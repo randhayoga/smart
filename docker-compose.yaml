@@ -10,7 +10,8 @@ services:
             - .:/var/www/smart
             - ./docker/docker-php-size.ini:/usr/local/etc/php/conf.d/docker-php-size.ini
         ports:
-            - "8000:8000"
+            - "443:443"
+            - "443:443/udp"
         depends_on:
             - db
         networks:
