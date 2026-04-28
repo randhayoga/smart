@@ -16,6 +16,7 @@ return new class extends Migration {
             $table->enum('type', ['consumable', 'asset']);
             $table->string('specification');
             $table->string('image_url');
+            $table->timestamp('last_restock_at')->nullable();
             $table->timestamps();
         });
 
@@ -43,12 +44,28 @@ return new class extends Migration {
             $table->decimal('price', 15, 2);
             $table->string('image_url');
             $table->string('vehicle_registration')->nullable();
+            $table->foreignId('user_id')->nullable()->constrained('users'); // Reserved unit
+            $table->timestamps();
+        });
+
+        Schema::create('inventory_logs', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('barang_id')->nullable()->constrained('barangs')->nullOnDelete();
+            $table->foreignId('lot_id')->nullable()->constrained('lots')->nullOnDelete();
+            $table->foreignId('unit_id')->nullable()->constrained('units')->nullOnDelete();
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->string('action_type'); // e.g. stock_in, stock_out, adjustment, relocation
+            $table->integer('quantity_change')->default(0); 
+            $table->json('previous_state')->nullable();
+            $table->json('new_state')->nullable();
+            $table->text('note')->nullable();
             $table->timestamps();
         });
     }
 
     public function down(): void
     {
+        Schema::dropIfExists('inventory_logs');
         Schema::dropIfExists('units');
         Schema::dropIfExists('lots');
         Schema::dropIfExists('barangs');
