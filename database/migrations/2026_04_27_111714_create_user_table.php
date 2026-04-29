@@ -17,7 +17,7 @@ return new class extends Migration {
 
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->char(6, 'username')->unique();
+            $table->char('username', 6)->unique();
             $table->string('name');
             $table->string('email')->unique();
             $table->string('password');
@@ -46,10 +46,21 @@ return new class extends Migration {
             $table->foreignId('project_id')->constrained('projects')->cascadeOnDelete();
             $table->timestamps();
         });
+
+        Schema::connection($connection)->create('sessions', function (Blueprint $table) {
+            $table->string('id')->primary();
+            $table->foreignId('user_id')->nullable()->index();
+            $table->string('ip_address', 45)->nullable();
+            $table->text('user_agent')->nullable();
+            $table->text('payload');
+            $table->integer('last_activity')->index();
+       });
     }
+
 
     public function down(): void
     {
+        Schema::dropIfExists('sessions');
         Schema::dropIfExists('project_user');
         Schema::dropIfExists('projects');
         Schema::table('departments', function (Blueprint $table) {

@@ -12,10 +12,7 @@ class User extends Authenticatable
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
-    /**
-     * The database connection that should be used by the model.
-     */
-    protected $connection = 'SMART';
+
 
     /**
      * The attributes that are mass assignable.
@@ -27,6 +24,8 @@ class User extends Authenticatable
         'username',
         'email',
         'password',
+        'role',
+        'department_id',
     ];
 
     /**
