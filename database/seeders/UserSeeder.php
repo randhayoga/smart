@@ -15,16 +15,16 @@ class UserSeeder extends Seeder
         //
         $departments = \App\Models\Department::factory(5)->create();
 
-        foreach ($departments as $department) {
-            $users = \App\Models\User::factory(10)->create([
-                'department_id' => $department->id,
-            ]);
+        // foreach ($departments as $department) {
+        //     $users = \App\Models\User::factory(10)->create([
+        //         'department_id' => $department->id,
+        //     ]);
 
-            // Assign a manager to the department
-            $department->update([
-                'manager_id' => $users->first()->id,
-            ]);
-        }
+        //     // Assign a manager to the department
+        //     $department->update([
+        //         'manager_id' => $users->first()->id,
+        //     ]);
+        // }
 
         // Create the hardcoded Admin user
         \App\Models\User::factory()->create([
