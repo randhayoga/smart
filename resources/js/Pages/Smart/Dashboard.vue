@@ -119,7 +119,7 @@ const getStatusColor = (status: string) => {
       <div class="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 class="text-lg sm:text-2xl lg:text-3xl font-bold leading-tight">
-            Welcome back, <span class="text-gradient-primary">{{ user?.name || 'User' }}</span>
+            Welcome, <span class="text-gradient-primary">{{ user?.name || 'User' }}</span>
           </h1>
           <p class="text-sm sm:text-base text-muted-foreground mt-1">
             Here's what's happening with your inventory today.
