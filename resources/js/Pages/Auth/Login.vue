@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { Loader2, ArrowRight } from 'lucide-vue-next';
+import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 
 defineProps<{
   canResetPassword?: boolean;
@@ -38,13 +39,13 @@ const submit = () => {
       <div class="p-6 text-center pb-2 pt-8">
         <!-- Logo -->
         <div class="flex justify-center mb-4">
-          <div class="h-14 w-14 rounded-xl bg-gradient-primary flex items-center justify-center shadow-button">
-            <span class="text-2xl font-bold text-white">S</span>
+          <div class="h-16 w-16 rounded-xl flex items-center justify-center overflow-hidden">
+            <ApplicationLogo class="h-full w-full object-contain" />
           </div>
         </div>
         
         <h3 class="text-2xl font-bold tracking-tight">
-          Welcome to <span class="text-gradient-primary">SMART</span>
+          Selamat Datang di <span class="text-gradient-primary">SMART</span>
         </h3>
         <p class="text-sm text-muted-foreground mt-2">
           Stock Management And Request Tracking
@@ -67,7 +68,7 @@ const submit = () => {
               id="username"
               type="text"
               v-model="form.username"
-              placeholder="Enter your NPK"
+              placeholder="Ketik NPK Anda"
               required
               autofocus
               autocomplete="username"
@@ -82,7 +83,7 @@ const submit = () => {
           <!-- Password -->
           <div class="space-y-2">
             <div class="flex items-center justify-between">
-              <label for="password" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Password</label>
+              <label for="password" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Kata Sandi</label>
               <!--
               <Link
                 v-if="canResetPassword"
@@ -116,10 +117,10 @@ const submit = () => {
             class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 w-full h-11 bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-button"
             :disabled="form.processing"
           >
-            <Loader2 v-if="form.processing" class="mr-2 h-4 w-4 animate-spin" />
+            <Loader2 v-if="form.processing" class="mr-2 h-5 w-5 animate-spin" />
             <template v-else>
-              Sign in
-              <ArrowRight class="ml-2 h-4 w-4" />
+              <span>Masuk</span>
+              <ArrowRight class="h-5 w-5 shrink-0" />
             </template>
           </button>
         </form>
@@ -130,7 +131,7 @@ const submit = () => {
     
     <!-- Footer -->
     <div class="absolute bottom-4 left-0 right-0 text-center text-sm text-muted-foreground">
-      © {{ new Date().getFullYear() }} SMART. All rights reserved.
+      © {{ new Date().getFullYear() }} Integrated Facilites Services, IT Dev Team
     </div>
   </div>
 </template>
