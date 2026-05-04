@@ -4,6 +4,7 @@ import { Link, usePage, router } from '@inertiajs/vue3';
 import { Menu, X, Search, Bell } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/Components/ui/avatar';
+import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 
 import { Badge } from '@/Components/ui/badge';
 
@@ -35,11 +36,11 @@ const logout = () => {
 </script>
 
 <template>
-  <header class="sticky top-0 z-40 w-full">
+  <header class="fixed top-0 z-50 w-full">
     <!-- Gradient accent line -->
     <div class="gradient-line"></div>
     
-    <div class="flex h-14 sm:h-16 items-center justify-between gap-2 sm:gap-4 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60 px-3 sm:px-4 lg:px-6">
+    <div class="flex h-14 sm:h-16 items-center justify-between gap-2 sm:gap-4 border-b border-border bg-card px-3 sm:px-4 lg:px-6">
       <!-- Left: Mobile menu button + Logo -->
       <div class="flex items-center gap-4">
         <!-- Mobile menu toggle -->
@@ -54,9 +55,9 @@ const logout = () => {
         </Button>
         
         <!-- Logo -->
-        <Link href="/smart/dashboard" class="flex items-center gap-2">
-          <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-primary">
-            <span class="text-sm font-bold text-white">S</span>
+        <Link href="/smart/dashboard" class="flex items-center gap-2 group">
+          <div class="flex h-9 w-9 items-center justify-center rounded-lg overflow-hidden transition-transform group-hover:scale-105">
+            <ApplicationLogo class="h-full w-full object-contain" />
           </div>
           <span class="hidden font-bold text-lg sm:text-xl text-gradient-primary min-[480px]:inline-block">
             SMART
