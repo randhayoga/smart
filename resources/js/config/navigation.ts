@@ -6,7 +6,18 @@ import {
     Settings,
     Users,
     Bell,
-    HelpCircle
+    HelpCircle,
+    Database,
+    LayoutList,
+    Handshake,
+    Telescope,
+    BaggageClaim,
+    ListCheck,
+    FileClock,
+    Eye,
+    PackagePlus,
+    ShoppingBasket,
+    ShoppingCart
 } from 'lucide-vue-next';
 
 export interface NavItem {
@@ -24,7 +35,7 @@ export interface NavSection {
 
 export const mainNavigation: NavSection[] = [
     {
-        title: 'Main',
+        title: 'Menu Utama',
         items: [
             {
                 title: 'Dashboard',
@@ -37,43 +48,59 @@ export const mainNavigation: NavSection[] = [
         title: 'Inventory',
         items: [
             {
-                title: 'Stock Items',
+                title: 'Manajemen Inventory',
                 href: '/smart/inventory',
                 icon: Package,
             },
             {
-                title: 'Requests',
-                href: '/smart/requests',
-                icon: FileText,
-                badge: 'New',
+                title: 'Master Data',
+                href: '/smart/master',
+                icon: Database,
+                // badge: 'New',
             },
         ],
     },
     {
-        title: 'Reports',
+        title: 'Permintaan',
         items: [
             {
-                title: 'Analytics',
-                href: '/smart/analytics',
-                icon: BarChart3,
+                title: 'Inbox',
+                href: '/smart/inbox',
+                icon: LayoutList,
+            },
+            {
+                title: 'Serah Terima',
+                href: '/smart/handover',
+                icon: Handshake,
+            },
+            {
+                title: 'Lacak Peminjaman',
+                href: '/smart/borrowed',
+                icon: Telescope,
+            },
+            {
+                title: 'Pengembalian',
+                href: '/smart/returning',
+                icon: BaggageClaim,
+            },
+            {
+                title: 'Arsip',
+                href: '/smart/archive',
+                icon: ListCheck,
             },
         ],
     },
     {
-        title: 'Administration',
+        title: 'Audit',
         items: [
             {
-                title: 'Users',
-                href: '/smart/users',
-                icon: Users,
-            },
-            {
-                title: 'Settings',
-                href: '/smart/settings',
-                icon: Settings,
+                title: 'Jejak Audit',
+                href: '/smart/audit',
+                icon: FileClock,
             },
         ],
     },
+
 ];
 
 export const quickActions = [
@@ -91,7 +118,7 @@ export const quickActions = [
 // Navigation for regular users (non-admin)
 export const userNavigation: NavSection[] = [
     {
-        title: 'Main',
+        title: 'Menu Utama',
         items: [
             {
                 title: 'Dashboard',
@@ -101,12 +128,42 @@ export const userNavigation: NavSection[] = [
         ],
     },
     {
-        title: 'My Items',
+        title: 'Approval',
         items: [
             {
-                title: 'My Requests',
-                href: '/smart/requests',
-                icon: FileText,
+                title: 'Perlu Approval',
+                href: '/smart/approve',
+                icon: Eye,
+            },
+            {
+                title: 'Sudah Diproses',
+                href: '/smart/approved',
+                icon: ListCheck,
+            },
+        ],
+    },
+    {
+        title: 'Permintaan',
+        items: [
+            {
+                title: 'Pilih Barang',
+                href: '/smart/browse',
+                icon: PackagePlus,
+            },
+            {
+                title: 'Keranjang Habis Pakai',
+                href: '/smart/asset-cart',
+                icon: ShoppingBasket,
+            },
+            {
+                title: 'Keranjang Pinjam',
+                href: '/smart/borrow-cart',
+                icon: ShoppingCart,
+            },
+            {
+                title: 'Riwayat Permintaan',
+                href: '/smart/history',
+                icon: ListCheck,
             },
         ],
     },

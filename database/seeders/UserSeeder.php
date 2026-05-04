@@ -35,5 +35,15 @@ class UserSeeder extends Seeder
             'department_id' => $departments->first()->id,
             'password' => \Illuminate\Support\Facades\Hash::make('password'),
         ]);
+
+        // Create the hardcoded Regular user
+        \App\Models\User::factory()->create([
+            'username' => '123456',
+            'name' => 'User',
+            'email' => 'user@example.com',
+            'role' => 'user',
+            'department_id' => $departments->first()->id,
+            'password' => \Illuminate\Support\Facades\Hash::make('password'),
+        ]);
     }
 }
