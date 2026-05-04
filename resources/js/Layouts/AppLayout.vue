@@ -66,7 +66,7 @@ onUnmounted(() => {
     
     <!-- Main content -->
     <main 
-      class="transition-all duration-300"
+      class="transition-all duration-300 pt-[60px] sm:pt-[68px]"
       :class="[
         !isMobile ? 'lg:ml-64' : ''
       ]"

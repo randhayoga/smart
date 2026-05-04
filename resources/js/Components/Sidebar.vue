@@ -11,6 +11,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/Components/ui/sheet';
+import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 
 interface Props {
   open: boolean;
@@ -101,7 +102,7 @@ const isActive = (href: string): boolean => {
         class="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-red-600 transition-all duration-200 hover:bg-red-50 cursor-pointer"
       >
         <LogOut class="h-5 w-5" />
-        Log Out
+        Keluar
       </Link>
     </div>
   </aside>
@@ -111,8 +112,8 @@ const isActive = (href: string): boolean => {
     <SheetContent side="left" class="w-[280px] max-w-[85vw] p-0 bg-sidebar flex flex-col h-full">
       <SheetHeader class="p-4 border-b border-sidebar-border flex-shrink-0">
         <SheetTitle class="flex items-center gap-2">
-          <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-primary">
-            <span class="text-sm font-bold text-white">S</span>
+          <div class="flex h-9 w-9 items-center justify-center rounded-lg overflow-hidden">
+            <ApplicationLogo class="h-full w-full object-contain" />
           </div>
           <span class="font-bold text-xl text-gradient-primary">SMART</span>
         </SheetTitle>
