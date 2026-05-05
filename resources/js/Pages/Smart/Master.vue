@@ -17,6 +17,17 @@ import {
   X
 } from 'lucide-vue-next';
 
+import { Button } from "@/Components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/Components/ui/dropdown-menu";
+
 interface Props {
   user: {
     name: string;
@@ -85,6 +96,7 @@ const sortKey = ref('code');
 const sortOrder = ref('asc');
 const searchQuery = ref('');
 const parentFilter = ref('');
+const rowsPerPage = ref('Semua baris');
 
 const toggleSort = (key: string) => {
   if (sortKey.value === key) {
@@ -211,18 +223,24 @@ watch(activeTab, () => {
                   type="text" 
                   v-model="searchQuery"
                   :placeholder="`Cari Nama ${activeTab}...`" 
-                  class="w-full px-3 py-2 text-sm border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
                 />
               </div>
-              <div v-if="activeTab === 'Subkategori'" class="relative flex-1 max-w-[200px]">
-                <select 
-                  v-model="parentFilter"
-                  class="appearance-none w-full px-3 py-2 border border-input rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary cursor-pointer transition-colors"
-                >
-                  <option value="">Semua Kategori Induk</option>
-                  <option v-for="cat in dummyCategories" :key="cat.code" :value="cat.code">{{ cat.name }}</option>
-                </select>
-                <ChevronDown class="w-4 h-4 text-muted-foreground absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <div v-if="activeTab === 'Subkategori'" class="flex-1 max-w-[200px]">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal">
+                      {{ parentFilter ? (dummyCategories.find(c => c.code === parentFilter)?.name || 'Semua Kategori Induk') : 'Semua Kategori Induk' }}
+                      <ChevronDown class="w-4 h-4 opacity-50" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent class="w-[200px] rounded-[14px]">
+                    <DropdownMenuItem @select="parentFilter = ''">Semua Kategori Induk</DropdownMenuItem>
+                    <DropdownMenuItem v-for="cat in dummyCategories" :key="cat.code" @select="parentFilter = cat.code">
+                      {{ cat.name }}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
 
@@ -230,18 +248,23 @@ watch(activeTab, () => {
             <div class="flex flex-wrap items-center gap-4">
               <div class="flex items-center gap-3 text-sm text-muted-foreground">
                 <span>Baris per halaman</span>
-                <div class="relative">
-                  <select class="appearance-none pl-3 pr-8 py-2 border border-input rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary cursor-pointer transition-colors">
-                    <option>Semua baris</option>
-                    <option>10</option>
-                    <option>25</option>
-                    <option>50</option>
-                  </select>
-                  <ChevronDown class="w-4 h-4 text-muted-foreground absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" class="w-[140px] justify-between rounded-[14px] font-normal">
+                      {{ rowsPerPage }}
+                      <ChevronDown class="w-4 h-4 opacity-50" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent class="w-[140px] rounded-[14px]">
+                    <DropdownMenuItem @select="rowsPerPage = 'Semua baris'">Semua baris</DropdownMenuItem>
+                    <DropdownMenuItem @select="rowsPerPage = '10'">10</DropdownMenuItem>
+                    <DropdownMenuItem @select="rowsPerPage = '25'">25</DropdownMenuItem>
+                    <DropdownMenuItem @select="rowsPerPage = '50'">50</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
 
-              <button @click="openCreateModal" class="flex items-center gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm">
+              <button @click="openCreateModal" class="flex items-center gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-[14px] text-sm font-medium transition-colors shadow-sm">
                 <Plus class="w-4 h-4" />
                 <span>{{ activeTab }} Baru</span>
               </button>
@@ -253,10 +276,10 @@ watch(activeTab, () => {
         <div class="px-[10px]">
           <div class="bg-card rounded-xl border border-border shadow-sm overflow-hidden"> 
             <div class="overflow-x-auto">
-              <table class="w-full text-sm text-left">
+              <table class="w-full text-sm text-left table-fixed">
                 <thead class="text-xs text-foreground bg-muted/50 border-b border-border">
               <tr>
-                <th v-if="!['Satuan', 'Merek', 'Organizer', 'Vendor', 'Lokasi'].includes(activeTab)" scope="col" class="px-6 py-4 font-semibold">
+                <th v-if="!['Satuan', 'Merek', 'Organizer', 'Vendor', 'Lokasi'].includes(activeTab)" scope="col" class="px-6 py-4 font-semibold w-[400px]">
                   <div @click="toggleSort('code')" class="flex items-center gap-1.5 cursor-pointer hover:text-primary transition-colors select-none" :class="{ 'text-primary': sortKey === 'code' }">
                     Kode {{ activeTab }}
                     <ArrowUp v-if="sortKey === 'code' && sortOrder === 'asc'" class="w-3.5 h-3.5" />
@@ -264,7 +287,7 @@ watch(activeTab, () => {
                     <ArrowUpDown v-else class="w-3.5 h-3.5 text-muted-foreground" />
                   </div>
                 </th>
-                <th scope="col" class="px-6 py-4 font-semibold">
+                <th scope="col" class="px-6 py-4 font-semibold w-auto">
                   <div @click="toggleSort('name')" class="flex items-center gap-1.5 cursor-pointer hover:text-primary transition-colors select-none" :class="{ 'text-primary': sortKey === 'name' }">
                     Nama {{ activeTab }}
                     <ArrowUp v-if="sortKey === 'name' && sortOrder === 'asc'" class="w-3.5 h-3.5" />
@@ -272,7 +295,7 @@ watch(activeTab, () => {
                     <ArrowUpDown v-else class="w-3.5 h-3.5 text-muted-foreground" />
                   </div>
                 </th>
-                <th v-if="activeTab === 'Subkategori'" scope="col" class="px-6 py-4 font-semibold">
+                <th v-if="activeTab === 'Subkategori'" scope="col" class="px-6 py-4 font-semibold w-[250px]">
                   <div @click="toggleSort('parent')" class="flex items-center gap-1.5 cursor-pointer hover:text-primary transition-colors select-none" :class="{ 'text-primary': sortKey === 'parent' }">
                     Kategori Induk
                     <ArrowUp v-if="sortKey === 'parent' && sortOrder === 'asc'" class="w-3.5 h-3.5" />
@@ -280,7 +303,7 @@ watch(activeTab, () => {
                     <ArrowUpDown v-else class="w-3.5 h-3.5 text-muted-foreground" />
                   </div>
                 </th>
-                <th scope="col" class="px-6 py-4 font-semibold text-right">
+                <th scope="col" class="px-6 py-4 font-semibold text-right w-[120px]">
                   Aksi
                 </th>
               </tr>
@@ -292,13 +315,13 @@ watch(activeTab, () => {
                 class="border-b border-border hover:bg-muted/30 transition-colors"
                 :class="{ 'border-none': index === displayData.length - 1 }"
               >
-                <td v-if="!['Satuan', 'Merek', 'Organizer', 'Vendor', 'Lokasi'].includes(activeTab)" class="px-6 py-4 text-muted-foreground">
+                <td v-if="!['Satuan', 'Merek', 'Organizer', 'Vendor', 'Lokasi'].includes(activeTab)" class="px-6 py-4 text-muted-foreground truncate">
                   {{ item.code }}
                 </td>
-                <td class="px-6 py-4 text-foreground">
+                <td class="px-6 py-4 text-foreground truncate">
                   {{ item.name }}
                 </td>
-                <td v-if="activeTab === 'Subkategori'" class="px-6 py-4 text-foreground">
+                <td v-if="activeTab === 'Subkategori'" class="px-6 py-4 text-muted-foreground truncate">
                   {{ item.parent }}
                 </td>
                 <td class="px-6 py-4">
@@ -356,7 +379,7 @@ watch(activeTab, () => {
         leave-from-class="opacity-100"
         leave-to-class="opacity-0"
       >
-        <div v-if="isEditModalOpen" class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4" @click="closeEditModal">
+        <div v-if="isEditModalOpen" class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4">
           <div 
             class="bg-card text-foreground rounded-[14px] shadow-2xl w-full max-w-[1200px] min-h-[261px] p-[24px] flex flex-col"
             @click.stop
@@ -375,7 +398,7 @@ watch(activeTab, () => {
                   type="text" 
                   :value="editingItem?.parent" 
                   disabled 
-                  class="w-full px-3 py-2 text-sm border border-input rounded-lg bg-muted/50 text-muted-foreground cursor-not-allowed"
+                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-muted/50 text-muted-foreground cursor-not-allowed"
                 />
               </div>
               <div>
@@ -384,7 +407,7 @@ watch(activeTab, () => {
                   type="text" 
                   :value="editingItem?.code" 
                   disabled 
-                  class="w-full px-3 py-2 text-sm border border-input rounded-lg bg-muted/50 text-muted-foreground cursor-not-allowed"
+                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-muted/50 text-muted-foreground cursor-not-allowed"
                 />
               </div>
               <div>
@@ -394,7 +417,7 @@ watch(activeTab, () => {
                   v-if="editingItem"
                   v-model="editingItem.name" 
                   maxlength="255"
-                  class="w-full px-3 py-2 text-sm border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
                 />
               </div>
             </div>
@@ -406,7 +429,7 @@ watch(activeTab, () => {
                   type="text" 
                   :value="editingItem?.code" 
                   disabled 
-                  class="w-full px-3 py-2 text-sm border border-input rounded-lg bg-muted/50 text-muted-foreground cursor-not-allowed"
+                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-muted/50 text-muted-foreground cursor-not-allowed"
                 />
               </div>
               <div>
@@ -416,7 +439,7 @@ watch(activeTab, () => {
                   v-if="editingItem"
                   v-model="editingItem.name" 
                   maxlength="255"
-                  class="w-full px-3 py-2 text-sm border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
                 />
               </div>
             </div>
@@ -429,17 +452,17 @@ watch(activeTab, () => {
                 v-model="editingItem.name" 
                 maxlength="255"
                 :placeholder="`${activeTab} sekarang`"
-                class="w-full px-3 py-2 text-sm border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
               />
             </div>
             
             <div class="flex items-center justify-between mt-auto">
               <span class="text-sm text-destructive italic">*Wajib diisi</span>
               <div class="flex items-center gap-3">
-                <button @click="closeEditModal" class="px-4 py-2 text-sm font-medium border border-input rounded-lg hover:bg-accent transition-colors">
+                <button @click="closeEditModal" class="px-4 py-2 text-sm font-medium border border-input rounded-[14px] hover:bg-accent transition-colors">
                   Batal
                 </button>
-                <button class="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-lg hover:bg-primary/90 transition-colors">
+                <button class="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-[14px] hover:bg-primary/90 transition-colors">
                   Simpan Perubahan
                 </button>
               </div>
@@ -459,7 +482,7 @@ watch(activeTab, () => {
         leave-from-class="opacity-100"
         leave-to-class="opacity-0"
       >
-        <div v-if="isCreateModalOpen" class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4" @click="closeCreateModal">
+        <div v-if="isCreateModalOpen" class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4">
           <div 
             class="bg-card text-foreground rounded-[14px] shadow-2xl w-full max-w-[1200px] min-h-[261px] p-[24px] flex flex-col"
             @click.stop
@@ -474,21 +497,24 @@ watch(activeTab, () => {
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 flex-grow" v-if="activeTab === 'Subkategori'">
               <div>
                 <label class="block text-sm font-medium text-foreground mb-2">Kategori Induk<span class="text-destructive">*</span></label>
-                <div class="relative">
-                  <select 
-                    v-model="newItem.parentCode" 
-                    class="appearance-none w-full pl-3 pr-8 py-2 text-sm border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors cursor-pointer"
-                  >
-                    <option value="" disabled>Pilih Kategori Induk</option>
-                    <option v-for="cat in dummyCategories" :key="cat.code" :value="cat.code">{{ cat.name }}</option>
-                  </select>
-                  <ChevronDown class="w-4 h-4 text-muted-foreground absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal">
+                      {{ newItem.parentCode ? (dummyCategories.find(c => c.code === newItem.parentCode)?.name || 'Pilih Kategori Induk') : 'Pilih Kategori Induk' }}
+                      <ChevronDown class="w-4 h-4 opacity-50" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent class="w-[200px] rounded-[14px]">
+                    <DropdownMenuItem v-for="cat in dummyCategories" :key="cat.code" @select="newItem.parentCode = cat.code">
+                      {{ cat.name }}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
               <div>
                 <label class="block text-sm font-medium text-foreground mb-2">Kode Subkategori<span class="text-destructive">*</span></label>
                 <div 
-                  class="flex rounded-lg border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors"
+                  class="flex rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors"
                   :class="{ 'opacity-50 bg-muted/50': !newItem.parentCode }"
                 >
                   <span class="pl-3 py-2 text-sm text-muted-foreground flex items-center bg-transparent select-none whitespace-nowrap">
@@ -513,7 +539,7 @@ watch(activeTab, () => {
                   v-model="newItem.name" 
                   maxlength="255"
                   placeholder="Input nama kategorinya di sini..."
-                  class="w-full px-3 py-2 text-sm border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
                 />
               </div>
             </div>
@@ -527,7 +553,7 @@ watch(activeTab, () => {
                   @input="newItem.code = newItem.code.replace(/[^A-Za-z]/g, '').toUpperCase()"
                   maxlength="3"
                   placeholder="Input kodenya di sini (tiga huruf kapital)..."
-                  class="w-full px-3 py-2 text-sm border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
                 />
               </div>
               <div>
@@ -537,7 +563,7 @@ watch(activeTab, () => {
                   v-model="newItem.name" 
                   maxlength="255"
                   placeholder="Input nama kategorinya di sini..."
-                  class="w-full px-3 py-2 text-sm border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
                 />
               </div>
             </div>
@@ -549,17 +575,17 @@ watch(activeTab, () => {
                 v-model="newItem.name" 
                 maxlength="255"
                 :placeholder="`Input nama ${activeTab}nya di sini...`"
-                class="w-full px-3 py-2 text-sm border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
               />
             </div>
             
             <div class="flex items-center justify-between mt-auto">
               <span class="text-sm text-destructive italic">*Wajib diisi</span>
               <div class="flex items-center gap-3">
-                <button @click="closeCreateModal" class="px-4 py-2 text-sm font-medium border border-input rounded-lg hover:bg-accent transition-colors">
+                <button @click="closeCreateModal" class="px-4 py-2 text-sm font-medium border border-input rounded-[14px] hover:bg-accent transition-colors">
                   Batal
                 </button>
-                <button class="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-lg hover:bg-primary/90 transition-colors">
+                <button class="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-[14px] hover:bg-primary/90 transition-colors">
                   Buat {{ activeTab }}
                 </button>
               </div>
