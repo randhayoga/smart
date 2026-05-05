@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Modal from '@/Components/Modal.vue';
 import { 
@@ -67,8 +67,24 @@ const dummyOrganizer = [
   { name: 'DDD' },
 ];
 
+const dummyVendors = [
+  { name: 'AAA' },
+  { name: 'BBB' },
+  { name: 'CCC' },
+  { name: 'DDD' },
+];
+
+const dummyLokasi = [
+  { name: 'Ruang IFS' },
+  { name: 'Mega Mendung' },
+  { name: 'Tiga Negeri' },
+  { name: 'Gudang' },
+];
+
 const sortKey = ref('code');
 const sortOrder = ref('asc');
+const searchQuery = ref('');
+const parentFilter = ref('');
 
 const toggleSort = (key: string) => {
   if (sortKey.value === key) {
@@ -86,6 +102,22 @@ const displayData = computed(() => {
   else if (activeTab.value === 'Satuan') data = [...dummySatuan];
   else if (activeTab.value === 'Merek') data = [...dummyMerek];
   else if (activeTab.value === 'Organizer') data = [...dummyOrganizer];
+  else if (activeTab.value === 'Vendor') data = [...dummyVendors];
+  else if (activeTab.value === 'Lokasi') data = [...dummyLokasi];
+  
+  // Apply Search Filter
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase();
+    data = data.filter(item => 
+      (item.name && item.name.toLowerCase().includes(query)) ||
+      (item.code && item.code.toLowerCase().includes(query))
+    );
+  }
+
+  // Apply Parent Filter (Subkategori only)
+  if (activeTab.value === 'Subkategori' && parentFilter.value) {
+    data = data.filter(item => item.parentCode === parentFilter.value);
+  }
   
   if (sortKey.value) {
     data.sort((a, b) => {
@@ -129,6 +161,12 @@ const openCreateModal = () => {
 const closeCreateModal = () => {
   isCreateModalOpen.value = false;
 };
+
+// Reset filters when tab changes
+watch(activeTab, () => {
+  searchQuery.value = '';
+  parentFilter.value = '';
+});
 </script>
 
 <template>
@@ -171,13 +209,17 @@ const closeCreateModal = () => {
                 <label class="text-xs text-muted-foreground font-medium block">Filter</label>
                 <input 
                   type="text" 
+                  v-model="searchQuery"
                   :placeholder="`Cari Nama ${activeTab}...`" 
                   class="w-full px-3 py-2 text-sm border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
                 />
               </div>
               <div v-if="activeTab === 'Subkategori'" class="relative flex-1 max-w-[200px]">
-                <select class="appearance-none w-full px-3 py-2 border border-input rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary cursor-pointer transition-colors">
-                  <option>Semua Kategori Induk</option>
+                <select 
+                  v-model="parentFilter"
+                  class="appearance-none w-full px-3 py-2 border border-input rounded-lg text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary cursor-pointer transition-colors"
+                >
+                  <option value="">Semua Kategori Induk</option>
                   <option v-for="cat in dummyCategories" :key="cat.code" :value="cat.code">{{ cat.name }}</option>
                 </select>
                 <ChevronDown class="w-4 h-4 text-muted-foreground absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -214,7 +256,7 @@ const closeCreateModal = () => {
               <table class="w-full text-sm text-left">
                 <thead class="text-xs text-foreground bg-muted/50 border-b border-border">
               <tr>
-                <th v-if="!['Satuan', 'Merek', 'Organizer'].includes(activeTab)" scope="col" class="px-6 py-4 font-semibold">
+                <th v-if="!['Satuan', 'Merek', 'Organizer', 'Vendor', 'Lokasi'].includes(activeTab)" scope="col" class="px-6 py-4 font-semibold">
                   <div @click="toggleSort('code')" class="flex items-center gap-1.5 cursor-pointer hover:text-primary transition-colors select-none" :class="{ 'text-primary': sortKey === 'code' }">
                     Kode {{ activeTab }}
                     <ArrowUp v-if="sortKey === 'code' && sortOrder === 'asc'" class="w-3.5 h-3.5" />
@@ -250,7 +292,7 @@ const closeCreateModal = () => {
                 class="border-b border-border hover:bg-muted/30 transition-colors"
                 :class="{ 'border-none': index === displayData.length - 1 }"
               >
-                <td v-if="!['Satuan', 'Merek', 'Organizer'].includes(activeTab)" class="px-6 py-4 text-muted-foreground">
+                <td v-if="!['Satuan', 'Merek', 'Organizer', 'Vendor', 'Lokasi'].includes(activeTab)" class="px-6 py-4 text-muted-foreground">
                   {{ item.code }}
                 </td>
                 <td class="px-6 py-4 text-foreground">
@@ -357,7 +399,7 @@ const closeCreateModal = () => {
               </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 flex-grow" v-else-if="!['Satuan', 'Merek', 'Organizer'].includes(activeTab)">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 flex-grow" v-else-if="!['Satuan', 'Merek', 'Organizer', 'Vendor', 'Lokasi'].includes(activeTab)">
               <div>
                 <label class="block text-sm font-medium text-foreground mb-2">Kode {{ activeTab }} (tidak dapat diubah)</label>
                 <input 
@@ -476,7 +518,7 @@ const closeCreateModal = () => {
               </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 flex-grow" v-else-if="!['Satuan', 'Merek', 'Organizer'].includes(activeTab)">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 flex-grow" v-else-if="!['Satuan', 'Merek', 'Organizer', 'Vendor', 'Lokasi'].includes(activeTab)">
               <div>
                 <label class="block text-sm font-medium text-foreground mb-2">Kode {{ activeTab }}<span class="text-destructive">*</span></label>
                 <input 
