@@ -2,6 +2,8 @@
 
 
 use App\Http\Controllers\Smart\DashboardController;
+use App\Http\Controllers\Smart\InventoryController;
+use App\Http\Controllers\Smart\MasterController;
 use App\Http\Controllers\Smart\UserDashboardController;
 use Illuminate\Support\Facades\Route;
 
@@ -14,6 +16,8 @@ Route::get('/', function () {
 Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/user/dashboard', [UserDashboardController::class, 'index'])->name('user.dashboard');
+    Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory');
+    Route::get('/master', [MasterController::class, 'index'])->name('master');
 });
 
 
