@@ -45,5 +45,15 @@ class UserSeeder extends Seeder
             'department_id' => $departments->first()->id,
             'password' => \Illuminate\Support\Facades\Hash::make('password'),
         ]);
+
+        // Create the hardcoded Manager user
+        \App\Models\User::factory()->create([
+            'username' => '654321',
+            'name' => 'Manager',
+            'email' => 'manager@example.com',
+            'role' => 'manager',
+            'department_id' => $departments->first()->id,
+            'password' => \Illuminate\Support\Facades\Hash::make('password'),
+        ]);
     }
 }
