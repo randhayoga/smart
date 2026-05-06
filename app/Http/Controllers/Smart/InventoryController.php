@@ -14,7 +14,7 @@ class InventoryController extends Controller
      */
     public function index(Request $request): Response
     {
-        return Inertia::render('Smart/Inventory', [
+        return Inertia::render('Smart/ManajemenStok', [
             'user' => $request->user(),
         ]);
     }

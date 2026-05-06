@@ -48,7 +48,7 @@ export const mainNavigation: NavSection[] = [
         title: 'Inventory',
         items: [
             {
-                title: 'Manajemen Inventory',
+                title: 'Manajemen Stok',
                 href: '/smart/inventory',
                 icon: Package,
             },

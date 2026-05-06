@@ -14,7 +14,7 @@ class MasterController extends Controller
      */
     public function index(Request $request): Response
     {
-        return Inertia::render('Smart/Master', [
+        return Inertia::render('Smart/MasterData', [
             'user' => $request->user(),
         ]);
     }
