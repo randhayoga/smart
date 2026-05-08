@@ -184,7 +184,7 @@ watch(activeTab, () => {
 <template>
   <AppLayout title="Master Data">
     <template #header>
-      <h1 class="text-xl font-medium text-foreground">
+      <h1 class="text-lg sm:text-2xl lg:text-3xl font-bold leading-tight">
         Master Data
       </h1>
     </template>

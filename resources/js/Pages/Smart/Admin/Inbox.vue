@@ -199,7 +199,7 @@ const handleExportPDF = () => {
 <template>
   <AppLayout title="Inbox">
     <template #header>
-      <h1 class="text-xl font-medium text-foreground">
+      <h1 class="text-lg sm:text-2xl lg:text-3xl font-bold leading-tight">
         Inbox
       </h1>
     </template>

@@ -1,11 +1,11 @@
 <?php
 
 
-use App\Http\Controllers\Smart\DashboardController;
-use App\Http\Controllers\Smart\InventoryController;
-use App\Http\Controllers\Smart\MasterController;
-use App\Http\Controllers\Smart\InboxController;
-use App\Http\Controllers\Smart\UserDashboardController;
+use App\Http\Controllers\Smart\Admin\DashboardController;
+use App\Http\Controllers\Smart\Admin\InventoryController;
+use App\Http\Controllers\Smart\Admin\MasterController;
+use App\Http\Controllers\Smart\Admin\InboxController;
+use App\Http\Controllers\Smart\User\UserDashboardController;
 use Illuminate\Support\Facades\Route;
 
 // Root redirect - always go to dashboard (middleware will handle auth)
