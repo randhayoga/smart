@@ -166,7 +166,7 @@ const closeEditModal = () => {
 };
 
 const openCreateModal = () => {
-  newItem.value = { code: '', name: '' };
+  newItem.value = { code: '', name: '', parentCode: '' };
   isCreateModalOpen.value = true;
 };
 
