@@ -1,20 +1,20 @@
 <?php
 
-namespace App\Http\Controllers\Smart;
+namespace App\Http\Controllers\Smart\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class InboxController extends Controller
+class InventoryController extends Controller
 {
     /**
-     * Display the inbox page.
+     * Display the inventory management page.
      */
     public function index(Request $request): Response
     {
-        return Inertia::render('Smart/Inbox', [
+        return Inertia::render('Smart/Admin/ManajemenStok', [
             'user' => $request->user(),
         ]);
     }

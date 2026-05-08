@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Smart;
+namespace App\Http\Controllers\Smart\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -14,7 +14,7 @@ class MasterController extends Controller
      */
     public function index(Request $request): Response
     {
-        return Inertia::render('Smart/MasterData', [
+        return Inertia::render('Smart/Admin/MasterData', [
             'user' => $request->user(),
         ]);
     }

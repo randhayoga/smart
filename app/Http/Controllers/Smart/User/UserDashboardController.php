@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Smart;
+namespace App\Http\Controllers\Smart\User;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
@@ -8,21 +8,21 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class DashboardController extends Controller
+class UserDashboardController extends Controller
 {
     /**
-     * Display the admin dashboard.
+     * Display the user dashboard.
      */
     public function index(Request $request): Response|RedirectResponse
     {
         $user = $request->user();
         
-        // Redirect non-admin to user dashboard
-        if (!$user->is_admin) {
-            return redirect()->route('smart.user.dashboard');
+        // Redirect admin to admin dashboard
+        if ($user->is_admin) {
+            return redirect()->route('smart.dashboard');
         }
         
-        return Inertia::render('Smart/Dashboard', [
+        return Inertia::render('Smart/User/UserDashboard', [
             'user' => $user,
         ]);
     }
