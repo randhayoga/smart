@@ -13,6 +13,8 @@ Route::get('/', function () {
     return redirect()->route('smart.dashboard');
 });
 
+
+
 // Smart routes - protected
 Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -24,9 +26,9 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
 
 
 
+require __DIR__.'/auth.php';
+
 // Fallback - redirect unknown routes to dashboard
 Route::fallback(function () {
     return redirect()->route('smart.dashboard');
 });
-
-require __DIR__.'/auth.php';
