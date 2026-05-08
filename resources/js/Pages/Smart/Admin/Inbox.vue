@@ -198,12 +198,6 @@ const handleExportPDF = () => {
 
 <template>
   <AppLayout title="Inbox">
-    <template #header>
-      <h1 class="text-lg sm:text-2xl lg:text-3xl font-bold leading-tight">
-        Inbox
-      </h1>
-    </template>
-    
     <div class="space-y-6">
       <div class="flex flex-col gap-1">
         <h2 class="text-2xl font-bold text-foreground">Daftar Permintaan Baru</h2>

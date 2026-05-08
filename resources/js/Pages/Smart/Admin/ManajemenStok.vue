@@ -174,12 +174,6 @@ const handleExportPDF = () => {
 
 <template>
   <AppLayout title="Manajemen Stok">
-    <template #header>
-      <h1 class="text-lg sm:text-2xl lg:text-3xl font-bold leading-tight">
-        Manajemen Stok
-      </h1>
-    </template>
-    
     <div class="space-y-4">
       <!-- Main Card -->
       <div class="bg-card rounded-xl border border-border shadow-sm overflow-hidden">

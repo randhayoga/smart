@@ -81,7 +81,7 @@
   --muted-foreground: #64748B;
 
   /* Accent: Emerald 500 - For success/trend up */
-  --accent: #10B981;
+  --accent: var(--secondary);
   --accent-foreground: #FFFFFF;
 
   /* Destructive */
@@ -130,7 +130,7 @@
   --muted: #1E293B;
   --muted-foreground: #94A3B8;
 
-  --accent: #34D399;
+  --accent: var(--secondary);
   --accent-foreground: #0F172A;
 
   --destructive: #F87171;

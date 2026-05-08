@@ -47,7 +47,8 @@ COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 RUN curl -fsSL https://fnm.vercel.app/install | bash -s -- --install-dir /root/.fnm \
     && /root/.fnm/fnm install 24 \
     && ln -s /root/.fnm/node-versions/v24.*/installation/bin/node /usr/local/bin/node \
-    && ln -s /root/.fnm/node-versions/v24.*/installation/bin/npm /usr/local/bin/npm
+    && ln -s /root/.fnm/node-versions/v24.*/installation/bin/npm /usr/local/bin/npm \
+    && ln -s /root/.fnm/node-versions/v24.*/installation/bin/npx /usr/local/bin/npx
 
 # Copy and set the entrypoint script
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
