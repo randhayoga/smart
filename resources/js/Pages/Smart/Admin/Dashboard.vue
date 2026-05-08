@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import Heading from '@/Components/Heading.vue';
 
 interface Props {
   user: {
@@ -22,11 +23,9 @@ const greeting = computed(() => {
 
 <template>
   <AppLayout title="Dashboard">
-    <template #header>
-      <h1 class="text-lg sm:text-2xl lg:text-3xl font-bold leading-tight">
-        {{ greeting }}, <span class="text-gradient-primary">{{ user?.name || 'User' }}</span>
-      </h1>
-    </template>
+    <Heading as="h1">
+      {{ greeting }}, <span class="text-gradient-primary">{{ user?.name || 'User' }}</span>
+    </Heading>
     
     <!-- Blank state -->
     <div class="bg-card rounded-xl border border-border p-8 min-h-[400px] flex items-center justify-center">

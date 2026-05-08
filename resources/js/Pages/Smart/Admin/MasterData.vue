@@ -1,19 +1,12 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, h } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import Modal from '@/Components/Modal.vue';
 import { 
-  Search, 
   ChevronDown, 
   ArrowUpDown, 
-  ArrowUp,
-  ArrowDown,
   Plus, 
   Pencil, 
   Trash2,
-  ChevronLeft,
-  ChevronRight,
-  MoreHorizontal,
   X
 } from 'lucide-vue-next';
 
@@ -21,12 +14,15 @@ import { Button } from "@/Components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/Components/ui/dropdown-menu";
+import Heading from '@/Components/Heading.vue';
+import { Breadcrumb, BreadcrumbLink, BreadcrumbList } from '@/Components/ui/breadcrumb';
+import BreadcrumbItem from '@/Components/ui/breadcrumb/BreadcrumbItem.vue';
+
+import type { ColumnDef } from '@tanstack/vue-table';
+import DataTable from '@/Components/DataTable.vue';
 
 interface Props {
   user: {
@@ -92,59 +88,19 @@ const dummyLokasi = [
   { name: 'Gudang' },
 ];
 
-const sortKey = ref('code');
-const sortOrder = ref('asc');
 const searchQuery = ref('');
 const parentFilter = ref('');
 const rowsPerPage = ref('Semua baris');
 
-const toggleSort = (key: string) => {
-  if (sortKey.value === key) {
-    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
-  } else {
-    sortKey.value = key;
-    sortOrder.value = 'asc';
-  }
-};
-
 const displayData = computed(() => {
-  let data: any[] = [];
-  if (activeTab.value === 'Kategori') data = [...dummyCategories];
-  else if (activeTab.value === 'Subkategori') data = [...dummySubcategories];
-  else if (activeTab.value === 'Satuan') data = [...dummySatuan];
-  else if (activeTab.value === 'Merek') data = [...dummyMerek];
-  else if (activeTab.value === 'Organizer') data = [...dummyOrganizer];
-  else if (activeTab.value === 'Vendor') data = [...dummyVendors];
-  else if (activeTab.value === 'Lokasi') data = [...dummyLokasi];
-  
-  // Apply Search Filter
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase();
-    data = data.filter(item => 
-      (item.name && item.name.toLowerCase().includes(query)) ||
-      (item.code && item.code.toLowerCase().includes(query))
-    );
-  }
-
-  // Apply Parent Filter (Subkategori only)
-  if (activeTab.value === 'Subkategori' && parentFilter.value) {
-    data = data.filter(item => item.parentCode === parentFilter.value);
-  }
-  
-  if (sortKey.value) {
-    data.sort((a, b) => {
-      let aVal = (a as any)[sortKey.value] || '';
-      let bVal = (b as any)[sortKey.value] || '';
-      if (typeof aVal === 'string') aVal = aVal.toLowerCase();
-      if (typeof bVal === 'string') bVal = bVal.toLowerCase();
-      
-      if (aVal < bVal) return sortOrder.value === 'asc' ? -1 : 1;
-      if (aVal > bVal) return sortOrder.value === 'asc' ? 1 : -1;
-      return 0;
-    });
-  }
-  
-  return data;
+  if (activeTab.value === 'Kategori') return [...dummyCategories];
+  if (activeTab.value === 'Subkategori') return [...dummySubcategories];
+  if (activeTab.value === 'Satuan') return [...dummySatuan];
+  if (activeTab.value === 'Merek') return [...dummyMerek];
+  if (activeTab.value === 'Organizer') return [...dummyOrganizer];
+  if (activeTab.value === 'Vendor') return [...dummyVendors];
+  if (activeTab.value === 'Lokasi') return [...dummyLokasi];
+  return [];
 });
 
 const isEditModalOpen = ref(false);
@@ -179,17 +135,110 @@ watch(activeTab, () => {
   searchQuery.value = '';
   parentFilter.value = '';
 });
+
+const columns = computed<ColumnDef<any>[]>(() => {
+  const cols: ColumnDef<any>[] = [];
+
+  // Code column (if applicable)
+  if (!['Satuan', 'Merek', 'Organizer', 'Vendor', 'Lokasi'].includes(activeTab.value)) {
+    cols.push({
+      accessorKey: 'code',
+      header: ({ column }) => {
+        return h(Button, {
+          variant: 'ghost',
+          onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+          class: 'px-2 hover:bg-transparent font-semibold text-foreground justify-start'
+        }, () => [
+          `Kode ${activeTab.value}`,
+          h(ArrowUpDown, { class: 'ml-2 h-4 w-4 text-muted-foreground' }),
+        ])
+      },
+      cell: ({ row }) => h('div', { class: 'pl-2 text-muted-foreground truncate' }, row.getValue('code')),
+    });
+  }
+
+  // Name column
+  cols.push({
+    accessorKey: 'name',
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'pl-2 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        `Nama ${activeTab.value}`,
+        h(ArrowUpDown, { class: 'ml-2 h-4 w-4 text-muted-foreground' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'pl-2 text-foreground truncate' }, row.getValue('name')),
+  });
+
+  // Parent column (Subkategori only)
+  if (activeTab.value === 'Subkategori') {
+    cols.push({
+      accessorKey: 'parent',
+      header: ({ column }) => {
+        return h(Button, {
+          variant: 'ghost',
+          onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+          class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+        }, () => [
+          'Kategori Induk',
+          h(ArrowUpDown, { class: 'ml-2 h-4 w-4 text-muted-foreground' }),
+        ])
+      },
+      cell: ({ row }) => h('div', { class: 'text-muted-foreground truncate' }, row.getValue('parent')),
+      // Enable filtering by parentCode if we want to use the dropdown for this column
+      filterFn: (row, id, value) => {
+        if (!value) return true;
+        return row.original.parentCode === value;
+      }
+    });
+  }
+
+  // Actions column
+  cols.push({
+    id: 'actions',
+    size: 84,
+    header: () => h('div', 'Aksi'),
+    cell: ({ row }) => {
+      const item = row.original;
+      return h('div', { class: 'flex items-center justify-end gap-2' }, [
+        h('button', {
+          onClick: () => openEditModal(item),
+          class: 'p-2 bg-amber-400 hover:bg-amber-500 text-white rounded-full transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50'
+        }, [h(Pencil, { class: 'w-3.5 h-3.5' })]),
+        h('button', {
+          class: 'p-2 bg-rose-500 hover:bg-rose-600 text-white rounded-full transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-rose-500/50'
+        }, [h(Trash2, { class: 'w-3.5 h-3.5' })])
+      ]);
+    },
+  });
+
+  return cols;
+});
+
+const dataTableRef = ref<any>(null);
+
+// Sync parentFilter with the parent column filter in DataTable
+watch(parentFilter, (val) => {
+  if (activeTab.value === 'Subkategori' && dataTableRef.value) {
+    dataTableRef.value.table.getColumn('parent')?.setFilterValue(val);
+  }
+});
 </script>
 
 <template>
   <AppLayout title="Master Data">
-    <template #header>
-      <h1 class="text-lg sm:text-2xl lg:text-3xl font-bold leading-tight">
-        Master Data
-      </h1>
-    </template>
+    <Breadcrumb>
+      <BreadcrumbList class="pb-3">
+        <BreadcrumbItem>
+          <BreadcrumbLink href="/smart/master">Master Data</BreadcrumbLink>
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
     
-    <div class="space-y-4">
+    <div class="space-y-1">
       <!-- Tabs -->
       <div class="flex overflow-x-auto pb-2 scrollbar-hide">
         <div class="flex items-center border border-border rounded-full bg-card p-1 shadow-sm w-max">
@@ -210,11 +259,11 @@ watch(activeTab, () => {
       </div>
 
       <!-- Main Card -->
-      <div class="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
-        <div class="p-5">
-          <h2 class="text-lg font-bold text-foreground">Daftar {{ activeTab }}</h2>
+      <div class="px-4 bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+        <div class="py-5">
+          <Heading as="h2">Daftar {{ activeTab }}</Heading>
           
-          <div class="mt-4 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div class="mt-4 flex flex-col sm:flex-row sm:items-end justify-between gap-3">
             <!-- Search -->
             <div class="flex items-end gap-3 w-full max-w-xl">
               <div class="space-y-1.5 flex-1 max-w-xs">
@@ -223,7 +272,7 @@ watch(activeTab, () => {
                   type="text" 
                   v-model="searchQuery"
                   :placeholder="`Cari Nama ${activeTab}...`" 
-                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                  class="w-full px-2 py-1.5 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
                 />
               </div>
               <div v-if="activeTab === 'Subkategori'" class="flex-1 max-w-[200px]">
@@ -245,8 +294,8 @@ watch(activeTab, () => {
             </div>
 
             <!-- Right Actions -->
-            <div class="flex flex-wrap items-center gap-4">
-              <div class="flex items-center gap-3 text-sm text-muted-foreground">
+            <div class="flex flex-wrap items-center gap-3">
+              <div class="flex items-center gap-2 text-sm text-muted-foreground">
                 <span>Baris per halaman</span>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -264,7 +313,7 @@ watch(activeTab, () => {
                 </DropdownMenu>
               </div>
 
-              <button @click="openCreateModal" class="flex items-center gap-1.5 bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-[14px] text-sm font-medium transition-colors shadow-sm">
+              <button @click="openCreateModal" class="flex items-center gap-1.5 bg-gradient-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-[14px] text-sm font-medium transition-colors shadow-sm">
                 <Plus class="w-4 h-4" />
                 <span>{{ activeTab }} Baru</span>
               </button>
@@ -273,98 +322,15 @@ watch(activeTab, () => {
         </div>
 
         <!-- Table -->
-        <div class="px-[10px]">
-          <div class="bg-card rounded-xl border border-border shadow-sm overflow-hidden"> 
-            <div class="overflow-x-auto">
-              <table class="w-full text-sm text-left table-fixed">
-                <thead class="text-xs text-foreground bg-muted/50 border-b border-border">
-              <tr>
-                <th v-if="!['Satuan', 'Merek', 'Organizer', 'Vendor', 'Lokasi'].includes(activeTab)" scope="col" class="px-6 py-4 font-semibold w-[400px]">
-                  <div @click="toggleSort('code')" class="flex items-center gap-1.5 cursor-pointer hover:text-primary transition-colors select-none" :class="{ 'text-primary': sortKey === 'code' }">
-                    Kode {{ activeTab }}
-                    <ArrowUp v-if="sortKey === 'code' && sortOrder === 'asc'" class="w-3.5 h-3.5" />
-                    <ArrowDown v-else-if="sortKey === 'code' && sortOrder === 'desc'" class="w-3.5 h-3.5" />
-                    <ArrowUpDown v-else class="w-3.5 h-3.5 text-muted-foreground" />
-                  </div>
-                </th>
-                <th scope="col" class="px-6 py-4 font-semibold w-auto">
-                  <div @click="toggleSort('name')" class="flex items-center gap-1.5 cursor-pointer hover:text-primary transition-colors select-none" :class="{ 'text-primary': sortKey === 'name' }">
-                    Nama {{ activeTab }}
-                    <ArrowUp v-if="sortKey === 'name' && sortOrder === 'asc'" class="w-3.5 h-3.5" />
-                    <ArrowDown v-else-if="sortKey === 'name' && sortOrder === 'desc'" class="w-3.5 h-3.5" />
-                    <ArrowUpDown v-else class="w-3.5 h-3.5 text-muted-foreground" />
-                  </div>
-                </th>
-                <th v-if="activeTab === 'Subkategori'" scope="col" class="px-6 py-4 font-semibold w-[250px]">
-                  <div @click="toggleSort('parent')" class="flex items-center gap-1.5 cursor-pointer hover:text-primary transition-colors select-none" :class="{ 'text-primary': sortKey === 'parent' }">
-                    Kategori Induk
-                    <ArrowUp v-if="sortKey === 'parent' && sortOrder === 'asc'" class="w-3.5 h-3.5" />
-                    <ArrowDown v-else-if="sortKey === 'parent' && sortOrder === 'desc'" class="w-3.5 h-3.5" />
-                    <ArrowUpDown v-else class="w-3.5 h-3.5 text-muted-foreground" />
-                  </div>
-                </th>
-                <th scope="col" class="px-6 py-4 font-semibold text-right w-[120px]">
-                  Aksi
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr 
-                v-for="(item, index) in displayData" 
-                :key="item.code || item.name"
-                class="border-b border-border hover:bg-muted/30 transition-colors"
-                :class="{ 'border-none': index === displayData.length - 1 }"
-              >
-                <td v-if="!['Satuan', 'Merek', 'Organizer', 'Vendor', 'Lokasi'].includes(activeTab)" class="px-6 py-4 text-muted-foreground truncate">
-                  {{ item.code }}
-                </td>
-                <td class="px-6 py-4 text-foreground truncate">
-                  {{ item.name }}
-                </td>
-                <td v-if="activeTab === 'Subkategori'" class="px-6 py-4 text-muted-foreground truncate">
-                  {{ item.parent }}
-                </td>
-                <td class="px-6 py-4">
-                  <div class="flex items-center justify-end gap-2">
-                    <button @click="openEditModal(item)" class="p-2 bg-amber-400 hover:bg-amber-500 text-white rounded-full transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50">
-                      <Pencil class="w-3.5 h-3.5" />
-                    </button>
-                    <button class="p-2 bg-rose-500 hover:bg-rose-600 text-white rounded-full transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-rose-500/50">
-                      <Trash2 class="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-            </div>
-          </div>
-        </div>
-
-        <!-- Footer Pagination -->
-        <div class="p-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
-          <div>
-            0 dari X baris dipilih
-          </div>
-          
-          <div class="flex items-center gap-1">
-            <button class="flex items-center gap-1 px-2 py-1 hover:text-foreground transition-colors disabled:opacity-50">
-              <ChevronLeft class="w-4 h-4" />
-              <span>Sebelumnya</span>
-            </button>
-            
-            <div class="flex items-center gap-1 px-2">
-              <button class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-accent text-foreground transition-colors">1</button>
-              <button class="w-8 h-8 flex items-center justify-center rounded-full border border-border bg-background font-medium text-foreground transition-colors shadow-sm">2</button>
-              <button class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-accent text-foreground transition-colors">3</button>
-              <span class="px-1"><MoreHorizontal class="w-4 h-4 text-muted-foreground" /></span>
-            </div>
-
-            <button class="flex items-center gap-1 px-2 py-1 hover:text-foreground transition-colors">
-              <span>Selanjutnya</span>
-              <ChevronRight class="w-4 h-4" />
-            </button>
-          </div>
+        <div class="pb-4">
+          <DataTable 
+            ref="dataTableRef"
+            :columns="columns" 
+            :data="displayData" 
+            :filter-value="searchQuery"
+            :show-selection-count=false
+            filter-key="name"
+          />
         </div>
       </div>
     </div>
