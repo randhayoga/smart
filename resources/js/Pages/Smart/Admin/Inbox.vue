@@ -523,6 +523,7 @@ const handleExportPDF = () => {
   th {
     background-color: #f1f5f9 !important;
     -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
     color: black !important;
   }
 
