@@ -13,6 +13,7 @@ import {
 } from 'lucide-vue-next';
 import TableSearch from '@/Components/TableSearch.vue';
 import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal.vue';
+import FilterDropdown from '@/Components/FilterDropdown.vue';
 
 import { Button } from "@/Components/ui/button";
 import {
@@ -328,6 +329,36 @@ const filteredBrands = computed(() => {
   return newItem.value.category ? brandMap[newItem.value.category] || [] : [];
 });
 
+const mainFilteredSubcategories = ref<string[]>([]);
+const mainFilteredBrands = ref<string[]>([]);
+
+// Function to update filtered lists
+const updateMainFilters = () => {
+  const cat = categoryFilter.value;
+  if (!cat) {
+    mainFilteredSubcategories.value = ([] as string[]).concat(...Object.values(subcategoryMap));
+    mainFilteredBrands.value = ([] as string[]).concat(...Object.values(brandMap));
+  } else {
+    mainFilteredSubcategories.value = subcategoryMap[cat] || [];
+    mainFilteredBrands.value = brandMap[cat] || [];
+  }
+};
+
+// Update filters on mount and when category changes
+onMounted(() => {
+  updateMainFilters();
+});
+
+watch(categoryFilter, () => {
+  updateMainFilters();
+  subcategoryFilter.value = '';
+  brandFilter.value = '';
+});
+
+watch(subcategoryFilter, () => {
+  brandFilter.value = '';
+});
+
 const openCreateModal = () => {
   newItem.value = {
     code: '',
@@ -480,77 +511,43 @@ const handleConfirmDelete = () => {
                 </div>
 
                 <!-- Category Dropdown -->
-                <div class="w-[200px]">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal text-muted-foreground">
-                        <span class="truncate">{{ categoryFilter || 'Semua kategori' }}</span>
-                        <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent class="w-[var(--radix-dropdown-menu-trigger-width)] rounded-[14px]">
-                      <DropdownMenuItem @select="categoryFilter = ''">Semua kategori</DropdownMenuItem>
-                      <DropdownMenuItem v-for="cat in categories" :key="cat" @select="categoryFilter = cat">
-                        {{ cat }}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
+                <FilterDropdown 
+                  v-model="categoryFilter"
+                  :options="categories"
+                  placeholder="Semua kategori"
+                  all-label="Semua kategori"
+                  class="w-[200px]"
+                />
 
                 <!-- Subcategory Dropdown -->
-                <div class="w-[200px]">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal text-muted-foreground">
-                        <span class="truncate">{{ subcategoryFilter || 'Semua subkategori' }}</span>
-                        <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent class="w-[var(--radix-dropdown-menu-trigger-width)] rounded-[14px]">
-                      <DropdownMenuItem @select="subcategoryFilter = ''">Semua subkategori</DropdownMenuItem>
-                      <DropdownMenuItem v-for="sub in subcategories" :key="sub" @select="subcategoryFilter = sub">
-                        {{ sub }}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
+                <FilterDropdown 
+                  v-model="subcategoryFilter"
+                  :options="mainFilteredSubcategories"
+                  placeholder="Semua subkategori"
+                  all-label="Semua subkategori"
+                  class="w-[200px]"
+                />
 
                 <!-- Brand Dropdown -->
-                <div class="w-[200px]">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal text-muted-foreground">
-                        <span class="truncate">{{ brandFilter || 'Semua merek' }}</span>
-                        <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent class="w-[var(--radix-dropdown-menu-trigger-width)] rounded-[14px]">
-                      <DropdownMenuItem @select="brandFilter = ''">Semua merek</DropdownMenuItem>
-                      <DropdownMenuItem v-for="brand in brands" :key="brand" @select="brandFilter = brand">
-                        {{ brand }}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
+                <FilterDropdown 
+                  v-model="brandFilter"
+                  :options="mainFilteredBrands"
+                  placeholder="Semua merek"
+                  all-label="Semua merek"
+                  class="w-[200px]"
+                />
               </div>
 
               <!-- Rows Per Page -->
               <div class="flex items-center gap-3 text-sm text-muted-foreground pb-0.5">
                 <span class="whitespace-nowrap">Baris per halaman</span>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" class="w-[140px] justify-between rounded-[14px] font-normal">
-                      {{ rowsPerPage }}
-                      <ChevronDown class="w-4 h-4 opacity-50" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent class="w-[140px] rounded-[14px]">
-                    <DropdownMenuItem @select="rowsPerPage = 'Semua baris'">Semua baris</DropdownMenuItem>
-                    <DropdownMenuItem @select="rowsPerPage = '10'">10</DropdownMenuItem>
-                    <DropdownMenuItem @select="rowsPerPage = '25'">25</DropdownMenuItem>
-                    <DropdownMenuItem @select="rowsPerPage = '50'">50</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <FilterDropdown 
+                  v-model="rowsPerPage"
+                  :options="['10', '25', '50']"
+                  placeholder="Semua baris"
+                  all-label="Semua baris"
+                  class="w-[140px]"
+                />
               </div>
             </div>
 
