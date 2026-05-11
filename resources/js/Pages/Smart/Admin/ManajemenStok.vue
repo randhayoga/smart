@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, h, onMounted } from 'vue';
+import { ref, watch, h, onMounted, computed } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { 
   ChevronDown, 
@@ -9,8 +9,10 @@ import {
   Printer,
   FileDown,
   Eye,
+  X
 } from 'lucide-vue-next';
 import TableSearch from '@/Components/TableSearch.vue';
+import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal.vue';
 
 import { Button } from "@/Components/ui/button";
 import {
@@ -35,15 +37,28 @@ const props = defineProps<Props>();
 
 // Dummy Data
 const categories = ['Elektronik', 'Furnitur', 'ATK', 'Kendaraan'];
-const subcategories = ['Laptop', 'Meja', 'Kertas', 'Mobil'];
-const brands = ['Asus', 'IKEA', 'Sinar Dunia', 'Toyota'];
+
+const subcategoryMap: Record<string, string[]> = {
+  'Elektronik': ['Laptop', 'Keyboard', 'Monitor', 'Mouse'],
+  'Furnitur': ['Meja', 'Kursi', 'Lemari', 'Sofa'],
+  'ATK': ['Kertas', 'Pulpen', 'Buku', 'Penghapus'],
+  'Kendaraan': ['Mobil', 'Motor', 'Sepeda']
+};
+
+const brandMap: Record<string, string[]> = {
+  'Elektronik': ['Asus', 'Lenovo', 'Samsung', 'Logitech'],
+  'Furnitur': ['IKEA', 'Informa', 'Olympic'],
+  'ATK': ['Sinar Dunia', 'Standard', 'Joyko'],
+  'Kendaraan': ['Toyota', 'Honda', 'Yamaha']
+};
+const units = Array.from({ length: 150 }, (_, i) => (i + 1).toString());
 
 const dummyInventory = [
-  { id: 1, code: 'ELE-LAP-ASUS', category: 'Elektronik', subcategory: 'Laptop', brand: 'Asus', specification: 'ROG Zephyrus G14, 16GB RAM, 512GB SSD', lastUpdate: '05-05-2026 10:00', amount: 5 },
-  { id: 2, code: 'FUR-MEJ-IKEA', category: 'Furnitur', subcategory: 'Meja', brand: 'IKEA', specification: 'Linnmon Table, White, 120x60cm', lastUpdate: '05-05-2026 11:30', amount: 12 },
-  { id: 3, code: 'ATK-KER-SIDU', category: 'ATK', subcategory: 'Kertas', brand: 'Sinar Dunia', specification: 'A4 80gsm, 500 sheets', lastUpdate: '04-05-2026 09:15', amount: 50 },
-  { id: 4, code: 'VEH-MOB-TOYO', category: 'Kendaraan', subcategory: 'Mobil', brand: 'Toyota', specification: 'Avanza 2023, Silver Metallic', lastUpdate: '03-05-2026 15:45', amount: 2 },
-  { id: 5, code: 'ELE-LAP-LENO', category: 'Elektronik', subcategory: 'Laptop', brand: 'Lenovo', specification: 'ThinkPad X1 Carbon, 32GB RAM', lastUpdate: '05-05-2026 14:20', amount: 3 },
+  { id: 1, code: 'ELE-LAP-0001', category: 'Elektronik', subcategory: 'Laptop', brand: 'Asus', specification: 'ROG Zephyrus G14, 16GB RAM, 512GB SSD', lastUpdate: '05-05-2026 10:00', amount: 5 },
+  { id: 2, code: 'FUR-MEJ-0001', category: 'Furnitur', subcategory: 'Meja', brand: 'IKEA', specification: 'Linnmon Table, White, 120x60cm', lastUpdate: '05-05-2026 11:30', amount: 12 },
+  { id: 3, code: 'ATK-KER-0001', category: 'ATK', subcategory: 'Kertas', brand: 'Sinar Dunia', specification: 'A4 80gsm, 500 sheets', lastUpdate: '04-05-2026 09:15', amount: 50 },
+  { id: 4, code: 'KEN-MOB-0001', category: 'Kendaraan', subcategory: 'Mobil', brand: 'Toyota', specification: 'Avanza 2023, Silver Metallic', lastUpdate: '03-05-2026 15:45', amount: 2 },
+  { id: 5, code: 'ELE-LAP-0002', category: 'Elektronik', subcategory: 'Laptop', brand: 'Lenovo', specification: 'ThinkPad X1 Carbon, 32GB RAM', lastUpdate: '05-05-2026 14:20', amount: 3 },
 ];
 
 const searchQuery = ref('');
@@ -202,6 +217,7 @@ const columns: ColumnDef<any>[] = [
           class: 'p-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-full transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50'
         }, [h(Eye, { class: 'w-3.5 h-3.5' })]),
         h('button', {
+          onClick: () => openDeleteModal(row.original),
           class: 'p-2 bg-rose-500 hover:bg-rose-600 text-white rounded-full transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-rose-500/50'
         }, [h(Trash2, { class: 'w-3.5 h-3.5' })])
       ]);
@@ -290,6 +306,146 @@ const handleExportExcel = () => {
 const handleExportPDF = () => {
   window.print();
 };
+
+// Create Modal Logic
+const isCreateModalOpen = ref(false);
+const newItem = ref({
+  code: '',
+  category: '',
+  subcategory: '',
+  brand: '',
+  unit: '',
+  specification: '',
+  photo: null as File | null,
+  photoName: ''
+});
+
+const filteredSubcategories = computed(() => {
+  return newItem.value.category ? subcategoryMap[newItem.value.category] || [] : [];
+});
+
+const filteredBrands = computed(() => {
+  return newItem.value.category ? brandMap[newItem.value.category] || [] : [];
+});
+
+const openCreateModal = () => {
+  newItem.value = {
+    code: '',
+    category: '',
+    subcategory: '',
+    brand: '',
+    unit: '',
+    specification: '',
+    photo: null,
+    photoName: ''
+  };
+  isCreateModalOpen.value = true;
+};
+
+const closeCreateModal = () => {
+  isCreateModalOpen.value = false;
+};
+
+const generateCode = () => {
+  if (!newItem.value.category || !newItem.value.subcategory) return;
+  
+  const catCode = newItem.value.category.substring(0, 3).toUpperCase();
+  const subCode = newItem.value.subcategory.substring(0, 3).toUpperCase();
+  
+  // Find the highest number for this subcategory in dummyInventory
+  // Note: Standard format expected is CAT[CAT]-SUB[SUB]-[XXXX]
+  const sameSubItems = dummyInventory.filter(item => item.subcategory === newItem.value.subcategory);
+  
+  let nextNumber = 1;
+  if (sameSubItems.length > 0) {
+    const numbers = sameSubItems.map(item => {
+      // Extract the last 4 digits from the code
+      // If code doesn't match the new format, it will return 0
+      const parts = item.code.split('-');
+      const lastPart = parts[parts.length - 1];
+      const num = parseInt(lastPart);
+      return isNaN(num) ? 0 : num;
+    });
+    nextNumber = Math.max(...numbers) + 1;
+  }
+  
+  const formattedNumber = nextNumber.toString().padStart(4, '0');
+  newItem.value.code = `${catCode}-${subCode}-${formattedNumber}`;
+};
+
+watch(() => newItem.value.category, () => { 
+  newItem.value.code = ''; 
+  newItem.value.subcategory = ''; 
+  newItem.value.brand = '';
+});
+watch(() => newItem.value.subcategory, () => { 
+  newItem.value.code = ''; 
+});
+
+const handleFileUpload = (e: any) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+  if (!allowedTypes.includes(file.type)) {
+    alert('Hanya diperbolehkan file .jpg, .jpeg, atau .png');
+    return;
+  }
+
+  if (file.size > 1024 * 1024) {
+    alert('Ukuran foto maksimal 1MB');
+    return;
+  }
+
+  newItem.value.photo = file;
+  newItem.value.photoName = file.name;
+};
+
+const triggerFileInput = () => {
+  const input = document.getElementById('photo-upload') as HTMLInputElement;
+  input?.click();
+};
+
+const isFormValid = computed(() => {
+  return newItem.value.code && 
+         newItem.value.category && 
+         newItem.value.subcategory && 
+         newItem.value.brand && 
+         newItem.value.unit && 
+         newItem.value.specification &&
+         newItem.value.photo;
+});
+
+const handleCreateItem = () => {
+  if (!isFormValid.value) return;
+  alert('Barang berhasil dibuat!');
+  closeCreateModal();
+};
+
+// Delete Modal Logic
+const isDeleteModalOpen = ref(false);
+const itemsToDelete = ref<any[]>([]);
+
+const openDeleteModal = (items: any | any[]) => {
+  itemsToDelete.value = Array.isArray(items) ? items : [items];
+  isDeleteModalOpen.value = true;
+};
+
+const closeDeleteModal = () => {
+  isDeleteModalOpen.value = false;
+  itemsToDelete.value = [];
+};
+
+const handleConfirmDelete = () => {
+  // Logic to actually delete items (e.g., API call)
+  alert(`Berhasil menghapus ${itemsToDelete.value.length} barang`);
+  
+  if (dataTableRef.value) {
+    dataTableRef.value.table.resetRowSelection();
+  }
+  
+  closeDeleteModal();
+};
 </script>
 
 <template>
@@ -332,7 +488,7 @@ const handleExportPDF = () => {
                         <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent class="w-[200px] rounded-[14px]">
+                    <DropdownMenuContent class="w-[var(--radix-dropdown-menu-trigger-width)] rounded-[14px]">
                       <DropdownMenuItem @select="categoryFilter = ''">Semua kategori</DropdownMenuItem>
                       <DropdownMenuItem v-for="cat in categories" :key="cat" @select="categoryFilter = cat">
                         {{ cat }}
@@ -350,7 +506,7 @@ const handleExportPDF = () => {
                         <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent class="w-[200px] rounded-[14px]">
+                    <DropdownMenuContent class="w-[var(--radix-dropdown-menu-trigger-width)] rounded-[14px]">
                       <DropdownMenuItem @select="subcategoryFilter = ''">Semua subkategori</DropdownMenuItem>
                       <DropdownMenuItem v-for="sub in subcategories" :key="sub" @select="subcategoryFilter = sub">
                         {{ sub }}
@@ -368,7 +524,7 @@ const handleExportPDF = () => {
                         <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent class="w-[200px] rounded-[14px]">
+                    <DropdownMenuContent class="w-[var(--radix-dropdown-menu-trigger-width)] rounded-[14px]">
                       <DropdownMenuItem @select="brandFilter = ''">Semua merek</DropdownMenuItem>
                       <DropdownMenuItem v-for="brand in brands" :key="brand" @select="brandFilter = brand">
                         {{ brand }}
@@ -404,6 +560,7 @@ const handleExportPDF = () => {
                 <label class="text-xs text-muted-foreground font-medium block ml-0.5">Aksi Terpilih</label>
                 <div class="flex flex-wrap gap-2">
                   <button 
+                    @click="openDeleteModal(dataTableRef.table.getFilteredRowModel().rows.filter((r: any) => r.getIsSelected()).map((r: any) => r.original))"
                     :disabled="!dataTableRef || Object.keys(dataTableRef.table.getState().rowSelection).length === 0"
                     class="flex items-center gap-2 px-4 py-2 bg-destructive hover:bg-destructive text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm disabled:opacity-50"
                   >
@@ -441,7 +598,10 @@ const handleExportPDF = () => {
                 </div>
               </div>
               
-              <button class="flex items-center gap-1.5 bg-gradient-primary hover:bg-primary/90 text-primary-foreground px-5 py-2.5 rounded-[14px] text-sm font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] shadow-sm whitespace-nowrap">
+              <button 
+                @click="openCreateModal"
+                class="flex items-center gap-1.5 bg-gradient-primary hover:bg-primary/90 text-primary-foreground px-5 py-2.5 rounded-[14px] text-sm font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] shadow-sm whitespace-nowrap"
+              >
                 <Plus class="w-4 h-4" />
                 <span>Barang Baru</span>
               </button>
@@ -460,5 +620,202 @@ const handleExportPDF = () => {
         </div>
       </div>
     </div>
+
+    <!-- Create Item Modal -->
+    <Teleport to="body">
+      <Transition
+        enter-active-class="ease-out duration-200"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="ease-in duration-150"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div v-if="isCreateModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <Transition
+            enter-active-class="ease-out duration-200"
+            enter-from-class="opacity-0 scale-95"
+            enter-to-class="opacity-100 scale-100"
+            leave-active-class="ease-in duration-150"
+            leave-from-class="opacity-100 scale-100"
+            leave-to-class="opacity-0 scale-95"
+          >
+            <div 
+              v-if="isCreateModalOpen"
+              class="bg-card w-full max-w-[1000px] rounded-[14px] shadow-2xl overflow-hidden flex flex-col"
+              @click.stop
+            >
+              <!-- Modal Header -->
+              <div class="flex items-center justify-between p-5 border-b border-border">
+                <h3 class="text-lg font-bold text-foreground">Pembuatan Barang Baru</h3>
+                <button @click="closeCreateModal" class="p-2 hover:bg-muted rounded-full transition-colors">
+                  <X class="w-5 h-5 text-muted-foreground" />
+                </button>
+              </div>
+
+              <!-- Modal Body -->
+              <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+                  <!-- Left Column -->
+                  <div class="space-y-6">
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-medium text-foreground block">Kode Barang<span class="text-rose-500">*</span></label>
+                      <div class="flex gap-2">
+                        <input 
+                          type="text" 
+                          v-model="newItem.code"
+                          disabled
+                          placeholder="Kode Barang belum di-generate" 
+                          class="flex-grow px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed"
+                        />
+                        <button 
+                          @click="generateCode"
+                          :disabled="!newItem.category || !newItem.subcategory"
+                          class="px-6 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors disabled:opacity-50"
+                        >
+                          Generate
+                        </button>
+                      </div>
+                    </div>
+
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-medium text-foreground block">Kategori<span class="text-rose-500">*</span></label>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 text-muted-foreground">
+                            {{ newItem.category || 'Pilih kategori' }}
+                            <ChevronDown class="w-4 h-4 opacity-50" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" class="w-[452px] rounded-[14px] z-[1001]">
+                          <DropdownMenuItem v-for="cat in categories" :key="cat" @select="newItem.category = cat">
+                            {{ cat }}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-medium text-foreground block">Subkategori<span class="text-rose-500">*</span></label>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 text-muted-foreground" :disabled="!newItem.category">
+                            {{ newItem.subcategory || 'Pilih subkategori' }}
+                            <ChevronDown class="w-4 h-4 opacity-50" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" class="w-[452px] rounded-[14px] z-[1001]">
+                          <DropdownMenuItem v-for="sub in filteredSubcategories" :key="sub" @select="newItem.subcategory = sub">
+                            {{ sub }}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-medium text-foreground block">Satuan<span class="text-rose-500">*</span></label>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 text-muted-foreground">
+                            {{ newItem.unit || 'Pilih satuan barang' }}
+                            <ChevronDown class="w-4 h-4 opacity-50" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" class="w-[452px] max-h-[300px] overflow-y-auto rounded-[14px] scrollbar-hide z-[1001]">
+                          <DropdownMenuItem v-for="unit in units" :key="unit" @select="newItem.unit = unit">
+                            {{ unit }}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+
+                  <!-- Right Column -->
+                  <div class="space-y-6">
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-medium text-foreground block">Merek<span class="text-rose-500">*</span></label>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 text-muted-foreground">
+                            {{ newItem.brand || 'Pilih merek' }}
+                            <ChevronDown class="w-4 h-4 opacity-50" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" class="w-[452px] rounded-[14px] z-[1001]">
+                          <DropdownMenuItem v-for="brand in filteredBrands" :key="brand" @select="newItem.brand = brand">
+                            {{ brand }}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-medium text-foreground block">Spesifikasi<span class="text-rose-500">*</span></label>
+                      <input 
+                        type="text" 
+                        v-model="newItem.specification"
+                        maxlength="255"
+                        placeholder="Input spesifikasinya di sini..." 
+                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
+                      />
+                    </div>
+
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-medium text-foreground block">Foto <span class="italic text-muted-foreground">default</span><span class="text-rose-500">*</span></label>
+                      <div class="flex gap-2">
+                        <div class="flex-grow px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/10 text-muted-foreground truncate flex items-center">
+                          {{ newItem.photoName || 'Belum ada foto yang dipilih' }}
+                        </div>
+                        <input 
+                          type="file" 
+                          id="photo-upload" 
+                          class="hidden" 
+                          accept=".jpg,.jpeg,.png"
+                          @change="handleFileUpload"
+                        />
+                        <button 
+                          @click="triggerFileInput"
+                          class="px-6 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors"
+                        >
+                          Pilih File
+                        </button>
+                      </div>
+                      <p class="text-[10px] text-muted-foreground ml-1">Maksimal ukuran 1 MB</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Modal Footer -->
+              <div class="p-6 border-t border-border flex items-center justify-between">
+                <p class="text-sm text-rose-500 italic font-medium">*Wajib diisi</p>
+                <div class="flex items-center gap-3">
+                  <button 
+                    @click="closeCreateModal"
+                    class="px-8 py-2.5 bg-background border border-input hover:bg-muted text-foreground text-sm font-medium rounded-[14px] transition-colors"
+                  >
+                    Batal
+                  </button>
+                  <button 
+                    @click="handleCreateItem"
+                    :disabled="!isFormValid"
+                    class="px-8 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors shadow-sm active:scale-[0.98] disabled:opacity-50"
+                  >
+                    Buat Barang
+                  </button>
+                </div>
+              </div>
+            </div>
+          </Transition>
+        </div>
+      </Transition>
+    </Teleport>
+    <DeleteConfirmationModal 
+      :is-open="isDeleteModalOpen"
+      :item-count="itemsToDelete.length"
+      item-name="Barang"
+      @close="closeDeleteModal"
+      @confirm="handleConfirmDelete"
+    />
   </AppLayout>
 </template>
