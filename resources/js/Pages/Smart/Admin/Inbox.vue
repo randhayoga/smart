@@ -1,9 +1,8 @@
 <script setup lang="ts">
 // Trigger re-build
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, h, onMounted } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { 
-  Search, 
   ChevronDown, 
   ArrowUpDown, 
   ArrowUp,
@@ -13,20 +12,18 @@ import {
   MoreHorizontal,
   Printer,
   FileDown,
-  Eye,
-  FileText
+  FileText,
+  X,
+  Eye
 } from 'lucide-vue-next';
-
 import { Button } from "@/Components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/Components/ui/dropdown-menu";
+import FilterDropdown from '@/Components/FilterDropdown.vue';
+import TableSearch from '@/Components/TableSearch.vue';
+
+import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem } from '@/Components/ui/breadcrumb';
+
+import type { ColumnDef } from '@tanstack/vue-table';
+import DataTable from '@/Components/DataTable.vue';
 
 interface Props {
   user: {
@@ -37,7 +34,18 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const dummyInbox = [
+interface InboxItem {
+  id: number;
+  number: string;
+  amount: number;
+  requester: string;
+  createdAt: string;
+  startTime: string;
+  endTime: string;
+  type: string;
+}
+
+const dummyInbox: InboxItem[] = [
   { 
     id: 1, 
     number: '052026-0001', 
@@ -80,75 +88,147 @@ const dummyInbox = [
   },
 ];
 
-const sortKey = ref('number');
-const sortOrder = ref('desc');
 const searchQuery = ref('');
 const typeFilter = ref('');
 const timeFilter = ref('');
-const selectedItems = ref<number[]>([]);
+const rowsPerPage = ref('Semua baris');
 
-const toggleSort = (key: string) => {
-  if (sortKey.value === key) {
-    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
-  } else {
-    sortKey.value = key;
-    sortOrder.value = 'asc';
-  }
-};
+const dataTableRef = ref<any>(null);
 
-const displayData = computed(() => {
-  let data = [...dummyInbox];
-  
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase();
-    data = data.filter(item => 
-      item.number.toLowerCase().includes(query) || 
-      item.requester.toLowerCase().includes(query)
-    );
-  }
+const columns: ColumnDef<InboxItem>[] = [
+  {
+    id: 'select',
+    size: 50,
+    header: ({ table }) => h('div', { class: 'text-center no-print flex items-center justify-center' }, [
+      h('input', {
+        type: 'checkbox',
+        class: 'rounded border-input text-primary focus:ring-primary/20 w-4 h-4 cursor-pointer',
+        checked: table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate'),
+        onChange: table.getToggleAllPageRowsSelectedHandler(),
+      })
+    ]),
+    cell: ({ row }) => h('div', { class: 'text-center no-print flex items-center justify-center' }, [
+      h('input', {
+        type: 'checkbox',
+        class: 'rounded border-input text-primary focus:ring-primary/20 w-4 h-4 cursor-pointer',
+        checked: row.getIsSelected(),
+        onChange: row.getToggleSelectedHandler(),
+      })
+    ]),
+  },
+  {
+    accessorKey: 'number',
+    size: 100,
+    header: ({ column }) => h(Button, {
+      variant: 'ghost',
+      onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+      class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+    }, () => [
+      'Nomor',
+      h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+    ]),
+    cell: ({ row }) => h('div', { class: 'text-muted-foreground font-mono text-sm truncate' }, row.getValue('number')),
+  },
+  {
+    accessorKey: 'amount',
+    header: ({ column }) => h(Button, {
+      variant: 'ghost',
+      onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+      class: 'p-0 hover:bg-transparent font-semibold text-foreground'
+    }, () => [
+      'Jumlah',
+      h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+    ]),
+    cell: ({ row }) => h('div', row.getValue('amount')),
+  },
+  {
+    accessorKey: 'requester',
+    header: ({ column }) => h(Button, {
+      variant: 'ghost',
+      onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+      class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+    }, () => [
+      'Nama Peminta',
+      h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+    ]),
+    cell: ({ row }) => h('div', { class: 'pl-0' }, row.getValue('requester')),
+  },
+  {
+    accessorKey: 'createdAt',
+    header: ({ column }) => h(Button, {
+      variant: 'ghost',
+      onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+      class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+    }, () => [
+      'Waktu Dibuat',
+      h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+    ]),
+    cell: ({ row }) => h('div', { class: 'text-muted-foreground' }, row.getValue('createdAt')),
+  },
+  {
+    accessorKey: 'startTime',
+    header: ({ column }) => h(Button, {
+      variant: 'ghost',
+      onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+      class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+    }, () => [
+      'Waktu Mulai',
+      h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+    ]),
+    cell: ({ row }) => h('div', { class: 'text-muted-foreground' }, row.getValue('startTime')),
+  },
+  {
+    accessorKey: 'endTime',
+    header: ({ column }) => h(Button, {
+      variant: 'ghost',
+      onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+      class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+    }, () => [
+      'Waktu Selesai',
+      h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+    ]),
+    cell: ({ row }) => h('div', { class: 'text-muted-foreground' }, row.getValue('endTime')),
+  },
+  {
+    id: 'actions',
+    size: 80,
+    header: () => h('div', { class: 'text-center font-semibold text-foreground no-print' }, 'Aksi'),
+    cell: ({ row }) => h('div', { class: 'flex items-center justify-center no-print' }, [
+      h('button', {
+        class: 'p-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-full transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50'
+      }, [h(Eye, { class: 'w-3.5 h-3.5' })])
+    ]),
+  },
+];
 
-  if (typeFilter.value) {
-    data = data.filter(item => item.type === typeFilter.value);
+// Watchers for filters
+watch(typeFilter, (val) => {
+  if (dataTableRef.value && dataTableRef.value.table) {
+    dataTableRef.value.table.getColumn('type')?.setFilterValue(val);
   }
-
-  // Time filter logic would go here
-  
-  if (sortKey.value) {
-    data.sort((a: any, b: any) => {
-      let aVal = a[sortKey.value];
-      let bVal = b[sortKey.value];
-      
-      if (typeof aVal === 'string') aVal = aVal.toLowerCase();
-      if (typeof bVal === 'string') bVal = bVal.toLowerCase();
-      
-      if (aVal < bVal) return sortOrder.value === 'asc' ? -1 : 1;
-      if (aVal > bVal) return sortOrder.value === 'asc' ? 1 : -1;
-      return 0;
-    });
-  }
-  
-  return data;
 });
 
-const toggleSelectAll = (e: any) => {
-  if (e.target.checked) {
-    selectedItems.value = displayData.value.map(item => item.id);
-  } else {
-    selectedItems.value = [];
+watch(rowsPerPage, (val) => {
+  if (dataTableRef.value && dataTableRef.value.table) {
+    if (val === 'Semua baris' || !val) {
+      dataTableRef.value.table.setPageSize(999999);
+    } else {
+      dataTableRef.value.table.setPageSize(Number(val));
+    }
   }
-};
+}, { immediate: true });
 
-const toggleSelectItem = (id: number) => {
-  const index = selectedItems.value.indexOf(id);
-  if (index > -1) {
-    selectedItems.value.splice(index, 1);
-  } else {
-    selectedItems.value.push(id);
+onMounted(() => {
+  if (dataTableRef.value && dataTableRef.value.table && rowsPerPage.value === 'Semua baris') {
+    dataTableRef.value.table.setPageSize(999999);
   }
-};
+});
 
-const isAllSelected = computed(() => {
-  return displayData.value.length > 0 && selectedItems.value.length === displayData.value.length;
+const displayData = computed<InboxItem[]>(() => {
+  if (dataTableRef.value && dataTableRef.value.table) {
+    return dataTableRef.value.table.getFilteredRowModel().rows.map((row: any) => row.original);
+  }
+  return dummyInbox;
 });
 
 const handlePrint = () => {
@@ -159,7 +239,7 @@ const handleExportCSV = () => {
   if (displayData.value.length === 0) return;
   
   const headers = ['Nomor', 'Jumlah', 'Nama Peminta', 'Waktu Dibuat', 'Waktu Mulai', 'Waktu Selesai', 'Jenis'];
-  const rows = displayData.value.map(item => [
+  const rows = displayData.value.map((item: InboxItem) => [
     `"${item.number}"`,
     `"${item.amount}"`,
     `"${item.requester}"`,
@@ -173,7 +253,7 @@ const handleExportCSV = () => {
   // Prepend "sep=," to tell Excel explicitly that the comma is the delimiter
   let csvContent = "\uFEFFsep=,\n" 
     + headers.map(h => `"${h}"`).join(",") + "\n"
-    + rows.map(e => e.join(",")).join("\n");
+    + rows.map((e: string[]) => e.join(",")).join("\n");
 
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
@@ -186,277 +266,125 @@ const handleExportCSV = () => {
 };
 
 const handleExportExcel = () => {
-  // Simple Excel-compatible CSV with tab separator or just call CSV for now
   handleExportCSV();
 };
 
 const handleExportPDF = () => {
-  // PDF is often just a print of the page
   window.print();
 };
 </script>
 
 <template>
   <AppLayout title="Inbox">
-    <div class="space-y-6">
-      <div class="flex flex-col gap-1">
-        <h2 class="text-2xl font-bold text-foreground">Daftar Permintaan Baru</h2>
-      </div>
+    <Breadcrumb>
+      <BreadcrumbList class="pb-3">
+        <BreadcrumbItem>
+          <BreadcrumbLink href="/smart/inbox">Inbox</BreadcrumbLink>
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
 
+    <div class="space-y-4">
       <!-- Main Card -->
-      <div class="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
-        <div class="p-5">
-          <!-- Filters -->
-          <div class="space-y-4">
-            <div class="flex flex-col sm:flex-row items-end gap-4">
-              <div class="space-y-1.5 flex-1 max-w-md">
-                <label class="text-xs text-muted-foreground font-medium block">Filter</label>
-                <div class="relative">
-                  <input 
-                    type="text" 
+      <div class="px-4 bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+        <div class="py-5 no-print">
+          <h2 class="text-lg font-bold text-foreground">Daftar Permintaan Baru</h2>
+
+          <!-- Filters & Actions -->
+          <div class="mt-4 flex flex-col space-y-4">
+            <!-- Row 1: Filters & Rows Per Page -->
+            <div class="flex flex-wrap items-end justify-between gap-4">
+              <div class="flex flex-wrap items-end gap-3 flex-1">
+                <!-- Search -->
+                <div class="space-y-1.5 flex-1 min-w-[200px] max-w-xs">
+                  <label class="text-xs text-muted-foreground font-medium block ml-0.5">Filter</label>
+                  <TableSearch 
                     v-model="searchQuery"
-                    placeholder="Cari nomor permintaan atau nama peminta..." 
-                    class="w-full pl-9 pr-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                    placeholder="Cari nomor permintaan..." 
                   />
-                  <Search class="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
                 </div>
+
+                <FilterDropdown 
+                  v-model="typeFilter"
+                  :options="['Habis Pakai', 'Pinjam']"
+                  placeholder="Semua jenis"
+                  all-label="Semua jenis"
+                  class="w-[200px]"
+                />
+
+                <FilterDropdown 
+                  v-model="timeFilter"
+                  :options="[
+                    { label: 'Hari Ini', value: 'today' },
+                    { label: 'Minggu Ini', value: 'week' },
+                    { label: 'Bulan Ini', value: 'month' }
+                  ]"
+                  placeholder="Semua kurun waktu"
+                  all-label="Semua kurun waktu"
+                  class="w-[200px]"
+                />
               </div>
 
-              <div class="flex-1 max-w-[200px]">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal">
-                      {{ typeFilter || 'Semua jenis' }}
-                      <ChevronDown class="w-4 h-4 opacity-50" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent class="w-[200px] rounded-[14px]">
-                    <DropdownMenuItem @select="typeFilter = ''">Semua jenis</DropdownMenuItem>
-                    <DropdownMenuItem @select="typeFilter = 'Habis Pakai'">Habis Pakai</DropdownMenuItem>
-                    <DropdownMenuItem @select="typeFilter = 'Pinjam'">Pinjam</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-
-              <div class="flex-1 max-w-[200px]">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal text-left">
-                      <span class="truncate">{{ timeFilter ? (timeFilter === 'today' ? 'Hari Ini' : (timeFilter === 'week' ? 'Minggu Ini' : 'Bulan Ini')) : 'Semua kurun waktu' }}</span>
-                      <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent class="w-[200px] rounded-[14px]">
-                    <DropdownMenuItem @select="timeFilter = ''">Semua kurun waktu</DropdownMenuItem>
-                    <DropdownMenuItem @select="timeFilter = 'today'">Hari Ini</DropdownMenuItem>
-                    <DropdownMenuItem @select="timeFilter = 'week'">Minggu Ini</DropdownMenuItem>
-                    <DropdownMenuItem @select="timeFilter = 'month'">Bulan Ini</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+              <!-- Rows Per Page -->
+              <div class="flex items-center gap-3 text-sm text-muted-foreground pb-0.5">
+                <span class="whitespace-nowrap">Baris per halaman</span>
+                <FilterDropdown 
+                  v-model="rowsPerPage"
+                  :options="['10', '25', '50']"
+                  placeholder="Semua baris"
+                  all-label="Semua baris"
+                  class="w-[140px]"
+                />
               </div>
             </div>
 
-            <!-- Export Actions -->
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
-              <div class="space-y-2">
-                <label class="text-xs text-muted-foreground font-medium block">Aksi Terpilih</label>
+            <!-- Row 2: Export Actions -->
+            <div class="flex flex-wrap items-end justify-between gap-4 pt-2">
+              <div class="space-y-2 flex-1 min-w-0">
+                <label class="text-xs text-muted-foreground font-medium block ml-0.5">Aksi Terpilih</label>
                 <div class="flex flex-wrap gap-2">
                   <button 
                     @click="handlePrint"
                     class="flex items-center gap-2 px-4 py-2 bg-[#9B897B] hover:bg-[#8A786A] text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm"
                   >
                     <Printer class="w-4 h-4" />
-                    Print
+                    <span>Print</span>
                   </button>
                   <button 
                     @click="handleExportExcel"
                     class="flex items-center gap-2 px-4 py-2 bg-[#66BB6A] hover:bg-[#57A85B] text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm"
                   >
                     <FileDown class="w-4 h-4" />
-                    Export: Excel
+                    <span>Excel</span>
                   </button>
                   <button 
                     @click="handleExportPDF"
                     class="flex items-center gap-2 px-4 py-2 bg-[#FFA726] hover:bg-[#FB8C00] text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm"
                   >
                     <FileDown class="w-4 h-4" />
-                    Export: PDF
+                    <span>PDF</span>
                   </button>
                   <button 
                     @click="handleExportCSV"
                     class="flex items-center gap-2 px-4 py-2 bg-[#BA68C8] hover:bg-[#AB47BC] text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm"
                   >
                     <FileDown class="w-4 h-4" />
-                    Export: CSV
+                    <span>CSV</span>
                   </button>
                 </div>
-              </div>
-
-              <div class="flex items-center gap-3 text-sm text-muted-foreground pt-6">
-                <span>Baris per halaman</span>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" class="w-[140px] justify-between rounded-[14px] font-normal">
-                      Semua baris
-                      <ChevronDown class="w-4 h-4 opacity-50" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent class="w-[140px] rounded-[14px]">
-                    <DropdownMenuItem>Semua baris</DropdownMenuItem>
-                    <DropdownMenuItem>10</DropdownMenuItem>
-                    <DropdownMenuItem>25</DropdownMenuItem>
-                    <DropdownMenuItem>50</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
               </div>
             </div>
           </div>
         </div>
 
         <!-- Table -->
-        <div class="px-[10px] pb-[10px]">
-          <div class="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
-            <div class="overflow-x-auto">
-              <table class="w-full text-sm text-left table-fixed">
-                <thead class="text-xs text-foreground bg-muted/50 border-b border-border">
-                  <tr>
-                    <th class="px-4 py-4 w-[50px]">
-                      <input 
-                        type="checkbox" 
-                        :checked="isAllSelected"
-                        @change="toggleSelectAll"
-                        class="rounded border-input text-primary focus:ring-primary/20 transition-colors"
-                      />
-                    </th>
-                    <th scope="col" class="px-4 py-4 font-semibold w-[160px]">
-                      <div @click="toggleSort('number')" class="flex items-center gap-1.5 cursor-pointer hover:text-primary transition-colors select-none" :class="{ 'text-primary': sortKey === 'number' }">
-                        Nomor
-                        <ArrowUp v-if="sortKey === 'number' && sortOrder === 'asc'" class="w-3.5 h-3.5" />
-                        <ArrowDown v-else-if="sortKey === 'number' && sortOrder === 'desc'" class="w-3.5 h-3.5" />
-                        <ArrowUpDown v-else class="w-3.5 h-3.5 text-muted-foreground" />
-                      </div>
-                    </th>
-                    <th scope="col" class="px-4 py-4 font-semibold text-center w-[100px]">
-                      <div @click="toggleSort('amount')" class="flex items-center justify-center gap-1.5 cursor-pointer hover:text-primary transition-colors select-none" :class="{ 'text-primary': sortKey === 'amount' }">
-                        Jumlah
-                        <ArrowUp v-if="sortKey === 'amount' && sortOrder === 'asc'" class="w-3.5 h-3.5" />
-                        <ArrowDown v-else-if="sortKey === 'amount' && sortOrder === 'desc'" class="w-3.5 h-3.5" />
-                        <ArrowUpDown v-else class="w-3.5 h-3.5 text-muted-foreground" />
-                      </div>
-                    </th>
-                    <th scope="col" class="px-4 py-4 font-semibold w-[200px]">
-                      <div @click="toggleSort('requester')" class="flex items-center gap-1.5 cursor-pointer hover:text-primary transition-colors select-none" :class="{ 'text-primary': sortKey === 'requester' }">
-                        Nama Peminta
-                        <ArrowUp v-if="sortKey === 'requester' && sortOrder === 'asc'" class="w-3.5 h-3.5" />
-                        <ArrowDown v-else-if="sortKey === 'requester' && sortOrder === 'desc'" class="w-3.5 h-3.5" />
-                        <ArrowUpDown v-else class="w-3.5 h-3.5 text-muted-foreground" />
-                      </div>
-                    </th>
-                    <th scope="col" class="px-4 py-4 font-semibold w-[180px]">
-                      <div @click="toggleSort('createdAt')" class="flex items-center gap-1.5 cursor-pointer hover:text-primary transition-colors select-none" :class="{ 'text-primary': sortKey === 'createdAt' }">
-                        Waktu Dibuat
-                        <ArrowUp v-if="sortKey === 'createdAt' && sortOrder === 'asc'" class="w-3.5 h-3.5" />
-                        <ArrowDown v-else-if="sortKey === 'createdAt' && sortOrder === 'desc'" class="w-3.5 h-3.5" />
-                        <ArrowUpDown v-else class="w-3.5 h-3.5 text-muted-foreground" />
-                      </div>
-                    </th>
-                    <th scope="col" class="px-4 py-4 font-semibold w-[180px]">
-                      <div @click="toggleSort('startTime')" class="flex items-center gap-1.5 cursor-pointer hover:text-primary transition-colors select-none" :class="{ 'text-primary': sortKey === 'startTime' }">
-                        Waktu Mulai
-                        <ArrowUp v-if="sortKey === 'startTime' && sortOrder === 'asc'" class="w-3.5 h-3.5" />
-                        <ArrowDown v-else-if="sortKey === 'startTime' && sortOrder === 'desc'" class="w-3.5 h-3.5" />
-                        <ArrowUpDown v-else class="w-3.5 h-3.5 text-muted-foreground" />
-                      </div>
-                    </th>
-                    <th scope="col" class="px-4 py-4 font-semibold w-[180px]">
-                      <div @click="toggleSort('endTime')" class="flex items-center gap-1.5 cursor-pointer hover:text-primary transition-colors select-none" :class="{ 'text-primary': sortKey === 'endTime' }">
-                        Waktu Selesai
-                        <ArrowUp v-if="sortKey === 'endTime' && sortOrder === 'asc'" class="w-3.5 h-3.5" />
-                        <ArrowDown v-else-if="sortKey === 'endTime' && sortOrder === 'desc'" class="w-3.5 h-3.5" />
-                        <ArrowUpDown v-else class="w-3.5 h-3.5 text-muted-foreground" />
-                      </div>
-                    </th>
-                    <th scope="col" class="px-4 py-4 font-semibold text-right w-[100px]">
-                      Aksi
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr 
-                    v-for="(item, index) in displayData" 
-                    :key="item.id"
-                    class="border-b border-border hover:bg-muted/30 transition-colors"
-                    :class="{ 'border-none': index === displayData.length - 1 }"
-                  >
-                    <td class="px-4 py-4">
-                      <input 
-                        type="checkbox" 
-                        :checked="selectedItems.includes(item.id)"
-                        @change="toggleSelectItem(item.id)"
-                        class="rounded border-input text-primary focus:ring-primary/20 transition-colors"
-                      />
-                    </td>
-                    <td class="px-4 py-4 font-medium text-foreground truncate">
-                      {{ item.number }}
-                    </td>
-                    <td class="px-4 py-4 text-center text-muted-foreground truncate">
-                      {{ item.amount }}
-                    </td>
-                    <td class="px-4 py-4 text-foreground truncate">
-                      {{ item.requester }}
-                    </td>
-                    <td class="px-4 py-4 text-muted-foreground truncate">
-                      {{ item.createdAt }}
-                    </td>
-                    <td class="px-4 py-4 text-muted-foreground truncate">
-                      {{ item.startTime }}
-                    </td>
-                    <td class="px-4 py-4 text-muted-foreground truncate">
-                      {{ item.endTime }}
-                    </td>
-                    <td class="px-4 py-4">
-                      <div class="flex items-center justify-end gap-2">
-                        <button class="p-2 bg-cyan-400 hover:bg-cyan-500 text-white rounded-[14px] transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-400/50">
-                          <Eye class="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                  <tr v-if="displayData.length === 0">
-                    <td colspan="8" class="px-4 py-12 text-center text-muted-foreground italic">
-                      Tidak ada permintaan baru yang ditemukan.
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <!-- Footer Pagination -->
-        <div class="p-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
-          <div>
-            {{ selectedItems.length }} dari {{ displayData.length }} baris dipilih
-          </div>
-          
-          <div class="flex items-center gap-1">
-            <button class="flex items-center gap-1 px-2 py-1 hover:text-foreground transition-colors disabled:opacity-50" :disabled="true">
-              <ChevronLeft class="w-4 h-4" />
-              <span>Sebelumnya</span>
-            </button>
-            
-            <div class="flex items-center gap-1 px-2">
-              <button class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-accent text-foreground transition-colors">1</button>
-              <button class="w-8 h-8 flex items-center justify-center rounded-full border border-border bg-background font-medium text-foreground transition-colors shadow-sm">2</button>
-              <button class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-accent text-foreground transition-colors">3</button>
-              <span class="px-1"><MoreHorizontal class="w-4 h-4 text-muted-foreground" /></span>
-            </div>
-
-            <button class="flex items-center gap-1 px-2 py-1 hover:text-foreground transition-colors">
-              <span>Selanjutnya</span>
-              <ChevronRight class="w-4 h-4" />
-            </button>
-          </div>
+        <div class="pb-4">
+          <DataTable 
+            ref="dataTableRef"
+            :columns="columns" 
+            :data="dummyInbox" 
+            :filter-value="searchQuery"
+          />
         </div>
       </div>
     </div>
@@ -523,6 +451,7 @@ const handleExportPDF = () => {
   th {
     background-color: #f1f5f9 !important;
     -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
     color: black !important;
   }
 
