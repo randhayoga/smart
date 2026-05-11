@@ -24,6 +24,7 @@ import BreadcrumbItem from '@/Components/ui/breadcrumb/BreadcrumbItem.vue';
 import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
 import TableSearch from '@/Components/TableSearch.vue';
+import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal.vue';
 
 interface Props {
   user: {
@@ -210,6 +211,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
           class: 'p-2 bg-amber-400 hover:bg-amber-500 text-white rounded-full transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50'
         }, [h(Pencil, { class: 'w-3.5 h-3.5' })]),
         h('button', {
+          onClick: () => openDeleteModal(item),
           class: 'p-2 bg-rose-500 hover:bg-rose-600 text-white rounded-full transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-rose-500/50'
         }, [h(Trash2, { class: 'w-3.5 h-3.5' })])
       ]);
@@ -227,6 +229,25 @@ watch(parentFilter, (val) => {
     dataTableRef.value.table.getColumn('parent')?.setFilterValue(val);
   }
 });
+
+// Delete Logic
+const isDeleteModalOpen = ref(false);
+const itemToDelete = ref<any>(null);
+
+const openDeleteModal = (item: any) => {
+  itemToDelete.value = item;
+  isDeleteModalOpen.value = true;
+};
+
+const closeDeleteModal = () => {
+  isDeleteModalOpen.value = false;
+  itemToDelete.value = null;
+};
+
+const handleConfirmDelete = () => {
+  alert(`Berhasil menghapus ${activeTab.value}: ${itemToDelete.value?.name || itemToDelete.value?.code}`);
+  closeDeleteModal();
+};
 </script>
 
 <template>
@@ -558,5 +579,13 @@ watch(parentFilter, (val) => {
         </div>
       </Transition>
     </Teleport>
+
+    <DeleteConfirmationModal 
+      :is-open="isDeleteModalOpen"
+      :item-count="1"
+      :item-name="activeTab"
+      @close="closeDeleteModal"
+      @confirm="handleConfirmDelete"
+    />
   </AppLayout>
 </template>
