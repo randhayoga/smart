@@ -11,9 +11,15 @@ import {
   X
 } from 'lucide-vue-next';
 import TableSearch from '@/Components/TableSearch.vue';
-import FilterDropdown from '@/Components/FilterDropdown.vue';
 
 import { Button } from "@/Components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/Components/ui/dropdown-menu";
+
 import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem } from '@/Components/ui/breadcrumb';
 
 import type { ColumnDef } from '@tanstack/vue-table';
@@ -198,25 +204,34 @@ onMounted(() => {
               />
             </div>
 
-            <FilterDropdown 
-              v-model="timeFilter"
-              :options="[
-                { label: 'Hari ini', value: 'Hari ini' },
-                { label: 'Minggu ini', value: 'Minggu ini' },
-                { label: 'Bulan ini', value: 'Bulan ini' }
-              ]"
-              placeholder="Semua kurun waktu"
-              all-label="Semua kurun waktu"
-              class="w-[220px]"
-            />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" class="w-[220px] justify-between rounded-[14px] font-normal text-muted-foreground">
+                  <span class="truncate">{{ timeFilter || 'Semua kurun waktu' }}</span>
+                  <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent class="w-[220px] rounded-[14px]" align="start" :side-offset="4">
+                <DropdownMenuItem @select="timeFilter = ''">Semua kurun waktu</DropdownMenuItem>
+                <DropdownMenuItem @select="timeFilter = 'Hari ini'">Hari ini</DropdownMenuItem>
+                <DropdownMenuItem @select="timeFilter = 'Minggu ini'">Minggu ini</DropdownMenuItem>
+                <DropdownMenuItem @select="timeFilter = 'Bulan ini'">Bulan ini</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
-            <FilterDropdown 
-              v-model="methodFilter"
-              :options="['Diambil sendiri', 'Diantar']"
-              placeholder="Semua metode"
-              all-label="Semua metode"
-              class="w-[220px]"
-            />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" class="w-[220px] justify-between rounded-[14px] font-normal text-muted-foreground">
+                  <span class="truncate">{{ methodFilter || 'Semua metode' }}</span>
+                  <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent class="w-[220px] rounded-[14px]" align="start" :side-offset="4">
+                <DropdownMenuItem @select="methodFilter = ''">Semua metode</DropdownMenuItem>
+                <DropdownMenuItem @select="methodFilter = 'Diambil sendiri'">Diambil sendiri</DropdownMenuItem>
+                <DropdownMenuItem @select="methodFilter = 'Diantar'">Diantar</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           <!-- Actions Row -->
@@ -245,13 +260,20 @@ onMounted(() => {
 
             <div class="flex items-center gap-3 text-sm text-muted-foreground">
               <span>Baris per halaman</span>
-              <FilterDropdown 
-                v-model="rowsPerPage"
-                :options="['10', '25', '50']"
-                placeholder="Semua baris"
-                all-label="Semua baris"
-                class="w-[160px]"
-              />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" class="w-[160px] justify-between rounded-[14px] font-normal text-muted-foreground">
+                    {{ rowsPerPage }}
+                    <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent class="w-[160px] rounded-[14px]" align="start" :side-offset="4">
+                  <DropdownMenuItem @select="rowsPerPage = 'Semua baris'">Semua baris</DropdownMenuItem>
+                  <DropdownMenuItem @select="rowsPerPage = '10'">10</DropdownMenuItem>
+                  <DropdownMenuItem @select="rowsPerPage = '25'">25</DropdownMenuItem>
+                  <DropdownMenuItem @select="rowsPerPage = '50'">50</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>

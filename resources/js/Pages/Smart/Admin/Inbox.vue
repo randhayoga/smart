@@ -17,7 +17,12 @@ import {
   Eye
 } from 'lucide-vue-next';
 import { Button } from "@/Components/ui/button";
-import FilterDropdown from '@/Components/FilterDropdown.vue';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/Components/ui/dropdown-menu";
 import TableSearch from '@/Components/TableSearch.vue';
 
 import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem } from '@/Components/ui/breadcrumb';
@@ -304,37 +309,53 @@ const handleExportPDF = () => {
                   />
                 </div>
 
-                <FilterDropdown 
-                  v-model="typeFilter"
-                  :options="['Habis Pakai', 'Pinjam']"
-                  placeholder="Semua jenis"
-                  all-label="Semua jenis"
-                  class="w-[200px]"
-                />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" class="w-[200px] justify-between rounded-[14px] font-normal text-muted-foreground">
+                      <span class="truncate">{{ typeFilter || 'Semua jenis' }}</span>
+                      <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
+                    <DropdownMenuItem @select="typeFilter = ''">Semua jenis</DropdownMenuItem>
+                    <DropdownMenuItem @select="typeFilter = 'Habis Pakai'">Habis Pakai</DropdownMenuItem>
+                    <DropdownMenuItem @select="typeFilter = 'Pinjam'">Pinjam</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
-                <FilterDropdown 
-                  v-model="timeFilter"
-                  :options="[
-                    { label: 'Hari Ini', value: 'today' },
-                    { label: 'Minggu Ini', value: 'week' },
-                    { label: 'Bulan Ini', value: 'month' }
-                  ]"
-                  placeholder="Semua kurun waktu"
-                  all-label="Semua kurun waktu"
-                  class="w-[200px]"
-                />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" class="w-[200px] justify-between rounded-[14px] font-normal text-muted-foreground">
+                      <span class="truncate">{{ timeFilter ? { today: 'Hari Ini', week: 'Minggu Ini', month: 'Bulan Ini' }[timeFilter] || 'Semua kurun waktu' : 'Semua kurun waktu' }}</span>
+                      <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
+                    <DropdownMenuItem @select="timeFilter = ''">Semua kurun waktu</DropdownMenuItem>
+                    <DropdownMenuItem @select="timeFilter = 'today'">Hari Ini</DropdownMenuItem>
+                    <DropdownMenuItem @select="timeFilter = 'week'">Minggu Ini</DropdownMenuItem>
+                    <DropdownMenuItem @select="timeFilter = 'month'">Bulan Ini</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
 
               <!-- Rows Per Page -->
               <div class="flex items-center gap-3 text-sm text-muted-foreground pb-0.5">
                 <span class="whitespace-nowrap">Baris per halaman</span>
-                <FilterDropdown 
-                  v-model="rowsPerPage"
-                  :options="['10', '25', '50']"
-                  placeholder="Semua baris"
-                  all-label="Semua baris"
-                  class="w-[140px]"
-                />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" class="w-[140px] justify-between rounded-[14px] font-normal text-muted-foreground">
+                      {{ rowsPerPage }}
+                      <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent class="w-[140px] rounded-[14px]" align="start" :side-offset="4">
+                    <DropdownMenuItem @select="rowsPerPage = 'Semua baris'">Semua baris</DropdownMenuItem>
+                    <DropdownMenuItem @select="rowsPerPage = '10'">10</DropdownMenuItem>
+                    <DropdownMenuItem @select="rowsPerPage = '25'">25</DropdownMenuItem>
+                    <DropdownMenuItem @select="rowsPerPage = '50'">50</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
 

@@ -9,11 +9,12 @@ import {
   Printer,
   FileDown,
   Eye,
-  X
+  X,
+  Check,
+  ChevronsUpDown
 } from 'lucide-vue-next';
 import TableSearch from '@/Components/TableSearch.vue';
 import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal.vue';
-import FilterDropdown from '@/Components/FilterDropdown.vue';
 
 import { Button } from "@/Components/ui/button";
 import {
@@ -22,6 +23,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/Components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from '@/Components/ui/popover';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/Components/ui/command';
 import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem } from '@/Components/ui/breadcrumb';
 
 import type { ColumnDef } from '@tanstack/vue-table';
@@ -67,6 +77,10 @@ const categoryFilter = ref('');
 const subcategoryFilter = ref('');
 const brandFilter = ref('');
 const rowsPerPage = ref('Semua baris');
+
+// Combobox open states
+const subcategoryOpen = ref(false);
+const brandOpen = ref(false);
 
 const dataTableRef = ref<any>(null);
 
@@ -510,44 +524,106 @@ const handleConfirmDelete = () => {
                   />
                 </div>
 
-                <!-- Category Dropdown -->
-                <FilterDropdown 
-                  v-model="categoryFilter"
-                  :options="categories"
-                  placeholder="Semua kategori"
-                  all-label="Semua kategori"
-                  class="w-[200px]"
-                />
+                <!-- Category Dropdown (regular) -->
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" class="w-[200px] justify-between rounded-[14px] font-normal text-muted-foreground">
+                      <span class="truncate">{{ categoryFilter || 'Semua kategori' }}</span>
+                      <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
+                    <DropdownMenuItem @select="categoryFilter = ''">Semua kategori</DropdownMenuItem>
+                    <DropdownMenuItem v-for="cat in categories" :key="cat" @select="categoryFilter = cat">
+                      {{ cat }}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
-                <!-- Subcategory Dropdown -->
-                <FilterDropdown 
-                  v-model="subcategoryFilter"
-                  :options="mainFilteredSubcategories"
-                  placeholder="Semua subkategori"
-                  all-label="Semua subkategori"
-                  class="w-[200px]"
-                />
+                <!-- Subcategory Combobox (searchable/scrollable) -->
+                <Popover v-model:open="subcategoryOpen">
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" role="combobox" :aria-expanded="subcategoryOpen" class="w-[200px] justify-between rounded-[14px] font-normal text-muted-foreground">
+                      <span class="truncate">{{ subcategoryFilter || 'Semua subkategori' }}</span>
+                      <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent class="w-[200px] p-0 rounded-[14px]" align="start">
+                    <Command>
+                      <CommandInput placeholder="Cari subkategori..." />
+                      <CommandEmpty>Tidak ditemukan.</CommandEmpty>
+                      <CommandList>
+                        <CommandGroup>
+                          <CommandItem value="semua-subkategori" @select="subcategoryFilter = ''; subcategoryOpen = false">
+                            <Check :class="['mr-2 h-4 w-4', !subcategoryFilter ? 'opacity-100' : 'opacity-0']" />
+                            Semua subkategori
+                          </CommandItem>
+                          <CommandItem
+                            v-for="sub in mainFilteredSubcategories"
+                            :key="sub"
+                            :value="sub"
+                            @select="subcategoryFilter = sub; subcategoryOpen = false"
+                          >
+                            <Check :class="['mr-2 h-4 w-4', subcategoryFilter === sub ? 'opacity-100' : 'opacity-0']" />
+                            {{ sub }}
+                          </CommandItem>
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
 
-                <!-- Brand Dropdown -->
-                <FilterDropdown 
-                  v-model="brandFilter"
-                  :options="mainFilteredBrands"
-                  placeholder="Semua merek"
-                  all-label="Semua merek"
-                  class="w-[200px]"
-                />
+                <!-- Brand Combobox (searchable/scrollable) -->
+                <Popover v-model:open="brandOpen">
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" role="combobox" :aria-expanded="brandOpen" class="w-[200px] justify-between rounded-[14px] font-normal text-muted-foreground">
+                      <span class="truncate">{{ brandFilter || 'Semua merek' }}</span>
+                      <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent class="w-[200px] p-0 rounded-[14px]" align="start">
+                    <Command>
+                      <CommandInput placeholder="Cari merek..." />
+                      <CommandEmpty>Tidak ditemukan.</CommandEmpty>
+                      <CommandList>
+                        <CommandGroup>
+                          <CommandItem value="semua-merek" @select="brandFilter = ''; brandOpen = false">
+                            <Check :class="['mr-2 h-4 w-4', !brandFilter ? 'opacity-100' : 'opacity-0']" />
+                            Semua merek
+                          </CommandItem>
+                          <CommandItem
+                            v-for="brand in mainFilteredBrands"
+                            :key="brand"
+                            :value="brand"
+                            @select="brandFilter = brand; brandOpen = false"
+                          >
+                            <Check :class="['mr-2 h-4 w-4', brandFilter === brand ? 'opacity-100' : 'opacity-0']" />
+                            {{ brand }}
+                          </CommandItem>
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
 
               <!-- Rows Per Page -->
               <div class="flex items-center gap-3 text-sm text-muted-foreground pb-0.5">
                 <span class="whitespace-nowrap">Baris per halaman</span>
-                <FilterDropdown 
-                  v-model="rowsPerPage"
-                  :options="['10', '25', '50']"
-                  placeholder="Semua baris"
-                  all-label="Semua baris"
-                  class="w-[140px]"
-                />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" class="w-[140px] justify-between rounded-[14px] font-normal text-muted-foreground">
+                      {{ rowsPerPage }}
+                      <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent class="w-[140px] rounded-[14px]" align="start" :side-offset="4">
+                    <DropdownMenuItem @select="rowsPerPage = 'Semua baris'">Semua baris</DropdownMenuItem>
+                    <DropdownMenuItem @select="rowsPerPage = '10'">10</DropdownMenuItem>
+                    <DropdownMenuItem @select="rowsPerPage = '25'">25</DropdownMenuItem>
+                    <DropdownMenuItem @select="rowsPerPage = '50'">50</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
 
