@@ -23,6 +23,7 @@ import BreadcrumbItem from '@/Components/ui/breadcrumb/BreadcrumbItem.vue';
 
 import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
+import TableSearch from '@/Components/TableSearch.vue';
 
 interface Props {
   user: {
@@ -268,11 +269,9 @@ watch(parentFilter, (val) => {
             <div class="flex items-end gap-3 w-full max-w-xl">
               <div class="space-y-1.5 flex-1 max-w-xs">
                 <label class="text-xs text-muted-foreground font-medium block">Filter</label>
-                <input 
-                  type="text" 
+                <TableSearch 
                   v-model="searchQuery"
-                  :placeholder="`Cari Nama ${activeTab}...`" 
-                  class="w-full px-2 py-1.5 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                  :placeholder="`Cari Kode atau Nama ${activeTab}...`" 
                 />
               </div>
               <div v-if="activeTab === 'Subkategori'" class="flex-1 max-w-[200px]">
@@ -329,7 +328,6 @@ watch(parentFilter, (val) => {
             :data="displayData" 
             :filter-value="searchQuery"
             :show-selection-count=false
-            filter-key="name"
           />
         </div>
       </div>
