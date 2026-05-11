@@ -18,8 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "@/Components/ui/dropdown-menu";
 import Heading from '@/Components/Heading.vue';
-import { Breadcrumb, BreadcrumbLink, BreadcrumbList } from '@/Components/ui/breadcrumb';
-import BreadcrumbItem from '@/Components/ui/breadcrumb/BreadcrumbItem.vue';
+import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem } from '@/Components/ui/breadcrumb';
 
 import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
@@ -155,7 +154,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
           h(ArrowUpDown, { class: 'ml-2 h-4 w-4 text-muted-foreground' }),
         ])
       },
-      cell: ({ row }) => h('div', { class: 'pl-2 text-muted-foreground truncate' }, row.getValue('code')),
+      cell: ({ row }) => h('div', { class: 'pl-2 text-muted-foreground font-mono text-sm truncate' }, row.getValue('code')),
     });
   }
 

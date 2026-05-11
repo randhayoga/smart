@@ -3,7 +3,6 @@
 import { ref, computed, watch, h, onMounted } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { 
-  Search, 
   ChevronDown, 
   ArrowUpDown, 
   ArrowUp,
@@ -19,6 +18,9 @@ import {
 } from 'lucide-vue-next';
 import { Button } from "@/Components/ui/button";
 import FilterDropdown from '@/Components/FilterDropdown.vue';
+import TableSearch from '@/Components/TableSearch.vue';
+
+import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem } from '@/Components/ui/breadcrumb';
 
 import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
@@ -32,7 +34,18 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const dummyInbox = [
+interface InboxItem {
+  id: number;
+  number: string;
+  amount: number;
+  requester: string;
+  createdAt: string;
+  startTime: string;
+  endTime: string;
+  type: string;
+}
+
+const dummyInbox: InboxItem[] = [
   { 
     id: 1, 
     number: '052026-0001', 
@@ -78,11 +91,11 @@ const dummyInbox = [
 const searchQuery = ref('');
 const typeFilter = ref('');
 const timeFilter = ref('');
-const rowsPerPage = ref('10');
+const rowsPerPage = ref('Semua baris');
 
 const dataTableRef = ref<any>(null);
 
-const columns: ColumnDef<any>[] = [
+const columns: ColumnDef<InboxItem>[] = [
   {
     id: 'select',
     size: 50,
@@ -105,84 +118,85 @@ const columns: ColumnDef<any>[] = [
   },
   {
     accessorKey: 'number',
+    size: 100,
     header: ({ column }) => h(Button, {
       variant: 'ghost',
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-      class: 'px-2 hover:bg-transparent font-bold text-foreground'
+      class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
     }, () => [
       'Nomor',
-      h(ArrowUpDown, { class: 'ml-2 h-4 w-4' }),
+      h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
     ]),
-    cell: ({ row }) => h('div', { class: 'font-medium pl-2' }, row.getValue('number')),
+    cell: ({ row }) => h('div', { class: 'text-muted-foreground font-mono text-sm truncate' }, row.getValue('number')),
   },
   {
     accessorKey: 'amount',
     header: ({ column }) => h(Button, {
       variant: 'ghost',
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-      class: 'px-2 hover:bg-transparent font-bold text-foreground justify-center w-full'
+      class: 'p-0 hover:bg-transparent font-semibold text-foreground'
     }, () => [
       'Jumlah',
-      h(ArrowUpDown, { class: 'ml-2 h-4 w-4' }),
+      h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
     ]),
-    cell: ({ row }) => h('div', { class: 'text-center' }, row.getValue('amount')),
+    cell: ({ row }) => h('div', row.getValue('amount')),
   },
   {
     accessorKey: 'requester',
     header: ({ column }) => h(Button, {
       variant: 'ghost',
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-      class: 'px-2 hover:bg-transparent font-bold text-foreground'
+      class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
     }, () => [
       'Nama Peminta',
-      h(ArrowUpDown, { class: 'ml-2 h-4 w-4' }),
+      h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
     ]),
-    cell: ({ row }) => h('div', { class: 'pl-2' }, row.getValue('requester')),
+    cell: ({ row }) => h('div', { class: 'pl-0' }, row.getValue('requester')),
   },
   {
     accessorKey: 'createdAt',
     header: ({ column }) => h(Button, {
       variant: 'ghost',
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-      class: 'px-2 hover:bg-transparent font-bold text-foreground'
+      class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
     }, () => [
       'Waktu Dibuat',
-      h(ArrowUpDown, { class: 'ml-2 h-4 w-4' }),
+      h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
     ]),
-    cell: ({ row }) => h('div', { class: 'text-muted-foreground pl-2' }, row.getValue('createdAt')),
+    cell: ({ row }) => h('div', { class: 'text-muted-foreground' }, row.getValue('createdAt')),
   },
   {
     accessorKey: 'startTime',
     header: ({ column }) => h(Button, {
       variant: 'ghost',
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-      class: 'px-2 hover:bg-transparent font-bold text-foreground'
+      class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
     }, () => [
       'Waktu Mulai',
-      h(ArrowUpDown, { class: 'ml-2 h-4 w-4' }),
+      h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
     ]),
-    cell: ({ row }) => h('div', { class: 'text-muted-foreground pl-2' }, row.getValue('startTime')),
+    cell: ({ row }) => h('div', { class: 'text-muted-foreground' }, row.getValue('startTime')),
   },
   {
     accessorKey: 'endTime',
     header: ({ column }) => h(Button, {
       variant: 'ghost',
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-      class: 'px-2 hover:bg-transparent font-bold text-foreground'
+      class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
     }, () => [
       'Waktu Selesai',
-      h(ArrowUpDown, { class: 'ml-2 h-4 w-4' }),
+      h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
     ]),
-    cell: ({ row }) => h('div', { class: 'text-muted-foreground pl-2' }, row.getValue('endTime')),
+    cell: ({ row }) => h('div', { class: 'text-muted-foreground' }, row.getValue('endTime')),
   },
   {
     id: 'actions',
     size: 80,
-    header: () => h('div', { class: 'text-center font-bold text-foreground' }, 'Aksi'),
-    cell: ({ row }) => h('div', { class: 'flex items-center justify-center' }, [
+    header: () => h('div', { class: 'text-center font-semibold text-foreground no-print' }, 'Aksi'),
+    cell: ({ row }) => h('div', { class: 'flex items-center justify-center no-print' }, [
       h('button', {
-        class: 'p-2 bg-cyan-400 hover:bg-cyan-500 text-white rounded-[14px] transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-400/50'
-      }, [h(Eye, { class: 'w-4 h-4' })])
+        class: 'p-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-full transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50'
+      }, [h(Eye, { class: 'w-3.5 h-3.5' })])
     ]),
   },
 ];
@@ -202,12 +216,19 @@ watch(rowsPerPage, (val) => {
       dataTableRef.value.table.setPageSize(Number(val));
     }
   }
-});
+}, { immediate: true });
 
 onMounted(() => {
-  if (dataTableRef.value && dataTableRef.value.table) {
-    dataTableRef.value.table.setPageSize(Number(rowsPerPage.value));
+  if (dataTableRef.value && dataTableRef.value.table && rowsPerPage.value === 'Semua baris') {
+    dataTableRef.value.table.setPageSize(999999);
   }
+});
+
+const displayData = computed<InboxItem[]>(() => {
+  if (dataTableRef.value && dataTableRef.value.table) {
+    return dataTableRef.value.table.getFilteredRowModel().rows.map((row: any) => row.original);
+  }
+  return dummyInbox;
 });
 
 const handlePrint = () => {
@@ -218,7 +239,7 @@ const handleExportCSV = () => {
   if (displayData.value.length === 0) return;
   
   const headers = ['Nomor', 'Jumlah', 'Nama Peminta', 'Waktu Dibuat', 'Waktu Mulai', 'Waktu Selesai', 'Jenis'];
-  const rows = displayData.value.map(item => [
+  const rows = displayData.value.map((item: InboxItem) => [
     `"${item.number}"`,
     `"${item.amount}"`,
     `"${item.requester}"`,
@@ -232,7 +253,7 @@ const handleExportCSV = () => {
   // Prepend "sep=," to tell Excel explicitly that the comma is the delimiter
   let csvContent = "\uFEFFsep=,\n" 
     + headers.map(h => `"${h}"`).join(",") + "\n"
-    + rows.map(e => e.join(",")).join("\n");
+    + rows.map((e: string[]) => e.join(",")).join("\n");
 
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
@@ -245,115 +266,119 @@ const handleExportCSV = () => {
 };
 
 const handleExportExcel = () => {
-  // Simple Excel-compatible CSV with tab separator or just call CSV for now
   handleExportCSV();
 };
 
 const handleExportPDF = () => {
-  // PDF is often just a print of the page
   window.print();
 };
 </script>
 
 <template>
   <AppLayout title="Inbox">
-    <div class="space-y-6">
-      <div class="flex flex-col gap-1">
-        <h2 class="text-2xl font-bold text-foreground">Daftar Permintaan Baru</h2>
-      </div>
+    <Breadcrumb>
+      <BreadcrumbList class="pb-3">
+        <BreadcrumbItem>
+          <BreadcrumbLink href="/smart/inbox">Inbox</BreadcrumbLink>
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
 
+    <div class="space-y-4">
       <!-- Main Card -->
-      <div class="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
-        <div class="p-5">
-          <!-- Filters -->
-          <div class="space-y-4">
-            <div class="flex flex-col sm:flex-row items-end gap-4">
-              <div class="space-y-1.5 flex-1 max-w-md">
-                <label class="text-xs text-muted-foreground font-medium block">Filter</label>
-                <div class="relative">
-                  <input 
-                    type="text" 
+      <div class="px-4 bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+        <div class="py-5 no-print">
+          <h2 class="text-lg font-bold text-foreground">Daftar Permintaan Baru</h2>
+
+          <!-- Filters & Actions -->
+          <div class="mt-4 flex flex-col space-y-4">
+            <!-- Row 1: Filters & Rows Per Page -->
+            <div class="flex flex-wrap items-end justify-between gap-4">
+              <div class="flex flex-wrap items-end gap-3 flex-1">
+                <!-- Search -->
+                <div class="space-y-1.5 flex-1 min-w-[200px] max-w-xs">
+                  <label class="text-xs text-muted-foreground font-medium block ml-0.5">Filter</label>
+                  <TableSearch 
                     v-model="searchQuery"
-                    placeholder="Cari nomor permintaan atau nama peminta..." 
-                    class="w-full pl-9 pr-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                    placeholder="Cari nomor permintaan..." 
                   />
-                  <Search class="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
                 </div>
+
+                <FilterDropdown 
+                  v-model="typeFilter"
+                  :options="['Habis Pakai', 'Pinjam']"
+                  placeholder="Semua jenis"
+                  all-label="Semua jenis"
+                  class="w-[200px]"
+                />
+
+                <FilterDropdown 
+                  v-model="timeFilter"
+                  :options="[
+                    { label: 'Hari Ini', value: 'today' },
+                    { label: 'Minggu Ini', value: 'week' },
+                    { label: 'Bulan Ini', value: 'month' }
+                  ]"
+                  placeholder="Semua kurun waktu"
+                  all-label="Semua kurun waktu"
+                  class="w-[200px]"
+                />
               </div>
 
-              <FilterDropdown 
-                v-model="typeFilter"
-                :options="['Habis Pakai', 'Pinjam']"
-                placeholder="Semua jenis"
-                all-label="Semua jenis"
-                class="flex-1 max-w-[200px]"
-              />
-
-              <FilterDropdown 
-                v-model="timeFilter"
-                :options="[
-                  { label: 'Hari Ini', value: 'today' },
-                  { label: 'Minggu Ini', value: 'week' },
-                  { label: 'Bulan Ini', value: 'month' }
-                ]"
-                placeholder="Semua kurun waktu"
-                all-label="Semua kurun waktu"
-                class="flex-1 max-w-[200px]"
-              />
+              <!-- Rows Per Page -->
+              <div class="flex items-center gap-3 text-sm text-muted-foreground pb-0.5">
+                <span class="whitespace-nowrap">Baris per halaman</span>
+                <FilterDropdown 
+                  v-model="rowsPerPage"
+                  :options="['10', '25', '50']"
+                  placeholder="Semua baris"
+                  all-label="Semua baris"
+                  class="w-[140px]"
+                />
+              </div>
             </div>
 
-            <!-- Export Actions -->
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
-              <div class="space-y-2">
-                <label class="text-xs text-muted-foreground font-medium block">Aksi Terpilih</label>
+            <!-- Row 2: Export Actions -->
+            <div class="flex flex-wrap items-end justify-between gap-4 pt-2">
+              <div class="space-y-2 flex-1 min-w-0">
+                <label class="text-xs text-muted-foreground font-medium block ml-0.5">Aksi Terpilih</label>
                 <div class="flex flex-wrap gap-2">
                   <button 
                     @click="handlePrint"
                     class="flex items-center gap-2 px-4 py-2 bg-[#9B897B] hover:bg-[#8A786A] text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm"
                   >
                     <Printer class="w-4 h-4" />
-                    Print
+                    <span>Print</span>
                   </button>
                   <button 
                     @click="handleExportExcel"
                     class="flex items-center gap-2 px-4 py-2 bg-[#66BB6A] hover:bg-[#57A85B] text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm"
                   >
                     <FileDown class="w-4 h-4" />
-                    Export: Excel
+                    <span>Excel</span>
                   </button>
                   <button 
                     @click="handleExportPDF"
                     class="flex items-center gap-2 px-4 py-2 bg-[#FFA726] hover:bg-[#FB8C00] text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm"
                   >
                     <FileDown class="w-4 h-4" />
-                    Export: PDF
+                    <span>PDF</span>
                   </button>
                   <button 
                     @click="handleExportCSV"
                     class="flex items-center gap-2 px-4 py-2 bg-[#BA68C8] hover:bg-[#AB47BC] text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm"
                   >
                     <FileDown class="w-4 h-4" />
-                    Export: CSV
+                    <span>CSV</span>
                   </button>
                 </div>
-              </div>
-
-              <div class="flex items-center gap-3 text-sm text-muted-foreground pt-6">
-                <span>Baris per halaman</span>
-              <FilterDropdown 
-                v-model="rowsPerPage"
-                :options="['10', '25', '50']"
-                placeholder="Semua baris"
-                all-label="Semua baris"
-                class="w-[140px]"
-              />
               </div>
             </div>
           </div>
         </div>
 
         <!-- Table -->
-        <div class="px-[10px] pb-[10px]">
+        <div class="pb-4">
           <DataTable 
             ref="dataTableRef"
             :columns="columns" 

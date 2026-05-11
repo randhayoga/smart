@@ -22,7 +22,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/Components/ui/dropdown-menu";
-import { Breadcrumb, BreadcrumbLink, BreadcrumbList } from '@/Components/ui/breadcrumb';
+import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem } from '@/Components/ui/breadcrumb';
 
 import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
@@ -73,7 +73,7 @@ const dataTableRef = ref<any>(null);
 const columns: ColumnDef<any>[] = [
   {
     id: 'select',
-    size: 50,
+    size: 40,
     header: ({ table }) => h('div', { class: 'text-center no-print flex items-center justify-center' }, [
       h('input', {
         type: 'checkbox',
@@ -191,7 +191,7 @@ const columns: ColumnDef<any>[] = [
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
-    cell: ({ row }) => h('div', { class: 'text-foreground truncate' }, row.getValue('lastUpdate')),
+    cell: ({ row }) => h('div', { class: 'text-muted-foreground truncate' }, row.getValue('lastUpdate')),
   },
   {
     accessorKey: 'amount',
@@ -492,8 +492,8 @@ const handleConfirmDelete = () => {
 
     <div class="space-y-4">
       <!-- Main Card -->
-      <div class="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
-        <div class="p-5 no-print">
+      <div class="px-4 bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+        <div class="py-5 no-print">
           <h2 class="text-lg font-bold text-foreground">Daftar Stok</h2>
           
           <!-- Filters & Actions -->
@@ -607,7 +607,7 @@ const handleConfirmDelete = () => {
         </div>
 
         <!-- Table -->
-        <div class="px-[10px] pb-[10px]">
+        <div class="pb-4">
           <DataTable 
             ref="dataTableRef"
             :columns="columns" 
