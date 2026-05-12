@@ -12,48 +12,41 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        //
-        $departments = \App\Models\Department::factory(1)->create();
-
-        // foreach ($departments as $department) {
-        //     $users = \App\Models\User::factory(10)->create([
-        //         'department_id' => $department->id,
-        //     ]);
-
-        //     // Assign a manager to the department
-        //     $department->update([
-        //         'manager_id' => $users->first()->id,
-        //     ]);
-        // }
+        // Define the department name here
+        $departmentName = 'IFS';
+        $department = \App\Models\Department::factory()->create([
+            'name' => $departmentName,
+        ]);
 
         // Create the hardcoded Admin user
         \App\Models\User::factory()->create([
             'username' => '255476',
-            'name' => 'Super Admin',
+            'name' => 'Radifa',
             'email' => 'admin@example.com',
             'role' => 'admin',
-            'department_id' => $departments->first()->id,
+            'department_id' => $department->id,
             'password' => \Illuminate\Support\Facades\Hash::make('password'),
         ]);
 
         // Create the hardcoded Regular user
         \App\Models\User::factory()->create([
             'username' => '123456',
-            'name' => 'User',
+            'name' => 'Arya Gepa',
             'email' => 'user@example.com',
             'role' => 'user',
-            'department_id' => $departments->first()->id,
+            'department_id' => $department->id,
             'password' => \Illuminate\Support\Facades\Hash::make('password'),
         ]);
 
         // Create the hardcoded Manager user
-        \App\Models\User::factory()->create([
+        $manager = \App\Models\User::factory()->create([
             'username' => '654321',
-            'name' => 'Manager',
+            'name' => 'Sonny Handini',
             'email' => 'manager@example.com',
             'role' => 'manager',
-            'department_id' => $departments->first()->id,
+            'department_id' => $department->id,
             'password' => \Illuminate\Support\Facades\Hash::make('password'),
         ]);
+        $department->update(['manager_id' => $manager->id]);
     }
 }
