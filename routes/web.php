@@ -23,6 +23,7 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/user/dashboard', [UserDashboardController::class, 'index'])->name('user.dashboard');
     Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory');
+    Route::get('/inventory/{id}', [InventoryController::class, 'show'])->name('inventory.show');
     Route::get('/master', [MasterController::class, 'index'])->name('master');
     Route::get('/inbox', [InboxController::class, 'index'])->name('inbox');
     Route::get('/inbox/{id}', [InboxController::class, 'show'])->name('inbox.show');
@@ -32,6 +33,8 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
     Route::get('/borrowed/{id}', [BorrowedController::class, 'show'])->name('borrowed.show');
     Route::get('/returns', [ReturnController::class, 'index'])->name('returns');
     Route::get('/returns/{id}', [ReturnController::class, 'show'])->name('returns.show');
+    Route::get('/arsip', [\App\Http\Controllers\Smart\Admin\ArsipController::class, 'index'])->name('arsip');
+    Route::get('/arsip/{id}', [\App\Http\Controllers\Smart\Admin\ArsipController::class, 'show'])->name('arsip.show');
 });
 
 

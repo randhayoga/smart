@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, h, onMounted, computed } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import { router } from '@inertiajs/vue3';
 import { 
   ChevronDown, 
   ArrowUpDown, 
@@ -230,6 +231,7 @@ const columns: ColumnDef<any>[] = [
     cell: ({ row }) => {
       return h('div', { class: 'flex items-center justify-end gap-2 no-print' }, [
         h('button', {
+          onClick: () => handleViewDetail(row.original),
           class: 'p-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-full transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50'
         }, [h(Eye, { class: 'w-3.5 h-3.5' })]),
         h('button', {
@@ -279,6 +281,11 @@ onMounted(() => {
 const getExportData = () => {
   if (!dataTableRef.value) return dummyInventory;
   return dataTableRef.value.table.getFilteredRowModel().rows.map((row: any) => row.original);
+};
+
+const handleViewDetail = (item: any) => {
+  const code = item.code || 'CAT-SUB-XXXX';
+  router.get(`/smart/inventory/${code}`);
 };
 
 // Export & Print Logic
@@ -464,8 +471,9 @@ const isFormValid = computed(() => {
 
 const handleCreateItem = () => {
   if (!isFormValid.value) return;
-  alert('Barang berhasil dibuat!');
+  const newCode = newItem.value.code;
   closeCreateModal();
+  router.get(`/smart/inventory/${newCode}`);
 };
 
 // Delete Modal Logic
