@@ -532,7 +532,7 @@ const handleConfirmDelete = () => {
                       <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
+                  <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px]" align="start" :side-offset="4">
                     <DropdownMenuItem @select="categoryFilter = ''">Semua kategori</DropdownMenuItem>
                     <DropdownMenuItem v-for="cat in categories" :key="cat" @select="categoryFilter = cat">
                       {{ cat }}
@@ -548,7 +548,7 @@ const handleConfirmDelete = () => {
                       <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent class="w-[200px] p-0 rounded-[14px]" align="start">
+                  <PopoverContent class="w-(--reka-popover-trigger-width) min-w-(--reka-popover-trigger-width) p-0 rounded-[14px]" align="start">
                     <Command>
                       <CommandInput placeholder="Cari subkategori..." />
                       <CommandEmpty>Tidak ditemukan.</CommandEmpty>
@@ -581,7 +581,7 @@ const handleConfirmDelete = () => {
                       <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent class="w-[200px] p-0 rounded-[14px]" align="start">
+                  <PopoverContent class="w-(--reka-popover-trigger-width) min-w-(--reka-popover-trigger-width) p-0 rounded-[14px]" align="start">
                     <Command>
                       <CommandInput placeholder="Cari merek..." />
                       <CommandEmpty>Tidak ditemukan.</CommandEmpty>
@@ -617,7 +617,7 @@ const handleConfirmDelete = () => {
                       <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent class="w-[140px] rounded-[14px]" align="start" :side-offset="4">
+                  <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px]" align="start" :side-offset="4">
                     <DropdownMenuItem @select="rowsPerPage = 'Semua baris'">Semua baris</DropdownMenuItem>
                     <DropdownMenuItem @select="rowsPerPage = '10'">10</DropdownMenuItem>
                     <DropdownMenuItem @select="rowsPerPage = '25'">25</DropdownMenuItem>
@@ -760,7 +760,7 @@ const handleConfirmDelete = () => {
                             <ChevronDown class="w-4 h-4 opacity-50" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" class="w-[452px] rounded-[14px] z-[1001]">
+                        <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
                           <DropdownMenuItem v-for="cat in categories" :key="cat" @select="newItem.category = cat">
                             {{ cat }}
                           </DropdownMenuItem>
@@ -777,7 +777,7 @@ const handleConfirmDelete = () => {
                             <ChevronDown class="w-4 h-4 opacity-50" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" class="w-[452px] rounded-[14px] z-[1001]">
+                        <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
                           <DropdownMenuItem v-for="sub in filteredSubcategories" :key="sub" @select="newItem.subcategory = sub">
                             {{ sub }}
                           </DropdownMenuItem>
@@ -794,7 +794,7 @@ const handleConfirmDelete = () => {
                             <ChevronDown class="w-4 h-4 opacity-50" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" class="w-[452px] max-h-[300px] overflow-y-auto rounded-[14px] scrollbar-hide z-[1001]">
+                        <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) max-h-[300px] overflow-y-auto rounded-[14px] scrollbar-hide z-[1001]">
                           <DropdownMenuItem v-for="unit in units" :key="unit" @select="newItem.unit = unit">
                             {{ unit }}
                           </DropdownMenuItem>
@@ -814,7 +814,7 @@ const handleConfirmDelete = () => {
                             <ChevronDown class="w-4 h-4 opacity-50" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" class="w-[452px] rounded-[14px] z-[1001]">
+                        <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
                           <DropdownMenuItem v-for="brand in filteredBrands" :key="brand" @select="newItem.brand = brand">
                             {{ brand }}
                           </DropdownMenuItem>
