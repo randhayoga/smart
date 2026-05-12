@@ -31,8 +31,10 @@ const props = withDefaults(defineProps<{
   data: TData[]
   filterValue?: string
   filterKey?: string
+  pageSize?: number
   showSelectionCount?: boolean
 }>(), {
+  pageSize: 10,
   showSelectionCount: true
 })
 
@@ -40,6 +42,10 @@ const sorting = ref<SortingState>([])
 const columnFilters = ref<ColumnFiltersState>([])
 const columnVisibility = ref<VisibilityState>({})
 const rowSelection = ref({})
+const pagination = ref({
+  pageIndex: 0,
+  pageSize: props.pageSize,
+})
 
 const table = useVueTable({
   get data() { return props.data },
@@ -60,12 +66,21 @@ const table = useVueTable({
   onRowSelectionChange: updaterOrValue => {
     rowSelection.value = typeof updaterOrValue === 'function' ? updaterOrValue(rowSelection.value) : updaterOrValue
   },
+  onPaginationChange: updaterOrValue => {
+    pagination.value = typeof updaterOrValue === 'function' ? updaterOrValue(pagination.value) : updaterOrValue
+  },
   state: {
     get sorting() { return sorting.value },
     get columnFilters() { return columnFilters.value },
     get columnVisibility() { return columnVisibility.value },
     get rowSelection() { return rowSelection.value },
+    get pagination() { return pagination.value },
   },
+})
+
+// Update pagination when pageSize prop changes
+watch(() => props.pageSize, (newSize) => {
+  table.setPageSize(newSize || 10)
 })
 
 // Expose internal table for external filter control if needed
@@ -132,7 +147,7 @@ watch(() => props.filterValue, (val) => {
   </div>
 
   <!-- Pagination UI -->
-  <div class="flex items-center justify-end space-x-2 pt-4 px-2">
+  <div v-if="table.getPageCount() > 1" class="flex items-center justify-end space-x-2 pt-4 px-2">
     <div v-if="showSelectionCount" class="flex-1 text-sm text-muted-foreground">
       {{ table.getFilteredSelectedRowModel().rows.length }} of
       {{ table.getFilteredRowModel().rows.length }} row(s) selected.
