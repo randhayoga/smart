@@ -324,7 +324,7 @@ const handleExportPDF = () => {
                       <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
+                  <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px]" align="start" :side-offset="4">
                     <DropdownMenuItem @select="typeFilter = ''">Semua jenis</DropdownMenuItem>
                     <DropdownMenuItem @select="typeFilter = 'Habis Pakai'">Habis Pakai</DropdownMenuItem>
                     <DropdownMenuItem @select="typeFilter = 'Pinjam'">Pinjam</DropdownMenuItem>
@@ -338,7 +338,7 @@ const handleExportPDF = () => {
                       <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
+                  <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px]" align="start" :side-offset="4">
                     <DropdownMenuItem @select="timeFilter = ''">Semua kurun waktu</DropdownMenuItem>
                     <DropdownMenuItem @select="timeFilter = 'today'">Hari Ini</DropdownMenuItem>
                     <DropdownMenuItem @select="timeFilter = 'week'">Minggu Ini</DropdownMenuItem>
@@ -357,7 +357,7 @@ const handleExportPDF = () => {
                       <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent class="w-[140px] rounded-[14px]" align="start" :side-offset="4">
+                  <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px]" align="start" :side-offset="4">
                     <DropdownMenuItem @select="rowsPerPage = 'Semua baris'">Semua baris</DropdownMenuItem>
                     <DropdownMenuItem @select="rowsPerPage = '10'">10</DropdownMenuItem>
                     <DropdownMenuItem @select="rowsPerPage = '25'">25</DropdownMenuItem>

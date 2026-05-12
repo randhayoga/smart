@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, h } from 'vue';
+import { useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { 
   ChevronDown, 
@@ -17,6 +18,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/Components/ui/dropdown-menu";
+import { RadioGroup, RadioGroupItem } from '@/Components/ui/radio-group';
+import { Label } from '@/Components/ui/label';
 import Heading from '@/Components/Heading.vue';
 import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem } from '@/Components/ui/breadcrumb';
 
@@ -25,14 +28,30 @@ import DataTable from '@/Components/DataTable.vue';
 import TableSearch from '@/Components/TableSearch.vue';
 import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal.vue';
 
+interface Category    { id: number; code: string; name: string; is_consumable: boolean; }
+interface Subcategory { id: number; code: string; name: string; category_id: number; category: Category; }
+interface SimpleItem  { id: number; name: string; }
+
 interface Props {
-  user: {
-    name: string;
-    email: string;
-  };
+  user: { name: string; email: string; };
+  categories:    Category[];
+  subcategories: Subcategory[];
+  uoms:          SimpleItem[];
+  brands:        SimpleItem[];
+  organizers:    SimpleItem[];
+  vendors:       SimpleItem[];
+  locations:     SimpleItem[];
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+  categories:    () => [],
+  subcategories: () => [],
+  uoms:          () => [],
+  brands:        () => [],
+  organizers:    () => [],
+  vendors:       () => [],
+  locations:     () => [],
+});
 
 const tabs = [
   'Kategori', 'Subkategori', 'Satuan', 'Merek', 'Organizer', 'Vendor', 'Lokasi'
@@ -40,78 +59,89 @@ const tabs = [
 
 const activeTab = ref('Kategori');
 
-const dummyCategories = [
-  { code: 'ATK', name: 'Alat Tulis Kantor' },
-  { code: 'FUR', name: 'Furnitur' },
-  { code: 'ELE', name: 'Elektronik' },
-  { code: 'VEH', name: 'Kendaraan' },
-];
-
-const dummySubcategories = [
-  { code: 'ATK-KER', name: 'Kertas', parent: 'Alat Tulis Kantor', parentCode: 'ATK' },
-  { code: 'FUR-MEJ', name: 'Meja', parent: 'Furnitur', parentCode: 'FUR' },
-  { code: 'ELE-LAP', name: 'Laptop', parent: 'Elektronik', parentCode: 'ELE' },
-  { code: 'VEH-MOB', name: 'Mobil', parent: 'Kendaraan', parentCode: 'VEH' },
-];
-
-const dummySatuan = [
-  { name: 'Rim' },
-  { name: 'Unit' },
-  { name: 'Botol' },
-  { name: 'Centimeter' },
-];
-
-const dummyMerek = [
-  { name: 'Asus' },
-  { name: 'Acer' },
-  { name: 'Dell' },
-  { name: 'Lenovo' },
-];
-
-const dummyOrganizer = [
-  { name: 'AAA' },
-  { name: 'BBB' },
-  { name: 'CCC' },
-  { name: 'DDD' },
-];
-
-const dummyVendors = [
-  { name: 'AAA' },
-  { name: 'BBB' },
-  { name: 'CCC' },
-  { name: 'DDD' },
-];
-
-const dummyLokasi = [
-  { name: 'Ruang IFS' },
-  { name: 'Mega Mendung' },
-  { name: 'Tiga Negeri' },
-  { name: 'Gudang' },
-];
-
 const searchQuery = ref('');
 const parentFilter = ref('');
 const rowsPerPage = ref('Semua baris');
 
+// Map subcategories to include a `parent` string for display/filter
+const subcategoryRows = computed(() =>
+  props.subcategories.map(s => ({
+    ...s,
+    parent:     s.category?.name ?? '',
+    parentCode: s.category?.code ?? '',
+  }))
+);
+
 const displayData = computed(() => {
-  if (activeTab.value === 'Kategori') return [...dummyCategories];
-  if (activeTab.value === 'Subkategori') return [...dummySubcategories];
-  if (activeTab.value === 'Satuan') return [...dummySatuan];
-  if (activeTab.value === 'Merek') return [...dummyMerek];
-  if (activeTab.value === 'Organizer') return [...dummyOrganizer];
-  if (activeTab.value === 'Vendor') return [...dummyVendors];
-  if (activeTab.value === 'Lokasi') return [...dummyLokasi];
+  if (activeTab.value === 'Kategori')    return props.categories;
+  if (activeTab.value === 'Subkategori') return subcategoryRows.value;
+  if (activeTab.value === 'Satuan')      return props.uoms;
+  if (activeTab.value === 'Merek')       return props.brands;
+  if (activeTab.value === 'Organizer')   return props.organizers;
+  if (activeTab.value === 'Vendor')      return props.vendors;
+  if (activeTab.value === 'Lokasi')      return props.locations;
   return [];
 });
 
-const isEditModalOpen = ref(false);
-const editingItem = ref<any>(null);
-
+const isEditModalOpen   = ref(false);
 const isCreateModalOpen = ref(false);
-const newItem = ref({ code: '', name: '', parentCode: '' });
+const editingItem       = ref<any>(null);
+
+// ── Create forms ────────────────────────────────────────────────
+const categoryForm    = useForm({ code: '', name: '', is_consumable: '1' });
+const subcategoryForm = useForm({ category_id: null as number | null, code: '', name: '' });
+const uomForm         = useForm({ name: '' });
+const brandForm       = useForm({ name: '' });
+const organizerForm   = useForm({ name: '' });
+const vendorForm      = useForm({ name: '' });
+const locationForm    = useForm({ name: '' });
+
+// ── Edit forms ──────────────────────────────────────────────────
+const editCategoryForm    = useForm({ id: null as number | null, code: '', name: '', is_consumable: '1' });
+const editSubcategoryForm = useForm({ id: null as number | null, name: '' });
+const editUomForm         = useForm({ id: null as number | null, name: '' });
+const editBrandForm       = useForm({ id: null as number | null, name: '' });
+const editOrganizerForm   = useForm({ id: null as number | null, name: '' });
+const editVendorForm      = useForm({ id: null as number | null, name: '' });
+const editLocationForm    = useForm({ id: null as number | null, name: '' });
+
+// Helper: active edit form
+const activeEditForm = computed(() => {
+  switch (activeTab.value) {
+    case 'Kategori':    return editCategoryForm;
+    case 'Subkategori': return editSubcategoryForm;
+    case 'Satuan':      return editUomForm;
+    case 'Merek':       return editBrandForm;
+    case 'Organizer':   return editOrganizerForm;
+    case 'Vendor':      return editVendorForm;
+    case 'Lokasi':      return editLocationForm;
+    default:            return editCategoryForm;
+  }
+});
+
+// Helper: active create form
+const activeCreateForm = computed(() => {
+  switch (activeTab.value) {
+    case 'Kategori':    return categoryForm;
+    case 'Subkategori': return subcategoryForm;
+    case 'Satuan':      return uomForm;
+    case 'Merek':       return brandForm;
+    case 'Organizer':   return organizerForm;
+    case 'Vendor':      return vendorForm;
+    case 'Lokasi':      return locationForm;
+    default:            return categoryForm;
+  }
+});
 
 const openEditModal = (item: any) => {
   editingItem.value = { ...item };
+  const form = activeEditForm.value as any;
+  form.id   = item.id;
+  form.name = item.name;
+  if (activeTab.value === 'Kategori') {
+    form.code = item.code;
+    form.is_consumable = item.is_consumable ? '1' : '0';
+  }
   isEditModalOpen.value = true;
 };
 
@@ -119,16 +149,27 @@ const closeEditModal = () => {
   isEditModalOpen.value = false;
   setTimeout(() => {
     editingItem.value = null;
+    editCategoryForm.reset();    editSubcategoryForm.reset();
+    editUomForm.reset();         editBrandForm.reset();
+    editOrganizerForm.reset();   editVendorForm.reset();
+    editLocationForm.reset();
   }, 200);
 };
 
 const openCreateModal = () => {
-  newItem.value = { code: '', name: '', parentCode: '' };
+  categoryForm.reset();    subcategoryForm.reset();
+  uomForm.reset();         brandForm.reset();
+  organizerForm.reset();   vendorForm.reset();
+  locationForm.reset();
   isCreateModalOpen.value = true;
 };
 
 const closeCreateModal = () => {
   isCreateModalOpen.value = false;
+  categoryForm.reset();    subcategoryForm.reset();
+  uomForm.reset();         brandForm.reset();
+  organizerForm.reset();   vendorForm.reset();
+  locationForm.reset();
 };
 
 // Reset filters when tab changes
@@ -155,6 +196,30 @@ const columns = computed<ColumnDef<any>[]>(() => {
         ])
       },
       cell: ({ row }) => h('div', { class: 'pl-2 text-muted-foreground font-mono text-sm truncate' }, row.getValue('code')),
+    });
+  }
+
+  // Klasifikasi column (Kategori only)
+  if (activeTab.value === 'Kategori') {
+    cols.push({
+      accessorKey: 'is_consumable',
+      header: ({ column }) => {
+        return h(Button, {
+          variant: 'ghost',
+          onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+          class: 'pl-2 hover:bg-transparent font-semibold text-foreground justify-start'
+        }, () => [
+          'Klasifikasi',
+          h(ArrowUpDown, { class: 'ml-2 h-4 w-4 text-muted-foreground' }),
+        ])
+      },
+      cell: ({ row }) => h('div', { class: 'pl-2' }, [
+        h('span', { 
+          class: row.original.is_consumable 
+            ? 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800' 
+            : 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800'
+        }, row.original.is_consumable ? 'Habis Pakai' : 'Aset')
+      ]),
     });
   }
 
@@ -243,10 +308,62 @@ const closeDeleteModal = () => {
   itemToDelete.value = null;
 };
 
-const handleConfirmDelete = () => {
-  alert(`Berhasil menghapus ${activeTab.value}: ${itemToDelete.value?.name || itemToDelete.value?.code}`);
-  closeDeleteModal();
+const deleteForm = useForm({});
+
+const routeMap: Record<string, string> = {
+  'Kategori':    'smart.master.categories.destroy',
+  'Subkategori': 'smart.master.subcategories.destroy',
+  'Satuan':      'smart.master.uoms.destroy',
+  'Merek':       'smart.master.brands.destroy',
+  'Organizer':   'smart.master.organizers.destroy',
+  'Vendor':      'smart.master.vendors.destroy',
+  'Lokasi':      'smart.master.locations.destroy',
 };
+
+const storeRouteMap: Record<string, string> = {
+  'Kategori':    'smart.master.categories.store',
+  'Subkategori': 'smart.master.subcategories.store',
+  'Satuan':      'smart.master.uoms.store',
+  'Merek':       'smart.master.brands.store',
+  'Organizer':   'smart.master.organizers.store',
+  'Vendor':      'smart.master.vendors.store',
+  'Lokasi':      'smart.master.locations.store',
+};
+
+const updateRouteMap: Record<string, string> = {
+  'Kategori':    'smart.master.categories.update',
+  'Subkategori': 'smart.master.subcategories.update',
+  'Satuan':      'smart.master.uoms.update',
+  'Merek':       'smart.master.brands.update',
+  'Organizer':   'smart.master.organizers.update',
+  'Vendor':      'smart.master.vendors.update',
+  'Lokasi':      'smart.master.locations.update',
+};
+
+const handleConfirmDelete = () => {
+  if (!itemToDelete.value) return;
+  deleteForm.delete(route(routeMap[activeTab.value], itemToDelete.value.id), {
+    onSuccess: () => closeDeleteModal(),
+  });
+};
+
+const submitCreate = () => {
+  (activeCreateForm.value as any).post(route(storeRouteMap[activeTab.value]), {
+    onSuccess: () => closeCreateModal(),
+  });
+};
+
+const submitUpdate = () => {
+  const form = activeEditForm.value as any;
+  if (!form.id) return;
+  form.put(route(updateRouteMap[activeTab.value], form.id), {
+    onSuccess: () => closeEditModal(),
+  });
+};
+const pageSize = computed(() => {
+  if (rowsPerPage.value === 'Semua baris') return 999999;
+  return parseInt(rowsPerPage.value);
+});
 </script>
 
 <template>
@@ -291,20 +408,20 @@ const handleConfirmDelete = () => {
                 <label class="text-xs text-muted-foreground font-medium block">Filter</label>
                 <TableSearch 
                   v-model="searchQuery"
-                  :placeholder="`Cari Kode atau Nama ${activeTab}...`" 
+                  :placeholder="`Cari ${activeTab}...`" 
                 />
               </div>
               <div v-if="activeTab === 'Subkategori'" class="flex-1 max-w-[200px]">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal">
-                      {{ parentFilter ? (dummyCategories.find(c => c.code === parentFilter)?.name || 'Semua Kategori Induk') : 'Semua Kategori Induk' }}
+                      {{ parentFilter ? (props.categories.find(c => c.code === parentFilter)?.name || 'Semua Kategori Induk') : 'Semua Kategori Induk' }}
                       <ChevronDown class="w-4 h-4 opacity-50" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent class="w-[200px] rounded-[14px]">
+                  <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px]">
                     <DropdownMenuItem @select="parentFilter = ''">Semua Kategori Induk</DropdownMenuItem>
-                    <DropdownMenuItem v-for="cat in dummyCategories" :key="cat.code" @select="parentFilter = cat.code">
+                    <DropdownMenuItem v-for="cat in props.categories" :key="cat.code" @select="parentFilter = cat.code">
                       {{ cat.name }}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -323,7 +440,7 @@ const handleConfirmDelete = () => {
                       <ChevronDown class="w-4 h-4 opacity-50" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent class="w-[140px] rounded-[14px]">
+                  <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px]">
                     <DropdownMenuItem @select="rowsPerPage = 'Semua baris'">Semua baris</DropdownMenuItem>
                     <DropdownMenuItem @select="rowsPerPage = '10'">10</DropdownMenuItem>
                     <DropdownMenuItem @select="rowsPerPage = '25'">25</DropdownMenuItem>
@@ -347,6 +464,7 @@ const handleConfirmDelete = () => {
             :columns="columns" 
             :data="displayData" 
             :filter-value="searchQuery"
+            :page-size="pageSize"
             :show-selection-count=false
           />
         </div>
@@ -363,7 +481,7 @@ const handleConfirmDelete = () => {
         leave-from-class="opacity-100"
         leave-to-class="opacity-0"
       >
-        <div v-if="isEditModalOpen" class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4">
+        <div v-if="isEditModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4">
           <div 
             class="bg-card text-foreground rounded-[14px] shadow-2xl w-full max-w-[1200px] min-h-[261px] p-[24px] flex flex-col"
             @click.stop
@@ -375,79 +493,74 @@ const handleConfirmDelete = () => {
               </button>
             </div>
             
+            <!-- Edit: Subkategori -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 flex-grow" v-if="activeTab === 'Subkategori'">
               <div>
-                <label class="block text-sm font-medium text-foreground mb-2">Kategori Induk<span class="text-destructive">*</span></label>
-                <input 
-                  type="text" 
-                  :value="editingItem?.parent" 
-                  disabled 
-                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-muted/50 text-muted-foreground cursor-not-allowed"
-                />
+                <label class="block text-sm font-medium text-foreground mb-2">Kategori Induk</label>
+                <input type="text" :value="editingItem?.category?.name ?? ''" disabled
+                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-muted/50 text-muted-foreground cursor-not-allowed" />
               </div>
               <div>
-                <label class="block text-sm font-medium text-foreground mb-2">Kode Subkategori<span class="text-destructive">*</span></label>
-                <input 
-                  type="text" 
-                  :value="editingItem?.code" 
-                  disabled 
-                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-muted/50 text-muted-foreground cursor-not-allowed"
-                />
+                <label class="block text-sm font-medium text-foreground mb-2">Kode Subkategori (tidak dapat diubah)</label>
+                <input type="text" :value="editingItem?.code" disabled
+                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-muted/50 text-muted-foreground cursor-not-allowed" />
               </div>
               <div>
                 <label class="block text-sm font-medium text-foreground mb-2">Nama Subkategori<span class="text-destructive">*</span></label>
-                <input 
-                  type="text" 
-                  v-if="editingItem"
-                  v-model="editingItem.name" 
-                  maxlength="255"
-                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-                />
+                <input type="text" v-model="editSubcategoryForm.name" maxlength="255"
+                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" />
+                <div v-if="editSubcategoryForm.errors.name" class="text-destructive text-xs mt-1">{{ editSubcategoryForm.errors.name }}</div>
               </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 flex-grow" v-else-if="!['Satuan', 'Merek', 'Organizer', 'Vendor', 'Lokasi'].includes(activeTab)">
+            <!-- Edit: Kategori -->
+            <div v-else-if="activeTab === 'Kategori'" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 flex-grow">
               <div>
-                <label class="block text-sm font-medium text-foreground mb-2">Kode {{ activeTab }} (tidak dapat diubah)</label>
-                <input 
-                  type="text" 
-                  :value="editingItem?.code" 
-                  disabled 
-                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-muted/50 text-muted-foreground cursor-not-allowed"
-                />
+                <label class="block text-sm font-medium text-foreground mb-2">Kode Kategori (tidak dapat diubah)</label>
+                <input type="text" v-model="editCategoryForm.code" disabled
+                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-muted/50 text-muted-foreground cursor-not-allowed" />
+                <div v-if="editCategoryForm.errors.code" class="text-destructive text-xs mt-1">{{ editCategoryForm.errors.code }}</div>
               </div>
               <div>
-                <label class="block text-sm font-medium text-foreground mb-2">Nama {{ activeTab }}<span class="text-destructive">*</span></label>
-                <input 
-                  type="text" 
-                  v-if="editingItem"
-                  v-model="editingItem.name" 
-                  maxlength="255"
-                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-                />
+                <label class="block text-sm font-medium text-foreground mb-2">Nama Kategori<span class="text-destructive">*</span></label>
+                <input type="text" v-model="editCategoryForm.name" maxlength="255"
+                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" />
+                <div v-if="editCategoryForm.errors.name" class="text-destructive text-xs mt-1">{{ editCategoryForm.errors.name }}</div>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-foreground mb-3">Klasifikasi<span class="text-destructive">*</span></label>
+                <RadioGroup v-model="editCategoryForm.is_consumable" class="flex gap-6">
+                  <div class="flex items-center space-x-2">
+                    <RadioGroupItem id="edit-consumable-true" value="1" />
+                    <Label for="edit-consumable-true" class="font-normal cursor-pointer">Habis Pakai</Label>
+                  </div>
+                  <div class="flex items-center space-x-2">
+                    <RadioGroupItem id="edit-consumable-false" value="0" />
+                    <Label for="edit-consumable-false" class="font-normal cursor-pointer">Aset</Label>
+                  </div>
+                </RadioGroup>
+                <div v-if="editCategoryForm.errors.is_consumable" class="text-destructive text-xs mt-1">{{ editCategoryForm.errors.is_consumable }}</div>
               </div>
             </div>
 
+            <!-- Edit: Satuan / Merek / Organizer / Vendor / Lokasi (name-only) -->
             <div class="mb-8 flex-grow" v-else>
               <label class="block text-sm font-medium text-foreground mb-2">Nama {{ activeTab }}<span class="text-destructive">*</span></label>
-              <input 
-                type="text" 
-                v-if="editingItem"
-                v-model="editingItem.name" 
-                maxlength="255"
+              <input type="text" v-model="(activeEditForm as any).name" maxlength="255"
                 :placeholder="`${activeTab} sekarang`"
-                class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-              />
+                class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" />
+              <div v-if="(activeEditForm as any).errors?.name" class="text-destructive text-xs mt-1">{{ (activeEditForm as any).errors.name }}</div>
             </div>
-            
+
             <div class="flex items-center justify-between mt-auto">
               <span class="text-sm text-destructive italic">*Wajib diisi</span>
               <div class="flex items-center gap-3">
-                <button @click="closeEditModal" class="px-4 py-2 text-sm font-medium border border-input rounded-[14px] hover:bg-accent transition-colors">
+                <button @click="closeEditModal" class="px-4 py-2 text-sm font-medium border border-input rounded-[14px] hover:bg-muted transition-colors">
                   Batal
                 </button>
-                <button class="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-[14px] hover:bg-primary/90 transition-colors">
-                  Simpan Perubahan
+                <button @click="submitUpdate" :disabled="(activeEditForm as any).processing"
+                  class="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-[14px] hover:bg-primary/90 transition-colors disabled:opacity-50">
+                  {{ (activeEditForm as any).processing ? 'Menyimpan...' : 'Simpan Perubahan' }}
                 </button>
               </div>
             </div>
@@ -466,7 +579,7 @@ const handleConfirmDelete = () => {
         leave-from-class="opacity-100"
         leave-to-class="opacity-0"
       >
-        <div v-if="isCreateModalOpen" class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4">
+        <div v-if="isCreateModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4">
           <div 
             class="bg-card text-foreground rounded-[14px] shadow-2xl w-full max-w-[1200px] min-h-[261px] p-[24px] flex flex-col"
             @click.stop
@@ -478,99 +591,99 @@ const handleConfirmDelete = () => {
               </button>
             </div>
             
+            <!-- Create: Subkategori -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 flex-grow" v-if="activeTab === 'Subkategori'">
               <div>
                 <label class="block text-sm font-medium text-foreground mb-2">Kategori Induk<span class="text-destructive">*</span></label>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal">
-                      {{ newItem.parentCode ? (dummyCategories.find(c => c.code === newItem.parentCode)?.name || 'Pilih Kategori Induk') : 'Pilih Kategori Induk' }}
+                      {{ subcategoryForm.category_id ? (props.categories.find(c => c.id === subcategoryForm.category_id)?.name || 'Pilih Kategori Induk') : 'Pilih Kategori Induk' }}
                       <ChevronDown class="w-4 h-4 opacity-50" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent class="w-[200px] rounded-[14px]">
-                    <DropdownMenuItem v-for="cat in dummyCategories" :key="cat.code" @select="newItem.parentCode = cat.code">
+                  <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
+                    <DropdownMenuItem v-for="cat in props.categories" :key="cat.id" @select="subcategoryForm.category_id = cat.id">
                       {{ cat.name }}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
+                <div v-if="subcategoryForm.errors.category_id" class="text-destructive text-xs mt-1">{{ subcategoryForm.errors.category_id }}</div>
               </div>
               <div>
                 <label class="block text-sm font-medium text-foreground mb-2">Kode Subkategori<span class="text-destructive">*</span></label>
-                <div 
-                  class="flex rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors"
-                  :class="{ 'opacity-50 bg-muted/50': !newItem.parentCode }"
-                >
+                <div class="flex rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors"
+                  :class="{ 'opacity-50 bg-muted/50': !subcategoryForm.category_id }">
                   <span class="pl-3 py-2 text-sm text-muted-foreground flex items-center bg-transparent select-none whitespace-nowrap">
-                    {{ newItem.parentCode ? newItem.parentCode + '-' : 'KOD-' }}
+                    {{ subcategoryForm.category_id ? (props.categories.find(c => c.id === subcategoryForm.category_id)?.code ?? 'KOD') + '-' : 'KOD-' }}
                   </span>
-                  <input 
-                    type="text" 
-                    v-model="newItem.code" 
-                    @input="newItem.code = newItem.code.replace(/[^A-Za-z]/g, '').toUpperCase()"
-                    maxlength="3"
-                    :disabled="!newItem.parentCode"
-                    placeholder="3 huruf kapital..."
+                  <input type="text" v-model="subcategoryForm.code"
+                    @input="subcategoryForm.code = subcategoryForm.code.replace(/[^A-Za-z0-9]/g, '').toUpperCase()"
+                    maxlength="3" :disabled="!subcategoryForm.category_id" placeholder="3 huruf kapital/angka..."
                     class="w-full pr-3 py-2 text-sm bg-transparent border-none focus:ring-0 focus:outline-none"
-                    :class="{ 'cursor-not-allowed': !newItem.parentCode }"
-                  />
+                    :class="{ 'cursor-not-allowed': !subcategoryForm.category_id }" />
                 </div>
+                <div v-if="subcategoryForm.errors.code" class="text-destructive text-xs mt-1">{{ subcategoryForm.errors.code }}</div>
               </div>
               <div>
                 <label class="block text-sm font-medium text-foreground mb-2">Nama Subkategori<span class="text-destructive">*</span></label>
-                <input 
-                  type="text" 
-                  v-model="newItem.name" 
-                  maxlength="255"
-                  placeholder="Input nama kategorinya di sini..."
-                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-                />
+                <input type="text" v-model="subcategoryForm.name" maxlength="255" placeholder="Nama subkategori..."
+                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" />
+                <div v-if="subcategoryForm.errors.name" class="text-destructive text-xs mt-1">{{ subcategoryForm.errors.name }}</div>
               </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 flex-grow" v-else-if="!['Subkategori, Satuan', 'Merek', 'Organizer', 'Vendor', 'Lokasi'].includes(activeTab)">
+            <!-- Create: Kategori -->
+            <div v-else-if="activeTab === 'Kategori'" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 flex-grow">
               <div>
-                <label class="block text-sm font-medium text-foreground mb-2">Kode {{ activeTab }}<span class="text-destructive">*</span></label>
-                <input 
-                  type="text" 
-                  v-model="newItem.code" 
-                  @input="newItem.code = newItem.code.replace(/[^A-Za-z]/g, '').toUpperCase()"
-                  maxlength="3"
-                  placeholder="Input kodenya di sini (tiga huruf kapital)..."
-                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-                />
+                <label class="block text-sm font-medium text-foreground mb-2">Kode Kategori<span class="text-destructive">*</span></label>
+                <input type="text" v-model="categoryForm.code"
+                  @input="categoryForm.code = categoryForm.code.replace(/[^A-Za-z0-9]/g, '').toUpperCase()"
+                  maxlength="3" placeholder="Contoh: ATK, FUR, ELE..."
+                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" />
+                <div v-if="categoryForm.errors.code" class="text-destructive text-xs mt-1">{{ categoryForm.errors.code }}</div>
               </div>
               <div>
-                <label class="block text-sm font-medium text-foreground mb-2">Nama {{ activeTab }}<span class="text-destructive">*</span></label>
-                <input 
-                  type="text" 
-                  v-model="newItem.name" 
-                  maxlength="255"
-                  placeholder="Input nama kategorinya di sini..."
-                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-                />
+                <label class="block text-sm font-medium text-foreground mb-2">Nama Kategori<span class="text-destructive">*</span></label>
+                <input type="text" v-model="categoryForm.name" maxlength="255" placeholder="Nama kategori..."
+                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" />
+                <div v-if="categoryForm.errors.name" class="text-destructive text-xs mt-1">{{ categoryForm.errors.name }}</div>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-foreground mb-3">Klasifikasi<span class="text-destructive">*</span></label>
+                <RadioGroup v-model="categoryForm.is_consumable" class="flex gap-6">
+                  <div class="flex items-center space-x-2">
+                    <RadioGroupItem id="consumable-true" value="1" />
+                    <Label for="consumable-true" class="font-normal cursor-pointer">Habis Pakai</Label>
+                  </div>
+                  <div class="flex items-center space-x-2">
+                    <RadioGroupItem id="consumable-false" value="0" />
+                    <Label for="consumable-false" class="font-normal cursor-pointer">Aset</Label>
+                  </div>
+                </RadioGroup>
+                <div v-if="categoryForm.errors.is_consumable" class="text-destructive text-xs mt-1">{{ categoryForm.errors.is_consumable }}</div>
               </div>
             </div>
 
+            <!-- Create: Satuan / Merek / Organizer / Vendor / Lokasi (name-only) -->
             <div class="mb-8 flex-grow" v-else>
               <label class="block text-sm font-medium text-foreground mb-2">Nama {{ activeTab }}<span class="text-destructive">*</span></label>
-              <input 
-                type="text" 
-                v-model="newItem.name" 
-                maxlength="255"
-                :placeholder="`Input nama ${activeTab}nya di sini...`"
-                class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-              />
+              <input type="text" v-model="(activeCreateForm as any).name" maxlength="255"
+                :placeholder="`Nama ${activeTab}...`"
+                class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" />
+              <div v-if="(activeCreateForm as any).errors?.name" class="text-destructive text-xs mt-1">{{ (activeCreateForm as any).errors.name }}</div>
             </div>
-            
+
             <div class="flex items-center justify-between mt-auto">
               <span class="text-sm text-destructive italic">*Wajib diisi</span>
               <div class="flex items-center gap-3">
-                <button @click="closeCreateModal" class="px-4 py-2 text-sm font-medium border border-input rounded-[14px] hover:bg-accent transition-colors">
+                <button @click="closeCreateModal" class="px-4 py-2 text-sm font-medium border border-input rounded-[14px] hover:bg-muted transition-colors">
                   Batal
                 </button>
-                <button class="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-[14px] hover:bg-primary/90 transition-colors">
-                  Buat {{ activeTab }}
+                <button @click="submitCreate" :disabled="(activeCreateForm as any).processing"
+                  class="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-[14px] hover:bg-primary/90 transition-colors disabled:opacity-50">
+                  {{ (activeCreateForm as any).processing ? 'Memproses...' : `Buat ${activeTab}` }}
                 </button>
               </div>
             </div>

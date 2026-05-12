@@ -4,7 +4,6 @@ import { Loader2, ArrowRight } from 'lucide-vue-next';
 import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 
 defineProps<{
-  canResetPassword?: boolean;
   status?: string;
 }>();
 
@@ -84,15 +83,6 @@ const submit = () => {
           <div class="space-y-2">
             <div class="flex items-center justify-between">
               <label for="password" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Kata Sandi</label>
-              <!--
-              <Link
-                v-if="canResetPassword"
-                :href="route('password.request')"
-                class="text-sm text-primary hover:text-primary/80 font-medium transition-colors"
-              >
-                Forgot password?
-              </Link>
-              -->
             </div>
             <input
               id="password"
@@ -124,8 +114,6 @@ const submit = () => {
             </template>
           </button>
         </form>
-        
-        <!-- Register link hidden since controller removed -->
       </div>
     </div>
     
