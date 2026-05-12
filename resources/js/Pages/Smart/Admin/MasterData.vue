@@ -41,7 +41,15 @@ interface Props {
   locations:     SimpleItem[];
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+  categories:    () => [],
+  subcategories: () => [],
+  uoms:          () => [],
+  brands:        () => [],
+  organizers:    () => [],
+  vendors:       () => [],
+  locations:     () => [],
+});
 
 const tabs = [
   'Kategori', 'Subkategori', 'Satuan', 'Merek', 'Organizer', 'Vendor', 'Lokasi'
