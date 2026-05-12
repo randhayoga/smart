@@ -13,7 +13,7 @@ class UserSeeder extends Seeder
     public function run(): void
     {
         //
-        $departments = \App\Models\Department::factory(5)->create();
+        $departments = \App\Models\Department::factory(1)->create();
 
         // foreach ($departments as $department) {
         //     $users = \App\Models\User::factory(10)->create([
