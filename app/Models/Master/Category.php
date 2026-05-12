@@ -13,6 +13,11 @@ class Category extends Model
     protected $fillable = [
         'code',
         'name',
+        'is_consumable',
+    ];
+
+    protected $casts = [
+        'is_consumable' => 'boolean',
     ];
 
     public function subcategories(): HasMany

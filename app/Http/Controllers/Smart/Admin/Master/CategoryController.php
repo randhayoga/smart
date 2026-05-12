@@ -29,6 +29,7 @@ class CategoryController extends Controller
         $validated = $request->validate([
             'code' => 'required|string|size:3|unique:categories,code',
             'name' => 'required|string|max:255',
+            'is_consumable' => 'required|boolean',
         ]);
 
         Category::create($validated);
@@ -44,6 +45,7 @@ class CategoryController extends Controller
         $validated = $request->validate([
             'code' => 'required|string|size:3|unique:categories,code,' . $category->id,
             'name' => 'required|string|max:255',
+            'is_consumable' => 'required|boolean',
         ]);
 
         $category->update($validated);

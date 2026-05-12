@@ -23,6 +23,7 @@ class CategoryFactory extends Factory
         return [
             'code' => strtoupper(substr($name, 0, 3)),
             'name' => $name,
+            'is_consumable' => fake()->boolean(),
         ];
     }
 }
