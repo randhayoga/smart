@@ -80,7 +80,7 @@ export const mainNavigation: NavSection[] = [
             },
             {
                 title: 'Pengembalian',
-                href: '/smart/returning',
+                href: '/smart/returns',
                 icon: BaggageClaim,
             },
             {
