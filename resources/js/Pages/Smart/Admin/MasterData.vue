@@ -161,6 +161,10 @@ const openCreateModal = () => {
 
 const closeCreateModal = () => {
   isCreateModalOpen.value = false;
+  categoryForm.reset();    subcategoryForm.reset();
+  uomForm.reset();         brandForm.reset();
+  organizerForm.reset();   vendorForm.reset();
+  locationForm.reset();
 };
 
 // Reset filters when tab changes
@@ -327,6 +331,10 @@ const submitUpdate = () => {
     onSuccess: () => closeEditModal(),
   });
 };
+const pageSize = computed(() => {
+  if (rowsPerPage.value === 'Semua baris') return 999999;
+  return parseInt(rowsPerPage.value);
+});
 </script>
 
 <template>
@@ -371,7 +379,7 @@ const submitUpdate = () => {
                 <label class="text-xs text-muted-foreground font-medium block">Filter</label>
                 <TableSearch 
                   v-model="searchQuery"
-                  :placeholder="`Cari Kode atau Nama ${activeTab}...`" 
+                  :placeholder="`Cari ${activeTab}...`" 
                 />
               </div>
               <div v-if="activeTab === 'Subkategori'" class="flex-1 max-w-[200px]">
@@ -382,7 +390,7 @@ const submitUpdate = () => {
                       <ChevronDown class="w-4 h-4 opacity-50" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent class="w-[200px] rounded-[14px]">
+                  <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px]">
                     <DropdownMenuItem @select="parentFilter = ''">Semua Kategori Induk</DropdownMenuItem>
                     <DropdownMenuItem v-for="cat in props.categories" :key="cat.code" @select="parentFilter = cat.code">
                       {{ cat.name }}
@@ -403,7 +411,7 @@ const submitUpdate = () => {
                       <ChevronDown class="w-4 h-4 opacity-50" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent class="w-[140px] rounded-[14px]">
+                  <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px]">
                     <DropdownMenuItem @select="rowsPerPage = 'Semua baris'">Semua baris</DropdownMenuItem>
                     <DropdownMenuItem @select="rowsPerPage = '10'">10</DropdownMenuItem>
                     <DropdownMenuItem @select="rowsPerPage = '25'">25</DropdownMenuItem>
@@ -427,6 +435,7 @@ const submitUpdate = () => {
             :columns="columns" 
             :data="displayData" 
             :filter-value="searchQuery"
+            :page-size="pageSize"
             :show-selection-count=false
           />
         </div>
@@ -443,7 +452,7 @@ const submitUpdate = () => {
         leave-from-class="opacity-100"
         leave-to-class="opacity-0"
       >
-        <div v-if="isEditModalOpen" class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4">
+        <div v-if="isEditModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4">
           <div 
             class="bg-card text-foreground rounded-[14px] shadow-2xl w-full max-w-[1200px] min-h-[261px] p-[24px] flex flex-col"
             @click.stop
@@ -503,7 +512,7 @@ const submitUpdate = () => {
             <div class="flex items-center justify-between mt-auto">
               <span class="text-sm text-destructive italic">*Wajib diisi</span>
               <div class="flex items-center gap-3">
-                <button @click="closeEditModal" class="px-4 py-2 text-sm font-medium border border-input rounded-[14px] hover:bg-accent transition-colors">
+                <button @click="closeEditModal" class="px-4 py-2 text-sm font-medium border border-input rounded-[14px] hover:bg-muted transition-colors">
                   Batal
                 </button>
                 <button @click="submitUpdate" :disabled="(activeEditForm as any).processing"
@@ -527,7 +536,7 @@ const submitUpdate = () => {
         leave-from-class="opacity-100"
         leave-to-class="opacity-0"
       >
-        <div v-if="isCreateModalOpen" class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4">
+        <div v-if="isCreateModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4">
           <div 
             class="bg-card text-foreground rounded-[14px] shadow-2xl w-full max-w-[1200px] min-h-[261px] p-[24px] flex flex-col"
             @click.stop
@@ -550,7 +559,7 @@ const submitUpdate = () => {
                       <ChevronDown class="w-4 h-4 opacity-50" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent class="w-[200px] rounded-[14px]">
+                  <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
                     <DropdownMenuItem v-for="cat in props.categories" :key="cat.id" @select="subcategoryForm.category_id = cat.id">
                       {{ cat.name }}
                     </DropdownMenuItem>
@@ -566,8 +575,8 @@ const submitUpdate = () => {
                     {{ subcategoryForm.category_id ? (props.categories.find(c => c.id === subcategoryForm.category_id)?.code ?? 'KOD') + '-' : 'KOD-' }}
                   </span>
                   <input type="text" v-model="subcategoryForm.code"
-                    @input="subcategoryForm.code = subcategoryForm.code.replace(/[^A-Za-z]/g, '').toUpperCase()"
-                    maxlength="3" :disabled="!subcategoryForm.category_id" placeholder="3 huruf kapital..."
+                    @input="subcategoryForm.code = subcategoryForm.code.replace(/[^A-Za-z0-9]/g, '').toUpperCase()"
+                    maxlength="3" :disabled="!subcategoryForm.category_id" placeholder="3 huruf kapital/angka..."
                     class="w-full pr-3 py-2 text-sm bg-transparent border-none focus:ring-0 focus:outline-none"
                     :class="{ 'cursor-not-allowed': !subcategoryForm.category_id }" />
                 </div>
@@ -586,7 +595,7 @@ const submitUpdate = () => {
               <div>
                 <label class="block text-sm font-medium text-foreground mb-2">Kode Kategori<span class="text-destructive">*</span></label>
                 <input type="text" v-model="categoryForm.code"
-                  @input="categoryForm.code = categoryForm.code.replace(/[^A-Za-z]/g, '').toUpperCase()"
+                  @input="categoryForm.code = categoryForm.code.replace(/[^A-Za-z0-9]/g, '').toUpperCase()"
                   maxlength="3" placeholder="Contoh: ATK, FUR, ELE..."
                   class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" />
                 <div v-if="categoryForm.errors.code" class="text-destructive text-xs mt-1">{{ categoryForm.errors.code }}</div>
@@ -611,7 +620,7 @@ const submitUpdate = () => {
             <div class="flex items-center justify-between mt-auto">
               <span class="text-sm text-destructive italic">*Wajib diisi</span>
               <div class="flex items-center gap-3">
-                <button @click="closeCreateModal" class="px-4 py-2 text-sm font-medium border border-input rounded-[14px] hover:bg-accent transition-colors">
+                <button @click="closeCreateModal" class="px-4 py-2 text-sm font-medium border border-input rounded-[14px] hover:bg-muted transition-colors">
                   Batal
                 </button>
                 <button @click="submitCreate" :disabled="(activeCreateForm as any).processing"

@@ -211,7 +211,7 @@ onMounted(() => {
                   <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent class="w-[220px] rounded-[14px]" align="start" :side-offset="4">
+              <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px]" align="start" :side-offset="4">
                 <DropdownMenuItem @select="timeFilter = ''">Semua kurun waktu</DropdownMenuItem>
                 <DropdownMenuItem @select="timeFilter = 'Hari ini'">Hari ini</DropdownMenuItem>
                 <DropdownMenuItem @select="timeFilter = 'Minggu ini'">Minggu ini</DropdownMenuItem>
@@ -226,7 +226,7 @@ onMounted(() => {
                   <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent class="w-[220px] rounded-[14px]" align="start" :side-offset="4">
+              <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px]" align="start" :side-offset="4">
                 <DropdownMenuItem @select="methodFilter = ''">Semua metode</DropdownMenuItem>
                 <DropdownMenuItem @select="methodFilter = 'Diambil sendiri'">Diambil sendiri</DropdownMenuItem>
                 <DropdownMenuItem @select="methodFilter = 'Diantar'">Diantar</DropdownMenuItem>
@@ -267,7 +267,7 @@ onMounted(() => {
                     <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent class="w-[160px] rounded-[14px]" align="start" :side-offset="4">
+                <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px]" align="start" :side-offset="4">
                   <DropdownMenuItem @select="rowsPerPage = 'Semua baris'">Semua baris</DropdownMenuItem>
                   <DropdownMenuItem @select="rowsPerPage = '10'">10</DropdownMenuItem>
                   <DropdownMenuItem @select="rowsPerPage = '25'">25</DropdownMenuItem>
