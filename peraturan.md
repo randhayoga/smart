@@ -25,3 +25,6 @@
 25. samakan gaya font dan ukuran font untuk judul, subjudul, dan isi teks di setiap halamannya
 26. jangan menambahkan file komponen jika tidak digunakan
 27. pastikan untuk selalu memeriksa halaman atau folder lainnya untuk memastikan jika ada komponen yang mirip atau sama, ada alur data yang mirip atau sama, ada kesamaan atau tidak. minimal memeriksa keseluruhan adalah 2 kali, awal dan akhir
+28. jika ada iput gambar maka harus jpg, jpeg dan png saja, tidak menerima format lain
+29. selalu memberikan notifikasi atau pemberitahuan kepada pengguna jika terjadi kesalahan atau jika berhasil
+30. 

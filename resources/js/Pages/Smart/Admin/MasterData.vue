@@ -528,7 +528,7 @@ const handleConfirmDelete = () => {
               </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 flex-grow" v-else-if="!['Satuan', 'Merek', 'Organizer', 'Vendor', 'Lokasi'].includes(activeTab)">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 flex-grow" v-else-if="!['Subkategori, Satuan', 'Merek', 'Organizer', 'Vendor', 'Lokasi'].includes(activeTab)">
               <div>
                 <label class="block text-sm font-medium text-foreground mb-2">Kode {{ activeTab }}<span class="text-destructive">*</span></label>
                 <input 

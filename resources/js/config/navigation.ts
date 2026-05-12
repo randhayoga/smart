@@ -17,7 +17,9 @@ import {
     Eye,
     PackagePlus,
     ShoppingBasket,
-    ShoppingCart
+    ShoppingCart,
+    Archive,
+    RefreshCcw
 } from 'lucide-vue-next';
 
 export interface NavItem {
@@ -81,12 +83,12 @@ export const mainNavigation: NavSection[] = [
             {
                 title: 'Pengembalian',
                 href: '/smart/returns',
-                icon: BaggageClaim,
+                icon: RefreshCcw,
             },
             {
                 title: 'Arsip',
-                href: '/smart/archive',
-                icon: ListCheck,
+                href: '/smart/arsip',
+                icon: Archive,
             },
         ],
     },
