@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, h, onMounted } from 'vue';
+import { ref, watch, h, onMounted } from 'vue';
 import { router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { 
@@ -11,9 +11,9 @@ import {
   X
 } from 'lucide-vue-next';
 import TableSearch from '@/Components/TableSearch.vue';
-import ExportButtonGroup from '@/Components/ExportButtonGroup.vue';
 
 import { Button } from "@/Components/ui/button";
+import ExportButtonGroup from "@/Components/ExportButtonGroup.vue";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,18 +36,17 @@ interface Props {
 const props = defineProps<Props>();
 
 // Dummy Data
-const dummyHandovers = [
-  { id: 1, number: '052026-0001', requester: 'John Doe', method: 'Diambil sendiri', time: '12-05-2026 10:00', location: 'Ruang IFS' },
-  { id: 2, number: '052026-0002', requester: 'Jane Smith', method: 'Diantar', time: '13-05-2026 14:30', location: 'Gudang Utama' },
-  { id: 3, number: '052026-0003', requester: 'John Doe', method: 'Diantar', time: '14-05-2026 09:15', location: 'Ruang IFS' },
-  { id: 4, number: '052026-0004', requester: 'Budi Utomo', method: 'Diambil sendiri', time: '15-05-2026 11:00', location: 'Tiga Negeri' },
-  { id: 5, number: '052026-0005', requester: 'Siti Aminah', method: 'Diantar', time: '16-05-2026 13:45', location: 'Mega Mendung' },
+const dummyBorrowed = [
+  { id: 1, number: '052026-0001', borrower: 'John Doe', dueDate: '12-05-2026 10:00', daysLeft: '1' },
+  { id: 2, number: '052026-0002', borrower: 'Jane Smith', dueDate: '-', daysLeft: '-' },
+  { id: 3, number: '052026-0003', borrower: 'Budi Utomo', dueDate: '-', daysLeft: '-' },
+  { id: 4, number: '052026-0004', borrower: 'Siti Aminah', dueDate: '15-05-2026 10:00', daysLeft: '4' },
+  { id: 5, number: '052026-0005', borrower: 'Andi Saputra', dueDate: '11-05-2026 10:00', daysLeft: '0' },
 ];
 
 const searchQuery = ref('');
 const timeFilter = ref('');
-const methodFilter = ref('');
-const rowsPerPage = ref('10');
+const rowsPerPage = ref('Semua baris');
 
 const dataTableRef = ref<any>(null);
 
@@ -58,7 +57,7 @@ const columns: ColumnDef<any>[] = [
     header: ({ table }) => h('div', { class: 'text-center no-print flex items-center justify-center' }, [
       h('input', {
         type: 'checkbox',
-        class: 'rounded border-input text-primary focus:ring-primary/20 w-4 h-4 cursor-pointer',
+        class: 'rounded-full border-input text-primary focus:ring-primary/20 w-4 h-4 cursor-pointer',
         checked: table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate'),
         onChange: table.getToggleAllPageRowsSelectedHandler(),
       })
@@ -66,7 +65,7 @@ const columns: ColumnDef<any>[] = [
     cell: ({ row }) => h('div', { class: 'text-center no-print flex items-center justify-center' }, [
       h('input', {
         type: 'checkbox',
-        class: 'rounded border-input text-primary focus:ring-primary/20 w-4 h-4 cursor-pointer',
+        class: 'rounded-full border-input text-primary focus:ring-primary/20 w-4 h-4 cursor-pointer',
         checked: row.getIsSelected(),
         onChange: row.getToggleSelectedHandler(),
       })
@@ -85,52 +84,40 @@ const columns: ColumnDef<any>[] = [
     cell: ({ row }) => h('div', { class: 'text-muted-foreground font-mono text-sm truncate' }, row.getValue('number')),
   },
   {
-    accessorKey: 'requester',
+    accessorKey: 'borrower',
     header: ({ column }) => h(Button, {
       variant: 'ghost',
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
       class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
     }, () => [
-      'Nama Peminta',
+      'Nama Peminjam',
       h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
     ]),
-    cell: ({ row }) => h('div', { class: 'pl-0' }, row.getValue('requester')),
+    cell: ({ row }) => h('div', { class: 'pl-0' }, row.getValue('borrower')),
   },
   {
-    accessorKey: 'method',
+    accessorKey: 'dueDate',
     header: ({ column }) => h(Button, {
       variant: 'ghost',
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
       class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
     }, () => [
-      'Metode',
+      'Waktu Tenggat',
       h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
     ]),
-    cell: ({ row }) => h('div', { class: 'pl-0' }, row.getValue('method')),
+    cell: ({ row }) => h('div', { class: 'pl-0 text-muted-foreground' }, row.getValue('dueDate')),
   },
   {
-    accessorKey: 'time',
+    accessorKey: 'daysLeft',
     header: ({ column }) => h(Button, {
       variant: 'ghost',
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
       class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
     }, () => [
-      'Waktu',
+      'Sisa Hari',
       h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
     ]),
-    cell: ({ row }) => h('div', { class: 'pl-0 text-muted-foreground' }, row.getValue('time')),
-  },
-  {
-    accessorKey: 'location',
-    header: ({ column }) => h(Button, {
-      variant: 'ghost',
-      onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-      class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
-    }, () => [
-      'Tempat',
-      h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-    ]),
-    cell: ({ row }) => h('div', { class: 'pl-0' }, row.getValue('location')),
+    cell: ({ row }) => h('div', { class: 'pl-0' }, row.getValue('daysLeft')),
   },
   {
     id: 'actions',
@@ -146,8 +133,7 @@ const columns: ColumnDef<any>[] = [
 ];
 
 const handleViewDetail = (item: any) => {
-  // Use Inertia router with fallback to prevent crash if route() is not loaded
-  const url = `/smart/handover/${item.id}`;
+  const url = `/smart/borrowed/${item.id}`;
   router.get(url);
 };
 
@@ -155,13 +141,6 @@ const handlePrint = () => window.print();
 const handleExportExcel = () => alert('Exporting to Excel...');
 const handleExportPDF = () => alert('Exporting to PDF...');
 const handleExportCSV = () => alert('Exporting to CSV...');
-
-// Watchers for filters
-watch(methodFilter, (val) => {
-  if (dataTableRef.value && dataTableRef.value.table) {
-    dataTableRef.value.table.getColumn('method')?.setFilterValue(val);
-  }
-});
 
 watch(rowsPerPage, (val) => {
   if (dataTableRef.value && dataTableRef.value.table) {
@@ -175,17 +154,21 @@ watch(rowsPerPage, (val) => {
 
 onMounted(() => {
   if (dataTableRef.value && dataTableRef.value.table) {
-    dataTableRef.value.table.setPageSize(Number(rowsPerPage.value));
+    if (rowsPerPage.value === 'Semua baris') {
+      dataTableRef.value.table.setPageSize(999999);
+    } else {
+      dataTableRef.value.table.setPageSize(Number(rowsPerPage.value));
+    }
   }
 });
 </script>
 
 <template>
-  <AppLayout title="Serah Terima">
+  <AppLayout title="Lacak Peminjaman">
     <Breadcrumb>
       <BreadcrumbList class="pb-3">
         <BreadcrumbItem>
-          <BreadcrumbLink href="/smart/handover">Serah Terima</BreadcrumbLink>
+          <BreadcrumbLink href="/smart/borrowed">Lacak Peminjaman</BreadcrumbLink>
         </BreadcrumbItem>
       </BreadcrumbList>
     </Breadcrumb>
@@ -193,7 +176,7 @@ onMounted(() => {
     <div class="space-y-4">
       <div class="px-4 bg-card rounded-xl border border-border shadow-sm overflow-hidden">
         <div class="py-5 no-print">
-          <h2 class="text-lg font-bold text-foreground">Daftar Jadwal Serah Terima</h2>
+          <h2 class="text-lg font-bold text-foreground">Daftar Peminjaman</h2>
           
           <!-- Filters Row -->
           <div class="mt-4 flex flex-wrap items-end gap-4">
@@ -201,7 +184,7 @@ onMounted(() => {
               <label class="text-xs text-muted-foreground font-medium block ml-0.5">Filter</label>
               <TableSearch 
                 v-model="searchQuery"
-                placeholder="Cari nomor permintaan atau nama peminta..." 
+                placeholder="Cari nomor peminjaman atau nama peminjam..." 
               />
             </div>
 
@@ -212,25 +195,11 @@ onMounted(() => {
                   <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px]" align="start" :side-offset="4">
+              <DropdownMenuContent class="w-[220px] rounded-[14px]" align="start" :side-offset="4">
                 <DropdownMenuItem @select="timeFilter = ''">Semua kurun waktu</DropdownMenuItem>
                 <DropdownMenuItem @select="timeFilter = 'Hari ini'">Hari ini</DropdownMenuItem>
                 <DropdownMenuItem @select="timeFilter = 'Minggu ini'">Minggu ini</DropdownMenuItem>
                 <DropdownMenuItem @select="timeFilter = 'Bulan ini'">Bulan ini</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" class="w-[220px] justify-between rounded-[14px] font-normal text-muted-foreground">
-                  <span class="truncate">{{ methodFilter || 'Semua metode' }}</span>
-                  <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px]" align="start" :side-offset="4">
-                <DropdownMenuItem @select="methodFilter = ''">Semua metode</DropdownMenuItem>
-                <DropdownMenuItem @select="methodFilter = 'Diambil sendiri'">Diambil sendiri</DropdownMenuItem>
-                <DropdownMenuItem @select="methodFilter = 'Diantar'">Diantar</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -256,7 +225,7 @@ onMounted(() => {
                     <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px]" align="start" :side-offset="4">
+                <DropdownMenuContent class="w-[160px] rounded-[14px]" align="start" :side-offset="4">
                   <DropdownMenuItem @select="rowsPerPage = 'Semua baris'">Semua baris</DropdownMenuItem>
                   <DropdownMenuItem @select="rowsPerPage = '10'">10</DropdownMenuItem>
                   <DropdownMenuItem @select="rowsPerPage = '25'">25</DropdownMenuItem>
@@ -272,10 +241,13 @@ onMounted(() => {
           <DataTable 
             ref="dataTableRef"
             :columns="columns" 
-            :data="dummyHandovers" 
+            :data="dummyBorrowed" 
             :filter-value="searchQuery"
           />
         </div>
+        
+        <!-- Selection Info is rendered by DataTable automatically if show-selection-count is true, 
+             which is the default. Let's make sure it matches "0 dari X baris dipilih". -->
       </div>
     </div>
   </AppLayout>
