@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, h, onMounted, computed } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import { router } from '@inertiajs/vue3';
 import { 
   ChevronDown, 
   ArrowUpDown, 
@@ -15,6 +16,7 @@ import {
 } from 'lucide-vue-next';
 import TableSearch from '@/Components/TableSearch.vue';
 import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal.vue';
+import ExportButtonGroup from '@/Components/ExportButtonGroup.vue';
 
 import { Button } from "@/Components/ui/button";
 import {
@@ -229,6 +231,7 @@ const columns: ColumnDef<any>[] = [
     cell: ({ row }) => {
       return h('div', { class: 'flex items-center justify-end gap-2 no-print' }, [
         h('button', {
+          onClick: () => handleViewDetail(row.original),
           class: 'p-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-full transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50'
         }, [h(Eye, { class: 'w-3.5 h-3.5' })]),
         h('button', {
@@ -278,6 +281,11 @@ onMounted(() => {
 const getExportData = () => {
   if (!dataTableRef.value) return dummyInventory;
   return dataTableRef.value.table.getFilteredRowModel().rows.map((row: any) => row.original);
+};
+
+const handleViewDetail = (item: any) => {
+  const code = item.code || 'CAT-SUB-XXXX';
+  router.get(`/smart/inventory/${code}`);
 };
 
 // Export & Print Logic
@@ -463,8 +471,9 @@ const isFormValid = computed(() => {
 
 const handleCreateItem = () => {
   if (!isFormValid.value) return;
-  alert('Barang berhasil dibuat!');
+  const newCode = newItem.value.code;
   closeCreateModal();
+  router.get(`/smart/inventory/${newCode}`);
 };
 
 // Delete Modal Logic
@@ -640,34 +649,12 @@ const handleConfirmDelete = () => {
                     <Trash2 class="w-4 h-4" />
                     <span class="hidden sm:inline">Hapus Barang</span>
                   </button>
-                  <button 
-                    @click="handlePrint"
-                    class="flex items-center gap-2 px-4 py-2 bg-[#9B897B] hover:bg-[#8A786A] text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm"
-                  >
-                    <Printer class="w-4 h-4" />
-                    <span>Print</span>
-                  </button>
-                  <button 
-                    @click="handleExportExcel"
-                    class="flex items-center gap-2 px-4 py-2 bg-[#66BB6A] hover:bg-[#57A85B] text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm"
-                  >
-                    <FileDown class="w-4 h-4" />
-                    <span>Excel</span>
-                  </button>
-                  <button 
-                    @click="handleExportPDF"
-                    class="flex items-center gap-2 px-4 py-2 bg-[#FFA726] hover:bg-[#FB8C00] text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm"
-                  >
-                    <FileDown class="w-4 h-4" />
-                    <span>PDF</span>
-                  </button>
-                  <button 
-                    @click="handleExportCSV"
-                    class="flex items-center gap-2 px-4 py-2 bg-[#BA68C8] hover:bg-[#AB47BC] text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm"
-                  >
-                    <FileDown class="w-4 h-4" />
-                    <span>CSV</span>
-                  </button>
+                  <ExportButtonGroup 
+                    @print="handlePrint"
+                    @export-excel="handleExportExcel"
+                    @export-pdf="handleExportPDF"
+                    @export-csv="handleExportCSV"
+                  />
                 </div>
               </div>
               

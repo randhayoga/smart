@@ -6,6 +6,8 @@ use App\Http\Controllers\Smart\Admin\InventoryController;
 use App\Http\Controllers\Smart\Admin\MasterController;
 use App\Http\Controllers\Smart\Admin\InboxController;
 use App\Http\Controllers\Smart\Admin\HandoverController;
+use App\Http\Controllers\Smart\Admin\BorrowedController;
+use App\Http\Controllers\Smart\Admin\ReturnController;
 use App\Http\Controllers\Smart\User\UserDashboardController;
 use App\Http\Controllers\Smart\Admin\Master\CategoryController;
 use App\Http\Controllers\Smart\Admin\Master\SubcategoryController;
@@ -28,6 +30,7 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/user/dashboard', [UserDashboardController::class, 'index'])->name('user.dashboard');
     Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory');
+    Route::get('/inventory/{id}', [InventoryController::class, 'show'])->name('inventory.show');
     Route::get('/master', [MasterController::class, 'index'])->name('master');
 
     Route::prefix('master')->name('master.')->group(function () {
@@ -41,8 +44,15 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
     });
 
     Route::get('/inbox', [InboxController::class, 'index'])->name('inbox');
+    Route::get('/inbox/{id}', [InboxController::class, 'show'])->name('inbox.show');
     Route::get('/handover', [HandoverController::class, 'index'])->name('handover');
     Route::get('/handover/{id}', [HandoverController::class, 'show'])->name('handover.show');
+    Route::get('/borrowed', [BorrowedController::class, 'index'])->name('borrowed');
+    Route::get('/borrowed/{id}', [BorrowedController::class, 'show'])->name('borrowed.show');
+    Route::get('/returns', [ReturnController::class, 'index'])->name('returns');
+    Route::get('/returns/{id}', [ReturnController::class, 'show'])->name('returns.show');
+    Route::get('/arsip', [\App\Http\Controllers\Smart\Admin\ArsipController::class, 'index'])->name('arsip');
+    Route::get('/arsip/{id}', [\App\Http\Controllers\Smart\Admin\ArsipController::class, 'show'])->name('arsip.show');
 });
 
 
