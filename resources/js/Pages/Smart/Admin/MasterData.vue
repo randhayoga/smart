@@ -18,6 +18,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/Components/ui/dropdown-menu";
+import { RadioGroup, RadioGroupItem } from '@/Components/ui/radio-group';
+import { Label } from '@/Components/ui/label';
 import Heading from '@/Components/Heading.vue';
 import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem } from '@/Components/ui/breadcrumb';
 
@@ -26,7 +28,7 @@ import DataTable from '@/Components/DataTable.vue';
 import TableSearch from '@/Components/TableSearch.vue';
 import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal.vue';
 
-interface Category    { id: number; code: string; name: string; }
+interface Category    { id: number; code: string; name: string; is_consumable: boolean; }
 interface Subcategory { id: number; code: string; name: string; category_id: number; category: Category; }
 interface SimpleItem  { id: number; name: string; }
 
@@ -86,7 +88,7 @@ const isCreateModalOpen = ref(false);
 const editingItem       = ref<any>(null);
 
 // ── Create forms ────────────────────────────────────────────────
-const categoryForm    = useForm({ code: '', name: '' });
+const categoryForm    = useForm({ code: '', name: '', is_consumable: '1' });
 const subcategoryForm = useForm({ category_id: null as number | null, code: '', name: '' });
 const uomForm         = useForm({ name: '' });
 const brandForm       = useForm({ name: '' });
@@ -95,7 +97,7 @@ const vendorForm      = useForm({ name: '' });
 const locationForm    = useForm({ name: '' });
 
 // ── Edit forms ──────────────────────────────────────────────────
-const editCategoryForm    = useForm({ id: null as number | null, code: '', name: '' });
+const editCategoryForm    = useForm({ id: null as number | null, code: '', name: '', is_consumable: '1' });
 const editSubcategoryForm = useForm({ id: null as number | null, name: '' });
 const editUomForm         = useForm({ id: null as number | null, name: '' });
 const editBrandForm       = useForm({ id: null as number | null, name: '' });
@@ -136,7 +138,10 @@ const openEditModal = (item: any) => {
   const form = activeEditForm.value as any;
   form.id   = item.id;
   form.name = item.name;
-  if (activeTab.value === 'Kategori') form.code = item.code;
+  if (activeTab.value === 'Kategori') {
+    form.code = item.code;
+    form.is_consumable = item.is_consumable ? '1' : '0';
+  }
   isEditModalOpen.value = true;
 };
 
@@ -191,6 +196,30 @@ const columns = computed<ColumnDef<any>[]>(() => {
         ])
       },
       cell: ({ row }) => h('div', { class: 'pl-2 text-muted-foreground font-mono text-sm truncate' }, row.getValue('code')),
+    });
+  }
+
+  // Klasifikasi column (Kategori only)
+  if (activeTab.value === 'Kategori') {
+    cols.push({
+      accessorKey: 'is_consumable',
+      header: ({ column }) => {
+        return h(Button, {
+          variant: 'ghost',
+          onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+          class: 'pl-2 hover:bg-transparent font-semibold text-foreground justify-start'
+        }, () => [
+          'Klasifikasi',
+          h(ArrowUpDown, { class: 'ml-2 h-4 w-4 text-muted-foreground' }),
+        ])
+      },
+      cell: ({ row }) => h('div', { class: 'pl-2' }, [
+        h('span', { 
+          class: row.original.is_consumable 
+            ? 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800' 
+            : 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800'
+        }, row.original.is_consumable ? 'Habis Pakai' : 'Aset')
+      ]),
     });
   }
 
@@ -485,7 +514,7 @@ const pageSize = computed(() => {
             </div>
 
             <!-- Edit: Kategori -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 flex-grow" v-else-if="activeTab === 'Kategori'">
+            <div v-else-if="activeTab === 'Kategori'" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 flex-grow">
               <div>
                 <label class="block text-sm font-medium text-foreground mb-2">Kode Kategori (tidak dapat diubah)</label>
                 <input type="text" v-model="editCategoryForm.code" disabled
@@ -497,6 +526,20 @@ const pageSize = computed(() => {
                 <input type="text" v-model="editCategoryForm.name" maxlength="255"
                   class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" />
                 <div v-if="editCategoryForm.errors.name" class="text-destructive text-xs mt-1">{{ editCategoryForm.errors.name }}</div>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-foreground mb-3">Klasifikasi<span class="text-destructive">*</span></label>
+                <RadioGroup v-model="editCategoryForm.is_consumable" class="flex gap-6">
+                  <div class="flex items-center space-x-2">
+                    <RadioGroupItem id="edit-consumable-true" value="1" />
+                    <Label for="edit-consumable-true" class="font-normal cursor-pointer">Habis Pakai</Label>
+                  </div>
+                  <div class="flex items-center space-x-2">
+                    <RadioGroupItem id="edit-consumable-false" value="0" />
+                    <Label for="edit-consumable-false" class="font-normal cursor-pointer">Aset</Label>
+                  </div>
+                </RadioGroup>
+                <div v-if="editCategoryForm.errors.is_consumable" class="text-destructive text-xs mt-1">{{ editCategoryForm.errors.is_consumable }}</div>
               </div>
             </div>
 
@@ -584,14 +627,14 @@ const pageSize = computed(() => {
               </div>
               <div>
                 <label class="block text-sm font-medium text-foreground mb-2">Nama Subkategori<span class="text-destructive">*</span></label>
-                <input type="text" v-model="subcategoryForm.name" maxlength="255" placeholder="Input nama subkategorinya di sini..."
+                <input type="text" v-model="subcategoryForm.name" maxlength="255" placeholder="Nama subkategori..."
                   class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" />
                 <div v-if="subcategoryForm.errors.name" class="text-destructive text-xs mt-1">{{ subcategoryForm.errors.name }}</div>
               </div>
             </div>
 
             <!-- Create: Kategori -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 flex-grow" v-else-if="activeTab === 'Kategori'">
+            <div v-else-if="activeTab === 'Kategori'" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 flex-grow">
               <div>
                 <label class="block text-sm font-medium text-foreground mb-2">Kode Kategori<span class="text-destructive">*</span></label>
                 <input type="text" v-model="categoryForm.code"
@@ -602,9 +645,24 @@ const pageSize = computed(() => {
               </div>
               <div>
                 <label class="block text-sm font-medium text-foreground mb-2">Nama Kategori<span class="text-destructive">*</span></label>
-                <input type="text" v-model="categoryForm.name" maxlength="255" placeholder="Input nama kategorinya di sini..."
+                <input type="text" v-model="categoryForm.name" maxlength="255" placeholder="Nama kategori..."
                   class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" />
                 <div v-if="categoryForm.errors.name" class="text-destructive text-xs mt-1">{{ categoryForm.errors.name }}</div>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-foreground mb-3">Klasifikasi<span class="text-destructive">*</span></label>
+                <RadioGroup v-model="categoryForm.is_consumable" class="flex gap-6">
+                  <div class="flex items-center space-x-2">
+                    <RadioGroupItem id="consumable-true" value="1" />
+                    <Label for="consumable-true" class="font-normal cursor-pointer">Habis Pakai</Label>
+                  </div>
+                  <div class="flex items-center space-x-2">
+                    <RadioGroupItem id="consumable-false" value="0" />
+                    <Label for="consumable-false" class="font-normal cursor-pointer">Aset</Label>
+                  </div>
+                </RadioGroup>
+                <div v-if="categoryForm.errors.is_consumable" class="text-destructive text-xs mt-1">{{ categoryForm.errors.is_consumable }}</div>
               </div>
             </div>
 
@@ -612,7 +670,7 @@ const pageSize = computed(() => {
             <div class="mb-8 flex-grow" v-else>
               <label class="block text-sm font-medium text-foreground mb-2">Nama {{ activeTab }}<span class="text-destructive">*</span></label>
               <input type="text" v-model="(activeCreateForm as any).name" maxlength="255"
-                :placeholder="`Input nama ${activeTab}nya di sini...`"
+                :placeholder="`Nama ${activeTab}...`"
                 class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" />
               <div v-if="(activeCreateForm as any).errors?.name" class="text-destructive text-xs mt-1">{{ (activeCreateForm as any).errors.name }}</div>
             </div>
