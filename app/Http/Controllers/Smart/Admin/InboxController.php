@@ -18,4 +18,15 @@ class InboxController extends Controller
             'user' => $request->user(),
         ]);
     }
+
+    /**
+     * Display the inbox detail page.
+     */
+    public function show(Request $request, string $id): Response
+    {
+        return Inertia::render('Smart/Admin/InboxDetail', [
+            'user' => $request->user(),
+            'requestId' => $id,
+        ]);
+    }
 }

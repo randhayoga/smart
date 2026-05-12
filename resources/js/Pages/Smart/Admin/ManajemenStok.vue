@@ -15,6 +15,7 @@ import {
 } from 'lucide-vue-next';
 import TableSearch from '@/Components/TableSearch.vue';
 import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal.vue';
+import ExportButtonGroup from '@/Components/ExportButtonGroup.vue';
 
 import { Button } from "@/Components/ui/button";
 import {
@@ -640,34 +641,12 @@ const handleConfirmDelete = () => {
                     <Trash2 class="w-4 h-4" />
                     <span class="hidden sm:inline">Hapus Barang</span>
                   </button>
-                  <button 
-                    @click="handlePrint"
-                    class="flex items-center gap-2 px-4 py-2 bg-[#9B897B] hover:bg-[#8A786A] text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm"
-                  >
-                    <Printer class="w-4 h-4" />
-                    <span>Print</span>
-                  </button>
-                  <button 
-                    @click="handleExportExcel"
-                    class="flex items-center gap-2 px-4 py-2 bg-[#66BB6A] hover:bg-[#57A85B] text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm"
-                  >
-                    <FileDown class="w-4 h-4" />
-                    <span>Excel</span>
-                  </button>
-                  <button 
-                    @click="handleExportPDF"
-                    class="flex items-center gap-2 px-4 py-2 bg-[#FFA726] hover:bg-[#FB8C00] text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm"
-                  >
-                    <FileDown class="w-4 h-4" />
-                    <span>PDF</span>
-                  </button>
-                  <button 
-                    @click="handleExportCSV"
-                    class="flex items-center gap-2 px-4 py-2 bg-[#BA68C8] hover:bg-[#AB47BC] text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm"
-                  >
-                    <FileDown class="w-4 h-4" />
-                    <span>CSV</span>
-                  </button>
+                  <ExportButtonGroup 
+                    @print="handlePrint"
+                    @export-excel="handleExportExcel"
+                    @export-pdf="handleExportPDF"
+                    @export-csv="handleExportCSV"
+                  />
                 </div>
               </div>
               
