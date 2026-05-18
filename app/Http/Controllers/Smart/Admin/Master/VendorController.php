@@ -42,6 +42,13 @@ class VendorController extends Controller
      */
     public function destroy(Vendor $vendor): RedirectResponse
     {
+        // Check if there are any Lots linked to this Vendor
+        if (\App\Models\Inventory\Lot::where('vendor_id', $vendor->id)->exists()) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'error' => 'Gagal menghapus! Vendor ini masih digunakan oleh LOT barang.'
+            ]);
+        }
+
         $vendor->delete();
 
         return redirect()->back()->with('success', 'Vendor berhasil dihapus.');

@@ -57,4 +57,24 @@ class User extends Authenticatable
     {
         return $this->username === '255476';
     }
+
+    public function department()
+    {
+        return $this->belongsTo(Department::class, 'department_id');
+    }
+
+    public function projects()
+    {
+        return $this->belongsToMany(Project::class, 'project_user');
+    }
+
+    public function requests()
+    {
+        return $this->hasMany(Request\Request::class, 'user_id');
+    }
+
+    public function approvals()
+    {
+        return $this->hasMany(Request\RequestApproval::class, 'approver_id');
+    }
 }

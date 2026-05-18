@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import AssetItemCard from '@/Components/AssetItemCard.vue';
 import { 
@@ -14,47 +14,38 @@ import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem, BreadcrumbS
 
 interface Props {
   requestId: string | number;
+  requestData: {
+    id: number;
+    number: string;
+    requester_name: string;
+    approver_name: string;
+    created_at: string;
+    utilization: string;
+    duration: string;
+    reason: string;
+  };
+  items: Array<{
+    id: number;
+    brand: string;
+    category: string;
+    subcategory: string;
+    quantity: number | string;
+    assets: string[];
+  }>;
+  timeline: Array<{
+    status: string;
+    user?: string;
+    time?: string;
+    completed?: boolean;
+    active?: boolean;
+    isAction?: boolean;
+  }>;
 }
 
 const props = defineProps<Props>();
 
-// Mock data for new request items
-const items = ref([
-  {
-    id: 1,
-    brand: 'Merek Spek',
-    category: 'Kategori',
-    subcategory: 'Subkategori',
-    quantity: 'XX',
-    assets: [
-      'XXXX-ABC-DE-ORG-PTRE-XX',
-      'XXXX-ABC-DE-ORG-PTRE-XX',
-      'XXXX-ABC-DE-ORG-PTRE-XX',
-      'XXXX-ABC-DE-ORG-PTRE-XX',
-      'XXXX-ABC-DE-ORG-PTRE-XX',
-    ]
-  },
-  {
-    id: 2,
-    brand: 'Merek Spek',
-    category: 'Kategori',
-    subcategory: 'Subkategori',
-    quantity: 'XX',
-    assets: [
-       'XXXX-ABC-DE-ORG-PTRE-XX',
-    ]
-  }
-]);
-
-const timeline = [
-  { status: 'Permintaan dibuat', user: 'John Doe', time: 'DD-MM-YYYY HH:MM', completed: true },
-  { status: 'Di-approve', user: 'Jane Doe', time: 'DD-MM-YYYY HH:MM', completed: true },
-  { 
-    status: 'Perlu konfirmasi Anda!', 
-    active: true,
-    isAction: true 
-  },
-];
+const items = computed(() => props.items || []);
+const timeline = computed(() => props.timeline || []);
 
 const handleApprove = () => alert('Request Approved!');
 const handleReject = () => alert('Request Rejected!');
@@ -102,30 +93,34 @@ const handlePilihAlokasi = (item: any) => alert(`Pilih Alokasi Aset untuk ${item
           <div class="space-y-4">
             <h3 class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Detail:</h3>
             <div class="space-y-2">
-                <h2 class="text-lg font-bold text-foreground">#Nomor_Permintaan/#Nomor_Peminjaman</h2>
-                
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-8 text-sm">
-                    <div class="flex flex-col">
-                        <span class="text-muted-foreground font-normal">Dibuat oleh:</span>
-                        <span class="font-medium text-foreground">John Doe</span>
-                    </div>
-                    <div class="flex flex-col">
-                        <span class="text-muted-foreground font-normal">PIC Approval:</span>
-                        <span class="font-medium text-foreground">Jane Doe</span>
-                    </div>
-                    <div class="flex flex-col">
-                        <span class="text-muted-foreground font-normal">Waktu dibuat:</span>
-                        <span class="font-medium text-foreground">DD/MM/YYYY HH:MM</span>
-                    </div>
-                    <div class="flex flex-col sm:col-span-2">
-                        <span class="text-muted-foreground font-normal">Pemanfaatan:</span>
-                        <span class="font-medium text-foreground">Jenis_Pemanfaatan (Nomor_Project/Nama_Departement)</span>
-                    </div>
-                    <div class="flex flex-col sm:col-span-2">
-                        <span class="text-muted-foreground font-normal">Durasi:</span>
-                        <span class="font-medium text-foreground">DD-MM-YYYY HH:MM s.d. DD-MM-YYYY HH:MM (X hari, Y jam)</span>
-                    </div>
-                </div>
+                 <h2 class="text-lg font-bold text-foreground">{{ requestData?.number }}</h2>
+                 
+                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-8 text-sm">
+                     <div class="flex flex-col">
+                         <span class="text-muted-foreground font-normal">Dibuat oleh:</span>
+                         <span class="font-medium text-foreground">{{ requestData?.requester_name }}</span>
+                     </div>
+                     <div class="flex flex-col">
+                         <span class="text-muted-foreground font-normal">PIC Approval:</span>
+                         <span class="font-medium text-foreground">{{ requestData?.approver_name }}</span>
+                     </div>
+                     <div class="flex flex-col">
+                         <span class="text-muted-foreground font-normal">Waktu dibuat:</span>
+                         <span class="font-medium text-foreground">{{ requestData?.created_at }}</span>
+                     </div>
+                     <div class="flex flex-col sm:col-span-2">
+                         <span class="text-muted-foreground font-normal">Pemanfaatan:</span>
+                         <span class="font-medium text-foreground">{{ requestData?.utilization }}</span>
+                     </div>
+                     <div class="flex flex-col sm:col-span-2">
+                         <span class="text-muted-foreground font-normal">Durasi:</span>
+                         <span class="font-medium text-foreground">{{ requestData?.duration }}</span>
+                     </div>
+                     <div v-if="requestData?.reason" class="flex flex-col sm:col-span-2">
+                         <span class="text-muted-foreground font-normal">Alasan Kebutuhan:</span>
+                         <span class="font-medium text-foreground italic">"{{ requestData?.reason }}"</span>
+                     </div>
+                 </div>
             </div>
           </div>
         </div>

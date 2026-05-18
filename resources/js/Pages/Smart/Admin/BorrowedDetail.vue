@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { 
   ChevronDown, 
@@ -16,50 +16,37 @@ import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem, BreadcrumbS
 
 interface Props {
   borrowedId: string | number;
+  requestData: {
+    id: number;
+    number: string;
+    requester_name: string;
+    created_at: string;
+    utilization: string;
+    duration: string;
+    reason: string;
+  };
+  items: Array<{
+    id: number;
+    brand: string;
+    category: string;
+    subcategory: string;
+    quantity: number | string;
+    assets: string[];
+  }>;
+  timeline: Array<{
+    status: string;
+    user?: string;
+    time?: string;
+    completed?: boolean;
+    active?: boolean;
+    info?: string;
+  }>;
 }
 
 const props = defineProps<Props>();
 
-// Mock internal state for items
-const items = ref([
-  {
-    id: 1,
-    brand: 'Merek Spek',
-    category: 'Kategori',
-    subcategory: 'Subkategori',
-    quantity: 'XX',
-    assets: [
-      'XXXX-ABC-DE-ORG-PTRE-XX (Tempat Penempatan)',
-      'XXXX-ABC-DE-ORG-PTRE-XX (Mega Mendung)',
-      'XXXX-ABC-DE-ORG-PTRE-XX (Mega Mendung)',
-      'XXXX-ABC-DE-ORG-PTRE-XX (Tiga Negeri)',
-      'XXXX-ABC-DE-ORG-PTRE-XX (Tiga Negeri)',
-    ]
-  },
-  {
-    id: 2,
-    brand: 'Merek Spek',
-    category: 'Kategori',
-    subcategory: 'Subkategori',
-    quantity: 'XX',
-    assets: [
-       'XXXX-ABC-DE-ORG-PTRE-XX (Tempat Penempatan)',
-    ]
-  }
-]);
-
-const timeline = [
-  { status: 'Permintaan dibuat', time: 'DD-MM-YYYY HH:MM', completed: true },
-  { status: 'Di-approve', user: 'John Doe', time: 'DD-MM-YYYY HH:MM', completed: true },
-  { status: 'Dikonfirmasi', user: 'Radifa', time: 'DD-MM-YYYY HH:MM', completed: true },
-  { status: 'Serah Terima', time: 'DD-MM-YYYY HH:MM', completed: true },
-  { 
-    status: 'Aset sedang dipinjam', 
-    info: 'Tenggat pada DD-MM-YYYY HH:MM', 
-    active: true,
-    isFinal: true
-  },
-];
+const items = computed(() => props.items || []);
+const timeline = computed(() => props.timeline || []);
 
 const handleCatatPenempatan = (item: any) => {
   alert('Fitur Catat Penempatan Aset untuk ' + item.brand);
@@ -93,14 +80,26 @@ const handleCatatPenempatan = (item: any) => {
           <div class="space-y-4">
             <h3 class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Detail:</h3>
             <div class="space-y-1">
-                <h2 class="text-lg font-bold text-foreground">#Nomor_Permintaan/#Nomor_Peminjaman</h2>
+                <h2 class="text-lg font-bold text-foreground">{{ requestData?.number }}</h2>
+                <p class="text-sm text-foreground">
+                    <span class="text-muted-foreground font-normal">Dibuat oleh: </span>
+                    <span class="font-medium">{{ requestData?.requester_name }}</span>
+                </p>
+                <p class="text-sm text-foreground">
+                    <span class="text-muted-foreground font-normal">Waktu dibuat: </span>
+                    <span class="font-medium">{{ requestData?.created_at }}</span>
+                </p>
                 <p class="text-sm text-foreground">
                     <span class="text-muted-foreground font-normal">Pemanfaatan: </span>
-                    Jenis_Pemanfaatan (Nomor_Project/Nama_Departement)
+                    {{ requestData?.utilization }}
                 </p>
                 <p class="text-sm text-foreground">
                     <span class="text-muted-foreground font-normal">Durasi: </span>
-                    DD-MM-YYYY HH:MM s.d. DD-MM-YYYY HH:MM (X hari, Y jam)
+                    {{ requestData?.duration }}
+                </p>
+                <p v-if="requestData?.reason" class="text-sm text-foreground">
+                    <span class="text-muted-foreground font-normal">Alasan Kebutuhan: </span>
+                    <span class="italic font-medium">"{{ requestData?.reason }}"</span>
                 </p>
             </div>
           </div>
