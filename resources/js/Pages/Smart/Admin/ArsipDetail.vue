@@ -1,65 +1,47 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import AssetItemCard from '@/Components/AssetItemCard.vue';
 import { 
   CheckCircle2,
+  AlertCircle,
 } from 'lucide-vue-next';
 import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem, BreadcrumbSeparator } from '@/Components/ui/breadcrumb';
 
 interface Props {
   requestId: string | number;
+  requestData: {
+    id: number;
+    number: string;
+    requester_name: string;
+    approver_name: string;
+    created_at: string;
+    utilization: string;
+    duration: string;
+    reason: string;
+  };
+  items: Array<{
+    id: number;
+    brand: string;
+    category: string;
+    subcategory: string;
+    quantity: number | string;
+    assets: string[];
+  }>;
+  timeline: Array<{
+    status: string;
+    user?: string;
+    time?: string;
+    completed?: boolean;
+    active?: boolean;
+    info?: string;
+  }>;
 }
 
 const props = defineProps<Props>();
 
-// Mock data for archive items
-const items = ref([
-  {
-    id: 1,
-    brand: 'Merek Spek',
-    category: 'Kategori',
-    subcategory: 'Subkategori',
-    quantity: 'XX',
-    assets: [
-      'XXXX-ABC-DE-ORG-PTRE-XX',
-      'XXXX-ABC-DE-ORG-PTRE-XX',
-      'XXXX-ABC-DE-ORG-PTRE-XX',
-      'XXXX-ABC-DE-ORG-PTRE-XX',
-      'XXXX-ABC-DE-ORG-PTRE-XX',
-    ]
-  },
-  {
-    id: 2,
-    brand: 'Merek Spek',
-    category: 'Kategori',
-    subcategory: 'Subkategori',
-    quantity: 'XX',
-    assets: [
-       'XXXX-ABC-DE-ORG-PTRE-XX',
-    ]
-  },
-  {
-    id: 3,
-    brand: 'Merek Spek',
-    category: 'Kategori',
-    subcategory: 'Subkategori',
-    quantity: 'XX',
-    assets: [
-       'XXXX-ABC-DE-ORG-PTRE-XX',
-    ]
-  }
-]);
-
-const timeline = [
-  { status: 'Permintaan dibuat', time: 'DD-MM-YYYY HH:MM', completed: true },
-  { status: 'Di-approve', user: 'John Doe', time: 'DD-MM-YYYY HH:MM', completed: true },
-  { status: 'Dikonfirmasi', user: 'Radifa', time: 'DD-MM-YYYY HH:MM', completed: true },
-  { status: 'Serah Terima', time: 'DD-MM-YYYY HH:MM', completed: true },
-  { status: 'Aset selesai dipinjam', time: 'DD-MM-YYYY HH:MM', completed: true },
-  { status: 'Pengembalian aset', info: 'dikonfirmasi oleh Radifa', time: 'DD-MM-YYYY HH:MM', completed: true },
-  { status: 'Selesai', time: 'DD-MM-YYYY HH:MM', completed: true },
-];
+const items = computed(() => props.items || []);
+const timeline = computed(() => props.timeline || []);
 
 </script>
 
@@ -79,8 +61,8 @@ const timeline = [
     </Breadcrumb>
 
     <div class="mb-6">
-      <h1 class="text-xl font-bold text-foreground">Detail Permintaan #{{ requestId || 'Request_ID' }}</h1>
-      <p class="text-sm text-muted-foreground">Permintaan dibuat pada DD-MM-YYYY</p>
+      <h1 class="text-xl font-bold text-foreground">Detail Permintaan {{ requestData?.number || requestId }}</h1>
+      <p class="text-sm text-muted-foreground">Permintaan dibuat pada {{ requestData?.created_at }}</p>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -91,28 +73,32 @@ const timeline = [
           <div class="space-y-4">
             <h3 class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Detail:</h3>
             <div class="space-y-2">
-                <h2 class="text-lg font-bold text-foreground">#Nomor_Permintaan/#Nomor_Peminjaman</h2>
+                <h2 class="text-lg font-bold text-foreground">{{ requestData?.number }}</h2>
                 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-8 text-sm mt-3">
                     <div class="flex flex-col">
                         <span class="text-muted-foreground font-normal">Dibuat oleh:</span>
-                        <span class="font-medium text-foreground">John Doe</span>
+                        <span class="font-medium text-foreground">{{ requestData?.requester_name }}</span>
                     </div>
                     <div class="flex flex-col">
                         <span class="text-muted-foreground font-normal">PIC Approval:</span>
-                        <span class="font-medium text-foreground">Jane Doe</span>
+                        <span class="font-medium text-foreground">{{ requestData?.approver_name }}</span>
                     </div>
                     <div class="flex flex-col">
                         <span class="text-muted-foreground font-normal">Waktu dibuat:</span>
-                        <span class="font-medium text-foreground">DD/MM/YYYY HH:MM</span>
+                        <span class="font-medium text-foreground">{{ requestData?.created_at }}</span>
                     </div>
                     <div class="flex flex-col sm:col-span-2">
                         <span class="text-muted-foreground font-normal">Pemanfaatan:</span>
-                        <span class="font-medium text-foreground">Jenis_Pemanfaatan (Nomor_Project/Nama_Departement)</span>
+                        <span class="font-medium text-foreground">{{ requestData?.utilization }}</span>
                     </div>
                     <div class="flex flex-col sm:col-span-2">
                         <span class="text-muted-foreground font-normal">Durasi:</span>
-                        <span class="font-medium text-foreground">DD-MM-YYYY HH:MM s.d. DD-MM-YYYY HH:MM (X hari, Y jam)</span>
+                        <span class="font-medium text-foreground">{{ requestData?.duration }}</span>
+                    </div>
+                    <div v-if="requestData?.reason" class="flex flex-col sm:col-span-2">
+                        <span class="text-muted-foreground font-normal">Alasan Kebutuhan:</span>
+                        <span class="font-medium text-foreground italic">"{{ requestData?.reason }}"</span>
                     </div>
                 </div>
             </div>
@@ -144,17 +130,22 @@ const timeline = [
             <div v-for="(step, index) in timeline" :key="index">
               <div class="flex items-start gap-4">
                 <div class="flex flex-col items-center">
-                  <div class="relative z-10 flex items-center justify-center w-10 h-10 rounded-full bg-card border-2 border-green-500">
-                    <CheckCircle2 class="w-6 h-6 text-green-500" />
+                  <div class="relative z-10 flex items-center justify-center w-10 h-10 rounded-full bg-card border-2"
+                    :class="[
+                      step.completed ? 'border-green-500' : (step.active ? 'border-indigo-600' : 'border-red-500')
+                    ]"
+                  >
+                    <CheckCircle2 v-if="step.completed" class="w-6 h-6 text-green-500" />
+                    <AlertCircle v-else class="w-6 h-6" :class="step.active ? 'text-indigo-600' : 'text-red-500'" />
                   </div>
                 </div>
 
                 <div class="space-y-0.5 pt-0.5 flex-grow">
-                  <p class="font-bold text-base leading-tight text-green-600">
+                  <p class="font-bold text-base leading-tight" :class="step.completed ? 'text-green-600' : (step.active ? 'text-indigo-600' : 'text-red-600')">
                     {{ step.status }}
                   </p>
-                  <p v-if="step.user" class="text-sm text-green-600/80 font-medium leading-tight">oleh {{ step.user }}</p>
-                  <p v-if="step.info" class="text-sm text-green-600/80 font-medium leading-tight">{{ step.info }}</p>
+                  <p v-if="step.user" class="text-sm font-medium leading-tight text-foreground/80">oleh {{ step.user }}</p>
+                  <p v-if="step.info" class="text-sm font-medium leading-tight text-muted-foreground">{{ step.info }}</p>
                   <p v-if="step.time" class="text-sm text-muted-foreground leading-tight">{{ step.time }}</p>
                 </div>
               </div>
@@ -163,7 +154,7 @@ const timeline = [
                 <div class="w-2.5 h-8 ml-0.5">
                   <svg width="12" height="32" viewBox="0 0 12 32" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M6 0V28M6 28L1 23M6 28L11 23" 
-                      stroke="#22C55E" 
+                      :stroke="index < timeline.length - 2 ? '#22C55E' : (timeline[index+1].completed ? '#22C55E' : '#9CA3AF')" 
                       stroke-width="2" 
                       stroke-linecap="round" 
                       stroke-linejoin="round"

@@ -24,15 +24,28 @@ import DataTable from '@/Components/DataTable.vue';
 
 interface Props {
   itemId: string | number;
+  barangDetail: {
+    id: number;
+    code: string;
+    category: string;
+    subcategory: string;
+    brand: string;
+    specification: string;
+    unit: string;
+    lastUpdate: string;
+    lotCount: number;
+    amount: number;
+    imageUrl: string;
+  };
+  lotsList: any[];
+  organizersList: string[];
+  vendorsList: string[];
+  locationsList: string[];
 }
 
 const props = defineProps<Props>();
 
-// Dummy Data
-const dummyLots = [
-  { id: 1, lotCode: 'LOT-YYYY-CAT-SUB-XXXX-001', poNumber: 'PO-001', entryDate: 'DD-MM-YYYY', organizer: 'XXX', assetCount: 'XX' },
-  { id: 2, lotCode: 'LOT-YYYY-CAT-SUB-XXXX-002', poNumber: 'PO-002', entryDate: 'DD-MM-YYYY', organizer: 'XXX', assetCount: 'XX' },
-];
+const dummyLots = computed(() => props.lotsList || []);
 
 const searchQuery = ref('');
 const timeFilter = ref('');
@@ -157,14 +170,14 @@ onMounted(() => {
 // Edit Modal Logic
 const isEditModalOpen = ref(false);
 const editForm = ref({
-  kode: 'CAT-SUB-XXXX',
-  kategori: 'Kategori sekarang',
-  subkategori: 'Subkategori sekarang',
-  satuan: 'Satuan sekarang',
-  merek: 'Merek sekarang',
-  spesifikasi: 'Spesifikasi sekarang',
+  kode: props.barangDetail?.code || '',
+  kategori: props.barangDetail?.category || '',
+  subkategori: props.barangDetail?.subcategory || '',
+  satuan: props.barangDetail?.unit || '',
+  merek: props.barangDetail?.brand || '',
+  spesifikasi: props.barangDetail?.specification || '',
   foto: null as File | null,
-  fotoName: 'Foto_Sekarang.extension'
+  fotoName: props.barangDetail?.imageUrl ? props.barangDetail.imageUrl.split('/').pop() || '' : ''
 });
 
 const openEditModal = () => {
@@ -205,8 +218,25 @@ const isEditFormValid = computed(() => {
 
 const handleSaveChanges = () => {
   if (!isEditFormValid.value) return;
-  alert('Berhasil! Perubahan detail barang telah disimpan.');
-  closeEditModal();
+
+  const formData = new FormData();
+  formData.append('_method', 'PUT');
+  formData.append('satuan', editForm.value.satuan);
+  formData.append('merek', editForm.value.merek);
+  formData.append('spesifikasi', editForm.value.spesifikasi);
+  if (editForm.value.foto) {
+    formData.append('photo', editForm.value.foto);
+  }
+
+  router.post(`/smart/inventory/${props.barangDetail.id}`, formData, {
+    onSuccess: () => {
+      alert('Berhasil! Perubahan detail barang telah disimpan.');
+      closeEditModal();
+    },
+    onError: (errors) => {
+      alert('Gagal menyimpan perubahan: ' + Object.values(errors).join(', '));
+    }
+  });
 };
 
 // Delete Modal Logic
@@ -228,9 +258,16 @@ const isDeleteValid = computed(() => {
 
 const handleDelete = () => {
   if (!isDeleteValid.value) return;
-  alert('Berhasil! Barang beserta seluruh LOT dan Aset-nya telah dihapus.');
-  closeDeleteModal();
-  router.get('/smart/inventory');
+  router.delete(`/smart/inventory/${props.barangDetail.id}`, {
+    onSuccess: () => {
+      alert('Berhasil! Barang beserta seluruh LOT dan Aset-nya telah dihapus.');
+      closeDeleteModal();
+      router.get('/smart/inventory');
+    },
+    onError: (errors) => {
+      alert('Gagal menghapus barang: ' + Object.values(errors).join(', '));
+    }
+  });
 };
 </script>
 
@@ -244,7 +281,7 @@ const handleDelete = () => {
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
-          <span class="text-muted-foreground">CAT-SUB-XXXX</span>
+          <span class="text-muted-foreground">{{ barangDetail?.code }}</span>
         </BreadcrumbItem>
       </BreadcrumbList>
     </Breadcrumb>
@@ -277,22 +314,22 @@ const handleDelete = () => {
         
         <div class="flex flex-col md:flex-row gap-6">
           <div class="w-48 h-48 rounded-xl bg-muted shrink-0 flex items-center justify-center overflow-hidden border border-border">
-            <img src="https://placehold.co/400x400?text=Item" class="w-full h-full object-cover opacity-50" />
+            <img :src="barangDetail?.imageUrl" class="w-full h-full object-cover" />
           </div>
 
           <div class="flex-grow space-y-1">
             <div class="flex flex-col gap-1 mb-3">
-              <p class="font-bold text-foreground"><span class="text-foreground">Kode Barang:</span> CAT-SUB-XXXX</p>
-              <p class="font-bold text-foreground"><span class="text-foreground">Merek:</span> Merek</p>
-              <p class="font-bold text-foreground"><span class="text-foreground">Spesifikasi:</span> Spesifikasi</p>
+              <p class="font-bold text-foreground"><span class="text-foreground">Kode Barang:</span> {{ barangDetail?.code }}</p>
+              <p class="font-bold text-foreground"><span class="text-foreground">Merek:</span> {{ barangDetail?.brand }}</p>
+              <p class="font-bold text-foreground"><span class="text-foreground">Spesifikasi:</span> {{ barangDetail?.specification }}</p>
             </div>
             
-            <p class="text-foreground">Kategori: Kategori</p>
-            <p class="text-foreground">Subkategori: Subkategori</p>
-            <p class="text-foreground">Jumlah LOT: XX</p>
-            <p class="text-foreground">Jumlah stok: XXX</p>
-            <p class="text-foreground">Satuan: Lorem</p>
-            <p class="text-foreground">Pembaruan terakhir: DD-MM-YYYY HH:MM</p>
+            <p class="text-foreground">Kategori: {{ barangDetail?.category }}</p>
+            <p class="text-foreground">Subkategori: {{ barangDetail?.subcategory }}</p>
+            <p class="text-foreground">Jumlah LOT: {{ barangDetail?.lotCount }}</p>
+            <p class="text-foreground">Jumlah stok: {{ barangDetail?.amount }}</p>
+            <p class="text-foreground">Satuan: {{ barangDetail?.unit }}</p>
+            <p class="text-foreground">Pembaruan terakhir: {{ barangDetail?.lastUpdate }}</p>
           </div>
         </div>
       </div>
@@ -565,22 +602,22 @@ const handleDelete = () => {
               <div class="p-6">
                 <div class="flex flex-col md:flex-row gap-6 mb-6">
                   <div class="w-40 h-40 rounded-xl bg-muted shrink-0 flex items-center justify-center overflow-hidden border border-border">
-                    <img src="https://placehold.co/400x400?text=Item" class="w-full h-full object-cover opacity-50" />
+                    <img :src="barangDetail?.imageUrl" class="w-full h-full object-cover" />
                   </div>
 
                   <div class="flex-grow space-y-1">
                     <div class="flex flex-col gap-1 mb-2">
-                      <p class="font-bold text-foreground"><span class="text-foreground">Kode Barang:</span> CAT-SUB-XXXX</p>
-                      <p class="font-bold text-foreground"><span class="text-foreground">Merek:</span> Merek</p>
-                      <p class="font-bold text-foreground"><span class="text-foreground">Spesifikasi:</span> Spesifikasi</p>
+                      <p class="font-bold text-foreground"><span class="text-foreground">Kode Barang:</span> {{ barangDetail?.code }}</p>
+                      <p class="font-bold text-foreground"><span class="text-foreground">Merek:</span> {{ barangDetail?.brand }}</p>
+                      <p class="font-bold text-foreground"><span class="text-foreground">Spesifikasi:</span> {{ barangDetail?.specification }}</p>
                     </div>
                     
-                    <p class="text-foreground text-sm">Kategori: Kategori</p>
-                    <p class="text-foreground text-sm">Subkategori: Subkategori</p>
-                    <p class="text-foreground text-sm">Jumlah LOT: XX</p>
-                    <p class="text-foreground text-sm">Jumlah stok: XXX</p>
-                    <p class="text-foreground text-sm">Satuan: Lorem</p>
-                    <p class="text-foreground text-sm">Pembaruan terakhir: DD-MM-YYYY HH:MM</p>
+                    <p class="text-foreground text-sm">Kategori: {{ barangDetail?.category }}</p>
+                    <p class="text-foreground text-sm">Subkategori: {{ barangDetail?.subcategory }}</p>
+                    <p class="text-foreground text-sm">Jumlah LOT: {{ barangDetail?.lotCount }}</p>
+                    <p class="text-foreground text-sm">Jumlah stok: {{ barangDetail?.amount }}</p>
+                    <p class="text-foreground text-sm">Satuan: {{ barangDetail?.unit }}</p>
+                    <p class="text-foreground text-sm">Pembaruan terakhir: {{ barangDetail?.lastUpdate }}</p>
                   </div>
                 </div>
 

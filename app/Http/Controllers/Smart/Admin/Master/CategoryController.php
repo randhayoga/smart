@@ -58,6 +58,13 @@ class CategoryController extends Controller
      */
     public function destroy(Category $category): RedirectResponse
     {
+        // Check if there are any Subcategories linked to this category
+        if ($category->subcategories()->exists()) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'error' => 'Gagal menghapus! Kategori ini masih memiliki subkategori. Silakan hapus subkategori di dalamnya terlebih dahulu.'
+            ]);
+        }
+
         $category->delete();
 
         return redirect()->back()->with('success', 'Kategori berhasil dihapus.');

@@ -29,8 +29,11 @@ Route::get('/', function () {
 Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/user/dashboard', [UserDashboardController::class, 'index'])->name('user.dashboard');
-    Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory');
-    Route::get('/inventory/{id}', [InventoryController::class, 'show'])->name('inventory.show');
+    Route::get('/browse', [\App\Http\Controllers\Smart\User\BrowseController::class, 'index'])->name('browse');
+    Route::post('/browse/add', [\App\Http\Controllers\Smart\User\BrowseController::class, 'addToCart'])->name('browse.addToCart');
+    Route::post('/browse/po', [\App\Http\Controllers\Smart\User\BrowseController::class, 'submitPoRequest'])->name('browse.po');
+    Route::delete('/inventory/bulk', [InventoryController::class, 'bulkDestroy'])->name('inventory.bulkDestroy');
+    Route::resource('inventory', InventoryController::class)->only(['index', 'show', 'store', 'update', 'destroy']);
     Route::get('/master', [MasterController::class, 'index'])->name('master');
 
     Route::prefix('master')->name('master.')->group(function () {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { 
   ChevronDown, 
@@ -16,63 +16,48 @@ import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem, BreadcrumbS
 
 interface Props {
   returnId: string | number;
+  requestData: {
+    id: number;
+    number: string;
+    requester_name: string;
+    approver_name: string;
+    created_at: string;
+    utilization: string;
+    duration: string;
+    reason: string;
+  };
+  returnData: {
+    id: number;
+    number: string;
+    borrower: string;
+    returnTime: string;
+    location: string;
+    method: string;
+  };
+  items: Array<{
+    id: number;
+    brand: string;
+    category: string;
+    subcategory: string;
+    quantity: number | string;
+    assets: string[];
+  }>;
+  timeline: Array<{
+    status: string;
+    user?: string;
+    time?: string;
+    completed?: boolean;
+    active?: boolean;
+    info?: string;
+    method?: string;
+    location?: string;
+  }>;
 }
 
 const props = defineProps<Props>();
 
-// Mock internal state for items
-const items = ref([
-  {
-    id: 1,
-    brand: 'Merek Spek',
-    category: 'Kategori',
-    subcategory: 'Subkategori',
-    quantity: 'XX',
-    assets: [
-      'XXXX-ABC-DE-ORG-PTRE-XX (Tempat Penempatan)',
-      'XXXX-ABC-DE-ORG-PTRE-XX (Mega Mendung)',
-      'XXXX-ABC-DE-ORG-PTRE-XX (Mega Mendung)',
-      'XXXX-ABC-DE-ORG-PTRE-XX (Tiga Negeri)',
-      'XXXX-ABC-DE-ORG-PTRE-XX (Tiga Negeri)',
-    ]
-  },
-  {
-    id: 2,
-    brand: 'Merek Spek',
-    category: 'Kategori',
-    subcategory: 'Subkategori',
-    quantity: 'XX',
-    assets: [
-       'XXXX-ABC-DE-ORG-PTRE-XX (Tempat Penempatan)',
-    ]
-  },
-  {
-    id: 3,
-    brand: 'Merek Spek',
-    category: 'Kategori',
-    subcategory: 'Subkategori',
-    quantity: 'XX',
-    assets: [
-       'XXXX-ABC-DE-ORG-PTRE-XX (Tempat Penempatan)',
-    ]
-  }
-]);
-
-const timeline = [
-  { status: 'Permintaan dibuat', time: 'DD-MM-YYYY HH:MM', completed: true },
-  { status: 'Di-approve', user: 'John Doe', time: 'DD-MM-YYYY HH:MM', completed: true },
-  { status: 'Dikonfirmasi', user: 'Radifa', time: 'DD-MM-YYYY HH:MM', completed: true },
-  { status: 'Serah Terima', time: 'DD-MM-YYYY HH:MM', completed: true },
-  { status: 'Aset selesai dipinjam', time: 'DD-MM-YYYY HH:MM', completed: true },
-  { 
-    status: 'Pengembalian aset', 
-    method: 'Dikembalikan sendiri',
-    location: 'Ruang IFS',
-    time: 'DD-MM-YYYY HH:MM', 
-    active: true,
-    isFinal: true
-  },
-];
+const items = computed(() => props.items || []);
+const timeline = computed(() => props.timeline || []);
 
 const handleConfirmReturn = () => {
   alert('Konfirmasi Pengembalian Berhasil!');
@@ -95,14 +80,14 @@ const handleConfirmReturn = () => {
     </Breadcrumb>
 
     <div class="mb-6">
-      <h1 class="text-xl font-bold text-foreground">Detail Permintaan #Request_ID</h1>
-      <p class="text-sm text-muted-foreground">Permintaan dibuat pada DD-MM-YYYY</p>
+      <h1 class="text-xl font-bold text-foreground">Detail Permintaan {{ requestData?.number || returnId }}</h1>
+      <p class="text-sm text-muted-foreground">Permintaan dibuat pada {{ requestData?.created_at }}</p>
     </div>
 
     <!-- Info Banner -->
     <div class="mb-6 p-1.5 pl-6 rounded-xl border border-indigo-200 bg-indigo-50/30 flex items-center justify-between gap-3 text-indigo-700">
       <p class="text-sm font-semibold">
-        Tolong kembalikan semua aset pada <span class="font-bold">DD-MM-YYYY jam HH:MM di Ruang IFS</span>
+        Tolong kembalikan semua aset pada <span class="font-bold">{{ returnData?.returnTime }} di {{ returnData?.location }} ({{ returnData?.method }})</span>
       </p>
       <button 
         @click="handleConfirmReturn"
@@ -120,28 +105,32 @@ const handleConfirmReturn = () => {
           <div class="space-y-4">
             <h3 class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Detail:</h3>
             <div class="space-y-2">
-                <h2 class="text-lg font-bold text-foreground">#Nomor_Permintaan/#Nomor_Peminjaman</h2>
+                <h2 class="text-lg font-bold text-foreground">{{ requestData?.number }}</h2>
                 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-8 text-sm">
                     <div class="flex flex-col">
                         <span class="text-muted-foreground font-normal">Dibuat oleh:</span>
-                        <span class="font-medium text-foreground">John Doe</span>
+                        <span class="font-medium text-foreground">{{ requestData?.requester_name }}</span>
                     </div>
                     <div class="flex flex-col">
                         <span class="text-muted-foreground font-normal">PIC Approval:</span>
-                        <span class="font-medium text-foreground">Jane Doe</span>
+                        <span class="font-medium text-foreground">{{ requestData?.approver_name }}</span>
                     </div>
                     <div class="flex flex-col">
                         <span class="text-muted-foreground font-normal">Waktu dibuat:</span>
-                        <span class="font-medium text-foreground">DD/MM/YYYY HH:MM</span>
+                        <span class="font-medium text-foreground">{{ requestData?.created_at }}</span>
                     </div>
                     <div class="flex flex-col sm:col-span-2">
                         <span class="text-muted-foreground font-normal">Pemanfaatan:</span>
-                        <span class="font-medium text-foreground">Jenis_Pemanfaatan (Nomor_Project/Nama_Departement)</span>
+                        <span class="font-medium text-foreground">{{ requestData?.utilization }}</span>
                     </div>
                     <div class="flex flex-col sm:col-span-2">
                         <span class="text-muted-foreground font-normal">Durasi:</span>
-                        <span class="font-medium text-foreground">DD-MM-YYYY HH:MM s.d. DD-MM-YYYY HH:MM (X hari, Y jam)</span>
+                        <span class="font-medium text-foreground">{{ requestData?.duration }}</span>
+                    </div>
+                    <div v-if="requestData?.reason" class="flex flex-col sm:col-span-2">
+                        <span class="text-muted-foreground font-normal">Alasan Kebutuhan:</span>
+                        <span class="font-medium text-foreground italic">"{{ requestData?.reason }}"</span>
                     </div>
                 </div>
             </div>
