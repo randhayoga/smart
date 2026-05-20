@@ -9,6 +9,10 @@ use App\Http\Controllers\Smart\Admin\HandoverController;
 use App\Http\Controllers\Smart\Admin\BorrowedController;
 use App\Http\Controllers\Smart\Admin\ReturnController;
 use App\Http\Controllers\Smart\User\UserDashboardController;
+use App\Http\Controllers\Smart\User\BrowseController;
+use App\Http\Controllers\Smart\User\AssetCartController;
+use App\Http\Controllers\Smart\User\BorrowCartController;
+use App\Http\Controllers\Smart\User\AssetCartConfirmationController;
 use App\Http\Controllers\Smart\Admin\Master\CategoryController;
 use App\Http\Controllers\Smart\Admin\Master\SubcategoryController;
 use App\Http\Controllers\Smart\Admin\Master\UomController;
@@ -31,6 +35,11 @@ Route::get('/', function () {
 Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/user/dashboard', [UserDashboardController::class, 'index'])->name('user.dashboard');
+    Route::get('/browse', [BrowseController::class, 'index'])->name('browse');
+    Route::get('/asset-cart', [AssetCartController::class, 'index'])->name('asset-cart');
+    Route::get('/asset-cart/confirmation', [AssetCartConfirmationController::class, 'index'])->name('asset-cart.confirmation');
+    Route::post('/asset-cart/confirmation', [AssetCartConfirmationController::class, 'store'])->name('asset-cart.confirmation.store');
+    Route::get('/borrow-cart', [BorrowCartController::class, 'index'])->name('borrow-cart');
     Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory');
     Route::get('/inventory/{id}', [InventoryController::class, 'show'])->name('inventory.show');
     Route::get('/master', [MasterController::class, 'index'])->name('master');
