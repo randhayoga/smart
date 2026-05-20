@@ -42,6 +42,10 @@ class OrganizerController extends Controller
      */
     public function destroy(Organizer $organizer): RedirectResponse
     {
+        if (\Illuminate\Support\Facades\DB::table('lots')->where('organizer_id', $organizer->id)->exists()) {
+            return redirect()->back()->with('error', 'Organizer tidak dapat dihapus karena sedang digunakan oleh data lot barang.');
+        }
+
         $organizer->delete();
 
         return redirect()->back()->with('success', 'Organizer berhasil dihapus.');

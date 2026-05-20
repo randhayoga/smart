@@ -43,6 +43,10 @@ class FloorController extends Controller
      */
     public function destroy(Floor $floor): RedirectResponse
     {
+        if ($floor->rooms()->exists()) {
+            return redirect()->back()->with('error', 'Lantai tidak dapat dihapus karena masih memiliki ruangan.');
+        }
+
         $floor->delete();
 
         return redirect()->back()->with('success', 'Lantai berhasil dihapus.');

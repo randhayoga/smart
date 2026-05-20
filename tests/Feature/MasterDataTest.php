@@ -59,6 +59,21 @@ class MasterDataTest extends TestCase
         ]);
     }
 
+    public function test_cannot_destroy_floor_if_it_has_rooms(): void
+    {
+        $user = User::factory()->create();
+        $floor = Floor::factory()->create();
+        Room::factory()->create(['floor_id' => $floor->id]);
+
+        $response = $this->actingAs($user)->delete(route('smart.master.floors.destroy', $floor));
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error', 'Lantai tidak dapat dihapus karena masih memiliki ruangan.');
+        $this->assertDatabaseHas('floors', [
+            'id' => $floor->id,
+        ]);
+    }
+
     public function test_can_store_room(): void
     {
         $user = User::factory()->create();

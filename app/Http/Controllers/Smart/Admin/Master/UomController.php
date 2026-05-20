@@ -42,6 +42,10 @@ class UomController extends Controller
      */
     public function destroy(Uom $uom): RedirectResponse
     {
+        if (\Illuminate\Support\Facades\DB::table('barangs')->where('uom_id', $uom->id)->exists()) {
+            return redirect()->back()->with('error', 'Satuan tidak dapat dihapus karena sedang digunakan oleh data barang.');
+        }
+
         $uom->delete();
 
         return redirect()->back()->with('success', 'Satuan berhasil dihapus.');

@@ -42,6 +42,10 @@ class VendorController extends Controller
      */
     public function destroy(Vendor $vendor): RedirectResponse
     {
+        if (\Illuminate\Support\Facades\DB::table('lots')->where('vendor_id', $vendor->id)->exists()) {
+            return redirect()->back()->with('error', 'Vendor tidak dapat dihapus karena sedang digunakan oleh data lot barang.');
+        }
+
         $vendor->delete();
 
         return redirect()->back()->with('success', 'Vendor berhasil dihapus.');

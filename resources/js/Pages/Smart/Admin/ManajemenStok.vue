@@ -874,6 +874,7 @@ const handleConfirmDelete = () => {
       :is-open="isDeleteModalOpen"
       :item-count="itemsToDelete.length"
       item-name="Barang"
+      :item-data="itemsToDelete.length === 1 ? itemsToDelete[0] : null"
       @close="closeDeleteModal"
       @confirm="handleConfirmDelete"
     />
