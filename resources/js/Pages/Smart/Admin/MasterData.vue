@@ -31,6 +31,8 @@ import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal.vue';
 interface Category    { id: number; code: string; name: string; is_consumable: boolean; }
 interface Subcategory { id: number; code: string; name: string; category_id: number; category: Category; }
 interface SimpleItem  { id: number; name: string; }
+interface Floor       { id: number; name: string; location_id: number; location: SimpleItem; }
+interface Room        { id: number; name: string; floor_id: number; floor: Floor; }
 
 interface Props {
   user: { name: string; email: string; };
@@ -41,6 +43,8 @@ interface Props {
   organizers:    SimpleItem[];
   vendors:       SimpleItem[];
   locations:     SimpleItem[];
+  floors:        Floor[];
+  rooms:         Room[];
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -51,10 +55,12 @@ const props = withDefaults(defineProps<Props>(), {
   organizers:    () => [],
   vendors:       () => [],
   locations:     () => [],
+  floors:        () => [],
+  rooms:         () => [],
 });
 
 const tabs = [
-  'Kategori', 'Subkategori', 'Satuan', 'Merek', 'Organizer', 'Vendor', 'Lokasi'
+  'Kategori', 'Subkategori', 'Satuan', 'Merek', 'Organizer', 'Vendor', 'Lokasi', 'Lantai', 'Ruangan'
 ];
 
 const activeTab = ref('Kategori');
@@ -72,6 +78,24 @@ const subcategoryRows = computed(() =>
   }))
 );
 
+// Map floors to include parent location name for display/filter
+const floorRows = computed(() =>
+  props.floors.map(f => ({
+    ...f,
+    parent:     f.location?.name ?? '',
+    parentCode: f.location_id?.toString() ?? '',
+  }))
+);
+
+// Map rooms to include parent floor name for display/filter
+const roomRows = computed(() =>
+  props.rooms.map(r => ({
+    ...r,
+    parent:     r.floor ? `${r.floor.location?.name ?? ''} - ${r.floor.name}` : '',
+    parentCode: r.floor_id?.toString() ?? '',
+  }))
+);
+
 const displayData = computed(() => {
   if (activeTab.value === 'Kategori')    return props.categories;
   if (activeTab.value === 'Subkategori') return subcategoryRows.value;
@@ -80,6 +104,8 @@ const displayData = computed(() => {
   if (activeTab.value === 'Organizer')   return props.organizers;
   if (activeTab.value === 'Vendor')      return props.vendors;
   if (activeTab.value === 'Lokasi')      return props.locations;
+  if (activeTab.value === 'Lantai')      return floorRows.value;
+  if (activeTab.value === 'Ruangan')     return roomRows.value;
   return [];
 });
 
@@ -95,6 +121,8 @@ const brandForm       = useForm({ name: '' });
 const organizerForm   = useForm({ name: '' });
 const vendorForm      = useForm({ name: '' });
 const locationForm    = useForm({ name: '' });
+const floorForm       = useForm({ location_id: null as number | null, name: '' });
+const roomForm        = useForm({ floor_id: null as number | null, name: '' });
 
 // ── Edit forms ──────────────────────────────────────────────────
 const editCategoryForm    = useForm({ id: null as number | null, code: '', name: '', is_consumable: '1' });
@@ -104,6 +132,8 @@ const editBrandForm       = useForm({ id: null as number | null, name: '' });
 const editOrganizerForm   = useForm({ id: null as number | null, name: '' });
 const editVendorForm      = useForm({ id: null as number | null, name: '' });
 const editLocationForm    = useForm({ id: null as number | null, name: '' });
+const editFloorForm       = useForm({ id: null as number | null, name: '' });
+const editRoomForm        = useForm({ id: null as number | null, name: '' });
 
 // Helper: active edit form
 const activeEditForm = computed(() => {
@@ -115,6 +145,8 @@ const activeEditForm = computed(() => {
     case 'Organizer':   return editOrganizerForm;
     case 'Vendor':      return editVendorForm;
     case 'Lokasi':      return editLocationForm;
+    case 'Lantai':      return editFloorForm;
+    case 'Ruangan':     return editRoomForm;
     default:            return editCategoryForm;
   }
 });
@@ -129,6 +161,8 @@ const activeCreateForm = computed(() => {
     case 'Organizer':   return organizerForm;
     case 'Vendor':      return vendorForm;
     case 'Lokasi':      return locationForm;
+    case 'Lantai':      return floorForm;
+    case 'Ruangan':     return roomForm;
     default:            return categoryForm;
   }
 });
@@ -152,7 +186,8 @@ const closeEditModal = () => {
     editCategoryForm.reset();    editSubcategoryForm.reset();
     editUomForm.reset();         editBrandForm.reset();
     editOrganizerForm.reset();   editVendorForm.reset();
-    editLocationForm.reset();
+    editLocationForm.reset();    editFloorForm.reset();
+    editRoomForm.reset();
   }, 200);
 };
 
@@ -160,7 +195,8 @@ const openCreateModal = () => {
   categoryForm.reset();    subcategoryForm.reset();
   uomForm.reset();         brandForm.reset();
   organizerForm.reset();   vendorForm.reset();
-  locationForm.reset();
+  locationForm.reset();    floorForm.reset();
+  roomForm.reset();
   isCreateModalOpen.value = true;
 };
 
@@ -169,7 +205,8 @@ const closeCreateModal = () => {
   categoryForm.reset();    subcategoryForm.reset();
   uomForm.reset();         brandForm.reset();
   organizerForm.reset();   vendorForm.reset();
-  locationForm.reset();
+  locationForm.reset();    floorForm.reset();
+  roomForm.reset();
 };
 
 // Reset filters when tab changes
@@ -182,7 +219,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
   const cols: ColumnDef<any>[] = [];
 
   // Code column (if applicable)
-  if (!['Satuan', 'Merek', 'Organizer', 'Vendor', 'Lokasi'].includes(activeTab.value)) {
+  if (!['Satuan', 'Merek', 'Organizer', 'Vendor', 'Lokasi', 'Lantai', 'Ruangan'].includes(activeTab.value)) {
     cols.push({
       accessorKey: 'code',
       header: ({ column }) => {
@@ -239,8 +276,12 @@ const columns = computed<ColumnDef<any>[]>(() => {
     cell: ({ row }) => h('div', { class: 'pl-2 text-foreground truncate' }, row.getValue('name')),
   });
 
-  // Parent column (Subkategori only)
-  if (activeTab.value === 'Subkategori') {
+  // Parent column (Subkategori, Lantai, Ruangan)
+  if (['Subkategori', 'Lantai', 'Ruangan'].includes(activeTab.value)) {
+    let headerText = 'Kategori Induk';
+    if (activeTab.value === 'Lantai') headerText = 'Lokasi';
+    if (activeTab.value === 'Ruangan') headerText = 'Lantai';
+
     cols.push({
       accessorKey: 'parent',
       header: ({ column }) => {
@@ -249,7 +290,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
           onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
           class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
         }, () => [
-          'Kategori Induk',
+          headerText,
           h(ArrowUpDown, { class: 'ml-2 h-4 w-4 text-muted-foreground' }),
         ])
       },
@@ -289,7 +330,7 @@ const dataTableRef = ref<any>(null);
 
 // Sync parentFilter with the parent column filter in DataTable
 watch(parentFilter, (val) => {
-  if (activeTab.value === 'Subkategori' && dataTableRef.value) {
+  if (['Subkategori', 'Lantai', 'Ruangan'].includes(activeTab.value) && dataTableRef.value) {
     dataTableRef.value.table.getColumn('parent')?.setFilterValue(val);
   }
 });
@@ -318,6 +359,8 @@ const routeMap: Record<string, string> = {
   'Organizer':   'smart.master.organizers.destroy',
   'Vendor':      'smart.master.vendors.destroy',
   'Lokasi':      'smart.master.locations.destroy',
+  'Lantai':      'smart.master.floors.destroy',
+  'Ruangan':     'smart.master.rooms.destroy',
 };
 
 const storeRouteMap: Record<string, string> = {
@@ -328,6 +371,8 @@ const storeRouteMap: Record<string, string> = {
   'Organizer':   'smart.master.organizers.store',
   'Vendor':      'smart.master.vendors.store',
   'Lokasi':      'smart.master.locations.store',
+  'Lantai':      'smart.master.floors.store',
+  'Ruangan':     'smart.master.rooms.store',
 };
 
 const updateRouteMap: Record<string, string> = {
@@ -338,6 +383,8 @@ const updateRouteMap: Record<string, string> = {
   'Organizer':   'smart.master.organizers.update',
   'Vendor':      'smart.master.vendors.update',
   'Lokasi':      'smart.master.locations.update',
+  'Lantai':      'smart.master.floors.update',
+  'Ruangan':     'smart.master.rooms.update',
 };
 
 const handleConfirmDelete = () => {
@@ -427,6 +474,38 @@ const pageSize = computed(() => {
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
+              <div v-if="activeTab === 'Lantai'" class="flex-1 max-w-[200px]">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal">
+                      {{ parentFilter ? (props.locations.find(l => l.id.toString() === parentFilter)?.name || 'Semua Lokasi') : 'Semua Lokasi' }}
+                      <ChevronDown class="w-4 h-4 opacity-50" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px]">
+                    <DropdownMenuItem @select="parentFilter = ''">Semua Lokasi</DropdownMenuItem>
+                    <DropdownMenuItem v-for="loc in props.locations" :key="loc.id" @select="parentFilter = loc.id.toString()">
+                      {{ loc.name }}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+              <div v-if="activeTab === 'Ruangan'" class="flex-1 max-w-[200px]">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal">
+                      {{ parentFilter ? (props.floors.find(f => f.id.toString() === parentFilter)?.name || 'Semua Lantai') : 'Semua Lantai' }}
+                      <ChevronDown class="w-4 h-4 opacity-50" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px]">
+                    <DropdownMenuItem @select="parentFilter = ''">Semua Lantai</DropdownMenuItem>
+                    <DropdownMenuItem v-for="fl in props.floors" :key="fl.id" @select="parentFilter = fl.id.toString()">
+                      {{ fl.location?.name ? `${fl.location.name} - ${fl.name}` : fl.name }}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
 
             <!-- Right Actions -->
@@ -510,6 +589,36 @@ const pageSize = computed(() => {
                 <input type="text" v-model="editSubcategoryForm.name" maxlength="255"
                   class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" />
                 <div v-if="editSubcategoryForm.errors.name" class="text-destructive text-xs mt-1">{{ editSubcategoryForm.errors.name }}</div>
+              </div>
+            </div>
+
+            <!-- Edit: Lantai -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 flex-grow" v-else-if="activeTab === 'Lantai'">
+              <div>
+                <label class="block text-sm font-medium text-foreground mb-2">Lokasi Induk</label>
+                <input type="text" :value="editingItem?.location?.name ?? ''" disabled
+                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-muted/50 text-muted-foreground cursor-not-allowed" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-foreground mb-2">Nama Lantai<span class="text-destructive">*</span></label>
+                <input type="text" v-model="editFloorForm.name" maxlength="255"
+                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" />
+                <div v-if="editFloorForm.errors.name" class="text-destructive text-xs mt-1">{{ editFloorForm.errors.name }}</div>
+              </div>
+            </div>
+
+            <!-- Edit: Ruangan -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 flex-grow" v-else-if="activeTab === 'Ruangan'">
+              <div>
+                <label class="block text-sm font-medium text-foreground mb-2">Lantai Induk</label>
+                <input type="text" :value="editingItem?.floor?.name ? `${editingItem.floor.location?.name ?? ''} - ${editingItem.floor.name}` : ''" disabled
+                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-muted/50 text-muted-foreground cursor-not-allowed" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-foreground mb-2">Nama Ruangan<span class="text-destructive">*</span></label>
+                <input type="text" v-model="editRoomForm.name" maxlength="255"
+                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" />
+                <div v-if="editRoomForm.errors.name" class="text-destructive text-xs mt-1">{{ editRoomForm.errors.name }}</div>
               </div>
             </div>
 
@@ -630,6 +739,60 @@ const pageSize = computed(() => {
                 <input type="text" v-model="subcategoryForm.name" maxlength="255" placeholder="Nama subkategori..."
                   class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" />
                 <div v-if="subcategoryForm.errors.name" class="text-destructive text-xs mt-1">{{ subcategoryForm.errors.name }}</div>
+              </div>
+            </div>
+
+            <!-- Create: Lantai -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 flex-grow" v-else-if="activeTab === 'Lantai'">
+              <div>
+                <label class="block text-sm font-medium text-foreground mb-2">Lokasi Induk<span class="text-destructive">*</span></label>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal">
+                      {{ floorForm.location_id ? (props.locations.find(l => l.id === floorForm.location_id)?.name || 'Pilih Lokasi Induk') : 'Pilih Lokasi Induk' }}
+                      <ChevronDown class="w-4 h-4 opacity-50" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
+                    <DropdownMenuItem v-for="loc in props.locations" :key="loc.id" @select="floorForm.location_id = loc.id">
+                      {{ loc.name }}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <div v-if="floorForm.errors.location_id" class="text-destructive text-xs mt-1">{{ floorForm.errors.location_id }}</div>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-foreground mb-2">Nama Lantai<span class="text-destructive">*</span></label>
+                <input type="text" v-model="floorForm.name" maxlength="255" placeholder="Nama lantai..."
+                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" />
+                <div v-if="floorForm.errors.name" class="text-destructive text-xs mt-1">{{ floorForm.errors.name }}</div>
+              </div>
+            </div>
+
+            <!-- Create: Ruangan -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 flex-grow" v-else-if="activeTab === 'Ruangan'">
+              <div>
+                <label class="block text-sm font-medium text-foreground mb-2">Lantai Induk<span class="text-destructive">*</span></label>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal">
+                      {{ roomForm.floor_id ? (props.floors.find(f => f.id === roomForm.floor_id)?.location?.name + ' - ' + props.floors.find(f => f.id === roomForm.floor_id)?.name || 'Pilih Lantai Induk') : 'Pilih Lantai Induk' }}
+                      <ChevronDown class="w-4 h-4 opacity-50" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
+                    <DropdownMenuItem v-for="fl in props.floors" :key="fl.id" @select="roomForm.floor_id = fl.id">
+                      {{ fl.location?.name ? `${fl.location.name} - ${fl.name}` : fl.name }}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <div v-if="roomForm.errors.floor_id" class="text-destructive text-xs mt-1">{{ roomForm.errors.floor_id }}</div>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-foreground mb-2">Nama Ruangan<span class="text-destructive">*</span></label>
+                <input type="text" v-model="roomForm.name" maxlength="255" placeholder="Nama ruangan..."
+                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" />
+                <div v-if="roomForm.errors.name" class="text-destructive text-xs mt-1">{{ roomForm.errors.name }}</div>
               </div>
             </div>
 

@@ -38,10 +38,26 @@ return new class extends Migration {
                 $table->timestamps();
             });
         }
+
+        Schema::create('floors', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->foreignId('location_id')->constrained('locations')->cascadeOnDelete();
+            $table->timestamps();
+        });
+
+        Schema::create('rooms', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->foreignId('floor_id')->constrained('floors')->cascadeOnDelete();
+            $table->timestamps();
+        });
     }
 
     public function down(): void
     {
+        Schema::dropIfExists('rooms');
+        Schema::dropIfExists('floors');
         Schema::dropIfExists('locations');
         Schema::dropIfExists('vendors');
         Schema::dropIfExists('organizers');

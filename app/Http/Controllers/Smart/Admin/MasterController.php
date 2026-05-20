@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Master\Brand;
 use App\Models\Master\Category;
 use App\Models\Master\Location;
+use App\Models\Master\Floor;
+use App\Models\Master\Room;
 use App\Models\Master\Organizer;
 use App\Models\Master\Subcategory;
 use App\Models\Master\Uom;
@@ -30,6 +32,8 @@ class MasterController extends Controller
             'organizers'    => Organizer::orderBy('name')->get(),
             'vendors'       => Vendor::orderBy('name')->get(),
             'locations'     => Location::orderBy('name')->get(),
+            'floors'        => Floor::with('location')->orderBy('name')->get(),
+            'rooms'         => Room::with('floor.location')->orderBy('name')->get(),
         ]);
     }
 }

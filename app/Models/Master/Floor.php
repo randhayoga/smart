@@ -5,16 +5,22 @@ namespace App\Models\Master;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Location extends Model
+class Floor extends Model
 {
     use HasFactory;
 
     protected $fillable = [
         'name',
+        'location_id',
     ];
 
-    public function floors()
+    public function location()
     {
-        return $this->hasMany(Floor::class);
+        return $this->belongsTo(Location::class);
+    }
+
+    public function rooms()
+    {
+        return $this->hasMany(Room::class);
     }
 }
