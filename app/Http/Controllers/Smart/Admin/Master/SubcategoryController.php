@@ -44,6 +44,10 @@ class SubcategoryController extends Controller
      */
     public function destroy(Subcategory $subcategory): RedirectResponse
     {
+        if (\Illuminate\Support\Facades\DB::table('barangs')->where('subcategory_id', $subcategory->id)->exists()) {
+            return redirect()->back()->with('error', 'Subkategori tidak dapat dihapus karena sedang digunakan oleh data barang.');
+        }
+
         $subcategory->delete();
 
         return redirect()->back()->with('success', 'Subkategori berhasil dihapus.');

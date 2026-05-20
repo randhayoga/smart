@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, h } from 'vue';
-import { useForm } from '@inertiajs/vue3';
+import { useForm, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { 
   ChevronDown, 
@@ -8,7 +8,9 @@ import {
   Plus, 
   Pencil, 
   Trash2,
-  X
+  X,
+  CheckCircle2,
+  AlertTriangle
 } from 'lucide-vue-next';
 
 import { Button } from "@/Components/ui/button";
@@ -411,6 +413,35 @@ const pageSize = computed(() => {
   if (rowsPerPage.value === 'Semua baris') return 999999;
   return parseInt(rowsPerPage.value);
 });
+
+// Flash Notifications
+const page = usePage();
+const flashSuccess = computed(() => (page.props as any).flash?.success);
+const flashError = computed(() => (page.props as any).flash?.error);
+
+const showSuccessAlert = ref(true);
+
+watch(() => (page.props as any).flash, () => {
+  showSuccessAlert.value = true;
+}, { deep: true });
+
+// Error Modal for Deletion Block
+const isErrorModalOpen = ref(false);
+const errorModalMessage = ref('');
+
+watch(flashError, (newVal) => {
+  if (newVal) {
+    errorModalMessage.value = newVal;
+    isErrorModalOpen.value = true;
+  }
+}, { immediate: true });
+
+const closeErrorModal = () => {
+  isErrorModalOpen.value = false;
+  if ((page.props as any).flash) {
+    (page.props as any).flash.error = null;
+  }
+};
 </script>
 
 <template>
@@ -422,6 +453,28 @@ const pageSize = computed(() => {
         </BreadcrumbItem>
       </BreadcrumbList>
     </Breadcrumb>
+
+    <!-- Flash Notifications -->
+    <div class="mb-4 space-y-2">
+      <Transition
+        enter-active-class="transition ease-out duration-300 transform"
+        enter-from-class="-translate-y-2 opacity-0"
+        enter-to-class="translate-y-0 opacity-100"
+        leave-active-class="transition ease-in duration-200"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div v-if="flashSuccess && showSuccessAlert" class="flex items-center justify-between p-4 rounded-[14px] border border-emerald-500/20 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-400">
+          <div class="flex items-center gap-2.5">
+            <CheckCircle2 class="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+            <span class="text-sm font-medium">{{ flashSuccess }}</span>
+          </div>
+          <button @click="showSuccessAlert = false" class="text-emerald-500 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300">
+            <X class="w-4 h-4" />
+          </button>
+        </div>
+      </Transition>
+    </div>
     
     <div class="space-y-1">
       <!-- Tabs -->
@@ -859,8 +912,68 @@ const pageSize = computed(() => {
       :is-open="isDeleteModalOpen"
       :item-count="1"
       :item-name="activeTab"
+      :item-data="itemToDelete"
       @close="closeDeleteModal"
       @confirm="handleConfirmDelete"
     />
+
+    <!-- Cannot Delete Warning Modal -->
+    <Teleport to="body">
+      <Transition
+        enter-active-class="ease-out duration-200"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="ease-in duration-150"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div v-if="isErrorModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <Transition
+            enter-active-class="ease-out duration-200"
+            enter-from-class="opacity-0 scale-95"
+            enter-to-class="opacity-100 scale-100"
+            leave-active-class="ease-in duration-150"
+            leave-from-class="opacity-100 scale-100"
+            leave-to-class="opacity-0 scale-95"
+          >
+            <div 
+              class="bg-card w-full max-w-[512px] rounded-[14px] shadow-2xl overflow-hidden flex flex-col"
+              @click.stop
+            >
+              <!-- Modal Header -->
+              <div class="flex items-center p-1 justify-between border-b border-border">
+                <h3 class="text-lg font-bold text-foreground p-2">Pemberitahuan</h3>
+                <button @click="closeErrorModal" class="p-2 hover:bg-muted rounded-full transition-colors">
+                  <X class="w-5 h-5 text-muted-foreground" />
+                </button>
+              </div>
+
+              <!-- Modal Body -->
+              <div class="p-6 flex flex-col items-center text-center space-y-4 flex-grow">
+                <div class="w-12 h-12 rounded-full bg-rose-50 dark:bg-rose-950/20 flex items-center justify-center text-[#CC0000]">
+                  <AlertTriangle class="w-6 h-6" />
+                </div>
+                <div class="space-y-2">
+                  <h4 class="text-destructive font-bold text-base">Gagal Menghapus Item</h4>
+                  <p class="text-sm text-muted-foreground leading-relaxed">
+                    {{ errorModalMessage }}
+                  </p>
+                </div>
+              </div>
+
+              <!-- Modal Footer -->
+              <div class="p-4 bg-muted/30 border-t border-border flex items-center justify-center">
+                <button 
+                  @click="closeErrorModal"
+                  class="w-full py-2.5 bg-gradient-primary text-primary-foreground hover:opacity-90 text-sm font-semibold rounded-[14px] transition-colors shadow-sm active:scale-[0.98]"
+                >
+                  Mengerti
+                </button>
+              </div>
+            </div>
+          </Transition>
+        </div>
+      </Transition>
+    </Teleport>
   </AppLayout>
 </template>

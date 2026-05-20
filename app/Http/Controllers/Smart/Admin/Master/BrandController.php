@@ -42,6 +42,10 @@ class BrandController extends Controller
      */
     public function destroy(Brand $brand): RedirectResponse
     {
+        if (\Illuminate\Support\Facades\DB::table('barangs')->where('brand_id', $brand->id)->exists()) {
+            return redirect()->back()->with('error', 'Merek tidak dapat dihapus karena sedang digunakan oleh data barang.');
+        }
+
         $brand->delete();
 
         return redirect()->back()->with('success', 'Merek berhasil dihapus.');

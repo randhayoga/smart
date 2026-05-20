@@ -42,6 +42,15 @@ class LocationController extends Controller
      */
     public function destroy(Location $location): RedirectResponse
     {
+        if ($location->floors()->exists()) {
+            return redirect()->back()->with('error', 'Lokasi tidak dapat dihapus karena masih memiliki lantai.');
+        }
+
+        if (\Illuminate\Support\Facades\DB::table('lots')->where('location_id', $location->id)->exists() ||
+            \Illuminate\Support\Facades\DB::table('units')->where('location_id', $location->id)->exists()) {
+            return redirect()->back()->with('error', 'Lokasi tidak dapat dihapus karena sedang digunakan oleh data lot/unit barang.');
+        }
+
         $location->delete();
 
         return redirect()->back()->with('success', 'Lokasi berhasil dihapus.');
