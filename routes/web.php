@@ -16,6 +16,8 @@ use App\Http\Controllers\Smart\Admin\Master\BrandController;
 use App\Http\Controllers\Smart\Admin\Master\OrganizerController;
 use App\Http\Controllers\Smart\Admin\Master\VendorController;
 use App\Http\Controllers\Smart\Admin\Master\LocationController;
+use App\Http\Controllers\Smart\Admin\Master\FloorController;
+use App\Http\Controllers\Smart\Admin\Master\RoomController;
 use Illuminate\Support\Facades\Route;
 
 // Root redirect - always go to dashboard (middleware will handle auth)
@@ -41,6 +43,8 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
         Route::resource('organizers',    OrganizerController::class)->only(['store', 'update', 'destroy']);
         Route::resource('vendors',       VendorController::class)->only(['store', 'update', 'destroy']);
         Route::resource('locations',     LocationController::class)->only(['store', 'update', 'destroy']);
+        Route::resource('floors',        FloorController::class)->only(['store', 'update', 'destroy']);
+        Route::resource('rooms',         RoomController::class)->only(['store', 'update', 'destroy']);
     });
 
     Route::get('/inbox', [InboxController::class, 'index'])->name('inbox');
