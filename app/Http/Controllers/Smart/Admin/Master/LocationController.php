@@ -42,14 +42,6 @@ class LocationController extends Controller
      */
     public function destroy(Location $location): RedirectResponse
     {
-        // Check if there are any Lots or Units linked to this Location
-        if (\App\Models\Inventory\Lot::where('location_id', $location->id)->exists() ||
-            \App\Models\Inventory\Unit::where('location_id', $location->id)->exists()) {
-            throw \Illuminate\Validation\ValidationException::withMessages([
-                'error' => 'Gagal menghapus! Lokasi ini masih digunakan oleh LOT atau unit barang.'
-            ]);
-        }
-
         $location->delete();
 
         return redirect()->back()->with('success', 'Lokasi berhasil dihapus.');

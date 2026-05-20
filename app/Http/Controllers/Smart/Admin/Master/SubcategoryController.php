@@ -44,13 +44,6 @@ class SubcategoryController extends Controller
      */
     public function destroy(Subcategory $subcategory): RedirectResponse
     {
-        // Check if there are any Barangs linked to this subcategory
-        if (\App\Models\Inventory\Barang::where('subcategory_id', $subcategory->id)->exists()) {
-            throw \Illuminate\Validation\ValidationException::withMessages([
-                'error' => 'Gagal menghapus! Subkategori ini masih memiliki barang di dalamnya. Silakan hapus barang-barangnya terlebih dahulu.'
-            ]);
-        }
-
         $subcategory->delete();
 
         return redirect()->back()->with('success', 'Subkategori berhasil dihapus.');

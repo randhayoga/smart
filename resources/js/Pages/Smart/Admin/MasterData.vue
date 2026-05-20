@@ -344,13 +344,6 @@ const handleConfirmDelete = () => {
   if (!itemToDelete.value) return;
   deleteForm.delete(route(routeMap[activeTab.value], itemToDelete.value.id), {
     onSuccess: () => closeDeleteModal(),
-    onError: (errors) => {
-      if (errors.error) {
-        alert(errors.error);
-      } else {
-        alert('Gagal menghapus ' + activeTab.value.toLowerCase() + '.');
-      }
-    }
   });
 };
 

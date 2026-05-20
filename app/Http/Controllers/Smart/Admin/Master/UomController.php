@@ -42,13 +42,6 @@ class UomController extends Controller
      */
     public function destroy(Uom $uom): RedirectResponse
     {
-        // Check if there are any Barangs linked to this UOM
-        if (\App\Models\Inventory\Barang::where('uom_id', $uom->id)->exists()) {
-            throw \Illuminate\Validation\ValidationException::withMessages([
-                'error' => 'Gagal menghapus! Satuan ini masih digunakan oleh barang.'
-            ]);
-        }
-
         $uom->delete();
 
         return redirect()->back()->with('success', 'Satuan berhasil dihapus.');

@@ -42,13 +42,6 @@ class BrandController extends Controller
      */
     public function destroy(Brand $brand): RedirectResponse
     {
-        // Check if there are any Barangs linked to this brand
-        if (\App\Models\Inventory\Barang::where('brand_id', $brand->id)->exists()) {
-            throw \Illuminate\Validation\ValidationException::withMessages([
-                'error' => 'Gagal menghapus! Merek ini masih digunakan oleh barang.'
-            ]);
-        }
-
         $brand->delete();
 
         return redirect()->back()->with('success', 'Merek berhasil dihapus.');

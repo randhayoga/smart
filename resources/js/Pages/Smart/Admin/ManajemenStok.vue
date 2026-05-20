@@ -44,21 +44,35 @@ interface Props {
     name: string;
     email: string;
   };
-  inventoryList: any[];
-  categoriesList: string[];
-  subcategoryMap: Record<string, string[]>;
-  brandMap: Record<string, string[]>;
-  uomsList: string[];
 }
 
 const props = defineProps<Props>();
 
-const categories = computed(() => props.categoriesList || []);
-const subcategoryMap = computed(() => props.subcategoryMap || {});
-const brandMap = computed(() => props.brandMap || {});
-const units = computed(() => props.uomsList || []);
+// Dummy Data
+const categories = ['Elektronik', 'Furnitur', 'ATK', 'Kendaraan'];
 
-const dummyInventory = computed(() => props.inventoryList || []);
+const subcategoryMap: Record<string, string[]> = {
+  'Elektronik': ['Laptop', 'Keyboard', 'Monitor', 'Mouse'],
+  'Furnitur': ['Meja', 'Kursi', 'Lemari', 'Sofa'],
+  'ATK': ['Kertas', 'Pulpen', 'Buku', 'Penghapus'],
+  'Kendaraan': ['Mobil', 'Motor', 'Sepeda']
+};
+
+const brandMap: Record<string, string[]> = {
+  'Elektronik': ['Asus', 'Lenovo', 'Samsung', 'Logitech'],
+  'Furnitur': ['IKEA', 'Informa', 'Olympic'],
+  'ATK': ['Sinar Dunia', 'Standard', 'Joyko'],
+  'Kendaraan': ['Toyota', 'Honda', 'Yamaha']
+};
+const units = Array.from({ length: 150 }, (_, i) => (i + 1).toString());
+
+const dummyInventory = [
+  { id: 1, code: 'ELE-LAP-0001', category: 'Elektronik', subcategory: 'Laptop', brand: 'Asus', specification: 'ROG Zephyrus G14, 16GB RAM, 512GB SSD', lastUpdate: '05-05-2026 10:00', amount: 5 },
+  { id: 2, code: 'FUR-MEJ-0001', category: 'Furnitur', subcategory: 'Meja', brand: 'IKEA', specification: 'Linnmon Table, White, 120x60cm', lastUpdate: '05-05-2026 11:30', amount: 12 },
+  { id: 3, code: 'ATK-KER-0001', category: 'ATK', subcategory: 'Kertas', brand: 'Sinar Dunia', specification: 'A4 80gsm, 500 sheets', lastUpdate: '04-05-2026 09:15', amount: 50 },
+  { id: 4, code: 'KEN-MOB-0001', category: 'Kendaraan', subcategory: 'Mobil', brand: 'Toyota', specification: 'Avanza 2023, Silver Metallic', lastUpdate: '03-05-2026 15:45', amount: 2 },
+  { id: 5, code: 'ELE-LAP-0002', category: 'Elektronik', subcategory: 'Laptop', brand: 'Lenovo', specification: 'ThinkPad X1 Carbon, 32GB RAM', lastUpdate: '05-05-2026 14:20', amount: 3 },
+];
 
 const searchQuery = ref('');
 const categoryFilter = ref('');
@@ -265,7 +279,7 @@ onMounted(() => {
 });
 
 const getExportData = () => {
-  if (!dataTableRef.value) return dummyInventory.value;
+  if (!dataTableRef.value) return dummyInventory;
   return dataTableRef.value.table.getFilteredRowModel().rows.map((row: any) => row.original);
 };
 
@@ -330,11 +344,11 @@ const newItem = ref({
 });
 
 const filteredSubcategories = computed(() => {
-  return newItem.value.category ? subcategoryMap.value[newItem.value.category] || [] : [];
+  return newItem.value.category ? subcategoryMap[newItem.value.category] || [] : [];
 });
 
 const filteredBrands = computed(() => {
-  return newItem.value.category ? brandMap.value[newItem.value.category] || [] : [];
+  return newItem.value.category ? brandMap[newItem.value.category] || [] : [];
 });
 
 const mainFilteredSubcategories = ref<string[]>([]);
@@ -344,11 +358,11 @@ const mainFilteredBrands = ref<string[]>([]);
 const updateMainFilters = () => {
   const cat = categoryFilter.value;
   if (!cat) {
-    mainFilteredSubcategories.value = ([] as string[]).concat(...Object.values(subcategoryMap.value));
-    mainFilteredBrands.value = ([] as string[]).concat(...Object.values(brandMap.value));
+    mainFilteredSubcategories.value = ([] as string[]).concat(...Object.values(subcategoryMap));
+    mainFilteredBrands.value = ([] as string[]).concat(...Object.values(brandMap));
   } else {
-    mainFilteredSubcategories.value = subcategoryMap.value[cat] || [];
-    mainFilteredBrands.value = brandMap.value[cat] || [];
+    mainFilteredSubcategories.value = subcategoryMap[cat] || [];
+    mainFilteredBrands.value = brandMap[cat] || [];
   }
 };
 
@@ -393,7 +407,7 @@ const generateCode = () => {
   
   // Find the highest number for this subcategory in dummyInventory
   // Note: Standard format expected is CAT[CAT]-SUB[SUB]-[XXXX]
-  const sameSubItems = dummyInventory.value.filter(item => item.subcategory === newItem.value.subcategory);
+  const sameSubItems = dummyInventory.filter(item => item.subcategory === newItem.value.subcategory);
   
   let nextNumber = 1;
   if (sameSubItems.length > 0) {
@@ -457,27 +471,9 @@ const isFormValid = computed(() => {
 
 const handleCreateItem = () => {
   if (!isFormValid.value) return;
-
-  const formData = new FormData();
-  formData.append('code', newItem.value.code);
-  formData.append('category', newItem.value.category);
-  formData.append('subcategory', newItem.value.subcategory);
-  formData.append('brand', newItem.value.brand);
-  formData.append('unit', newItem.value.unit);
-  formData.append('specification', newItem.value.specification);
-  if (newItem.value.photo) {
-    formData.append('photo', newItem.value.photo);
-  }
-
-  router.post('/smart/inventory', formData, {
-    onSuccess: () => {
-      alert('Berhasil! Barang baru telah berhasil dibuat di database.');
-      closeCreateModal();
-    },
-    onError: (errors) => {
-      alert('Gagal membuat barang baru: ' + Object.values(errors).join(', '));
-    }
-  });
+  const newCode = newItem.value.code;
+  closeCreateModal();
+  router.get(`/smart/inventory/${newCode}`);
 };
 
 // Delete Modal Logic
@@ -495,20 +491,14 @@ const closeDeleteModal = () => {
 };
 
 const handleConfirmDelete = () => {
-  const ids = itemsToDelete.value.map(item => item.id);
-  router.delete('/smart/inventory/bulk', {
-    data: { ids: ids },
-    onSuccess: () => {
-      alert(`Berhasil menghapus ${itemsToDelete.value.length} barang dari database`);
-      if (dataTableRef.value) {
-        dataTableRef.value.table.resetRowSelection();
-      }
-      closeDeleteModal();
-    },
-    onError: (errors) => {
-      alert('Gagal menghapus barang: ' + Object.values(errors).join(', '));
-    }
-  });
+  // Logic to actually delete items (e.g., API call)
+  alert(`Berhasil menghapus ${itemsToDelete.value.length} barang`);
+  
+  if (dataTableRef.value) {
+    dataTableRef.value.table.resetRowSelection();
+  }
+  
+  closeDeleteModal();
 };
 </script>
 

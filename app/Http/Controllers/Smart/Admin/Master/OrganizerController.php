@@ -42,13 +42,6 @@ class OrganizerController extends Controller
      */
     public function destroy(Organizer $organizer): RedirectResponse
     {
-        // Check if there are any Lots linked to this Organizer
-        if (\App\Models\Inventory\Lot::where('organizer_id', $organizer->id)->exists()) {
-            throw \Illuminate\Validation\ValidationException::withMessages([
-                'error' => 'Gagal menghapus! Organizer ini masih digunakan oleh LOT barang.'
-            ]);
-        }
-
         $organizer->delete();
 
         return redirect()->back()->with('success', 'Organizer berhasil dihapus.');
