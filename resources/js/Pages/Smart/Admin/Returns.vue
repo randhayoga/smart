@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, h, onMounted, computed } from 'vue';
+import { ref, watch, h, onMounted } from 'vue';
 import { router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { 
@@ -21,17 +21,14 @@ import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem } from '@/Co
 import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
 
-interface Props {
-  user: {
-    name: string;
-    email: string;
-  };
-  returnsList: any[];
-}
-
-const props = defineProps<Props>();
-
-const dummyReturns = computed(() => props.returnsList || []);
+// Dummy Data
+const dummyReturns = [
+  { id: 1, number: '052026-0001', borrower: 'John Doe', returnTime: '12-05-2026 10:00', daysLeft: '1', location: 'Ruang IFS' },
+  { id: 2, number: '052026-0002', borrower: 'Jane Smith', returnTime: '13-05-2026 14:00', daysLeft: '2', location: 'Ruang IFS' },
+  { id: 3, number: '052026-0003', borrower: 'Budi Utomo', returnTime: '14-05-2026 09:00', daysLeft: '3', location: 'Ruang Workshop' },
+  { id: 4, number: '052026-0004', borrower: 'Siti Aminah', returnTime: '12-05-2026 10:00', daysLeft: '1', location: 'Ruang IFS' },
+  { id: 5, number: '052026-0005', borrower: 'Andi Saputra', returnTime: '12-05-2026 10:00', daysLeft: '1', location: 'Ruang IFS' },
+];
 
 const searchQuery = ref('');
 const timeFilter = ref('');

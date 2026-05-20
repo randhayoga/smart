@@ -9,14 +9,4 @@ class Department extends Model
     use \Illuminate\Database\Eloquent\Factories\HasFactory;
 
     protected $guarded = [];
-
-    public function manager()
-    {
-        return $this->belongsTo(User::class, 'manager_id');
-    }
-
-    public function users()
-    {
-        return $this->hasMany(User::class, 'department_id');
-    }
 }

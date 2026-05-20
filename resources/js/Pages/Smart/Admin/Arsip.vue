@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, h, onMounted, computed } from 'vue';
+import { ref, watch, h, onMounted } from 'vue';
 import { router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { 
@@ -20,17 +20,12 @@ import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem } from '@/Co
 import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
 
-interface Props {
-  user: {
-    name: string;
-    email: string;
-  };
-  arsipList: any[];
-}
-
-const props = defineProps<Props>();
-
-const dummyArsip = computed(() => props.arsipList || []);
+// Mock Data
+const dummyArsip = [
+  { id: 1, number: 'MMYYYY-XXXX', type: 'Permintaan', status: 'Sukses', requester: 'John Doe', startTime: 'DD-MM-YYYY HH:MM', endTime: '-' },
+  { id: 2, number: 'MMYYYY-XXXX', type: 'Peminjaman', status: 'Ditolak', requester: 'John Doe', startTime: 'DD-MM-YYYY HH:MM', endTime: 'DD-MM-YYYY HH:MM' },
+  { id: 3, number: 'MMYYYY-XXXX', type: 'Permintaan', status: 'Dibatalkan', requester: 'Jane Smith', startTime: 'DD-MM-YYYY HH:MM', endTime: '-' },
+];
 
 const searchQuery = ref('');
 const typeFilter = ref('');

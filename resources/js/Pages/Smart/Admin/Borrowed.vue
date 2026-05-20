@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, h, onMounted, computed } from 'vue';
+import { ref, watch, h, onMounted } from 'vue';
 import { router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { 
@@ -31,12 +31,18 @@ interface Props {
     name: string;
     email: string;
   };
-  borrowedList: any[];
 }
 
 const props = defineProps<Props>();
 
-const dummyBorrowed = computed(() => props.borrowedList || []);
+// Dummy Data
+const dummyBorrowed = [
+  { id: 1, number: '052026-0001', borrower: 'John Doe', dueDate: '12-05-2026 10:00', daysLeft: '1' },
+  { id: 2, number: '052026-0002', borrower: 'Jane Smith', dueDate: '-', daysLeft: '-' },
+  { id: 3, number: '052026-0003', borrower: 'Budi Utomo', dueDate: '-', daysLeft: '-' },
+  { id: 4, number: '052026-0004', borrower: 'Siti Aminah', dueDate: '15-05-2026 10:00', daysLeft: '4' },
+  { id: 5, number: '052026-0005', borrower: 'Andi Saputra', dueDate: '11-05-2026 10:00', daysLeft: '0' },
+];
 
 const searchQuery = ref('');
 const timeFilter = ref('');

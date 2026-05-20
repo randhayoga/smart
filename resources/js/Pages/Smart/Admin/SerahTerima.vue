@@ -31,12 +31,18 @@ interface Props {
     name: string;
     email: string;
   };
-  handoverList: any[];
 }
 
 const props = defineProps<Props>();
 
-const dummyHandovers = computed(() => props.handoverList || []);
+// Dummy Data
+const dummyHandovers = [
+  { id: 1, number: '052026-0001', requester: 'John Doe', method: 'Diambil sendiri', time: '12-05-2026 10:00', location: 'Ruang IFS' },
+  { id: 2, number: '052026-0002', requester: 'Jane Smith', method: 'Diantar', time: '13-05-2026 14:30', location: 'Gudang Utama' },
+  { id: 3, number: '052026-0003', requester: 'John Doe', method: 'Diantar', time: '14-05-2026 09:15', location: 'Ruang IFS' },
+  { id: 4, number: '052026-0004', requester: 'Budi Utomo', method: 'Diambil sendiri', time: '15-05-2026 11:00', location: 'Tiga Negeri' },
+  { id: 5, number: '052026-0005', requester: 'Siti Aminah', method: 'Diantar', time: '16-05-2026 13:45', location: 'Mega Mendung' },
+];
 
 const searchQuery = ref('');
 const timeFilter = ref('');

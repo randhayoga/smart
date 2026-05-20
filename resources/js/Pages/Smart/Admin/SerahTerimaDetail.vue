@@ -29,49 +29,56 @@ import DataTable from '@/Components/DataTable.vue';
 import TableSearch from '@/Components/TableSearch.vue';
 
 interface Props {
-  handover: {
-    id: number;
-    number: string;
-    requester: string;
-    method: string;
-    time: string;
-    location: string;
-    note?: string;
-  };
-  requestData: {
-    id: number;
-    number: string;
-    requester_name: string;
-    approver_name?: string;
-    created_at: string;
-    utilization: string;
-    duration: string;
-    reason: string;
-  };
-  items: Array<{
-    id: number;
-    brand: string;
-    category: string;
-    subcategory: string;
-    quantity: number | string;
-    assets: string[];
-  }>;
-  timeline: Array<{
-    status: string;
-    user?: string;
-    time?: string;
-    completed?: boolean;
-    active?: boolean;
-    info?: string;
-    method?: string;
-    location?: string;
-  }>;
+  handover: any;
 }
 
 const props = defineProps<Props>();
 
-const items = computed(() => props.items || []);
-const timeline = computed(() => props.timeline || []);
+// Mock internal state for items
+const items = ref([
+  {
+    id: 1,
+    brand: 'Asus ROG',
+    spec: 'Zephyrus G14',
+    category: 'Elektronik',
+    subcategory: 'Laptop',
+    quantity: 5,
+    assets: [
+      '2024-LAP-01-ORG-PTRE-01',
+      '2024-LAP-01-ORG-PTRE-02',
+      '2024-LAP-01-ORG-PTRE-03',
+      '2024-LAP-01-ORG-PTRE-04',
+      '2024-LAP-01-ORG-PTRE-05',
+    ],
+    showAssets: false
+  },
+  {
+    id: 2,
+    brand: 'Logitech',
+    spec: 'MX Master 3S',
+    category: 'Elektronik',
+    subcategory: 'Mouse',
+    quantity: 2,
+    assets: [
+      '2024-MOU-01-ORG-PTRE-01',
+      '2024-MOU-01-ORG-PTRE-02',
+    ],
+    showAssets: false
+  }
+]);
+
+const timeline = [
+  { status: 'Permintaan dibuat', time: '10-05-2026 09:00', completed: true },
+  { status: 'Di-approve', user: 'John Doe', time: '10-05-2026 14:30', completed: true },
+  { status: 'Dikonfirmasi', user: 'Radifa', time: '11-05-2026 10:00', completed: true },
+  { 
+    status: 'Serah Terima', 
+    method: 'Ambil sendiri', 
+    location: 'Ruang IFS', 
+    time: '12-05-2026 10:00', 
+    active: true 
+  },
+];
 
 // Allocation Modal State
 const isAllocModalOpen = ref(false);
@@ -245,32 +252,28 @@ const confirmCancel = () => {
         <!-- Main Detail Card -->
         <div class="bg-card rounded-xl border border-border p-5 shadow-sm">
           <div class="space-y-4">
-            <h2 class="text-lg font-bold text-foreground">{{ requestData?.number || handover?.number }}</h2>
+            <h2 class="text-lg font-bold text-foreground">{{ handover?.number || '#Nomor_Permintaan' }}</h2>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-12 text-sm">
               <div class="space-y-1">
                 <p class="text-muted-foreground">Dibuat oleh</p>
-                <p class="font-semibold text-foreground">{{ requestData?.requester_name || handover?.requester }}</p>
+                <p class="font-semibold text-foreground">{{ handover?.requester || 'John Doe' }}</p>
               </div>
               <div class="space-y-1">
                 <p class="text-muted-foreground">PIC Approval</p>
-                <p class="font-semibold text-foreground">{{ requestData?.approver_name || 'Jane Doe' }}</p>
+                <p class="font-semibold text-foreground">Jane Doe</p>
               </div>
               <div class="space-y-1">
                 <p class="text-muted-foreground">Waktu dibuat</p>
-                <p class="font-semibold text-foreground">{{ requestData?.created_at }}</p>
+                <p class="font-semibold text-foreground">10-05-2026 09:00</p>
               </div>
               <div class="space-y-1">
                 <p class="text-muted-foreground">Pemanfaatan</p>
-                <p class="font-semibold text-foreground">{{ requestData?.utilization }}</p>
+                <p class="font-semibold text-foreground">Internal Project (PRJ-2024-001/Finance)</p>
               </div>
               <div class="md:col-span-2 space-y-1">
                 <p class="text-muted-foreground">Durasi</p>
-                <p class="font-semibold text-foreground">{{ requestData?.duration }}</p>
-              </div>
-              <div v-if="requestData?.reason" class="md:col-span-2 space-y-1">
-                <p class="text-muted-foreground">Alasan Kebutuhan</p>
-                <p class="font-semibold text-foreground italic">"{{ requestData?.reason }}"</p>
+                <p class="font-semibold text-foreground">12-05-2026 10:00 s.d. 19-05-2026 10:00 (7 hari, 0 jam)</p>
               </div>
             </div>
           </div>
@@ -283,7 +286,7 @@ const confirmCancel = () => {
           <AssetItemCard 
             v-for="item in items" 
             :key="item.id"
-            :brand="item.brand"
+            :brand="`${item.brand} ${item.spec}`"
             :category="item.category"
             :subcategory="item.subcategory"
             :quantity="item.quantity"
