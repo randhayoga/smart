@@ -7,11 +7,11 @@ import {
   ArrowUpDown, 
   Printer,
   FileDown,
-  Eye,
   X
 } from 'lucide-vue-next';
 import TableSearch from '@/Components/TableSearch.vue';
 import ExportButtonGroup from '@/Components/ExportButtonGroup.vue';
+import ViewTableButton from '@/Components/ViewTableButton.vue';
 
 import { Button } from "@/Components/ui/button";
 import {
@@ -137,10 +137,9 @@ const columns: ColumnDef<any>[] = [
     size: 80,
     header: () => h('div', { class: 'text-center font-semibold text-foreground no-print' }, 'Aksi'),
     cell: ({ row }) => h('div', { class: 'flex items-center justify-center no-print' }, [
-      h('button', {
-        onClick: () => handleViewDetail(row.original),
-        class: 'p-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-full transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50'
-      }, [h(Eye, { class: 'w-3.5 h-3.5' })])
+      h(ViewTableButton, {
+        onClick: () => handleViewDetail(row.original)
+      })
     ]),
   },
 ];

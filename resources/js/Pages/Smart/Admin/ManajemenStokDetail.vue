@@ -5,8 +5,6 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import { 
   ChevronDown, 
   ArrowUpDown, 
-  Eye,
-  Trash2,
   Plus,
   X
 } from 'lucide-vue-next';
@@ -21,6 +19,8 @@ import TableSearch from '@/Components/TableSearch.vue';
 import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem, BreadcrumbSeparator } from '@/Components/ui/breadcrumb';
 import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
+import ViewTableButton from '@/Components/ViewTableButton.vue';
+import DeleteTableButton from '@/Components/DeleteTableButton.vue';
 
 interface Props {
   itemId: string | number;
@@ -126,14 +126,12 @@ const columns: ColumnDef<any>[] = [
     size: 100,
     header: () => h('div', { class: 'text-center font-semibold text-foreground no-print' }, 'Aksi'),
     cell: ({ row }) => h('div', { class: 'flex items-center justify-center gap-2 no-print' }, [
-      h('button', {
+      h(ViewTableButton, {
         onClick: () => alert('View LOT'),
-        class: 'p-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-full transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50'
-      }, [h(Eye, { class: 'w-3.5 h-3.5' })]),
-      h('button', {
+      }),
+      h(DeleteTableButton, {
         onClick: () => alert('Delete LOT'),
-        class: 'p-2 bg-[#D9534F] hover:bg-[#C9302C] text-white rounded-full transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500/50'
-      }, [h(Trash2, { class: 'w-3.5 h-3.5' })])
+      })
     ]),
   },
 ];
