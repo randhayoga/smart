@@ -288,9 +288,6 @@ const handleViewDetail = (item: any) => {
 };
 
 // Export & Print Logic
-const handlePrint = () => {
-  window.print();
-};
 
 const handleExportCSV = () => {
   const data = getExportData();
@@ -621,7 +618,6 @@ const handleConfirmDelete = () => {
                     <span class="hidden sm:inline">Hapus Barang</span>
                   </button>
                   <ExportButtonGroup 
-                    @print="handlePrint"
                     @export-excel="handleExportExcel"
                     @export-pdf="handleExportPDF"
                     @export-csv="handleExportCSV"
@@ -642,6 +638,17 @@ const handleConfirmDelete = () => {
 
         <!-- Table -->
         <div class="pb-4">
+          <!-- Print-only Filter Info -->
+          <div v-if="searchQuery || categoryFilter || subcategoryFilter || brandFilter" class="print-only mb-4 text-left">
+            <div class="font-bold text-xs text-foreground mb-1">Filter:</div>
+            <div class="text-[10px] text-muted-foreground space-y-0.5">
+              <div v-if="searchQuery">Pencarian: {{ searchQuery }}</div>
+              <div v-if="categoryFilter">Kategori: {{ categoryFilter }}</div>
+              <div v-if="subcategoryFilter">Subkategori: {{ subcategoryFilter }}</div>
+              <div v-if="brandFilter">Merek: {{ brandFilter }}</div>
+            </div>
+          </div>
+
           <DataTable 
             ref="dataTableRef"
             :columns="columns" 

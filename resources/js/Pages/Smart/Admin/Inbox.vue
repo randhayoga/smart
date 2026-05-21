@@ -241,10 +241,6 @@ const displayData = computed<InboxItem[]>(() => {
   return dummyInbox;
 });
 
-const handlePrint = () => {
-  window.print();
-};
-
 const handleExportCSV = () => {
   if (displayData.value.length === 0) return;
   
@@ -369,7 +365,6 @@ const handleExportPDF = () => {
               <div class="space-y-2 flex-1 min-w-0">
                 <label class="text-xs text-muted-foreground font-medium block ml-0.5">Aksi Terpilih</label>
                 <ExportButtonGroup 
-                  @print="handlePrint"
                   @export-excel="handleExportExcel"
                   @export-pdf="handleExportPDF"
                   @export-csv="handleExportCSV"
@@ -381,6 +376,16 @@ const handleExportPDF = () => {
 
         <!-- Table -->
         <div class="pb-4">
+          <!-- Print-only Filter Info -->
+          <div v-if="searchQuery || typeFilter || timeFilter" class="print-only mb-4 text-left">
+            <div class="font-bold text-xs text-foreground mb-1">Filter:</div>
+            <div class="text-[10px] text-muted-foreground space-y-0.5">
+              <div v-if="searchQuery">Pencarian: {{ searchQuery }}</div>
+              <div v-if="typeFilter">Jenis: {{ typeFilter }}</div>
+              <div v-if="timeFilter">Kurun Waktu: {{ { today: 'Hari Ini', week: 'Minggu Ini', month: 'Bulan Ini' }[timeFilter] || timeFilter }}</div>
+            </div>
+          </div>
+
           <DataTable 
             ref="dataTableRef"
             :columns="columns" 
@@ -393,80 +398,4 @@ const handleExportPDF = () => {
   </AppLayout>
 </template>
 
-<style scoped>
-@media print {
-  /* Hide browser headers/footers (Title/URL) */
-  @page {
-    size: landscape;
-    margin: 0; /* Set margin to 0 to hide default headers/footers */
-  }
 
-  body {
-    padding: 1.5cm !important; /* Add padding to compensate for 0 margin */
-    background: white !important;
-  }
-
-  /* Hide unnecessary elements */
-  :deep(aside), 
-  :deep(header),
-  :deep(nav),
-  .no-print,
-  .bg-card > .p-5,
-  .flex.items-center.justify-between.gap-4.text-sm.text-muted-foreground,
-  th:first-child, td:first-child, /* Hide Checkbox column */
-  th:last-child, td:last-child, /* Hide Action column */
-  th svg, /* Hide sort icons */
-  .lucide /* Hide any other icons in the table */
-  {
-    display: none !important;
-  }
-
-  /* Reset layout and borders */
-  .bg-card {
-    border: none !important;
-    box-shadow: none !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    width: 100% !important;
-    border-radius: 0 !important; /* Edge 0 */
-  }
-
-  .bg-card div {
-    border-radius: 0 !important;
-  }
-
-  /* Shrink table for total fit */
-  table {
-    width: 100% !important;
-    border-collapse: collapse !important;
-    font-size: 9px !important; /* Even smaller font */
-    table-layout: fixed !important; /* Force fixed layout to avoid overflow */
-  }
-
-  th, td {
-    border: 1px solid #000 !important;
-    padding: 4px 2px !important;
-    word-break: break-all !important;
-    border-radius: 0 !important;
-  }
-
-  th {
-    background-color: #f1f5f9 !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-    color: black !important;
-  }
-
-  .truncate {
-    overflow: visible !important;
-    white-space: normal !important;
-    text-overflow: clip !important;
-  }
-
-  /* Remove all padding/margin from wrappers */
-  .px-\[10px\], .pb-\[10px\], .p-4, .p-5 {
-    padding: 0 !important;
-    margin: 0 !important;
-  }
-}
-</style>

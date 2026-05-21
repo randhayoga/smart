@@ -144,9 +144,10 @@ const handleViewDetail = (item: any) => {
   router.get(url);
 };
 
-const handlePrint = () => window.print();
 const handleExportExcel = () => alert('Exporting to Excel...');
-const handleExportPDF = () => alert('Exporting to PDF...');
+const handleExportPDF = () => {
+  window.print();
+};
 const handleExportCSV = () => alert('Exporting to CSV...');
 
 watch(rowsPerPage, (val) => {
@@ -241,7 +242,6 @@ onMounted(() => {
             <div class="space-y-2">
               <label class="text-xs text-muted-foreground font-medium block ml-0.5">Aksi Terpilih</label>
               <ExportButtonGroup 
-                @print="handlePrint"
                 @export-excel="handleExportExcel"
                 @export-pdf="handleExportPDF"
                 @export-csv="handleExportCSV"
@@ -270,6 +270,17 @@ onMounted(() => {
 
         <!-- Table -->
         <div class="pb-4">
+          <!-- Print-only Filter Info -->
+          <div v-if="searchQuery || typeFilter || statusFilter || timeFilter" class="print-only mb-4 text-left">
+            <div class="font-bold text-xs text-foreground mb-1">Filter:</div>
+            <div class="text-[10px] text-muted-foreground space-y-0.5">
+              <div v-if="searchQuery">Pencarian: {{ searchQuery }}</div>
+              <div v-if="typeFilter">Jenis: {{ typeFilter }}</div>
+              <div v-if="statusFilter">Status Akhir: {{ statusFilter }}</div>
+              <div v-if="timeFilter">Kurun Waktu: {{ timeFilter }}</div>
+            </div>
+          </div>
+
           <DataTable 
             ref="dataTableRef"
             :columns="columns" 
