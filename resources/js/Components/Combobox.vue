@@ -74,7 +74,11 @@ const handleSelect = (val: string | number | null) => {
         role="combobox" 
         :aria-expanded="open" 
         :disabled="disabled"
-        :class="[widthClass, 'justify-between rounded-[14px] font-normal text-muted-foreground']"
+        :class="[
+          widthClass,
+          'justify-between rounded-[14px] font-normal',
+          !modelValue ? 'text-muted-foreground' : 'text-foreground'
+        ]"
       >
         <span class="truncate">{{ selectedLabel }}</span>
         <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
