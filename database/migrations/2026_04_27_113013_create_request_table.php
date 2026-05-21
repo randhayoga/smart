@@ -9,7 +9,7 @@ return new class extends Migration {
     {
         Schema::create('requests', function (Blueprint $table) {
             $table->id();
-            $table->char('request_number', 11)->unique();
+            $table->string('request_number', 11)->unique();
             $table->foreignId('user_id')->constrained('users');
             $table->foreignId('approver_id')->constrained('users');
             $table->enum('utilization', ['project', 'corporate']);

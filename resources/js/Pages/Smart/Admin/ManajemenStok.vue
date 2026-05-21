@@ -10,13 +10,13 @@ import {
   Printer,
   FileDown,
   Eye,
-  X,
-  Check,
-  ChevronsUpDown
+  X
 } from 'lucide-vue-next';
 import TableSearch from '@/Components/TableSearch.vue';
 import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal.vue';
 import ExportButtonGroup from '@/Components/ExportButtonGroup.vue';
+import ResetFilterButton from '@/Components/ResetFilterButton.vue';
+import Combobox from '@/Components/Combobox.vue';
 
 import { Button } from "@/Components/ui/button";
 import {
@@ -25,54 +25,45 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/Components/ui/dropdown-menu";
-import { Popover, PopoverContent, PopoverTrigger } from '@/Components/ui/popover';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/Components/ui/command';
 import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem } from '@/Components/ui/breadcrumb';
 
 import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
 
+interface Category    { id: number; code: string; name: string; is_consumable: boolean; }
+interface Subcategory { id: number; code: string; name: string; category_id: number; category: Category; }
+interface SimpleItem  { id: number; name: string; }
+interface Floor       { id: number; name: string; location_id: number; location: SimpleItem; }
+interface Room        { id: number; name: string; floor_id: number; floor: Floor; }
+
 interface Props {
-  user: {
-    name: string;
-    email: string;
-  };
+  user: { name: string; email: string; };
+  categories:    Category[];
+  subcategories: Subcategory[];
+  uoms:          SimpleItem[];
+  brands:        SimpleItem[];
+  organizers:    SimpleItem[];
+  vendors:       SimpleItem[];
+  locations:     SimpleItem[];
+  floors:        Floor[];
+  rooms:         Room[];
+  barangs?:      any[];
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+  categories:    () => [],
+  subcategories: () => [],
+  uoms:          () => [],
+  brands:        () => [],
+  organizers:    () => [],
+  vendors:       () => [],
+  locations:     () => [],
+  floors:        () => [],
+  rooms:         () => [],
+  barangs:       () => [],
+});
 
-// Dummy Data
-const categories = ['Elektronik', 'Furnitur', 'ATK', 'Kendaraan'];
-
-const subcategoryMap: Record<string, string[]> = {
-  'Elektronik': ['Laptop', 'Keyboard', 'Monitor', 'Mouse'],
-  'Furnitur': ['Meja', 'Kursi', 'Lemari', 'Sofa'],
-  'ATK': ['Kertas', 'Pulpen', 'Buku', 'Penghapus'],
-  'Kendaraan': ['Mobil', 'Motor', 'Sepeda']
-};
-
-const brandMap: Record<string, string[]> = {
-  'Elektronik': ['Asus', 'Lenovo', 'Samsung', 'Logitech'],
-  'Furnitur': ['IKEA', 'Informa', 'Olympic'],
-  'ATK': ['Sinar Dunia', 'Standard', 'Joyko'],
-  'Kendaraan': ['Toyota', 'Honda', 'Yamaha']
-};
-const units = Array.from({ length: 150 }, (_, i) => (i + 1).toString());
-
-const dummyInventory = [
-  { id: 1, code: 'ELE-LAP-0001', category: 'Elektronik', subcategory: 'Laptop', brand: 'Asus', specification: 'ROG Zephyrus G14, 16GB RAM, 512GB SSD', lastUpdate: '05-05-2026 10:00', amount: 5 },
-  { id: 2, code: 'FUR-MEJ-0001', category: 'Furnitur', subcategory: 'Meja', brand: 'IKEA', specification: 'Linnmon Table, White, 120x60cm', lastUpdate: '05-05-2026 11:30', amount: 12 },
-  { id: 3, code: 'ATK-KER-0001', category: 'ATK', subcategory: 'Kertas', brand: 'Sinar Dunia', specification: 'A4 80gsm, 500 sheets', lastUpdate: '04-05-2026 09:15', amount: 50 },
-  { id: 4, code: 'KEN-MOB-0001', category: 'Kendaraan', subcategory: 'Mobil', brand: 'Toyota', specification: 'Avanza 2023, Silver Metallic', lastUpdate: '03-05-2026 15:45', amount: 2 },
-  { id: 5, code: 'ELE-LAP-0002', category: 'Elektronik', subcategory: 'Laptop', brand: 'Lenovo', specification: 'ThinkPad X1 Carbon, 32GB RAM', lastUpdate: '05-05-2026 14:20', amount: 3 },
-];
+import { useForm } from '@inertiajs/vue3';
 
 const searchQuery = ref('');
 const categoryFilter = ref('');
@@ -80,9 +71,18 @@ const subcategoryFilter = ref('');
 const brandFilter = ref('');
 const rowsPerPage = ref('Semua baris');
 
-// Combobox open states
-const subcategoryOpen = ref(false);
-const brandOpen = ref(false);
+
+
+const hasActiveFilters = computed(() => {
+  return !!(categoryFilter.value || subcategoryFilter.value || brandFilter.value || searchQuery.value);
+});
+
+const clearFilters = () => {
+  categoryFilter.value = '';
+  subcategoryFilter.value = '';
+  brandFilter.value = '';
+  searchQuery.value = '';
+};
 
 const dataTableRef = ref<any>(null);
 
@@ -279,7 +279,7 @@ onMounted(() => {
 });
 
 const getExportData = () => {
-  if (!dataTableRef.value) return dummyInventory;
+  if (!dataTableRef.value) return props.barangs || [];
   return dataTableRef.value.table.getFilteredRowModel().rows.map((row: any) => row.original);
 };
 
@@ -332,47 +332,37 @@ const handleExportPDF = () => {
 
 // Create Modal Logic
 const isCreateModalOpen = ref(false);
-const newItem = ref({
+const newItem = useForm({
   code: '',
-  category: '',
-  subcategory: '',
-  brand: '',
-  unit: '',
+  category_id: null as number | null,
+  subcategory_id: null as number | null,
+  brand_id: null as number | null,
+  uom_id: null as number | null,
   specification: '',
   photo: null as File | null,
   photoName: ''
 });
 
 const filteredSubcategories = computed(() => {
-  return newItem.value.category ? subcategoryMap[newItem.value.category] || [] : [];
+  return newItem.category_id ? props.subcategories.filter(s => s.category_id == newItem.category_id) : props.subcategories;
 });
 
-const filteredBrands = computed(() => {
-  return newItem.value.category ? brandMap[newItem.value.category] || [] : [];
+const mainFilteredSubcategories = computed(() => {
+  const cat = props.categories.find(c => c.name === categoryFilter.value);
+  if (!cat) return props.subcategories.map(s => s.name);
+  return props.subcategories.filter(s => s.category_id == cat.id).map(s => s.name);
 });
 
-const mainFilteredSubcategories = ref<string[]>([]);
-const mainFilteredBrands = ref<string[]>([]);
-
-// Function to update filtered lists
-const updateMainFilters = () => {
-  const cat = categoryFilter.value;
-  if (!cat) {
-    mainFilteredSubcategories.value = ([] as string[]).concat(...Object.values(subcategoryMap));
-    mainFilteredBrands.value = ([] as string[]).concat(...Object.values(brandMap));
-  } else {
-    mainFilteredSubcategories.value = subcategoryMap[cat] || [];
-    mainFilteredBrands.value = brandMap[cat] || [];
-  }
-};
+const mainFilteredBrands = computed(() => {
+  return props.brands.map(b => b.name);
+});
 
 // Update filters on mount and when category changes
 onMounted(() => {
-  updateMainFilters();
+  // Filters updated via computed
 });
 
 watch(categoryFilter, () => {
-  updateMainFilters();
   subcategoryFilter.value = '';
   brandFilter.value = '';
 });
@@ -382,16 +372,9 @@ watch(subcategoryFilter, () => {
 });
 
 const openCreateModal = () => {
-  newItem.value = {
-    code: '',
-    category: '',
-    subcategory: '',
-    brand: '',
-    unit: '',
-    specification: '',
-    photo: null,
-    photoName: ''
-  };
+  newItem.reset();
+  newItem.clearErrors();
+  newItem.photoName = '';
   isCreateModalOpen.value = true;
 };
 
@@ -400,21 +383,22 @@ const closeCreateModal = () => {
 };
 
 const generateCode = () => {
-  if (!newItem.value.category || !newItem.value.subcategory) return;
+  if (!newItem.category_id || !newItem.subcategory_id) return;
   
-  const catCode = newItem.value.category.substring(0, 3).toUpperCase();
-  const subCode = newItem.value.subcategory.substring(0, 3).toUpperCase();
+  const cat = props.categories.find(c => c.id === newItem.category_id);
+  const sub = props.subcategories.find(s => s.id === newItem.subcategory_id);
   
-  // Find the highest number for this subcategory in dummyInventory
-  // Note: Standard format expected is CAT[CAT]-SUB[SUB]-[XXXX]
-  const sameSubItems = dummyInventory.filter(item => item.subcategory === newItem.value.subcategory);
+  if (!cat || !sub) return;
+
+  const catCode = cat.code.trim();
+  const subCode = sub.code.trim();
+  
+  const sameSubItems = (props.barangs || []).filter(item => item.subcategory_id == newItem.subcategory_id);
   
   let nextNumber = 1;
   if (sameSubItems.length > 0) {
     const numbers = sameSubItems.map(item => {
-      // Extract the last 4 digits from the code
-      // If code doesn't match the new format, it will return 0
-      const parts = item.code.split('-');
+      const parts = item.code.trim().split('-');
       const lastPart = parts[parts.length - 1];
       const num = parseInt(lastPart);
       return isNaN(num) ? 0 : num;
@@ -423,16 +407,16 @@ const generateCode = () => {
   }
   
   const formattedNumber = nextNumber.toString().padStart(4, '0');
-  newItem.value.code = `${catCode}-${subCode}-${formattedNumber}`;
+  newItem.code = `${catCode}-${subCode}-${formattedNumber}`;
 };
 
-watch(() => newItem.value.category, () => { 
-  newItem.value.code = ''; 
-  newItem.value.subcategory = ''; 
-  newItem.value.brand = '';
+watch(() => newItem.category_id, () => { 
+  newItem.code = ''; 
+  newItem.subcategory_id = null; 
+  newItem.brand_id = null;
 });
-watch(() => newItem.value.subcategory, () => { 
-  newItem.value.code = ''; 
+watch(() => newItem.subcategory_id, () => { 
+  newItem.code = ''; 
 });
 
 const handleFileUpload = (e: any) => {
@@ -450,8 +434,8 @@ const handleFileUpload = (e: any) => {
     return;
   }
 
-  newItem.value.photo = file;
-  newItem.value.photoName = file.name;
+  newItem.photo = file;
+  newItem.photoName = file.name;
 };
 
 const triggerFileInput = () => {
@@ -460,20 +444,29 @@ const triggerFileInput = () => {
 };
 
 const isFormValid = computed(() => {
-  return newItem.value.code && 
-         newItem.value.category && 
-         newItem.value.subcategory && 
-         newItem.value.brand && 
-         newItem.value.unit && 
-         newItem.value.specification &&
-         newItem.value.photo;
+  return newItem.code && 
+         newItem.category_id && 
+         newItem.subcategory_id && 
+         newItem.brand_id && 
+         newItem.uom_id && 
+         newItem.specification &&
+         newItem.photo && !newItem.processing;
 });
 
 const handleCreateItem = () => {
   if (!isFormValid.value) return;
-  const newCode = newItem.value.code;
-  closeCreateModal();
-  router.get(`/smart/inventory/${newCode}`);
+  newItem.transform((data) => ({
+    number: data.code,
+    subcategory_id: data.subcategory_id,
+    brand_id: data.brand_id,
+    uom_id: data.uom_id,
+    specification: data.specification,
+    image_url: data.photo,
+  })).post('/smart/inventory/barangs', {
+    onSuccess: () => {
+      closeCreateModal();
+    },
+  });
 };
 
 // Delete Modal Logic
@@ -491,14 +484,29 @@ const closeDeleteModal = () => {
 };
 
 const handleConfirmDelete = () => {
-  // Logic to actually delete items (e.g., API call)
-  alert(`Berhasil menghapus ${itemsToDelete.value.length} barang`);
+  if (itemsToDelete.value.length === 0) return;
+
+  const ids = itemsToDelete.value.map(item => item.id);
   
-  if (dataTableRef.value) {
-    dataTableRef.value.table.resetRowSelection();
+  if (ids.length === 1) {
+    router.delete(`/smart/inventory/barangs/${ids[0]}`, {
+      onSuccess: () => {
+        if (dataTableRef.value) {
+          dataTableRef.value.table.resetRowSelection();
+        }
+        closeDeleteModal();
+      }
+    });
+  } else {
+    // If multiple deletion is supported by backend, else loop or alert
+    ids.forEach(id => {
+       router.delete(`/smart/inventory/barangs/${id}`);
+    });
+    if (dataTableRef.value) {
+      dataTableRef.value.table.resetRowSelection();
+    }
+    closeDeleteModal();
   }
-  
-  closeDeleteModal();
 };
 </script>
 
@@ -529,7 +537,7 @@ const handleConfirmDelete = () => {
                   <label class="text-xs text-muted-foreground font-medium block">Filter</label>
                   <TableSearch 
                     v-model="searchQuery"
-                    placeholder="Cari kode Barang..." 
+                    placeholder="Cari Barang..." 
                   />
                 </div>
 
@@ -543,77 +551,41 @@ const handleConfirmDelete = () => {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px]" align="start" :side-offset="4">
                     <DropdownMenuItem @select="categoryFilter = ''">Semua kategori</DropdownMenuItem>
-                    <DropdownMenuItem v-for="cat in categories" :key="cat" @select="categoryFilter = cat">
-                      {{ cat }}
+                    <DropdownMenuItem v-for="cat in props.categories" :key="cat.id" @select="categoryFilter = cat.name">
+                      {{ cat.name }}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
 
                 <!-- Subcategory Combobox (searchable/scrollable) -->
-                <Popover v-model:open="subcategoryOpen">
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" role="combobox" :aria-expanded="subcategoryOpen" class="w-[200px] justify-between rounded-[14px] font-normal text-muted-foreground">
-                      <span class="truncate">{{ subcategoryFilter || 'Semua subkategori' }}</span>
-                      <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent class="w-(--reka-popover-trigger-width) min-w-(--reka-popover-trigger-width) p-0 rounded-[14px]" align="start">
-                    <Command>
-                      <CommandInput placeholder="Cari subkategori..." />
-                      <CommandEmpty>Tidak ditemukan.</CommandEmpty>
-                      <CommandList>
-                        <CommandGroup>
-                          <CommandItem value="semua-subkategori" @select="subcategoryFilter = ''; subcategoryOpen = false">
-                            <Check :class="['mr-2 h-4 w-4', !subcategoryFilter ? 'opacity-100' : 'opacity-0']" />
-                            Semua subkategori
-                          </CommandItem>
-                          <CommandItem
-                            v-for="sub in mainFilteredSubcategories"
-                            :key="sub"
-                            :value="sub"
-                            @select="subcategoryFilter = sub; subcategoryOpen = false"
-                          >
-                            <Check :class="['mr-2 h-4 w-4', subcategoryFilter === sub ? 'opacity-100' : 'opacity-0']" />
-                            {{ sub }}
-                          </CommandItem>
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
+                <Combobox
+                  v-model="subcategoryFilter"
+                  :options="mainFilteredSubcategories"
+                  search-placeholder="Cari subkategori..."
+                  default-label="Semua subkategori"
+                />
 
                 <!-- Brand Combobox (searchable/scrollable) -->
-                <Popover v-model:open="brandOpen">
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" role="combobox" :aria-expanded="brandOpen" class="w-[200px] justify-between rounded-[14px] font-normal text-muted-foreground">
-                      <span class="truncate">{{ brandFilter || 'Semua merek' }}</span>
-                      <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent class="w-(--reka-popover-trigger-width) min-w-(--reka-popover-trigger-width) p-0 rounded-[14px]" align="start">
-                    <Command>
-                      <CommandInput placeholder="Cari merek..." />
-                      <CommandEmpty>Tidak ditemukan.</CommandEmpty>
-                      <CommandList>
-                        <CommandGroup>
-                          <CommandItem value="semua-merek" @select="brandFilter = ''; brandOpen = false">
-                            <Check :class="['mr-2 h-4 w-4', !brandFilter ? 'opacity-100' : 'opacity-0']" />
-                            Semua merek
-                          </CommandItem>
-                          <CommandItem
-                            v-for="brand in mainFilteredBrands"
-                            :key="brand"
-                            :value="brand"
-                            @select="brandFilter = brand; brandOpen = false"
-                          >
-                            <Check :class="['mr-2 h-4 w-4', brandFilter === brand ? 'opacity-100' : 'opacity-0']" />
-                            {{ brand }}
-                          </CommandItem>
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
+                <Combobox
+                  v-model="brandFilter"
+                  :options="mainFilteredBrands"
+                  search-placeholder="Cari merek..."
+                  default-label="Semua merek"
+                />
+
+                <Transition
+                  enter-active-class="transition ease-out duration-200"
+                  enter-from-class="transform scale-95 opacity-0"
+                  enter-to-class="transform scale-100 opacity-100"
+                  leave-active-class="transition ease-in duration-150"
+                  leave-from-class="transform scale-100 opacity-100"
+                  leave-to-class="transform scale-95 opacity-0"
+                >
+                  <ResetFilterButton 
+                    v-if="hasActiveFilters"
+                    @click="clearFilters"
+                  />
+                </Transition>
               </div>
 
               <!-- Rows Per Page -->
@@ -674,7 +646,7 @@ const handleConfirmDelete = () => {
           <DataTable 
             ref="dataTableRef"
             :columns="columns" 
-            :data="dummyInventory" 
+            :data="props.barangs || []" 
             :filter-value="searchQuery"
           />
         </div>
@@ -706,7 +678,7 @@ const handleConfirmDelete = () => {
               @click.stop
             >
               <!-- Modal Header -->
-              <div class="flex items-center justify-between p-5 border-b border-border">
+              <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
                 <h3 class="text-lg font-bold text-foreground">Pembuatan Barang Baru</h3>
                 <button @click="closeCreateModal" class="p-2 hover:bg-muted rounded-full transition-colors">
                   <X class="w-5 h-5 text-muted-foreground" />
@@ -730,7 +702,7 @@ const handleConfirmDelete = () => {
                         />
                         <button 
                           @click="generateCode"
-                          :disabled="!newItem.category || !newItem.subcategory"
+                          :disabled="!newItem.category_id || !newItem.subcategory_id"
                           class="px-6 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors disabled:opacity-50"
                         >
                           Generate
@@ -743,13 +715,13 @@ const handleConfirmDelete = () => {
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 text-muted-foreground">
-                            {{ newItem.category || 'Pilih kategori' }}
+                            {{ props.categories.find(c => c.id === newItem.category_id)?.name || 'Pilih kategori' }}
                             <ChevronDown class="w-4 h-4 opacity-50" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
-                          <DropdownMenuItem v-for="cat in categories" :key="cat" @select="newItem.category = cat">
-                            {{ cat }}
+                          <DropdownMenuItem v-for="cat in props.categories" :key="cat.id" @select="newItem.category_id = cat.id">
+                            {{ cat.name }}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -757,36 +729,25 @@ const handleConfirmDelete = () => {
 
                     <div class="space-y-1.5">
                       <label class="text-sm font-medium text-foreground block">Subkategori<span class="text-rose-500">*</span></label>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 text-muted-foreground" :disabled="!newItem.category">
-                            {{ newItem.subcategory || 'Pilih subkategori' }}
-                            <ChevronDown class="w-4 h-4 opacity-50" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
-                          <DropdownMenuItem v-for="sub in filteredSubcategories" :key="sub" @select="newItem.subcategory = sub">
-                            {{ sub }}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <Combobox
+                        v-model="newItem.subcategory_id"
+                        :options="filteredSubcategories"
+                        search-placeholder="Cari subkategori..."
+                        default-label="Pilih subkategori"
+                        width-class="w-full h-10 px-4"
+                        :disabled="!newItem.category_id"
+                      />
                     </div>
 
                     <div class="space-y-1.5">
                       <label class="text-sm font-medium text-foreground block">Satuan<span class="text-rose-500">*</span></label>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 text-muted-foreground">
-                            {{ newItem.unit || 'Pilih satuan barang' }}
-                            <ChevronDown class="w-4 h-4 opacity-50" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) max-h-[300px] overflow-y-auto rounded-[14px] scrollbar-hide z-[1001]">
-                          <DropdownMenuItem v-for="unit in units" :key="unit" @select="newItem.unit = unit">
-                            {{ unit }}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <Combobox
+                        v-model="newItem.uom_id"
+                        :options="props.uoms"
+                        search-placeholder="Cari satuan..."
+                        default-label="Pilih satuan barang"
+                        width-class="w-full h-10 px-4"
+                      />
                     </div>
                   </div>
 
@@ -794,19 +755,13 @@ const handleConfirmDelete = () => {
                   <div class="space-y-6">
                     <div class="space-y-1.5">
                       <label class="text-sm font-medium text-foreground block">Merek<span class="text-rose-500">*</span></label>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 text-muted-foreground">
-                            {{ newItem.brand || 'Pilih merek' }}
-                            <ChevronDown class="w-4 h-4 opacity-50" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
-                          <DropdownMenuItem v-for="brand in filteredBrands" :key="brand" @select="newItem.brand = brand">
-                            {{ brand }}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <Combobox
+                        v-model="newItem.brand_id"
+                        :options="props.brands"
+                        search-placeholder="Cari merek..."
+                        default-label="Pilih merek"
+                        width-class="w-full h-10 px-4"
+                      />
                     </div>
 
                     <div class="space-y-1.5">

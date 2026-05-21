@@ -16,8 +16,17 @@ class Subcategory extends Model
         'category_id',
     ];
 
+    protected $casts = [
+        'category_id' => 'integer',
+    ];
+
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
+    }
+
+    public function getCodeAttribute($value)
+    {
+        return $value !== null ? trim($value) : null;
     }
 }

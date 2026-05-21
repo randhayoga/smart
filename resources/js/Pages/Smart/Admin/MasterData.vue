@@ -965,7 +965,7 @@ const closeErrorModal = () => {
               <div class="p-4 bg-muted/30 border-t border-border flex items-center justify-center">
                 <button 
                   @click="closeErrorModal"
-                  class="w-full py-2.5 bg-gradient-primary text-primary-foreground hover:opacity-90 text-sm font-semibold rounded-[14px] transition-colors shadow-sm active:scale-[0.98]"
+                  class="w-full py-2.5 border border-input rounded-[14px] hover:bg-muted transition-colors shadow-button active:scale-[0.98]"
                 >
                   Mengerti
                 </button>

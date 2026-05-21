@@ -47,6 +47,10 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
         Route::resource('rooms',         RoomController::class)->only(['store', 'update', 'destroy']);
     });
 
+    Route::prefix('inventory')->name('inventory.')->group(function () {
+        Route::resource('barangs', \App\Http\Controllers\Smart\Admin\Inventory\BarangController::class)->only(['store', 'update', 'destroy']);
+    });
+
     Route::get('/inbox', [InboxController::class, 'index'])->name('inbox');
     Route::get('/inbox/{id}', [InboxController::class, 'show'])->name('inbox.show');
     Route::get('/handover', [HandoverController::class, 'index'])->name('handover');
