@@ -9,7 +9,8 @@ import {
   ArrowLeft,
   Info,
   X,
-  AlertCircle
+  AlertCircle,
+  Check
 } from 'lucide-vue-next';
 import AssetItemCard from '@/Components/AssetItemCard.vue';
 import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem, BreadcrumbSeparator } from '@/Components/ui/breadcrumb';
@@ -89,26 +90,34 @@ const handleCatatPenempatan = (item: any) => {
       <!-- Left Column (Details & Items) -->
       <div class="lg:col-span-2 space-y-6">
         <!-- Main Detail Card -->
-        <div class="bg-card rounded-xl border border-border p-5 shadow-sm">
-          <div class="space-y-4">
-            <h3 class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Detail:</h3>
-            <div class="space-y-1">
-                <h2 class="text-lg font-bold text-foreground">#Nomor_Permintaan/#Nomor_Peminjaman</h2>
-                <p class="text-sm text-foreground">
-                    <span class="text-muted-foreground font-normal">Pemanfaatan: </span>
-                    Jenis_Pemanfaatan (Nomor_Project/Nama_Departement)
-                </p>
-                <p class="text-sm text-foreground">
-                    <span class="text-muted-foreground font-normal">Durasi: </span>
-                    DD-MM-YYYY HH:MM s.d. DD-MM-YYYY HH:MM (X hari, Y jam)
-                </p>
+        <div class="bg-card border border-border rounded-[14px] p-6 shadow-sm">
+          <h3 class="text-sm font-medium text-muted-foreground mb-3">Detail:</h3>
+          <div class="space-y-2">
+            <h2 class="text-lg md:text-xl font-extrabold text-foreground mb-3">
+              #Nomor_Permintaan/#Nomor_Peminjaman
+            </h2>
+            
+            <div class="space-y-1.5 text-sm text-foreground">
+              <p>
+                <span class="text-muted-foreground">Pemanfaatan:</span> 
+                <span class="font-semibold">
+                  Jenis_Pemanfaatan (Nomor_Project/Nama_Departement)
+                </span>
+              </p>
+
+              <p>
+                <span class="text-muted-foreground">Durasi:</span>
+                <span class="font-semibold">
+                  DD-MM-YYYY HH:MM s.d. DD-MM-YYYY HH:MM (X hari, Y jam)
+                </span>
+              </p>
             </div>
           </div>
         </div>
 
         <!-- Items Card -->
-        <div class="bg-card rounded-xl border border-border p-5 shadow-sm space-y-6">
-          <h3 class="text-lg font-bold text-foreground">Daftar barang:</h3>
+        <div class="bg-card border border-border rounded-[14px] p-6 shadow-sm">
+          <h3 class="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-4">Daftar barang:</h3>
           
           <AssetItemCard 
             v-for="item in items" 
@@ -133,45 +142,66 @@ const handleCatatPenempatan = (item: any) => {
 
       <!-- Right Column (Timeline) -->
       <div class="space-y-6">
-        <div class="bg-card rounded-xl border border-border p-5 shadow-sm">
-          <h3 class="text-lg font-bold text-foreground mb-8">Tahapan:</h3>
+        <div class="bg-card border border-border rounded-[14px] p-6 shadow-sm relative overflow-hidden">
+          <h3 class="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-6">Tahapan:</h3>
           
-          <div class="space-y-4">
-            <div v-for="(step, index) in timeline" :key="index">
-              <!-- Step Content -->
-              <div class="flex items-start gap-4">
-                <div class="flex flex-col items-center">
-                  <div class="relative z-10 flex items-center justify-center w-10 h-10 rounded-full bg-card border-2"
-                    :class="[
-                        step.completed ? 'border-green-500' : 'border-indigo-600'
-                    ]"
-                  >
-                    <CheckCircle2 v-if="step.completed" class="w-6 h-6 text-green-500" />
-                    <AlertCircle v-else class="w-6 h-6 text-indigo-600" />
-                  </div>
+          <!-- Vertical Timestep Stepper -->
+          <div class="relative pl-8 space-y-8 before:absolute before:left-[15px] before:top-[10px] before:bottom-[10px] before:w-[2px] before:bg-border">
+            <div 
+              v-for="(step, index) in timeline" 
+              :key="index" 
+              class="relative"
+            >
+              <!-- Icon/Indicator -->
+              <div class="absolute -left-[32px] top-0 w-8 h-8 rounded-full bg-card flex items-center justify-center z-10">
+                <!-- Status Done (Green Check Circle) -->
+                <div 
+                  v-if="step.completed" 
+                  class="w-7 h-7 rounded-full border-2 border-green-500 flex items-center justify-center bg-card"
+                >
+                  <Check class="w-4 h-4 text-green-500 stroke-[3.5]" />
+                </div>
+                
+                <!-- Status Active / Current (Pulsing Blue Clock) -->
+                <div 
+                  v-else-if="step.active" 
+                  class="w-7 h-7 rounded-full border-2 border-blue-500 flex items-center justify-center bg-card relative"
+                >
+                  <span class="absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-30 animate-ping"></span>
+                  <Clock class="w-4 h-4 text-blue-500" />
                 </div>
 
-                <div class="space-y-0.5 pt-0.5 flex-grow">
-                  <p class="font-bold text-base leading-tight" :class="step.completed ? 'text-green-600' : 'text-indigo-600'">
-                    {{ step.status }}
-                  </p>
-                  <p v-if="step.user" class="text-sm text-green-600/80 font-medium leading-tight">oleh {{ step.user }}</p>
-                  <p v-if="step.time" class="text-sm text-muted-foreground leading-tight">{{ step.time }}</p>
-                  <p v-if="step.info" class="text-sm text-indigo-600 font-medium leading-tight">{{ step.info }}</p>
+                <!-- Status Pending/Next (Grey Dot) -->
+                <div 
+                  v-else 
+                  class="w-6 h-6 rounded-full border-2 border-muted-foreground/30 flex items-center justify-center bg-card"
+                >
+                  <div class="w-2 h-2 rounded-full bg-muted-foreground/30"></div>
                 </div>
               </div>
 
-              <!-- Connecting Arrow -->
-              <div v-if="index < timeline.length - 1" class="flex justify-start pl-4 py-1">
-                <div class="w-2.5 h-6 ml-0.5">
-                  <svg width="12" height="24" viewBox="0 0 12 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M6 0V20M6 20L1 15M6 20L11 15" 
-                      :stroke="index < 3 ? '#22C55E' : '#6366F1'" 
-                      stroke-width="2" 
-                      stroke-linecap="round" 
-                      stroke-linejoin="round"
-                    />
-                  </svg>
+              <!-- Content Step -->
+              <div class="space-y-1">
+                <div>
+                  <h4 
+                    class="text-sm font-bold"
+                    :class="{
+                      'text-green-600': step.completed,
+                      'text-blue-600': step.active && !step.completed,
+                      'text-muted-foreground': !step.completed && !step.active
+                    }"
+                  >
+                    {{ step.status }}
+                  </h4>
+                  <p v-if="step.user" class="text-xs font-semibold text-green-600 mt-0.5">
+                    oleh {{ step.user }}
+                  </p>
+                  <p v-if="step.time" class="text-xs text-muted-foreground mt-0.5">
+                    {{ step.time }}
+                  </p>
+                  <p v-if="step.info" class="text-xs text-indigo-600 font-medium mt-0.5">
+                    {{ step.info }}
+                  </p>
                 </div>
               </div>
             </div>

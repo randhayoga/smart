@@ -9,7 +9,8 @@ import {
   ArrowLeft,
   Info,
   X,
-  AlertCircle
+  AlertCircle,
+  Check
 } from 'lucide-vue-next';
 import AssetItemCard from '@/Components/AssetItemCard.vue';
 import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem, BreadcrumbSeparator } from '@/Components/ui/breadcrumb';
@@ -116,41 +117,41 @@ const handleConfirmReturn = () => {
       <!-- Left Column (Details & Items) -->
       <div class="lg:col-span-2 space-y-6">
         <!-- Main Detail Card -->
-        <div class="bg-card rounded-xl border border-border p-5 shadow-sm">
-          <div class="space-y-4">
-            <h3 class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Detail:</h3>
-            <div class="space-y-2">
-                <h2 class="text-lg font-bold text-foreground">#Nomor_Permintaan/#Nomor_Peminjaman</h2>
-                
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-8 text-sm">
-                    <div class="flex flex-col">
-                        <span class="text-muted-foreground font-normal">Dibuat oleh:</span>
-                        <span class="font-medium text-foreground">John Doe</span>
-                    </div>
-                    <div class="flex flex-col">
-                        <span class="text-muted-foreground font-normal">PIC Approval:</span>
-                        <span class="font-medium text-foreground">Jane Doe</span>
-                    </div>
-                    <div class="flex flex-col">
-                        <span class="text-muted-foreground font-normal">Waktu dibuat:</span>
-                        <span class="font-medium text-foreground">DD/MM/YYYY HH:MM</span>
-                    </div>
-                    <div class="flex flex-col sm:col-span-2">
-                        <span class="text-muted-foreground font-normal">Pemanfaatan:</span>
-                        <span class="font-medium text-foreground">Jenis_Pemanfaatan (Nomor_Project/Nama_Departement)</span>
-                    </div>
-                    <div class="flex flex-col sm:col-span-2">
-                        <span class="text-muted-foreground font-normal">Durasi:</span>
-                        <span class="font-medium text-foreground">DD-MM-YYYY HH:MM s.d. DD-MM-YYYY HH:MM (X hari, Y jam)</span>
-                    </div>
-                </div>
+        <div class="bg-card border border-border rounded-[14px] p-6 shadow-sm">
+          <h3 class="text-sm font-medium text-muted-foreground mb-3">Detail:</h3>
+          <div class="space-y-2">
+            <h2 class="text-lg md:text-xl font-extrabold text-foreground mb-3">
+              #Nomor_Permintaan/#Nomor_Peminjaman
+            </h2>
+            
+            <div class="space-y-1.5 text-sm text-foreground">
+              <p>
+                <span class="text-muted-foreground">Dibuat oleh:</span> 
+                <span class="font-semibold">John Doe</span>
+              </p>
+              <p>
+                <span class="text-muted-foreground">PIC Approval:</span> 
+                <span class="font-semibold">Jane Doe</span>
+              </p>
+              <p>
+                <span class="text-muted-foreground">Waktu dibuat:</span> 
+                <span class="font-semibold">DD/MM/YYYY HH:MM</span>
+              </p>
+              <p>
+                <span class="text-muted-foreground">Pemanfaatan:</span> 
+                <span class="font-semibold">Jenis_Pemanfaatan (Nomor_Project/Nama_Departement)</span>
+              </p>
+              <p>
+                <span class="text-muted-foreground">Durasi:</span>
+                <span class="font-semibold">DD-MM-YYYY HH:MM s.d. DD-MM-YYYY HH:MM (X hari, Y jam)</span>
+              </p>
             </div>
           </div>
         </div>
 
         <!-- Items Card -->
-        <div class="bg-card rounded-xl border border-border p-5 shadow-sm space-y-6">
-          <h3 class="text-lg font-bold text-foreground">Daftar barang:</h3>
+        <div class="bg-card border border-border rounded-[14px] p-6 shadow-sm">
+          <h3 class="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-4">Daftar barang:</h3>
           
           <AssetItemCard 
             v-for="item in items" 
@@ -166,57 +167,78 @@ const handleConfirmReturn = () => {
 
       <!-- Right Column (Timeline) -->
       <div class="space-y-6">
-        <div class="bg-card rounded-xl border border-border p-5 shadow-sm">
-          <h3 class="text-lg font-bold text-foreground mb-8">Tahapan:</h3>
+        <div class="bg-card border border-border rounded-[14px] p-6 shadow-sm relative overflow-hidden">
+          <h3 class="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-6">Tahapan:</h3>
           
-          <div class="space-y-4">
-            <div v-for="(step, index) in timeline" :key="index">
-              <div class="flex items-start gap-4">
-                <div class="flex flex-col items-center">
-                  <div class="relative z-10 flex items-center justify-center w-10 h-10 rounded-full bg-card border-2"
-                    :class="[
-                        step.completed ? 'border-green-500' : 'border-indigo-600'
-                    ]"
-                  >
-                    <CheckCircle2 v-if="step.completed" class="w-6 h-6 text-green-500" />
-                    <AlertCircle v-else class="w-6 h-6 text-indigo-600" />
-                  </div>
+          <!-- Vertical Timestep Stepper -->
+          <div class="relative pl-8 space-y-8 before:absolute before:left-[15px] before:top-[10px] before:bottom-[10px] before:w-[2px] before:bg-border">
+            <div 
+              v-for="(step, index) in timeline" 
+              :key="index" 
+              class="relative"
+            >
+              <!-- Icon/Indicator -->
+              <div class="absolute -left-[32px] top-0 w-8 h-8 rounded-full bg-card flex items-center justify-center z-10">
+                <!-- Status Done (Green Check Circle) -->
+                <div 
+                  v-if="step.completed" 
+                  class="w-7 h-7 rounded-full border-2 border-green-500 flex items-center justify-center bg-card"
+                >
+                  <Check class="w-4 h-4 text-green-500 stroke-[3.5]" />
+                </div>
+                
+                <!-- Status Active / Current (Pulsing Indigo Alert/Exclamation) -->
+                <div 
+                  v-else-if="step.active" 
+                  class="w-7 h-7 rounded-full border-2 border-[#6366F1] flex items-center justify-center bg-card relative"
+                >
+                  <span class="absolute inline-flex h-full w-full rounded-full bg-[#6366F1]/20 opacity-40 animate-ping"></span>
+                  <span class="text-sm font-extrabold text-[#6366F1]">!</span>
                 </div>
 
-                <div class="space-y-0.5 pt-0.5 flex-grow">
-                  <p class="font-bold text-base leading-tight" :class="step.completed ? 'text-green-600' : 'text-indigo-600'">
-                    {{ step.status }}
-                  </p>
-                  <p v-if="step.user" class="text-sm text-green-600/80 font-medium leading-tight">oleh {{ step.user }}</p>
-                  <p v-if="step.time" class="text-sm text-muted-foreground leading-tight">{{ step.time }}</p>
-                  
-                  <div v-if="step.active" class="space-y-0.5 mt-1">
-                    <p class="text-sm text-indigo-600 font-medium leading-tight">Metode: {{ step.method }}</p>
-                    <p class="text-sm text-indigo-600 font-medium leading-tight">Tempat: {{ step.location }}</p>
-                    <p class="text-sm text-indigo-600 font-medium leading-tight">Waktu: {{ step.time }}</p>
-                    
-                    <div class="pt-3">
-                        <button 
-                            @click="handleConfirmReturn"
-                            class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-4 py-2 rounded-lg transition-all"
-                        >
-                            Konfirmasi Pengembalian
-                        </button>
-                    </div>
-                  </div>
+                <!-- Status Pending/Next (Grey Dot) -->
+                <div 
+                  v-else 
+                  class="w-6 h-6 rounded-full border-2 border-muted-foreground/30 flex items-center justify-center bg-card"
+                >
+                  <div class="w-2 h-2 rounded-full bg-muted-foreground/30"></div>
                 </div>
               </div>
 
-              <div v-if="index < timeline.length - 1" class="flex justify-start pl-4 py-1">
-                <div class="w-2.5 h-6 ml-0.5">
-                  <svg width="12" height="24" viewBox="0 0 12 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M6 0V20M6 20L1 15M6 20L11 15" 
-                      :stroke="index < 5 ? '#22C55E' : '#6366F1'" 
-                      stroke-width="2" 
-                      stroke-linecap="round" 
-                      stroke-linejoin="round"
-                    />
-                  </svg>
+              <!-- Content Step -->
+              <div class="space-y-1">
+                <div>
+                  <h4 
+                    class="text-sm font-bold"
+                    :class="{
+                      'text-green-600': step.completed,
+                      'text-[#6366F1]': step.active && !step.completed,
+                      'text-muted-foreground': !step.completed && !step.active
+                    }"
+                  >
+                    {{ step.status }}
+                  </h4>
+                  <p v-if="step.user" class="text-xs font-semibold text-green-600 mt-0.5">
+                    oleh {{ step.user }}
+                  </p>
+                  <p v-if="step.time" class="text-xs text-muted-foreground mt-0.5">
+                    {{ step.time }}
+                  </p>
+                  
+                  <div v-if="step.active" class="space-y-0.5 mt-2 text-xs text-indigo-600">
+                    <p class="font-semibold">Metode: {{ step.method }}</p>
+                    <p class="font-semibold">Tempat: {{ step.location }}</p>
+                    <p class="font-semibold">Waktu: {{ step.time }}</p>
+                    
+                    <div class="pt-3">
+                      <button 
+                        @click="handleConfirmReturn"
+                        class="bg-[#6366F1] hover:bg-[#5558EB] text-white text-xs font-bold px-4 py-2 rounded-lg transition-all shadow-sm"
+                      >
+                        Konfirmasi Pengembalian
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
