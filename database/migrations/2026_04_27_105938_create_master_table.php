@@ -9,7 +9,7 @@ return new class extends Migration {
     {
         Schema::create('categories', function (Blueprint $table) {
             $table->id();
-            $table->char('code', 3)->unique();
+            $table->string('code', 3)->unique();
             $table->string('name');
             $table->boolean('is_consumable')->default(true);
             $table->timestamps();
@@ -17,7 +17,7 @@ return new class extends Migration {
 
         Schema::create('subcategories', function (Blueprint $table) {
             $table->id();
-            $table->char('code', 7)->unique();
+            $table->string('code', 7)->unique();
             $table->string('name');
             $table->foreignId('category_id')->constrained('categories')->cascadeOnDelete();
             $table->timestamps();

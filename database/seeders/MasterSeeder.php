@@ -52,8 +52,8 @@ class MasterSeeder extends Seeder
         // 2. Subcategories
         $subcategories = [
             [
-                'code' => 'HA4',
-                'name' => 'Kertas HVS A4',
+                'code' => 'KER',
+                'name' => 'Kertas',
                 'category_code' => 'ATK',
             ],
             [
@@ -111,7 +111,7 @@ class MasterSeeder extends Seeder
             'Sinar Dunia',
             'Paper One',
             'Snowman',
-            'Joyko',
+            'Standard',
             'IKEA',
             'Informa',
             'Toyota',

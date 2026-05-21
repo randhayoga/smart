@@ -57,4 +57,9 @@ class User extends Authenticatable
     {
         return $this->username === '255476';
     }
+
+    public function getUsernameAttribute($value)
+    {
+        return $value !== null ? trim($value) : null;
+    }
 }

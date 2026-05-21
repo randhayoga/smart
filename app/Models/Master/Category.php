@@ -24,4 +24,9 @@ class Category extends Model
     {
         return $this->hasMany(Subcategory::class);
     }
+
+    public function getCodeAttribute($value)
+    {
+        return $value !== null ? trim($value) : null;
+    }
 }

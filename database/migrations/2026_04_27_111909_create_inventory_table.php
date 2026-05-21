@@ -9,11 +9,10 @@ return new class extends Migration {
     {
         Schema::create('barangs', function (Blueprint $table) {
             $table->id();
-            $table->char('number', 12)->unique();
+            $table->string('number', 12)->unique();
             $table->foreignId('subcategory_id')->constrained('subcategories');
             $table->foreignId('brand_id')->constrained('brands');
             $table->foreignId('uom_id')->constrained('uoms');
-            $table->enum('type', ['consumable', 'asset']);
             $table->string('specification');
             $table->string('image_url');
             $table->timestamp('last_restock_at')->nullable();
@@ -22,11 +21,13 @@ return new class extends Migration {
 
         Schema::create('lots', function (Blueprint $table) {
             $table->id();
-            $table->char('number', 26)->unique();
+            $table->string('number', 26)->unique();
             $table->foreignId('barang_id')->constrained('barangs');
             $table->foreignId('organizer_id')->constrained('organizers');
             $table->foreignId('vendor_id')->constrained('vendors');
             $table->foreignId('location_id')->constrained('locations');
+            $table->foreignId('floor_id')->nullable()->after('location_id')->constrained('floors');
+            $table->foreignId('room_id')->nullable()->after('floor_id')->constrained('rooms');
             $table->string('po_number');
             $table->dateTime('date_of_receipt');
             $table->decimal('unit_price', 15, 2);
@@ -36,9 +37,11 @@ return new class extends Migration {
 
         Schema::create('units', function (Blueprint $table) {
             $table->id();
-            $table->char('number', 25)->unique();
+            $table->string('number', 25)->unique();
             $table->foreignId('lot_id')->constrained('lots');
             $table->foreignId('location_id')->constrained('locations');
+            $table->foreignId('floor_id')->nullable()->after('location_id')->constrained('floors');
+            $table->foreignId('room_id')->nullable()->after('floor_id')->constrained('rooms');
             $table->enum('status', ['tersedia', 'dipinjam', 'dipakai', 'nonaktif']);
             $table->string('condition');
             $table->decimal('price', 15, 2);
