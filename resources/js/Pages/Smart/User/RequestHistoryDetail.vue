@@ -159,6 +159,38 @@ const requestsDb: RequestHistory[] = [
     items: [
       { id: 601, subcategory: 'Peralatan Listrik', brand: 'Schneider', spec: 'Stopkontak 5 Lubang', quantity: 5, stockQuantity: 10, category: 'Elektronik', assets: [] }
     ]
+  },
+  {
+    id: 7,
+    number: '#BOR-2026-0007',
+    type: 'peminjaman',
+    pemanfaatan: 'project',
+    pemanfaatanDetail: 'PRJ-004 – AI Research Model',
+    durationStart: '20-05-2026 09:00',
+    durationEnd: '27-05-2026 17:00',
+    durationDays: 7,
+    durationHours: 8,
+    status: 'Dipinjam',
+    created_at: '2026-05-18',
+    items: [
+      { id: 701, subcategory: 'GPU Workstation', brand: 'NVIDIA', spec: 'RTX 4090 24GB', quantity: 1, stockQuantity: 2, category: 'Elektronik', assets: ['GPU-NVIDIA-2026-001'] }
+    ]
+  },
+  {
+    id: 8,
+    number: '#BOR-2026-0008',
+    type: 'peminjaman',
+    pemanfaatan: 'corporate',
+    pemanfaatanDetail: 'Research & Development',
+    durationStart: '10-05-2026 08:00',
+    durationEnd: '', // No due date
+    durationDays: 0,
+    durationHours: 0,
+    status: 'Dipinjam',
+    created_at: '2026-05-09',
+    items: [
+      { id: 801, subcategory: 'Papan Tulis', brand: 'Sakura', spec: 'Whiteboard Portable 120x90', quantity: 1, stockQuantity: 3, category: 'Alat Tulis', assets: ['WBD-SAKURA-2026-101'] }
+    ]
   }
 ];
 
@@ -342,6 +374,62 @@ const toggleAssets = (itemId: number) => {
   expandedAssets.value[itemId] = !expandedAssets.value[itemId];
 };
 
+// Asset placement state
+const assetPlacements = ref<Record<string, string>>({
+  'GPU-NVIDIA-2026-001': 'Mega Mendung',
+  'WBD-SAKURA-2026-101': 'Tiga Negeri',
+  'MON-DELL-2026-901': 'Mega Mendung',
+  'MON-DELL-2026-902': 'Tiga Negeri',
+});
+
+// Placement Modal State
+const isPlacementModalOpen = ref(false);
+const currentItemForPlacement = ref<RequestItem | null>(null);
+const placementForm = ref<Record<string, string>>({});
+
+const openPlacementModal = (item: RequestItem) => {
+  currentItemForPlacement.value = item;
+  placementForm.value = {};
+  if (item.assets) {
+    item.assets.forEach(asset => {
+      placementForm.value[asset] = assetPlacements.value[asset] || '';
+    });
+  }
+  isPlacementModalOpen.value = true;
+};
+
+const closePlacementModal = () => {
+  isPlacementModalOpen.value = false;
+  currentItemForPlacement.value = null;
+};
+
+const handleSavePlacements = () => {
+  if (currentItemForPlacement.value && currentItemForPlacement.value.assets) {
+    currentItemForPlacement.value.assets.forEach(asset => {
+      assetPlacements.value[asset] = placementForm.value[asset] || '';
+    });
+  }
+  closePlacementModal();
+  alertToastMessage.value = 'Penempatan aset berhasil dicatat!';
+  showToast.value = true;
+  setTimeout(() => {
+    showToast.value = false;
+  }, 4000);
+};
+
+const handleReturnAction = () => {
+  if (requestState.value) {
+    requestState.value.status = 'Selesai';
+    alertToastMessage.value = request.value.type === 'peminjaman' 
+      ? 'Pengembalian aset berhasil diatur!' 
+      : 'Permintaan barang habis pakai selesai!';
+    showToast.value = true;
+    setTimeout(() => {
+      showToast.value = false;
+    }, 4000);
+  }
+};
+
 // ─────────────────────────────────────────────
 // Timeline / Steps Logic
 // ─────────────────────────────────────────────
@@ -433,9 +521,9 @@ const timelineSteps = computed((): TimelineStep[] => {
       description: `Serah terima diselesaikan secara ${effectiveHandoverMethod.value.toLowerCase()} di ${effectiveHandoverLocation.value}.`
     });
     steps.push({
-      title: r.type === 'peminjaman' ? 'Sedang Dipinjam' : 'Selesai Digunakan',
-      status: 'active',
-      description: r.type === 'peminjaman' ? 'Aset sedang Anda gunakan. Harap dikembalikan sebelum jatuh tempo.' : 'Barang habis pakai sudah diserahkan.'
+      title: r.type === 'peminjaman' ? 'Aset sedang Anda pinjam' : 'Aset sedang Anda gunakan',
+      status: 'action-required',
+      description: 'show-return-action'
     });
   } else if (r.status === 'Selesai') {
     steps.push({
@@ -547,6 +635,16 @@ const timelineSteps = computed((): TimelineStep[] => {
       </Button>
     </div>
 
+    <!-- ── Warning Banner for Dipinjam Status (Tolong catat penempatan Aset) ── -->
+    <div 
+      v-if="request.status === 'Dipinjam' && request.type === 'peminjaman'" 
+      class="mb-6 p-4 border border-[#6366F1] bg-[#6366F1]/5 rounded-[12px] flex justify-start items-center animate-in fade-in slide-in-from-top-1 duration-300"
+    >
+      <span class="text-sm font-semibold text-[#6366F1]">
+        Tolong catat penempatan Aset
+      </span>
+    </div>
+
     <!-- ── Grid Layout Dua Kolom ── -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       
@@ -639,9 +737,22 @@ const timelineSteps = computed((): TimelineStep[] => {
                         class="text-xs text-foreground font-semibold flex items-center gap-1.5"
                       >
                         <span class="w-1 h-1 rounded-full bg-foreground shrink-0"></span>
-                        {{ asset }}
+                        <span>{{ asset }} <span class="text-muted-foreground font-normal">({{ assetPlacements[asset] || 'Tempat Penempatan' }})</span></span>
                       </li>
                     </ul>
+                  </div>
+
+                  <!-- Catat Penempatan Aset Button -->
+                  <div 
+                    v-if="request.status === 'Dipinjam' && request.type === 'peminjaman' && item.assets && item.assets.length > 0" 
+                    class="pt-3 flex justify-end"
+                  >
+                    <Button 
+                      @click="openPlacementModal(item)"
+                      class="bg-[#00BCD4] hover:bg-[#00ACC1] text-white font-bold px-4 h-9 rounded-lg text-xs shadow-sm transition-colors"
+                    >
+                      Catat Penempatan Aset
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -712,30 +823,28 @@ const timelineSteps = computed((): TimelineStep[] => {
 
               <!-- Content Step -->
               <div class="space-y-1">
-                <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-1">
-                  <div>
-                    <h4 
-                      class="text-sm font-bold"
-                      :class="{
-                        'text-green-600': step.status === 'done',
-                        'text-[#6366F1]': step.status === 'action-required',
-                        'text-blue-600': step.status === 'active',
-                        'text-red-600': step.status === 'rejected',
-                        'text-muted-foreground': step.status === 'pending'
-                      }"
-                    >
-                      {{ step.title }}
-                    </h4>
-                    <p v-if="step.user" class="text-xs font-semibold text-green-600 mt-0.5">
-                      oleh {{ step.user }}
-                    </p>
-                  </div>
-                  <span v-if="step.time" class="text-[10px] md:text-[11px] font-semibold text-muted-foreground shrink-0 bg-muted px-2 py-0.5 rounded-[6px] self-start sm:self-center">
+                <div>
+                  <h4 
+                    class="text-sm font-bold"
+                    :class="{
+                      'text-green-600': step.status === 'done',
+                      'text-[#6366F1]': step.status === 'action-required',
+                      'text-blue-600': step.status === 'active',
+                      'text-red-600': step.status === 'rejected',
+                      'text-muted-foreground': step.status === 'pending'
+                    }"
+                  >
+                    {{ step.title }}
+                  </h4>
+                  <p v-if="step.user" class="text-xs font-semibold text-green-600 mt-0.5">
+                    oleh {{ step.user }}
+                  </p>
+                  <p v-if="step.time" class="text-xs text-muted-foreground mt-0.5">
                     {{ step.time }}
-                  </span>
+                  </p>
                 </div>
                 
-                <p v-if="step.description && step.description !== 'scheduled-details'" class="text-xs text-muted-foreground leading-relaxed pt-0.5">
+                <p v-if="step.description && step.description !== 'scheduled-details' && step.description !== 'show-return-action'" class="text-xs text-muted-foreground leading-relaxed pt-0.5">
                   {{ step.description }}
                 </p>
 
@@ -747,7 +856,7 @@ const timelineSteps = computed((): TimelineStep[] => {
                 </div>
 
                 <!-- Tombol Atur Serah Terima di Step Timeline -->
-                <div v-if="step.status === 'action-required' && step.description !== 'scheduled-details'" class="pt-2">
+                <div v-if="step.status === 'action-required' && step.description !== 'scheduled-details' && step.description !== 'show-return-action'" class="pt-2">
                   <Button 
                     @click="openHandoverModal" 
                     class="bg-[#6366F1] hover:bg-[#5558EB] text-white font-bold px-4 h-8 rounded-lg text-xs shadow-sm transition-colors"
@@ -763,6 +872,16 @@ const timelineSteps = computed((): TimelineStep[] => {
                     class="bg-[#6366F1] hover:bg-[#5558EB] text-white font-bold px-5 h-8 rounded-full text-xs shadow-sm transition-colors"
                   >
                     Aset Telah Diterima
+                  </Button>
+                </div>
+
+                <!-- Tombol Atur Pengembalian / Selesai di Step Timeline -->
+                <div v-if="step.status === 'action-required' && step.description === 'show-return-action'" class="pt-2">
+                  <Button 
+                    @click="handleReturnAction" 
+                    class="bg-[#6366F1] hover:bg-[#5558EB] text-white font-bold px-5 h-8 rounded-full text-xs shadow-sm transition-colors"
+                  >
+                    {{ request.type === 'peminjaman' ? 'Atur Pengembalian' : 'Selesai' }}
                   </Button>
                 </div>
               </div>
@@ -961,6 +1080,78 @@ const timelineSteps = computed((): TimelineStep[] => {
                 class="bg-[#6366F1] hover:bg-[#5558EB] text-white font-bold px-6 h-9 rounded-full text-xs md:text-sm shadow-sm transition-colors"
               >
                 Iya
+              </Button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
+    <!-- ============================================================
+         Modal Catat Penempatan Aset (Teleport & Backdrop)
+         ============================================================ -->
+    <Teleport to="body">
+      <Transition
+        enter-active-class="ease-out duration-300"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="ease-in duration-200"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div 
+          v-if="isPlacementModalOpen && currentItemForPlacement" 
+          class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+        >
+          <div 
+            class="bg-card text-foreground rounded-[20px] shadow-2xl w-full max-w-[550px] flex flex-col overflow-hidden border border-border"
+            @click.stop
+          >
+            <!-- Header -->
+            <div class="flex items-center justify-between p-6 bg-card shrink-0">
+              <h3 class="text-lg font-bold text-foreground">Catat Penempatan Aset</h3>
+              <button @click="closePlacementModal" class="p-1.5 hover:bg-muted rounded-full transition-colors">
+                <X class="w-5 h-5 text-muted-foreground" />
+              </button>
+            </div>
+            
+            <!-- Metadata Area -->
+            <div class="px-6 pb-4 space-y-1 text-sm text-foreground shrink-0">
+              <h4 class="font-extrabold text-base">{{ currentItemForPlacement.brand }} {{ currentItemForPlacement.spec }}</h4>
+              <p class="text-muted-foreground text-xs md:text-sm">
+                Kategori: {{ currentItemForPlacement.category }} ({{ currentItemForPlacement.subcategory }})
+              </p>
+            </div>
+
+            <div class="mx-6 border-b border-border"></div>
+
+            <!-- Form Content -->
+            <div class="p-6 space-y-4 max-h-[350px] overflow-y-auto">
+              <div v-for="asset in currentItemForPlacement.assets" :key="asset" class="flex flex-col gap-2">
+                <label class="text-xs font-bold text-muted-foreground uppercase tracking-wider">{{ asset }}</label>
+                <input 
+                  type="text" 
+                  v-model="placementForm[asset]" 
+                  class="h-10 px-4 rounded-full border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors text-foreground w-full"
+                  placeholder="Masukkan lokasi penempatan (misal: Mega Mendung)"
+                />
+              </div>
+            </div>
+
+            <!-- Footer Action Section -->
+            <div class="flex items-center justify-end gap-3 p-6 border-t border-border bg-card shrink-0">
+              <Button 
+                variant="outline"
+                @click="closePlacementModal"
+                class="rounded-full h-10 px-6 font-bold text-sm border-input hover:bg-muted transition-colors"
+              >
+                Batal
+              </Button>
+              <Button 
+                @click="handleSavePlacements"
+                class="rounded-full h-10 px-6 font-bold text-sm bg-[#6366F1] hover:bg-[#5558EB] text-white shadow-sm transition-colors"
+              >
+                Simpan Lokasi
               </Button>
             </div>
           </div>

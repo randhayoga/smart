@@ -148,6 +148,38 @@ const requests = ref<RequestHistory[]>([
     items: [
       { id: 601, subcategory: 'Peralatan Listrik', brand: 'Schneider', spec: 'Stopkontak 5 Lubang', quantity: 5, stockQuantity: 10, category: 'Elektronik' }
     ]
+  },
+  {
+    id: 7,
+    number: '#BOR-2026-0007',
+    type: 'peminjaman',
+    pemanfaatan: 'project',
+    pemanfaatanDetail: 'PRJ-004 – AI Research Model',
+    durationStart: '20-05-2026 09:00',
+    durationEnd: '27-05-2026 17:00',
+    durationDays: 7,
+    durationHours: 8,
+    status: 'Dipinjam',
+    created_at: '2026-05-18',
+    items: [
+      { id: 701, subcategory: 'GPU Workstation', brand: 'NVIDIA', spec: 'RTX 4090 24GB', quantity: 1, stockQuantity: 2, category: 'Elektronik' }
+    ]
+  },
+  {
+    id: 8,
+    number: '#BOR-2026-0008',
+    type: 'peminjaman',
+    pemanfaatan: 'corporate',
+    pemanfaatanDetail: 'Research & Development',
+    durationStart: '10-05-2026 08:00',
+    durationEnd: '', // No due date
+    durationDays: 0,
+    durationHours: 0,
+    status: 'Dipinjam',
+    created_at: '2026-05-09',
+    items: [
+      { id: 801, subcategory: 'Papan Tulis', brand: 'Sakura', spec: 'Whiteboard Portable 120x90', quantity: 1, stockQuantity: 3, category: 'Alat Tulis' }
+    ]
   }
 ]);
 
