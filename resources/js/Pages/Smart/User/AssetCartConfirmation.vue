@@ -55,9 +55,8 @@ const props = withDefaults(defineProps<Props>(), {
 // Data dummy dropdown (nanti dari backend)
 // ─────────────────────────────────────────────
 const pemanfaatanOptions = [
-  { value: 'project',    label: 'Project' },
-  { value: 'departemen', label: 'Departemen' },
-  { value: 'operasional', label: 'Operasional' },
+  { value: 'corporate', label: 'Corporate' },
+  { value: 'project',   label: 'Project' },
 ];
 
 const departemenOptions = [
@@ -76,18 +75,30 @@ const projectOptions = [
 // ─────────────────────────────────────────────
 // State Form
 // ─────────────────────────────────────────────
-const pemanfaatan = ref('project');
+import { watch } from 'vue';
+
+const pemanfaatan = ref('corporate');
 const departemen  = ref('');
 const project     = ref('');
 const alasan      = ref('');
 
-/** Project hanya wajib jika pemanfaatan = "project" */
-const isProjectRequired = computed(() => pemanfaatan.value === 'project');
+/** Project / Departemen kondisional */
+const isCorporateRequired = computed(() => pemanfaatan.value === 'corporate');
+const isProjectRequired   = computed(() => pemanfaatan.value === 'project');
+
+// Reset selection when changing type
+watch(pemanfaatan, (newVal) => {
+  if (newVal === 'corporate') {
+    project.value = '';
+  } else if (newVal === 'project') {
+    departemen.value = '';
+  }
+});
 
 /** Validasi: semua field wajib terisi */
 const isFormValid = computed(() => {
   if (!pemanfaatan.value) return false;
-  if (!departemen.value)  return false;
+  if (isCorporateRequired.value && !departemen.value) return false;
   if (isProjectRequired.value && !project.value) return false;
   if (!alasan.value.trim()) return false;
   return true;
@@ -244,8 +255,8 @@ const handleGoToHistory = () => {
               </div>
             </div>
 
-            <!-- ── Departemen ── -->
-            <div class="flex items-center gap-3">
+            <!-- ── Departemen (hanya jika pemanfaatan = corporate) ── -->
+            <div v-if="isCorporateRequired" class="flex items-center gap-3">
               <label class="text-sm font-medium text-foreground w-32 flex-shrink-0">
                 Departemen<span class="text-destructive">*</span>:
               </label>
