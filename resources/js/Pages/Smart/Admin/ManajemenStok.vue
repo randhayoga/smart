@@ -9,7 +9,6 @@ import {
   Trash2,
   Printer,
   FileDown,
-  Eye,
   X
 } from 'lucide-vue-next';
 import TableSearch from '@/Components/TableSearch.vue';
@@ -29,6 +28,8 @@ import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem } from '@/Co
 
 import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
+import ViewTableButton from '@/Components/ViewTableButton.vue';
+import DeleteTableButton from '@/Components/DeleteTableButton.vue';
 
 interface Category    { id: number; code: string; name: string; is_consumable: boolean; }
 interface Subcategory { id: number; code: string; name: string; category_id: number; category: Category; }
@@ -230,14 +231,12 @@ const columns: ColumnDef<any>[] = [
     header: () => h('div', { class: 'w-full no-print pr-6' }, 'Aksi'),
     cell: ({ row }) => {
       return h('div', { class: 'flex items-center justify-end gap-2 no-print' }, [
-        h('button', {
+        h(ViewTableButton, {
           onClick: () => handleViewDetail(row.original),
-          class: 'p-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-full transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50'
-        }, [h(Eye, { class: 'w-3.5 h-3.5' })]),
-        h('button', {
+        }),
+        h(DeleteTableButton, {
           onClick: () => openDeleteModal(row.original),
-          class: 'p-2 bg-rose-500 hover:bg-rose-600 text-white rounded-full transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-rose-500/50'
-        }, [h(Trash2, { class: 'w-3.5 h-3.5' })])
+        })
       ]);
     },
   },
