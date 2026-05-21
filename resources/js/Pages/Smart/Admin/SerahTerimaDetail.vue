@@ -13,7 +13,8 @@ import {
   X,
   Search,
   ArrowUpDown,
-  AlertCircle
+  AlertCircle,
+  Check
 } from 'lucide-vue-next';
 import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem, BreadcrumbSeparator } from '@/Components/ui/breadcrumb';
 
@@ -250,38 +251,41 @@ const confirmCancel = () => {
       <!-- Left Column (Details & Items) -->
       <div class="lg:col-span-2 space-y-6">
         <!-- Main Detail Card -->
-        <div class="bg-card rounded-xl border border-border p-5 shadow-sm">
-          <div class="space-y-4">
-            <h2 class="text-lg font-bold text-foreground">{{ handover?.number || '#Nomor_Permintaan' }}</h2>
+        <div class="bg-card border border-border rounded-[14px] p-6 shadow-sm">
+          <h3 class="text-sm font-medium text-muted-foreground mb-3">Detail:</h3>
+          <div class="space-y-2">
+            <h2 class="text-lg md:text-xl font-extrabold text-foreground mb-3">
+              {{ handover?.number || '#Nomor_Permintaan' }}
+            </h2>
             
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-12 text-sm">
-              <div class="space-y-1">
-                <p class="text-muted-foreground">Dibuat oleh</p>
-                <p class="font-semibold text-foreground">{{ handover?.requester || 'John Doe' }}</p>
-              </div>
-              <div class="space-y-1">
-                <p class="text-muted-foreground">PIC Approval</p>
-                <p class="font-semibold text-foreground">Jane Doe</p>
-              </div>
-              <div class="space-y-1">
-                <p class="text-muted-foreground">Waktu dibuat</p>
-                <p class="font-semibold text-foreground">10-05-2026 09:00</p>
-              </div>
-              <div class="space-y-1">
-                <p class="text-muted-foreground">Pemanfaatan</p>
-                <p class="font-semibold text-foreground">Internal Project (PRJ-2024-001/Finance)</p>
-              </div>
-              <div class="md:col-span-2 space-y-1">
-                <p class="text-muted-foreground">Durasi</p>
-                <p class="font-semibold text-foreground">12-05-2026 10:00 s.d. 19-05-2026 10:00 (7 hari, 0 jam)</p>
-              </div>
+            <div class="space-y-1.5 text-sm text-foreground">
+              <p>
+                <span class="text-muted-foreground">Dibuat oleh:</span> 
+                <span class="font-semibold">{{ handover?.requester || 'John Doe' }}</span>
+              </p>
+              <p>
+                <span class="text-muted-foreground">PIC Approval:</span> 
+                <span class="font-semibold">Jane Doe</span>
+              </p>
+              <p>
+                <span class="text-muted-foreground">Waktu dibuat:</span> 
+                <span class="font-semibold">10-05-2026 09:00</span>
+              </p>
+              <p>
+                <span class="text-muted-foreground">Pemanfaatan:</span> 
+                <span class="font-semibold">Internal Project (PRJ-2024-001/Finance)</span>
+              </p>
+              <p>
+                <span class="text-muted-foreground">Durasi:</span>
+                <span class="font-semibold">12-05-2026 10:00 s.d. 19-05-2026 10:00 (7 hari, 0 jam)</span>
+              </p>
             </div>
           </div>
         </div>
 
         <!-- Items Card -->
-        <div class="bg-card rounded-xl border border-border p-5 shadow-sm space-y-6">
-          <h3 class="text-lg font-bold text-foreground">Daftar barang:</h3>
+        <div class="bg-card border border-border rounded-[14px] p-6 shadow-sm">
+          <h3 class="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-4">Daftar barang:</h3>
           
           <AssetItemCard 
             v-for="item in items" 
@@ -295,7 +299,7 @@ const confirmCancel = () => {
             <template #footer>
               <button 
                 @click="openAllocModal(item)"
-                class="px-5 py-2 bg-[#5BC0DE] hover:bg-[#46B8DA] text-white text-sm font-semibold rounded-[14px] transition-all shadow-sm"
+                class="px-5 py-2.5 bg-[#5BC0DE] hover:bg-[#46B8DA] text-white text-sm font-bold rounded-[14px] transition-all shadow-sm"
               >
                 Pilih Alokasi Aset
               </button>
@@ -306,36 +310,69 @@ const confirmCancel = () => {
 
       <!-- Right Column (Timeline) -->
       <div class="space-y-6">
-        <div class="bg-card rounded-xl border border-border p-5 shadow-sm">
-          <h3 class="text-lg font-bold text-foreground mb-6">Tahapan:</h3>
+        <div class="bg-card border border-border rounded-[14px] p-6 shadow-sm relative overflow-hidden">
+          <h3 class="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-6">Tahapan:</h3>
           
-          <div class="relative space-y-8 pl-4">
-            <!-- Vertical Line -->
-            <div class="absolute left-7 top-2 bottom-8 w-0.5 bg-border"></div>
-
-            <div v-for="(step, index) in timeline" :key="index" class="relative flex items-start gap-4">
-              <!-- Icon Container -->
-              <div class="relative z-10 flex items-center justify-center w-8 h-8 rounded-full bg-card">
-                <CheckCircle2 v-if="step.completed" class="w-8 h-8 text-green-500" />
-                <div v-else-if="step.active" class="w-8 h-8 rounded-full border-2 border-indigo-600 flex items-center justify-center bg-indigo-50">
-                   <div class="w-2.5 h-2.5 rounded-full bg-indigo-600 animate-pulse"></div>
+          <!-- Vertical Timestep Stepper -->
+          <div class="relative pl-8 space-y-8 before:absolute before:left-[15px] before:top-[10px] before:bottom-[10px] before:w-[2px] before:bg-border">
+            <div 
+              v-for="(step, index) in timeline" 
+              :key="index" 
+              class="relative"
+            >
+              <!-- Icon/Indicator -->
+              <div class="absolute -left-[32px] top-0 w-8 h-8 rounded-full bg-card flex items-center justify-center z-10">
+                <!-- Status Done (Green Check Circle) -->
+                <div 
+                  v-if="step.completed" 
+                  class="w-7 h-7 rounded-full border-2 border-green-500 flex items-center justify-center bg-card"
+                >
+                  <Check class="w-4 h-4 text-green-500 stroke-[3.5]" />
                 </div>
-                <div v-else class="w-8 h-8 rounded-full border-2 border-border bg-muted flex items-center justify-center">
-                  <Clock class="w-4 h-4 text-muted-foreground" />
+                
+                <!-- Status Active / Current (Pulsing Indigo Alert/Exclamation) -->
+                <div 
+                  v-else-if="step.active" 
+                  class="w-7 h-7 rounded-full border-2 border-[#6366F1] flex items-center justify-center bg-card relative"
+                >
+                  <span class="absolute inline-flex h-full w-full rounded-full bg-[#6366F1]/20 opacity-40 animate-ping"></span>
+                  <span class="text-sm font-extrabold text-[#6366F1]">!</span>
+                </div>
+
+                <!-- Status Pending/Next (Grey Dot) -->
+                <div 
+                  v-else 
+                  class="w-6 h-6 rounded-full border-2 border-muted-foreground/30 flex items-center justify-center bg-card"
+                >
+                  <div class="w-2 h-2 rounded-full bg-muted-foreground/30"></div>
                 </div>
               </div>
 
+              <!-- Content Step -->
               <div class="space-y-1">
-                <p class="font-bold text-sm" :class="step.completed ? 'text-green-600' : step.active ? 'text-indigo-600' : 'text-muted-foreground'">
-                  {{ step.status }}
-                </p>
-                <div v-if="step.user" class="text-xs text-foreground font-medium">Oleh {{ step.user }}</div>
-                <div v-if="step.time" class="text-xs text-muted-foreground">{{ step.time }}</div>
-                
-                <div v-if="step.active" class="mt-2 space-y-1">
-                  <p class="text-xs font-semibold text-indigo-700">Metode: {{ step.method }}</p>
-                  <p class="text-xs font-semibold text-indigo-700">Tempat: {{ step.location }}</p>
-                  <p class="text-xs font-semibold text-indigo-700">Waktu: {{ step.time }}</p>
+                <div>
+                  <h4 
+                    class="text-sm font-bold"
+                    :class="{
+                      'text-green-600': step.completed,
+                      'text-[#6366F1]': step.active && !step.completed,
+                      'text-muted-foreground': !step.completed && !step.active
+                    }"
+                  >
+                    {{ step.status }}
+                  </h4>
+                  <p v-if="step.user" class="text-xs font-semibold text-green-600 mt-0.5">
+                    oleh {{ step.user }}
+                  </p>
+                  <p v-if="step.time && !step.active" class="text-xs text-muted-foreground mt-0.5">
+                    {{ step.time }}
+                  </p>
+                  
+                  <div v-if="step.active" class="mt-2 space-y-1 text-xs text-muted-foreground">
+                    <p><span class="font-semibold text-foreground/80">Metode:</span> {{ step.method }}</p>
+                    <p><span class="font-semibold text-foreground/80">Tempat:</span> {{ step.location }}</p>
+                    <p><span class="font-semibold text-foreground/80">Waktu:</span> {{ step.time }}</p>
+                  </div>
                 </div>
               </div>
             </div>

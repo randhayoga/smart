@@ -69,8 +69,9 @@ const getStatusClasses = (status: string) => {
     case 'Selesai':
       return 'bg-emerald-600 text-white border-transparent';
     case 'Serah Terima':
-    case 'Dipinjam':
       return 'bg-indigo-500 text-white border-transparent';
+    case 'Dipinjam':
+      return 'bg-[#EF4444] text-white border-transparent'; // red-pinkish for "Sedang dipinjam"
     case 'Ditolak':
     case 'Dibatalkan':
       return 'bg-zinc-500 text-white border-transparent'; // gray
@@ -85,12 +86,21 @@ const getStatusClasses = (status: string) => {
     
     <!-- Badge Status & Tanggal Pembuatan -->
     <div class="flex items-center justify-between mb-4">
-      <span 
-        class="text-xs font-bold px-3 py-1 rounded-[14px] border"
-        :class="getStatusClasses(request.status)"
-      >
-        {{ request.status === 'Disetujui' ? 'Di-approve' : request.status }}
-      </span>
+      <div class="flex items-center gap-2">
+        <span 
+          class="text-xs font-bold px-3 py-1 rounded-[14px] border"
+          :class="getStatusClasses(request.status)"
+        >
+          {{ request.status === 'Disetujui' ? 'Di-approve' : (request.status === 'Dipinjam' ? 'Sedang dipinjam' : request.status) }}
+        </span>
+        <!-- Tenggat Pengembalian -->
+        <span 
+          v-if="request.status === 'Dipinjam' && request.durationEnd" 
+          class="text-xs font-bold px-3 py-1 rounded-[14px] border border-[#EF4444] text-[#EF4444] bg-[#EF4444]/5"
+        >
+          Tenggat pengembalian: {{ request.durationEnd }}
+        </span>
+      </div>
       <span class="text-xs text-muted-foreground font-medium">
         Dibuat: {{ formatDate(request.created_at) }}
       </span>
@@ -154,7 +164,12 @@ const getStatusClasses = (status: string) => {
         <p v-if="request.type === 'peminjaman' && request.durationStart" class="text-sm text-foreground">
           <span class="text-muted-foreground">Durasi:</span>
           <span class="font-medium">
-            {{ request.durationStart }} s.d. {{ request.durationEnd }} ({{ request.durationDays }} hari, {{ request.durationHours }} jam)
+            <template v-if="request.durationEnd">
+              {{ request.durationStart }} s.d. {{ request.durationEnd }} ({{ request.durationDays }} hari, {{ request.durationHours }} jam)
+            </template>
+            <template v-else>
+              {{ request.durationStart }} s.d. - (Tanpa Tenggat Waktu)
+            </template>
           </span>
         </p>
 
@@ -216,6 +231,15 @@ const getStatusClasses = (status: string) => {
         class="h-9 px-5 rounded-lg text-xs font-bold bg-[#6366F1] hover:bg-[#5558EB] text-white shadow-sm flex items-center justify-center transition-colors"
       >
         Atur Serah Terima
+      </Link>
+
+      <!-- Tampilkan Atur Pengembalian jika status Dipinjam (Sedang dipinjam) -->
+      <Link
+        v-if="request.status === 'Dipinjam'"
+        :href="route('smart.history.show', request.id)"
+        class="h-9 px-5 rounded-lg text-xs font-bold bg-[#6366F1] hover:bg-[#5558EB] text-white shadow-sm flex items-center justify-center transition-colors"
+      >
+        Atur Pengembalian
       </Link>
     </div>
 
