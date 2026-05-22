@@ -61,6 +61,7 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
 
     Route::prefix('inventory')->name('inventory.')->group(function () {
         Route::resource('barangs', \App\Http\Controllers\Smart\Admin\Inventory\BarangController::class)->only(['store', 'update', 'destroy']);
+        Route::resource('lots', \App\Http\Controllers\Smart\Admin\Inventory\LotController::class)->only(['store', 'update', 'destroy']);
     });
 
     Route::get('/inbox', [InboxController::class, 'index'])->name('inbox');

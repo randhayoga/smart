@@ -47,15 +47,33 @@ interface Props {
   };
   brands: { id: number; name: string; }[];
   uoms: { id: number; name: string; }[];
+  lots: {
+    id: number;
+    lotCode: string;
+    poNumber: string;
+    entryDate: string;
+    organizer: string;
+    organizer_id: number;
+    vendor: string;
+    vendor_id: number;
+    location: string;
+    location_id: number;
+    floor: string | null;
+    floor_id: number | null;
+    room: string | null;
+    room_id: number | null;
+    unitPrice: number | string;
+    imageUrl: string;
+    assetCount: number;
+  }[];
+  organizers: { id: number; name: string; }[];
+  vendors: { id: number; name: string; }[];
+  locations: { id: number; name: string; }[];
+  floors: { id: number; name: string; location_id: number; }[];
+  rooms: { id: number; name: string; floor_id: number; }[];
 }
 
 const props = defineProps<Props>();
-
-// Dummy Data
-const dummyLots = [
-  { id: 1, lotCode: 'LOT-YYYY-CAT-SUB-XXXX-001', poNumber: 'PO-001', entryDate: 'DD-MM-YYYY', organizer: 'XXX', assetCount: 'XX' },
-  { id: 2, lotCode: 'LOT-YYYY-CAT-SUB-XXXX-002', poNumber: 'PO-002', entryDate: 'DD-MM-YYYY', organizer: 'XXX', assetCount: 'XX' },
-];
 
 const tabs = ['Detail', 'Daftar Aset'];
 const activeTab = ref('Detail');
@@ -65,6 +83,222 @@ const timeFilter = ref('');
 const organizerFilter = ref('');
 const rowsPerPage = ref('Semua baris');
 const dataTableRef = ref<any>(null);
+
+// Lot Modal Setup
+const isLotModalOpen = ref(false);
+const lotModalMode = ref<'create' | 'edit'>('create');
+const selectedLotId = ref<number | null>(null);
+
+const lotForm = useForm({
+  _method: 'POST',
+  number: '',
+  barang_id: props.barang.id,
+  organizer_id: '' as string | number,
+  vendor_id: '' as string | number,
+  location_id: '' as string | number,
+  floor_id: null as string | number | null,
+  room_id: null as string | number | null,
+  po_number: '',
+  date_of_receipt: '',
+  unit_price: '' as string | number,
+  image_url: null as File | null,
+  image_url_name: '',
+});
+
+const generateLotCode = () => {
+  const year = new Date().getFullYear();
+  const barangCode = props.barang.code;
+  const prefix = `LOT-${year}-${barangCode}-`;
+  
+  const matchingLots = (props.lots || []).filter(lot => lot.lotCode.startsWith(prefix));
+  
+  let nextNum = 1;
+  if (matchingLots.length > 0) {
+    const numbers = matchingLots.map(lot => {
+      const suffix = lot.lotCode.replace(prefix, '');
+      return parseInt(suffix, 10) || 0;
+    });
+    nextNum = Math.max(...numbers) + 1;
+  }
+  
+  const paddedNum = String(nextNum).padStart(4, '0');
+  lotForm.number = `${prefix}${paddedNum}`;
+};
+
+const openCreateLotModal = () => {
+  lotModalMode.value = 'create';
+  selectedLotId.value = null;
+  lotForm.reset();
+  lotForm.barang_id = props.barang.id;
+  lotForm._method = 'POST';
+  generateLotCode();
+  lotForm.organizer_id = '';
+  lotForm.vendor_id = '';
+  lotForm.location_id = '';
+  lotForm.floor_id = null;
+  lotForm.room_id = null;
+  lotForm.po_number = '';
+  lotForm.date_of_receipt = '';
+  lotForm.unit_price = '';
+  lotForm.image_url = null;
+  lotForm.image_url_name = '';
+  lotForm.clearErrors();
+  isLotModalOpen.value = true;
+};
+
+const openEditLotModal = (lot: any) => {
+  lotModalMode.value = 'edit';
+  selectedLotId.value = lot.id;
+  lotForm.clearErrors();
+  
+  lotForm._method = 'PUT';
+  lotForm.number = lot.lotCode;
+  lotForm.barang_id = props.barang.id;
+  lotForm.organizer_id = lot.organizer_id;
+  lotForm.vendor_id = lot.vendor_id;
+  lotForm.location_id = lot.location_id;
+  lotForm.floor_id = lot.floor_id;
+  lotForm.room_id = lot.room_id;
+  lotForm.po_number = lot.poNumber;
+  
+  if (lot.entryDate && lot.entryDate !== '-') {
+    const parts = lot.entryDate.split('-');
+    if (parts.length === 3) {
+      lotForm.date_of_receipt = `${parts[2]}-${parts[1]}-${parts[0]}`;
+    } else {
+      lotForm.date_of_receipt = '';
+    }
+  } else {
+    lotForm.date_of_receipt = '';
+  }
+  
+  lotForm.unit_price = lot.unitPrice;
+  lotForm.image_url = null;
+  lotForm.image_url_name = lot.imageUrl ? lot.imageUrl.split('/').pop() : '';
+  
+  isLotModalOpen.value = true;
+};
+
+const handleLotFileUpload = (e: any) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+  if (!allowedTypes.includes(file.type)) {
+    alert('Format file salah! Hanya diperbolehkan file .jpg, .jpeg, atau .png');
+    return;
+  }
+
+  if (file.size > 1024 * 1024) {
+    alert('Gagal! Ukuran foto maksimal 1MB');
+    return;
+  }
+
+  lotForm.image_url = file;
+  lotForm.image_url_name = file.name;
+};
+
+const triggerLotFileInput = () => {
+  const input = document.getElementById('lot-photo-upload') as HTMLInputElement;
+  input?.click();
+};
+
+const viewLotImageInNewTab = () => {
+  if (lotForm.image_url) {
+    const url = URL.createObjectURL(lotForm.image_url);
+    window.open(url, '_blank');
+  } else if (lotModalMode.value === 'edit') {
+    const lot = props.lots.find(l => l.id === selectedLotId.value);
+    if (lot && lot.imageUrl) {
+      window.open('/storage/' + lot.imageUrl, '_blank');
+    }
+  }
+};
+
+const filteredFloors = computed(() => {
+  if (!lotForm.location_id) return [];
+  return props.floors.filter(f => f.location_id === Number(lotForm.location_id));
+});
+
+const filteredRooms = computed(() => {
+  if (!lotForm.floor_id) return [];
+  return props.rooms.filter(r => r.floor_id === Number(lotForm.floor_id));
+});
+
+watch(() => lotForm.location_id, (newVal) => {
+  if (newVal) {
+    const valid = filteredFloors.value.some(f => f.id === Number(lotForm.floor_id));
+    if (!valid) {
+      lotForm.floor_id = null;
+      lotForm.room_id = null;
+    }
+  } else {
+    lotForm.floor_id = null;
+    lotForm.room_id = null;
+  }
+});
+
+watch(() => lotForm.floor_id, (newVal) => {
+  if (newVal) {
+    const valid = filteredRooms.value.some(r => r.id === Number(lotForm.room_id));
+    if (!valid) {
+      lotForm.room_id = null;
+    }
+  } else {
+    lotForm.room_id = null;
+  }
+});
+
+const isLotFormValid = computed(() => {
+  return lotForm.number && 
+         lotForm.organizer_id && 
+         lotForm.vendor_id && 
+         lotForm.location_id && 
+         lotForm.po_number && 
+         lotForm.date_of_receipt && 
+         lotForm.unit_price !== '' && 
+         !lotForm.processing;
+});
+
+const handleSaveLot = () => {
+  if (!isLotFormValid.value) return;
+  
+  lotForm.transform((data) => {
+    const formData: any = {
+      _method: data._method,
+      number: data.number,
+      barang_id: data.barang_id,
+      organizer_id: data.organizer_id,
+      vendor_id: data.vendor_id,
+      location_id: data.location_id,
+      floor_id: data.floor_id,
+      room_id: data.room_id,
+      po_number: data.po_number,
+      date_of_receipt: data.date_of_receipt,
+      unit_price: data.unit_price,
+    };
+    if (data.image_url) {
+      formData.image_url = data.image_url;
+    }
+    return formData;
+  });
+
+  if (lotModalMode.value === 'create') {
+    lotForm.post('/smart/inventory/lots', {
+      onSuccess: () => {
+        isLotModalOpen.value = false;
+        toast.success('LOT berhasil ditambahkan.');
+      }
+    });
+  } else {
+    lotForm.post(`/smart/inventory/lots/${selectedLotId.value}`, {
+      onSuccess: () => {
+        isLotModalOpen.value = false;
+        toast.success('LOT berhasil diperbarui.');
+      }
+    });
+  }
+};
 
 const columns: ColumnDef<any>[] = [
   {
@@ -153,10 +387,10 @@ const columns: ColumnDef<any>[] = [
     header: () => h('div', { class: 'text-center font-semibold text-foreground no-print' }, 'Aksi'),
     cell: ({ row }) => h('div', { class: 'flex items-center justify-center gap-2 no-print' }, [
       h(ViewTableButton, {
-        onClick: () => alert('View LOT'),
+        onClick: () => openEditLotModal(row.original),
       }),
       h(DeleteTableButton, {
-        onClick: () => alert('Delete LOT'),
+        onClick: () => openDeleteLotModal(row.original),
       })
     ]),
   },
@@ -178,8 +412,52 @@ onMounted(() => {
   }
 });
 
+const filteredLots = computed(() => {
+  let list = props.lots || [];
+
+  if (searchQuery.value) {
+    const q = searchQuery.value.toLowerCase();
+    list = list.filter(lot => 
+      (lot.lotCode && lot.lotCode.toLowerCase().includes(q)) || 
+      (lot.poNumber && lot.poNumber.toLowerCase().includes(q))
+    );
+  }
+
+  if (organizerFilter.value) {
+    list = list.filter(lot => lot.organizer === organizerFilter.value);
+  }
+
+  if (timeFilter.value) {
+    const today = new Date();
+    list = list.filter(lot => {
+      if (!lot.entryDate || lot.entryDate === '-') return false;
+      const parts = lot.entryDate.split('-');
+      if (parts.length !== 3) return false;
+      const entryDateObj = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+      
+      if (timeFilter.value === 'Hari ini') {
+        return entryDateObj.toDateString() === today.toDateString();
+      } else if (timeFilter.value === 'Bulan ini') {
+        return entryDateObj.getMonth() === today.getMonth() && entryDateObj.getFullYear() === today.getFullYear();
+      }
+      return true;
+    });
+  }
+
+  return list;
+});
+
+const uniqueOrganizers = computed(() => {
+  const names = (props.lots || []).map(lot => lot.organizer).filter(Boolean);
+  return [...new Set(names)];
+});
+
+const totalStok = computed(() => {
+  return (props.lots || []).reduce((acc, lot) => acc + (Number(lot.assetCount) || 0), 0);
+});
+
 const getExportData = () => {
-  if (!dataTableRef.value) return dummyLots;
+  if (!dataTableRef.value) return filteredLots.value;
   return dataTableRef.value.table.getFilteredRowModel().rows.map((row: any) => row.original);
 };
 
@@ -311,9 +589,11 @@ const handleSaveChanges = () => {
 
 // Delete Modal Logic
 const isDeleteModalOpen = ref(false);
+const deleteMode = ref<'barang' | 'lot'>('barang');
 const itemsToDelete = ref<any[]>([]);
 
 const openDeleteModal = () => {
+  deleteMode.value = 'barang';
   itemsToDelete.value = [{
     id: props.barang.id,
     code: props.barang.code,
@@ -327,6 +607,12 @@ const openDeleteModal = () => {
   isDeleteModalOpen.value = true;
 };
 
+const openDeleteLotModal = (lot: any) => {
+  deleteMode.value = 'lot';
+  itemsToDelete.value = [lot];
+  isDeleteModalOpen.value = true;
+};
+
 const closeDeleteModal = () => {
   isDeleteModalOpen.value = false;
   itemsToDelete.value = [];
@@ -337,11 +623,20 @@ const handleConfirmDelete = () => {
 
   const ids = itemsToDelete.value.map(item => item.id);
   
-  router.delete(`/smart/inventory/barangs/${ids[0]}`, {
-    onSuccess: () => {
-      closeDeleteModal();
-    }
-  });
+  if (deleteMode.value === 'barang') {
+    router.delete(`/smart/inventory/barangs/${ids[0]}`, {
+      onSuccess: () => {
+        closeDeleteModal();
+      }
+    });
+  } else {
+    router.delete(`/smart/inventory/lots/${ids[0]}`, {
+      onSuccess: () => {
+        closeDeleteModal();
+        toast.success('LOT berhasil dihapus.');
+      }
+    });
+  }
 };
 
 // Flash Notifications
@@ -404,8 +699,8 @@ watch(flashSuccess, (newVal) => {
             <p class="font-bold text-foreground"><span class="text-foreground">Spesifikasi:</span> {{ props.barang.specification }}</p>
             <p class="text-foreground">Kategori: {{ props.barang.category }}</p>
             <p class="text-foreground">Subkategori: {{ props.barang.subcategory }}</p>
-            <p class="text-foreground">Jumlah LOT: 0</p>
-            <p class="text-foreground">Jumlah stok: 0</p>
+            <p class="text-foreground">Jumlah LOT: {{ props.lots.length }}</p>
+            <p class="text-foreground">Jumlah stok: {{ totalStok }}</p>
             <p class="text-foreground">Satuan: {{ props.barang.uom }}</p>
             <p class="text-foreground">Pembaruan terakhir: {{ props.barang.lastUpdate }}</p>
           </div>
@@ -450,8 +745,9 @@ watch(flashSuccess, (newVal) => {
               </DropdownMenuTrigger>
               <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
                 <DropdownMenuItem @select="organizerFilter = ''">Semua organizer</DropdownMenuItem>
-                <DropdownMenuItem @select="organizerFilter = 'XXX'">XXX</DropdownMenuItem>
-                <DropdownMenuItem @select="organizerFilter = 'YYY'">YYY</DropdownMenuItem>
+                <DropdownMenuItem v-for="org in uniqueOrganizers" :key="org" @select="organizerFilter = org">
+                  {{ org }}
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
@@ -483,7 +779,7 @@ watch(flashSuccess, (newVal) => {
               />
             </div>
             
-            <button class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition-all shadow-sm flex items-center gap-2">
+            <button @click="openCreateLotModal" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition-all shadow-sm flex items-center gap-2">
               <Plus class="w-4 h-4" />
               LOT Baru
             </button>
@@ -495,7 +791,7 @@ watch(flashSuccess, (newVal) => {
           <DataTable 
             ref="dataTableRef"
             :columns="columns" 
-            :data="dummyLots" 
+            :data="filteredLots" 
             :filter-value="searchQuery"
           />
         </div>
@@ -664,10 +960,225 @@ watch(flashSuccess, (newVal) => {
       </Transition>
     </Teleport>
 
+    <!-- Add/Edit LOT Modal -->
+    <Teleport to="body">
+      <Transition
+        enter-active-class="ease-out duration-200"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="ease-in duration-150"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div v-if="isLotModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <Transition
+            enter-active-class="ease-out duration-200"
+            enter-from-class="opacity-0 scale-95"
+            enter-to-class="opacity-100 scale-100"
+            leave-active-class="ease-in duration-150"
+            leave-from-class="opacity-100 scale-100"
+            leave-to-class="opacity-0 scale-95"
+          >
+            <div 
+              v-if="isLotModalOpen" 
+              class="bg-card w-full max-w-[1000px] rounded-[14px] shadow-2xl overflow-hidden flex flex-col" 
+              @click.stop
+            >
+              <!-- Modal Header -->
+              <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
+                <h3 class="text-lg font-bold text-foreground">
+                  {{ lotModalMode === 'create' ? 'Tambah LOT Baru' : 'Edit LOT' }}
+                </h3>
+                <button @click="isLotModalOpen = false" class="p-2 hover:bg-muted rounded-full transition-colors">
+                  <X class="w-5 h-5 text-muted-foreground" />
+                </button>
+              </div>
+
+              <!-- Modal Body -->
+              <div class="p-6 overflow-y-auto max-h-[70vh]">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+                  <!-- Left Column -->
+                  <div class="space-y-6">
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-medium text-foreground block">Kode LOT<span class="text-rose-500">*</span></label>
+                      <div class="flex gap-2">
+                        <input 
+                          type="text" 
+                          v-model="lotForm.number"
+                          disabled
+                          placeholder="Kode LOT belum di-generate"
+                          class="flex-grow px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
+                        />
+                        <button 
+                          v-if="lotModalMode === 'create'" 
+                          type="button" 
+                          @click="generateLotCode" 
+                          class="px-6 py-2 bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors h-10"
+                        >
+                          Generate
+                        </button>
+                      </div>
+                    </div>
+
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-medium text-foreground block">Organizer<span class="text-rose-500">*</span></label>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !lotForm.organizer_id ? 'text-muted-foreground' : 'text-foreground']">
+                            {{ props.organizers.find(o => o.id === lotForm.organizer_id)?.name || 'Pilih organizer' }}
+                            <ChevronDown class="w-4 h-4 opacity-50" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
+                          <DropdownMenuItem v-for="org in props.organizers" :key="org.id" @select="lotForm.organizer_id = org.id">
+                            {{ org.name }}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-medium text-foreground block">Vendor<span class="text-rose-500">*</span></label>
+                      <Combobox
+                        v-model="lotForm.vendor_id"
+                        :options="props.vendors"
+                        search-placeholder="Cari vendor..."
+                        default-label="Pilih vendor"
+                        width-class="w-full h-10 px-4"
+                      />
+                    </div>
+
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-medium text-foreground block">Lokasi<span class="text-rose-500">*</span></label>
+                      <Combobox
+                        v-model="lotForm.location_id"
+                        :options="props.locations"
+                        search-placeholder="Cari lokasi..."
+                        default-label="Pilih lokasi"
+                        width-class="w-full h-10 px-4"
+                      />
+                    </div>
+
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-medium text-foreground block">Lantai</label>
+                      <Combobox
+                        v-model="lotForm.floor_id"
+                        :options="filteredFloors"
+                        search-placeholder="Cari lantai..."
+                        default-label="Pilih lantai (opsional)"
+                        width-class="w-full h-10 px-4"
+                        :disabled="!lotForm.location_id"
+                      />
+                    </div>
+                  </div>
+
+                  <!-- Right Column -->
+                  <div class="space-y-6">
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-medium text-foreground block">Ruangan</label>
+                      <Combobox
+                        v-model="lotForm.room_id"
+                        :options="filteredRooms"
+                        search-placeholder="Cari ruangan..."
+                        default-label="Pilih ruangan (opsional)"
+                        width-class="w-full h-10 px-4"
+                        :disabled="!lotForm.floor_id"
+                      />
+                    </div>
+
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-medium text-foreground block">Nomor PO<span class="text-rose-500">*</span></label>
+                      <input 
+                        type="text" 
+                        v-model="lotForm.po_number"
+                        placeholder="Contoh: PO-02"
+                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
+                      />
+                    </div>
+
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-medium text-foreground block">Tanggal Masuk<span class="text-rose-500">*</span></label>
+                      <input 
+                        type="date" 
+                        v-model="lotForm.date_of_receipt"
+                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
+                      />
+                    </div>
+
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-medium text-foreground block">Harga Satuan (Rp)<span class="text-rose-500">*</span></label>
+                      <input 
+                        type="number" 
+                        v-model="lotForm.unit_price"
+                        placeholder="Contoh: 60000"
+                        min="0"
+                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
+                      />
+                    </div>
+
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-medium text-foreground block">Foto LOT</label>
+                      <div class="flex gap-2">
+                        <div 
+                          class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/10 truncate flex items-center h-10"
+                          :class="[
+                            (lotForm.image_url || lotForm.image_url_name) 
+                              ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' 
+                              : 'text-muted-foreground cursor-default'
+                          ]"
+                          @click="(lotForm.image_url || lotForm.image_url_name) && viewLotImageInNewTab()"
+                        >
+                          {{ lotForm.image_url_name || 'Belum ada foto yang dipilih' }}
+                        </div>
+                        <input 
+                          type="file" 
+                          id="lot-photo-upload" 
+                          class="hidden" 
+                          accept=".jpg,.jpeg,.png"
+                          @change="handleLotFileUpload"
+                        />
+                        <button 
+                          @click="triggerLotFileInput"
+                          class="w-[120px] shrink-0 flex items-center justify-center bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors h-10"
+                        >
+                          Pilih File
+                        </button>
+                      </div>
+                      <p class="text-[10px] text-muted-foreground ml-1">Maksimal ukuran 1 MB (opsional)</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Modal Footer -->
+              <div class="p-6 border-t border-border flex items-center justify-between">
+                <p class="text-sm text-rose-500 italic font-medium">*Wajib diisi</p>
+                <div class="flex items-center gap-3">
+                  <button 
+                    @click="isLotModalOpen = false"
+                    class="px-8 py-2.5 bg-background border border-input hover:bg-muted text-foreground text-sm font-medium rounded-[14px] transition-colors"
+                  >
+                    Batal
+                  </button>
+                  <button 
+                    @click="handleSaveLot"
+                    :disabled="!isLotFormValid"
+                    class="px-8 py-2.5 bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors shadow-sm active:scale-[0.98] disabled:opacity-50"
+                  >
+                    {{ lotModalMode === 'create' ? 'Tambah LOT' : 'Simpan Perubahan' }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </Transition>
+        </div>
+      </Transition>
+    </Teleport>
+
     <DeleteConfirmationModal 
       :is-open="isDeleteModalOpen"
       :item-count="itemsToDelete.length"
-      item-name="Barang"
+      :item-name="deleteMode === 'barang' ? 'Barang' : 'LOT'"
       :item-data="itemsToDelete.length === 1 ? itemsToDelete[0] : null"
       @close="closeDeleteModal"
       @confirm="handleConfirmDelete"

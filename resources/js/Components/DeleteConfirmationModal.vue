@@ -38,6 +38,16 @@ const displayFields = computed(() => {
     return fields;
   }
 
+  // Determine fields for Lot
+  if ('lotCode' in data) {
+    fields.push({ label: 'Kode LOT', value: data.lotCode });
+    if (data.poNumber) fields.push({ label: 'Nomor PO', value: data.poNumber });
+    if (data.entryDate) fields.push({ label: 'Tanggal Masuk', value: data.entryDate });
+    if (data.organizer) fields.push({ label: 'Organizer', value: data.organizer });
+    if (data.assetCount !== undefined) fields.push({ label: 'Jumlah Aset', value: data.assetCount });
+    return fields;
+  }
+
   // Determine fields for MasterData
   const name = props.itemName || 'Barang';
   
