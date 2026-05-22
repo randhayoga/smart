@@ -33,7 +33,7 @@ class BarangFactory extends Factory
             'brand_id' => Brand::factory(),
             'uom_id' => Uom::factory(),
             'specification' => $this->faker->sentence(),
-            'image_url' => null,
+            'image_url' => 'inventory/barangs/placeholder.jpg',
         ];
     }
 }

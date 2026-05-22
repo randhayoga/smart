@@ -63,6 +63,8 @@ class InventoryController extends Controller
             ->orWhere('id', $id)
             ->firstOrFail();
 
+        $amount = $barang->lots()->withCount('units')->get()->sum('units_count');
+
         $formattedBarang = [
             'id' => $barang->id,
             'code' => $barang->number,
@@ -71,7 +73,7 @@ class InventoryController extends Controller
             'brand' => $barang->brand->name ?? '-',
             'specification' => $barang->specification,
             'lastUpdate' => $barang->updated_at ? $barang->updated_at->format('d-m-Y H:i') : '-',
-            'amount' => 0,
+            'amount' => $amount,
             'image_url' => $barang->image_url,
             'uom' => $barang->uom->name ?? '-',
             'subcategory_id' => $barang->subcategory_id,
@@ -80,8 +82,39 @@ class InventoryController extends Controller
             'uom_id' => $barang->uom_id,
         ];
 
+        $lots = \App\Models\Inventory\Lot::with(['organizer', 'vendor', 'location', 'floor', 'room'])
+            ->withCount('units')
+            ->where('barang_id', $barang->id)
+            ->get()
+            ->map(function ($lot) {
+                return [
+                    'id' => $lot->id,
+                    'lotCode' => $lot->number,
+                    'poNumber' => $lot->po_number,
+                    'entryDate' => $lot->date_of_receipt ? $lot->date_of_receipt->format('d-m-Y') : '-',
+                    'organizer' => $lot->organizer->name ?? '-',
+                    'organizer_id' => $lot->organizer_id,
+                    'vendor' => $lot->vendor->name ?? '-',
+                    'vendor_id' => $lot->vendor_id,
+                    'location' => $lot->location->name ?? '-',
+                    'location_id' => $lot->location_id,
+                    'floor' => $lot->floor->name ?? null,
+                    'floor_id' => $lot->floor_id,
+                    'room' => $lot->room->name ?? null,
+                    'room_id' => $lot->room_id,
+                    'unitPrice' => $lot->unit_price,
+                    'imageUrl' => $lot->image_url,
+                    'assetCount' => $lot->units_count,
+                ];
+            });
+
         $brands = \App\Models\Master\Brand::orderBy('name')->get();
         $uoms = \App\Models\Master\Uom::orderBy('name')->get();
+        $organizers = \App\Models\Master\Organizer::orderBy('name')->get();
+        $vendors = \App\Models\Master\Vendor::orderBy('name')->get();
+        $locations = \App\Models\Master\Location::orderBy('name')->get();
+        $floors = \App\Models\Master\Floor::with('location')->orderBy('name')->get();
+        $rooms = \App\Models\Master\Room::with('floor.location')->orderBy('name')->get();
 
         return Inertia::render('Smart/Admin/ManajemenStokDetail', [
             'user' => $request->user(),
@@ -89,6 +122,12 @@ class InventoryController extends Controller
             'barang' => $formattedBarang,
             'brands' => $brands,
             'uoms' => $uoms,
+            'lots' => $lots,
+            'organizers' => $organizers,
+            'vendors' => $vendors,
+            'locations' => $locations,
+            'floors' => $floors,
+            'rooms' => $rooms,
         ]);
     }
 }

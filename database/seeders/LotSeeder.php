@@ -1,0 +1,110 @@
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+use App\Models\Inventory\Lot;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon;
+
+class LotSeeder extends Seeder
+{
+    /**
+     * Run the database seeds.
+     */
+    public function run(): void
+    {
+        $lots = [
+            [
+                'number' => 'LOT-2026-ATK-KER-0001-0002',
+                'barang_id' => 1,
+                'organizer_id' => 1,
+                'vendor_id' => 1,
+                'location_id' => 1,
+                'floor_id' => 1,
+                'room_id' => 1,
+                'po_number' => 'PO-02',
+                'date_of_receipt' => '02-04-2026',
+                'unit_price' => 60000,
+                'image_url' => '/database/seeders/assets/sidu.jpg',
+            ],
+            [
+                'number' => 'LOT-2026-ATK-KER-0001-0001',
+                'barang_id' => 1,
+                'organizer_id' => 1,
+                'vendor_id' => 1,
+                'location_id' => 1,
+                'floor_id' => 1,
+                'room_id' => 1,
+                'po_number' => 'PO-01',
+                'date_of_receipt' => '01-03-2026',
+                'unit_price' => 60000,
+                'image_url' => '/database/seeders/assets/sidu.jpg',
+            ],
+            [
+                'number' => 'LOT-2026-ELE-LAP-0001-0001',
+                'barang_id' => 6,
+                'organizer_id' => 1,
+                'vendor_id' => 1,
+                'location_id' => 1,
+                'floor_id' => 1,
+                'room_id' => 1,
+                'po_number' => 'PO-03',
+                'date_of_receipt' => '22-05-2026',
+                'unit_price' => 12500000,
+                'image_url' => '/database/seeders/assets/acer.jpg',
+            ],
+            [
+                'number' => 'LOT-2026-KEN-MOB-0001-0001',
+                'barang_id' => 7,
+                'organizer_id' => 1,
+                'vendor_id' => 2,
+                'location_id' => 2,
+                'floor_id' => null,
+                'room_id' => null,
+                'po_number' => 'PO-04',
+                'date_of_receipt' => '02-05-2026',
+                'unit_price' => 60000,
+                'image_url' => '/database/seeders/assets/byd.jpg',
+            ],
+        ];
+
+        foreach ($lots as $data) {
+            $sourcePath = base_path(ltrim($data['image_url'], '/'));
+            if (!File::exists($sourcePath)) {
+                if (str_ends_with($sourcePath, '.jpg')) {
+                    $fallback = substr($sourcePath, 0, -4) . '.jpeg';
+                    if (File::exists($fallback)) {
+                        $sourcePath = $fallback;
+                    }
+                }
+            }
+
+            $destinationPath = 'inventory/lots/' . basename($sourcePath);
+
+            if (File::exists($sourcePath)) {
+                if (!Storage::disk('public')->exists('inventory/lots')) {
+                    Storage::disk('public')->makeDirectory('inventory/lots');
+                }
+                Storage::disk('public')->put($destinationPath, File::get($sourcePath));
+            }
+
+            Lot::updateOrCreate(
+                ['number' => $data['number']],
+                [
+                    'barang_id' => $data['barang_id'],
+                    'organizer_id' => $data['organizer_id'],
+                    'vendor_id' => $data['vendor_id'],
+                    'location_id' => $data['location_id'],
+                    'floor_id' => $data['floor_id'],
+                    'room_id' => $data['room_id'],
+                    'po_number' => $data['po_number'],
+                    'date_of_receipt' => Carbon::createFromFormat('d-m-Y', $data['date_of_receipt']),
+                    'unit_price' => $data['unit_price'],
+                    'image_url' => $destinationPath,
+                ]
+            );
+        }
+    }
+}
