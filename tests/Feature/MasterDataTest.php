@@ -34,14 +34,17 @@ class MasterDataTest extends TestCase
     {
         $user = User::factory()->create();
         $floor = Floor::factory()->create();
+        $newLocation = Location::factory()->create();
 
         $response = $this->actingAs($user)->put(route('smart.master.floors.update', $floor), [
+            'location_id' => $newLocation->id,
             'name' => 'Lantai Baru',
         ]);
 
         $response->assertRedirect();
         $this->assertDatabaseHas('floors', [
             'id' => $floor->id,
+            'location_id' => $newLocation->id,
             'name' => 'Lantai Baru',
         ]);
     }

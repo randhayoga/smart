@@ -143,7 +143,7 @@ const editBrandForm       = useForm({ id: null as number | null, name: '' });
 const editOrganizerForm   = useForm({ id: null as number | null, name: '' });
 const editVendorForm      = useForm({ id: null as number | null, name: '' });
 const editLocationForm    = useForm({ id: null as number | null, name: '' });
-const editFloorForm       = useForm({ id: null as number | null, name: '' });
+const editFloorForm       = useForm({ id: null as number | null, location_id: null as number | null, name: '' });
 const editRoomForm        = useForm({ id: null as number | null, location_id: null as number | null, floor_id: null as number | null, name: '' });
 
 // Helper: active edit form
@@ -186,6 +186,9 @@ const openEditModal = (item: any) => {
   if (activeTab.value === 'Kategori') {
     form.code = item.code;
     form.is_consumable = item.is_consumable ? '1' : '0';
+  }
+  if (activeTab.value === 'Lantai') {
+    form.location_id = item.location_id ?? null;
   }
   if (activeTab.value === 'Ruangan') {
     form.location_id = item.floor?.location_id ?? null;
@@ -667,7 +670,7 @@ const closeErrorModal = () => {
                 </DropdownMenu>
               </div>
 
-              <button @click="openCreateModal" class="flex items-center gap-1.5 bg-gradient-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-[14px] text-sm font-medium transition-colors shadow-sm">
+              <button @click="openCreateModal" class="flex items-center gap-1.5 bg-gradient-primary hover:opacity-90 text-primary-foreground px-4 py-2 rounded-[14px] text-sm font-medium transition-colors shadow-sm">
                 <Plus class="w-4 h-4" />
                 <span>{{ activeTab }} Baru</span>
               </button>
@@ -734,13 +737,25 @@ const closeErrorModal = () => {
             <!-- Edit: Lantai -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 flex-grow" v-else-if="activeTab === 'Lantai'">
               <div>
-                <label class="block text-sm font-medium text-foreground mb-2">Lokasi Induk</label>
-                <input type="text" :value="editingItem?.location?.name ?? ''" disabled
-                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-muted/50 text-muted-foreground cursor-not-allowed" />
+                <label class="block text-sm font-medium text-foreground mb-2">Lokasi Induk<span class="text-destructive">*</span></label>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal', !editFloorForm.location_id ? 'text-muted-foreground' : 'text-foreground']">
+                      {{ editFloorForm.location_id ? (props.locations.find(l => l.id === editFloorForm.location_id)?.name || 'Pilih Lokasi Induk') : 'Pilih Lokasi Induk' }}
+                      <ChevronDown class="w-4 h-4 opacity-50" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
+                    <DropdownMenuItem v-for="loc in props.locations" :key="loc.id" @select="editFloorForm.location_id = loc.id">
+                      {{ loc.name }}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <div v-if="editFloorForm.errors.location_id" class="text-destructive text-xs mt-1">{{ editFloorForm.errors.location_id }}</div>
               </div>
               <div>
                 <label class="block text-sm font-medium text-foreground mb-2">Nama Lantai<span class="text-destructive">*</span></label>
-                <input type="text" v-model="editFloorForm.name" maxlength="255"
+                <input type="text" v-model="editFloorForm.name" maxlength="255" placeholder="Nama lantai..."
                   class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" />
                 <div v-if="editFloorForm.errors.name" class="text-destructive text-xs mt-1">{{ editFloorForm.errors.name }}</div>
               </div>
@@ -749,19 +764,43 @@ const closeErrorModal = () => {
             <!-- Edit: Ruangan -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 flex-grow" v-else-if="activeTab === 'Ruangan'">
               <div>
-                <label class="block text-sm font-medium text-foreground mb-2">Lokasi</label>
-                <input type="text" :value="editingItem?.floor?.location?.name ?? ''" disabled
-                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-muted/50 text-muted-foreground cursor-not-allowed" />
+                <label class="block text-sm font-medium text-foreground mb-2">Lokasi<span class="text-destructive">*</span></label>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal', !editRoomForm.location_id ? 'text-muted-foreground' : 'text-foreground']">
+                      {{ editRoomForm.location_id ? (props.locations.find(l => l.id == editRoomForm.location_id)?.name || 'Pilih Lokasi') : 'Pilih Lokasi' }}
+                      <ChevronDown class="w-4 h-4 opacity-50" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
+                    <DropdownMenuItem v-for="loc in props.locations" :key="loc.id" @select="editRoomForm.location_id = loc.id; editRoomForm.floor_id = null">
+                      {{ loc.name }}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <div v-if="editRoomForm.errors.location_id" class="text-destructive text-xs mt-1">{{ editRoomForm.errors.location_id }}</div>
               </div>
               <div>
-                <label class="block text-sm font-medium text-foreground mb-2">Lantai</label>
-                <input type="text" :value="editingItem?.floor?.name ?? ''" disabled
-                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-muted/50 text-muted-foreground cursor-not-allowed" />
+                <label class="block text-sm font-medium text-foreground mb-2">Lantai<span class="text-destructive">*</span></label>
+                <DropdownMenu>
+                  <DropdownMenuTrigger :disabled="!editRoomForm.location_id" asChild>
+                    <Button :disabled="!editRoomForm.location_id" variant="outline" :class="['w-full justify-between rounded-[14px] font-normal', !editRoomForm.floor_id ? 'text-muted-foreground' : 'text-foreground']">
+                      {{ editRoomForm.floor_id ? (props.floors.find(f => f.id == editRoomForm.floor_id)?.name || 'Pilih Lantai') : 'Pilih Lantai' }}
+                      <ChevronDown class="w-4 h-4 opacity-50" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
+                    <DropdownMenuItem v-for="fl in props.floors.filter(f => f.location_id == editRoomForm.location_id)" :key="fl.id" @select="editRoomForm.floor_id = fl.id">
+                      {{ fl.name }}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <div v-if="editRoomForm.errors.floor_id" class="text-destructive text-xs mt-1">{{ editRoomForm.errors.floor_id }}</div>
               </div>
               <div>
                 <label class="block text-sm font-medium text-foreground mb-2">Nama Ruangan<span class="text-destructive">*</span></label>
-                <input type="text" v-model="editRoomForm.name" maxlength="255" placeholder="Nama ruangan..."
-                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" />
+                <input type="text" v-model="editRoomForm.name" maxlength="255" placeholder="Nama ruangan..." :disabled="!editRoomForm.floor_id"
+                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed" />
                 <div v-if="editRoomForm.errors.name" class="text-destructive text-xs mt-1">{{ editRoomForm.errors.name }}</div>
               </div>
             </div>
