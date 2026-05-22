@@ -152,9 +152,6 @@ const handleViewDetail = (item: any) => {
 
 
 const handleExportExcel = () => alert('Exporting to Excel...');
-const handleExportPDF = () => {
-  window.print();
-};
 const handleExportCSV = () => alert('Exporting to CSV...');
 
 // Watchers for filters
@@ -208,7 +205,7 @@ onMounted(() => {
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" class="w-[220px] justify-between rounded-[14px] font-normal text-muted-foreground">
+                <Button variant="outline" :class="['w-[220px] justify-between rounded-[14px] font-normal', !timeFilter ? 'text-muted-foreground' : 'text-foreground']">
                   <span class="truncate">{{ timeFilter || 'Semua kurun waktu' }}</span>
                   <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                 </Button>
@@ -223,7 +220,7 @@ onMounted(() => {
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" class="w-[220px] justify-between rounded-[14px] font-normal text-muted-foreground">
+                <Button variant="outline" :class="['w-[220px] justify-between rounded-[14px] font-normal', !methodFilter ? 'text-muted-foreground' : 'text-foreground']">
                   <span class="truncate">{{ methodFilter || 'Semua metode' }}</span>
                   <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                 </Button>
@@ -242,7 +239,6 @@ onMounted(() => {
               <label class="text-xs text-muted-foreground font-medium block ml-0.5">Aksi Terpilih</label>
               <ExportButtonGroup 
                 @export-excel="handleExportExcel"
-                @export-pdf="handleExportPDF"
                 @export-csv="handleExportCSV"
               />
             </div>
@@ -251,7 +247,7 @@ onMounted(() => {
               <span>Baris per halaman</span>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" class="w-[160px] justify-between rounded-[14px] font-normal text-muted-foreground">
+                  <Button variant="outline" :class="['w-[160px] justify-between rounded-[14px] font-normal', (rowsPerPage === 'Semua baris' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
                     {{ rowsPerPage }}
                     <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                   </Button>

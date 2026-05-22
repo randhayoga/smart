@@ -428,7 +428,7 @@ const confirmCancel = () => {
                   <div class="flex-1 max-w-[200px]">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal">
+                        <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal', !lotFilter ? 'text-muted-foreground' : 'text-foreground']">
                           {{ lotFilter || 'Semua LOT' }}
                           <ChevronDown class="w-4 h-4 opacity-50" />
                         </Button>
@@ -446,7 +446,7 @@ const confirmCancel = () => {
                   <span>Baris per halaman</span>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="outline" class="w-[140px] justify-between rounded-[14px] font-normal">
+                      <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal', (assetRowsPerPage === 'Semua baris' || !assetRowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
                         {{ assetRowsPerPage }}
                         <ChevronDown class="w-4 h-4 opacity-50" />
                       </Button>

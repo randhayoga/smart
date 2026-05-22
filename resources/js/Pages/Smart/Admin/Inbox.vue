@@ -274,10 +274,6 @@ const handleExportCSV = () => {
 const handleExportExcel = () => {
   handleExportCSV();
 };
-
-const handleExportPDF = () => {
-  window.print();
-};
 </script>
 
 <template>
@@ -312,7 +308,7 @@ const handleExportPDF = () => {
 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" class="w-[200px] justify-between rounded-[14px] font-normal text-muted-foreground">
+                    <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal', !typeFilter ? 'text-muted-foreground' : 'text-foreground']">
                       <span class="truncate">{{ typeFilter || 'Semua jenis' }}</span>
                       <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                     </Button>
@@ -326,7 +322,7 @@ const handleExportPDF = () => {
 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" class="w-[200px] justify-between rounded-[14px] font-normal text-muted-foreground">
+                    <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal', !timeFilter ? 'text-muted-foreground' : 'text-foreground']">
                       <span class="truncate">{{ timeFilter ? { today: 'Hari Ini', week: 'Minggu Ini', month: 'Bulan Ini' }[timeFilter] || 'Semua kurun waktu' : 'Semua kurun waktu' }}</span>
                       <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                     </Button>
@@ -345,7 +341,7 @@ const handleExportPDF = () => {
                 <span class="whitespace-nowrap">Baris per halaman</span>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" class="w-[140px] justify-between rounded-[14px] font-normal text-muted-foreground">
+                    <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal', (rowsPerPage === 'Semua baris' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
                       {{ rowsPerPage }}
                       <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                     </Button>
@@ -366,7 +362,6 @@ const handleExportPDF = () => {
                 <label class="text-xs text-muted-foreground font-medium block ml-0.5">Aksi Terpilih</label>
                 <ExportButtonGroup 
                   @export-excel="handleExportExcel"
-                  @export-pdf="handleExportPDF"
                   @export-csv="handleExportCSV"
                 />
               </div>

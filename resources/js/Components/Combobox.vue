@@ -85,7 +85,7 @@ const handleSelect = (val: string | number | null) => {
       </Button>
     </PopoverTrigger>
     <PopoverContent class="w-(--reka-popover-trigger-width) min-w-(--reka-popover-trigger-width) p-0 rounded-[14px] overflow-hidden z-[1001]" align="start">
-      <Command>
+      <Command :highlight-on-hover="true">
         <CommandInput :placeholder="searchPlaceholder" />
         <CommandEmpty>{{ emptyText }}</CommandEmpty>
         <CommandList>
