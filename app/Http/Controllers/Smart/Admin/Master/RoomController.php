@@ -30,7 +30,8 @@ class RoomController extends Controller
     public function update(Request $request, Room $room): RedirectResponse
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'floor_id' => 'required|integer|exists:floors,id',
+            'name'     => 'required|string|max:255',
         ]);
 
         $room->update($validated);
