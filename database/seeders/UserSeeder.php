@@ -20,7 +20,7 @@ class UserSeeder extends Seeder
 
         // Create the hardcoded Admin user
         \App\Models\User::factory()->create([
-            'username' => '255476',
+            'username' => '255578',
             'name' => 'Radifa',
             'email' => 'admin@example.com',
             'role' => 'admin',

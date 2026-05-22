@@ -622,7 +622,7 @@ const handleConfirmDelete = () => {
               
               <button 
                 @click="openCreateModal"
-                class="flex items-center gap-1.5 bg-gradient-primary hover:bg-primary/90 text-primary-foreground px-5 py-2.5 rounded-[14px] text-sm font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] shadow-sm whitespace-nowrap"
+                class="flex items-center gap-1.5 bg-gradient-primary hover:opacity-90 text-primary-foreground px-5 py-2.5 rounded-[14px] text-sm font-semibold transition-all shadow-sm whitespace-nowrap"
               >
                 <Plus class="w-4 h-4" />
                 <span>Barang Baru</span>
@@ -704,7 +704,7 @@ const handleConfirmDelete = () => {
                         <button 
                           @click="generateCode"
                           :disabled="!newItem.category_id || !newItem.subcategory_id"
-                          class="px-6 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors disabled:opacity-50"
+                          class="px-6 py-2 bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors disabled:opacity-50"
                         >
                           Generate
                         </button>
@@ -791,7 +791,7 @@ const handleConfirmDelete = () => {
                         />
                         <button 
                           @click="triggerFileInput"
-                          class="px-6 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors"
+                          class="px-6 py-2 bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors"
                         >
                           Pilih File
                         </button>
@@ -815,7 +815,7 @@ const handleConfirmDelete = () => {
                   <button 
                     @click="handleCreateItem"
                     :disabled="!isFormValid"
-                    class="px-8 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors shadow-sm active:scale-[0.98] disabled:opacity-50"
+                    class="px-8 py-2.5 bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors shadow-sm active:scale-[0.98] disabled:opacity-50"
                   >
                     Buat Barang
                   </button>

@@ -30,7 +30,8 @@ class FloorController extends Controller
     public function update(Request $request, Floor $floor): RedirectResponse
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'location_id' => 'required|integer|exists:locations,id',
+            'name'        => 'required|string|max:255',
         ]);
 
         $floor->update($validated);
