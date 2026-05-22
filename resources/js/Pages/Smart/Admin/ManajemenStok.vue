@@ -283,8 +283,7 @@ const getExportData = () => {
 };
 
 const handleViewDetail = (item: any) => {
-  const code = item.code || 'CAT-SUB-XXXX';
-  router.get(`/smart/inventory/${code}`);
+  router.get(`/smart/inventory/${item.id}`);
 };
 
 // Export & Print Logic
@@ -516,7 +515,7 @@ const handleConfirmDelete = () => {
     <div class="space-y-4">
       <!-- Main Card -->
       <div class="px-4 bg-card rounded-xl border border-border shadow-sm overflow-hidden">
-        <div class="py-5 no-print">
+        <div class="py-3 no-print">
           <h2 class="text-lg font-bold text-foreground">Daftar Stok</h2>
           
           <!-- Filters & Actions -->
@@ -779,7 +778,7 @@ const handleConfirmDelete = () => {
                     <div class="space-y-1.5">
                       <label class="text-sm font-medium text-foreground block">Foto <span class="italic text-muted-foreground">default</span><span class="text-rose-500">*</span></label>
                       <div class="flex gap-2">
-                        <div class="flex-grow px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/10 text-muted-foreground truncate flex items-center">
+                        <div class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/10 text-muted-foreground truncate flex items-center h-10">
                           {{ newItem.photoName || 'Belum ada foto yang dipilih' }}
                         </div>
                         <input 
@@ -791,7 +790,7 @@ const handleConfirmDelete = () => {
                         />
                         <button 
                           @click="triggerFileInput"
-                          class="px-6 py-2 bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors"
+                          class="w-[120px] shrink-0 flex items-center justify-center bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors h-10"
                         >
                           Pilih File
                         </button>

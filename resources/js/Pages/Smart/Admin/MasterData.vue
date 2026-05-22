@@ -29,6 +29,7 @@ import TableSearch from '@/Components/TableSearch.vue';
 import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal.vue';
 import DeleteTableButton from '@/Components/DeleteTableButton.vue';
 import EditTableButton from '@/Components/EditTableButton.vue';
+import Tabs from '@/Components/Tabs.vue';
 
 interface Category    { id: number; code: string; name: string; is_consumable: boolean; }
 interface Subcategory { id: number; code: string; name: string; category_id: number; category: Category; }
@@ -549,27 +550,11 @@ const closeErrorModal = () => {
     
     <div class="space-y-1">
       <!-- Tabs -->
-      <div class="flex overflow-x-auto pb-2 scrollbar-hide">
-        <div class="flex items-center border border-border rounded-full bg-card p-1 shadow-sm w-max">
-          <button
-            v-for="tab in tabs"
-            :key="tab"
-            @click="activeTab = tab"
-            class="px-4 py-1.5 text-sm font-medium rounded-full transition-colors whitespace-nowrap"
-            :class="[
-              activeTab === tab 
-                ? 'border border-primary text-primary bg-primary/10' 
-                : 'text-muted-foreground hover:text-primary hover:bg-primary/10'
-            ]"
-          >
-            {{ tab }}
-          </button>
-        </div>
-      </div>
+      <Tabs v-model="activeTab" :tabs="tabs" />
 
       <!-- Main Card -->
       <div class="px-4 bg-card rounded-xl border border-border shadow-sm overflow-hidden">
-        <div class="py-5">
+        <div class="py-3">
           <Heading as="h2">Daftar {{ activeTab }}</Heading>
           
           <div class="mt-4 flex flex-col sm:flex-row sm:items-end justify-between gap-3">
@@ -679,7 +664,7 @@ const closeErrorModal = () => {
         </div>
 
         <!-- Table -->
-        <div class="pb-4">
+        <div class="pb-5">
           <DataTable 
             ref="dataTableRef"
             :columns="columns" 
@@ -1112,7 +1097,7 @@ const closeErrorModal = () => {
               <div class="p-4 bg-muted/30 border-t border-border flex items-center justify-center">
                 <button 
                   @click="closeErrorModal"
-                  class="w-full py-2.5 border border-input rounded-[14px] hover:bg-muted transition-colors shadow-button active:scale-[0.98]"
+                  class="w-full py-2.5 border border-input rounded-[14px] hover:bg-muted transition-colors shadow-card active:scale-[0.98]"
                 >
                   Mengerti
                 </button>
