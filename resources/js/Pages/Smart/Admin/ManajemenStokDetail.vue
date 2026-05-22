@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, computed, h } from 'vue';
-import { router } from '@inertiajs/vue3';
+import { router, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { 
   ChevronDown, 
@@ -22,9 +22,30 @@ import DataTable from '@/Components/DataTable.vue';
 import ViewTableButton from '@/Components/ViewTableButton.vue';
 import DeleteTableButton from '@/Components/DeleteTableButton.vue';
 import ExportButtonGroup from '@/Components/ExportButtonGroup.vue';
+import Tabs from '@/Components/Tabs.vue';
+import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal.vue';
+import Combobox from '@/Components/Combobox.vue';
 
 interface Props {
   itemId: string | number;
+  barang: {
+    id: number;
+    code: string;
+    category: string;
+    subcategory: string;
+    brand: string;
+    specification: string;
+    lastUpdate: string;
+    amount: number;
+    image_url: string | null;
+    uom: string;
+    subcategory_id: number;
+    category_id: number;
+    brand_id: number;
+    uom_id: number;
+  };
+  brands: { id: number; name: string; }[];
+  uoms: { id: number; name: string; }[];
 }
 
 const props = defineProps<Props>();
@@ -34,6 +55,9 @@ const dummyLots = [
   { id: 1, lotCode: 'LOT-YYYY-CAT-SUB-XXXX-001', poNumber: 'PO-001', entryDate: 'DD-MM-YYYY', organizer: 'XXX', assetCount: 'XX' },
   { id: 2, lotCode: 'LOT-YYYY-CAT-SUB-XXXX-002', poNumber: 'PO-002', entryDate: 'DD-MM-YYYY', organizer: 'XXX', assetCount: 'XX' },
 ];
+
+const tabs = ['Detail', 'Daftar Aset'];
+const activeTab = ref('Detail');
 
 const searchQuery = ref('');
 const timeFilter = ref('');
@@ -191,18 +215,33 @@ const handleExportExcel = () => {
 
 // Edit Modal Logic
 const isEditModalOpen = ref(false);
-const editForm = ref({
-  kode: 'CAT-SUB-XXXX',
-  kategori: 'Kategori sekarang',
-  subkategori: 'Subkategori sekarang',
-  satuan: 'Satuan sekarang',
-  merek: 'Merek sekarang',
-  spesifikasi: 'Spesifikasi sekarang',
+const editForm = useForm({
+  _method: 'PUT',
+  kode: props.barang.code,
+  kategori: props.barang.category,
+  subkategori: props.barang.subcategory,
+  satuan: props.barang.uom,
+  merek: props.barang.brand,
+  spesifikasi: props.barang.specification,
   foto: null as File | null,
-  fotoName: 'Foto_Sekarang.extension'
+  fotoName: props.barang.image_url ? props.barang.image_url.split('/').pop() : '',
+  uom_id: props.barang.uom_id,
+  brand_id: props.barang.brand_id,
+  subcategory_id: props.barang.subcategory_id,
 });
 
 const openEditModal = () => {
+  editForm.kode = props.barang.code;
+  editForm.kategori = props.barang.category;
+  editForm.subkategori = props.barang.subcategory;
+  editForm.uom_id = props.barang.uom_id;
+  editForm.satuan = props.barang.uom;
+  editForm.brand_id = props.barang.brand_id;
+  editForm.merek = props.barang.brand;
+  editForm.spesifikasi = props.barang.specification;
+  editForm.foto = null;
+  editForm.fotoName = props.barang.image_url ? props.barang.image_url.split('/').pop() : '';
+  editForm.clearErrors();
   isEditModalOpen.value = true;
 };
 
@@ -225,8 +264,8 @@ const handleEditFileUpload = (e: any) => {
     return;
   }
 
-  editForm.value.foto = file;
-  editForm.value.fotoName = file.name;
+  editForm.foto = file;
+  editForm.fotoName = file.name;
 };
 
 const triggerEditFileInput = () => {
@@ -234,38 +273,74 @@ const triggerEditFileInput = () => {
   input?.click();
 };
 
+const viewImageInNewTab = () => {
+  if (editForm.foto) {
+    const url = URL.createObjectURL(editForm.foto);
+    window.open(url, '_blank');
+  } else if (props.barang.image_url) {
+    window.open('/storage/' + props.barang.image_url, '_blank');
+  }
+};
+
 const isEditFormValid = computed(() => {
-  return editForm.value.satuan && editForm.value.merek && editForm.value.spesifikasi;
+  return editForm.uom_id && editForm.brand_id && editForm.spesifikasi && !editForm.processing;
 });
 
 const handleSaveChanges = () => {
   if (!isEditFormValid.value) return;
-  alert('Berhasil! Perubahan detail barang telah disimpan.');
-  closeEditModal();
+  editForm.transform((data) => {
+    const formData: any = {
+      _method: 'PUT',
+      number: data.kode,
+      subcategory_id: data.subcategory_id,
+      brand_id: data.brand_id,
+      uom_id: data.uom_id,
+      specification: data.spesifikasi,
+    };
+    if (data.foto) {
+      formData.image_url = data.foto;
+    }
+    return formData;
+  }).post(`/smart/inventory/barangs/${props.barang.id}`, {
+    onSuccess: () => {
+      closeEditModal();
+    },
+  });
 };
 
 // Delete Modal Logic
 const isDeleteModalOpen = ref(false);
-const deleteConfirmationCode = ref('');
+const itemsToDelete = ref<any[]>([]);
 
 const openDeleteModal = () => {
+  itemsToDelete.value = [{
+    id: props.barang.id,
+    code: props.barang.code,
+    category: props.barang.category,
+    subcategory: props.barang.subcategory,
+    brand: props.barang.brand,
+    specification: props.barang.specification,
+    lastUpdate: props.barang.lastUpdate,
+    amount: 0
+  }];
   isDeleteModalOpen.value = true;
-  deleteConfirmationCode.value = '';
 };
 
 const closeDeleteModal = () => {
   isDeleteModalOpen.value = false;
+  itemsToDelete.value = [];
 };
 
-const isDeleteValid = computed(() => {
-  return deleteConfirmationCode.value === editForm.value.kode;
-});
+const handleConfirmDelete = () => {
+  if (itemsToDelete.value.length === 0) return;
 
-const handleDelete = () => {
-  if (!isDeleteValid.value) return;
-  alert('Berhasil! Barang beserta seluruh LOT dan Aset-nya telah dihapus.');
-  closeDeleteModal();
-  router.get('/smart/inventory');
+  const ids = itemsToDelete.value.map(item => item.id);
+  
+  router.delete(`/smart/inventory/barangs/${ids[0]}`, {
+    onSuccess: () => {
+      closeDeleteModal();
+    }
+  });
 };
 </script>
 
@@ -279,61 +354,52 @@ const handleDelete = () => {
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
-          <span class="text-muted-foreground">CAT-SUB-XXXX</span>
+          <span class="text-muted-foreground">{{ props.barang.code }}</span>
         </BreadcrumbItem>
       </BreadcrumbList>
     </Breadcrumb>
 
     <!-- Top Action Bar -->
-    <div class="flex flex-wrap items-center justify-between gap-4 mb-6 no-print">
-      <div class="flex items-center gap-2">
-        <button class="px-5 py-2 rounded-full border border-indigo-600 text-indigo-600 font-bold text-sm bg-indigo-50/50">
-          Detail
-        </button>
-        <button class="px-5 py-2 rounded-full text-muted-foreground font-semibold text-sm hover:bg-muted/50 transition-colors">
-          Daftar Aset
-        </button>
-      </div>
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-2 no-print">
+      <Tabs v-model="activeTab" :tabs="tabs" />
 
       <div class="flex items-center gap-3">
-        <button @click="openEditModal" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-all shadow-sm">
+        <button @click="openEditModal" class="flex items-center gap-1.5 bg-gradient-primary hover:opacity-90 text-primary-foreground px-5 py-2.5 rounded-[14px] text-sm font-bold">
           Edit Detail Barang
         </button>
-        <button @click="openDeleteModal" class="px-6 py-2.5 bg-[#D9534F] hover:bg-[#C9302C] text-white font-bold rounded-xl transition-all shadow-sm">
+        <button @click="openDeleteModal" class="flex items-center gap-1.5 bg-destructive hover:opacity-70 text-primary-foreground px-5 py-2.5 rounded-[14px] text-sm font-bold">
           Hapus Barang
         </button>
       </div>
     </div>
 
-    <div class="space-y-6">
+    <div class="space-y-4">
       <!-- Detail Barang Card -->
-      <div class="bg-card rounded-xl border border-border p-6 shadow-sm no-print">
+      <div class="px-4 py-3 bg-card rounded-xl border border-border shadow-sm overflow-hidden no-print">
         <h2 class="text-lg font-bold text-foreground mb-4">Detail Barang</h2>
         
         <div class="flex flex-col md:flex-row gap-6">
           <div class="w-48 h-48 rounded-xl bg-muted shrink-0 flex items-center justify-center overflow-hidden border border-border">
-            <img src="https://placehold.co/400x400?text=Item" class="w-full h-full object-cover opacity-50" />
+            <img v-if="props.barang.image_url" :src="'/storage/' + props.barang.image_url" class="w-full h-full object-cover" />
+            <img v-else src="https://placehold.co/400x400?text=Placeholder" class="w-full h-full object-cover opacity-50" />
           </div>
 
-          <div class="flex-grow space-y-1">
-            <div class="flex flex-col gap-1 mb-3">
-              <p class="font-bold text-foreground"><span class="text-foreground">Kode Barang:</span> CAT-SUB-XXXX</p>
-              <p class="font-bold text-foreground"><span class="text-foreground">Merek:</span> Merek</p>
-              <p class="font-bold text-foreground"><span class="text-foreground">Spesifikasi:</span> Spesifikasi</p>
-            </div>
-            
-            <p class="text-foreground">Kategori: Kategori</p>
-            <p class="text-foreground">Subkategori: Subkategori</p>
-            <p class="text-foreground">Jumlah LOT: XX</p>
-            <p class="text-foreground">Jumlah stok: XXX</p>
-            <p class="text-foreground">Satuan: Lorem</p>
-            <p class="text-foreground">Pembaruan terakhir: DD-MM-YYYY HH:MM</p>
+          <div class="flex-grow">
+            <p class="font-bold text-foreground"><span class="text-foreground">Kode Barang:</span> {{ props.barang.code }}</p>
+            <p class="font-bold text-foreground"><span class="text-foreground">Merek:</span> {{ props.barang.brand }}</p>
+            <p class="font-bold text-foreground"><span class="text-foreground">Spesifikasi:</span> {{ props.barang.specification }}</p>
+            <p class="text-foreground">Kategori: {{ props.barang.category }}</p>
+            <p class="text-foreground">Subkategori: {{ props.barang.subcategory }}</p>
+            <p class="text-foreground">Jumlah LOT: 0</p>
+            <p class="text-foreground">Jumlah stok: 0</p>
+            <p class="text-foreground">Satuan: {{ props.barang.uom }}</p>
+            <p class="text-foreground">Pembaruan terakhir: {{ props.barang.lastUpdate }}</p>
           </div>
         </div>
       </div>
 
       <!-- Daftar LOT Card -->
-      <div class="bg-card rounded-xl border border-border p-6 shadow-sm overflow-hidden">
+      <div class="bg-card rounded-xl border border-border px-4 py-3 shadow-sm overflow-hidden">
         <div class="no-print">
           <h2 class="text-lg font-bold text-foreground mb-4">Daftar LOT</h2>
 
@@ -425,25 +491,29 @@ const handleDelete = () => {
     <!-- Edit Modal -->
     <Teleport to="body">
       <Transition
-        enter-active-class="transition duration-200 ease-out"
+        enter-active-class="ease-out duration-200"
         enter-from-class="opacity-0"
         enter-to-class="opacity-100"
-        leave-active-class="transition duration-150 ease-in"
+        leave-active-class="ease-in duration-150"
         leave-from-class="opacity-100"
         leave-to-class="opacity-0"
       >
-        <div v-if="isEditModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div v-if="isEditModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <Transition
-            enter-active-class="transition duration-200 ease-out"
-            enter-from-class="opacity-0 scale-95 translate-y-4"
-            enter-to-class="opacity-100 scale-100 translate-y-0"
-            leave-active-class="transition duration-150 ease-in"
-            leave-from-class="opacity-100 scale-100 translate-y-0"
-            leave-to-class="opacity-0 scale-95 translate-y-4"
+            enter-active-class="ease-out duration-200"
+            enter-from-class="opacity-0 scale-95"
+            enter-to-class="opacity-100 scale-100"
+            leave-active-class="ease-in duration-150"
+            leave-from-class="opacity-100 scale-100"
+            leave-to-class="opacity-0 scale-95"
           >
-            <div v-if="isEditModalOpen" class="bg-background rounded-[24px] shadow-lg w-full max-w-4xl overflow-hidden" @click.stop>
+            <div 
+              v-if="isEditModalOpen" 
+              class="bg-card w-full max-w-[1000px] rounded-[14px] shadow-2xl overflow-hidden flex flex-col" 
+              @click.stop
+            >
               <!-- Modal Header -->
-              <div class="flex items-center justify-between p-5 border-b border-border">
+              <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
                 <h3 class="text-lg font-bold text-foreground">Edit Detail Barang</h3>
                 <button @click="closeEditModal" class="p-2 hover:bg-muted rounded-full transition-colors">
                   <X class="w-5 h-5 text-muted-foreground" />
@@ -487,18 +557,13 @@ const handleDelete = () => {
 
                     <div class="space-y-1.5">
                       <label class="text-sm font-medium text-foreground block">Satuan<span class="text-rose-500">*</span></label>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4 bg-background', !editForm.satuan ? 'text-muted-foreground' : 'text-foreground']">
-                            {{ editForm.satuan || 'Pilih satuan' }}
-                            <ChevronDown class="w-4 h-4 opacity-50" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" class="w-[380px] rounded-[14px] z-[1001]">
-                          <DropdownMenuItem @select="editForm.satuan = 'Lorem'">Lorem</DropdownMenuItem>
-                          <DropdownMenuItem @select="editForm.satuan = 'Satuan sekarang'">Satuan sekarang</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <Combobox
+                        v-model="editForm.uom_id"
+                        :options="props.uoms"
+                        search-placeholder="Cari satuan..."
+                        default-label="Pilih satuan"
+                        width-class="w-full h-10 px-4"
+                      />
                     </div>
                   </div>
 
@@ -506,18 +571,13 @@ const handleDelete = () => {
                   <div class="space-y-6">
                     <div class="space-y-1.5">
                       <label class="text-sm font-medium text-foreground block">Merek<span class="text-rose-500">*</span></label>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4 bg-background', !editForm.merek ? 'text-muted-foreground' : 'text-foreground']">
-                            {{ editForm.merek || 'Pilih merek' }}
-                            <ChevronDown class="w-4 h-4 opacity-50" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" class="w-[380px] rounded-[14px] z-[1001]">
-                          <DropdownMenuItem @select="editForm.merek = 'Merek baru'">Merek baru</DropdownMenuItem>
-                          <DropdownMenuItem @select="editForm.merek = 'Merek sekarang'">Merek sekarang</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <Combobox
+                        v-model="editForm.brand_id"
+                        :options="props.brands"
+                        search-placeholder="Cari merek..."
+                        default-label="Pilih merek"
+                        width-class="w-full h-10 px-4"
+                      />
                     </div>
 
                     <div class="space-y-1.5">
@@ -532,9 +592,17 @@ const handleDelete = () => {
                     </div>
 
                     <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Foto <span class="italic text-foreground">default</span><span class="text-rose-500">*</span></label>
+                      <label class="text-sm font-medium text-foreground block">Foto <span class="italic text-muted-foreground">default</span><span class="text-rose-500">*</span></label>
                       <div class="flex gap-2">
-                        <div class="flex-grow px-4 py-2 text-sm border border-input rounded-[14px] bg-background text-foreground truncate flex items-center h-10">
+                        <div 
+                          class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/10 truncate flex items-center h-10"
+                          :class="[
+                            (editForm.foto || props.barang.image_url) 
+                              ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' 
+                              : 'text-muted-foreground cursor-default'
+                          ]"
+                          @click="(editForm.foto || props.barang.image_url) && viewImageInNewTab()"
+                        >
                           {{ editForm.fotoName || 'Belum ada foto yang dipilih' }}
                         </div>
                         <input 
@@ -546,30 +614,31 @@ const handleDelete = () => {
                         />
                         <button 
                           @click="triggerEditFileInput"
-                          class="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-[14px] transition-colors h-10"
+                          class="w-[120px] shrink-0 flex items-center justify-center bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors h-10"
                         >
                           Pilih File
                         </button>
                       </div>
+                      <p class="text-[10px] text-muted-foreground ml-1">Maksimal ukuran 1 MB</p>
                     </div>
                   </div>
                 </div>
               </div>
 
               <!-- Modal Footer -->
-              <div class="p-6 pt-2 flex items-center justify-between">
+              <div class="p-6 border-t border-border flex items-center justify-between">
                 <p class="text-sm text-rose-500 italic font-medium">*Wajib diisi</p>
                 <div class="flex items-center gap-3">
                   <button 
                     @click="closeEditModal"
-                    class="px-6 py-2.5 bg-background border border-input hover:bg-muted text-foreground text-sm font-bold rounded-[14px] transition-colors"
+                    class="px-8 py-2.5 bg-background border border-input hover:bg-muted text-foreground text-sm font-medium rounded-[14px] transition-colors"
                   >
                     Batal
                   </button>
                   <button 
                     @click="handleSaveChanges"
                     :disabled="!isEditFormValid"
-                    class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-[14px] transition-colors shadow-sm active:scale-[0.98] disabled:opacity-50"
+                    class="px-8 py-2.5 bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors shadow-sm active:scale-[0.98] disabled:opacity-50"
                   >
                     Simpan Perubahan
                   </button>
@@ -581,93 +650,13 @@ const handleDelete = () => {
       </Transition>
     </Teleport>
 
-    <!-- Delete Modal -->
-    <Teleport to="body">
-      <Transition
-        enter-active-class="transition duration-200 ease-out"
-        enter-from-class="opacity-0"
-        enter-to-class="opacity-100"
-        leave-active-class="transition duration-150 ease-in"
-        leave-from-class="opacity-100"
-        leave-to-class="opacity-0"
-      >
-        <div v-if="isDeleteModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <Transition
-            enter-active-class="transition duration-200 ease-out"
-            enter-from-class="opacity-0 scale-95 translate-y-4"
-            enter-to-class="opacity-100 scale-100 translate-y-0"
-            leave-active-class="transition duration-150 ease-in"
-            leave-from-class="opacity-100 scale-100 translate-y-0"
-            leave-to-class="opacity-0 scale-95 translate-y-4"
-          >
-            <div v-if="isDeleteModalOpen" class="bg-background rounded-[24px] shadow-lg w-full max-w-[886px] overflow-hidden" @click.stop>
-              <!-- Modal Header -->
-              <div class="flex items-center justify-between p-5 border-b border-border">
-                <h3 class="text-lg font-bold text-foreground">Konfirmasi Penghapusan Barang</h3>
-                <button @click="closeDeleteModal" class="p-2 hover:bg-muted rounded-full transition-colors">
-                  <X class="w-5 h-5 text-muted-foreground" />
-                </button>
-              </div>
-
-              <!-- Modal Body -->
-              <div class="p-6">
-                <div class="flex flex-col md:flex-row gap-6 mb-6">
-                  <div class="w-40 h-40 rounded-xl bg-muted shrink-0 flex items-center justify-center overflow-hidden border border-border">
-                    <img src="https://placehold.co/400x400?text=Item" class="w-full h-full object-cover opacity-50" />
-                  </div>
-
-                  <div class="flex-grow space-y-1">
-                    <div class="flex flex-col gap-1 mb-2">
-                      <p class="font-bold text-foreground"><span class="text-foreground">Kode Barang:</span> CAT-SUB-XXXX</p>
-                      <p class="font-bold text-foreground"><span class="text-foreground">Merek:</span> Merek</p>
-                      <p class="font-bold text-foreground"><span class="text-foreground">Spesifikasi:</span> Spesifikasi</p>
-                    </div>
-                    
-                    <p class="text-foreground text-sm">Kategori: Kategori</p>
-                    <p class="text-foreground text-sm">Subkategori: Subkategori</p>
-                    <p class="text-foreground text-sm">Jumlah LOT: XX</p>
-                    <p class="text-foreground text-sm">Jumlah stok: XXX</p>
-                    <p class="text-foreground text-sm">Satuan: Lorem</p>
-                    <p class="text-foreground text-sm">Pembaruan terakhir: DD-MM-YYYY HH:MM</p>
-                  </div>
-                </div>
-
-                <div class="border-t border-border pt-6">
-                  <p class="text-[#D9534F] font-bold mb-2">Menghapus Barang ini akan menghapus semua LOT dan Aset yang menjadi bagian dari barang ini!</p>
-                  <p class="text-sm text-foreground mb-3">Ketik kode barang ini lalu tekan tombol Konfirmasi untuk menghapus barang ini<span class="text-[#D9534F]">*</span></p>
-                  
-                  <input 
-                    type="text" 
-                    v-model="deleteConfirmationCode"
-                    placeholder="KODE BARANG..." 
-                    class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-[#D9534F] transition-colors h-10"
-                  />
-                </div>
-              </div>
-
-              <!-- Modal Footer -->
-              <div class="p-6 pt-2 flex items-center justify-between">
-                <p class="text-sm text-[#D9534F] italic font-medium">*Wajib diisi</p>
-                <div class="flex items-center gap-3">
-                  <button 
-                    @click="closeDeleteModal"
-                    class="px-6 py-2.5 bg-background border border-input hover:bg-muted text-foreground text-sm font-bold rounded-[14px] transition-colors"
-                  >
-                    Batal
-                  </button>
-                  <button 
-                    @click="handleDelete"
-                    :disabled="!isDeleteValid"
-                    class="px-6 py-2.5 bg-[#D9534F] hover:bg-[#C9302C] text-white text-sm font-bold rounded-[14px] transition-colors shadow-sm active:scale-[0.98] disabled:opacity-50"
-                  >
-                    Konfirmasi Penghapusan
-                  </button>
-                </div>
-              </div>
-            </div>
-          </Transition>
-        </div>
-      </Transition>
-    </Teleport>
+    <DeleteConfirmationModal 
+      :is-open="isDeleteModalOpen"
+      :item-count="itemsToDelete.length"
+      item-name="Barang"
+      :item-data="itemsToDelete.length === 1 ? itemsToDelete[0] : null"
+      @close="closeDeleteModal"
+      @confirm="handleConfirmDelete"
+    />
   </AppLayout>
 </template>

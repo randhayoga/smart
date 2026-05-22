@@ -48,6 +48,8 @@ class BarangController extends Controller
             }
             $imagePath = $request->file('image_url')->store('inventory/barangs', 'public');
             $validated['image_url'] = $imagePath;
+        } else {
+            unset($validated['image_url']);
         }
 
         $barang->update($validated);
@@ -62,6 +64,6 @@ class BarangController extends Controller
         }
         $barang->delete();
 
-        return redirect()->back()->with('success', 'Barang deleted successfully.');
+        return redirect()->route('smart.inventory')->with('success', 'Barang deleted successfully.');
     }
 }
