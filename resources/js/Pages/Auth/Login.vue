@@ -71,12 +71,9 @@ const submit = () => {
               required
               autofocus
               autocomplete="username"
-              class="flex h-11 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary disabled:cursor-not-allowed disabled:opacity-50 transition-all"
+              class="flex h-11 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ..."
               :class="{ 'border-destructive focus-visible:ring-destructive/20': form.errors.username }"
             />
-            <p v-if="form.errors.username" class="text-sm text-destructive font-medium">
-              {{ form.errors.username }}
-            </p>
           </div>
           
           <!-- Password -->
@@ -100,6 +97,9 @@ const submit = () => {
           </div>
           
           <!-- Remember me removed - not allowed in this project -->
+          <p v-if="form.errors.username" class="text-sm text-destructive font-medium">
+            {{ form.errors.username }}
+          </p>
           
           <!-- Submit button -->
           <button

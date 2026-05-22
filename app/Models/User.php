@@ -51,11 +51,10 @@ class User extends Authenticatable
 
     /**
      * Check if the user is an admin.
-     * Admin is identified by username '255476'.
      */
     public function getIsAdminAttribute(): bool
     {
-        return $this->username === '255476';
+        return $this->role === 'admin';
     }
 
     public function getUsernameAttribute($value)
