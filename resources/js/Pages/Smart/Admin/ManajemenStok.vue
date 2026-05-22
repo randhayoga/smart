@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref, watch, h, onMounted, computed } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import { router } from '@inertiajs/vue3';
+import { router, usePage } from '@inertiajs/vue3';
+import { toast } from 'vue-sonner';
 import { 
   ChevronDown, 
   ArrowUpDown, 
@@ -499,6 +500,19 @@ const handleConfirmDelete = () => {
     closeDeleteModal();
   }
 };
+
+// Flash Notifications
+const page = usePage();
+const flashSuccess = computed(() => (page.props as any).flash?.success);
+
+watch(flashSuccess, (newVal) => {
+  if (newVal) {
+    toast.success(newVal);
+    if ((page.props as any).flash) {
+      (page.props as any).flash.success = null;
+    }
+  }
+}, { immediate: true });
 </script>
 
 <template>

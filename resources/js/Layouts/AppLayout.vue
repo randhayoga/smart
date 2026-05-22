@@ -3,6 +3,8 @@ import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { Head } from '@inertiajs/vue3';
 import Navbar from '@/Components/Navbar.vue';
 import Sidebar from '@/Components/Sidebar.vue';
+import { Toaster } from '@/Components/ui/sonner';
+import 'vue-sonner/style.css';
 
 interface Props {
   title?: string;
@@ -81,5 +83,6 @@ onUnmounted(() => {
         <slot />
       </div>
     </main>
+    <Toaster />
   </div>
 </template>

@@ -28,7 +28,7 @@ class BarangController extends Controller
 
         Barang::create($validated);
 
-        return redirect()->back()->with('success', 'Barang created successfully.');
+        return redirect()->back()->with('success', 'Barang berhasil ditambahkan.');
     }
 
     public function update(Request $request, Barang $barang)
@@ -54,7 +54,7 @@ class BarangController extends Controller
 
         $barang->update($validated);
 
-        return redirect()->back()->with('success', 'Barang updated successfully.');
+        return redirect()->back()->with('success', 'Barang berhasil diperbarui.');
     }
 
     public function destroy(Barang $barang)
@@ -64,6 +64,6 @@ class BarangController extends Controller
         }
         $barang->delete();
 
-        return redirect()->route('smart.inventory')->with('success', 'Barang deleted successfully.');
+        return redirect()->route('smart.inventory')->with('success', 'Barang berhasil dihapus.');
     }
 }

@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { ref, computed, watch, h } from 'vue';
 import { useForm, usePage } from '@inertiajs/vue3';
+import { toast } from 'vue-sonner';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { 
   ChevronDown, 
   ArrowUpDown, 
   Plus, 
   X,
-  CheckCircle2,
   AlertTriangle
 } from 'lucide-vue-next';
 
@@ -491,11 +491,14 @@ const page = usePage();
 const flashSuccess = computed(() => (page.props as any).flash?.success);
 const flashError = computed(() => (page.props as any).flash?.error);
 
-const showSuccessAlert = ref(true);
-
-watch(() => (page.props as any).flash, () => {
-  showSuccessAlert.value = true;
-}, { deep: true });
+watch(flashSuccess, (newVal) => {
+  if (newVal) {
+    toast.success(newVal);
+    if ((page.props as any).flash) {
+      (page.props as any).flash.success = null;
+    }
+  }
+}, { immediate: true });
 
 // Error Modal for Deletion Block
 const isErrorModalOpen = ref(false);
@@ -525,29 +528,6 @@ const closeErrorModal = () => {
         </BreadcrumbItem>
       </BreadcrumbList>
     </Breadcrumb>
-
-    <!-- Flash Notifications -->
-    <div class="mb-4 space-y-2">
-      <Transition
-        enter-active-class="transition ease-out duration-300 transform"
-        enter-from-class="-translate-y-2 opacity-0"
-        enter-to-class="translate-y-0 opacity-100"
-        leave-active-class="transition ease-in duration-200"
-        leave-from-class="opacity-100"
-        leave-to-class="opacity-0"
-      >
-        <div v-if="flashSuccess && showSuccessAlert" class="flex items-center justify-between p-4 rounded-[14px] border border-emerald-500/20 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-400">
-          <div class="flex items-center gap-2.5">
-            <CheckCircle2 class="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-            <span class="text-sm font-medium">{{ flashSuccess }}</span>
-          </div>
-          <button @click="showSuccessAlert = false" class="text-emerald-500 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300">
-            <X class="w-4 h-4" />
-          </button>
-        </div>
-      </Transition>
-    </div>
-    
     <div class="space-y-1">
       <!-- Tabs -->
       <Tabs v-model="activeTab" :tabs="tabs" />
