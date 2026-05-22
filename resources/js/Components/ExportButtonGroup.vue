@@ -3,11 +3,14 @@ import { Printer, FileDown } from 'lucide-vue-next';
 
 defineEmits<{
   (e: 'export-excel'): void;
-  (e: 'export-pdf'): void;
   (e: 'export-csv'): void;
 }>();
 
 const handlePrint = () => {
+  window.print();
+};
+
+const handleExportPDF = () => {
   window.print();
 };
 </script>
@@ -29,7 +32,7 @@ const handlePrint = () => {
       <span>Excel</span>
     </button>
     <button 
-      @click="$emit('export-pdf')"
+      @click="handleExportPDF"
       class="flex items-center gap-2 px-4 py-2 bg-[#FFA726] hover:bg-[#FB8C00] text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm cursor-pointer"
     >
       <FileDown class="w-4 h-4" />

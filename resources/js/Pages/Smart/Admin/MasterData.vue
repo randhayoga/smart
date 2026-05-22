@@ -512,7 +512,7 @@ const closeErrorModal = () => {
               <div v-if="activeTab === 'Subkategori'" class="flex-1 max-w-[200px]">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal">
+                    <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal', !parentFilter ? 'text-muted-foreground' : 'text-foreground']">
                       {{ parentFilter ? (props.categories.find(c => c.code === parentFilter)?.name || 'Semua Kategori Induk') : 'Semua Kategori Induk' }}
                       <ChevronDown class="w-4 h-4 opacity-50" />
                     </Button>
@@ -528,7 +528,7 @@ const closeErrorModal = () => {
               <div v-if="activeTab === 'Lantai'" class="flex-1 max-w-[200px]">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal">
+                    <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal', !parentFilter ? 'text-muted-foreground' : 'text-foreground']">
                       {{ parentFilter ? (props.locations.find(l => l.id.toString() === parentFilter)?.name || 'Semua Lokasi') : 'Semua Lokasi' }}
                       <ChevronDown class="w-4 h-4 opacity-50" />
                     </Button>
@@ -544,7 +544,7 @@ const closeErrorModal = () => {
               <div v-if="activeTab === 'Ruangan'" class="flex-1 max-w-[200px]">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal">
+                    <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal', !parentFilter ? 'text-muted-foreground' : 'text-foreground']">
                       {{ parentFilter ? (props.floors.find(f => f.id.toString() === parentFilter)?.name || 'Semua Lantai') : 'Semua Lantai' }}
                       <ChevronDown class="w-4 h-4 opacity-50" />
                     </Button>
@@ -565,7 +565,7 @@ const closeErrorModal = () => {
                 <span>Baris per halaman</span>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" class="w-[140px] justify-between rounded-[14px] font-normal">
+                    <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal', (rowsPerPage === 'Semua baris' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
                       {{ rowsPerPage }}
                       <ChevronDown class="w-4 h-4 opacity-50" />
                     </Button>
@@ -757,7 +757,7 @@ const closeErrorModal = () => {
                 <label class="block text-sm font-medium text-foreground mb-2">Kategori Induk<span class="text-destructive">*</span></label>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal">
+                    <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal', !subcategoryForm.category_id ? 'text-muted-foreground' : 'text-foreground']">
                       {{ subcategoryForm.category_id ? (props.categories.find(c => c.id === subcategoryForm.category_id)?.name || 'Pilih Kategori Induk') : 'Pilih Kategori Induk' }}
                       <ChevronDown class="w-4 h-4 opacity-50" />
                     </Button>
@@ -799,7 +799,7 @@ const closeErrorModal = () => {
                 <label class="block text-sm font-medium text-foreground mb-2">Lokasi Induk<span class="text-destructive">*</span></label>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal">
+                    <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal', !floorForm.location_id ? 'text-muted-foreground' : 'text-foreground']">
                       {{ floorForm.location_id ? (props.locations.find(l => l.id === floorForm.location_id)?.name || 'Pilih Lokasi Induk') : 'Pilih Lokasi Induk' }}
                       <ChevronDown class="w-4 h-4 opacity-50" />
                     </Button>
@@ -826,7 +826,7 @@ const closeErrorModal = () => {
                 <label class="block text-sm font-medium text-foreground mb-2">Lantai Induk<span class="text-destructive">*</span></label>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal">
+                    <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal', !roomForm.floor_id ? 'text-muted-foreground' : 'text-foreground']">
                       {{ roomForm.floor_id ? (props.floors.find(f => f.id === roomForm.floor_id)?.location?.name + ' - ' + props.floors.find(f => f.id === roomForm.floor_id)?.name || 'Pilih Lantai Induk') : 'Pilih Lantai Induk' }}
                       <ChevronDown class="w-4 h-4 opacity-50" />
                     </Button>

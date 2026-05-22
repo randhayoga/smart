@@ -93,7 +93,7 @@ const handlePOReimburse = (product: any) => {
             <!-- Category Filter -->
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" class="w-64 justify-between rounded-full font-normal text-muted-foreground h-10">
+                <Button variant="outline" :class="['w-64 justify-between rounded-full font-normal h-10', selectedCategory === 'Semua kategori' ? 'text-muted-foreground' : 'text-foreground']">
                   <span class="truncate">{{ selectedCategory }}</span>
                   <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                 </Button>
@@ -109,7 +109,7 @@ const handlePOReimburse = (product: any) => {
             <!-- Sort -->
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" class="w-48 justify-between rounded-full font-normal text-muted-foreground h-10">
+                <Button variant="outline" :class="['w-48 justify-between rounded-full font-normal h-10', selectedSort === 'Urutkan: A-Z' ? 'text-muted-foreground' : 'text-foreground']">
                   <span class="truncate">{{ selectedSort }}</span>
                   <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                 </Button>

@@ -322,10 +322,6 @@ const handleExportExcel = () => {
   handleExportCSV();
 };
 
-const handleExportPDF = () => {
-  window.print();
-};
-
 // Create Modal Logic
 const isCreateModalOpen = ref(false);
 const newItem = useForm({
@@ -540,7 +536,7 @@ const handleConfirmDelete = () => {
                 <!-- Category Dropdown (regular) -->
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" class="w-[200px] justify-between rounded-[14px] font-normal text-muted-foreground">
+                    <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal', !categoryFilter ? 'text-muted-foreground' : 'text-foreground']">
                       <span class="truncate">{{ categoryFilter || 'Semua kategori' }}</span>
                       <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                     </Button>
@@ -589,7 +585,7 @@ const handleConfirmDelete = () => {
                 <span class="whitespace-nowrap">Baris per halaman</span>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" class="w-[140px] justify-between rounded-[14px] font-normal text-muted-foreground">
+                    <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal', (rowsPerPage === 'Semua baris' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
                       {{ rowsPerPage }}
                       <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                     </Button>
@@ -619,7 +615,6 @@ const handleConfirmDelete = () => {
                   </button>
                   <ExportButtonGroup 
                     @export-excel="handleExportExcel"
-                    @export-pdf="handleExportPDF"
                     @export-csv="handleExportCSV"
                   />
                 </div>
@@ -720,7 +715,7 @@ const handleConfirmDelete = () => {
                       <label class="text-sm font-medium text-foreground block">Kategori<span class="text-rose-500">*</span></label>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 text-muted-foreground">
+                          <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !newItem.category_id ? 'text-muted-foreground' : 'text-foreground']">
                             {{ props.categories.find(c => c.id === newItem.category_id)?.name || 'Pilih kategori' }}
                             <ChevronDown class="w-4 h-4 opacity-50" />
                           </Button>

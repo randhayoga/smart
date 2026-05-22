@@ -21,6 +21,7 @@ import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
 import ViewTableButton from '@/Components/ViewTableButton.vue';
 import DeleteTableButton from '@/Components/DeleteTableButton.vue';
+import ExportButtonGroup from '@/Components/ExportButtonGroup.vue';
 
 interface Props {
   itemId: string | number;
@@ -152,6 +153,42 @@ onMounted(() => {
   }
 });
 
+const getExportData = () => {
+  if (!dataTableRef.value) return dummyLots;
+  return dataTableRef.value.table.getFilteredRowModel().rows.map((row: any) => row.original);
+};
+
+const handleExportCSV = () => {
+  const data = getExportData();
+  if (data.length === 0) return;
+  
+  const headers = ['Kode LOT', 'Nomor PO', 'Tanggal Masuk', 'Organizer', 'Jml. Aset'];
+  const rows = data.map((item: any) => [
+    `"${item.lotCode}"`,
+    `"${item.poNumber}"`,
+    `"${item.entryDate}"`,
+    `"${item.organizer}"`,
+    `"${item.assetCount}"`
+  ]);
+
+  let csvContent = "\uFEFFsep=,\n" 
+    + headers.map(h => `"${h}"`).join(",") + "\n"
+    + rows.map((e: any) => e.join(",")).join("\n");
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", `lot_export_${new Date().getTime()}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
+const handleExportExcel = () => {
+  handleExportCSV();
+};
+
 // Edit Modal Logic
 const isEditModalOpen = ref(false);
 const editForm = ref({
@@ -235,7 +272,7 @@ const handleDelete = () => {
 <template>
   <AppLayout title="Detail Barang">
     <!-- Breadcrumb -->
-    <Breadcrumb>
+    <Breadcrumb class="no-print">
       <BreadcrumbList class="pb-3">
         <BreadcrumbItem>
           <BreadcrumbLink href="/smart/inventory">Manajemen Stok</BreadcrumbLink>
@@ -248,7 +285,7 @@ const handleDelete = () => {
     </Breadcrumb>
 
     <!-- Top Action Bar -->
-    <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-6 no-print">
       <div class="flex items-center gap-2">
         <button class="px-5 py-2 rounded-full border border-indigo-600 text-indigo-600 font-bold text-sm bg-indigo-50/50">
           Detail
@@ -270,7 +307,7 @@ const handleDelete = () => {
 
     <div class="space-y-6">
       <!-- Detail Barang Card -->
-      <div class="bg-card rounded-xl border border-border p-6 shadow-sm">
+      <div class="bg-card rounded-xl border border-border p-6 shadow-sm no-print">
         <h2 class="text-lg font-bold text-foreground mb-4">Detail Barang</h2>
         
         <div class="flex flex-col md:flex-row gap-6">
@@ -297,67 +334,80 @@ const handleDelete = () => {
 
       <!-- Daftar LOT Card -->
       <div class="bg-card rounded-xl border border-border p-6 shadow-sm overflow-hidden">
-        <h2 class="text-lg font-bold text-foreground mb-4">Daftar LOT</h2>
+        <div class="no-print">
+          <h2 class="text-lg font-bold text-foreground mb-4">Daftar LOT</h2>
 
-        <!-- Filters Row -->
-        <div class="mb-4 flex flex-wrap items-end gap-4">
-          <div class="space-y-1.5 flex-1 min-w-[300px] max-w-sm">
-            <label class="text-xs text-muted-foreground font-medium block ml-0.5">Filter</label>
-            <TableSearch 
-              v-model="searchQuery"
-              placeholder="Cari Kode LOT atau nomor PO..." 
-            />
-          </div>
+          <!-- Filters Row -->
+          <div class="mb-4 flex flex-wrap items-end gap-4">
+            <div class="space-y-1.5 flex-1 min-w-[300px] max-w-sm">
+              <label class="text-xs text-muted-foreground font-medium block ml-0.5">Filter</label>
+              <TableSearch 
+                v-model="searchQuery"
+                placeholder="Cari Kode LOT atau nomor PO..." 
+              />
+            </div>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" class="w-[200px] justify-between rounded-[14px] font-normal text-muted-foreground">
-                <span class="truncate">{{ timeFilter || 'Semua kurun waktu' }}</span>
-                <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
-              <DropdownMenuItem @select="timeFilter = ''">Semua kurun waktu</DropdownMenuItem>
-              <DropdownMenuItem @select="timeFilter = 'Hari ini'">Hari ini</DropdownMenuItem>
-              <DropdownMenuItem @select="timeFilter = 'Bulan ini'">Bulan ini</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" class="w-[200px] justify-between rounded-[14px] font-normal text-muted-foreground">
-                <span class="truncate">{{ organizerFilter || 'Semua organizer' }}</span>
-                <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
-              <DropdownMenuItem @select="organizerFilter = ''">Semua organizer</DropdownMenuItem>
-              <DropdownMenuItem @select="organizerFilter = 'XXX'">XXX</DropdownMenuItem>
-              <DropdownMenuItem @select="organizerFilter = 'YYY'">YYY</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <div class="flex items-center gap-3 text-sm text-muted-foreground ml-auto">
-            <span>Baris per halaman</span>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" class="w-[140px] justify-between rounded-[14px] font-normal text-muted-foreground">
-                  {{ rowsPerPage }}
+                <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal', !timeFilter ? 'text-muted-foreground' : 'text-foreground']">
+                  <span class="truncate">{{ timeFilter || 'Semua kurun waktu' }}</span>
                   <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent class="w-[140px] rounded-[14px]" align="start" :side-offset="4">
-                <DropdownMenuItem @select="rowsPerPage = 'Semua baris'">Semua baris</DropdownMenuItem>
-                <DropdownMenuItem @select="rowsPerPage = '10'">10</DropdownMenuItem>
-                <DropdownMenuItem @select="rowsPerPage = '25'">25</DropdownMenuItem>
+              <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
+                <DropdownMenuItem @select="timeFilter = ''">Semua kurun waktu</DropdownMenuItem>
+                <DropdownMenuItem @select="timeFilter = 'Hari ini'">Hari ini</DropdownMenuItem>
+                <DropdownMenuItem @select="timeFilter = 'Bulan ini'">Bulan ini</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal', !organizerFilter ? 'text-muted-foreground' : 'text-foreground']">
+                  <span class="truncate">{{ organizerFilter || 'Semua organizer' }}</span>
+                  <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
+                <DropdownMenuItem @select="organizerFilter = ''">Semua organizer</DropdownMenuItem>
+                <DropdownMenuItem @select="organizerFilter = 'XXX'">XXX</DropdownMenuItem>
+                <DropdownMenuItem @select="organizerFilter = 'YYY'">YYY</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <div class="flex items-center gap-3 text-sm text-muted-foreground ml-auto">
+              <span>Baris per halaman</span>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal', (rowsPerPage === 'Semua baris' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
+                    {{ rowsPerPage }}
+                    <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent class="w-[140px] rounded-[14px]" align="start" :side-offset="4">
+                  <DropdownMenuItem @select="rowsPerPage = 'Semua baris'">Semua baris</DropdownMenuItem>
+                  <DropdownMenuItem @select="rowsPerPage = '10'">10</DropdownMenuItem>
+                  <DropdownMenuItem @select="rowsPerPage = '25'">25</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
 
-          <button class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition-all shadow-sm flex items-center gap-2">
-            <Plus class="w-4 h-4" />
-            LOT Baru
-          </button>
+          <!-- Actions Row -->
+          <div class="mb-4 flex flex-wrap items-end justify-between gap-4 pt-2">
+            <div class="space-y-2 flex-1 min-w-0">
+              <label class="text-xs text-muted-foreground font-medium block ml-0.5">Aksi Terpilih</label>
+              <ExportButtonGroup 
+                @export-excel="handleExportExcel"
+                @export-csv="handleExportCSV"
+              />
+            </div>
+            
+            <button class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition-all shadow-sm flex items-center gap-2">
+              <Plus class="w-4 h-4" />
+              LOT Baru
+            </button>
+          </div>
         </div>
 
         <!-- Table -->
@@ -439,7 +489,7 @@ const handleDelete = () => {
                       <label class="text-sm font-medium text-foreground block">Satuan<span class="text-rose-500">*</span></label>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 text-foreground bg-background">
+                          <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4 bg-background', !editForm.satuan ? 'text-muted-foreground' : 'text-foreground']">
                             {{ editForm.satuan || 'Pilih satuan' }}
                             <ChevronDown class="w-4 h-4 opacity-50" />
                           </Button>
@@ -458,7 +508,7 @@ const handleDelete = () => {
                       <label class="text-sm font-medium text-foreground block">Merek<span class="text-rose-500">*</span></label>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 text-foreground bg-background">
+                          <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4 bg-background', !editForm.merek ? 'text-muted-foreground' : 'text-foreground']">
                             {{ editForm.merek || 'Pilih merek' }}
                             <ChevronDown class="w-4 h-4 opacity-50" />
                           </Button>
