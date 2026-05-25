@@ -59,6 +59,10 @@ class BarangController extends Controller
 
     public function destroy(Barang $barang)
     {
+        if ($barang->lots()->exists()) {
+            return redirect()->back()->with('error', 'Barang tidak dapat dihapus karena masih memiliki LOT terkait.');
+        }
+
         if ($barang->image_url && Storage::disk('public')->exists($barang->image_url)) {
             Storage::disk('public')->delete($barang->image_url);
         }
