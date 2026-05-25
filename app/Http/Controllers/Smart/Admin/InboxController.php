@@ -51,7 +51,7 @@ class InboxController extends Controller
      */
     public function show(Request $request, string $id): Response
     {
-        $req = SmartRequest::with(['user', 'approver', 'items.barang.subcategory.category', 'items.barang.brand', 'project', 'department'])
+        $req = SmartRequest::with(['user', 'approver', 'approval.approver', 'adminConfirmation.admin', 'items.barang.subcategory.category', 'items.barang.brand', 'project', 'department'])
             ->findOrFail($id);
 
         $durationDays = 0;
@@ -62,8 +62,20 @@ class InboxController extends Controller
             $durationHours = $diff->h;
         }
 
+        $hasInsufficientStock = false;
         // Map items
-        $items = $req->items->map(function ($item) {
+        $items = $req->items->map(function ($item) use (&$hasInsufficientStock) {
+            // Count stock quantity of units in status 'tersedia' and no user_id assigned
+            $availableStock = Unit::whereHas('lot', function ($q) use ($item) {
+                $q->where('barang_id', $item->barang_id);
+            })->where('status', 'tersedia')
+              ->whereNull('user_id')
+              ->count();
+
+            if ($availableStock < $item->quantity_requested) {
+                $hasInsufficientStock = true;
+            }
+
             // Get assigned assets (serial numbers)
             $assets = RequestUnitAssignment::where('request_item_id', $item->id)
                 ->with('unit')
@@ -91,6 +103,8 @@ class InboxController extends Controller
             'number' => $req->request_number,
             'requester' => $req->user->name ?? '-',
             'approver' => $req->approver->name ?? '-',
+            'approval_by' => $req->approval?->approver?->name,
+            'confirmation_by' => $req->adminConfirmation?->admin?->name,
             'createdAt' => $req->created_at ? $req->created_at->format('d-m-Y H:i') : '-',
             'pemanfaatan' => $req->utilization,
             'pemanfaatanDetail' => $req->utilization === 'corporate' 
@@ -104,6 +118,7 @@ class InboxController extends Controller
             'type' => $req->start_date ? 'peminjaman' : 'permintaan',
             'items' => $items,
             'approvedAt' => $approvedAt,
+            'has_insufficient_stock' => $hasInsufficientStock,
         ];
 
         return Inertia::render('Smart/Admin/InboxDetail', [
@@ -119,14 +134,33 @@ class InboxController extends Controller
     public function action(Request $request, $id)
     {
         $validated = $request->validate([
-            'action' => 'required|string|in:approve,reject',
+            'action' => 'required|string|in:approve,reject,pending',
             'note' => 'nullable|string',
         ]);
 
         $req = SmartRequest::findOrFail($id);
         $oldStatus = $req->status;
 
-        if ($validated['action'] === 'approve') {
+        if ($validated['action'] === 'pending') {
+            RequestAdminConfirmation::create([
+                'request_id' => $req->id,
+                'admin_id' => $request->user()->id,
+                'action' => 'pending',
+                'note' => $validated['note'] ?? 'Pending/Delayed by Admin due to stock',
+                'decided_at' => now(),
+            ]);
+
+            RequestStatusLog::create([
+                'request_id' => $req->id,
+                'status_from' => $oldStatus,
+                'status_to' => 'pending',
+                'changed_by' => $request->user()->id,
+                'note' => 'Permintaan ditunda (pending) oleh Admin karena stok habis.',
+            ]);
+
+            $req->status = 'pending';
+            $req->save();
+        } else if ($validated['action'] === 'approve') {
             if ($req->status === 'wait') {
                 RequestApproval::create([
                     'request_id' => $req->id,

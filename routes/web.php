@@ -57,6 +57,13 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
     Route::post('/history/{id}/handover', [RequestHistoryController::class, 'handover'])->name('history.handover');
     Route::post('/history/{id}/receive', [RequestHistoryController::class, 'receive'])->name('history.receive');
     Route::post('/history/{id}/return', [RequestHistoryController::class, 'returnAsset'])->name('history.return');
+
+    // Manager approval routes
+    Route::get('/approve', [App\Http\Controllers\Smart\Manager\ApprovalController::class, 'index'])->name('approve');
+    Route::get('/approve/{id}', [App\Http\Controllers\Smart\Manager\ApprovalController::class, 'show'])->name('approve.show');
+    Route::post('/approve/{id}/action', [App\Http\Controllers\Smart\Manager\ApprovalController::class, 'action'])->name('approve.action');
+    Route::get('/approved', [App\Http\Controllers\Smart\Manager\ApprovalController::class, 'approvedList'])->name('approved');
+
     Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory');
     Route::get('/inventory/{id}', [InventoryController::class, 'show'])->name('inventory.show');
     Route::get('/master', [MasterController::class, 'index'])->name('master');

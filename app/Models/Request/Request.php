@@ -60,4 +60,25 @@ class Request extends Model
     {
         return $this->hasMany(RequestStatusLog::class);
     }
+
+    public function approval(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(RequestApproval::class, 'request_id')->latestOfMany();
+    }
+
+    public function adminConfirmation(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(RequestAdminConfirmation::class, 'request_id')->latestOfMany();
+    }
+
+    public function handover(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(RequestHandover::class, 'request_id');
+    }
+
+    public function return(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(RequestReturn::class, 'request_id');
+    }
 }
+

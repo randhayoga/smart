@@ -30,6 +30,8 @@ interface RequestDetail {
   number: string;
   requester: string;
   approver: string;
+  approval_by?: string;
+  confirmation_by?: string;
   createdAt: string;
   pemanfaatan: 'corporate' | 'project';
   pemanfaatanDetail: string;
@@ -41,6 +43,7 @@ interface RequestDetail {
   type: 'permintaan' | 'peminjaman';
   items: RequestItem[];
   approvedAt?: string;
+  has_insufficient_stock?: boolean;
 }
 
 interface Props {
@@ -67,23 +70,37 @@ const timeline = computed(() => {
   if (r.status === 'wait') {
     steps.push({
       status: 'Menunggu approval manager',
-      user: r.approver,
+      user: r.approval_by || r.approver || 'Manager',
       completed: false,
       active: true,
       isAction: true,
     });
   } else if (r.status === 'approve') {
     steps.push({
-      status: 'Di-approve oleh Manager',
-      user: r.approver,
+      status: 'Di-approve',
+      user: r.approval_by || r.approver || 'Manager',
       time: r.approvedAt || r.createdAt,
       completed: true,
     });
     steps.push({
-      status: 'Perlu konfirmasi Anda!',
+      status: 'Perlu alokasi & konfirmasi',
       completed: false,
       active: true,
       isAction: true,
+    });
+  } else if (r.status === 'pending') {
+    steps.push({
+      status: 'Di-approve',
+      user: r.approval_by || r.approver || 'Manager',
+      time: r.approvedAt || r.createdAt,
+      completed: true,
+    });
+    steps.push({
+      status: 'Pending',
+      user: r.confirmation_by || 'Admin',
+      time: r.createdAt,
+      completed: true,
+      isPending: true,
     });
   } else if (r.status === 'reject') {
     steps.push({
@@ -94,13 +111,14 @@ const timeline = computed(() => {
     });
   } else {
     steps.push({
-      status: 'Di-approve oleh Manager',
-      user: r.approver,
+      status: 'Di-approve',
+      user: r.approval_by || r.approver || 'Manager',
       time: r.approvedAt || r.createdAt,
       completed: true,
     });
     steps.push({
-      status: 'Telah dikonfirmasi oleh Admin',
+      status: 'Dikonfirmasi',
+      user: r.confirmation_by || 'Admin',
       completed: true,
     });
   }
@@ -114,6 +132,31 @@ const handleApprove = () => {
   }, {
     onSuccess: () => {
       toast.success('Permintaan berhasil dikonfirmasi/disetujui!');
+    },
+    onError: (errors) => {
+      toast.error(Object.values(errors).join(', '));
+    }
+  });
+};
+
+const isPendingModalOpen = ref(false);
+const pendingReason = ref('');
+const openPendingModal = () => {
+  pendingReason.value = '';
+  isPendingModalOpen.value = true;
+};
+const closePendingModal = () => {
+  isPendingModalOpen.value = false;
+};
+
+const submitPending = () => {
+  router.post(route('smart.inbox.action', props.requestId), {
+    action: 'pending',
+    note: pendingReason.value
+  }, {
+    onSuccess: () => {
+      closePendingModal();
+      toast.success('Status pemesanan berhasil diubah menjadi pending.');
     },
     onError: (errors) => {
       toast.error(Object.values(errors).join(', '));
@@ -197,7 +240,7 @@ const handlePilihAlokasi = (item: any) => {
               </p>
               <p>
                 <span class="text-muted-foreground">PIC Approval:</span> 
-                <span class="font-semibold"> {{ request.approver }}</span>
+                <span class="font-semibold"> {{ request.approval_by || request.approver }}</span>
               </p>
               <p>
                 <span class="text-muted-foreground">Waktu dibuat:</span> 
@@ -259,9 +302,17 @@ const handlePilihAlokasi = (item: any) => {
             >
               <!-- Icon/Indicator -->
               <div class="absolute -left-[32px] top-0 w-8 h-8 rounded-full bg-card flex items-center justify-center z-10">
+                <!-- Status Pending (Grey Dot) -->
+                <div 
+                  v-if="step.isPending" 
+                  class="w-6 h-6 rounded-full border-2 border-muted-foreground/30 flex items-center justify-center bg-card"
+                >
+                  <div class="w-2 h-2 rounded-full bg-muted-foreground/30"></div>
+                </div>
+
                 <!-- Status Done (Green Check Circle) -->
                 <div 
-                  v-if="step.completed" 
+                  v-else-if="step.completed" 
                   class="w-7 h-7 rounded-full border-2 border-green-500 flex items-center justify-center bg-card"
                 >
                   <Check class="w-4 h-4 text-green-500 stroke-[3.5]" />
@@ -291,7 +342,8 @@ const handlePilihAlokasi = (item: any) => {
                   <h4 
                     class="text-sm font-bold"
                     :class="{
-                      'text-green-600': step.completed,
+                      'text-green-600': step.completed && !step.isPending,
+                      'text-muted-foreground': step.isPending,
                       'text-red-600': step.rejected,
                       'text-[#6366F1]': !step.completed && !step.rejected
                     }"
@@ -308,6 +360,14 @@ const handlePilihAlokasi = (item: any) => {
                   <!-- Action Buttons inside timeline step -->
                   <div v-if="step.isAction" class="pt-3 flex gap-2">
                     <button 
+                      v-if="request.has_insufficient_stock"
+                      @click="openPendingModal"
+                      class="px-4 py-1.5 bg-zinc-500 hover:bg-zinc-600 text-white text-sm font-bold rounded-lg transition-all shadow-sm"
+                    >
+                      Pending
+                    </button>
+                    <button 
+                      v-else
                       @click="handleApprove"
                       class="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-lg transition-all shadow-sm"
                     >
@@ -327,5 +387,67 @@ const handlePilihAlokasi = (item: any) => {
         </div>
       </div>
     </div>
+    <!-- Teleport Modal Pending -->
+    <Teleport to="body">
+      <Transition
+        enter-active-class="ease-out duration-300"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="ease-in duration-200"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div 
+          v-if="isPendingModalOpen" 
+          class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4"
+        >
+          <div 
+            class="bg-card text-foreground rounded-[14px] shadow-2xl w-full max-w-md flex flex-col overflow-hidden border border-border"
+            @click.stop
+          >
+            <!-- Header -->
+            <div class="flex items-center justify-between p-5 border-b border-border bg-card">
+              <h3 class="text-base md:text-lg font-extrabold text-foreground">Pending Permintaan</h3>
+              <button @click="closePendingModal" class="p-1.5 hover:bg-muted rounded-full transition-colors">
+                <X class="w-5 h-5 text-muted-foreground" />
+              </button>
+            </div>
+            
+            <!-- Body -->
+            <div class="p-6 space-y-4">
+              <p class="text-sm text-muted-foreground">
+                Kirim informasi mengenai delay/pending untuk penyediaan barang ini ke pengguna.
+              </p>
+              
+              <div class="space-y-2">
+                <label class="text-xs font-semibold text-foreground">Catatan / Alasan Penundaan:</label>
+                <textarea
+                  v-model="pendingReason"
+                  placeholder="Masukkan alasan penundaan (contoh: Stok habis di gudang pusat)..."
+                  rows="4"
+                  class="w-full text-sm border border-input rounded-[10px] bg-background p-3 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none"
+                ></textarea>
+              </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="flex items-center justify-end gap-3 p-5 border-t border-border bg-muted/20">
+              <button 
+                @click="closePendingModal"
+                class="px-5 py-2 text-sm font-semibold border border-input hover:bg-muted rounded-lg transition-colors"
+              >
+                Batal
+              </button>
+              <button 
+                @click="submitPending"
+                class="px-5 py-2 text-sm font-bold bg-zinc-500 hover:bg-zinc-600 text-white rounded-lg transition-all shadow-sm"
+              >
+                Kirim Pending
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </AppLayout>
 </template>

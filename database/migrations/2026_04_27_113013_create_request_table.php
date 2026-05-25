@@ -18,7 +18,7 @@ return new class extends Migration {
             $table->text('reasoning');
             $table->dateTime('start_date')->nullable();
             $table->dateTime('end_date')->nullable();
-            $table->enum('status', ['wait', 'approve', 'confirm', 'handover', 'borrow', 'return', 'success', 'reject', 'cancel']);
+            $table->enum('status', ['wait', 'approve', 'confirm', 'handover', 'borrow', 'return', 'success', 'reject', 'cancel', 'pending']);
             $table->timestamps();
         });
 
