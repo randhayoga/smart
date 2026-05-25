@@ -29,7 +29,9 @@ import {
   Check,
   X,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Search,
+  ArrowUpDown
 } from 'lucide-vue-next';
 
 // ─────────────────────────────────────────────
@@ -62,152 +64,29 @@ interface RequestHistory {
   items: RequestItem[];
 }
 
+import { watch } from 'vue';
+import { router } from '@inertiajs/vue3';
+import { toast } from 'vue-sonner';
+
 const props = defineProps<{
-  id: string | number;
+  requestId: string | number;
   user?: any;
+  request: RequestHistory;
 }>();
 
-// ─────────────────────────────────────────────
-// Dummy Database for detail requests
-// ─────────────────────────────────────────────
-const requestsDb: RequestHistory[] = [
-  {
-    id: 1,
-    number: '#REQ-2026-0001',
-    type: 'permintaan',
-    pemanfaatan: 'corporate',
-    pemanfaatanDetail: 'Finance',
-    status: 'Menunggu approval',
-    created_at: '2026-05-20',
-    items: [
-      { id: 101, subcategory: 'ATK', brand: 'Sinar Dunia', spec: 'Kertas A4 80gr', quantity: 5, stockQuantity: 15, category: 'Alat Tulis', assets: [] },
-      { id: 102, subcategory: 'Peralatan Kantor', brand: 'Joyko', spec: 'Stapler Besar', quantity: 2, stockQuantity: 4, category: 'Alat Tulis', assets: [] },
-      { id: 103, subcategory: 'ATK', brand: 'Pilot', spec: 'Pulpen Hitam Ballpoint', quantity: 12, stockQuantity: 45, category: 'Alat Tulis', assets: [] },
-      { id: 104, subcategory: 'Peralatan Kantor', brand: 'Kenko', spec: 'Gunting Kantor', quantity: 3, stockQuantity: 8, category: 'Alat Tulis', assets: [] }
-    ]
-  },
-  {
-    id: 2,
-    number: '#BOR-2026-0002',
-    type: 'peminjaman',
-    pemanfaatan: 'project',
-    pemanfaatanDetail: 'PRJ-001 – Website Revamp',
-    durationStart: '22-05-2026 09:00',
-    durationEnd: '29-05-2026 17:00',
-    durationDays: 7,
-    durationHours: 8,
-    status: 'Menunggu approval',
-    created_at: '2026-05-19',
-    items: [
-      { id: 201, subcategory: 'Laptop', brand: 'Asus ROG', spec: 'Zephyrus G14 AMD R7', quantity: 1, stockQuantity: 2, category: 'Elektronik', assets: [] },
-      { id: 202, subcategory: 'Mouse', brand: 'Logitech', spec: 'MX Master 3S Wireless', quantity: 1, stockQuantity: 5, category: 'Elektronik', assets: [] }
-    ]
-  },
-  {
-    id: 3,
-    number: '#BOR-2026-0003',
-    type: 'peminjaman',
-    pemanfaatan: 'project',
-    pemanfaatanDetail: 'PRJ-002 – Mobile App Development',
-    durationStart: '15-05-2026 08:00',
-    durationEnd: '15-06-2026 17:00',
-    durationDays: 31,
-    durationHours: 9,
-    status: 'Disetujui',
-    created_at: '2026-05-14',
-    items: [
-      { id: 301, subcategory: 'Monitor', brand: 'Dell', spec: 'UltraSharp 27" U2723QE', quantity: 2, stockQuantity: 3, category: 'Elektronik', assets: ['MON-DELL-2026-901', 'MON-DELL-2026-902'] }
-    ]
-  },
-  {
-    id: 4,
-    number: '#REQ-2026-0004',
-    type: 'permintaan',
-    pemanfaatan: 'corporate',
-    pemanfaatanDetail: 'IT Support',
-    status: 'Disetujui',
-    created_at: '2026-05-10',
-    items: [
-      { id: 401, subcategory: 'Kabel', brand: 'Belden', spec: 'Kabel UTP Cat6 10m', quantity: 4, stockQuantity: 12, category: 'Elektronik', assets: ['BEL-CAT6-2026-001', 'BEL-CAT6-2026-002', 'BEL-CAT6-2026-003', 'BEL-CAT6-2026-004'] },
-      { id: 402, subcategory: 'Konektor', brand: 'Amp', spec: 'RJ45 Connector isi 50', quantity: 1, stockQuantity: 3, category: 'Elektronik', assets: ['AMP-RJ45-2026-092'] }
-    ]
-  },
-  {
-    id: 5,
-    number: '#BOR-2026-0005',
-    type: 'peminjaman',
-    pemanfaatan: 'corporate',
-    pemanfaatanDetail: 'HR & GA',
-    durationStart: '01-05-2026 10:00',
-    durationEnd: '08-05-2026 10:00',
-    durationDays: 7,
-    durationHours: 0,
-    status: 'Selesai',
-    created_at: '2026-04-30',
-    items: [
-      { id: 501, subcategory: 'Proyektor', brand: 'Epson', spec: 'EB-X500 XGA 3600 Lumens', quantity: 1, stockQuantity: 2, category: 'Elektronik', assets: ['PRJ-EPSON-2026-441'] }
-    ]
-  },
-  {
-    id: 6,
-    number: '#REQ-2026-0006',
-    type: 'permintaan',
-    pemanfaatan: 'project',
-    pemanfaatanDetail: 'PRJ-003 – ERP Integration',
-    status: 'Dibatalkan',
-    created_at: '2026-04-25',
-    items: [
-      { id: 601, subcategory: 'Peralatan Listrik', brand: 'Schneider', spec: 'Stopkontak 5 Lubang', quantity: 5, stockQuantity: 10, category: 'Elektronik', assets: [] }
-    ]
-  },
-  {
-    id: 7,
-    number: '#BOR-2026-0007',
-    type: 'peminjaman',
-    pemanfaatan: 'project',
-    pemanfaatanDetail: 'PRJ-004 – AI Research Model',
-    durationStart: '20-05-2026 09:00',
-    durationEnd: '27-05-2026 17:00',
-    durationDays: 7,
-    durationHours: 8,
-    status: 'Dipinjam',
-    created_at: '2026-05-18',
-    items: [
-      { id: 701, subcategory: 'GPU Workstation', brand: 'NVIDIA', spec: 'RTX 4090 24GB', quantity: 1, stockQuantity: 2, category: 'Elektronik', assets: ['GPU-NVIDIA-2026-001'] }
-    ]
-  },
-  {
-    id: 8,
-    number: '#BOR-2026-0008',
-    type: 'peminjaman',
-    pemanfaatan: 'corporate',
-    pemanfaatanDetail: 'Research & Development',
-    durationStart: '10-05-2026 08:00',
-    durationEnd: '', // No due date
-    durationDays: 0,
-    durationHours: 0,
-    status: 'Dipinjam',
-    created_at: '2026-05-09',
-    items: [
-      { id: 801, subcategory: 'Papan Tulis', brand: 'Sakura', spec: 'Whiteboard Portable 120x90', quantity: 1, stockQuantity: 3, category: 'Alat Tulis', assets: ['WBD-SAKURA-2026-101'] }
-    ]
-  }
-];
+const requestState = ref<RequestHistory>(props.request);
 
-// Reaktif Request State
-const requestState = ref<RequestHistory | null>(null);
-
-// Inisialisasi data
-const reqId = Number(props.id);
-const found = requestsDb.find(r => r.id === reqId);
-requestState.value = found ? JSON.parse(JSON.stringify(found)) : JSON.parse(JSON.stringify(requestsDb[0]));
+watch(() => props.request, (newVal) => {
+  requestState.value = newVal;
+}, { deep: true });
 
 const request = computed((): RequestHistory => {
-  return requestState.value || requestsDb[0];
+  return requestState.value;
 });
 
 // Formatting Date Helper
 const formatDate = (dateStr: string) => {
+  if (!dateStr) return '';
   const parts = dateStr.split('-');
   if (parts.length !== 3) return dateStr;
   return `${parts[2]}-${parts[1]}-${parts[0]}`; // DD-MM-YYYY
@@ -328,22 +207,106 @@ const handleSaveHandover = () => {
     }
   }
 
-  // Simpan data & ubah status
-  if (requestState.value) {
-    requestState.value.status = 'Serah Terima';
-    
-    // Format tanggal ke DD-MM-YYYY untuk display di timeline
-    const dateParts = handoverDate.value.split('-');
-    const formattedDate = dateParts.length === 3 ? `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}` : handoverDate.value;
-    handoverTime.value = `${formattedDate} ${handoverTimeOnly.value}`;
+  router.post(route('smart.history.handover', props.requestId), {
+    method: handoverMethod.value,
+    scheduled_date: `${handoverDate.value} ${handoverTimeOnly.value}`,
+    location: handoverLocation.value,
+    note: handoverNotes.value,
+  }, {
+    onSuccess: () => {
+      // Format tanggal ke DD-MM-YYYY untuk display di timeline
+      const dateParts = handoverDate.value.split('-');
+      const formattedDate = dateParts.length === 3 ? `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}` : handoverDate.value;
+      handoverTime.value = `${formattedDate} ${handoverTimeOnly.value}`;
 
-    alertToastMessage.value = 'Serah terima berhasil diatur!';
-    showToast.value = true;
-    setTimeout(() => {
-      showToast.value = false;
-    }, 4000);
+      alertToastMessage.value = 'Serah terima berhasil diatur!';
+      showToast.value = true;
+      setTimeout(() => {
+        showToast.value = false;
+      }, 4000);
+      closeHandoverModal();
+    },
+    onError: (errs) => {
+      errorMessage.value = Object.values(errs).join(', ');
+    }
+  });
+};
+
+// Return Modal State
+const isReturnModalOpen = ref(false);
+const returnMethod = ref('Pilih');
+const returnDate = ref('');
+const returnTimeOnly = ref('');
+const returnTime = ref(''); // Combined string for timeline
+const returnLocation = ref('Ruang GA / IT Support'); 
+const returnNotes = ref('');
+const returnErrorMessage = ref('');
+
+const effectiveReturnMethod = computed(() => {
+  return returnMethod.value && returnMethod.value !== 'Pilih' ? returnMethod.value : 'Kembalikan sendiri';
+});
+
+const effectiveReturnTime = computed(() => {
+  return returnTime.value || '';
+});
+
+const effectiveReturnLocation = computed(() => {
+  return returnLocation.value;
+});
+
+const openReturnModal = () => {
+  returnMethod.value = 'Pilih';
+  returnDate.value = '';
+  returnTimeOnly.value = '';
+  returnErrorMessage.value = '';
+  isReturnModalOpen.value = true;
+};
+
+const closeReturnModal = () => {
+  isReturnModalOpen.value = false;
+};
+
+const onReturnInputChange = () => {
+  returnErrorMessage.value = '';
+};
+
+const handleSaveReturn = () => {
+  if (!returnMethod.value || returnMethod.value === 'Pilih') {
+    returnErrorMessage.value = 'Metode pengembalian wajib dipilih.';
+    return;
   }
-  closeHandoverModal();
+  if (!returnDate.value) {
+    returnErrorMessage.value = 'Tanggal pengembalian wajib diisi.';
+    return;
+  }
+  if (!returnTimeOnly.value) {
+    returnErrorMessage.value = 'Jam pengembalian wajib diisi.';
+    return;
+  }
+
+  router.post(route('smart.history.return', props.requestId), {
+    method: returnMethod.value,
+    scheduled_date: `${returnDate.value} ${returnTimeOnly.value}`,
+    location: returnLocation.value,
+    note: returnNotes.value,
+  }, {
+    onSuccess: () => {
+      // Format tanggal ke DD-MM-YYYY untuk display di timeline
+      const dateParts = returnDate.value.split('-');
+      const formattedDate = dateParts.length === 3 ? `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}` : returnDate.value;
+      returnTime.value = `${formattedDate} ${returnTimeOnly.value}`;
+
+      alertToastMessage.value = 'Pengembalian aset berhasil diatur!';
+      showToast.value = true;
+      setTimeout(() => {
+        showToast.value = false;
+      }, 4000);
+      closeReturnModal();
+    },
+    onError: (errs) => {
+      returnErrorMessage.value = Object.values(errs).join(', ');
+    }
+  });
 };
 
 const isConfirmReceivedModalOpen = ref(false);
@@ -357,15 +320,16 @@ const closeConfirmReceivedModal = () => {
 };
 
 const confirmReceivedAction = () => {
-  if (requestState.value) {
-    requestState.value.status = 'Dipinjam';
-    alertToastMessage.value = 'Aset berhasil dikonfirmasi telah diterima!';
-    showToast.value = true;
-    setTimeout(() => {
-      showToast.value = false;
-    }, 4000);
-  }
-  closeConfirmReceivedModal();
+  router.post(route('smart.history.receive', props.requestId), {}, {
+    onSuccess: () => {
+      alertToastMessage.value = 'Aset berhasil dikonfirmasi telah diterima!';
+      showToast.value = true;
+      setTimeout(() => {
+        showToast.value = false;
+      }, 4000);
+      closeConfirmReceivedModal();
+    }
+  });
 };
 
 // Collapsible Aset state
@@ -383,51 +347,126 @@ const assetPlacements = ref<Record<string, string>>({
 });
 
 // Placement Modal State
-const isPlacementModalOpen = ref(false);
-const currentItemForPlacement = ref<RequestItem | null>(null);
-const placementForm = ref<Record<string, string>>({});
+const isAssetPlacementModalOpen = ref(false);
+const selectedItemForPlacement = ref<RequestItem | null>(null);
+const returnPlacementType = ref<'seragam' | 'beragam'>('seragam');
+const singlePlacementLocation = ref('');
+const beragamPlacementLocations = ref<Record<string, string>>({});
+const searchQuery = ref('');
+const itemsPerPage = ref<string | number>('Semua baris');
+const currentPage = ref(1);
+const sortAsc = ref(true);
 
-const openPlacementModal = (item: RequestItem) => {
-  currentItemForPlacement.value = item;
-  placementForm.value = {};
-  if (item.assets) {
+const activeItemForPlacement = computed(() => {
+  return selectedItemForPlacement.value || request.value.items[0];
+});
+
+const openAssetPlacementModal = (item: RequestItem) => {
+  selectedItemForPlacement.value = item;
+  searchQuery.value = '';
+  currentPage.value = 1;
+  
+  if (item && item.assets && item.assets.length > 0) {
+    // Populate beragam placements
     item.assets.forEach(asset => {
-      placementForm.value[asset] = assetPlacements.value[asset] || '';
+      beragamPlacementLocations.value = { ...beragamPlacementLocations.value };
+      beragamPlacementLocations.value[asset] = assetPlacements.value[asset] || '';
     });
+
+    // Check if all assets have the same location and it is not empty
+    const firstLoc = assetPlacements.value[item.assets[0]] || '';
+    const allSame = firstLoc && item.assets.every(asset => assetPlacements.value[asset] === firstLoc);
+    if (allSame) {
+      returnPlacementType.value = 'seragam';
+      singlePlacementLocation.value = firstLoc;
+    } else {
+      returnPlacementType.value = 'beragam';
+      singlePlacementLocation.value = '';
+    }
+  } else {
+    returnPlacementType.value = 'seragam';
+    singlePlacementLocation.value = '';
   }
-  isPlacementModalOpen.value = true;
+  isAssetPlacementModalOpen.value = true;
 };
 
-const closePlacementModal = () => {
-  isPlacementModalOpen.value = false;
-  currentItemForPlacement.value = null;
-};
+const filteredAssets = computed(() => {
+  const item = activeItemForPlacement.value;
+  if (!item || !item.assets) return [];
+  
+  let list = item.assets.filter(asset => 
+    asset.toLowerCase().includes(searchQuery.value.toLowerCase())
+  );
 
-const handleSavePlacements = () => {
-  if (currentItemForPlacement.value && currentItemForPlacement.value.assets) {
-    currentItemForPlacement.value.assets.forEach(asset => {
-      assetPlacements.value[asset] = placementForm.value[asset] || '';
-    });
+  const sortedList = [...list];
+  if (sortAsc.value) {
+    sortedList.sort();
+  } else {
+    sortedList.sort().reverse();
   }
-  closePlacementModal();
-  alertToastMessage.value = 'Penempatan aset berhasil dicatat!';
-  showToast.value = true;
-  setTimeout(() => {
-    showToast.value = false;
-  }, 4000);
-};
+
+  return sortedList;
+});
+
+const paginatedAssets = computed(() => {
+  const list = filteredAssets.value;
+  if (itemsPerPage.value === 'Semua baris') return list;
+  
+  const limit = Number(itemsPerPage.value);
+  const start = (currentPage.value - 1) * limit;
+  return list.slice(start, start + limit);
+});
+
+const totalPages = computed(() => {
+  if (itemsPerPage.value === 'Semua baris') return 1;
+  const limit = Number(itemsPerPage.value);
+  return Math.ceil(filteredAssets.value.length / limit);
+});
 
 const handleReturnAction = () => {
-  if (requestState.value) {
+  if (!requestState.value) return;
+
+  if (request.value.type === 'peminjaman') {
+    openReturnModal();
+  } else {
     requestState.value.status = 'Selesai';
-    alertToastMessage.value = request.value.type === 'peminjaman' 
-      ? 'Pengembalian aset berhasil diatur!' 
-      : 'Permintaan barang habis pakai selesai!';
+    alertToastMessage.value = 'Permintaan barang habis pakai selesai!';
     showToast.value = true;
     setTimeout(() => {
       showToast.value = false;
     }, 4000);
   }
+};
+
+const confirmAssetPlacement = () => {
+  const item = activeItemForPlacement.value;
+  if (!item || !item.assets) return;
+
+  if (returnPlacementType.value === 'seragam') {
+    if (!singlePlacementLocation.value) {
+      alert('Tolong pilih lokasi penempatan aset.');
+      return;
+    }
+    item.assets.forEach(asset => {
+      assetPlacements.value[asset] = singlePlacementLocation.value;
+    });
+  } else {
+    const unselected = item.assets.some(asset => !beragamPlacementLocations.value[asset]);
+    if (unselected) {
+      alert('Tolong pilih lokasi penempatan untuk semua aset.');
+      return;
+    }
+    item.assets.forEach(asset => {
+      assetPlacements.value[asset] = beragamPlacementLocations.value[asset];
+    });
+  }
+
+  isAssetPlacementModalOpen.value = false;
+  alertToastMessage.value = 'Penempatan aset berhasil disimpan!';
+  showToast.value = true;
+  setTimeout(() => {
+    showToast.value = false;
+  }, 4000);
 };
 
 // ─────────────────────────────────────────────
@@ -544,10 +583,12 @@ const timelineSteps = computed((): TimelineStep[] => {
       status: 'done'
     });
     steps.push({
-      title: 'Barang Dikembalikan & Selesai',
-      time: `${baseDate} 17:00`,
+      title: r.type === 'peminjaman' ? 'Barang Dikembalikan & Selesai' : 'Selesai',
+      time: r.type === 'peminjaman' ? (returnTime.value || `${baseDate} 17:00`) : `${baseDate} 17:00`,
       status: 'done',
-      description: 'Semua proses peminjaman telah diselesaikan dengan sukses.'
+      description: r.type === 'peminjaman' 
+        ? `Pengembalian diselesaikan secara ${effectiveReturnMethod.value.toLowerCase()} di ${effectiveReturnLocation.value}.` 
+        : 'Semua proses permintaan telah diselesaikan dengan sukses.'
     });
   } else if (r.status === 'Dibatalkan') {
     steps.push({
@@ -748,7 +789,7 @@ const timelineSteps = computed((): TimelineStep[] => {
                     class="pt-3 flex justify-end"
                   >
                     <Button 
-                      @click="openPlacementModal(item)"
+                      @click="openAssetPlacementModal(item)"
                       class="bg-[#00BCD4] hover:bg-[#00ACC1] text-white font-bold px-4 h-9 rounded-lg text-xs shadow-sm transition-colors"
                     >
                       Catat Penempatan Aset
@@ -1088,7 +1129,7 @@ const timelineSteps = computed((): TimelineStep[] => {
     </Teleport>
 
     <!-- ============================================================
-         Modal Catat Penempatan Aset (Teleport & Backdrop)
+         Modal Pilih Penempatan Aset (Teleport & Backdrop)
          ============================================================ -->
     <Teleport to="body">
       <Transition
@@ -1100,59 +1141,359 @@ const timelineSteps = computed((): TimelineStep[] => {
         leave-to-class="opacity-0"
       >
         <div 
-          v-if="isPlacementModalOpen && currentItemForPlacement" 
+          v-if="isAssetPlacementModalOpen && activeItemForPlacement" 
           class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-200"
         >
           <div 
-            class="bg-card text-foreground rounded-[20px] shadow-2xl w-full max-w-[550px] flex flex-col overflow-hidden border border-border"
+            class="bg-card text-foreground rounded-[20px] shadow-2xl w-full max-w-[800px] flex flex-col overflow-hidden border border-border"
             @click.stop
           >
             <!-- Header -->
             <div class="flex items-center justify-between p-6 bg-card shrink-0">
-              <h3 class="text-lg font-bold text-foreground">Catat Penempatan Aset</h3>
-              <button @click="closePlacementModal" class="p-1.5 hover:bg-muted rounded-full transition-colors">
+              <div>
+                <h3 class="text-lg font-bold text-foreground">Pilih Penempatan Aset</h3>
+                <p class="text-xs text-muted-foreground mt-1">
+                  Tolong pilih dimana penempatan aset dengan kode tertentu yang sedang Anda pinjam
+                </p>
+              </div>
+              <button @click="isAssetPlacementModalOpen = false" class="p-1.5 hover:bg-muted rounded-full transition-colors">
                 <X class="w-5 h-5 text-muted-foreground" />
               </button>
             </div>
             
-            <!-- Metadata Area -->
+            <div class="border-b border-border"></div>
+
+            <!-- Item Card Detail -->
+            <div class="px-6 py-5 flex gap-4 items-center shrink-0">
+              <!-- Thumbnail -->
+              <div class="w-[84px] h-[84px] rounded-[16px] bg-gradient-to-br from-gray-100 to-gray-200 border border-gray-200/50 overflow-hidden shrink-0 flex items-center justify-center shadow-sm">
+                <img 
+                  v-if="activeItemForPlacement.imageUrl" 
+                  :src="activeItemForPlacement.imageUrl" 
+                  class="w-full h-full object-cover" 
+                />
+                <div v-else class="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 opacity-60"></div>
+              </div>
+              <!-- Details -->
+              <div class="min-w-0 flex-grow">
+                <h4 class="text-base md:text-lg font-bold text-foreground leading-snug">
+                  {{ activeItemForPlacement.brand }} {{ activeItemForPlacement.spec }}
+                </h4>
+                <p class="text-xs md:text-sm text-muted-foreground mt-0.5">
+                  {{ activeItemForPlacement.category }} ({{ activeItemForPlacement.subcategory }})
+                </p>
+                <p class="text-xs md:text-sm text-muted-foreground mt-1.5">
+                  Jumlah dipinjam: <span class="text-foreground font-medium">{{ activeItemForPlacement.quantity }} satuan</span>
+                </p>
+              </div>
+            </div>
+
+            <div class="border-b border-border"></div>
+
+            <!-- Tab Switch & Main Content -->
+            <div class="p-6 flex-grow overflow-y-auto max-h-[400px] space-y-5">
+              <!-- Switch -->
+              <div class="flex gap-2.5">
+                <button 
+                  type="button"
+                  @click="returnPlacementType = 'seragam'"
+                  class="px-5 py-2 text-xs font-bold rounded-full border transition-all"
+                  :class="returnPlacementType === 'seragam' 
+                    ? 'border-[#6366F1] text-[#6366F1] bg-[#6366F1]/5' 
+                    : 'border-border text-foreground hover:bg-muted'"
+                >
+                  Seragam
+                </button>
+                <button 
+                  type="button"
+                  @click="returnPlacementType = 'beragam'"
+                  class="px-5 py-2 text-xs font-bold rounded-full border transition-all"
+                  :class="returnPlacementType === 'beragam' 
+                    ? 'border-[#6366F1] text-[#6366F1] bg-[#6366F1]/5' 
+                    : 'border-border text-foreground hover:bg-muted'"
+                >
+                  Beragam
+                </button>
+              </div>
+
+              <!-- Seragam View -->
+              <div v-if="returnPlacementType === 'seragam'" class="flex items-center gap-4 py-3">
+                <label class="text-sm font-semibold text-foreground shrink-0">
+                  Lokasi penempatan aset:
+                </label>
+                <div class="w-full max-w-[280px]">
+                  <Select v-model="singlePlacementLocation">
+                    <SelectTrigger class="w-full rounded-full border-input bg-background h-10 px-4">
+                      <SelectValue placeholder="Pilih tempat" />
+                    </SelectTrigger>
+                    <SelectContent class="bg-card border border-border rounded-xl shadow-lg z-[10000]">
+                      <SelectItem value="Mega Mendung">Mega Mendung</SelectItem>
+                      <SelectItem value="Tiga Negeri">Tiga Negeri</SelectItem>
+                      <SelectItem value="Gudang GA">Gudang GA</SelectItem>
+                      <SelectItem value="Ruang IT">Ruang IT</SelectItem>
+                      <SelectItem value="Ruang IFS">Ruang IFS</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <!-- Beragam View -->
+              <div v-else class="space-y-4">
+                <!-- Search & Items Per Page -->
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                  <div class="flex flex-col gap-1.5 flex-grow max-w-xs">
+                    <span class="text-xs text-muted-foreground font-medium">Filter</span>
+                    <input 
+                      type="text" 
+                      v-model="searchQuery" 
+                      placeholder="Cari Kode Aset..." 
+                      class="h-10 w-full px-4 rounded-full border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20 focus:border-[#6366F1] transition-colors text-foreground"
+                    />
+                  </div>
+                  
+                  <div class="flex items-center gap-3 text-sm text-foreground shrink-0 mb-0.5">
+                    <span class="font-medium text-muted-foreground">Baris per halaman</span>
+                    <select 
+                      v-model="itemsPerPage" 
+                      class="h-10 px-4 pr-8 rounded-full border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-[#6366F1]/20 focus:border-[#6366F1] transition-colors text-foreground cursor-pointer appearance-none relative"
+                      style="background-image: url('data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 20 20%22%3E%3Cpath stroke=%22%236b7280%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%221.5%22 d=%22m6 8 4 4 4-4%22/%3E%3C/svg%3E'); background-position: right 0.75rem center; background-repeat: no-repeat; background-size: 1.25rem;"
+                    >
+                      <option value="Semua baris">Semua baris</option>
+                      <option :value="5">5</option>
+                      <option :value="10">10</option>
+                      <option :value="25">25</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Table -->
+                <div class="border border-border rounded-xl overflow-hidden bg-card">
+                  <table class="min-w-full divide-y divide-border">
+                    <thead class="bg-muted/15">
+                      <tr>
+                        <th 
+                          scope="col" 
+                          @click="sortAsc = !sortAsc"
+                          class="px-6 py-3.5 text-left text-sm font-bold text-foreground cursor-pointer hover:bg-muted/30 select-none w-1/2 transition-colors"
+                        >
+                          <div class="flex items-center gap-1.5">
+                            <span>Kode Aset</span>
+                            <ArrowUpDown class="w-3.5 h-3.5 opacity-60 text-muted-foreground" />
+                          </div>
+                        </th>
+                        <th 
+                          scope="col" 
+                          class="px-6 py-3.5 text-left text-sm font-bold text-foreground w-1/2"
+                        >
+                          Penempatan Aset
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-border">
+                      <tr v-for="asset in paginatedAssets" :key="asset" class="hover:bg-muted/5 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-mono font-medium text-foreground">
+                          {{ asset }}
+                        </td>
+                        <td class="px-6 py-3 whitespace-nowrap text-sm text-foreground">
+                          <div class="relative w-full max-w-[240px]">
+                            <Select v-model="beragamPlacementLocations[asset]">
+                              <SelectTrigger class="w-full rounded-full border-input bg-background h-10 px-4">
+                                <SelectValue placeholder="Pilih tempat" />
+                              </SelectTrigger>
+                              <SelectContent class="bg-card border border-border rounded-xl shadow-lg z-[10000]">
+                                <SelectItem value="Mega Mendung">Mega Mendung</SelectItem>
+                                <SelectItem value="Tiga Negeri">Tiga Negeri</SelectItem>
+                                <SelectItem value="Gudang GA">Gudang GA</SelectItem>
+                                <SelectItem value="Ruang IT">Ruang IT</SelectItem>
+                                <SelectItem value="Ruang IFS">Ruang IFS</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- Pagination -->
+                <div v-if="totalPages > 1" class="flex justify-end items-center gap-2 pt-2">
+                  <button 
+                    type="button"
+                    @click="currentPage > 1 && (currentPage--)"
+                    :disabled="currentPage === 1"
+                    class="text-xs font-bold px-3 py-2 rounded-lg text-foreground hover:bg-muted disabled:opacity-40 disabled:hover:bg-transparent transition-all flex items-center gap-1"
+                  >
+                    &lsaquo; Sebelumnya
+                  </button>
+                  <button 
+                    v-for="page in totalPages" 
+                    :key="page"
+                    type="button"
+                    @click="currentPage = page"
+                    class="text-xs font-bold w-8 h-8 rounded-full flex items-center justify-center transition-all border"
+                    :class="currentPage === page 
+                      ? 'border-[#6366F1]/30 bg-[#6366F1]/10 text-[#6366F1]' 
+                      : 'border-transparent text-muted-foreground hover:bg-muted hover:text-foreground'"
+                  >
+                    {{ page }}
+                  </button>
+                  <button 
+                    type="button"
+                    @click="currentPage < totalPages && (currentPage++)"
+                    :disabled="currentPage === totalPages"
+                    class="text-xs font-bold px-3 py-2 rounded-lg text-foreground hover:bg-muted disabled:opacity-40 disabled:hover:bg-transparent transition-all flex items-center gap-1"
+                  >
+                    Selanjutnya &rsaquo;
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="flex items-center justify-end gap-3 p-6 border-t border-border bg-card shrink-0">
+              <Button 
+                variant="outline"
+                @click="isAssetPlacementModalOpen = false"
+                class="rounded-full h-10 px-6 font-bold text-sm border-input hover:bg-muted transition-colors"
+              >
+                Batal
+              </Button>
+              <Button 
+                @click="confirmAssetPlacement"
+                class="rounded-full h-10 px-6 font-bold text-sm bg-[#6366F1] hover:bg-[#5558EB] text-white shadow-sm transition-colors"
+              >
+                Konfirmasi Penempatan Aset
+              </Button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
+    <!-- ============================================================
+         Modal Atur Pengembalian (Teleport & Backdrop)
+         ============================================================ -->
+    <Teleport to="body">
+      <Transition
+        enter-active-class="ease-out duration-300"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="ease-in duration-200"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div 
+          v-if="isReturnModalOpen" 
+          class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+        >
+          <div 
+            class="bg-card text-foreground rounded-[20px] shadow-2xl w-full max-w-[850px] flex flex-col overflow-hidden border border-border"
+            @click.stop
+          >
+            <!-- Header -->
+            <div class="flex items-center justify-between p-6 bg-card shrink-0">
+              <h3 class="text-lg font-bold text-foreground">Pengembalian</h3>
+              <button @click="closeReturnModal" class="p-1.5 hover:bg-muted rounded-full transition-colors">
+                <X class="w-5 h-5 text-muted-foreground" />
+              </button>
+            </div>
+            
+            <!-- Metadata Area (Indented / Styled) -->
             <div class="px-6 pb-4 space-y-1 text-sm text-foreground shrink-0">
-              <h4 class="font-extrabold text-base">{{ currentItemForPlacement.brand }} {{ currentItemForPlacement.spec }}</h4>
+              <h4 class="font-extrabold text-base">{{ request.number }}</h4>
               <p class="text-muted-foreground text-xs md:text-sm">
-                Kategori: {{ currentItemForPlacement.category }} ({{ currentItemForPlacement.subcategory }})
+                Pemanfaatan: {{ request.pemanfaatan === 'corporate' ? 'Corporate' : 'Project' }} ({{ request.pemanfaatanDetail }})
+              </p>
+              <p v-if="request.type === 'peminjaman' && request.durationStart" class="text-muted-foreground text-xs md:text-sm">
+                Durasi: {{ request.durationStart }} s.d. {{ request.durationEnd }} ({{ request.durationDays }} hari, {{ request.durationHours || 0 }} jam)
               </p>
             </div>
 
             <div class="mx-6 border-b border-border"></div>
 
             <!-- Form Content -->
-            <div class="p-6 space-y-4 max-h-[350px] overflow-y-auto">
-              <div v-for="asset in currentItemForPlacement.assets" :key="asset" class="flex flex-col gap-2">
-                <label class="text-xs font-bold text-muted-foreground uppercase tracking-wider">{{ asset }}</label>
-                <input 
-                  type="text" 
-                  v-model="placementForm[asset]" 
-                  class="h-10 px-4 rounded-full border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors text-foreground w-full"
-                  placeholder="Masukkan lokasi penempatan (misal: Mega Mendung)"
-                />
+            <div class="p-6 space-y-6">
+              
+              <!-- Row: Metode Pengembalian -->
+              <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+                <label class="w-full sm:w-44 text-sm font-semibold text-foreground shrink-0">
+                  Metode pengembalian<span class="text-red-500">*</span>:
+                </label>
+                <div class="flex-grow max-w-xs relative">
+                  <!-- Custom Select -->
+                  <Select v-model="returnMethod" @update:modelValue="onReturnInputChange">
+                    <SelectTrigger class="w-full rounded-full border-input bg-background h-10 px-4">
+                      <SelectValue placeholder="Pilih" />
+                    </SelectTrigger>
+                    <SelectContent 
+                      class="bg-card border border-border rounded-xl shadow-lg z-[10000]"
+                      style="width: var(--reka-select-trigger-width);"
+                    >
+                      <SelectItem value="Kembalikan sendiri">Kembalikan sendiri</SelectItem>
+                      <SelectItem value="Diantar ke GA / IT Support">Diantar ke GA / IT Support</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
+
+              <!-- Row: Jadwal Pengembalian -->
+              <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+                <label class="w-full sm:w-44 text-sm font-semibold text-foreground shrink-0">
+                  Jadwal pengembalian<span class="text-red-500">*</span>:
+                </label>
+                <div class="flex flex-wrap items-center gap-3">
+                  <!-- Date Input -->
+                  <div class="relative">
+                    <input 
+                      type="date" 
+                      v-model="returnDate" 
+                      @change="onReturnInputChange"
+                      class="h-10 px-4 rounded-full border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors text-muted-foreground w-48"
+                      placeholder="Pilih tanggal"
+                    />
+                  </div>
+
+                  <!-- Time Input -->
+                  <div class="relative">
+                    <input 
+                      type="time" 
+                      v-model="returnTimeOnly" 
+                      @change="onReturnInputChange"
+                      class="h-10 px-4 rounded-full border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors text-muted-foreground w-36"
+                      placeholder="Pilih jam"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Validation Error Message -->
+              <div v-if="returnErrorMessage" class="pl-0 sm:pl-48">
+                <p class="text-xs font-bold text-red-500 bg-red-500/5 border border-red-500/20 px-3 py-2 rounded-lg animate-in fade-in duration-200">
+                  {{ returnErrorMessage }}
+                </p>
+              </div>
+
             </div>
 
             <!-- Footer Action Section -->
-            <div class="flex items-center justify-end gap-3 p-6 border-t border-border bg-card shrink-0">
-              <Button 
-                variant="outline"
-                @click="closePlacementModal"
-                class="rounded-full h-10 px-6 font-bold text-sm border-input hover:bg-muted transition-colors"
-              >
-                Batal
-              </Button>
-              <Button 
-                @click="handleSavePlacements"
-                class="rounded-full h-10 px-6 font-bold text-sm bg-[#6366F1] hover:bg-[#5558EB] text-white shadow-sm transition-colors"
-              >
-                Simpan Lokasi
-              </Button>
+            <div class="flex items-center justify-between p-6 border-t border-border bg-card shrink-0">
+              <span class="text-xs italic text-red-500">*Wajib diisi</span>
+              
+              <div class="flex items-center gap-3">
+                <Button 
+                  variant="outline"
+                  @click="closeReturnModal"
+                  class="rounded-full h-10 px-6 font-bold text-sm border-input hover:bg-muted transition-colors"
+                >
+                  Batal
+                </Button>
+                <Button 
+                  @click="handleSaveReturn"
+                  class="rounded-full h-10 px-6 font-bold text-sm bg-[#6366F1] hover:bg-[#5558EB] text-white shadow-sm transition-colors"
+                >
+                  Konfirmasi Pengembalian
+                </Button>
+              </div>
             </div>
           </div>
         </div>

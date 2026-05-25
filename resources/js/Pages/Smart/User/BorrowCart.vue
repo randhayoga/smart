@@ -1,14 +1,27 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
+import { router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import { Button } from '@/Components/ui/button';
 import { Input } from '@/Components/ui/input';
+import { Button } from '@/Components/ui/button';
 import { Trash2, Minus, Plus } from 'lucide-vue-next';
 
 interface Props {
   user?: any;
+  cartItems?: CartItem[];
+  defaultStartDate?: string;
+  defaultStartTime?: string;
+  defaultEndDate?: string;
+  defaultEndTime?: string;
 }
-defineProps<Props>();
+
+const props = withDefaults(defineProps<Props>(), {
+  cartItems: () => [],
+  defaultStartDate: '',
+  defaultStartTime: '',
+  defaultEndDate: '',
+  defaultEndTime: '',
+});
 
 // --- Tipe Data ---
 interface CartItem {
@@ -26,13 +39,22 @@ interface CartItem {
 
 // --- State Tanggal Peminjaman ---
 // HARUS diisi lebih dulu — semua aksi lain disabled sampai tanggal mulai diisi
-const startDate = ref('');
-const startTime = ref('');
-const endDate   = ref('');
-const endTime   = ref('');
+const startDate = ref(props.defaultStartDate);
+const startTime = ref(props.defaultStartTime);
+const endDate   = ref(props.defaultEndDate);
+const endTime   = ref(props.defaultEndTime);
 
-// Tanggal valid jika startDate sudah terisi
-const isDateSelected = computed(() => startDate.value.trim() !== '');
+const cartItems = ref<CartItem[]>(props.cartItems.map(item => ({ ...item, selected: false })));
+
+watch(() => props.cartItems, (newVal) => {
+  const selectedMap = new Map(cartItems.value.map(i => [i.id, i.selected]));
+  cartItems.value = newVal.map(item => ({
+    ...item,
+    selected: selectedMap.get(item.id) || false
+  }));
+}, { deep: true });
+
+const isDateSelected = computed(() => startDate.value && startDate.value.trim() !== '');
 
 // Jika tanggal mulai berubah → reset semua pilihan (karena ketersediaan bisa berubah)
 watch(startDate, () => {
@@ -40,7 +62,6 @@ watch(startDate, () => {
     item.selected = false;
     item.quantity = 1;
   });
-  showAvailableOnly.value = false;
 });
 watch(startTime, () => {
   cartItems.value.forEach(item => {
@@ -49,23 +70,7 @@ watch(startTime, () => {
   });
 });
 
-// --- Data Dummy Keranjang ---
-// Nantinya diganti dengan data dari backend (tabel keranjang user)
-const cartItems = ref<CartItem[]>([
-  { id: 1, brand: 'Merek', spec: 'Spek', category: 'Kategori (Subkategori)', code: '#Nomor_1', stock: 10,  quantity: 1, selected: false, isPreorder: false },
-  { id: 2, brand: 'Merek', spec: 'Spek', category: 'Kategori (Subkategori)', code: '#Nomor_2', stock: 0,   quantity: 1, selected: false, isPreorder: true  },
-  { id: 3, brand: 'Merek', spec: 'Spek', category: 'Kategori (Subkategori)', code: '#Nomor_3', stock: 5,   quantity: 1, selected: false, isPreorder: false },
-  { id: 4, brand: 'Merek', spec: 'Spek', category: 'Kategori (Subkategori)', code: '#Nomor_4', stock: 0,   quantity: 1, selected: false, isPreorder: false },
-]);
-
-// --- Filter: Tampilkan yang tersedia pada tanggal yang dipilih saja ---
-// Hanya bisa diaktifkan jika tanggal sudah dipilih
-const showAvailableOnly = ref(false);
-
 const filteredItems = computed(() => {
-  if (showAvailableOnly.value) {
-    return cartItems.value.filter(item => item.stock > 0);
-  }
   return cartItems.value;
 });
 
@@ -77,24 +82,41 @@ const canProceed = computed(() => isDateSelected.value && selectedItems.value.le
 
 // --- Aksi: Hapus item dari keranjang ---
 const removeItem = (id: number) => {
-  const index = cartItems.value.findIndex(item => item.id === id);
-  if (index !== -1) cartItems.value.splice(index, 1);
+  router.delete(route('smart.borrow-cart.destroy', id), {
+    preserveScroll: true,
+  });
 };
 
 // --- Aksi: Kurangi jumlah (minimal 1) ---
 const decreaseQty = (item: CartItem) => {
-  if (item.quantity > 1) item.quantity--;
+  if (item.quantity > 1) {
+    router.put(route('smart.borrow-cart.update', item.id), {
+      quantity: item.quantity - 1
+    }, {
+      preserveScroll: true,
+    });
+  }
 };
 
-// --- Aksi: Tambah jumlah (maksimal sesuai stok) ---
+// --- Aksi: Tambah jumlah ---
 const increaseQty = (item: CartItem) => {
-  if (item.quantity < item.stock) item.quantity++;
+  router.put(route('smart.borrow-cart.update', item.id), {
+    quantity: item.quantity + 1
+  }, {
+    preserveScroll: true,
+  });
 };
 
 // --- Aksi: Lanjut ke konfirmasi ---
 const handleProceed = () => {
-  // TODO: Kirim selectedItems + tanggal ke halaman konfirmasi atau API
-  alert(`Melanjutkan dengan ${selectedItems.value.length} barang dipilih.\nMulai: ${startDate.value} ${startTime.value}`);
+  const ids = selectedItems.value.map(i => i.id).join(',');
+  router.get(route('smart.borrow-cart.confirmation'), {
+    ids,
+    start_date: startDate.value,
+    start_time: startTime.value,
+    end_date: endDate.value,
+    end_time: endTime.value,
+  });
 };
 </script>
 
@@ -172,22 +194,7 @@ const handleProceed = () => {
           </div>
         </div>
 
-        <!-- === Filter: Tampilkan yang tersedia pada tanggal === -->
-        <div class="flex justify-end">
-          <label
-            class="flex items-center gap-2.5 cursor-pointer select-none"
-            :class="{ 'opacity-40 pointer-events-none': !isDateSelected }"
-          >
-            <div
-              class="relative flex items-center justify-center w-5 h-5 border-2 rounded-full transition-colors"
-              :class="showAvailableOnly ? 'border-primary' : 'border-input'"
-              @click="isDateSelected && (showAvailableOnly = !showAvailableOnly)"
-            >
-              <div v-if="showAvailableOnly" class="w-2.5 h-2.5 rounded-full bg-primary"></div>
-            </div>
-            <span class="text-sm font-medium text-foreground">Tampilkan barang yang tersedia pada tanggal di atas saja</span>
-          </label>
-        </div>
+
 
         <!-- === Daftar Item Keranjang === -->
         <div class="space-y-3">
@@ -230,12 +237,7 @@ const handleProceed = () => {
             <div class="flex-1 min-w-0">
               <p class="text-sm font-bold text-foreground truncate">{{ item.brand }} {{ item.spec }}</p>
               <p class="text-xs text-muted-foreground truncate">{{ item.category }}</p>
-              <p class="text-xs text-foreground mt-0.5">
-                Jumlah stok:
-                <span :class="item.stock > 0 ? 'text-foreground' : 'text-destructive font-medium'">
-                  {{ item.stock > 0 ? `${item.stock} satuan` : 'Habis' }}
-                </span>
-              </p>
+
             </div>
 
             <!-- Tombol Hapus -->
@@ -249,11 +251,10 @@ const handleProceed = () => {
               <Trash2 class="w-4 h-4" />
             </Button>
 
-            <!-- Kontrol Jumlah / Minta Pre-order / PO Reimburse -->
+            <!-- Kontrol Jumlah -->
             <!-- Semua disabled jika tanggal belum dipilih -->
             <div class="flex-shrink-0" :class="{ 'opacity-40 pointer-events-none': !isDateSelected }">
-              <!-- Stok tersedia: tampilkan kontrol qty -->
-              <div v-if="item.stock > 0" class="flex items-center border border-input rounded-[14px] bg-background">
+              <div class="flex items-center border border-input rounded-[14px] bg-background">
                 <button
                   type="button"
                   class="w-9 h-9 flex items-center justify-center text-muted-foreground hover:bg-muted/50 rounded-l-[14px] transition-colors disabled:opacity-40"
@@ -268,28 +269,11 @@ const handleProceed = () => {
                 <button
                   type="button"
                   class="w-9 h-9 flex items-center justify-center text-muted-foreground hover:bg-muted/50 rounded-r-[14px] transition-colors disabled:opacity-40"
-                  :disabled="item.quantity >= item.stock"
                   @click="increaseQty(item)"
                 >
                   <Plus class="w-3.5 h-3.5" />
                 </button>
               </div>
-
-              <!-- Stok habis tapi bisa pre-order -->
-              <Button
-                v-else-if="item.isPreorder"
-                class="bg-[#5bc0de] hover:bg-[#46b8da] text-white rounded-full h-9 px-4 text-xs font-semibold shadow-sm"
-              >
-                Minta Pre-order
-              </Button>
-
-              <!-- Stok habis dan tidak bisa pre-order -->
-              <Button
-                v-else
-                class="bg-gradient-primary shadow-button hover:opacity-90 text-white rounded-full h-9 px-4 text-xs font-semibold"
-              >
-                PO / Reimburse
-              </Button>
             </div>
           </div>
         </div>

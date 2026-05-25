@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 class VendorController extends Controller
 {
     /**
-     * Store a newly created resource in storage.
+     * Menyimpan data vendor baru ke dalam database.
      */
     public function store(Request $request): RedirectResponse
     {
@@ -24,7 +24,7 @@ class VendorController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Memperbarui data vendor di dalam database.
      */
     public function update(Request $request, Vendor $vendor): RedirectResponse
     {
@@ -38,7 +38,7 @@ class VendorController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Menghapus data vendor dari database jika tidak sedang digunakan.
      */
     public function destroy(Vendor $vendor): RedirectResponse
     {

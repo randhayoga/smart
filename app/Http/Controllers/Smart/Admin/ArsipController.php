@@ -5,28 +5,115 @@ namespace App\Http\Controllers\Smart\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Inertia\Response;
+use App\Models\Request\Request as SmartRequest;
+use App\Models\Request\RequestItem;
+use App\Models\Request\RequestUnitAssignment;
 
 class ArsipController extends Controller
 {
     /**
-     * Display the arsip (archive) page.
+     * Menampilkan halaman daftar arsip permintaan/peminjaman barang (Arsip).
      */
-    public function index(Request $request): Response
+    public function index()
     {
+        $archiveList = SmartRequest::with(['user'])
+            ->whereIn('status', ['success', 'reject', 'cancel'])
+            ->orderBy('id', 'desc')
+            ->get()
+            ->map(function ($req) {
+                $type = $req->start_date ? 'Peminjaman' : 'Permintaan';
+                
+                $statusStr = 'Sukses';
+                if ($req->status === 'reject') {
+                    $statusStr = 'Ditolak';
+                } elseif ($req->status === 'cancel') {
+                    $statusStr = 'Dibatalkan';
+                }
+
+                $timeStr = $req->start_date ? $req->start_date->format('d-m-Y H:i') : ($req->created_at ? $req->created_at->format('d-m-Y H:i') : '-');
+                $endTimeStr = $req->end_date ? $req->end_date->format('d-m-Y H:i') : '-';
+
+                return [
+                    'id' => $req->id,
+                    'number' => $req->request_number,
+                    'type' => $type,
+                    'status' => $statusStr,
+                    'requester' => $req->user->name ?? '-',
+                    'startTime' => $timeStr,
+                    'endTime' => $endTimeStr,
+                ];
+            });
+
         return Inertia::render('Smart/Admin/Arsip', [
-            'user' => $request->user(),
+            'user' => [
+                'name' => auth()->user()->name,
+                'email' => auth()->user()->email,
+            ],
+            'archiveList' => $archiveList,
         ]);
     }
 
     /**
-     * Display the arsip detail page.
+     * Menampilkan detail informasi arsip permintaan/peminjaman barang.
      */
-    public function show(Request $request, string $id): Response
+    public function show($id)
     {
+        $req = SmartRequest::with(['user', 'approver', 'items.barang.subcategory.category', 'items.barang.brand', 'project', 'department'])
+            ->findOrFail($id);
+
+        $durationDays = 0;
+        $durationHours = 0;
+        if ($req->start_date && $req->end_date) {
+            $diff = $req->start_date->diff($req->end_date);
+            $durationDays = $diff->days;
+            $durationHours = $diff->h;
+        }
+
+        $items = $req->items->map(function ($item) {
+            $assets = RequestUnitAssignment::where('request_item_id', $item->id)
+                ->with('unit')
+                ->get()
+                ->pluck('unit.number')
+                ->toArray();
+
+            return [
+                'id' => $item->id,
+                'brand' => ($item->barang->brand->name ?? '-') . ' ' . ($item->barang->specification ?? ''),
+                'category' => $item->barang->subcategory->category->name ?? '-',
+                'subcategory' => $item->barang->subcategory->name ?? '-',
+                'quantity' => $item->quantity_requested,
+                'assets' => $assets,
+                'imageUrl' => $item->barang->image_url ?? null,
+            ];
+        });
+
+        $mappedRequest = [
+            'id' => $req->id,
+            'number' => $req->request_number,
+            'requester' => $req->user->name ?? '-',
+            'approver' => $req->approver->name ?? '-',
+            'createdAt' => $req->created_at ? $req->created_at->format('d-m-Y H:i') : '-',
+            'updatedAt' => $req->updated_at ? $req->updated_at->format('d-m-Y H:i') : '-',
+            'pemanfaatan' => $req->utilization,
+            'pemanfaatanDetail' => $req->utilization === 'corporate' 
+                ? ($req->department->name ?? '-') 
+                : ($req->project->name ?? '-'),
+            'durationStart' => $req->start_date ? $req->start_date->format('d-m-Y H:i') : null,
+            'durationEnd' => $req->end_date ? $req->end_date->format('d-m-Y H:i') : null,
+            'durationDays' => $durationDays,
+            'durationHours' => $durationHours,
+            'status' => $req->status,
+            'type' => $req->start_date ? 'peminjaman' : 'permintaan',
+            'items' => $items,
+        ];
+
         return Inertia::render('Smart/Admin/ArsipDetail', [
-            'user' => $request->user(),
-            'requestId' => $id,
+            'requestId' => $req->id,
+            'request' => $mappedRequest,
+            'user' => [
+                'name' => auth()->user()->name,
+                'email' => auth()->user()->email,
+            ]
         ]);
     }
 }

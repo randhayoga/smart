@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { Button } from '@/Components/ui/button';
 import {
@@ -51,137 +51,22 @@ interface RequestHistory {
   items: RequestItem[];
 }
 
+import { router } from '@inertiajs/vue3';
+
 interface Props {
   user?: any;
+  requests?: RequestHistory[];
 }
-defineProps<Props>();
 
-// ─────────────────────────────────────────────
-// Dummy Data
-// ─────────────────────────────────────────────
-const requests = ref<RequestHistory[]>([
-  {
-    id: 1,
-    number: '#REQ-2026-0001',
-    type: 'permintaan',
-    pemanfaatan: 'corporate',
-    pemanfaatanDetail: 'Finance',
-    status: 'Menunggu approval',
-    created_at: '2026-05-20',
-    items: [
-      { id: 101, subcategory: 'ATK', brand: 'Sinar Dunia', spec: 'Kertas A4 80gr', quantity: 5, stockQuantity: 15, category: 'Alat Tulis' },
-      { id: 102, subcategory: 'Peralatan Kantor', brand: 'Joyko', spec: 'Stapler Besar', quantity: 2, stockQuantity: 4, category: 'Alat Tulis' },
-      { id: 103, subcategory: 'ATK', brand: 'Pilot', spec: 'Pulpen Hitam Ballpoint', quantity: 12, stockQuantity: 45, category: 'Alat Tulis' },
-      { id: 104, subcategory: 'Peralatan Kantor', brand: 'Kenko', spec: 'Gunting Kantor', quantity: 3, stockQuantity: 8, category: 'Alat Tulis' }
-    ]
-  },
-  {
-    id: 2,
-    number: '#BOR-2026-0002',
-    type: 'peminjaman',
-    pemanfaatan: 'project',
-    pemanfaatanDetail: 'PRJ-001 – Website Revamp',
-    durationStart: '22-05-2026 09:00',
-    durationEnd: '29-05-2026 17:00',
-    durationDays: 7,
-    durationHours: 8,
-    status: 'Menunggu approval',
-    created_at: '2026-05-19',
-    items: [
-      { id: 201, subcategory: 'Laptop', brand: 'Asus ROG', spec: 'Zephyrus G14 AMD R7', quantity: 1, stockQuantity: 2, category: 'Elektronik' },
-      { id: 202, subcategory: 'Mouse', brand: 'Logitech', spec: 'MX Master 3S Wireless', quantity: 1, stockQuantity: 5, category: 'Elektronik' }
-    ]
-  },
-  {
-    id: 3,
-    number: '#BOR-2026-0003',
-    type: 'peminjaman',
-    pemanfaatan: 'project',
-    pemanfaatanDetail: 'PRJ-002 – Mobile App Development',
-    durationStart: '15-05-2026 08:00',
-    durationEnd: '15-06-2026 17:00',
-    durationDays: 31,
-    durationHours: 9,
-    status: 'Disetujui',
-    created_at: '2026-05-14',
-    items: [
-      { id: 301, subcategory: 'Monitor', brand: 'Dell', spec: 'UltraSharp 27" U2723QE', quantity: 2, stockQuantity: 3, category: 'Elektronik' }
-    ]
-  },
-  {
-    id: 4,
-    number: '#REQ-2026-0004',
-    type: 'permintaan',
-    pemanfaatan: 'corporate',
-    pemanfaatanDetail: 'IT Support',
-    status: 'Disetujui',
-    created_at: '2026-05-10',
-    items: [
-      { id: 401, subcategory: 'Kabel', brand: 'Belden', spec: 'Kabel UTP Cat6 10m', quantity: 4, stockQuantity: 12, category: 'Elektronik' },
-      { id: 402, subcategory: 'Konektor', brand: 'Amp', spec: 'RJ45 Connector isi 50', quantity: 1, stockQuantity: 3, category: 'Elektronik' }
-    ]
-  },
-  {
-    id: 5,
-    number: '#BOR-2026-0005',
-    type: 'peminjaman',
-    pemanfaatan: 'corporate',
-    pemanfaatanDetail: 'HR & GA',
-    durationStart: '01-05-2026 10:00',
-    durationEnd: '08-05-2026 10:00',
-    durationDays: 7,
-    durationHours: 0,
-    status: 'Selesai',
-    created_at: '2026-04-30',
-    items: [
-      { id: 501, subcategory: 'Proyektor', brand: 'Epson', spec: 'EB-X500 XGA 3600 Lumens', quantity: 1, stockQuantity: 2, category: 'Elektronik' }
-    ]
-  },
-  {
-    id: 6,
-    number: '#REQ-2026-0006',
-    type: 'permintaan',
-    pemanfaatan: 'project',
-    pemanfaatanDetail: 'PRJ-003 – ERP Integration',
-    status: 'Dibatalkan',
-    created_at: '2026-04-25',
-    items: [
-      { id: 601, subcategory: 'Peralatan Listrik', brand: 'Schneider', spec: 'Stopkontak 5 Lubang', quantity: 5, stockQuantity: 10, category: 'Elektronik' }
-    ]
-  },
-  {
-    id: 7,
-    number: '#BOR-2026-0007',
-    type: 'peminjaman',
-    pemanfaatan: 'project',
-    pemanfaatanDetail: 'PRJ-004 – AI Research Model',
-    durationStart: '20-05-2026 09:00',
-    durationEnd: '27-05-2026 17:00',
-    durationDays: 7,
-    durationHours: 8,
-    status: 'Dipinjam',
-    created_at: '2026-05-18',
-    items: [
-      { id: 701, subcategory: 'GPU Workstation', brand: 'NVIDIA', spec: 'RTX 4090 24GB', quantity: 1, stockQuantity: 2, category: 'Elektronik' }
-    ]
-  },
-  {
-    id: 8,
-    number: '#BOR-2026-0008',
-    type: 'peminjaman',
-    pemanfaatan: 'corporate',
-    pemanfaatanDetail: 'Research & Development',
-    durationStart: '10-05-2026 08:00',
-    durationEnd: '', // No due date
-    durationDays: 0,
-    durationHours: 0,
-    status: 'Dipinjam',
-    created_at: '2026-05-09',
-    items: [
-      { id: 801, subcategory: 'Papan Tulis', brand: 'Sakura', spec: 'Whiteboard Portable 120x90', quantity: 1, stockQuantity: 3, category: 'Alat Tulis' }
-    ]
-  }
-]);
+const props = withDefaults(defineProps<Props>(), {
+  requests: () => []
+});
+
+const requests = ref<RequestHistory[]>([...props.requests]);
+
+watch(() => props.requests, (newVal) => {
+  requests.value = [...newVal];
+}, { deep: true });
 
 // ─────────────────────────────────────────────
 // State Filters & Search
@@ -192,7 +77,7 @@ const filterCategory = ref('semua');   // 'semua' | 'Elektronik' | 'Alat Tulis'
 const filterStatus = ref('semua');     // 'semua' | 'Menunggu approval' | etc.
 const filterTimeRange = ref('semua');   // 'semua' | 'hari-ini' | '7-hari' | '30-hari'
 
-// Category Options (Unique categories from dummy data)
+// Category Options (Unique categories from data)
 const categoryOptions = computed(() => {
   const cats = new Set<string>();
   requests.value.forEach(req => {
@@ -208,7 +93,7 @@ const categoryOptions = computed(() => {
 // ─────────────────────────────────────────────
 const filteredRequests = computed(() => {
   return requests.value.filter(req => {
-    // 1. Search Query Match (Request Number or Item Brand/Subcat/Spec)
+    // 1. Search Query Match
     const matchesSearch = 
       req.number.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
       req.items.some(item => 
@@ -235,7 +120,7 @@ const filteredRequests = computed(() => {
       today.setHours(0, 0, 0, 0);
 
       if (filterTimeRange.value === 'hari-ini') {
-        const reqDateStr = req.created_at; // YYYY-MM-DD
+        const reqDateStr = req.created_at;
         const todayStr = today.toISOString().split('T')[0];
         matchesTime = reqDateStr === todayStr;
       } else if (filterTimeRange.value === '7-hari') {
@@ -276,19 +161,13 @@ const closeCancelModal = () => {
 const handleConfirmCancel = () => {
   if (!activeRequestToCancel.value) return;
 
-  // Cari item di state dummy dan ganti statusnya ke 'Dibatalkan'
-  const index = requests.value.findIndex(r => r.id === activeRequestToCancel.value?.id);
-  if (index !== -1) {
-    requests.value[index].status = 'Dibatalkan';
-  }
-
-  // TODO: Integrasi backend via Inertia
-  // router.post(route('smart.request.cancel', activeRequestToCancel.value.id), {
-  //   note: cancelNote.value
-  // });
-
-  alert(`Permintaan ${activeRequestToCancel.value.number} berhasil dibatalkan.`);
-  closeCancelModal();
+  router.post(route('smart.history.cancel', activeRequestToCancel.value.id), {
+    note: cancelNote.value
+  }, {
+    onSuccess: () => {
+      closeCancelModal();
+    }
+  });
 };
 </script>
 
@@ -528,9 +407,6 @@ const handleConfirmCancel = () => {
                       </p>
                       
                       <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs font-semibold pt-0.5">
-                        <span class="text-muted-foreground">
-                          Jumlah stok: {{ item.stockQuantity }} satuan
-                        </span>
                         <span class="text-primary">
                           Jumlah diminta: {{ item.quantity }} satuan
                         </span>

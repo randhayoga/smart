@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 class BrandController extends Controller
 {
     /**
-     * Store a newly created resource in storage.
+     * Menyimpan data merek baru ke dalam database.
      */
     public function store(Request $request): RedirectResponse
     {
@@ -24,7 +24,7 @@ class BrandController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Memperbarui data merek di dalam database.
      */
     public function update(Request $request, Brand $brand): RedirectResponse
     {
@@ -38,7 +38,7 @@ class BrandController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Menghapus data merek dari database jika tidak sedang digunakan.
      */
     public function destroy(Brand $brand): RedirectResponse
     {

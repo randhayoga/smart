@@ -9,6 +9,9 @@ use Illuminate\Support\Facades\Storage;
 
 class LotController extends Controller
 {
+    /**
+     * Menyimpan data LOT baru ke dalam database.
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -36,6 +39,9 @@ class LotController extends Controller
         return redirect()->back()->with('success', 'LOT berhasil ditambahkan.');
     }
 
+    /**
+     * Memperbarui data LOT yang sudah ada di database.
+     */
     public function update(Request $request, Lot $lot)
     {
         $validated = $request->validate([
@@ -67,6 +73,9 @@ class LotController extends Controller
         return redirect()->back()->with('success', 'LOT berhasil diperbarui.');
     }
 
+    /**
+     * Menghapus data LOT dari database beserta gambarnya.
+     */
     public function destroy(Lot $lot)
     {
         if ($lot->image_url && $lot->image_url !== 'inventory/lots/placeholder.jpg' && Storage::disk('public')->exists($lot->image_url)) {

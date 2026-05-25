@@ -20,7 +20,8 @@ import {
 import { CheckCircle2 } from 'lucide-vue-next';
 
 // ─────────────────────────────────────────────
-// Props (akan diisi dari Inertia ketika backend siap)
+// ─────────────────────────────────────────────
+// Props (diisi dari Inertia)
 // ─────────────────────────────────────────────
 interface CartItem {
   id: number;
@@ -33,44 +34,39 @@ interface CartItem {
   imageUrl?: string;
 }
 
+interface Option {
+  value: string;
+  label: string;
+}
+
 interface Props {
   user?: any;
-  /** Daftar barang yang dipilih user dari keranjang */
   selectedItems?: CartItem[];
+  departments?: Option[];
+  projects?: Option[];
+  defaultStartDate?: string;
+  defaultStartTime?: string;
+  defaultEndDate?: string;
+  defaultEndTime?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  selectedItems: () => [
-    { id: 1, brand: 'Merek', spec: 'Spek', category: 'Kategori', subcategory: 'Subkategori', stock: 10, quantity: 2 },
-    { id: 2, brand: 'Merek', spec: 'Spek', category: 'Kategori', subcategory: 'Subkategori', stock: 5,  quantity: 1 },
-    { id: 3, brand: 'Merek', spec: 'Spek', category: 'Kategori', subcategory: 'Subkategori', stock: 8,  quantity: 3 },
-    { id: 4, brand: 'Merek', spec: 'Spek', category: 'Kategori', subcategory: 'Subkategori', stock: 15, quantity: 1 },
-    { id: 5, brand: 'Merek', spec: 'Spek', category: 'Kategori', subcategory: 'Subkategori', stock: 7,  quantity: 2 },
-    { id: 6, brand: 'Merek', spec: 'Spek', category: 'Kategori', subcategory: 'Subkategori', stock: 3,  quantity: 1 },
-    { id: 7, brand: 'Merek', spec: 'Spek', category: 'Kategori', subcategory: 'Subkategori', stock: 12, quantity: 4 },
-  ],
+  selectedItems: () => [],
+  departments: () => [],
+  projects: () => [],
+  defaultStartDate: '',
+  defaultStartTime: '',
+  defaultEndDate: '',
+  defaultEndTime: '',
 });
 
-// ─────────────────────────────────────────────
-// Data dummy dropdown (nanti dari backend)
-// ─────────────────────────────────────────────
 const pemanfaatanOptions = [
   { value: 'corporate', label: 'Corporate' },
   { value: 'project',   label: 'Project' },
 ];
 
-const departemenOptions = [
-  { value: 'finance',  label: 'Finance' },
-  { value: 'hr',       label: 'HR' },
-  { value: 'it',       label: 'IT' },
-  { value: 'marketing', label: 'Marketing' },
-];
-
-const projectOptions = [
-  { value: 'prj-001', label: 'PRJ-001 – Website Revamp' },
-  { value: 'prj-002', label: 'PRJ-002 – Mobile App' },
-  { value: 'prj-003', label: 'PRJ-003 – ERP Integration' },
-];
+const departemenOptions = computed(() => props.departments);
+const projectOptions = computed(() => props.projects);
 
 // ─────────────────────────────────────────────
 // State Form
@@ -110,6 +106,8 @@ const isFormValid = computed(() => {
 const isSubmitted  = ref(false);
 const isSubmitting = ref(false);
 
+const isBorrow = computed(() => !!props.defaultStartDate);
+
 // ─────────────────────────────────────────────
 // Aksi: Konfirmasi dan Minta Approval
 // ─────────────────────────────────────────────
@@ -118,25 +116,43 @@ const handleConfirm = () => {
 
   isSubmitting.value = true;
 
-  // TODO: Kirim data ke backend via Inertia/API
-  // router.post(route('smart.asset-cart.confirm'), {
-  //   items:       props.selectedItems,
-  //   pemanfaatan: pemanfaatan.value,
-  //   departemen:  departemen.value,
-  //   project:     isProjectRequired.value ? project.value : null,
-  //   alasan:      alasan.value,
-  // });
+  const routeName = isBorrow.value 
+    ? 'smart.borrow-cart.confirmation.store' 
+    : 'smart.asset-cart.confirmation.store';
 
-  // Simulasi async request
-  setTimeout(() => {
-    isSubmitting.value = false;
-    isSubmitted.value  = true;
-  }, 800);
+  const payload: any = {
+    items: props.selectedItems,
+    pemanfaatan: pemanfaatan.value,
+    departemen: departemen.value ? departemen.value : null,
+    project: project.value ? project.value : null,
+    alasan: alasan.value,
+  };
+
+  if (isBorrow.value) {
+    payload.start_date = `${props.defaultStartDate} ${props.defaultStartTime || '08:00'}`;
+    payload.end_date = props.defaultEndDate && props.defaultEndTime 
+      ? `${props.defaultEndDate} ${props.defaultEndTime}` 
+      : (props.defaultEndDate ? `${props.defaultEndDate} 17:00` : null);
+  }
+
+  router.post(route(routeName), payload, {
+    onSuccess: () => {
+      isSubmitting.value = false;
+      isSubmitted.value  = true;
+    },
+    onError: () => {
+      isSubmitting.value = false;
+    }
+  });
 };
 
 /** Kembali ke keranjang */
 const handleBack = () => {
-  router.visit(route('smart.asset-cart'));
+  if (isBorrow.value) {
+    router.visit(route('smart.borrow-cart'));
+  } else {
+    router.visit(route('smart.asset-cart'));
+  }
 };
 
 /** Setelah sukses → pergi ke dashboard atau riwayat permintaan */
@@ -208,12 +224,6 @@ const handleGoToHistory = () => {
                   {{ item.category }} ({{ item.subcategory }})
                 </p>
                 <p class="text-xs text-foreground mt-0.5">
-                  Jumlah stok:
-                  <span :class="item.stock > 0 ? 'text-foreground' : 'text-destructive font-medium'">
-                    {{ item.stock > 0 ? `${item.stock} satuan` : 'Habis' }}
-                  </span>
-                </p>
-                <p class="text-xs text-foreground">
                   Jumlah diminta:
                   <span class="font-semibold">{{ item.quantity }} satuan</span>
                 </p>

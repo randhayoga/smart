@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 class SubcategoryController extends Controller
 {
     /**
-     * Store a newly created resource in storage.
+     * Menyimpan data subkategori baru ke dalam database.
      */
     public function store(Request $request): RedirectResponse
     {
@@ -26,7 +26,7 @@ class SubcategoryController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Memperbarui data subkategori di dalam database.
      */
     public function update(Request $request, Subcategory $subcategory): RedirectResponse
     {
@@ -40,7 +40,7 @@ class SubcategoryController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Menghapus data subkategori dari database jika tidak sedang digunakan.
      */
     public function destroy(Subcategory $subcategory): RedirectResponse
     {
