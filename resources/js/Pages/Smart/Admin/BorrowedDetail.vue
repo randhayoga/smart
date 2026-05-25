@@ -50,13 +50,13 @@ const items = ref([
 ]);
 
 const timeline = [
-  { status: 'Permintaan dibuat', time: 'DD-MM-YYYY HH:MM', completed: true },
-  { status: 'Di-approve', user: 'John Doe', time: 'DD-MM-YYYY HH:MM', completed: true },
-  { status: 'Dikonfirmasi', user: 'Radifa', time: 'DD-MM-YYYY HH:MM', completed: true },
-  { status: 'Serah Terima', time: 'DD-MM-YYYY HH:MM', completed: true },
+  { status: 'Permintaan dibuat', time: 'DD/MM/YYYY HH:MM', completed: true },
+  { status: 'Di-approve', user: 'John Doe', time: 'DD/MM/YYYY HH:MM', completed: true },
+  { status: 'Dikonfirmasi', user: 'Radifa', time: 'DD/MM/YYYY HH:MM', completed: true },
+  { status: 'Serah Terima', time: 'DD/MM/YYYY HH:MM', completed: true },
   { 
     status: 'Aset sedang dipinjam', 
-    info: 'Tenggat pada DD-MM-YYYY HH:MM', 
+    info: 'Tenggat pada DD/MM/YYYY HH:MM', 
     active: true,
     isFinal: true
   },
@@ -108,7 +108,7 @@ const handleCatatPenempatan = (item: any) => {
               <p>
                 <span class="text-muted-foreground">Durasi:</span>
                 <span class="font-semibold">
-                  DD-MM-YYYY HH:MM s.d. DD-MM-YYYY HH:MM (X hari, Y jam)
+                  DD/MM/YYYY HH:MM s.d. DD/MM/YYYY HH:MM (X hari, Y jam)
                 </span>
               </p>
             </div>

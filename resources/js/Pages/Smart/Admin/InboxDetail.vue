@@ -48,8 +48,8 @@ const items = ref([
 ]);
 
 const timeline = [
-  { status: 'Permintaan dibuat', user: 'John Doe', time: 'DD-MM-YYYY HH:MM', completed: true },
-  { status: 'Di-approve', user: 'Jane Doe', time: 'DD-MM-YYYY HH:MM', completed: true },
+  { status: 'Permintaan dibuat', user: 'John Doe', time: 'DD/MM/YYYY HH:MM', completed: true },
+  { status: 'Di-approve', user: 'Jane Doe', time: 'DD/MM/YYYY HH:MM', completed: true },
   { 
     status: 'Perlu konfirmasi Anda!', 
     active: true,
@@ -128,7 +128,7 @@ const handlePilihAlokasi = (item: any) => alert(`Pilih Alokasi Aset untuk ${item
               <p>
                 <span class="text-muted-foreground">Durasi:</span>
                 <span class="font-semibold">
-                  DD-MM-YYYY HH:MM s.d. DD-MM-YYYY HH:MM (X hari, Y jam)
+                  DD/MM/YYYY HH:MM s.d. DD/MM/YYYY HH:MM (X hari, Y jam)
                 </span>
               </p>
             </div>

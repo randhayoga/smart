@@ -52,9 +52,9 @@ const toggleExpanded = () => {
 
 // Formatting Helper
 const formatDate = (dateStr: string) => {
-  const parts = dateStr.split('-');
+  const parts = dateStr.split(/[-/]/);
   if (parts.length !== 3) return dateStr;
-  return `${parts[2]}-${parts[1]}-${parts[0]}`; // DD-MM-YYYY
+  return `${parts[2]}/${parts[1]}/${parts[0]}`; // DD/MM/YYYY
 };
 
 // ─────────────────────────────────────────────

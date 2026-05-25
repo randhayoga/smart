@@ -56,8 +56,8 @@ const dummyInbox: InboxItem[] = [
     number: '052026-0001', 
     amount: 12, 
     requester: 'John Doe', 
-    createdAt: '05-05-2026 09:30', 
-    startTime: '05-05-2026 10:00', 
+    createdAt: '05/05/2026 09:30', 
+    startTime: '05/05/2026 10:00', 
     endTime: '-',
     type: 'Habis Pakai'
   },
@@ -66,9 +66,9 @@ const dummyInbox: InboxItem[] = [
     number: '052026-0002', 
     amount: 1, 
     requester: 'Jane Smith', 
-    createdAt: '05-05-2026 09:45', 
-    startTime: '05-05-2026 11:00', 
-    endTime: '06-05-2026 11:00',
+    createdAt: '05/05/2026 09:45', 
+    startTime: '05/05/2026 11:00', 
+    endTime: '06/05/2026 11:00',
     type: 'Pinjam'
   },
   { 
@@ -76,8 +76,8 @@ const dummyInbox: InboxItem[] = [
     number: '052026-0003', 
     amount: 5, 
     requester: 'Budi Santoso', 
-    createdAt: '05-05-2026 10:15', 
-    startTime: '05-05-2026 13:00', 
+    createdAt: '05/05/2026 10:15', 
+    startTime: '05/05/2026 13:00', 
     endTime: '-',
     type: 'Habis Pakai'
   },
@@ -86,9 +86,9 @@ const dummyInbox: InboxItem[] = [
     number: '052026-0004', 
     amount: 2, 
     requester: 'Siti Aminah', 
-    createdAt: '05-05-2026 11:00', 
-    startTime: '05-05-2026 14:00', 
-    endTime: '05-05-2026 17:00',
+    createdAt: '05/05/2026 11:00', 
+    startTime: '05/05/2026 14:00', 
+    endTime: '05/05/2026 17:00',
     type: 'Pinjam'
   },
 ];

@@ -22,9 +22,9 @@ import ViewTableButton from '@/Components/ViewTableButton.vue';
 
 // Mock Data
 const dummyArsip = [
-  { id: 1, number: 'MMYYYY-XXXX', type: 'Permintaan', status: 'Sukses', requester: 'John Doe', startTime: 'DD-MM-YYYY HH:MM', endTime: '-' },
-  { id: 2, number: 'MMYYYY-XXXX', type: 'Peminjaman', status: 'Ditolak', requester: 'John Doe', startTime: 'DD-MM-YYYY HH:MM', endTime: 'DD-MM-YYYY HH:MM' },
-  { id: 3, number: 'MMYYYY-XXXX', type: 'Permintaan', status: 'Dibatalkan', requester: 'Jane Smith', startTime: 'DD-MM-YYYY HH:MM', endTime: '-' },
+  { id: 1, number: 'MMYYYY-XXXX', type: 'Permintaan', status: 'Sukses', requester: 'John Doe', startTime: 'DD/MM/YYYY HH:MM', endTime: '-' },
+  { id: 2, number: 'MMYYYY-XXXX', type: 'Peminjaman', status: 'Ditolak', requester: 'John Doe', startTime: 'DD/MM/YYYY HH:MM', endTime: 'DD/MM/YYYY HH:MM' },
+  { id: 3, number: 'MMYYYY-XXXX', type: 'Permintaan', status: 'Dibatalkan', requester: 'Jane Smith', startTime: 'DD/MM/YYYY HH:MM', endTime: '-' },
 ];
 
 const searchQuery = ref('');
