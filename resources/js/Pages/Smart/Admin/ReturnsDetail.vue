@@ -60,16 +60,16 @@ const items = ref([
 ]);
 
 const timeline = [
-  { status: 'Permintaan dibuat', time: 'DD-MM-YYYY HH:MM', completed: true },
-  { status: 'Di-approve', user: 'John Doe', time: 'DD-MM-YYYY HH:MM', completed: true },
-  { status: 'Dikonfirmasi', user: 'Radifa', time: 'DD-MM-YYYY HH:MM', completed: true },
-  { status: 'Serah Terima', time: 'DD-MM-YYYY HH:MM', completed: true },
-  { status: 'Aset selesai dipinjam', time: 'DD-MM-YYYY HH:MM', completed: true },
+  { status: 'Permintaan dibuat', time: 'DD/MM/YYYY HH:MM', completed: true },
+  { status: 'Di-approve', user: 'John Doe', time: 'DD/MM/YYYY HH:MM', completed: true },
+  { status: 'Dikonfirmasi', user: 'Radifa', time: 'DD/MM/YYYY HH:MM', completed: true },
+  { status: 'Serah Terima', time: 'DD/MM/YYYY HH:MM', completed: true },
+  { status: 'Aset selesai dipinjam', time: 'DD/MM/YYYY HH:MM', completed: true },
   { 
     status: 'Pengembalian aset', 
     method: 'Dikembalikan sendiri',
     location: 'Ruang IFS',
-    time: 'DD-MM-YYYY HH:MM', 
+    time: 'DD/MM/YYYY HH:MM', 
     active: true,
     isFinal: true
   },
@@ -97,13 +97,13 @@ const handleConfirmReturn = () => {
 
     <div class="mb-6">
       <h1 class="text-xl font-bold text-foreground">Detail Permintaan #Request_ID</h1>
-      <p class="text-sm text-muted-foreground">Permintaan dibuat pada DD-MM-YYYY</p>
+      <p class="text-sm text-muted-foreground">Permintaan dibuat pada DD/MM/YYYY</p>
     </div>
 
     <!-- Info Banner -->
     <div class="mb-6 p-1.5 pl-6 rounded-xl border border-indigo-200 bg-indigo-50/30 flex items-center justify-between gap-3 text-indigo-700">
       <p class="text-sm font-semibold">
-        Tolong kembalikan semua aset pada <span class="font-bold">DD-MM-YYYY jam HH:MM di Ruang IFS</span>
+        Tolong kembalikan semua aset pada <span class="font-bold">DD/MM/YYYY jam HH:MM di Ruang IFS</span>
       </p>
       <button 
         @click="handleConfirmReturn"
@@ -143,7 +143,7 @@ const handleConfirmReturn = () => {
               </p>
               <p>
                 <span class="text-muted-foreground">Durasi:</span>
-                <span class="font-semibold">DD-MM-YYYY HH:MM s.d. DD-MM-YYYY HH:MM (X hari, Y jam)</span>
+                <span class="font-semibold">DD/MM/YYYY HH:MM s.d. DD/MM/YYYY HH:MM (X hari, Y jam)</span>
               </p>
             </div>
           </div>

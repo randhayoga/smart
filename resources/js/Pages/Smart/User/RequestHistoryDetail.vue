@@ -92,8 +92,8 @@ const requestsDb: RequestHistory[] = [
     type: 'peminjaman',
     pemanfaatan: 'project',
     pemanfaatanDetail: 'PRJ-001 – Website Revamp',
-    durationStart: '22-05-2026 09:00',
-    durationEnd: '29-05-2026 17:00',
+    durationStart: '22/05/2026 09:00',
+    durationEnd: '29/05/2026 17:00',
     durationDays: 7,
     durationHours: 8,
     status: 'Menunggu approval',
@@ -109,8 +109,8 @@ const requestsDb: RequestHistory[] = [
     type: 'peminjaman',
     pemanfaatan: 'project',
     pemanfaatanDetail: 'PRJ-002 – Mobile App Development',
-    durationStart: '15-05-2026 08:00',
-    durationEnd: '15-06-2026 17:00',
+    durationStart: '15/05/2026 08:00',
+    durationEnd: '15/06/2026 17:00',
     durationDays: 31,
     durationHours: 9,
     status: 'Disetujui',
@@ -138,8 +138,8 @@ const requestsDb: RequestHistory[] = [
     type: 'peminjaman',
     pemanfaatan: 'corporate',
     pemanfaatanDetail: 'HR & GA',
-    durationStart: '01-05-2026 10:00',
-    durationEnd: '08-05-2026 10:00',
+    durationStart: '01/05/2026 10:00',
+    durationEnd: '08/05/2026 10:00',
     durationDays: 7,
     durationHours: 0,
     status: 'Selesai',
@@ -166,8 +166,8 @@ const requestsDb: RequestHistory[] = [
     type: 'peminjaman',
     pemanfaatan: 'project',
     pemanfaatanDetail: 'PRJ-004 – AI Research Model',
-    durationStart: '20-05-2026 09:00',
-    durationEnd: '27-05-2026 17:00',
+    durationStart: '20/05/2026 09:00',
+    durationEnd: '27/05/2026 17:00',
     durationDays: 7,
     durationHours: 8,
     status: 'Dipinjam',
@@ -182,7 +182,7 @@ const requestsDb: RequestHistory[] = [
     type: 'peminjaman',
     pemanfaatan: 'corporate',
     pemanfaatanDetail: 'Research & Development',
-    durationStart: '10-05-2026 08:00',
+    durationStart: '10/05/2026 08:00',
     durationEnd: '', // No due date
     durationDays: 0,
     durationHours: 0,
@@ -208,9 +208,9 @@ const request = computed((): RequestHistory => {
 
 // Formatting Date Helper
 const formatDate = (dateStr: string) => {
-  const parts = dateStr.split('-');
+  const parts = dateStr.split(/[-/]/);
   if (parts.length !== 3) return dateStr;
-  return `${parts[2]}-${parts[1]}-${parts[0]}`; // DD-MM-YYYY
+  return `${parts[2]}/${parts[1]}/${parts[0]}`; // DD/MM/YYYY
 };
 
 // ─────────────────────────────────────────────
@@ -228,11 +228,11 @@ const errorMessage = ref('');
 const showToast = ref(false);
 const alertToastMessage = ref('');
 
-// Parser durationDate e.g. "22-05-2026 09:00" -> Date object
+// Parser durationDate e.g. "22/05/2026 09:00" -> Date object
 const parseDurationDate = (dateStr: string) => {
   const parts = dateStr.trim().split(' ');
   if (parts.length < 2) return null;
-  const dateParts = parts[0].split('-');
+  const dateParts = parts[0].split(/[-/]/);
   const timeParts = parts[1].split(':');
   if (dateParts.length !== 3 || timeParts.length !== 2) return null;
   
@@ -332,9 +332,9 @@ const handleSaveHandover = () => {
   if (requestState.value) {
     requestState.value.status = 'Serah Terima';
     
-    // Format tanggal ke DD-MM-YYYY untuk display di timeline
-    const dateParts = handoverDate.value.split('-');
-    const formattedDate = dateParts.length === 3 ? `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}` : handoverDate.value;
+    // Format tanggal ke DD/MM/YYYY untuk display di timeline
+    const dateParts = handoverDate.value.split(/[-/]/);
+    const formattedDate = dateParts.length === 3 ? `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}` : handoverDate.value;
     handoverTime.value = `${formattedDate} ${handoverTimeOnly.value}`;
 
     alertToastMessage.value = 'Serah terima berhasil diatur!';

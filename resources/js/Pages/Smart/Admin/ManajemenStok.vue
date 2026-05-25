@@ -211,6 +211,23 @@ const columns: ColumnDef<any>[] = [
       ])
     },
     cell: ({ row }) => h('div', { class: 'text-muted-foreground truncate' }, row.getValue('lastUpdate')),
+    sortingFn: (rowA, rowB, columnId) => {
+      const parseDate = (str: string) => {
+        if (!str || str === '-') return 0;
+        const parts = str.trim().split(/\s+/);
+        const dateParts = parts[0].split('/').map(Number);
+        if (dateParts.length !== 3) return 0;
+        const [d, m, y] = dateParts;
+        let hour = 0, minute = 0;
+        if (parts[1]) {
+          const timeParts = parts[1].split(':').map(Number);
+          hour = timeParts[0] || 0;
+          minute = timeParts[1] || 0;
+        }
+        return new Date(y, m - 1, d, hour, minute).getTime();
+      };
+      return parseDate(rowA.getValue(columnId)) - parseDate(rowB.getValue(columnId));
+    }
   },
   {
     accessorKey: 'amount',
@@ -681,6 +698,7 @@ const closeErrorModal = () => {
             :columns="columns" 
             :data="props.barangs || []" 
             :filter-value="searchQuery"
+            :default-sorting="[{ id: 'lastUpdate', desc: true }]"
           />
         </div>
       </div>

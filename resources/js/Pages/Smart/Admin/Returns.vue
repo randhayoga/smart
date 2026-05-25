@@ -23,11 +23,11 @@ import ViewTableButton from '@/Components/ViewTableButton.vue';
 
 // Dummy Data
 const dummyReturns = [
-  { id: 1, number: '052026-0001', borrower: 'John Doe', returnTime: '12-05-2026 10:00', daysLeft: '1', location: 'Ruang IFS' },
-  { id: 2, number: '052026-0002', borrower: 'Jane Smith', returnTime: '13-05-2026 14:00', daysLeft: '2', location: 'Ruang IFS' },
-  { id: 3, number: '052026-0003', borrower: 'Budi Utomo', returnTime: '14-05-2026 09:00', daysLeft: '3', location: 'Ruang Workshop' },
-  { id: 4, number: '052026-0004', borrower: 'Siti Aminah', returnTime: '12-05-2026 10:00', daysLeft: '1', location: 'Ruang IFS' },
-  { id: 5, number: '052026-0005', borrower: 'Andi Saputra', returnTime: '12-05-2026 10:00', daysLeft: '1', location: 'Ruang IFS' },
+  { id: 1, number: '052026-0001', borrower: 'John Doe', returnTime: '12/05/2026 10:00', daysLeft: '1', location: 'Ruang IFS' },
+  { id: 2, number: '052026-0002', borrower: 'Jane Smith', returnTime: '13/05/2026 14:00', daysLeft: '2', location: 'Ruang IFS' },
+  { id: 3, number: '052026-0003', borrower: 'Budi Utomo', returnTime: '14/05/2026 09:00', daysLeft: '3', location: 'Ruang Workshop' },
+  { id: 4, number: '052026-0004', borrower: 'Siti Aminah', returnTime: '12/05/2026 10:00', daysLeft: '1', location: 'Ruang IFS' },
+  { id: 5, number: '052026-0005', borrower: 'Andi Saputra', returnTime: '12/05/2026 10:00', daysLeft: '1', location: 'Ruang IFS' },
 ];
 
 const searchQuery = ref('');

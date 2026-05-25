@@ -14,6 +14,10 @@ class Room extends Model
         'floor_id',
     ];
 
+    protected $casts = [
+        'floor_id' => 'integer',
+    ];
+
     public function floor()
     {
         return $this->belongsTo(Floor::class);

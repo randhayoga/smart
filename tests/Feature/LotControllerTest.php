@@ -118,4 +118,70 @@ class LotControllerTest extends TestCase
             'id' => $lot->id,
         ]);
     }
+
+    public function test_can_store_lot_using_parent_image(): void
+    {
+        Storage::fake('public');
+        $user = User::factory()->create();
+        
+        $barangImage = UploadedFile::fake()->image('barang.jpg');
+        $barangImagePath = Storage::disk('public')->putFile('inventory/barangs', $barangImage);
+        $barang = Barang::factory()->create(['image_url' => $barangImagePath]);
+        
+        $organizer = Organizer::factory()->create();
+        $vendor = Vendor::factory()->create();
+        $location = Location::factory()->create();
+
+        $response = $this->actingAs($user)->post(route('smart.inventory.lots.store'), [
+            'number' => 'LOT-2026-ATK-KER-0001-0001',
+            'barang_id' => $barang->id,
+            'organizer_id' => $organizer->id,
+            'vendor_id' => $vendor->id,
+            'location_id' => $location->id,
+            'po_number' => 'PO-01',
+            'date_of_receipt' => '2026-05-22',
+            'unit_price' => 60000,
+            'use_parent_image' => true,
+        ]);
+
+        $response->assertRedirect();
+        
+        $lot = Lot::first();
+        $this->assertNotNull($lot->image_url);
+        $this->assertNotEquals($barangImagePath, $lot->image_url);
+        Storage::disk('public')->assertExists($lot->image_url);
+    }
+
+    public function test_can_update_lot_using_parent_image(): void
+    {
+        Storage::fake('public');
+        $user = User::factory()->create();
+        
+        $barangImage = UploadedFile::fake()->image('barang.jpg');
+        $barangImagePath = Storage::disk('public')->putFile('inventory/barangs', $barangImage);
+        $barang = Barang::factory()->create(['image_url' => $barangImagePath]);
+        
+        $lot = Lot::factory()->create(['barang_id' => $barang->id]);
+        $oldLotImagePath = $lot->image_url;
+        
+        $response = $this->actingAs($user)->put(route('smart.inventory.lots.update', $lot), [
+            'number' => $lot->number,
+            'barang_id' => $barang->id,
+            'organizer_id' => $lot->organizer_id,
+            'vendor_id' => $lot->vendor_id,
+            'location_id' => $lot->location_id,
+            'po_number' => $lot->po_number,
+            'date_of_receipt' => $lot->date_of_receipt->format('Y-m-d'),
+            'unit_price' => $lot->unit_price,
+            'use_parent_image' => true,
+        ]);
+
+        $response->assertRedirect();
+        
+        $lot->refresh();
+        $this->assertNotNull($lot->image_url);
+        $this->assertNotEquals($barangImagePath, $lot->image_url);
+        $this->assertNotEquals($oldLotImagePath, $lot->image_url);
+        Storage::disk('public')->assertExists($lot->image_url);
+    }
 }
