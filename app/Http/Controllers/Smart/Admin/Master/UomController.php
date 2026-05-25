@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 class UomController extends Controller
 {
     /**
-     * Store a newly created resource in storage.
+     * Menyimpan data satuan (UOM) baru ke dalam database.
      */
     public function store(Request $request): RedirectResponse
     {
@@ -24,7 +24,7 @@ class UomController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Memperbarui data satuan (UOM) di dalam database.
      */
     public function update(Request $request, Uom $uom): RedirectResponse
     {
@@ -38,7 +38,7 @@ class UomController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Menghapus data satuan (UOM) dari database jika tidak sedang digunakan.
      */
     public function destroy(Uom $uom): RedirectResponse
     {

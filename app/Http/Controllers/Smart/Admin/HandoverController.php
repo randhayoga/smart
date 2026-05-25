@@ -3,34 +3,93 @@
 namespace App\Http\Controllers\Smart\Admin;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Models\Request\Request as SmartRequest;
 
 class HandoverController extends Controller
 {
+    /**
+     * Menampilkan halaman daftar jadwal serah terima (Handover).
+     */
     public function index()
     {
+        $handovers = SmartRequest::with(['user', 'handover'])
+            ->whereIn('status', ['confirm', 'handover'])
+            ->orderBy('id', 'desc')
+            ->get()
+            ->map(function ($req) {
+                $ho = $req->handover;
+                $methodStr = 'Belum diatur';
+                $timeStr = '-';
+                $locStr = '-';
+
+                if ($ho) {
+                    $methodStr = $ho->method === 'pickup' ? 'Diambil sendiri' : 'Diantar';
+                    $timeStr = $ho->scheduled_date ? $ho->scheduled_date->format('d-m-Y H:i') : '-';
+                    $locStr = $ho->location ?? '-';
+                }
+
+                return [
+                    'id' => $req->id,
+                    'number' => $req->request_number,
+                    'requester' => $req->user->name ?? '-',
+                    'method' => $methodStr,
+                    'time' => $timeStr,
+                    'location' => $locStr,
+                ];
+            });
+
         return Inertia::render('Smart/Admin/SerahTerima', [
             'user' => [
                 'name' => auth()->user()->name,
                 'email' => auth()->user()->email,
-            ]
+            ],
+            'handovers' => $handovers,
         ]);
     }
 
+    /**
+     * Menampilkan detail informasi jadwal serah terima (Handover).
+     */
     public function show($id)
     {
-        // Mock data for handover
-        $handover = [
-            'id' => $id,
-            'number' => '052026-000' . $id,
-            'requester' => 'John Doe',
-            'method' => 'Diambil sendiri',
-            'time' => '12-05-2026 10:00',
-            'location' => 'Ruang IFS'
+        $req = SmartRequest::with(['user', 'handover', 'items.barang.subcategory.category', 'items.barang.brand'])
+            ->findOrFail($id);
+
+        $ho = $req->handover;
+        $handoverData = [
+            'id' => $req->id,
+            'number' => $req->request_number,
+            'requester' => $req->user->name ?? '-',
+            'method' => $ho && $ho->method === 'pickup' ? 'Diambil sendiri' : ($ho ? 'Diantar' : 'Belum diatur'),
+            'time' => $ho && $ho->scheduled_date ? $ho->scheduled_date->format('d-m-Y H:i') : '-',
+            'location' => $ho ? $ho->location : '-',
+            'note' => $ho ? $ho->note : '',
+            'status' => $req->status,
         ];
 
+        $items = $req->items->map(function ($item) {
+            $assets = \App\Models\Request\RequestUnitAssignment::where('request_item_id', $item->id)
+                ->with('unit')
+                ->get()
+                ->pluck('unit.number')
+                ->toArray();
+
+            return [
+                'id' => $item->id,
+                'brand' => ($item->barang->brand->name ?? '-') . ' ' . ($item->barang->specification ?? ''),
+                'category' => $item->barang->subcategory->category->name ?? '-',
+                'subcategory' => $item->barang->subcategory->name ?? '-',
+                'quantity' => $item->quantity_requested,
+                'assets' => $assets,
+                'imageUrl' => $item->barang->image_url ?? null,
+            ];
+        });
+
         return Inertia::render('Smart/Admin/SerahTerimaDetail', [
-            'handover' => $handover,
+            'handover' => $handoverData,
+            'items' => $items,
             'user' => [
                 'name' => auth()->user()->name,
                 'email' => auth()->user()->email,

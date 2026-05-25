@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 class FloorController extends Controller
 {
     /**
-     * Store a newly created resource in storage.
+     * Menyimpan data lantai baru ke dalam database.
      */
     public function store(Request $request): RedirectResponse
     {
@@ -25,7 +25,7 @@ class FloorController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Memperbarui data lantai di dalam database.
      */
     public function update(Request $request, Floor $floor): RedirectResponse
     {
@@ -40,7 +40,7 @@ class FloorController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Menghapus data lantai dari database jika tidak sedang digunakan.
      */
     public function destroy(Floor $floor): RedirectResponse
     {

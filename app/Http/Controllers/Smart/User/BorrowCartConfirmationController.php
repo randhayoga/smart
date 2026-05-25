@@ -5,24 +5,25 @@ namespace App\Http\Controllers\Smart\User;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use App\Models\Cart\ConsumableBasket;
+use App\Models\Cart\AssetBasket;
 use App\Models\Department;
 use App\Models\Project;
 use App\Models\Request\Request as SmartRequest;
 use App\Models\Request\RequestItem;
 use App\Models\Request\RequestStatusLog;
+use Carbon\Carbon;
 
-class AssetCartConfirmationController extends Controller
+class BorrowCartConfirmationController extends Controller
 {
     /**
-     * Menampilkan halaman Konfirmasi Permintaan (Keranjang Habis Pakai).
+     * Menampilkan halaman Konfirmasi Peminjaman (Keranjang Pinjam).
      */
     public function index(Request $request)
     {
         $idsStr = $request->query('ids', '');
         $ids = array_filter(explode(',', $idsStr));
 
-        $selectedItems = ConsumableBasket::with(['barang.subcategory.category', 'barang.brand'])
+        $selectedItems = AssetBasket::with(['barang.subcategory.category', 'barang.brand'])
             ->where('user_id', $request->user()->id)
             ->whereIn('id', $ids)
             ->get()
@@ -55,15 +56,25 @@ class AssetCartConfirmationController extends Controller
             'label' => $p->name
         ]);
 
+        // Default dates from query params or fallback
+        $startDate = $request->query('start_date', '');
+        $startTime = $request->query('start_time', '');
+        $endDate = $request->query('end_date', '');
+        $endTime = $request->query('end_time', '');
+
         return Inertia::render('Smart/User/AssetCartConfirmation', [
             'selectedItems' => $selectedItems,
             'departments' => $departments,
             'projects' => $projects,
+            'defaultStartDate' => $startDate,
+            'defaultStartTime' => $startTime,
+            'defaultEndDate' => $endDate,
+            'defaultEndTime' => $endTime,
         ]);
     }
 
     /**
-     * Proses konfirmasi permintaan: simpan ke database dan kirim notifikasi approval.
+     * Proses konfirmasi peminjaman.
      */
     public function store(Request $request)
     {
@@ -74,6 +85,8 @@ class AssetCartConfirmationController extends Controller
             'departemen'   => 'required_if:pemanfaatan,corporate|nullable|string',
             'project'      => 'required_if:pemanfaatan,project|nullable|string',
             'alasan'       => 'required|string|max:2000',
+            'start_date'   => 'required|date',
+            'end_date'     => 'nullable|date',
         ]);
 
         // Generate request number
@@ -88,16 +101,16 @@ class AssetCartConfirmationController extends Controller
         }
         $requestNumber = $monthYear . '-' . str_pad($seq, 4, '0', STR_PAD_LEFT);
 
-        // Determine approver (manager of department)
+        // Determine approver
         $approverId = $request->user()->department?->manager_id;
         if (!$approverId) {
             $approverId = \App\Models\User::where('role', 'manager')->first()?->id;
         }
         if (!$approverId) {
-            $approverId = \App\Models\User::first()?->id; // Final fallback
+            $approverId = \App\Models\User::first()?->id;
         }
 
-        // Create Request
+        // Create Request with dates
         $smartRequest = SmartRequest::create([
             'request_number' => $requestNumber,
             'user_id' => $request->user()->id,
@@ -106,12 +119,14 @@ class AssetCartConfirmationController extends Controller
             'department_id' => $validated['pemanfaatan'] === 'corporate' ? (int)$validated['departemen'] : null,
             'project_id' => $validated['pemanfaatan'] === 'project' ? (int)$validated['project'] : null,
             'reasoning' => $validated['alasan'],
+            'start_date' => Carbon::parse($validated['start_date']),
+            'end_date' => $validated['end_date'] ? Carbon::parse($validated['end_date']) : null,
             'status' => 'wait',
         ]);
 
         // Add items and delete from cart
         foreach ($validated['items'] as $itemData) {
-            $basketItem = ConsumableBasket::where('user_id', $request->user()->id)
+            $basketItem = AssetBasket::where('user_id', $request->user()->id)
                 ->findOrFail($itemData['id']);
 
             RequestItem::create([
@@ -129,9 +144,9 @@ class AssetCartConfirmationController extends Controller
             'status_from' => 'draft',
             'status_to' => 'wait',
             'changed_by' => $request->user()->id,
-            'note' => 'Permintaan diajukan',
+            'note' => 'Permintaan peminjaman diajukan',
         ]);
 
-        return redirect()->route('smart.user.dashboard')->with('success', 'Permintaan berhasil dikirim dan sedang menunggu approval.');
+        return redirect()->route('smart.user.dashboard')->with('success', 'Permintaan peminjaman berhasil dikirim.');
     }
 }

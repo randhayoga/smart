@@ -90,7 +90,7 @@ class LotSeeder extends Seeder
                 Storage::disk('public')->put($destinationPath, File::get($sourcePath));
             }
 
-            Lot::updateOrCreate(
+            $lot = Lot::updateOrCreate(
                 ['number' => $data['number']],
                 [
                     'barang_id' => $data['barang_id'],
@@ -105,6 +105,32 @@ class LotSeeder extends Seeder
                     'image_url' => $destinationPath,
                 ]
             );
+
+            // Generate units for the lot
+            $qty = 5; // Default quantity
+            if (str_contains($data['number'], 'ELE-LAP')) {
+                $qty = 2;
+            } elseif (str_contains($data['number'], 'KEN-MOB')) {
+                $qty = 1;
+            } elseif ($data['number'] === 'LOT-2026-ATK-KER-0001-0002') {
+                $qty = 10;
+            }
+
+            for ($i = 1; $i <= $qty; $i++) {
+                \App\Models\Inventory\Unit::updateOrCreate(
+                    ['number' => $lot->number . '-U' . str_pad($i, 2, '0', STR_PAD_LEFT)],
+                    [
+                        'lot_id' => $lot->id,
+                        'location_id' => $lot->location_id,
+                        'floor_id' => $lot->floor_id,
+                        'room_id' => $lot->room_id,
+                        'status' => 'tersedia',
+                        'condition' => 'Baik',
+                        'price' => $lot->unit_price,
+                        'image_url' => $lot->image_url,
+                    ]
+                );
+            }
         }
     }
 }
