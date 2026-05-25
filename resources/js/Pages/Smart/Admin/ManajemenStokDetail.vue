@@ -25,6 +25,7 @@ import DeleteTableButton from '@/Components/DeleteTableButton.vue';
 import ExportButtonGroup from '@/Components/ExportButtonGroup.vue';
 import Tabs from '@/Components/Tabs.vue';
 import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal.vue';
+import DeleteErrorModal from '@/Components/DeleteErrorModal.vue';
 import Combobox from '@/Components/Combobox.vue';
 
 interface Props {
@@ -651,6 +652,24 @@ watch(flashSuccess, (newVal) => {
     }
   }
 }, { immediate: true });
+
+const flashError = computed(() => (page.props as any).flash?.error);
+const isErrorModalOpen = ref(false);
+const errorModalMessage = ref('');
+
+watch(flashError, (newVal) => {
+  if (newVal) {
+    errorModalMessage.value = newVal;
+    isErrorModalOpen.value = true;
+  }
+}, { immediate: true });
+
+const closeErrorModal = () => {
+  isErrorModalOpen.value = false;
+  if ((page.props as any).flash) {
+    (page.props as any).flash.error = null;
+  }
+};
 </script>
 
 <template>
@@ -1182,6 +1201,11 @@ watch(flashSuccess, (newVal) => {
       :item-data="itemsToDelete.length === 1 ? itemsToDelete[0] : null"
       @close="closeDeleteModal"
       @confirm="handleConfirmDelete"
+    />
+    <DeleteErrorModal 
+      :is-open="isErrorModalOpen"
+      :error-message="errorModalMessage"
+      @close="closeErrorModal"
     />
   </AppLayout>
 </template>
