@@ -56,7 +56,7 @@ const normalizedOptions = computed(() => {
 // Find label for currently selected value
 const selectedLabel = computed(() => {
   if (!props.modelValue) return props.defaultLabel;
-  const found = normalizedOptions.value.find(opt => opt.id === props.modelValue);
+  const found = normalizedOptions.value.find(opt => opt.id == props.modelValue);
   return found ? found.name : props.defaultLabel;
 });
 
@@ -103,7 +103,7 @@ const handleSelect = (val: string | number | null) => {
               :value="String(opt.name)"
               @select="handleSelect(opt.id)"
             >
-              <Check :class="['mr-2 h-4 w-4', modelValue === opt.id ? 'opacity-100' : 'opacity-0']" />
+              <Check :class="['mr-2 h-4 w-4', modelValue == opt.id ? 'opacity-100' : 'opacity-0']" />
               {{ opt.name }}
             </CommandItem>
           </CommandGroup>

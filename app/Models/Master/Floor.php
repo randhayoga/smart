@@ -14,6 +14,10 @@ class Floor extends Model
         'location_id',
     ];
 
+    protected $casts = [
+        'location_id' => 'integer',
+    ];
+
     public function location()
     {
         return $this->belongsTo(Location::class);

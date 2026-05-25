@@ -33,12 +33,14 @@ const props = withDefaults(defineProps<{
   filterKey?: string
   pageSize?: number
   showSelectionCount?: boolean
+  defaultSorting?: SortingState
 }>(), {
   pageSize: 10,
-  showSelectionCount: true
+  showSelectionCount: true,
+  defaultSorting: () => []
 })
 
-const sorting = ref<SortingState>([])
+const sorting = ref<SortingState>(props.defaultSorting)
 const columnFilters = ref<ColumnFiltersState>([])
 const columnVisibility = ref<VisibilityState>({})
 const rowSelection = ref({})
