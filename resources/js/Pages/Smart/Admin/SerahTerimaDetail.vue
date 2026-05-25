@@ -31,12 +31,13 @@ import TableSearch from '@/Components/TableSearch.vue';
 
 interface Props {
   handover: any;
+  items?: any[];
 }
 
 const props = defineProps<Props>();
 
-// Mock internal state for items
-const items = ref([
+// If items is passed from props, use it, otherwise fallback to the mock/default
+const items = computed(() => props.items || [
   {
     id: 1,
     brand: 'Asus ROG',
@@ -51,7 +52,8 @@ const items = ref([
       '2024-LAP-01-ORG-PTRE-04',
       '2024-LAP-01-ORG-PTRE-05',
     ],
-    showAssets: false
+    showAssets: false,
+    imageUrl: null
   },
   {
     id: 2,
@@ -64,7 +66,8 @@ const items = ref([
       '2024-MOU-01-ORG-PTRE-01',
       '2024-MOU-01-ORG-PTRE-02',
     ],
-    showAssets: false
+    showAssets: false,
+    imageUrl: null
   }
 ]);
 
@@ -290,11 +293,12 @@ const confirmCancel = () => {
           <AssetItemCard 
             v-for="item in items" 
             :key="item.id"
-            :brand="`${item.brand} ${item.spec}`"
+            :brand="item.spec ? `${item.brand} ${item.spec}` : item.brand"
             :category="item.category"
             :subcategory="item.subcategory"
             :quantity="item.quantity"
             :assets="item.assets"
+            :imageUrl="item.imageUrl"
           >
             <template #footer>
               <button 

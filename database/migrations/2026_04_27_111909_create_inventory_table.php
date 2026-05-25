@@ -37,7 +37,7 @@ return new class extends Migration {
 
         Schema::create('units', function (Blueprint $table) {
             $table->id();
-            $table->string('number', 25)->unique();
+            $table->string('number', 50)->unique();
             $table->foreignId('lot_id')->constrained('lots');
             $table->foreignId('location_id')->constrained('locations');
             $table->foreignId('floor_id')->nullable()->after('location_id')->constrained('floors');

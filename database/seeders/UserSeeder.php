@@ -48,5 +48,22 @@ class UserSeeder extends Seeder
             'password' => \Illuminate\Support\Facades\Hash::make('password'),
         ]);
         $department->update(['manager_id' => $manager->id]);
+
+        // Create projects
+        $projects = [
+            ['code' => 'PRJ-001', 'name' => 'PRJ-001 – Website Revamp'],
+            ['code' => 'PRJ-002', 'name' => 'PRJ-002 – Mobile App'],
+            ['code' => 'PRJ-003', 'name' => 'PRJ-003 – ERP Integration'],
+        ];
+
+        foreach ($projects as $proj) {
+            \App\Models\Project::updateOrCreate(
+                ['code' => $proj['code']],
+                [
+                    'name' => $proj['name'],
+                    'manager_id' => $manager->id,
+                ]
+            );
+        }
     }
 }

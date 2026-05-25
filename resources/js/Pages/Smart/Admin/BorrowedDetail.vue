@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { 
   ChevronDown, 
@@ -15,60 +15,68 @@ import {
 import AssetItemCard from '@/Components/AssetItemCard.vue';
 import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem, BreadcrumbSeparator } from '@/Components/ui/breadcrumb';
 
+interface RequestItem {
+  id: number;
+  brand: string;
+  category: string;
+  subcategory: string;
+  quantity: number;
+  assets: string[];
+  imageUrl?: string | null;
+}
+
+interface RequestDetail {
+  id: number;
+  number: string;
+  requester: string;
+  approver: string;
+  createdAt: string;
+  pemanfaatan: 'corporate' | 'project';
+  pemanfaatanDetail: string;
+  durationStart?: string;
+  durationEnd?: string;
+  durationDays?: number;
+  durationHours?: number;
+  status: string;
+  type: 'permintaan' | 'peminjaman';
+  items: RequestItem[];
+  dueDate: string;
+}
+
 interface Props {
   borrowedId: string | number;
+  request: RequestDetail;
 }
 
 const props = defineProps<Props>();
 
-// Mock internal state for items
-const items = ref([
-  {
-    id: 1,
-    brand: 'Merek Spek',
-    category: 'Kategori',
-    subcategory: 'Subkategori',
-    quantity: 'XX',
-    assets: [
-      'XXXX-ABC-DE-ORG-PTRE-XX (Tempat Penempatan)',
-      'XXXX-ABC-DE-ORG-PTRE-XX (Mega Mendung)',
-      'XXXX-ABC-DE-ORG-PTRE-XX (Mega Mendung)',
-      'XXXX-ABC-DE-ORG-PTRE-XX (Tiga Negeri)',
-      'XXXX-ABC-DE-ORG-PTRE-XX (Tiga Negeri)',
-    ]
-  },
-  {
-    id: 2,
-    brand: 'Merek Spek',
-    category: 'Kategori',
-    subcategory: 'Subkategori',
-    quantity: 'XX',
-    assets: [
-       'XXXX-ABC-DE-ORG-PTRE-XX (Tempat Penempatan)',
-    ]
-  }
-]);
+const items = computed(() => props.request.items);
 
-const timeline = [
-  { status: 'Permintaan dibuat', time: 'DD/MM/YYYY HH:MM', completed: true },
-  { status: 'Di-approve', user: 'John Doe', time: 'DD/MM/YYYY HH:MM', completed: true },
-  { status: 'Dikonfirmasi', user: 'Radifa', time: 'DD/MM/YYYY HH:MM', completed: true },
-  { status: 'Serah Terima', time: 'DD/MM/YYYY HH:MM', completed: true },
-  { 
-    status: 'Aset sedang dipinjam', 
-    info: 'Tenggat pada DD/MM/YYYY HH:MM', 
-    active: true,
-    isFinal: true
-  },
-];
+const timeline = computed(() => {
+  const r = props.request;
+  if (!r) return [];
+
+  return [
+    { status: 'Permintaan dibuat', time: r.createdAt, completed: true },
+    { status: 'Di-approve', user: r.approver, time: r.createdAt, completed: true },
+    { status: 'Dikonfirmasi', user: 'Admin', time: r.createdAt, completed: true },
+    { status: 'Serah Terima', time: r.createdAt, completed: true },
+    { 
+      status: 'Aset sedang dipinjam', 
+      info: `Tenggat pada ${r.dueDate}`, 
+      active: true,
+      isFinal: true
+    },
+  ];
+});
 
 const handleCatatPenempatan = (item: any) => {
-  alert('Fitur Catat Penempatan Aset untuk ' + item.brand);
+  alert('Penempatan aset dicatat oleh pengguna di halaman riwayat.');
 };
 </script>
 
 <template>
-  <AppLayout title="Detail Permintaan">
+  <AppLayout title="Detail Peminjaman">
     <!-- Breadcrumb -->
     <Breadcrumb>
       <BreadcrumbList class="pb-3">
@@ -77,13 +85,13 @@ const handleCatatPenempatan = (item: any) => {
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
-          <span class="text-muted-foreground">#Request_ID</span>
+          <span class="text-muted-foreground">{{ request.number }}</span>
         </BreadcrumbItem>
       </BreadcrumbList>
     </Breadcrumb>
 
     <div class="mb-4">
-      <h1 class="text-xl font-bold text-foreground">Detail Permintaan</h1>
+      <h1 class="text-xl font-bold text-foreground">Detail Peminjaman</h1>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -94,21 +102,25 @@ const handleCatatPenempatan = (item: any) => {
           <h3 class="text-sm font-medium text-muted-foreground mb-3">Detail:</h3>
           <div class="space-y-2">
             <h2 class="text-lg md:text-xl font-extrabold text-foreground mb-3">
-              #Nomor_Permintaan/#Nomor_Peminjaman
+              {{ request.number }}
             </h2>
             
             <div class="space-y-1.5 text-sm text-foreground">
               <p>
+                <span class="text-muted-foreground">Peminjam:</span> 
+                <span class="font-semibold">{{ request.requester }}</span>
+              </p>
+              <p>
                 <span class="text-muted-foreground">Pemanfaatan:</span> 
                 <span class="font-semibold">
-                  Jenis_Pemanfaatan (Nomor_Project/Nama_Departement)
+                  {{ request.pemanfaatan === 'corporate' ? 'Corporate' : 'Project' }} ({{ request.pemanfaatanDetail }})
                 </span>
               </p>
 
-              <p>
+              <p v-if="request.durationStart">
                 <span class="text-muted-foreground">Durasi:</span>
                 <span class="font-semibold">
-                  DD/MM/YYYY HH:MM s.d. DD/MM/YYYY HH:MM (X hari, Y jam)
+                  {{ request.durationStart }} s.d. {{ request.durationEnd }} ({{ request.durationDays }} hari, {{ request.durationHours }} jam)
                 </span>
               </p>
             </div>
@@ -127,6 +139,7 @@ const handleCatatPenempatan = (item: any) => {
             :subcategory="item.subcategory"
             :quantity="item.quantity"
             :assets="item.assets"
+            :imageUrl="item.imageUrl"
           >
             <template #footer>
               <button 

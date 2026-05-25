@@ -35,6 +35,7 @@ interface Props {
     name: string;
     email: string;
   };
+  inboxItems: InboxItem[];
 }
 
 const props = defineProps<Props>();
@@ -50,48 +51,7 @@ interface InboxItem {
   type: string;
 }
 
-const dummyInbox: InboxItem[] = [
-  { 
-    id: 1, 
-    number: '052026-0001', 
-    amount: 12, 
-    requester: 'John Doe', 
-    createdAt: '05/05/2026 09:30', 
-    startTime: '05/05/2026 10:00', 
-    endTime: '-',
-    type: 'Habis Pakai'
-  },
-  { 
-    id: 2, 
-    number: '052026-0002', 
-    amount: 1, 
-    requester: 'Jane Smith', 
-    createdAt: '05/05/2026 09:45', 
-    startTime: '05/05/2026 11:00', 
-    endTime: '06/05/2026 11:00',
-    type: 'Pinjam'
-  },
-  { 
-    id: 3, 
-    number: '052026-0003', 
-    amount: 5, 
-    requester: 'Budi Santoso', 
-    createdAt: '05/05/2026 10:15', 
-    startTime: '05/05/2026 13:00', 
-    endTime: '-',
-    type: 'Habis Pakai'
-  },
-  { 
-    id: 4, 
-    number: '052026-0004', 
-    amount: 2, 
-    requester: 'Siti Aminah', 
-    createdAt: '05/05/2026 11:00', 
-    startTime: '05/05/2026 14:00', 
-    endTime: '05/05/2026 17:00',
-    type: 'Pinjam'
-  },
-];
+const dummyInbox = computed(() => props.inboxItems);
 
 const searchQuery = ref('');
 const typeFilter = ref('');
@@ -238,7 +198,7 @@ const displayData = computed<InboxItem[]>(() => {
   if (dataTableRef.value && dataTableRef.value.table) {
     return dataTableRef.value.table.getFilteredRowModel().rows.map((row: any) => row.original);
   }
-  return dummyInbox;
+  return dummyInbox.value;
 });
 
 const handleExportCSV = () => {

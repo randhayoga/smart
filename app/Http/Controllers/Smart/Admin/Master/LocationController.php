@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 class LocationController extends Controller
 {
     /**
-     * Store a newly created resource in storage.
+     * Menyimpan data lokasi baru ke dalam database.
      */
     public function store(Request $request): RedirectResponse
     {
@@ -24,7 +24,7 @@ class LocationController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Memperbarui data lokasi di dalam database.
      */
     public function update(Request $request, Location $location): RedirectResponse
     {
@@ -38,7 +38,7 @@ class LocationController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Menghapus data lokasi dari database jika tidak sedang digunakan.
      */
     public function destroy(Location $location): RedirectResponse
     {

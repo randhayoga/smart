@@ -9,6 +9,9 @@ use Illuminate\Support\Facades\Storage;
 
 class BarangController extends Controller
 {
+    /**
+     * Menyimpan data barang baru ke dalam database.
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -31,6 +34,9 @@ class BarangController extends Controller
         return redirect()->back()->with('success', 'Barang berhasil ditambahkan.');
     }
 
+    /**
+     * Memperbarui data barang yang sudah ada di database.
+     */
     public function update(Request $request, Barang $barang)
     {
         $validated = $request->validate([
@@ -57,6 +63,9 @@ class BarangController extends Controller
         return redirect()->back()->with('success', 'Barang berhasil diperbarui.');
     }
 
+    /**
+     * Menghapus data barang dari database beserta gambarnya.
+     */
     public function destroy(Barang $barang)
     {
         if ($barang->lots()->exists()) {

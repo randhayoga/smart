@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
+import { router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { Input } from "@/Components/ui/input";
 import { Search, ChevronDown } from 'lucide-vue-next';
 import { Button } from "@/Components/ui/button";
 import ProductCard from '@/Components/ProductCard.vue';
+import { toast } from 'vue-sonner';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,56 +20,105 @@ import {
   DialogTitle,
 } from "@/Components/ui/dialog";
 
+interface Category {
+  id: number;
+  name: string;
+}
+
+interface Item {
+  id: number;
+  code: string;
+  category: string;
+  category_id: number;
+  category_name: string;
+  subcategory_name: string;
+  is_consumable: boolean;
+  brand: string;
+  spec: string;
+  stock: number;
+  imageUrl?: string;
+}
+
 interface Props {
   user?: any;
+  items?: Item[];
+  categories?: Category[];
 }
-defineProps<Props>();
 
-// Dummy data for browsing
-const items = [
-  { id: 1, brand: 'Merek', spec: 'Spek', category: 'Kategori (Subkategori)', code: '#Nomor_Barang_1', stock: 10 },
-  { id: 2, brand: 'Merek', spec: 'Spek', category: 'Kategori (Subkategori)', code: '#Nomor_Barang_2', stock: 5 },
-  { id: 3, brand: 'Merek', spec: 'Spek', category: 'Kategori (Subkategori)', code: '#Nomor_Barang_3', stock: 0 },
-  { id: 4, brand: 'Merek', spec: 'Spek', category: 'Kategori (Subkategori)', code: '#Nomor_Barang_4', stock: 12 },
-  { id: 5, brand: 'Merek', spec: 'Spek', category: 'Kategori (Subkategori)', code: '#Nomor_Barang_5', stock: 0 },
-  { id: 6, brand: 'Merek', spec: 'Spek', category: 'Kategori (Subkategori)', code: '#Nomor_Barang_6', stock: 1 },
-  { id: 7, brand: 'Merek', spec: 'Spek', category: 'Kategori (Subkategori)', code: '#Nomor_Barang_7', stock: 0 },
-  { id: 8, brand: 'Merek', spec: 'Spek', category: 'Kategori (Subkategori)', code: '#Nomor_Barang_8', stock: 4 },
-  { id: 9, brand: 'Merek', spec: 'Spek', category: 'Kategori (Subkategori)', code: '#Nomor_Barang_9', stock: 8 },
-  { id: 10, brand: 'Merek', spec: 'Spek', category: 'Kategori (Subkategori)', code: '#Nomor_Barang_10', stock: 0 },
-];
+const props = withDefaults(defineProps<Props>(), {
+  items: () => [],
+  categories: () => []
+});
 
 const searchQuery = ref('');
 const selectedCategory = ref('Semua kategori');
 const selectedSort = ref('Urutkan: A-Z');
-const showInStockOnly = ref(false);
+
 
 const clearFilter = () => {
   searchQuery.value = '';
   selectedCategory.value = 'Semua kategori';
   selectedSort.value = 'Urutkan: A-Z';
-  showInStockOnly.value = false;
 };
 
 const isModalOpen = ref(false);
-const selectedProduct = ref<any>(null);
+const selectedProduct = ref<Item | null>(null);
 const quantity = ref(1);
 
-const openAddToCartModal = (product: any) => {
+const openAddToCartModal = (product: Item) => {
   selectedProduct.value = product;
   quantity.value = 1;
   isModalOpen.value = true;
 };
 
 const handleConfirmAddToCart = () => {
-  // Logic to add item to cart via API goes here
-  alert(`Berhasil menambahkan ${quantity.value} item ke keranjang!`);
-  isModalOpen.value = false;
+  if (!selectedProduct.value) return;
+
+  router.post(route('smart.browse.add-to-cart'), {
+    barang_id: selectedProduct.value.id,
+    quantity: quantity.value,
+  }, {
+    onSuccess: () => {
+      isModalOpen.value = false;
+      toast.success(`Berhasil menambahkan ${quantity.value} item ke keranjang!`);
+    },
+    onError: (errors) => {
+      toast.error(Object.values(errors)[0] as string);
+    }
+  });
 };
 
-const handlePOReimburse = (product: any) => {
-  alert(`Fitur PO/Reimburse untuk barang ${product.brand} segera datang!`);
-};
+
+
+const filteredAndSortedItems = computed(() => {
+  let list = [...props.items];
+
+  // Search filter
+  if (searchQuery.value.trim()) {
+    const q = searchQuery.value.toLowerCase();
+    list = list.filter(item => 
+      item.brand.toLowerCase().includes(q) || 
+      item.spec.toLowerCase().includes(q) || 
+      item.code.toLowerCase().includes(q)
+    );
+  }
+
+  // Category filter
+  if (selectedCategory.value !== 'Semua kategori') {
+    list = list.filter(item => item.category_name === selectedCategory.value);
+  }
+
+
+
+  // Sort
+  if (selectedSort.value === 'Urutkan: A-Z') {
+    list.sort((a, b) => a.brand.localeCompare(b.brand));
+  } else if (selectedSort.value === 'Urutkan: Z-A') {
+    list.sort((a, b) => b.brand.localeCompare(a.brand));
+  }
+
+  return list;
+});
 </script>
 
 <template>
@@ -100,9 +151,13 @@ const handlePOReimburse = (product: any) => {
               </DropdownMenuTrigger>
               <DropdownMenuContent class="w-64 rounded-[14px]" align="start">
                 <DropdownMenuItem @select="selectedCategory = 'Semua kategori'">Semua kategori</DropdownMenuItem>
-                <DropdownMenuItem @select="selectedCategory = 'Elektronik'">Elektronik</DropdownMenuItem>
-                <DropdownMenuItem @select="selectedCategory = 'Furnitur'">Furnitur</DropdownMenuItem>
-                <DropdownMenuItem @select="selectedCategory = 'ATK'">ATK</DropdownMenuItem>
+                <DropdownMenuItem 
+                  v-for="cat in props.categories" 
+                  :key="cat.id" 
+                  @select="selectedCategory = cat.name"
+                >
+                  {{ cat.name }}
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
@@ -120,15 +175,7 @@ const handlePOReimburse = (product: any) => {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <!-- In Stock Only Checkbox -->
-            <label class="flex items-center gap-3 px-4 h-10 border border-input rounded-full bg-background cursor-pointer hover:bg-muted/50 transition-colors">
-              <div class="relative flex items-center justify-center w-5 h-5 border border-input rounded-full">
-                <div v-if="showInStockOnly" class="w-3 h-3 bg-primary rounded-full"></div>
-              </div>
-              <!-- Hidden native checkbox just for state if needed, or use v-model directly -->
-              <input type="checkbox" v-model="showInStockOnly" class="hidden" />
-              <span class="text-sm font-medium text-foreground">Tampilkan barang dengan stok tersedia saja</span>
-            </label>
+
 
             <!-- Clear Filter Button -->
             <Button @click="clearFilter" class="bg-[#cb3a31] hover:bg-[#b02e26] text-white rounded-full px-6 h-10 font-semibold">
@@ -143,14 +190,14 @@ const handlePOReimburse = (product: any) => {
         <div class="border border-border rounded-[14px] p-6 bg-card">
           <div class="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-6">
             <ProductCard 
-              v-for="item in items" 
+              v-for="item in filteredAndSortedItems" 
               :key="item.id" 
               :brand="item.brand" 
               :spec="item.spec" 
               :category="item.category"
               :stock="item.stock"
+              :imageUrl="item.imageUrl"
               @add-to-cart="openAddToCartModal(item)"
-              @po-reimburse="handlePOReimburse(item)"
             />
           </div>
         </div>
