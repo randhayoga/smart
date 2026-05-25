@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import AssetItemCard from '@/Components/AssetItemCard.vue';
 import { 
@@ -9,60 +9,66 @@ import {
 } from 'lucide-vue-next';
 import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem, BreadcrumbSeparator } from '@/Components/ui/breadcrumb';
 
+interface RequestItem {
+  id: number;
+  brand: string;
+  category: string;
+  subcategory: string;
+  quantity: number;
+  assets: string[];
+  imageUrl?: string | null;
+}
+
+interface RequestDetail {
+  id: number;
+  number: string;
+  requester: string;
+  approver: string;
+  createdAt: string;
+  updatedAt: string;
+  pemanfaatan: 'corporate' | 'project';
+  pemanfaatanDetail: string;
+  durationStart?: string;
+  durationEnd?: string;
+  durationDays?: number;
+  durationHours?: number;
+  status: string;
+  type: 'permintaan' | 'peminjaman';
+  items: RequestItem[];
+}
+
 interface Props {
   requestId: string | number;
+  request: RequestDetail;
 }
 
 const props = defineProps<Props>();
 
-// Mock data for archive items
-const items = ref([
-  {
-    id: 1,
-    brand: 'Merek Spek',
-    category: 'Kategori',
-    subcategory: 'Subkategori',
-    quantity: 'XX',
-    assets: [
-      'XXXX-ABC-DE-ORG-PTRE-XX',
-      'XXXX-ABC-DE-ORG-PTRE-XX',
-      'XXXX-ABC-DE-ORG-PTRE-XX',
-      'XXXX-ABC-DE-ORG-PTRE-XX',
-      'XXXX-ABC-DE-ORG-PTRE-XX',
-    ]
-  },
-  {
-    id: 2,
-    brand: 'Merek Spek',
-    category: 'Kategori',
-    subcategory: 'Subkategori',
-    quantity: 'XX',
-    assets: [
-       'XXXX-ABC-DE-ORG-PTRE-XX',
-    ]
-  },
-  {
-    id: 3,
-    brand: 'Merek Spek',
-    category: 'Kategori',
-    subcategory: 'Subkategori',
-    quantity: 'XX',
-    assets: [
-       'XXXX-ABC-DE-ORG-PTRE-XX',
-    ]
+const items = computed(() => props.request.items);
+
+const timeline = computed(() => {
+  const r = props.request;
+  if (!r) return [];
+
+  const steps = [];
+  steps.push({ status: 'Permintaan dibuat', time: r.createdAt, completed: true });
+  
+  if (r.status === 'reject') {
+    steps.push({ status: 'Ditolak', time: r.updatedAt || r.createdAt, completed: true });
+  } else if (r.status === 'cancel') {
+    steps.push({ status: 'Dibatalkan oleh Pengguna', time: r.updatedAt || r.createdAt, completed: true });
+  } else {
+    steps.push({ status: 'Di-approve', user: r.approver, time: r.createdAt, completed: true });
+    steps.push({ status: 'Dikonfirmasi', user: 'Admin', time: r.createdAt, completed: true });
+    steps.push({ status: 'Serah Terima', time: r.createdAt, completed: true });
+    if (r.type === 'peminjaman') {
+      steps.push({ status: 'Aset selesai dipinjam', time: r.createdAt, completed: true });
+      steps.push({ status: 'Pengembalian aset', info: 'dikonfirmasi oleh Admin', time: r.updatedAt || r.createdAt, completed: true });
+    }
+    steps.push({ status: 'Selesai', time: r.updatedAt || r.createdAt, completed: true });
   }
-]);
-
-const timeline = [
-  { status: 'Permintaan dibuat', time: 'DD/MM/YYYY HH:MM', completed: true },
-  { status: 'Di-approve', user: 'John Doe', time: 'DD/MM/YYYY HH:MM', completed: true },
-  { status: 'Dikonfirmasi', user: 'Radifa', time: 'DD/MM/YYYY HH:MM', completed: true },
-  { status: 'Serah Terima', time: 'DD/MM/YYYY HH:MM', completed: true },
-  { status: 'Aset selesai dipinjam', time: 'DD/MM/YYYY HH:MM', completed: true },
-  { status: 'Pengembalian aset', info: 'dikonfirmasi oleh Radifa', time: 'DD/MM/YYYY HH:MM', completed: true },
-  { status: 'Selesai', time: 'DD/MM/YYYY HH:MM', completed: true },
-];
-
+  return steps;
+});
 </script>
 
 <template>
@@ -75,14 +81,14 @@ const timeline = [
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
-          <span class="text-muted-foreground">{{ requestId || '#Request_ID' }}</span>
+          <span class="text-muted-foreground">{{ request.number }}</span>
         </BreadcrumbItem>
       </BreadcrumbList>
     </Breadcrumb>
 
     <div class="mb-6">
-      <h1 class="text-xl font-bold text-foreground">Detail Permintaan #{{ requestId || 'Request_ID' }}</h1>
-      <p class="text-sm text-muted-foreground">Permintaan dibuat pada DD/MM/YYYY</p>
+      <h1 class="text-xl font-bold text-foreground">Detail Permintaan {{ request.number }}</h1>
+      <p class="text-sm text-muted-foreground">Permintaan dibuat pada {{ request.createdAt }}</p>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -93,32 +99,32 @@ const timeline = [
           <h3 class="text-sm font-medium text-muted-foreground mb-3">Detail:</h3>
           <div class="space-y-2">
             <h2 class="text-lg md:text-xl font-extrabold text-foreground mb-3">
-              #Nomor_Permintaan/#Nomor_Peminjaman
+              {{ request.number }}
             </h2>
             
             <div class="space-y-1.5 text-sm text-foreground">
               <p>
                 <span class="text-muted-foreground">Dibuat oleh:</span> 
-                <span class="font-semibold"> John Doe</span>
+                <span class="font-semibold"> {{ request.requester }}</span>
               </p>
               <p>
                 <span class="text-muted-foreground">PIC Approval:</span> 
-                <span class="font-semibold"> Jane Doe</span>
+                <span class="font-semibold"> {{ request.approver }}</span>
               </p>
               <p>
                 <span class="text-muted-foreground">Waktu dibuat:</span> 
-                <span class="font-semibold"> DD/MM/YYYY HH:MM</span>
+                <span class="font-semibold"> {{ request.createdAt }}</span>
               </p>
               <p>
                 <span class="text-muted-foreground">Pemanfaatan:</span> 
                 <span class="font-semibold">
-                  Jenis_Pemanfaatan (Nomor_Project/Nama_Departement)
+                  {{ request.pemanfaatan === 'corporate' ? 'Corporate' : 'Project' }} ({{ request.pemanfaatanDetail }})
                 </span>
               </p>
-              <p>
+              <p v-if="request.durationStart">
                 <span class="text-muted-foreground">Durasi:</span>
                 <span class="font-semibold">
-                  DD/MM/YYYY HH:MM s.d. DD/MM/YYYY HH:MM (X hari, Y jam)
+                  {{ request.durationStart }} s.d. {{ request.durationEnd }} ({{ request.durationDays }} hari, {{ request.durationHours }} jam)
                 </span>
               </p>
             </div>
@@ -137,6 +143,7 @@ const timeline = [
             :subcategory="item.subcategory"
             :quantity="item.quantity"
             :assets="item.assets"
+            :imageUrl="item.imageUrl"
           />
         </div>
       </div>

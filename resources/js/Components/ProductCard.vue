@@ -12,7 +12,6 @@ interface Props {
 const props = defineProps<Props>();
 const emit = defineEmits<{
   (e: 'add-to-cart'): void;
-  (e: 'po-reimburse'): void;
 }>();
 </script>
 
@@ -35,18 +34,10 @@ const emit = defineEmits<{
       <div class="flex-grow pt-3"></div>
       
       <Button 
-        v-if="stock > 0"
         @click="emit('add-to-cart')"
         class="w-full mt-auto bg-gradient-primary shadow-button hover:opacity-90 text-white rounded-full h-[38px] text-xs font-semibold"
       >
         Tambah ke Keranjang
-      </Button>
-      <Button 
-        v-else
-        @click="emit('po-reimburse')"
-        class="w-full mt-auto bg-gradient-primary shadow-button hover:opacity-90 text-white rounded-full h-[38px] text-xs font-semibold"
-      >
-        PO / Reimburse
       </Button>
     </div>
   </div>

@@ -12,7 +12,7 @@ use Inertia\Response;
 class CategoryController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Menampilkan daftar kategori (tidak digunakan secara langsung karena index utama ada di MasterController).
      */
     public function index(): Response
     {
@@ -22,7 +22,7 @@ class CategoryController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Menyimpan data kategori baru ke dalam database.
      */
     public function store(Request $request): RedirectResponse
     {
@@ -38,7 +38,7 @@ class CategoryController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Memperbarui data kategori di dalam database.
      */
     public function update(Request $request, Category $category): RedirectResponse
     {
@@ -54,7 +54,7 @@ class CategoryController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Menghapus data kategori dari database jika tidak sedang digunakan.
      */
     public function destroy(Category $category): RedirectResponse
     {

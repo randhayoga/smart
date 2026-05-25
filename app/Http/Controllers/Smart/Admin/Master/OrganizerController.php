@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 class OrganizerController extends Controller
 {
     /**
-     * Store a newly created resource in storage.
+     * Menyimpan data organizer baru ke dalam database.
      */
     public function store(Request $request): RedirectResponse
     {
@@ -24,7 +24,7 @@ class OrganizerController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Memperbarui data organizer di dalam database.
      */
     public function update(Request $request, Organizer $organizer): RedirectResponse
     {
@@ -38,7 +38,7 @@ class OrganizerController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Menghapus data organizer dari database jika tidak sedang digunakan.
      */
     public function destroy(Organizer $organizer): RedirectResponse
     {

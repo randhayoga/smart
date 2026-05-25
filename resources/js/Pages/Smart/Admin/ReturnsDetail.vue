@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
+import { router } from '@inertiajs/vue3';
+import { toast } from 'vue-sonner';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { 
   ChevronDown, 
@@ -15,73 +17,77 @@ import {
 import AssetItemCard from '@/Components/AssetItemCard.vue';
 import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem, BreadcrumbSeparator } from '@/Components/ui/breadcrumb';
 
+interface RequestItem {
+  id: number;
+  brand: string;
+  category: string;
+  subcategory: string;
+  quantity: number;
+  assets: string[];
+  imageUrl?: string | null;
+}
+
+interface RequestDetail {
+  id: number;
+  number: string;
+  requester: string;
+  approver: string;
+  createdAt: string;
+  pemanfaatan: 'corporate' | 'project';
+  pemanfaatanDetail: string;
+  durationStart?: string;
+  durationEnd?: string;
+  durationDays?: number;
+  durationHours?: number;
+  status: string;
+  type: 'permintaan' | 'peminjaman';
+  items: RequestItem[];
+  returnTime: string;
+  location: string;
+  method: string;
+}
+
 interface Props {
   returnId: string | number;
+  request: RequestDetail;
 }
 
 const props = defineProps<Props>();
 
-// Mock internal state for items
-const items = ref([
-  {
-    id: 1,
-    brand: 'Merek Spek',
-    category: 'Kategori',
-    subcategory: 'Subkategori',
-    quantity: 'XX',
-    assets: [
-      'XXXX-ABC-DE-ORG-PTRE-XX (Tempat Penempatan)',
-      'XXXX-ABC-DE-ORG-PTRE-XX (Mega Mendung)',
-      'XXXX-ABC-DE-ORG-PTRE-XX (Mega Mendung)',
-      'XXXX-ABC-DE-ORG-PTRE-XX (Tiga Negeri)',
-      'XXXX-ABC-DE-ORG-PTRE-XX (Tiga Negeri)',
-    ]
-  },
-  {
-    id: 2,
-    brand: 'Merek Spek',
-    category: 'Kategori',
-    subcategory: 'Subkategori',
-    quantity: 'XX',
-    assets: [
-       'XXXX-ABC-DE-ORG-PTRE-XX (Tempat Penempatan)',
-    ]
-  },
-  {
-    id: 3,
-    brand: 'Merek Spek',
-    category: 'Kategori',
-    subcategory: 'Subkategori',
-    quantity: 'XX',
-    assets: [
-       'XXXX-ABC-DE-ORG-PTRE-XX (Tempat Penempatan)',
-    ]
-  }
-]);
+const items = computed(() => props.request.items);
 
-const timeline = [
-  { status: 'Permintaan dibuat', time: 'DD/MM/YYYY HH:MM', completed: true },
-  { status: 'Di-approve', user: 'John Doe', time: 'DD/MM/YYYY HH:MM', completed: true },
-  { status: 'Dikonfirmasi', user: 'Radifa', time: 'DD/MM/YYYY HH:MM', completed: true },
-  { status: 'Serah Terima', time: 'DD/MM/YYYY HH:MM', completed: true },
-  { status: 'Aset selesai dipinjam', time: 'DD/MM/YYYY HH:MM', completed: true },
-  { 
-    status: 'Pengembalian aset', 
-    method: 'Dikembalikan sendiri',
-    location: 'Ruang IFS',
-    time: 'DD/MM/YYYY HH:MM', 
-    active: true,
-    isFinal: true
-  },
-];
+const timeline = computed(() => {
+  const r = props.request;
+  if (!r) return [];
+
+  return [
+    { status: 'Permintaan dibuat', time: r.createdAt, completed: true },
+    { status: 'Di-approve', user: r.approver, time: r.createdAt, completed: true },
+    { status: 'Dikonfirmasi', user: 'Admin', time: r.createdAt, completed: true },
+    { status: 'Serah Terima', time: r.createdAt, completed: true },
+    { status: 'Aset selesai dipinjam', time: r.createdAt, completed: true },
+    { 
+      status: 'Pengembalian aset', 
+      method: r.method,
+      location: r.location,
+      time: r.returnTime, 
+      active: true,
+      isFinal: true
+    },
+  ];
+});
 
 const handleConfirmReturn = () => {
-  alert('Konfirmasi Pengembalian Berhasil!');
+  router.post(route('smart.returns.confirm', props.returnId), {}, {
+    onSuccess: () => {
+      toast.success('Pengembalian aset berhasil dikonfirmasi!');
+    }
+  });
 };
 </script>
 
 <template>
-  <AppLayout title="Detail Permintaan">
+  <AppLayout title="Detail Pengembalian">
     <!-- Breadcrumb -->
     <Breadcrumb>
       <BreadcrumbList class="pb-3">
@@ -90,20 +96,20 @@ const handleConfirmReturn = () => {
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
-          <span class="text-muted-foreground">#Request_ID</span>
+          <span class="text-muted-foreground">{{ request.number }}</span>
         </BreadcrumbItem>
       </BreadcrumbList>
     </Breadcrumb>
 
     <div class="mb-6">
-      <h1 class="text-xl font-bold text-foreground">Detail Permintaan #Request_ID</h1>
-      <p class="text-sm text-muted-foreground">Permintaan dibuat pada DD/MM/YYYY</p>
+      <h1 class="text-xl font-bold text-foreground">Detail Permintaan {{ request.number }}</h1>
+      <p class="text-sm text-muted-foreground">Permintaan dibuat pada {{ request.createdAt }}</p>
     </div>
 
     <!-- Info Banner -->
     <div class="mb-6 p-1.5 pl-6 rounded-xl border border-indigo-200 bg-indigo-50/30 flex items-center justify-between gap-3 text-indigo-700">
       <p class="text-sm font-semibold">
-        Tolong kembalikan semua aset pada <span class="font-bold">DD/MM/YYYY jam HH:MM di Ruang IFS</span>
+        Tolong kembalikan semua aset pada <span class="font-bold">{{ request.returnTime }} di {{ request.location }}</span>
       </p>
       <button 
         @click="handleConfirmReturn"
@@ -121,29 +127,29 @@ const handleConfirmReturn = () => {
           <h3 class="text-sm font-medium text-muted-foreground mb-3">Detail:</h3>
           <div class="space-y-2">
             <h2 class="text-lg md:text-xl font-extrabold text-foreground mb-3">
-              #Nomor_Permintaan/#Nomor_Peminjaman
+              {{ request.number }}
             </h2>
             
             <div class="space-y-1.5 text-sm text-foreground">
               <p>
                 <span class="text-muted-foreground">Dibuat oleh:</span> 
-                <span class="font-semibold">John Doe</span>
+                <span class="font-semibold">{{ request.requester }}</span>
               </p>
               <p>
                 <span class="text-muted-foreground">PIC Approval:</span> 
-                <span class="font-semibold">Jane Doe</span>
+                <span class="font-semibold">{{ request.approver }}</span>
               </p>
               <p>
                 <span class="text-muted-foreground">Waktu dibuat:</span> 
-                <span class="font-semibold">DD/MM/YYYY HH:MM</span>
+                <span class="font-semibold">{{ request.createdAt }}</span>
               </p>
               <p>
                 <span class="text-muted-foreground">Pemanfaatan:</span> 
-                <span class="font-semibold">Jenis_Pemanfaatan (Nomor_Project/Nama_Departement)</span>
+                <span class="font-semibold">{{ request.pemanfaatan === 'corporate' ? 'Corporate' : 'Project' }} ({{ request.pemanfaatanDetail }})</span>
               </p>
-              <p>
+              <p v-if="request.durationStart">
                 <span class="text-muted-foreground">Durasi:</span>
-                <span class="font-semibold">DD/MM/YYYY HH:MM s.d. DD/MM/YYYY HH:MM (X hari, Y jam)</span>
+                <span class="font-semibold">{{ request.durationStart }} s.d. {{ request.durationEnd }} ({{ request.durationDays }} hari, {{ request.durationHours }} jam)</span>
               </p>
             </div>
           </div>
@@ -161,6 +167,7 @@ const handleConfirmReturn = () => {
             :subcategory="item.subcategory"
             :quantity="item.quantity"
             :assets="item.assets"
+            :imageUrl="item.imageUrl"
           />
         </div>
       </div>
@@ -248,3 +255,9 @@ const handleConfirmReturn = () => {
     </div>
   </AppLayout>
 </template>
+
+<style scoped>
+.transition-all {
+  transition: all 0.2s ease-in-out;
+}
+</style>

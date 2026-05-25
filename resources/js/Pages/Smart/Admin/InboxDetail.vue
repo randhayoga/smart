@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
+import { router } from '@inertiajs/vue3';
+import { toast } from 'vue-sonner';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import AssetItemCard from '@/Components/AssetItemCard.vue';
 import { 
@@ -13,54 +15,136 @@ import {
 } from 'lucide-vue-next';
 import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem, BreadcrumbSeparator } from '@/Components/ui/breadcrumb';
 
+interface RequestItem {
+  id: number;
+  brand: string;
+  category: string;
+  subcategory: string;
+  quantity: number;
+  assets: string[];
+  imageUrl?: string | null;
+}
+
+interface RequestDetail {
+  id: number;
+  number: string;
+  requester: string;
+  approver: string;
+  createdAt: string;
+  pemanfaatan: 'corporate' | 'project';
+  pemanfaatanDetail: string;
+  durationStart?: string;
+  durationEnd?: string;
+  durationDays?: number;
+  durationHours?: number;
+  status: string;
+  type: 'permintaan' | 'peminjaman';
+  items: RequestItem[];
+  approvedAt?: string;
+}
+
 interface Props {
   requestId: string | number;
+  request: RequestDetail;
 }
 
 const props = defineProps<Props>();
 
-// Mock data for new request items
-const items = ref([
-  {
-    id: 1,
-    brand: 'Merek Spek',
-    category: 'Kategori',
-    subcategory: 'Subkategori',
-    quantity: 'XX',
-    assets: [
-      'XXXX-ABC-DE-ORG-PTRE-XX',
-      'XXXX-ABC-DE-ORG-PTRE-XX',
-      'XXXX-ABC-DE-ORG-PTRE-XX',
-      'XXXX-ABC-DE-ORG-PTRE-XX',
-      'XXXX-ABC-DE-ORG-PTRE-XX',
-    ]
-  },
-  {
-    id: 2,
-    brand: 'Merek Spek',
-    category: 'Kategori',
-    subcategory: 'Subkategori',
-    quantity: 'XX',
-    assets: [
-       'XXXX-ABC-DE-ORG-PTRE-XX',
-    ]
+const items = computed(() => props.request.items);
+
+const timeline = computed(() => {
+  const r = props.request;
+  if (!r) return [];
+
+  const steps = [];
+  steps.push({
+    status: 'Permintaan dibuat',
+    user: r.requester,
+    time: r.createdAt,
+    completed: true,
+  });
+
+  if (r.status === 'wait') {
+    steps.push({
+      status: 'Menunggu approval manager',
+      user: r.approver,
+      completed: false,
+      active: true,
+      isAction: true,
+    });
+  } else if (r.status === 'approve') {
+    steps.push({
+      status: 'Di-approve oleh Manager',
+      user: r.approver,
+      time: r.approvedAt || r.createdAt,
+      completed: true,
+    });
+    steps.push({
+      status: 'Perlu konfirmasi Anda!',
+      completed: false,
+      active: true,
+      isAction: true,
+    });
+  } else if (r.status === 'reject') {
+    steps.push({
+      status: 'Ditolak',
+      completed: false,
+      active: true,
+      rejected: true,
+    });
+  } else {
+    steps.push({
+      status: 'Di-approve oleh Manager',
+      user: r.approver,
+      time: r.approvedAt || r.createdAt,
+      completed: true,
+    });
+    steps.push({
+      status: 'Telah dikonfirmasi oleh Admin',
+      completed: true,
+    });
   }
-]);
 
-const timeline = [
-  { status: 'Permintaan dibuat', user: 'John Doe', time: 'DD/MM/YYYY HH:MM', completed: true },
-  { status: 'Di-approve', user: 'Jane Doe', time: 'DD/MM/YYYY HH:MM', completed: true },
-  { 
-    status: 'Perlu konfirmasi Anda!', 
-    active: true,
-    isAction: true 
-  },
-];
+  return steps;
+});
 
-const handleApprove = () => alert('Request Approved!');
-const handleReject = () => alert('Request Rejected!');
-const handleAturSerahTerima = () => alert('Atur Serah Terima diklik!');
-const handlePilihAlokasi = (item: any) => alert(`Pilih Alokasi Aset untuk ${item.brand}`);
+const handleApprove = () => {
+  router.post(route('smart.inbox.action', props.requestId), {
+    action: 'approve'
+  }, {
+    onSuccess: () => {
+      toast.success('Permintaan berhasil dikonfirmasi/disetujui!');
+    },
+    onError: (errors) => {
+      toast.error(Object.values(errors).join(', '));
+    }
+  });
+};
+
+const handleReject = () => {
+  const reason = prompt('Masukkan alasan penolakan (opsional):');
+  if (reason === null) return;
+  
+  router.post(route('smart.inbox.action', props.requestId), {
+    action: 'reject',
+    note: reason
+  }, {
+    onSuccess: () => {
+      toast.success('Permintaan berhasil ditolak.');
+    },
+    onError: (errors) => {
+      toast.error(Object.values(errors).join(', '));
+    }
+  });
+};
+
+const handleAturSerahTerima = () => {
+  router.get('/smart/handover');
+};
+
+const handlePilihAlokasi = (item: any) => {
+  toast.info('Alokasi aset dilakukan secara otomatis saat persetujuan/konfirmasi.');
+};
 </script>
 
 <template>
@@ -73,7 +157,7 @@ const handlePilihAlokasi = (item: any) => alert(`Pilih Alokasi Aset untuk ${item
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
-          <span class="text-muted-foreground">{{ requestId || '#Request_ID' }}</span>
+          <span class="text-muted-foreground">{{ request.number }}</span>
         </BreadcrumbItem>
       </BreadcrumbList>
     </Breadcrumb>
@@ -103,32 +187,32 @@ const handlePilihAlokasi = (item: any) => alert(`Pilih Alokasi Aset untuk ${item
           <h3 class="text-sm font-medium text-muted-foreground mb-3">Detail:</h3>
           <div class="space-y-2">
             <h2 class="text-lg md:text-xl font-extrabold text-foreground mb-3">
-              #Nomor_Permintaan/#Nomor_Peminjaman
+              {{ request.number }}
             </h2>
             
             <div class="space-y-1.5 text-sm text-foreground">
               <p>
                 <span class="text-muted-foreground">Dibuat oleh:</span> 
-                <span class="font-semibold"> John Doe</span>
+                <span class="font-semibold"> {{ request.requester }}</span>
               </p>
               <p>
                 <span class="text-muted-foreground">PIC Approval:</span> 
-                <span class="font-semibold"> Jane Doe</span>
+                <span class="font-semibold"> {{ request.approver }}</span>
               </p>
               <p>
                 <span class="text-muted-foreground">Waktu dibuat:</span> 
-                <span class="font-semibold"> DD/MM/YYYY HH:MM</span>
+                <span class="font-semibold"> {{ request.createdAt }}</span>
               </p>
               <p>
                 <span class="text-muted-foreground">Pemanfaatan:</span> 
                 <span class="font-semibold">
-                  Jenis_Pemanfaatan (Nomor_Project/Nama_Departement)
+                  {{ request.pemanfaatan === 'corporate' ? 'Corporate' : 'Project' }} ({{ request.pemanfaatanDetail }})
                 </span>
               </p>
-              <p>
+              <p v-if="request.type === 'peminjaman' && request.durationStart">
                 <span class="text-muted-foreground">Durasi:</span>
                 <span class="font-semibold">
-                  DD/MM/YYYY HH:MM s.d. DD/MM/YYYY HH:MM (X hari, Y jam)
+                  {{ request.durationStart }} s.d. {{ request.durationEnd }} ({{ request.durationDays }} hari, {{ request.durationHours }} jam)
                 </span>
               </p>
             </div>
@@ -147,6 +231,7 @@ const handlePilihAlokasi = (item: any) => alert(`Pilih Alokasi Aset untuk ${item
             :subcategory="item.subcategory"
             :quantity="item.quantity"
             :assets="item.assets"
+            :imageUrl="item.imageUrl"
           >
             <template #footer>
               <button 
@@ -182,6 +267,14 @@ const handlePilihAlokasi = (item: any) => alert(`Pilih Alokasi Aset untuk ${item
                   <Check class="w-4 h-4 text-green-500 stroke-[3.5]" />
                 </div>
                 
+                <!-- Status Rejected (Red X) -->
+                <div 
+                  v-else-if="step.rejected" 
+                  class="w-7 h-7 rounded-full border-2 border-red-500 flex items-center justify-center bg-card"
+                >
+                  <X class="w-4 h-4 text-red-500 stroke-[3.5]" />
+                </div>
+
                 <!-- Status Action Required / Active -->
                 <div 
                   v-else
@@ -199,7 +292,8 @@ const handlePilihAlokasi = (item: any) => alert(`Pilih Alokasi Aset untuk ${item
                     class="text-sm font-bold"
                     :class="{
                       'text-green-600': step.completed,
-                      'text-[#6366F1]': !step.completed
+                      'text-red-600': step.rejected,
+                      'text-[#6366F1]': !step.completed && !step.rejected
                     }"
                   >
                     {{ step.status }}

@@ -19,7 +19,7 @@ use Inertia\Response;
 class MasterController extends Controller
 {
     /**
-     * Display the master data page.
+     * Menampilkan halaman manajemen data master.
      */
     public function index(Request $request): Response
     {

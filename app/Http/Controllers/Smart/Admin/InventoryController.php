@@ -10,7 +10,7 @@ use Inertia\Response;
 class InventoryController extends Controller
 {
     /**
-     * Display the inventory management page.
+     * Menampilkan halaman manajemen stok barang (Inventory).
      */
     public function index(Request $request): Response
     {
@@ -54,7 +54,7 @@ class InventoryController extends Controller
     }
 
     /**
-     * Display the inventory item detail page.
+     * Menampilkan halaman detail item inventaris.
      */
     public function show(Request $request, string $id): Response
     {
