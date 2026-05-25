@@ -89,7 +89,7 @@ const formatDate = (dateStr: string) => {
   if (!dateStr) return '';
   const parts = dateStr.split('-');
   if (parts.length !== 3) return dateStr;
-  return `${parts[2]}-${parts[1]}-${parts[0]}`; // DD-MM-YYYY
+  return `${parts[2]}/${parts[1]}/${parts[0]}`; // DD/MM/YYYY
 };
 
 // ─────────────────────────────────────────────
@@ -107,11 +107,11 @@ const errorMessage = ref('');
 const showToast = ref(false);
 const alertToastMessage = ref('');
 
-// Parser durationDate e.g. "22-05-2026 09:00" -> Date object
+// Parser durationDate e.g. "22/05/2026 09:00" -> Date object
 const parseDurationDate = (dateStr: string) => {
   const parts = dateStr.trim().split(' ');
   if (parts.length < 2) return null;
-  const dateParts = parts[0].split('-');
+  const dateParts = parts[0].split(/[-/]/);
   const timeParts = parts[1].split(':');
   if (dateParts.length !== 3 || timeParts.length !== 2) return null;
   

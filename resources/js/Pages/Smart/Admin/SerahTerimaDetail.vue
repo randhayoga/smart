@@ -72,14 +72,14 @@ const items = computed(() => props.items || [
 ]);
 
 const timeline = [
-  { status: 'Permintaan dibuat', time: '10-05-2026 09:00', completed: true },
-  { status: 'Di-approve', user: 'John Doe', time: '10-05-2026 14:30', completed: true },
-  { status: 'Dikonfirmasi', user: 'Radifa', time: '11-05-2026 10:00', completed: true },
+  { status: 'Permintaan dibuat', time: '10/05/2026 09:00', completed: true },
+  { status: 'Di-approve', user: 'John Doe', time: '10/05/2026 14:30', completed: true },
+  { status: 'Dikonfirmasi', user: 'Radifa', time: '11/05/2026 10:00', completed: true },
   { 
     status: 'Serah Terima', 
     method: 'Ambil sendiri', 
     location: 'Ruang IFS', 
-    time: '12-05-2026 10:00', 
+    time: '12/05/2026 10:00', 
     active: true 
   },
 ];
@@ -246,7 +246,7 @@ const confirmCancel = () => {
     <div class="mb-6 p-4 rounded-xl border border-indigo-200 bg-indigo-50/30 flex items-center gap-3 text-indigo-700">
       <Info class="w-5 h-5 shrink-0" />
       <p class="text-sm font-medium">
-        Pengingat bahwa aset akan diambil pada <span class="font-bold">{{ handover?.time || 'DD-MM-YYYY jam HH:MM' }}</span>
+        Pengingat bahwa aset akan diambil pada <span class="font-bold">{{ handover?.time || 'DD/MM/YYYY jam HH:MM' }}</span>
       </p>
     </div>
 
@@ -272,7 +272,7 @@ const confirmCancel = () => {
               </p>
               <p>
                 <span class="text-muted-foreground">Waktu dibuat:</span> 
-                <span class="font-semibold">10-05-2026 09:00</span>
+                <span class="font-semibold">10/05/2026 09:00</span>
               </p>
               <p>
                 <span class="text-muted-foreground">Pemanfaatan:</span> 
@@ -280,7 +280,7 @@ const confirmCancel = () => {
               </p>
               <p>
                 <span class="text-muted-foreground">Durasi:</span>
-                <span class="font-semibold">12-05-2026 10:00 s.d. 19-05-2026 10:00 (7 hari, 0 jam)</span>
+                <span class="font-semibold">12/05/2026 10:00 s.d. 19/05/2026 10:00 (7 hari, 0 jam)</span>
               </p>
             </div>
           </div>
@@ -523,7 +523,7 @@ const confirmCancel = () => {
                 <p>PIC Approval: Jane Doe</p>
                 <p>Waktu dibuat: 10/05/2026 09:00</p>
                 <p>Pemanfaatan: Internal Project (PRJ-2024-001/Finance)</p>
-                <p>Durasi: 12-05-2026 10:00 s.d. 19-05-2026 10:00 (7 hari, 0 jam)</p>
+                <p>Durasi: 12/05/2026 10:00 s.d. 19/05/2026 10:00 (7 hari, 0 jam)</p>
               </div>
 
               <div class="border-t border-border pt-4">

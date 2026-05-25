@@ -17,6 +17,7 @@ import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal.vue';
 import ExportButtonGroup from '@/Components/ExportButtonGroup.vue';
 import ResetFilterButton from '@/Components/ResetFilterButton.vue';
 import Combobox from '@/Components/Combobox.vue';
+import DeleteErrorModal from '@/Components/DeleteErrorModal.vue';
 
 import { Button } from "@/Components/ui/button";
 import {
@@ -210,6 +211,23 @@ const columns: ColumnDef<any>[] = [
       ])
     },
     cell: ({ row }) => h('div', { class: 'text-muted-foreground truncate' }, row.getValue('lastUpdate')),
+    sortingFn: (rowA, rowB, columnId) => {
+      const parseDate = (str: string) => {
+        if (!str || str === '-') return 0;
+        const parts = str.trim().split(/\s+/);
+        const dateParts = parts[0].split('/').map(Number);
+        if (dateParts.length !== 3) return 0;
+        const [d, m, y] = dateParts;
+        let hour = 0, minute = 0;
+        if (parts[1]) {
+          const timeParts = parts[1].split(':').map(Number);
+          hour = timeParts[0] || 0;
+          minute = timeParts[1] || 0;
+        }
+        return new Date(y, m - 1, d, hour, minute).getTime();
+      };
+      return parseDate(rowA.getValue(columnId)) - parseDate(rowB.getValue(columnId));
+    }
   },
   {
     accessorKey: 'amount',
@@ -513,6 +531,24 @@ watch(flashSuccess, (newVal) => {
     }
   }
 }, { immediate: true });
+
+const flashError = computed(() => (page.props as any).flash?.error);
+const isErrorModalOpen = ref(false);
+const errorModalMessage = ref('');
+
+watch(flashError, (newVal) => {
+  if (newVal) {
+    errorModalMessage.value = newVal;
+    isErrorModalOpen.value = true;
+  }
+}, { immediate: true });
+
+const closeErrorModal = () => {
+  isErrorModalOpen.value = false;
+  if ((page.props as any).flash) {
+    (page.props as any).flash.error = null;
+  }
+};
 </script>
 
 <template>
@@ -662,6 +698,7 @@ watch(flashSuccess, (newVal) => {
             :columns="columns" 
             :data="props.barangs || []" 
             :filter-value="searchQuery"
+            :default-sorting="[{ id: 'lastUpdate', desc: true }]"
           />
         </div>
       </div>
@@ -846,6 +883,11 @@ watch(flashSuccess, (newVal) => {
       :item-data="itemsToDelete.length === 1 ? itemsToDelete[0] : null"
       @close="closeDeleteModal"
       @confirm="handleConfirmDelete"
+    />
+    <DeleteErrorModal 
+      :is-open="isErrorModalOpen"
+      :error-message="errorModalMessage"
+      @close="closeErrorModal"
     />
   </AppLayout>
 </template>

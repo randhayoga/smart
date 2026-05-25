@@ -25,6 +25,7 @@ import DeleteTableButton from '@/Components/DeleteTableButton.vue';
 import ExportButtonGroup from '@/Components/ExportButtonGroup.vue';
 import Tabs from '@/Components/Tabs.vue';
 import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal.vue';
+import DeleteErrorModal from '@/Components/DeleteErrorModal.vue';
 import Combobox from '@/Components/Combobox.vue';
 
 interface Props {
@@ -103,6 +104,7 @@ const lotForm = useForm({
   unit_price: '' as string | number,
   image_url: null as File | null,
   image_url_name: '',
+  use_parent_image: false,
 });
 
 const generateLotCode = () => {
@@ -142,6 +144,7 @@ const openCreateLotModal = () => {
   lotForm.unit_price = '';
   lotForm.image_url = null;
   lotForm.image_url_name = '';
+  lotForm.use_parent_image = false;
   lotForm.clearErrors();
   isLotModalOpen.value = true;
 };
@@ -162,7 +165,7 @@ const openEditLotModal = (lot: any) => {
   lotForm.po_number = lot.poNumber;
   
   if (lot.entryDate && lot.entryDate !== '-') {
-    const parts = lot.entryDate.split('-');
+    const parts = lot.entryDate.split(/[-/]/);
     if (parts.length === 3) {
       lotForm.date_of_receipt = `${parts[2]}-${parts[1]}-${parts[0]}`;
     } else {
@@ -175,6 +178,7 @@ const openEditLotModal = (lot: any) => {
   lotForm.unit_price = lot.unitPrice;
   lotForm.image_url = null;
   lotForm.image_url_name = lot.imageUrl ? lot.imageUrl.split('/').pop() : '';
+  lotForm.use_parent_image = false;
   
   isLotModalOpen.value = true;
 };
@@ -196,6 +200,7 @@ const handleLotFileUpload = (e: any) => {
 
   lotForm.image_url = file;
   lotForm.image_url_name = file.name;
+  lotForm.use_parent_image = false;
 };
 
 const triggerLotFileInput = () => {
@@ -207,6 +212,8 @@ const viewLotImageInNewTab = () => {
   if (lotForm.image_url) {
     const url = URL.createObjectURL(lotForm.image_url);
     window.open(url, '_blank');
+  } else if (lotForm.use_parent_image && props.barang.image_url) {
+    window.open('/storage/' + props.barang.image_url, '_blank');
   } else if (lotModalMode.value === 'edit') {
     const lot = props.lots.find(l => l.id === selectedLotId.value);
     if (lot && lot.imageUrl) {
@@ -215,19 +222,29 @@ const viewLotImageInNewTab = () => {
   }
 };
 
+const handleSamakanPhoto = () => {
+  if (props.barang.image_url) {
+    lotForm.use_parent_image = true;
+    lotForm.image_url = null;
+    lotForm.image_url_name = props.barang.image_url.split('/').pop() || '';
+  } else {
+    toast.error('Barang parent tidak memiliki foto.');
+  }
+};
+
 const filteredFloors = computed(() => {
   if (!lotForm.location_id) return [];
-  return props.floors.filter(f => f.location_id === Number(lotForm.location_id));
+  return props.floors.filter(f => Number(f.location_id) === Number(lotForm.location_id));
 });
 
 const filteredRooms = computed(() => {
   if (!lotForm.floor_id) return [];
-  return props.rooms.filter(r => r.floor_id === Number(lotForm.floor_id));
+  return props.rooms.filter(r => Number(r.floor_id) === Number(lotForm.floor_id));
 });
 
 watch(() => lotForm.location_id, (newVal) => {
   if (newVal) {
-    const valid = filteredFloors.value.some(f => f.id === Number(lotForm.floor_id));
+    const valid = filteredFloors.value.some(f => Number(f.id) === Number(lotForm.floor_id));
     if (!valid) {
       lotForm.floor_id = null;
       lotForm.room_id = null;
@@ -240,7 +257,7 @@ watch(() => lotForm.location_id, (newVal) => {
 
 watch(() => lotForm.floor_id, (newVal) => {
   if (newVal) {
-    const valid = filteredRooms.value.some(r => r.id === Number(lotForm.room_id));
+    const valid = filteredRooms.value.some(r => Number(r.id) === Number(lotForm.room_id));
     if (!valid) {
       lotForm.room_id = null;
     }
@@ -257,6 +274,7 @@ const isLotFormValid = computed(() => {
          lotForm.po_number && 
          lotForm.date_of_receipt && 
          lotForm.unit_price !== '' && 
+         (lotForm.image_url || lotForm.image_url_name) &&
          !lotForm.processing;
 });
 
@@ -279,6 +297,9 @@ const handleSaveLot = () => {
     };
     if (data.image_url) {
       formData.image_url = data.image_url;
+    }
+    if (data.use_parent_image) {
+      formData.use_parent_image = data.use_parent_image;
     }
     return formData;
   });
@@ -356,6 +377,17 @@ const columns: ColumnDef<any>[] = [
       h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
     ]),
     cell: ({ row }) => h('div', { class: 'pl-0 text-muted-foreground' }, row.getValue('entryDate')),
+    sortingFn: (rowA, rowB, columnId) => {
+      const parseDate = (str: string) => {
+        if (!str || str === '-') return 0;
+        const parts = str.trim().split(/\s+/);
+        const dateParts = parts[0].split('/').map(Number);
+        if (dateParts.length !== 3) return 0;
+        const [d, m, y] = dateParts;
+        return new Date(y, m - 1, d).getTime();
+      };
+      return parseDate(rowA.getValue(columnId)) - parseDate(rowB.getValue(columnId));
+    }
   },
   {
     accessorKey: 'organizer',
@@ -431,7 +463,7 @@ const filteredLots = computed(() => {
     const today = new Date();
     list = list.filter(lot => {
       if (!lot.entryDate || lot.entryDate === '-') return false;
-      const parts = lot.entryDate.split('-');
+      const parts = lot.entryDate.split(/[-/]/);
       if (parts.length !== 3) return false;
       const entryDateObj = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
       
@@ -651,6 +683,24 @@ watch(flashSuccess, (newVal) => {
     }
   }
 }, { immediate: true });
+
+const flashError = computed(() => (page.props as any).flash?.error);
+const isErrorModalOpen = ref(false);
+const errorModalMessage = ref('');
+
+watch(flashError, (newVal) => {
+  if (newVal) {
+    errorModalMessage.value = newVal;
+    isErrorModalOpen.value = true;
+  }
+}, { immediate: true });
+
+const closeErrorModal = () => {
+  isErrorModalOpen.value = false;
+  if ((page.props as any).flash) {
+    (page.props as any).flash.error = null;
+  }
+};
 </script>
 
 <template>
@@ -793,6 +843,7 @@ watch(flashSuccess, (newVal) => {
             :columns="columns" 
             :data="filteredLots" 
             :filter-value="searchQuery"
+            :default-sorting="[{ id: 'entryDate', desc: true }]"
           />
         </div>
       </div>
@@ -1049,7 +1100,7 @@ watch(flashSuccess, (newVal) => {
                     </div>
 
                     <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Lokasi<span class="text-rose-500">*</span></label>
+                      <label class="text-sm font-medium text-foreground block">Lokasi <span class="italic text-muted-foreground">default</span><span class="text-rose-500">*</span></label>
                       <Combobox
                         v-model="lotForm.location_id"
                         :options="props.locations"
@@ -1060,7 +1111,7 @@ watch(flashSuccess, (newVal) => {
                     </div>
 
                     <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Lantai</label>
+                      <label class="text-sm font-medium text-foreground block">Lantai <span class="italic text-muted-foreground">default</span></label>
                       <Combobox
                         v-model="lotForm.floor_id"
                         :options="filteredFloors"
@@ -1075,7 +1126,7 @@ watch(flashSuccess, (newVal) => {
                   <!-- Right Column -->
                   <div class="space-y-6">
                     <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Ruangan</label>
+                      <label class="text-sm font-medium text-foreground block">Ruangan <span class="italic text-muted-foreground">default</span></label>
                       <Combobox
                         v-model="lotForm.room_id"
                         :options="filteredRooms"
@@ -1106,7 +1157,7 @@ watch(flashSuccess, (newVal) => {
                     </div>
 
                     <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Harga Satuan (Rp)<span class="text-rose-500">*</span></label>
+                      <label class="text-sm font-medium text-foreground block">Harga Satuan (Rp) <span class="italic text-muted-foreground">default</span><span class="text-rose-500">*</span></label>
                       <input 
                         type="number" 
                         v-model="lotForm.unit_price"
@@ -1117,7 +1168,7 @@ watch(flashSuccess, (newVal) => {
                     </div>
 
                     <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Foto LOT</label>
+                      <label class="text-sm font-medium text-foreground block">Foto <span class="italic text-muted-foreground">default</span><span class="text-rose-500">*</span></label>
                       <div class="flex gap-2">
                         <div 
                           class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/10 truncate flex items-center h-10"
@@ -1138,13 +1189,20 @@ watch(flashSuccess, (newVal) => {
                           @change="handleLotFileUpload"
                         />
                         <button 
+                          type="button"
+                          @click="handleSamakanPhoto"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-orange-400 hover:opacity-90 text-white text-sm font-medium rounded-[14px] transition-colors h-10"
+                        >
+                          Samakan
+                        </button>
+                        <button 
                           @click="triggerLotFileInput"
-                          class="w-[120px] shrink-0 flex items-center justify-center bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors h-10"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors h-10"
                         >
                           Pilih File
                         </button>
                       </div>
-                      <p class="text-[10px] text-muted-foreground ml-1">Maksimal ukuran 1 MB (opsional)</p>
+                      <p class="text-[10px] text-muted-foreground ml-1">Maksimal ukuran 1 MB</p>
                     </div>
                   </div>
                 </div>
@@ -1182,6 +1240,11 @@ watch(flashSuccess, (newVal) => {
       :item-data="itemsToDelete.length === 1 ? itemsToDelete[0] : null"
       @close="closeDeleteModal"
       @confirm="handleConfirmDelete"
+    />
+    <DeleteErrorModal 
+      :is-open="isErrorModalOpen"
+      :error-message="errorModalMessage"
+      @close="closeErrorModal"
     />
   </AppLayout>
 </template>

@@ -25,14 +25,26 @@ class LotController extends Controller
             'po_number' => 'required|string|max:255',
             'date_of_receipt' => 'required|date',
             'unit_price' => 'required|numeric|min:0',
-            'image_url' => 'nullable|image|max:1024',
+            'image_url' => 'required_without:use_parent_image|nullable|image|max:1024',
+            'use_parent_image' => 'nullable',
         ]);
 
-        $imagePath = 'inventory/lots/placeholder.jpg';
-        if ($request->hasFile('image_url')) {
+        if ($request->boolean('use_parent_image')) {
+            $barang = \App\Models\Inventory\Barang::findOrFail($request->input('barang_id'));
+            if ($barang->image_url && Storage::disk('public')->exists($barang->image_url)) {
+                $extension = pathinfo($barang->image_url, PATHINFO_EXTENSION);
+                $newFilename = 'inventory/lots/' . uniqid() . '.' . $extension;
+                Storage::disk('public')->copy($barang->image_url, $newFilename);
+                $validated['image_url'] = $newFilename;
+            } else {
+                return redirect()->back()->withErrors(['image_url' => 'Foto barang parent tidak ditemukan di storage.']);
+            }
+        } else {
             $imagePath = $request->file('image_url')->store('inventory/lots', 'public');
+            $validated['image_url'] = $imagePath;
         }
-        $validated['image_url'] = $imagePath;
+
+        unset($validated['use_parent_image']);
 
         Lot::create($validated);
 
@@ -56,9 +68,23 @@ class LotController extends Controller
             'date_of_receipt' => 'required|date',
             'unit_price' => 'required|numeric|min:0',
             'image_url' => 'nullable|image|max:1024',
+            'use_parent_image' => 'nullable',
         ]);
 
-        if ($request->hasFile('image_url')) {
+        if ($request->boolean('use_parent_image')) {
+            if ($lot->image_url && $lot->image_url !== 'inventory/lots/placeholder.jpg' && Storage::disk('public')->exists($lot->image_url)) {
+                Storage::disk('public')->delete($lot->image_url);
+            }
+            $barang = \App\Models\Inventory\Barang::findOrFail($request->input('barang_id'));
+            if ($barang->image_url && Storage::disk('public')->exists($barang->image_url)) {
+                $extension = pathinfo($barang->image_url, PATHINFO_EXTENSION);
+                $newFilename = 'inventory/lots/' . uniqid() . '.' . $extension;
+                Storage::disk('public')->copy($barang->image_url, $newFilename);
+                $validated['image_url'] = $newFilename;
+            } else {
+                return redirect()->back()->withErrors(['image_url' => 'Foto barang parent tidak ditemukan di storage.']);
+            }
+        } else if ($request->hasFile('image_url')) {
             if ($lot->image_url && $lot->image_url !== 'inventory/lots/placeholder.jpg' && Storage::disk('public')->exists($lot->image_url)) {
                 Storage::disk('public')->delete($lot->image_url);
             }
@@ -67,6 +93,8 @@ class LotController extends Controller
         } else {
             unset($validated['image_url']);
         }
+
+        unset($validated['use_parent_image']);
 
         $lot->update($validated);
 
