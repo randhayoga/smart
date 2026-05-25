@@ -90,6 +90,18 @@ const columns: ColumnDef<any>[] = [
     cell: ({ row }) => h('div', { class: 'pl-0' }, row.getValue('borrower')),
   },
   {
+    accessorKey: 'daysPassed',
+    header: ({ column }) => h(Button, {
+      variant: 'ghost',
+      onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+      class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+    }, () => [
+      'Hari Berlalu',
+      h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+    ]),
+    cell: ({ row }) => h('div', { class: 'pl-0' }, row.getValue('daysPassed')),
+  },
+  {
     accessorKey: 'dueDate',
     header: ({ column }) => h(Button, {
       variant: 'ghost',

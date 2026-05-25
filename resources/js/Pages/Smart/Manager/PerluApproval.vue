@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
+import { Head } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import { Button } from '@/Components/ui/button';
 import {
   Select,
   SelectContent,
@@ -14,17 +14,10 @@ import {
   BreadcrumbList,
   BreadcrumbItem,
 } from '@/Components/ui/breadcrumb';
-import { 
-  Search, 
-  Calendar, 
-  AlertTriangle, 
-  X
-} from 'lucide-vue-next';
-import RequestHistoryCard from '@/Components/RequestHistoryCard.vue';
+import { Button } from '@/Components/ui/button';
+import { Search, Calendar, AlertTriangle, X } from 'lucide-vue-next';
+import ManagerRequestCard from '@/Components/ManagerRequestCard.vue';
 
-// ─────────────────────────────────────────────
-// Types
-// ─────────────────────────────────────────────
 interface RequestItem {
   id: number;
   subcategory: string;
@@ -40,27 +33,17 @@ interface RequestHistory {
   id: number;
   number: string;
   type: 'permintaan' | 'peminjaman';
+  requester: string;
   pemanfaatan: 'corporate' | 'project';
   pemanfaatanDetail: string;
   durationStart?: string;
   durationEnd?: string;
   durationDays?: number;
   durationHours?: number;
-  status: 'Menunggu approval' | 'Disetujui' | 'Ditolak' | 'Serah Terima' | 'Dipinjam' | 'Selesai' | 'Dibatalkan' | 'Pending';
-  raw_status: 'wait' | 'approve' | 'confirm' | 'handover' | 'borrow' | 'return' | 'success' | 'reject' | 'cancel' | 'pending';
-  created_at: string; // format YYYY-MM-DD
+  status: string;
+  created_at: string;
   items: RequestItem[];
-  approval_by?: string | null;
-  approval_at?: string | null;
-  confirmation_by?: string | null;
-  confirmation_at?: string | null;
-  handover_method?: string | null;
-  handover_time?: string | null;
-  handover_location?: string | null;
-  handover_note?: string | null;
 }
-
-import { router } from '@inertiajs/vue3';
 
 interface Props {
   user?: any;
@@ -81,47 +64,45 @@ watch(() => props.requests, (newVal) => {
 // State Filters & Search
 // ─────────────────────────────────────────────
 const searchQuery = ref('');
-const filterType = ref('semua');       // 'semua' | 'permintaan' | 'peminjaman'
-const filterCategory = ref('semua');   // 'semua' | 'Elektronik' | 'Alat Tulis'
-const filterStatus = ref('semua');     // 'semua' | 'Menunggu approval' | etc.
-const filterTimeRange = ref('semua');   // 'semua' | 'hari-ini' | '7-hari' | '30-hari'
+const filterSort = ref('urgensi');        // 'urgensi' | 'terbaru' | 'terlama'
+const filterUtilization = ref('semua');   // 'semua' | 'corporate' | 'project'
+const filterProject = ref('semua');       // 'semua' | unique projects
+const filterTimeRange = ref('semua');     // 'semua' | 'hari-ini' | '7-hari' | '30-hari'
 
-// Category Options (Unique categories from data)
-const categoryOptions = computed(() => {
-  const cats = new Set<string>();
+// Project Options (Unique project details from data)
+const projectOptions = computed(() => {
+  const projs = new Set<string>();
   requests.value.forEach(req => {
-    req.items.forEach(item => {
-      if (item.category) cats.add(item.category);
-    });
+    if (req.pemanfaatan === 'project' && req.pemanfaatanDetail) {
+      projs.add(req.pemanfaatanDetail);
+    }
   });
-  return Array.from(cats);
+  return Array.from(projs);
 });
 
 // ─────────────────────────────────────────────
-// Filtered Data
+// Filtered & Sorted Data
 // ─────────────────────────────────────────────
 const filteredRequests = computed(() => {
-  return requests.value.filter(req => {
+  let list = requests.value.filter(req => {
     // 1. Search Query Match
     const matchesSearch = 
       req.number.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+      req.requester.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
       req.items.some(item => 
         item.brand.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
         item.subcategory.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
         item.spec.toLowerCase().includes(searchQuery.value.toLowerCase())
       );
 
-    // 2. Type Match
-    const matchesType = filterType.value === 'semua' || req.type === filterType.value;
+    // 2. Pemanfaatan Match
+    const matchesUtilization = filterUtilization.value === 'semua' || req.pemanfaatan === filterUtilization.value;
 
-    // 3. Category Match
-    const matchesCategory = filterCategory.value === 'semua' || 
-      req.items.some(item => item.category === filterCategory.value);
+    // 3. Project Match
+    const matchesProject = filterProject.value === 'semua' || 
+      (req.pemanfaatan === 'project' && req.pemanfaatanDetail === filterProject.value);
 
-    // 4. Status Match
-    const matchesStatus = filterStatus.value === 'semua' || req.status === filterStatus.value;
-
-    // 5. Time Range Match
+    // 4. Time Range Match
     let matchesTime = true;
     if (filterTimeRange.value !== 'semua') {
       const reqDate = new Date(req.created_at);
@@ -143,9 +124,20 @@ const filteredRequests = computed(() => {
       }
     }
 
-    return matchesSearch && matchesType && matchesCategory && matchesStatus && matchesTime;
+    return matchesSearch && matchesUtilization && matchesProject && matchesTime;
   });
+
+  // Sorting
+  if (filterSort.value === 'terbaru') {
+    return [...list].sort((a, b) => b.id - a.id);
+  } else if (filterSort.value === 'terlama') {
+    return [...list].sort((a, b) => a.id - b.id);
+  }
+  // Default 'urgensi' sorting (wait is high priority) or keep backend order
+  return list;
 });
+
+import { router } from '@inertiajs/vue3';
 
 // ─────────────────────────────────────────────
 // Modal Pembatalan State
@@ -170,7 +162,8 @@ const closeCancelModal = () => {
 const handleConfirmCancel = () => {
   if (!activeRequestToCancel.value) return;
 
-  router.post(route('smart.history.cancel', activeRequestToCancel.value.id), {
+  router.post(route('smart.approve.action', activeRequestToCancel.value.id), {
+    action: 'reject',
     note: cancelNote.value
   }, {
     onSuccess: () => {
@@ -181,28 +174,29 @@ const handleConfirmCancel = () => {
 </script>
 
 <template>
-  <AppLayout title="Riwayat Permintaan">
+  <Head title="Perlu Approval" />
 
-    <!-- ── Breadcrumb ─────────────────────────────── -->
+  <AppLayout title="Perlu Approval">
+    <!-- ── Breadcrumb ── -->
     <Breadcrumb>
-      <BreadcrumbList class="pb-3">
+      <BreadcrumbList class="pb-3 text-xs md:text-sm">
         <BreadcrumbItem>
-          <span class="text-muted-foreground">Riwayat Permintaan</span>
+          <span class="text-muted-foreground">Perlu Approval</span>
         </BreadcrumbItem>
       </BreadcrumbList>
     </Breadcrumb>
 
-    <!-- ── Judul Halaman ──────────────────────────── -->
+    <!-- ── Judul Halaman ── -->
     <div class="mb-4">
-      <h1 class="text-2xl font-bold text-foreground">Riwayat permintaan dan peminjaman</h1>
+      <h1 class="text-2xl font-bold text-foreground">Approval: Perlu Perhatian Anda</h1>
     </div>
 
-    <!-- ── Input Pencarian (Rounded Capsule dengan Icon Search) ── -->
+    <!-- ── Input Pencarian ── -->
     <div class="relative w-full max-w-xl mb-6">
       <input
         v-model="searchQuery"
         type="text"
-        placeholder="Cari nama barang yang Anda minta atau pinjam..."
+        placeholder="Cari nomor permintaan atau nama yang meminta barang..."
         class="w-full h-11 pl-4 pr-12 text-sm border border-input rounded-full bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm"
       />
       <div class="absolute right-1 top-1 h-9 w-9 bg-primary/10 rounded-full flex items-center justify-center text-primary">
@@ -210,65 +204,59 @@ const handleConfirmCancel = () => {
       </div>
     </div>
 
-    <!-- ── Filter Controls ────────────────────────── -->
+    <!-- ── Filter Controls ── -->
     <div class="space-y-2 mb-6">
       <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">Filter</span>
       
       <div class="flex flex-wrap gap-3 items-center">
-        <!-- Filter Tipe (Permintaan / Peminjaman) -->
-        <div class="w-full sm:w-[220px]">
-          <Select v-model="filterType">
+        <!-- Urutkan -->
+        <div class="w-full sm:w-[180px]">
+          <Select v-model="filterSort">
             <SelectTrigger class="w-full rounded-[14px] h-10 text-sm">
-              <SelectValue placeholder="Tipe Permintaan" />
+              <SelectValue placeholder="Urutkan" />
             </SelectTrigger>
             <SelectContent class="rounded-[14px]">
-              <SelectItem value="semua">Permintaan &amp; Peminjaman</SelectItem>
-              <SelectItem value="permintaan">Hanya Permintaan (Habis Pakai)</SelectItem>
-              <SelectItem value="peminjaman">Hanya Peminjaman (Aset)</SelectItem>
+              <SelectItem value="urgensi">Urutkan: Urgensi</SelectItem>
+              <SelectItem value="terbaru">Terbaru</SelectItem>
+              <SelectItem value="terlama">Terlama</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
-        <!-- Filter Kategori -->
-        <div class="w-full sm:w-[180px]">
-          <Select v-model="filterCategory">
+        <!-- Corporate & Project -->
+        <div class="w-full sm:w-[200px]">
+          <Select v-model="filterUtilization">
             <SelectTrigger class="w-full rounded-[14px] h-10 text-sm">
-              <SelectValue placeholder="Kategori: Semua" />
+              <SelectValue placeholder="Corporate & Project" />
             </SelectTrigger>
             <SelectContent class="rounded-[14px]">
-              <SelectItem value="semua">Kategori: Semua</SelectItem>
+              <SelectItem value="semua">Corporate &amp; Project</SelectItem>
+              <SelectItem value="corporate">Hanya Corporate</SelectItem>
+              <SelectItem value="project">Hanya Project</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <!-- Pilih Project -->
+        <div class="w-full sm:w-[180px]">
+          <Select v-model="filterProject" :disabled="filterUtilization === 'corporate'">
+            <SelectTrigger class="w-full rounded-[14px] h-10 text-sm">
+              <SelectValue placeholder="Pilih Project" />
+            </SelectTrigger>
+            <SelectContent class="rounded-[14px]">
+              <SelectItem value="semua">Pilih Project</SelectItem>
               <SelectItem 
-                v-for="cat in categoryOptions" 
-                :key="cat" 
-                :value="cat"
+                v-for="proj in projectOptions" 
+                :key="proj" 
+                :value="proj"
               >
-                Kategori: {{ cat }}
+                {{ proj }}
               </SelectItem>
             </SelectContent>
           </Select>
         </div>
 
-        <!-- Filter Status -->
-        <div class="w-full sm:w-[180px]">
-          <Select v-model="filterStatus">
-            <SelectTrigger class="w-full rounded-[14px] h-10 text-sm">
-              <SelectValue placeholder="Status: Semua" />
-            </SelectTrigger>
-            <SelectContent class="rounded-[14px]">
-              <SelectItem value="semua">Status: Semua</SelectItem>
-              <SelectItem value="Menunggu approval">Menunggu approval</SelectItem>
-              <SelectItem value="Disetujui">Disetujui</SelectItem>
-              <SelectItem value="Serah Terima">Serah Terima</SelectItem>
-              <SelectItem value="Dipinjam">Dipinjam</SelectItem>
-              <SelectItem value="Selesai">Selesai</SelectItem>
-              <SelectItem value="Ditolak">Ditolak</SelectItem>
-              <SelectItem value="Dibatalkan">Dibatalkan</SelectItem>
-              <SelectItem value="Pending">Pending</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <!-- Filter Rentang Waktu -->
+        <!-- Rentang Waktu -->
         <div class="w-full sm:w-[220px]">
           <Select v-model="filterTimeRange">
             <SelectTrigger class="w-full rounded-[14px] h-10 text-sm flex items-center gap-2">
@@ -286,12 +274,12 @@ const handleConfirmCancel = () => {
       </div>
     </div>
 
-    <!-- ── Hasil Pencarian Title ──────────────────── -->
+    <!-- ── Hasil Pencarian Title ── -->
     <div class="mb-4">
       <span class="text-sm font-semibold text-foreground">Hasil Pencarian dan Filter:</span>
     </div>
 
-    <!-- ── Daftar Request Cards ───────────────────── -->
+    <!-- ── Daftar Request Cards ── -->
     <div class="space-y-4">
       <!-- Empty State -->
       <div 
@@ -299,14 +287,15 @@ const handleConfirmCancel = () => {
         class="bg-card border border-border rounded-[14px] p-12 text-center"
       >
         <AlertTriangle class="w-10 h-10 text-muted-foreground/60 mx-auto mb-3" />
-        <p class="text-sm text-muted-foreground font-medium">Tidak ada riwayat permintaan yang cocok dengan filter atau kata kunci pencarian.</p>
+        <p class="text-sm text-muted-foreground font-medium">Tidak ada permintaan yang perlu approval.</p>
       </div>
 
       <!-- Request Card -->
-      <RequestHistoryCard
+      <ManagerRequestCard
         v-for="req in filteredRequests"
         :key="req.id"
         :request="req"
+        :detailRoute="route('smart.approve.show', req.id)"
         @cancel="openCancelModal"
       />
     </div>
@@ -333,7 +322,7 @@ const handleConfirmCancel = () => {
           >
             <!-- Header -->
             <div class="flex items-center justify-between p-5 border-b border-border bg-card shrink-0">
-              <h3 class="text-base md:text-lg font-extrabold text-foreground">Pembatalan Permintaan/Peminjaman</h3>
+              <h3 class="text-base md:text-lg font-extrabold text-foreground">Tolak Permintaan / Peminjaman</h3>
               <button @click="closeCancelModal" class="p-1.5 hover:bg-muted rounded-full transition-colors">
                 <X class="w-5 h-5 text-muted-foreground" />
               </button>
@@ -345,7 +334,7 @@ const handleConfirmCancel = () => {
               <div class="p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div class="space-y-1.5 text-sm text-foreground flex-grow">
                   <p class="font-bold text-[#D9534F] text-base md:text-lg">
-                    Apakah Anda yakin untuk membatalkan permintaan/peminjaman ini?
+                    Apakah Anda yakin untuk menolak permintaan/peminjaman ini?
                   </p>
                   <p class="font-extrabold text-lg text-foreground">
                     {{ activeRequestToCancel?.number }}
@@ -382,6 +371,17 @@ const handleConfirmCancel = () => {
                 </div>
               </div>
 
+              <!-- Input Catatan/Alasan Rejection -->
+              <div class="px-6 pb-6 space-y-1.5">
+                <label class="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Catatan / Alasan Penolakan (Opsional)</label>
+                <textarea
+                  v-model="cancelNote"
+                  placeholder="Masukkan alasan penolakan..."
+                  rows="3"
+                  class="w-full text-sm border border-input rounded-lg bg-background p-2.5 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm"
+                ></textarea>
+              </div>
+
               <!-- Divider line -->
               <div class="border-t border-border/80 mx-6"></div>
 
@@ -413,7 +413,7 @@ const handleConfirmCancel = () => {
                         {{ item.brand }} {{ item.spec }}
                       </h5>
                       <p class="text-xs text-muted-foreground">
-                        Kategori: {{ item.category }} ({{ item.subcategory }})
+                        Kategori ({{ item.subcategory }})
                       </p>
                       
                       <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs font-semibold pt-0.5">
@@ -431,13 +431,5 @@ const handleConfirmCancel = () => {
         </div>
       </Transition>
     </Teleport>
-
   </AppLayout>
 </template>
-
-<style scoped>
-.animate-in {
-  animation-duration: 200ms;
-  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
-}
-</style>

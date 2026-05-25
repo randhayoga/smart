@@ -24,6 +24,9 @@ interface RequestDetail {
   number: string;
   requester: string;
   approver: string;
+  approval_by?: string;
+  confirmation_by?: string;
+  return_confirmed_by?: string;
   createdAt: string;
   updatedAt: string;
   pemanfaatan: 'corporate' | 'project';
@@ -57,13 +60,16 @@ const timeline = computed(() => {
     steps.push({ status: 'Ditolak', time: r.updatedAt || r.createdAt, completed: true });
   } else if (r.status === 'cancel') {
     steps.push({ status: 'Dibatalkan oleh Pengguna', time: r.updatedAt || r.createdAt, completed: true });
+  } else if (r.status === 'pending') {
+    steps.push({ status: 'Di-approve', user: r.approval_by || r.approver || 'Manager', time: r.createdAt, completed: true });
+    steps.push({ status: 'Pending', user: r.confirmation_by || 'Admin', time: r.updatedAt || r.createdAt, completed: true, isPending: true });
   } else {
-    steps.push({ status: 'Di-approve', user: r.approver, time: r.createdAt, completed: true });
-    steps.push({ status: 'Dikonfirmasi', user: 'Admin', time: r.createdAt, completed: true });
+    steps.push({ status: 'Di-approve', user: r.approval_by || r.approver || 'Manager', time: r.createdAt, completed: true });
+    steps.push({ status: 'Dikonfirmasi', user: r.confirmation_by || 'Admin', time: r.createdAt, completed: true });
     steps.push({ status: 'Serah Terima', time: r.createdAt, completed: true });
     if (r.type === 'peminjaman') {
       steps.push({ status: 'Aset selesai dipinjam', time: r.createdAt, completed: true });
-      steps.push({ status: 'Pengembalian aset', info: 'dikonfirmasi oleh Admin', time: r.updatedAt || r.createdAt, completed: true });
+      steps.push({ status: 'Pengembalian aset', info: r.return_confirmed_by ? `dikonfirmasi oleh ${r.return_confirmed_by}` : 'dikonfirmasi oleh Admin', time: r.updatedAt || r.createdAt, completed: true });
     }
     steps.push({ status: 'Selesai', time: r.updatedAt || r.createdAt, completed: true });
   }
@@ -109,7 +115,7 @@ const timeline = computed(() => {
               </p>
               <p>
                 <span class="text-muted-foreground">PIC Approval:</span> 
-                <span class="font-semibold"> {{ request.approver }}</span>
+                <span class="font-semibold"> {{ request.approval_by || request.approver }}</span>
               </p>
               <p>
                 <span class="text-muted-foreground">Waktu dibuat:</span> 
@@ -162,8 +168,12 @@ const timeline = computed(() => {
             >
               <!-- Icon/Indicator -->
               <div class="absolute -left-[32px] top-0 w-8 h-8 rounded-full bg-card flex items-center justify-center z-10">
+                <!-- Status Pending (Grey Dot) -->
+                <div v-if="step.isPending" class="w-6 h-6 rounded-full border-2 border-muted-foreground/30 flex items-center justify-center bg-card">
+                  <div class="w-2 h-2 rounded-full bg-muted-foreground/30"></div>
+                </div>
                 <!-- Status Done (Green Check Circle) -->
-                <div class="w-7 h-7 rounded-full border-2 border-green-500 flex items-center justify-center bg-card">
+                <div v-else class="w-7 h-7 rounded-full border-2 border-green-500 flex items-center justify-center bg-card">
                   <Check class="w-4 h-4 text-green-500 stroke-[3.5]" />
                 </div>
               </div>
@@ -171,16 +181,19 @@ const timeline = computed(() => {
               <!-- Content Step -->
               <div class="space-y-1">
                 <div>
-                  <h4 class="text-sm font-bold text-green-600">
+                  <h4 
+                    class="text-sm font-bold"
+                    :class="step.isPending ? 'text-muted-foreground' : 'text-green-600'"
+                  >
                     {{ step.status }}
                   </h4>
-                  <p v-if="step.user" class="text-xs font-semibold text-green-600 mt-0.5">
+                  <p v-if="step.user" class="text-xs font-semibold text-green-600 mt-0.5" :class="step.isPending ? 'text-muted-foreground/80' : 'text-green-600'">
                     oleh {{ step.user }}
                   </p>
                   <p v-if="step.time" class="text-xs text-muted-foreground mt-0.5">
                     {{ step.time }}
                   </p>
-                  <p v-if="step.info" class="text-xs text-green-600/80 font-medium mt-0.5">
+                  <p v-if="step.info" class="text-xs font-medium mt-0.5" :class="step.isPending ? 'text-muted-foreground/80' : 'text-green-600/80'">
                     {{ step.info }}
                   </p>
                 </div>

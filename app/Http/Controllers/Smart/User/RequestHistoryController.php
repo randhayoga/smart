@@ -32,6 +32,7 @@ class RequestHistoryController extends Controller
             'success' => 'Selesai',
             'reject' => 'Ditolak',
             'cancel' => 'Dibatalkan',
+            'pending' => 'Pending',
         ];
 
         $type = $req->start_date ? 'peminjaman' : 'permintaan';
@@ -84,8 +85,19 @@ class RequestHistoryController extends Controller
             'durationDays' => $durationDays,
             'durationHours' => $durationHours,
             'status' => $statusMap[$req->status] ?? $req->status,
+            'raw_status' => $req->status,
             'created_at' => $req->created_at ? $req->created_at->format('Y-m-d') : '-',
             'items' => $items,
+            'approver_name' => $req->approver?->name,
+            'approval_by' => $req->approval?->approver?->name,
+            'approval_at' => $req->approval?->decided_at?->format('d-m-Y H:i'),
+            'confirmation_by' => $req->adminConfirmation?->admin?->name,
+            'confirmation_at' => $req->adminConfirmation?->decided_at?->format('d-m-Y H:i'),
+            'return_confirmed_by' => $req->statusLogs->first(fn($log) => $log->status_from === 'return' && $log->status_to === 'success')?->changer?->name,
+            'handover_method' => $req->handover ? ($req->handover->method === 'pickup' ? 'Ambil sendiri' : 'Diantar') : null,
+            'handover_time' => $req->handover?->scheduled_date?->format('d-m-Y H:i'),
+            'handover_location' => $req->handover?->location,
+            'handover_note' => $req->handover?->note,
         ];
     }
 
@@ -94,7 +106,17 @@ class RequestHistoryController extends Controller
      */
     public function index(Request $request): Response
     {
-        $requests = SmartRequest::with(['items.barang.subcategory.category', 'items.barang.brand', 'project', 'department'])
+        $requests = SmartRequest::with([
+            'approver',
+            'items.barang.subcategory.category',
+            'items.barang.brand',
+            'project',
+            'department',
+            'approval.approver',
+            'adminConfirmation.admin',
+            'handover',
+            'statusLogs.changer'
+        ])
             ->where('user_id', $request->user()->id)
             ->orderBy('id', 'desc')
             ->get()
@@ -111,7 +133,17 @@ class RequestHistoryController extends Controller
      */
     public function show(Request $request, string $id): Response
     {
-        $req = SmartRequest::with(['items.barang.subcategory.category', 'items.barang.brand', 'project', 'department'])
+        $req = SmartRequest::with([
+            'approver',
+            'items.barang.subcategory.category',
+            'items.barang.brand',
+            'project',
+            'department',
+            'approval.approver',
+            'adminConfirmation.admin',
+            'handover',
+            'statusLogs.changer'
+        ])
             ->where('user_id', $request->user()->id)
             ->findOrFail($id);
 

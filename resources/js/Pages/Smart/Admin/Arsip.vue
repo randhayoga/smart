@@ -220,6 +220,7 @@ onMounted(() => {
                 <DropdownMenuItem @select="statusFilter = 'Sukses'">Sukses</DropdownMenuItem>
                 <DropdownMenuItem @select="statusFilter = 'Ditolak'">Ditolak</DropdownMenuItem>
                 <DropdownMenuItem @select="statusFilter = 'Dibatalkan'">Dibatalkan</DropdownMenuItem>
+                <DropdownMenuItem @select="statusFilter = 'Pending'">Pending</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 

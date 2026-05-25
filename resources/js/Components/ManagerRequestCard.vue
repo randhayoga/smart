@@ -1,12 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { Link } from '@inertiajs/vue3';
-import { Button } from '@/Components/ui/button';
-import { ChevronDown, ChevronUp, Trash2 } from 'lucide-vue-next';
+import { ChevronDown, ChevronUp } from 'lucide-vue-next';
 
-// ─────────────────────────────────────────────
-// Types
-// ─────────────────────────────────────────────
 interface RequestItem {
   id: number;
   subcategory: string;
@@ -22,61 +18,54 @@ interface RequestHistory {
   id: number;
   number: string;
   type: 'permintaan' | 'peminjaman';
+  requester: string;
   pemanfaatan: 'corporate' | 'project';
   pemanfaatanDetail: string;
   durationStart?: string;
   durationEnd?: string;
   durationDays?: number;
   durationHours?: number;
-  status: 'Menunggu approval' | 'Disetujui' | 'Ditolak' | 'Serah Terima' | 'Dipinjam' | 'Selesai' | 'Dibatalkan' | 'Pending';
-  raw_status: 'wait' | 'approve' | 'confirm' | 'handover' | 'borrow' | 'return' | 'success' | 'reject' | 'cancel' | 'pending';
+  status: string;
   created_at: string;
   items: RequestItem[];
 }
 
 const props = defineProps<{
   request: RequestHistory;
+  detailRoute: string;
 }>();
 
 const emit = defineEmits<{
   (e: 'cancel', request: RequestHistory): void;
 }>();
 
-// ─────────────────────────────────────────────
-// State & Collapsible Logic
-// ─────────────────────────────────────────────
 const isExpanded = ref(false);
 
 const toggleExpanded = () => {
   isExpanded.value = !isExpanded.value;
 };
 
-// Formatting Helper
 const formatDate = (dateStr: string) => {
   const parts = dateStr.split(/[-/]/);
   if (parts.length !== 3) return dateStr;
   return `${parts[2]}/${parts[1]}/${parts[0]}`; // DD/MM/YYYY
 };
 
-// ─────────────────────────────────────────────
-// Status Styling Helper
-// ─────────────────────────────────────────────
 const getStatusClasses = (status: string) => {
   switch (status) {
     case 'Menunggu approval':
       return 'bg-orange-500 text-white border-transparent';
     case 'Disetujui':
-      return 'bg-[#4B8DF8] text-white border-transparent'; // blue-ish
+      return 'bg-blue-500 text-white border-transparent';
     case 'Selesai':
       return 'bg-emerald-600 text-white border-transparent';
     case 'Serah Terima':
       return 'bg-indigo-500 text-white border-transparent';
     case 'Dipinjam':
-      return 'bg-[#EF4444] text-white border-transparent'; // red-pinkish for "Sedang dipinjam"
+      return 'bg-red-500 text-white border-transparent';
     case 'Ditolak':
     case 'Dibatalkan':
-    case 'Pending':
-      return 'bg-zinc-500 text-white border-transparent'; // gray
+      return 'bg-zinc-500 text-white border-transparent';
     default:
       return 'bg-muted text-muted-foreground border-border';
   }
@@ -93,14 +82,7 @@ const getStatusClasses = (status: string) => {
           class="text-xs font-bold px-3 py-1 rounded-[14px] border"
           :class="getStatusClasses(request.status)"
         >
-          {{ request.status === 'Disetujui' ? 'Di-approve' : (request.status === 'Dipinjam' ? 'Sedang dipinjam' : request.status) }}
-        </span>
-        <!-- Tenggat Pengembalian -->
-        <span 
-          v-if="request.status === 'Dipinjam' && request.durationEnd" 
-          class="text-xs font-bold px-3 py-1 rounded-[14px] border border-[#EF4444] text-[#EF4444] bg-[#EF4444]/5"
-        >
-          Tenggat pengembalian: {{ request.durationEnd }}
+          {{ request.status }}
         </span>
       </div>
       <span class="text-xs text-muted-foreground font-medium">
@@ -111,7 +93,7 @@ const getStatusClasses = (status: string) => {
     <div class="flex flex-col md:flex-row gap-5 items-start">
       <!-- Gambar Thumbnail Grid (2x2) atau Single -->
       <div class="shrink-0">
-        <!-- Jika item lebih dari 1, tampilkan grid 2x2 -->
+        <!-- Grid 2x2 if multi items -->
         <div 
           v-if="request.items.length > 1" 
           class="grid grid-cols-2 gap-1 w-20 h-20 rounded-[14px] overflow-hidden bg-muted border border-border p-1"
@@ -132,7 +114,7 @@ const getStatusClasses = (status: string) => {
           </div>
         </div>
         
-        <!-- Jika hanya 1 item -->
+        <!-- Single Item -->
         <div 
           v-else 
           class="w-20 h-20 rounded-[14px] bg-muted border border-border overflow-hidden flex items-center justify-center"
@@ -150,28 +132,29 @@ const getStatusClasses = (status: string) => {
 
       <!-- Deskripsi/Info Permintaan -->
       <div class="flex-grow space-y-1 min-w-0">
-        <h2 class="text-base font-bold text-foreground truncate">
+        <!-- Nama Peminta -->
+        <h3 class="text-base font-bold text-foreground">
+          {{ request.requester }}
+        </h3>
+        
+        <!-- Nomor Permintaan/Peminjaman -->
+        <h2 class="text-base font-bold text-foreground truncate mt-0.5">
           {{ request.number }}
         </h2>
         
         <!-- Pemanfaatan -->
-        <p class="text-sm text-foreground">
+        <p class="text-sm text-foreground pt-1">
           <span class="text-muted-foreground">Pemanfaatan:</span> 
           <span class="font-medium">
             {{ request.pemanfaatan === 'corporate' ? 'Corporate' : 'Project' }} ({{ request.pemanfaatanDetail }})
           </span>
         </p>
 
-        <!-- Durasi (Hanya untuk Peminjaman/Aset) -->
+        <!-- Durasi (Hanya untuk Peminjaman) -->
         <p v-if="request.type === 'peminjaman' && request.durationStart" class="text-sm text-foreground">
           <span class="text-muted-foreground">Durasi:</span>
           <span class="font-medium">
-            <template v-if="request.durationEnd">
-              {{ request.durationStart }} s.d. {{ request.durationEnd }} ({{ request.durationDays }} hari, {{ request.durationHours }} jam)
-            </template>
-            <template v-else>
-              {{ request.durationStart }} s.d. - (Tanpa Tenggat Waktu)
-            </template>
+            {{ request.durationStart }} s.d. {{ request.durationEnd }} ({{ request.durationDays }} hari, {{ request.durationHours }} jam)
           </span>
         </p>
 
@@ -179,7 +162,7 @@ const getStatusClasses = (status: string) => {
         <div class="pt-1">
           <button
             @click="toggleExpanded"
-            class="text-xs font-bold text-primary hover:opacity-85 flex items-center gap-1 transition-all"
+            class="text-xs font-bold text-[#6366F1] hover:opacity-85 flex items-center gap-1 transition-all"
           >
             <span>{{ isExpanded ? 'Sembunyikan Barang' : 'Lihat Barang' }}</span>
             <ChevronUp v-if="isExpanded" class="w-3.5 h-3.5" />
@@ -206,43 +189,26 @@ const getStatusClasses = (status: string) => {
       </div>
     </div>
 
+    <!-- Divider Line -->
+    <div class="border-t border-border mt-5 mb-4"></div>
+
     <!-- Tombol Aksi di Kaki Card -->
-    <div class="flex items-center justify-end gap-4 mt-4 pt-1">
+    <div class="flex items-center justify-end gap-4">
       <Link
-        :href="route('smart.history.show', request.id)"
-        class="text-xs md:text-sm font-semibold text-primary hover:underline transition-colors"
+        :href="detailRoute"
+        class="text-xs md:text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors"
       >
         Lihat Detail
       </Link>
 
       <!-- Tampilkan Batalkan Permintaan hanya jika status Menunggu approval -->
-      <Button
+      <button
         v-if="request.status === 'Menunggu approval'"
-        variant="destructive"
-        class="h-9 px-4 rounded-lg text-xs font-bold bg-[#D9534F] hover:bg-[#C9302C] text-white shadow-sm flex items-center gap-1.5"
+        class="h-9 px-5 rounded-lg text-xs font-bold bg-[#D9534F] hover:bg-[#C9302C] text-white shadow-sm flex items-center justify-center transition-colors cursor-pointer"
         @click="emit('cancel', request)"
       >
-        <Trash2 class="w-3.5 h-3.5" />
         Batalkan Permintaan
-      </Button>
-
-      <!-- Tampilkan Atur Serah Terima jika status Serah Terima (confirm) -->
-      <Link
-        v-if="request.raw_status === 'confirm'"
-        :href="route('smart.history.show', request.id)"
-        class="h-9 px-5 rounded-lg text-xs font-bold bg-[#6366F1] hover:bg-[#5558EB] text-white shadow-sm flex items-center justify-center transition-colors"
-      >
-        Atur Serah Terima
-      </Link>
-
-      <!-- Tampilkan Atur Pengembalian jika status Dipinjam (borrow) -->
-      <Link
-        v-if="request.raw_status === 'borrow'"
-        :href="route('smart.history.show', request.id)"
-        class="h-9 px-5 rounded-lg text-xs font-bold bg-[#6366F1] hover:bg-[#5558EB] text-white shadow-sm flex items-center justify-center transition-colors"
-      >
-        Atur Pengembalian
-      </Link>
+      </button>
     </div>
 
   </div>

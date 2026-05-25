@@ -54,19 +54,42 @@ class HandoverController extends Controller
      */
     public function show($id)
     {
-        $req = SmartRequest::with(['user', 'handover', 'items.barang.subcategory.category', 'items.barang.brand'])
+        $req = SmartRequest::with(['user', 'handover', 'approver', 'approval.approver', 'adminConfirmation.admin', 'project', 'department', 'items.barang.subcategory.category', 'items.barang.brand'])
             ->findOrFail($id);
+
+        $durationDays = 0;
+        $durationHours = 0;
+        if ($req->start_date && $req->end_date) {
+            $diff = $req->start_date->diff($req->end_date);
+            $durationDays = $diff->days;
+            $durationHours = $diff->h;
+        }
 
         $ho = $req->handover;
         $handoverData = [
             'id' => $req->id,
             'number' => $req->request_number,
             'requester' => $req->user->name ?? '-',
-            'method' => $ho && $ho->method === 'pickup' ? 'Diambil sendiri' : ($ho ? 'Diantar' : 'Belum diatur'),
+            'method' => $ho && $ho->method === 'pickup' ? 'Ambil sendiri' : ($ho ? 'Diantar' : 'Belum diatur'),
             'time' => $ho && $ho->scheduled_date ? $ho->scheduled_date->format('d-m-Y H:i') : '-',
             'location' => $ho ? $ho->location : '-',
             'note' => $ho ? $ho->note : '',
             'status' => $req->status,
+            'type' => $req->start_date ? 'peminjaman' : 'permintaan',
+            'pemanfaatan' => $req->utilization,
+            'pemanfaatanDetail' => $req->utilization === 'corporate' 
+                ? ($req->department->name ?? '-') 
+                : ($req->project->name ?? '-'),
+            'durationStart' => $req->start_date ? $req->start_date->format('d-m-Y H:i') : null,
+            'durationEnd' => $req->end_date ? $req->end_date->format('d-m-Y H:i') : null,
+            'durationDays' => $durationDays,
+            'durationHours' => $durationHours,
+            'createdAt' => $req->created_at ? $req->created_at->format('d-m-Y H:i') : '-',
+            'approver' => $req->approver?->name ?? '-',
+            'approval_by' => $req->approval?->approver?->name,
+            'approval_at' => $req->approval?->decided_at?->format('d-m-Y H:i'),
+            'confirmation_by' => $req->adminConfirmation?->admin?->name,
+            'confirmation_at' => $req->adminConfirmation?->decided_at?->format('d-m-Y H:i'),
         ];
 
         $items = $req->items->map(function ($item) {

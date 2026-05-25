@@ -14,7 +14,7 @@ class BorrowedController extends Controller
      */
     public function index()
     {
-        $borrowedList = SmartRequest::with(['user'])
+        $borrowedList = SmartRequest::with(['user', 'handover'])
             ->where('status', 'borrow')
             ->orderBy('id', 'desc')
             ->get()
@@ -25,7 +25,16 @@ class BorrowedController extends Controller
                 if ($req->end_date) {
                     $dueDateStr = $req->end_date->format('d-m-Y H:i');
                     $diff = now()->diffInDays($req->end_date, false);
-                    $daysLeft = $diff >= 0 ? (string)$diff : 'Telat ' . abs($diff) . ' hari';
+                    $daysLeft = $diff >= 0 ? (string)(int)$diff : 'Telat ' . abs((int)$diff) . ' hari';
+                }
+
+                // Calculate days passed since the goods were taken
+                $daysPassed = '-';
+                $confirmedAt = $req->handover?->user_confirmed_at ?? $req->updated_at;
+                if ($confirmedAt) {
+                    $diffPassed = $confirmedAt->diffInDays(now(), false);
+                    $daysPassedVal = max(0, (int) $diffPassed);
+                    $daysPassed = (string)$daysPassedVal . ' hari';
                 }
 
                 return [
@@ -34,6 +43,7 @@ class BorrowedController extends Controller
                     'borrower' => $req->user->name ?? '-',
                     'dueDate' => $dueDateStr,
                     'daysLeft' => $daysLeft,
+                    'daysPassed' => $daysPassed,
                 ];
             });
 
@@ -51,7 +61,7 @@ class BorrowedController extends Controller
      */
     public function show($id)
     {
-        $req = SmartRequest::with(['user', 'approver', 'items.barang.subcategory.category', 'items.barang.brand', 'project', 'department'])
+        $req = SmartRequest::with(['user', 'approver', 'approval.approver', 'adminConfirmation.admin', 'items.barang.subcategory.category', 'items.barang.brand', 'project', 'department'])
             ->findOrFail($id);
 
         $daysLeft = '-';
@@ -93,6 +103,8 @@ class BorrowedController extends Controller
             'number' => $req->request_number,
             'requester' => $req->user->name ?? '-',
             'approver' => $req->approver->name ?? '-',
+            'approval_by' => $req->approval?->approver?->name,
+            'confirmation_by' => $req->adminConfirmation?->admin?->name,
             'createdAt' => $req->created_at ? $req->created_at->format('d-m-Y H:i') : '-',
             'pemanfaatan' => $req->utilization,
             'pemanfaatanDetail' => $req->utilization === 'corporate' 

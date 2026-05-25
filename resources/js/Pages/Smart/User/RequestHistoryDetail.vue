@@ -59,9 +59,20 @@ interface RequestHistory {
   durationEnd?: string;
   durationDays?: number;
   durationHours?: number;
-  status: 'Menunggu approval' | 'Disetujui' | 'Ditolak' | 'Serah Terima' | 'Dipinjam' | 'Selesai' | 'Dibatalkan';
+  status: 'Menunggu approval' | 'Disetujui' | 'Ditolak' | 'Serah Terima' | 'Dipinjam' | 'Selesai' | 'Dibatalkan' | 'Pending';
+  raw_status: 'wait' | 'approve' | 'confirm' | 'handover' | 'borrow' | 'return' | 'success' | 'reject' | 'cancel' | 'pending';
   created_at: string; // format YYYY-MM-DD
   items: RequestItem[];
+  approval_by?: string | null;
+  approval_at?: string | null;
+  confirmation_by?: string | null;
+  confirmation_at?: string | null;
+  approver_name?: string | null;
+  return_confirmed_by?: string | null;
+  handover_method?: string | null;
+  handover_time?: string | null;
+  handover_location?: string | null;
+  handover_note?: string | null;
 }
 
 import { watch } from 'vue';
@@ -128,7 +139,7 @@ const parseDurationDate = (dateStr: string) => {
 const isAutoScheduled = computed(() => {
   const r = request.value;
   if (!r || r.type !== 'peminjaman' || !r.durationStart) return false;
-  if (r.status !== 'Disetujui') return false;
+  if (r.raw_status !== 'confirm') return false;
 
   const startDate = parseDurationDate(r.durationStart);
   if (!startDate) return false;
@@ -141,16 +152,19 @@ const isAutoScheduled = computed(() => {
 
 const effectiveHandoverMethod = computed(() => {
   if (isAutoScheduled.value) return 'Ambil sendiri';
+  if (request.value.handover_method) return request.value.handover_method;
   return handoverMethod.value && handoverMethod.value !== 'Pilih' ? handoverMethod.value : 'Ambil sendiri';
 });
 
 const effectiveHandoverTime = computed(() => {
   if (isAutoScheduled.value) return request.value.durationStart || '';
+  if (request.value.handover_time) return request.value.handover_time;
   return handoverTime.value || request.value.durationStart || '';
 });
 
 const effectiveHandoverLocation = computed(() => {
   if (isAutoScheduled.value) return 'Ruang GA / IT Support';
+  if (request.value.handover_location) return request.value.handover_location;
   return handoverLocation.value;
 });
 
@@ -493,117 +507,149 @@ const timelineSteps = computed((): TimelineStep[] => {
     status: 'done'
   });
 
-  if (r.status === 'Menunggu approval') {
-    steps.push({
-      title: 'Dalam proses approval',
-      status: 'active',
-      description: 'Menunggu peninjauan dari Admin/Departemen terkait.'
-    });
-  } else if (r.status === 'Disetujui' && !isAutoScheduled.value) {
-    steps.push({
-      title: 'Di-approve',
-      user: 'Jean Doe',
-      time: `${baseDate} 14:15`,
-      status: 'done'
-    });
-    steps.push({
-      title: 'Dikonfirmasi',
-      user: 'Radifa',
-      time: `${baseDate} 15:30`,
-      status: 'done'
-    });
-    steps.push({
-      title: 'Serah Terima',
-      status: 'action-required',
-      description: 'Serah Terima perlu diatur!'
-    });
-  } else if (r.status === 'Serah Terima' || (r.status === 'Disetujui' && isAutoScheduled.value)) {
-    steps.push({
-      title: 'Di-approve',
-      user: 'Jean Doe',
-      time: `${baseDate} 14:15`,
-      status: 'done'
-    });
-    steps.push({
-      title: 'Dikonfirmasi',
-      user: 'Radifa',
-      time: `${baseDate} 15:30`,
-      status: 'done'
-    });
-    steps.push({
-      title: 'Serah Terima',
-      status: 'action-required',
-      description: 'scheduled-details'
-    });
-    steps.push({
-      title: r.type === 'peminjaman' ? 'Sedang Dipinjam' : 'Selesai Digunakan',
-      status: 'pending',
-      description: r.type === 'peminjaman' ? 'Aset sedang Anda gunakan. Harap dikembalikan sebelum jatuh tempo.' : 'Barang habis pakai sudah diserahkan.'
-    });
-  } else if (r.status === 'Dipinjam') {
-    steps.push({
-      title: 'Di-approve',
-      user: 'Jean Doe',
-      time: `${baseDate} 14:15`,
-      status: 'done'
-    });
-    steps.push({
-      title: 'Dikonfirmasi',
-      user: 'Radifa',
-      time: `${baseDate} 15:30`,
-      status: 'done'
-    });
-    steps.push({
-      title: 'Serah Terima Selesai',
-      time: effectiveHandoverTime.value,
-      status: 'done',
-      description: `Serah terima diselesaikan secara ${effectiveHandoverMethod.value.toLowerCase()} di ${effectiveHandoverLocation.value}.`
-    });
-    steps.push({
-      title: r.type === 'peminjaman' ? 'Aset sedang Anda pinjam' : 'Aset sedang Anda gunakan',
-      status: 'action-required',
-      description: 'show-return-action'
-    });
-  } else if (r.status === 'Selesai') {
-    steps.push({
-      title: 'Di-approve',
-      user: 'Jean Doe',
-      time: `${baseDate} 14:15`,
-      status: 'done'
-    });
-    steps.push({
-      title: 'Dikonfirmasi',
-      user: 'Radifa',
-      time: `${baseDate} 15:30`,
-      status: 'done'
-    });
-    steps.push({
-      title: 'Serah Terima Selesai',
-      time: effectiveHandoverTime.value || `${baseDate} 16:00`,
-      status: 'done'
-    });
-    steps.push({
-      title: r.type === 'peminjaman' ? 'Barang Dikembalikan & Selesai' : 'Selesai',
-      time: r.type === 'peminjaman' ? (returnTime.value || `${baseDate} 17:00`) : `${baseDate} 17:00`,
-      status: 'done',
-      description: r.type === 'peminjaman' 
-        ? `Pengembalian diselesaikan secara ${effectiveReturnMethod.value.toLowerCase()} di ${effectiveReturnLocation.value}.` 
-        : 'Semua proses permintaan telah diselesaikan dengan sukses.'
-    });
-  } else if (r.status === 'Dibatalkan') {
+  // Handle Cancel / Reject statuses early
+  if (r.raw_status === 'cancel') {
     steps.push({
       title: 'Dibatalkan oleh Pengguna',
-      time: `${baseDate} 09:45`,
+      time: r.approval_at || `${baseDate} 09:45`,
       status: 'rejected',
       description: 'Anda telah membatalkan permintaan ini.'
     });
-  } else if (r.status === 'Ditolak') {
+    return steps;
+  }
+
+  if (r.raw_status === 'reject') {
     steps.push({
-      title: 'Ditolak oleh Admin',
-      time: `${baseDate} 11:20`,
+      title: 'Ditolak',
+      time: r.approval_at || `${baseDate} 11:20`,
       status: 'rejected',
       description: 'Permintaan ditolak karena stok di gudang tidak mencukupi atau spesifikasi tidak sesuai.'
     });
+    return steps;
+  }
+
+  // Active Lifecycle steps:
+  // Step 2: Di-approve (Manager Approval)
+  if (r.raw_status === 'wait') {
+    steps.push({
+      title: 'Menunggu approval',
+      status: 'active',
+      description: 'Menunggu approval dari Manager.'
+    });
+    steps.push({
+      title: 'Konfirmasi Admin',
+      status: 'pending',
+      description: 'Belum diproses.'
+    });
+    steps.push({
+      title: 'Serah Terima',
+      status: 'pending'
+    });
+    steps.push({
+      title: r.type === 'peminjaman' ? 'Sedang Dipinjam' : 'Selesai',
+      status: 'pending'
+    });
+  } else {
+    // If raw_status is approve, confirm, borrow, return, success:
+    steps.push({
+      title: 'Di-approve',
+      user: r.approval_by || r.approver_name || 'Manager',
+      time: r.approval_at || `${baseDate} 14:15`,
+      status: 'done'
+    });
+
+    // Step 3: Dikonfirmasi (Admin Confirmation)
+    if (r.raw_status === 'approve') {
+      steps.push({
+        title: 'Menunggu konfirmasi Admin',
+        status: 'active',
+        description: 'Permintaan disetujui Manager. Menunggu alokasi aset dan konfirmasi Admin.'
+      });
+      steps.push({
+        title: 'Serah Terima',
+        status: 'pending'
+      });
+      steps.push({
+        title: r.type === 'peminjaman' ? 'Sedang Dipinjam' : 'Selesai',
+        status: 'pending'
+      });
+    } else if (r.raw_status === 'pending') {
+      steps.push({
+        title: 'Pending',
+        status: 'pending',
+        user: r.confirmation_by || 'Admin',
+        time: r.confirmation_at || `${baseDate} 15:30`,
+        description: 'Pemesanan pending/ditunda oleh Admin karena stok barang habis.'
+      });
+      steps.push({
+        title: 'Serah Terima',
+        status: 'pending'
+      });
+      steps.push({
+        title: r.type === 'peminjaman' ? 'Sedang Dipinjam' : 'Selesai',
+        status: 'pending'
+      });
+    } else {
+      // If raw_status is confirm, borrow, return, success:
+      steps.push({
+        title: 'Dikonfirmasi',
+        user: r.confirmation_by || 'Admin',
+        time: r.confirmation_at || `${baseDate} 15:30`,
+        status: 'done'
+      });
+
+      // Step 4: Serah Terima
+      if (r.raw_status === 'confirm') {
+        const isScheduled = !!r.handover_time || isAutoScheduled.value;
+        steps.push({
+          title: 'Serah Terima',
+          status: 'action-required',
+          description: isScheduled ? 'scheduled-details' : 'Serah Terima perlu diatur!'
+        });
+        steps.push({
+          title: r.type === 'peminjaman' ? 'Sedang Dipinjam' : 'Selesai Digunakan',
+          status: 'pending',
+          description: r.type === 'peminjaman' ? 'Aset sedang Anda gunakan. Harap dikembalikan sebelum jatuh tempo.' : 'Barang habis pakai sudah diserahkan.'
+        });
+      } else if (r.raw_status === 'borrow' || r.raw_status === 'return') {
+        steps.push({
+          title: 'Serah Terima Selesai',
+          time: effectiveHandoverTime.value || `${baseDate} 16:00`,
+          status: 'done',
+          description: `Serah terima diselesaikan secara ${effectiveHandoverMethod.value.toLowerCase()} di ${effectiveHandoverLocation.value}.`
+        });
+
+        // Step 5: Penggunaan / Pengembalian
+        if (r.raw_status === 'borrow') {
+          steps.push({
+            title: r.type === 'peminjaman' ? 'Aset sedang Anda pinjam' : 'Aset sedang Anda gunakan',
+            status: 'action-required',
+            description: 'show-return-action'
+          });
+        } else {
+          // 'return'
+          steps.push({
+            title: 'Dalam Proses Pengembalian',
+            status: 'active',
+            description: 'Jadwal pengembalian telah diajukan. Menunggu konfirmasi Admin.'
+          });
+        }
+      } else if (r.raw_status === 'success') {
+        steps.push({
+          title: 'Serah Terima Selesai',
+          time: effectiveHandoverTime.value || `${baseDate} 16:00`,
+          status: 'done'
+        });
+        steps.push({
+          title: r.type === 'peminjaman' ? 'Barang Dikembalikan & Selesai' : 'Selesai',
+          time: returnTime.value || `${baseDate} 17:00`,
+          status: 'done',
+          description: r.type === 'peminjaman' 
+            ? `Pengembalian diselesaikan secara ${effectiveReturnMethod.value.toLowerCase()} di ${effectiveReturnLocation.value}${r.return_confirmed_by ? ' dan dikonfirmasi oleh ' + r.return_confirmed_by : ''}.` 
+            : 'Semua proses permintaan telah diselesaikan dengan sukses.'
+        });
+      }
+    }
   }
 
   return steps;
@@ -650,10 +696,10 @@ const timelineSteps = computed((): TimelineStep[] => {
 
     <!-- ── Alert Banner: Tindakan Diperlukan atau Pengingat Serah Terima ── -->
     <div 
-      v-if="request.status === 'Disetujui' || request.status === 'Serah Terima'" 
+      v-if="request.raw_status === 'confirm'" 
       class="mb-6 p-4 border border-[#6366F1] bg-[#6366F1]/5 rounded-[12px] flex flex-col sm:flex-row justify-between items-center gap-4 animate-in fade-in slide-in-from-top-1 duration-300"
     >
-      <span v-if="request.status === 'Disetujui' && !isAutoScheduled" class="text-sm font-semibold text-[#6366F1]">
+      <span v-if="!request.handover_time && !isAutoScheduled" class="text-sm font-semibold text-[#6366F1]">
         Tindakan diperlukan: serah terima belum diatur!
       </span>
       <span v-else class="text-sm font-semibold text-[#6366F1]">
@@ -661,7 +707,7 @@ const timelineSteps = computed((): TimelineStep[] => {
       </span>
 
       <Button 
-        v-if="request.status === 'Disetujui' && !isAutoScheduled"
+        v-if="!request.handover_time && !isAutoScheduled"
         @click="openHandoverModal" 
         class="bg-[#6366F1] hover:bg-[#5558EB] text-white font-bold px-5 h-9 rounded-lg text-xs md:text-sm shadow-sm transition-colors"
       >
