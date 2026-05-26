@@ -1157,14 +1157,19 @@ const closeErrorModal = () => {
                     </div>
 
                     <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Harga Satuan (Rp) <span class="italic text-muted-foreground">default</span><span class="text-rose-500">*</span></label>
-                      <input 
-                        type="number" 
-                        v-model="lotForm.unit_price"
-                        placeholder="Contoh: 60000"
-                        min="0"
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
-                      />
+                      <label class="text-sm font-medium text-foreground block">Harga Satuan <span class="italic text-muted-foreground">default</span><span class="text-rose-500">*</span></label>
+                      <div class="flex w-full rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors h-10 overflow-hidden">
+                        <span class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-r border-input select-none font-medium">
+                          Rp
+                        </span>
+                        <input 
+                          type="number" 
+                          v-model="lotForm.unit_price"
+                          placeholder="Contoh: 60000"
+                          min="0"
+                          class="flex-1 min-w-0 px-4 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 transition-colors h-full"
+                        />
+                      </div>
                     </div>
 
                     <div class="space-y-1.5">
