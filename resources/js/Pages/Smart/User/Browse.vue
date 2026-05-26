@@ -18,6 +18,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/Components/ui/dialog";
 
 interface Category {
@@ -209,6 +210,9 @@ const filteredAndSortedItems = computed(() => {
       <DialogContent class="sm:max-w-[886px] rounded-[14px]">
         <DialogHeader>
           <DialogTitle class="text-xl font-bold">Tambah ke Keranjang</DialogTitle>
+          <DialogDescription class="sr-only">
+            Formulir untuk menentukan jumlah barang yang ingin ditambahkan ke keranjang.
+          </DialogDescription>
         </DialogHeader>
         
         <hr class="border-border my-0" />

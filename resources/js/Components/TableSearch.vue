@@ -4,6 +4,8 @@ import { Search } from 'lucide-vue-next';
 defineProps<{
   modelValue: string;
   placeholder?: string;
+  id?: string;
+  name?: string;
 }>();
 
 defineEmits<{
@@ -16,6 +18,8 @@ defineEmits<{
     <Search class="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
     <input 
       type="text" 
+      :id="id"
+      :name="name"
       :value="modelValue"
       @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
       :placeholder="placeholder"
