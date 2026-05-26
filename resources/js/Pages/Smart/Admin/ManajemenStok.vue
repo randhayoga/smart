@@ -36,8 +36,6 @@ import DeleteTableButton from '@/Components/DeleteTableButton.vue';
 interface Category    { id: number; code: string; name: string; is_consumable: boolean; }
 interface Subcategory { id: number; code: string; name: string; category_id: number; category: Category; }
 interface SimpleItem  { id: number; name: string; }
-interface Floor       { id: number; name: string; location_id: number; location: SimpleItem; }
-interface Room        { id: number; name: string; floor_id: number; floor: Floor; }
 
 interface Props {
   user: { name: string; email: string; };
@@ -45,11 +43,6 @@ interface Props {
   subcategories: Subcategory[];
   uoms:          SimpleItem[];
   brands:        SimpleItem[];
-  organizers:    SimpleItem[];
-  vendors:       SimpleItem[];
-  locations:     SimpleItem[];
-  floors:        Floor[];
-  rooms:         Room[];
   barangs?:      any[];
 }
 
@@ -58,11 +51,6 @@ const props = withDefaults(defineProps<Props>(), {
   subcategories: () => [],
   uoms:          () => [],
   brands:        () => [],
-  organizers:    () => [],
-  vendors:       () => [],
-  locations:     () => [],
-  floors:        () => [],
-  rooms:         () => [],
   barangs:       () => [],
 });
 
@@ -247,7 +235,7 @@ const columns: ColumnDef<any>[] = [
   {
     id: 'actions',
     size: 84,
-    header: () => h('div', { class: 'w-full no-print pr-6' }, 'Aksi'),
+    header: () => h('div', { class: 'text-right no-print' }, 'Aksi'),
     cell: ({ row }) => {
       return h('div', { class: 'flex items-center justify-end gap-2 no-print' }, [
         h(ViewTableButton, {
@@ -575,8 +563,10 @@ const closeErrorModal = () => {
               <div class="flex flex-wrap items-end gap-3 flex-1">
                 <!-- Search -->
                 <div class="space-y-1.5 flex-1 min-w-[200px] max-w-xs">
-                  <label class="text-xs text-muted-foreground font-medium block">Filter</label>
+                  <label for="search-barang" class="text-xs text-muted-foreground font-medium block">Filter</label>
                   <TableSearch 
+                    id="search-barang"
+                    name="search"
                     v-model="searchQuery"
                     placeholder="Cari Barang..." 
                   />
@@ -631,7 +621,7 @@ const closeErrorModal = () => {
 
               <!-- Rows Per Page -->
               <div class="flex items-center gap-3 text-sm text-muted-foreground pb-0.5">
-                <span class="whitespace-nowrap">Baris per halaman</span>
+                <span class="whitespace-nowrap text-right">Baris per halaman</span>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal', (rowsPerPage === 'Semua baris' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
@@ -742,10 +732,12 @@ const closeErrorModal = () => {
                   <!-- Left Column -->
                   <div class="space-y-6">
                     <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Kode Barang<span class="text-rose-500">*</span></label>
+                      <label for="newItemCode" class="text-sm font-medium text-foreground block">Kode Barang<span class="text-rose-500">*</span></label>
                       <div class="flex gap-2">
                         <input 
                           type="text" 
+                          id="newItemCode"
+                          name="code"
                           v-model="newItem.code"
                           disabled
                           placeholder="Kode Barang belum di-generate" 
@@ -816,9 +808,11 @@ const closeErrorModal = () => {
                     </div>
 
                     <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Spesifikasi<span class="text-rose-500">*</span></label>
+                      <label for="newItemSpecification" class="text-sm font-medium text-foreground block">Spesifikasi<span class="text-rose-500">*</span></label>
                       <input 
                         type="text" 
+                        id="newItemSpecification"
+                        name="specification"
                         v-model="newItem.specification"
                         maxlength="255"
                         placeholder="Input spesifikasinya di sini..." 
@@ -827,7 +821,7 @@ const closeErrorModal = () => {
                     </div>
 
                     <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Foto <span class="italic text-muted-foreground">default</span><span class="text-rose-500">*</span></label>
+                      <label for="photo-upload" class="text-sm font-medium text-foreground block">Foto <span class="italic text-muted-foreground">default</span><span class="text-rose-500">*</span></label>
                       <div class="flex gap-2">
                         <div class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/10 text-muted-foreground truncate flex items-center h-10">
                           {{ newItem.photoName || 'Belum ada foto yang dipilih' }}
@@ -835,6 +829,7 @@ const closeErrorModal = () => {
                         <input 
                           type="file" 
                           id="photo-upload" 
+                          name="photo"
                           class="hidden" 
                           accept=".jpg,.jpeg,.png"
                           @change="handleFileUpload"

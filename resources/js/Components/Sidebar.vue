@@ -10,6 +10,7 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
+  SheetDescription,
 } from '@/Components/ui/sheet';
 import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 
@@ -117,6 +118,9 @@ const isActive = (href: string): boolean => {
           </div>
           <span class="font-bold text-xl text-gradient-primary">SMART</span>
         </SheetTitle>
+        <SheetDescription class="sr-only">
+          Navigasi utama untuk aplikasi SMART.
+        </SheetDescription>
       </SheetHeader>
       
       <!-- Scrollable Menu Area -->
