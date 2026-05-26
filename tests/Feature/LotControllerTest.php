@@ -44,6 +44,7 @@ class LotControllerTest extends TestCase
             'date_of_receipt' => '2026-05-22',
             'unit_price' => 60000,
             'image_url' => $file,
+            'total_item' => 3,
         ]);
 
         $response->assertRedirect();
@@ -64,6 +65,14 @@ class LotControllerTest extends TestCase
         $this->assertNotNull($lot->image_url);
         $this->assertNotEquals('inventory/lots/placeholder.jpg', $lot->image_url);
         Storage::disk('public')->assertExists($lot->image_url);
+
+        $this->assertEquals(3, $lot->units()->count());
+        $this->assertDatabaseHas('units', [
+            'lot_id' => $lot->id,
+            'number' => 'LOT-2026-ATK-KER-0001-0001-U01',
+            'status' => 'tersedia',
+            'price' => 60000,
+        ]);
     }
 
     public function test_can_update_lot(): void
@@ -142,6 +151,7 @@ class LotControllerTest extends TestCase
             'date_of_receipt' => '2026-05-22',
             'unit_price' => 60000,
             'use_parent_image' => true,
+            'total_item' => 2,
         ]);
 
         $response->assertRedirect();
@@ -150,6 +160,7 @@ class LotControllerTest extends TestCase
         $this->assertNotNull($lot->image_url);
         $this->assertNotEquals($barangImagePath, $lot->image_url);
         Storage::disk('public')->assertExists($lot->image_url);
+        $this->assertEquals(2, $lot->units()->count());
     }
 
     public function test_can_update_lot_using_parent_image(): void

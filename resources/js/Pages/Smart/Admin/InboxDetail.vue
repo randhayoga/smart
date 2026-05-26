@@ -49,6 +49,7 @@ interface RequestDetail {
 interface Props {
   requestId: string | number;
   request: RequestDetail;
+  user?: any;
 }
 
 const props = defineProps<Props>();
@@ -210,7 +211,7 @@ const handlePilihAlokasi = (item: any) => {
     </div>
 
     <!-- Info Banner -->
-    <div class="mb-6 p-1.5 pl-6 rounded-xl border border-indigo-200 bg-white flex items-center justify-between gap-3 text-indigo-600">
+    <div v-if="user?.role === 'admin'" class="mb-6 p-1.5 pl-6 rounded-xl border border-indigo-200 bg-white flex items-center justify-between gap-3 text-indigo-600">
       <p class="text-sm font-semibold">
         Tolong pastikan bahwa alokasi aset sudah sesuai dan konfirmasi permintaan/peminjaman ini
       </p>
@@ -358,7 +359,7 @@ const handlePilihAlokasi = (item: any) => {
                   </p>
                   
                   <!-- Action Buttons inside timeline step -->
-                  <div v-if="step.isAction" class="pt-3 flex gap-2">
+                  <div v-if="step.isAction && user?.role === 'admin'" class="pt-3 flex gap-2">
                     <button 
                       v-if="request.has_insufficient_stock"
                       @click="openPendingModal"
