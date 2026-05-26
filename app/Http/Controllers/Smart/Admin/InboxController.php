@@ -21,6 +21,10 @@ class InboxController extends Controller
      */
     public function index(Request $request): Response
     {
+        if ($request->user()->role !== 'admin') {
+            abort(403, 'Akses ditolak. Hanya Admin yang dapat mengakses halaman ini.');
+        }
+
         $requests = SmartRequest::with(['user', 'items'])
             ->whereIn('status', ['wait', 'approve'])
             ->orderBy('id', 'desc')
@@ -51,6 +55,10 @@ class InboxController extends Controller
      */
     public function show(Request $request, string $id): Response
     {
+        if ($request->user()->role !== 'admin') {
+            abort(403, 'Akses ditolak. Hanya Admin yang dapat mengakses halaman ini.');
+        }
+
         $req = SmartRequest::with(['user', 'approver', 'approval.approver', 'adminConfirmation.admin', 'items.barang.subcategory.category', 'items.barang.brand', 'project', 'department'])
             ->findOrFail($id);
 
@@ -133,6 +141,10 @@ class InboxController extends Controller
      */
     public function action(Request $request, $id)
     {
+        if ($request->user()->role !== 'admin') {
+            abort(403, 'Akses ditolak. Hanya Admin yang dapat mengakses halaman ini.');
+        }
+
         $validated = $request->validate([
             'action' => 'required|string|in:approve,reject,pending',
             'note' => 'nullable|string',

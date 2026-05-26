@@ -99,6 +99,10 @@ class ApprovalController extends Controller
      */
     public function index(Request $request): Response
     {
+        if ($request->user()->role !== 'manager') {
+            abort(403, 'Akses ditolak. Hanya Manager yang dapat mengakses halaman ini.');
+        }
+
         $requests = SmartRequest::with(['user', 'approver', 'approval.approver', 'adminConfirmation.admin', 'items.barang.subcategory.category', 'items.barang.brand', 'project', 'department'])
             ->where('approver_id', $request->user()->id)
             ->where('status', 'wait')
@@ -117,6 +121,10 @@ class ApprovalController extends Controller
      */
     public function approvedList(Request $request): Response
     {
+        if ($request->user()->role !== 'manager') {
+            abort(403, 'Akses ditolak. Hanya Manager yang dapat mengakses halaman ini.');
+        }
+
         $requests = SmartRequest::with(['user', 'approver', 'approval.approver', 'adminConfirmation.admin', 'items.barang.subcategory.category', 'items.barang.brand', 'project', 'department'])
             ->where('approver_id', $request->user()->id)
             ->where('status', '!=', 'wait')
@@ -135,6 +143,10 @@ class ApprovalController extends Controller
      */
     public function show(Request $request, string $id): Response
     {
+        if ($request->user()->role !== 'manager') {
+            abort(403, 'Akses ditolak. Hanya Manager yang dapat mengakses halaman ini.');
+        }
+
         $req = SmartRequest::with(['user', 'approver', 'approval.approver', 'adminConfirmation.admin', 'items.barang.subcategory.category', 'items.barang.brand', 'project', 'department'])
             ->where('approver_id', $request->user()->id)
             ->findOrFail($id);
@@ -151,6 +163,10 @@ class ApprovalController extends Controller
      */
     public function action(Request $request, $id)
     {
+        if ($request->user()->role !== 'manager') {
+            abort(403, 'Akses ditolak. Hanya Manager yang dapat mengakses halaman ini.');
+        }
+
         $validated = $request->validate([
             'action' => 'required|string|in:approve,reject',
             'note' => 'nullable|string',

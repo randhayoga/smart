@@ -201,9 +201,9 @@ const getStatusClasses = (status: string) => {
         Lihat Detail
       </Link>
 
-      <!-- Tampilkan Batalkan Permintaan hanya jika status Menunggu approval -->
+      <!-- Tampilkan Batalkan Permintaan hanya jika status Menunggu approval dan user adalah manager -->
       <button
-        v-if="request.status === 'Menunggu approval'"
+        v-if="request.status === 'Menunggu approval' && $page.props.auth.user?.role === 'manager'"
         class="h-9 px-5 rounded-lg text-xs font-bold bg-[#D9534F] hover:bg-[#C9302C] text-white shadow-sm flex items-center justify-center transition-colors cursor-pointer"
         @click="emit('cancel', request)"
       >

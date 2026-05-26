@@ -48,3 +48,4 @@
 48. Jangan menghapus komentar atau kode dokumentasi yang sudah ada jika tidak berkaitan langsung dengan perubahan yang sedang dilakukan, untuk menjaga riwayat pemikiran pengembang sebelumnya.
 49. Pastikan semua elemen interaktif (tombol, link, dropdown) memiliki cursor hover state dan active state yang jelas agar UX terasa hidup dan responsif.
 50. Selalu lakukan sinkronisasi branch lokal dengan remote branch secara teratur sebelum mulai mengerjakan tugas baru untuk menghindari conflict kode yang rumit di akhir.
+51. buatkan catatan untuk setiap fitur yang dibuat atau dirubah

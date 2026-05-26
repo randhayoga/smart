@@ -105,6 +105,7 @@ const lotForm = useForm({
   image_url: null as File | null,
   image_url_name: '',
   use_parent_image: false,
+  total_item: 1,
 });
 
 const generateLotCode = () => {
@@ -145,6 +146,7 @@ const openCreateLotModal = () => {
   lotForm.image_url = null;
   lotForm.image_url_name = '';
   lotForm.use_parent_image = false;
+  lotForm.total_item = 1;
   lotForm.clearErrors();
   isLotModalOpen.value = true;
 };
@@ -267,7 +269,7 @@ watch(() => lotForm.floor_id, (newVal) => {
 });
 
 const isLotFormValid = computed(() => {
-  return lotForm.number && 
+  const baseValid = lotForm.number && 
          lotForm.organizer_id && 
          lotForm.vendor_id && 
          lotForm.location_id && 
@@ -276,6 +278,11 @@ const isLotFormValid = computed(() => {
          lotForm.unit_price !== '' && 
          (lotForm.image_url || lotForm.image_url_name) &&
          !lotForm.processing;
+
+  if (lotModalMode.value === 'create') {
+    return baseValid && lotForm.total_item !== null && lotForm.total_item !== undefined && Number(lotForm.total_item) >= 1;
+  }
+  return baseValid;
 });
 
 const handleSaveLot = () => {
@@ -300,6 +307,9 @@ const handleSaveLot = () => {
     }
     if (data.use_parent_image) {
       formData.use_parent_image = data.use_parent_image;
+    }
+    if (lotModalMode.value === 'create') {
+      formData.total_item = data.total_item;
     }
     return formData;
   });
@@ -1119,6 +1129,17 @@ const closeErrorModal = () => {
                         default-label="Pilih lantai (opsional)"
                         width-class="w-full h-10 px-4"
                         :disabled="!lotForm.location_id"
+                      />
+                    </div>
+
+                    <div v-if="lotModalMode === 'create'" class="space-y-1.5">
+                      <label class="text-sm font-medium text-foreground block">Total Item<span class="text-rose-500">*</span></label>
+                      <input 
+                        type="number" 
+                        v-model="lotForm.total_item"
+                        placeholder="Contoh: 5"
+                        min="1"
+                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
                       />
                     </div>
                   </div>

@@ -168,7 +168,7 @@ const timeline = computed(() => {
 
     <!-- Info Banner (Approve or Reject Prompt) -->
     <div 
-      v-if="request.raw_status === 'wait'" 
+      v-if="request.raw_status === 'wait' && user?.role === 'manager'" 
       class="mb-6 p-1.5 pl-6 rounded-xl border border-indigo-200 bg-white flex items-center justify-between gap-3 text-indigo-600 animate-in fade-in duration-300"
     >
       <p class="text-sm font-semibold">
@@ -311,7 +311,7 @@ const timeline = computed(() => {
                   </p>
                   
                   <!-- Action Buttons inside timeline step -->
-                  <div v-if="step.isAction" class="pt-3 flex gap-2">
+                  <div v-if="step.isAction && user?.role === 'manager'" class="pt-3 flex gap-2">
                     <button 
                       @click="openActionModal('approve')"
                       class="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-lg transition-all shadow-sm cursor-pointer"

@@ -27,7 +27,11 @@ class LotController extends Controller
             'unit_price' => 'required|numeric|min:0',
             'image_url' => 'required_without:use_parent_image|nullable|image|max:1024',
             'use_parent_image' => 'nullable',
+            'total_item' => 'required|integer|min:1',
         ]);
+
+        $totalItem = $validated['total_item'];
+        unset($validated['total_item']);
 
         if ($request->boolean('use_parent_image')) {
             $barang = \App\Models\Inventory\Barang::findOrFail($request->input('barang_id'));
@@ -46,7 +50,21 @@ class LotController extends Controller
 
         unset($validated['use_parent_image']);
 
-        Lot::create($validated);
+        $lot = Lot::create($validated);
+
+        for ($i = 1; $i <= $totalItem; $i++) {
+            \App\Models\Inventory\Unit::create([
+                'number' => $lot->number . '-U' . str_pad($i, 2, '0', STR_PAD_LEFT),
+                'lot_id' => $lot->id,
+                'location_id' => $lot->location_id,
+                'floor_id' => $lot->floor_id,
+                'room_id' => $lot->room_id,
+                'status' => 'tersedia',
+                'condition' => 'Baik',
+                'price' => $lot->unit_price,
+                'image_url' => $lot->image_url,
+            ]);
+        }
 
         return redirect()->back()->with('success', 'LOT berhasil ditambahkan.');
     }

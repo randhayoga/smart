@@ -21,7 +21,7 @@ return new class extends Migration {
             $table->id();
             $table->foreignId('request_id')->constrained('requests')->cascadeOnDelete();
             $table->foreignId('admin_id')->constrained('users');
-            $table->enum('action', ['confirm', 'reject']);
+            $table->enum('action', ['confirm', 'reject', 'pending']);
             $table->text('note')->nullable();
             $table->dateTime('decided_at');
             $table->timestamps();
