@@ -15,6 +15,14 @@ class Unit extends Model
 {
     use HasFactory;
 
+    // Asset statuses (Consumables do not get individual UNIT records)
+    public const STATUS_AVAILABLE = 'available';
+    public const STATUS_BORROWED = 'borrowed';
+    public const STATUS_MAINTENANCE = 'maintenance';
+    public const STATUS_RESERVED = 'reserved';
+    public const STATUS_INACTIVE = 'inactive';
+    public const STATUS_BROKEN = 'broken';
+
     protected $fillable = [
         'number',
         'lot_id',
@@ -61,6 +69,11 @@ class Unit extends Model
     public function inventoryLogs(): HasMany
     {
         return $this->hasMany(InventoryLog::class);
+    }
+
+    public function statusApprovals(): HasMany
+    {
+        return $this->hasMany(UnitStatusApproval::class);
     }
 
     public function getNumberAttribute($value)

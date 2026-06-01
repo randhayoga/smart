@@ -38,6 +38,8 @@ class LotFactory extends Factory
             'location_id' => Location::factory(),
             'floor_id' => Floor::factory(),
             'room_id' => Room::factory(),
+            'initial_quantity' => 0,
+            'current_quantity' => 0,
             'po_number' => $this->faker->bothify('PO-##'),
             'date_of_receipt' => $this->faker->dateTime(),
             'unit_price' => $this->faker->randomFloat(2, 10000, 10000000),

@@ -28,6 +28,8 @@ return new class extends Migration {
             $table->foreignId('location_id')->constrained('locations');
             $table->foreignId('floor_id')->nullable()->after('location_id')->constrained('floors');
             $table->foreignId('room_id')->nullable()->after('floor_id')->constrained('rooms');
+            $table->integer('initial_quantity')->nullable();
+            $table->integer('current_quantity')->nullable();
             $table->string('po_number');
             $table->dateTime('date_of_receipt');
             $table->decimal('unit_price', 15, 2);
@@ -37,7 +39,7 @@ return new class extends Migration {
 
         Schema::create('units', function (Blueprint $table) {
             $table->id();
-            $table->string('number', 50)->unique();
+            $table->string('number', 30)->unique();
             $table->foreignId('lot_id')->constrained('lots');
             $table->foreignId('location_id')->constrained('locations');
             $table->foreignId('floor_id')->nullable()->after('location_id')->constrained('floors');
@@ -64,10 +66,24 @@ return new class extends Migration {
             $table->text('note')->nullable();
             $table->timestamps();
         });
+
+        Schema::create('unit_status_approvals', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('unit_id')->constrained('units')->cascadeOnDelete();
+            $table->foreignId('requester_id')->constrained('users');
+            $table->foreignId('approver_id')->nullable()->constrained('users');
+            $table->string('proposed_status');
+            $table->string('decision')->default('pending');
+            $table->text('note')->nullable();
+            $table->dateTime('requested_at');
+            $table->dateTime('decided_at')->nullable();
+            $table->timestamps();
+        });
     }
 
     public function down(): void
     {
+        Schema::dropIfExists('unit_status_approvals');
         Schema::dropIfExists('inventory_logs');
         Schema::dropIfExists('units');
         Schema::dropIfExists('lots');
