@@ -38,6 +38,7 @@ class InventoryController extends Controller
                     'uom' => $barang->uom->name ?? '-',
                     'subcategory_id' => $barang->subcategory_id,
                     'category_id' => $barang->subcategory->category_id ?? null,
+                    'is_consumable' => (bool)($barang->subcategory->category->is_consumable ?? false),
                     'brand_id' => $barang->brand_id,
                     'uom_id' => $barang->uom_id,
                 ];
@@ -78,6 +79,7 @@ class InventoryController extends Controller
             'uom' => $barang->uom->name ?? '-',
             'subcategory_id' => $barang->subcategory_id,
             'category_id' => $barang->subcategory->category_id ?? null,
+            'is_consumable' => (bool)($barang->subcategory->category->is_consumable ?? false),
             'brand_id' => $barang->brand_id,
             'uom_id' => $barang->uom_id,
         ];
@@ -105,6 +107,8 @@ class InventoryController extends Controller
                     'unitPrice' => $lot->unit_price,
                     'imageUrl' => $lot->image_url,
                     'assetCount' => $lot->units_count,
+                    'initial_quantity' => $lot->initial_quantity,
+                    'current_quantity' => $lot->current_quantity,
                 ];
             });
 

@@ -226,7 +226,7 @@ const columns: ColumnDef<any>[] = [
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Jumlah',
+        'Total',
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
@@ -299,7 +299,7 @@ const handleExportCSV = () => {
   const data = getExportData();
   if (data.length === 0) return;
   
-  const headers = ['Kode', 'Kategori', 'Subkategori', 'Merek', 'Spesifikasi', 'Pembaruan Terakhir', 'Jumlah'];
+  const headers = ['Kode', 'Kategori', 'Subkategori', 'Merek', 'Spesifikasi', 'Pembaruan Terakhir', 'Total'];
   const rows = data.map((item: any) => [
     `"${item.code}"`,
     `"${item.category}"`,
