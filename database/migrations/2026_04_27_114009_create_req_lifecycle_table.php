@@ -61,10 +61,24 @@ return new class extends Migration {
             $table->text('note')->nullable();
             $table->timestamp('created_at')->useCurrent(); // Single timestamp per ERD
         });
+
+        Schema::create('request_fulfillments', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('request_item_id')->constrained('request_items')->cascadeOnDelete();
+            $table->foreignId('unit_id')->nullable()->constrained('units');
+            $table->foreignId('lot_id')->nullable()->constrained('lots');
+            $table->foreignId('handover_id')->nullable()->constrained('request_handovers');
+            $table->foreignId('return_id')->nullable()->constrained('request_returns');
+            $table->integer('quantity_fulfilled')->default(1);
+            $table->dateTime('assigned_at');
+            $table->dateTime('completed_at')->nullable();
+            $table->timestamps();
+        });
     }
 
     public function down(): void
     {
+        Schema::dropIfExists('request_fulfillments');
         Schema::dropIfExists('request_status_logs');
         Schema::dropIfExists('request_returns');
         Schema::dropIfExists('request_handovers');

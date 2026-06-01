@@ -8,307 +8,324 @@ config:
   layout: elk
 ---
 erDiagram
-	direction LR
-	CATEGORY {
-		int id PK ""  
-		char_3 code UK ""  
-		varchar name  ""  
-		boolean is_consumable  ""  
-	}
+    direction BT
+    CATEGORY {
+        int id PK ""  
+        char_3 code UK ""  
+        varchar name  ""  
+        boolean is_consumable  ""  
+    }
 
-	SUBCATEGORY {
-		int id PK ""  
-		char_7 code UK ""  
-		varchar name  ""  
-		int category_id FK ""  
-	}
+    SUBCATEGORY {
+        int id PK ""  
+        char_7 code UK ""  
+        varchar name  ""  
+        int category_id FK ""  
+    }
 
-	UOM {
-		int id PK ""  
-		varchar name  "satuan barang"  
-	}
+    UOM {
+        int id PK ""  
+        varchar name  "satuan barang"  
+    }
 
-	BRAND {
-		int id PK ""  
-		varchar name  ""  
-	}
+    BRAND {
+        int id PK ""  
+        varchar name  ""  
+    }
 
-	ORGANIZER {
-		int id PK ""  
-		varchar name  ""  
-	}
+    ORGANIZER {
+        int id PK ""  
+        varchar name  ""  
+    }
 
-	VENDOR {
-		int id PK ""  
-		varchar name  ""  
-	}
+    VENDOR {
+        int id PK ""  
+        varchar name  ""  
+    }
 
-	LOCATION {
-		int id PK ""  
-		varchar name  ""  
-	}
+    LOCATION {
+        int id PK ""  
+        varchar name  ""  
+    }
 
-	FLOOR {
-		int id PK ""  
-		varchar name  ""  
-		int location_id FK ""  
-	}
+    FLOOR {
+        int id PK ""  
+        varchar name  ""  
+        int location_id FK ""  
+    }
 
-	ROOM {
-		int id PK ""  
-		varchar name  ""  
-		int floor_id FK ""  
-	}
+    ROOM {
+        int id PK ""  
+        varchar name  ""  
+        int floor_id FK ""  
+    }
 
-	HRD_EMPLOYEE {
-		int id PK ""  
-		int orgchart_id FK ""  
-		varchar employee_id UK ""  
-		varchar employee_name  ""  
-		varchar email UK ""  
-		boolean active  ""  
-	}
+    HRD_EMPLOYEE {
+        int id PK ""  
+        int orgchart_id FK ""  
+        varchar employee_id UK ""  
+        varchar employee_name  ""  
+        varchar email UK ""  
+        boolean active  ""  
+    }
 
-	ADM_USER {
-		int id PK ""  
-		varchar employee_id FK "HRD_EMPLOYEE's employee_id"  
-		varchar password_hash  ""  
-		varchar name  ""  
-	}
+    ADM_USER {
+        int id PK ""  
+        varchar employee_id FK "HRD_EMPLOYEE's employee_id"  
+        varchar password_hash  ""  
+        varchar name  ""  
+    }
 
-	HRD_ORGCHART {
-		int id PK ""  
-		int employee_id FK ""  
-		varchar org_code UK ""  
-		varchar org_name UK ""  
-	}
+    HRD_ORGCHART {
+        int id PK ""  
+        int employee_id FK ""  
+        varchar org_code UK ""  
+        varchar org_name UK ""  
+    }
 
-	TB_PROJECT {
-		int id PK ""  
-		varchar no_project UK ""  
-		varchar project_name  ""  
-		varchar client_id  ""  
-	}
+    TB_PROJECT {
+        int id PK ""  
+        varchar no_project UK ""  
+        varchar project_name  ""  
+        varchar client_id  ""  
+    }
 
-	TB_ASSIGN_PROJECT {
-		int id PK ""  
-		int npk FK "ADM_USER's employee_id"  
-		int no_project FK "TB_PROJECT's no_project"  
-		varchar id_rbs FK "TB_RBS's id"  
-		datetime start_date  ""  
-		datetime end_date  ""  
-	}
+    TB_ASSIGN_PROJECT {
+        int id PK ""  
+        int npk FK "ADM_USER's employee_id"  
+        int no_project FK "TB_PROJECT's no_project"  
+        varchar id_rbs FK "TB_RBS's id"  
+        datetime start_date  ""  
+        datetime end_date  ""  
+    }
 
-	TB_RBS {
-		int no_urut PK ""  
-		varchar id UK ""  
-		varchar name  ""  
-		varchar showing_name  ""  
-	}
+    TB_RBS {
+        int no_urut PK ""  
+        varchar id UK ""  
+        varchar name  ""  
+        varchar showing_name  ""  
+    }
 
-	BARANG {
-		int id PK ""  
-		char_12 number UK ""  
-		int subcategory_id FK ""  
-		int brand_id FK ""  
-		int uom_id FK ""  
-		varchar type  "consumable | asset"  
-		varchar specification  ""  
-		varchar image_url  "default image"  
-	}
+    BARANG {
+        int id PK ""  
+        char_12 number UK ""  
+        int subcategory_id FK ""  
+        int brand_id FK ""  
+        int uom_id FK ""  
+        varchar type  "consumable | asset"  
+        varchar specification  ""  
+        varchar image_url  "default image"  
+    }
 
-	LOT {
-		int id PK ""  
-		char_26 number UK ""  
-		int barang_id FK ""  
-		int organizer_id FK ""  
-		int vendor_id FK ""  
-		int location_id FK "default location"  
-		int floor_id FK "nullable | default location"  
-		int room_id FK "nullable | default location"  
-		varchar po_number  ""  
-		datetime date_of_receipt  ""  
-		numeric unit_price  "default unit price"  
-		varchar image_url  "default image"  
-	}
+    LOT {
+        int id PK ""  
+        char_26 number UK ""  
+        int barang_id FK ""  
+        int organizer_id FK ""  
+        int vendor_id FK ""  
+        int location_id FK "default location"  
+        int floor_id FK "nullable | default location"  
+        int room_id FK "nullable | default location"  
+        int initial_quantity "nullable"
+        int current_quantity "nullable"
+        varchar po_number  ""  
+        datetime date_of_receipt  ""  
+        numeric unit_price  "default unit price"  
+        varchar image_url  "default image"  
+    }
 
-	UNIT {
-		int id PK ""  
-		char_25 number UK ""  
-		int lot_id FK ""  
-		int location_id FK "current location"  
-		int floor_id FK "nullable | default location"  
-		int room_id FK "nullable | default location"  
-		varchar status  "tersedia | dipinjam (aset) | dipakai (habis pakai)"  
-		boolean is_status_verified  "default to false"  
-		varchar condition  ""  
-		numeric price  ""  
-		varchar image_url  ""  
-		varchar vehicle_registration  "nullable"  
-	}
+    UNIT {
+        int id PK ""  
+        char_25 number UK ""  
+        int lot_id FK ""  
+        int location_id FK "current location"  
+        int floor_id FK "nullable | default location"  
+        int room_id FK "nullable | default location"  
+        varchar status  ""  
+        boolean is_status_verified  "default to false"  
+        varchar condition  ""  
+        numeric price  ""  
+        varchar image_url  ""  
+        varchar vehicle_registration  "nullable"  
+    }
 
-	INVENTORY_LOG {
-		int id PK ""  
-		int barang_id FK "nullable"  
-		int lot_id FK "nullable"  
-		int unit_id FK "nullable"  
-		int user_id FK ""  
-		varchar action_type  "stock_in, stock_out, adjustment, relocation"  
-		int quantity_change  "default to 0"  
-		json previous_state  "nullable"  
-		json new_state  "nullable"  
-		text note  "nullable"  
-	}
+    UNIT_STATUS_APPROVAL {
+        int id PK ""
+        int unit_id FK ""
+        int requester_id FK "ADM_USER's id"
+        int approver_id FK "nullable | ADM_USER's id"
+        varchar proposed_status ""
+        varchar decision "pending | approved | rejected"
+        text note "nullable | required if rejected"
+        datetime requested_at ""
+        datetime decided_at "nullable"
+    }
 
-	CONSUMABLE_BASKET {
-		int id PK ""  
-		int user_id FK ""  
-		int barang_id FK ""  
-		int quantity  ""  
-	}
+    INVENTORY_LOG {
+        int id PK ""  
+        int barang_id FK "nullable"  
+        int lot_id FK "nullable"  
+        int unit_id FK "nullable"  
+        int user_id FK ""  
+        varchar action_type  "stock_in, stock_out, adjustment, relocation"  
+        int quantity_change  "default to 0"  
+        json previous_state  "nullable"  
+        json new_state  "nullable"  
+        text note  "nullable"  
+    }
 
-	ASSET_BASKET {
-		int id PK ""  
-		int user_id FK ""  
-		int barang_id FK ""  
-		int quantity  ""  
-		datetime start_date  ""  
-		datetime end_date  ""  
-	}
+    CONSUMABLE_BASKET {
+        int id PK ""
+        int user_id FK ""
+        int barang_id FK ""
+        int quantity ""
+    }
 
-	REQUEST {
-		int id PK ""  
-		char_11 request_number UK ""  
-		int user_id FK ""  
-		int approver_id FK ""  
-		varchar utilization  "project | corporate"  
-		int org_id FK "nullable"  
-		int project_id FK "nullable"  
-		text reasoning  ""  
-		varchar status  "overall status e.g., pending | partial | completed"  
-		datetime created_at  ""  
-		datetime updated_at  ""  
-	}
+    ASSET_BASKET {
+        int id PK ""
+        int user_id FK ""
+        int barang_id FK ""
+        int quantity ""
+        datetime start_date ""
+        datetime end_date ""
+    }
 
-	REQUEST_ITEM {
-		int id PK ""  
-		int request_id FK ""  
-		int barang_id FK ""  
-		int quantity_requested  ""  
-		datetime start_date  "nullable; assets only"  
-		datetime end_date  "nullable; assets only"  
-		varchar status  "pending | partially_fulfilled | fulfilled | cancelled"  
-	}
+    REQUEST {
+        int id PK ""  
+        char_11 request_number UK ""  
+        int user_id FK ""  
+        int approver_id FK ""  
+        varchar utilization  "project | corporate"  
+        int org_id FK "nullable"  
+        int project_id FK "nullable"  
+        text reasoning  ""  
+        varchar status  "overall status e.g., pending | partial | completed"  
+        datetime created_at  ""  
+        datetime updated_at  ""  
+    }
 
-	REQUEST_FULFILLMENT {
-		int id PK ""  
-		int request_item_id FK ""  
-		int unit_id FK "nullable | for assets"  
-		int lot_id FK "nullable | for consumables"  
-		int handover_id FK "nullable | links to schedule"  
-		int return_id FK "nullable | links to return schedule"  
-		int quantity_fulfilled  "defaults to 1 for assets"  
-		datetime assigned_at  ""  
-		datetime completed_at  "nullable"  
-	}
+    REQUEST_ITEM {
+        int id PK ""  
+        int request_id FK ""  
+        int barang_id FK ""  
+        int quantity_requested  ""  
+        datetime start_date  "nullable; assets only"  
+        datetime end_date  "nullable; assets only"  
+        varchar status "pending | partially_fulfilled | fulfilled | cancelled"
+    }
 
-	REQUEST_APPROVAL {
-		int id PK ""  
-		int request_id FK ""  
-		int approver_id FK ""  
-		varchar decision  "approved | rejected"  
-		text note  "nullable | required if rejected"  
-		datetime decided_at  ""  
-	}
+    REQUEST_FULFILLMENT {
+        int id PK ""  
+        int request_item_id FK ""  
+        int unit_id FK "nullable | for assets"
+        int lot_id FK "nullable | for consumables"
+        int handover_id FK "nullable | links to schedule"
+        int return_id FK "nullable | links to return schedule"
+        int quantity_fulfilled  "defaults to 1 for assets"
+        datetime assigned_at  ""  
+        datetime completed_at  "nullable"  
+    }
 
-	REQUEST_ADMIN_CONFIRMATION {
-		int id PK ""  
-		int request_id FK ""  
-		int admin_id FK ""  
-		varchar action  "confirmed | rejected"  
-		text note  "nullable | required if rejected"  
-		datetime acted_at  ""  
-	}
+    REQUEST_APPROVAL {
+        int id PK ""  
+        int request_id FK ""  
+        int approver_id FK ""  
+        varchar decision  "approved | rejected"  
+        text note  "nullable | required if rejected"  
+        datetime decided_at  ""  
+    }
 
-	REQUEST_HANDOVER {
-		int id PK ""  
-		int request_id FK ""  
-		varchar method  "delivery | pickup"  
-		datetime scheduled_date  ""  
-		varchar location  ""  
-		boolean is_auto_set  ""  
-		datetime user_confirmed_at  "nullable"  
-		boolean auto_confirmed  ""  
-		datetime admin_cancelled_at  "nullable"  
-		text note  "nullable | required if cancelled"  
-	}
+    REQUEST_ADMIN_CONFIRMATION {
+        int id PK ""  
+        int request_id FK ""  
+        int admin_id FK ""  
+        varchar action  "confirmed | rejected"  
+        text note  "nullable | required if rejected"  
+        datetime acted_at  ""  
+    }
 
-	REQUEST_RETURN {
-		int id PK ""  
-		int request_id FK ""  
-		varchar method  "pickup (active) | delivery (inactive)"  
-		datetime scheduled_date  ""  
-		varchar location  "default to Ruang IFS & can't be changed"  
-		boolean is_auto_set  ""  
-		datetime completed_at  "nullable"  
-	}
+    REQUEST_HANDOVER {
+        int id PK ""  
+        int request_id FK ""  
+        varchar method  "delivery | pickup"  
+        datetime scheduled_date  ""  
+        varchar location  ""  
+        boolean is_auto_set  ""  
+        datetime user_confirmed_at  "nullable"  
+        boolean auto_confirmed  ""  
+        datetime admin_cancelled_at  "nullable"  
+        text note  "nullable | required if cancelled"  
+    }
 
-	REQUEST_STATUS_LOG {
-		int id PK ""  
-		int request_id FK ""  
-		varchar status_from  ""  
-		varchar status_to  ""  
-		int changed_by FK "nullable"  
-		text note  "nullable"  
-		datetime created_at  ""  
-	}
+    REQUEST_RETURN {
+        int id PK ""  
+        int request_id FK ""  
+        varchar method  "pickup (active) | delivery (inactive)"  
+        datetime scheduled_date  ""  
+        varchar location  "default to Ruang IFS & can't be changed"  
+        boolean is_auto_set  ""  
+        datetime completed_at  "nullable"  
+    }
 
-	CATEGORY||--o{SUBCATEGORY:"has"
-	SUBCATEGORY||--o{BARANG:"classifies"
-	UOM||--o{BARANG:"measures"
-	BRAND||--o{BARANG:"made by"
-	BARANG||--o{LOT:"procured in"
-	ORGANIZER||--o{LOT:"managed by"
-	VENDOR||--o{LOT:"supplied by"
-	LOCATION||--o{LOT:"default location"
-	FLOOR||--o{LOT:"default floor"
-	ROOM||--o{LOT:"default room"
-	LOT||--o{UNIT:"contains"
-	LOCATION||--o{UNIT:"currently at"
-	FLOOR||--o{UNIT:"default floor"
-	ROOM||--o{UNIT:"default room"
-	HRD_EMPLOYEE||--||ADM_USER:"credentials"
-	HRD_ORGCHART||--o{HRD_EMPLOYEE:"employs"
-	HRD_EMPLOYEE||--o{HRD_ORGCHART:"manages"
-	ADM_USER||--o{CONSUMABLE_BASKET:"owns"
-	BARANG||--o{CONSUMABLE_BASKET:"in"
-	ADM_USER||--o{ASSET_BASKET:"owns"
-	BARANG||--o{ASSET_BASKET:"in"
-	ADM_USER||--o{TB_ASSIGN_PROJECT:"assigned to"
-	TB_PROJECT||--o{TB_ASSIGN_PROJECT:"project details"
-	TB_RBS||--o{TB_ASSIGN_PROJECT:"assigned as"
-	ADM_USER||--o{REQUEST:"submits"
-	ADM_USER||--o{REQUEST:"assigned to approve"
-	TB_PROJECT||--o{REQUEST:"allocated to project"
-	HRD_ORGCHART||--o{REQUEST:"allocated to dept"
-	REQUEST||--o{REQUEST_ITEM:"contains"
-	BARANG||--o{REQUEST_ITEM:"requested as"
-	REQUEST_ITEM||--o{REQUEST_FULFILLMENT:"fulfilled by"
-	UNIT||--o{REQUEST_FULFILLMENT:"assigned in"
-	LOT||--o{REQUEST_FULFILLMENT:"deducted from"
-	REQUEST||--o{REQUEST_HANDOVER:"generates handovers"
-	REQUEST_HANDOVER||--o{REQUEST_FULFILLMENT:"delivers"
-	REQUEST||--o{REQUEST_RETURN:"generates returns"
-	REQUEST_RETURN||--o{REQUEST_FULFILLMENT:"receives"
-	REQUEST||--o|REQUEST_APPROVAL:"reviewed by manager"
-	ADM_USER||--o{REQUEST_APPROVAL:"decides"
-	REQUEST||--o|REQUEST_ADMIN_CONFIRMATION:"reviewed by admin"
-	ADM_USER||--o{REQUEST_ADMIN_CONFIRMATION:"acts on"
-	REQUEST||--o{REQUEST_STATUS_LOG:"transitions"
-	ADM_USER||--o{REQUEST_STATUS_LOG:"actored"
-	BARANG||--o{INVENTORY_LOG:"logged"
-	LOT||--o{INVENTORY_LOG:"logged"
-	UNIT||--o{INVENTORY_LOG:"logged"
-	ADM_USER||--o{INVENTORY_LOG:"actored"
-	LOCATION||--o{FLOOR:"in floor"
-	FLOOR||--o{ROOM:"in room"
+    REQUEST_STATUS_LOG {
+        int id PK ""  
+        int request_id FK ""  
+        varchar status_from  ""  
+        varchar status_to  ""  
+        int changed_by FK "nullable"  
+        text note  "nullable"  
+        datetime created_at  ""  
+    }
+
+    CATEGORY||--o{SUBCATEGORY:"has"
+    SUBCATEGORY||--o{BARANG:"classifies"
+    UOM||--o{BARANG:"measures"
+    BRAND||--o{BARANG:"made by"
+    BARANG||--o{LOT:"procured in"
+    ORGANIZER||--o{LOT:"managed by"
+    VENDOR||--o{LOT:"supplied by"
+    LOCATION||--o{LOT:"default location"
+    FLOOR||--o{LOT:"default floor"
+    ROOM||--o{LOT:"default room"
+    LOT||--o{UNIT:"contains"
+    LOCATION||--o{UNIT:"currently at"
+    FLOOR||--o{UNIT:"default floor"
+    ROOM||--o{UNIT:"default room"
+    HRD_EMPLOYEE||--||ADM_USER:"credentials"
+    HRD_ORGCHART||--o{HRD_EMPLOYEE:"employs"
+    HRD_EMPLOYEE||--o{HRD_ORGCHART:"manages"
+    ADM_USER||--o{CONSUMABLE_BASKET:"owns"
+    BARANG||--o{CONSUMABLE_BASKET:"in"
+    ADM_USER||--o{ASSET_BASKET:"owns"
+    BARANG||--o{ASSET_BASKET:"in"
+    ADM_USER||--o{TB_ASSIGN_PROJECT:"assigned to"
+    TB_PROJECT||--o{TB_ASSIGN_PROJECT:"project details"
+    TB_RBS||--o{TB_ASSIGN_PROJECT:"assigned as"
+    ADM_USER||--o{REQUEST:"submits"
+    ADM_USER||--o{REQUEST:"assigned to approve"
+    TB_PROJECT||--o{REQUEST:"allocated to project"
+    HRD_ORGCHART||--o{REQUEST:"allocated to dept"
+    REQUEST||--o{REQUEST_ITEM:"contains"
+    BARANG||--o{REQUEST_ITEM:"requested as"
+    REQUEST_ITEM||--o{REQUEST_FULFILLMENT:"fulfilled by"
+    UNIT||--o{REQUEST_FULFILLMENT:"assigned in"
+    LOT||--o{REQUEST_FULFILLMENT:"deducted from"
+    REQUEST||--o{REQUEST_HANDOVER:"generates handovers"
+    REQUEST_HANDOVER||--o{REQUEST_FULFILLMENT:"delivers"
+    REQUEST||--o{REQUEST_RETURN:"generates returns"
+    REQUEST_RETURN||--o{REQUEST_FULFILLMENT:"receives"
+    REQUEST||--o|REQUEST_APPROVAL:"reviewed by manager"
+    ADM_USER||--o{REQUEST_APPROVAL:"decides"
+    REQUEST||--o|REQUEST_ADMIN_CONFIRMATION:"reviewed by admin"
+    ADM_USER||--o{REQUEST_ADMIN_CONFIRMATION:"acts on"
+    REQUEST||--o{REQUEST_STATUS_LOG:"transitions"
+    ADM_USER||--o{REQUEST_STATUS_LOG:"actored"
+    BARANG||--o{INVENTORY_LOG:"logged"
+    LOT||--o{INVENTORY_LOG:"logged"
+    UNIT||--o{INVENTORY_LOG:"logged"
+    UNIT||--o{UNIT_STATUS_APPROVAL:"has pending changes"
+    ADM_USER||--o{UNIT_STATUS_APPROVAL:"requests status change"
+    ADM_USER||--o{UNIT_STATUS_APPROVAL:"decides status change"
+    ADM_USER||--o{INVENTORY_LOG:"actored"
+    LOCATION||--o{FLOOR:"in floor"
+    FLOOR||--o{ROOM:"in room"

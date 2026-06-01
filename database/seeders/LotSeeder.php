@@ -24,6 +24,8 @@ class LotSeeder extends Seeder
                 'location_id' => 1,
                 'floor_id' => 1,
                 'room_id' => 1,
+                'initial_quantity' => 0,
+                'current_quantity' => 0,
                 'po_number' => 'PO-02',
                 'date_of_receipt' => '02/04/2026',
                 'unit_price' => 60000,
@@ -37,6 +39,8 @@ class LotSeeder extends Seeder
                 'location_id' => 1,
                 'floor_id' => 1,
                 'room_id' => 1,
+                'initial_quantity' => 0,
+                'current_quantity' => 0,
                 'po_number' => 'PO-01',
                 'date_of_receipt' => '01/03/2026',
                 'unit_price' => 60000,
@@ -50,6 +54,8 @@ class LotSeeder extends Seeder
                 'location_id' => 1,
                 'floor_id' => 1,
                 'room_id' => 1,
+                'initial_quantity' => 0,
+                'current_quantity' => 0,
                 'po_number' => 'PO-03',
                 'date_of_receipt' => '22/05/2026',
                 'unit_price' => 12500000,
@@ -63,6 +69,8 @@ class LotSeeder extends Seeder
                 'location_id' => 2,
                 'floor_id' => null,
                 'room_id' => null,
+                'initial_quantity' => 0,
+                'current_quantity' => 0,
                 'po_number' => 'PO-04',
                 'date_of_receipt' => '02/05/2026',
                 'unit_price' => 60000,
@@ -99,38 +107,14 @@ class LotSeeder extends Seeder
                     'location_id' => $data['location_id'],
                     'floor_id' => $data['floor_id'],
                     'room_id' => $data['room_id'],
+                    'initial_quantity' => $data['initial_quantity'],
+                    'current_quantity' => $data['current_quantity'],
                     'po_number' => $data['po_number'],
                     'date_of_receipt' => Carbon::createFromFormat('d/m/Y', $data['date_of_receipt']),
                     'unit_price' => $data['unit_price'],
                     'image_url' => $destinationPath,
                 ]
             );
-
-            // Generate units for the lot
-            $qty = 5; // Default quantity
-            if (str_contains($data['number'], 'ELE-LAP')) {
-                $qty = 2;
-            } elseif (str_contains($data['number'], 'KEN-MOB')) {
-                $qty = 1;
-            } elseif ($data['number'] === 'LOT-2026-ATK-KER-0001-0002') {
-                $qty = 10;
-            }
-
-            for ($i = 1; $i <= $qty; $i++) {
-                \App\Models\Inventory\Unit::updateOrCreate(
-                    ['number' => $lot->number . '-U' . str_pad($i, 2, '0', STR_PAD_LEFT)],
-                    [
-                        'lot_id' => $lot->id,
-                        'location_id' => $lot->location_id,
-                        'floor_id' => $lot->floor_id,
-                        'room_id' => $lot->room_id,
-                        'status' => 'tersedia',
-                        'condition' => 'Baik',
-                        'price' => $lot->unit_price,
-                        'image_url' => $lot->image_url,
-                    ]
-                );
-            }
         }
     }
 }
