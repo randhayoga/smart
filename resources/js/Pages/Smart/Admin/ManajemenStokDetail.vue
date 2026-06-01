@@ -21,12 +21,14 @@ import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem, BreadcrumbS
 import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
 import ViewTableButton from '@/Components/ViewTableButton.vue';
+import EditTableButton from '@/Components/EditTableButton.vue';
 import DeleteTableButton from '@/Components/DeleteTableButton.vue';
 import ExportButtonGroup from '@/Components/ExportButtonGroup.vue';
 import Tabs from '@/Components/Tabs.vue';
 import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal.vue';
 import DeleteErrorModal from '@/Components/DeleteErrorModal.vue';
 import Combobox from '@/Components/Combobox.vue';
+import { Checkbox } from '@/Components/ui/checkbox';
 
 interface Props {
   itemId: string | number;
@@ -45,6 +47,7 @@ interface Props {
     category_id: number;
     brand_id: number;
     uom_id: number;
+    is_consumable: boolean;
   };
   brands: { id: number; name: string; }[];
   uoms: { id: number; name: string; }[];
@@ -66,6 +69,8 @@ interface Props {
     unitPrice: number | string;
     imageUrl: string;
     assetCount: number;
+    initial_quantity?: number | null;
+    current_quantity?: number | null;
   }[];
   organizers: { id: number; name: string; }[];
   vendors: { id: number; name: string; }[];
@@ -99,6 +104,10 @@ const lotForm = useForm({
   location_id: '' as string | number,
   floor_id: null as string | number | null,
   room_id: null as string | number | null,
+  initial_quantity: '' as string | number,
+  current_quantity: '' as string | number,
+  auto_create_assets: false,
+  auto_create_assets_count: '' as string | number,
   po_number: '',
   date_of_receipt: '',
   unit_price: '' as string | number,
@@ -139,6 +148,10 @@ const openCreateLotModal = () => {
   lotForm.location_id = '';
   lotForm.floor_id = null;
   lotForm.room_id = null;
+  lotForm.initial_quantity = '';
+  lotForm.current_quantity = '';
+  lotForm.auto_create_assets = false;
+  lotForm.auto_create_assets_count = '';
   lotForm.po_number = '';
   lotForm.date_of_receipt = '';
   lotForm.unit_price = '';
@@ -162,6 +175,10 @@ const openEditLotModal = (lot: any) => {
   lotForm.location_id = lot.location_id;
   lotForm.floor_id = lot.floor_id;
   lotForm.room_id = lot.room_id;
+  lotForm.initial_quantity = lot.initial_quantity ?? '';
+  lotForm.current_quantity = lot.current_quantity ?? '';
+  lotForm.auto_create_assets = false;
+  lotForm.auto_create_assets_count = '';
   lotForm.po_number = lot.poNumber;
   
   if (lot.entryDate && lot.entryDate !== '-') {
@@ -267,7 +284,7 @@ watch(() => lotForm.floor_id, (newVal) => {
 });
 
 const isLotFormValid = computed(() => {
-  return lotForm.number && 
+  const baseValid = lotForm.number && 
          lotForm.organizer_id && 
          lotForm.vendor_id && 
          lotForm.location_id && 
@@ -276,6 +293,20 @@ const isLotFormValid = computed(() => {
          lotForm.unit_price !== '' && 
          (lotForm.image_url || lotForm.image_url_name) &&
          !lotForm.processing;
+
+  if (!baseValid) return false;
+
+  if (lotModalMode.value === 'create') {
+    if (props.barang.is_consumable) {
+      return lotForm.initial_quantity !== '' && lotForm.initial_quantity !== null && Number(lotForm.initial_quantity) >= 0;
+    }
+
+    if (lotForm.auto_create_assets) {
+      return lotForm.auto_create_assets_count !== '' && lotForm.auto_create_assets_count !== null && Number(lotForm.auto_create_assets_count) > 0;
+    }
+  }
+
+  return true;
 });
 
 const handleSaveLot = () => {
@@ -295,6 +326,15 @@ const handleSaveLot = () => {
       date_of_receipt: data.date_of_receipt,
       unit_price: data.unit_price,
     };
+    if (lotModalMode.value === 'create') {
+      if (props.barang.is_consumable) {
+        formData.initial_quantity = data.initial_quantity;
+        formData.current_quantity = data.current_quantity;
+      } else {
+        formData.auto_create_assets = data.auto_create_assets;
+        formData.auto_create_assets_count = data.auto_create_assets_count;
+      }
+    }
     if (data.image_url) {
       formData.image_url = data.image_url;
     }
@@ -408,19 +448,27 @@ const columns: ColumnDef<any>[] = [
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
       class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
     }, () => [
-      'Jml. Aset',
+      'Jml. Stok',
       h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
     ]),
-    cell: ({ row }) => h('div', { class: 'pl-0 text-muted-foreground' }, row.getValue('assetCount')),
+    cell: ({ row }) => h('div', { class: 'pl-0 text-muted-foreground' }, 
+      props.barang.is_consumable 
+        ? (row.original.current_quantity !== null && row.original.current_quantity !== undefined ? row.original.current_quantity : 0) 
+        : row.getValue('assetCount')
+    ),
   },
   {
     id: 'actions',
     size: 100,
     header: () => h('div', { class: 'text-center font-semibold text-foreground no-print' }, 'Aksi'),
     cell: ({ row }) => h('div', { class: 'flex items-center justify-center gap-2 no-print' }, [
-      h(ViewTableButton, {
-        onClick: () => openEditLotModal(row.original),
-      }),
+      props.barang.is_consumable === false
+        ? h(ViewTableButton, {
+            onClick: () => openEditLotModal(row.original),
+          })
+        : h(EditTableButton, {
+            onClick: () => openEditLotModal(row.original),
+          }),
       h(DeleteTableButton, {
         onClick: () => openDeleteLotModal(row.original),
       })
@@ -485,7 +533,7 @@ const uniqueOrganizers = computed(() => {
 });
 
 const totalStok = computed(() => {
-  return (props.lots || []).reduce((acc, lot) => acc + (Number(lot.assetCount) || 0), 0);
+  return (props.lots || []).reduce((acc, lot) => acc + (Number(lot.current_quantity) || 0), 0);
 });
 
 const getExportData = () => {
@@ -497,13 +545,13 @@ const handleExportCSV = () => {
   const data = getExportData();
   if (data.length === 0) return;
   
-  const headers = ['Kode LOT', 'Nomor PO', 'Tanggal Masuk', 'Organizer', 'Jml. Aset'];
+  const headers = ['Kode LOT', 'Nomor PO', 'Tanggal Masuk', 'Organizer', 'Jml. Stok'];
   const rows = data.map((item: any) => [
     `"${item.lotCode}"`,
     `"${item.poNumber}"`,
     `"${item.entryDate}"`,
     `"${item.organizer}"`,
-    `"${item.assetCount}"`
+    `"${props.barang.is_consumable ? (item.current_quantity ?? 0) : item.assetCount}"`
   ]);
 
   let csvContent = "\uFEFFsep=,\n" 
@@ -750,7 +798,7 @@ const closeErrorModal = () => {
             <p class="text-foreground">Kategori: {{ props.barang.category }}</p>
             <p class="text-foreground">Subkategori: {{ props.barang.subcategory }}</p>
             <p class="text-foreground">Jumlah LOT: {{ props.lots.length }}</p>
-            <p class="text-foreground">Jumlah stok: {{ totalStok }}</p>
+            <p class="text-foreground">Total stok: {{ totalStok }}</p>
             <p class="text-foreground">Satuan: {{ props.barang.uom }}</p>
             <p class="text-foreground">Pembaruan terakhir: {{ props.barang.lastUpdate }}</p>
           </div>
@@ -1052,23 +1100,13 @@ const closeErrorModal = () => {
                   <div class="space-y-6">
                     <div class="space-y-1.5">
                       <label class="text-sm font-medium text-foreground block">Kode LOT<span class="text-rose-500">*</span></label>
-                      <div class="flex gap-2">
-                        <input 
-                          type="text" 
-                          v-model="lotForm.number"
-                          disabled
-                          placeholder="Kode LOT belum di-generate"
-                          class="flex-grow px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
-                        />
-                        <button 
-                          v-if="lotModalMode === 'create'" 
-                          type="button" 
-                          @click="generateLotCode" 
-                          class="px-6 py-2 bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors h-10"
-                        >
-                          Generate
-                        </button>
-                      </div>
+                      <input 
+                        type="text" 
+                        v-model="lotForm.number"
+                        disabled
+                        placeholder="Kode LOT belum di-generate"
+                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
+                      />
                     </div>
 
                     <div class="space-y-1.5">
@@ -1121,6 +1159,39 @@ const closeErrorModal = () => {
                         :disabled="!lotForm.location_id"
                       />
                     </div>
+
+                    <!-- Conditional Stock Input / Auto Asset Creation Field (Create Mode Only) -->
+                    <template v-if="lotModalMode === 'create'">
+                      <div v-if="props.barang.is_consumable" class="space-y-1.5">
+                        <label class="text-sm font-medium text-foreground block">Jumlah stok<span class="text-rose-500">*</span></label>
+                        <input 
+                          type="number" 
+                          v-model="lotForm.initial_quantity"
+                          placeholder="Contoh: 10"
+                          min="0"
+                          class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
+                          @input="lotForm.current_quantity = lotForm.initial_quantity"
+                        />
+                      </div>
+                      <div v-else class="space-y-1.5 flex items-center gap-2 pt-2 flex-wrap">
+                        <Checkbox 
+                          id="auto-create-checkbox"
+                          v-model="lotForm.auto_create_assets"
+                        />
+                        <label for="auto-create-checkbox" class="cursor-pointer select-none text-sm font-medium text-foreground">
+                          Buat
+                        </label>
+                        <input 
+                          type="number" 
+                          v-model="lotForm.auto_create_assets_count"
+                          placeholder="..."
+                          min="1"
+                          :disabled="!lotForm.auto_create_assets"
+                          class="w-12 px-2 py-1 text-sm border border-input rounded-[10px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-8 disabled:opacity-50 disabled:cursor-not-allowed mx-1"
+                        />
+                        <span class="text-sm font-medium text-foreground">aset secara otomatis dengan nilai default.</span>
+                      </div>
+                    </template>
                   </div>
 
                   <!-- Right Column -->
