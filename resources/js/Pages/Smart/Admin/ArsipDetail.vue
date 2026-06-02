@@ -5,7 +5,8 @@ import AssetItemCard from '@/Components/AssetItemCard.vue';
 import { 
   CheckCircle2,
   Check,
-  Clock
+  Clock,
+  X
 } from 'lucide-vue-next';
 import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem, BreadcrumbSeparator } from '@/Components/ui/breadcrumb';
 
@@ -57,7 +58,12 @@ const timeline = computed(() => {
   steps.push({ status: 'Permintaan dibuat', time: r.createdAt, completed: true });
   
   if (r.status === 'reject') {
-    steps.push({ status: 'Ditolak', time: r.updatedAt || r.createdAt, completed: true });
+    steps.push({ 
+      status: 'Ditolak', 
+      user: r.approval_by || r.approver || 'Manager', 
+      time: r.updatedAt || r.createdAt, 
+      rejected: true 
+    });
   } else if (r.status === 'cancel') {
     steps.push({ status: 'Dibatalkan oleh Pengguna', time: r.updatedAt || r.createdAt, completed: true });
   } else if (r.status === 'pending') {
@@ -173,6 +179,10 @@ const timeline = computed(() => {
                   <div class="w-2 h-2 rounded-full bg-muted-foreground/30"></div>
                 </div>
                 <!-- Status Done (Green Check Circle) -->
+                <!-- Status Done (Green Check Circle) / Status Rejected (Red X) -->
+                <div v-else-if="step.rejected" class="w-7 h-7 rounded-full border-2 border-red-500 flex items-center justify-center bg-card">
+                  <X class="w-4 h-4 text-red-500 stroke-[3.5]" />
+                </div>
                 <div v-else class="w-7 h-7 rounded-full border-2 border-green-500 flex items-center justify-center bg-card">
                   <Check class="w-4 h-4 text-green-500 stroke-[3.5]" />
                 </div>
@@ -183,17 +193,37 @@ const timeline = computed(() => {
                 <div>
                   <h4 
                     class="text-sm font-bold"
-                    :class="step.isPending ? 'text-muted-foreground' : 'text-green-600'"
+                    :class="{
+                      'text-muted-foreground': step.isPending,
+                      'text-red-600': step.rejected,
+                      'text-green-600': !step.isPending && !step.rejected
+                    }"
                   >
                     {{ step.status }}
                   </h4>
-                  <p v-if="step.user" class="text-xs font-semibold text-green-600 mt-0.5" :class="step.isPending ? 'text-muted-foreground/80' : 'text-green-600'">
+                  <p 
+                    v-if="step.user" 
+                    class="text-xs font-semibold mt-0.5" 
+                    :class="{
+                      'text-muted-foreground/80': step.isPending,
+                      'text-red-600': step.rejected,
+                      'text-green-600': !step.isPending && !step.rejected
+                    }"
+                  >
                     oleh {{ step.user }}
                   </p>
                   <p v-if="step.time" class="text-xs text-muted-foreground mt-0.5">
                     {{ step.time }}
                   </p>
-                  <p v-if="step.info" class="text-xs font-medium mt-0.5" :class="step.isPending ? 'text-muted-foreground/80' : 'text-green-600/80'">
+                  <p 
+                    v-if="step.info" 
+                    class="text-xs font-medium mt-0.5" 
+                    :class="{
+                      'text-muted-foreground/80': step.isPending,
+                      'text-red-600/80': step.rejected,
+                      'text-green-600/80': !step.isPending && !step.rejected
+                    }"
+                  >
                     {{ step.info }}
                   </p>
                 </div>

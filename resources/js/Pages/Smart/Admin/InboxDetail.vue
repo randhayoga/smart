@@ -74,7 +74,7 @@ const timeline = computed(() => {
       user: r.approval_by || r.approver || 'Manager',
       completed: false,
       active: true,
-      isAction: true,
+      isAction: false,
     });
   } else if (r.status === 'approve') {
     steps.push({
