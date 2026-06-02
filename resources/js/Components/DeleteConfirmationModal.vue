@@ -63,10 +63,10 @@ const displayFields = computed(() => {
   // Determine fields for Lot
   if ('lotCode' in data) {
     fields.push({ label: 'Kode LOT', value: data.lotCode });
-    if (data.barang_brand) fields.push({ label: 'Merek', value: data.barang_brand });
-    if (data.barang_specification) fields.push({ label: 'Spesifikasi', value: data.barang_specification });
     if (data.barang_category) fields.push({ label: 'Kategori', value: data.barang_category });
     if (data.barang_subcategory) fields.push({ label: 'Subkategori', value: data.barang_subcategory });
+    if (data.barang_brand) fields.push({ label: 'Merek', value: data.barang_brand });
+    if (data.barang_specification) fields.push({ label: 'Spesifikasi', value: data.barang_specification });
     
     const uom = data.barang_uom || '';
     const currentQty = data.current_quantity !== undefined && data.current_quantity !== null ? data.current_quantity : 0;
@@ -75,6 +75,8 @@ const displayFields = computed(() => {
     fields.push({ label: 'Jumlah stok diawal', value: `${initialQty} ${uom}`.trim() });
     
     if (!data.is_consumable) {
+      fields.push({ label: 'Lokasi (default)', value: formatLocation(data) });
+    } else {
       fields.push({ label: 'Lokasi', value: formatLocation(data) });
     }
     
@@ -82,6 +84,8 @@ const displayFields = computed(() => {
     if (data.entryDate) fields.push({ label: 'Tanggal masuk', value: formatDateWithDashes(data.entryDate) });
     
     if (!data.is_consumable) {
+      fields.push({ label: 'Harga Satuan (default)', value: formatRupiah(data.unitPrice) });
+    } else {
       fields.push({ label: 'Harga Satuan', value: formatRupiah(data.unitPrice) });
     }
     
@@ -164,7 +168,7 @@ const displayFields = computed(() => {
                 </p>
 
                 <!-- Single Item Info Details -->
-                <div v-if="displayFields.length > 0" class="p-3 rounded-[14px] bg-muted/40 border border-border text-left space-y-2.5 w-full max-w-md mx-auto">
+                <div v-if="displayFields.length > 0" class="p-3 rounded-[14px] bg-muted/40 border border-border text-left space-y-2.5 w-full max-w-md mx-auto max-h-120 overflow-y-auto">
                   <div v-for="field in displayFields" :key="field.label" class="grid grid-cols-12 gap-2 text-sm border-b border-border/50 last:border-0 pb-2 last:pb-0">
                     <span class="col-span-5 text-muted-foreground font-medium">{{ field.label }}</span>
                     <span class="col-span-7 text-foreground font-semibold text-right break-words">
