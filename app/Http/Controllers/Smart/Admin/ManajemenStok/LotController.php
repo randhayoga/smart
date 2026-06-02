@@ -77,7 +77,11 @@ class LotController extends Controller
 
         if ($request->boolean('use_parent_image')) {
             if ($lot->image_url && $lot->image_url !== 'inventory/lots/placeholder.jpg' && Storage::disk('public')->exists($lot->image_url)) {
-                Storage::disk('public')->delete($lot->image_url);
+                $isShared = Lot::where('image_url', $lot->image_url)->where('id', '!=', $lot->id)->exists()
+                    || \App\Models\Inventory\Barang::where('image_url', $lot->image_url)->exists();
+                if (!$isShared) {
+                    Storage::disk('public')->delete($lot->image_url);
+                }
             }
             $barang = \App\Models\Inventory\Barang::findOrFail($request->input('barang_id'));
             if ($barang->image_url && Storage::disk('public')->exists($barang->image_url)) {
@@ -90,7 +94,11 @@ class LotController extends Controller
             }
         } else if ($request->hasFile('image_url')) {
             if ($lot->image_url && $lot->image_url !== 'inventory/lots/placeholder.jpg' && Storage::disk('public')->exists($lot->image_url)) {
-                Storage::disk('public')->delete($lot->image_url);
+                $isShared = Lot::where('image_url', $lot->image_url)->where('id', '!=', $lot->id)->exists()
+                    || \App\Models\Inventory\Barang::where('image_url', $lot->image_url)->exists();
+                if (!$isShared) {
+                    Storage::disk('public')->delete($lot->image_url);
+                }
             }
             $imagePath = $request->file('image_url')->store('inventory/lots', 'public');
             $validated['image_url'] = $imagePath;
@@ -111,7 +119,11 @@ class LotController extends Controller
     public function destroy(Lot $lot)
     {
         if ($lot->image_url && $lot->image_url !== 'inventory/lots/placeholder.jpg' && Storage::disk('public')->exists($lot->image_url)) {
-            Storage::disk('public')->delete($lot->image_url);
+            $isShared = Lot::where('image_url', $lot->image_url)->where('id', '!=', $lot->id)->exists()
+                || \App\Models\Inventory\Barang::where('image_url', $lot->image_url)->exists();
+            if (!$isShared) {
+                Storage::disk('public')->delete($lot->image_url);
+            }
         }
         $lot->delete();
 

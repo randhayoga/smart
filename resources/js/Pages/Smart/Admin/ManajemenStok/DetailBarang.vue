@@ -357,14 +357,12 @@ const handleSaveLot = () => {
     lotForm.post('/smart/inventory/lots', {
       onSuccess: () => {
         isLotModalOpen.value = false;
-        toast.success('LOT berhasil ditambahkan.');
       }
     });
   } else {
     lotForm.post(`/smart/inventory/lots/${selectedLotId.value}`, {
       onSuccess: () => {
         isLotModalOpen.value = false;
-        toast.success('LOT berhasil diperbarui.');
       }
     });
   }
@@ -709,7 +707,16 @@ const openDeleteModal = () => {
 
 const openDeleteLotModal = (lot: any) => {
   deleteMode.value = 'lot';
-  itemsToDelete.value = [lot];
+  itemsToDelete.value = [{
+    ...lot,
+    barang_code: lot.barang_code || props.barang.code,
+    barang_brand: lot.barang_brand || props.barang.brand,
+    barang_specification: lot.barang_specification || props.barang.specification,
+    barang_category: lot.barang_category || props.barang.category,
+    barang_subcategory: lot.barang_subcategory || props.barang.subcategory,
+    barang_uom: lot.barang_uom || props.barang.uom,
+    is_consumable: lot.is_consumable !== undefined ? lot.is_consumable : props.barang.is_consumable,
+  }];
   isDeleteModalOpen.value = true;
 };
 
@@ -733,7 +740,6 @@ const handleConfirmDelete = () => {
     router.delete(`/smart/inventory/lots/${ids[0]}`, {
       onSuccess: () => {
         closeDeleteModal();
-        toast.success('LOT berhasil dihapus.');
       }
     });
   }
@@ -897,7 +903,7 @@ const closeErrorModal = () => {
               />
             </div>
             
-            <button @click="openCreateLotModal" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition-all shadow-sm flex items-center gap-2">
+            <button @click="openCreateLotModal" class="px-5 py-2.5 bg-gradient-primary hover:opacity-90 text-white text-sm font-bold rounded-xl transition-all shadow-sm flex items-center gap-2">
               <Plus class="w-4 h-4" />
               LOT Baru
             </button>
@@ -1158,7 +1164,7 @@ const closeErrorModal = () => {
                     </div>
 
                     <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Lokasi <span class="italic text-muted-foreground">default</span><span class="text-rose-500">*</span></label>
+                      <label class="text-sm font-medium text-foreground block">Lokasi <span v-if="!props.barang.is_consumable" class="italic text-muted-foreground">default</span><span class="text-rose-500">*</span></label>
                       <Combobox
                         v-model="lotForm.location_id"
                         :options="props.locations"
@@ -1169,7 +1175,7 @@ const closeErrorModal = () => {
                     </div>
 
                     <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Lantai <span class="italic text-muted-foreground">default</span></label>
+                      <label class="text-sm font-medium text-foreground block">Lantai <span v-if="!props.barang.is_consumable" class="italic text-muted-foreground">default</span></label>
                       <Combobox
                         v-model="lotForm.floor_id"
                         :options="filteredFloors"
@@ -1217,7 +1223,7 @@ const closeErrorModal = () => {
                   <!-- Right Column -->
                   <div class="space-y-6">
                     <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Ruangan <span class="italic text-muted-foreground">default</span></label>
+                      <label class="text-sm font-medium text-foreground block">Ruangan <span v-if="!props.barang.is_consumable" class="italic text-muted-foreground">default</span></label>
                       <Combobox
                         v-model="lotForm.room_id"
                         :options="filteredRooms"
@@ -1248,7 +1254,7 @@ const closeErrorModal = () => {
                     </div>
 
                     <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Harga Satuan <span class="italic text-muted-foreground">default</span><span class="text-rose-500">*</span></label>
+                      <label class="text-sm font-medium text-foreground block">Harga Satuan <span v-if="!props.barang.is_consumable" class="italic text-muted-foreground">default</span><span class="text-rose-500">*</span></label>
                       <div class="flex w-full rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors h-10 overflow-hidden">
                         <span class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-r border-input select-none font-medium">
                           Rp
@@ -1264,7 +1270,7 @@ const closeErrorModal = () => {
                     </div>
 
                     <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Foto <span class="italic text-muted-foreground">default</span><span class="text-rose-500">*</span></label>
+                      <label class="text-sm font-medium text-foreground block">Foto <span v-if="!props.barang.is_consumable" class="italic text-muted-foreground">default</span><span class="text-rose-500">*</span></label>
                       <div class="flex gap-2">
                         <div 
                           class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/10 truncate flex items-center h-10"
