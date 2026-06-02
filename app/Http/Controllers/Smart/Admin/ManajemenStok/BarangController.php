@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Smart\Admin\Inventory;
+namespace App\Http\Controllers\Smart\Admin\ManajemenStok;
 
 use App\Http\Controllers\Controller;
 use App\Models\Inventory\Barang;

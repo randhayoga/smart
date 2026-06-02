@@ -29,6 +29,7 @@ import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal.vue';
 import DeleteErrorModal from '@/Components/DeleteErrorModal.vue';
 import Combobox from '@/Components/Combobox.vue';
 import { Checkbox } from '@/Components/ui/checkbox';
+import DetailLOTConsumables from './DetailLOTConsumables.vue';
 
 interface Props {
   itemId: string | number;
@@ -81,7 +82,7 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const tabs = ['Detail', 'Daftar Aset'];
+const tabs = computed(() => ['Detail', props.barang.is_consumable ? 'Daftar LOT' : 'Daftar Aset']);
 const activeTab = ref('Detail');
 
 const searchQuery = ref('');
@@ -94,6 +95,14 @@ const dataTableRef = ref<any>(null);
 const isLotModalOpen = ref(false);
 const lotModalMode = ref<'create' | 'edit'>('create');
 const selectedLotId = ref<number | null>(null);
+
+const isDetailConsumablesOpen = ref(false);
+const selectedLotForDetail = ref<number | null>(null);
+
+const openDetailLOTConsumables = (lot: any) => {
+  selectedLotForDetail.value = lot.id;
+  isDetailConsumablesOpen.value = true;
+};
 
 const lotForm = useForm({
   _method: 'POST',
@@ -461,18 +470,29 @@ const columns: ColumnDef<any>[] = [
     id: 'actions',
     size: 100,
     header: () => h('div', { class: 'text-center font-semibold text-foreground no-print' }, 'Aksi'),
-    cell: ({ row }) => h('div', { class: 'flex items-center justify-center gap-2 no-print' }, [
-      props.barang.is_consumable === false
-        ? h(ViewTableButton, {
-            onClick: () => openEditLotModal(row.original),
+    cell: ({ row }) => {
+      const buttons = [];
+      if (props.barang.is_consumable) {
+        buttons.push(
+          h(ViewTableButton, {
+            onClick: () => openDetailLOTConsumables(row.original)
           })
-        : h(EditTableButton, {
-            onClick: () => openEditLotModal(row.original),
-          }),
-      h(DeleteTableButton, {
-        onClick: () => openDeleteLotModal(row.original),
-      })
-    ]),
+        );
+      } else {
+        buttons.push(
+          h(ViewTableButton, {
+            disabled: true,
+            class: 'opacity-50 cursor-not-allowed pointer-events-none'
+          })
+        );
+      }
+      buttons.push(
+        h(DeleteTableButton, {
+          onClick: () => openDeleteLotModal(row.original),
+        })
+      );
+      return h('div', { class: 'flex items-center justify-center gap-2 no-print' }, buttons);
+    }
   },
 ];
 
@@ -1035,7 +1055,7 @@ const closeErrorModal = () => {
               </div>
 
               <!-- Modal Footer -->
-              <div class="p-6 border-t border-border flex items-center justify-between">
+              <div class="py-3 px-4 border-t border-border flex items-center justify-between">
                 <p class="text-sm text-rose-500 italic font-medium">*Wajib diisi</p>
                 <div class="flex items-center gap-3">
                   <button 
@@ -1114,7 +1134,7 @@ const closeErrorModal = () => {
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !lotForm.organizer_id ? 'text-muted-foreground' : 'text-foreground']">
-                            {{ props.organizers.find(o => o.id === lotForm.organizer_id)?.name || 'Pilih organizer' }}
+                            {{ props.organizers.find(o => o.id == lotForm.organizer_id)?.name || 'Pilih organizer' }}
                             <ChevronDown class="w-4 h-4 opacity-50" />
                           </Button>
                         </DropdownMenuTrigger>
@@ -1285,7 +1305,7 @@ const closeErrorModal = () => {
               </div>
 
               <!-- Modal Footer -->
-              <div class="p-6 border-t border-border flex items-center justify-between">
+              <div class="py-3 px-4 border-t border-border flex items-center justify-between">
                 <p class="text-sm text-rose-500 italic font-medium">*Wajib diisi</p>
                 <div class="flex items-center gap-3">
                   <button 
@@ -1321,6 +1341,13 @@ const closeErrorModal = () => {
       :is-open="isErrorModalOpen"
       :error-message="errorModalMessage"
       @close="closeErrorModal"
+    />
+    <DetailLOTConsumables 
+      :is-open="isDetailConsumablesOpen"
+      :lot-id="selectedLotForDetail"
+      @close="isDetailConsumablesOpen = false"
+      @edit="openEditLotModal"
+      @delete="openDeleteLotModal"
     />
   </AppLayout>
 </template>

@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class InventoryController extends Controller
+class ManajemenStokController extends Controller
 {
     /**
      * Menampilkan halaman manajemen stok barang (Inventory).
@@ -44,7 +44,7 @@ class InventoryController extends Controller
                 ];
             });
 
-        return Inertia::render('Smart/Admin/ManajemenStok', [
+        return Inertia::render('Smart/Admin/ManajemenStok/ManajemenStok', [
             'user' => $request->user(),
             'categories' => $categories,
             'subcategories' => $subcategories,
@@ -120,7 +120,7 @@ class InventoryController extends Controller
         $floors = \App\Models\Master\Floor::with('location')->orderBy('name')->get();
         $rooms = \App\Models\Master\Room::with('floor.location')->orderBy('name')->get();
 
-        return Inertia::render('Smart/Admin/ManajemenStokDetail', [
+        return Inertia::render('Smart/Admin/ManajemenStok/DetailBarang', [
             'user' => $request->user(),
             'itemId' => $id,
             'barang' => $formattedBarang,

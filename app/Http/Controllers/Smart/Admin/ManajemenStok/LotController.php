@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Smart\Admin\Inventory;
+namespace App\Http\Controllers\Smart\Admin\ManajemenStok;
 
 use App\Http\Controllers\Controller;
 use App\Models\Inventory\Lot;
@@ -116,5 +116,52 @@ class LotController extends Controller
         $lot->delete();
 
         return redirect()->back()->with('success', 'LOT berhasil dihapus.');
+    }
+
+    /**
+     * Menampilkan detail data LOT dalam format JSON.
+     */
+    public function show(Lot $lot)
+    {
+        $lot->load([
+            'barang.subcategory.category',
+            'barang.brand',
+            'barang.uom',
+            'organizer',
+            'vendor',
+            'location',
+            'floor',
+            'room'
+        ]);
+
+        return response()->json([
+            'id' => $lot->id,
+            'lotCode' => $lot->number,
+            'poNumber' => $lot->po_number,
+            'entryDate' => $lot->date_of_receipt ? $lot->date_of_receipt->format('d/m/Y') : '-',
+            'organizer' => $lot->organizer->name ?? '-',
+            'organizer_id' => $lot->organizer_id,
+            'vendor' => $lot->vendor->name ?? '-',
+            'vendor_id' => $lot->vendor_id,
+            'location' => $lot->location->name ?? '-',
+            'location_id' => $lot->location_id,
+            'floor' => $lot->floor->name ?? null,
+            'floor_id' => $lot->floor_id,
+            'room' => $lot->room->name ?? null,
+            'room_id' => $lot->room_id,
+            'unitPrice' => $lot->unit_price,
+            'imageUrl' => $lot->image_url,
+            'initial_quantity' => $lot->initial_quantity,
+            'current_quantity' => $lot->current_quantity,
+            'updated_at' => $lot->updated_at ? $lot->updated_at->format('d/m/Y H:i') : '-',
+            
+            // Parent barang info
+            'barang_code' => $lot->barang->number ?? '-',
+            'barang_brand' => $lot->barang->brand->name ?? '-',
+            'barang_specification' => $lot->barang->specification ?? '-',
+            'barang_category' => $lot->barang->subcategory->category->name ?? '-',
+            'barang_subcategory' => $lot->barang->subcategory->name ?? '-',
+            'barang_uom' => $lot->barang->uom->name ?? '-',
+        ]);
     }
 }
