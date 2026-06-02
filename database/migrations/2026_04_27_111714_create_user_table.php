@@ -24,17 +24,17 @@ return new class extends Migration {
             $table->string('org_name')->unique();
             $table->timestamps();
 
-            $table->foreign('employee_id')->references('employee_id')->on('hrd_employees')->cascadeOnDelete();
+            $table->foreign('employee_id')->references('employee_id')->on('hrd_employees')->nullOnDelete();
         });
 
         // Now enforce orgchart FK on hrd_employees
         Schema::table('hrd_employees', function (Blueprint $table) {
-            $table->foreign('orgchart_id')->references('id')->on('hrd_orgcharts')->cascadeOnDelete();
+            $table->foreign('orgchart_id')->references('id')->on('hrd_orgcharts')->nullOnDelete();
         });
 
         Schema::create('adm_users', function (Blueprint $table) {
             $table->id();
-            $table->string('employee_id');
+            $table->string('employee_id')->unique();
             $table->string('password_hash');
             $table->string('name');
             $table->rememberToken();

@@ -4,7 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Inventory\Barang;
 use App\Models\Inventory\Lot;
-use App\Models\User;
+use App\Models\AdmUser as User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 

@@ -54,9 +54,9 @@ return new class extends Migration {
 
         Schema::create('unit_status_approvals', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('unit_id')->constrained('units')->cascadeOnDelete();
-            $table->foreignId('requester_id')->constrained('adm_users')->comment("ADM_USER's id");
-            $table->foreignId('approver_id')->nullable()->constrained('adm_users')->comment("nullable | ADM_USER's id");
+            $table->foreignId('unit_id')->constrained('units')->noActionOnDelete();
+            $table->foreignId('requester_id')->constrained('adm_users')->comment("ADM_USER's id")->noActionOnDelete();
+            $table->foreignId('approver_id')->nullable()->constrained('adm_users')->comment("nullable | ADM_USER's id")->noActionOnDelete();
             $table->string('proposed_status');
             $table->string('decision')->default('pending')->comment('pending | approved | rejected');
             $table->text('note')->nullable()->comment('nullable | required if rejected');
@@ -67,10 +67,10 @@ return new class extends Migration {
 
         Schema::create('inventory_logs', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('barang_id')->nullable()->constrained('barangs')->nullOnDelete();
-            $table->foreignId('lot_id')->nullable()->constrained('lots')->nullOnDelete();
-            $table->foreignId('unit_id')->nullable()->constrained('units')->nullOnDelete();
-            $table->foreignId('user_id')->constrained('adm_users')->cascadeOnDelete();
+            $table->foreignId('barang_id')->nullable()->constrained('barangs')->noActionOnDelete();
+            $table->foreignId('lot_id')->nullable()->constrained('lots')->noActionOnDelete();
+            $table->foreignId('unit_id')->nullable()->constrained('units')->noActionOnDelete();
+            $table->foreignId('user_id')->constrained('adm_users')->noActionOnDelete();
             $table->string('action_type')->comment('stock_in, stock_out, adjustment, relocation');
             $table->integer('quantity_change')->default(0);
             $table->json('previous_state')->nullable();

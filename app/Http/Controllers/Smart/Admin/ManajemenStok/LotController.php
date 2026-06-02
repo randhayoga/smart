@@ -47,6 +47,7 @@ class LotController extends Controller
         }
 
         unset($validated['use_parent_image']);
+        $validated['initial_quantity'] = $validated['initial_quantity'] ?? 0;
 
         Lot::create($validated);
 
@@ -107,6 +108,7 @@ class LotController extends Controller
         }
 
         unset($validated['use_parent_image']);
+        $validated['initial_quantity'] = $validated['initial_quantity'] ?? 0;
 
         $lot->update($validated);
 
