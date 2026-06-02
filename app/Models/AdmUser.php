@@ -20,6 +20,12 @@ class AdmUser extends Authenticatable
         'name',
     ];
 
+    protected $appends = [
+        'username',
+        'role',
+        'is_admin',
+    ];
+
     /**
      * The attributes that should be hidden for serialization.
      *
@@ -43,7 +49,7 @@ class AdmUser extends Authenticatable
      */
     public function getRoleAttribute(): string
     {
-        $admins = ['2555578'];
+        $admins = ['255578'];
         if (in_array($this->employee_id, $admins) || app()->runningUnitTests()) {
             return 'admin';
         }
