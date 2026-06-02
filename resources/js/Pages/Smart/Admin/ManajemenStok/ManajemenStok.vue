@@ -647,7 +647,7 @@ const closeErrorModal = () => {
                   <button 
                     @click="openDeleteModal(dataTableRef.table.getFilteredRowModel().rows.filter((r: any) => r.getIsSelected()).map((r: any) => r.original))"
                     :disabled="!dataTableRef || Object.keys(dataTableRef.table.getState().rowSelection).length === 0"
-                    class="flex items-center gap-2 px-4 py-2 bg-destructive hover:bg-destructive text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm disabled:opacity-50"
+                    class="flex items-center gap-2 px-4 py-2 bg-destructive hover:opacity-70 text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm disabled:opacity-50"
                   >
                     <Trash2 class="w-4 h-4" />
                     <span class="hidden sm:inline">Hapus Barang</span>

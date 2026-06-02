@@ -109,6 +109,7 @@ class ManajemenStokController extends Controller
                     'assetCount' => $lot->units_count,
                     'initial_quantity' => $lot->initial_quantity,
                     'current_quantity' => $lot->current_quantity,
+                    'updated_at' => $lot->updated_at ? $lot->updated_at->format('d/m/Y H:i') : '-',
                 ];
             });
 
