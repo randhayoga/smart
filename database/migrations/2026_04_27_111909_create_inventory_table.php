@@ -14,42 +14,54 @@ return new class extends Migration {
             $table->foreignId('brand_id')->constrained('brands');
             $table->foreignId('uom_id')->constrained('uoms');
             $table->string('specification');
-            $table->string('image_url');
-            $table->timestamp('last_restock_at')->nullable();
+            $table->string('image_url')->comment('default image');
+            $table->dateTime('last_restock_at')->nullable();
             $table->timestamps();
         });
 
         Schema::create('lots', function (Blueprint $table) {
             $table->id();
             $table->string('number', 26)->unique();
-            $table->foreignId('barang_id')->constrained('barangs');
-            $table->foreignId('organizer_id')->constrained('organizers');
-            $table->foreignId('vendor_id')->constrained('vendors');
-            $table->foreignId('location_id')->constrained('locations');
-            $table->foreignId('floor_id')->nullable()->after('location_id')->constrained('floors');
-            $table->foreignId('room_id')->nullable()->after('floor_id')->constrained('rooms');
-            $table->integer('initial_quantity')->nullable();
-            $table->integer('current_quantity')->nullable();
+            $table->foreignId('barang_id')->constrained('barangs')->cascadeOnDelete();
+            $table->foreignId('organizer_id')->constrained('organizers')->cascadeOnDelete();
+            $table->foreignId('vendor_id')->constrained('vendors')->cascadeOnDelete();
+            $table->foreignId('location_id')->constrained('locations')->comment('default location');
+            $table->foreignId('floor_id')->nullable()->constrained('floors')->comment('nullable | default location');
+            $table->foreignId('room_id')->nullable()->constrained('rooms')->comment('nullable | default location');
+            $table->integer('initial_quantity');
+            $table->integer('current_quantity')->nullable()->comment('for consumables');
             $table->string('po_number');
             $table->dateTime('date_of_receipt');
-            $table->decimal('unit_price', 15, 2);
-            $table->string('image_url');
+            $table->decimal('unit_price', 15, 2)->comment('default unit price');
+            $table->string('image_url')->comment('default image');
             $table->timestamps();
         });
 
         Schema::create('units', function (Blueprint $table) {
             $table->id();
             $table->string('number', 30)->unique();
-            $table->foreignId('lot_id')->constrained('lots');
-            $table->foreignId('location_id')->constrained('locations');
-            $table->foreignId('floor_id')->nullable()->after('location_id')->constrained('floors');
-            $table->foreignId('room_id')->nullable()->after('floor_id')->constrained('rooms');
-            $table->enum('status', ['tersedia', 'dipinjam', 'dipakai', 'nonaktif']);
+            $table->foreignId('lot_id')->constrained('lots')->cascadeOnDelete();
+            $table->foreignId('location_id')->constrained('locations')->comment('current location');
+            $table->foreignId('floor_id')->nullable()->constrained('floors');
+            $table->foreignId('room_id')->nullable()->constrained('rooms');
+            $table->string('status');
             $table->string('condition');
             $table->decimal('price', 15, 2);
             $table->string('image_url');
             $table->string('vehicle_registration')->nullable();
-            $table->foreignId('user_id')->nullable()->constrained('users'); // Reserved unit
+            $table->timestamps();
+        });
+
+        Schema::create('unit_status_approvals', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('unit_id')->constrained('units')->cascadeOnDelete();
+            $table->foreignId('requester_id')->constrained('adm_users')->comment("ADM_USER's id");
+            $table->foreignId('approver_id')->nullable()->constrained('adm_users')->comment("nullable | ADM_USER's id");
+            $table->string('proposed_status');
+            $table->string('decision')->default('pending')->comment('pending | approved | rejected');
+            $table->text('note')->nullable()->comment('nullable | required if rejected');
+            $table->dateTime('requested_at');
+            $table->dateTime('decided_at')->nullable();
             $table->timestamps();
         });
 
@@ -58,33 +70,20 @@ return new class extends Migration {
             $table->foreignId('barang_id')->nullable()->constrained('barangs')->nullOnDelete();
             $table->foreignId('lot_id')->nullable()->constrained('lots')->nullOnDelete();
             $table->foreignId('unit_id')->nullable()->constrained('units')->nullOnDelete();
-            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
-            $table->string('action_type'); // e.g. stock_in, stock_out, adjustment, relocation
-            $table->integer('quantity_change')->default(0); 
+            $table->foreignId('user_id')->constrained('adm_users')->cascadeOnDelete();
+            $table->string('action_type')->comment('stock_in, stock_out, adjustment, relocation');
+            $table->integer('quantity_change')->default(0);
             $table->json('previous_state')->nullable();
             $table->json('new_state')->nullable();
             $table->text('note')->nullable();
-            $table->timestamps();
-        });
-
-        Schema::create('unit_status_approvals', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('unit_id')->constrained('units')->cascadeOnDelete();
-            $table->foreignId('requester_id')->constrained('users');
-            $table->foreignId('approver_id')->nullable()->constrained('users');
-            $table->string('proposed_status');
-            $table->string('decision')->default('pending');
-            $table->text('note')->nullable();
-            $table->dateTime('requested_at');
-            $table->dateTime('decided_at')->nullable();
             $table->timestamps();
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('unit_status_approvals');
         Schema::dropIfExists('inventory_logs');
+        Schema::dropIfExists('unit_status_approvals');
         Schema::dropIfExists('units');
         Schema::dropIfExists('lots');
         Schema::dropIfExists('barangs');
