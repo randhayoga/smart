@@ -155,7 +155,7 @@ const handleDelete = () => {
                     <p class="text-foreground">Lokasi: {{ formatLocation(lotDetails) }}</p>
                     <p class="text-foreground">Nomor PO: {{ lotDetails.poNumber }}</p>
                     <p class="text-foreground">Tanggal masuk: {{ formatDateWithDashes(lotDetails.entryDate) }}</p>
-                    <p class="text-foreground">Harga Satuan: {{ formatRupiah(lotDetails.unitPrice) }}</p>
+                    <p class="text-foreground">Harga satuan: {{ formatRupiah(lotDetails.unitPrice) }}</p>
                     <p class="text-foreground">Organizer: {{ lotDetails.organizer }}</p>
                     <p class="text-foreground">Vendor: {{ lotDetails.vendor }}</p>
                     <p class="text-foreground">Pembaruan terakhir: {{ lotDetails.updated_at }}</p>
