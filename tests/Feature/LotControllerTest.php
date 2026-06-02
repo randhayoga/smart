@@ -9,7 +9,7 @@ use App\Models\Master\Vendor;
 use App\Models\Master\Location;
 use App\Models\Master\Floor;
 use App\Models\Master\Room;
-use App\Models\User;
+use App\Models\AdmUser as User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
