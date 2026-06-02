@@ -44,7 +44,7 @@ const displayFields = computed(() => {
     if (data.poNumber) fields.push({ label: 'Nomor PO', value: data.poNumber });
     if (data.entryDate) fields.push({ label: 'Tanggal Masuk', value: data.entryDate });
     if (data.organizer) fields.push({ label: 'Organizer', value: data.organizer });
-    if (data.assetCount !== undefined) fields.push({ label: 'Jumlah Aset', value: data.assetCount });
+    if (data.assetCount !== undefined) fields.push({ label: 'Jumlah Stok', value: data.assetCount });
     return fields;
   }
 

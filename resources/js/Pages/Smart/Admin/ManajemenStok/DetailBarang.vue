@@ -21,12 +21,15 @@ import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem, BreadcrumbS
 import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
 import ViewTableButton from '@/Components/ViewTableButton.vue';
+import EditTableButton from '@/Components/EditTableButton.vue';
 import DeleteTableButton from '@/Components/DeleteTableButton.vue';
 import ExportButtonGroup from '@/Components/ExportButtonGroup.vue';
 import Tabs from '@/Components/Tabs.vue';
 import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal.vue';
 import DeleteErrorModal from '@/Components/DeleteErrorModal.vue';
 import Combobox from '@/Components/Combobox.vue';
+import { Checkbox } from '@/Components/ui/checkbox';
+import DetailLOTConsumables from './DetailLOTConsumables.vue';
 
 interface Props {
   itemId: string | number;
@@ -45,6 +48,7 @@ interface Props {
     category_id: number;
     brand_id: number;
     uom_id: number;
+    is_consumable: boolean;
   };
   brands: { id: number; name: string; }[];
   uoms: { id: number; name: string; }[];
@@ -66,6 +70,8 @@ interface Props {
     unitPrice: number | string;
     imageUrl: string;
     assetCount: number;
+    initial_quantity?: number | null;
+    current_quantity?: number | null;
   }[];
   organizers: { id: number; name: string; }[];
   vendors: { id: number; name: string; }[];
@@ -76,7 +82,7 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const tabs = ['Detail', 'Daftar Aset'];
+const tabs = computed(() => ['Detail', props.barang.is_consumable ? 'Daftar LOT' : 'Daftar Aset']);
 const activeTab = ref('Detail');
 
 const searchQuery = ref('');
@@ -90,6 +96,14 @@ const isLotModalOpen = ref(false);
 const lotModalMode = ref<'create' | 'edit'>('create');
 const selectedLotId = ref<number | null>(null);
 
+const isDetailConsumablesOpen = ref(false);
+const selectedLotForDetail = ref<number | null>(null);
+
+const openDetailLOTConsumables = (lot: any) => {
+  selectedLotForDetail.value = lot.id;
+  isDetailConsumablesOpen.value = true;
+};
+
 const lotForm = useForm({
   _method: 'POST',
   number: '',
@@ -99,6 +113,10 @@ const lotForm = useForm({
   location_id: '' as string | number,
   floor_id: null as string | number | null,
   room_id: null as string | number | null,
+  initial_quantity: '' as string | number,
+  current_quantity: '' as string | number,
+  auto_create_assets: false,
+  auto_create_assets_count: '' as string | number,
   po_number: '',
   date_of_receipt: '',
   unit_price: '' as string | number,
@@ -140,6 +158,10 @@ const openCreateLotModal = () => {
   lotForm.location_id = '';
   lotForm.floor_id = null;
   lotForm.room_id = null;
+  lotForm.initial_quantity = '';
+  lotForm.current_quantity = '';
+  lotForm.auto_create_assets = false;
+  lotForm.auto_create_assets_count = '';
   lotForm.po_number = '';
   lotForm.date_of_receipt = '';
   lotForm.unit_price = '';
@@ -164,6 +186,10 @@ const openEditLotModal = (lot: any) => {
   lotForm.location_id = lot.location_id;
   lotForm.floor_id = lot.floor_id;
   lotForm.room_id = lot.room_id;
+  lotForm.initial_quantity = lot.initial_quantity ?? '';
+  lotForm.current_quantity = lot.current_quantity ?? '';
+  lotForm.auto_create_assets = false;
+  lotForm.auto_create_assets_count = '';
   lotForm.po_number = lot.poNumber;
   
   if (lot.entryDate && lot.entryDate !== '-') {
@@ -279,10 +305,17 @@ const isLotFormValid = computed(() => {
          (lotForm.image_url || lotForm.image_url_name) &&
          !lotForm.processing;
 
+  if (!baseValid) return false;
+
   if (lotModalMode.value === 'create') {
-    return baseValid && lotForm.total_item !== null && lotForm.total_item !== undefined && Number(lotForm.total_item) >= 1;
+    if (props.barang.is_consumable) {
+      return lotForm.initial_quantity !== '' && lotForm.initial_quantity !== null && Number(lotForm.initial_quantity) >= 0;
+    } else {
+      return lotForm.total_item !== null && lotForm.total_item !== undefined && Number(lotForm.total_item) >= 1;
+    }
   }
-  return baseValid;
+
+  return true;
 });
 
 const handleSaveLot = () => {
@@ -302,6 +335,15 @@ const handleSaveLot = () => {
       date_of_receipt: data.date_of_receipt,
       unit_price: data.unit_price,
     };
+    if (lotModalMode.value === 'create') {
+      if (props.barang.is_consumable) {
+        formData.initial_quantity = data.initial_quantity;
+        formData.current_quantity = data.current_quantity;
+      } else {
+        formData.auto_create_assets = data.auto_create_assets;
+        formData.auto_create_assets_count = data.auto_create_assets_count;
+      }
+    }
     if (data.image_url) {
       formData.image_url = data.image_url;
     }
@@ -418,23 +460,42 @@ const columns: ColumnDef<any>[] = [
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
       class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
     }, () => [
-      'Jml. Aset',
+      'Jml. Stok',
       h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
     ]),
-    cell: ({ row }) => h('div', { class: 'pl-0 text-muted-foreground' }, row.getValue('assetCount')),
+    cell: ({ row }) => h('div', { class: 'pl-0 text-muted-foreground' }, 
+      props.barang.is_consumable 
+        ? (row.original.current_quantity !== null && row.original.current_quantity !== undefined ? row.original.current_quantity : 0) 
+        : row.getValue('assetCount')
+    ),
   },
   {
     id: 'actions',
     size: 100,
     header: () => h('div', { class: 'text-center font-semibold text-foreground no-print' }, 'Aksi'),
-    cell: ({ row }) => h('div', { class: 'flex items-center justify-center gap-2 no-print' }, [
-      h(ViewTableButton, {
-        onClick: () => openEditLotModal(row.original),
-      }),
-      h(DeleteTableButton, {
-        onClick: () => openDeleteLotModal(row.original),
-      })
-    ]),
+    cell: ({ row }) => {
+      const buttons = [];
+      if (props.barang.is_consumable) {
+        buttons.push(
+          h(ViewTableButton, {
+            onClick: () => openDetailLOTConsumables(row.original)
+          })
+        );
+      } else {
+        buttons.push(
+          h(ViewTableButton, {
+            disabled: true,
+            class: 'opacity-50 cursor-not-allowed pointer-events-none'
+          })
+        );
+      }
+      buttons.push(
+        h(DeleteTableButton, {
+          onClick: () => openDeleteLotModal(row.original),
+        })
+      );
+      return h('div', { class: 'flex items-center justify-center gap-2 no-print' }, buttons);
+    }
   },
 ];
 
@@ -495,7 +556,7 @@ const uniqueOrganizers = computed(() => {
 });
 
 const totalStok = computed(() => {
-  return (props.lots || []).reduce((acc, lot) => acc + (Number(lot.assetCount) || 0), 0);
+  return (props.lots || []).reduce((acc, lot) => acc + (Number(lot.current_quantity) || 0), 0);
 });
 
 const getExportData = () => {
@@ -507,13 +568,13 @@ const handleExportCSV = () => {
   const data = getExportData();
   if (data.length === 0) return;
   
-  const headers = ['Kode LOT', 'Nomor PO', 'Tanggal Masuk', 'Organizer', 'Jml. Aset'];
+  const headers = ['Kode LOT', 'Nomor PO', 'Tanggal Masuk', 'Organizer', 'Jml. Stok'];
   const rows = data.map((item: any) => [
     `"${item.lotCode}"`,
     `"${item.poNumber}"`,
     `"${item.entryDate}"`,
     `"${item.organizer}"`,
-    `"${item.assetCount}"`
+    `"${props.barang.is_consumable ? (item.current_quantity ?? 0) : item.assetCount}"`
   ]);
 
   let csvContent = "\uFEFFsep=,\n" 
@@ -760,7 +821,7 @@ const closeErrorModal = () => {
             <p class="text-foreground">Kategori: {{ props.barang.category }}</p>
             <p class="text-foreground">Subkategori: {{ props.barang.subcategory }}</p>
             <p class="text-foreground">Jumlah LOT: {{ props.lots.length }}</p>
-            <p class="text-foreground">Jumlah stok: {{ totalStok }}</p>
+            <p class="text-foreground">Total stok: {{ totalStok }}</p>
             <p class="text-foreground">Satuan: {{ props.barang.uom }}</p>
             <p class="text-foreground">Pembaruan terakhir: {{ props.barang.lastUpdate }}</p>
           </div>
@@ -997,7 +1058,7 @@ const closeErrorModal = () => {
               </div>
 
               <!-- Modal Footer -->
-              <div class="p-6 border-t border-border flex items-center justify-between">
+              <div class="py-3 px-4 border-t border-border flex items-center justify-between">
                 <p class="text-sm text-rose-500 italic font-medium">*Wajib diisi</p>
                 <div class="flex items-center gap-3">
                   <button 
@@ -1062,23 +1123,13 @@ const closeErrorModal = () => {
                   <div class="space-y-6">
                     <div class="space-y-1.5">
                       <label class="text-sm font-medium text-foreground block">Kode LOT<span class="text-rose-500">*</span></label>
-                      <div class="flex gap-2">
-                        <input 
-                          type="text" 
-                          v-model="lotForm.number"
-                          disabled
-                          placeholder="Kode LOT belum di-generate"
-                          class="flex-grow px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
-                        />
-                        <button 
-                          v-if="lotModalMode === 'create'" 
-                          type="button" 
-                          @click="generateLotCode" 
-                          class="px-6 py-2 bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors h-10"
-                        >
-                          Generate
-                        </button>
-                      </div>
+                      <input 
+                        type="text" 
+                        v-model="lotForm.number"
+                        disabled
+                        placeholder="Kode LOT belum di-generate"
+                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
+                      />
                     </div>
 
                     <div class="space-y-1.5">
@@ -1086,7 +1137,7 @@ const closeErrorModal = () => {
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !lotForm.organizer_id ? 'text-muted-foreground' : 'text-foreground']">
-                            {{ props.organizers.find(o => o.id === lotForm.organizer_id)?.name || 'Pilih organizer' }}
+                            {{ props.organizers.find(o => o.id == lotForm.organizer_id)?.name || 'Pilih organizer' }}
                             <ChevronDown class="w-4 h-4 opacity-50" />
                           </Button>
                         </DropdownMenuTrigger>
@@ -1132,16 +1183,30 @@ const closeErrorModal = () => {
                       />
                     </div>
 
-                    <div v-if="lotModalMode === 'create'" class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Total Item<span class="text-rose-500">*</span></label>
-                      <input 
-                        type="number" 
-                        v-model="lotForm.total_item"
-                        placeholder="Contoh: 5"
-                        min="1"
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
-                      />
-                    </div>
+                    <!-- Conditional Stock Input / Auto Asset Creation Field (Create Mode Only) -->
+                    <template v-if="lotModalMode === 'create'">
+                      <div v-if="props.barang.is_consumable" class="space-y-1.5">
+                        <label class="text-sm font-medium text-foreground block">Jumlah stok<span class="text-rose-500">*</span></label>
+                        <input 
+                          type="number" 
+                          v-model="lotForm.initial_quantity"
+                          placeholder="Contoh: 10"
+                          min="0"
+                          class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
+                          @input="lotForm.current_quantity = lotForm.initial_quantity"
+                        />
+                      </div>
+                      <div v-else class="space-y-1.5">
+                        <label class="text-sm font-medium text-foreground block">Total Item (Aset)<span class="text-rose-500">*</span></label>
+                        <input 
+                          type="number" 
+                          v-model="lotForm.total_item"
+                          placeholder="Contoh: 5"
+                          min="1"
+                          class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
+                        />
+                      </div>
+                    </template>
                   </div>
 
                   <!-- Right Column -->
@@ -1178,14 +1243,19 @@ const closeErrorModal = () => {
                     </div>
 
                     <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Harga Satuan (Rp) <span class="italic text-muted-foreground">default</span><span class="text-rose-500">*</span></label>
-                      <input 
-                        type="number" 
-                        v-model="lotForm.unit_price"
-                        placeholder="Contoh: 60000"
-                        min="0"
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
-                      />
+                      <label class="text-sm font-medium text-foreground block">Harga Satuan <span class="italic text-muted-foreground">default</span><span class="text-rose-500">*</span></label>
+                      <div class="flex w-full rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors h-10 overflow-hidden">
+                        <span class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-r border-input select-none font-medium">
+                          Rp
+                        </span>
+                        <input 
+                          type="number" 
+                          v-model="lotForm.unit_price"
+                          placeholder="Contoh: 60000"
+                          min="0"
+                          class="flex-1 min-w-0 px-4 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 transition-colors h-full"
+                        />
+                      </div>
                     </div>
 
                     <div class="space-y-1.5">
@@ -1230,7 +1300,7 @@ const closeErrorModal = () => {
               </div>
 
               <!-- Modal Footer -->
-              <div class="p-6 border-t border-border flex items-center justify-between">
+              <div class="py-3 px-4 border-t border-border flex items-center justify-between">
                 <p class="text-sm text-rose-500 italic font-medium">*Wajib diisi</p>
                 <div class="flex items-center gap-3">
                   <button 
@@ -1266,6 +1336,13 @@ const closeErrorModal = () => {
       :is-open="isErrorModalOpen"
       :error-message="errorModalMessage"
       @close="closeErrorModal"
+    />
+    <DetailLOTConsumables 
+      :is-open="isDetailConsumablesOpen"
+      :lot-id="selectedLotForDetail"
+      @close="isDetailConsumablesOpen = false"
+      @edit="openEditLotModal"
+      @delete="openDeleteLotModal"
     />
   </AppLayout>
 </template>

@@ -371,7 +371,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
   cols.push({
     id: 'actions',
     size: 84,
-    header: () => h('div', 'Aksi'),
+    header: () => h('div', { class: 'text-right' }, 'Aksi'),
     cell: ({ row }) => {
       const item = row.original;
       return h('div', { class: 'flex items-center justify-end gap-2' }, [
@@ -617,9 +617,9 @@ const closeErrorModal = () => {
             </div>
 
             <!-- Right Actions -->
-            <div class="flex flex-wrap items-center gap-3">
+            <div class="flex flex-wrap items-center justify-end gap-3 w-full sm:w-auto sm:ml-auto">
               <div class="flex items-center gap-2 text-sm text-muted-foreground">
-                <span>Baris per halaman</span>
+                <span class="text-right">Baris per halaman</span>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal', (rowsPerPage === 'Semua baris' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">

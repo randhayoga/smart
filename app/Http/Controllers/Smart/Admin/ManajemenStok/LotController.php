@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Smart\Admin\Inventory;
+namespace App\Http\Controllers\Smart\Admin\ManajemenStok;
 
 use App\Http\Controllers\Controller;
 use App\Models\Inventory\Lot;
@@ -14,7 +14,7 @@ class LotController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $rules = [
             'number' => 'required|string|max:26|unique:lots,number',
             'barang_id' => 'required|exists:barangs,id',
             'organizer_id' => 'required|exists:organizers,id',
@@ -27,14 +27,26 @@ class LotController extends Controller
             'unit_price' => 'required|numeric|min:0',
             'image_url' => 'required_without:use_parent_image|nullable|image|max:1024',
             'use_parent_image' => 'nullable',
-            'total_item' => 'required|integer|min:1',
-        ]);
+        ];
 
-        $totalItem = $validated['total_item'];
-        unset($validated['total_item']);
+        $barang = \App\Models\Inventory\Barang::with('subcategory.category')->findOrFail($request->input('barang_id'));
+        $isConsumable = (bool)($barang->subcategory->category->is_consumable ?? false);
+
+        if ($isConsumable) {
+            $rules['initial_quantity'] = 'required|integer|min:0';
+            $rules['current_quantity'] = 'nullable|integer|min:0';
+        } else {
+            $rules['total_item'] = 'required|integer|min:1';
+        }
+
+        $validated = $request->validate($rules);
+
+        $totalItem = $isConsumable ? 0 : $validated['total_item'];
+        if (isset($validated['total_item'])) {
+            unset($validated['total_item']);
+        }
 
         if ($request->boolean('use_parent_image')) {
-            $barang = \App\Models\Inventory\Barang::findOrFail($request->input('barang_id'));
             if ($barang->image_url && Storage::disk('public')->exists($barang->image_url)) {
                 $extension = pathinfo($barang->image_url, PATHINFO_EXTENSION);
                 $newFilename = 'inventory/lots/' . uniqid() . '.' . $extension;
@@ -52,18 +64,20 @@ class LotController extends Controller
 
         $lot = Lot::create($validated);
 
-        for ($i = 1; $i <= $totalItem; $i++) {
-            \App\Models\Inventory\Unit::create([
-                'number' => $lot->number . '-U' . str_pad($i, 2, '0', STR_PAD_LEFT),
-                'lot_id' => $lot->id,
-                'location_id' => $lot->location_id,
-                'floor_id' => $lot->floor_id,
-                'room_id' => $lot->room_id,
-                'status' => 'tersedia',
-                'condition' => 'Baik',
-                'price' => $lot->unit_price,
-                'image_url' => $lot->image_url,
-            ]);
+        if (!$isConsumable) {
+            for ($i = 1; $i <= $totalItem; $i++) {
+                \App\Models\Inventory\Unit::create([
+                    'number' => $lot->number . '-U' . str_pad($i, 2, '0', STR_PAD_LEFT),
+                    'lot_id' => $lot->id,
+                    'location_id' => $lot->location_id,
+                    'floor_id' => $lot->floor_id,
+                    'room_id' => $lot->room_id,
+                    'status' => 'tersedia',
+                    'condition' => 'Baik',
+                    'price' => $lot->unit_price,
+                    'image_url' => $lot->image_url,
+                ]);
+            }
         }
 
         return redirect()->back()->with('success', 'LOT berhasil ditambahkan.');
@@ -82,6 +96,8 @@ class LotController extends Controller
             'location_id' => 'required|exists:locations,id',
             'floor_id' => 'nullable|exists:floors,id',
             'room_id' => 'nullable|exists:rooms,id',
+            'initial_quantity' => 'nullable|integer|min:0',
+            'current_quantity' => 'nullable|integer|min:0',
             'po_number' => 'required|string|max:255',
             'date_of_receipt' => 'required|date',
             'unit_price' => 'required|numeric|min:0',
@@ -130,5 +146,52 @@ class LotController extends Controller
         $lot->delete();
 
         return redirect()->back()->with('success', 'LOT berhasil dihapus.');
+    }
+
+    /**
+     * Menampilkan detail data LOT dalam format JSON.
+     */
+    public function show(Lot $lot)
+    {
+        $lot->load([
+            'barang.subcategory.category',
+            'barang.brand',
+            'barang.uom',
+            'organizer',
+            'vendor',
+            'location',
+            'floor',
+            'room'
+        ]);
+
+        return response()->json([
+            'id' => $lot->id,
+            'lotCode' => $lot->number,
+            'poNumber' => $lot->po_number,
+            'entryDate' => $lot->date_of_receipt ? $lot->date_of_receipt->format('d/m/Y') : '-',
+            'organizer' => $lot->organizer->name ?? '-',
+            'organizer_id' => $lot->organizer_id,
+            'vendor' => $lot->vendor->name ?? '-',
+            'vendor_id' => $lot->vendor_id,
+            'location' => $lot->location->name ?? '-',
+            'location_id' => $lot->location_id,
+            'floor' => $lot->floor->name ?? null,
+            'floor_id' => $lot->floor_id,
+            'room' => $lot->room->name ?? null,
+            'room_id' => $lot->room_id,
+            'unitPrice' => $lot->unit_price,
+            'imageUrl' => $lot->image_url,
+            'initial_quantity' => $lot->initial_quantity,
+            'current_quantity' => $lot->current_quantity,
+            'updated_at' => $lot->updated_at ? $lot->updated_at->format('d/m/Y H:i') : '-',
+            
+            // Parent barang info
+            'barang_code' => $lot->barang->number ?? '-',
+            'barang_brand' => $lot->barang->brand->name ?? '-',
+            'barang_specification' => $lot->barang->specification ?? '-',
+            'barang_category' => $lot->barang->subcategory->category->name ?? '-',
+            'barang_subcategory' => $lot->barang->subcategory->name ?? '-',
+            'barang_uom' => $lot->barang->uom->name ?? '-',
+        ]);
     }
 }

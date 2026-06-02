@@ -24,6 +24,8 @@ class Lot extends Model
         'location_id',
         'floor_id',
         'room_id',
+        'initial_quantity',
+        'current_quantity',
         'po_number',
         'date_of_receipt',
         'unit_price',
@@ -33,6 +35,8 @@ class Lot extends Model
     protected $casts = [
         'date_of_receipt' => 'datetime',
         'unit_price' => 'decimal:2',
+        'initial_quantity' => 'integer',
+        'current_quantity' => 'integer',
     ];
 
     public function barang(): BelongsTo

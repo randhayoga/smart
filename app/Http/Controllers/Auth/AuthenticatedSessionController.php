@@ -32,7 +32,12 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('smart.dashboard', absolute: false));
+        $user = Auth::user();
+        if ($user && $user->role === 'admin') {
+            return redirect()->intended(route('smart.dashboard', absolute: false));
+        }
+
+        return redirect()->intended(route('smart.user.dashboard', absolute: false));
     }
 
     /**
