@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * DEPRECATED!!!
+ * Substituted by TB_PROJECT
+ */
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
