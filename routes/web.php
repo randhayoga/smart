@@ -2,7 +2,7 @@
 
 
 use App\Http\Controllers\Smart\Admin\DashboardController;
-use App\Http\Controllers\Smart\Admin\InventoryController;
+use App\Http\Controllers\Smart\Admin\ManajemenStokController;
 use App\Http\Controllers\Smart\Admin\MasterController;
 use App\Http\Controllers\Smart\Admin\InboxController;
 use App\Http\Controllers\Smart\Admin\HandoverController;
@@ -46,8 +46,8 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
     Route::middleware(['role:admin'])->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-        Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory');
-        Route::get('/inventory/{id}', [InventoryController::class, 'show'])->name('inventory.show');
+        Route::get('/inventory', [ManajemenStokController::class, 'index'])->name('inventory');
+        Route::get('/inventory/{id}', [ManajemenStokController::class, 'show'])->name('inventory.show');
         Route::get('/master', [MasterController::class, 'index'])->name('master');
 
         Route::prefix('master')->name('master.')->group(function () {
@@ -63,8 +63,8 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
         });
 
         Route::prefix('inventory')->name('inventory.')->group(function () {
-            Route::resource('barangs', \App\Http\Controllers\Smart\Admin\Inventory\BarangController::class)->only(['store', 'update', 'destroy']);
-            Route::resource('lots', \App\Http\Controllers\Smart\Admin\Inventory\LotController::class)->only(['store', 'update', 'destroy']);
+            Route::resource('barangs', \App\Http\Controllers\Smart\Admin\ManajemenStok\BarangController::class)->only(['store', 'update', 'destroy']);
+            Route::resource('lots', \App\Http\Controllers\Smart\Admin\ManajemenStok\LotController::class)->only(['store', 'update', 'destroy', 'show']);
         });
 
         Route::get('/inbox', [InboxController::class, 'index'])->name('inbox');

@@ -848,7 +848,7 @@ const closeErrorModal = () => {
               </div>
 
               <!-- Modal Footer -->
-              <div class="p-6 border-t border-border flex items-center justify-between">
+              <div class="py-3 px-4 border-t border-border flex items-center justify-between">
                 <p class="text-sm text-rose-500 italic font-medium">*Wajib diisi</p>
                 <div class="flex items-center gap-3">
                   <button 
