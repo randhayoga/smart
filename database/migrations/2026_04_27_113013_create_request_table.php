@@ -16,9 +16,7 @@ return new class extends Migration {
             $table->foreignId('department_id')->nullable()->constrained('departments');
             $table->foreignId('project_id')->nullable()->constrained('projects');
             $table->text('reasoning');
-            $table->dateTime('start_date')->nullable();
-            $table->dateTime('end_date')->nullable();
-            $table->enum('status', ['wait', 'approve', 'confirm', 'handover', 'borrow', 'return', 'success', 'reject', 'cancel', 'pending']);
+            $table->enum('status', ['wait', 'approve', 'confirm', 'handover', 'borrow', 'return', 'success', 'reject', 'cancel']);
             $table->timestamps();
         });
 
@@ -27,22 +25,16 @@ return new class extends Migration {
             $table->foreignId('request_id')->constrained('requests')->cascadeOnDelete();
             $table->foreignId('barang_id')->constrained('barangs');
             $table->integer('quantity_requested');
+            $table->dateTime('start_date')->nullable();
+            $table->dateTime('end_date')->nullable();
+            $table->string('status')->default('pending');
             $table->timestamps();
         });
 
-        Schema::create('request_unit_assignments', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('request_item_id')->constrained('request_items')->cascadeOnDelete();
-            $table->foreignId('unit_id')->constrained('units');
-            $table->dateTime('assigned_at');
-            $table->dateTime('completed_at')->nullable();
-            $table->timestamps();
-        });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('request_unit_assignments');
         Schema::dropIfExists('request_items');
         Schema::dropIfExists('requests');
     }

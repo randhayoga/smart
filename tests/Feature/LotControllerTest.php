@@ -22,8 +22,10 @@ class LotControllerTest extends TestCase
     public function test_can_store_lot(): void
     {
         Storage::fake('public');
-        $user = User::factory()->create();
-        $barang = Barang::factory()->create();
+        $user = User::factory()->create(['role' => 'admin']);
+        $category = \App\Models\Master\Category::factory()->create(['is_consumable' => false]);
+        $subcategory = \App\Models\Master\Subcategory::factory()->create(['category_id' => $category->id]);
+        $barang = Barang::factory()->create(['subcategory_id' => $subcategory->id]);
         $organizer = Organizer::factory()->create();
         $vendor = Vendor::factory()->create();
         $location = Location::factory()->create();
@@ -78,7 +80,7 @@ class LotControllerTest extends TestCase
     public function test_can_update_lot(): void
     {
         Storage::fake('public');
-        $user = User::factory()->create();
+        $user = User::factory()->create(['role' => 'admin']);
         $lot = Lot::factory()->create();
         
         $newOrganizer = Organizer::factory()->create();
@@ -117,7 +119,7 @@ class LotControllerTest extends TestCase
 
     public function test_can_destroy_lot(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create(['role' => 'admin']);
         $lot = Lot::factory()->create();
 
         $response = $this->actingAs($user)->delete(route('smart.inventory.lots.destroy', $lot));
@@ -131,11 +133,17 @@ class LotControllerTest extends TestCase
     public function test_can_store_lot_using_parent_image(): void
     {
         Storage::fake('public');
-        $user = User::factory()->create();
+        $user = User::factory()->create(['role' => 'admin']);
         
         $barangImage = UploadedFile::fake()->image('barang.jpg');
         $barangImagePath = Storage::disk('public')->putFile('inventory/barangs', $barangImage);
-        $barang = Barang::factory()->create(['image_url' => $barangImagePath]);
+        
+        $category = \App\Models\Master\Category::factory()->create(['is_consumable' => false]);
+        $subcategory = \App\Models\Master\Subcategory::factory()->create(['category_id' => $category->id]);
+        $barang = Barang::factory()->create([
+            'image_url' => $barangImagePath,
+            'subcategory_id' => $subcategory->id
+        ]);
         
         $organizer = Organizer::factory()->create();
         $vendor = Vendor::factory()->create();
@@ -166,7 +174,7 @@ class LotControllerTest extends TestCase
     public function test_can_update_lot_using_parent_image(): void
     {
         Storage::fake('public');
-        $user = User::factory()->create();
+        $user = User::factory()->create(['role' => 'admin']);
         
         $barangImage = UploadedFile::fake()->image('barang.jpg');
         $barangImagePath = Storage::disk('public')->putFile('inventory/barangs', $barangImage);
