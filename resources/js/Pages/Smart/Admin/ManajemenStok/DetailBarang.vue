@@ -7,7 +7,9 @@ import {
   ChevronDown, 
   ArrowUpDown, 
   Plus,
-  X
+  X,
+  Pencil,
+  Trash2
 } from 'lucide-vue-next';
 import { Button } from "@/Components/ui/button";
 import {
@@ -685,6 +687,249 @@ const handleSaveChanges = () => {
   });
 };
 
+// Bulk Edit LOT Modal Logic
+const isBulkEditModalOpen = ref(false);
+const selectedLotItem = ref<any | null>(null);
+
+const bulkLotForm = useForm({
+  ids: [] as number[],
+  organizer_id: '' as string | number,
+  vendor_id: '' as string | number,
+  location_id: '' as string | number,
+  floor_id: null as string | number | null,
+  room_id: null as string | number | null,
+  unit_price: '' as string | number,
+  image_url: null as File | null,
+  image_url_name: '',
+  use_parent_image: false,
+  po_number: '',
+  date_of_receipt: '',
+});
+
+const openBulkEditModal = () => {
+  if (!dataTableRef.value) return;
+  const selectedRows = dataTableRef.value.table.getFilteredRowModel().rows
+    .filter((r: any) => r.getIsSelected())
+    .map((r: any) => r.original);
+  
+  if (selectedRows.length === 0) return;
+
+  bulkLotForm.reset();
+  bulkLotForm.clearErrors();
+  bulkLotForm.ids = selectedRows.map((r: any) => r.id);
+  
+  // Explicitly reset the edit values first
+  bulkLotForm.organizer_id = '';
+  bulkLotForm.vendor_id = '';
+  bulkLotForm.location_id = '';
+  bulkLotForm.floor_id = null;
+  bulkLotForm.room_id = null;
+  bulkLotForm.unit_price = '';
+  bulkLotForm.image_url = null;
+  bulkLotForm.image_url_name = '';
+  bulkLotForm.use_parent_image = false;
+  bulkLotForm.po_number = '';
+  bulkLotForm.date_of_receipt = '';
+
+  if (selectedRows.length === 1) {
+    selectedLotItem.value = selectedRows[0];
+    bulkLotForm.organizer_id = selectedLotItem.value.organizer_id;
+    bulkLotForm.vendor_id = selectedLotItem.value.vendor_id;
+    bulkLotForm.location_id = selectedLotItem.value.location_id;
+    bulkLotForm.floor_id = selectedLotItem.value.floor_id;
+    bulkLotForm.room_id = selectedLotItem.value.room_id;
+    bulkLotForm.unit_price = selectedLotItem.value.unitPrice;
+    bulkLotForm.po_number = selectedLotItem.value.poNumber || '';
+    
+    if (selectedLotItem.value.entryDate && selectedLotItem.value.entryDate !== '-') {
+      const parts = selectedLotItem.value.entryDate.split(/[-/]/);
+      if (parts.length === 3) {
+        bulkLotForm.date_of_receipt = `${parts[2]}-${parts[1]}-${parts[0]}`;
+      } else {
+        bulkLotForm.date_of_receipt = '';
+      }
+    } else {
+      bulkLotForm.date_of_receipt = '';
+    }
+
+    bulkLotForm.image_url = null;
+    bulkLotForm.image_url_name = selectedLotItem.value.imageUrl ? selectedLotItem.value.imageUrl.split('/').pop() : '';
+    bulkLotForm.use_parent_image = false;
+  } else {
+    selectedLotItem.value = null;
+  }
+  isBulkEditModalOpen.value = true;
+};
+
+const closeBulkEditModal = () => {
+  isBulkEditModalOpen.value = false;
+  bulkLotForm.ids = [];
+  bulkLotForm.organizer_id = '';
+  bulkLotForm.vendor_id = '';
+  bulkLotForm.location_id = '';
+  bulkLotForm.floor_id = null;
+  bulkLotForm.room_id = null;
+  bulkLotForm.unit_price = '';
+  bulkLotForm.image_url = null;
+  bulkLotForm.image_url_name = '';
+  bulkLotForm.use_parent_image = false;
+  bulkLotForm.po_number = '';
+  bulkLotForm.date_of_receipt = '';
+  bulkLotForm.clearErrors();
+  selectedLotItem.value = null;
+};
+
+const handleBulkLotFileUpload = (e: any) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+  if (!allowedTypes.includes(file.type)) {
+    alert('Format file salah! Hanya diperbolehkan file .jpg, .jpeg, atau .png');
+    return;
+  }
+
+  if (file.size > 1024 * 1024) {
+    alert('Gagal! Ukuran foto maksimal 1MB');
+    return;
+  }
+
+  bulkLotForm.image_url = file;
+  bulkLotForm.image_url_name = file.name;
+  bulkLotForm.use_parent_image = false;
+};
+
+const triggerBulkLotFileInput = () => {
+  const input = document.getElementById('bulk-lot-photo-upload') as HTMLInputElement;
+  input?.click();
+};
+
+const handleBulkLotSamakanPhoto = () => {
+  if (props.barang.image_url) {
+    bulkLotForm.use_parent_image = true;
+    bulkLotForm.image_url = null;
+    bulkLotForm.image_url_name = props.barang.image_url.split('/').pop() || '';
+  } else {
+    toast.error('Barang parent tidak memiliki foto.');
+  }
+};
+
+const viewBulkLotImageInNewTab = () => {
+  if (bulkLotForm.image_url) {
+    const url = URL.createObjectURL(bulkLotForm.image_url);
+    window.open(url, '_blank');
+  } else if (bulkLotForm.use_parent_image && props.barang.image_url) {
+    window.open('/storage/' + props.barang.image_url, '_blank');
+  } else if (bulkLotForm.ids.length === 1 && selectedLotItem.value && selectedLotItem.value.imageUrl) {
+    window.open('/storage/' + selectedLotItem.value.imageUrl, '_blank');
+  }
+};
+
+const bulkFilteredFloors = computed(() => {
+  if (!bulkLotForm.location_id) return [];
+  return props.floors.filter(f => Number(f.location_id) === Number(bulkLotForm.location_id));
+});
+
+const bulkFilteredRooms = computed(() => {
+  if (!bulkLotForm.floor_id) return [];
+  return props.rooms.filter(r => Number(r.floor_id) === Number(bulkLotForm.floor_id));
+});
+
+watch(() => bulkLotForm.location_id, (newVal) => {
+  if (newVal) {
+    const valid = bulkFilteredFloors.value.some(f => Number(f.id) === Number(bulkLotForm.floor_id));
+    if (!valid) {
+      bulkLotForm.floor_id = null;
+      bulkLotForm.room_id = null;
+    }
+  } else {
+    bulkLotForm.floor_id = null;
+    bulkLotForm.room_id = null;
+  }
+});
+
+watch(() => bulkLotForm.floor_id, (newVal) => {
+  if (newVal) {
+    const valid = bulkFilteredRooms.value.some(r => Number(r.id) === Number(bulkLotForm.room_id));
+    if (!valid) {
+      bulkLotForm.room_id = null;
+    }
+  } else {
+    bulkLotForm.room_id = null;
+  }
+});
+
+const isBulkLotFormValid = computed(() => {
+  if (bulkLotForm.ids.length === 1) {
+    return !!(
+      bulkLotForm.organizer_id &&
+      bulkLotForm.vendor_id &&
+      bulkLotForm.location_id &&
+      bulkLotForm.po_number &&
+      bulkLotForm.date_of_receipt &&
+      bulkLotForm.unit_price !== '' &&
+      (bulkLotForm.image_url || bulkLotForm.use_parent_image || bulkLotForm.image_url_name) &&
+      !bulkLotForm.processing
+    );
+  } else {
+    const hasAtLeastOneField = !!(
+      bulkLotForm.organizer_id ||
+      bulkLotForm.vendor_id ||
+      bulkLotForm.location_id ||
+      bulkLotForm.floor_id ||
+      bulkLotForm.room_id ||
+      bulkLotForm.unit_price !== '' ||
+      bulkLotForm.image_url ||
+      bulkLotForm.use_parent_image
+    );
+    return hasAtLeastOneField && !bulkLotForm.processing;
+  }
+});
+
+const handleSaveBulkChanges = () => {
+  if (!isBulkLotFormValid.value) return;
+
+  bulkLotForm.transform((data) => {
+    const formData: any = {
+      _method: 'PUT',
+      ids: data.ids,
+    };
+    if (data.ids.length === 1) {
+      formData.organizer_id = data.organizer_id;
+      formData.vendor_id = data.vendor_id;
+      formData.location_id = data.location_id;
+      formData.floor_id = data.floor_id;
+      formData.room_id = data.room_id;
+      formData.po_number = data.po_number;
+      formData.date_of_receipt = data.date_of_receipt;
+      formData.unit_price = data.unit_price;
+      if (data.image_url) {
+        formData.image_url = data.image_url;
+      }
+      if (data.use_parent_image) {
+        formData.use_parent_image = data.use_parent_image;
+      }
+    } else {
+      if (data.organizer_id) formData.organizer_id = data.organizer_id;
+      if (data.vendor_id) formData.vendor_id = data.vendor_id;
+      if (data.location_id) formData.location_id = data.location_id;
+      if (data.floor_id) formData.floor_id = data.floor_id;
+      if (data.room_id) formData.room_id = data.room_id;
+      if (data.unit_price !== '') formData.unit_price = data.unit_price;
+      if (data.image_url) formData.image_url = data.image_url;
+      if (data.use_parent_image) formData.use_parent_image = data.use_parent_image;
+    }
+    return formData;
+  }).post('/smart/inventory/lots/bulk', {
+    onSuccess: () => {
+      closeBulkEditModal();
+      if (dataTableRef.value) {
+        dataTableRef.value.table.resetRowSelection();
+      }
+    },
+  });
+};
+
 // Delete Modal Logic
 const isDeleteModalOpen = ref(false);
 const deleteMode = ref<'barang' | 'lot'>('barang');
@@ -705,9 +950,10 @@ const openDeleteModal = () => {
   isDeleteModalOpen.value = true;
 };
 
-const openDeleteLotModal = (lot: any) => {
+const openDeleteLotModal = (lots: any | any[]) => {
   deleteMode.value = 'lot';
-  itemsToDelete.value = [{
+  const rawLots = Array.isArray(lots) ? lots : [lots];
+  itemsToDelete.value = rawLots.map((lot: any) => ({
     ...lot,
     barang_code: lot.barang_code || props.barang.code,
     barang_brand: lot.barang_brand || props.barang.brand,
@@ -716,7 +962,7 @@ const openDeleteLotModal = (lot: any) => {
     barang_subcategory: lot.barang_subcategory || props.barang.subcategory,
     barang_uom: lot.barang_uom || props.barang.uom,
     is_consumable: lot.is_consumable !== undefined ? lot.is_consumable : props.barang.is_consumable,
-  }];
+  }));
   isDeleteModalOpen.value = true;
 };
 
@@ -737,11 +983,26 @@ const handleConfirmDelete = () => {
       }
     });
   } else {
-    router.delete(`/smart/inventory/lots/${ids[0]}`, {
-      onSuccess: () => {
-        closeDeleteModal();
-      }
-    });
+    if (ids.length === 1) {
+      router.delete(`/smart/inventory/lots/${ids[0]}`, {
+        onSuccess: () => {
+          closeDeleteModal();
+          if (dataTableRef.value) {
+            dataTableRef.value.table.resetRowSelection();
+          }
+        }
+      });
+    } else {
+      router.delete('/smart/inventory/lots/bulk', {
+        data: { ids },
+        onSuccess: () => {
+          closeDeleteModal();
+          if (dataTableRef.value) {
+            dataTableRef.value.table.resetRowSelection();
+          }
+        }
+      });
+    }
   }
 };
 
@@ -897,10 +1158,28 @@ const closeErrorModal = () => {
           <div class="mb-4 flex flex-wrap items-end justify-between gap-4 pt-2">
             <div class="space-y-2 flex-1 min-w-0">
               <label class="text-xs text-muted-foreground font-medium block ml-0.5">Aksi Terpilih</label>
-              <ExportButtonGroup 
-                @export-excel="handleExportExcel"
-                @export-csv="handleExportCSV"
-              />
+              <div class="flex flex-wrap gap-2">
+                <button 
+                  @click="openBulkEditModal"
+                  :disabled="!dataTableRef || Object.keys(dataTableRef.table.getState().rowSelection).length === 0"
+                  class="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:opacity-70 text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm disabled:opacity-50 font-bold"
+                >
+                  <Pencil class="w-4 h-4" />
+                  <span class="hidden sm:inline">Edit Terpilih</span>
+                </button>
+                <button 
+                  @click="openDeleteLotModal(dataTableRef.table.getFilteredRowModel().rows.filter((r: any) => r.getIsSelected()).map((r: any) => r.original))"
+                  :disabled="!dataTableRef || Object.keys(dataTableRef.table.getState().rowSelection).length === 0"
+                  class="flex items-center gap-2 px-4 py-2 bg-destructive hover:opacity-70 text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm disabled:opacity-50 font-bold"
+                >
+                  <Trash2 class="w-4 h-4" />
+                  <span class="hidden sm:inline">Hapus Terpilih</span>
+                </button>
+                <ExportButtonGroup 
+                  @export-excel="handleExportExcel"
+                  @export-csv="handleExportCSV"
+                />
+              </div>
             </div>
             
             <button @click="openCreateLotModal" class="px-5 py-2.5 bg-gradient-primary hover:opacity-90 text-white text-sm font-bold rounded-xl transition-all shadow-sm flex items-center gap-2">
@@ -1326,6 +1605,227 @@ const closeErrorModal = () => {
                     class="px-8 py-2.5 bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors shadow-sm active:scale-[0.98] disabled:opacity-50"
                   >
                     {{ lotModalMode === 'create' ? 'Tambah LOT' : 'Simpan Perubahan' }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </Transition>
+        </div>
+      </Transition>
+    </Teleport>
+
+    <!-- Bulk Edit LOT Modal -->
+    <Teleport to="body">
+      <Transition
+        enter-active-class="ease-out duration-200"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="ease-in duration-150"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div v-if="isBulkEditModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <Transition
+            enter-active-class="ease-out duration-200"
+            enter-from-class="opacity-0 scale-95"
+            enter-to-class="opacity-100 scale-100"
+            leave-active-class="ease-in duration-150"
+            leave-from-class="opacity-100 scale-100"
+            leave-to-class="opacity-0 scale-95"
+          >
+            <div 
+              v-if="isBulkEditModalOpen" 
+              class="bg-card w-full max-w-[1000px] rounded-[14px] shadow-2xl overflow-hidden flex flex-col" 
+              @click.stop
+            >
+              <!-- Modal Header -->
+              <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
+                <h3 class="text-lg font-bold text-foreground">
+                  {{ bulkLotForm.ids.length === 1 ? 'Edit LOT' : 'Edit Terpilih (Bulk Edit LOT)' }}
+                </h3>
+                <button @click="closeBulkEditModal" class="p-2 hover:bg-muted rounded-full transition-colors">
+                  <X class="w-5 h-5 text-muted-foreground" />
+                </button>
+              </div>
+
+              <!-- Modal Body -->
+              <div class="p-6 overflow-y-auto max-h-[70vh]">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+                  <!-- Left Column -->
+                  <div class="space-y-6">
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-medium text-foreground block">Kode LOT</label>
+                      <input 
+                        type="text" 
+                        :value="bulkLotForm.ids.length === 1 && selectedLotItem ? selectedLotItem.lotCode : 'Tidak dapat diubah'"
+                        disabled
+                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
+                      />
+                    </div>
+
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-medium text-foreground block">Organizer<span v-if="bulkLotForm.ids.length === 1" class="text-rose-500">*</span></label>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !bulkLotForm.organizer_id ? 'text-muted-foreground' : 'text-foreground']">
+                            {{ props.organizers.find(o => o.id == bulkLotForm.organizer_id)?.name || 'Pilih organizer' }}
+                            <ChevronDown class="w-4 h-4 opacity-50" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
+                          <DropdownMenuItem v-for="org in props.organizers" :key="org.id" @select="bulkLotForm.organizer_id = org.id">
+                            {{ org.name }}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-medium text-foreground block">Vendor<span v-if="bulkLotForm.ids.length === 1" class="text-rose-500">*</span></label>
+                      <Combobox
+                        v-model="bulkLotForm.vendor_id"
+                        :options="props.vendors"
+                        search-placeholder="Cari vendor..."
+                        default-label="Pilih vendor"
+                        width-class="w-full h-10 px-4"
+                      />
+                    </div>
+
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-medium text-foreground block">Lokasi <span v-if="!props.barang.is_consumable" class="italic text-muted-foreground">default</span><span v-if="bulkLotForm.ids.length === 1" class="text-rose-500">*</span></label>
+                      <Combobox
+                        v-model="bulkLotForm.location_id"
+                        :options="props.locations"
+                        search-placeholder="Cari lokasi..."
+                        default-label="Pilih lokasi"
+                        width-class="w-full h-10 px-4"
+                      />
+                    </div>
+
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-medium text-foreground block">Lantai <span v-if="!props.barang.is_consumable" class="italic text-muted-foreground">default</span></label>
+                      <Combobox
+                        v-model="bulkLotForm.floor_id"
+                        :options="bulkFilteredFloors"
+                        search-placeholder="Cari lantai..."
+                        default-label="Pilih lantai (opsional)"
+                        width-class="w-full h-10 px-4"
+                        :disabled="!bulkLotForm.location_id"
+                      />
+                    </div>
+                  </div>
+
+                  <!-- Right Column -->
+                  <div class="space-y-6">
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-medium text-foreground block">Ruangan <span v-if="!props.barang.is_consumable" class="italic text-muted-foreground">default</span></label>
+                      <Combobox
+                        v-model="bulkLotForm.room_id"
+                        :options="bulkFilteredRooms"
+                        search-placeholder="Cari ruangan..."
+                        default-label="Pilih ruangan (opsional)"
+                        width-class="w-full h-10 px-4"
+                        :disabled="!bulkLotForm.floor_id"
+                      />
+                    </div>
+
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-medium text-foreground block">Nomor PO<span v-if="bulkLotForm.ids.length === 1" class="text-rose-500">*</span></label>
+                      <input 
+                        type="text" 
+                        v-model="bulkLotForm.po_number"
+                        :disabled="bulkLotForm.ids.length > 1"
+                        :placeholder="bulkLotForm.ids.length > 1 ? 'Tidak dapat diubah' : 'Contoh: PO-02'"
+                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10 disabled:bg-muted/30 disabled:text-muted-foreground disabled:cursor-not-allowed"
+                      />
+                    </div>
+
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-medium text-foreground block">Tanggal Masuk<span v-if="bulkLotForm.ids.length === 1" class="text-rose-500">*</span></label>
+                      <input 
+                        type="date" 
+                        v-model="bulkLotForm.date_of_receipt"
+                        :disabled="bulkLotForm.ids.length > 1"
+                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10 disabled:bg-muted/30 disabled:text-muted-foreground disabled:cursor-not-allowed"
+                      />
+                    </div>
+
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-medium text-foreground block">Harga Satuan <span v-if="!props.barang.is_consumable" class="italic text-muted-foreground">default</span><span v-if="bulkLotForm.ids.length === 1" class="text-rose-500">*</span></label>
+                      <div class="flex w-full rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors h-10 overflow-hidden">
+                        <span class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-r border-input select-none font-medium">
+                          Rp
+                        </span>
+                        <input 
+                          type="number" 
+                          v-model="bulkLotForm.unit_price"
+                          placeholder="Contoh: 60000"
+                          min="0"
+                          class="flex-1 min-w-0 px-4 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 transition-colors h-full"
+                        />
+                      </div>
+                    </div>
+
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-medium text-foreground block">Foto <span v-if="!props.barang.is_consumable" class="italic text-muted-foreground">default</span><span v-if="bulkLotForm.ids.length === 1" class="text-rose-500">*</span></label>
+                      <div class="flex gap-2">
+                        <div 
+                          class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/10 truncate flex items-center h-10"
+                          :class="[
+                            (bulkLotForm.image_url || bulkLotForm.image_url_name) 
+                              ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' 
+                              : 'text-muted-foreground cursor-default'
+                          ]"
+                          @click="(bulkLotForm.image_url || bulkLotForm.image_url_name) && viewBulkLotImageInNewTab()"
+                        >
+                          {{ bulkLotForm.image_url_name || 'Belum ada foto yang dipilih' }}
+                        </div>
+                        <input 
+                          type="file" 
+                          id="bulk-lot-photo-upload" 
+                          class="hidden" 
+                          accept=".jpg,.jpeg,.png"
+                          @change="handleBulkLotFileUpload"
+                        />
+                        <button 
+                          type="button"
+                          @click="handleBulkLotSamakanPhoto"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-orange-400 hover:opacity-90 text-white text-sm font-medium rounded-[14px] transition-colors h-10"
+                        >
+                          Samakan
+                        </button>
+                        <button 
+                          type="button"
+                          @click="triggerBulkLotFileInput"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors h-10"
+                        >
+                          Pilih File
+                        </button>
+                      </div>
+                      <p class="text-[10px] text-muted-foreground ml-1">Maksimal ukuran 1 MB</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Modal Footer -->
+              <div class="py-3 px-4 border-t border-border flex items-center justify-between">
+                <p class="text-sm text-rose-500 italic font-medium">
+                  {{ bulkLotForm.ids.length === 1 ? '*Wajib diisi' : '*Kosongkan input yang tidak ingin diubah' }}
+                </p>
+                <div class="flex items-center gap-3">
+                  <button 
+                    @click="closeBulkEditModal"
+                    class="px-8 py-2.5 bg-background border border-input hover:bg-muted text-foreground text-sm font-medium rounded-[14px] transition-colors"
+                  >
+                    Batal
+                  </button>
+                  <button 
+                    @click="handleSaveBulkChanges"
+                    :disabled="!isBulkLotFormValid"
+                    class="px-8 py-2.5 bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors shadow-sm active:scale-[0.98] disabled:opacity-50"
+                  >
+                    {{ bulkLotForm.ids.length === 1 ? 'Simpan Perubahan' : 'Simpan Perubahan Massal' }}
                   </button>
                 </div>
               </div>
