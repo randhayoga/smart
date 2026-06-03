@@ -149,9 +149,9 @@ class LotController extends Controller
     }
 
     /**
-     * Menampilkan detail data LOT dalam format JSON.
+     * Menampilkan detail data LOT dalam format JSON atau render halaman Inertia.
      */
-    public function show(Lot $lot)
+    public function show(Request $request, Lot $lot)
     {
         $lot->load([
             'barang.subcategory.category',
@@ -164,34 +164,109 @@ class LotController extends Controller
             'room'
         ]);
 
-        return response()->json([
-            'id' => $lot->id,
-            'lotCode' => $lot->number,
-            'poNumber' => $lot->po_number,
-            'entryDate' => $lot->date_of_receipt ? $lot->date_of_receipt->format('d/m/Y') : '-',
-            'organizer' => $lot->organizer->name ?? '-',
-            'organizer_id' => $lot->organizer_id,
-            'vendor' => $lot->vendor->name ?? '-',
-            'vendor_id' => $lot->vendor_id,
-            'location' => $lot->location->name ?? '-',
-            'location_id' => $lot->location_id,
-            'floor' => $lot->floor->name ?? null,
-            'floor_id' => $lot->floor_id,
-            'room' => $lot->room->name ?? null,
-            'room_id' => $lot->room_id,
-            'unitPrice' => $lot->unit_price,
-            'imageUrl' => $lot->image_url,
-            'initial_quantity' => $lot->initial_quantity,
-            'current_quantity' => $lot->current_quantity,
-            'updated_at' => $lot->updated_at ? $lot->updated_at->format('d/m/Y H:i') : '-',
-            
-            // Parent barang info
-            'barang_code' => $lot->barang->number ?? '-',
-            'barang_brand' => $lot->barang->brand->name ?? '-',
-            'barang_specification' => $lot->barang->specification ?? '-',
-            'barang_category' => $lot->barang->subcategory->category->name ?? '-',
-            'barang_subcategory' => $lot->barang->subcategory->name ?? '-',
-            'barang_uom' => $lot->barang->uom->name ?? '-',
+        if ($request->wantsJson() && !$request->headers->has('X-Inertia')) {
+            return response()->json([
+                'id' => $lot->id,
+                'lotCode' => $lot->number,
+                'poNumber' => $lot->po_number,
+                'entryDate' => $lot->date_of_receipt ? $lot->date_of_receipt->format('d/m/Y') : '-',
+                'organizer' => $lot->organizer->name ?? '-',
+                'organizer_id' => $lot->organizer_id,
+                'vendor' => $lot->vendor->name ?? '-',
+                'vendor_id' => $lot->vendor_id,
+                'location' => $lot->location->name ?? '-',
+                'location_id' => $lot->location_id,
+                'floor' => $lot->floor->name ?? null,
+                'floor_id' => $lot->floor_id,
+                'room' => $lot->room->name ?? null,
+                'room_id' => $lot->room_id,
+                'unitPrice' => $lot->unit_price,
+                'imageUrl' => $lot->image_url,
+                'initial_quantity' => $lot->initial_quantity,
+                'current_quantity' => $lot->current_quantity,
+                'updated_at' => $lot->updated_at ? $lot->updated_at->format('d/m/Y H:i') : '-',
+                
+                // Parent barang info
+                'barang_code' => $lot->barang->number ?? '-',
+                'barang_brand' => $lot->barang->brand->name ?? '-',
+                'barang_specification' => $lot->barang->specification ?? '-',
+                'barang_category' => $lot->barang->subcategory->category->name ?? '-',
+                'barang_subcategory' => $lot->barang->subcategory->name ?? '-',
+                'barang_uom' => $lot->barang->uom->name ?? '-',
+            ]);
+        }
+
+        // Ambil data unit (aset) terkait LOT ini
+        $units = \App\Models\Inventory\Unit::with(['location', 'floor', 'room', 'user'])
+            ->where('lot_id', $lot->id)
+            ->get()
+            ->map(function ($unit) {
+                return [
+                    'id' => $unit->id,
+                    'number' => $unit->number,
+                    'status' => $unit->status,
+                    'condition' => $unit->condition,
+                    'location' => $unit->location->name ?? '-',
+                    'location_id' => $unit->location_id,
+                    'floor' => $unit->floor->name ?? null,
+                    'floor_id' => $unit->floor_id,
+                    'room' => $unit->room->name ?? null,
+                    'room_id' => $unit->room_id,
+                    'price' => $unit->price,
+                    'image_url' => $unit->image_url,
+                    'user_name' => $unit->user->name ?? null,
+                    'vehicle_registration' => $unit->vehicle_registration,
+                    'updated_at' => $unit->updated_at ? $unit->updated_at->format('d/m/Y H:i') : '-',
+                ];
+            });
+
+        $brands = \App\Models\Master\Brand::orderBy('name')->get();
+        $uoms = \App\Models\Master\Uom::orderBy('name')->get();
+        $organizers = \App\Models\Master\Organizer::orderBy('name')->get();
+        $vendors = \App\Models\Master\Vendor::orderBy('name')->get();
+        $locations = \App\Models\Master\Location::orderBy('name')->get();
+        $floors = \App\Models\Master\Floor::with('location')->orderBy('name')->get();
+        $rooms = \App\Models\Master\Room::with('floor.location')->orderBy('name')->get();
+
+        return \Inertia\Inertia::render('Smart/Admin/ManajemenStok/DetailLOTNonConsumables', [
+            'lot' => [
+                'id' => $lot->id,
+                'lotCode' => $lot->number,
+                'poNumber' => $lot->po_number,
+                'entryDate' => $lot->date_of_receipt ? $lot->date_of_receipt->format('d/m/Y') : '-',
+                'organizer' => $lot->organizer->name ?? '-',
+                'organizer_id' => $lot->organizer_id,
+                'vendor' => $lot->vendor->name ?? '-',
+                'vendor_id' => $lot->vendor_id,
+                'location' => $lot->location->name ?? '-',
+                'location_id' => $lot->location_id,
+                'floor' => $lot->floor->name ?? null,
+                'floor_id' => $lot->floor_id,
+                'room' => $lot->room->name ?? null,
+                'room_id' => $lot->room_id,
+                'unitPrice' => $lot->unit_price,
+                'imageUrl' => $lot->image_url,
+                'initial_quantity' => $lot->initial_quantity,
+                'current_quantity' => $lot->current_quantity,
+                'updated_at' => $lot->updated_at ? $lot->updated_at->format('d/m/Y H:i') : '-',
+                
+                // Parent barang info
+                'barang_id' => $lot->barang->id ?? null,
+                'barang_code' => $lot->barang->number ?? '-',
+                'barang_brand' => $lot->barang->brand->name ?? '-',
+                'barang_specification' => $lot->barang->specification ?? '-',
+                'barang_category' => $lot->barang->subcategory->category->name ?? '-',
+                'barang_subcategory' => $lot->barang->subcategory->name ?? '-',
+                'barang_uom' => $lot->barang->uom->name ?? '-',
+            ],
+            'units' => $units,
+            'brands' => $brands,
+            'uoms' => $uoms,
+            'organizers' => $organizers,
+            'vendors' => $vendors,
+            'locations' => $locations,
+            'floors' => $floors,
+            'rooms' => $rooms,
         ]);
     }
 }

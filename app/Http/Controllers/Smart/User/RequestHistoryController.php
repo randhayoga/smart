@@ -227,14 +227,18 @@ class RequestHistoryController extends Controller
 
         $req->update(['status' => $newStatus]);
 
-        // If it is borrow, mark units status to 'dipinjam'
+        // If it is borrow, mark units status to 'dipinjam' (or 'dipakai' if vehicle)
         // If consumable, mark units status to 'dipakai' or 'nonaktif'
         $requestItems = RequestItem::where('request_id', $req->id)->get();
         foreach ($requestItems as $reqItem) {
             $assignments = \App\Models\Request\RequestUnitAssignment::where('request_item_id', $reqItem->id)->get();
             foreach ($assignments as $asn) {
+                $status = 'dipakai';
+                if ($isBorrow && !$asn->unit->is_vehicle) {
+                    $status = 'dipinjam';
+                }
                 $asn->unit->update([
-                    'status' => $isBorrow ? 'dipinjam' : 'dipakai',
+                    'status' => $status,
                     'user_id' => $req->user_id,
                 ]);
             }

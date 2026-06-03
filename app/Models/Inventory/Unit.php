@@ -80,4 +80,18 @@ class Unit extends Model
     {
         return $value !== null ? trim($value) : null;
     }
+
+    public function getIsVehicleAttribute(): bool
+    {
+        $this->loadMissing('lot.barang.subcategory.category');
+        $lot = $this->lot;
+        if ($lot && $lot->barang && $lot->barang->subcategory && $lot->barang->subcategory->category) {
+            $catName = strtolower($lot->barang->subcategory->category->name);
+            $subcatName = strtolower($lot->barang->subcategory->name);
+            return str_contains($catName, 'kendaraan') || str_contains($subcatName, 'kendaraan') ||
+                   str_contains($catName, 'mobil') || str_contains($subcatName, 'mobil') ||
+                   str_contains($catName, 'motor') || str_contains($subcatName, 'motor');
+        }
+        return false;
+    }
 }

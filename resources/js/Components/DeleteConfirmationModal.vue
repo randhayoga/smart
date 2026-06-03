@@ -7,11 +7,13 @@ interface Props {
   itemCount: number;
   itemName?: string;
   itemData?: Record<string, any> | null;
+  fields?: { label: string; value: any }[] | null;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   itemName: 'Barang',
   itemData: null,
+  fields: null,
 });
 
 const emit = defineEmits(['close', 'confirm']);
@@ -21,6 +23,7 @@ const handleConfirm = () => {
 };
 
 const displayFields = computed(() => {
+  if (props.fields) return props.fields;
   if (!props.itemData || props.itemCount !== 1) return [];
 
   const data = props.itemData;
@@ -35,6 +38,35 @@ const displayFields = computed(() => {
     if (data.specification) fields.push({ label: 'Spesifikasi', value: data.specification });
     if (data.lastUpdate) fields.push({ label: 'Pembaruan Terakhir', value: data.lastUpdate });
     if (data.amount !== undefined) fields.push({ label: 'Jumlah', value: data.amount });
+    return fields;
+  }
+
+  // Determine fields for Asset (Unit)
+  if ('number' in data && 'status' in data && 'condition' in data) {
+    fields.push({ label: 'Kode Aset', value: data.number });
+    if (data.vehicle_registration) {
+      fields.push({ label: 'TNKB (Nopol)', value: data.vehicle_registration });
+    }
+    
+    const getStatusLabel = (status: string) => {
+      if (status === 'tersedia') return 'Tersedia';
+      if (status === 'dipinjam') return 'Dipinjam';
+      if (status === 'dipakai') return 'Dipakai';
+      if (status === 'rusak') return 'Rusak';
+      return status;
+    };
+    
+    const formatLocation = (loc: string, floor: string | null, room: string | null) => {
+      const parts = [];
+      if (loc && loc !== '-') parts.push(loc);
+      if (floor && floor !== '-') parts.push(floor);
+      if (room && room !== '-') parts.push(room);
+      return parts.join(', ') || '-';
+    };
+
+    fields.push({ label: 'Status', value: getStatusLabel(data.status) });
+    fields.push({ label: 'Kondisi', value: data.condition });
+    fields.push({ label: 'Lokasi', value: formatLocation(data.location, data.floor, data.room) });
     return fields;
   }
 
@@ -120,7 +152,7 @@ const displayFields = computed(() => {
                 </p>
 
                 <!-- Single Item Info Details -->
-                <div v-if="displayFields.length > 0" class="p-3 rounded-[14px] bg-muted/40 border border-border text-left space-y-2.5 w-full max-w-md mx-auto">
+                <div v-if="displayFields.length > 0" class="p-3 rounded-[14px] bg-muted/40 border border-border text-left space-y-2.5 w-full max-w-md mx-auto max-h-[45vh] overflow-y-auto">
                   <div v-for="field in displayFields" :key="field.label" class="grid grid-cols-12 gap-2 text-sm border-b border-border/50 last:border-0 pb-2 last:pb-0">
                     <span class="col-span-5 text-muted-foreground font-medium">{{ field.label }}</span>
                     <span class="col-span-7 text-foreground font-semibold text-right break-words">
@@ -132,7 +164,8 @@ const displayFields = computed(() => {
             </div>
 
             <!-- Modal Footer -->
-            <div class="py-3 px-4 bg-muted/30 border-t border-border flex items-center justify-end">
+            <div class="py-3 px-4 bg-muted/30 border-t border-border flex items-center justify-between">
+              <p class="text-sm text-rose-500 italic font-medium">*Wajib diisi</p>
               <div class="flex items-center gap-3">
                 <button 
                   @click="emit('close')"

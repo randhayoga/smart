@@ -70,8 +70,10 @@ interface Props {
     unitPrice: number | string;
     imageUrl: string;
     assetCount: number;
+    availableAssetCount: number;
     initial_quantity?: number | null;
     current_quantity?: number | null;
+    updated_at: string;
   }[];
   organizers: { id: number; name: string; }[];
   vendors: { id: number; name: string; }[];
@@ -484,8 +486,7 @@ const columns: ColumnDef<any>[] = [
       } else {
         buttons.push(
           h(ViewTableButton, {
-            disabled: true,
-            class: 'opacity-50 cursor-not-allowed pointer-events-none'
+            onClick: () => router.get(`/smart/inventory/lots/${row.original.id}`)
           })
         );
       }
@@ -694,6 +695,63 @@ const handleSaveChanges = () => {
 const isDeleteModalOpen = ref(false);
 const deleteMode = ref<'barang' | 'lot'>('barang');
 const itemsToDelete = ref<any[]>([]);
+
+const deleteFields = computed(() => {
+  if (deleteMode.value === 'barang') {
+    return null;
+  }
+  
+  if (deleteMode.value === 'lot' && itemsToDelete.value.length === 1) {
+    const data = itemsToDelete.value[0];
+    
+    // Helpers
+    const formatLocation = (loc: string, floor: string | null, room: string | null) => {
+      const parts = [];
+      if (loc && loc !== '-') parts.push(loc);
+      if (floor && floor !== '-') parts.push(floor);
+      if (room && room !== '-') parts.push(room);
+      return parts.join(', ') || '-';
+    };
+    
+    const formatDateWithDashes = (dateStr: string) => {
+      if (!dateStr || dateStr === '-') return '-';
+      return dateStr.replace(/\//g, '-');
+    };
+    
+    const formatRupiah = (val: number | string | null | undefined) => {
+      if (val === null || val === undefined || val === '') return 'Rp0';
+      const num = typeof val === 'string' ? parseFloat(val) : val;
+      if (isNaN(num)) return 'Rp0';
+      const formatted = Math.floor(num).toLocaleString('id-ID');
+      return `Rp${formatted}`;
+    };
+
+    const isConsumable = props.barang.is_consumable;
+    const availableStock = isConsumable ? (data.current_quantity ?? 0) : (data.availableAssetCount ?? 0);
+    const initialStock = isConsumable ? (data.initial_quantity ?? 0) : (data.assetCount ?? 0);
+
+    const fields = [
+      { label: 'Kode LOT', value: data.lotCode },
+      { label: 'Kategori', value: props.barang.category },
+      { label: 'Subkategori', value: props.barang.subcategory },
+      { label: 'Merek', value: props.barang.brand },
+      { label: 'Spesifikasi', value: props.barang.specification },
+      { label: 'Jumlah stok tersedia', value: availableStock },
+      { label: 'Jumlah stok diawal', value: initialStock },
+      { label: 'Lokasi', value: formatLocation(data.location, data.floor, data.room) },
+      { label: 'Nomor PO', value: data.poNumber },
+      { label: 'Tanggal masuk', value: formatDateWithDashes(data.entryDate) },
+      { label: 'Harga satuan', value: formatRupiah(data.unitPrice) },
+      { label: 'Organizer', value: data.organizer },
+      { label: 'Vendor', value: data.vendor },
+      { label: 'Pembaruan Terakhir', value: data.updated_at || '-' }
+    ];
+    
+    return fields;
+  }
+  
+  return null;
+});
 
 const openDeleteModal = () => {
   deleteMode.value = 'barang';
@@ -1327,8 +1385,9 @@ const closeErrorModal = () => {
     <DeleteConfirmationModal 
       :is-open="isDeleteModalOpen"
       :item-count="itemsToDelete.length"
-      :item-name="deleteMode === 'barang' ? 'Barang' : 'LOT'"
+      :item-name="'Barang'"
       :item-data="itemsToDelete.length === 1 ? itemsToDelete[0] : null"
+      :fields="deleteFields"
       @close="closeDeleteModal"
       @confirm="handleConfirmDelete"
     />
