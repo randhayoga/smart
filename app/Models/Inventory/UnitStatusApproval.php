@@ -5,7 +5,7 @@ namespace App\Models\Inventory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use App\Models\User;
+use App\Models\AdmUser;
 
 class UnitStatusApproval extends Model
 {
@@ -34,11 +34,11 @@ class UnitStatusApproval extends Model
 
     public function requester(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'requester_id');
+        return $this->belongsTo(AdmUser::class, 'requester_id');
     }
 
     public function approver(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'approver_id');
+        return $this->belongsTo(AdmUser::class, 'approver_id');
     }
 }

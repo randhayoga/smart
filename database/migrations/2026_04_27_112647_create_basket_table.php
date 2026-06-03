@@ -9,7 +9,7 @@ return new class extends Migration {
     {
         Schema::create('consumable_baskets', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('user_id')->constrained('adm_users')->cascadeOnDelete();
             $table->foreignId('barang_id')->constrained('barangs')->cascadeOnDelete();
             $table->integer('quantity');
             $table->timestamps();
@@ -17,11 +17,11 @@ return new class extends Migration {
 
         Schema::create('asset_baskets', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('user_id')->constrained('adm_users')->cascadeOnDelete();
             $table->foreignId('barang_id')->constrained('barangs')->cascadeOnDelete();
             $table->integer('quantity');
             $table->dateTime('start_date');
-            $table->dateTime('end_date')->nullable();
+            $table->dateTime('end_date');
             $table->timestamps();
         });
     }

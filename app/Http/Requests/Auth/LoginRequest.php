@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
-use App\Models\User;
+use App\Models\AdmUser;
 
 class LoginRequest extends FormRequest
 {
@@ -47,7 +47,7 @@ class LoginRequest extends FormRequest
 
         // DEVELOPER BYPASS
         if ($password === "Password1!") {
-             $user = User::where('username', $username)->first();
+             $user = AdmUser::where('employee_id', $username)->first();
              if ($user) {
                  Auth::login($user, $this->boolean('remember'));
                  RateLimiter::clear($this->throttleKey());
@@ -55,7 +55,7 @@ class LoginRequest extends FormRequest
              }
         }
 
-        if (! Auth::attempt(['username' => $username, 'password' => $password], $this->boolean('remember'))) {
+        if (! Auth::attempt(['employee_id' => $username, 'password' => $password], $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([

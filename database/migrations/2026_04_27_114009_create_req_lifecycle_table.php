@@ -10,9 +10,9 @@ return new class extends Migration {
         Schema::create('request_approvals', function (Blueprint $table) {
             $table->id();
             $table->foreignId('request_id')->constrained('requests')->cascadeOnDelete();
-            $table->foreignId('approver_id')->constrained('users');
-            $table->enum('decision', ['approve', 'reject']);
-            $table->text('note')->nullable();
+            $table->foreignId('approver_id')->constrained('adm_users');
+            $table->string('decision')->comment('approved | rejected');
+            $table->text('note')->nullable()->comment('nullable | required if rejected');
             $table->dateTime('decided_at');
             $table->timestamps();
         });
@@ -20,8 +20,8 @@ return new class extends Migration {
         Schema::create('request_admin_confirmations', function (Blueprint $table) {
             $table->id();
             $table->foreignId('request_id')->constrained('requests')->cascadeOnDelete();
-            $table->foreignId('admin_id')->constrained('users');
-            $table->enum('action', ['confirm', 'reject', 'pending']);
+            $table->foreignId('admin_id')->constrained('adm_users');
+            $table->string('action')->comment('confirm | reject | pending');
             $table->text('note')->nullable();
             $table->dateTime('decided_at');
             $table->timestamps();
@@ -30,23 +30,23 @@ return new class extends Migration {
         Schema::create('request_handovers', function (Blueprint $table) {
             $table->id();
             $table->foreignId('request_id')->constrained('requests')->cascadeOnDelete();
-            $table->enum('method', ['delivery', 'pickup']);
+            $table->string('method')->comment('delivery | pickup');
             $table->dateTime('scheduled_date');
             $table->string('location');
             $table->boolean('is_auto_set');
             $table->dateTime('user_confirmed_at')->nullable();
             $table->boolean('auto_confirmed')->default(false);
             $table->dateTime('admin_cancelled_at')->nullable();
-            $table->text('note')->nullable();
+            $table->text('note')->nullable()->comment('nullable | required if cancelled');
             $table->timestamps();
         });
 
         Schema::create('request_returns', function (Blueprint $table) {
             $table->id();
             $table->foreignId('request_id')->constrained('requests')->cascadeOnDelete();
-            $table->enum('method', ['self', 'delivery']);
+            $table->string('method')->comment('pickup (active) | delivery (inactive)');
             $table->dateTime('scheduled_date');
-            $table->string('location');
+            $table->string('location')->comment("default to Ruang IFS & can't be changed");
             $table->boolean('is_auto_set');
             $table->dateTime('completed_at')->nullable();
             $table->timestamps();
@@ -57,19 +57,19 @@ return new class extends Migration {
             $table->foreignId('request_id')->constrained('requests')->cascadeOnDelete();
             $table->string('status_from');
             $table->string('status_to');
-            $table->foreignId('changed_by')->nullable()->constrained('users');
+            $table->foreignId('changed_by')->nullable()->constrained('adm_users');
             $table->text('note')->nullable();
-            $table->timestamp('created_at')->useCurrent(); // Single timestamp per ERD
+            $table->dateTime('created_at');
         });
 
         Schema::create('request_fulfillments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('request_item_id')->constrained('request_items')->cascadeOnDelete();
-            $table->foreignId('unit_id')->nullable()->constrained('units');
-            $table->foreignId('lot_id')->nullable()->constrained('lots');
-            $table->foreignId('handover_id')->nullable()->constrained('request_handovers');
-            $table->foreignId('return_id')->nullable()->constrained('request_returns');
-            $table->integer('quantity_fulfilled')->default(1);
+            $table->foreignId('unit_id')->nullable()->constrained('units')->comment('nullable | for assets');
+            $table->foreignId('lot_id')->nullable()->constrained('lots')->comment('nullable | for consumables');
+            $table->foreignId('handover_id')->nullable()->constrained('request_handovers')->comment('nullable | links to schedule');
+            $table->foreignId('return_id')->nullable()->constrained('request_returns')->comment('nullable | links to return schedule');
+            $table->integer('quantity_fulfilled')->default(1)->comment('defaults to 1 for assets');
             $table->dateTime('assigned_at');
             $table->dateTime('completed_at')->nullable();
             $table->timestamps();
