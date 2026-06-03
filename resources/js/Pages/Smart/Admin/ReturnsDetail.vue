@@ -32,6 +32,9 @@ interface RequestDetail {
   number: string;
   requester: string;
   approver: string;
+  approval_by?: string;
+  confirmation_by?: string;
+  return_confirmed_by?: string;
   createdAt: string;
   pemanfaatan: 'corporate' | 'project';
   pemanfaatanDetail: string;
@@ -62,8 +65,8 @@ const timeline = computed(() => {
 
   return [
     { status: 'Permintaan dibuat', time: r.createdAt, completed: true },
-    { status: 'Di-approve', user: r.approver, time: r.createdAt, completed: true },
-    { status: 'Dikonfirmasi', user: 'Admin', time: r.createdAt, completed: true },
+    { status: 'Di-approve', user: r.approval_by || r.approver || 'Manager', time: r.createdAt, completed: true },
+    { status: 'Dikonfirmasi', user: r.confirmation_by || 'Admin', time: r.createdAt, completed: true },
     { status: 'Serah Terima', time: r.createdAt, completed: true },
     { status: 'Aset selesai dipinjam', time: r.createdAt, completed: true },
     { 
@@ -137,7 +140,7 @@ const handleConfirmReturn = () => {
               </p>
               <p>
                 <span class="text-muted-foreground">PIC Approval:</span> 
-                <span class="font-semibold">{{ request.approver }}</span>
+                <span class="font-semibold">{{ request.approval_by || request.approver }}</span>
               </p>
               <p>
                 <span class="text-muted-foreground">Waktu dibuat:</span> 

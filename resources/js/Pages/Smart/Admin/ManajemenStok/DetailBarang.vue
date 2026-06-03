@@ -72,8 +72,10 @@ interface Props {
     unitPrice: number | string;
     imageUrl: string;
     assetCount: number;
+    availableAssetCount: number;
     initial_quantity?: number | null;
     current_quantity?: number | null;
+    updated_at: string;
   }[];
   organizers: { id: number; name: string; }[];
   vendors: { id: number; name: string; }[];
@@ -125,6 +127,7 @@ const lotForm = useForm({
   image_url: null as File | null,
   image_url_name: '',
   use_parent_image: false,
+  total_item: 1,
 });
 
 const generateLotCode = () => {
@@ -169,6 +172,7 @@ const openCreateLotModal = () => {
   lotForm.image_url = null;
   lotForm.image_url_name = '';
   lotForm.use_parent_image = false;
+  lotForm.total_item = 1;
   lotForm.clearErrors();
   isLotModalOpen.value = true;
 };
@@ -310,10 +314,8 @@ const isLotFormValid = computed(() => {
   if (lotModalMode.value === 'create') {
     if (props.barang.is_consumable) {
       return lotForm.initial_quantity !== '' && lotForm.initial_quantity !== null && Number(lotForm.initial_quantity) >= 0;
-    }
-
-    if (lotForm.auto_create_assets) {
-      return lotForm.auto_create_assets_count !== '' && lotForm.auto_create_assets_count !== null && Number(lotForm.auto_create_assets_count) > 0;
+    } else {
+      return lotForm.total_item !== null && lotForm.total_item !== undefined && Number(lotForm.total_item) >= 1;
     }
   }
 
@@ -351,6 +353,9 @@ const handleSaveLot = () => {
     }
     if (data.use_parent_image) {
       formData.use_parent_image = data.use_parent_image;
+    }
+    if (lotModalMode.value === 'create') {
+      formData.total_item = data.total_item;
     }
     return formData;
   });
@@ -481,8 +486,7 @@ const columns: ColumnDef<any>[] = [
       } else {
         buttons.push(
           h(ViewTableButton, {
-            disabled: true,
-            class: 'opacity-50 cursor-not-allowed pointer-events-none'
+            onClick: () => router.get(`/smart/inventory/lots/${row.original.id}`)
           })
         );
       }
@@ -934,6 +938,63 @@ const handleSaveBulkChanges = () => {
 const isDeleteModalOpen = ref(false);
 const deleteMode = ref<'barang' | 'lot'>('barang');
 const itemsToDelete = ref<any[]>([]);
+
+const deleteFields = computed(() => {
+  if (deleteMode.value === 'barang') {
+    return null;
+  }
+  
+  if (deleteMode.value === 'lot' && itemsToDelete.value.length === 1) {
+    const data = itemsToDelete.value[0];
+    
+    // Helpers
+    const formatLocation = (loc: string, floor: string | null, room: string | null) => {
+      const parts = [];
+      if (loc && loc !== '-') parts.push(loc);
+      if (floor && floor !== '-') parts.push(floor);
+      if (room && room !== '-') parts.push(room);
+      return parts.join(', ') || '-';
+    };
+    
+    const formatDateWithDashes = (dateStr: string) => {
+      if (!dateStr || dateStr === '-') return '-';
+      return dateStr.replace(/\//g, '-');
+    };
+    
+    const formatRupiah = (val: number | string | null | undefined) => {
+      if (val === null || val === undefined || val === '') return 'Rp0';
+      const num = typeof val === 'string' ? parseFloat(val) : val;
+      if (isNaN(num)) return 'Rp0';
+      const formatted = Math.floor(num).toLocaleString('id-ID');
+      return `Rp${formatted}`;
+    };
+
+    const isConsumable = props.barang.is_consumable;
+    const availableStock = isConsumable ? (data.current_quantity ?? 0) : (data.availableAssetCount ?? 0);
+    const initialStock = isConsumable ? (data.initial_quantity ?? 0) : (data.assetCount ?? 0);
+
+    const fields = [
+      { label: 'Kode LOT', value: data.lotCode },
+      { label: 'Kategori', value: props.barang.category },
+      { label: 'Subkategori', value: props.barang.subcategory },
+      { label: 'Merek', value: props.barang.brand },
+      { label: 'Spesifikasi', value: props.barang.specification },
+      { label: 'Jumlah stok tersedia', value: availableStock },
+      { label: 'Jumlah stok diawal', value: initialStock },
+      { label: 'Lokasi', value: formatLocation(data.location, data.floor, data.room) },
+      { label: 'Nomor PO', value: data.poNumber },
+      { label: 'Tanggal masuk', value: formatDateWithDashes(data.entryDate) },
+      { label: 'Harga satuan', value: formatRupiah(data.unitPrice) },
+      { label: 'Organizer', value: data.organizer },
+      { label: 'Vendor', value: data.vendor },
+      { label: 'Pembaruan Terakhir', value: data.updated_at || '-' }
+    ];
+    
+    return fields;
+  }
+  
+  return null;
+});
 
 const openDeleteModal = () => {
   deleteMode.value = 'barang';
@@ -1478,23 +1539,15 @@ const closeErrorModal = () => {
                           @input="lotForm.current_quantity = lotForm.initial_quantity"
                         />
                       </div>
-                      <div v-else class="space-y-1.5 flex items-center gap-2 pt-2 flex-wrap">
-                        <Checkbox 
-                          id="auto-create-checkbox"
-                          v-model="lotForm.auto_create_assets"
-                        />
-                        <label for="auto-create-checkbox" class="cursor-pointer select-none text-sm font-medium text-foreground">
-                          Buat
-                        </label>
+                      <div v-else class="space-y-1.5">
+                        <label class="text-sm font-medium text-foreground block">Total Item (Aset)<span class="text-rose-500">*</span></label>
                         <input 
                           type="number" 
-                          v-model="lotForm.auto_create_assets_count"
-                          placeholder="..."
+                          v-model="lotForm.total_item"
+                          placeholder="Contoh: 5"
                           min="1"
-                          :disabled="!lotForm.auto_create_assets"
-                          class="w-12 px-2 py-1 text-sm border border-input rounded-[10px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-8 disabled:opacity-50 disabled:cursor-not-allowed mx-1"
+                          class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
                         />
-                        <span class="text-sm font-medium text-foreground">aset secara otomatis dengan nilai default.</span>
                       </div>
                     </template>
                   </div>
@@ -1838,8 +1891,9 @@ const closeErrorModal = () => {
     <DeleteConfirmationModal 
       :is-open="isDeleteModalOpen"
       :item-count="itemsToDelete.length"
-      :item-name="deleteMode === 'barang' ? 'Barang' : 'LOT'"
+      :item-name="'Barang'"
       :item-data="itemsToDelete.length === 1 ? itemsToDelete[0] : null"
+      :fields="deleteFields"
       @close="closeDeleteModal"
       @confirm="handleConfirmDelete"
     />

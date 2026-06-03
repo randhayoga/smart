@@ -28,7 +28,8 @@ interface RequestHistory {
   durationEnd?: string;
   durationDays?: number;
   durationHours?: number;
-  status: 'Menunggu approval' | 'Disetujui' | 'Ditolak' | 'Serah Terima' | 'Dipinjam' | 'Selesai' | 'Dibatalkan';
+  status: 'Menunggu approval' | 'Disetujui' | 'Ditolak' | 'Serah Terima' | 'Dipinjam' | 'Selesai' | 'Dibatalkan' | 'Pending';
+  raw_status: 'wait' | 'approve' | 'confirm' | 'handover' | 'borrow' | 'return' | 'success' | 'reject' | 'cancel' | 'pending';
   created_at: string;
   items: RequestItem[];
 }
@@ -74,6 +75,7 @@ const getStatusClasses = (status: string) => {
       return 'bg-[#EF4444] text-white border-transparent'; // red-pinkish for "Sedang dipinjam"
     case 'Ditolak':
     case 'Dibatalkan':
+    case 'Pending':
       return 'bg-zinc-500 text-white border-transparent'; // gray
     default:
       return 'bg-muted text-muted-foreground border-border';
@@ -224,18 +226,18 @@ const getStatusClasses = (status: string) => {
         Batalkan Permintaan
       </Button>
 
-      <!-- Tampilkan Atur Serah Terima jika status Disetujui (Di-approve) -->
+      <!-- Tampilkan Atur Serah Terima jika status Serah Terima (confirm) -->
       <Link
-        v-if="request.status === 'Disetujui'"
+        v-if="request.raw_status === 'confirm'"
         :href="route('smart.history.show', request.id)"
         class="h-9 px-5 rounded-lg text-xs font-bold bg-[#6366F1] hover:bg-[#5558EB] text-white shadow-sm flex items-center justify-center transition-colors"
       >
         Atur Serah Terima
       </Link>
 
-      <!-- Tampilkan Atur Pengembalian jika status Dipinjam (Sedang dipinjam) -->
+      <!-- Tampilkan Atur Pengembalian jika status Dipinjam (borrow) -->
       <Link
-        v-if="request.status === 'Dipinjam'"
+        v-if="request.raw_status === 'borrow'"
         :href="route('smart.history.show', request.id)"
         class="h-9 px-5 rounded-lg text-xs font-bold bg-[#6366F1] hover:bg-[#5558EB] text-white shadow-sm flex items-center justify-center transition-colors"
       >

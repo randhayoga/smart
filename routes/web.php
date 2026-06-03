@@ -69,6 +69,8 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
             Route::put('lots/bulk', [\App\Http\Controllers\Smart\Admin\ManajemenStok\BulkLotController::class, 'update'])->name('lots.bulk-update');
             Route::delete('lots/bulk', [\App\Http\Controllers\Smart\Admin\ManajemenStok\BulkLotController::class, 'destroy'])->name('lots.bulk-destroy');
             Route::resource('lots', \App\Http\Controllers\Smart\Admin\ManajemenStok\LotController::class)->only(['store', 'update', 'destroy', 'show']);
+            Route::post('units/bulk-update', [\App\Http\Controllers\Smart\Admin\ManajemenStok\UnitController::class, 'bulkUpdate'])->name('units.bulk-update');
+            Route::resource('units', \App\Http\Controllers\Smart\Admin\ManajemenStok\UnitController::class)->only(['store', 'update', 'destroy']);
         });
 
         Route::get('/inbox', [InboxController::class, 'index'])->name('inbox');
@@ -83,6 +85,14 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
         Route::post('/returns/{id}/confirm', [ReturnController::class, 'confirm'])->name('returns.confirm');
         Route::get('/arsip', [\App\Http\Controllers\Smart\Admin\ArsipController::class, 'index'])->name('arsip');
         Route::get('/arsip/{id}', [\App\Http\Controllers\Smart\Admin\ArsipController::class, 'show'])->name('arsip.show');
+    });
+
+    // Manager only routes
+    Route::middleware(['role:manager'])->group(function () {
+        Route::get('/approve', [App\Http\Controllers\Smart\Manager\ApprovalController::class, 'index'])->name('approve');
+        Route::get('/approve/{id}', [App\Http\Controllers\Smart\Manager\ApprovalController::class, 'show'])->name('approve.show');
+        Route::post('/approve/{id}/action', [App\Http\Controllers\Smart\Manager\ApprovalController::class, 'action'])->name('approve.action');
+        Route::get('/approved', [App\Http\Controllers\Smart\Manager\ApprovalController::class, 'approvedList'])->name('approved');
     });
 
     // Manager and User routes

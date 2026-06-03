@@ -17,7 +17,7 @@ class ArsipController extends Controller
     public function index()
     {
         $archiveList = SmartRequest::with(['user'])
-            ->whereIn('status', ['success', 'reject', 'cancel'])
+            ->whereIn('status', ['success', 'reject', 'cancel', 'pending'])
             ->orderBy('id', 'desc')
             ->get()
             ->map(function ($req) {
@@ -28,6 +28,8 @@ class ArsipController extends Controller
                     $statusStr = 'Ditolak';
                 } elseif ($req->status === 'cancel') {
                     $statusStr = 'Dibatalkan';
+                } elseif ($req->status === 'pending') {
+                    $statusStr = 'Pending';
                 }
 
                 $timeStr = $req->start_date ? $req->start_date->format('d-m-Y H:i') : ($req->created_at ? $req->created_at->format('d-m-Y H:i') : '-');
@@ -58,7 +60,7 @@ class ArsipController extends Controller
      */
     public function show($id)
     {
-        $req = SmartRequest::with(['user', 'approver', 'items.barang.subcategory.category', 'items.barang.brand', 'project', 'department'])
+        $req = SmartRequest::with(['user', 'approver', 'approval.approver', 'adminConfirmation.admin', 'statusLogs.changer', 'items.barang.subcategory.category', 'items.barang.brand', 'project', 'department'])
             ->findOrFail($id);
 
         $durationDays = 0;
@@ -87,11 +89,19 @@ class ArsipController extends Controller
             ];
         });
 
+        $returnConfirmation = $req->statusLogs
+            ->where('status_from', 'return')
+            ->where('status_to', 'success')
+            ->first();
+
         $mappedRequest = [
             'id' => $req->id,
             'number' => $req->request_number,
             'requester' => $req->user->name ?? '-',
             'approver' => $req->approver->name ?? '-',
+            'approval_by' => $req->approval?->approver?->name,
+            'confirmation_by' => $req->adminConfirmation?->admin?->name,
+            'return_confirmed_by' => $returnConfirmation?->changer?->name,
             'createdAt' => $req->created_at ? $req->created_at->format('d-m-Y H:i') : '-',
             'updatedAt' => $req->updated_at ? $req->updated_at->format('d-m-Y H:i') : '-',
             'pemanfaatan' => $req->utilization,

@@ -46,9 +46,18 @@ interface RequestHistory {
   durationEnd?: string;
   durationDays?: number;
   durationHours?: number;
-  status: 'Menunggu approval' | 'Disetujui' | 'Ditolak' | 'Serah Terima' | 'Dipinjam' | 'Selesai' | 'Dibatalkan';
+  status: 'Menunggu approval' | 'Disetujui' | 'Ditolak' | 'Serah Terima' | 'Dipinjam' | 'Selesai' | 'Dibatalkan' | 'Pending';
+  raw_status: 'wait' | 'approve' | 'confirm' | 'handover' | 'borrow' | 'return' | 'success' | 'reject' | 'cancel' | 'pending';
   created_at: string; // format YYYY-MM-DD
   items: RequestItem[];
+  approval_by?: string | null;
+  approval_at?: string | null;
+  confirmation_by?: string | null;
+  confirmation_at?: string | null;
+  handover_method?: string | null;
+  handover_time?: string | null;
+  handover_location?: string | null;
+  handover_note?: string | null;
 }
 
 import { router } from '@inertiajs/vue3';
@@ -254,6 +263,7 @@ const handleConfirmCancel = () => {
               <SelectItem value="Selesai">Selesai</SelectItem>
               <SelectItem value="Ditolak">Ditolak</SelectItem>
               <SelectItem value="Dibatalkan">Dibatalkan</SelectItem>
+              <SelectItem value="Pending">Pending</SelectItem>
             </SelectContent>
           </Select>
         </div>

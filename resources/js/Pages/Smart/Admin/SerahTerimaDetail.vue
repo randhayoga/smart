@@ -71,18 +71,23 @@ const items = computed(() => props.items || [
   }
 ]);
 
-const timeline = [
-  { status: 'Permintaan dibuat', time: '10/05/2026 09:00', completed: true },
-  { status: 'Di-approve', user: 'John Doe', time: '10/05/2026 14:30', completed: true },
-  { status: 'Dikonfirmasi', user: 'Radifa', time: '11/05/2026 10:00', completed: true },
-  { 
-    status: 'Serah Terima', 
-    method: 'Ambil sendiri', 
-    location: 'Ruang IFS', 
-    time: '12/05/2026 10:00', 
-    active: true 
-  },
-];
+const timeline = computed(() => {
+  const hData = props.handover;
+  if (!hData) return [];
+
+  return [
+    { status: 'Permintaan dibuat', time: hData.createdAt, completed: true },
+    { status: 'Di-approve', user: hData.approval_by || hData.approver || 'Manager', time: hData.approval_at || hData.createdAt, completed: true },
+    { status: 'Dikonfirmasi', user: hData.confirmation_by || 'Admin', time: hData.confirmation_at || hData.createdAt, completed: true },
+    { 
+      status: 'Serah Terima', 
+      method: hData.method, 
+      location: hData.location, 
+      time: hData.time, 
+      active: true 
+    },
+  ];
+});
 
 // Allocation Modal State
 const isAllocModalOpen = ref(false);
@@ -264,23 +269,23 @@ const confirmCancel = () => {
             <div class="space-y-1.5 text-sm text-foreground">
               <p>
                 <span class="text-muted-foreground">Dibuat oleh:</span> 
-                <span class="font-semibold">{{ handover?.requester || 'John Doe' }}</span>
+                <span class="font-semibold">{{ handover?.requester }}</span>
               </p>
               <p>
                 <span class="text-muted-foreground">PIC Approval:</span> 
-                <span class="font-semibold">Jane Doe</span>
+                <span class="font-semibold">{{ handover?.approval_by || handover?.approver || 'Manager' }}</span>
               </p>
               <p>
                 <span class="text-muted-foreground">Waktu dibuat:</span> 
-                <span class="font-semibold">10/05/2026 09:00</span>
+                <span class="font-semibold">{{ handover?.createdAt }}</span>
               </p>
               <p>
                 <span class="text-muted-foreground">Pemanfaatan:</span> 
-                <span class="font-semibold">Internal Project (PRJ-2024-001/Finance)</span>
+                <span class="font-semibold">{{ handover?.pemanfaatan === 'corporate' ? 'Corporate' : 'Project' }} ({{ handover?.pemanfaatanDetail }})</span>
               </p>
-              <p>
+              <p v-if="handover?.durationStart">
                 <span class="text-muted-foreground">Durasi:</span>
-                <span class="font-semibold">12/05/2026 10:00 s.d. 19/05/2026 10:00 (7 hari, 0 jam)</span>
+                <span class="font-semibold">{{ handover?.durationStart }} s.d. {{ handover?.durationEnd }} ({{ handover?.durationDays }} hari, {{ handover?.durationHours }} jam)</span>
               </p>
             </div>
           </div>
@@ -519,11 +524,11 @@ const confirmCancel = () => {
             <div class="p-6 overflow-y-auto flex-grow bg-card space-y-4">
               <div class="space-y-1 text-sm text-foreground">
                 <p class="font-bold mb-2">{{ handover?.number || '#Nomor_Permintaan/#Nomor_Peminjaman' }}</p>
-                <p>Dibuat oleh: {{ handover?.requester || 'John Doe' }}</p>
-                <p>PIC Approval: Jane Doe</p>
-                <p>Waktu dibuat: 10/05/2026 09:00</p>
-                <p>Pemanfaatan: Internal Project (PRJ-2024-001/Finance)</p>
-                <p>Durasi: 12/05/2026 10:00 s.d. 19/05/2026 10:00 (7 hari, 0 jam)</p>
+                <p>Dibuat oleh: {{ handover?.requester }}</p>
+                <p>PIC Approval: {{ handover?.approval_by || handover?.approver || 'Manager' }}</p>
+                <p>Waktu dibuat: {{ handover?.createdAt }}</p>
+                <p>Pemanfaatan: {{ handover?.pemanfaatan === 'corporate' ? 'Corporate' : 'Project' }} ({{ handover?.pemanfaatanDetail }})</p>
+                <p v-if="handover?.durationStart">Durasi: {{ handover?.durationStart }} s.d. {{ handover?.durationEnd }} ({{ handover?.durationDays }} hari, {{ handover?.durationHours }} jam)</p>
               </div>
 
               <div class="border-t border-border pt-4">
