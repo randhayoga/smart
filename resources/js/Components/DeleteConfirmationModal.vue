@@ -22,6 +22,28 @@ const handleConfirm = () => {
   emit('confirm');
 };
 
+const formatRupiah = (val: number | string | null | undefined) => {
+  if (val === null || val === undefined || val === '') return 'Rp0';
+  const num = typeof val === 'string' ? parseFloat(val) : val;
+  if (isNaN(num)) return 'Rp0';
+  const formatted = Math.floor(num).toLocaleString('id-ID');
+  return `Rp${formatted}`;
+};
+
+const formatDateWithDashes = (dateStr: string) => {
+  if (!dateStr || dateStr === '-') return '-';
+  return dateStr.replace(/\//g, '-');
+};
+
+const formatLocation = (lot: any) => {
+  if (!lot) return '-';
+  const parts = [];
+  if (lot.location) parts.push(lot.location);
+  if (lot.floor) parts.push(lot.floor);
+  if (lot.room) parts.push(lot.room);
+  return parts.join(', ') || '-';
+};
+
 const displayFields = computed(() => {
   if (props.fields) return props.fields;
   if (!props.itemData || props.itemCount !== 1) return [];
@@ -73,10 +95,36 @@ const displayFields = computed(() => {
   // Determine fields for Lot
   if ('lotCode' in data) {
     fields.push({ label: 'Kode LOT', value: data.lotCode });
+    if (data.barang_category) fields.push({ label: 'Kategori', value: data.barang_category });
+    if (data.barang_subcategory) fields.push({ label: 'Subkategori', value: data.barang_subcategory });
+    if (data.barang_brand) fields.push({ label: 'Merek', value: data.barang_brand });
+    if (data.barang_specification) fields.push({ label: 'Spesifikasi', value: data.barang_specification });
+    
+    const uom = data.barang_uom || '';
+    const currentQty = data.current_quantity !== undefined && data.current_quantity !== null ? data.current_quantity : 0;
+    const initialQty = data.initial_quantity !== undefined && data.initial_quantity !== null ? data.initial_quantity : 0;
+    fields.push({ label: 'Jumlah stok tersedia', value: `${currentQty} ${uom}`.trim() });
+    fields.push({ label: 'Jumlah stok diawal', value: `${initialQty} ${uom}`.trim() });
+    
+    if (!data.is_consumable) {
+      fields.push({ label: 'Lokasi (default)', value: formatLocation(data) });
+    } else {
+      fields.push({ label: 'Lokasi', value: formatLocation(data) });
+    }
+    
     if (data.poNumber) fields.push({ label: 'Nomor PO', value: data.poNumber });
-    if (data.entryDate) fields.push({ label: 'Tanggal Masuk', value: data.entryDate });
+    if (data.entryDate) fields.push({ label: 'Tanggal masuk', value: formatDateWithDashes(data.entryDate) });
+    
+    if (!data.is_consumable) {
+      fields.push({ label: 'Harga Satuan (default)', value: formatRupiah(data.unitPrice) });
+    } else {
+      fields.push({ label: 'Harga Satuan', value: formatRupiah(data.unitPrice) });
+    }
+    
     if (data.organizer) fields.push({ label: 'Organizer', value: data.organizer });
-    if (data.assetCount !== undefined) fields.push({ label: 'Jumlah Stok', value: data.assetCount });
+    if (data.vendor) fields.push({ label: 'Vendor', value: data.vendor });
+    if (data.updated_at) fields.push({ label: 'Pembaruan terakhir', value: data.updated_at });
+    
     return fields;
   }
 
@@ -175,7 +223,7 @@ const displayFields = computed(() => {
                 </button>
                 <button 
                   @click="handleConfirm"
-                  class="px-5 py-2 bg-[#CC0000] hover:bg-[#AA0000] text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm active:scale-[0.98]"
+                  class="px-5 py-2 bg-destructive hover:opacity-70 text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm active:scale-[0.98]"
                 >
                   Konfirmasi Penghapusan
                 </button>

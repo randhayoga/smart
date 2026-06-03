@@ -7,44 +7,70 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        Schema::create('departments', function (Blueprint $table) {
+        Schema::create('hrd_employees', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            // Nullable initially to prevent circular dependency issues during creation
-            $table->unsignedBigInteger('manager_id')->nullable(); 
+            $table->unsignedBigInteger('orgchart_id')->nullable(); // FK added after hrd_orgcharts created
+            $table->string('employee_id')->unique();
+            $table->string('employee_name');
+            $table->string('email')->unique();
+            $table->boolean('active')->default(true);
             $table->timestamps();
         });
 
-        Schema::create('users', function (Blueprint $table) {
+        Schema::create('hrd_orgcharts', function (Blueprint $table) {
             $table->id();
-            $table->string('username', 6)->unique();
+            $table->string('employee_id')->nullable();
+            $table->string('org_code')->unique();
+            $table->string('org_name')->unique();
+            $table->timestamps();
+
+            $table->foreign('employee_id')->references('employee_id')->on('hrd_employees')->nullOnDelete();
+        });
+
+        // Now enforce orgchart FK on hrd_employees
+        Schema::table('hrd_employees', function (Blueprint $table) {
+            $table->foreign('orgchart_id')->references('id')->on('hrd_orgcharts')->nullOnDelete();
+        });
+
+        Schema::create('adm_users', function (Blueprint $table) {
+            $table->id();
+            $table->string('employee_id')->unique();
+            $table->string('password_hash');
             $table->string('name');
-            $table->string('email')->unique();
-            $table->string('password');
-            $table->enum('role', ['admin', 'user', 'manager']);
-            $table->foreignId('department_id')->constrained('departments');
             $table->rememberToken();
             $table->timestamps();
+
+            $table->foreign('employee_id')->references('employee_id')->on('hrd_employees')->cascadeOnDelete();
         });
 
-        // Now that users exist, enforce the manager foreign key on departments
-        Schema::table('departments', function (Blueprint $table) {
-            $table->foreign('manager_id')->references('id')->on('users');
-        });
-
-        Schema::create('projects', function (Blueprint $table) {
+        Schema::create('tb_projects', function (Blueprint $table) {
             $table->id();
+            $table->string('no_project')->unique();
+            $table->string('project_name');
+            $table->string('client_id');
+            $table->timestamps();
+        });
+
+        Schema::create('tb_rbs', function (Blueprint $table) {
+            $table->id('no_urut');
+            $table->string('id')->unique();
             $table->string('name');
-            $table->string('code');
-            $table->foreignId('manager_id')->constrained('users');
+            $table->string('showing_name');
             $table->timestamps();
         });
 
-        Schema::create('project_user', function (Blueprint $table) { // Standard Laravel pivot naming
+        Schema::create('tb_assign_projects', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
-            $table->foreignId('project_id')->constrained('projects')->cascadeOnDelete();
+            $table->string('npk');
+            $table->string('no_project');
+            $table->string('id_rbs');
+            $table->dateTime('start_date');
+            $table->dateTime('end_date');
             $table->timestamps();
+
+            $table->foreign('npk')->references('employee_id')->on('adm_users')->cascadeOnDelete();
+            $table->foreign('no_project')->references('no_project')->on('tb_projects')->cascadeOnDelete();
+            $table->foreign('id_rbs')->references('id')->on('tb_rbs')->cascadeOnDelete();
         });
 
         Schema::create('sessions', function (Blueprint $table) {
@@ -61,12 +87,14 @@ return new class extends Migration {
     public function down(): void
     {
         Schema::dropIfExists('sessions');
-        Schema::dropIfExists('project_user');
-        Schema::dropIfExists('projects');
-        Schema::table('departments', function (Blueprint $table) {
-            $table->dropForeign(['manager_id']);
+        Schema::dropIfExists('tb_assign_projects');
+        Schema::dropIfExists('tb_rbs');
+        Schema::dropIfExists('tb_projects');
+        Schema::dropIfExists('adm_users');
+        Schema::table('hrd_employees', function (Blueprint $table) {
+            $table->dropForeign(['orgchart_id']);
         });
-        Schema::dropIfExists('users');
-        Schema::dropIfExists('departments');
+        Schema::dropIfExists('hrd_orgcharts');
+        Schema::dropIfExists('hrd_employees');
     }
 };

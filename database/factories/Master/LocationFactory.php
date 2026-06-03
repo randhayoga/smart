@@ -20,7 +20,7 @@ class LocationFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => fake()->unique()->cityPrefix(),
+            'name' => fake()->city() . ' ' . fake()->unique()->randomNumber(5, false),
         ];
     }
 }

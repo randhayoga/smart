@@ -10,13 +10,13 @@ return new class extends Migration {
         Schema::create('requests', function (Blueprint $table) {
             $table->id();
             $table->string('request_number', 11)->unique();
-            $table->foreignId('user_id')->constrained('users');
-            $table->foreignId('approver_id')->constrained('users');
-            $table->enum('utilization', ['project', 'corporate']);
-            $table->foreignId('department_id')->nullable()->constrained('departments');
-            $table->foreignId('project_id')->nullable()->constrained('projects');
+            $table->foreignId('user_id')->constrained('adm_users');
+            $table->foreignId('approver_id')->constrained('adm_users');
+            $table->string('utilization')->comment('project | corporate');
+            $table->foreignId('org_id')->nullable()->constrained('hrd_orgcharts');
+            $table->foreignId('project_id')->nullable()->constrained('tb_projects');
             $table->text('reasoning');
-            $table->enum('status', ['wait', 'approve', 'confirm', 'handover', 'borrow', 'return', 'success', 'reject', 'cancel']);
+            $table->string('status')->comment('overall status e.g., pending | partial | completed');
             $table->timestamps();
         });
 
@@ -25,9 +25,9 @@ return new class extends Migration {
             $table->foreignId('request_id')->constrained('requests')->cascadeOnDelete();
             $table->foreignId('barang_id')->constrained('barangs');
             $table->integer('quantity_requested');
-            $table->dateTime('start_date')->nullable();
-            $table->dateTime('end_date')->nullable();
-            $table->string('status')->default('pending');
+            $table->dateTime('start_date')->nullable()->comment('nullable; assets only');
+            $table->dateTime('end_date')->nullable()->comment('nullable; assets only');
+            $table->string('status')->default('pending')->comment('pending | partially_fulfilled | fulfilled | cancelled');
             $table->timestamps();
         });
 
