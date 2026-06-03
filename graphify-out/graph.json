@@ -180,52 +180,52 @@
       "source_file": "app/Http/Controllers/Smart/Admin/DashboardController.php",
       "source_location": "L1",
       "id": "admin_dashboardcontroller",
-      "community": 13,
+      "community": 1,
       "norm_label": "dashboardcontroller.php"
     },
     {
       "label": "DashboardController",
       "file_type": "code",
       "source_file": "app/Http/Controllers/Smart/Admin/DashboardController.php",
-      "source_location": "L15",
+      "source_location": "L11",
       "id": "admin_dashboardcontroller_dashboardcontroller",
-      "community": 13,
+      "community": 1,
       "norm_label": "dashboardcontroller"
     },
     {
       "label": ".index()",
       "file_type": "code",
       "source_file": "app/Http/Controllers/Smart/Admin/DashboardController.php",
-      "source_location": "L20",
+      "source_location": "L16",
       "id": "admin_dashboardcontroller_dashboardcontroller_index",
-      "community": 13,
+      "community": 1,
       "norm_label": ".index()"
     },
     {
       "label": "Request",
       "file_type": "code",
       "source_file": "app/Http/Controllers/Smart/Admin/DashboardController.php",
-      "source_location": "L20",
+      "source_location": "L16",
       "id": "app_http_controllers_smart_admin_dashboardcontroller_php_request",
-      "community": 13,
+      "community": 1,
       "norm_label": "request"
     },
     {
       "label": "Response",
       "file_type": "code",
       "source_file": "app/Http/Controllers/Smart/Admin/DashboardController.php",
-      "source_location": "L20",
+      "source_location": "L16",
       "id": "app_http_controllers_smart_admin_dashboardcontroller_php_response",
-      "community": 13,
+      "community": 1,
       "norm_label": "response"
     },
     {
       "label": "RedirectResponse",
       "file_type": "code",
       "source_file": "app/Http/Controllers/Smart/Admin/DashboardController.php",
-      "source_location": "L20",
+      "source_location": "L16",
       "id": "app_http_controllers_smart_admin_dashboardcontroller_php_redirectresponse",
-      "community": 13,
+      "community": 1,
       "norm_label": "redirectresponse"
     },
     {
@@ -270,7 +270,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/InboxController.php",
       "source_location": "L1",
       "id": "admin_inboxcontroller",
-      "community": 6,
+      "community": 5,
       "norm_label": "inboxcontroller.php"
     },
     {
@@ -279,7 +279,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/InboxController.php",
       "source_location": "L17",
       "id": "admin_inboxcontroller_inboxcontroller",
-      "community": 6,
+      "community": 5,
       "norm_label": "inboxcontroller"
     },
     {
@@ -288,7 +288,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/InboxController.php",
       "source_location": "L22",
       "id": "admin_inboxcontroller_inboxcontroller_index",
-      "community": 6,
+      "community": 5,
       "norm_label": ".index()"
     },
     {
@@ -297,7 +297,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/InboxController.php",
       "source_location": "L22",
       "id": "app_http_controllers_smart_admin_inboxcontroller_php_request",
-      "community": 6,
+      "community": 5,
       "norm_label": "request"
     },
     {
@@ -306,7 +306,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/InboxController.php",
       "source_location": "L22",
       "id": "app_http_controllers_smart_admin_inboxcontroller_php_response",
-      "community": 6,
+      "community": 5,
       "norm_label": "response"
     },
     {
@@ -315,7 +315,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/InboxController.php",
       "source_location": "L56",
       "id": "admin_inboxcontroller_inboxcontroller_show",
-      "community": 6,
+      "community": 5,
       "norm_label": ".show()"
     },
     {
@@ -324,7 +324,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/InboxController.php",
       "source_location": "L142",
       "id": "admin_inboxcontroller_inboxcontroller_action",
-      "community": 6,
+      "community": 5,
       "norm_label": ".action()"
     },
     {
@@ -333,7 +333,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStokController.php",
       "source_location": "L1",
       "id": "admin_manajemenstokcontroller",
-      "community": 1,
+      "community": 204,
       "norm_label": "manajemenstokcontroller.php"
     },
     {
@@ -342,7 +342,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStokController.php",
       "source_location": "L10",
       "id": "admin_manajemenstokcontroller_manajemenstokcontroller",
-      "community": 1,
+      "community": 204,
       "norm_label": "manajemenstokcontroller"
     },
     {
@@ -351,7 +351,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStokController.php",
       "source_location": "L15",
       "id": "admin_manajemenstokcontroller_manajemenstokcontroller_index",
-      "community": 1,
+      "community": 204,
       "norm_label": ".index()"
     },
     {
@@ -360,7 +360,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStokController.php",
       "source_location": "L15",
       "id": "app_http_controllers_smart_admin_manajemenstokcontroller_php_request",
-      "community": 1,
+      "community": 204,
       "norm_label": "request"
     },
     {
@@ -369,7 +369,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStokController.php",
       "source_location": "L15",
       "id": "app_http_controllers_smart_admin_manajemenstokcontroller_php_response",
-      "community": 1,
+      "community": 204,
       "norm_label": "response"
     },
     {
@@ -378,7 +378,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStokController.php",
       "source_location": "L60",
       "id": "admin_manajemenstokcontroller_manajemenstokcontroller_show",
-      "community": 1,
+      "community": 204,
       "norm_label": ".show()"
     },
     {
@@ -387,7 +387,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/BarangController.php",
       "source_location": "L1",
       "id": "manajemenstok_barangcontroller",
-      "community": 18,
+      "community": 37,
       "norm_label": "barangcontroller.php"
     },
     {
@@ -396,7 +396,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/BarangController.php",
       "source_location": "L10",
       "id": "manajemenstok_barangcontroller_barangcontroller",
-      "community": 18,
+      "community": 37,
       "norm_label": "barangcontroller"
     },
     {
@@ -405,7 +405,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/BarangController.php",
       "source_location": "L15",
       "id": "manajemenstok_barangcontroller_barangcontroller_store",
-      "community": 18,
+      "community": 37,
       "norm_label": ".store()"
     },
     {
@@ -414,7 +414,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/BarangController.php",
       "source_location": "L15",
       "id": "app_http_controllers_smart_admin_manajemenstok_barangcontroller_php_request",
-      "community": 18,
+      "community": 37,
       "norm_label": "request"
     },
     {
@@ -423,7 +423,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/BarangController.php",
       "source_location": "L40",
       "id": "manajemenstok_barangcontroller_barangcontroller_update",
-      "community": 18,
+      "community": 37,
       "norm_label": ".update()"
     },
     {
@@ -432,7 +432,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/BarangController.php",
       "source_location": "L40",
       "id": "barang",
-      "community": 18,
+      "community": 37,
       "norm_label": "barang"
     },
     {
@@ -441,7 +441,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/BarangController.php",
       "source_location": "L69",
       "id": "manajemenstok_barangcontroller_barangcontroller_destroy",
-      "community": 18,
+      "community": 37,
       "norm_label": ".destroy()"
     },
     {
@@ -450,7 +450,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/LotController.php",
       "source_location": "L1",
       "id": "manajemenstok_lotcontroller",
-      "community": 13,
+      "community": 7,
       "norm_label": "lotcontroller.php"
     },
     {
@@ -459,7 +459,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/LotController.php",
       "source_location": "L10",
       "id": "manajemenstok_lotcontroller_lotcontroller",
-      "community": 13,
+      "community": 7,
       "norm_label": "lotcontroller"
     },
     {
@@ -468,7 +468,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/LotController.php",
       "source_location": "L15",
       "id": "manajemenstok_lotcontroller_lotcontroller_store",
-      "community": 13,
+      "community": 7,
       "norm_label": ".store()"
     },
     {
@@ -477,7 +477,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/LotController.php",
       "source_location": "L15",
       "id": "app_http_controllers_smart_admin_manajemenstok_lotcontroller_php_request",
-      "community": 13,
+      "community": 7,
       "norm_label": "request"
     },
     {
@@ -486,7 +486,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/LotController.php",
       "source_location": "L89",
       "id": "manajemenstok_lotcontroller_lotcontroller_update",
-      "community": 13,
+      "community": 7,
       "norm_label": ".update()"
     },
     {
@@ -495,7 +495,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/LotController.php",
       "source_location": "L89",
       "id": "lot",
-      "community": 13,
+      "community": 7,
       "norm_label": "lot"
     },
     {
@@ -504,7 +504,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/LotController.php",
       "source_location": "L141",
       "id": "manajemenstok_lotcontroller_lotcontroller_destroy",
-      "community": 13,
+      "community": 7,
       "norm_label": ".destroy()"
     },
     {
@@ -513,8 +513,80 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/LotController.php",
       "source_location": "L154",
       "id": "manajemenstok_lotcontroller_lotcontroller_show",
-      "community": 13,
+      "community": 7,
       "norm_label": ".show()"
+    },
+    {
+      "label": "UnitController.php",
+      "file_type": "code",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitController.php",
+      "source_location": "L1",
+      "id": "manajemenstok_unitcontroller",
+      "community": 5,
+      "norm_label": "unitcontroller.php"
+    },
+    {
+      "label": "UnitController",
+      "file_type": "code",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitController.php",
+      "source_location": "L12",
+      "id": "manajemenstok_unitcontroller_unitcontroller",
+      "community": 5,
+      "norm_label": "unitcontroller"
+    },
+    {
+      "label": ".store()",
+      "file_type": "code",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitController.php",
+      "source_location": "L17",
+      "id": "manajemenstok_unitcontroller_unitcontroller_store",
+      "community": 5,
+      "norm_label": ".store()"
+    },
+    {
+      "label": "Request",
+      "file_type": "code",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitController.php",
+      "source_location": "L17",
+      "id": "app_http_controllers_smart_admin_manajemenstok_unitcontroller_php_request",
+      "community": 5,
+      "norm_label": "request"
+    },
+    {
+      "label": ".update()",
+      "file_type": "code",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitController.php",
+      "source_location": "L136",
+      "id": "manajemenstok_unitcontroller_unitcontroller_update",
+      "community": 5,
+      "norm_label": ".update()"
+    },
+    {
+      "label": "Unit",
+      "file_type": "code",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitController.php",
+      "source_location": "L136",
+      "id": "unit",
+      "community": 5,
+      "norm_label": "unit"
+    },
+    {
+      "label": ".destroy()",
+      "file_type": "code",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitController.php",
+      "source_location": "L202",
+      "id": "manajemenstok_unitcontroller_unitcontroller_destroy",
+      "community": 5,
+      "norm_label": ".destroy()"
+    },
+    {
+      "label": ".bulkUpdate()",
+      "file_type": "code",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitController.php",
+      "source_location": "L220",
+      "id": "manajemenstok_unitcontroller_unitcontroller_bulkupdate",
+      "community": 5,
+      "norm_label": ".bulkupdate()"
     },
     {
       "label": "MasterController.php",
@@ -567,7 +639,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/BrandController.php",
       "source_location": "L1",
       "id": "master_brandcontroller",
-      "community": 5,
+      "community": 203,
       "norm_label": "brandcontroller.php"
     },
     {
@@ -576,7 +648,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/BrandController.php",
       "source_location": "L10",
       "id": "master_brandcontroller_brandcontroller",
-      "community": 5,
+      "community": 203,
       "norm_label": "brandcontroller"
     },
     {
@@ -585,7 +657,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/BrandController.php",
       "source_location": "L15",
       "id": "master_brandcontroller_brandcontroller_store",
-      "community": 5,
+      "community": 203,
       "norm_label": ".store()"
     },
     {
@@ -594,7 +666,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/BrandController.php",
       "source_location": "L15",
       "id": "app_http_controllers_smart_admin_master_brandcontroller_php_request",
-      "community": 5,
+      "community": 203,
       "norm_label": "request"
     },
     {
@@ -603,7 +675,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/BrandController.php",
       "source_location": "L15",
       "id": "app_http_controllers_smart_admin_master_brandcontroller_php_redirectresponse",
-      "community": 5,
+      "community": 203,
       "norm_label": "redirectresponse"
     },
     {
@@ -612,7 +684,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/BrandController.php",
       "source_location": "L29",
       "id": "master_brandcontroller_brandcontroller_update",
-      "community": 5,
+      "community": 203,
       "norm_label": ".update()"
     },
     {
@@ -621,7 +693,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/BrandController.php",
       "source_location": "L29",
       "id": "brand",
-      "community": 5,
+      "community": 203,
       "norm_label": "brand"
     },
     {
@@ -630,7 +702,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/BrandController.php",
       "source_location": "L43",
       "id": "master_brandcontroller_brandcontroller_destroy",
-      "community": 5,
+      "community": 203,
       "norm_label": ".destroy()"
     },
     {
@@ -639,7 +711,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/CategoryController.php",
       "source_location": "L1",
       "id": "master_categorycontroller",
-      "community": 69,
+      "community": 13,
       "norm_label": "categorycontroller.php"
     },
     {
@@ -648,7 +720,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/CategoryController.php",
       "source_location": "L12",
       "id": "master_categorycontroller_categorycontroller",
-      "community": 69,
+      "community": 13,
       "norm_label": "categorycontroller"
     },
     {
@@ -657,7 +729,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/CategoryController.php",
       "source_location": "L17",
       "id": "master_categorycontroller_categorycontroller_index",
-      "community": 69,
+      "community": 13,
       "norm_label": ".index()"
     },
     {
@@ -666,7 +738,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/CategoryController.php",
       "source_location": "L17",
       "id": "app_http_controllers_smart_admin_master_categorycontroller_php_response",
-      "community": 69,
+      "community": 13,
       "norm_label": "response"
     },
     {
@@ -675,7 +747,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/CategoryController.php",
       "source_location": "L27",
       "id": "master_categorycontroller_categorycontroller_store",
-      "community": 69,
+      "community": 13,
       "norm_label": ".store()"
     },
     {
@@ -684,7 +756,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/CategoryController.php",
       "source_location": "L27",
       "id": "app_http_controllers_smart_admin_master_categorycontroller_php_request",
-      "community": 69,
+      "community": 13,
       "norm_label": "request"
     },
     {
@@ -693,7 +765,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/CategoryController.php",
       "source_location": "L27",
       "id": "app_http_controllers_smart_admin_master_categorycontroller_php_redirectresponse",
-      "community": 69,
+      "community": 13,
       "norm_label": "redirectresponse"
     },
     {
@@ -702,7 +774,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/CategoryController.php",
       "source_location": "L43",
       "id": "master_categorycontroller_categorycontroller_update",
-      "community": 69,
+      "community": 13,
       "norm_label": ".update()"
     },
     {
@@ -711,7 +783,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/CategoryController.php",
       "source_location": "L43",
       "id": "category",
-      "community": 69,
+      "community": 13,
       "norm_label": "category"
     },
     {
@@ -720,7 +792,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/CategoryController.php",
       "source_location": "L59",
       "id": "master_categorycontroller_categorycontroller_destroy",
-      "community": 69,
+      "community": 13,
       "norm_label": ".destroy()"
     },
     {
@@ -801,7 +873,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/LocationController.php",
       "source_location": "L1",
       "id": "master_locationcontroller",
-      "community": 9,
+      "community": 2,
       "norm_label": "locationcontroller.php"
     },
     {
@@ -810,7 +882,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/LocationController.php",
       "source_location": "L10",
       "id": "master_locationcontroller_locationcontroller",
-      "community": 9,
+      "community": 2,
       "norm_label": "locationcontroller"
     },
     {
@@ -819,7 +891,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/LocationController.php",
       "source_location": "L15",
       "id": "master_locationcontroller_locationcontroller_store",
-      "community": 9,
+      "community": 2,
       "norm_label": ".store()"
     },
     {
@@ -828,7 +900,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/LocationController.php",
       "source_location": "L15",
       "id": "app_http_controllers_smart_admin_master_locationcontroller_php_request",
-      "community": 9,
+      "community": 2,
       "norm_label": "request"
     },
     {
@@ -837,7 +909,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/LocationController.php",
       "source_location": "L15",
       "id": "app_http_controllers_smart_admin_master_locationcontroller_php_redirectresponse",
-      "community": 9,
+      "community": 2,
       "norm_label": "redirectresponse"
     },
     {
@@ -846,7 +918,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/LocationController.php",
       "source_location": "L29",
       "id": "master_locationcontroller_locationcontroller_update",
-      "community": 9,
+      "community": 2,
       "norm_label": ".update()"
     },
     {
@@ -855,7 +927,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/LocationController.php",
       "source_location": "L29",
       "id": "location",
-      "community": 9,
+      "community": 2,
       "norm_label": "location"
     },
     {
@@ -864,7 +936,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/LocationController.php",
       "source_location": "L43",
       "id": "master_locationcontroller_locationcontroller_destroy",
-      "community": 9,
+      "community": 2,
       "norm_label": ".destroy()"
     },
     {
@@ -873,7 +945,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/OrganizerController.php",
       "source_location": "L1",
       "id": "master_organizercontroller",
-      "community": 32,
+      "community": 10,
       "norm_label": "organizercontroller.php"
     },
     {
@@ -882,7 +954,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/OrganizerController.php",
       "source_location": "L10",
       "id": "master_organizercontroller_organizercontroller",
-      "community": 32,
+      "community": 10,
       "norm_label": "organizercontroller"
     },
     {
@@ -891,7 +963,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/OrganizerController.php",
       "source_location": "L15",
       "id": "master_organizercontroller_organizercontroller_store",
-      "community": 32,
+      "community": 10,
       "norm_label": ".store()"
     },
     {
@@ -900,7 +972,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/OrganizerController.php",
       "source_location": "L15",
       "id": "app_http_controllers_smart_admin_master_organizercontroller_php_request",
-      "community": 32,
+      "community": 10,
       "norm_label": "request"
     },
     {
@@ -909,7 +981,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/OrganizerController.php",
       "source_location": "L15",
       "id": "app_http_controllers_smart_admin_master_organizercontroller_php_redirectresponse",
-      "community": 32,
+      "community": 10,
       "norm_label": "redirectresponse"
     },
     {
@@ -918,7 +990,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/OrganizerController.php",
       "source_location": "L29",
       "id": "master_organizercontroller_organizercontroller_update",
-      "community": 32,
+      "community": 10,
       "norm_label": ".update()"
     },
     {
@@ -927,7 +999,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/OrganizerController.php",
       "source_location": "L29",
       "id": "organizer",
-      "community": 32,
+      "community": 10,
       "norm_label": "organizer"
     },
     {
@@ -936,7 +1008,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/OrganizerController.php",
       "source_location": "L43",
       "id": "master_organizercontroller_organizercontroller_destroy",
-      "community": 32,
+      "community": 10,
       "norm_label": ".destroy()"
     },
     {
@@ -945,7 +1017,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/RoomController.php",
       "source_location": "L1",
       "id": "master_roomcontroller",
-      "community": 3,
+      "community": 9,
       "norm_label": "roomcontroller.php"
     },
     {
@@ -954,7 +1026,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/RoomController.php",
       "source_location": "L10",
       "id": "master_roomcontroller_roomcontroller",
-      "community": 3,
+      "community": 9,
       "norm_label": "roomcontroller"
     },
     {
@@ -963,7 +1035,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/RoomController.php",
       "source_location": "L15",
       "id": "master_roomcontroller_roomcontroller_store",
-      "community": 3,
+      "community": 9,
       "norm_label": ".store()"
     },
     {
@@ -972,7 +1044,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/RoomController.php",
       "source_location": "L15",
       "id": "app_http_controllers_smart_admin_master_roomcontroller_php_request",
-      "community": 3,
+      "community": 9,
       "norm_label": "request"
     },
     {
@@ -981,7 +1053,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/RoomController.php",
       "source_location": "L15",
       "id": "app_http_controllers_smart_admin_master_roomcontroller_php_redirectresponse",
-      "community": 3,
+      "community": 9,
       "norm_label": "redirectresponse"
     },
     {
@@ -990,7 +1062,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/RoomController.php",
       "source_location": "L30",
       "id": "master_roomcontroller_roomcontroller_update",
-      "community": 3,
+      "community": 9,
       "norm_label": ".update()"
     },
     {
@@ -999,7 +1071,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/RoomController.php",
       "source_location": "L30",
       "id": "room",
-      "community": 3,
+      "community": 9,
       "norm_label": "room"
     },
     {
@@ -1008,7 +1080,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/RoomController.php",
       "source_location": "L45",
       "id": "master_roomcontroller_roomcontroller_destroy",
-      "community": 3,
+      "community": 9,
       "norm_label": ".destroy()"
     },
     {
@@ -1161,7 +1233,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/VendorController.php",
       "source_location": "L1",
       "id": "master_vendorcontroller",
-      "community": 7,
+      "community": 1,
       "norm_label": "vendorcontroller.php"
     },
     {
@@ -1170,7 +1242,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/VendorController.php",
       "source_location": "L10",
       "id": "master_vendorcontroller_vendorcontroller",
-      "community": 7,
+      "community": 1,
       "norm_label": "vendorcontroller"
     },
     {
@@ -1179,7 +1251,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/VendorController.php",
       "source_location": "L15",
       "id": "master_vendorcontroller_vendorcontroller_store",
-      "community": 7,
+      "community": 1,
       "norm_label": ".store()"
     },
     {
@@ -1188,7 +1260,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/VendorController.php",
       "source_location": "L15",
       "id": "app_http_controllers_smart_admin_master_vendorcontroller_php_request",
-      "community": 7,
+      "community": 1,
       "norm_label": "request"
     },
     {
@@ -1197,7 +1269,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/VendorController.php",
       "source_location": "L15",
       "id": "app_http_controllers_smart_admin_master_vendorcontroller_php_redirectresponse",
-      "community": 7,
+      "community": 1,
       "norm_label": "redirectresponse"
     },
     {
@@ -1206,7 +1278,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/VendorController.php",
       "source_location": "L29",
       "id": "master_vendorcontroller_vendorcontroller_update",
-      "community": 7,
+      "community": 1,
       "norm_label": ".update()"
     },
     {
@@ -1215,7 +1287,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/VendorController.php",
       "source_location": "L29",
       "id": "vendor",
-      "community": 7,
+      "community": 1,
       "norm_label": "vendor"
     },
     {
@@ -1224,7 +1296,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/VendorController.php",
       "source_location": "L43",
       "id": "master_vendorcontroller_vendorcontroller_destroy",
-      "community": 7,
+      "community": 1,
       "norm_label": ".destroy()"
     },
     {
@@ -1233,7 +1305,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ReturnController.php",
       "source_location": "L1",
       "id": "admin_returncontroller",
-      "community": 6,
+      "community": 5,
       "norm_label": "returncontroller.php"
     },
     {
@@ -1242,7 +1314,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ReturnController.php",
       "source_location": "L14",
       "id": "admin_returncontroller_returncontroller",
-      "community": 6,
+      "community": 5,
       "norm_label": "returncontroller"
     },
     {
@@ -1251,7 +1323,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ReturnController.php",
       "source_location": "L19",
       "id": "admin_returncontroller_returncontroller_index",
-      "community": 6,
+      "community": 5,
       "norm_label": ".index()"
     },
     {
@@ -1260,7 +1332,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ReturnController.php",
       "source_location": "L67",
       "id": "admin_returncontroller_returncontroller_show",
-      "community": 6,
+      "community": 5,
       "norm_label": ".show()"
     },
     {
@@ -1269,7 +1341,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ReturnController.php",
       "source_location": "L147",
       "id": "admin_returncontroller_returncontroller_confirm",
-      "community": 6,
+      "community": 5,
       "norm_label": ".confirm()"
     },
     {
@@ -1278,7 +1350,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ReturnController.php",
       "source_location": "L147",
       "id": "app_http_controllers_smart_admin_returncontroller_php_request",
-      "community": 6,
+      "community": 5,
       "norm_label": "request"
     },
     {
@@ -1287,7 +1359,7 @@
       "source_file": "app/Http/Controllers/Smart/Manager/ApprovalController.php",
       "source_location": "L1",
       "id": "manager_approvalcontroller",
-      "community": 26,
+      "community": 5,
       "norm_label": "approvalcontroller.php"
     },
     {
@@ -1296,7 +1368,7 @@
       "source_file": "app/Http/Controllers/Smart/Manager/ApprovalController.php",
       "source_location": "L16",
       "id": "manager_approvalcontroller_approvalcontroller",
-      "community": 26,
+      "community": 5,
       "norm_label": "approvalcontroller"
     },
     {
@@ -1305,7 +1377,7 @@
       "source_file": "app/Http/Controllers/Smart/Manager/ApprovalController.php",
       "source_location": "L21",
       "id": "manager_approvalcontroller_approvalcontroller_maprequest",
-      "community": 26,
+      "community": 5,
       "norm_label": ".maprequest()"
     },
     {
@@ -1314,7 +1386,7 @@
       "source_file": "app/Http/Controllers/Smart/Manager/ApprovalController.php",
       "source_location": "L100",
       "id": "manager_approvalcontroller_approvalcontroller_index",
-      "community": 26,
+      "community": 5,
       "norm_label": ".index()"
     },
     {
@@ -1323,7 +1395,7 @@
       "source_file": "app/Http/Controllers/Smart/Manager/ApprovalController.php",
       "source_location": "L100",
       "id": "app_http_controllers_smart_manager_approvalcontroller_php_request",
-      "community": 26,
+      "community": 5,
       "norm_label": "request"
     },
     {
@@ -1332,7 +1404,7 @@
       "source_file": "app/Http/Controllers/Smart/Manager/ApprovalController.php",
       "source_location": "L100",
       "id": "app_http_controllers_smart_manager_approvalcontroller_php_response",
-      "community": 26,
+      "community": 5,
       "norm_label": "response"
     },
     {
@@ -1341,7 +1413,7 @@
       "source_file": "app/Http/Controllers/Smart/Manager/ApprovalController.php",
       "source_location": "L122",
       "id": "manager_approvalcontroller_approvalcontroller_approvedlist",
-      "community": 26,
+      "community": 5,
       "norm_label": ".approvedlist()"
     },
     {
@@ -1350,7 +1422,7 @@
       "source_file": "app/Http/Controllers/Smart/Manager/ApprovalController.php",
       "source_location": "L144",
       "id": "manager_approvalcontroller_approvalcontroller_show",
-      "community": 26,
+      "community": 5,
       "norm_label": ".show()"
     },
     {
@@ -1359,7 +1431,7 @@
       "source_file": "app/Http/Controllers/Smart/Manager/ApprovalController.php",
       "source_location": "L164",
       "id": "manager_approvalcontroller_approvalcontroller_action",
-      "community": 26,
+      "community": 5,
       "norm_label": ".action()"
     },
     {
@@ -1566,7 +1638,7 @@
       "source_file": "app/Http/Controllers/Smart/User/BrowseController.php",
       "source_location": "L1",
       "id": "user_browsecontroller",
-      "community": 69,
+      "community": 13,
       "norm_label": "browsecontroller.php"
     },
     {
@@ -1575,7 +1647,7 @@
       "source_file": "app/Http/Controllers/Smart/User/BrowseController.php",
       "source_location": "L14",
       "id": "user_browsecontroller_browsecontroller",
-      "community": 69,
+      "community": 13,
       "norm_label": "browsecontroller"
     },
     {
@@ -1584,7 +1656,7 @@
       "source_file": "app/Http/Controllers/Smart/User/BrowseController.php",
       "source_location": "L19",
       "id": "user_browsecontroller_browsecontroller_index",
-      "community": 69,
+      "community": 13,
       "norm_label": ".index()"
     },
     {
@@ -1593,7 +1665,7 @@
       "source_file": "app/Http/Controllers/Smart/User/BrowseController.php",
       "source_location": "L19",
       "id": "app_http_controllers_smart_user_browsecontroller_php_request",
-      "community": 69,
+      "community": 13,
       "norm_label": "request"
     },
     {
@@ -1602,7 +1674,7 @@
       "source_file": "app/Http/Controllers/Smart/User/BrowseController.php",
       "source_location": "L19",
       "id": "app_http_controllers_smart_user_browsecontroller_php_response",
-      "community": 69,
+      "community": 13,
       "norm_label": "response"
     },
     {
@@ -1611,7 +1683,7 @@
       "source_file": "app/Http/Controllers/Smart/User/BrowseController.php",
       "source_location": "L56",
       "id": "user_browsecontroller_browsecontroller_addtocart",
-      "community": 69,
+      "community": 13,
       "norm_label": ".addtocart()"
     },
     {
@@ -1620,7 +1692,7 @@
       "source_file": "app/Http/Controllers/Smart/User/RequestHistoryController.php",
       "source_location": "L1",
       "id": "user_requesthistorycontroller",
-      "community": 8,
+      "community": 6,
       "norm_label": "requesthistorycontroller.php"
     },
     {
@@ -1629,7 +1701,7 @@
       "source_file": "app/Http/Controllers/Smart/User/RequestHistoryController.php",
       "source_location": "L18",
       "id": "user_requesthistorycontroller_requesthistorycontroller",
-      "community": 8,
+      "community": 6,
       "norm_label": "requesthistorycontroller"
     },
     {
@@ -1638,7 +1710,7 @@
       "source_file": "app/Http/Controllers/Smart/User/RequestHistoryController.php",
       "source_location": "L23",
       "id": "user_requesthistorycontroller_requesthistorycontroller_maprequest",
-      "community": 8,
+      "community": 6,
       "norm_label": ".maprequest()"
     },
     {
@@ -1647,7 +1719,7 @@
       "source_file": "app/Http/Controllers/Smart/User/RequestHistoryController.php",
       "source_location": "L107",
       "id": "user_requesthistorycontroller_requesthistorycontroller_index",
-      "community": 8,
+      "community": 6,
       "norm_label": ".index()"
     },
     {
@@ -1656,7 +1728,7 @@
       "source_file": "app/Http/Controllers/Smart/User/RequestHistoryController.php",
       "source_location": "L107",
       "id": "app_http_controllers_smart_user_requesthistorycontroller_php_request",
-      "community": 8,
+      "community": 6,
       "norm_label": "request"
     },
     {
@@ -1665,7 +1737,7 @@
       "source_file": "app/Http/Controllers/Smart/User/RequestHistoryController.php",
       "source_location": "L107",
       "id": "app_http_controllers_smart_user_requesthistorycontroller_php_response",
-      "community": 8,
+      "community": 6,
       "norm_label": "response"
     },
     {
@@ -1674,7 +1746,7 @@
       "source_file": "app/Http/Controllers/Smart/User/RequestHistoryController.php",
       "source_location": "L134",
       "id": "user_requesthistorycontroller_requesthistorycontroller_show",
-      "community": 8,
+      "community": 6,
       "norm_label": ".show()"
     },
     {
@@ -1683,7 +1755,7 @@
       "source_file": "app/Http/Controllers/Smart/User/RequestHistoryController.php",
       "source_location": "L160",
       "id": "user_requesthistorycontroller_requesthistorycontroller_cancel",
-      "community": 8,
+      "community": 6,
       "norm_label": ".cancel()"
     },
     {
@@ -1692,7 +1764,7 @@
       "source_file": "app/Http/Controllers/Smart/User/RequestHistoryController.php",
       "source_location": "L181",
       "id": "user_requesthistorycontroller_requesthistorycontroller_handover",
-      "community": 8,
+      "community": 6,
       "norm_label": ".handover()"
     },
     {
@@ -1701,16 +1773,16 @@
       "source_file": "app/Http/Controllers/Smart/User/RequestHistoryController.php",
       "source_location": "L220",
       "id": "user_requesthistorycontroller_requesthistorycontroller_receive",
-      "community": 8,
+      "community": 6,
       "norm_label": ".receive()"
     },
     {
       "label": ".returnAsset()",
       "file_type": "code",
       "source_file": "app/Http/Controllers/Smart/User/RequestHistoryController.php",
-      "source_location": "L263",
+      "source_location": "L267",
       "id": "user_requesthistorycontroller_requesthistorycontroller_returnasset",
-      "community": 8,
+      "community": 6,
       "norm_label": ".returnasset()"
     },
     {
@@ -1773,7 +1845,7 @@
       "source_file": "app/Http/Middleware/HandleInertiaRequests.php",
       "source_location": "L1",
       "id": "middleware_handleinertiarequests",
-      "community": 27,
+      "community": 26,
       "norm_label": "handleinertiarequests.php"
     },
     {
@@ -1782,7 +1854,7 @@
       "source_file": "app/Http/Middleware/HandleInertiaRequests.php",
       "source_location": "L8",
       "id": "middleware_handleinertiarequests_handleinertiarequests",
-      "community": 27,
+      "community": 26,
       "norm_label": "handleinertiarequests"
     },
     {
@@ -1791,7 +1863,7 @@
       "source_file": "",
       "source_location": "",
       "id": "middleware",
-      "community": 27,
+      "community": 26,
       "norm_label": "middleware"
     },
     {
@@ -1800,7 +1872,7 @@
       "source_file": "app/Http/Middleware/HandleInertiaRequests.php",
       "source_location": "L20",
       "id": "middleware_handleinertiarequests_handleinertiarequests_version",
-      "community": 27,
+      "community": 26,
       "norm_label": ".version()"
     },
     {
@@ -1809,7 +1881,7 @@
       "source_file": "app/Http/Middleware/HandleInertiaRequests.php",
       "source_location": "L20",
       "id": "app_http_middleware_handleinertiarequests_php_request",
-      "community": 27,
+      "community": 26,
       "norm_label": "request"
     },
     {
@@ -1818,7 +1890,7 @@
       "source_file": "app/Http/Middleware/HandleInertiaRequests.php",
       "source_location": "L30",
       "id": "middleware_handleinertiarequests_handleinertiarequests_share",
-      "community": 27,
+      "community": 26,
       "norm_label": ".share()"
     },
     {
@@ -1827,7 +1899,7 @@
       "source_file": "app/Http/Middleware/RoleMiddleware.php",
       "source_location": "L1",
       "id": "middleware_rolemiddleware",
-      "community": 201,
+      "community": 39,
       "norm_label": "rolemiddleware.php"
     },
     {
@@ -1836,7 +1908,7 @@
       "source_file": "app/Http/Middleware/RoleMiddleware.php",
       "source_location": "L9",
       "id": "middleware_rolemiddleware_rolemiddleware",
-      "community": 201,
+      "community": 39,
       "norm_label": "rolemiddleware"
     },
     {
@@ -1845,7 +1917,7 @@
       "source_file": "app/Http/Middleware/RoleMiddleware.php",
       "source_location": "L19",
       "id": "middleware_rolemiddleware_rolemiddleware_handle",
-      "community": 201,
+      "community": 39,
       "norm_label": ".handle()"
     },
     {
@@ -1854,7 +1926,7 @@
       "source_file": "app/Http/Middleware/RoleMiddleware.php",
       "source_location": "L19",
       "id": "app_http_middleware_rolemiddleware_php_request",
-      "community": 201,
+      "community": 39,
       "norm_label": "request"
     },
     {
@@ -1863,7 +1935,7 @@
       "source_file": "app/Http/Middleware/RoleMiddleware.php",
       "source_location": "L19",
       "id": "closure",
-      "community": 201,
+      "community": 39,
       "norm_label": "closure"
     },
     {
@@ -1872,7 +1944,7 @@
       "source_file": "app/Http/Middleware/RoleMiddleware.php",
       "source_location": "L19",
       "id": "app_http_middleware_rolemiddleware_php_response",
-      "community": 201,
+      "community": 39,
       "norm_label": "response"
     },
     {
@@ -1881,7 +1953,7 @@
       "source_file": "app/Http/Middleware/TrustProxies.php",
       "source_location": "L1",
       "id": "middleware_trustproxies",
-      "community": 27,
+      "community": 26,
       "norm_label": "trustproxies.php"
     },
     {
@@ -1890,7 +1962,7 @@
       "source_file": "app/Http/Middleware/TrustProxies.php",
       "source_location": "L8",
       "id": "middleware_trustproxies_trustproxies",
-      "community": 27,
+      "community": 26,
       "norm_label": "trustproxies"
     },
     {
@@ -1899,7 +1971,7 @@
       "source_file": "app/Http/Requests/Auth/LoginRequest.php",
       "source_location": "L1",
       "id": "auth_loginrequest",
-      "community": 33,
+      "community": 31,
       "norm_label": "loginrequest.php"
     },
     {
@@ -1908,7 +1980,7 @@
       "source_file": "app/Http/Requests/Auth/LoginRequest.php",
       "source_location": "L13",
       "id": "auth_loginrequest_loginrequest",
-      "community": 33,
+      "community": 31,
       "norm_label": "loginrequest"
     },
     {
@@ -1917,7 +1989,7 @@
       "source_file": "",
       "source_location": "",
       "id": "formrequest",
-      "community": 33,
+      "community": 31,
       "norm_label": "formrequest"
     },
     {
@@ -1926,7 +1998,7 @@
       "source_file": "app/Http/Requests/Auth/LoginRequest.php",
       "source_location": "L18",
       "id": "auth_loginrequest_loginrequest_authorize",
-      "community": 33,
+      "community": 31,
       "norm_label": ".authorize()"
     },
     {
@@ -1935,7 +2007,7 @@
       "source_file": "app/Http/Requests/Auth/LoginRequest.php",
       "source_location": "L28",
       "id": "auth_loginrequest_loginrequest_rules",
-      "community": 33,
+      "community": 31,
       "norm_label": ".rules()"
     },
     {
@@ -1944,7 +2016,7 @@
       "source_file": "app/Http/Requests/Auth/LoginRequest.php",
       "source_location": "L41",
       "id": "auth_loginrequest_loginrequest_authenticate",
-      "community": 33,
+      "community": 31,
       "norm_label": ".authenticate()"
     },
     {
@@ -1953,7 +2025,7 @@
       "source_file": "app/Http/Requests/Auth/LoginRequest.php",
       "source_location": "L74",
       "id": "auth_loginrequest_loginrequest_ensureisnotratelimited",
-      "community": 33,
+      "community": 31,
       "norm_label": ".ensureisnotratelimited()"
     },
     {
@@ -1962,7 +2034,7 @@
       "source_file": "app/Http/Requests/Auth/LoginRequest.php",
       "source_location": "L95",
       "id": "auth_loginrequest_loginrequest_throttlekey",
-      "community": 33,
+      "community": 31,
       "norm_label": ".throttlekey()"
     },
     {
@@ -2097,7 +2169,7 @@
       "source_file": "app/Models/Inventory/Barang.php",
       "source_location": "L1",
       "id": "inventory_barang",
-      "community": 0,
+      "community": 203,
       "norm_label": "barang.php"
     },
     {
@@ -2106,7 +2178,7 @@
       "source_file": "app/Models/Inventory/Barang.php",
       "source_location": "L13",
       "id": "inventory_barang_barang",
-      "community": 0,
+      "community": 203,
       "norm_label": "barang"
     },
     {
@@ -2115,7 +2187,7 @@
       "source_file": "app/Models/Inventory/Barang.php",
       "source_location": "L34",
       "id": "inventory_barang_barang_subcategory",
-      "community": 0,
+      "community": 203,
       "norm_label": ".subcategory()"
     },
     {
@@ -2124,7 +2196,7 @@
       "source_file": "app/Models/Inventory/Barang.php",
       "source_location": "L34",
       "id": "app_models_inventory_barang_php_belongsto",
-      "community": 0,
+      "community": 203,
       "norm_label": "belongsto"
     },
     {
@@ -2133,7 +2205,7 @@
       "source_file": "app/Models/Inventory/Barang.php",
       "source_location": "L39",
       "id": "inventory_barang_barang_brand",
-      "community": 0,
+      "community": 203,
       "norm_label": ".brand()"
     },
     {
@@ -2142,7 +2214,7 @@
       "source_file": "app/Models/Inventory/Barang.php",
       "source_location": "L44",
       "id": "inventory_barang_barang_uom",
-      "community": 0,
+      "community": 203,
       "norm_label": ".uom()"
     },
     {
@@ -2151,7 +2223,7 @@
       "source_file": "app/Models/Inventory/Barang.php",
       "source_location": "L49",
       "id": "inventory_barang_barang_lots",
-      "community": 0,
+      "community": 203,
       "norm_label": ".lots()"
     },
     {
@@ -2160,7 +2232,7 @@
       "source_file": "app/Models/Inventory/Barang.php",
       "source_location": "L49",
       "id": "app_models_inventory_barang_php_hasmany",
-      "community": 0,
+      "community": 203,
       "norm_label": "hasmany"
     },
     {
@@ -2169,7 +2241,7 @@
       "source_file": "app/Models/Inventory/Barang.php",
       "source_location": "L54",
       "id": "inventory_barang_barang_getnumberattribute",
-      "community": 0,
+      "community": 203,
       "norm_label": ".getnumberattribute()"
     },
     {
@@ -2241,7 +2313,7 @@
       "source_file": "app/Models/Inventory/Lot.php",
       "source_location": "L1",
       "id": "inventory_lot",
-      "community": 7,
+      "community": 10,
       "norm_label": "lot.php"
     },
     {
@@ -2250,7 +2322,7 @@
       "source_file": "app/Models/Inventory/Lot.php",
       "source_location": "L15",
       "id": "inventory_lot_lot",
-      "community": 7,
+      "community": 10,
       "norm_label": "lot"
     },
     {
@@ -2259,7 +2331,7 @@
       "source_file": "app/Models/Inventory/Lot.php",
       "source_location": "L42",
       "id": "inventory_lot_lot_barang",
-      "community": 7,
+      "community": 10,
       "norm_label": ".barang()"
     },
     {
@@ -2268,7 +2340,7 @@
       "source_file": "app/Models/Inventory/Lot.php",
       "source_location": "L42",
       "id": "app_models_inventory_lot_php_belongsto",
-      "community": 7,
+      "community": 10,
       "norm_label": "belongsto"
     },
     {
@@ -2277,7 +2349,7 @@
       "source_file": "app/Models/Inventory/Lot.php",
       "source_location": "L47",
       "id": "inventory_lot_lot_organizer",
-      "community": 7,
+      "community": 10,
       "norm_label": ".organizer()"
     },
     {
@@ -2286,7 +2358,7 @@
       "source_file": "app/Models/Inventory/Lot.php",
       "source_location": "L52",
       "id": "inventory_lot_lot_vendor",
-      "community": 7,
+      "community": 10,
       "norm_label": ".vendor()"
     },
     {
@@ -2295,7 +2367,7 @@
       "source_file": "app/Models/Inventory/Lot.php",
       "source_location": "L57",
       "id": "inventory_lot_lot_location",
-      "community": 7,
+      "community": 10,
       "norm_label": ".location()"
     },
     {
@@ -2304,7 +2376,7 @@
       "source_file": "app/Models/Inventory/Lot.php",
       "source_location": "L62",
       "id": "inventory_lot_lot_floor",
-      "community": 7,
+      "community": 10,
       "norm_label": ".floor()"
     },
     {
@@ -2313,7 +2385,7 @@
       "source_file": "app/Models/Inventory/Lot.php",
       "source_location": "L67",
       "id": "inventory_lot_lot_room",
-      "community": 7,
+      "community": 10,
       "norm_label": ".room()"
     },
     {
@@ -2322,7 +2394,7 @@
       "source_file": "app/Models/Inventory/Lot.php",
       "source_location": "L72",
       "id": "inventory_lot_lot_units",
-      "community": 7,
+      "community": 10,
       "norm_label": ".units()"
     },
     {
@@ -2331,7 +2403,7 @@
       "source_file": "app/Models/Inventory/Lot.php",
       "source_location": "L72",
       "id": "app_models_inventory_lot_php_hasmany",
-      "community": 7,
+      "community": 10,
       "norm_label": "hasmany"
     },
     {
@@ -2340,7 +2412,7 @@
       "source_file": "app/Models/Inventory/Lot.php",
       "source_location": "L77",
       "id": "inventory_lot_lot_getnumberattribute",
-      "community": 7,
+      "community": 10,
       "norm_label": ".getnumberattribute()"
     },
     {
@@ -2450,6 +2522,15 @@
       "id": "inventory_unit_unit_getnumberattribute",
       "community": 9,
       "norm_label": ".getnumberattribute()"
+    },
+    {
+      "label": ".getIsVehicleAttribute()",
+      "file_type": "code",
+      "source_file": "app/Models/Inventory/Unit.php",
+      "source_location": "L84",
+      "id": "inventory_unit_unit_getisvehicleattribute",
+      "community": 9,
+      "norm_label": ".getisvehicleattribute()"
     },
     {
       "label": "UnitStatusApproval.php",
@@ -2952,7 +3033,7 @@
       "source_file": "app/Models/Request/RequestAdminConfirmation.php",
       "source_location": "L1",
       "id": "request_requestadminconfirmation",
-      "community": 6,
+      "community": 0,
       "norm_label": "requestadminconfirmation.php"
     },
     {
@@ -2961,7 +3042,7 @@
       "source_file": "app/Models/Request/RequestAdminConfirmation.php",
       "source_location": "L9",
       "id": "request_requestadminconfirmation_requestadminconfirmation",
-      "community": 6,
+      "community": 0,
       "norm_label": "requestadminconfirmation"
     },
     {
@@ -2970,7 +3051,7 @@
       "source_file": "app/Models/Request/RequestAdminConfirmation.php",
       "source_location": "L25",
       "id": "request_requestadminconfirmation_requestadminconfirmation_request",
-      "community": 6,
+      "community": 0,
       "norm_label": ".request()"
     },
     {
@@ -2979,7 +3060,7 @@
       "source_file": "app/Models/Request/RequestAdminConfirmation.php",
       "source_location": "L25",
       "id": "app_models_request_requestadminconfirmation_php_belongsto",
-      "community": 6,
+      "community": 0,
       "norm_label": "belongsto"
     },
     {
@@ -2988,7 +3069,7 @@
       "source_file": "app/Models/Request/RequestAdminConfirmation.php",
       "source_location": "L30",
       "id": "request_requestadminconfirmation_requestadminconfirmation_admin",
-      "community": 6,
+      "community": 0,
       "norm_label": ".admin()"
     },
     {
@@ -2997,7 +3078,7 @@
       "source_file": "app/Models/Request/RequestApproval.php",
       "source_location": "L1",
       "id": "request_requestapproval",
-      "community": 6,
+      "community": 5,
       "norm_label": "requestapproval.php"
     },
     {
@@ -3006,7 +3087,7 @@
       "source_file": "app/Models/Request/RequestApproval.php",
       "source_location": "L9",
       "id": "request_requestapproval_requestapproval",
-      "community": 6,
+      "community": 5,
       "norm_label": "requestapproval"
     },
     {
@@ -3015,7 +3096,7 @@
       "source_file": "app/Models/Request/RequestApproval.php",
       "source_location": "L25",
       "id": "request_requestapproval_requestapproval_request",
-      "community": 6,
+      "community": 5,
       "norm_label": ".request()"
     },
     {
@@ -3024,7 +3105,7 @@
       "source_file": "app/Models/Request/RequestApproval.php",
       "source_location": "L25",
       "id": "app_models_request_requestapproval_php_belongsto",
-      "community": 6,
+      "community": 5,
       "norm_label": "belongsto"
     },
     {
@@ -3033,7 +3114,7 @@
       "source_file": "app/Models/Request/RequestApproval.php",
       "source_location": "L30",
       "id": "request_requestapproval_requestapproval_approver",
-      "community": 6,
+      "community": 5,
       "norm_label": ".approver()"
     },
     {
@@ -3042,7 +3123,7 @@
       "source_file": "app/Models/Request/RequestHandover.php",
       "source_location": "L1",
       "id": "request_requesthandover",
-      "community": 8,
+      "community": 6,
       "norm_label": "requesthandover.php"
     },
     {
@@ -3051,7 +3132,7 @@
       "source_file": "app/Models/Request/RequestHandover.php",
       "source_location": "L8",
       "id": "request_requesthandover_requesthandover",
-      "community": 8,
+      "community": 6,
       "norm_label": "requesthandover"
     },
     {
@@ -3060,7 +3141,7 @@
       "source_file": "app/Models/Request/RequestHandover.php",
       "source_location": "L32",
       "id": "request_requesthandover_requesthandover_request",
-      "community": 8,
+      "community": 6,
       "norm_label": ".request()"
     },
     {
@@ -3069,7 +3150,7 @@
       "source_file": "app/Models/Request/RequestHandover.php",
       "source_location": "L32",
       "id": "app_models_request_requesthandover_php_belongsto",
-      "community": 8,
+      "community": 6,
       "norm_label": "belongsto"
     },
     {
@@ -3078,7 +3159,7 @@
       "source_file": "app/Models/Request/RequestItem.php",
       "source_location": "L1",
       "id": "request_requestitem",
-      "community": 18,
+      "community": 37,
       "norm_label": "requestitem.php"
     },
     {
@@ -3087,7 +3168,7 @@
       "source_file": "app/Models/Request/RequestItem.php",
       "source_location": "L10",
       "id": "request_requestitem_requestitem",
-      "community": 18,
+      "community": 37,
       "norm_label": "requestitem"
     },
     {
@@ -3096,7 +3177,7 @@
       "source_file": "app/Models/Request/RequestItem.php",
       "source_location": "L20",
       "id": "request_requestitem_requestitem_request",
-      "community": 18,
+      "community": 37,
       "norm_label": ".request()"
     },
     {
@@ -3105,7 +3186,7 @@
       "source_file": "app/Models/Request/RequestItem.php",
       "source_location": "L20",
       "id": "app_models_request_requestitem_php_belongsto",
-      "community": 18,
+      "community": 37,
       "norm_label": "belongsto"
     },
     {
@@ -3114,7 +3195,7 @@
       "source_file": "app/Models/Request/RequestItem.php",
       "source_location": "L25",
       "id": "request_requestitem_requestitem_barang",
-      "community": 18,
+      "community": 37,
       "norm_label": ".barang()"
     },
     {
@@ -3123,7 +3204,7 @@
       "source_file": "app/Models/Request/RequestItem.php",
       "source_location": "L30",
       "id": "request_requestitem_requestitem_unitassignments",
-      "community": 18,
+      "community": 37,
       "norm_label": ".unitassignments()"
     },
     {
@@ -3132,7 +3213,7 @@
       "source_file": "app/Models/Request/RequestItem.php",
       "source_location": "L30",
       "id": "app_models_request_requestitem_php_hasmany",
-      "community": 18,
+      "community": 37,
       "norm_label": "hasmany"
     },
     {
@@ -3141,7 +3222,7 @@
       "source_file": "app/Models/Request/RequestReturn.php",
       "source_location": "L1",
       "id": "request_requestreturn",
-      "community": 8,
+      "community": 0,
       "norm_label": "requestreturn.php"
     },
     {
@@ -3150,7 +3231,7 @@
       "source_file": "app/Models/Request/RequestReturn.php",
       "source_location": "L8",
       "id": "request_requestreturn_requestreturn",
-      "community": 8,
+      "community": 0,
       "norm_label": "requestreturn"
     },
     {
@@ -3159,7 +3240,7 @@
       "source_file": "app/Models/Request/RequestReturn.php",
       "source_location": "L27",
       "id": "request_requestreturn_requestreturn_request",
-      "community": 8,
+      "community": 0,
       "norm_label": ".request()"
     },
     {
@@ -3168,7 +3249,7 @@
       "source_file": "app/Models/Request/RequestReturn.php",
       "source_location": "L27",
       "id": "app_models_request_requestreturn_php_belongsto",
-      "community": 8,
+      "community": 0,
       "norm_label": "belongsto"
     },
     {
@@ -3177,7 +3258,7 @@
       "source_file": "app/Models/Request/RequestStatusLog.php",
       "source_location": "L1",
       "id": "request_requeststatuslog",
-      "community": 8,
+      "community": 6,
       "norm_label": "requeststatuslog.php"
     },
     {
@@ -3186,7 +3267,7 @@
       "source_file": "app/Models/Request/RequestStatusLog.php",
       "source_location": "L9",
       "id": "request_requeststatuslog_requeststatuslog",
-      "community": 8,
+      "community": 6,
       "norm_label": "requeststatuslog"
     },
     {
@@ -3195,7 +3276,7 @@
       "source_file": "app/Models/Request/RequestStatusLog.php",
       "source_location": "L23",
       "id": "request_requeststatuslog_requeststatuslog_request",
-      "community": 8,
+      "community": 6,
       "norm_label": ".request()"
     },
     {
@@ -3204,7 +3285,7 @@
       "source_file": "app/Models/Request/RequestStatusLog.php",
       "source_location": "L23",
       "id": "app_models_request_requeststatuslog_php_belongsto",
-      "community": 8,
+      "community": 6,
       "norm_label": "belongsto"
     },
     {
@@ -3213,7 +3294,7 @@
       "source_file": "app/Models/Request/RequestStatusLog.php",
       "source_location": "L28",
       "id": "request_requeststatuslog_requeststatuslog_changer",
-      "community": 8,
+      "community": 6,
       "norm_label": ".changer()"
     },
     {
@@ -3222,7 +3303,7 @@
       "source_file": "app/Models/Request/RequestUnitAssignment.php",
       "source_location": "L1",
       "id": "request_requestunitassignment",
-      "community": 6,
+      "community": 5,
       "norm_label": "requestunitassignment.php"
     },
     {
@@ -3231,7 +3312,7 @@
       "source_file": "app/Models/Request/RequestUnitAssignment.php",
       "source_location": "L9",
       "id": "request_requestunitassignment_requestunitassignment",
-      "community": 6,
+      "community": 5,
       "norm_label": "requestunitassignment"
     },
     {
@@ -3240,7 +3321,7 @@
       "source_file": "app/Models/Request/RequestUnitAssignment.php",
       "source_location": "L25",
       "id": "request_requestunitassignment_requestunitassignment_requestitem",
-      "community": 6,
+      "community": 5,
       "norm_label": ".requestitem()"
     },
     {
@@ -3249,7 +3330,7 @@
       "source_file": "app/Models/Request/RequestUnitAssignment.php",
       "source_location": "L25",
       "id": "app_models_request_requestunitassignment_php_belongsto",
-      "community": 6,
+      "community": 5,
       "norm_label": "belongsto"
     },
     {
@@ -3258,7 +3339,7 @@
       "source_file": "app/Models/Request/RequestUnitAssignment.php",
       "source_location": "L30",
       "id": "request_requestunitassignment_requestunitassignment_unit",
-      "community": 6,
+      "community": 5,
       "norm_label": ".unit()"
     },
     {
@@ -3375,7 +3456,7 @@
       "source_file": "bootstrap/app.php",
       "source_location": "L1",
       "id": "bootstrap_app",
-      "community": 27,
+      "community": 26,
       "norm_label": "app.php"
     },
     {
@@ -3411,7 +3492,7 @@
       "source_file": "components.json",
       "source_location": "L1",
       "id": "components",
-      "community": 10,
+      "community": 11,
       "norm_label": "components.json"
     },
     {
@@ -3420,7 +3501,7 @@
       "source_file": "components.json",
       "source_location": "L2",
       "id": "components_schema",
-      "community": 10,
+      "community": 11,
       "norm_label": "$schema"
     },
     {
@@ -3429,7 +3510,7 @@
       "source_file": "components.json",
       "source_location": "L3",
       "id": "components_style",
-      "community": 10,
+      "community": 11,
       "norm_label": "style"
     },
     {
@@ -3438,7 +3519,7 @@
       "source_file": "components.json",
       "source_location": "L4",
       "id": "components_typescript",
-      "community": 10,
+      "community": 11,
       "norm_label": "typescript"
     },
     {
@@ -3447,7 +3528,7 @@
       "source_file": "components.json",
       "source_location": "L5",
       "id": "components_tailwind",
-      "community": 10,
+      "community": 11,
       "norm_label": "tailwind"
     },
     {
@@ -3456,7 +3537,7 @@
       "source_file": "components.json",
       "source_location": "L6",
       "id": "components_tailwind_config",
-      "community": 10,
+      "community": 11,
       "norm_label": "config"
     },
     {
@@ -3465,7 +3546,7 @@
       "source_file": "components.json",
       "source_location": "L7",
       "id": "components_tailwind_css",
-      "community": 10,
+      "community": 11,
       "norm_label": "css"
     },
     {
@@ -3474,7 +3555,7 @@
       "source_file": "components.json",
       "source_location": "L8",
       "id": "components_tailwind_basecolor",
-      "community": 10,
+      "community": 11,
       "norm_label": "basecolor"
     },
     {
@@ -3483,7 +3564,7 @@
       "source_file": "components.json",
       "source_location": "L9",
       "id": "components_tailwind_cssvariables",
-      "community": 10,
+      "community": 11,
       "norm_label": "cssvariables"
     },
     {
@@ -3492,7 +3573,7 @@
       "source_file": "components.json",
       "source_location": "L10",
       "id": "components_tailwind_prefix",
-      "community": 10,
+      "community": 11,
       "norm_label": "prefix"
     },
     {
@@ -3501,7 +3582,7 @@
       "source_file": "components.json",
       "source_location": "L12",
       "id": "components_iconlibrary",
-      "community": 10,
+      "community": 11,
       "norm_label": "iconlibrary"
     },
     {
@@ -3510,7 +3591,7 @@
       "source_file": "components.json",
       "source_location": "L13",
       "id": "components_aliases",
-      "community": 10,
+      "community": 11,
       "norm_label": "aliases"
     },
     {
@@ -3519,7 +3600,7 @@
       "source_file": "components.json",
       "source_location": "L14",
       "id": "components_aliases_components",
-      "community": 10,
+      "community": 11,
       "norm_label": "components"
     },
     {
@@ -3528,7 +3609,7 @@
       "source_file": "components.json",
       "source_location": "L15",
       "id": "components_aliases_utils",
-      "community": 10,
+      "community": 11,
       "norm_label": "utils"
     },
     {
@@ -3537,7 +3618,7 @@
       "source_file": "components.json",
       "source_location": "L16",
       "id": "components_aliases_ui",
-      "community": 10,
+      "community": 11,
       "norm_label": "ui"
     },
     {
@@ -3546,7 +3627,7 @@
       "source_file": "components.json",
       "source_location": "L17",
       "id": "components_aliases_lib",
-      "community": 10,
+      "community": 11,
       "norm_label": "lib"
     },
     {
@@ -3555,7 +3636,7 @@
       "source_file": "components.json",
       "source_location": "L18",
       "id": "components_aliases_composables",
-      "community": 10,
+      "community": 11,
       "norm_label": "composables"
     },
     {
@@ -3564,7 +3645,7 @@
       "source_file": "components.json",
       "source_location": "L20",
       "id": "components_registries",
-      "community": 10,
+      "community": 11,
       "norm_label": "registries"
     },
     {
@@ -3573,7 +3654,7 @@
       "source_file": "composer.json",
       "source_location": "L1",
       "id": "composer",
-      "community": 28,
+      "community": 27,
       "norm_label": "composer.json"
     },
     {
@@ -3582,7 +3663,7 @@
       "source_file": "composer.json",
       "source_location": "L2",
       "id": "composer_schema",
-      "community": 28,
+      "community": 27,
       "norm_label": "$schema"
     },
     {
@@ -3591,7 +3672,7 @@
       "source_file": "composer.json",
       "source_location": "L3",
       "id": "composer_name",
-      "community": 28,
+      "community": 27,
       "norm_label": "name"
     },
     {
@@ -3600,7 +3681,7 @@
       "source_file": "composer.json",
       "source_location": "L4",
       "id": "composer_type",
-      "community": 28,
+      "community": 27,
       "norm_label": "type"
     },
     {
@@ -3609,7 +3690,7 @@
       "source_file": "composer.json",
       "source_location": "L5",
       "id": "composer_description",
-      "community": 28,
+      "community": 27,
       "norm_label": "description"
     },
     {
@@ -3618,7 +3699,7 @@
       "source_file": "composer.json",
       "source_location": "L6",
       "id": "composer_keywords",
-      "community": 28,
+      "community": 27,
       "norm_label": "keywords"
     },
     {
@@ -3627,7 +3708,7 @@
       "source_file": "composer.json",
       "source_location": "L7",
       "id": "composer_license",
-      "community": 28,
+      "community": 27,
       "norm_label": "license"
     },
     {
@@ -3636,7 +3717,7 @@
       "source_file": "composer.json",
       "source_location": "L8",
       "id": "composer_require",
-      "community": 35,
+      "community": 33,
       "norm_label": "require"
     },
     {
@@ -3645,7 +3726,7 @@
       "source_file": "composer.json",
       "source_location": "L9",
       "id": "composer_require_php",
-      "community": 35,
+      "community": 33,
       "norm_label": "php"
     },
     {
@@ -3654,7 +3735,7 @@
       "source_file": "composer.json",
       "source_location": "L10",
       "id": "composer_require_inertiajs_inertia_laravel",
-      "community": 35,
+      "community": 33,
       "norm_label": "inertiajs/inertia-laravel"
     },
     {
@@ -3663,7 +3744,7 @@
       "source_file": "composer.json",
       "source_location": "L11",
       "id": "composer_require_laravel_framework",
-      "community": 35,
+      "community": 33,
       "norm_label": "laravel/framework"
     },
     {
@@ -3672,7 +3753,7 @@
       "source_file": "composer.json",
       "source_location": "L12",
       "id": "composer_require_laravel_octane",
-      "community": 35,
+      "community": 33,
       "norm_label": "laravel/octane"
     },
     {
@@ -3681,7 +3762,7 @@
       "source_file": "composer.json",
       "source_location": "L13",
       "id": "composer_require_laravel_sanctum",
-      "community": 35,
+      "community": 33,
       "norm_label": "laravel/sanctum"
     },
     {
@@ -3690,7 +3771,7 @@
       "source_file": "composer.json",
       "source_location": "L14",
       "id": "composer_require_laravel_tinker",
-      "community": 35,
+      "community": 33,
       "norm_label": "laravel/tinker"
     },
     {
@@ -3699,7 +3780,7 @@
       "source_file": "composer.json",
       "source_location": "L15",
       "id": "composer_require_tightenco_ziggy",
-      "community": 35,
+      "community": 33,
       "norm_label": "tightenco/ziggy"
     },
     {
@@ -3708,7 +3789,7 @@
       "source_file": "composer.json",
       "source_location": "L17",
       "id": "composer_require_dev",
-      "community": 29,
+      "community": 28,
       "norm_label": "require-dev"
     },
     {
@@ -3717,7 +3798,7 @@
       "source_file": "composer.json",
       "source_location": "L18",
       "id": "composer_require_dev_fakerphp_faker",
-      "community": 29,
+      "community": 28,
       "norm_label": "fakerphp/faker"
     },
     {
@@ -3726,7 +3807,7 @@
       "source_file": "composer.json",
       "source_location": "L19",
       "id": "composer_require_dev_laravel_breeze",
-      "community": 29,
+      "community": 28,
       "norm_label": "laravel/breeze"
     },
     {
@@ -3735,7 +3816,7 @@
       "source_file": "composer.json",
       "source_location": "L20",
       "id": "composer_require_dev_laravel_pail",
-      "community": 29,
+      "community": 28,
       "norm_label": "laravel/pail"
     },
     {
@@ -3744,7 +3825,7 @@
       "source_file": "composer.json",
       "source_location": "L21",
       "id": "composer_require_dev_laravel_pint",
-      "community": 29,
+      "community": 28,
       "norm_label": "laravel/pint"
     },
     {
@@ -3753,7 +3834,7 @@
       "source_file": "composer.json",
       "source_location": "L22",
       "id": "composer_require_dev_laravel_sail",
-      "community": 29,
+      "community": 28,
       "norm_label": "laravel/sail"
     },
     {
@@ -3762,7 +3843,7 @@
       "source_file": "composer.json",
       "source_location": "L23",
       "id": "composer_require_dev_mockery_mockery",
-      "community": 29,
+      "community": 28,
       "norm_label": "mockery/mockery"
     },
     {
@@ -3771,7 +3852,7 @@
       "source_file": "composer.json",
       "source_location": "L24",
       "id": "composer_require_dev_nunomaduro_collision",
-      "community": 29,
+      "community": 28,
       "norm_label": "nunomaduro/collision"
     },
     {
@@ -3780,7 +3861,7 @@
       "source_file": "composer.json",
       "source_location": "L25",
       "id": "composer_require_dev_phpunit_phpunit",
-      "community": 29,
+      "community": 28,
       "norm_label": "phpunit/phpunit"
     },
     {
@@ -3861,7 +3942,7 @@
       "source_file": "composer.json",
       "source_location": "L39",
       "id": "composer_scripts",
-      "community": 30,
+      "community": 29,
       "norm_label": "scripts"
     },
     {
@@ -3870,7 +3951,7 @@
       "source_file": "composer.json",
       "source_location": "L40",
       "id": "composer_scripts_setup",
-      "community": 30,
+      "community": 29,
       "norm_label": "setup"
     },
     {
@@ -3879,7 +3960,7 @@
       "source_file": "composer.json",
       "source_location": "L48",
       "id": "composer_scripts_dev",
-      "community": 30,
+      "community": 29,
       "norm_label": "dev"
     },
     {
@@ -3888,7 +3969,7 @@
       "source_file": "composer.json",
       "source_location": "L52",
       "id": "composer_scripts_test",
-      "community": 30,
+      "community": 29,
       "norm_label": "test"
     },
     {
@@ -3897,7 +3978,7 @@
       "source_file": "composer.json",
       "source_location": "L56",
       "id": "composer_scripts_post_autoload_dump",
-      "community": 30,
+      "community": 29,
       "norm_label": "post-autoload-dump"
     },
     {
@@ -3906,7 +3987,7 @@
       "source_file": "composer.json",
       "source_location": "L60",
       "id": "composer_scripts_post_update_cmd",
-      "community": 30,
+      "community": 29,
       "norm_label": "post-update-cmd"
     },
     {
@@ -3915,7 +3996,7 @@
       "source_file": "composer.json",
       "source_location": "L63",
       "id": "composer_scripts_post_root_package_install",
-      "community": 30,
+      "community": 29,
       "norm_label": "post-root-package-install"
     },
     {
@@ -3924,7 +4005,7 @@
       "source_file": "composer.json",
       "source_location": "L66",
       "id": "composer_scripts_post_create_project_cmd",
-      "community": 30,
+      "community": 29,
       "norm_label": "post-create-project-cmd"
     },
     {
@@ -3933,7 +4014,7 @@
       "source_file": "composer.json",
       "source_location": "L71",
       "id": "composer_scripts_pre_package_uninstall",
-      "community": 30,
+      "community": 29,
       "norm_label": "pre-package-uninstall"
     },
     {
@@ -3969,7 +4050,7 @@
       "source_file": "composer.json",
       "source_location": "L80",
       "id": "composer_config",
-      "community": 37,
+      "community": 35,
       "norm_label": "config"
     },
     {
@@ -3978,7 +4059,7 @@
       "source_file": "composer.json",
       "source_location": "L81",
       "id": "composer_config_optimize_autoloader",
-      "community": 37,
+      "community": 35,
       "norm_label": "optimize-autoloader"
     },
     {
@@ -3987,7 +4068,7 @@
       "source_file": "composer.json",
       "source_location": "L82",
       "id": "composer_config_preferred_install",
-      "community": 37,
+      "community": 35,
       "norm_label": "preferred-install"
     },
     {
@@ -3996,7 +4077,7 @@
       "source_file": "composer.json",
       "source_location": "L83",
       "id": "composer_config_sort_packages",
-      "community": 37,
+      "community": 35,
       "norm_label": "sort-packages"
     },
     {
@@ -4005,7 +4086,7 @@
       "source_file": "composer.json",
       "source_location": "L84",
       "id": "composer_config_allow_plugins",
-      "community": 37,
+      "community": 35,
       "norm_label": "allow-plugins"
     },
     {
@@ -4014,7 +4095,7 @@
       "source_file": "composer.json",
       "source_location": "L85",
       "id": "composer_allow_plugins_pestphp_pest_plugin",
-      "community": 37,
+      "community": 35,
       "norm_label": "pestphp/pest-plugin"
     },
     {
@@ -4023,7 +4104,7 @@
       "source_file": "composer.json",
       "source_location": "L86",
       "id": "composer_allow_plugins_php_http_discovery",
-      "community": 37,
+      "community": 35,
       "norm_label": "php-http/discovery"
     },
     {
@@ -4032,7 +4113,7 @@
       "source_file": "composer.json",
       "source_location": "L89",
       "id": "composer_minimum_stability",
-      "community": 28,
+      "community": 27,
       "norm_label": "minimum-stability"
     },
     {
@@ -4041,7 +4122,7 @@
       "source_file": "composer.json",
       "source_location": "L90",
       "id": "composer_prefer_stable",
-      "community": 28,
+      "community": 27,
       "norm_label": "prefer-stable"
     },
     {
@@ -4779,7 +4860,7 @@
       "source_file": "database/seeders/BarangSeeder.php",
       "source_location": "L1",
       "id": "seeders_barangseeder",
-      "community": 5,
+      "community": 7,
       "norm_label": "barangseeder.php"
     },
     {
@@ -4788,7 +4869,7 @@
       "source_file": "database/seeders/BarangSeeder.php",
       "source_location": "L10",
       "id": "seeders_barangseeder_barangseeder",
-      "community": 5,
+      "community": 7,
       "norm_label": "barangseeder"
     },
     {
@@ -4797,7 +4878,7 @@
       "source_file": "",
       "source_location": "",
       "id": "seeder",
-      "community": 5,
+      "community": 7,
       "norm_label": "seeder"
     },
     {
@@ -4806,7 +4887,7 @@
       "source_file": "database/seeders/BarangSeeder.php",
       "source_location": "L15",
       "id": "seeders_barangseeder_barangseeder_run",
-      "community": 5,
+      "community": 7,
       "norm_label": ".run()"
     },
     {
@@ -4815,7 +4896,7 @@
       "source_file": "database/seeders/DatabaseSeeder.php",
       "source_location": "L1",
       "id": "seeders_databaseseeder",
-      "community": 5,
+      "community": 7,
       "norm_label": "databaseseeder.php"
     },
     {
@@ -4824,7 +4905,7 @@
       "source_file": "database/seeders/DatabaseSeeder.php",
       "source_location": "L8",
       "id": "seeders_databaseseeder_databaseseeder",
-      "community": 5,
+      "community": 7,
       "norm_label": "databaseseeder"
     },
     {
@@ -4833,7 +4914,7 @@
       "source_file": "database/seeders/DatabaseSeeder.php",
       "source_location": "L13",
       "id": "seeders_databaseseeder_databaseseeder_run",
-      "community": 5,
+      "community": 7,
       "norm_label": ".run()"
     },
     {
@@ -4842,7 +4923,7 @@
       "source_file": "database/seeders/LotSeeder.php",
       "source_location": "L1",
       "id": "seeders_lotseeder",
-      "community": 5,
+      "community": 7,
       "norm_label": "lotseeder.php"
     },
     {
@@ -4851,7 +4932,7 @@
       "source_file": "database/seeders/LotSeeder.php",
       "source_location": "L11",
       "id": "seeders_lotseeder_lotseeder",
-      "community": 5,
+      "community": 7,
       "norm_label": "lotseeder"
     },
     {
@@ -4860,7 +4941,7 @@
       "source_file": "database/seeders/LotSeeder.php",
       "source_location": "L16",
       "id": "seeders_lotseeder_lotseeder_run",
-      "community": 5,
+      "community": 7,
       "norm_label": ".run()"
     },
     {
@@ -4869,7 +4950,7 @@
       "source_file": "database/seeders/MasterSeeder.php",
       "source_location": "L1",
       "id": "seeders_masterseeder",
-      "community": 5,
+      "community": 1,
       "norm_label": "masterseeder.php"
     },
     {
@@ -4878,7 +4959,7 @@
       "source_file": "database/seeders/MasterSeeder.php",
       "source_location": "L16",
       "id": "seeders_masterseeder_masterseeder",
-      "community": 5,
+      "community": 1,
       "norm_label": "masterseeder"
     },
     {
@@ -4887,7 +4968,7 @@
       "source_file": "database/seeders/MasterSeeder.php",
       "source_location": "L21",
       "id": "seeders_masterseeder_masterseeder_run",
-      "community": 5,
+      "community": 1,
       "norm_label": ".run()"
     },
     {
@@ -4896,7 +4977,7 @@
       "source_file": "database/seeders/UserSeeder.php",
       "source_location": "L1",
       "id": "seeders_userseeder",
-      "community": 5,
+      "community": 7,
       "norm_label": "userseeder.php"
     },
     {
@@ -4905,7 +4986,7 @@
       "source_file": "database/seeders/UserSeeder.php",
       "source_location": "L8",
       "id": "seeders_userseeder_userseeder",
-      "community": 5,
+      "community": 7,
       "norm_label": "userseeder"
     },
     {
@@ -4914,7 +4995,7 @@
       "source_file": "database/seeders/UserSeeder.php",
       "source_location": "L13",
       "id": "seeders_userseeder_userseeder_run",
-      "community": 5,
+      "community": 7,
       "norm_label": ".run()"
     },
     {
@@ -5273,7 +5354,7 @@
       "source_file": "public/frankenphp-worker.php",
       "source_location": "L1",
       "id": "public_frankenphp_worker",
-      "community": 140,
+      "community": 142,
       "norm_label": "frankenphp-worker.php"
     },
     {
@@ -5282,7 +5363,7 @@
       "source_file": "public/index.php",
       "source_location": "L1",
       "id": "public_index",
-      "community": 141,
+      "community": 143,
       "norm_label": "index.php"
     },
     {
@@ -5723,7 +5804,7 @@
       "source_file": "resources/js/Components/ui/breadcrumb/Breadcrumb.vue",
       "source_location": "L1",
       "id": "breadcrumb_breadcrumb",
-      "community": 34,
+      "community": 32,
       "norm_label": "breadcrumb.vue"
     },
     {
@@ -5732,7 +5813,7 @@
       "source_file": "resources/js/Components/ui/breadcrumb/BreadcrumbEllipsis.vue",
       "source_location": "L1",
       "id": "breadcrumb_breadcrumbellipsis",
-      "community": 34,
+      "community": 32,
       "norm_label": "breadcrumbellipsis.vue"
     },
     {
@@ -5741,7 +5822,7 @@
       "source_file": "resources/js/Components/ui/breadcrumb/BreadcrumbItem.vue",
       "source_location": "L1",
       "id": "breadcrumb_breadcrumbitem",
-      "community": 34,
+      "community": 32,
       "norm_label": "breadcrumbitem.vue"
     },
     {
@@ -5750,7 +5831,7 @@
       "source_file": "resources/js/Components/ui/breadcrumb/BreadcrumbLink.vue",
       "source_location": "L1",
       "id": "breadcrumb_breadcrumblink",
-      "community": 34,
+      "community": 32,
       "norm_label": "breadcrumblink.vue"
     },
     {
@@ -5759,7 +5840,7 @@
       "source_file": "resources/js/Components/ui/breadcrumb/BreadcrumbList.vue",
       "source_location": "L1",
       "id": "breadcrumb_breadcrumblist",
-      "community": 34,
+      "community": 32,
       "norm_label": "breadcrumblist.vue"
     },
     {
@@ -5768,7 +5849,7 @@
       "source_file": "resources/js/Components/ui/breadcrumb/BreadcrumbPage.vue",
       "source_location": "L1",
       "id": "breadcrumb_breadcrumbpage",
-      "community": 34,
+      "community": 32,
       "norm_label": "breadcrumbpage.vue"
     },
     {
@@ -5777,7 +5858,7 @@
       "source_file": "resources/js/Components/ui/breadcrumb/BreadcrumbSeparator.vue",
       "source_location": "L1",
       "id": "breadcrumb_breadcrumbseparator",
-      "community": 34,
+      "community": 32,
       "norm_label": "breadcrumbseparator.vue"
     },
     {
@@ -5786,7 +5867,7 @@
       "source_file": "resources/js/Components/ui/breadcrumb/index.ts",
       "source_location": "L1",
       "id": "breadcrumb_index",
-      "community": 34,
+      "community": 32,
       "norm_label": "index.ts"
     },
     {
@@ -5822,7 +5903,7 @@
       "source_file": "resources/js/Components/ui/card/Card.vue",
       "source_location": "L1",
       "id": "card_card",
-      "community": 36,
+      "community": 34,
       "norm_label": "card.vue"
     },
     {
@@ -5831,7 +5912,7 @@
       "source_file": "resources/js/Components/ui/card/CardContent.vue",
       "source_location": "L1",
       "id": "card_cardcontent",
-      "community": 36,
+      "community": 34,
       "norm_label": "cardcontent.vue"
     },
     {
@@ -5840,7 +5921,7 @@
       "source_file": "resources/js/Components/ui/card/CardDescription.vue",
       "source_location": "L1",
       "id": "card_carddescription",
-      "community": 36,
+      "community": 34,
       "norm_label": "carddescription.vue"
     },
     {
@@ -5849,7 +5930,7 @@
       "source_file": "resources/js/Components/ui/card/CardFooter.vue",
       "source_location": "L1",
       "id": "card_cardfooter",
-      "community": 36,
+      "community": 34,
       "norm_label": "cardfooter.vue"
     },
     {
@@ -5858,7 +5939,7 @@
       "source_file": "resources/js/Components/ui/card/CardHeader.vue",
       "source_location": "L1",
       "id": "card_cardheader",
-      "community": 36,
+      "community": 34,
       "norm_label": "cardheader.vue"
     },
     {
@@ -5867,7 +5948,7 @@
       "source_file": "resources/js/Components/ui/card/CardTitle.vue",
       "source_location": "L1",
       "id": "card_cardtitle",
-      "community": 36,
+      "community": 34,
       "norm_label": "cardtitle.vue"
     },
     {
@@ -5876,7 +5957,7 @@
       "source_file": "resources/js/Components/ui/card/index.ts",
       "source_location": "L1",
       "id": "card_index",
-      "community": 36,
+      "community": 34,
       "norm_label": "index.ts"
     },
     {
@@ -5885,7 +5966,7 @@
       "source_file": "resources/js/Components/ui/checkbox/Checkbox.vue",
       "source_location": "L1",
       "id": "checkbox_checkbox",
-      "community": 202,
+      "community": 69,
       "norm_label": "checkbox.vue"
     },
     {
@@ -5894,7 +5975,7 @@
       "source_file": "resources/js/Components/ui/checkbox/index.ts",
       "source_location": "L1",
       "id": "checkbox_index",
-      "community": 202,
+      "community": 69,
       "norm_label": "index.ts"
     },
     {
@@ -6497,7 +6578,7 @@
       "source_file": "resources/js/Components/ui/separator/Separator.vue",
       "source_location": "L1",
       "id": "separator_separator",
-      "community": 76,
+      "community": 77,
       "norm_label": "separator.vue"
     },
     {
@@ -6506,7 +6587,7 @@
       "source_file": "resources/js/Components/ui/separator/index.ts",
       "source_location": "L1",
       "id": "separator_index",
-      "community": 76,
+      "community": 77,
       "norm_label": "index.ts"
     },
     {
@@ -6605,7 +6686,7 @@
       "source_file": "resources/js/Components/ui/sonner/Sonner.vue",
       "source_location": "L1",
       "id": "sonner_sonner",
-      "community": 77,
+      "community": 78,
       "norm_label": "sonner.vue"
     },
     {
@@ -6614,7 +6695,7 @@
       "source_file": "resources/js/Components/ui/sonner/index.ts",
       "source_location": "L1",
       "id": "sonner_index",
-      "community": 77,
+      "community": 78,
       "norm_label": "index.ts"
     },
     {
@@ -6794,7 +6875,7 @@
       "source_file": "resources/js/Pages/Smart/Admin/Arsip.vue",
       "source_location": "L1",
       "id": "admin_arsip",
-      "community": 38,
+      "community": 36,
       "norm_label": "arsip.vue"
     },
     {
@@ -6803,7 +6884,7 @@
       "source_file": "resources/js/Pages/Smart/Admin/Arsip.vue",
       "source_location": "L35",
       "id": "admin_arsip_searchquery",
-      "community": 38,
+      "community": 36,
       "norm_label": "searchquery"
     },
     {
@@ -6812,7 +6893,7 @@
       "source_file": "resources/js/Pages/Smart/Admin/Arsip.vue",
       "source_location": "L36",
       "id": "admin_arsip_typefilter",
-      "community": 38,
+      "community": 36,
       "norm_label": "typefilter"
     },
     {
@@ -6821,7 +6902,7 @@
       "source_file": "resources/js/Pages/Smart/Admin/Arsip.vue",
       "source_location": "L37",
       "id": "admin_arsip_statusfilter",
-      "community": 38,
+      "community": 36,
       "norm_label": "statusfilter"
     },
     {
@@ -6830,7 +6911,7 @@
       "source_file": "resources/js/Pages/Smart/Admin/Arsip.vue",
       "source_location": "L38",
       "id": "admin_arsip_timefilter",
-      "community": 38,
+      "community": 36,
       "norm_label": "timefilter"
     },
     {
@@ -6839,7 +6920,7 @@
       "source_file": "resources/js/Pages/Smart/Admin/Arsip.vue",
       "source_location": "L39",
       "id": "admin_arsip_rowsperpage",
-      "community": 38,
+      "community": 36,
       "norm_label": "rowsperpage"
     },
     {
@@ -6848,7 +6929,7 @@
       "source_file": "resources/js/Pages/Smart/Admin/ArsipDetail.vue",
       "source_location": "L1",
       "id": "admin_arsipdetail",
-      "community": 80,
+      "community": 81,
       "norm_label": "arsipdetail.vue"
     },
     {
@@ -6857,7 +6938,7 @@
       "source_file": "resources/js/Pages/Smart/Admin/Borrowed.vue",
       "source_location": "L1",
       "id": "admin_borrowed",
-      "community": 81,
+      "community": 82,
       "norm_label": "borrowed.vue"
     },
     {
@@ -6866,7 +6947,7 @@
       "source_file": "resources/js/Pages/Smart/Admin/BorrowedDetail.vue",
       "source_location": "L1",
       "id": "admin_borroweddetail",
-      "community": 82,
+      "community": 83,
       "norm_label": "borroweddetail.vue"
     },
     {
@@ -6875,7 +6956,7 @@
       "source_file": "resources/js/Pages/Smart/Admin/Dashboard.vue",
       "source_location": "L1",
       "id": "admin_dashboard",
-      "community": 83,
+      "community": 84,
       "norm_label": "dashboard.vue"
     },
     {
@@ -6902,7 +6983,7 @@
       "source_file": "resources/js/Pages/Smart/Admin/InboxDetail.vue",
       "source_location": "L1",
       "id": "admin_inboxdetail",
-      "community": 84,
+      "community": 85,
       "norm_label": "inboxdetail.vue"
     },
     {
@@ -6911,188 +6992,8 @@
       "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailBarang.vue",
       "source_location": "L1",
       "id": "manajemenstok_detailbarang",
-      "community": 11,
+      "community": 8,
       "norm_label": "detailbarang.vue"
-    },
-    {
-      "label": "activeTab",
-      "file_type": "code",
-      "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailBarang.vue",
-      "source_location": "L86",
-      "id": "manajemenstok_detailbarang_activetab",
-      "community": 11,
-      "norm_label": "activetab"
-    },
-    {
-      "label": "searchQuery",
-      "file_type": "code",
-      "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailBarang.vue",
-      "source_location": "L88",
-      "id": "manajemenstok_detailbarang_searchquery",
-      "community": 11,
-      "norm_label": "searchquery"
-    },
-    {
-      "label": "timeFilter",
-      "file_type": "code",
-      "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailBarang.vue",
-      "source_location": "L89",
-      "id": "manajemenstok_detailbarang_timefilter",
-      "community": 11,
-      "norm_label": "timefilter"
-    },
-    {
-      "label": "organizerFilter",
-      "file_type": "code",
-      "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailBarang.vue",
-      "source_location": "L90",
-      "id": "manajemenstok_detailbarang_organizerfilter",
-      "community": 11,
-      "norm_label": "organizerfilter"
-    },
-    {
-      "label": "rowsPerPage",
-      "file_type": "code",
-      "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailBarang.vue",
-      "source_location": "L91",
-      "id": "manajemenstok_detailbarang_rowsperpage",
-      "community": 11,
-      "norm_label": "rowsperpage"
-    },
-    {
-      "label": "isLotModalOpen",
-      "file_type": "code",
-      "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailBarang.vue",
-      "source_location": "L95",
-      "id": "manajemenstok_detailbarang_islotmodalopen",
-      "community": 11,
-      "norm_label": "islotmodalopen"
-    },
-    {
-      "label": "isDetailConsumablesOpen",
-      "file_type": "code",
-      "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailBarang.vue",
-      "source_location": "L99",
-      "id": "manajemenstok_detailbarang_isdetailconsumablesopen",
-      "community": 11,
-      "norm_label": "isdetailconsumablesopen"
-    },
-    {
-      "label": "openDetailLOTConsumables()",
-      "file_type": "code",
-      "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailBarang.vue",
-      "source_location": "L102",
-      "id": "manajemenstok_detailbarang_opendetaillotconsumables",
-      "community": 11,
-      "norm_label": "opendetaillotconsumables()"
-    },
-    {
-      "label": "lotForm",
-      "file_type": "code",
-      "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailBarang.vue",
-      "source_location": "L107",
-      "id": "manajemenstok_detailbarang_lotform",
-      "community": 11,
-      "norm_label": "lotform"
-    },
-    {
-      "label": "generateLotCode()",
-      "file_type": "code",
-      "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailBarang.vue",
-      "source_location": "L129",
-      "id": "manajemenstok_detailbarang_generatelotcode",
-      "community": 11,
-      "norm_label": "generatelotcode()"
-    },
-    {
-      "label": "openCreateLotModal()",
-      "file_type": "code",
-      "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailBarang.vue",
-      "source_location": "L149",
-      "id": "manajemenstok_detailbarang_opencreatelotmodal",
-      "community": 11,
-      "norm_label": "opencreatelotmodal()"
-    },
-    {
-      "label": "openEditLotModal()",
-      "file_type": "code",
-      "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailBarang.vue",
-      "source_location": "L176",
-      "id": "manajemenstok_detailbarang_openeditlotmodal",
-      "community": 11,
-      "norm_label": "openeditlotmodal()"
-    },
-    {
-      "label": "handleLotFileUpload()",
-      "file_type": "code",
-      "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailBarang.vue",
-      "source_location": "L214",
-      "id": "manajemenstok_detailbarang_handlelotfileupload",
-      "community": 11,
-      "norm_label": "handlelotfileupload()"
-    },
-    {
-      "label": "triggerLotFileInput()",
-      "file_type": "code",
-      "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailBarang.vue",
-      "source_location": "L234",
-      "id": "manajemenstok_detailbarang_triggerlotfileinput",
-      "community": 11,
-      "norm_label": "triggerlotfileinput()"
-    },
-    {
-      "label": "viewLotImageInNewTab()",
-      "file_type": "code",
-      "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailBarang.vue",
-      "source_location": "L239",
-      "id": "manajemenstok_detailbarang_viewlotimageinnewtab",
-      "community": 11,
-      "norm_label": "viewlotimageinnewtab()"
-    },
-    {
-      "label": "handleSamakanPhoto()",
-      "file_type": "code",
-      "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailBarang.vue",
-      "source_location": "L253",
-      "id": "manajemenstok_detailbarang_handlesamakanphoto",
-      "community": 11,
-      "norm_label": "handlesamakanphoto()"
-    },
-    {
-      "label": "filteredFloors",
-      "file_type": "code",
-      "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailBarang.vue",
-      "source_location": "L263",
-      "id": "manajemenstok_detailbarang_filteredfloors",
-      "community": 11,
-      "norm_label": "filteredfloors"
-    },
-    {
-      "label": "filteredRooms",
-      "file_type": "code",
-      "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailBarang.vue",
-      "source_location": "L268",
-      "id": "manajemenstok_detailbarang_filteredrooms",
-      "community": 11,
-      "norm_label": "filteredrooms"
-    },
-    {
-      "label": "isLotFormValid",
-      "file_type": "code",
-      "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailBarang.vue",
-      "source_location": "L297",
-      "id": "manajemenstok_detailbarang_islotformvalid",
-      "community": 11,
-      "norm_label": "islotformvalid"
-    },
-    {
-      "label": "handleSaveLot()",
-      "file_type": "code",
-      "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailBarang.vue",
-      "source_location": "L321",
-      "id": "manajemenstok_detailbarang_handlesavelot",
-      "community": 11,
-      "norm_label": "handlesavelot()"
     },
     {
       "label": "DetailLOTConsumables.vue",
@@ -7100,7 +7001,7 @@
       "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailLOTConsumables.vue",
       "source_location": "L1",
       "id": "manajemenstok_detaillotconsumables",
-      "community": 203,
+      "community": 75,
       "norm_label": "detaillotconsumables.vue"
     },
     {
@@ -7109,8 +7010,26 @@
       "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailLOTConsumables.vue",
       "source_location": "L39",
       "id": "manajemenstok_detaillotconsumables_fetchlotdetails",
-      "community": 203,
+      "community": 75,
       "norm_label": "fetchlotdetails()"
+    },
+    {
+      "label": "DetailLOTNonConsumables.vue",
+      "file_type": "code",
+      "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailLOTNonConsumables.vue",
+      "source_location": "L1",
+      "id": "manajemenstok_detaillotnonconsumables",
+      "community": 138,
+      "norm_label": "detaillotnonconsumables.vue"
+    },
+    {
+      "label": "if()",
+      "file_type": "code",
+      "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailLOTNonConsumables.vue",
+      "source_location": "L465",
+      "id": "manajemenstok_detaillotnonconsumables_if",
+      "community": 138,
+      "norm_label": "if()"
     },
     {
       "label": "ManajemenStok.vue",
@@ -7118,7 +7037,7 @@
       "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/ManajemenStok.vue",
       "source_location": "L1",
       "id": "manajemenstok_manajemenstok",
-      "community": 204,
+      "community": 139,
       "norm_label": "manajemenstok.vue"
     },
     {
@@ -7181,7 +7100,7 @@
       "source_file": "resources/js/Pages/Smart/Admin/SerahTerima.vue",
       "source_location": "L1",
       "id": "admin_serahterima",
-      "community": 39,
+      "community": 38,
       "norm_label": "serahterima.vue"
     },
     {
@@ -7190,7 +7109,7 @@
       "source_file": "resources/js/Pages/Smart/Admin/SerahTerima.vue",
       "source_location": "L41",
       "id": "admin_serahterima_searchquery",
-      "community": 39,
+      "community": 38,
       "norm_label": "searchquery"
     },
     {
@@ -7199,7 +7118,7 @@
       "source_file": "resources/js/Pages/Smart/Admin/SerahTerima.vue",
       "source_location": "L42",
       "id": "admin_serahterima_timefilter",
-      "community": 39,
+      "community": 38,
       "norm_label": "timefilter"
     },
     {
@@ -7208,7 +7127,7 @@
       "source_file": "resources/js/Pages/Smart/Admin/SerahTerima.vue",
       "source_location": "L43",
       "id": "admin_serahterima_methodfilter",
-      "community": 39,
+      "community": 38,
       "norm_label": "methodfilter"
     },
     {
@@ -7217,7 +7136,7 @@
       "source_file": "resources/js/Pages/Smart/Admin/SerahTerima.vue",
       "source_location": "L44",
       "id": "admin_serahterima_rowsperpage",
-      "community": 39,
+      "community": 38,
       "norm_label": "rowsperpage"
     },
     {
@@ -7226,7 +7145,7 @@
       "source_file": "resources/js/Pages/Smart/Admin/SerahTerima.vue",
       "source_location": "L160",
       "id": "admin_serahterima_if",
-      "community": 39,
+      "community": 38,
       "norm_label": "if()"
     },
     {
@@ -7379,7 +7298,7 @@
       "source_file": "resources/js/Pages/Smart/User/AssetCart.vue",
       "source_location": "L1",
       "id": "user_assetcart",
-      "community": 150,
+      "community": 152,
       "norm_label": "assetcart.vue"
     },
     {
@@ -7388,7 +7307,7 @@
       "source_file": "resources/js/Pages/Smart/User/AssetCartConfirmation.vue",
       "source_location": "L1",
       "id": "user_assetcartconfirmation",
-      "community": 151,
+      "community": 153,
       "norm_label": "assetcartconfirmation.vue"
     },
     {
@@ -7397,7 +7316,7 @@
       "source_file": "resources/js/Pages/Smart/User/BorrowCart.vue",
       "source_location": "L1",
       "id": "user_borrowcart",
-      "community": 152,
+      "community": 154,
       "norm_label": "borrowcart.vue"
     },
     {
@@ -7406,7 +7325,7 @@
       "source_file": "resources/js/Pages/Smart/User/Browse.vue",
       "source_location": "L1",
       "id": "user_browse",
-      "community": 153,
+      "community": 155,
       "norm_label": "browse.vue"
     },
     {
@@ -7415,7 +7334,7 @@
       "source_file": "resources/js/Pages/Smart/User/RequestHistory.vue",
       "source_location": "L1",
       "id": "user_requesthistory",
-      "community": 154,
+      "community": 156,
       "norm_label": "requesthistory.vue"
     },
     {
@@ -7424,7 +7343,7 @@
       "source_file": "resources/js/Pages/Smart/User/RequestHistoryDetail.vue",
       "source_location": "L1",
       "id": "user_requesthistorydetail",
-      "community": 78,
+      "community": 79,
       "norm_label": "requesthistorydetail.vue"
     },
     {
@@ -7433,7 +7352,7 @@
       "source_file": "resources/js/Pages/Smart/User/RequestHistoryDetail.vue",
       "source_location": "L444",
       "id": "user_requesthistorydetail_openreturnmodal",
-      "community": 78,
+      "community": 79,
       "norm_label": "openreturnmodal()"
     },
     {
@@ -7442,7 +7361,7 @@
       "source_file": "resources/js/Pages/Smart/User/UserDashboard.vue",
       "source_location": "L1",
       "id": "user_userdashboard",
-      "community": 155,
+      "community": 157,
       "norm_label": "userdashboard.vue"
     },
     {
@@ -7451,7 +7370,7 @@
       "source_file": "resources/js/Pages/Welcome.vue",
       "source_location": "L1",
       "id": "pages_welcome",
-      "community": 138,
+      "community": 140,
       "norm_label": "welcome.vue"
     },
     {
@@ -7622,7 +7541,7 @@
       "source_file": "resources/js/types/vite-env.d.ts",
       "source_location": "L1",
       "id": "types_vite_env_d",
-      "community": 149,
+      "community": 151,
       "norm_label": "vite-env.d.ts"
     },
     {
@@ -7631,7 +7550,7 @@
       "source_file": "resources/views/app.blade.php",
       "source_location": null,
       "id": "views_app_blade",
-      "community": 187,
+      "community": 189,
       "norm_label": "app.blade.php"
     },
     {
@@ -7640,7 +7559,7 @@
       "source_file": "routes/auth.php",
       "source_location": "L1",
       "id": "routes_auth",
-      "community": 142,
+      "community": 144,
       "norm_label": "auth.php"
     },
     {
@@ -7649,7 +7568,7 @@
       "source_file": "routes/console.php",
       "source_location": "L1",
       "id": "routes_console",
-      "community": 143,
+      "community": 145,
       "norm_label": "console.php"
     },
     {
@@ -7658,7 +7577,7 @@
       "source_file": "routes/web.php",
       "source_location": "L1",
       "id": "routes_web",
-      "community": 144,
+      "community": 146,
       "norm_label": "web.php"
     },
     {
@@ -7667,7 +7586,7 @@
       "source_file": "scratch_inspect.php",
       "source_location": "L1",
       "id": "scratch_inspect",
-      "community": 145,
+      "community": 147,
       "norm_label": "scratch_inspect.php"
     },
     {
@@ -7676,7 +7595,7 @@
       "source_file": "scratch_inspect_0004.php",
       "source_location": "L1",
       "id": "scratch_inspect_0004",
-      "community": 146,
+      "community": 148,
       "norm_label": "scratch_inspect_0004.php"
     },
     {
@@ -7685,7 +7604,7 @@
       "source_file": "scratch_inspect_logs.php",
       "source_location": "L1",
       "id": "scratch_inspect_logs",
-      "community": 147,
+      "community": 149,
       "norm_label": "scratch_inspect_logs.php"
     },
     {
@@ -7694,7 +7613,7 @@
       "source_file": "storage/framework/views/131f9cd39b9f77b54f395f23ed863743.php",
       "source_location": "L1",
       "id": "views_131f9cd39b9f77b54f395f23ed863743",
-      "community": 156,
+      "community": 158,
       "norm_label": "131f9cd39b9f77b54f395f23ed863743.php"
     },
     {
@@ -7703,7 +7622,7 @@
       "source_file": "storage/framework/views/19699d784f6a78c06f04460e48419e65.php",
       "source_location": "L1",
       "id": "views_19699d784f6a78c06f04460e48419e65",
-      "community": 157,
+      "community": 159,
       "norm_label": "19699d784f6a78c06f04460e48419e65.php"
     },
     {
@@ -7712,7 +7631,7 @@
       "source_file": "storage/framework/views/1bc627c95a70514b12ffc14da43356c1.php",
       "source_location": "L1",
       "id": "views_1bc627c95a70514b12ffc14da43356c1",
-      "community": 158,
+      "community": 160,
       "norm_label": "1bc627c95a70514b12ffc14da43356c1.php"
     },
     {
@@ -7721,7 +7640,7 @@
       "source_file": "storage/framework/views/2659979d0828792a129211088899423b.php",
       "source_location": "L1",
       "id": "views_2659979d0828792a129211088899423b",
-      "community": 159,
+      "community": 161,
       "norm_label": "2659979d0828792a129211088899423b.php"
     },
     {
@@ -7730,7 +7649,7 @@
       "source_file": "storage/framework/views/2addfd8c4c21de3d4651f0c976b35e3e.php",
       "source_location": "L1",
       "id": "views_2addfd8c4c21de3d4651f0c976b35e3e",
-      "community": 160,
+      "community": 162,
       "norm_label": "2addfd8c4c21de3d4651f0c976b35e3e.php"
     },
     {
@@ -7739,7 +7658,7 @@
       "source_file": "storage/framework/views/2ffaf81b4877ff87ca67579e340acc43.php",
       "source_location": "L1",
       "id": "views_2ffaf81b4877ff87ca67579e340acc43",
-      "community": 161,
+      "community": 163,
       "norm_label": "2ffaf81b4877ff87ca67579e340acc43.php"
     },
     {
@@ -7748,7 +7667,7 @@
       "source_file": "storage/framework/views/34907d7d56db7791b85547fcc3aeb58d.php",
       "source_location": "L1",
       "id": "views_34907d7d56db7791b85547fcc3aeb58d",
-      "community": 162,
+      "community": 164,
       "norm_label": "34907d7d56db7791b85547fcc3aeb58d.php"
     },
     {
@@ -7757,7 +7676,7 @@
       "source_file": "storage/framework/views/3e362be46448f9673256306641ec7049.php",
       "source_location": "L1",
       "id": "views_3e362be46448f9673256306641ec7049",
-      "community": 163,
+      "community": 165,
       "norm_label": "3e362be46448f9673256306641ec7049.php"
     },
     {
@@ -7766,7 +7685,7 @@
       "source_file": "storage/framework/views/3fc26d7245cd72103b6ef4f29b0785f6.php",
       "source_location": "L1",
       "id": "views_3fc26d7245cd72103b6ef4f29b0785f6",
-      "community": 164,
+      "community": 166,
       "norm_label": "3fc26d7245cd72103b6ef4f29b0785f6.php"
     },
     {
@@ -7775,7 +7694,7 @@
       "source_file": "storage/framework/views/41366cb9660865aee67b46ef440020ee.php",
       "source_location": "L1",
       "id": "views_41366cb9660865aee67b46ef440020ee",
-      "community": 165,
+      "community": 167,
       "norm_label": "41366cb9660865aee67b46ef440020ee.php"
     },
     {
@@ -7784,7 +7703,7 @@
       "source_file": "storage/framework/views/497e4c8405d521fa52155acb3f22c39b.php",
       "source_location": "L1",
       "id": "views_497e4c8405d521fa52155acb3f22c39b",
-      "community": 166,
+      "community": 168,
       "norm_label": "497e4c8405d521fa52155acb3f22c39b.php"
     },
     {
@@ -7793,7 +7712,7 @@
       "source_file": "storage/framework/views/52c80f03fb0089a3485c8b2229e15aa3.php",
       "source_location": "L1",
       "id": "views_52c80f03fb0089a3485c8b2229e15aa3",
-      "community": 167,
+      "community": 169,
       "norm_label": "52c80f03fb0089a3485c8b2229e15aa3.php"
     },
     {
@@ -7802,7 +7721,7 @@
       "source_file": "storage/framework/views/54828765c173a35add083a2972231788.php",
       "source_location": "L1",
       "id": "views_54828765c173a35add083a2972231788",
-      "community": 168,
+      "community": 170,
       "norm_label": "54828765c173a35add083a2972231788.php"
     },
     {
@@ -7811,7 +7730,7 @@
       "source_file": "storage/framework/views/562c45fd3052a0125e8ea2e8d783bc59.php",
       "source_location": "L1",
       "id": "views_562c45fd3052a0125e8ea2e8d783bc59",
-      "community": 169,
+      "community": 171,
       "norm_label": "562c45fd3052a0125e8ea2e8d783bc59.php"
     },
     {
@@ -7820,7 +7739,7 @@
       "source_file": "storage/framework/views/58f01d927e51e2d9e4fe35e04df3ec95.php",
       "source_location": "L1",
       "id": "views_58f01d927e51e2d9e4fe35e04df3ec95",
-      "community": 170,
+      "community": 172,
       "norm_label": "58f01d927e51e2d9e4fe35e04df3ec95.php"
     },
     {
@@ -7829,7 +7748,7 @@
       "source_file": "storage/framework/views/5f4f692b902a45211045e34592eedff3.php",
       "source_location": "L1",
       "id": "views_5f4f692b902a45211045e34592eedff3",
-      "community": 171,
+      "community": 173,
       "norm_label": "5f4f692b902a45211045e34592eedff3.php"
     },
     {
@@ -7838,7 +7757,7 @@
       "source_file": "storage/framework/views/6a510c382a3ffd2424504601fd5acf3d.php",
       "source_location": "L1",
       "id": "views_6a510c382a3ffd2424504601fd5acf3d",
-      "community": 172,
+      "community": 174,
       "norm_label": "6a510c382a3ffd2424504601fd5acf3d.php"
     },
     {
@@ -7847,7 +7766,7 @@
       "source_file": "storage/framework/views/6bd5cb40d53edade32adf3deafadf249.php",
       "source_location": "L1",
       "id": "views_6bd5cb40d53edade32adf3deafadf249",
-      "community": 173,
+      "community": 175,
       "norm_label": "6bd5cb40d53edade32adf3deafadf249.php"
     },
     {
@@ -7856,7 +7775,7 @@
       "source_file": "storage/framework/views/700e0e40b4618a6f758b68ead3c93568.php",
       "source_location": "L1",
       "id": "views_700e0e40b4618a6f758b68ead3c93568",
-      "community": 174,
+      "community": 176,
       "norm_label": "700e0e40b4618a6f758b68ead3c93568.php"
     },
     {
@@ -7865,7 +7784,7 @@
       "source_file": "storage/framework/views/730a44b118f5a039dee96f0a9f8464ef.php",
       "source_location": "L1",
       "id": "views_730a44b118f5a039dee96f0a9f8464ef",
-      "community": 175,
+      "community": 177,
       "norm_label": "730a44b118f5a039dee96f0a9f8464ef.php"
     },
     {
@@ -7874,7 +7793,7 @@
       "source_file": "storage/framework/views/7a76f62d098ad5516d69bdf62e80794b.php",
       "source_location": "L1",
       "id": "views_7a76f62d098ad5516d69bdf62e80794b",
-      "community": 176,
+      "community": 178,
       "norm_label": "7a76f62d098ad5516d69bdf62e80794b.php"
     },
     {
@@ -7883,7 +7802,7 @@
       "source_file": "storage/framework/views/7ff599048f211d46011ed79de0b356fd.php",
       "source_location": "L1",
       "id": "views_7ff599048f211d46011ed79de0b356fd",
-      "community": 177,
+      "community": 179,
       "norm_label": "7ff599048f211d46011ed79de0b356fd.php"
     },
     {
@@ -7892,7 +7811,7 @@
       "source_file": "storage/framework/views/84b84d7349164aca30c4e71008f34bc2.php",
       "source_location": "L1",
       "id": "views_84b84d7349164aca30c4e71008f34bc2",
-      "community": 178,
+      "community": 180,
       "norm_label": "84b84d7349164aca30c4e71008f34bc2.php"
     },
     {
@@ -7901,7 +7820,7 @@
       "source_file": "storage/framework/views/8c3e9f551328ae43eabf65b811205368.php",
       "source_location": "L1",
       "id": "views_8c3e9f551328ae43eabf65b811205368",
-      "community": 179,
+      "community": 181,
       "norm_label": "8c3e9f551328ae43eabf65b811205368.php"
     },
     {
@@ -7910,7 +7829,7 @@
       "source_file": "storage/framework/views/8d849d990a63012a3d30b338d9fd8a13.php",
       "source_location": "L1",
       "id": "views_8d849d990a63012a3d30b338d9fd8a13",
-      "community": 180,
+      "community": 182,
       "norm_label": "8d849d990a63012a3d30b338d9fd8a13.php"
     },
     {
@@ -7919,7 +7838,7 @@
       "source_file": "storage/framework/views/93ce84a7a3f9af3de9501bf9e1038fab.php",
       "source_location": "L1",
       "id": "views_93ce84a7a3f9af3de9501bf9e1038fab",
-      "community": 181,
+      "community": 183,
       "norm_label": "93ce84a7a3f9af3de9501bf9e1038fab.php"
     },
     {
@@ -7928,7 +7847,7 @@
       "source_file": "storage/framework/views/95eeb190907af726a723d062ef4c1b9a.php",
       "source_location": "L1",
       "id": "views_95eeb190907af726a723d062ef4c1b9a",
-      "community": 182,
+      "community": 184,
       "norm_label": "95eeb190907af726a723d062ef4c1b9a.php"
     },
     {
@@ -7937,7 +7856,7 @@
       "source_file": "storage/framework/views/9ad7dd89201a4f0313cc483f696d7956.php",
       "source_location": "L1",
       "id": "views_9ad7dd89201a4f0313cc483f696d7956",
-      "community": 183,
+      "community": 185,
       "norm_label": "9ad7dd89201a4f0313cc483f696d7956.php"
     },
     {
@@ -7946,7 +7865,7 @@
       "source_file": "storage/framework/views/9ded11ff1ee36646b1b2e5d670993f3e.php",
       "source_location": "L1",
       "id": "views_9ded11ff1ee36646b1b2e5d670993f3e",
-      "community": 184,
+      "community": 186,
       "norm_label": "9ded11ff1ee36646b1b2e5d670993f3e.php"
     },
     {
@@ -7955,7 +7874,7 @@
       "source_file": "storage/framework/views/9e062ebb51ad1359a87d07f3ae03c551.php",
       "source_location": "L1",
       "id": "views_9e062ebb51ad1359a87d07f3ae03c551",
-      "community": 185,
+      "community": 187,
       "norm_label": "9e062ebb51ad1359a87d07f3ae03c551.php"
     },
     {
@@ -7964,7 +7883,7 @@
       "source_file": "storage/framework/views/9f0dfe3230f27e0cac11f6c913d1a7e0.php",
       "source_location": "L1",
       "id": "views_9f0dfe3230f27e0cac11f6c913d1a7e0",
-      "community": 186,
+      "community": 188,
       "norm_label": "9f0dfe3230f27e0cac11f6c913d1a7e0.php"
     },
     {
@@ -7973,7 +7892,7 @@
       "source_file": "storage/framework/views/b1274d2aca7933799cc5e5bb6126f186.php",
       "source_location": "L1",
       "id": "views_b1274d2aca7933799cc5e5bb6126f186",
-      "community": 188,
+      "community": 190,
       "norm_label": "b1274d2aca7933799cc5e5bb6126f186.php"
     },
     {
@@ -7982,7 +7901,7 @@
       "source_file": "storage/framework/views/b83dbed909129ba6eee4800935d3d12c.php",
       "source_location": "L1",
       "id": "views_b83dbed909129ba6eee4800935d3d12c",
-      "community": 189,
+      "community": 191,
       "norm_label": "b83dbed909129ba6eee4800935d3d12c.php"
     },
     {
@@ -7991,7 +7910,7 @@
       "source_file": "storage/framework/views/c6a941c17af2a5386ed65cea95b2b294.php",
       "source_location": "L1",
       "id": "views_c6a941c17af2a5386ed65cea95b2b294",
-      "community": 190,
+      "community": 192,
       "norm_label": "c6a941c17af2a5386ed65cea95b2b294.php"
     },
     {
@@ -8000,7 +7919,7 @@
       "source_file": "storage/framework/views/d89293bbc6f68a61874a92a653f64005.php",
       "source_location": "L1",
       "id": "views_d89293bbc6f68a61874a92a653f64005",
-      "community": 191,
+      "community": 193,
       "norm_label": "d89293bbc6f68a61874a92a653f64005.php"
     },
     {
@@ -8009,7 +7928,7 @@
       "source_file": "storage/framework/views/e1e4c03aaeeedd25ba50cc8eb7375c7b.php",
       "source_location": "L1",
       "id": "views_e1e4c03aaeeedd25ba50cc8eb7375c7b",
-      "community": 192,
+      "community": 194,
       "norm_label": "e1e4c03aaeeedd25ba50cc8eb7375c7b.php"
     },
     {
@@ -8018,7 +7937,7 @@
       "source_file": "storage/framework/views/e83d7b69198577a3b642ef36ab7e2ea2.php",
       "source_location": "L1",
       "id": "views_e83d7b69198577a3b642ef36ab7e2ea2",
-      "community": 193,
+      "community": 195,
       "norm_label": "e83d7b69198577a3b642ef36ab7e2ea2.php"
     },
     {
@@ -8027,7 +7946,7 @@
       "source_file": "storage/framework/views/eb1bcf48ad01dc2ee2bda4ed5b0bb89b.php",
       "source_location": "L1",
       "id": "views_eb1bcf48ad01dc2ee2bda4ed5b0bb89b",
-      "community": 194,
+      "community": 196,
       "norm_label": "eb1bcf48ad01dc2ee2bda4ed5b0bb89b.php"
     },
     {
@@ -8036,7 +7955,7 @@
       "source_file": "storage/framework/views/eb30e36ebc9e627b60b6b5409d2b4615.php",
       "source_location": "L1",
       "id": "views_eb30e36ebc9e627b60b6b5409d2b4615",
-      "community": 195,
+      "community": 197,
       "norm_label": "eb30e36ebc9e627b60b6b5409d2b4615.php"
     },
     {
@@ -8045,7 +7964,7 @@
       "source_file": "storage/framework/views/eff5e7418c2ff99b7bc07aeb2c786b51.php",
       "source_location": "L1",
       "id": "views_eff5e7418c2ff99b7bc07aeb2c786b51",
-      "community": 196,
+      "community": 198,
       "norm_label": "eff5e7418c2ff99b7bc07aeb2c786b51.php"
     },
     {
@@ -8054,7 +7973,7 @@
       "source_file": "storage/framework/views/f86e917a7dc57bedb9aa36070ecd6e5d.php",
       "source_location": "L1",
       "id": "views_f86e917a7dc57bedb9aa36070ecd6e5d",
-      "community": 197,
+      "community": 199,
       "norm_label": "f86e917a7dc57bedb9aa36070ecd6e5d.php"
     },
     {
@@ -8063,7 +7982,7 @@
       "source_file": "storage/framework/views/fa1d85a9a761695bad5645f74c48e5ec.php",
       "source_location": "L1",
       "id": "views_fa1d85a9a761695bad5645f74c48e5ec",
-      "community": 198,
+      "community": 200,
       "norm_label": "fa1d85a9a761695bad5645f74c48e5ec.php"
     },
     {
@@ -8072,7 +7991,7 @@
       "source_file": "storage/framework/views/fed6dfd0f4b4e1a8a06e89ae08eb0c15.php",
       "source_location": "L1",
       "id": "views_fed6dfd0f4b4e1a8a06e89ae08eb0c15",
-      "community": 199,
+      "community": 201,
       "norm_label": "fed6dfd0f4b4e1a8a06e89ae08eb0c15.php"
     },
     {
@@ -8081,7 +8000,7 @@
       "source_file": "tailwind.config.js",
       "source_location": "L1",
       "id": "tailwind_config",
-      "community": 148,
+      "community": 150,
       "norm_label": "tailwind.config.js"
     },
     {
@@ -8567,7 +8486,7 @@
       "source_file": "vite.config.js",
       "source_location": "L1",
       "id": "vite_config",
-      "community": 200,
+      "community": 202,
       "norm_label": "vite.config.js"
     },
     {
@@ -8576,7 +8495,7 @@
       "source_file": ".agents/rules/graphify.md",
       "source_location": "L1",
       "id": "rules_graphify",
-      "community": 75,
+      "community": 76,
       "norm_label": "graphify.md"
     },
     {
@@ -8585,7 +8504,7 @@
       "source_file": ".agents/rules/graphify.md",
       "source_location": "L6",
       "id": "rules_graphify_graphify",
-      "community": 75,
+      "community": 76,
       "norm_label": "graphify"
     },
     {
@@ -8594,7 +8513,7 @@
       "source_file": ".agents/workflows/graphify.md",
       "source_location": "L1",
       "id": "workflows_graphify",
-      "community": 79,
+      "community": 80,
       "norm_label": "graphify.md"
     },
     {
@@ -8603,7 +8522,7 @@
       "source_file": ".agents/workflows/graphify.md",
       "source_location": "L6",
       "id": "workflows_graphify_workflow_graphify",
-      "community": 79,
+      "community": 80,
       "norm_label": "workflow: graphify"
     },
     {
@@ -8621,7 +8540,7 @@
       "source_file": "README.md",
       "source_location": "L1",
       "id": "readme",
-      "community": 31,
+      "community": 30,
       "norm_label": "readme.md"
     },
     {
@@ -8630,7 +8549,7 @@
       "source_file": "README.md",
       "source_location": "L10",
       "id": "readme_about_laravel",
-      "community": 31,
+      "community": 30,
       "norm_label": "about laravel"
     },
     {
@@ -8639,7 +8558,7 @@
       "source_file": "README.md",
       "source_location": "L24",
       "id": "readme_learning_laravel",
-      "community": 31,
+      "community": 30,
       "norm_label": "learning laravel"
     },
     {
@@ -8648,7 +8567,7 @@
       "source_file": "README.md",
       "source_location": "L30",
       "id": "readme_laravel_sponsors",
-      "community": 31,
+      "community": 30,
       "norm_label": "laravel sponsors"
     },
     {
@@ -8657,7 +8576,7 @@
       "source_file": "README.md",
       "source_location": "L34",
       "id": "readme_premium_partners",
-      "community": 31,
+      "community": 30,
       "norm_label": "premium partners"
     },
     {
@@ -8666,7 +8585,7 @@
       "source_file": "README.md",
       "source_location": "L45",
       "id": "readme_contributing",
-      "community": 31,
+      "community": 30,
       "norm_label": "contributing"
     },
     {
@@ -8675,7 +8594,7 @@
       "source_file": "README.md",
       "source_location": "L49",
       "id": "readme_code_of_conduct",
-      "community": 31,
+      "community": 30,
       "norm_label": "code of conduct"
     },
     {
@@ -8684,7 +8603,7 @@
       "source_file": "README.md",
       "source_location": "L53",
       "id": "readme_security_vulnerabilities",
-      "community": 31,
+      "community": 30,
       "norm_label": "security vulnerabilities"
     },
     {
@@ -8693,7 +8612,7 @@
       "source_file": "README.md",
       "source_location": "L57",
       "id": "readme_license",
-      "community": 31,
+      "community": 30,
       "norm_label": "license"
     },
     {
@@ -8702,8 +8621,197 @@
       "source_file": "peraturan.md",
       "source_location": "L1",
       "id": "peraturan",
-      "community": 139,
+      "community": 141,
       "norm_label": "peraturan.md"
+    },
+    {
+      "label": "activeTab",
+      "file_type": "code",
+      "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailBarang.vue",
+      "source_location": "L86",
+      "community": 8,
+      "norm_label": "activetab",
+      "id": "manajemenstok_detailbarang_activetab"
+    },
+    {
+      "label": "searchQuery",
+      "file_type": "code",
+      "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailBarang.vue",
+      "source_location": "L88",
+      "community": 8,
+      "norm_label": "searchquery",
+      "id": "manajemenstok_detailbarang_searchquery"
+    },
+    {
+      "label": "timeFilter",
+      "file_type": "code",
+      "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailBarang.vue",
+      "source_location": "L89",
+      "community": 8,
+      "norm_label": "timefilter",
+      "id": "manajemenstok_detailbarang_timefilter"
+    },
+    {
+      "label": "organizerFilter",
+      "file_type": "code",
+      "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailBarang.vue",
+      "source_location": "L90",
+      "community": 8,
+      "norm_label": "organizerfilter",
+      "id": "manajemenstok_detailbarang_organizerfilter"
+    },
+    {
+      "label": "rowsPerPage",
+      "file_type": "code",
+      "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailBarang.vue",
+      "source_location": "L91",
+      "community": 8,
+      "norm_label": "rowsperpage",
+      "id": "manajemenstok_detailbarang_rowsperpage"
+    },
+    {
+      "label": "isLotModalOpen",
+      "file_type": "code",
+      "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailBarang.vue",
+      "source_location": "L95",
+      "community": 8,
+      "norm_label": "islotmodalopen",
+      "id": "manajemenstok_detailbarang_islotmodalopen"
+    },
+    {
+      "label": "isDetailConsumablesOpen",
+      "file_type": "code",
+      "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailBarang.vue",
+      "source_location": "L99",
+      "community": 8,
+      "norm_label": "isdetailconsumablesopen",
+      "id": "manajemenstok_detailbarang_isdetailconsumablesopen"
+    },
+    {
+      "label": "openDetailLOTConsumables()",
+      "file_type": "code",
+      "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailBarang.vue",
+      "source_location": "L102",
+      "community": 8,
+      "norm_label": "opendetaillotconsumables()",
+      "id": "manajemenstok_detailbarang_opendetaillotconsumables"
+    },
+    {
+      "label": "lotForm",
+      "file_type": "code",
+      "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailBarang.vue",
+      "source_location": "L107",
+      "community": 8,
+      "norm_label": "lotform",
+      "id": "manajemenstok_detailbarang_lotform"
+    },
+    {
+      "label": "generateLotCode()",
+      "file_type": "code",
+      "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailBarang.vue",
+      "source_location": "L129",
+      "community": 8,
+      "norm_label": "generatelotcode()",
+      "id": "manajemenstok_detailbarang_generatelotcode"
+    },
+    {
+      "label": "openCreateLotModal()",
+      "file_type": "code",
+      "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailBarang.vue",
+      "source_location": "L149",
+      "community": 8,
+      "norm_label": "opencreatelotmodal()",
+      "id": "manajemenstok_detailbarang_opencreatelotmodal"
+    },
+    {
+      "label": "openEditLotModal()",
+      "file_type": "code",
+      "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailBarang.vue",
+      "source_location": "L176",
+      "community": 8,
+      "norm_label": "openeditlotmodal()",
+      "id": "manajemenstok_detailbarang_openeditlotmodal"
+    },
+    {
+      "label": "handleLotFileUpload()",
+      "file_type": "code",
+      "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailBarang.vue",
+      "source_location": "L214",
+      "community": 8,
+      "norm_label": "handlelotfileupload()",
+      "id": "manajemenstok_detailbarang_handlelotfileupload"
+    },
+    {
+      "label": "triggerLotFileInput()",
+      "file_type": "code",
+      "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailBarang.vue",
+      "source_location": "L234",
+      "community": 8,
+      "norm_label": "triggerlotfileinput()",
+      "id": "manajemenstok_detailbarang_triggerlotfileinput"
+    },
+    {
+      "label": "viewLotImageInNewTab()",
+      "file_type": "code",
+      "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailBarang.vue",
+      "source_location": "L239",
+      "community": 8,
+      "norm_label": "viewlotimageinnewtab()",
+      "id": "manajemenstok_detailbarang_viewlotimageinnewtab"
+    },
+    {
+      "label": "handleSamakanPhoto()",
+      "file_type": "code",
+      "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailBarang.vue",
+      "source_location": "L253",
+      "community": 8,
+      "norm_label": "handlesamakanphoto()",
+      "id": "manajemenstok_detailbarang_handlesamakanphoto"
+    },
+    {
+      "label": "filteredFloors",
+      "file_type": "code",
+      "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailBarang.vue",
+      "source_location": "L263",
+      "community": 8,
+      "norm_label": "filteredfloors",
+      "id": "manajemenstok_detailbarang_filteredfloors"
+    },
+    {
+      "label": "filteredRooms",
+      "file_type": "code",
+      "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailBarang.vue",
+      "source_location": "L268",
+      "community": 8,
+      "norm_label": "filteredrooms",
+      "id": "manajemenstok_detailbarang_filteredrooms"
+    },
+    {
+      "label": "isLotFormValid",
+      "file_type": "code",
+      "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailBarang.vue",
+      "source_location": "L297",
+      "community": 8,
+      "norm_label": "islotformvalid",
+      "id": "manajemenstok_detailbarang_islotformvalid"
+    },
+    {
+      "label": "handleSaveLot()",
+      "file_type": "code",
+      "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailBarang.vue",
+      "source_location": "L321",
+      "community": 8,
+      "norm_label": "handlesavelot()",
+      "id": "manajemenstok_detailbarang_handlesavelot"
+    },
+    {
+      "label": "if()",
+      "file_type": "code",
+      "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailBarang.vue",
+      "source_location": "L671",
+      "community": 8,
+      "norm_label": "if()",
+      "id": "manajemenstok_detailbarang_if"
     }
   ],
   "links": [
@@ -8786,7 +8894,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "app/Http/Controllers/Auth/AuthenticatedSessionController.php",
-      "source_location": "L41",
+      "source_location": "L46",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "auth_authenticatedsessioncontroller_authenticatedsessioncontroller",
@@ -8849,7 +8957,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "app/Http/Controllers/Auth/AuthenticatedSessionController.php",
-      "source_location": "L41",
+      "source_location": "L46",
       "weight": 1.0,
       "context": "return_type",
       "confidence_score": 1.0,
@@ -8860,7 +8968,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "app/Http/Controllers/Auth/AuthenticatedSessionController.php",
-      "source_location": "L41",
+      "source_location": "L46",
       "weight": 1.0,
       "context": "parameter_type",
       "confidence_score": 1.0,
@@ -9102,10 +9210,31 @@
       "relation": "inherits",
       "confidence": "EXTRACTED",
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/LotController.php",
-      "source_location": "L10",
+      "source_location": "L11",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "manajemenstok_lotcontroller_lotcontroller",
+      "target": "controllers_controller_controller"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitController.php",
+      "source_location": "L5",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "manajemenstok_unitcontroller",
+      "target": "controllers_controller_controller"
+    },
+    {
+      "relation": "inherits",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitController.php",
+      "source_location": "L10",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "manajemenstok_unitcontroller_unitcontroller",
       "target": "controllers_controller_controller"
     },
     {
@@ -9559,39 +9688,6 @@
       "target": "app_http_controllers_smart_admin_dashboardcontroller_php_response"
     },
     {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "app/Http/Controllers/Smart/Admin/DashboardController.php",
-      "source_location": "L13",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "admin_dashboardcontroller",
-      "target": "barang"
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "app/Http/Controllers/Smart/Admin/DashboardController.php",
-      "source_location": "L13",
-      "weight": 1.0,
-      "source": "admin_dashboardcontroller",
-      "target": "category",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "app/Http/Controllers/Smart/Admin/DashboardController.php",
-      "source_location": "L12",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "admin_dashboardcontroller",
-      "target": "lot"
-    },
-    {
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "app/Http/Controllers/Smart/Admin/DashboardController.php",
@@ -9633,17 +9729,6 @@
       "confidence_score": 1.0,
       "source": "admin_dashboardcontroller_dashboardcontroller_index",
       "target": "app_http_controllers_smart_admin_dashboardcontroller_php_response"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "app/Http/Controllers/Smart/Admin/DashboardController.php",
-      "source_location": "L115",
-      "weight": 1.0,
-      "source": "admin_dashboardcontroller_dashboardcontroller_index",
-      "target": "request_requeststatuslog_requeststatuslog"
     },
     {
       "relation": "contains",
@@ -9706,6 +9791,17 @@
       "confidence_score": 1.0,
       "source": "admin_inboxcontroller",
       "target": "app_http_controllers_smart_admin_inboxcontroller_php_response"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/InboxController.php",
+      "source_location": "L15",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "admin_inboxcontroller",
+      "target": "unit"
     },
     {
       "relation": "method",
@@ -10218,7 +10314,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/LotController.php",
-      "source_location": "L10",
+      "source_location": "L11",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "manajemenstok_lotcontroller",
@@ -10228,7 +10324,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/LotController.php",
-      "source_location": "L141",
+      "source_location": "L142",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "manajemenstok_lotcontroller_lotcontroller",
@@ -10238,7 +10334,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/LotController.php",
-      "source_location": "L154",
+      "source_location": "L155",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "manajemenstok_lotcontroller_lotcontroller",
@@ -10248,7 +10344,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/LotController.php",
-      "source_location": "L15",
+      "source_location": "L16",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "manajemenstok_lotcontroller_lotcontroller",
@@ -10258,7 +10354,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/LotController.php",
-      "source_location": "L89",
+      "source_location": "L90",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "manajemenstok_lotcontroller_lotcontroller",
@@ -10268,7 +10364,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/LotController.php",
-      "source_location": "L15",
+      "source_location": "L16",
       "weight": 1.0,
       "context": "parameter_type",
       "confidence_score": 1.0,
@@ -10280,7 +10376,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/LotController.php",
-      "source_location": "L65",
+      "source_location": "L66",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "manajemenstok_lotcontroller_lotcontroller_store",
@@ -10291,7 +10387,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/LotController.php",
-      "source_location": "L125",
+      "source_location": "L126",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "manajemenstok_lotcontroller_lotcontroller_update",
@@ -10301,7 +10397,18 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/LotController.php",
-      "source_location": "L89",
+      "source_location": "L155",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "manajemenstok_lotcontroller_lotcontroller_show",
+      "target": "app_http_controllers_smart_admin_manajemenstok_lotcontroller_php_request"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/LotController.php",
+      "source_location": "L90",
       "weight": 1.0,
       "context": "parameter_type",
       "confidence_score": 1.0,
@@ -10312,7 +10419,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/LotController.php",
-      "source_location": "L89",
+      "source_location": "L90",
       "weight": 1.0,
       "context": "parameter_type",
       "confidence_score": 1.0,
@@ -10356,7 +10463,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/LotController.php",
-      "source_location": "L141",
+      "source_location": "L142",
       "weight": 1.0,
       "context": "parameter_type",
       "confidence_score": 1.0,
@@ -10367,11 +10474,22 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/LotController.php",
-      "source_location": "L154",
+      "source_location": "L155",
       "weight": 1.0,
       "context": "parameter_type",
       "confidence_score": 1.0,
       "source": "manajemenstok_lotcontroller_lotcontroller_show",
+      "target": "lot"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitController.php",
+      "source_location": "L7",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "manajemenstok_unitcontroller",
       "target": "lot"
     },
     {
@@ -10384,6 +10502,221 @@
       "confidence_score": 1.0,
       "source": "seeders_lotseeder",
       "target": "lot"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitController.php",
+      "source_location": "L8",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "manajemenstok_unitcontroller",
+      "target": "app_http_controllers_smart_admin_manajemenstok_unitcontroller_php_request"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitController.php",
+      "source_location": "L10",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "manajemenstok_unitcontroller",
+      "target": "manajemenstok_unitcontroller_unitcontroller"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitController.php",
+      "source_location": "L6",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "manajemenstok_unitcontroller",
+      "target": "unit"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitController.php",
+      "source_location": "L220",
+      "weight": 1.0,
+      "source": "manajemenstok_unitcontroller_unitcontroller",
+      "target": "manajemenstok_unitcontroller_unitcontroller_bulkupdate",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitController.php",
+      "source_location": "L52",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "manajemenstok_unitcontroller_unitcontroller",
+      "target": "manajemenstok_unitcontroller_unitcontroller_destroy"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitController.php",
+      "source_location": "L15",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "manajemenstok_unitcontroller_unitcontroller",
+      "target": "manajemenstok_unitcontroller_unitcontroller_store"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitController.php",
+      "source_location": "L57",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "manajemenstok_unitcontroller_unitcontroller",
+      "target": "manajemenstok_unitcontroller_unitcontroller_update"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitController.php",
+      "source_location": "L15",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "manajemenstok_unitcontroller_unitcontroller_store",
+      "target": "app_http_controllers_smart_admin_manajemenstok_unitcontroller_php_request"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitController.php",
+      "source_location": "L30",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "manajemenstok_unitcontroller_unitcontroller_store",
+      "target": "unit"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitController.php",
+      "source_location": "L89",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "manajemenstok_unitcontroller_unitcontroller_update",
+      "target": "manajemenstok_unitcontroller_unitcontroller_store"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitController.php",
+      "source_location": "L220",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "source": "manajemenstok_unitcontroller_unitcontroller_bulkupdate",
+      "target": "app_http_controllers_smart_admin_manajemenstok_unitcontroller_php_request",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitController.php",
+      "source_location": "L57",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "manajemenstok_unitcontroller_unitcontroller_update",
+      "target": "app_http_controllers_smart_admin_manajemenstok_unitcontroller_php_request"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitController.php",
+      "source_location": "L258",
+      "weight": 1.0,
+      "source": "manajemenstok_unitcontroller_unitcontroller_bulkupdate",
+      "target": "manajemenstok_unitcontroller_unitcontroller_update",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitController.php",
+      "source_location": "L57",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "manajemenstok_unitcontroller_unitcontroller_update",
+      "target": "unit"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Manager/ApprovalController.php",
+      "source_location": "L13",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "manager_approvalcontroller",
+      "target": "unit"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitController.php",
+      "source_location": "L258",
+      "weight": 1.0,
+      "source": "manajemenstok_unitcontroller_unitcontroller_bulkupdate",
+      "target": "unit",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitController.php",
+      "source_location": "L52",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "manajemenstok_unitcontroller_unitcontroller_destroy",
+      "target": "unit"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Models/Request/RequestUnitAssignment.php",
+      "source_location": "L7",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "request_requestunitassignment",
+      "target": "unit"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/User/RequestHistoryController.php",
+      "source_location": "L14",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "user_requesthistorycontroller",
+      "target": "unit"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitController.php",
+      "source_location": "L107",
+      "weight": 1.0,
+      "source": "manajemenstok_unitcontroller_unitcontroller_destroy",
+      "target": "request_requestunitassignment_requestunitassignment"
     },
     {
       "relation": "contains",
@@ -15417,7 +15750,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "app/Models/Inventory/Lot.php",
-      "source_location": "L38",
+      "source_location": "L42",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "inventory_lot_lot",
@@ -15427,7 +15760,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "app/Models/Inventory/Lot.php",
-      "source_location": "L58",
+      "source_location": "L62",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "inventory_lot_lot",
@@ -15437,7 +15770,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "app/Models/Inventory/Lot.php",
-      "source_location": "L73",
+      "source_location": "L77",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "inventory_lot_lot",
@@ -15447,7 +15780,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "app/Models/Inventory/Lot.php",
-      "source_location": "L53",
+      "source_location": "L57",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "inventory_lot_lot",
@@ -15457,7 +15790,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "app/Models/Inventory/Lot.php",
-      "source_location": "L43",
+      "source_location": "L47",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "inventory_lot_lot",
@@ -15467,7 +15800,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "app/Models/Inventory/Lot.php",
-      "source_location": "L63",
+      "source_location": "L67",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "inventory_lot_lot",
@@ -15477,7 +15810,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "app/Models/Inventory/Lot.php",
-      "source_location": "L68",
+      "source_location": "L72",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "inventory_lot_lot",
@@ -15487,7 +15820,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "app/Models/Inventory/Lot.php",
-      "source_location": "L48",
+      "source_location": "L52",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "inventory_lot_lot",
@@ -15497,7 +15830,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "app/Models/Inventory/Lot.php",
-      "source_location": "L38",
+      "source_location": "L42",
       "weight": 1.0,
       "context": "return_type",
       "confidence_score": 1.0,
@@ -15508,7 +15841,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "app/Models/Inventory/Lot.php",
-      "source_location": "L58",
+      "source_location": "L62",
       "weight": 1.0,
       "context": "return_type",
       "confidence_score": 1.0,
@@ -15519,7 +15852,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "app/Models/Inventory/Lot.php",
-      "source_location": "L53",
+      "source_location": "L57",
       "weight": 1.0,
       "context": "return_type",
       "confidence_score": 1.0,
@@ -15530,7 +15863,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "app/Models/Inventory/Lot.php",
-      "source_location": "L43",
+      "source_location": "L47",
       "weight": 1.0,
       "context": "return_type",
       "confidence_score": 1.0,
@@ -15541,7 +15874,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "app/Models/Inventory/Lot.php",
-      "source_location": "L63",
+      "source_location": "L67",
       "weight": 1.0,
       "context": "return_type",
       "confidence_score": 1.0,
@@ -15552,7 +15885,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "app/Models/Inventory/Lot.php",
-      "source_location": "L48",
+      "source_location": "L52",
       "weight": 1.0,
       "context": "return_type",
       "confidence_score": 1.0,
@@ -15563,7 +15896,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "app/Models/Inventory/Lot.php",
-      "source_location": "L68",
+      "source_location": "L72",
       "weight": 1.0,
       "context": "return_type",
       "confidence_score": 1.0,
@@ -15606,7 +15939,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "app/Models/Inventory/Unit.php",
-      "source_location": "L46",
+      "source_location": "L54",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "inventory_unit_unit",
@@ -15616,7 +15949,17 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "app/Models/Inventory/Unit.php",
-      "source_location": "L66",
+      "source_location": "L84",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "inventory_unit_unit",
+      "target": "inventory_unit_unit_getisvehicleattribute"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Models/Inventory/Unit.php",
+      "source_location": "L79",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "inventory_unit_unit",
@@ -15626,7 +15969,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "app/Models/Inventory/Unit.php",
-      "source_location": "L61",
+      "source_location": "L69",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "inventory_unit_unit",
@@ -15636,7 +15979,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "app/Models/Inventory/Unit.php",
-      "source_location": "L41",
+      "source_location": "L49",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "inventory_unit_unit",
@@ -15646,7 +15989,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "app/Models/Inventory/Unit.php",
-      "source_location": "L36",
+      "source_location": "L44",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "inventory_unit_unit",
@@ -15656,7 +15999,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "app/Models/Inventory/Unit.php",
-      "source_location": "L51",
+      "source_location": "L59",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "inventory_unit_unit",
@@ -15676,7 +16019,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "app/Models/Inventory/Unit.php",
-      "source_location": "L56",
+      "source_location": "L64",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "inventory_unit_unit",
@@ -15686,7 +16029,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "app/Models/Inventory/Unit.php",
-      "source_location": "L36",
+      "source_location": "L44",
       "weight": 1.0,
       "context": "return_type",
       "confidence_score": 1.0,
@@ -15697,7 +16040,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "app/Models/Inventory/Unit.php",
-      "source_location": "L46",
+      "source_location": "L54",
       "weight": 1.0,
       "context": "return_type",
       "confidence_score": 1.0,
@@ -15708,7 +16051,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "app/Models/Inventory/Unit.php",
-      "source_location": "L41",
+      "source_location": "L49",
       "weight": 1.0,
       "context": "return_type",
       "confidence_score": 1.0,
@@ -15719,7 +16062,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "app/Models/Inventory/Unit.php",
-      "source_location": "L51",
+      "source_location": "L59",
       "weight": 1.0,
       "context": "return_type",
       "confidence_score": 1.0,
@@ -15730,7 +16073,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "app/Models/Inventory/Unit.php",
-      "source_location": "L56",
+      "source_location": "L64",
       "weight": 1.0,
       "context": "return_type",
       "confidence_score": 1.0,
@@ -15741,7 +16084,7 @@
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "app/Models/Inventory/Unit.php",
-      "source_location": "L61",
+      "source_location": "L69",
       "weight": 1.0,
       "context": "return_type",
       "confidence_score": 1.0,
@@ -18203,7 +18546,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "database/migrations/2026_04_27_111909_create_inventory_table.php",
-      "source_location": "L69",
+      "source_location": "L84",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "migrations_2026_04_27_111909_create_inventory_table",
@@ -18243,7 +18586,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "database/migrations/2026_04_27_113013_create_request_table.php",
-      "source_location": "L43",
+      "source_location": "L36",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "migrations_2026_04_27_113013_create_request_table",
@@ -18263,7 +18606,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "database/migrations/2026_04_27_114009_create_req_lifecycle_table.php",
-      "source_location": "L66",
+      "source_location": "L79",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "migrations_2026_04_27_114009_create_req_lifecycle_table",
@@ -20273,6 +20616,16 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailBarang.vue",
+      "source_location": "L671",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "manajemenstok_detailbarang",
+      "target": "manajemenstok_detailbarang_if"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailBarang.vue",
       "source_location": "L99",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -20400,17 +20753,6 @@
       "target": "manajemenstok_detailbarang_viewlotimageinnewtab"
     },
     {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailBarang.vue",
-      "source_location": "L155",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "manajemenstok_detailbarang_opencreatelotmodal",
-      "target": "manajemenstok_detailbarang_generatelotcode"
-    },
-    {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailLOTConsumables.vue",
@@ -20419,6 +20761,16 @@
       "confidence_score": 1.0,
       "source": "manajemenstok_detaillotconsumables",
       "target": "manajemenstok_detaillotconsumables_fetchlotdetails"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailLOTNonConsumables.vue",
+      "source_location": "L520",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "manajemenstok_detaillotnonconsumables",
+      "target": "manajemenstok_detaillotnonconsumables_if"
     },
     {
       "relation": "contains",
@@ -21033,7 +21385,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "tests/Feature/LotControllerTest.php",
-      "source_location": "L118",
+      "source_location": "L120",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "feature_lotcontrollertest_lotcontrollertest",
@@ -21053,7 +21405,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "tests/Feature/LotControllerTest.php",
-      "source_location": "L131",
+      "source_location": "L133",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "feature_lotcontrollertest_lotcontrollertest",
@@ -21063,7 +21415,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "tests/Feature/LotControllerTest.php",
-      "source_location": "L78",
+      "source_location": "L80",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "feature_lotcontrollertest_lotcontrollertest",
@@ -21073,7 +21425,7 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "tests/Feature/LotControllerTest.php",
-      "source_location": "L166",
+      "source_location": "L174",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "feature_lotcontrollertest_lotcontrollertest",
@@ -21511,8 +21863,19 @@
       "confidence_score": 1.0,
       "source": "readme_laravel_sponsors",
       "target": "readme_premium_partners"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailBarang.vue",
+      "source_location": "L155",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "manajemenstok_detailbarang_opencreatelotmodal",
+      "target": "manajemenstok_detailbarang_generatelotcode"
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "dd21bda34fe01487ee8645c4940e72a0eff5e73e"
+  "built_at_commit": "8652f9392041c6466ea6654fff9d87257676fd5f"
 }
