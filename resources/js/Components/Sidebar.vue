@@ -28,9 +28,18 @@ const page = usePage();
 
 // Determine if user is admin from shared props
 const isAdmin = computed(() => (page.props.auth as { user: any; isAdmin?: boolean })?.isAdmin ?? false);
+const isManager = computed(() => (page.props.auth as { user: any })?.user?.role === 'manager');
 
 // Select navigation based on user role
-const navigation = computed(() => isAdmin.value ? mainNavigation : userNavigation);
+const navigation = computed(() => {
+  if (isAdmin.value) {
+    return mainNavigation;
+  }
+  if (isManager.value) {
+    return userNavigation;
+  }
+  return userNavigation.filter(section => section.title !== 'Approval');
+});
 
 const isActive = (href: string): boolean => {
   const currentPath = page.url;

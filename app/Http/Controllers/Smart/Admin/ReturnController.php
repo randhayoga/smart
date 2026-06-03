@@ -66,7 +66,7 @@ class ReturnController extends Controller
      */
     public function show($id)
     {
-        $req = SmartRequest::with(['user', 'return', 'items.barang.subcategory.category', 'items.barang.brand'])
+        $req = SmartRequest::with(['user', 'return', 'approver', 'approval.approver', 'adminConfirmation.admin', 'statusLogs.changer', 'items.barang.subcategory.category', 'items.barang.brand'])
             ->findOrFail($id);
 
         $ret = $req->return;
@@ -101,11 +101,19 @@ class ReturnController extends Controller
         $returnLocationStr = $ret ? $ret->location : '-';
         $returnMethodStr = $ret && $ret->method === 'self' ? 'Kembalikan sendiri' : ($ret ? 'Diantar ke GA / IT Support' : 'Belum diatur');
 
+        $returnConfirmation = $req->statusLogs
+            ->where('status_from', 'return')
+            ->where('status_to', 'success')
+            ->first();
+
         $returnData = [
             'id' => $req->id,
             'number' => $req->request_number,
             'requester' => $req->user->name ?? '-',
             'approver' => $req->approver->name ?? '-',
+            'approval_by' => $req->approval?->approver?->name,
+            'confirmation_by' => $req->adminConfirmation?->admin?->name,
+            'return_confirmed_by' => $returnConfirmation?->changer?->name,
             'createdAt' => $req->created_at ? $req->created_at->format('d-m-Y H:i') : '-',
             'pemanfaatan' => $req->utilization,
             'pemanfaatanDetail' => $req->utilization === 'corporate' 

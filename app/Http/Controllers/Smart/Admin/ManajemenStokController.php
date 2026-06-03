@@ -90,7 +90,9 @@ class ManajemenStokController extends Controller
         ];
 
         $lots = \App\Models\Inventory\Lot::with(['organizer', 'vendor', 'location', 'floor', 'room'])
-            ->withCount('units')
+            ->withCount(['units', 'units as available_units_count' => function ($query) {
+                $query->where('status', 'tersedia');
+            }])
             ->where('barang_id', $barang->id)
             ->get()
             ->map(function ($lot) {
@@ -112,6 +114,7 @@ class ManajemenStokController extends Controller
                     'unitPrice' => $lot->unit_price,
                     'imageUrl' => $lot->image_url,
                     'assetCount' => $lot->units_count,
+                    'availableAssetCount' => $lot->available_units_count,
                     'initial_quantity' => $lot->initial_quantity,
                     'current_quantity' => $lot->current_quantity,
                     'updated_at' => $lot->updated_at ? $lot->updated_at->format('d/m/Y H:i') : '-',
