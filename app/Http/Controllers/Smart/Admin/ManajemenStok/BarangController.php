@@ -67,6 +67,7 @@ class BarangController extends Controller
         return redirect()->back()->with('success', 'Barang berhasil diperbarui.');
     }
 
+
     /**
      * Menghapus data barang dari database beserta gambarnya.
      */
