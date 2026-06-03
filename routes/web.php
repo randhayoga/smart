@@ -63,6 +63,7 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
         });
 
         Route::prefix('inventory')->name('inventory.')->group(function () {
+            Route::put('barangs/bulk', [\App\Http\Controllers\Smart\Admin\ManajemenStok\BulkBarangController::class, 'update'])->name('barangs.bulk-update');
             Route::resource('barangs', \App\Http\Controllers\Smart\Admin\ManajemenStok\BarangController::class)->only(['store', 'update', 'destroy']);
             Route::resource('lots', \App\Http\Controllers\Smart\Admin\ManajemenStok\LotController::class)->only(['store', 'update', 'destroy', 'show']);
         });
