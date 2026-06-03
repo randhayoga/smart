@@ -133,4 +133,46 @@ class BarangControllerTest extends TestCase
             'specification' => 'Spec Keep 2', // kept old spec
         ]);
     }
+
+    public function test_can_bulk_destroy_barangs_without_lots(): void
+    {
+        $user = User::factory()->create();
+        $barangs = Barang::factory()->count(3)->create();
+        $ids = $barangs->pluck('id')->toArray();
+
+        $response = $this->actingAs($user)->delete(route('smart.inventory.barangs.bulk-destroy'), [
+            'ids' => $ids,
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success', 'Barang-barang terpilih berhasil dihapus.');
+
+        foreach ($ids as $id) {
+            $this->assertDatabaseMissing('barangs', [
+                'id' => $id,
+            ]);
+        }
+    }
+
+    public function test_cannot_bulk_destroy_barangs_with_any_lots(): void
+    {
+        $user = User::factory()->create();
+        $barangWithoutLots = Barang::factory()->create();
+        $lot = Lot::factory()->create();
+        $barangWithLots = $lot->barang;
+
+        $response = $this->actingAs($user)->delete(route('smart.inventory.barangs.bulk-destroy'), [
+            'ids' => [$barangWithoutLots->id, $barangWithLots->id],
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error', 'Beberapa barang tidak dapat dihapus karena masih memiliki LOT terkait.');
+
+        $this->assertDatabaseHas('barangs', [
+            'id' => $barangWithoutLots->id,
+        ]);
+        $this->assertDatabaseHas('barangs', [
+            'id' => $barangWithLots->id,
+        ]);
+    }
 }

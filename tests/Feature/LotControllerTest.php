@@ -184,4 +184,56 @@ class LotControllerTest extends TestCase
         $this->assertNotEquals($oldLotImagePath, $lot->image_url);
         Storage::disk('public')->assertExists($lot->image_url);
     }
+
+    public function test_can_bulk_update_lots(): void
+    {
+        $user = User::factory()->create();
+        
+        $barang = Barang::factory()->create();
+        $lots = Lot::factory()->count(3)->create(['barang_id' => $barang->id]);
+        $ids = $lots->pluck('id')->toArray();
+        
+        $newOrganizer = Organizer::factory()->create();
+        $newVendor = Vendor::factory()->create();
+        $newLocation = Location::factory()->create();
+
+        $response = $this->actingAs($user)->put(route('smart.inventory.lots.bulk-update'), [
+            'ids' => $ids,
+            'organizer_id' => $newOrganizer->id,
+            'vendor_id' => $newVendor->id,
+            'location_id' => $newLocation->id,
+            'unit_price' => 99000,
+        ]);
+
+        $response->assertRedirect();
+
+        foreach ($ids as $id) {
+            $this->assertDatabaseHas('lots', [
+                'id' => $id,
+                'organizer_id' => $newOrganizer->id,
+                'vendor_id' => $newVendor->id,
+                'location_id' => $newLocation->id,
+                'unit_price' => 99000,
+            ]);
+        }
+    }
+
+    public function test_can_bulk_delete_lots(): void
+    {
+        $user = User::factory()->create();
+        $lots = Lot::factory()->count(3)->create();
+        $ids = $lots->pluck('id')->toArray();
+
+        $response = $this->actingAs($user)->delete(route('smart.inventory.lots.bulk-destroy'), [
+            'ids' => $ids,
+        ]);
+
+        $response->assertRedirect();
+
+        foreach ($ids as $id) {
+            $this->assertDatabaseMissing('lots', [
+                'id' => $id,
+            ]);
+        }
+    }
 }

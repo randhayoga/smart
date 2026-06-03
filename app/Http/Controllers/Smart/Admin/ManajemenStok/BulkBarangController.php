@@ -60,4 +60,38 @@ class BulkBarangController extends Controller
 
         return redirect()->back()->with('success', 'Barang-barang terpilih berhasil diperbarui.');
     }
+
+    /**
+     * Menghapus beberapa data barang secara massal di database beserta gambarnya.
+     */
+    public function destroy(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'required|exists:barangs,id',
+        ]);
+
+        $barangs = Barang::whereIn('id', $request->input('ids'))->get();
+
+        foreach ($barangs as $barang) {
+            if ($barang->lots()->exists()) {
+                return redirect()->back()->with('error', 'Beberapa barang tidak dapat dihapus karena masih memiliki LOT terkait.');
+            }
+        }
+
+        foreach ($barangs as $barang) {
+            if ($barang->image_url && Storage::disk('public')->exists($barang->image_url)) {
+                $isShared = Barang::where('image_url', $barang->image_url)
+                    ->whereNotIn('id', $request->input('ids'))
+                    ->exists()
+                    || \App\Models\Inventory\Lot::where('image_url', $barang->image_url)->exists();
+                if (!$isShared) {
+                    Storage::disk('public')->delete($barang->image_url);
+                }
+            }
+            $barang->delete();
+        }
+
+        return redirect()->back()->with('success', 'Barang-barang terpilih berhasil dihapus.');
+    }
 }

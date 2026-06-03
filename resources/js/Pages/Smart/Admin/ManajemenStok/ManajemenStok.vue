@@ -559,13 +559,22 @@ const viewBulkEditImageInNewTab = () => {
 };
 
 const isBulkEditFormValid = computed(() => {
-  const hasAtLeastOneField = !!(
-    bulkEditForm.uom_id || 
-    bulkEditForm.brand_id || 
-    bulkEditForm.specification || 
-    bulkEditForm.photo
-  );
-  return hasAtLeastOneField && !bulkEditForm.processing;
+  if (bulkEditForm.ids.length === 1) {
+    return !!(
+      bulkEditForm.uom_id &&
+      bulkEditForm.brand_id &&
+      bulkEditForm.specification &&
+      !bulkEditForm.processing
+    );
+  } else {
+    const hasAtLeastOneField = !!(
+      bulkEditForm.uom_id || 
+      bulkEditForm.brand_id || 
+      bulkEditForm.specification || 
+      bulkEditForm.photo
+    );
+    return hasAtLeastOneField && !bulkEditForm.processing;
+  }
 });
 
 const handleSaveBulkChanges = () => {
@@ -576,17 +585,26 @@ const handleSaveBulkChanges = () => {
       _method: 'PUT',
       ids: data.ids,
     };
-    if (data.uom_id) {
+    if (data.ids.length === 1) {
       formData.uom_id = data.uom_id;
-    }
-    if (data.brand_id) {
       formData.brand_id = data.brand_id;
-    }
-    if (data.specification) {
       formData.specification = data.specification;
-    }
-    if (data.photo) {
-      formData.image_url = data.photo;
+      if (data.photo) {
+        formData.image_url = data.photo;
+      }
+    } else {
+      if (data.uom_id) {
+        formData.uom_id = data.uom_id;
+      }
+      if (data.brand_id) {
+        formData.brand_id = data.brand_id;
+      }
+      if (data.specification) {
+        formData.specification = data.specification;
+      }
+      if (data.photo) {
+        formData.image_url = data.photo;
+      }
     }
     return formData;
   }).post('/smart/inventory/barangs/bulk', {
@@ -628,14 +646,15 @@ const handleConfirmDelete = () => {
       }
     });
   } else {
-    // If multiple deletion is supported by backend, else loop or alert
-    ids.forEach(id => {
-       router.delete(`/smart/inventory/barangs/${id}`);
+    router.delete('/smart/inventory/barangs/bulk', {
+      data: { ids },
+      onSuccess: () => {
+        if (dataTableRef.value) {
+          dataTableRef.value.table.resetRowSelection();
+        }
+        closeDeleteModal();
+      }
     });
-    if (dataTableRef.value) {
-      dataTableRef.value.table.resetRowSelection();
-    }
-    closeDeleteModal();
   }
 };
 
@@ -1037,7 +1056,9 @@ const closeErrorModal = () => {
             >
               <!-- Modal Header -->
               <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
-                <h3 class="text-lg font-bold text-foreground">Edit Detail Terpilih</h3>
+                <h3 class="text-lg font-bold text-foreground">
+                  {{ bulkEditForm.ids.length === 1 ? 'Edit Barang' : 'Edit Terpilih (Bulk Edit Barang)' }}
+                </h3>
                 <button @click="closeBulkEditModal" class="p-2 hover:bg-muted rounded-full transition-colors">
                   <X class="w-5 h-5 text-muted-foreground" />
                 </button>
@@ -1079,7 +1100,9 @@ const closeErrorModal = () => {
                     </div>
 
                     <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Satuan</label>
+                      <label class="text-sm font-medium text-foreground block">
+                        Satuan<span v-if="bulkEditForm.ids.length === 1" class="text-rose-500">*</span>
+                      </label>
                       <Combobox
                         v-model="bulkEditForm.uom_id"
                         :options="props.uoms"
@@ -1093,7 +1116,9 @@ const closeErrorModal = () => {
                   <!-- Right Column -->
                   <div class="space-y-6">
                     <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Merek</label>
+                      <label class="text-sm font-medium text-foreground block">
+                        Merek<span v-if="bulkEditForm.ids.length === 1" class="text-rose-500">*</span>
+                      </label>
                       <Combobox
                         v-model="bulkEditForm.brand_id"
                         :options="props.brands"
@@ -1104,7 +1129,9 @@ const closeErrorModal = () => {
                     </div>
 
                     <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Spesifikasi</label>
+                      <label class="text-sm font-medium text-foreground block">
+                        Spesifikasi<span v-if="bulkEditForm.ids.length === 1" class="text-rose-500">*</span>
+                      </label>
                       <input 
                         type="text" 
                         v-model="bulkEditForm.specification"
@@ -1150,7 +1177,9 @@ const closeErrorModal = () => {
 
               <!-- Modal Footer -->
               <div class="py-3 px-4 border-t border-border flex items-center justify-between">
-                <p class="text-sm text-muted-foreground italic font-medium">*Kosongkan input yang tidak ingin diubah</p>
+                <p class="text-sm text-rose-500 italic font-medium">
+                  {{ bulkEditForm.ids.length === 1 ? '*Wajib diisi' : '*Kosongkan input yang tidak ingin diubah' }}
+                </p>
                 <div class="flex items-center gap-3">
                   <button 
                     @click="closeBulkEditModal"
@@ -1163,7 +1192,7 @@ const closeErrorModal = () => {
                     :disabled="!isBulkEditFormValid"
                     class="px-8 py-2.5 bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors shadow-sm active:scale-[0.98] disabled:opacity-50"
                   >
-                    Simpan Perubahan
+                    {{ bulkEditForm.ids.length === 1 ? 'Simpan Perubahan' : 'Simpan Perubahan Massal' }}
                   </button>
                 </div>
               </div>
