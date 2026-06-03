@@ -7,24 +7,27 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Models\AdmUser;
 
-class UnitStatusApproval extends Model
+class UnitLifecycle extends Model
 {
     use HasFactory;
 
+    protected $table = 'unit_lifecycles';
+
+    public $timestamps = false;
+
     protected $fillable = [
         'unit_id',
+        'status',
+        'start_date',
+        'end_date',
         'requester_id',
         'approver_id',
-        'proposed_status',
-        'decision',
         'note',
-        'requested_at',
-        'decided_at',
     ];
 
     protected $casts = [
-        'requested_at' => 'datetime',
-        'decided_at' => 'datetime',
+        'start_date' => 'datetime',
+        'end_date' => 'datetime',
     ];
 
     public function unit(): BelongsTo

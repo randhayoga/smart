@@ -150,13 +150,14 @@ const handleDelete = () => {
                   <!-- Right Details Column -->
                   <div class="md:col-span-8">
                     <p class="font-bold text-foreground"><span class="text-foreground">Kode LOT:</span> {{ lotDetails.lotCode }}</p>
-                    <p class="text-foreground">Organizer: {{ lotDetails.organizer }}</p>
-                    <p class="text-foreground">Jumlah stok: {{ lotDetails.current_quantity ?? 0 }}</p>
-                    <p class="text-foreground">Tanggal masuk: {{ formatDateWithDashes(lotDetails.entryDate) }}</p>
-                    <p class="text-foreground">Vendor: {{ lotDetails.vendor }}</p>
-                    <p class="text-foreground">Nomor PO: {{ lotDetails.poNumber }}</p>
-                    <p class="text-foreground">Harga Satuan: {{ formatRupiah(lotDetails.unitPrice) }}</p>
+                    <p class="font-bold text-foreground"><span class="text-foreground">Jumlah stok tersedia:</span> {{ lotDetails.current_quantity ?? 0 }}</p>
+                    <p class="font-bold text-foreground"><span class="text-foreground">Jumlah stok diawal:</span> {{ lotDetails.initial_quantity ?? 0 }}</p>
                     <p class="text-foreground">Lokasi: {{ formatLocation(lotDetails) }}</p>
+                    <p class="text-foreground">Nomor PO: {{ lotDetails.poNumber }}</p>
+                    <p class="text-foreground">Tanggal masuk: {{ formatDateWithDashes(lotDetails.entryDate) }}</p>
+                    <p class="text-foreground">Harga satuan: {{ formatRupiah(lotDetails.unitPrice) }}</p>
+                    <p class="text-foreground">Organizer: {{ lotDetails.organizer }}</p>
+                    <p class="text-foreground">Vendor: {{ lotDetails.vendor }}</p>
                     <p class="text-foreground">Pembaruan terakhir: {{ lotDetails.updated_at }}</p>
                   </div>
                 </div>
@@ -167,13 +168,13 @@ const handleDelete = () => {
             <div v-if="!isLoading && lotDetails" class="py-3 px-4 bg-muted/30 border-t border-border flex items-center justify-end gap-3">
               <button 
                 @click="handleEdit"
-                class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm active:scale-[0.98]"
+                class="px-5 py-2 bg-gradient-primary hover:opacity-90 text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm active:scale-[0.98]"
               >
                 Edit Detail LOT
               </button>
               <button 
                 @click="handleDelete"
-                class="px-5 py-2 bg-[#CC0000] hover:bg-[#AA0000] text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm active:scale-[0.98]"
+                class="px-5 py-2 bg-destructive hover:opacity-70 text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm active:scale-[0.98]"
               >
                 Hapus LOT
               </button>
