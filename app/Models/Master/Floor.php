@@ -4,6 +4,8 @@ namespace App\Models\Master;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Floor extends Model
 {
@@ -18,13 +20,31 @@ class Floor extends Model
         'location_id' => 'integer',
     ];
 
-    public function location()
+    public function location(): BelongsTo
     {
         return $this->belongsTo(Location::class);
     }
 
-    public function rooms()
+    public function rooms(): HasMany
     {
         return $this->hasMany(Room::class);
+    }
+
+    /**
+     * Lots with this as default floor.
+     * FLOOR ||--o{ LOT : "default floor"
+     */
+    public function lots(): HasMany
+    {
+        return $this->hasMany(\App\Models\Inventory\Lot::class);
+    }
+
+    /**
+     * Units on this floor.
+     * FLOOR ||--o{ UNIT : "default floor"
+     */
+    public function units(): HasMany
+    {
+        return $this->hasMany(\App\Models\Inventory\Unit::class);
     }
 }

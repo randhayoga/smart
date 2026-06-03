@@ -74,6 +74,15 @@ class Lot extends Model
         return $this->hasMany(Unit::class);
     }
 
+    /**
+     * Inventory logs for this lot.
+     * LOT ||--o{ INVENTORY_LOG : "logged"
+     */
+    public function inventoryLogs(): HasMany
+    {
+        return $this->hasMany(InventoryLog::class);
+    }
+
     public function getNumberAttribute($value)
     {
         return $value !== null ? trim($value) : null;

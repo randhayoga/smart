@@ -50,7 +50,11 @@ class BarangController extends Controller
 
         if ($request->hasFile('image_url')) {
             if ($barang->image_url && Storage::disk('public')->exists($barang->image_url)) {
-                Storage::disk('public')->delete($barang->image_url);
+                $isShared = Barang::where('image_url', $barang->image_url)->where('id', '!=', $barang->id)->exists()
+                    || \App\Models\Inventory\Lot::where('image_url', $barang->image_url)->exists();
+                if (!$isShared) {
+                    Storage::disk('public')->delete($barang->image_url);
+                }
             }
             $imagePath = $request->file('image_url')->store('inventory/barangs', 'public');
             $validated['image_url'] = $imagePath;
@@ -63,6 +67,7 @@ class BarangController extends Controller
         return redirect()->back()->with('success', 'Barang berhasil diperbarui.');
     }
 
+
     /**
      * Menghapus data barang dari database beserta gambarnya.
      */
@@ -73,7 +78,11 @@ class BarangController extends Controller
         }
 
         if ($barang->image_url && Storage::disk('public')->exists($barang->image_url)) {
-            Storage::disk('public')->delete($barang->image_url);
+            $isShared = Barang::where('image_url', $barang->image_url)->where('id', '!=', $barang->id)->exists()
+                || \App\Models\Inventory\Lot::where('image_url', $barang->image_url)->exists();
+            if (!$isShared) {
+                Storage::disk('public')->delete($barang->image_url);
+            }
         }
         $barang->delete();
 

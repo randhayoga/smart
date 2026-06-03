@@ -10,7 +10,8 @@ import {
   Trash2,
   Printer,
   FileDown,
-  X
+  X,
+  Pencil
 } from 'lucide-vue-next';
 import TableSearch from '@/Components/TableSearch.vue';
 import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal.vue';
@@ -467,6 +468,155 @@ const handleCreateItem = () => {
   });
 };
 
+// Bulk Edit Modal Logic
+const isBulkEditModalOpen = ref(false);
+const selectedItem = ref<any>(null);
+const bulkEditForm = useForm({
+  ids: [] as number[],
+  uom_id: null as number | null,
+  brand_id: null as number | null,
+  specification: '',
+  photo: null as File | null,
+  photoName: ''
+});
+
+const openBulkEditModal = () => {
+  if (!dataTableRef.value) return;
+  const selectedRows = dataTableRef.value.table.getFilteredRowModel().rows
+    .filter((r: any) => r.getIsSelected())
+    .map((r: any) => r.original);
+  
+  if (selectedRows.length === 0) return;
+
+  bulkEditForm.reset();
+  bulkEditForm.clearErrors();
+  bulkEditForm.ids = selectedRows.map((r: any) => r.id);
+  
+  // Explicitly reset the edit values first
+  bulkEditForm.uom_id = null;
+  bulkEditForm.brand_id = null;
+  bulkEditForm.specification = '';
+  bulkEditForm.photo = null;
+  bulkEditForm.photoName = '';
+
+  if (selectedRows.length === 1) {
+    selectedItem.value = selectedRows[0];
+    bulkEditForm.uom_id = selectedItem.value.uom_id;
+    bulkEditForm.brand_id = selectedItem.value.brand_id;
+    bulkEditForm.specification = selectedItem.value.specification;
+    bulkEditForm.photo = null;
+    bulkEditForm.photoName = selectedItem.value.image_url ? selectedItem.value.image_url.split('/').pop() : '';
+  } else {
+    selectedItem.value = null;
+  }
+  isBulkEditModalOpen.value = true;
+};
+
+const closeBulkEditModal = () => {
+  isBulkEditModalOpen.value = false;
+  // Explicitly reset the form fields on close/success
+  bulkEditForm.ids = [];
+  bulkEditForm.uom_id = null;
+  bulkEditForm.brand_id = null;
+  bulkEditForm.specification = '';
+  bulkEditForm.photo = null;
+  bulkEditForm.photoName = '';
+  bulkEditForm.clearErrors();
+  selectedItem.value = null;
+};
+
+const handleBulkEditFileUpload = (e: any) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+  if (!allowedTypes.includes(file.type)) {
+    alert('Hanya diperbolehkan file .jpg, .jpeg, atau .png');
+    return;
+  }
+
+  if (file.size > 1024 * 1024) {
+    alert('Ukuran foto maksimal 1MB');
+    return;
+  }
+
+  bulkEditForm.photo = file;
+  bulkEditForm.photoName = file.name;
+};
+
+const triggerBulkEditFileInput = () => {
+  const input = document.getElementById('bulk-edit-photo-upload') as HTMLInputElement;
+  input?.click();
+};
+
+const viewBulkEditImageInNewTab = () => {
+  if (bulkEditForm.photo) {
+    const url = URL.createObjectURL(bulkEditForm.photo);
+    window.open(url, '_blank');
+  } else if (selectedItem.value && selectedItem.value.image_url) {
+    window.open('/storage/' + selectedItem.value.image_url, '_blank');
+  }
+};
+
+const isBulkEditFormValid = computed(() => {
+  if (bulkEditForm.ids.length === 1) {
+    return !!(
+      bulkEditForm.uom_id &&
+      bulkEditForm.brand_id &&
+      bulkEditForm.specification &&
+      !bulkEditForm.processing
+    );
+  } else {
+    const hasAtLeastOneField = !!(
+      bulkEditForm.uom_id || 
+      bulkEditForm.brand_id || 
+      bulkEditForm.specification || 
+      bulkEditForm.photo
+    );
+    return hasAtLeastOneField && !bulkEditForm.processing;
+  }
+});
+
+const handleSaveBulkChanges = () => {
+  if (!isBulkEditFormValid.value) return;
+
+  bulkEditForm.transform((data) => {
+    const formData: any = {
+      _method: 'PUT',
+      ids: data.ids,
+    };
+    if (data.ids.length === 1) {
+      formData.uom_id = data.uom_id;
+      formData.brand_id = data.brand_id;
+      formData.specification = data.specification;
+      if (data.photo) {
+        formData.image_url = data.photo;
+      }
+    } else {
+      if (data.uom_id) {
+        formData.uom_id = data.uom_id;
+      }
+      if (data.brand_id) {
+        formData.brand_id = data.brand_id;
+      }
+      if (data.specification) {
+        formData.specification = data.specification;
+      }
+      if (data.photo) {
+        formData.image_url = data.photo;
+      }
+    }
+    return formData;
+  }).post('/smart/inventory/barangs/bulk', {
+    onSuccess: () => {
+      closeBulkEditModal();
+      if (dataTableRef.value) {
+        dataTableRef.value.table.resetRowSelection();
+      }
+    },
+  });
+};
+
 // Delete Modal Logic
 const isDeleteModalOpen = ref(false);
 const itemsToDelete = ref<any[]>([]);
@@ -496,14 +646,15 @@ const handleConfirmDelete = () => {
       }
     });
   } else {
-    // If multiple deletion is supported by backend, else loop or alert
-    ids.forEach(id => {
-       router.delete(`/smart/inventory/barangs/${id}`);
+    router.delete('/smart/inventory/barangs/bulk', {
+      data: { ids },
+      onSuccess: () => {
+        if (dataTableRef.value) {
+          dataTableRef.value.table.resetRowSelection();
+        }
+        closeDeleteModal();
+      }
     });
-    if (dataTableRef.value) {
-      dataTableRef.value.table.resetRowSelection();
-    }
-    closeDeleteModal();
   }
 };
 
@@ -645,12 +796,20 @@ const closeErrorModal = () => {
                 <label class="text-xs text-muted-foreground font-medium block ml-0.5">Aksi Terpilih</label>
                 <div class="flex flex-wrap gap-2">
                   <button 
+                    @click="openBulkEditModal"
+                    :disabled="!dataTableRef || Object.keys(dataTableRef.table.getState().rowSelection).length === 0"
+                    class="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:opacity-70 text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm disabled:opacity-50"
+                  >
+                    <Pencil class="w-4 h-4" />
+                    <span class="hidden sm:inline">Edit Terpilih</span>
+                  </button>
+                  <button 
                     @click="openDeleteModal(dataTableRef.table.getFilteredRowModel().rows.filter((r: any) => r.getIsSelected()).map((r: any) => r.original))"
                     :disabled="!dataTableRef || Object.keys(dataTableRef.table.getState().rowSelection).length === 0"
-                    class="flex items-center gap-2 px-4 py-2 bg-destructive hover:bg-destructive text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm disabled:opacity-50"
+                    class="flex items-center gap-2 px-4 py-2 bg-destructive hover:opacity-70 text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm disabled:opacity-50"
                   >
                     <Trash2 class="w-4 h-4" />
-                    <span class="hidden sm:inline">Hapus Barang</span>
+                    <span class="hidden sm:inline">Hapus Terpilih</span>
                   </button>
                   <ExportButtonGroup 
                     @export-excel="handleExportExcel"
@@ -863,6 +1022,177 @@ const closeErrorModal = () => {
                     class="px-8 py-2.5 bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors shadow-sm active:scale-[0.98] disabled:opacity-50"
                   >
                     Buat Barang
+                  </button>
+                </div>
+              </div>
+            </div>
+          </Transition>
+        </div>
+      </Transition>
+    </Teleport>
+    <!-- Bulk Edit Modal -->
+    <Teleport to="body">
+      <Transition
+        enter-active-class="ease-out duration-200"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="ease-in duration-150"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div v-if="isBulkEditModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <Transition
+            enter-active-class="ease-out duration-200"
+            enter-from-class="opacity-0 scale-95"
+            enter-to-class="opacity-100 scale-100"
+            leave-active-class="ease-in duration-150"
+            leave-from-class="opacity-100 scale-100"
+            leave-to-class="opacity-0 scale-95"
+          >
+            <div 
+              v-if="isBulkEditModalOpen" 
+              class="bg-card w-full max-w-[1000px] rounded-[14px] shadow-2xl overflow-hidden flex flex-col" 
+              @click.stop
+            >
+              <!-- Modal Header -->
+              <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
+                <h3 class="text-lg font-bold text-foreground">
+                  {{ bulkEditForm.ids.length === 1 ? 'Edit Barang' : 'Edit Terpilih (Bulk Edit Barang)' }}
+                </h3>
+                <button @click="closeBulkEditModal" class="p-2 hover:bg-muted rounded-full transition-colors">
+                  <X class="w-5 h-5 text-muted-foreground" />
+                </button>
+              </div>
+
+              <!-- Modal Body -->
+              <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+                  <!-- Left Column -->
+                  <div class="space-y-6">
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-medium text-foreground block">Kode Barang</label>
+                      <input 
+                        type="text" 
+                        :value="selectedItem ? selectedItem.code : 'Tidak dapat diubah'"
+                        disabled
+                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
+                      />
+                    </div>
+
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-medium text-foreground block">Kategori</label>
+                      <input 
+                        type="text" 
+                        :value="selectedItem ? selectedItem.category : 'Tidak dapat diubah'"
+                        disabled
+                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
+                      />
+                    </div>
+
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-medium text-foreground block">Subkategori</label>
+                      <input 
+                        type="text" 
+                        :value="selectedItem ? selectedItem.subcategory : 'Tidak dapat diubah'"
+                        disabled
+                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
+                      />
+                    </div>
+
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-medium text-foreground block">
+                        Satuan<span v-if="bulkEditForm.ids.length === 1" class="text-rose-500">*</span>
+                      </label>
+                      <Combobox
+                        v-model="bulkEditForm.uom_id"
+                        :options="props.uoms"
+                        search-placeholder="Cari satuan..."
+                        default-label="Pilih satuan"
+                        width-class="w-full h-10 px-4"
+                      />
+                    </div>
+                  </div>
+
+                  <!-- Right Column -->
+                  <div class="space-y-6">
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-medium text-foreground block">
+                        Merek<span v-if="bulkEditForm.ids.length === 1" class="text-rose-500">*</span>
+                      </label>
+                      <Combobox
+                        v-model="bulkEditForm.brand_id"
+                        :options="props.brands"
+                        search-placeholder="Cari merek..."
+                        default-label="Pilih merek"
+                        width-class="w-full h-10 px-4"
+                      />
+                    </div>
+
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-medium text-foreground block">
+                        Spesifikasi<span v-if="bulkEditForm.ids.length === 1" class="text-rose-500">*</span>
+                      </label>
+                      <input 
+                        type="text" 
+                        v-model="bulkEditForm.specification"
+                        maxlength="255"
+                        placeholder="Input spesifikasinya di sini..." 
+                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
+                      />
+                    </div>
+
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-medium text-foreground block">Foto <span class="italic text-muted-foreground">default</span></label>
+                      <div class="flex gap-2">
+                        <div 
+                          class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/10 truncate flex items-center h-10"
+                          :class="[
+                            (bulkEditForm.photo || (selectedItem && selectedItem.image_url)) 
+                              ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' 
+                              : 'text-muted-foreground cursor-default'
+                          ]"
+                          @click="(bulkEditForm.photo || (selectedItem && selectedItem.image_url)) && viewBulkEditImageInNewTab()"
+                        >
+                          {{ bulkEditForm.photoName || 'Belum ada foto yang dipilih' }}
+                        </div>
+                        <input 
+                          type="file" 
+                          id="bulk-edit-photo-upload" 
+                          class="hidden" 
+                          accept=".jpg,.jpeg,.png"
+                          @change="handleBulkEditFileUpload"
+                        />
+                        <button 
+                          @click="triggerBulkEditFileInput"
+                          class="w-[120px] shrink-0 flex items-center justify-center bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors h-10"
+                        >
+                          Pilih File
+                        </button>
+                      </div>
+                      <p class="text-[10px] text-muted-foreground ml-1">Maksimal ukuran 1 MB</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Modal Footer -->
+              <div class="py-3 px-4 border-t border-border flex items-center justify-between">
+                <p class="text-sm text-rose-500 italic font-medium">
+                  {{ bulkEditForm.ids.length === 1 ? '*Wajib diisi' : '*Kosongkan input yang tidak ingin diubah' }}
+                </p>
+                <div class="flex items-center gap-3">
+                  <button 
+                    @click="closeBulkEditModal"
+                    class="px-8 py-2.5 bg-background border border-input hover:bg-muted text-foreground text-sm font-medium rounded-[14px] transition-colors"
+                  >
+                    Batal
+                  </button>
+                  <button 
+                    @click="handleSaveBulkChanges"
+                    :disabled="!isBulkEditFormValid"
+                    class="px-8 py-2.5 bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors shadow-sm active:scale-[0.98] disabled:opacity-50"
+                  >
+                    {{ bulkEditForm.ids.length === 1 ? 'Simpan Perubahan' : 'Simpan Perubahan Massal' }}
                   </button>
                 </div>
               </div>

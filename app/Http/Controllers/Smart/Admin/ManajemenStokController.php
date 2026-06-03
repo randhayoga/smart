@@ -22,8 +22,10 @@ class ManajemenStokController extends Controller
         $barangs = \App\Models\Inventory\Barang::with(['subcategory.category', 'brand', 'uom'])
             ->get()
             ->map(function ($barang) {
-                // Calculate amount by summing units in each lot
-                $amount = $barang->lots()->withCount('units')->get()->sum('units_count');
+                $isConsumable = (bool)($barang->subcategory->category->is_consumable ?? false);
+                $amount = $isConsumable 
+                    ? (int)$barang->lots()->sum('current_quantity')
+                    : (int)$barang->lots()->withCount('units')->get()->sum('units_count');
                 
                 return [
                     'id' => $barang->id,
@@ -64,7 +66,10 @@ class ManajemenStokController extends Controller
             ->orWhere('id', $id)
             ->firstOrFail();
 
-        $amount = $barang->lots()->withCount('units')->get()->sum('units_count');
+        $isConsumable = (bool)($barang->subcategory->category->is_consumable ?? false);
+        $amount = $isConsumable 
+            ? (int)$barang->lots()->sum('current_quantity')
+            : (int)$barang->lots()->withCount('units')->get()->sum('units_count');
 
         $formattedBarang = [
             'id' => $barang->id,

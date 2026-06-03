@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Models\Master\Location;
 use App\Models\Master\Floor;
 use App\Models\Master\Room;
-use App\Models\User;
 
 class Unit extends Model
 {
@@ -34,7 +33,6 @@ class Unit extends Model
         'price',
         'image_url',
         'vehicle_registration',
-        'user_id'
     ];
 
     protected $casts = [
@@ -59,11 +57,6 @@ class Unit extends Model
     public function room(): BelongsTo
     {
         return $this->belongsTo(Room::class);
-    }
-
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
     }
 
     public function inventoryLogs(): HasMany
