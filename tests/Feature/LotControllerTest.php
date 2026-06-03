@@ -22,7 +22,7 @@ class LotControllerTest extends TestCase
     public function test_can_store_lot(): void
     {
         Storage::fake('public');
-        $user = User::factory()->create(['role' => 'admin']);
+        $user = User::factory()->create();
         $category = \App\Models\Master\Category::factory()->create(['is_consumable' => false]);
         $subcategory = \App\Models\Master\Subcategory::factory()->create(['category_id' => $category->id]);
         $barang = Barang::factory()->create(['subcategory_id' => $subcategory->id]);
@@ -80,7 +80,7 @@ class LotControllerTest extends TestCase
     public function test_can_update_lot(): void
     {
         Storage::fake('public');
-        $user = User::factory()->create(['role' => 'admin']);
+        $user = User::factory()->create();
         $lot = Lot::factory()->create();
         
         $newOrganizer = Organizer::factory()->create();
@@ -119,7 +119,7 @@ class LotControllerTest extends TestCase
 
     public function test_can_destroy_lot(): void
     {
-        $user = User::factory()->create(['role' => 'admin']);
+        $user = User::factory()->create();
         $lot = Lot::factory()->create();
 
         $response = $this->actingAs($user)->delete(route('smart.inventory.lots.destroy', $lot));
@@ -133,7 +133,7 @@ class LotControllerTest extends TestCase
     public function test_can_store_lot_using_parent_image(): void
     {
         Storage::fake('public');
-        $user = User::factory()->create(['role' => 'admin']);
+        $user = User::factory()->create();
         
         $barangImage = UploadedFile::fake()->image('barang.jpg');
         $barangImagePath = Storage::disk('public')->putFile('inventory/barangs', $barangImage);
@@ -174,7 +174,7 @@ class LotControllerTest extends TestCase
     public function test_can_update_lot_using_parent_image(): void
     {
         Storage::fake('public');
-        $user = User::factory()->create(['role' => 'admin']);
+        $user = User::factory()->create();
         
         $barangImage = UploadedFile::fake()->image('barang.jpg');
         $barangImagePath = Storage::disk('public')->putFile('inventory/barangs', $barangImage);
