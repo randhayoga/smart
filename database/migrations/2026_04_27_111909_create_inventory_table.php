@@ -69,19 +69,30 @@ return new class extends Migration {
             $table->id();
             $table->foreignId('barang_id')->nullable()->constrained('barangs')->noActionOnDelete();
             $table->foreignId('lot_id')->nullable()->constrained('lots')->noActionOnDelete();
-            $table->foreignId('unit_id')->nullable()->constrained('units')->noActionOnDelete();
             $table->foreignId('user_id')->constrained('adm_users')->noActionOnDelete();
             $table->string('action_type')->comment('stock_in, stock_out, adjustment, relocation');
             $table->integer('quantity_change')->default(0);
             $table->json('previous_state')->nullable();
             $table->json('new_state')->nullable();
             $table->text('note')->nullable();
-            $table->timestamps();
+            $table->dateTime('created_at');
+        });
+
+        Schema::create('unit_lifecycles', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('unit_id')->constrained('units')->noActionOnDelete();
+            $table->string('status')->comment('available | repair | lost | broken | inactive');
+            $table->dateTime('start_date');
+            $table->dateTime('end_date')->nullable();
+            $table->foreignId('requester_id')->constrained('adm_users')->noActionOnDelete()->comment("ADM_USER's id | who created/requested the state");
+            $table->foreignId('approver_id')->nullable()->constrained('adm_users')->noActionOnDelete()->comment("nullable | ADM_USER's id | who approved it");
+            $table->text('note')->nullable();
         });
     }
 
     public function down(): void
     {
+        Schema::dropIfExists('unit_lifecycles');
         Schema::dropIfExists('inventory_logs');
         Schema::dropIfExists('unit_status_approvals');
         Schema::dropIfExists('units');
