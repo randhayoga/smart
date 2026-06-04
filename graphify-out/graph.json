@@ -517,6 +517,15 @@
       "norm_label": "request"
     },
     {
+      "label": ".update()",
+      "file_type": "code",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/BulkUnitController.php",
+      "source_location": "L111",
+      "id": "manajemenstok_bulkunitcontroller_bulkunitcontroller_update",
+      "community": 183,
+      "norm_label": ".update()"
+    },
+    {
       "label": "LotController.php",
       "file_type": "code",
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/LotController.php",
@@ -650,15 +659,6 @@
       "id": "manajemenstok_unitcontroller_unitcontroller_destroy",
       "community": 5,
       "norm_label": ".destroy()"
-    },
-    {
-      "label": ".bulkUpdate()",
-      "file_type": "code",
-      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitController.php",
-      "source_location": "L174",
-      "id": "manajemenstok_unitcontroller_unitcontroller_bulkupdate",
-      "community": 5,
-      "norm_label": ".bulkupdate()"
     },
     {
       "label": "ManajemenStokController.php",
@@ -1611,7 +1611,7 @@
       "source_file": "D:/magang/web app/4/smart/app/Http/Controllers/Smart/User/AssetCartController.php",
       "source_location": "L1",
       "id": "d_magang_web_app_4_smart_app_http_controllers_smart_user_assetcartcontroller_php",
-      "community": 7,
+      "community": 180,
       "norm_label": "assetcartcontroller.php"
     },
     {
@@ -1620,7 +1620,7 @@
       "source_file": "D:/magang/web app/4/smart/app/Http/Controllers/Smart/User/AssetCartController.php",
       "source_location": "L10",
       "id": "user_assetcartcontroller_assetcartcontroller",
-      "community": 7,
+      "community": 180,
       "norm_label": "assetcartcontroller"
     },
     {
@@ -1629,7 +1629,7 @@
       "source_file": "D:/magang/web app/4/smart/app/Http/Controllers/Smart/User/AssetCartController.php",
       "source_location": "L15",
       "id": "user_assetcartcontroller_assetcartcontroller_index",
-      "community": 7,
+      "community": 180,
       "norm_label": ".index()"
     },
     {
@@ -1638,7 +1638,7 @@
       "source_file": "D:/magang/web app/4/smart/app/Http/Controllers/Smart/User/AssetCartController.php",
       "source_location": "L15",
       "id": "d_magang_web_app_4_smart_app_http_controllers_smart_user_assetcartcontroller_php_request",
-      "community": 7,
+      "community": 180,
       "norm_label": "request"
     },
     {
@@ -1647,7 +1647,7 @@
       "source_file": "D:/magang/web app/4/smart/app/Http/Controllers/Smart/User/AssetCartController.php",
       "source_location": "L48",
       "id": "user_assetcartcontroller_assetcartcontroller_update",
-      "community": 7,
+      "community": 180,
       "norm_label": ".update()"
     },
     {
@@ -1656,7 +1656,7 @@
       "source_file": "D:/magang/web app/4/smart/app/Http/Controllers/Smart/User/AssetCartController.php",
       "source_location": "L65",
       "id": "user_assetcartcontroller_assetcartcontroller_destroy",
-      "community": 7,
+      "community": 180,
       "norm_label": ".destroy()"
     },
     {
@@ -1710,7 +1710,7 @@
       "source_file": "D:/magang/web app/4/smart/app/Http/Controllers/Smart/User/BorrowCartController.php",
       "source_location": "L1",
       "id": "d_magang_web_app_4_smart_app_http_controllers_smart_user_borrowcartcontroller_php",
-      "community": 7,
+      "community": 185,
       "norm_label": "borrowcartcontroller.php"
     },
     {
@@ -1719,7 +1719,7 @@
       "source_file": "D:/magang/web app/4/smart/app/Http/Controllers/Smart/User/BorrowCartController.php",
       "source_location": "L10",
       "id": "user_borrowcartcontroller_borrowcartcontroller",
-      "community": 7,
+      "community": 185,
       "norm_label": "borrowcartcontroller"
     },
     {
@@ -1728,7 +1728,7 @@
       "source_file": "D:/magang/web app/4/smart/app/Http/Controllers/Smart/User/BorrowCartController.php",
       "source_location": "L15",
       "id": "user_borrowcartcontroller_borrowcartcontroller_index",
-      "community": 7,
+      "community": 185,
       "norm_label": ".index()"
     },
     {
@@ -1737,7 +1737,7 @@
       "source_file": "D:/magang/web app/4/smart/app/Http/Controllers/Smart/User/BorrowCartController.php",
       "source_location": "L15",
       "id": "d_magang_web_app_4_smart_app_http_controllers_smart_user_borrowcartcontroller_php_request",
-      "community": 7,
+      "community": 185,
       "norm_label": "request"
     },
     {
@@ -1746,7 +1746,7 @@
       "source_file": "D:/magang/web app/4/smart/app/Http/Controllers/Smart/User/BorrowCartController.php",
       "source_location": "L60",
       "id": "user_borrowcartcontroller_borrowcartcontroller_update",
-      "community": 7,
+      "community": 185,
       "norm_label": ".update()"
     },
     {
@@ -1755,7 +1755,7 @@
       "source_file": "D:/magang/web app/4/smart/app/Http/Controllers/Smart/User/BorrowCartController.php",
       "source_location": "L79",
       "id": "user_borrowcartcontroller_borrowcartcontroller_destroy",
-      "community": 7,
+      "community": 185,
       "norm_label": ".destroy()"
     },
     {
@@ -2403,7 +2403,7 @@
       "source_file": "D:/magang/web app/4/smart/app/Models/Cart/AssetBasket.php",
       "source_location": "L1",
       "id": "d_magang_web_app_4_smart_app_models_cart_assetbasket_php",
-      "community": 7,
+      "community": 185,
       "norm_label": "assetbasket.php"
     },
     {
@@ -2412,7 +2412,7 @@
       "source_file": "D:/magang/web app/4/smart/app/Models/Cart/AssetBasket.php",
       "source_location": "L10",
       "id": "cart_assetbasket_assetbasket",
-      "community": 7,
+      "community": 185,
       "norm_label": "assetbasket"
     },
     {
@@ -2430,7 +2430,7 @@
       "source_file": "D:/magang/web app/4/smart/app/Models/Cart/AssetBasket.php",
       "source_location": "L27",
       "id": "cart_assetbasket_assetbasket_user",
-      "community": 7,
+      "community": 185,
       "norm_label": ".user()"
     },
     {
@@ -2439,7 +2439,7 @@
       "source_file": "D:/magang/web app/4/smart/app/Models/Cart/AssetBasket.php",
       "source_location": "L27",
       "id": "d_magang_web_app_4_smart_app_models_cart_assetbasket_php_belongsto",
-      "community": 7,
+      "community": 185,
       "norm_label": "belongsto"
     },
     {
@@ -2448,7 +2448,7 @@
       "source_file": "D:/magang/web app/4/smart/app/Models/Cart/AssetBasket.php",
       "source_location": "L32",
       "id": "cart_assetbasket_assetbasket_barang",
-      "community": 7,
+      "community": 185,
       "norm_label": ".barang()"
     },
     {
@@ -2457,7 +2457,7 @@
       "source_file": "D:/magang/web app/4/smart/app/Models/Cart/ConsumableBasket.php",
       "source_location": "L1",
       "id": "d_magang_web_app_4_smart_app_models_cart_consumablebasket_php",
-      "community": 7,
+      "community": 180,
       "norm_label": "consumablebasket.php"
     },
     {
@@ -2466,7 +2466,7 @@
       "source_file": "D:/magang/web app/4/smart/app/Models/Cart/ConsumableBasket.php",
       "source_location": "L10",
       "id": "cart_consumablebasket_consumablebasket",
-      "community": 7,
+      "community": 180,
       "norm_label": "consumablebasket"
     },
     {
@@ -2475,7 +2475,7 @@
       "source_file": "D:/magang/web app/4/smart/app/Models/Cart/ConsumableBasket.php",
       "source_location": "L20",
       "id": "cart_consumablebasket_consumablebasket_user",
-      "community": 7,
+      "community": 180,
       "norm_label": ".user()"
     },
     {
@@ -2484,7 +2484,7 @@
       "source_file": "D:/magang/web app/4/smart/app/Models/Cart/ConsumableBasket.php",
       "source_location": "L20",
       "id": "d_magang_web_app_4_smart_app_models_cart_consumablebasket_php_belongsto",
-      "community": 7,
+      "community": 180,
       "norm_label": "belongsto"
     },
     {
@@ -2493,7 +2493,7 @@
       "source_file": "D:/magang/web app/4/smart/app/Models/Cart/ConsumableBasket.php",
       "source_location": "L25",
       "id": "cart_consumablebasket_consumablebasket_barang",
-      "community": 7,
+      "community": 180,
       "norm_label": ".barang()"
     },
     {
@@ -3123,7 +3123,7 @@
       "source_file": "app/Models/Master/Brand.php",
       "source_location": "L1",
       "id": "master_brand",
-      "community": 0,
+      "community": 162,
       "norm_label": "brand.php"
     },
     {
@@ -3132,7 +3132,7 @@
       "source_file": "app/Models/Master/Brand.php",
       "source_location": "L9",
       "id": "master_brand_brand",
-      "community": 0,
+      "community": 162,
       "norm_label": "brand"
     },
     {
@@ -3141,7 +3141,7 @@
       "source_file": "app/Models/Master/Brand.php",
       "source_location": "L21",
       "id": "master_brand_brand_barangs",
-      "community": 0,
+      "community": 162,
       "norm_label": ".barangs()"
     },
     {
@@ -3150,7 +3150,7 @@
       "source_file": "app/Models/Master/Brand.php",
       "source_location": "L21",
       "id": "app_models_master_brand_php_hasmany",
-      "community": 0,
+      "community": 162,
       "norm_label": "hasmany"
     },
     {
@@ -3330,7 +3330,7 @@
       "source_file": "app/Models/Master/Organizer.php",
       "source_location": "L1",
       "id": "master_organizer",
-      "community": 162,
+      "community": 184,
       "norm_label": "organizer.php"
     },
     {
@@ -3339,7 +3339,7 @@
       "source_file": "app/Models/Master/Organizer.php",
       "source_location": "L9",
       "id": "master_organizer_organizer",
-      "community": 162,
+      "community": 184,
       "norm_label": "organizer"
     },
     {
@@ -3348,7 +3348,7 @@
       "source_file": "app/Models/Master/Organizer.php",
       "source_location": "L21",
       "id": "master_organizer_organizer_lots",
-      "community": 162,
+      "community": 184,
       "norm_label": ".lots()"
     },
     {
@@ -3357,7 +3357,7 @@
       "source_file": "app/Models/Master/Organizer.php",
       "source_location": "L21",
       "id": "app_models_master_organizer_php_hasmany",
-      "community": 162,
+      "community": 184,
       "norm_label": "hasmany"
     },
     {
@@ -3492,7 +3492,7 @@
       "source_file": "app/Models/Master/Uom.php",
       "source_location": "L1",
       "id": "master_uom",
-      "community": 162,
+      "community": 0,
       "norm_label": "uom.php"
     },
     {
@@ -3501,7 +3501,7 @@
       "source_file": "app/Models/Master/Uom.php",
       "source_location": "L9",
       "id": "master_uom_uom",
-      "community": 162,
+      "community": 0,
       "norm_label": "uom"
     },
     {
@@ -3510,7 +3510,7 @@
       "source_file": "app/Models/Master/Uom.php",
       "source_location": "L21",
       "id": "master_uom_uom_barangs",
-      "community": 162,
+      "community": 0,
       "norm_label": ".barangs()"
     },
     {
@@ -3519,7 +3519,7 @@
       "source_file": "app/Models/Master/Uom.php",
       "source_location": "L21",
       "id": "app_models_master_uom_php_hasmany",
-      "community": 162,
+      "community": 0,
       "norm_label": "hasmany"
     },
     {
@@ -3528,7 +3528,7 @@
       "source_file": "app/Models/Master/Vendor.php",
       "source_location": "L1",
       "id": "master_vendor",
-      "community": 162,
+      "community": 200,
       "norm_label": "vendor.php"
     },
     {
@@ -3537,7 +3537,7 @@
       "source_file": "app/Models/Master/Vendor.php",
       "source_location": "L9",
       "id": "master_vendor_vendor",
-      "community": 162,
+      "community": 200,
       "norm_label": "vendor"
     },
     {
@@ -3546,7 +3546,7 @@
       "source_file": "app/Models/Master/Vendor.php",
       "source_location": "L21",
       "id": "master_vendor_vendor_lots",
-      "community": 162,
+      "community": 200,
       "norm_label": ".lots()"
     },
     {
@@ -3555,7 +3555,7 @@
       "source_file": "app/Models/Master/Vendor.php",
       "source_location": "L21",
       "id": "app_models_master_vendor_php_hasmany",
-      "community": 162,
+      "community": 200,
       "norm_label": "hasmany"
     },
     {
@@ -3798,7 +3798,7 @@
       "source_file": "D:/magang/web app/4/smart/app/Models/Request/RequestApproval.php",
       "source_location": "L1",
       "id": "d_magang_web_app_4_smart_app_models_request_requestapproval_php",
-      "community": 180,
+      "community": 5,
       "norm_label": "requestapproval.php"
     },
     {
@@ -3807,7 +3807,7 @@
       "source_file": "D:/magang/web app/4/smart/app/Models/Request/RequestApproval.php",
       "source_location": "L9",
       "id": "request_requestapproval_requestapproval",
-      "community": 180,
+      "community": 5,
       "norm_label": "requestapproval"
     },
     {
@@ -3816,7 +3816,7 @@
       "source_file": "D:/magang/web app/4/smart/app/Models/Request/RequestApproval.php",
       "source_location": "L25",
       "id": "request_requestapproval_requestapproval_request",
-      "community": 180,
+      "community": 5,
       "norm_label": ".request()"
     },
     {
@@ -3825,7 +3825,7 @@
       "source_file": "D:/magang/web app/4/smart/app/Models/Request/RequestApproval.php",
       "source_location": "L25",
       "id": "d_magang_web_app_4_smart_app_models_request_requestapproval_php_belongsto",
-      "community": 180,
+      "community": 5,
       "norm_label": "belongsto"
     },
     {
@@ -3834,7 +3834,7 @@
       "source_file": "D:/magang/web app/4/smart/app/Models/Request/RequestApproval.php",
       "source_location": "L30",
       "id": "request_requestapproval_requestapproval_approver",
-      "community": 180,
+      "community": 5,
       "norm_label": ".approver()"
     },
     {
@@ -4122,7 +4122,7 @@
       "source_file": "app/Models/TbProject.php",
       "source_location": "L1",
       "id": "models_tbproject",
-      "community": 184,
+      "community": 162,
       "norm_label": "tbproject.php"
     },
     {
@@ -4131,7 +4131,7 @@
       "source_file": "app/Models/TbProject.php",
       "source_location": "L9",
       "id": "models_tbproject_tbproject",
-      "community": 184,
+      "community": 162,
       "norm_label": "tbproject"
     },
     {
@@ -4140,7 +4140,7 @@
       "source_file": "app/Models/TbProject.php",
       "source_location": "L25",
       "id": "models_tbproject_tbproject_assignprojects",
-      "community": 184,
+      "community": 162,
       "norm_label": ".assignprojects()"
     },
     {
@@ -4149,7 +4149,7 @@
       "source_file": "app/Models/TbProject.php",
       "source_location": "L25",
       "id": "app_models_tbproject_php_hasmany",
-      "community": 184,
+      "community": 162,
       "norm_label": "hasmany"
     },
     {
@@ -4158,7 +4158,7 @@
       "source_file": "app/Models/TbProject.php",
       "source_location": "L34",
       "id": "models_tbproject_tbproject_requests",
-      "community": 184,
+      "community": 162,
       "norm_label": ".requests()"
     },
     {
@@ -5679,7 +5679,7 @@
       "source_file": "D:/magang/web app/4/smart/database/seeders/BarangSeeder.php",
       "source_location": "L1",
       "id": "d_magang_web_app_4_smart_database_seeders_barangseeder_php",
-      "community": 174,
+      "community": 7,
       "norm_label": "barangseeder.php"
     },
     {
@@ -5688,7 +5688,7 @@
       "source_file": "D:/magang/web app/4/smart/database/seeders/BarangSeeder.php",
       "source_location": "L10",
       "id": "seeders_barangseeder_barangseeder",
-      "community": 174,
+      "community": 7,
       "norm_label": "barangseeder"
     },
     {
@@ -5697,7 +5697,7 @@
       "source_file": "",
       "source_location": "",
       "id": "seeder",
-      "community": 174,
+      "community": 7,
       "norm_label": "seeder"
     },
     {
@@ -5706,7 +5706,7 @@
       "source_file": "D:/magang/web app/4/smart/database/seeders/BarangSeeder.php",
       "source_location": "L15",
       "id": "seeders_barangseeder_barangseeder_run",
-      "community": 174,
+      "community": 7,
       "norm_label": ".run()"
     },
     {
@@ -5715,7 +5715,7 @@
       "source_file": "D:/magang/web app/4/smart/database/seeders/DatabaseSeeder.php",
       "source_location": "L1",
       "id": "d_magang_web_app_4_smart_database_seeders_databaseseeder_php",
-      "community": 174,
+      "community": 7,
       "norm_label": "databaseseeder.php"
     },
     {
@@ -5724,7 +5724,7 @@
       "source_file": "D:/magang/web app/4/smart/database/seeders/DatabaseSeeder.php",
       "source_location": "L8",
       "id": "seeders_databaseseeder_databaseseeder",
-      "community": 174,
+      "community": 7,
       "norm_label": "databaseseeder"
     },
     {
@@ -5733,7 +5733,7 @@
       "source_file": "D:/magang/web app/4/smart/database/seeders/DatabaseSeeder.php",
       "source_location": "L13",
       "id": "seeders_databaseseeder_databaseseeder_run",
-      "community": 174,
+      "community": 7,
       "norm_label": ".run()"
     },
     {
@@ -5742,7 +5742,7 @@
       "source_file": "database/seeders/LotSeeder.php",
       "source_location": "L1",
       "id": "seeders_lotseeder",
-      "community": 174,
+      "community": 7,
       "norm_label": "lotseeder.php"
     },
     {
@@ -5751,7 +5751,7 @@
       "source_file": "database/seeders/LotSeeder.php",
       "source_location": "L11",
       "id": "seeders_lotseeder_lotseeder",
-      "community": 174,
+      "community": 7,
       "norm_label": "lotseeder"
     },
     {
@@ -5760,7 +5760,7 @@
       "source_file": "database/seeders/LotSeeder.php",
       "source_location": "L16",
       "id": "seeders_lotseeder_lotseeder_run",
-      "community": 174,
+      "community": 7,
       "norm_label": ".run()"
     },
     {
@@ -5796,7 +5796,7 @@
       "source_file": "database/seeders/UserSeeder.php",
       "source_location": "L1",
       "id": "seeders_userseeder",
-      "community": 174,
+      "community": 7,
       "norm_label": "userseeder.php"
     },
     {
@@ -5805,7 +5805,7 @@
       "source_file": "database/seeders/UserSeeder.php",
       "source_location": "L11",
       "id": "seeders_userseeder_userseeder",
-      "community": 174,
+      "community": 7,
       "norm_label": "userseeder"
     },
     {
@@ -5814,7 +5814,7 @@
       "source_file": "database/seeders/UserSeeder.php",
       "source_location": "L16",
       "id": "seeders_userseeder_userseeder_run",
-      "community": 174,
+      "community": 7,
       "norm_label": ".run()"
     },
     {
@@ -7845,7 +7845,7 @@
       "label": "if()",
       "file_type": "code",
       "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailLOTNonConsumables.vue",
-      "source_location": "L465",
+      "source_location": "L466",
       "id": "manajemenstok_detaillotnonconsumables_if",
       "community": 138,
       "norm_label": "if()"
@@ -9435,6 +9435,15 @@
       "norm_label": ".test_cannot_bulk_destroy_lots_if_any_has_units()"
     },
     {
+      "label": ".test_can_bulk_update_units()",
+      "file_type": "code",
+      "source_file": "tests/Feature/LotControllerTest.php",
+      "source_location": "L337",
+      "id": "feature_lotcontrollertest_lotcontrollertest_test_can_bulk_update_units",
+      "community": 3,
+      "norm_label": ".test_can_bulk_update_units()"
+    },
+    {
       "label": "MasterDataTest.php",
       "file_type": "code",
       "source_file": "tests/Feature/MasterDataTest.php",
@@ -9865,6 +9874,15 @@
       "id": "peraturan",
       "community": 141,
       "norm_label": "peraturan.md"
+    },
+    {
+      "label": ".bulkUpdate()",
+      "file_type": "code",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitController.php",
+      "source_location": "L174",
+      "community": 5,
+      "norm_label": ".bulkupdate()",
+      "id": "manajemenstok_unitcontroller_unitcontroller_bulkupdate"
     },
     {
       "label": "AuthenticatedSessionController.php",
@@ -10348,7 +10366,7 @@
       "file_type": "code",
       "source_file": "app/Http/Controllers/Smart/User/AssetCartController.php",
       "source_location": "L1",
-      "community": 7,
+      "community": 180,
       "norm_label": "assetcartcontroller.php",
       "id": "user_assetcartcontroller"
     },
@@ -10357,7 +10375,7 @@
       "file_type": "code",
       "source_file": "app/Http/Controllers/Smart/User/AssetCartController.php",
       "source_location": "L15",
-      "community": 7,
+      "community": 180,
       "norm_label": "request",
       "id": "app_http_controllers_smart_user_assetcartcontroller_php_request"
     },
@@ -10384,7 +10402,7 @@
       "file_type": "code",
       "source_file": "app/Http/Controllers/Smart/User/BorrowCartController.php",
       "source_location": "L1",
-      "community": 7,
+      "community": 185,
       "norm_label": "borrowcartcontroller.php",
       "id": "user_borrowcartcontroller"
     },
@@ -10393,7 +10411,7 @@
       "file_type": "code",
       "source_file": "app/Http/Controllers/Smart/User/BorrowCartController.php",
       "source_location": "L15",
-      "community": 7,
+      "community": 185,
       "norm_label": "request",
       "id": "app_http_controllers_smart_user_borrowcartcontroller_php_request"
     },
@@ -10519,7 +10537,7 @@
       "file_type": "code",
       "source_file": "app/Models/Cart/AssetBasket.php",
       "source_location": "L1",
-      "community": 7,
+      "community": 185,
       "norm_label": "assetbasket.php",
       "id": "cart_assetbasket"
     },
@@ -10528,7 +10546,7 @@
       "file_type": "code",
       "source_file": "app/Models/Cart/AssetBasket.php",
       "source_location": "L27",
-      "community": 7,
+      "community": 185,
       "norm_label": "belongsto",
       "id": "app_models_cart_assetbasket_php_belongsto"
     },
@@ -10537,7 +10555,7 @@
       "file_type": "code",
       "source_file": "app/Models/Cart/ConsumableBasket.php",
       "source_location": "L1",
-      "community": 7,
+      "community": 180,
       "norm_label": "consumablebasket.php",
       "id": "cart_consumablebasket"
     },
@@ -10546,7 +10564,7 @@
       "file_type": "code",
       "source_file": "app/Models/Cart/ConsumableBasket.php",
       "source_location": "L20",
-      "community": 7,
+      "community": 180,
       "norm_label": "belongsto",
       "id": "app_models_cart_consumablebasket_php_belongsto"
     },
@@ -10645,7 +10663,7 @@
       "file_type": "code",
       "source_file": "app/Models/Request/RequestApproval.php",
       "source_location": "L1",
-      "community": 180,
+      "community": 5,
       "norm_label": "requestapproval.php",
       "id": "request_requestapproval"
     },
@@ -10654,7 +10672,7 @@
       "file_type": "code",
       "source_file": "app/Models/Request/RequestApproval.php",
       "source_location": "L25",
-      "community": 180,
+      "community": 5,
       "norm_label": "belongsto",
       "id": "app_models_request_requestapproval_php_belongsto"
     },
@@ -11662,7 +11680,7 @@
       "file_type": "code",
       "source_file": "database/seeders/BarangSeeder.php",
       "source_location": "L1",
-      "community": 174,
+      "community": 7,
       "norm_label": "barangseeder.php",
       "id": "seeders_barangseeder"
     },
@@ -11671,7 +11689,7 @@
       "file_type": "code",
       "source_file": "database/seeders/DatabaseSeeder.php",
       "source_location": "L1",
-      "community": 174,
+      "community": 7,
       "norm_label": "databaseseeder.php",
       "id": "seeders_databaseseeder"
     },
@@ -14763,6 +14781,16 @@
       "target": "manajemenstok_bulkunitcontroller_bulkunitcontroller_store"
     },
     {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/BulkUnitController.php",
+      "source_location": "L111",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "manajemenstok_bulkunitcontroller_bulkunitcontroller",
+      "target": "manajemenstok_bulkunitcontroller_bulkunitcontroller_update"
+    },
+    {
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/BulkUnitController.php",
@@ -14771,6 +14799,17 @@
       "context": "parameter_type",
       "confidence_score": 1.0,
       "source": "manajemenstok_bulkunitcontroller_bulkunitcontroller_store",
+      "target": "app_http_controllers_smart_admin_manajemenstok_bulkunitcontroller_php_request"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/BulkUnitController.php",
+      "source_location": "L111",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "manajemenstok_bulkunitcontroller_bulkunitcontroller_update",
       "target": "app_http_controllers_smart_admin_manajemenstok_bulkunitcontroller_php_request"
     },
     {
@@ -30578,6 +30617,16 @@
       "relation": "method",
       "confidence": "EXTRACTED",
       "source_file": "tests/Feature/LotControllerTest.php",
+      "source_location": "L337",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "feature_lotcontrollertest_lotcontrollertest",
+      "target": "feature_lotcontrollertest_lotcontrollertest_test_can_bulk_update_units"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/Feature/LotControllerTest.php",
       "source_location": "L120",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -33020,5 +33069,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "5bc4171eb7a7137584718bbcf0384de5b15c10b2"
+  "built_at_commit": "3b0a6e54d2957ae096cdaf7751a1a2ed1c68b62e"
 }

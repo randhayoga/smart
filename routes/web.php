@@ -69,7 +69,7 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
             Route::put('lots/bulk', [\App\Http\Controllers\Smart\Admin\ManajemenStok\BulkLotController::class, 'update'])->name('lots.bulk-update');
             Route::delete('lots/bulk', [\App\Http\Controllers\Smart\Admin\ManajemenStok\BulkLotController::class, 'destroy'])->name('lots.bulk-destroy');
             Route::resource('lots', \App\Http\Controllers\Smart\Admin\ManajemenStok\LotController::class)->only(['store', 'update', 'destroy', 'show']);
-            Route::post('units/bulk-update', [\App\Http\Controllers\Smart\Admin\ManajemenStok\UnitController::class, 'bulkUpdate'])->name('units.bulk-update');
+            Route::post('units/bulk-update', [\App\Http\Controllers\Smart\Admin\ManajemenStok\BulkUnitController::class, 'update'])->name('units.bulk-update');
             Route::post('units/bulk', [\App\Http\Controllers\Smart\Admin\ManajemenStok\BulkUnitController::class, 'store'])->name('units.bulk-store');
             Route::resource('units', \App\Http\Controllers\Smart\Admin\ManajemenStok\UnitController::class)->only(['store', 'update', 'destroy']);
         });
