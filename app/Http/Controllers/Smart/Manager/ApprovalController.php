@@ -99,7 +99,7 @@ class ApprovalController extends Controller
      */
     public function index(Request $request): Response
     {
-        if ($request->user()->role !== 'manager') {
+        if (!in_array($request->user()->role, ['manager', 'ifs_manager'])) {
             abort(403, 'Akses ditolak. Hanya Manager yang dapat mengakses halaman ini.');
         }
 
@@ -121,7 +121,7 @@ class ApprovalController extends Controller
      */
     public function approvedList(Request $request): Response
     {
-        if ($request->user()->role !== 'manager') {
+        if (!in_array($request->user()->role, ['manager', 'ifs_manager'])) {
             abort(403, 'Akses ditolak. Hanya Manager yang dapat mengakses halaman ini.');
         }
 
@@ -143,7 +143,7 @@ class ApprovalController extends Controller
      */
     public function show(Request $request, string $id): Response
     {
-        if ($request->user()->role !== 'manager') {
+        if (!in_array($request->user()->role, ['manager', 'ifs_manager'])) {
             abort(403, 'Akses ditolak. Hanya Manager yang dapat mengakses halaman ini.');
         }
 
@@ -163,7 +163,7 @@ class ApprovalController extends Controller
      */
     public function action(Request $request, $id)
     {
-        if ($request->user()->role !== 'manager') {
+        if (!in_array($request->user()->role, ['manager', 'ifs_manager'])) {
             abort(403, 'Akses ditolak. Hanya Manager yang dapat mengakses halaman ini.');
         }
 
