@@ -55,7 +55,8 @@ class BulkLotController extends Controller
             if ($request->boolean('use_parent_image')) {
                 if ($lot->image_url && $lot->image_url !== 'inventory/lots/placeholder.jpg' && Storage::disk('public')->exists($lot->image_url)) {
                     $isShared = Lot::where('image_url', $lot->image_url)->where('id', '!=', $lot->id)->exists()
-                        || \App\Models\Inventory\Barang::where('image_url', $lot->image_url)->exists();
+                        || \App\Models\Inventory\Barang::where('image_url', $lot->image_url)->exists()
+                        || \App\Models\Inventory\Unit::where('image_url', $lot->image_url)->exists();
                     if (!$isShared) {
                         Storage::disk('public')->delete($lot->image_url);
                     }
@@ -70,7 +71,8 @@ class BulkLotController extends Controller
             } else if ($request->hasFile('image_url')) {
                 if ($lot->image_url && $lot->image_url !== 'inventory/lots/placeholder.jpg' && Storage::disk('public')->exists($lot->image_url)) {
                     $isShared = Lot::where('image_url', $lot->image_url)->where('id', '!=', $lot->id)->exists()
-                        || \App\Models\Inventory\Barang::where('image_url', $lot->image_url)->exists();
+                        || \App\Models\Inventory\Barang::where('image_url', $lot->image_url)->exists()
+                        || \App\Models\Inventory\Unit::where('image_url', $lot->image_url)->exists();
                     if (!$isShared) {
                         Storage::disk('public')->delete($lot->image_url);
                     }
@@ -101,11 +103,18 @@ class BulkLotController extends Controller
 
         $lots = Lot::whereIn('id', $request->input('ids'))->get();
         foreach ($lots as $lot) {
+            if ($lot->units()->exists()) {
+                return redirect()->back()->with('error', 'Beberapa LOT tidak dapat dihapus karena masih memiliki unit terkait.');
+            }
+        }
+
+        foreach ($lots as $lot) {
             if ($lot->image_url && $lot->image_url !== 'inventory/lots/placeholder.jpg' && Storage::disk('public')->exists($lot->image_url)) {
                 $isShared = Lot::where('image_url', $lot->image_url)
                     ->whereNotIn('id', $request->input('ids'))
                     ->exists()
-                    || \App\Models\Inventory\Barang::where('image_url', $lot->image_url)->exists();
+                    || \App\Models\Inventory\Barang::where('image_url', $lot->image_url)->exists()
+                    || \App\Models\Inventory\Unit::where('image_url', $lot->image_url)->exists();
                 if (!$isShared) {
                     Storage::disk('public')->delete($lot->image_url);
                 }

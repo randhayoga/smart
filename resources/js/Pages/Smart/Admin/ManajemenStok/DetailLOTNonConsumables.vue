@@ -27,6 +27,7 @@ import Tabs from '@/Components/Tabs.vue';
 import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal.vue';
 import DeleteErrorModal from '@/Components/DeleteErrorModal.vue';
 import Combobox from '@/Components/Combobox.vue';
+import { Checkbox } from '@/Components/ui/checkbox';
 
 interface Props {
   lot: {
@@ -72,7 +73,6 @@ interface Props {
     room_id: number | null;
     price: number | string;
     image_url: string;
-    user_name: string | null;
     vehicle_registration: string | null;
     updated_at: string;
   }[];
@@ -535,10 +535,11 @@ const handleSaveAsset = () => {
   });
 
   if (assetModalMode.value === 'create') {
-    assetForm.post('/smart/inventory/units', {
+    const url = assetForm.is_bulk ? '/smart/inventory/units/bulk' : '/smart/inventory/units';
+    assetForm.post(url, {
       onSuccess: () => {
         isAssetModalOpen.value = false;
-        toast.success('Aset berhasil ditambahkan.');
+        toast.success(assetForm.is_bulk ? 'Aset berhasil ditambahkan secara massal.' : 'Aset berhasil ditambahkan.');
       }
     });
   } else {
@@ -659,7 +660,11 @@ const errorModalMessage = ref('');
 const handleConfirmDelete = () => {
   if (deleteMode.value === 'lot') {
     router.delete(`/smart/inventory/lots/${props.lot.id}`, {
-      onSuccess: () => {
+      onSuccess: (page) => {
+        if ((page.props as any).flash?.error) {
+          closeDeleteModal();
+          return;
+        }
         closeDeleteModal();
         toast.success('LOT berhasil dihapus.');
         // Redirect to parent detail page
@@ -1542,6 +1547,26 @@ const totalAsetTerpilihCount = computed(() => {
                       </div>
                       <p class="text-[10px] text-muted-foreground ml-1">Maksimal ukuran 1 MB</p>
                     </div>
+
+                    <!-- Pembuatan massal (Create Mode Only) -->
+                    <div v-if="assetModalMode === 'create' && props.lot.barang_category !== 'Kendaraan'" class="space-y-1.5 flex items-center gap-2 pt-2 flex-wrap">
+                      <Checkbox 
+                        id="is_bulk"
+                        v-model="assetForm.is_bulk"
+                      />
+                      <label for="is_bulk" class="cursor-pointer select-none text-sm font-medium text-foreground">
+                        Buat
+                      </label>
+                      <input 
+                        type="number" 
+                        v-model="assetForm.bulk_quantity"
+                        placeholder="..."
+                        min="1"
+                        :disabled="!assetForm.is_bulk"
+                        class="w-16 px-2 py-1 text-sm border border-input rounded-[10px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-8 disabled:opacity-50 disabled:cursor-not-allowed mx-1"
+                      />
+                      <span class="text-sm font-medium text-foreground">aset secara otomatis dengan nilai yang sama.</span>
+                    </div>
                   </div>
 
                   <!-- Right Column -->
@@ -1656,31 +1681,6 @@ const totalAsetTerpilihCount = computed(() => {
                     </div>
                   </div>
 
-                  <!-- Pembuatan massal (Create Mode Only) -->
-                  <div v-if="assetModalMode === 'create'" class="md:col-span-2 border-t border-border pt-4">
-                    <label class="text-sm font-bold text-foreground block mb-2">Pembuatan massal</label>
-                    <div class="flex items-center gap-2">
-                      <input 
-                        type="checkbox" 
-                        id="is_bulk"
-                        v-model="assetForm.is_bulk"
-                        class="rounded border-input text-primary focus:ring-primary/20 w-4 h-4 cursor-pointer"
-                      />
-                      <label for="is_bulk" class="text-sm text-foreground flex items-center gap-1.5 cursor-pointer">
-                        Buat 
-                        <input 
-                          type="number" 
-                          v-model="assetForm.bulk_quantity"
-                          :disabled="!assetForm.is_bulk"
-                          placeholder="jumlah..." 
-                          min="1"
-                          max="100"
-                          class="w-24 px-3 py-1 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed h-8"
-                        />
-                        aset secara otomatis dengan nilai yang sama dengan data di atas.
-                      </label>
-                    </div>
-                  </div>
                 </div>
               </div>
 

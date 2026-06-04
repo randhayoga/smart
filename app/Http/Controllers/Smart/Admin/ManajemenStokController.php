@@ -61,10 +61,15 @@ class ManajemenStokController extends Controller
      */
     public function show(Request $request, string $id): Response
     {
-        $barang = \App\Models\Inventory\Barang::with(['subcategory.category', 'brand', 'uom'])
-            ->where('number', $id)
-            ->orWhere('id', $id)
-            ->firstOrFail();
+        $query = \App\Models\Inventory\Barang::with(['subcategory.category', 'brand', 'uom']);
+        if (is_numeric($id)) {
+            $query->where(function ($q) use ($id) {
+                $q->where('id', $id)->orWhere('number', $id);
+            });
+        } else {
+            $query->where('number', $id);
+        }
+        $barang = $query->firstOrFail();
 
         $isConsumable = (bool)($barang->subcategory->category->is_consumable ?? false);
         $amount = $isConsumable 
