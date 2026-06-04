@@ -49,7 +49,6 @@ return new class extends Migration {
             $table->decimal('price', 15, 2);
             $table->string('image_url');
             $table->string('vehicle_registration')->nullable();
-            $table->foreignId('user_id')->nullable()->constrained('adm_users')->nullOnDelete();
             $table->timestamps();
         });
 

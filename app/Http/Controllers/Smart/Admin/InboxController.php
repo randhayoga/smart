@@ -73,11 +73,10 @@ class InboxController extends Controller
         $hasInsufficientStock = false;
         // Map items
         $items = $req->items->map(function ($item) use (&$hasInsufficientStock) {
-            // Count stock quantity of units in status 'tersedia' and no user_id assigned
+            // Count stock quantity of units in status 'tersedia'
             $availableStock = Unit::whereHas('lot', function ($q) use ($item) {
                 $q->where('barang_id', $item->barang_id);
             })->where('status', 'tersedia')
-              ->whereNull('user_id')
               ->count();
 
             if ($availableStock < $item->quantity_requested) {
@@ -200,7 +199,6 @@ class InboxController extends Controller
                     $units = Unit::whereHas('lot', function ($q) use ($item) {
                         $q->where('barang_id', $item->barang_id);
                     })->where('status', 'tersedia')
-                      ->whereNull('user_id')
                       ->limit($item->quantity_requested)
                       ->get();
 
@@ -215,9 +213,14 @@ class InboxController extends Controller
                             'assigned_at' => now(),
                         ]);
 
-                        // Reserve unit
+                        // Reserve unit status
+                        $isBorrow = (bool) $req->start_date;
+                        $status = 'dipakai';
+                        if ($isBorrow && !$unit->is_vehicle) {
+                            $status = 'dipinjam';
+                        }
                         $unit->update([
-                            'user_id' => $req->user_id,
+                            'status' => $status,
                         ]);
                     }
                 }

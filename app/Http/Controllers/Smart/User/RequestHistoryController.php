@@ -239,7 +239,6 @@ class RequestHistoryController extends Controller
                 }
                 $asn->unit->update([
                     'status' => $status,
-                    'user_id' => $req->user_id,
                 ]);
             }
         }

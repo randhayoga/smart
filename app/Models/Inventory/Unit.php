@@ -33,7 +33,6 @@ class Unit extends Model
         'price',
         'image_url',
         'vehicle_registration',
-        'user_id',
     ];
 
     protected $casts = [
@@ -43,11 +42,6 @@ class Unit extends Model
     public function lot(): BelongsTo
     {
         return $this->belongsTo(Lot::class);
-    }
-
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(\App\Models\AdmUser::class, 'user_id');
     }
 
     public function location(): BelongsTo

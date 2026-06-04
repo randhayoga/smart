@@ -157,7 +157,6 @@ class ReturnController extends Controller
             foreach ($assignments as $asn) {
                 $asn->unit->update([
                     'status' => 'tersedia',
-                    'user_id' => null,
                 ]);
                 $asn->update(['completed_at' => now()]);
             }
