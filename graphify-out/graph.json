@@ -328,6 +328,60 @@
       "norm_label": ".action()"
     },
     {
+      "label": "ManajemenStokController.php",
+      "file_type": "code",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStokController.php",
+      "source_location": "L1",
+      "id": "admin_manajemenstokcontroller",
+      "community": 174,
+      "norm_label": "manajemenstokcontroller.php"
+    },
+    {
+      "label": "ManajemenStokController",
+      "file_type": "code",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStokController.php",
+      "source_location": "L10",
+      "id": "admin_manajemenstokcontroller_manajemenstokcontroller",
+      "community": 174,
+      "norm_label": "manajemenstokcontroller"
+    },
+    {
+      "label": ".index()",
+      "file_type": "code",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStokController.php",
+      "source_location": "L15",
+      "id": "admin_manajemenstokcontroller_manajemenstokcontroller_index",
+      "community": 174,
+      "norm_label": ".index()"
+    },
+    {
+      "label": "Request",
+      "file_type": "code",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStokController.php",
+      "source_location": "L15",
+      "id": "app_http_controllers_smart_admin_manajemenstokcontroller_php_request",
+      "community": 174,
+      "norm_label": "request"
+    },
+    {
+      "label": "Response",
+      "file_type": "code",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStokController.php",
+      "source_location": "L15",
+      "id": "app_http_controllers_smart_admin_manajemenstokcontroller_php_response",
+      "community": 174,
+      "norm_label": "response"
+    },
+    {
+      "label": ".show()",
+      "file_type": "code",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStokController.php",
+      "source_location": "L62",
+      "id": "admin_manajemenstokcontroller_manajemenstokcontroller_show",
+      "community": 174,
+      "norm_label": ".show()"
+    },
+    {
       "label": "BarangController.php",
       "file_type": "code",
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/BarangController.php",
@@ -661,58 +715,49 @@
       "norm_label": ".destroy()"
     },
     {
-      "label": "ManajemenStokController.php",
+      "label": "MasterController.php",
       "file_type": "code",
-      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStokController.php",
+      "source_file": "app/Http/Controllers/Smart/Admin/MasterController.php",
       "source_location": "L1",
-      "id": "admin_manajemenstokcontroller",
-      "community": 0,
-      "norm_label": "manajemenstokcontroller.php"
+      "id": "admin_mastercontroller",
+      "community": 3,
+      "norm_label": "mastercontroller.php"
     },
     {
-      "label": "ManajemenStokController",
+      "label": "MasterController",
       "file_type": "code",
-      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStokController.php",
-      "source_location": "L10",
-      "id": "admin_manajemenstokcontroller_manajemenstokcontroller",
-      "community": 0,
-      "norm_label": "manajemenstokcontroller"
+      "source_file": "app/Http/Controllers/Smart/Admin/MasterController.php",
+      "source_location": "L19",
+      "id": "admin_mastercontroller_mastercontroller",
+      "community": 3,
+      "norm_label": "mastercontroller"
     },
     {
       "label": ".index()",
       "file_type": "code",
-      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStokController.php",
-      "source_location": "L15",
-      "id": "admin_manajemenstokcontroller_manajemenstokcontroller_index",
-      "community": 0,
+      "source_file": "app/Http/Controllers/Smart/Admin/MasterController.php",
+      "source_location": "L24",
+      "id": "admin_mastercontroller_mastercontroller_index",
+      "community": 3,
       "norm_label": ".index()"
     },
     {
       "label": "Request",
       "file_type": "code",
-      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStokController.php",
-      "source_location": "L15",
-      "id": "app_http_controllers_smart_admin_manajemenstokcontroller_php_request",
-      "community": 0,
+      "source_file": "app/Http/Controllers/Smart/Admin/MasterController.php",
+      "source_location": "L24",
+      "id": "app_http_controllers_smart_admin_mastercontroller_php_request",
+      "community": 3,
       "norm_label": "request"
     },
     {
       "label": "Response",
       "file_type": "code",
-      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStokController.php",
-      "source_location": "L15",
-      "id": "app_http_controllers_smart_admin_manajemenstokcontroller_php_response",
-      "community": 0,
+      "source_file": "app/Http/Controllers/Smart/Admin/MasterController.php",
+      "source_location": "L24",
+      "id": "app_http_controllers_smart_admin_mastercontroller_php_response",
+      "community": 3,
       "norm_label": "response"
-    },
-    {
-      "label": ".show()",
-      "file_type": "code",
-      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStokController.php",
-      "source_location": "L62",
-      "id": "admin_manajemenstokcontroller_manajemenstokcontroller_show",
-      "community": 0,
-      "norm_label": ".show()"
     },
     {
       "label": "BrandController.php",
@@ -1381,57 +1426,12 @@
       "norm_label": ".destroy()"
     },
     {
-      "label": "MasterController.php",
-      "file_type": "code",
-      "source_file": "app/Http/Controllers/Smart/Admin/MasterController.php",
-      "source_location": "L1",
-      "id": "admin_mastercontroller",
-      "community": 3,
-      "norm_label": "mastercontroller.php"
-    },
-    {
-      "label": "MasterController",
-      "file_type": "code",
-      "source_file": "app/Http/Controllers/Smart/Admin/MasterController.php",
-      "source_location": "L19",
-      "id": "admin_mastercontroller_mastercontroller",
-      "community": 3,
-      "norm_label": "mastercontroller"
-    },
-    {
-      "label": ".index()",
-      "file_type": "code",
-      "source_file": "app/Http/Controllers/Smart/Admin/MasterController.php",
-      "source_location": "L24",
-      "id": "admin_mastercontroller_mastercontroller_index",
-      "community": 3,
-      "norm_label": ".index()"
-    },
-    {
-      "label": "Request",
-      "file_type": "code",
-      "source_file": "app/Http/Controllers/Smart/Admin/MasterController.php",
-      "source_location": "L24",
-      "id": "app_http_controllers_smart_admin_mastercontroller_php_request",
-      "community": 3,
-      "norm_label": "request"
-    },
-    {
-      "label": "Response",
-      "file_type": "code",
-      "source_file": "app/Http/Controllers/Smart/Admin/MasterController.php",
-      "source_location": "L24",
-      "id": "app_http_controllers_smart_admin_mastercontroller_php_response",
-      "community": 3,
-      "norm_label": "response"
-    },
-    {
       "label": "ReturnController.php",
       "file_type": "code",
       "source_file": "app/Http/Controllers/Smart/Admin/ReturnController.php",
       "source_location": "L1",
       "id": "admin_returncontroller",
-      "community": 8,
+      "community": 0,
       "norm_label": "returncontroller.php"
     },
     {
@@ -1440,7 +1440,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ReturnController.php",
       "source_location": "L14",
       "id": "admin_returncontroller_returncontroller",
-      "community": 8,
+      "community": 0,
       "norm_label": "returncontroller"
     },
     {
@@ -1449,7 +1449,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ReturnController.php",
       "source_location": "L19",
       "id": "admin_returncontroller_returncontroller_index",
-      "community": 8,
+      "community": 0,
       "norm_label": ".index()"
     },
     {
@@ -1458,7 +1458,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ReturnController.php",
       "source_location": "L67",
       "id": "admin_returncontroller_returncontroller_show",
-      "community": 8,
+      "community": 0,
       "norm_label": ".show()"
     },
     {
@@ -1467,7 +1467,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ReturnController.php",
       "source_location": "L147",
       "id": "admin_returncontroller_returncontroller_confirm",
-      "community": 8,
+      "community": 0,
       "norm_label": ".confirm()"
     },
     {
@@ -1476,7 +1476,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ReturnController.php",
       "source_location": "L147",
       "id": "app_http_controllers_smart_admin_returncontroller_php_request",
-      "community": 8,
+      "community": 0,
       "norm_label": "request"
     },
     {
@@ -1485,7 +1485,7 @@
       "source_file": "app/Http/Controllers/Smart/Manager/ApprovalController.php",
       "source_location": "L1",
       "id": "manager_approvalcontroller",
-      "community": 174,
+      "community": 8,
       "norm_label": "approvalcontroller.php"
     },
     {
@@ -1494,7 +1494,7 @@
       "source_file": "app/Http/Controllers/Smart/Manager/ApprovalController.php",
       "source_location": "L16",
       "id": "manager_approvalcontroller_approvalcontroller",
-      "community": 174,
+      "community": 8,
       "norm_label": "approvalcontroller"
     },
     {
@@ -1503,7 +1503,7 @@
       "source_file": "app/Http/Controllers/Smart/Manager/ApprovalController.php",
       "source_location": "L21",
       "id": "manager_approvalcontroller_approvalcontroller_maprequest",
-      "community": 174,
+      "community": 8,
       "norm_label": ".maprequest()"
     },
     {
@@ -1512,7 +1512,7 @@
       "source_file": "app/Http/Controllers/Smart/Manager/ApprovalController.php",
       "source_location": "L100",
       "id": "manager_approvalcontroller_approvalcontroller_index",
-      "community": 174,
+      "community": 8,
       "norm_label": ".index()"
     },
     {
@@ -1521,7 +1521,7 @@
       "source_file": "app/Http/Controllers/Smart/Manager/ApprovalController.php",
       "source_location": "L100",
       "id": "app_http_controllers_smart_manager_approvalcontroller_php_request",
-      "community": 174,
+      "community": 8,
       "norm_label": "request"
     },
     {
@@ -1530,7 +1530,7 @@
       "source_file": "app/Http/Controllers/Smart/Manager/ApprovalController.php",
       "source_location": "L100",
       "id": "app_http_controllers_smart_manager_approvalcontroller_php_response",
-      "community": 174,
+      "community": 8,
       "norm_label": "response"
     },
     {
@@ -1539,7 +1539,7 @@
       "source_file": "app/Http/Controllers/Smart/Manager/ApprovalController.php",
       "source_location": "L122",
       "id": "manager_approvalcontroller_approvalcontroller_approvedlist",
-      "community": 174,
+      "community": 8,
       "norm_label": ".approvedlist()"
     },
     {
@@ -1548,7 +1548,7 @@
       "source_file": "app/Http/Controllers/Smart/Manager/ApprovalController.php",
       "source_location": "L144",
       "id": "manager_approvalcontroller_approvalcontroller_show",
-      "community": 174,
+      "community": 8,
       "norm_label": ".show()"
     },
     {
@@ -1557,7 +1557,7 @@
       "source_file": "app/Http/Controllers/Smart/Manager/ApprovalController.php",
       "source_location": "L164",
       "id": "manager_approvalcontroller_approvalcontroller_action",
-      "community": 174,
+      "community": 8,
       "norm_label": ".action()"
     },
     {
@@ -2196,7 +2196,7 @@
       "source_file": "",
       "source_location": "",
       "id": "hasfactory",
-      "community": 28,
+      "community": 19,
       "norm_label": "hasfactory"
     },
     {
@@ -2421,7 +2421,7 @@
       "source_file": "",
       "source_location": "",
       "id": "model",
-      "community": 19,
+      "community": 54,
       "norm_label": "model"
     },
     {
@@ -3537,7 +3537,7 @@
       "source_file": "app/Models/Master/Vendor.php",
       "source_location": "L1",
       "id": "master_vendor",
-      "community": 28,
+      "community": 19,
       "norm_label": "vendor.php"
     },
     {
@@ -3546,7 +3546,7 @@
       "source_file": "app/Models/Master/Vendor.php",
       "source_location": "L9",
       "id": "master_vendor_vendor",
-      "community": 28,
+      "community": 19,
       "norm_label": "vendor"
     },
     {
@@ -3555,7 +3555,7 @@
       "source_file": "app/Models/Master/Vendor.php",
       "source_location": "L21",
       "id": "master_vendor_vendor_lots",
-      "community": 28,
+      "community": 19,
       "norm_label": ".lots()"
     },
     {
@@ -3564,7 +3564,7 @@
       "source_file": "app/Models/Master/Vendor.php",
       "source_location": "L21",
       "id": "app_models_master_vendor_php_hasmany",
-      "community": 28,
+      "community": 19,
       "norm_label": "hasmany"
     },
     {
@@ -3852,7 +3852,7 @@
       "source_file": "app/Models/Request/RequestHandover.php",
       "source_location": "L1",
       "id": "request_requesthandover",
-      "community": 4,
+      "community": 54,
       "norm_label": "requesthandover.php"
     },
     {
@@ -3861,7 +3861,7 @@
       "source_file": "app/Models/Request/RequestHandover.php",
       "source_location": "L8",
       "id": "request_requesthandover_requesthandover",
-      "community": 4,
+      "community": 54,
       "norm_label": "requesthandover"
     },
     {
@@ -3870,7 +3870,7 @@
       "source_file": "app/Models/Request/RequestHandover.php",
       "source_location": "L32",
       "id": "request_requesthandover_requesthandover_request",
-      "community": 4,
+      "community": 54,
       "norm_label": ".request()"
     },
     {
@@ -3879,7 +3879,7 @@
       "source_file": "app/Models/Request/RequestHandover.php",
       "source_location": "L32",
       "id": "app_models_request_requesthandover_php_belongsto",
-      "community": 4,
+      "community": 54,
       "norm_label": "belongsto"
     },
     {
@@ -3951,7 +3951,7 @@
       "source_file": "app/Models/Request/RequestReturn.php",
       "source_location": "L1",
       "id": "request_requestreturn",
-      "community": 8,
+      "community": 54,
       "norm_label": "requestreturn.php"
     },
     {
@@ -3960,7 +3960,7 @@
       "source_file": "app/Models/Request/RequestReturn.php",
       "source_location": "L8",
       "id": "request_requestreturn_requestreturn",
-      "community": 8,
+      "community": 54,
       "norm_label": "requestreturn"
     },
     {
@@ -3969,7 +3969,7 @@
       "source_file": "app/Models/Request/RequestReturn.php",
       "source_location": "L27",
       "id": "request_requestreturn_requestreturn_request",
-      "community": 8,
+      "community": 54,
       "norm_label": ".request()"
     },
     {
@@ -3978,7 +3978,7 @@
       "source_file": "app/Models/Request/RequestReturn.php",
       "source_location": "L27",
       "id": "app_models_request_requestreturn_php_belongsto",
-      "community": 8,
+      "community": 54,
       "norm_label": "belongsto"
     },
     {
@@ -4032,7 +4032,7 @@
       "source_file": "app/Models/Request/RequestUnitAssignment.php",
       "source_location": "L1",
       "id": "request_requestunitassignment",
-      "community": 8,
+      "community": 0,
       "norm_label": "requestunitassignment.php"
     },
     {
@@ -4041,7 +4041,7 @@
       "source_file": "app/Models/Request/RequestUnitAssignment.php",
       "source_location": "L9",
       "id": "request_requestunitassignment_requestunitassignment",
-      "community": 8,
+      "community": 0,
       "norm_label": "requestunitassignment"
     },
     {
@@ -4050,7 +4050,7 @@
       "source_file": "app/Models/Request/RequestUnitAssignment.php",
       "source_location": "L29",
       "id": "request_requestunitassignment_requestunitassignment_requestitem",
-      "community": 8,
+      "community": 0,
       "norm_label": ".requestitem()"
     },
     {
@@ -4059,7 +4059,7 @@
       "source_file": "app/Models/Request/RequestUnitAssignment.php",
       "source_location": "L29",
       "id": "app_models_request_requestunitassignment_php_belongsto",
-      "community": 8,
+      "community": 0,
       "norm_label": "belongsto"
     },
     {
@@ -4068,7 +4068,7 @@
       "source_file": "app/Models/Request/RequestUnitAssignment.php",
       "source_location": "L34",
       "id": "request_requestunitassignment_requestunitassignment_unit",
-      "community": 8,
+      "community": 0,
       "norm_label": ".unit()"
     },
     {
@@ -4176,7 +4176,7 @@
       "source_file": "app/Models/TbRbs.php",
       "source_location": "L1",
       "id": "models_tbrbs",
-      "community": 19,
+      "community": 177,
       "norm_label": "tbrbs.php"
     },
     {
@@ -4185,7 +4185,7 @@
       "source_file": "app/Models/TbRbs.php",
       "source_location": "L9",
       "id": "models_tbrbs_tbrbs",
-      "community": 19,
+      "community": 177,
       "norm_label": "tbrbs"
     },
     {
@@ -4194,7 +4194,7 @@
       "source_file": "app/Models/TbRbs.php",
       "source_location": "L27",
       "id": "models_tbrbs_tbrbs_assignprojects",
-      "community": 19,
+      "community": 177,
       "norm_label": ".assignprojects()"
     },
     {
@@ -4203,7 +4203,7 @@
       "source_file": "app/Models/TbRbs.php",
       "source_location": "L27",
       "id": "app_models_tbrbs_php_hasmany",
-      "community": 19,
+      "community": 177,
       "norm_label": "hasmany"
     },
     {
@@ -5067,7 +5067,7 @@
       "source_file": "database/factories/HrdEmployeeFactory.php",
       "source_location": "L13",
       "id": "factories_hrdemployeefactory_hrdemployeefactory_definition",
-      "community": 1,
+      "community": 171,
       "norm_label": ".definition()"
     },
     {
@@ -5670,7 +5670,7 @@
       "source_file": "database/seeders/BarangSeeder.php",
       "source_location": "L1",
       "id": "seeders_barangseeder",
-      "community": 9,
+      "community": 17,
       "norm_label": "barangseeder.php"
     },
     {
@@ -5679,7 +5679,7 @@
       "source_file": "database/seeders/BarangSeeder.php",
       "source_location": "L10",
       "id": "seeders_barangseeder_barangseeder",
-      "community": 9,
+      "community": 17,
       "norm_label": "barangseeder"
     },
     {
@@ -5688,7 +5688,7 @@
       "source_file": "",
       "source_location": "",
       "id": "seeder",
-      "community": 9,
+      "community": 17,
       "norm_label": "seeder"
     },
     {
@@ -5697,7 +5697,7 @@
       "source_file": "database/seeders/BarangSeeder.php",
       "source_location": "L15",
       "id": "seeders_barangseeder_barangseeder_run",
-      "community": 9,
+      "community": 17,
       "norm_label": ".run()"
     },
     {
@@ -5706,7 +5706,7 @@
       "source_file": "database/seeders/DatabaseSeeder.php",
       "source_location": "L1",
       "id": "seeders_databaseseeder",
-      "community": 9,
+      "community": 17,
       "norm_label": "databaseseeder.php"
     },
     {
@@ -5715,7 +5715,7 @@
       "source_file": "database/seeders/DatabaseSeeder.php",
       "source_location": "L8",
       "id": "seeders_databaseseeder_databaseseeder",
-      "community": 9,
+      "community": 17,
       "norm_label": "databaseseeder"
     },
     {
@@ -5724,7 +5724,7 @@
       "source_file": "database/seeders/DatabaseSeeder.php",
       "source_location": "L13",
       "id": "seeders_databaseseeder_databaseseeder_run",
-      "community": 9,
+      "community": 17,
       "norm_label": ".run()"
     },
     {
@@ -5733,7 +5733,7 @@
       "source_file": "database/seeders/LotSeeder.php",
       "source_location": "L1",
       "id": "seeders_lotseeder",
-      "community": 9,
+      "community": 17,
       "norm_label": "lotseeder.php"
     },
     {
@@ -5742,7 +5742,7 @@
       "source_file": "database/seeders/LotSeeder.php",
       "source_location": "L11",
       "id": "seeders_lotseeder_lotseeder",
-      "community": 9,
+      "community": 17,
       "norm_label": "lotseeder"
     },
     {
@@ -5751,7 +5751,7 @@
       "source_file": "database/seeders/LotSeeder.php",
       "source_location": "L16",
       "id": "seeders_lotseeder_lotseeder_run",
-      "community": 9,
+      "community": 17,
       "norm_label": ".run()"
     },
     {
@@ -5760,7 +5760,7 @@
       "source_file": "database/seeders/MasterSeeder.php",
       "source_location": "L1",
       "id": "seeders_masterseeder",
-      "community": 9,
+      "community": 3,
       "norm_label": "masterseeder.php"
     },
     {
@@ -5769,7 +5769,7 @@
       "source_file": "database/seeders/MasterSeeder.php",
       "source_location": "L16",
       "id": "seeders_masterseeder_masterseeder",
-      "community": 9,
+      "community": 3,
       "norm_label": "masterseeder"
     },
     {
@@ -5778,7 +5778,7 @@
       "source_file": "database/seeders/MasterSeeder.php",
       "source_location": "L21",
       "id": "seeders_masterseeder_masterseeder_run",
-      "community": 9,
+      "community": 3,
       "norm_label": ".run()"
     },
     {
@@ -5787,7 +5787,7 @@
       "source_file": "database/seeders/UserSeeder.php",
       "source_location": "L1",
       "id": "seeders_userseeder",
-      "community": 9,
+      "community": 17,
       "norm_label": "userseeder.php"
     },
     {
@@ -5796,7 +5796,7 @@
       "source_file": "database/seeders/UserSeeder.php",
       "source_location": "L11",
       "id": "seeders_userseeder_userseeder",
-      "community": 9,
+      "community": 17,
       "norm_label": "userseeder"
     },
     {
@@ -5805,7 +5805,7 @@
       "source_file": "database/seeders/UserSeeder.php",
       "source_location": "L16",
       "id": "seeders_userseeder_userseeder_run",
-      "community": 9,
+      "community": 17,
       "norm_label": ".run()"
     },
     {
@@ -5830,7 +5830,7 @@
         "language": "bash",
         "kind": "bash_entrypoint"
       },
-      "id": "home_ran_desktop_ptre_app_smart_docker_entrypoint_sh__entry",
+      "id": "d_magang_web_app_4_smart_docker_entrypoint_sh__entry",
       "community": 83,
       "norm_label": "entrypoint.sh script"
     },
@@ -7836,7 +7836,7 @@
       "label": "if()",
       "file_type": "code",
       "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailLOTNonConsumables.vue",
-      "source_location": "L466",
+      "source_location": "L521",
       "id": "manajemenstok_detaillotnonconsumables_if",
       "community": 88,
       "norm_label": "if()"
@@ -9172,6 +9172,19 @@
       "id": "peraturan",
       "community": 152,
       "norm_label": "peraturan.md"
+    },
+    {
+      "label": "entrypoint.sh script",
+      "file_type": "code",
+      "source_file": "docker/entrypoint.sh",
+      "source_location": "L1",
+      "metadata": {
+        "language": "bash",
+        "kind": "bash_entrypoint"
+      },
+      "community": 83,
+      "norm_label": "entrypoint.sh script",
+      "id": "home_ran_desktop_ptre_app_smart_docker_entrypoint_sh__entry"
     }
   ],
   "links": [
@@ -10378,6 +10391,102 @@
       "target": "request_requestunitassignment_requestunitassignment"
     },
     {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStokController.php",
+      "source_location": "L10",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "admin_manajemenstokcontroller",
+      "target": "admin_manajemenstokcontroller_manajemenstokcontroller"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStokController.php",
+      "source_location": "L6",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "admin_manajemenstokcontroller",
+      "target": "app_http_controllers_smart_admin_manajemenstokcontroller_php_request"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStokController.php",
+      "source_location": "L8",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "admin_manajemenstokcontroller",
+      "target": "app_http_controllers_smart_admin_manajemenstokcontroller_php_response"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStokController.php",
+      "source_location": "L15",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "admin_manajemenstokcontroller_manajemenstokcontroller",
+      "target": "admin_manajemenstokcontroller_manajemenstokcontroller_index"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStokController.php",
+      "source_location": "L62",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "admin_manajemenstokcontroller_manajemenstokcontroller",
+      "target": "admin_manajemenstokcontroller_manajemenstokcontroller_show"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStokController.php",
+      "source_location": "L15",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "admin_manajemenstokcontroller_manajemenstokcontroller_index",
+      "target": "app_http_controllers_smart_admin_manajemenstokcontroller_php_request"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStokController.php",
+      "source_location": "L15",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "admin_manajemenstokcontroller_manajemenstokcontroller_index",
+      "target": "app_http_controllers_smart_admin_manajemenstokcontroller_php_response"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStokController.php",
+      "source_location": "L62",
+      "weight": 1.0,
+      "context": "parameter_type",
+      "confidence_score": 1.0,
+      "source": "admin_manajemenstokcontroller_manajemenstokcontroller_show",
+      "target": "app_http_controllers_smart_admin_manajemenstokcontroller_php_request"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStokController.php",
+      "source_location": "L62",
+      "weight": 1.0,
+      "context": "return_type",
+      "confidence_score": 1.0,
+      "source": "admin_manajemenstokcontroller_manajemenstokcontroller_show",
+      "target": "app_http_controllers_smart_admin_manajemenstokcontroller_php_response"
+    },
+    {
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -11238,98 +11347,165 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
-      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStokController.php",
-      "source_location": "L10",
+      "source_file": "app/Http/Controllers/Smart/Admin/MasterController.php",
+      "source_location": "L19",
       "weight": 1.0,
       "confidence_score": 1.0,
-      "source": "admin_manajemenstokcontroller",
-      "target": "admin_manajemenstokcontroller_manajemenstokcontroller"
+      "source": "admin_mastercontroller",
+      "target": "admin_mastercontroller_mastercontroller"
     },
     {
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
-      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStokController.php",
+      "source_file": "app/Http/Controllers/Smart/Admin/MasterController.php",
+      "source_location": "L15",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "admin_mastercontroller",
+      "target": "app_http_controllers_smart_admin_mastercontroller_php_request"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/MasterController.php",
+      "source_location": "L17",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "admin_mastercontroller",
+      "target": "app_http_controllers_smart_admin_mastercontroller_php_response"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/MasterController.php",
       "source_location": "L6",
       "weight": 1.0,
       "confidence_score": 1.0,
-      "source": "admin_manajemenstokcontroller",
-      "target": "app_http_controllers_smart_admin_manajemenstokcontroller_php_request"
+      "source": "admin_mastercontroller",
+      "target": "brand"
     },
     {
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
-      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStokController.php",
+      "source_file": "app/Http/Controllers/Smart/Admin/MasterController.php",
+      "source_location": "L7",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "admin_mastercontroller",
+      "target": "category"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/MasterController.php",
+      "source_location": "L9",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "admin_mastercontroller",
+      "target": "floor"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/MasterController.php",
       "source_location": "L8",
       "weight": 1.0,
       "confidence_score": 1.0,
-      "source": "admin_manajemenstokcontroller",
-      "target": "app_http_controllers_smart_admin_manajemenstokcontroller_php_response"
+      "source": "admin_mastercontroller",
+      "target": "location"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/MasterController.php",
+      "source_location": "L11",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "admin_mastercontroller",
+      "target": "organizer"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/MasterController.php",
+      "source_location": "L10",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "admin_mastercontroller",
+      "target": "room"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/MasterController.php",
+      "source_location": "L12",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "admin_mastercontroller",
+      "target": "subcategory"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/MasterController.php",
+      "source_location": "L13",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "admin_mastercontroller",
+      "target": "uom"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/MasterController.php",
+      "source_location": "L14",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "admin_mastercontroller",
+      "target": "vendor"
     },
     {
       "relation": "method",
       "confidence": "EXTRACTED",
-      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStokController.php",
-      "source_location": "L15",
+      "source_file": "app/Http/Controllers/Smart/Admin/MasterController.php",
+      "source_location": "L24",
       "weight": 1.0,
       "confidence_score": 1.0,
-      "source": "admin_manajemenstokcontroller_manajemenstokcontroller",
-      "target": "admin_manajemenstokcontroller_manajemenstokcontroller_index"
-    },
-    {
-      "relation": "method",
-      "confidence": "EXTRACTED",
-      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStokController.php",
-      "source_location": "L62",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "admin_manajemenstokcontroller_manajemenstokcontroller",
-      "target": "admin_manajemenstokcontroller_manajemenstokcontroller_show"
+      "source": "admin_mastercontroller_mastercontroller",
+      "target": "admin_mastercontroller_mastercontroller_index"
     },
     {
       "relation": "references",
       "confidence": "EXTRACTED",
-      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStokController.php",
-      "source_location": "L15",
+      "source_file": "app/Http/Controllers/Smart/Admin/MasterController.php",
+      "source_location": "L24",
       "weight": 1.0,
       "context": "parameter_type",
       "confidence_score": 1.0,
-      "source": "admin_manajemenstokcontroller_manajemenstokcontroller_index",
-      "target": "app_http_controllers_smart_admin_manajemenstokcontroller_php_request"
+      "source": "admin_mastercontroller_mastercontroller_index",
+      "target": "app_http_controllers_smart_admin_mastercontroller_php_request"
     },
     {
       "relation": "references",
       "confidence": "EXTRACTED",
-      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStokController.php",
-      "source_location": "L15",
+      "source_file": "app/Http/Controllers/Smart/Admin/MasterController.php",
+      "source_location": "L24",
       "weight": 1.0,
       "context": "return_type",
       "confidence_score": 1.0,
-      "source": "admin_manajemenstokcontroller_manajemenstokcontroller_index",
-      "target": "app_http_controllers_smart_admin_manajemenstokcontroller_php_response"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStokController.php",
-      "source_location": "L62",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "confidence_score": 1.0,
-      "source": "admin_manajemenstokcontroller_manajemenstokcontroller_show",
-      "target": "app_http_controllers_smart_admin_manajemenstokcontroller_php_request"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStokController.php",
-      "source_location": "L62",
-      "weight": 1.0,
-      "context": "return_type",
-      "confidence_score": 1.0,
-      "source": "admin_manajemenstokcontroller_manajemenstokcontroller_show",
-      "target": "app_http_controllers_smart_admin_manajemenstokcontroller_php_response"
+      "source": "admin_mastercontroller_mastercontroller_index",
+      "target": "app_http_controllers_smart_admin_mastercontroller_php_response"
     },
     {
       "relation": "imports",
@@ -11479,17 +11655,6 @@
       "context": "parameter_type",
       "confidence_score": 1.0,
       "source": "master_brandcontroller_brandcontroller_update",
-      "target": "brand"
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "app/Http/Controllers/Smart/Admin/MasterController.php",
-      "source_location": "L6",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "admin_mastercontroller",
       "target": "brand"
     },
     {
@@ -11752,17 +11917,6 @@
       "target": "category"
     },
     {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "app/Http/Controllers/Smart/Admin/MasterController.php",
-      "source_location": "L7",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "admin_mastercontroller",
-      "target": "category"
-    },
-    {
       "relation": "references",
       "confidence": "EXTRACTED",
       "source_file": "app/Http/Controllers/Smart/Admin/Master/CategoryController.php",
@@ -11965,17 +12119,6 @@
       "context": "parameter_type",
       "confidence_score": 1.0,
       "source": "master_floorcontroller_floorcontroller_update",
-      "target": "floor"
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "app/Http/Controllers/Smart/Admin/MasterController.php",
-      "source_location": "L9",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "admin_mastercontroller",
       "target": "floor"
     },
     {
@@ -12231,17 +12374,6 @@
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
-      "source_file": "app/Http/Controllers/Smart/Admin/MasterController.php",
-      "source_location": "L8",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "admin_mastercontroller",
-      "target": "location"
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
       "source_file": "tests/Feature/LotControllerTest.php",
       "source_location": "L9",
       "weight": 1.0,
@@ -12491,17 +12623,6 @@
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
-      "source_file": "app/Http/Controllers/Smart/Admin/MasterController.php",
-      "source_location": "L11",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "admin_mastercontroller",
-      "target": "organizer"
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
       "source_file": "tests/Feature/LotControllerTest.php",
       "source_location": "L7",
       "weight": 1.0,
@@ -12712,17 +12833,6 @@
       "context": "parameter_type",
       "confidence_score": 1.0,
       "source": "master_roomcontroller_roomcontroller_update",
-      "target": "room"
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "app/Http/Controllers/Smart/Admin/MasterController.php",
-      "source_location": "L10",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "admin_mastercontroller",
       "target": "room"
     },
     {
@@ -12967,17 +13077,6 @@
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
-      "source_file": "app/Http/Controllers/Smart/Admin/MasterController.php",
-      "source_location": "L12",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "admin_mastercontroller",
-      "target": "subcategory"
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
       "source_file": "app/Models/Inventory/Barang.php",
       "source_location": "L9",
       "weight": 1.0,
@@ -13177,17 +13276,6 @@
       "context": "parameter_type",
       "confidence_score": 1.0,
       "source": "master_uomcontroller_uomcontroller_update",
-      "target": "uom"
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "app/Http/Controllers/Smart/Admin/MasterController.php",
-      "source_location": "L13",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "admin_mastercontroller",
       "target": "uom"
     },
     {
@@ -13410,17 +13498,6 @@
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
-      "source_file": "app/Http/Controllers/Smart/Admin/MasterController.php",
-      "source_location": "L14",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "admin_mastercontroller",
-      "target": "vendor"
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
       "source_file": "tests/Feature/LotControllerTest.php",
       "source_location": "L8",
       "weight": 1.0,
@@ -13482,70 +13559,6 @@
       "confidence_score": 1.0,
       "source": "seeders_masterseeder",
       "target": "vendor"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "app/Http/Controllers/Smart/Admin/MasterController.php",
-      "source_location": "L19",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "admin_mastercontroller",
-      "target": "admin_mastercontroller_mastercontroller"
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "app/Http/Controllers/Smart/Admin/MasterController.php",
-      "source_location": "L15",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "admin_mastercontroller",
-      "target": "app_http_controllers_smart_admin_mastercontroller_php_request"
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "app/Http/Controllers/Smart/Admin/MasterController.php",
-      "source_location": "L17",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "admin_mastercontroller",
-      "target": "app_http_controllers_smart_admin_mastercontroller_php_response"
-    },
-    {
-      "relation": "method",
-      "confidence": "EXTRACTED",
-      "source_file": "app/Http/Controllers/Smart/Admin/MasterController.php",
-      "source_location": "L24",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "admin_mastercontroller_mastercontroller",
-      "target": "admin_mastercontroller_mastercontroller_index"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "app/Http/Controllers/Smart/Admin/MasterController.php",
-      "source_location": "L24",
-      "weight": 1.0,
-      "context": "parameter_type",
-      "confidence_score": 1.0,
-      "source": "admin_mastercontroller_mastercontroller_index",
-      "target": "app_http_controllers_smart_admin_mastercontroller_php_request"
-    },
-    {
-      "relation": "references",
-      "confidence": "EXTRACTED",
-      "source_file": "app/Http/Controllers/Smart/Admin/MasterController.php",
-      "source_location": "L24",
-      "weight": 1.0,
-      "context": "return_type",
-      "confidence_score": 1.0,
-      "source": "admin_mastercontroller_mastercontroller_index",
-      "target": "app_http_controllers_smart_admin_mastercontroller_php_response"
     },
     {
       "relation": "contains",
@@ -21081,6 +21094,16 @@
       "source_file": "docker/entrypoint.sh",
       "source_location": "L1",
       "weight": 1.0,
+      "source": "docker_entrypoint",
+      "target": "d_magang_web_app_4_smart_docker_entrypoint_sh__entry",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "docker/entrypoint.sh",
+      "source_location": "L1",
+      "weight": 1.0,
       "confidence_score": 1.0,
       "source": "docker_entrypoint",
       "target": "home_ran_desktop_ptre_app_smart_docker_entrypoint_sh__entry"
@@ -23996,5 +24019,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "189a98d15f6e8aa4ebc8f6086e70838bdfa5c0a0"
+  "built_at_commit": "6b7cd456e5e38cd764b2b0e5993f16c5f6e903fe"
 }
