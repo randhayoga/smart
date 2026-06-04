@@ -317,6 +317,8 @@ const assetForm = useForm({
   is_bulk: false,
   bulk_quantity: '' as string | number,
   vehicle_registration: '',
+  memo_file: null as File | null,
+  memo_file_name: '',
 });
 
 const generateAssetCode = () => {
@@ -352,6 +354,8 @@ const openCreateAssetModal = () => {
   assetForm.is_bulk = false;
   assetForm.bulk_quantity = '';
   assetForm.vehicle_registration = '';
+  assetForm.memo_file = null;
+  assetForm.memo_file_name = '';
   isAssetModalOpen.value = true;
 };
 
@@ -372,6 +376,8 @@ const openEditAssetModal = (asset: any) => {
   assetForm.is_bulk = false;
   assetForm.bulk_quantity = '';
   assetForm.vehicle_registration = asset.vehicle_registration || '';
+  assetForm.memo_file = null;
+  assetForm.memo_file_name = asset.memo_file_name || '';
   isAssetModalOpen.value = true;
 };
 
@@ -424,6 +430,48 @@ const handleSamakanAssetPhoto = () => {
   }
 };
 
+const handleAssetMemoUpload = (e: any) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+  if (!allowedTypes.includes(file.type)) {
+    toast.error('Format file salah! Hanya diperbolehkan file .pdf, .jpg, .jpeg, atau .png');
+    return;
+  }
+
+  if (file.size > 2 * 1024 * 1024) {
+    toast.error('Gagal! Ukuran dokumen maksimal 2MB');
+    return;
+  }
+
+  assetForm.memo_file = file;
+  assetForm.memo_file_name = file.name;
+};
+
+const triggerAssetMemoInput = () => {
+  const input = document.getElementById('asset-memo-upload') as HTMLInputElement;
+  input?.click();
+};
+
+const viewAssetMemoInNewTab = () => {
+  if (assetForm.memo_file) {
+    const url = URL.createObjectURL(assetForm.memo_file);
+    window.open(url, '_blank');
+  } else if (assetModalMode.value === 'edit' && selectedAssetId.value) {
+    const asset = props.units.find(u => u.id === selectedAssetId.value);
+    if (asset && (asset as any).memo_path) {
+      window.open('/storage/' + (asset as any).memo_path, '_blank');
+    }
+  }
+};
+
+const handleSamakanAssetMemo = () => {
+  toast.success('Berita Acara / Memo disamakan dengan default.');
+  assetForm.memo_file = null;
+  assetForm.memo_file_name = 'Berita_Acara_Default.pdf';
+};
+
 const filteredFloorsForAsset = computed(() => {
   if (!assetForm.location_id) return [];
   return props.floors.filter(f => Number(f.location_id) === Number(assetForm.location_id));
@@ -458,6 +506,13 @@ watch(() => assetForm.floor_id, (newVal) => {
   }
 });
 
+watch(() => assetForm.condition, (newVal) => {
+  if (newVal !== 'Rusak') {
+    assetForm.memo_file = null;
+    assetForm.memo_file_name = '';
+  }
+});
+
 const parseCurrencyToNumber = (val: string | number) => {
   if (typeof val === 'number') return val;
   if (!val) return 0;
@@ -487,6 +542,7 @@ const isAssetFormValid = computed(() => {
          assetForm.condition && 
          assetForm.price !== '' && 
          (assetForm.image_url || assetForm.image_url_name) &&
+         assetForm.memo_file_name &&
          !assetForm.processing;
 
   if (!baseValid) return false;
@@ -519,8 +575,9 @@ const handleSaveAsset = () => {
     };
     if (isVehicle.value) {
       formData.vehicle_registration = data.vehicle_registration;
-      formData.floor_id = null;
-      formData.room_id = null;
+    }
+    if (data.memo_file) {
+      formData.memo_file = data.memo_file;
     }
     if (data.image_url) {
       formData.image_url = data.image_url;
@@ -684,13 +741,19 @@ const handleConfirmDelete = () => {
 
 // Bulk Edit & Export Logic
 const isBulkEditModalOpen = ref(false);
-const bulkEditForm = useForm({
+const bulkEditForm = ref({
   ids: [] as number[],
-  status: 'keep',
-  condition: 'keep',
-  location_id: 'keep' as string | number,
-  floor_id: 'keep' as string | number | null,
-  room_id: 'keep' as string | number | null,
+  price: '',
+  image_url: null as File | null,
+  image_url_name: '',
+  use_lot_image: false,
+  condition: '',
+  status: '',
+  location_id: '' as string | number,
+  floor_id: '' as string | number | null,
+  room_id: '' as string | number | null,
+  memo_file: null as File | null,
+  memo_file_name: '',
 });
 
 // Bulk Edit Vehicle states
@@ -706,6 +769,8 @@ const bulkVehicleEditForm = ref({
   location_id: '' as string | number,
   floor_id: '' as string | number | null,
   room_id: '' as string | number | null,
+  memo_file: null as File | null,
+  memo_file_name: '',
 });
 
 const openBulkVehicleEditModal = () => {
@@ -723,6 +788,8 @@ const openBulkVehicleEditModal = () => {
     location_id: '',
     floor_id: '',
     room_id: '',
+    memo_file: null,
+    memo_file_name: '',
   };
   isBulkVehicleEditModalOpen.value = true;
 };
@@ -837,68 +904,210 @@ const handleBulkVehicleSamakanRoom = () => {
   }
 };
 
+const handleBulkVehicleMemoUpload = (e: any) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+  if (!allowedTypes.includes(file.type)) {
+    toast.error('Format file salah! Hanya diperbolehkan file .pdf, .jpg, .jpeg, atau .png');
+    return;
+  }
+
+  if (file.size > 2 * 1024 * 1024) {
+    toast.error('Gagal! Ukuran dokumen maksimal 2MB');
+    return;
+  }
+
+  bulkVehicleEditForm.value.memo_file = file;
+  bulkVehicleEditForm.value.memo_file_name = file.name;
+};
+
+const triggerBulkVehicleMemoInput = () => {
+  const input = document.getElementById('bulk-vehicle-memo-upload') as HTMLInputElement;
+  input?.click();
+};
+
+const viewBulkVehicleMemoInNewTab = () => {
+  if (bulkVehicleEditForm.value.memo_file) {
+    const url = URL.createObjectURL(bulkVehicleEditForm.value.memo_file);
+    window.open(url, '_blank');
+  }
+};
+
+const handleBulkVehicleSamakanMemo = () => {
+  toast.success('Berita Acara / Memo disamakan dengan default.');
+  bulkVehicleEditForm.value.memo_file = null;
+  bulkVehicleEditForm.value.memo_file_name = 'Berita_Acara_Default.pdf';
+};
+
 const openBulkEditModal = () => {
   if (!dataTableRef.value || !dataTableRef.value.table) return;
   const selectedRows = dataTableRef.value.table.getFilteredSelectedRowModel().rows;
-  bulkEditForm.ids = selectedRows.map((row: any) => row.original.id);
-  bulkEditForm.status = 'keep';
-  bulkEditForm.condition = 'keep';
-  bulkEditForm.location_id = 'keep';
-  bulkEditForm.floor_id = 'keep';
-  bulkEditForm.room_id = 'keep';
+  
+  bulkEditForm.value = {
+    ids: selectedRows.map((row: any) => row.original.id),
+    price: '',
+    image_url: null,
+    image_url_name: '',
+    use_lot_image: false,
+    condition: '',
+    status: '',
+    location_id: '',
+    floor_id: '',
+    room_id: '',
+    memo_file: null,
+    memo_file_name: '',
+  };
   isBulkEditModalOpen.value = true;
 };
 
-const handleSaveBulkEdit = () => {
-  bulkEditForm.post('/smart/inventory/units/bulk-update', {
-    onSuccess: () => {
-      isBulkEditModalOpen.value = false;
-      if (dataTableRef.value && dataTableRef.value.table) {
-        dataTableRef.value.table.resetRowSelection();
-      }
-      toast.success('Aset berhasil diperbarui secara massal.');
-    }
-  });
+const handleBulkMemoUpload = (e: any) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+  if (!allowedTypes.includes(file.type)) {
+    toast.error('Format file salah! Hanya diperbolehkan file .pdf, .jpg, .jpeg, atau .png');
+    return;
+  }
+
+  if (file.size > 2 * 1024 * 1024) {
+    toast.error('Gagal! Ukuran dokumen maksimal 2MB');
+    return;
+  }
+
+  bulkEditForm.value.memo_file = file;
+  bulkEditForm.value.memo_file_name = file.name;
 };
 
-const bulkLocationsOptions = computed(() => {
-  return [{ id: 'keep', name: 'Tidak diubah' }, ...props.locations];
-});
+const triggerBulkMemoInput = () => {
+  const input = document.getElementById('bulk-memo-upload') as HTMLInputElement;
+  input?.click();
+};
 
-const bulkFloorsOptions = computed(() => {
-  if (bulkEditForm.location_id === 'keep') return [{ id: 'keep', name: 'Tidak diubah' }];
-  const floors = props.floors.filter(f => Number(f.location_id) === Number(bulkEditForm.location_id));
-  return [
-    { id: 'keep', name: 'Tidak diubah' },
-    { id: 'null', name: 'Kosongkan' },
-    ...floors
-  ];
-});
-
-const bulkRoomsOptions = computed(() => {
-  if (bulkEditForm.floor_id === 'keep' || bulkEditForm.floor_id === 'null') {
-    return [{ id: 'keep', name: 'Tidak diubah' }];
+const viewBulkMemoInNewTab = () => {
+  if (bulkEditForm.value.memo_file) {
+    const url = URL.createObjectURL(bulkEditForm.value.memo_file);
+    window.open(url, '_blank');
   }
-  const rooms = props.rooms.filter(r => Number(r.floor_id) === Number(bulkEditForm.floor_id));
-  return [
-    { id: 'keep', name: 'Tidak diubah' },
-    { id: 'null', name: 'Kosongkan' },
-    ...rooms
-  ];
+};
+
+const handleBulkSamakanMemo = () => {
+  toast.success('Berita Acara / Memo disamakan dengan default.');
+  bulkEditForm.value.memo_file = null;
+  bulkEditForm.value.memo_file_name = 'Berita_Acara_Default.pdf';
+};
+
+const handleSaveBulkEdit = () => {
+  isBulkEditModalOpen.value = false;
+  if (dataTableRef.value && dataTableRef.value.table) {
+    dataTableRef.value.table.resetRowSelection();
+  }
+  toast.success('Aset berhasil diperbarui secara massal.');
+};
+
+const filteredFloorsForBulk = computed(() => {
+  if (!bulkEditForm.value.location_id) return [];
+  return props.floors.filter(f => Number(f.location_id) === Number(bulkEditForm.value.location_id));
 });
 
-watch(() => bulkEditForm.location_id, (newVal) => {
-  if (newVal !== 'keep') {
-    bulkEditForm.floor_id = 'keep';
-    bulkEditForm.room_id = 'keep';
+const filteredRoomsForBulk = computed(() => {
+  if (!bulkEditForm.value.floor_id) return [];
+  return props.rooms.filter(r => Number(r.floor_id) === Number(bulkEditForm.value.floor_id));
+});
+
+watch(() => bulkEditForm.value.location_id, (newVal) => {
+  if (newVal) {
+    const valid = filteredFloorsForBulk.value.some(f => Number(f.id) === Number(bulkEditForm.value.floor_id));
+    if (!valid) {
+      bulkEditForm.value.floor_id = '';
+      bulkEditForm.value.room_id = '';
+    }
+  } else {
+    bulkEditForm.value.floor_id = '';
+    bulkEditForm.value.room_id = '';
   }
 });
 
-watch(() => bulkEditForm.floor_id, (newVal) => {
-  if (newVal !== 'keep') {
-    bulkEditForm.room_id = 'keep';
+watch(() => bulkEditForm.value.floor_id, (newVal) => {
+  if (newVal) {
+    const valid = filteredRoomsForBulk.value.some(r => Number(r.id) === Number(bulkEditForm.value.room_id));
+    if (!valid) {
+      bulkEditForm.value.room_id = '';
+    }
+  } else {
+    bulkEditForm.value.room_id = '';
   }
 });
+
+const handleBulkSamakanPrice = () => {
+  bulkEditForm.value.price = props.lot.unitPrice.toString();
+};
+
+const handleBulkFileUpload = (e: any) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+  if (!allowedTypes.includes(file.type)) {
+    toast.error('Format file salah! Hanya diperbolehkan file .jpg, .jpeg, atau .png');
+    return;
+  }
+
+  if (file.size > 1024 * 1024) {
+    toast.error('Gagal! Ukuran foto maksimal 1MB');
+    return;
+  }
+
+  bulkEditForm.value.image_url = file;
+  bulkEditForm.value.image_url_name = file.name;
+  bulkEditForm.value.use_lot_image = false;
+};
+
+const triggerBulkFileInput = () => {
+  const input = document.getElementById('bulk-photo-upload') as HTMLInputElement;
+  input?.click();
+};
+
+const handleBulkSamakanPhoto = () => {
+  if (props.lot.imageUrl) {
+    bulkEditForm.value.use_lot_image = true;
+    bulkEditForm.value.image_url = null;
+    bulkEditForm.value.image_url_name = props.lot.imageUrl.split('/').pop() || '';
+  } else {
+    toast.error('LOT tidak memiliki foto.');
+  }
+};
+
+const viewBulkImageInNewTab = () => {
+  if (bulkEditForm.value.image_url) {
+    const url = URL.createObjectURL(bulkEditForm.value.image_url);
+    window.open(url, '_blank');
+  } else if (bulkEditForm.value.use_lot_image && props.lot.imageUrl) {
+    window.open('/storage/' + props.lot.imageUrl, '_blank');
+  }
+};
+
+const handleBulkSamakanLocation = () => {
+  bulkEditForm.value.location_id = props.lot.location_id;
+};
+
+const handleBulkSamakanFloor = () => {
+  if (props.lot.floor_id) {
+    bulkEditForm.value.floor_id = props.lot.floor_id;
+  } else {
+    toast.error('LOT tidak memiliki lantai default.');
+  }
+};
+
+const handleBulkSamakanRoom = () => {
+  if (props.lot.room_id) {
+    bulkEditForm.value.room_id = props.lot.room_id;
+  } else {
+    toast.error('LOT tidak memiliki ruangan default.');
+  }
+};
 
 const getExportData = () => {
   if (!dataTableRef.value || !dataTableRef.value.table) return props.units || [];
@@ -1577,35 +1786,41 @@ const totalAsetTerpilihCount = computed(() => {
               @click.stop
             >
               <!-- Modal Header -->
-              <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
-                <h3 class="text-lg font-bold text-foreground">
-                  {{ assetModalMode === 'create' ? 'Tambah Aset Baru' : 'Edit Detail Aset' }}
+              <div class="flex items-center justify-between pt-5 pb-3 px-6 border-b border-border">
+                <h3 class="text-xl font-bold text-foreground">
+                  {{ assetModalMode === 'create' ? 'Pembuatan Aset Baru' : 'Edit Detail Aset' }}
                 </h3>
                 <button @click="isAssetModalOpen = false" class="p-2 hover:bg-muted rounded-full transition-colors">
-                  <X class="w-5 h-5 text-muted-foreground" />
+                  <X class="w-6 h-6 text-foreground" />
                 </button>
               </div>
 
               <!-- Modal Body -->
-              <div class="p-6 overflow-y-auto max-h-[70vh]">
+              <div class="p-6 overflow-y-auto max-h-[75vh]">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
                   <!-- Left Column -->
                   <div class="space-y-6">
                     <!-- Kode Aset -->
                     <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Kode Aset (tidak dapat diubah: sudah auto generate)</label>
+                      <label class="text-sm font-semibold text-foreground block">
+                        {{ assetModalMode === 'create' ? 'Kode Aset' : 'Kode Aset (tidak dapat diubah: sudah auto generate)' }}
+                      </label>
                       <input 
                         type="text" 
                         v-model="assetForm.number"
                         :disabled="assetModalMode === 'edit'"
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground h-10"
-                        :class="assetModalMode === 'edit' ? 'cursor-not-allowed opacity-50' : 'bg-background'"
+                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] h-10 transition-colors"
+                        :class="[
+                          assetModalMode === 'edit'
+                            ? 'bg-[#F3F4F6] dark:bg-muted/30 text-gray-400 cursor-not-allowed'
+                            : 'bg-background text-foreground'
+                        ]"
                       />
                     </div>
 
                     <!-- Nilai (Price) -->
                     <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Nilai<span class="text-rose-500">*</span></label>
+                      <label class="text-sm font-semibold text-foreground block">Nilai<span class="text-rose-500">*</span></label>
                       <div class="flex gap-2">
                         <div class="flex flex-grow rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors h-10 overflow-hidden">
                           <span class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-r border-input select-none font-medium">
@@ -1622,7 +1837,7 @@ const totalAsetTerpilihCount = computed(() => {
                         <button 
                           type="button"
                           @click="assetForm.price = props.lot.unitPrice"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-[14px] transition-colors h-10 shadow-sm"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#E58B35] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm"
                         >
                           Samakan
                         </button>
@@ -1631,14 +1846,14 @@ const totalAsetTerpilihCount = computed(() => {
 
                     <!-- Foto Aset -->
                     <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Foto<span class="text-rose-500">*</span></label>
+                      <label class="text-sm font-semibold text-foreground block">Foto<span class="text-rose-500">*</span></label>
                       <div class="flex gap-2">
                         <div 
-                          class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/10 truncate flex items-center h-10"
+                          class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-background truncate flex items-center h-10"
                           :class="[
                             (assetForm.image_url || assetForm.image_url_name) 
-                              ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' 
-                              : 'text-muted-foreground cursor-default'
+                              ? 'cursor-pointer hover:bg-muted/10 transition-colors text-foreground font-medium' 
+                              : 'text-gray-400 cursor-default'
                           ]"
                           @click="(assetForm.image_url || assetForm.image_url_name) && viewAssetImageInNewTab()"
                         >
@@ -1653,20 +1868,19 @@ const totalAsetTerpilihCount = computed(() => {
                         />
                         <button 
                           type="button"
-                          @click="handleSamakanAssetPhoto"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-[14px] transition-colors h-10 shadow-sm"
-                        >
-                          Samakan
-                        </button>
-                        <button 
-                          type="button"
                           @click="triggerAssetFileInput"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors h-10 shadow-sm"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#5B46F6] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm"
                         >
                           Pilih File
                         </button>
+                        <button 
+                          type="button"
+                          @click="handleSamakanAssetPhoto"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#E58B35] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm"
+                        >
+                          Samakan
+                        </button>
                       </div>
-                      <p class="text-[10px] text-muted-foreground ml-1">Maksimal ukuran 1 MB</p>
                     </div>
 
                     <!-- Pembuatan massal (Create Mode Only) -->
@@ -1688,6 +1902,20 @@ const totalAsetTerpilihCount = computed(() => {
                       />
                       <span class="text-sm font-medium text-foreground">aset secara otomatis dengan nilai yang sama.</span>
                     </div>
+
+                    <!-- TNKB (Nomor Polisi) - Shown if it's a vehicle -->
+                    <div v-if="isVehicle" class="space-y-1.5">
+                      <label class="text-sm font-semibold text-foreground block">TNKB (Nomor Polisi)<span class="text-rose-500">*</span></label>
+                      <input 
+                        type="text" 
+                        v-model="assetForm.vehicle_registration"
+                        :disabled="isFieldDisabled"
+                        maxlength="15"
+                        :placeholder="assetModalMode === 'create' ? 'B XXXX YYY' : 'B 1234 ABC'"
+                        @input="assetForm.vehicle_registration = assetForm.vehicle_registration.toUpperCase()"
+                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary h-10 disabled:opacity-50 disabled:cursor-not-allowed uppercase"
+                      />
+                    </div>
                   </div>
 
                   <!-- Right Column -->
@@ -1696,11 +1924,11 @@ const totalAsetTerpilihCount = computed(() => {
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <!-- Kondisi -->
                       <div class="space-y-1.5">
-                        <label class="text-sm font-medium text-foreground block">Kondisi<span class="text-rose-500">*</span></label>
+                        <label class="text-sm font-semibold text-foreground block">Kondisi<span class="text-rose-500">*</span></label>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="outline" :disabled="isFieldDisabled" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 text-foreground disabled:opacity-50 disabled:cursor-not-allowed">
-                              {{ assetForm.condition }}
+                            <Button variant="outline" :disabled="isFieldDisabled" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 disabled:opacity-50 disabled:cursor-not-allowed" :class="[!assetForm.condition ? 'text-gray-400' : 'text-foreground']">
+                              {{ assetForm.condition || 'Pilih kondisi aset' }}
                               <ChevronDown class="w-4 h-4 opacity-50" />
                             </Button>
                           </DropdownMenuTrigger>
@@ -1714,11 +1942,11 @@ const totalAsetTerpilihCount = computed(() => {
 
                       <!-- Status -->
                       <div class="space-y-1.5">
-                        <label class="text-sm font-medium text-foreground block">Status<span class="text-rose-500">*</span></label>
+                        <label class="text-sm font-semibold text-foreground block">Status<span class="text-rose-500">*</span></label>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="outline" :disabled="isFieldDisabled" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 text-foreground disabled:opacity-50 disabled:cursor-not-allowed">
-                              {{ getStatusLabel(assetForm.status) }}
+                            <Button variant="outline" :disabled="isFieldDisabled" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 disabled:opacity-50 disabled:cursor-not-allowed" :class="[!assetForm.status ? 'text-gray-400' : 'text-foreground']">
+                              {{ assetForm.status ? getStatusLabel(assetForm.status) : 'Pilih status aset' }}
                               <ChevronDown class="w-4 h-4 opacity-50" />
                             </Button>
                           </DropdownMenuTrigger>
@@ -1733,13 +1961,13 @@ const totalAsetTerpilihCount = computed(() => {
 
                     <!-- Lokasi -->
                     <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Lokasi<span class="text-rose-500">*</span></label>
+                      <label class="text-sm font-semibold text-foreground block">Lokasi<span class="text-rose-500">*</span></label>
                       <div class="flex gap-2">
                         <Combobox
                           v-model="assetForm.location_id"
                           :options="props.locations"
                           search-placeholder="Cari lokasi..."
-                          default-label="Pilih lokasi"
+                          default-label="Pilih lokasi aset"
                           width-class="flex-grow h-10 px-4"
                           :disabled="isFieldDisabled"
                         />
@@ -1751,76 +1979,124 @@ const totalAsetTerpilihCount = computed(() => {
                             assetForm.floor_id = props.lot.floor_id; 
                             assetForm.room_id = props.lot.room_id;
                           "
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-[14px] transition-colors h-10 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#E58B35] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           Samakan
                         </button>
                       </div>
                     </div>
 
-                    <!-- Lantai & Ruangan (Side-by-Side) -->
-                    <div v-if="!isVehicle" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <!-- Lantai -->
-                      <div class="space-y-1.5">
-                        <label class="text-sm font-medium text-foreground block">Lantai</label>
+                    <!-- Lantai -->
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-semibold text-foreground block">Lantai</label>
+                      <div class="flex gap-2">
                         <Combobox
                           v-model="assetForm.floor_id"
                           :options="filteredFloorsForAsset"
                           search-placeholder="Cari lantai..."
-                          default-label="Pilih lantai (opsional)"
-                          width-class="w-full h-10 px-4"
+                          default-label="Pilih lokasi aset"
+                          width-class="flex-grow h-10 px-4"
                           :disabled="!assetForm.location_id || isFieldDisabled"
                         />
+                        <button 
+                          type="button"
+                          :disabled="!assetForm.location_id || isFieldDisabled"
+                          @click="assetForm.floor_id = props.lot.floor_id"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#E58B35] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Samakan
+                        </button>
                       </div>
+                    </div>
 
-                      <!-- Ruangan -->
-                      <div class="space-y-1.5">
-                        <label class="text-sm font-medium text-foreground block">Ruangan</label>
+                    <!-- Ruangan -->
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-semibold text-foreground block">Ruangan</label>
+                      <div class="flex gap-2">
                         <Combobox
                           v-model="assetForm.room_id"
                           :options="filteredRoomsForAsset"
                           search-placeholder="Cari ruangan..."
-                          default-label="Pilih ruangan (opsional)"
-                          width-class="w-full h-10 px-4"
+                          default-label="Pilih lokasi aset"
+                          width-class="flex-grow h-10 px-4"
                           :disabled="!assetForm.floor_id || isFieldDisabled"
                         />
+                        <button 
+                          type="button"
+                          :disabled="!assetForm.floor_id || isFieldDisabled"
+                          @click="assetForm.room_id = props.lot.room_id"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#E58B35] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Samakan
+                        </button>
                       </div>
                     </div>
 
-                    <!-- TNKB (Nomor Polisi) - Shown if it's a vehicle -->
-                    <div v-if="isVehicle" class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">TNKB (Nomor Polisi)<span class="text-rose-500">*</span></label>
-                      <input 
-                        type="text" 
-                        v-model="assetForm.vehicle_registration"
-                        :disabled="isFieldDisabled"
-                        maxlength="15"
-                        placeholder="B XXXX YYY"
-                        @input="assetForm.vehicle_registration = assetForm.vehicle_registration.toUpperCase()"
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary h-10 disabled:opacity-50 disabled:cursor-not-allowed uppercase"
-                      />
+                    <!-- Berita Acara / Memo -->
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-semibold text-foreground block">
+                        Berita Acara / Memo<span v-if="assetForm.condition === 'Rusak'" class="text-rose-500">*</span>
+                      </label>
+                      <div class="flex gap-2">
+                        <div 
+                          class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] truncate flex items-center h-10 transition-colors"
+                          :class="[
+                            assetForm.condition !== 'Rusak'
+                              ? 'bg-[#F3F4F6] dark:bg-muted/30 text-gray-400 cursor-not-allowed'
+                              : (assetForm.memo_file || assetForm.memo_file_name)
+                                ? 'bg-background cursor-pointer hover:bg-muted/10 text-foreground font-medium'
+                                : 'bg-background text-gray-400 cursor-default'
+                          ]"
+                          @click="assetForm.condition === 'Rusak' && (assetForm.memo_file || assetForm.memo_file_name) && viewAssetMemoInNewTab()"
+                        >
+                          {{ assetForm.memo_file_name || 'Belum ada foto yang dipilih' }}
+                        </div>
+                        <input 
+                          type="file" 
+                          id="asset-memo-upload" 
+                          class="hidden" 
+                          accept=".pdf,.jpg,.jpeg,.png"
+                          :disabled="assetForm.condition !== 'Rusak'"
+                          @change="handleAssetMemoUpload"
+                        />
+                        <button 
+                          type="button"
+                          :disabled="assetForm.condition !== 'Rusak'"
+                          @click="triggerAssetMemoInput"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#5B46F6] text-white text-sm font-semibold rounded-[14px] transition-all h-10 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90"
+                        >
+                          Pilih File
+                        </button>
+                        <button 
+                          type="button"
+                          :disabled="assetForm.condition !== 'Rusak'"
+                          @click="handleSamakanAssetMemo"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#E58B35] text-white text-sm font-semibold rounded-[14px] transition-all h-10 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90"
+                        >
+                          Samakan
+                        </button>
+                      </div>
                     </div>
                   </div>
-
                 </div>
               </div>
 
               <!-- Modal Footer -->
-              <div class="py-3 px-4 border-t border-border flex items-center justify-between">
-                <p class="text-sm text-rose-500 italic font-medium">*Wajib diisi</p>
+              <div class="py-4 px-6 border-t border-border flex items-center justify-between bg-card">
+                <p class="text-sm text-rose-500 italic font-semibold">*Wajib diisi</p>
                 <div class="flex items-center gap-3">
                   <button 
                     @click="isAssetModalOpen = false"
-                    class="px-8 py-2.5 bg-background border border-input hover:bg-muted text-foreground text-sm font-medium rounded-[14px] transition-colors"
+                    class="px-8 py-2.5 bg-background border border-gray-300 hover:bg-muted text-gray-700 text-sm font-semibold rounded-[14px] transition-colors"
                   >
                     Batal
                   </button>
                   <button 
                     @click="handleSaveAsset"
                     :disabled="!isAssetFormValid"
-                    class="px-8 py-2.5 bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors shadow-sm active:scale-[0.98] disabled:opacity-50"
+                    class="px-8 py-2.5 bg-[#5F38E6] hover:bg-[#4E2ED0] text-white text-sm font-semibold rounded-[14px] transition-colors shadow-sm disabled:opacity-50"
                   >
-                    {{ assetModalMode === 'create' ? 'Tambah Aset' : 'Simpan Perubahan' }}
+                    {{ assetModalMode === 'create' ? 'Buat Aset' : 'Simpan Perubahan' }}
                   </button>
                 </div>
               </div>
@@ -2005,115 +2281,265 @@ const totalAsetTerpilihCount = computed(() => {
           >
             <div 
               v-if="isBulkEditModalOpen" 
-              class="bg-card w-full max-w-[600px] rounded-[14px] shadow-2xl overflow-hidden flex flex-col" 
+              class="bg-card w-full max-w-[1000px] rounded-[14px] shadow-2xl overflow-hidden flex flex-col" 
               @click.stop
             >
               <!-- Modal Header -->
-              <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
-                <h3 class="text-lg font-bold text-foreground">
-                  Edit Terpilih ({{ bulkEditForm.ids.length }} Aset)
-                </h3>
+              <div class="flex items-center justify-between pt-5 pb-3 px-6 border-b border-border">
+                <h3 class="text-xl font-bold text-foreground">Edit Aset Terpilih</h3>
                 <button @click="isBulkEditModalOpen = false" class="p-2 hover:bg-muted rounded-full transition-colors">
-                  <X class="w-5 h-5 text-muted-foreground" />
+                  <X class="w-6 h-6 text-foreground" />
                 </button>
               </div>
 
               <!-- Modal Body -->
-              <div class="p-6 overflow-y-auto max-h-[60vh] space-y-6">
-                <!-- Status -->
-                <div class="space-y-1.5">
-                  <label class="text-sm font-medium text-foreground block">Status</label>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 text-foreground">
-                        {{ bulkEditForm.status === 'keep' ? 'Tidak diubah' : getStatusLabel(bulkEditForm.status) }}
-                        <ChevronDown class="w-4 h-4 opacity-50" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
-                      <DropdownMenuItem @select="bulkEditForm.status = 'keep'">Tidak diubah</DropdownMenuItem>
-                      <DropdownMenuItem v-for="st in availableStatuses" :key="st" @select="bulkEditForm.status = st">
-                        {{ getStatusLabel(st) }}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
+              <div class="p-6 overflow-y-auto max-h-[75vh]">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+                  <!-- Left Column -->
+                  <div class="space-y-6">
+                    <!-- Kode LOT -->
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-semibold text-foreground block">Kode LOT</label>
+                      <input 
+                        type="text" 
+                        value="Tidak dapat diubah"
+                        disabled
+                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-[#F3F4F6] dark:bg-muted/30 text-gray-400 cursor-not-allowed h-10"
+                      />
+                    </div>
 
-                <!-- Kondisi -->
-                <div class="space-y-1.5">
-                  <label class="text-sm font-medium text-foreground block">Kondisi</label>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 text-foreground">
-                        {{ bulkEditForm.condition === 'keep' ? 'Tidak diubah' : bulkEditForm.condition }}
-                        <ChevronDown class="w-4 h-4 opacity-50" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
-                      <DropdownMenuItem @select="bulkEditForm.condition = 'keep'">Tidak diubah</DropdownMenuItem>
-                      <DropdownMenuItem v-for="cond in availableConditions" :key="cond" @select="bulkEditForm.condition = cond">
-                        {{ cond }}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
+                    <!-- Nilai (Price) -->
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-semibold text-foreground block">Nilai<span class="text-rose-500">*</span></label>
+                      <div class="flex gap-2">
+                        <div class="flex flex-grow rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors h-10 overflow-hidden">
+                          <span class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-r border-input select-none font-medium">
+                            Rp
+                          </span>
+                          <input 
+                            type="text" 
+                            v-model="bulkEditForm.price"
+                            @input="bulkEditForm.price = bulkEditForm.price.toString().replace(/[^0-9.,]/g, '')"
+                            placeholder="Nilai aset"
+                            class="flex-1 min-w-0 px-4 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 transition-colors h-full"
+                          />
+                        </div>
+                        <button 
+                          type="button"
+                          @click="handleBulkSamakanPrice"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#E58B35] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm"
+                        >
+                          Samakan
+                        </button>
+                      </div>
+                    </div>
 
-                <!-- Lokasi -->
-                <div class="space-y-1.5">
-                  <label class="text-sm font-medium text-foreground block">Lokasi</label>
-                  <Combobox
-                    v-model="bulkEditForm.location_id"
-                    :options="bulkLocationsOptions"
-                    search-placeholder="Cari lokasi..."
-                    default-label="Tidak diubah"
-                    width-class="w-full h-10 px-4"
-                  />
-                </div>
+                    <!-- Foto -->
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-semibold text-foreground block">Foto<span class="text-rose-500">*</span></label>
+                      <div class="flex gap-2">
+                        <div 
+                          class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-background truncate flex items-center h-10"
+                          :class="[
+                            (bulkEditForm.image_url || bulkEditForm.image_url_name) 
+                              ? 'cursor-pointer hover:bg-muted/10 transition-colors text-foreground font-medium' 
+                              : 'text-gray-400 cursor-default'
+                          ]"
+                          @click="(bulkEditForm.image_url || bulkEditForm.image_url_name) && viewBulkImageInNewTab()"
+                        >
+                          {{ bulkEditForm.image_url_name || 'Belum ada foto yang dipilih' }}
+                        </div>
+                        <input 
+                          type="file" 
+                          id="bulk-photo-upload" 
+                          class="hidden" 
+                          accept=".jpg,.jpeg,.png"
+                          @change="handleBulkFileUpload"
+                        />
+                        <button 
+                          type="button"
+                          @click="triggerBulkFileInput"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#5B46F6] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm"
+                        >
+                          Pilih File
+                        </button>
+                        <button 
+                          type="button"
+                          @click="handleBulkSamakanPhoto"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#E58B35] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm"
+                        >
+                          Samakan
+                        </button>
+                      </div>
+                    </div>
 
-                <!-- Lantai & Ruangan (Hidden if isVehicle is true) -->
-                <div v-if="!isVehicle" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <!-- Lantai -->
-                  <div class="space-y-1.5">
-                    <label class="text-sm font-medium text-foreground block">Lantai</label>
-                    <Combobox
-                      v-model="bulkEditForm.floor_id"
-                      :options="bulkFloorsOptions"
-                      search-placeholder="Cari lantai..."
-                      default-label="Tidak diubah"
-                      width-class="w-full h-10 px-4"
-                      :disabled="bulkEditForm.location_id === 'keep'"
-                    />
+                    <!-- Footnote Note -->
+                    <p class="text-sm text-rose-500 italic font-normal mt-4">*Kosongkan input yang tidak ingin diubah</p>
                   </div>
 
-                  <!-- Ruangan -->
-                  <div class="space-y-1.5">
-                    <label class="text-sm font-medium text-foreground block">Ruangan</label>
-                    <Combobox
-                      v-model="bulkEditForm.room_id"
-                      :options="bulkRoomsOptions"
-                      search-placeholder="Cari ruangan..."
-                      default-label="Tidak diubah"
-                      width-class="w-full h-10 px-4"
-                      :disabled="bulkEditForm.floor_id === 'keep' || bulkEditForm.floor_id === 'null'"
-                    />
+                  <!-- Right Column -->
+                  <div class="space-y-6">
+                    <!-- Kondisi & Status (Side-by-Side) -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <!-- Kondisi -->
+                      <div class="space-y-1.5">
+                        <label class="text-sm font-semibold text-foreground block">Kondisi<span class="text-rose-500">*</span></label>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 disabled:opacity-50 disabled:cursor-not-allowed" :class="[!bulkEditForm.condition ? 'text-gray-400' : 'text-foreground']">
+                              {{ bulkEditForm.condition || 'Pilih kondisi aset' }}
+                              <ChevronDown class="w-4 h-4 opacity-50" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
+                            <DropdownMenuItem @select="bulkEditForm.condition = ''">Pilih kondisi aset</DropdownMenuItem>
+                            <DropdownMenuItem v-for="cond in availableConditions" :key="cond" @select="bulkEditForm.condition = cond">
+                              {{ cond }}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+
+                      <!-- Status -->
+                      <div class="space-y-1.5">
+                        <label class="text-sm font-semibold text-foreground block">Status<span class="text-rose-500">*</span></label>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 disabled:opacity-50 disabled:cursor-not-allowed" :class="[!bulkEditForm.status ? 'text-gray-400' : 'text-foreground']">
+                              {{ bulkEditForm.status ? getStatusLabel(bulkEditForm.status) : 'Pilih status aset' }}
+                              <ChevronDown class="w-4 h-4 opacity-50" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
+                            <DropdownMenuItem @select="bulkEditForm.status = ''">Pilih status aset</DropdownMenuItem>
+                            <DropdownMenuItem v-for="st in availableStatuses" :key="st" @select="bulkEditForm.status = st">
+                              {{ getStatusLabel(st) }}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </div>
+
+                    <!-- Lokasi -->
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-semibold text-foreground block">Lokasi<span class="text-rose-500">*</span></label>
+                      <div class="flex gap-2">
+                        <Combobox
+                          v-model="bulkEditForm.location_id"
+                          :options="props.locations"
+                          search-placeholder="Cari lokasi..."
+                          default-label="Pilih lokasi aset"
+                          width-class="flex-grow h-10 px-4"
+                        />
+                        <button 
+                          type="button"
+                          @click="handleBulkSamakanLocation"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#E58B35] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm"
+                        >
+                          Samakan
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Lantai -->
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-semibold text-foreground block">Lantai</label>
+                      <div class="flex gap-2">
+                        <Combobox
+                          v-model="bulkEditForm.floor_id"
+                          :options="filteredFloorsForBulk"
+                          search-placeholder="Cari lantai..."
+                          default-label="Pilih lokasi aset"
+                          width-class="flex-grow h-10 px-4"
+                          :disabled="!bulkEditForm.location_id"
+                        />
+                        <button 
+                          type="button"
+                          @click="handleBulkSamakanFloor"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#E58B35] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm"
+                        >
+                          Samakan
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Ruangan -->
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-semibold text-foreground block">Ruangan</label>
+                      <div class="flex gap-2">
+                        <Combobox
+                          v-model="bulkEditForm.room_id"
+                          :options="filteredRoomsForBulk"
+                          search-placeholder="Cari ruangan..."
+                          default-label="Pilih lokasi aset"
+                          width-class="flex-grow h-10 px-4"
+                          :disabled="!bulkEditForm.floor_id"
+                        />
+                        <button 
+                          type="button"
+                          @click="handleBulkSamakanRoom"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#E58B35] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm"
+                        >
+                          Samakan
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Berita Acara / Memo -->
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-semibold text-foreground block">Berita Acara / Memo<span class="text-rose-500">*</span></label>
+                      <div class="flex gap-2">
+                        <div 
+                          class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-background truncate flex items-center h-10"
+                          :class="[
+                            (bulkEditForm.memo_file || bulkEditForm.memo_file_name) 
+                              ? 'cursor-pointer hover:bg-muted/10 transition-colors text-foreground font-medium' 
+                              : 'text-gray-400 cursor-default'
+                          ]"
+                          @click="(bulkEditForm.memo_file || bulkEditForm.memo_file_name) && viewBulkMemoInNewTab()"
+                        >
+                          {{ bulkEditForm.memo_file_name || 'Belum ada foto yang dipilih' }}
+                        </div>
+                        <input 
+                          type="file" 
+                          id="bulk-memo-upload" 
+                          class="hidden" 
+                          accept=".pdf,.jpg,.jpeg,.png"
+                          @change="handleBulkMemoUpload"
+                        />
+                        <button 
+                          type="button"
+                          @click="triggerBulkMemoInput"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#5B46F6] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm"
+                        >
+                          Pilih File
+                        </button>
+                        <button 
+                          type="button"
+                          @click="handleBulkSamakanMemo"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#E58B35] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm"
+                        >
+                          Samakan
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
 
               <!-- Modal Footer -->
-              <div class="py-3 px-4 border-t border-border flex items-center justify-end gap-3 bg-muted/10">
+              <div class="py-4 px-6 border-t border-border flex items-center justify-end gap-3 bg-card">
                 <button 
                   @click="isBulkEditModalOpen = false"
-                  class="px-8 py-2.5 bg-background border border-input hover:bg-muted text-foreground text-sm font-medium rounded-[14px] transition-colors"
+                  class="px-8 py-2.5 bg-background border border-gray-300 hover:bg-muted text-gray-700 text-sm font-semibold rounded-[14px] transition-colors"
                 >
                   Batal
                 </button>
                 <button 
                   @click="handleSaveBulkEdit"
-                  :disabled="bulkEditForm.processing"
-                  class="px-8 py-2.5 bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors shadow-sm active:scale-[0.98] disabled:opacity-50"
+                  class="px-8 py-2.5 bg-[#5F38E6] hover:bg-[#4E2ED0] text-white text-sm font-semibold rounded-[14px] transition-colors shadow-sm"
                 >
-                  Simpan Perubahan
+                  Simpan Perubahan Massal
                 </button>
               </div>
             </div>
@@ -2201,11 +2627,11 @@ const totalAsetTerpilihCount = computed(() => {
                       <label class="text-sm font-semibold text-foreground block">Foto<span class="text-rose-500">*</span></label>
                       <div class="flex gap-2">
                         <div 
-                          class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/10 truncate flex items-center h-10 text-muted-foreground"
+                          class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-background truncate flex items-center h-10"
                           :class="[
                             (bulkVehicleEditForm.image_url || bulkVehicleEditForm.image_url_name) 
-                              ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' 
-                              : 'text-muted-foreground cursor-default'
+                              ? 'cursor-pointer hover:bg-muted/10 transition-colors text-foreground font-medium' 
+                              : 'text-gray-400 cursor-default'
                           ]"
                           @click="(bulkVehicleEditForm.image_url || bulkVehicleEditForm.image_url_name) && viewBulkVehicleImageInNewTab()"
                         >
@@ -2233,7 +2659,6 @@ const totalAsetTerpilihCount = computed(() => {
                           Samakan
                         </button>
                       </div>
-                      <p class="text-[10px] text-muted-foreground ml-1">Maksimal ukuran 1 MB</p>
                     </div>
 
                     <!-- TNKB (Nomor Polisi) -->
@@ -2260,7 +2685,7 @@ const totalAsetTerpilihCount = computed(() => {
                         <label class="text-sm font-semibold text-foreground block">Kondisi<span class="text-rose-500">*</span></label>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 text-foreground">
+                            <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 disabled:opacity-50 disabled:cursor-not-allowed" :class="[!bulkVehicleEditForm.condition ? 'text-gray-400' : 'text-foreground']">
                               {{ bulkVehicleEditForm.condition || 'Pilih kondisi aset' }}
                               <ChevronDown class="w-4 h-4 opacity-50" />
                             </Button>
@@ -2279,7 +2704,7 @@ const totalAsetTerpilihCount = computed(() => {
                         <label class="text-sm font-semibold text-foreground block">Status<span class="text-rose-500">*</span></label>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 text-foreground">
+                            <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 disabled:opacity-50 disabled:cursor-not-allowed" :class="[!bulkVehicleEditForm.status ? 'text-gray-400' : 'text-foreground']">
                               {{ bulkVehicleEditForm.status ? getStatusLabel(bulkVehicleEditForm.status) : 'Pilih status aset' }}
                               <ChevronDown class="w-4 h-4 opacity-50" />
                             </Button>
@@ -2358,6 +2783,45 @@ const totalAsetTerpilihCount = computed(() => {
                         </button>
                       </div>
                     </div>
+
+                    <!-- Berita Acara / Memo -->
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-semibold text-foreground block">Berita Acara / Memo<span class="text-rose-500">*</span></label>
+                      <div class="flex gap-2">
+                        <div 
+                          class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-background truncate flex items-center h-10"
+                          :class="[
+                            (bulkVehicleEditForm.memo_file || bulkVehicleEditForm.memo_file_name) 
+                              ? 'cursor-pointer hover:bg-muted/10 transition-colors text-foreground font-medium' 
+                              : 'text-gray-400 cursor-default'
+                          ]"
+                          @click="(bulkVehicleEditForm.memo_file || bulkVehicleEditForm.memo_file_name) && viewBulkVehicleMemoInNewTab()"
+                        >
+                          {{ bulkVehicleEditForm.memo_file_name || 'Belum ada foto yang dipilih' }}
+                        </div>
+                        <input 
+                          type="file" 
+                          id="bulk-vehicle-memo-upload" 
+                          class="hidden" 
+                          accept=".pdf,.jpg,.jpeg,.png"
+                          @change="handleBulkVehicleMemoUpload"
+                        />
+                        <button 
+                          type="button"
+                          @click="triggerBulkVehicleMemoInput"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#5B46F6] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm"
+                        >
+                          Pilih File
+                        </button>
+                        <button 
+                          type="button"
+                          @click="handleBulkVehicleSamakanMemo"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#E58B35] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm"
+                        >
+                          Samakan
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -2366,13 +2830,13 @@ const totalAsetTerpilihCount = computed(() => {
               <div class="py-4 px-6 border-t border-border flex items-center justify-end gap-3 bg-card">
                 <button 
                   @click="isBulkVehicleEditModalOpen = false"
-                  class="px-8 py-2.5 bg-background border border-gray-300 hover:bg-muted text-gray-700 text-sm font-semibold rounded-full transition-colors"
+                  class="px-8 py-2.5 bg-background border border-gray-300 hover:bg-muted text-gray-700 text-sm font-semibold rounded-[14px] transition-colors"
                 >
                   Batal
                 </button>
                 <button 
                   @click="handleSaveBulkVehicleEdit"
-                  class="px-8 py-2.5 bg-[#5F38E6] hover:bg-[#4E2ED0] text-white text-sm font-semibold rounded-full transition-colors shadow-sm"
+                  class="px-8 py-2.5 bg-[#5F38E6] hover:bg-[#4E2ED0] text-white text-sm font-semibold rounded-[14px] transition-colors shadow-sm"
                 >
                   Simpan Perubahan Massal
                 </button>
