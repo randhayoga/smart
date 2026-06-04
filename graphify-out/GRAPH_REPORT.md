@@ -1,16 +1,16 @@
 # Graph Report - smart  (2026-06-04)
 
 ## Corpus Check
-- 326 files · ~258,849 words
+- 326 files · ~258,867 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1018 nodes · 1410 edges · 177 communities (156 shown, 21 thin omitted)
-- Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 42 edges (avg confidence: 0.8)
+- 1020 nodes · 1420 edges · 172 communities (154 shown, 18 thin omitted)
+- Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 46 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `189a98d1`
+- Built from commit: `6f7f7920`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -77,15 +77,10 @@
 - [[_COMMUNITY_Community 89|Community 89]]
 - [[_COMMUNITY_Community 93|Community 93]]
 - [[_COMMUNITY_Community 171|Community 171]]
-- [[_COMMUNITY_Community 172|Community 172]]
-- [[_COMMUNITY_Community 173|Community 173]]
-- [[_COMMUNITY_Community 174|Community 174]]
-- [[_COMMUNITY_Community 175|Community 175]]
-- [[_COMMUNITY_Community 176|Community 176]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `Controller` - 65 edges
-2. `AdmUser` - 23 edges
+2. `AdmUser` - 25 edges
 3. `TestCase` - 16 edges
 4. `Barang` - 15 edges
 5. `Floor` - 13 edges
@@ -93,36 +88,40 @@
 7. `RequestStatusLog` - 13 edges
 8. `LotControllerTest` - 13 edges
 9. `compilerOptions` - 13 edges
-10. `Lot` - 12 edges
+10. `HasMany` - 12 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `AuthenticatedSessionController` --inherits--> `Controller`  [EXTRACTED]
-  app/Http/Controllers/Auth/AuthenticatedSessionController.php → app/Http/Controllers/Controller.php
 - `InboxController` --inherits--> `Controller`  [EXTRACTED]
   app/Http/Controllers/Smart/Admin/InboxController.php → app/Http/Controllers/Controller.php
-- `MasterController` --inherits--> `Controller`  [EXTRACTED]
-  app/Http/Controllers/Smart/Admin/MasterController.php → app/Http/Controllers/Controller.php
-- `ReturnController` --inherits--> `Controller`  [EXTRACTED]
-  app/Http/Controllers/Smart/Admin/ReturnController.php → app/Http/Controllers/Controller.php
 - `ApprovalController` --inherits--> `Controller`  [EXTRACTED]
   app/Http/Controllers/Smart/Manager/ApprovalController.php → app/Http/Controllers/Controller.php
+- `AuthenticatedSessionController` --inherits--> `Controller`  [EXTRACTED]
+  app/Http/Controllers/Auth/AuthenticatedSessionController.php → app/Http/Controllers/Controller.php
+- `ReturnController` --inherits--> `Controller`  [EXTRACTED]
+  app/Http/Controllers/Smart/Admin/ReturnController.php → app/Http/Controllers/Controller.php
+- `BarangController` --inherits--> `Controller`  [EXTRACTED]
+  app/Http/Controllers/Smart/Admin/ManajemenStok/BarangController.php → app/Http/Controllers/Controller.php
 
 ## Import Cycles
 - None detected.
 
-## Communities (177 total, 21 thin omitted)
+## Communities (172 total, 18 thin omitted)
 
 ### Community 0 - "Community 0"
-Cohesion: 0.06
-Nodes (27): ArsipController, BorrowedController, DashboardController, HandoverController, ManajemenStokController, RedirectResponse, Request, Response (+19 more)
+Cohesion: 0.05
+Nodes (31): ArsipController, BorrowedController, DashboardController, HandoverController, ManajemenStokController, MasterController, RedirectResponse, Request (+23 more)
 
 ### Community 1 - "Community 1"
 Cohesion: 0.06
-Nodes (22): RedirectResponse, Request, RedirectResponse, Request, AdmUserFactory, HrdEmployeeFactory, HrdOrgchartFactory, Factory (+14 more)
+Nodes (23): RedirectResponse, Request, RedirectResponse, Request, AdmUserFactory, HrdEmployeeFactory, HrdOrgchartFactory, Factory (+15 more)
+
+### Community 2 - "Community 2"
+Cohesion: 0.05
+Nodes (11): AuthenticationTest, BaseTestCase, BarangControllerTest, ExampleTest, IfsManagerRoleTest, LotControllerTest, MasterDataTest, RefreshDatabase (+3 more)
 
 ### Community 3 - "Community 3"
-Cohesion: 0.09
-Nodes (19): MasterController, RedirectResponse, Request, RedirectResponse, Request, RedirectResponse, Request, Request (+11 more)
+Cohesion: 0.20
+Nodes (7): RedirectResponse, Request, BelongsTo, HasMany, Barang, SubcategoryController, Subcategory
 
 ### Community 4 - "Community 4"
 Cohesion: 0.19
@@ -133,20 +132,20 @@ Cohesion: 0.06
 Nodes (33): dependencies, class-variance-authority, clsx, lucide-vue-next, reka-ui, tailwind-merge, tailwindcss-animate, @tanstack/vue-table (+25 more)
 
 ### Community 6 - "Community 6"
-Cohesion: 0.13
-Nodes (5): BelongsTo, HasMany, Authenticatable, AdmUser, Notifiable
+Cohesion: 0.09
+Nodes (8): BelongsTo, BelongsTo, HasMany, Authenticatable, HasMany, AdmUser, HrdOrgchart, Notifiable
 
 ### Community 7 - "Community 7"
-Cohesion: 0.21
-Nodes (6): Request, Request, BelongsTo, ConsumableBasket, AssetCartConfirmationController, AssetCartController
+Cohesion: 0.11
+Nodes (10): Request, Request, BelongsTo, BelongsTo, HasMany, HasOne, ConsumableBasket, Request (+2 more)
 
 ### Community 8 - "Community 8"
-Cohesion: 0.09
-Nodes (13): InboxController, ReturnController, Request, Response, Request, BelongsTo, BelongsTo, BelongsTo (+5 more)
+Cohesion: 0.07
+Nodes (20): InboxController, ReturnController, Request, Response, Request, Request, Request, Response (+12 more)
 
 ### Community 9 - "Community 9"
 Cohesion: 0.13
-Nodes (10): RedirectResponse, Request, OrganizerController, Organizer, Seeder, BarangSeeder, DatabaseSeeder, LotSeeder (+2 more)
+Nodes (10): RedirectResponse, Request, Brand, BrandController, Seeder, BarangSeeder, DatabaseSeeder, LotSeeder (+2 more)
 
 ### Community 10 - "Community 10"
 Cohesion: 0.17
@@ -169,16 +168,16 @@ Cohesion: 0.23
 Nodes (8): RedirectResponse, Request, Response, Request, Response, Category, CategoryController, BrowseController
 
 ### Community 15 - "Community 15"
-Cohesion: 0.11
-Nodes (10): Request, Request, BelongsTo, BelongsTo, HasMany, HasOne, AssetBasket, Request (+2 more)
+Cohesion: 0.21
+Nodes (6): Request, Request, BelongsTo, AssetBasket, BorrowCartConfirmationController, BorrowCartController
 
 ### Community 17 - "Community 17"
 Cohesion: 0.24
 Nodes (6): Request, BelongsTo, HasMany, Barang, BarangController, RequestItem
 
 ### Community 19 - "Community 19"
-Cohesion: 0.23
-Nodes (7): HasMany, HasMany, HasMany, Brand, Organizer, Model, TbRbs
+Cohesion: 0.33
+Nodes (5): HasMany, HasMany, HasFactory, Organizer, TbRbs
 
 ### Community 20 - "Community 20"
 Cohesion: 0.15
@@ -197,8 +196,8 @@ Cohesion: 0.31
 Nodes (4): BelongsTo, HasMany, HasOne, HrdEmployee
 
 ### Community 28 - "Community 28"
-Cohesion: 0.33
-Nodes (5): HasMany, HasMany, HasFactory, Uom, Vendor
+Cohesion: 0.23
+Nodes (7): HasMany, HasMany, HasMany, Brand, Uom, Vendor, Model
 
 ### Community 29 - "Community 29"
 Cohesion: 0.22
@@ -281,40 +280,28 @@ Cohesion: 0.67
 Nodes (3): extra, laravel, dont-discover
 
 ### Community 171 - "Community 171"
-Cohesion: 0.27
-Nodes (3): BelongsTo, HasMany, HrdOrgchart
-
-### Community 172 - "Community 172"
-Cohesion: 0.24
-Nodes (3): AuthenticationTest, IfsManagerRoleTest, RefreshDatabase
-
-### Community 173 - "Community 173"
-Cohesion: 0.24
-Nodes (4): BaseTestCase, ExampleTest, TestCase, ExampleTest
-
-### Community 174 - "Community 174"
-Cohesion: 0.50
-Nodes (3): Request, Response, ApprovalController
+Cohesion: 0.54
+Nodes (4): RedirectResponse, Request, OrganizerController, Organizer
 
 ## Knowledge Gaps
-- **151 isolated node(s):** `$schema`, `style`, `typescript`, `config`, `css` (+146 more)
+- **151 isolated node(s):** `NavItem`, `NavSection`, `mainNavigation`, `quickActions`, `userNavigation` (+146 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **21 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **18 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Controller` connect `Community 0` to `Community 1`, `Community 3`, `Community 4`, `Community 7`, `Community 8`, `Community 9`, `Community 10`, `Community 11`, `Community 174`, `Community 14`, `Community 15`, `Community 17`, `Community 25`?**
-  _High betweenness centrality (0.088) - this node is a cross-community bridge._
-- **Why does `Barang` connect `Community 17` to `Community 0`, `Community 1`, `Community 3`, `Community 4`, `Community 7`, `Community 9`, `Community 173`, `Community 14`, `Community 15`, `Community 176`?**
-  _High betweenness centrality (0.029) - this node is a cross-community bridge._
-- **Why does `Floor` connect `Community 1` to `Community 3`, `Community 9`, `Community 10`, `Community 11`, `Community 173`, `Community 175`?**
-  _High betweenness centrality (0.022) - this node is a cross-community bridge._
-- **What connects `$schema`, `style`, `typescript` to the rest of the system?**
+- **Why does `Controller` connect `Community 0` to `Community 1`, `Community 3`, `Community 4`, `Community 7`, `Community 8`, `Community 9`, `Community 10`, `Community 171`, `Community 11`, `Community 14`, `Community 15`, `Community 17`, `Community 25`?**
+  _High betweenness centrality (0.110) - this node is a cross-community bridge._
+- **Why does `AdmUser` connect `Community 6` to `Community 2`, `Community 19`?**
+  _High betweenness centrality (0.042) - this node is a cross-community bridge._
+- **Why does `Barang` connect `Community 17` to `Community 0`, `Community 1`, `Community 2`, `Community 4`, `Community 7`, `Community 9`, `Community 14`, `Community 15`?**
+  _High betweenness centrality (0.028) - this node is a cross-community bridge._
+- **Are the 2 inferred relationships involving `AdmUser` (e.g. with `.test_dynamic_role_assignment()` and `.test_ifs_manager_role_middleware_authorization()`) actually correct?**
+  _`AdmUser` has 2 INFERRED edges - model-reasoned connections that need verification._
+- **What connects `NavItem`, `NavSection`, `mainNavigation` to the rest of the system?**
   _151 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
-  _Cohesion score 0.05605499735589635 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.050921861281826165 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
-  _Cohesion score 0.05714285714285714 - nodes in this community are weakly interconnected._
-- **Should `Community 3` be split into smaller, more focused modules?**
-  _Cohesion score 0.08826945412311266 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.055051421657592255 - nodes in this community are weakly interconnected._
