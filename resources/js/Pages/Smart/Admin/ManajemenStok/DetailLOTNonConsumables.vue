@@ -693,6 +693,150 @@ const bulkEditForm = useForm({
   room_id: 'keep' as string | number | null,
 });
 
+// Bulk Edit Vehicle states
+const isBulkVehicleEditModalOpen = ref(false);
+const bulkVehicleEditForm = ref({
+  ids: [] as number[],
+  price: '',
+  image_url: null as File | null,
+  image_url_name: '',
+  use_lot_image: false,
+  condition: '',
+  status: '',
+  location_id: '' as string | number,
+  floor_id: '' as string | number | null,
+  room_id: '' as string | number | null,
+});
+
+const openBulkVehicleEditModal = () => {
+  if (!dataTableRef.value || !dataTableRef.value.table) return;
+  const selectedRows = dataTableRef.value.table.getFilteredSelectedRowModel().rows;
+  
+  bulkVehicleEditForm.value = {
+    ids: selectedRows.map((row: any) => row.original.id),
+    price: '',
+    image_url: null,
+    image_url_name: '',
+    use_lot_image: false,
+    condition: '',
+    status: '',
+    location_id: '',
+    floor_id: '',
+    room_id: '',
+  };
+  isBulkVehicleEditModalOpen.value = true;
+};
+
+const handleSaveBulkVehicleEdit = () => {
+  isBulkVehicleEditModalOpen.value = false;
+  if (dataTableRef.value && dataTableRef.value.table) {
+    dataTableRef.value.table.resetRowSelection();
+  }
+  toast.success('Aset kendaraan berhasil diperbarui secara massal.');
+};
+
+const filteredFloorsForBulkVehicle = computed(() => {
+  if (!bulkVehicleEditForm.value.location_id) return [];
+  return props.floors.filter(f => Number(f.location_id) === Number(bulkVehicleEditForm.value.location_id));
+});
+
+const filteredRoomsForBulkVehicle = computed(() => {
+  if (!bulkVehicleEditForm.value.floor_id) return [];
+  return props.rooms.filter(r => Number(r.floor_id) === Number(bulkVehicleEditForm.value.floor_id));
+});
+
+watch(() => bulkVehicleEditForm.value.location_id, (newVal) => {
+  if (newVal) {
+    const valid = filteredFloorsForBulkVehicle.value.some(f => Number(f.id) === Number(bulkVehicleEditForm.value.floor_id));
+    if (!valid) {
+      bulkVehicleEditForm.value.floor_id = '';
+      bulkVehicleEditForm.value.room_id = '';
+    }
+  } else {
+    bulkVehicleEditForm.value.floor_id = '';
+    bulkVehicleEditForm.value.room_id = '';
+  }
+});
+
+watch(() => bulkVehicleEditForm.value.floor_id, (newVal) => {
+  if (newVal) {
+    const valid = filteredRoomsForBulkVehicle.value.some(r => Number(r.id) === Number(bulkVehicleEditForm.value.room_id));
+    if (!valid) {
+      bulkVehicleEditForm.value.room_id = '';
+    }
+  } else {
+    bulkVehicleEditForm.value.room_id = '';
+  }
+});
+
+const handleBulkVehicleSamakanPrice = () => {
+  bulkVehicleEditForm.value.price = props.lot.unitPrice.toString();
+};
+
+const handleBulkVehicleFileUpload = (e: any) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+  if (!allowedTypes.includes(file.type)) {
+    toast.error('Format file salah! Hanya diperbolehkan file .jpg, .jpeg, atau .png');
+    return;
+  }
+
+  if (file.size > 1024 * 1024) {
+    toast.error('Gagal! Ukuran foto maksimal 1MB');
+    return;
+  }
+
+  bulkVehicleEditForm.value.image_url = file;
+  bulkVehicleEditForm.value.image_url_name = file.name;
+  bulkVehicleEditForm.value.use_lot_image = false;
+};
+
+const triggerBulkVehicleFileInput = () => {
+  const input = document.getElementById('bulk-vehicle-photo-upload') as HTMLInputElement;
+  input?.click();
+};
+
+const handleBulkVehicleSamakanPhoto = () => {
+  if (props.lot.imageUrl) {
+    bulkVehicleEditForm.value.use_lot_image = true;
+    bulkVehicleEditForm.value.image_url = null;
+    bulkVehicleEditForm.value.image_url_name = props.lot.imageUrl.split('/').pop() || '';
+  } else {
+    toast.error('LOT tidak memiliki foto.');
+  }
+};
+
+const viewBulkVehicleImageInNewTab = () => {
+  if (bulkVehicleEditForm.value.image_url) {
+    const url = URL.createObjectURL(bulkVehicleEditForm.value.image_url);
+    window.open(url, '_blank');
+  } else if (bulkVehicleEditForm.value.use_lot_image && props.lot.imageUrl) {
+    window.open('/storage/' + props.lot.imageUrl, '_blank');
+  }
+};
+
+const handleBulkVehicleSamakanLocation = () => {
+  bulkVehicleEditForm.value.location_id = props.lot.location_id;
+};
+
+const handleBulkVehicleSamakanFloor = () => {
+  if (props.lot.floor_id) {
+    bulkVehicleEditForm.value.floor_id = props.lot.floor_id;
+  } else {
+    toast.error('LOT tidak memiliki lantai default.');
+  }
+};
+
+const handleBulkVehicleSamakanRoom = () => {
+  if (props.lot.room_id) {
+    bulkVehicleEditForm.value.room_id = props.lot.room_id;
+  } else {
+    toast.error('LOT tidak memiliki ruangan default.');
+  }
+};
+
 const openBulkEditModal = () => {
   if (!dataTableRef.value || !dataTableRef.value.table) return;
   const selectedRows = dataTableRef.value.table.getFilteredSelectedRowModel().rows;
@@ -1155,7 +1299,7 @@ const totalAsetTerpilihCount = computed(() => {
               <div class="flex flex-wrap gap-2">
                 <!-- Edit Terpilih -->
                 <button 
-                  @click="openBulkEditModal"
+                  @click="isVehicle ? openBulkVehicleEditModal() : openBulkEditModal()"
                   :disabled="totalAsetTerpilihCount === 0"
                   class="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:opacity-70 text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm disabled:opacity-50 font-bold"
                 >
@@ -1970,6 +2114,267 @@ const totalAsetTerpilihCount = computed(() => {
                   class="px-8 py-2.5 bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors shadow-sm active:scale-[0.98] disabled:opacity-50"
                 >
                   Simpan Perubahan
+                </button>
+              </div>
+            </div>
+          </Transition>
+        </div>
+      </Transition>
+    </Teleport>
+
+    <!-- Bulk Edit Vehicle Assets Modal -->
+    <Teleport to="body">
+      <Transition
+        enter-active-class="ease-out duration-200"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="ease-in duration-150"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div v-if="isBulkVehicleEditModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <Transition
+            enter-active-class="ease-out duration-200"
+            enter-from-class="opacity-0 scale-95"
+            enter-to-class="opacity-100 scale-100"
+            leave-active-class="ease-in duration-150"
+            leave-from-class="opacity-100 scale-100"
+            leave-to-class="opacity-0 scale-95"
+          >
+            <div 
+              v-if="isBulkVehicleEditModalOpen" 
+              class="bg-card w-full max-w-[1000px] rounded-[14px] shadow-2xl overflow-hidden flex flex-col" 
+              @click.stop
+            >
+              <!-- Modal Header -->
+              <div class="flex items-center justify-between pt-5 pb-3 px-6 border-b border-border">
+                <h3 class="text-xl font-bold text-foreground">Edit Aset Terpilih</h3>
+                <button @click="isBulkVehicleEditModalOpen = false" class="p-2 hover:bg-muted rounded-full transition-colors">
+                  <X class="w-6 h-6 text-foreground" />
+                </button>
+              </div>
+
+              <!-- Modal Body -->
+              <div class="p-6 overflow-y-auto max-h-[75vh]">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+                  <!-- Left Column -->
+                  <div class="space-y-6">
+                    <!-- Kode LOT -->
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-semibold text-foreground block">Kode LOT</label>
+                      <input 
+                        type="text" 
+                        value="Tidak dapat diubah"
+                        disabled
+                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-[#F3F4F6] dark:bg-muted/30 text-gray-400 cursor-not-allowed h-10"
+                      />
+                    </div>
+
+                    <!-- Nilai (Price) -->
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-semibold text-foreground block">Nilai<span class="text-rose-500">*</span></label>
+                      <div class="flex gap-2">
+                        <div class="flex flex-grow rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors h-10 overflow-hidden">
+                          <span class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-r border-input select-none font-medium">
+                            Rp
+                          </span>
+                          <input 
+                            type="text" 
+                            v-model="bulkVehicleEditForm.price"
+                            @input="bulkVehicleEditForm.price = bulkVehicleEditForm.price.toString().replace(/[^0-9.,]/g, '')"
+                            placeholder="Nilai aset"
+                            class="flex-1 min-w-0 px-4 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 transition-colors h-full"
+                          />
+                        </div>
+                        <button 
+                          type="button"
+                          @click="handleBulkVehicleSamakanPrice"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#E58B35] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm"
+                        >
+                          Samakan
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Foto -->
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-semibold text-foreground block">Foto<span class="text-rose-500">*</span></label>
+                      <div class="flex gap-2">
+                        <div 
+                          class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/10 truncate flex items-center h-10 text-muted-foreground"
+                          :class="[
+                            (bulkVehicleEditForm.image_url || bulkVehicleEditForm.image_url_name) 
+                              ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' 
+                              : 'text-muted-foreground cursor-default'
+                          ]"
+                          @click="(bulkVehicleEditForm.image_url || bulkVehicleEditForm.image_url_name) && viewBulkVehicleImageInNewTab()"
+                        >
+                          {{ bulkVehicleEditForm.image_url_name || 'Belum ada foto yang dipilih' }}
+                        </div>
+                        <input 
+                          type="file" 
+                          id="bulk-vehicle-photo-upload" 
+                          class="hidden" 
+                          accept=".jpg,.jpeg,.png"
+                          @change="handleBulkVehicleFileUpload"
+                        />
+                        <button 
+                          type="button"
+                          @click="triggerBulkVehicleFileInput"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#5B46F6] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm"
+                        >
+                          Pilih File
+                        </button>
+                        <button 
+                          type="button"
+                          @click="handleBulkVehicleSamakanPhoto"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#E58B35] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm"
+                        >
+                          Samakan
+                        </button>
+                      </div>
+                      <p class="text-[10px] text-muted-foreground ml-1">Maksimal ukuran 1 MB</p>
+                    </div>
+
+                    <!-- TNKB (Nomor Polisi) -->
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-semibold text-foreground block">TNKB (Nomor Polisi)<span class="text-rose-500">*</span></label>
+                      <input 
+                        type="text" 
+                        value="Tidak dapat diubah"
+                        disabled
+                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-[#F3F4F6] dark:bg-muted/30 text-gray-400 cursor-not-allowed h-10"
+                      />
+                    </div>
+
+                    <!-- Footnote Note -->
+                    <p class="text-sm text-rose-500 italic font-normal mt-4">*Kosongkan input yang tidak ingin diubah</p>
+                  </div>
+
+                  <!-- Right Column -->
+                  <div class="space-y-6">
+                    <!-- Kondisi & Status (Side-by-Side) -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <!-- Kondisi -->
+                      <div class="space-y-1.5">
+                        <label class="text-sm font-semibold text-foreground block">Kondisi<span class="text-rose-500">*</span></label>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 text-foreground">
+                              {{ bulkVehicleEditForm.condition || 'Pilih kondisi aset' }}
+                              <ChevronDown class="w-4 h-4 opacity-50" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
+                            <DropdownMenuItem @select="bulkVehicleEditForm.condition = ''">Pilih kondisi aset</DropdownMenuItem>
+                            <DropdownMenuItem v-for="cond in availableConditions" :key="cond" @select="bulkVehicleEditForm.condition = cond">
+                              {{ cond }}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+
+                      <!-- Status -->
+                      <div class="space-y-1.5">
+                        <label class="text-sm font-semibold text-foreground block">Status<span class="text-rose-500">*</span></label>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 text-foreground">
+                              {{ bulkVehicleEditForm.status ? getStatusLabel(bulkVehicleEditForm.status) : 'Pilih status aset' }}
+                              <ChevronDown class="w-4 h-4 opacity-50" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
+                            <DropdownMenuItem @select="bulkVehicleEditForm.status = ''">Pilih status aset</DropdownMenuItem>
+                            <DropdownMenuItem v-for="st in availableStatuses" :key="st" @select="bulkVehicleEditForm.status = st">
+                              {{ getStatusLabel(st) }}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </div>
+
+                    <!-- Lokasi -->
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-semibold text-foreground block">Lokasi<span class="text-rose-500">*</span></label>
+                      <div class="flex gap-2">
+                        <Combobox
+                          v-model="bulkVehicleEditForm.location_id"
+                          :options="props.locations"
+                          search-placeholder="Cari lokasi..."
+                          default-label="Pilih lokasi aset"
+                          width-class="flex-grow h-10 px-4"
+                        />
+                        <button 
+                          type="button"
+                          @click="handleBulkVehicleSamakanLocation"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#E58B35] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm"
+                        >
+                          Samakan
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Lantai -->
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-semibold text-foreground block">Lantai</label>
+                      <div class="flex gap-2">
+                        <Combobox
+                          v-model="bulkVehicleEditForm.floor_id"
+                          :options="filteredFloorsForBulkVehicle"
+                          search-placeholder="Cari lantai..."
+                          default-label="Pilih lokasi aset"
+                          width-class="flex-grow h-10 px-4"
+                          :disabled="!bulkVehicleEditForm.location_id"
+                        />
+                        <button 
+                          type="button"
+                          @click="handleBulkVehicleSamakanFloor"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#E58B35] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm"
+                        >
+                          Samakan
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Ruangan -->
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-semibold text-foreground block">Ruangan</label>
+                      <div class="flex gap-2">
+                        <Combobox
+                          v-model="bulkVehicleEditForm.room_id"
+                          :options="filteredRoomsForBulkVehicle"
+                          search-placeholder="Cari ruangan..."
+                          default-label="Pilih lokasi aset"
+                          width-class="flex-grow h-10 px-4"
+                          :disabled="!bulkVehicleEditForm.floor_id"
+                        />
+                        <button 
+                          type="button"
+                          @click="handleBulkVehicleSamakanRoom"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#E58B35] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm"
+                        >
+                          Samakan
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Modal Footer -->
+              <div class="py-4 px-6 border-t border-border flex items-center justify-end gap-3 bg-card">
+                <button 
+                  @click="isBulkVehicleEditModalOpen = false"
+                  class="px-8 py-2.5 bg-background border border-gray-300 hover:bg-muted text-gray-700 text-sm font-semibold rounded-full transition-colors"
+                >
+                  Batal
+                </button>
+                <button 
+                  @click="handleSaveBulkVehicleEdit"
+                  class="px-8 py-2.5 bg-[#5F38E6] hover:bg-[#4E2ED0] text-white text-sm font-semibold rounded-full transition-colors shadow-sm"
+                >
+                  Simpan Perubahan Massal
                 </button>
               </div>
             </div>
