@@ -505,28 +505,51 @@ const isAssetFormValid = computed(() => {
 const handleSaveAsset = () => {
   if (!isAssetFormValid.value) return;
 
-  isAssetModalOpen.value = false;
-  if (assetModalMode.value === 'create') {
-    toast.success(assetForm.is_bulk ? 'Aset berhasil ditambahkan secara massal (simulasi).' : 'Aset berhasil ditambahkan (simulasi).');
-  } else {
-    // Find and update the asset locally in props.units to make the UI look updated!
-    const index = props.units.findIndex(u => u.id === selectedAssetId.value);
-    if (index !== -1) {
-      props.units[index] = {
-        ...props.units[index],
-        price: assetForm.price,
-        status: assetForm.status,
-        condition: assetForm.condition,
-        location_id: Number(assetForm.location_id),
-        location: props.locations.find(l => l.id == assetForm.location_id)?.name || props.units[index].location,
-        floor_id: assetForm.floor_id ? Number(assetForm.floor_id) : null,
-        floor: props.floors.find(f => f.id == assetForm.floor_id)?.name || null,
-        room_id: assetForm.room_id ? Number(assetForm.room_id) : null,
-        room: props.rooms.find(r => r.id == assetForm.room_id)?.name || null,
-        vehicle_registration: assetForm.vehicle_registration || null,
-      };
+  assetForm.transform((data) => {
+    const formData: any = {
+      _method: data._method,
+      number: data.number,
+      lot_id: data.lot_id,
+      location_id: data.location_id,
+      floor_id: data.floor_id,
+      room_id: data.room_id,
+      status: data.status,
+      condition: data.condition,
+      price: parseCurrencyToNumber(data.price),
+    };
+    if (isVehicle.value) {
+      formData.vehicle_registration = data.vehicle_registration;
+      formData.floor_id = null;
+      formData.room_id = null;
     }
-    toast.success('Aset berhasil diperbarui (simulasi).');
+    if (data.image_url) {
+      formData.image_url = data.image_url;
+    }
+    if (data.use_lot_image) {
+      formData.use_lot_image = data.use_lot_image;
+    }
+    if (assetModalMode.value === 'create') {
+      formData.is_bulk = data.is_bulk;
+      formData.bulk_quantity = data.bulk_quantity;
+    }
+    return formData;
+  });
+
+  if (assetModalMode.value === 'create') {
+    const url = assetForm.is_bulk ? '/smart/inventory/units/bulk' : '/smart/inventory/units';
+    assetForm.post(url, {
+      onSuccess: () => {
+        isAssetModalOpen.value = false;
+        toast.success(assetForm.is_bulk ? 'Aset berhasil ditambahkan secara massal.' : 'Aset berhasil ditambahkan.');
+      }
+    });
+  } else {
+    assetForm.post(`/smart/inventory/units/${selectedAssetId.value}`, {
+      onSuccess: () => {
+        isAssetModalOpen.value = false;
+        toast.success('Aset berhasil diperbarui.');
+      }
+    });
   }
 };
 
