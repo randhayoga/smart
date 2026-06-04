@@ -32,7 +32,7 @@ Route::get('/', function (\Illuminate\Http\Request $request) {
     if (!$user) {
         return redirect()->route('login');
     }
-    if ($user->role === 'admin') {
+    if ($user->is_admin) {
         return redirect()->route('smart.dashboard');
     }
     return redirect()->route('smart.user.dashboard');

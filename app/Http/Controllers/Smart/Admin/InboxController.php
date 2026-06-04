@@ -21,7 +21,7 @@ class InboxController extends Controller
      */
     public function index(Request $request): Response
     {
-        if ($request->user()->role !== 'admin') {
+        if (!in_array($request->user()->role, ['admin', 'ifs_manager'])) {
             abort(403, 'Akses ditolak. Hanya Admin yang dapat mengakses halaman ini.');
         }
 
@@ -55,7 +55,7 @@ class InboxController extends Controller
      */
     public function show(Request $request, string $id): Response
     {
-        if ($request->user()->role !== 'admin') {
+        if (!in_array($request->user()->role, ['admin', 'ifs_manager'])) {
             abort(403, 'Akses ditolak. Hanya Admin yang dapat mengakses halaman ini.');
         }
 
@@ -141,7 +141,7 @@ class InboxController extends Controller
      */
     public function action(Request $request, $id)
     {
-        if ($request->user()->role !== 'admin') {
+        if (!in_array($request->user()->role, ['admin', 'ifs_manager'])) {
             abort(403, 'Akses ditolak. Hanya Admin yang dapat mengakses halaman ini.');
         }
 

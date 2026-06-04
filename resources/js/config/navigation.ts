@@ -6,6 +6,7 @@ import {
     Settings,
     Users,
     Bell,
+    CircleCheckBig,
     HelpCircle,
     Database,
     LayoutList,
@@ -16,6 +17,7 @@ import {
     FileClock,
     Eye,
     PackagePlus,
+    RotateCw,
     ShoppingBasket,
     ShoppingCart,
     Archive,
@@ -130,7 +132,7 @@ export const userNavigation: NavSection[] = [
         ],
     },
     {
-        title: 'Approval',
+        title: 'Approval Permintaan',
         items: [
             {
                 title: 'Perlu Approval',
@@ -141,6 +143,21 @@ export const userNavigation: NavSection[] = [
                 title: 'Sudah Diproses',
                 href: '/smart/approved',
                 icon: ListCheck,
+            },
+        ],
+    },
+    {
+        title: 'Approval Status',
+        items: [
+            {
+                title: 'Perlu Approval',
+                href: 'smart/approve-status',
+                icon: RotateCw,
+            },
+            {
+                title: 'Sudah Diproses',
+                href: 'smart/approved-status',
+                icon: CircleCheckBig,
             },
         ],
     },
