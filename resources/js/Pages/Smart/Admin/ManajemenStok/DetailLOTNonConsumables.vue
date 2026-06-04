@@ -1758,6 +1758,20 @@ const totalAsetTerpilihCount = computed(() => {
                       />
                       <span class="text-sm font-medium text-foreground">aset secara otomatis dengan nilai yang sama.</span>
                     </div>
+
+                    <!-- TNKB (Nomor Polisi) - Shown if it's a vehicle -->
+                    <div v-if="isVehicle" class="space-y-1.5">
+                      <label class="text-sm font-semibold text-foreground block">TNKB (Nomor Polisi)<span class="text-rose-500">*</span></label>
+                      <input 
+                        type="text" 
+                        v-model="assetForm.vehicle_registration"
+                        :disabled="isFieldDisabled"
+                        maxlength="15"
+                        placeholder="B 1234 ABC"
+                        @input="assetForm.vehicle_registration = assetForm.vehicle_registration.toUpperCase()"
+                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary h-10 disabled:opacity-50 disabled:cursor-not-allowed uppercase"
+                      />
+                    </div>
                   </div>
 
                   <!-- Right Column -->
@@ -1872,20 +1886,6 @@ const totalAsetTerpilihCount = computed(() => {
                           Samakan
                         </button>
                       </div>
-                    </div>
-
-                    <!-- TNKB (Nomor Polisi) - Shown if it's a vehicle -->
-                    <div v-if="isVehicle" class="space-y-1.5">
-                      <label class="text-sm font-semibold text-foreground block">TNKB (Nomor Polisi)<span class="text-rose-500">*</span></label>
-                      <input 
-                        type="text" 
-                        v-model="assetForm.vehicle_registration"
-                        :disabled="isFieldDisabled"
-                        maxlength="15"
-                        placeholder="B XXXX YYY"
-                        @input="assetForm.vehicle_registration = assetForm.vehicle_registration.toUpperCase()"
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary h-10 disabled:opacity-50 disabled:cursor-not-allowed uppercase"
-                      />
                     </div>
                   </div>
                 </div>
