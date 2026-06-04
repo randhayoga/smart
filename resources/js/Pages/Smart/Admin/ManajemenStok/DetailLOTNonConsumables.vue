@@ -24,9 +24,11 @@ import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
 import ViewTableButton from '@/Components/ViewTableButton.vue';
 import Tabs from '@/Components/Tabs.vue';
+import ExportButtonGroup from '@/Components/ExportButtonGroup.vue';
 import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal.vue';
 import DeleteErrorModal from '@/Components/DeleteErrorModal.vue';
 import Combobox from '@/Components/Combobox.vue';
+import { Checkbox } from '@/Components/ui/checkbox';
 
 interface Props {
   lot: {
@@ -72,7 +74,6 @@ interface Props {
     room_id: number | null;
     price: number | string;
     image_url: string;
-    user_name: string | null;
     vehicle_registration: string | null;
     updated_at: string;
   }[];
@@ -535,10 +536,11 @@ const handleSaveAsset = () => {
   });
 
   if (assetModalMode.value === 'create') {
-    assetForm.post('/smart/inventory/units', {
+    const url = assetForm.is_bulk ? '/smart/inventory/units/bulk' : '/smart/inventory/units';
+    assetForm.post(url, {
       onSuccess: () => {
         isAssetModalOpen.value = false;
-        toast.success('Aset berhasil ditambahkan.');
+        toast.success(assetForm.is_bulk ? 'Aset berhasil ditambahkan secara massal.' : 'Aset berhasil ditambahkan.');
       }
     });
   } else {
@@ -659,7 +661,11 @@ const errorModalMessage = ref('');
 const handleConfirmDelete = () => {
   if (deleteMode.value === 'lot') {
     router.delete(`/smart/inventory/lots/${props.lot.id}`, {
-      onSuccess: () => {
+      onSuccess: (page) => {
+        if ((page.props as any).flash?.error) {
+          closeDeleteModal();
+          return;
+        }
         closeDeleteModal();
         toast.success('LOT berhasil dihapus.');
         // Redirect to parent detail page
@@ -1181,7 +1187,7 @@ const totalAsetTerpilihCount = computed(() => {
         <button @click="openEditLotModal" class="flex items-center gap-1.5 bg-gradient-primary hover:opacity-90 text-primary-foreground px-5 py-2.5 rounded-[14px] text-sm font-bold shadow-sm">
           Edit Detail LOT
         </button>
-        <button @click="openDeleteLotModal" class="flex items-center gap-1.5 bg-[#CC0000] hover:bg-[#AA0000] text-primary-foreground px-5 py-2.5 rounded-[14px] text-sm font-bold shadow-sm">
+        <button @click="openDeleteLotModal" class="flex items-center gap-1.5 bg-destructive hover:opacity-70 text-primary-foreground px-5 py-2.5 rounded-[14px] text-sm font-bold shadow-sm">
           Hapus LOT
         </button>
       </div>
@@ -1198,26 +1204,26 @@ const totalAsetTerpilihCount = computed(() => {
             <img v-else src="https://placehold.co/400x400?text=Placeholder" class="w-full h-full object-cover opacity-50" />
           </div>
 
-          <div class="flex-grow grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <p class="font-bold text-foreground mb-1.5"><span class="text-foreground">Kode Barang:</span> {{ props.lot.barang_code }}</p>
-              <p class="font-bold text-foreground mb-1.5"><span class="text-foreground">Merek:</span> {{ props.lot.barang_brand }}</p>
-              <p class="font-bold text-foreground mb-1.5"><span class="text-foreground">Spesifikasi:</span> {{ props.lot.barang_specification }}</p>
-              <p class="text-foreground mb-1.5">Kategori: {{ props.lot.barang_category }}</p>
-              <p class="text-foreground mb-1.5">Subkategori: {{ props.lot.barang_subcategory }}</p>
-              <p class="text-foreground mb-1.5">Satuan: {{ props.lot.barang_uom }}</p>
+          <div class="flex-grow grid grid-cols-1 md:grid-cols-12 gap-4">
+            <div class="md:col-span-4">
+              <p class="font-bold text-foreground"><span class="text-foreground">Kode Barang:</span> {{ props.lot.barang_code }}</p>
+              <p class="font-bold text-foreground"><span class="text-foreground">Merek:</span> {{ props.lot.barang_brand }}</p>
+              <p class="font-bold text-foreground"><span class="text-foreground">Spesifikasi:</span> {{ props.lot.barang_specification }}</p>
+              <p class="text-foreground">Kategori: {{ props.lot.barang_category }}</p>
+              <p class="text-foreground">Subkategori: {{ props.lot.barang_subcategory }}</p>
+              <p class="text-foreground">Satuan: {{ props.lot.barang_uom }}</p>
             </div>
-            <div>
-              <p class="font-bold text-foreground mb-1.5"><span class="text-foreground">Kode LOT:</span> {{ props.lot.lotCode }}</p>
-              <p class="text-foreground mb-1.5">Jumlah stok tersedia: {{ props.units.filter(u => u.status === 'tersedia').length }}</p>
-              <p class="text-foreground mb-1.5">Jumlah stok diawal: {{ props.units.length }}</p>
-              <p class="text-foreground mb-1.5">Lokasi <span class="italic text-muted-foreground">default</span>: {{ formatLocation(props.lot.location, props.lot.floor, props.lot.room) }}</p>
-              <p class="text-foreground mb-1.5">Nomor PO: {{ props.lot.poNumber }}</p>
-              <p class="text-foreground mb-1.5">Tanggal masuk: {{ formatDateWithDashes(props.lot.entryDate) }}</p>
-              <p class="text-foreground mb-1.5">Harga satuan <span class="italic text-muted-foreground">default</span>: {{ formatRupiah(props.lot.unitPrice) }}</p>
-              <p class="text-foreground mb-1.5">Organizer: {{ props.lot.organizer }}</p>
-              <p class="text-foreground mb-1.5">Vendor: {{ props.lot.vendor }}</p>
-              <p class="text-foreground mb-1.5">Pembaruan terakhir: {{ props.lot.updated_at }}</p>
+            <div class="md:col-span-8">
+              <p class="font-bold text-foreground"><span class="text-foreground">Kode LOT:</span> {{ props.lot.lotCode }}</p>
+              <p class="text-foreground">Jumlah stok tersedia: {{ props.units.filter(u => u.status === 'tersedia').length }}</p>
+              <p class="text-foreground">Jumlah stok diawal: {{ props.units.length }}</p>
+              <p class="text-foreground">Lokasi <span class="italic text-muted-foreground">default</span>: {{ formatLocation(props.lot.location, props.lot.floor, props.lot.room) }}</p>
+              <p class="text-foreground">Nomor PO: {{ props.lot.poNumber }}</p>
+              <p class="text-foreground">Tanggal masuk: {{ formatDateWithDashes(props.lot.entryDate) }}</p>
+              <p class="text-foreground">Harga satuan <span class="italic text-muted-foreground">default</span>: {{ formatRupiah(props.lot.unitPrice) }}</p>
+              <p class="text-foreground">Organizer: {{ props.lot.organizer }}</p>
+              <p class="text-foreground">Vendor: {{ props.lot.vendor }}</p>
+              <p class="text-foreground">Pembaruan terakhir: {{ props.lot.updated_at }}</p>
             </div>
           </div>
         </div>
@@ -1240,12 +1246,12 @@ const totalAsetTerpilihCount = computed(() => {
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal h-10', !statusFilter ? 'text-muted-foreground' : 'text-foreground']">
+                <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal', !statusFilter ? 'text-muted-foreground' : 'text-foreground']">
                   <span class="truncate">{{ statusFilter ? getStatusLabel(statusFilter) : 'Semua status' }}</span>
                   <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start">
+              <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
                 <DropdownMenuItem @select="statusFilter = ''">Semua status</DropdownMenuItem>
                 <DropdownMenuItem v-for="st in availableStatuses" :key="st" @select="statusFilter = st">
                   {{ getStatusLabel(st) }}
@@ -1255,12 +1261,12 @@ const totalAsetTerpilihCount = computed(() => {
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal h-10', !conditionFilter ? 'text-muted-foreground' : 'text-foreground']">
+                <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal', !conditionFilter ? 'text-muted-foreground' : 'text-foreground']">
                   <span class="truncate">{{ conditionFilter || 'Semua kondisi' }}</span>
                   <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start">
+              <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
                 <DropdownMenuItem @select="conditionFilter = ''">Semua kondisi</DropdownMenuItem>
                 <DropdownMenuItem v-for="cond in availableConditions" :key="cond" @select="conditionFilter = cond">
                   {{ cond }}
@@ -1272,12 +1278,12 @@ const totalAsetTerpilihCount = computed(() => {
               <span>Baris per halaman</span>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal h-10', (rowsPerPage === 'Semua baris' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
+                  <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal', (rowsPerPage === 'Semua baris' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
                     {{ rowsPerPage }}
                     <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent class="w-[140px] rounded-[14px]" align="start">
+                <DropdownMenuContent class="w-[140px] rounded-[14px]" align="start" :side-offset="4">
                   <DropdownMenuItem @select="rowsPerPage = 'Semua baris'">Semua baris</DropdownMenuItem>
                   <DropdownMenuItem @select="rowsPerPage = '10'">10</DropdownMenuItem>
                   <DropdownMenuItem @select="rowsPerPage = '25'">25</DropdownMenuItem>
@@ -1288,50 +1294,26 @@ const totalAsetTerpilihCount = computed(() => {
 
           <!-- Actions Row -->
           <div class="mb-4 flex flex-wrap items-end justify-between gap-4 pt-2">
-            <div class="space-y-2 flex-grow min-w-0">
+            <div class="space-y-2 flex-1 min-w-0">
               <label class="text-xs text-muted-foreground font-medium block ml-0.5">Aksi Terpilih</label>
               <div class="flex flex-wrap gap-2">
                 <!-- Edit Terpilih -->
                 <button 
                   @click="isVehicle ? openBulkVehicleEditModal() : openBulkEditModal()"
                   :disabled="totalAsetTerpilihCount === 0"
-                  class="flex items-center gap-1.5 px-4 py-2 bg-[#FFA726] hover:bg-[#FB8C00] disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm cursor-pointer"
+                  class="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:opacity-70 text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm disabled:opacity-50 font-bold"
                 >
                   <Pencil class="w-4 h-4" />
-                  <span>Edit Terpilih</span>
+                  <span class="hidden sm:inline">Edit Terpilih</span>
                 </button>
-                <!-- Print -->
-                <button 
-                  @click="handlePrint"
-                  class="flex items-center gap-2 px-4 py-2 bg-[#9B897B] hover:bg-[#8A786A] text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm cursor-pointer"
-                >
-                  <span>Print</span>
-                </button>
-                <!-- Export: Excel -->
-                <button 
-                  @click="handleExportExcel"
-                  class="flex items-center gap-2 px-4 py-2 bg-[#66BB6A] hover:bg-[#57A85B] text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm cursor-pointer"
-                >
-                  <span>Export: Excel</span>
-                </button>
-                <!-- Export: PDF -->
-                <button 
-                  @click="handleExportPDF"
-                  class="flex items-center gap-2 px-4 py-2 bg-[#FFA726] hover:bg-[#FB8C00] text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm cursor-pointer"
-                >
-                  <span>Export: PDF</span>
-                </button>
-                <!-- Export: CSV -->
-                <button 
-                  @click="handleExportCSV"
-                  class="flex items-center gap-2 px-4 py-2 bg-[#BA68C8] hover:bg-[#AB47BC] text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm cursor-pointer"
-                >
-                  <span>Export: CSV</span>
-                </button>
+                <ExportButtonGroup 
+                  @export-excel="handleExportExcel"
+                  @export-csv="handleExportCSV"
+                />
               </div>
             </div>
             
-            <button @click="openCreateAssetModal" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition-all shadow-sm flex items-center gap-2">
+            <button @click="openCreateAssetModal" class="px-5 py-2.5 bg-gradient-primary hover:opacity-90 text-white text-sm font-bold rounded-xl transition-all shadow-sm flex items-center gap-2">
               <Plus class="w-4 h-4" />
               Aset Baru
             </button>
@@ -1686,6 +1668,26 @@ const totalAsetTerpilihCount = computed(() => {
                       </div>
                       <p class="text-[10px] text-muted-foreground ml-1">Maksimal ukuran 1 MB</p>
                     </div>
+
+                    <!-- Pembuatan massal (Create Mode Only) -->
+                    <div v-if="assetModalMode === 'create' && props.lot.barang_category !== 'Kendaraan'" class="space-y-1.5 flex items-center gap-2 pt-2 flex-wrap">
+                      <Checkbox 
+                        id="is_bulk"
+                        v-model="assetForm.is_bulk"
+                      />
+                      <label for="is_bulk" class="cursor-pointer select-none text-sm font-medium text-foreground">
+                        Buat
+                      </label>
+                      <input 
+                        type="number" 
+                        v-model="assetForm.bulk_quantity"
+                        placeholder="..."
+                        min="1"
+                        :disabled="!assetForm.is_bulk"
+                        class="w-16 px-2 py-1 text-sm border border-input rounded-[10px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-8 disabled:opacity-50 disabled:cursor-not-allowed mx-1"
+                      />
+                      <span class="text-sm font-medium text-foreground">aset secara otomatis dengan nilai yang sama.</span>
+                    </div>
                   </div>
 
                   <!-- Right Column -->
@@ -1800,31 +1802,6 @@ const totalAsetTerpilihCount = computed(() => {
                     </div>
                   </div>
 
-                  <!-- Pembuatan massal (Create Mode Only) -->
-                  <div v-if="assetModalMode === 'create'" class="md:col-span-2 border-t border-border pt-4">
-                    <label class="text-sm font-bold text-foreground block mb-2">Pembuatan massal</label>
-                    <div class="flex items-center gap-2">
-                      <input 
-                        type="checkbox" 
-                        id="is_bulk"
-                        v-model="assetForm.is_bulk"
-                        class="rounded border-input text-primary focus:ring-primary/20 w-4 h-4 cursor-pointer"
-                      />
-                      <label for="is_bulk" class="text-sm text-foreground flex items-center gap-1.5 cursor-pointer">
-                        Buat 
-                        <input 
-                          type="number" 
-                          v-model="assetForm.bulk_quantity"
-                          :disabled="!assetForm.is_bulk"
-                          placeholder="jumlah..." 
-                          min="1"
-                          max="100"
-                          class="w-24 px-3 py-1 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed h-8"
-                        />
-                        aset secara otomatis dengan nilai yang sama dengan data di atas.
-                      </label>
-                    </div>
-                  </div>
                 </div>
               </div>
 

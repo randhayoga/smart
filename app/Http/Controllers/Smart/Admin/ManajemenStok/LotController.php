@@ -14,7 +14,7 @@ class LotController extends Controller
      */
     public function store(Request $request)
     {
-        $rules = [
+        $validated = $request->validate([
             'number' => 'required|string|max:26|unique:lots,number',
             'barang_id' => 'required|exists:barangs,id',
             'organizer_id' => 'required|exists:organizers,id',
@@ -22,31 +22,17 @@ class LotController extends Controller
             'location_id' => 'required|exists:locations,id',
             'floor_id' => 'nullable|exists:floors,id',
             'room_id' => 'nullable|exists:rooms,id',
+            'initial_quantity' => 'nullable|integer|min:0',
+            'current_quantity' => 'nullable|integer|min:0',
             'po_number' => 'required|string|max:255',
             'date_of_receipt' => 'required|date',
             'unit_price' => 'required|numeric|min:0',
             'image_url' => 'required_without:use_parent_image|nullable|image|max:1024',
             'use_parent_image' => 'nullable',
-        ];
-
-        $barang = \App\Models\Inventory\Barang::with('subcategory.category')->findOrFail($request->input('barang_id'));
-        $isConsumable = (bool)($barang->subcategory->category->is_consumable ?? false);
-
-        if ($isConsumable) {
-            $rules['initial_quantity'] = 'required|integer|min:0';
-            $rules['current_quantity'] = 'nullable|integer|min:0';
-        } else {
-            $rules['total_item'] = 'required|integer|min:1';
-        }
-
-        $validated = $request->validate($rules);
-
-        $totalItem = $isConsumable ? 0 : $validated['total_item'];
-        if (isset($validated['total_item'])) {
-            unset($validated['total_item']);
-        }
+        ]);
 
         if ($request->boolean('use_parent_image')) {
+            $barang = \App\Models\Inventory\Barang::findOrFail($request->input('barang_id'));
             if ($barang->image_url && Storage::disk('public')->exists($barang->image_url)) {
                 $extension = pathinfo($barang->image_url, PATHINFO_EXTENSION);
                 $newFilename = 'inventory/lots/' . uniqid() . '.' . $extension;
@@ -63,25 +49,9 @@ class LotController extends Controller
         unset($validated['use_parent_image']);
         $validated['initial_quantity'] = $validated['initial_quantity'] ?? 0;
 
-        $lot = Lot::create($validated);
+        Lot::create($validated);
 
-        if (!$isConsumable) {
-            for ($i = 1; $i <= $totalItem; $i++) {
-                \App\Models\Inventory\Unit::create([
-                    'number' => $lot->number . '-U' . str_pad($i, 2, '0', STR_PAD_LEFT),
-                    'lot_id' => $lot->id,
-                    'location_id' => $lot->location_id,
-                    'floor_id' => $lot->floor_id,
-                    'room_id' => $lot->room_id,
-                    'status' => 'tersedia',
-                    'condition' => 'Baik',
-                    'price' => $lot->unit_price,
-                    'image_url' => $lot->image_url,
-                ]);
-            }
-        }
-
-        return redirect()->back()->with('success', 'LOT berhasil ditambahkan.');
+        return redirect()->back()->with('success', 'LOT berhasil ditambahkan.');    
     }
 
     /**
@@ -109,7 +79,8 @@ class LotController extends Controller
         if ($request->boolean('use_parent_image')) {
             if ($lot->image_url && $lot->image_url !== 'inventory/lots/placeholder.jpg' && Storage::disk('public')->exists($lot->image_url)) {
                 $isShared = Lot::where('image_url', $lot->image_url)->where('id', '!=', $lot->id)->exists()
-                    || \App\Models\Inventory\Barang::where('image_url', $lot->image_url)->exists();
+                    || \App\Models\Inventory\Barang::where('image_url', $lot->image_url)->exists()
+                    || \App\Models\Inventory\Unit::where('image_url', $lot->image_url)->exists();
                 if (!$isShared) {
                     Storage::disk('public')->delete($lot->image_url);
                 }
@@ -126,7 +97,8 @@ class LotController extends Controller
         } else if ($request->hasFile('image_url')) {
             if ($lot->image_url && $lot->image_url !== 'inventory/lots/placeholder.jpg' && Storage::disk('public')->exists($lot->image_url)) {
                 $isShared = Lot::where('image_url', $lot->image_url)->where('id', '!=', $lot->id)->exists()
-                    || \App\Models\Inventory\Barang::where('image_url', $lot->image_url)->exists();
+                    || \App\Models\Inventory\Barang::where('image_url', $lot->image_url)->exists()
+                    || \App\Models\Inventory\Unit::where('image_url', $lot->image_url)->exists();
                 if (!$isShared) {
                     Storage::disk('public')->delete($lot->image_url);
                 }
@@ -150,9 +122,14 @@ class LotController extends Controller
      */
     public function destroy(Lot $lot)
     {
+        if ($lot->units()->exists()) {
+            return redirect()->back()->with('error', 'LOT tidak dapat dihapus karena masih memiliki unit terkait.');
+        }
+
         if ($lot->image_url && $lot->image_url !== 'inventory/lots/placeholder.jpg' && Storage::disk('public')->exists($lot->image_url)) {
             $isShared = Lot::where('image_url', $lot->image_url)->where('id', '!=', $lot->id)->exists()
-                || \App\Models\Inventory\Barang::where('image_url', $lot->image_url)->exists();
+                || \App\Models\Inventory\Barang::where('image_url', $lot->image_url)->exists()
+                || \App\Models\Inventory\Unit::where('image_url', $lot->image_url)->exists();
             if (!$isShared) {
                 Storage::disk('public')->delete($lot->image_url);
             }
@@ -211,7 +188,7 @@ class LotController extends Controller
         }
 
         // Ambil data unit (aset) terkait LOT ini
-        $units = \App\Models\Inventory\Unit::with(['location', 'floor', 'room', 'user'])
+        $units = \App\Models\Inventory\Unit::with(['location', 'floor', 'room'])
             ->where('lot_id', $lot->id)
             ->get()
             ->map(function ($unit) {
@@ -228,7 +205,6 @@ class LotController extends Controller
                     'room_id' => $unit->room_id,
                     'price' => $unit->price,
                     'image_url' => $unit->image_url,
-                    'user_name' => $unit->user->name ?? null,
                     'vehicle_registration' => $unit->vehicle_registration,
                     'updated_at' => $unit->updated_at ? $unit->updated_at->format('d/m/Y H:i') : '-',
                 ];
