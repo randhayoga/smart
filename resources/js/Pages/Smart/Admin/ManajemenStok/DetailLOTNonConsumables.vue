@@ -295,12 +295,6 @@ const isVehicle = computed(() => {
          category.includes('motor') || subcategory.includes('motor');
 });
 
-const isFieldDisabled = computed(() => {
-  if (!isVehicle.value) return false;
-  if (assetModalMode.value === 'create') return false;
-  return assetForm.status === 'dipinjam';
-});
-
 const assetForm = useForm({
   _method: 'POST',
   number: '',
@@ -343,14 +337,15 @@ const openCreateAssetModal = () => {
   assetForm.reset();
   assetForm._method = 'POST';
   assetForm.number = generateAssetCode();
-  assetForm.location_id = props.lot.location_id;
-  assetForm.floor_id = props.lot.floor_id;
-  assetForm.room_id = props.lot.room_id;
-  assetForm.price = props.lot.unitPrice;
-  assetForm.status = 'tersedia';
-  assetForm.condition = 'Baik';
-  assetForm.use_lot_image = true;
-  assetForm.image_url_name = props.lot.imageUrl ? props.lot.imageUrl.split('/').pop() || '' : '';
+  assetForm.location_id = '';
+  assetForm.floor_id = null;
+  assetForm.room_id = null;
+  assetForm.price = '';
+  assetForm.status = '';
+  assetForm.condition = '';
+  assetForm.use_lot_image = false;
+  assetForm.image_url = null;
+  assetForm.image_url_name = '';
   assetForm.is_bulk = false;
   assetForm.bulk_quantity = '';
   assetForm.vehicle_registration = '';
@@ -466,12 +461,6 @@ const viewAssetMemoInNewTab = () => {
   }
 };
 
-const handleSamakanAssetMemo = () => {
-  toast.success('Berita Acara / Memo disamakan dengan default.');
-  assetForm.memo_file = null;
-  assetForm.memo_file_name = 'Berita_Acara_Default.pdf';
-};
-
 const filteredFloorsForAsset = computed(() => {
   if (!assetForm.location_id) return [];
   return props.floors.filter(f => Number(f.location_id) === Number(assetForm.location_id));
@@ -506,8 +495,8 @@ watch(() => assetForm.floor_id, (newVal) => {
   }
 });
 
-watch(() => assetForm.condition, (newVal) => {
-  if (newVal !== 'Rusak') {
+watch(() => assetForm.status, (newVal) => {
+  if (newVal !== 'rusak') {
     assetForm.memo_file = null;
     assetForm.memo_file_name = '';
   }
@@ -542,7 +531,7 @@ const isAssetFormValid = computed(() => {
          assetForm.condition && 
          assetForm.price !== '' && 
          (assetForm.image_url || assetForm.image_url_name) &&
-         assetForm.memo_file_name &&
+         (assetForm.status !== 'rusak' || assetForm.memo_file_name) &&
          !assetForm.processing;
 
   if (!baseValid) return false;
@@ -1786,41 +1775,35 @@ const totalAsetTerpilihCount = computed(() => {
               @click.stop
             >
               <!-- Modal Header -->
-              <div class="flex items-center justify-between pt-5 pb-3 px-6 border-b border-border">
-                <h3 class="text-xl font-bold text-foreground">
+              <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
+                <h3 class="text-lg font-bold text-foreground">
                   {{ assetModalMode === 'create' ? 'Pembuatan Aset Baru' : 'Edit Detail Aset' }}
                 </h3>
                 <button @click="isAssetModalOpen = false" class="p-2 hover:bg-muted rounded-full transition-colors">
-                  <X class="w-6 h-6 text-foreground" />
+                  <X class="w-5 h-5 text-muted-foreground" />
                 </button>
               </div>
 
               <!-- Modal Body -->
-              <div class="p-6 overflow-y-auto max-h-[75vh]">
+              <div class="p-6 overflow-y-auto max-h-[70vh]">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
                   <!-- Left Column -->
                   <div class="space-y-6">
                     <!-- Kode Aset -->
                     <div class="space-y-1.5">
-                      <label class="text-sm font-semibold text-foreground block">
-                        {{ assetModalMode === 'create' ? 'Kode Aset' : 'Kode Aset (tidak dapat diubah: sudah auto generate)' }}
-                      </label>
+                      <label class="text-sm font-medium text-foreground block">Kode Aset<span class="text-rose-500">*</span></label>
                       <input 
                         type="text" 
                         v-model="assetForm.number"
-                        :disabled="assetModalMode === 'edit'"
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] h-10 transition-colors"
-                        :class="[
-                          assetModalMode === 'edit'
-                            ? 'bg-[#F3F4F6] dark:bg-muted/30 text-gray-400 cursor-not-allowed'
-                            : 'bg-background text-foreground'
-                        ]"
+                        disabled
+                        placeholder="Kode Aset belum di-generate"
+                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
                       />
                     </div>
 
                     <!-- Nilai (Price) -->
                     <div class="space-y-1.5">
-                      <label class="text-sm font-semibold text-foreground block">Nilai<span class="text-rose-500">*</span></label>
+                      <label class="text-sm font-medium text-foreground block">Nilai<span class="text-rose-500">*</span></label>
                       <div class="flex gap-2">
                         <div class="flex flex-grow rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors h-10 overflow-hidden">
                           <span class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-r border-input select-none font-medium">
@@ -1837,7 +1820,7 @@ const totalAsetTerpilihCount = computed(() => {
                         <button 
                           type="button"
                           @click="assetForm.price = props.lot.unitPrice"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#E58B35] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-orange-400 hover:opacity-90 text-white text-sm font-medium rounded-[14px] transition-colors h-10"
                         >
                           Samakan
                         </button>
@@ -1846,14 +1829,14 @@ const totalAsetTerpilihCount = computed(() => {
 
                     <!-- Foto Aset -->
                     <div class="space-y-1.5">
-                      <label class="text-sm font-semibold text-foreground block">Foto<span class="text-rose-500">*</span></label>
+                      <label class="text-sm font-medium text-foreground block">Foto<span class="text-rose-500">*</span></label>
                       <div class="flex gap-2">
                         <div 
-                          class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-background truncate flex items-center h-10"
+                          class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/10 truncate flex items-center h-10"
                           :class="[
                             (assetForm.image_url || assetForm.image_url_name) 
-                              ? 'cursor-pointer hover:bg-muted/10 transition-colors text-foreground font-medium' 
-                              : 'text-gray-400 cursor-default'
+                              ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' 
+                              : 'text-muted-foreground cursor-default'
                           ]"
                           @click="(assetForm.image_url || assetForm.image_url_name) && viewAssetImageInNewTab()"
                         >
@@ -1869,14 +1852,14 @@ const totalAsetTerpilihCount = computed(() => {
                         <button 
                           type="button"
                           @click="triggerAssetFileInput"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#5B46F6] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors h-10"
                         >
                           Pilih File
                         </button>
                         <button 
                           type="button"
                           @click="handleSamakanAssetPhoto"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#E58B35] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-orange-400 hover:opacity-90 text-white text-sm font-medium rounded-[14px] transition-colors h-10"
                         >
                           Samakan
                         </button>
@@ -1905,15 +1888,14 @@ const totalAsetTerpilihCount = computed(() => {
 
                     <!-- TNKB (Nomor Polisi) - Shown if it's a vehicle -->
                     <div v-if="isVehicle" class="space-y-1.5">
-                      <label class="text-sm font-semibold text-foreground block">TNKB (Nomor Polisi)<span class="text-rose-500">*</span></label>
+                      <label class="text-sm font-medium text-foreground block">TNKB (Nomor Polisi)<span class="text-rose-500">*</span></label>
                       <input 
                         type="text" 
                         v-model="assetForm.vehicle_registration"
-                        :disabled="isFieldDisabled"
                         maxlength="15"
                         :placeholder="assetModalMode === 'create' ? 'B XXXX YYY' : 'B 1234 ABC'"
                         @input="assetForm.vehicle_registration = assetForm.vehicle_registration.toUpperCase()"
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary h-10 disabled:opacity-50 disabled:cursor-not-allowed uppercase"
+                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10 disabled:opacity-50 disabled:cursor-not-allowed uppercase"
                       />
                     </div>
                   </div>
@@ -1924,10 +1906,10 @@ const totalAsetTerpilihCount = computed(() => {
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <!-- Kondisi -->
                       <div class="space-y-1.5">
-                        <label class="text-sm font-semibold text-foreground block">Kondisi<span class="text-rose-500">*</span></label>
+                        <label class="text-sm font-medium text-foreground block">Kondisi<span class="text-rose-500">*</span></label>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="outline" :disabled="isFieldDisabled" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 disabled:opacity-50 disabled:cursor-not-allowed" :class="[!assetForm.condition ? 'text-gray-400' : 'text-foreground']">
+                            <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 disabled:opacity-50 disabled:cursor-not-allowed" :class="[!assetForm.condition ? 'text-muted-foreground' : 'text-foreground']">
                               {{ assetForm.condition || 'Pilih kondisi aset' }}
                               <ChevronDown class="w-4 h-4 opacity-50" />
                             </Button>
@@ -1942,10 +1924,10 @@ const totalAsetTerpilihCount = computed(() => {
 
                       <!-- Status -->
                       <div class="space-y-1.5">
-                        <label class="text-sm font-semibold text-foreground block">Status<span class="text-rose-500">*</span></label>
+                        <label class="text-sm font-medium text-foreground block">Status<span class="text-rose-500">*</span></label>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="outline" :disabled="isFieldDisabled" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 disabled:opacity-50 disabled:cursor-not-allowed" :class="[!assetForm.status ? 'text-gray-400' : 'text-foreground']">
+                            <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 disabled:opacity-50 disabled:cursor-not-allowed" :class="[!assetForm.status ? 'text-muted-foreground' : 'text-foreground']">
                               {{ assetForm.status ? getStatusLabel(assetForm.status) : 'Pilih status aset' }}
                               <ChevronDown class="w-4 h-4 opacity-50" />
                             </Button>
@@ -1961,7 +1943,7 @@ const totalAsetTerpilihCount = computed(() => {
 
                     <!-- Lokasi -->
                     <div class="space-y-1.5">
-                      <label class="text-sm font-semibold text-foreground block">Lokasi<span class="text-rose-500">*</span></label>
+                      <label class="text-sm font-medium text-foreground block">Lokasi<span class="text-rose-500">*</span></label>
                       <div class="flex gap-2">
                         <Combobox
                           v-model="assetForm.location_id"
@@ -1969,17 +1951,15 @@ const totalAsetTerpilihCount = computed(() => {
                           search-placeholder="Cari lokasi..."
                           default-label="Pilih lokasi aset"
                           width-class="flex-grow h-10 px-4"
-                          :disabled="isFieldDisabled"
                         />
                         <button 
                           type="button"
-                          :disabled="isFieldDisabled"
                           @click="
                             assetForm.location_id = props.lot.location_id; 
                             assetForm.floor_id = props.lot.floor_id; 
                             assetForm.room_id = props.lot.room_id;
                           "
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#E58B35] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-orange-400 hover:opacity-90 text-white text-sm font-medium rounded-[14px] transition-colors h-10 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           Samakan
                         </button>
@@ -1988,7 +1968,7 @@ const totalAsetTerpilihCount = computed(() => {
 
                     <!-- Lantai -->
                     <div class="space-y-1.5">
-                      <label class="text-sm font-semibold text-foreground block">Lantai</label>
+                      <label class="text-sm font-medium text-foreground block">Lantai</label>
                       <div class="flex gap-2">
                         <Combobox
                           v-model="assetForm.floor_id"
@@ -1996,13 +1976,13 @@ const totalAsetTerpilihCount = computed(() => {
                           search-placeholder="Cari lantai..."
                           default-label="Pilih lokasi aset"
                           width-class="flex-grow h-10 px-4"
-                          :disabled="!assetForm.location_id || isFieldDisabled"
+                          :disabled="!assetForm.location_id"
                         />
                         <button 
                           type="button"
-                          :disabled="!assetForm.location_id || isFieldDisabled"
+                          :disabled="!assetForm.location_id"
                           @click="assetForm.floor_id = props.lot.floor_id"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#E58B35] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-orange-400 hover:opacity-90 text-white text-sm font-medium rounded-[14px] transition-colors h-10 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           Samakan
                         </button>
@@ -2011,7 +1991,7 @@ const totalAsetTerpilihCount = computed(() => {
 
                     <!-- Ruangan -->
                     <div class="space-y-1.5">
-                      <label class="text-sm font-semibold text-foreground block">Ruangan</label>
+                      <label class="text-sm font-medium text-foreground block">Ruangan</label>
                       <div class="flex gap-2">
                         <Combobox
                           v-model="assetForm.room_id"
@@ -2019,13 +1999,13 @@ const totalAsetTerpilihCount = computed(() => {
                           search-placeholder="Cari ruangan..."
                           default-label="Pilih lokasi aset"
                           width-class="flex-grow h-10 px-4"
-                          :disabled="!assetForm.floor_id || isFieldDisabled"
+                          :disabled="!assetForm.floor_id"
                         />
                         <button 
                           type="button"
-                          :disabled="!assetForm.floor_id || isFieldDisabled"
+                          :disabled="!assetForm.floor_id"
                           @click="assetForm.room_id = props.lot.room_id"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#E58B35] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-orange-400 hover:opacity-90 text-white text-sm font-medium rounded-[14px] transition-colors h-10 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           Samakan
                         </button>
@@ -2033,47 +2013,35 @@ const totalAsetTerpilihCount = computed(() => {
                     </div>
 
                     <!-- Berita Acara / Memo -->
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-semibold text-foreground block">
-                        Berita Acara / Memo<span v-if="assetForm.condition === 'Rusak'" class="text-rose-500">*</span>
+                    <div v-if="assetForm.status === 'rusak'" class="space-y-1.5">
+                      <label class="text-sm font-medium text-foreground block">
+                        Berita Acara / Memo<span class="text-rose-500">*</span>
                       </label>
                       <div class="flex gap-2">
                         <div 
                           class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] truncate flex items-center h-10 transition-colors"
                           :class="[
-                            assetForm.condition !== 'Rusak'
-                              ? 'bg-[#F3F4F6] dark:bg-muted/30 text-gray-400 cursor-not-allowed'
-                              : (assetForm.memo_file || assetForm.memo_file_name)
-                                ? 'bg-background cursor-pointer hover:bg-muted/10 text-foreground font-medium'
-                                : 'bg-background text-gray-400 cursor-default'
+                            (assetForm.memo_file || assetForm.memo_file_name)
+                              ? 'bg-muted/10 cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted'
+                              : 'bg-muted/10 text-muted-foreground cursor-default'
                           ]"
-                          @click="assetForm.condition === 'Rusak' && (assetForm.memo_file || assetForm.memo_file_name) && viewAssetMemoInNewTab()"
+                          @click="(assetForm.memo_file || assetForm.memo_file_name) && viewAssetMemoInNewTab()"
                         >
-                          {{ assetForm.memo_file_name || 'Belum ada foto yang dipilih' }}
+                          {{ assetForm.memo_file_name || 'Belum ada file yang dipilih' }}
                         </div>
                         <input 
                           type="file" 
                           id="asset-memo-upload" 
                           class="hidden" 
                           accept=".pdf,.jpg,.jpeg,.png"
-                          :disabled="assetForm.condition !== 'Rusak'"
                           @change="handleAssetMemoUpload"
                         />
                         <button 
                           type="button"
-                          :disabled="assetForm.condition !== 'Rusak'"
                           @click="triggerAssetMemoInput"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#5B46F6] text-white text-sm font-semibold rounded-[14px] transition-all h-10 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors h-10 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           Pilih File
-                        </button>
-                        <button 
-                          type="button"
-                          :disabled="assetForm.condition !== 'Rusak'"
-                          @click="handleSamakanAssetMemo"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#E58B35] text-white text-sm font-semibold rounded-[14px] transition-all h-10 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90"
-                        >
-                          Samakan
                         </button>
                       </div>
                     </div>
@@ -2082,19 +2050,19 @@ const totalAsetTerpilihCount = computed(() => {
               </div>
 
               <!-- Modal Footer -->
-              <div class="py-4 px-6 border-t border-border flex items-center justify-between bg-card">
-                <p class="text-sm text-rose-500 italic font-semibold">*Wajib diisi</p>
+              <div class="py-3 px-4 border-t border-border flex items-center justify-between">
+                <p class="text-sm text-rose-500 italic font-medium">*Wajib diisi</p>
                 <div class="flex items-center gap-3">
                   <button 
                     @click="isAssetModalOpen = false"
-                    class="px-8 py-2.5 bg-background border border-gray-300 hover:bg-muted text-gray-700 text-sm font-semibold rounded-[14px] transition-colors"
+                    class="px-8 py-2.5 bg-background border border-input hover:bg-muted text-foreground text-sm font-medium rounded-[14px] transition-colors"
                   >
                     Batal
                   </button>
                   <button 
                     @click="handleSaveAsset"
                     :disabled="!isAssetFormValid"
-                    class="px-8 py-2.5 bg-[#5F38E6] hover:bg-[#4E2ED0] text-white text-sm font-semibold rounded-[14px] transition-colors shadow-sm disabled:opacity-50"
+                    class="px-8 py-2.5 bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors shadow-sm active:scale-[0.98] disabled:opacity-50"
                   >
                     {{ assetModalMode === 'create' ? 'Buat Aset' : 'Simpan Perubahan' }}
                   </button>
@@ -2127,7 +2095,7 @@ const totalAsetTerpilihCount = computed(() => {
           >
             <div 
               v-if="isViewAssetModalOpen" 
-              class="bg-card w-full max-w-[1100px] rounded-[14px] shadow-2xl overflow-hidden flex flex-col" 
+              class="bg-card w-full md:max-w-[90%] rounded-[14px] shadow-2xl overflow-hidden flex flex-col" 
               @click.stop
             >
               <!-- Modal Header -->
@@ -2161,9 +2129,9 @@ const totalAsetTerpilihCount = computed(() => {
                   </div>
 
                   <!-- Details Columns -->
-                  <div v-if="selectedAssetForView" class="flex-grow grid grid-cols-1 md:grid-cols-3 gap-6 text-sm text-foreground">
+                  <div v-if="selectedAssetForView" class="flex-grow grid grid-cols-1 md:grid-cols-12 gap-4 text-foreground">
                     <!-- Column 1: Item Info -->
-                    <div class="space-y-2">
+                    <div class="md:col-span-3">
                       <p class="font-bold text-foreground"><span class="text-foreground">Kode Barang:</span> {{ props.lot.barang_code }}</p>
                       <p class="font-bold text-foreground"><span class="text-foreground">Merek:</span> {{ props.lot.barang_brand }}</p>
                       <p class="font-bold text-foreground"><span class="text-foreground">Spesifikasi:</span> {{ props.lot.barang_specification }}</p>
@@ -2173,7 +2141,7 @@ const totalAsetTerpilihCount = computed(() => {
                     </div>
 
                     <!-- Column 2: LOT Info -->
-                    <div class="space-y-2">
+                    <div class="md:col-span-4">
                       <p class="font-bold text-foreground"><span class="text-foreground">Kode LOT:</span> {{ props.lot.lotCode }}</p>
                       <p class="text-foreground">Organizer: {{ props.lot.organizer }}</p>
                       <p class="text-foreground">Tanggal masuk: {{ formatDateWithDashes(props.lot.entryDate) }}</p>
@@ -2182,7 +2150,7 @@ const totalAsetTerpilihCount = computed(() => {
                     </div>
 
                     <!-- Column 3: Asset Info -->
-                    <div class="space-y-2">
+                    <div class="md:col-span-5">
                       <p class="font-bold text-foreground"><span class="text-foreground">Kode Aset:</span> {{ selectedAssetForView.number }}</p>
                       <!-- TNKB (Nopol) -->
                       <p v-if="isVehicle" class="font-bold text-foreground">
@@ -2218,7 +2186,6 @@ const totalAsetTerpilihCount = computed(() => {
                       <p class="text-foreground">Nilai: {{ formatRupiah(selectedAssetForView.price) }}</p>
                       <p class="text-foreground">Lokasi penyimpanan: {{ formatLocation(selectedAssetForView.location, selectedAssetForView.floor, selectedAssetForView.room) }}</p>
                       <p class="text-foreground">Pembaruan terakhir: {{ selectedAssetForView.updated_at || '-' }}</p>
-                      <p class="text-foreground">Diverifikasi: <span class="font-semibold text-emerald-600">Sudah</span></p>
                     </div>
                   </div>
                 </div>
@@ -2285,32 +2252,32 @@ const totalAsetTerpilihCount = computed(() => {
               @click.stop
             >
               <!-- Modal Header -->
-              <div class="flex items-center justify-between pt-5 pb-3 px-6 border-b border-border">
-                <h3 class="text-xl font-bold text-foreground">Edit Aset Terpilih</h3>
+              <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
+                <h3 class="text-lg font-bold text-foreground">Edit Aset Terpilih</h3>
                 <button @click="isBulkEditModalOpen = false" class="p-2 hover:bg-muted rounded-full transition-colors">
-                  <X class="w-6 h-6 text-foreground" />
+                  <X class="w-5 h-5 text-muted-foreground" />
                 </button>
               </div>
 
               <!-- Modal Body -->
-              <div class="p-6 overflow-y-auto max-h-[75vh]">
+              <div class="p-6 overflow-y-auto max-h-[70vh]">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
                   <!-- Left Column -->
                   <div class="space-y-6">
                     <!-- Kode LOT -->
                     <div class="space-y-1.5">
-                      <label class="text-sm font-semibold text-foreground block">Kode LOT</label>
+                      <label class="text-sm font-medium text-foreground block">Kode LOT</label>
                       <input 
                         type="text" 
                         value="Tidak dapat diubah"
                         disabled
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-[#F3F4F6] dark:bg-muted/30 text-gray-400 cursor-not-allowed h-10"
+                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
                       />
                     </div>
 
                     <!-- Nilai (Price) -->
                     <div class="space-y-1.5">
-                      <label class="text-sm font-semibold text-foreground block">Nilai<span class="text-rose-500">*</span></label>
+                      <label class="text-sm font-medium text-foreground block">Nilai</label>
                       <div class="flex gap-2">
                         <div class="flex flex-grow rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors h-10 overflow-hidden">
                           <span class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-r border-input select-none font-medium">
@@ -2327,7 +2294,7 @@ const totalAsetTerpilihCount = computed(() => {
                         <button 
                           type="button"
                           @click="handleBulkSamakanPrice"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#E58B35] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-orange-400 hover:opacity-90 text-white text-sm font-medium rounded-[14px] transition-colors h-10"
                         >
                           Samakan
                         </button>
@@ -2336,14 +2303,14 @@ const totalAsetTerpilihCount = computed(() => {
 
                     <!-- Foto -->
                     <div class="space-y-1.5">
-                      <label class="text-sm font-semibold text-foreground block">Foto<span class="text-rose-500">*</span></label>
+                      <label class="text-sm font-medium text-foreground block">Foto</label>
                       <div class="flex gap-2">
                         <div 
-                          class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-background truncate flex items-center h-10"
+                          class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/10 truncate flex items-center h-10"
                           :class="[
                             (bulkEditForm.image_url || bulkEditForm.image_url_name) 
-                              ? 'cursor-pointer hover:bg-muted/10 transition-colors text-foreground font-medium' 
-                              : 'text-gray-400 cursor-default'
+                              ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' 
+                              : 'text-muted-foreground cursor-default'
                           ]"
                           @click="(bulkEditForm.image_url || bulkEditForm.image_url_name) && viewBulkImageInNewTab()"
                         >
@@ -2358,23 +2325,21 @@ const totalAsetTerpilihCount = computed(() => {
                         />
                         <button 
                           type="button"
-                          @click="triggerBulkFileInput"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#5B46F6] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm"
-                        >
-                          Pilih File
-                        </button>
-                        <button 
-                          type="button"
                           @click="handleBulkSamakanPhoto"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#E58B35] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-orange-400 hover:opacity-90 text-white text-sm font-medium rounded-[14px] transition-colors h-10"
                         >
                           Samakan
                         </button>
+                        <button 
+                          type="button"
+                          @click="triggerBulkFileInput"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors h-10"
+                        >
+                          Pilih File
+                        </button>
                       </div>
+                      <p class="text-[10px] text-muted-foreground ml-1">Maksimal ukuran 1 MB</p>
                     </div>
-
-                    <!-- Footnote Note -->
-                    <p class="text-sm text-rose-500 italic font-normal mt-4">*Kosongkan input yang tidak ingin diubah</p>
                   </div>
 
                   <!-- Right Column -->
@@ -2383,10 +2348,10 @@ const totalAsetTerpilihCount = computed(() => {
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <!-- Kondisi -->
                       <div class="space-y-1.5">
-                        <label class="text-sm font-semibold text-foreground block">Kondisi<span class="text-rose-500">*</span></label>
+                        <label class="text-sm font-medium text-foreground block">Kondisi</label>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 disabled:opacity-50 disabled:cursor-not-allowed" :class="[!bulkEditForm.condition ? 'text-gray-400' : 'text-foreground']">
+                            <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 disabled:opacity-50 disabled:cursor-not-allowed" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !bulkEditForm.condition ? 'text-muted-foreground' : 'text-foreground']">
                               {{ bulkEditForm.condition || 'Pilih kondisi aset' }}
                               <ChevronDown class="w-4 h-4 opacity-50" />
                             </Button>
@@ -2402,10 +2367,10 @@ const totalAsetTerpilihCount = computed(() => {
 
                       <!-- Status -->
                       <div class="space-y-1.5">
-                        <label class="text-sm font-semibold text-foreground block">Status<span class="text-rose-500">*</span></label>
+                        <label class="text-sm font-medium text-foreground block">Status</label>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 disabled:opacity-50 disabled:cursor-not-allowed" :class="[!bulkEditForm.status ? 'text-gray-400' : 'text-foreground']">
+                            <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 disabled:opacity-50 disabled:cursor-not-allowed" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !bulkEditForm.status ? 'text-muted-foreground' : 'text-foreground']">
                               {{ bulkEditForm.status ? getStatusLabel(bulkEditForm.status) : 'Pilih status aset' }}
                               <ChevronDown class="w-4 h-4 opacity-50" />
                             </Button>
@@ -2422,7 +2387,7 @@ const totalAsetTerpilihCount = computed(() => {
 
                     <!-- Lokasi -->
                     <div class="space-y-1.5">
-                      <label class="text-sm font-semibold text-foreground block">Lokasi<span class="text-rose-500">*</span></label>
+                      <label class="text-sm font-medium text-foreground block">Lokasi</label>
                       <div class="flex gap-2">
                         <Combobox
                           v-model="bulkEditForm.location_id"
@@ -2434,7 +2399,7 @@ const totalAsetTerpilihCount = computed(() => {
                         <button 
                           type="button"
                           @click="handleBulkSamakanLocation"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#E58B35] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-orange-400 hover:opacity-90 text-white text-sm font-medium rounded-[14px] transition-colors h-10"
                         >
                           Samakan
                         </button>
@@ -2443,7 +2408,7 @@ const totalAsetTerpilihCount = computed(() => {
 
                     <!-- Lantai -->
                     <div class="space-y-1.5">
-                      <label class="text-sm font-semibold text-foreground block">Lantai</label>
+                      <label class="text-sm font-medium text-foreground block">Lantai</label>
                       <div class="flex gap-2">
                         <Combobox
                           v-model="bulkEditForm.floor_id"
@@ -2456,7 +2421,7 @@ const totalAsetTerpilihCount = computed(() => {
                         <button 
                           type="button"
                           @click="handleBulkSamakanFloor"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#E58B35] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-orange-400 hover:opacity-90 text-white text-sm font-medium rounded-[14px] transition-colors h-10"
                         >
                           Samakan
                         </button>
@@ -2465,7 +2430,7 @@ const totalAsetTerpilihCount = computed(() => {
 
                     <!-- Ruangan -->
                     <div class="space-y-1.5">
-                      <label class="text-sm font-semibold text-foreground block">Ruangan</label>
+                      <label class="text-sm font-medium text-foreground block">Ruangan</label>
                       <div class="flex gap-2">
                         <Combobox
                           v-model="bulkEditForm.room_id"
@@ -2478,7 +2443,7 @@ const totalAsetTerpilihCount = computed(() => {
                         <button 
                           type="button"
                           @click="handleBulkSamakanRoom"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#E58B35] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-orange-400 hover:opacity-90 text-white text-sm font-medium rounded-[14px] transition-colors h-10"
                         >
                           Samakan
                         </button>
@@ -2487,18 +2452,18 @@ const totalAsetTerpilihCount = computed(() => {
 
                     <!-- Berita Acara / Memo -->
                     <div class="space-y-1.5">
-                      <label class="text-sm font-semibold text-foreground block">Berita Acara / Memo<span class="text-rose-500">*</span></label>
+                      <label class="text-sm font-medium text-foreground block">Berita Acara / Memo</label>
                       <div class="flex gap-2">
                         <div 
-                          class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-background truncate flex items-center h-10"
+                          class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/10 truncate flex items-center h-10"
                           :class="[
                             (bulkEditForm.memo_file || bulkEditForm.memo_file_name) 
-                              ? 'cursor-pointer hover:bg-muted/10 transition-colors text-foreground font-medium' 
-                              : 'text-gray-400 cursor-default'
+                              ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' 
+                              : 'text-muted-foreground cursor-default'
                           ]"
                           @click="(bulkEditForm.memo_file || bulkEditForm.memo_file_name) && viewBulkMemoInNewTab()"
                         >
-                          {{ bulkEditForm.memo_file_name || 'Belum ada foto yang dipilih' }}
+                          {{ bulkEditForm.memo_file_name || 'Belum ada dokumen yang dipilih' }}
                         </div>
                         <input 
                           type="file" 
@@ -2509,38 +2474,42 @@ const totalAsetTerpilihCount = computed(() => {
                         />
                         <button 
                           type="button"
-                          @click="triggerBulkMemoInput"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#5B46F6] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm"
-                        >
-                          Pilih File
-                        </button>
-                        <button 
-                          type="button"
                           @click="handleBulkSamakanMemo"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#E58B35] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-orange-400 hover:opacity-90 text-white text-sm font-medium rounded-[14px] transition-colors h-10"
                         >
                           Samakan
                         </button>
+                        <button 
+                          type="button"
+                          @click="triggerBulkMemoInput"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors h-10"
+                        >
+                          Pilih File
+                        </button>
                       </div>
+                      <p class="text-[10px] text-muted-foreground ml-1">Maksimal ukuran 2 MB</p>
                     </div>
                   </div>
                 </div>
               </div>
 
               <!-- Modal Footer -->
-              <div class="py-4 px-6 border-t border-border flex items-center justify-end gap-3 bg-card">
-                <button 
-                  @click="isBulkEditModalOpen = false"
-                  class="px-8 py-2.5 bg-background border border-gray-300 hover:bg-muted text-gray-700 text-sm font-semibold rounded-[14px] transition-colors"
-                >
-                  Batal
-                </button>
-                <button 
-                  @click="handleSaveBulkEdit"
-                  class="px-8 py-2.5 bg-[#5F38E6] hover:bg-[#4E2ED0] text-white text-sm font-semibold rounded-[14px] transition-colors shadow-sm"
-                >
-                  Simpan Perubahan Massal
-                </button>
+              <div class="py-3 px-4 border-t border-border flex items-center justify-between bg-card">
+                <p class="text-sm text-rose-500 italic font-medium">*Kosongkan input yang tidak ingin diubah</p>
+                <div class="flex items-center gap-3">
+                  <button 
+                    @click="isBulkEditModalOpen = false"
+                    class="px-8 py-2.5 bg-background border border-input hover:bg-muted text-foreground text-sm font-medium rounded-[14px] transition-colors"
+                  >
+                    Batal
+                  </button>
+                  <button 
+                    @click="handleSaveBulkEdit"
+                    class="px-8 py-2.5 bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors shadow-sm active:scale-[0.98]"
+                  >
+                    Simpan Perubahan Massal
+                  </button>
+                </div>
               </div>
             </div>
           </Transition>
@@ -2573,32 +2542,32 @@ const totalAsetTerpilihCount = computed(() => {
               @click.stop
             >
               <!-- Modal Header -->
-              <div class="flex items-center justify-between pt-5 pb-3 px-6 border-b border-border">
-                <h3 class="text-xl font-bold text-foreground">Edit Aset Terpilih</h3>
+              <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
+                <h3 class="text-lg font-bold text-foreground">Edit Aset Terpilih</h3>
                 <button @click="isBulkVehicleEditModalOpen = false" class="p-2 hover:bg-muted rounded-full transition-colors">
-                  <X class="w-6 h-6 text-foreground" />
+                  <X class="w-5 h-5 text-muted-foreground" />
                 </button>
               </div>
 
               <!-- Modal Body -->
-              <div class="p-6 overflow-y-auto max-h-[75vh]">
+              <div class="p-6 overflow-y-auto max-h-[70vh]">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
                   <!-- Left Column -->
                   <div class="space-y-6">
                     <!-- Kode LOT -->
                     <div class="space-y-1.5">
-                      <label class="text-sm font-semibold text-foreground block">Kode LOT</label>
+                      <label class="text-sm font-medium text-foreground block">Kode LOT</label>
                       <input 
                         type="text" 
                         value="Tidak dapat diubah"
                         disabled
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-[#F3F4F6] dark:bg-muted/30 text-gray-400 cursor-not-allowed h-10"
+                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
                       />
                     </div>
 
                     <!-- Nilai (Price) -->
                     <div class="space-y-1.5">
-                      <label class="text-sm font-semibold text-foreground block">Nilai<span class="text-rose-500">*</span></label>
+                      <label class="text-sm font-medium text-foreground block">Nilai</label>
                       <div class="flex gap-2">
                         <div class="flex flex-grow rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors h-10 overflow-hidden">
                           <span class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-r border-input select-none font-medium">
@@ -2615,7 +2584,7 @@ const totalAsetTerpilihCount = computed(() => {
                         <button 
                           type="button"
                           @click="handleBulkVehicleSamakanPrice"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#E58B35] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-orange-400 hover:opacity-90 text-white text-sm font-medium rounded-[14px] transition-colors h-10"
                         >
                           Samakan
                         </button>
@@ -2624,14 +2593,14 @@ const totalAsetTerpilihCount = computed(() => {
 
                     <!-- Foto -->
                     <div class="space-y-1.5">
-                      <label class="text-sm font-semibold text-foreground block">Foto<span class="text-rose-500">*</span></label>
+                      <label class="text-sm font-medium text-foreground block">Foto</label>
                       <div class="flex gap-2">
                         <div 
-                          class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-background truncate flex items-center h-10"
+                          class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/10 truncate flex items-center h-10"
                           :class="[
                             (bulkVehicleEditForm.image_url || bulkVehicleEditForm.image_url_name) 
-                              ? 'cursor-pointer hover:bg-muted/10 transition-colors text-foreground font-medium' 
-                              : 'text-gray-400 cursor-default'
+                              ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' 
+                              : 'text-muted-foreground cursor-default'
                           ]"
                           @click="(bulkVehicleEditForm.image_url || bulkVehicleEditForm.image_url_name) && viewBulkVehicleImageInNewTab()"
                         >
@@ -2646,34 +2615,32 @@ const totalAsetTerpilihCount = computed(() => {
                         />
                         <button 
                           type="button"
-                          @click="triggerBulkVehicleFileInput"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#5B46F6] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm"
-                        >
-                          Pilih File
-                        </button>
-                        <button 
-                          type="button"
                           @click="handleBulkVehicleSamakanPhoto"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#E58B35] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-orange-400 hover:opacity-90 text-white text-sm font-medium rounded-[14px] transition-colors h-10"
                         >
                           Samakan
                         </button>
+                        <button 
+                          type="button"
+                          @click="triggerBulkVehicleFileInput"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors h-10"
+                        >
+                          Pilih File
+                        </button>
                       </div>
+                      <p class="text-[10px] text-muted-foreground ml-1">Maksimal ukuran 1 MB</p>
                     </div>
 
                     <!-- TNKB (Nomor Polisi) -->
                     <div class="space-y-1.5">
-                      <label class="text-sm font-semibold text-foreground block">TNKB (Nomor Polisi)<span class="text-rose-500">*</span></label>
+                      <label class="text-sm font-medium text-foreground block">TNKB (Nomor Polisi)</label>
                       <input 
                         type="text" 
                         value="Tidak dapat diubah"
                         disabled
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-[#F3F4F6] dark:bg-muted/30 text-gray-400 cursor-not-allowed h-10"
+                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
                       />
                     </div>
-
-                    <!-- Footnote Note -->
-                    <p class="text-sm text-rose-500 italic font-normal mt-4">*Kosongkan input yang tidak ingin diubah</p>
                   </div>
 
                   <!-- Right Column -->
@@ -2682,10 +2649,10 @@ const totalAsetTerpilihCount = computed(() => {
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <!-- Kondisi -->
                       <div class="space-y-1.5">
-                        <label class="text-sm font-semibold text-foreground block">Kondisi<span class="text-rose-500">*</span></label>
+                        <label class="text-sm font-medium text-foreground block">Kondisi</label>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 disabled:opacity-50 disabled:cursor-not-allowed" :class="[!bulkVehicleEditForm.condition ? 'text-gray-400' : 'text-foreground']">
+                            <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 disabled:opacity-50 disabled:cursor-not-allowed" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !bulkVehicleEditForm.condition ? 'text-muted-foreground' : 'text-foreground']">
                               {{ bulkVehicleEditForm.condition || 'Pilih kondisi aset' }}
                               <ChevronDown class="w-4 h-4 opacity-50" />
                             </Button>
@@ -2701,10 +2668,10 @@ const totalAsetTerpilihCount = computed(() => {
 
                       <!-- Status -->
                       <div class="space-y-1.5">
-                        <label class="text-sm font-semibold text-foreground block">Status<span class="text-rose-500">*</span></label>
+                        <label class="text-sm font-medium text-foreground block">Status</label>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 disabled:opacity-50 disabled:cursor-not-allowed" :class="[!bulkVehicleEditForm.status ? 'text-gray-400' : 'text-foreground']">
+                            <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 disabled:opacity-50 disabled:cursor-not-allowed" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !bulkVehicleEditForm.status ? 'text-muted-foreground' : 'text-foreground']">
                               {{ bulkVehicleEditForm.status ? getStatusLabel(bulkVehicleEditForm.status) : 'Pilih status aset' }}
                               <ChevronDown class="w-4 h-4 opacity-50" />
                             </Button>
@@ -2721,7 +2688,7 @@ const totalAsetTerpilihCount = computed(() => {
 
                     <!-- Lokasi -->
                     <div class="space-y-1.5">
-                      <label class="text-sm font-semibold text-foreground block">Lokasi<span class="text-rose-500">*</span></label>
+                      <label class="text-sm font-medium text-foreground block">Lokasi</label>
                       <div class="flex gap-2">
                         <Combobox
                           v-model="bulkVehicleEditForm.location_id"
@@ -2733,7 +2700,7 @@ const totalAsetTerpilihCount = computed(() => {
                         <button 
                           type="button"
                           @click="handleBulkVehicleSamakanLocation"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#E58B35] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-orange-400 hover:opacity-90 text-white text-sm font-medium rounded-[14px] transition-colors h-10"
                         >
                           Samakan
                         </button>
@@ -2742,7 +2709,7 @@ const totalAsetTerpilihCount = computed(() => {
 
                     <!-- Lantai -->
                     <div class="space-y-1.5">
-                      <label class="text-sm font-semibold text-foreground block">Lantai</label>
+                      <label class="text-sm font-medium text-foreground block">Lantai</label>
                       <div class="flex gap-2">
                         <Combobox
                           v-model="bulkVehicleEditForm.floor_id"
@@ -2755,7 +2722,7 @@ const totalAsetTerpilihCount = computed(() => {
                         <button 
                           type="button"
                           @click="handleBulkVehicleSamakanFloor"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#E58B35] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-orange-400 hover:opacity-90 text-white text-sm font-medium rounded-[14px] transition-colors h-10"
                         >
                           Samakan
                         </button>
@@ -2764,7 +2731,7 @@ const totalAsetTerpilihCount = computed(() => {
 
                     <!-- Ruangan -->
                     <div class="space-y-1.5">
-                      <label class="text-sm font-semibold text-foreground block">Ruangan</label>
+                      <label class="text-sm font-medium text-foreground block">Ruangan</label>
                       <div class="flex gap-2">
                         <Combobox
                           v-model="bulkVehicleEditForm.room_id"
@@ -2777,7 +2744,7 @@ const totalAsetTerpilihCount = computed(() => {
                         <button 
                           type="button"
                           @click="handleBulkVehicleSamakanRoom"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#E58B35] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-orange-400 hover:opacity-90 text-white text-sm font-medium rounded-[14px] transition-colors h-10"
                         >
                           Samakan
                         </button>
@@ -2786,18 +2753,18 @@ const totalAsetTerpilihCount = computed(() => {
 
                     <!-- Berita Acara / Memo -->
                     <div class="space-y-1.5">
-                      <label class="text-sm font-semibold text-foreground block">Berita Acara / Memo<span class="text-rose-500">*</span></label>
+                      <label class="text-sm font-medium text-foreground block">Berita Acara / Memo</label>
                       <div class="flex gap-2">
                         <div 
-                          class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-background truncate flex items-center h-10"
+                          class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/10 truncate flex items-center h-10"
                           :class="[
                             (bulkVehicleEditForm.memo_file || bulkVehicleEditForm.memo_file_name) 
-                              ? 'cursor-pointer hover:bg-muted/10 transition-colors text-foreground font-medium' 
-                              : 'text-gray-400 cursor-default'
+                              ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' 
+                              : 'text-muted-foreground cursor-default'
                           ]"
                           @click="(bulkVehicleEditForm.memo_file || bulkVehicleEditForm.memo_file_name) && viewBulkVehicleMemoInNewTab()"
                         >
-                          {{ bulkVehicleEditForm.memo_file_name || 'Belum ada foto yang dipilih' }}
+                          {{ bulkVehicleEditForm.memo_file_name || 'Belum ada dokumen yang dipilih' }}
                         </div>
                         <input 
                           type="file" 
@@ -2808,38 +2775,42 @@ const totalAsetTerpilihCount = computed(() => {
                         />
                         <button 
                           type="button"
-                          @click="triggerBulkVehicleMemoInput"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#5B46F6] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm"
-                        >
-                          Pilih File
-                        </button>
-                        <button 
-                          type="button"
                           @click="handleBulkVehicleSamakanMemo"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#E58B35] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-orange-400 hover:opacity-90 text-white text-sm font-medium rounded-[14px] transition-colors h-10"
                         >
                           Samakan
                         </button>
+                        <button 
+                          type="button"
+                          @click="triggerBulkVehicleMemoInput"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors h-10"
+                        >
+                          Pilih File
+                        </button>
                       </div>
+                      <p class="text-[10px] text-muted-foreground ml-1">Maksimal ukuran 2 MB</p>
                     </div>
                   </div>
                 </div>
               </div>
 
               <!-- Modal Footer -->
-              <div class="py-4 px-6 border-t border-border flex items-center justify-end gap-3 bg-card">
-                <button 
-                  @click="isBulkVehicleEditModalOpen = false"
-                  class="px-8 py-2.5 bg-background border border-gray-300 hover:bg-muted text-gray-700 text-sm font-semibold rounded-[14px] transition-colors"
-                >
-                  Batal
-                </button>
-                <button 
-                  @click="handleSaveBulkVehicleEdit"
-                  class="px-8 py-2.5 bg-[#5F38E6] hover:bg-[#4E2ED0] text-white text-sm font-semibold rounded-[14px] transition-colors shadow-sm"
-                >
-                  Simpan Perubahan Massal
-                </button>
+              <div class="py-3 px-4 border-t border-border flex items-center justify-between bg-card">
+                <p class="text-sm text-rose-500 italic font-medium">*Kosongkan input yang tidak ingin diubah</p>
+                <div class="flex items-center gap-3">
+                  <button 
+                    @click="isBulkVehicleEditModalOpen = false"
+                    class="px-8 py-2.5 bg-background border border-input hover:bg-muted text-foreground text-sm font-medium rounded-[14px] transition-colors"
+                  >
+                    Batal
+                  </button>
+                  <button 
+                    @click="handleSaveBulkVehicleEdit"
+                    class="px-8 py-2.5 bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors shadow-sm active:scale-[0.98]"
+                  >
+                    Simpan Perubahan Massal
+                  </button>
+                </div>
               </div>
             </div>
           </Transition>
