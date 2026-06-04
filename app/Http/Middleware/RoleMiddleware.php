@@ -27,18 +27,23 @@ class RoleMiddleware
         // Determine user's role by ID
         $userRole = 'user';
         $admins = ['255578'];
-        if (in_array($user->employee_id, $admins) || app()->runningUnitTests()) {
+        if (in_array($user->employee_id, $admins) || (app()->runningUnitTests() && !config('app.disable_test_admin_bypass'))) {
             $userRole = 'admin';
         } else {
             $ifsOrg = \App\Models\HrdOrgchart::where('org_code', 'IFS')->first();
             if ($ifsOrg && $ifsOrg->employee_id === $user->employee_id) {
-                $userRole = 'manager';
+                $userRole = 'ifs_manager';
             } elseif (\App\Models\HrdOrgchart::where('employee_id', $user->employee_id)->exists()) {
                 $userRole = 'manager';
             }
         }
 
-        if (!in_array($userRole, $roles)) {
+        $satisfiedRoles = [$userRole];
+        if ($userRole === 'ifs_manager') {
+            $satisfiedRoles = ['ifs_manager', 'admin', 'manager', 'user'];
+        }
+
+        if (empty(array_intersect($satisfiedRoles, $roles))) {
             abort(403, 'Unauthorized action.');
         }
 

@@ -50,13 +50,13 @@ class AdmUser extends Authenticatable
     public function getRoleAttribute(): string
     {
         $admins = ['255578'];
-        if (in_array($this->employee_id, $admins) || app()->runningUnitTests()) {
+        if (in_array($this->employee_id, $admins) || (app()->runningUnitTests() && !config('app.disable_test_admin_bypass'))) {
             return 'admin';
         }
 
         $ifsOrg = HrdOrgchart::where('org_code', 'IFS')->first();
         if ($ifsOrg && $ifsOrg->employee_id === $this->employee_id) {
-            return 'manager';
+            return 'ifs_manager';
         }
 
         if (HrdOrgchart::where('employee_id', $this->employee_id)->exists()) {
@@ -71,7 +71,7 @@ class AdmUser extends Authenticatable
      */
     public function getIsAdminAttribute(): bool
     {
-        return $this->role === 'admin';
+        return $this->role === 'admin' || $this->role === 'ifs_manager';
     }
 
     /**

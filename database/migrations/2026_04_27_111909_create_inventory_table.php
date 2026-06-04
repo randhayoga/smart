@@ -76,6 +76,7 @@ return new class extends Migration {
             $table->json('previous_state')->nullable();
             $table->json('new_state')->nullable();
             $table->text('note')->nullable();
+            $table->string('document_url')->nullable();
             $table->dateTime('created_at');
         });
 
