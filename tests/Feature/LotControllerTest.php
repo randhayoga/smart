@@ -333,4 +333,50 @@ class LotControllerTest extends TestCase
             'id' => $lotWithUnits->id,
         ]);
     }
+
+    public function test_can_bulk_update_units(): void
+    {
+        $user = User::factory()->create();
+        $lot = Lot::factory()->create();
+        $location = Location::factory()->create();
+        $floor = Floor::factory()->create(['location_id' => $location->id]);
+        $room = Room::factory()->create(['floor_id' => $floor->id]);
+        
+        $units = [];
+        for ($i = 0; $i < 3; $i++) {
+            $units[] = \App\Models\Inventory\Unit::create([
+                'number' => $lot->number . '-U0' . ($i + 1),
+                'lot_id' => $lot->id,
+                'location_id' => $lot->location_id ?? 1,
+                'status' => 'tersedia',
+                'condition' => 'Baik',
+                'price' => $lot->unit_price ?? 0,
+                'image_url' => $lot->image_url ?? 'inventory/lots/placeholder.jpg',
+            ]);
+        }
+        $ids = collect($units)->pluck('id')->toArray();
+
+        $response = $this->actingAs($user)->post(route('smart.inventory.units.bulk-update'), [
+            'ids' => $ids,
+            'status' => 'rusak',
+            'condition' => 'Rusak',
+            'location_id' => (string) $location->id,
+            'floor_id' => (string) $floor->id,
+            'room_id' => (string) $room->id,
+        ]);
+
+        $response->assertSessionHasNoErrors();
+        $response->assertRedirect();
+        
+        foreach ($ids as $id) {
+            $this->assertDatabaseHas('units', [
+                'id' => $id,
+                'status' => 'rusak',
+                'condition' => 'Rusak',
+                'location_id' => $location->id,
+                'floor_id' => $floor->id,
+                'room_id' => $room->id,
+            ]);
+        }
+    }
 }
