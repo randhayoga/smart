@@ -46,7 +46,8 @@ class BulkBarangController extends Controller
                     $isShared = Barang::where('image_url', $barang->image_url)
                         ->whereNotIn('id', $request->input('ids'))
                         ->exists()
-                        || \App\Models\Inventory\Lot::where('image_url', $barang->image_url)->exists();
+                        || \App\Models\Inventory\Lot::where('image_url', $barang->image_url)->exists()
+                        || \App\Models\Inventory\Unit::where('image_url', $barang->image_url)->exists();
                     if (!$isShared) {
                         Storage::disk('public')->delete($barang->image_url);
                     }
@@ -84,7 +85,8 @@ class BulkBarangController extends Controller
                 $isShared = Barang::where('image_url', $barang->image_url)
                     ->whereNotIn('id', $request->input('ids'))
                     ->exists()
-                    || \App\Models\Inventory\Lot::where('image_url', $barang->image_url)->exists();
+                    || \App\Models\Inventory\Lot::where('image_url', $barang->image_url)->exists()
+                    || \App\Models\Inventory\Unit::where('image_url', $barang->image_url)->exists();
                 if (!$isShared) {
                     Storage::disk('public')->delete($barang->image_url);
                 }

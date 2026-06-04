@@ -315,6 +315,9 @@ const isLotFormValid = computed(() => {
     if (props.barang.is_consumable) {
       return lotForm.initial_quantity !== '' && lotForm.initial_quantity !== null && Number(lotForm.initial_quantity) >= 0;
     } else {
+      if (lotForm.auto_create_assets) {
+        return lotForm.auto_create_assets_count !== '' && lotForm.auto_create_assets_count !== null && Number(lotForm.auto_create_assets_count) >= 1;
+      }
       return lotForm.total_item !== null && lotForm.total_item !== undefined && Number(lotForm.total_item) >= 1;
     }
   }
@@ -324,6 +327,10 @@ const isLotFormValid = computed(() => {
 
 const handleSaveLot = () => {
   if (!isLotFormValid.value) return;
+
+  const autoCreate = lotForm.auto_create_assets;
+  const autoCreateCount = Number(lotForm.auto_create_assets_count);
+  const lotNumber = lotForm.number;
   
   lotForm.transform((data) => {
     const formData: any = {
@@ -362,8 +369,34 @@ const handleSaveLot = () => {
 
   if (lotModalMode.value === 'create') {
     lotForm.post('/smart/inventory/lots', {
-      onSuccess: () => {
+      onSuccess: (page) => {
         isLotModalOpen.value = false;
+        
+        if (autoCreate && autoCreateCount > 0) {
+          const updatedLots = (page.props as any).lots || props.lots;
+          const newLot = updatedLots.find((l: any) => l.lotCode === lotNumber);
+          if (newLot) {
+            router.post('/smart/inventory/units/bulk', {
+              number: `${newLot.lotCode}-U01`,
+              lot_id: newLot.id,
+              location_id: newLot.location_id,
+              floor_id: newLot.floor_id,
+              room_id: newLot.room_id,
+              status: 'tersedia',
+              condition: 'Baik',
+              price: Number(newLot.unitPrice),
+              use_lot_image: true,
+              bulk_quantity: autoCreateCount
+            }, {
+              onError: (errors) => {
+                const errMsg = Object.values(errors).join(', ');
+                toast.error(`Gagal membuat unit secara otomatis: ${errMsg}`);
+              }
+            });
+          } else {
+            toast.error('Gagal menemukan data LOT yang baru dibuat untuk pembuatan aset otomatis.');
+          }
+        }
       }
     });
   } else {
@@ -1539,15 +1572,23 @@ const closeErrorModal = () => {
                           @input="lotForm.current_quantity = lotForm.initial_quantity"
                         />
                       </div>
-                      <div v-else class="space-y-1.5">
-                        <label class="text-sm font-medium text-foreground block">Total Item (Aset)<span class="text-rose-500">*</span></label>
+                      <div v-else-if="props.barang.category !== 'Kendaraan'" class="space-y-1.5 flex items-center gap-2 pt-2 flex-wrap">
+                        <Checkbox 
+                          id="auto-create-checkbox"
+                          v-model="lotForm.auto_create_assets"
+                        />
+                        <label for="auto-create-checkbox" class="cursor-pointer select-none text-sm font-medium text-foreground">
+                          Buat
+                        </label>
                         <input 
                           type="number" 
-                          v-model="lotForm.total_item"
-                          placeholder="Contoh: 5"
+                          v-model="lotForm.auto_create_assets_count"
+                          placeholder="..."
                           min="1"
-                          class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
+                          :disabled="!lotForm.auto_create_assets"
+                          class="w-16 px-2 py-1 text-sm border border-input rounded-[10px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-8 disabled:opacity-50 disabled:cursor-not-allowed mx-1"
                         />
+                        <span class="text-sm font-medium text-foreground">aset secara otomatis dengan nilai default.</span>
                       </div>
                     </template>
                   </div>

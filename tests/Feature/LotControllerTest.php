@@ -46,7 +46,6 @@ class LotControllerTest extends TestCase
             'date_of_receipt' => '2026-05-22',
             'unit_price' => 60000,
             'image_url' => $file,
-            'total_item' => 3,
         ]);
 
         $response->assertRedirect();
@@ -67,6 +66,20 @@ class LotControllerTest extends TestCase
         $this->assertNotNull($lot->image_url);
         $this->assertNotEquals('inventory/lots/placeholder.jpg', $lot->image_url);
         Storage::disk('public')->assertExists($lot->image_url);
+
+        $bulkResponse = $this->actingAs($user)->post(route('smart.inventory.units.bulk-store'), [
+            'number' => 'LOT-2026-ATK-KER-0001-0001-U01',
+            'lot_id' => $lot->id,
+            'location_id' => $location->id,
+            'floor_id' => $floor->id,
+            'room_id' => $room->id,
+            'status' => 'tersedia',
+            'condition' => 'Baik',
+            'price' => 60000,
+            'use_lot_image' => true,
+            'bulk_quantity' => 3,
+        ]);
+        $bulkResponse->assertRedirect();
 
         $this->assertEquals(3, $lot->units()->count());
         $this->assertDatabaseHas('units', [
@@ -130,6 +143,29 @@ class LotControllerTest extends TestCase
         ]);
     }
 
+    public function test_cannot_destroy_lot_with_units(): void
+    {
+        $user = User::factory()->create();
+        $lot = Lot::factory()->create();
+        \App\Models\Inventory\Unit::create([
+            'number' => $lot->number . '-U01',
+            'lot_id' => $lot->id,
+            'location_id' => $lot->location_id ?? 1,
+            'status' => 'tersedia',
+            'condition' => 'Baik',
+            'price' => $lot->unit_price ?? 0,
+            'image_url' => $lot->image_url ?? 'inventory/lots/placeholder.jpg',
+        ]);
+
+        $response = $this->actingAs($user)->delete(route('smart.inventory.lots.destroy', $lot));
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error', 'LOT tidak dapat dihapus karena masih memiliki unit terkait.');
+        $this->assertDatabaseHas('lots', [
+            'id' => $lot->id,
+        ]);
+    }
+
     public function test_can_store_lot_using_parent_image(): void
     {
         Storage::fake('public');
@@ -159,7 +195,6 @@ class LotControllerTest extends TestCase
             'date_of_receipt' => '2026-05-22',
             'unit_price' => 60000,
             'use_parent_image' => true,
-            'total_item' => 2,
         ]);
 
         $response->assertRedirect();
@@ -168,6 +203,19 @@ class LotControllerTest extends TestCase
         $this->assertNotNull($lot->image_url);
         $this->assertNotEquals($barangImagePath, $lot->image_url);
         Storage::disk('public')->assertExists($lot->image_url);
+
+        $bulkResponse = $this->actingAs($user)->post(route('smart.inventory.units.bulk-store'), [
+            'number' => 'LOT-2026-ATK-KER-0001-0001-U01',
+            'lot_id' => $lot->id,
+            'location_id' => $location->id,
+            'status' => 'tersedia',
+            'condition' => 'Baik',
+            'price' => 60000,
+            'use_lot_image' => true,
+            'bulk_quantity' => 2,
+        ]);
+        $bulkResponse->assertRedirect();
+
         $this->assertEquals(2, $lot->units()->count());
     }
 
@@ -252,6 +300,82 @@ class LotControllerTest extends TestCase
         foreach ($ids as $id) {
             $this->assertDatabaseMissing('lots', [
                 'id' => $id,
+            ]);
+        }
+    }
+
+    public function test_cannot_bulk_destroy_lots_if_any_has_units(): void
+    {
+        $user = User::factory()->create();
+        $lotWithoutUnits = Lot::factory()->create();
+        $lotWithUnits = Lot::factory()->create();
+        \App\Models\Inventory\Unit::create([
+            'number' => $lotWithUnits->number . '-U01',
+            'lot_id' => $lotWithUnits->id,
+            'location_id' => $lotWithUnits->location_id ?? 1,
+            'status' => 'tersedia',
+            'condition' => 'Baik',
+            'price' => $lotWithUnits->unit_price ?? 0,
+            'image_url' => $lotWithUnits->image_url ?? 'inventory/lots/placeholder.jpg',
+        ]);
+
+        $response = $this->actingAs($user)->delete(route('smart.inventory.lots.bulk-destroy'), [
+            'ids' => [$lotWithoutUnits->id, $lotWithUnits->id],
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error', 'Beberapa LOT tidak dapat dihapus karena masih memiliki unit terkait.');
+
+        $this->assertDatabaseHas('lots', [
+            'id' => $lotWithoutUnits->id,
+        ]);
+        $this->assertDatabaseHas('lots', [
+            'id' => $lotWithUnits->id,
+        ]);
+    }
+
+    public function test_can_bulk_update_units(): void
+    {
+        $user = User::factory()->create();
+        $lot = Lot::factory()->create();
+        $location = Location::factory()->create();
+        $floor = Floor::factory()->create(['location_id' => $location->id]);
+        $room = Room::factory()->create(['floor_id' => $floor->id]);
+        
+        $units = [];
+        for ($i = 0; $i < 3; $i++) {
+            $units[] = \App\Models\Inventory\Unit::create([
+                'number' => $lot->number . '-U0' . ($i + 1),
+                'lot_id' => $lot->id,
+                'location_id' => $lot->location_id ?? 1,
+                'status' => 'tersedia',
+                'condition' => 'Baik',
+                'price' => $lot->unit_price ?? 0,
+                'image_url' => $lot->image_url ?? 'inventory/lots/placeholder.jpg',
+            ]);
+        }
+        $ids = collect($units)->pluck('id')->toArray();
+
+        $response = $this->actingAs($user)->post(route('smart.inventory.units.bulk-update'), [
+            'ids' => $ids,
+            'status' => 'rusak',
+            'condition' => 'Rusak',
+            'location_id' => (string) $location->id,
+            'floor_id' => (string) $floor->id,
+            'room_id' => (string) $room->id,
+        ]);
+
+        $response->assertSessionHasNoErrors();
+        $response->assertRedirect();
+        
+        foreach ($ids as $id) {
+            $this->assertDatabaseHas('units', [
+                'id' => $id,
+                'status' => 'rusak',
+                'condition' => 'Rusak',
+                'location_id' => $location->id,
+                'floor_id' => $floor->id,
+                'room_id' => $room->id,
             ]);
         }
     }
