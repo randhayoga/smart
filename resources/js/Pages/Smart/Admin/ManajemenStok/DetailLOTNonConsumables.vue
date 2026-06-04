@@ -519,8 +519,6 @@ const handleSaveAsset = () => {
     };
     if (isVehicle.value) {
       formData.vehicle_registration = data.vehicle_registration;
-      formData.floor_id = null;
-      formData.room_id = null;
     }
     if (data.image_url) {
       formData.image_url = data.image_url;
@@ -1831,7 +1829,7 @@ const totalAsetTerpilihCount = computed(() => {
                     </div>
 
                     <!-- Lantai -->
-                    <div v-if="!isVehicle" class="space-y-1.5">
+                    <div class="space-y-1.5">
                       <label class="text-sm font-semibold text-foreground block">Lantai</label>
                       <div class="flex gap-2">
                         <Combobox
@@ -1854,7 +1852,7 @@ const totalAsetTerpilihCount = computed(() => {
                     </div>
 
                     <!-- Ruangan -->
-                    <div v-if="!isVehicle" class="space-y-1.5">
+                    <div class="space-y-1.5">
                       <label class="text-sm font-semibold text-foreground block">Ruangan</label>
                       <div class="flex gap-2">
                         <Combobox
