@@ -18,7 +18,7 @@ class BarangControllerTest extends TestCase
 
     public function test_can_destroy_barang_without_lots(): void
     {
-        $user = User::factory()->create(['role' => 'admin']);
+        $user = User::factory()->create();
         $barang = Barang::factory()->create();
 
         $response = $this->actingAs($user)->delete(route('smart.inventory.barangs.destroy', $barang));
@@ -32,7 +32,7 @@ class BarangControllerTest extends TestCase
 
     public function test_cannot_destroy_barang_with_lots(): void
     {
-        $user = User::factory()->create(['role' => 'admin']);
+        $user = User::factory()->create();
         $lot = Lot::factory()->create();
         $barang = $lot->barang;
 
