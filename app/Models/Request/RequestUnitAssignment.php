@@ -8,11 +8,15 @@ use App\Models\Inventory\Unit;
 
 class RequestUnitAssignment extends Model
 {
-    protected $table = 'request_unit_assignments';
+    protected $table = 'request_fulfillments';
 
     protected $fillable = [
         'request_item_id',
         'unit_id',
+        'lot_id',
+        'handover_id',
+        'return_id',
+        'quantity_fulfilled',
         'assigned_at',
         'completed_at',
     ];
