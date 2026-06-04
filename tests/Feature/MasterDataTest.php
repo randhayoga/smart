@@ -15,7 +15,7 @@ class MasterDataTest extends TestCase
 
     public function test_can_store_floor(): void
     {
-        $user = User::factory()->create(['role' => 'admin']);
+        $user = User::factory()->create();
         $location = Location::factory()->create();
 
         $response = $this->actingAs($user)->post(route('smart.master.floors.store'), [
@@ -32,7 +32,7 @@ class MasterDataTest extends TestCase
 
     public function test_can_update_floor(): void
     {
-        $user = User::factory()->create(['role' => 'admin']);
+        $user = User::factory()->create();
         $floor = Floor::factory()->create();
         $newLocation = Location::factory()->create();
 
@@ -51,7 +51,7 @@ class MasterDataTest extends TestCase
 
     public function test_can_destroy_floor(): void
     {
-        $user = User::factory()->create(['role' => 'admin']);
+        $user = User::factory()->create();
         $floor = Floor::factory()->create();
 
         $response = $this->actingAs($user)->delete(route('smart.master.floors.destroy', $floor));
@@ -64,7 +64,7 @@ class MasterDataTest extends TestCase
 
     public function test_cannot_destroy_floor_if_it_has_rooms(): void
     {
-        $user = User::factory()->create(['role' => 'admin']);
+        $user = User::factory()->create();
         $floor = Floor::factory()->create();
         Room::factory()->create(['floor_id' => $floor->id]);
 
@@ -79,7 +79,7 @@ class MasterDataTest extends TestCase
 
     public function test_can_store_room(): void
     {
-        $user = User::factory()->create(['role' => 'admin']);
+        $user = User::factory()->create();
         $floor = Floor::factory()->create();
 
         $response = $this->actingAs($user)->post(route('smart.master.rooms.store'), [
@@ -96,7 +96,7 @@ class MasterDataTest extends TestCase
 
     public function test_can_update_room(): void
     {
-        $user = User::factory()->create(['role' => 'admin']);
+        $user = User::factory()->create();
         $room = Room::factory()->create();
         $newFloor = Floor::factory()->create();
 
@@ -115,7 +115,7 @@ class MasterDataTest extends TestCase
 
     public function test_can_destroy_room(): void
     {
-        $user = User::factory()->create(['role' => 'admin']);
+        $user = User::factory()->create();
         $room = Room::factory()->create();
 
         $response = $this->actingAs($user)->delete(route('smart.master.rooms.destroy', $room));
