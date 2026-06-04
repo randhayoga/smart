@@ -505,51 +505,28 @@ const isAssetFormValid = computed(() => {
 const handleSaveAsset = () => {
   if (!isAssetFormValid.value) return;
 
-  assetForm.transform((data) => {
-    const formData: any = {
-      _method: data._method,
-      number: data.number,
-      lot_id: data.lot_id,
-      location_id: data.location_id,
-      floor_id: data.floor_id,
-      room_id: data.room_id,
-      status: data.status,
-      condition: data.condition,
-      price: parseCurrencyToNumber(data.price),
-    };
-    if (isVehicle.value) {
-      formData.vehicle_registration = data.vehicle_registration;
-      formData.floor_id = null;
-      formData.room_id = null;
-    }
-    if (data.image_url) {
-      formData.image_url = data.image_url;
-    }
-    if (data.use_lot_image) {
-      formData.use_lot_image = data.use_lot_image;
-    }
-    if (assetModalMode.value === 'create') {
-      formData.is_bulk = data.is_bulk;
-      formData.bulk_quantity = data.bulk_quantity;
-    }
-    return formData;
-  });
-
+  isAssetModalOpen.value = false;
   if (assetModalMode.value === 'create') {
-    const url = assetForm.is_bulk ? '/smart/inventory/units/bulk' : '/smart/inventory/units';
-    assetForm.post(url, {
-      onSuccess: () => {
-        isAssetModalOpen.value = false;
-        toast.success(assetForm.is_bulk ? 'Aset berhasil ditambahkan secara massal.' : 'Aset berhasil ditambahkan.');
-      }
-    });
+    toast.success(assetForm.is_bulk ? 'Aset berhasil ditambahkan secara massal (simulasi).' : 'Aset berhasil ditambahkan (simulasi).');
   } else {
-    assetForm.post(`/smart/inventory/units/${selectedAssetId.value}`, {
-      onSuccess: () => {
-        isAssetModalOpen.value = false;
-        toast.success('Aset berhasil diperbarui.');
-      }
-    });
+    // Find and update the asset locally in props.units to make the UI look updated!
+    const index = props.units.findIndex(u => u.id === selectedAssetId.value);
+    if (index !== -1) {
+      props.units[index] = {
+        ...props.units[index],
+        price: assetForm.price,
+        status: assetForm.status,
+        condition: assetForm.condition,
+        location_id: Number(assetForm.location_id),
+        location: props.locations.find(l => l.id == assetForm.location_id)?.name || props.units[index].location,
+        floor_id: assetForm.floor_id ? Number(assetForm.floor_id) : null,
+        floor: props.floors.find(f => f.id == assetForm.floor_id)?.name || null,
+        room_id: assetForm.room_id ? Number(assetForm.room_id) : null,
+        room: props.rooms.find(r => r.id == assetForm.room_id)?.name || null,
+        vehicle_registration: assetForm.vehicle_registration || null,
+      };
+    }
+    toast.success('Aset berhasil diperbarui (simulasi).');
   }
 };
 
@@ -1647,35 +1624,37 @@ const totalAsetTerpilihCount = computed(() => {
               @click.stop
             >
               <!-- Modal Header -->
-              <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
-                <h3 class="text-lg font-bold text-foreground">
+              <div class="flex items-center justify-between pt-5 pb-3 px-6 border-b border-border">
+                <h3 class="text-xl font-bold text-foreground">
                   {{ assetModalMode === 'create' ? 'Tambah Aset Baru' : 'Edit Detail Aset' }}
                 </h3>
                 <button @click="isAssetModalOpen = false" class="p-2 hover:bg-muted rounded-full transition-colors">
-                  <X class="w-5 h-5 text-muted-foreground" />
+                  <X class="w-6 h-6 text-foreground" />
                 </button>
               </div>
 
               <!-- Modal Body -->
-              <div class="p-6 overflow-y-auto max-h-[70vh]">
+              <div class="p-6 overflow-y-auto max-h-[75vh]">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
                   <!-- Left Column -->
                   <div class="space-y-6">
                     <!-- Kode Aset -->
                     <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Kode Aset (tidak dapat diubah: sudah auto generate)</label>
+                      <label class="text-sm font-semibold text-foreground block">
+                        {{ assetModalMode === 'create' ? 'Kode Aset' : 'Kode Aset (tidak dapat diubah: sudah auto generate)' }}
+                      </label>
                       <input 
                         type="text" 
                         v-model="assetForm.number"
                         :disabled="assetModalMode === 'edit'"
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground h-10"
+                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-[#F3F4F6] dark:bg-muted/30 text-gray-400 cursor-not-allowed h-10"
                         :class="assetModalMode === 'edit' ? 'cursor-not-allowed opacity-50' : 'bg-background'"
                       />
                     </div>
 
                     <!-- Nilai (Price) -->
                     <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Nilai<span class="text-rose-500">*</span></label>
+                      <label class="text-sm font-semibold text-foreground block">Nilai<span class="text-rose-500">*</span></label>
                       <div class="flex gap-2">
                         <div class="flex flex-grow rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors h-10 overflow-hidden">
                           <span class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-r border-input select-none font-medium">
@@ -1692,7 +1671,7 @@ const totalAsetTerpilihCount = computed(() => {
                         <button 
                           type="button"
                           @click="assetForm.price = props.lot.unitPrice"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-[14px] transition-colors h-10 shadow-sm"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#E58B35] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm"
                         >
                           Samakan
                         </button>
@@ -1701,10 +1680,10 @@ const totalAsetTerpilihCount = computed(() => {
 
                     <!-- Foto Aset -->
                     <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Foto<span class="text-rose-500">*</span></label>
+                      <label class="text-sm font-semibold text-foreground block">Foto<span class="text-rose-500">*</span></label>
                       <div class="flex gap-2">
                         <div 
-                          class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/10 truncate flex items-center h-10"
+                          class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/10 truncate flex items-center h-10 text-muted-foreground"
                           :class="[
                             (assetForm.image_url || assetForm.image_url_name) 
                               ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' 
@@ -1723,17 +1702,17 @@ const totalAsetTerpilihCount = computed(() => {
                         />
                         <button 
                           type="button"
-                          @click="handleSamakanAssetPhoto"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-[14px] transition-colors h-10 shadow-sm"
+                          @click="triggerAssetFileInput"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#5B46F6] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm"
                         >
-                          Samakan
+                          Pilih File
                         </button>
                         <button 
                           type="button"
-                          @click="triggerAssetFileInput"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors h-10 shadow-sm"
+                          @click="handleSamakanAssetPhoto"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#E58B35] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm"
                         >
-                          Pilih File
+                          Samakan
                         </button>
                       </div>
                       <p class="text-[10px] text-muted-foreground ml-1">Maksimal ukuran 1 MB</p>
@@ -1766,7 +1745,7 @@ const totalAsetTerpilihCount = computed(() => {
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <!-- Kondisi -->
                       <div class="space-y-1.5">
-                        <label class="text-sm font-medium text-foreground block">Kondisi<span class="text-rose-500">*</span></label>
+                        <label class="text-sm font-semibold text-foreground block">Kondisi<span class="text-rose-500">*</span></label>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="outline" :disabled="isFieldDisabled" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 text-foreground disabled:opacity-50 disabled:cursor-not-allowed">
@@ -1784,7 +1763,7 @@ const totalAsetTerpilihCount = computed(() => {
 
                       <!-- Status -->
                       <div class="space-y-1.5">
-                        <label class="text-sm font-medium text-foreground block">Status<span class="text-rose-500">*</span></label>
+                        <label class="text-sm font-semibold text-foreground block">Status<span class="text-rose-500">*</span></label>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="outline" :disabled="isFieldDisabled" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 text-foreground disabled:opacity-50 disabled:cursor-not-allowed">
@@ -1803,13 +1782,13 @@ const totalAsetTerpilihCount = computed(() => {
 
                     <!-- Lokasi -->
                     <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Lokasi<span class="text-rose-500">*</span></label>
+                      <label class="text-sm font-semibold text-foreground block">Lokasi<span class="text-rose-500">*</span></label>
                       <div class="flex gap-2">
                         <Combobox
                           v-model="assetForm.location_id"
                           :options="props.locations"
                           search-placeholder="Cari lokasi..."
-                          default-label="Pilih lokasi"
+                          default-label="Pilih lokasi aset"
                           width-class="flex-grow h-10 px-4"
                           :disabled="isFieldDisabled"
                         />
@@ -1821,45 +1800,62 @@ const totalAsetTerpilihCount = computed(() => {
                             assetForm.floor_id = props.lot.floor_id; 
                             assetForm.room_id = props.lot.room_id;
                           "
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-[14px] transition-colors h-10 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#E58B35] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           Samakan
                         </button>
                       </div>
                     </div>
 
-                    <!-- Lantai & Ruangan (Side-by-Side) -->
-                    <div v-if="!isVehicle" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <!-- Lantai -->
-                      <div class="space-y-1.5">
-                        <label class="text-sm font-medium text-foreground block">Lantai</label>
+                    <!-- Lantai -->
+                    <div v-if="!isVehicle" class="space-y-1.5">
+                      <label class="text-sm font-semibold text-foreground block">Lantai</label>
+                      <div class="flex gap-2">
                         <Combobox
                           v-model="assetForm.floor_id"
                           :options="filteredFloorsForAsset"
                           search-placeholder="Cari lantai..."
-                          default-label="Pilih lantai (opsional)"
-                          width-class="w-full h-10 px-4"
+                          default-label="Pilih lokasi aset"
+                          width-class="flex-grow h-10 px-4"
                           :disabled="!assetForm.location_id || isFieldDisabled"
                         />
+                        <button 
+                          type="button"
+                          :disabled="!assetForm.location_id || isFieldDisabled"
+                          @click="assetForm.floor_id = props.lot.floor_id"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#E58B35] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Samakan
+                        </button>
                       </div>
+                    </div>
 
-                      <!-- Ruangan -->
-                      <div class="space-y-1.5">
-                        <label class="text-sm font-medium text-foreground block">Ruangan</label>
+                    <!-- Ruangan -->
+                    <div v-if="!isVehicle" class="space-y-1.5">
+                      <label class="text-sm font-semibold text-foreground block">Ruangan</label>
+                      <div class="flex gap-2">
                         <Combobox
                           v-model="assetForm.room_id"
                           :options="filteredRoomsForAsset"
                           search-placeholder="Cari ruangan..."
-                          default-label="Pilih ruangan (opsional)"
-                          width-class="w-full h-10 px-4"
+                          default-label="Pilih lokasi aset"
+                          width-class="flex-grow h-10 px-4"
                           :disabled="!assetForm.floor_id || isFieldDisabled"
                         />
+                        <button 
+                          type="button"
+                          :disabled="!assetForm.floor_id || isFieldDisabled"
+                          @click="assetForm.room_id = props.lot.room_id"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#E58B35] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Samakan
+                        </button>
                       </div>
                     </div>
 
                     <!-- TNKB (Nomor Polisi) - Shown if it's a vehicle -->
                     <div v-if="isVehicle" class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">TNKB (Nomor Polisi)<span class="text-rose-500">*</span></label>
+                      <label class="text-sm font-semibold text-foreground block">TNKB (Nomor Polisi)<span class="text-rose-500">*</span></label>
                       <input 
                         type="text" 
                         v-model="assetForm.vehicle_registration"
@@ -1871,24 +1867,23 @@ const totalAsetTerpilihCount = computed(() => {
                       />
                     </div>
                   </div>
-
                 </div>
               </div>
 
               <!-- Modal Footer -->
-              <div class="py-3 px-4 border-t border-border flex items-center justify-between">
-                <p class="text-sm text-rose-500 italic font-medium">*Wajib diisi</p>
+              <div class="py-4 px-6 border-t border-border flex items-center justify-between bg-card">
+                <p class="text-sm text-rose-500 italic font-semibold">*Wajib diisi</p>
                 <div class="flex items-center gap-3">
                   <button 
                     @click="isAssetModalOpen = false"
-                    class="px-8 py-2.5 bg-background border border-input hover:bg-muted text-foreground text-sm font-medium rounded-[14px] transition-colors"
+                    class="px-8 py-2.5 bg-background border border-gray-300 hover:bg-muted text-gray-700 text-sm font-semibold rounded-full transition-colors"
                   >
                     Batal
                   </button>
                   <button 
                     @click="handleSaveAsset"
                     :disabled="!isAssetFormValid"
-                    class="px-8 py-2.5 bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors shadow-sm active:scale-[0.98] disabled:opacity-50"
+                    class="px-8 py-2.5 bg-[#5F38E6] hover:bg-[#4E2ED0] text-white text-sm font-semibold rounded-full transition-colors shadow-sm disabled:opacity-50"
                   >
                     {{ assetModalMode === 'create' ? 'Tambah Aset' : 'Simpan Perubahan' }}
                   </button>
