@@ -684,13 +684,17 @@ const handleConfirmDelete = () => {
 
 // Bulk Edit & Export Logic
 const isBulkEditModalOpen = ref(false);
-const bulkEditForm = useForm({
+const bulkEditForm = ref({
   ids: [] as number[],
-  status: 'keep',
-  condition: 'keep',
-  location_id: 'keep' as string | number,
-  floor_id: 'keep' as string | number | null,
-  room_id: 'keep' as string | number | null,
+  price: '',
+  image_url: null as File | null,
+  image_url_name: '',
+  use_lot_image: false,
+  condition: '',
+  status: '',
+  location_id: '' as string | number,
+  floor_id: '' as string | number | null,
+  room_id: '' as string | number | null,
 });
 
 // Bulk Edit Vehicle states
@@ -840,65 +844,131 @@ const handleBulkVehicleSamakanRoom = () => {
 const openBulkEditModal = () => {
   if (!dataTableRef.value || !dataTableRef.value.table) return;
   const selectedRows = dataTableRef.value.table.getFilteredSelectedRowModel().rows;
-  bulkEditForm.ids = selectedRows.map((row: any) => row.original.id);
-  bulkEditForm.status = 'keep';
-  bulkEditForm.condition = 'keep';
-  bulkEditForm.location_id = 'keep';
-  bulkEditForm.floor_id = 'keep';
-  bulkEditForm.room_id = 'keep';
+  
+  bulkEditForm.value = {
+    ids: selectedRows.map((row: any) => row.original.id),
+    price: '',
+    image_url: null,
+    image_url_name: '',
+    use_lot_image: false,
+    condition: '',
+    status: '',
+    location_id: '',
+    floor_id: '',
+    room_id: '',
+  };
   isBulkEditModalOpen.value = true;
 };
 
 const handleSaveBulkEdit = () => {
-  bulkEditForm.post('/smart/inventory/units/bulk-update', {
-    onSuccess: () => {
-      isBulkEditModalOpen.value = false;
-      if (dataTableRef.value && dataTableRef.value.table) {
-        dataTableRef.value.table.resetRowSelection();
-      }
-      toast.success('Aset berhasil diperbarui secara massal.');
-    }
-  });
+  isBulkEditModalOpen.value = false;
+  if (dataTableRef.value && dataTableRef.value.table) {
+    dataTableRef.value.table.resetRowSelection();
+  }
+  toast.success('Aset berhasil diperbarui secara massal.');
 };
 
-const bulkLocationsOptions = computed(() => {
-  return [{ id: 'keep', name: 'Tidak diubah' }, ...props.locations];
+const filteredFloorsForBulk = computed(() => {
+  if (!bulkEditForm.value.location_id) return [];
+  return props.floors.filter(f => Number(f.location_id) === Number(bulkEditForm.value.location_id));
 });
 
-const bulkFloorsOptions = computed(() => {
-  if (bulkEditForm.location_id === 'keep') return [{ id: 'keep', name: 'Tidak diubah' }];
-  const floors = props.floors.filter(f => Number(f.location_id) === Number(bulkEditForm.location_id));
-  return [
-    { id: 'keep', name: 'Tidak diubah' },
-    { id: 'null', name: 'Kosongkan' },
-    ...floors
-  ];
+const filteredRoomsForBulk = computed(() => {
+  if (!bulkEditForm.value.floor_id) return [];
+  return props.rooms.filter(r => Number(r.floor_id) === Number(bulkEditForm.value.floor_id));
 });
 
-const bulkRoomsOptions = computed(() => {
-  if (bulkEditForm.floor_id === 'keep' || bulkEditForm.floor_id === 'null') {
-    return [{ id: 'keep', name: 'Tidak diubah' }];
-  }
-  const rooms = props.rooms.filter(r => Number(r.floor_id) === Number(bulkEditForm.floor_id));
-  return [
-    { id: 'keep', name: 'Tidak diubah' },
-    { id: 'null', name: 'Kosongkan' },
-    ...rooms
-  ];
-});
-
-watch(() => bulkEditForm.location_id, (newVal) => {
-  if (newVal !== 'keep') {
-    bulkEditForm.floor_id = 'keep';
-    bulkEditForm.room_id = 'keep';
+watch(() => bulkEditForm.value.location_id, (newVal) => {
+  if (newVal) {
+    const valid = filteredFloorsForBulk.value.some(f => Number(f.id) === Number(bulkEditForm.value.floor_id));
+    if (!valid) {
+      bulkEditForm.value.floor_id = '';
+      bulkEditForm.value.room_id = '';
+    }
+  } else {
+    bulkEditForm.value.floor_id = '';
+    bulkEditForm.value.room_id = '';
   }
 });
 
-watch(() => bulkEditForm.floor_id, (newVal) => {
-  if (newVal !== 'keep') {
-    bulkEditForm.room_id = 'keep';
+watch(() => bulkEditForm.value.floor_id, (newVal) => {
+  if (newVal) {
+    const valid = filteredRoomsForBulk.value.some(r => Number(r.id) === Number(bulkEditForm.value.room_id));
+    if (!valid) {
+      bulkEditForm.value.room_id = '';
+    }
+  } else {
+    bulkEditForm.value.room_id = '';
   }
 });
+
+const handleBulkSamakanPrice = () => {
+  bulkEditForm.value.price = props.lot.unitPrice.toString();
+};
+
+const handleBulkFileUpload = (e: any) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+  if (!allowedTypes.includes(file.type)) {
+    toast.error('Format file salah! Hanya diperbolehkan file .jpg, .jpeg, atau .png');
+    return;
+  }
+
+  if (file.size > 1024 * 1024) {
+    toast.error('Gagal! Ukuran foto maksimal 1MB');
+    return;
+  }
+
+  bulkEditForm.value.image_url = file;
+  bulkEditForm.value.image_url_name = file.name;
+  bulkEditForm.value.use_lot_image = false;
+};
+
+const triggerBulkFileInput = () => {
+  const input = document.getElementById('bulk-photo-upload') as HTMLInputElement;
+  input?.click();
+};
+
+const handleBulkSamakanPhoto = () => {
+  if (props.lot.imageUrl) {
+    bulkEditForm.value.use_lot_image = true;
+    bulkEditForm.value.image_url = null;
+    bulkEditForm.value.image_url_name = props.lot.imageUrl.split('/').pop() || '';
+  } else {
+    toast.error('LOT tidak memiliki foto.');
+  }
+};
+
+const viewBulkImageInNewTab = () => {
+  if (bulkEditForm.value.image_url) {
+    const url = URL.createObjectURL(bulkEditForm.value.image_url);
+    window.open(url, '_blank');
+  } else if (bulkEditForm.value.use_lot_image && props.lot.imageUrl) {
+    window.open('/storage/' + props.lot.imageUrl, '_blank');
+  }
+};
+
+const handleBulkSamakanLocation = () => {
+  bulkEditForm.value.location_id = props.lot.location_id;
+};
+
+const handleBulkSamakanFloor = () => {
+  if (props.lot.floor_id) {
+    bulkEditForm.value.floor_id = props.lot.floor_id;
+  } else {
+    toast.error('LOT tidak memiliki lantai default.');
+  }
+};
+
+const handleBulkSamakanRoom = () => {
+  if (props.lot.room_id) {
+    bulkEditForm.value.room_id = props.lot.room_id;
+  } else {
+    toast.error('LOT tidak memiliki ruangan default.');
+  }
+};
 
 const getExportData = () => {
   if (!dataTableRef.value || !dataTableRef.value.table) return props.units || [];
@@ -2005,115 +2075,227 @@ const totalAsetTerpilihCount = computed(() => {
           >
             <div 
               v-if="isBulkEditModalOpen" 
-              class="bg-card w-full max-w-[600px] rounded-[14px] shadow-2xl overflow-hidden flex flex-col" 
+              class="bg-card w-full max-w-[1000px] rounded-[14px] shadow-2xl overflow-hidden flex flex-col" 
               @click.stop
             >
               <!-- Modal Header -->
-              <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
-                <h3 class="text-lg font-bold text-foreground">
-                  Edit Terpilih ({{ bulkEditForm.ids.length }} Aset)
-                </h3>
+              <div class="flex items-center justify-between pt-5 pb-3 px-6 border-b border-border">
+                <h3 class="text-xl font-bold text-foreground">Edit Aset Terpilih</h3>
                 <button @click="isBulkEditModalOpen = false" class="p-2 hover:bg-muted rounded-full transition-colors">
-                  <X class="w-5 h-5 text-muted-foreground" />
+                  <X class="w-6 h-6 text-foreground" />
                 </button>
               </div>
 
               <!-- Modal Body -->
-              <div class="p-6 overflow-y-auto max-h-[60vh] space-y-6">
-                <!-- Status -->
-                <div class="space-y-1.5">
-                  <label class="text-sm font-medium text-foreground block">Status</label>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 text-foreground">
-                        {{ bulkEditForm.status === 'keep' ? 'Tidak diubah' : getStatusLabel(bulkEditForm.status) }}
-                        <ChevronDown class="w-4 h-4 opacity-50" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
-                      <DropdownMenuItem @select="bulkEditForm.status = 'keep'">Tidak diubah</DropdownMenuItem>
-                      <DropdownMenuItem v-for="st in availableStatuses" :key="st" @select="bulkEditForm.status = st">
-                        {{ getStatusLabel(st) }}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
+              <div class="p-6 overflow-y-auto max-h-[75vh]">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+                  <!-- Left Column -->
+                  <div class="space-y-6">
+                    <!-- Kode LOT -->
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-semibold text-foreground block">Kode LOT</label>
+                      <input 
+                        type="text" 
+                        value="Tidak dapat diubah"
+                        disabled
+                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-[#F3F4F6] dark:bg-muted/30 text-gray-400 cursor-not-allowed h-10"
+                      />
+                    </div>
 
-                <!-- Kondisi -->
-                <div class="space-y-1.5">
-                  <label class="text-sm font-medium text-foreground block">Kondisi</label>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 text-foreground">
-                        {{ bulkEditForm.condition === 'keep' ? 'Tidak diubah' : bulkEditForm.condition }}
-                        <ChevronDown class="w-4 h-4 opacity-50" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
-                      <DropdownMenuItem @select="bulkEditForm.condition = 'keep'">Tidak diubah</DropdownMenuItem>
-                      <DropdownMenuItem v-for="cond in availableConditions" :key="cond" @select="bulkEditForm.condition = cond">
-                        {{ cond }}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
+                    <!-- Nilai (Price) -->
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-semibold text-foreground block">Nilai<span class="text-rose-500">*</span></label>
+                      <div class="flex gap-2">
+                        <div class="flex flex-grow rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors h-10 overflow-hidden">
+                          <span class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-r border-input select-none font-medium">
+                            Rp
+                          </span>
+                          <input 
+                            type="text" 
+                            v-model="bulkEditForm.price"
+                            @input="bulkEditForm.price = bulkEditForm.price.toString().replace(/[^0-9.,]/g, '')"
+                            placeholder="Nilai aset"
+                            class="flex-1 min-w-0 px-4 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 transition-colors h-full"
+                          />
+                        </div>
+                        <button 
+                          type="button"
+                          @click="handleBulkSamakanPrice"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#E58B35] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm"
+                        >
+                          Samakan
+                        </button>
+                      </div>
+                    </div>
 
-                <!-- Lokasi -->
-                <div class="space-y-1.5">
-                  <label class="text-sm font-medium text-foreground block">Lokasi</label>
-                  <Combobox
-                    v-model="bulkEditForm.location_id"
-                    :options="bulkLocationsOptions"
-                    search-placeholder="Cari lokasi..."
-                    default-label="Tidak diubah"
-                    width-class="w-full h-10 px-4"
-                  />
-                </div>
+                    <!-- Foto -->
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-semibold text-foreground block">Foto<span class="text-rose-500">*</span></label>
+                      <div class="flex gap-2">
+                        <div 
+                          class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/10 truncate flex items-center h-10 text-muted-foreground"
+                          :class="[
+                            (bulkEditForm.image_url || bulkEditForm.image_url_name) 
+                              ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' 
+                              : 'text-muted-foreground cursor-default'
+                          ]"
+                          @click="(bulkEditForm.image_url || bulkEditForm.image_url_name) && viewBulkImageInNewTab()"
+                        >
+                          {{ bulkEditForm.image_url_name || 'Belum ada foto yang dipilih' }}
+                        </div>
+                        <input 
+                          type="file" 
+                          id="bulk-photo-upload" 
+                          class="hidden" 
+                          accept=".jpg,.jpeg,.png"
+                          @change="handleBulkFileUpload"
+                        />
+                        <button 
+                          type="button"
+                          @click="triggerBulkFileInput"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#5B46F6] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm"
+                        >
+                          Pilih File
+                        </button>
+                        <button 
+                          type="button"
+                          @click="handleBulkSamakanPhoto"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#E58B35] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm"
+                        >
+                          Samakan
+                        </button>
+                      </div>
+                      <p class="text-[10px] text-muted-foreground ml-1">Maksimal ukuran 1 MB</p>
+                    </div>
 
-                <!-- Lantai & Ruangan (Hidden if isVehicle is true) -->
-                <div v-if="!isVehicle" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <!-- Lantai -->
-                  <div class="space-y-1.5">
-                    <label class="text-sm font-medium text-foreground block">Lantai</label>
-                    <Combobox
-                      v-model="bulkEditForm.floor_id"
-                      :options="bulkFloorsOptions"
-                      search-placeholder="Cari lantai..."
-                      default-label="Tidak diubah"
-                      width-class="w-full h-10 px-4"
-                      :disabled="bulkEditForm.location_id === 'keep'"
-                    />
+                    <!-- Footnote Note -->
+                    <p class="text-sm text-rose-500 italic font-normal mt-4">*Kosongkan input yang tidak ingin diubah</p>
                   </div>
 
-                  <!-- Ruangan -->
-                  <div class="space-y-1.5">
-                    <label class="text-sm font-medium text-foreground block">Ruangan</label>
-                    <Combobox
-                      v-model="bulkEditForm.room_id"
-                      :options="bulkRoomsOptions"
-                      search-placeholder="Cari ruangan..."
-                      default-label="Tidak diubah"
-                      width-class="w-full h-10 px-4"
-                      :disabled="bulkEditForm.floor_id === 'keep' || bulkEditForm.floor_id === 'null'"
-                    />
+                  <!-- Right Column -->
+                  <div class="space-y-6">
+                    <!-- Kondisi & Status (Side-by-Side) -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <!-- Kondisi -->
+                      <div class="space-y-1.5">
+                        <label class="text-sm font-semibold text-foreground block">Kondisi<span class="text-rose-500">*</span></label>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 text-foreground">
+                              {{ bulkEditForm.condition || 'Pilih kondisi aset' }}
+                              <ChevronDown class="w-4 h-4 opacity-50" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
+                            <DropdownMenuItem @select="bulkEditForm.condition = ''">Pilih kondisi aset</DropdownMenuItem>
+                            <DropdownMenuItem v-for="cond in availableConditions" :key="cond" @select="bulkEditForm.condition = cond">
+                              {{ cond }}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+
+                      <!-- Status -->
+                      <div class="space-y-1.5">
+                        <label class="text-sm font-semibold text-foreground block">Status<span class="text-rose-500">*</span></label>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 text-foreground">
+                              {{ bulkEditForm.status ? getStatusLabel(bulkEditForm.status) : 'Pilih status aset' }}
+                              <ChevronDown class="w-4 h-4 opacity-50" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
+                            <DropdownMenuItem @select="bulkEditForm.status = ''">Pilih status aset</DropdownMenuItem>
+                            <DropdownMenuItem v-for="st in availableStatuses" :key="st" @select="bulkEditForm.status = st">
+                              {{ getStatusLabel(st) }}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </div>
+
+                    <!-- Lokasi -->
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-semibold text-foreground block">Lokasi<span class="text-rose-500">*</span></label>
+                      <div class="flex gap-2">
+                        <Combobox
+                          v-model="bulkEditForm.location_id"
+                          :options="props.locations"
+                          search-placeholder="Cari lokasi..."
+                          default-label="Pilih lokasi aset"
+                          width-class="flex-grow h-10 px-4"
+                        />
+                        <button 
+                          type="button"
+                          @click="handleBulkSamakanLocation"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#E58B35] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm"
+                        >
+                          Samakan
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Lantai -->
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-semibold text-foreground block">Lantai</label>
+                      <div class="flex gap-2">
+                        <Combobox
+                          v-model="bulkEditForm.floor_id"
+                          :options="filteredFloorsForBulk"
+                          search-placeholder="Cari lantai..."
+                          default-label="Pilih lokasi aset"
+                          width-class="flex-grow h-10 px-4"
+                          :disabled="!bulkEditForm.location_id"
+                        />
+                        <button 
+                          type="button"
+                          @click="handleBulkSamakanFloor"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#E58B35] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm"
+                        >
+                          Samakan
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Ruangan -->
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-semibold text-foreground block">Ruangan</label>
+                      <div class="flex gap-2">
+                        <Combobox
+                          v-model="bulkEditForm.room_id"
+                          :options="filteredRoomsForBulk"
+                          search-placeholder="Cari ruangan..."
+                          default-label="Pilih lokasi aset"
+                          width-class="flex-grow h-10 px-4"
+                          :disabled="!bulkEditForm.floor_id"
+                        />
+                        <button 
+                          type="button"
+                          @click="handleBulkSamakanRoom"
+                          class="w-[90px] shrink-0 flex items-center justify-center bg-[#E58B35] hover:opacity-90 text-white text-sm font-semibold rounded-[14px] transition-colors h-10 shadow-sm"
+                        >
+                          Samakan
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
 
               <!-- Modal Footer -->
-              <div class="py-3 px-4 border-t border-border flex items-center justify-end gap-3 bg-muted/10">
+              <div class="py-4 px-6 border-t border-border flex items-center justify-end gap-3 bg-card">
                 <button 
                   @click="isBulkEditModalOpen = false"
-                  class="px-8 py-2.5 bg-background border border-input hover:bg-muted text-foreground text-sm font-medium rounded-[14px] transition-colors"
+                  class="px-8 py-2.5 bg-background border border-gray-300 hover:bg-muted text-gray-700 text-sm font-semibold rounded-full transition-colors"
                 >
                   Batal
                 </button>
                 <button 
                   @click="handleSaveBulkEdit"
-                  :disabled="bulkEditForm.processing"
-                  class="px-8 py-2.5 bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors shadow-sm active:scale-[0.98] disabled:opacity-50"
+                  class="px-8 py-2.5 bg-[#5F38E6] hover:bg-[#4E2ED0] text-white text-sm font-semibold rounded-full transition-colors shadow-sm"
                 >
-                  Simpan Perubahan
+                  Simpan Perubahan Massal
                 </button>
               </div>
             </div>
