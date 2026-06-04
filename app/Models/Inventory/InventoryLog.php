@@ -11,10 +11,11 @@ class InventoryLog extends Model
 {
     use HasFactory;
 
+    public const UPDATED_AT = null;
+
     protected $fillable = [
         'barang_id',
         'lot_id',
-        'unit_id',
         'user_id',
         'action_type',
         'quantity_change',
@@ -36,11 +37,6 @@ class InventoryLog extends Model
     public function lot(): BelongsTo
     {
         return $this->belongsTo(Lot::class);
-    }
-
-    public function unit(): BelongsTo
-    {
-        return $this->belongsTo(Unit::class);
     }
 
     public function user(): BelongsTo

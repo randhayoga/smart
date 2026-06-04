@@ -1694,7 +1694,7 @@ const closeErrorModal = () => {
               <!-- Modal Header -->
               <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
                 <h3 class="text-lg font-bold text-foreground">
-                  {{ bulkLotForm.ids.length === 1 ? 'Edit LOT' : 'Edit Terpilih (Bulk Edit LOT)' }}
+                  {{ bulkLotForm.ids.length === 1 ? 'Edit LOT' : 'Edit LOT Terpilih' }}
                 </h3>
                 <button @click="closeBulkEditModal" class="p-2 hover:bg-muted rounded-full transition-colors">
                   <X class="w-5 h-5 text-muted-foreground" />
