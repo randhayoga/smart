@@ -22,3 +22,8 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Graphify local and environment-specific files
+graphify-out/manifest.json
+graphify-out/cost.json
+graphify-out/cache/

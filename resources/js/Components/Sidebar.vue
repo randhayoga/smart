@@ -29,16 +29,64 @@ const page = usePage();
 // Determine if user is admin from shared props
 const isAdmin = computed(() => (page.props.auth as { user: any; isAdmin?: boolean })?.isAdmin ?? false);
 const isManager = computed(() => (page.props.auth as { user: any })?.user?.role === 'manager');
+const isIfsManager = computed(() => (page.props.auth as { user: any })?.user?.role === 'ifs_manager');
 
 // Select navigation based on user role
-const navigation = computed(() => {
+const navigation = computed<NavSection[]>(() => {
+  if (isIfsManager.value) {
+    // Manager IFS:
+    // - Menu Utama
+    // - Approval Status
+    // - Approval Permintaan
+    // - Rest of Admin Menus (Inventory, Permintaan, Audit)
+    const menuUtama = mainNavigation.find(section => section.title === 'Menu Utama');
+    const approvalStatus = userNavigation.find(section => section.title === 'Approval Status');
+    const approvalPermintaan = userNavigation.find(section => section.title === 'Approval Permintaan');
+    const restOfAdmin = mainNavigation.filter(section => section.title !== 'Menu Utama' && section.title !== 'Permintaan');
+    
+    return [
+      menuUtama,
+      approvalStatus,
+      approvalPermintaan,
+      ...restOfAdmin
+    ].filter((section): section is NavSection => !!section);
+  }
+  
   if (isAdmin.value) {
+    // Admin:
+    // - Menu Utama
+    // - Inventory
+    // - Permintaan
+    // - Audit
     return mainNavigation;
   }
+  
   if (isManager.value) {
-    return userNavigation;
+    // Manager:
+    // - Menu Utama
+    // - Approval Permintaan
+    // - Permintaan
+    const menuUtama = userNavigation.find(section => section.title === 'Menu Utama');
+    const approvalPermintaan = userNavigation.find(section => section.title === 'Approval Permintaan');
+    const permintaan = userNavigation.find(section => section.title === 'Permintaan');
+    
+    return [
+      menuUtama,
+      approvalPermintaan,
+      permintaan
+    ].filter((section): section is NavSection => !!section);
   }
-  return userNavigation.filter(section => section.title !== 'Approval');
+  
+  // User:
+  // - Menu Utama
+  // - Permintaan
+  const menuUtama = userNavigation.find(section => section.title === 'Menu Utama');
+  const permintaan = userNavigation.find(section => section.title === 'Permintaan');
+  
+  return [
+    menuUtama,
+    permintaan
+  ].filter((section): section is NavSection => !!section);
 });
 
 const isActive = (href: string): boolean => {
