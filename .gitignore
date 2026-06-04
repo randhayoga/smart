@@ -22,3 +22,8 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Graphify local and environment-specific files
+graphify-out/manifest.json  # Breaks after a git clone due to mtime differences
+graphify-out/cost.json      # Tracks local API costs
+graphify-out/cache/         # Optional to commit, but ignoring it keeps the repo small

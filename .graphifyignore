@@ -1,31 +1,54 @@
-storage/
-bootstrap/cache/
-database/seeders/assets/
-public/storage/
-*.jpg
-*.jpeg
-*.png
-*.webp
-*.gif
-*.svg
-*.ico
-*.woff
-*.woff2
-*.ttf
-*.eot
-*.mp4
-*.mp3
-*.wav
-*.avi
-*.mov
-*.zip
-*.tar.gz
-*.rar
-*.pdf
+# ==========================================
+# Dependencies
+# ==========================================
 vendor/
 node_modules/
+
+# ==========================================
+# Environment & Secrets
+# ==========================================
+.env
+.env.*
+*.key
+*.pem
+auth.json
+
+# ==========================================
+# Laravel Caches, Logs, and Storage
+# ==========================================
+bootstrap/cache/
+storage/framework/
+storage/logs/
+storage/debugbar/
+*.sqlite
+*.sqlite-journal
+
+# ==========================================
+# Vue / Vite / Mix Build Outputs
+# ==========================================
+# You want Graphify to read your raw Vue files in resources/js/ 
+# but ignore the compiled minified files it outputs to public/.
+public/build/
+public/hot
+public/mix-manifest.json
+dist/
+*.map
+*.min.js
+*.min.css
+
+# ==========================================
+# Testing & Coverage Outputs
+# ==========================================
+coverage/
+tests/Browser/console/
+phpunit.xml
+
+# ==========================================
+# IDE, Git, and Graphify Cache
+# ==========================================
 .git/
-graphify-out/
-.agents/
-scratch_*.php
-toArray())
+.idea/
+.vscode/
+.DS_Store
+graphify-out/cache/
+graphify-out/cost.json
