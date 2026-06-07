@@ -34,6 +34,12 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
                 'isAdmin' => $request->user()?->is_admin ?? false,
+                'pendingRequestCount' => $request->user() && in_array($request->user()->role, ['manager', 'ifs_manager'])
+                    ? \App\Models\Request\Request::where('approver_id', $request->user()->id)->where('status', 'wait')->count()
+                    : 0,
+                'pendingAssetStatusCount' => $request->user() && in_array($request->user()->role, ['manager', 'ifs_manager'])
+                    ? \App\Models\Inventory\UnitStatusApproval::where('decision', 'pending')->count()
+                    : 0,
             ],
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
