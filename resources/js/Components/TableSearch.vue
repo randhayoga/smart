@@ -6,6 +6,7 @@ defineProps<{
   placeholder?: string;
   id?: string;
   name?: string;
+  bgClass?: string;
 }>();
 
 defineEmits<{
@@ -23,7 +24,7 @@ defineEmits<{
       :value="modelValue"
       @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
       :placeholder="placeholder"
-      class="w-full pl-9 pr-2 py-1.5 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+      :class="['w-full pl-9 pr-2 py-1.5 text-sm border border-input rounded-[14px] focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors', bgClass || 'bg-background']"
     />
   </div>
 </template>

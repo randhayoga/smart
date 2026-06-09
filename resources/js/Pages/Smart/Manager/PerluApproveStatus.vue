@@ -1,18 +1,30 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, h } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import {
   Search,
   X,
   FileText,
-  Eye,
   ThumbsUp,
   Ban,
   ArrowUpDown,
-  AlertTriangle
+  AlertTriangle,
+  ChevronDown
 } from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
+import { Button } from "@/Components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/Components/ui/dropdown-menu";
+import TableSearch from '@/Components/TableSearch.vue';
+import type { ColumnDef } from '@tanstack/vue-table';
+import DataTable from '@/Components/DataTable.vue';
+import ViewTableButton from '@/Components/ViewTableButton.vue';
+import Tabs from '@/Components/Tabs.vue';
 
 interface AuditTrail {
   waktu: string;
@@ -59,7 +71,6 @@ interface ApprovalItem {
   requested_by: string;
   requested_at: string;
   memo_path: string | null;
-  memo_name: string | null;
   unit_details: UnitDetails;
 }
 
@@ -78,18 +89,15 @@ const categoryFilter = ref('Semua kategori');
 const statusFilter = ref('Semua status');
 const rowsPerPage = ref('Semua baris');
 
-// Sorting
-const sortBy = ref('id');
-const sortDesc = ref(true);
+const dataTableRef = ref<any>(null);
 
-const toggleSort = (field: string) => {
-  if (sortBy.value === field) {
-    sortDesc.value = !sortDesc.value;
-  } else {
-    sortBy.value = field;
-    sortDesc.value = false;
-  }
-};
+// Selection States
+const selectedIds = computed(() => {
+  if (!dataTableRef.value || !dataTableRef.value.table) return [];
+  return dataTableRef.value.table.getFilteredRowModel().rows
+    .filter((r: any) => r.getIsSelected())
+    .map((r: any) => r.original.id);
+});
 
 // Filter options
 const categoryOptions = computed(() => {
@@ -112,16 +120,6 @@ const statusOptions = computed(() => {
 const filteredApprovals = computed(() => {
   let list = [...props.approvals];
 
-  if (searchQuery.value.trim() !== '') {
-    const q = searchQuery.value.toLowerCase();
-    list = list.filter(app => 
-      app.asset_code.toLowerCase().includes(q) ||
-      app.brand.toLowerCase().includes(q) ||
-      app.specification.toLowerCase().includes(q) ||
-      app.subcategory.toLowerCase().includes(q)
-    );
-  }
-
   if (categoryFilter.value !== 'Semua kategori') {
     list = list.filter(app => app.category === categoryFilter.value);
   }
@@ -130,91 +128,271 @@ const filteredApprovals = computed(() => {
     list = list.filter(app => app.status_label === statusFilter.value);
   }
 
-  list.sort((a, b) => {
-    let valA: any = a[sortBy.value as keyof ApprovalItem] ?? '';
-    let valB: any = b[sortBy.value as keyof ApprovalItem] ?? '';
-
-    if (sortBy.value === 'asset_code') {
-      valA = a.asset_code;
-      valB = b.asset_code;
-    } else if (sortBy.value === 'category') {
-      valA = a.category;
-      valB = b.category;
-    } else if (sortBy.value === 'subcategory') {
-      valA = a.subcategory;
-      valB = b.subcategory;
-    } else if (sortBy.value === 'brand') {
-      valA = a.brand;
-      valB = b.brand;
-    } else if (sortBy.value === 'specification') {
-      valA = a.specification;
-      valB = b.specification;
-    } else if (sortBy.value === 'status') {
-      valA = a.status_label;
-      valB = b.status_label;
-    }
-
-    if (typeof valA === 'string') {
-      return sortDesc.value ? valB.localeCompare(valA) : valA.localeCompare(valB);
-    } else {
-      return sortDesc.value ? valB - valA : valA - valB;
-    }
-  });
+  // default sort by id desc
+  list.sort((a, b) => b.id - a.id);
 
   return list;
 });
 
-// Pagination
-const currentPage = ref(1);
-
-const totalPages = computed(() => {
-  if (rowsPerPage.value === 'Semua baris') return 1;
-  const limit = parseInt(rowsPerPage.value, 10);
-  return Math.ceil(filteredApprovals.value.length / limit) || 1;
-});
-
-const paginatedApprovals = computed(() => {
-  const list = filteredApprovals.value;
-  if (rowsPerPage.value === 'Semua baris') return list;
-  const limit = parseInt(rowsPerPage.value, 10);
-  const start = (currentPage.value - 1) * limit;
-  return list.slice(start, start + limit);
-});
-
-// Selection States
-const selectedIds = ref<number[]>([]);
-
-const isAllSelected = computed(() => {
-  const currentList = paginatedApprovals.value;
-  if (currentList.length === 0) return false;
-  return currentList.every(item => selectedIds.value.includes(item.id));
-});
-
-const toggleSelectAll = () => {
-  const currentList = paginatedApprovals.value;
-  if (isAllSelected.value) {
-    selectedIds.value = selectedIds.value.filter(id => !currentList.some(item => item.id === id));
-  } else {
-    const idsToAdd = currentList.map(item => item.id).filter(id => !selectedIds.value.includes(id));
-    selectedIds.value = [...selectedIds.value, ...idsToAdd];
+const computedPageSize = computed(() => {
+  if (rowsPerPage.value === 'Semua baris') {
+    return filteredApprovals.value.length || 10;
   }
-};
+  return parseInt(rowsPerPage.value, 10);
+});
 
-const toggleSelectRow = (id: number) => {
-  if (selectedIds.value.includes(id)) {
-    selectedIds.value = selectedIds.value.filter(item => item !== id);
-  } else {
-    selectedIds.value.push(id);
+watch([categoryFilter, statusFilter], () => {
+  if (dataTableRef.value && dataTableRef.value.table) {
+    dataTableRef.value.table.resetRowSelection();
   }
-};
+});
+
+const columns: ColumnDef<ApprovalItem>[] = [
+  {
+    id: 'select',
+    size: 40,
+    header: ({ table }) => h('div', { class: 'text-center no-print flex items-center justify-center' }, [
+      h('input', {
+        type: 'checkbox',
+        class: 'rounded border-input text-primary focus:ring-primary/20 w-4 h-4 cursor-pointer',
+        checked: table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate'),
+        onChange: table.getToggleAllPageRowsSelectedHandler(),
+        'aria-label': 'Select all',
+      })
+    ]),
+    cell: ({ row }) => h('div', { class: 'text-center no-print flex items-center justify-center' }, [
+      h('input', {
+        type: 'checkbox',
+        class: 'rounded border-input text-primary focus:ring-primary/20 w-4 h-4 cursor-pointer',
+        checked: row.getIsSelected(),
+        onChange: row.getToggleSelectedHandler(),
+        'aria-label': 'Select row',
+      })
+    ]),
+    enableSorting: false,
+    enableHiding: false,
+  },
+  {
+    accessorKey: 'asset_code',
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'Kode Aset',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'text-muted-foreground font-mono text-sm truncate font-medium' }, row.getValue('asset_code')),
+  },
+  {
+    accessorKey: 'category',
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'Kategori',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'text-foreground truncate' }, row.getValue('category')),
+  },
+  {
+    accessorKey: 'subcategory',
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'Subkategori',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'text-foreground truncate' }, row.getValue('subcategory')),
+  },
+  {
+    accessorKey: 'brand',
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'Merek',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'text-foreground truncate' }, row.getValue('brand')),
+  },
+  {
+    accessorKey: 'specification',
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'Spesifikasi',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'text-foreground truncate', title: row.getValue('specification') }, row.getValue('specification')),
+  },
+  {
+    accessorKey: 'status_label',
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'Status',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'text-foreground font-medium truncate' }, row.getValue('status_label')),
+  },
+  {
+    id: 'actions',
+    size: 100,
+    header: () => h('div', { class: 'text-center font-semibold text-foreground' }, 'Aksi'),
+    cell: ({ row }) => {
+      const item = row.original;
+      return h('div', { class: 'flex items-center justify-center gap-2' }, [
+        h('button', {
+          onClick: () => openMemoFile(item.memo_path),
+          class: 'w-8 h-8 rounded-full bg-[#6366F1] hover:bg-[#5850EC] text-white flex items-center justify-center transition-colors shadow-sm cursor-pointer',
+          title: 'Buka Berita Acara / Memo'
+        }, [
+          h(FileText, { class: 'w-4 h-4' })
+        ]),
+        h(ViewTableButton, {
+          onClick: () => openDetailPopup(item),
+          title: 'Detail Aset'
+        })
+      ]);
+    },
+    enableSorting: false,
+  }
+];
+
+const auditColumns: ColumnDef<AuditTrail>[] = [
+  {
+    accessorKey: 'waktu',
+    size: 160,
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'Waktu',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'text-foreground truncate' }, row.getValue('waktu')),
+  },
+  {
+    accessorKey: 'aksi_status',
+    size: 144,
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'Aksi / Status',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'text-foreground font-semibold truncate' }, row.getValue('aksi_status')),
+  },
+  {
+    accessorKey: 'aktor',
+    size: 160,
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'Aktor',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'text-foreground truncate' }, row.getValue('aktor')),
+  },
+  {
+    accessorKey: 'durasi',
+    size: 112,
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-center w-full'
+      }, () => [
+        'Durasi (hari)',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'text-center text-foreground truncate' }, row.getValue('durasi')),
+  },
+  {
+    accessorKey: 'catatan',
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'Catatan',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'text-muted-foreground max-w-sm truncate' }, row.getValue('catatan')),
+  }
+];
 
 // Memo document opener
-const openMemoFile = (path: string | null, name: string | null) => {
+const openMemoFile = (path: string | null) => {
   if (!path) {
     toast.error('File berita acara / memo tidak ditemukan.');
     return;
   }
   window.open('/storage/' + path, '_blank');
+};
+
+// Formats & Helpers
+const formatRupiah = (val: number | string | null | undefined) => {
+  if (val === null || val === undefined || val === '') return 'Rp0';
+  let num: number;
+  if (typeof val === 'string') {
+    const cleanStr = val.replace(/[^0-9,-]/g, '');
+    if (!cleanStr) return 'Rp0';
+    num = parseFloat(cleanStr.replace(/,/g, '.'));
+  } else {
+    num = val;
+  }
+  if (isNaN(num)) return 'Rp0';
+  const formatted = Math.floor(num).toLocaleString('id-ID');
+  return `Rp${formatted}`;
+};
+
+const formatLocation = (loc: string | null | undefined, floor: string | null, room: string | null) => {
+  const parts = [];
+  if (loc && loc !== '-') parts.push(loc);
+  if (floor && floor !== '-') parts.push(floor);
+  if (room && room !== '-') parts.push(room);
+  return parts.join(', ') || '-';
+};
+
+const formatDateWithDashes = (dateStr: string | null | undefined) => {
+  if (!dateStr || dateStr === '-') return '-';
+  return dateStr.replace(/\//g, '-');
 };
 
 // ─────────────────────────────────────────────
@@ -246,7 +424,14 @@ const closeDetailPopup = () => {
 
 // Jejak Audit tab local pagination
 const auditCurrentPage = ref(1);
-const auditRowsPerPage = ref('semua');
+const auditRowsPerPage = ref('Semua baris');
+
+const computedAuditPageSize = computed(() => {
+  if (auditRowsPerPage.value === 'Semua baris') {
+    return filteredLifecycles.value.length || 10;
+  }
+  return parseInt(auditRowsPerPage.value, 10);
+});
 
 const filteredLifecycles = computed(() => {
   if (!activeApproval.value) return [];
@@ -335,7 +520,7 @@ const handleConfirmSubmit = () => {
     return;
   }
 
-  router.post(route('smart.approve-status.action'), {
+  router.post(route('smart.approve-status.bulk-store'), {
     ids: idsToProcess,
     decision: confirmActionType.value,
     note: confirmNote.value,
@@ -343,7 +528,9 @@ const handleConfirmSubmit = () => {
     onSuccess: () => {
       closeConfirmModal();
       closeDetailPopup();
-      selectedIds.value = [];
+      if (dataTableRef.value && dataTableRef.value.table) {
+        dataTableRef.value.table.resetRowSelection();
+      }
       toast.success(confirmActionType.value === 'approved' 
         ? 'Perubahan status aset berhasil disetujui.' 
         : 'Perubahan status aset berhasil ditolak.'
@@ -362,639 +549,527 @@ const handleConfirmSubmit = () => {
   <AppLayout title="Approval Aset">
     <!-- ── Title Halaman ── -->
     <div class="mb-6">
-      <h1 class="text-[28px] font-bold text-gray-900 leading-none">Approval Aset</h1>
-      <p class="text-base font-semibold text-gray-900 mt-2">Perlu Perhatian Anda</p>
+      <h1 class="text-xl font-bold text-gray-900 leading-none">Approval Aset</h1>
+      <p class="text-lg font-bold text-gray-900 mt-2">Perlu Perhatian Anda</p>
     </div>
 
     <!-- ── Filter & Search Section ── -->
     <div class="space-y-4 mb-6">
-      <span class="text-xs font-semibold text-gray-500 block">Filter</span>
-      
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div class="flex flex-wrap gap-3 items-center w-full sm:w-auto">
-          <!-- Search input -->
-          <div class="relative w-full sm:w-[220px]">
-            <input
-              v-model="searchQuery"
-              type="text"
-              placeholder="Cari Aset..."
-              class="w-full h-10 pl-4 pr-10 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
-            />
-            <div class="absolute right-3 top-3 text-gray-400">
-              <Search class="w-4 h-4" />
-            </div>
-          </div>
-
-          <!-- Kategori Filter -->
-          <div class="w-full sm:w-[150px]">
-            <select 
-              v-model="categoryFilter" 
-              class="w-full h-10 px-3 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer shadow-sm"
-            >
-              <option value="Semua kategori">Semua kategori</option>
-              <option v-for="cat in categoryOptions" :key="cat" :value="cat">{{ cat }}</option>
-            </select>
-          </div>
-
-          <!-- Status Filter -->
-          <div class="w-full sm:w-[150px]">
-            <select 
-              v-model="statusFilter" 
-              class="w-full h-10 px-3 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer shadow-sm"
-            >
-              <option value="Semua status">Semua status</option>
-              <option v-for="st in statusOptions" :key="st" :value="st">{{ st }}</option>
-            </select>
-          </div>
+      <!-- Filters Row -->
+      <div class="flex flex-wrap items-end gap-4">
+        <div class="space-y-1.5 flex-1 min-w-[300px] max-w-sm">
+          <label class="text-xs text-muted-foreground font-medium block ml-0.5">Filter</label>
+          <TableSearch 
+            v-model="searchQuery"
+            placeholder="Cari Aset..." 
+            bg-class="bg-white"
+          />
         </div>
 
-        <!-- Page Size Selection -->
-        <div class="flex items-center gap-2 text-xs text-gray-600 justify-end w-full sm:w-auto">
-          <span class="whitespace-nowrap">Baris per halaman</span>
-          <select 
-            v-model="rowsPerPage" 
-            class="border border-gray-300 rounded-lg h-10 px-3 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer w-[120px]"
-          >
-            <option value="5">5 baris</option>
-            <option value="10">10 baris</option>
-            <option value="25">25 baris</option>
-            <option value="Semua baris">Semua baris</option>
-          </select>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal bg-white', (!categoryFilter || categoryFilter === 'Semua kategori') ? 'text-muted-foreground' : 'text-foreground']">
+              <span class="truncate">{{ categoryFilter || 'Semua kategori' }}</span>
+              <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
+            <DropdownMenuItem @select="categoryFilter = 'Semua kategori'">Semua kategori</DropdownMenuItem>
+            <DropdownMenuItem v-for="cat in categoryOptions" :key="cat" @select="categoryFilter = cat">
+              {{ cat }}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal bg-white', (!statusFilter || statusFilter === 'Semua status') ? 'text-muted-foreground' : 'text-foreground']">
+              <span class="truncate">{{ statusFilter || 'Semua status' }}</span>
+              <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
+            <DropdownMenuItem @select="statusFilter = 'Semua status'">Semua status</DropdownMenuItem>
+            <DropdownMenuItem v-for="st in statusOptions" :key="st" @select="statusFilter = st">
+              {{ st }}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <div class="flex items-center gap-3 text-sm text-muted-foreground ml-auto">
+          <span>Baris per halaman</span>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal bg-white', (rowsPerPage === 'Semua baris' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
+                {{ rowsPerPage === 'Semua baris' ? 'Semua baris' : `${rowsPerPage} baris` }}
+                <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent class="w-[140px] rounded-[14px]" align="start" :side-offset="4">
+              <DropdownMenuItem @select="rowsPerPage = '5'">5 baris</DropdownMenuItem>
+              <DropdownMenuItem @select="rowsPerPage = '10'">10 baris</DropdownMenuItem>
+              <DropdownMenuItem @select="rowsPerPage = '25'">25 baris</DropdownMenuItem>
+              <DropdownMenuItem @select="rowsPerPage = 'Semua baris'">Semua baris</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
       <!-- ── Bulk Actions ── -->
-      <div class="flex flex-col space-y-1.5 pt-2">
-        <span class="text-xs font-bold text-gray-500 uppercase tracking-wider block">Aksi Terpilih</span>
-        <div class="flex gap-2.5">
+      <div class="space-y-2 flex-1 min-w-0 pt-2">
+        <label class="text-xs text-muted-foreground font-medium block ml-0.5">Aksi Terpilih</label>
+        <div class="flex flex-wrap gap-2">
           <button 
             :disabled="selectedIds.length <= 1"
             @click="openConfirmModal('approved', true)"
-            class="rounded-[10px] h-10 font-bold text-xs shadow-sm flex items-center gap-2 px-5 transition-all duration-200"
-            :class="selectedIds.length > 1 
-              ? 'bg-[#2ECC71] hover:bg-[#27AE60] text-white cursor-pointer' 
-              : 'bg-gray-200 text-gray-400 cursor-not-allowed'"
+            class="flex items-center gap-2 px-4 py-2 bg-[#2ECC71] hover:opacity-70 text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm disabled:opacity-50"
           >
             <ThumbsUp class="w-4 h-4" />
-            Approve Terpilih
+            <span class="hidden sm:inline">Approve Terpilih</span>
           </button>
           <button 
             :disabled="selectedIds.length <= 1"
             @click="openConfirmModal('rejected', true)"
-            class="rounded-[10px] h-10 font-bold text-xs shadow-sm flex items-center gap-2 px-5 transition-all duration-200"
-            :class="selectedIds.length > 1 
-              ? 'bg-[#E74C3C] hover:bg-[#C0392B] text-white cursor-pointer' 
-              : 'bg-gray-200 text-gray-400 cursor-not-allowed'"
+            class="flex items-center gap-2 px-4 py-2 bg-[#E74C3C] hover:opacity-70 text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm disabled:opacity-50"
           >
             <Ban class="w-4 h-4" />
-            Tolak Terpilih
+            <span class="hidden sm:inline">Tolak Terpilih</span>
           </button>
         </div>
       </div>
     </div>
 
     <!-- ── Table Display ── -->
-    <div class="bg-white border border-gray-200 rounded-xl overflow-x-auto shadow-sm">
-      <table class="w-full text-xs text-left border-collapse">
-        <thead>
-          <tr class="bg-white border-b border-gray-200 text-gray-900 font-bold">
-            <th class="py-4 px-4 w-12 text-center">
-              <div class="flex items-center justify-center">
-                <!-- Circular Custom Checkbox -->
-                <button 
-                  @click="toggleSelectAll" 
-                  class="w-5 h-5 rounded-full border border-gray-300 flex items-center justify-center transition-all cursor-pointer"
-                  :class="isAllSelected ? 'bg-[#2ECC71] border-transparent text-white' : 'bg-white text-transparent'"
-                >
-                  <span class="text-[10px] font-bold">✓</span>
-                </button>
-              </div>
-            </th>
-            <th @click="toggleSort('asset_code')" class="py-4 px-4 cursor-pointer select-none">
-              <div class="flex items-center gap-1">
-                Kode Aset
-                <span class="text-gray-400 font-normal">↑↓</span>
-              </div>
-            </th>
-            <th @click="toggleSort('category')" class="py-4 px-4 cursor-pointer select-none">
-              <div class="flex items-center gap-1">
-                Kategori
-                <span class="text-gray-400 font-normal">↑↓</span>
-              </div>
-            </th>
-            <th @click="toggleSort('subcategory')" class="py-4 px-4 cursor-pointer select-none">
-              <div class="flex items-center gap-1">
-                Subkategori
-                <span class="text-gray-400 font-normal">↑↓</span>
-              </div>
-            </th>
-            <th @click="toggleSort('brand')" class="py-4 px-4 cursor-pointer select-none">
-              <div class="flex items-center gap-1">
-                Merek
-                <span class="text-gray-400 font-normal">↑↓</span>
-              </div>
-            </th>
-            <th @click="toggleSort('specification')" class="py-4 px-4 cursor-pointer select-none">
-              <div class="flex items-center gap-1">
-                Spesifikasi
-                <span class="text-gray-400 font-normal">↑↓</span>
-              </div>
-            </th>
-            <th @click="toggleSort('status')" class="py-4 px-4 cursor-pointer select-none">
-              <div class="flex items-center gap-1">
-                Status
-                <span class="text-gray-400 font-normal">↑↓</span>
-              </div>
-            </th>
-            <th class="py-4 px-4 text-center w-28">Aksi</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-150">
-          <tr 
-            v-for="app in paginatedApprovals" 
-            :key="app.id"
-            class="hover:bg-gray-50/50 transition-colors"
-          >
-            <td class="py-4 px-4 text-center">
-              <div class="flex items-center justify-center">
-                <!-- Circular Custom Checkbox -->
-                <button 
-                  @click="toggleSelectRow(app.id)" 
-                  class="w-5 h-5 rounded-full border border-gray-300 flex items-center justify-center transition-all cursor-pointer"
-                  :class="selectedIds.includes(app.id) ? 'bg-[#2ECC71] border-transparent text-white' : 'bg-white text-transparent'"
-                >
-                  <span class="text-[10px] font-bold">✓</span>
-                </button>
-              </div>
-            </td>
-            <td class="py-4 px-4 font-mono font-medium text-gray-900">{{ app.asset_code }}</td>
-            <td class="py-4 px-4 text-gray-900">{{ app.category }}</td>
-            <td class="py-4 px-4 text-gray-900">{{ app.subcategory }}</td>
-            <td class="py-4 px-4 text-gray-900">{{ app.brand }}</td>
-            <td class="py-4 px-4 text-gray-900 truncate max-w-xs">{{ app.specification }}</td>
-            <!-- Plain Text Status Column (matches mockup) -->
-            <td class="py-4 px-4 text-gray-900 font-medium">{{ app.status_label }}</td>
-            <td class="py-4 px-4">
-              <div class="flex items-center justify-center gap-2">
-                <!-- Purple Circle Action Button -->
-                <button 
-                  @click="openMemoFile(app.memo_path, app.memo_name)"
-                  class="w-8 h-8 rounded-full bg-[#6366F1] hover:bg-[#5850EC] text-white flex items-center justify-center transition-colors shadow-sm cursor-pointer"
-                  title="Buka Berita Acara / Memo"
-                >
-                  <FileText class="w-4 h-4" />
-                </button>
-                <!-- Cyan Circle Action Button -->
-                <button 
-                  @click="openDetailPopup(app)"
-                  class="w-8 h-8 rounded-full bg-[#00BCD4] hover:bg-[#06B6D4] text-white flex items-center justify-center transition-colors shadow-sm cursor-pointer"
-                  title="Detail Aset"
-                >
-                  <Eye class="w-4 h-4" />
-                </button>
-              </div>
-            </td>
-          </tr>
-
-          <!-- Empty State -->
-          <tr v-if="filteredApprovals.length === 0">
-            <td colspan="8" class="py-12 text-center text-gray-500">
-              <AlertTriangle class="w-8 h-8 mx-auto mb-2 text-gray-400" />
-              <p class="font-medium">Tidak ada data persetujuan status aset.</p>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- ── Pagination & Count Display ── -->
-    <div class="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4 px-2 text-xs text-gray-500">
-      <div>
-        {{ selectedIds.length }} dari {{ filteredApprovals.length }} baris dipilih
-      </div>
-      
-      <!-- Page numbers navigation -->
-      <div v-if="totalPages > 1" class="flex items-center gap-1">
-        <button 
-          :disabled="currentPage === 1"
-          @click="currentPage--"
-          class="h-8 px-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none transition-colors"
-        >
-          &lt; Sebelumnya
-        </button>
-        
-        <button 
-          v-for="page in totalPages" 
-          :key="page"
-          @click="currentPage = page"
-          class="w-8 h-8 border rounded-lg transition-all"
-          :class="[
-            currentPage === page 
-              ? 'border-indigo-600 bg-indigo-50 text-indigo-600 font-bold shadow-sm' 
-              : 'border-gray-300 hover:bg-gray-50 text-gray-700'
-          ]"
-        >
-          {{ page }}
-        </button>
-
-        <button 
-          :disabled="currentPage === totalPages"
-          @click="currentPage++"
-          class="h-8 px-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none transition-colors"
-        >
-          Selanjutnya &gt;
-        </button>
-      </div>
+    <div class="pb-4">
+      <DataTable 
+        ref="dataTableRef"
+        :columns="columns" 
+        :data="filteredApprovals" 
+        :filter-value="searchQuery"
+        :page-size="computedPageSize"
+      />
     </div>
 
     <!-- ============================================================
          Detail Asset Popup (Overlay Backdrop & Modal Card)
          ============================================================ -->
     <Teleport to="body">
-      <div 
-        v-if="isDetailPopupOpen && activeApproval" 
-        class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4"
-        @click="closeDetailPopup"
+      <Transition
+        enter-active-class="ease-out duration-200"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="ease-in duration-150"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
       >
         <div 
-          class="bg-white text-gray-900 rounded-xl shadow-2xl w-full max-w-5xl flex flex-col overflow-hidden border border-gray-200 animate-in fade-in zoom-in-95 duration-200"
-          @click.stop
+          v-if="isDetailPopupOpen && activeApproval" 
+          class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+          @click="closeDetailPopup"
         >
-          <!-- Header -->
-          <div class="flex items-center justify-between p-5 border-b border-gray-200 bg-white shrink-0">
-            <h3 class="text-base md:text-lg font-bold text-gray-900">Detail Aset</h3>
-            <button @click="closeDetailPopup" class="p-1.5 hover:bg-gray-100 rounded-full transition-colors cursor-pointer">
-              <X class="w-5 h-5 text-gray-500" />
-            </button>
-          </div>
-
-          <!-- Popup Tab pills -->
-          <div class="px-6 py-3 border-b border-gray-200 flex items-center gap-2 shrink-0">
-            <button 
-              @click="detailActiveTab = 'Detail'"
-              class="px-4 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer shadow-sm"
-              :class="[
-                detailActiveTab === 'Detail' 
-                  ? 'border-indigo-600 text-indigo-600 bg-white' 
-                  : 'border-gray-300 text-gray-500 hover:text-gray-700 bg-white'
-              ]"
+          <Transition
+            enter-active-class="ease-out duration-200"
+            enter-from-class="opacity-0 scale-95"
+            enter-to-class="opacity-100 scale-100"
+            leave-active-class="ease-in duration-150"
+            leave-from-class="opacity-100 scale-100"
+            leave-to-class="opacity-0 scale-95"
+          >
+            <div 
+              v-if="isDetailPopupOpen && activeApproval"
+              class="bg-card w-full rounded-[14px] shadow-2xl overflow-hidden flex flex-col border border-border"
+              @click.stop
             >
-              Detail
-            </button>
-            <button 
-              @click="detailActiveTab = 'Jejak Audit'"
-              class="px-4 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer shadow-sm"
-              :class="[
-                detailActiveTab === 'Jejak Audit' 
-                  ? 'border-indigo-600 text-indigo-600 bg-white' 
-                  : 'border-gray-300 text-gray-500 hover:text-gray-700 bg-white'
-              ]"
-            >
-              Jejak Audit
-            </button>
-          </div>
-
-          <!-- Body contents -->
-          <div class="overflow-y-auto max-h-[70vh] p-6">
-            
-            <!-- ── TAB 1: DETAIL ── -->
-            <div v-if="detailActiveTab === 'Detail'" class="border border-gray-200 rounded-xl p-5 flex flex-col lg:flex-row gap-6 bg-white">
-              <!-- Left Side Image -->
-              <div class="w-full lg:w-48 h-48 rounded-[12px] bg-gray-100 border border-gray-200 overflow-hidden shrink-0 flex items-center justify-center">
-                <img 
-                  v-if="activeApproval.unit_details.image_url" 
-                  :src="activeApproval.unit_details.image_url" 
-                  class="w-full h-full object-cover" 
-                />
-                <div v-else class="text-xs font-bold text-gray-400 select-none text-center p-4">
-                  No Photo
-                </div>
+              <!-- Header -->
+              <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
+                <h3 class="text-lg font-bold text-foreground">Detail Aset</h3>
+                <button @click="closeDetailPopup" class="p-2 hover:bg-muted rounded-full transition-colors">
+                  <X class="w-5 h-5 text-muted-foreground" />
+                </button>
               </div>
 
-              <!-- Right Side Metadata (Same line labels) -->
-              <div class="flex-grow grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-3.5 text-xs text-gray-900 align-top">
-                <!-- Column 1 -->
-                <div class="space-y-3.5">
-                  <p class="leading-normal font-bold">Kode Barang: <span>{{ activeApproval.unit_details.barang_code }}</span></p>
-                  <p class="leading-normal font-bold">Merek: <span>{{ activeApproval.brand }}</span></p>
-                  <p class="leading-normal font-bold">Spesifikasi: <span>{{ activeApproval.specification }}</span></p>
-                  <p class="leading-normal text-gray-600">Kategori: <span class="text-gray-900">{{ activeApproval.category }}</span></p>
-                  <p class="leading-normal text-gray-600">Subkategori: <span class="text-gray-900">{{ activeApproval.subcategory }}</span></p>
-                  <p class="leading-normal text-gray-600">Satuan: <span class="text-gray-900">{{ activeApproval.unit_details.barang_unit }}</span></p>
+              <!-- Body contents -->
+              <div class="overflow-y-auto max-h-[70vh] px-6 py-3 space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-4 mb-2">
+                  <Tabs v-model="detailActiveTab" :tabs="['Detail', 'Jejak Audit']" />
                 </div>
+                
+                <!-- ── TAB 1: DETAIL ── -->
+                <div v-if="detailActiveTab === 'Detail'" class="px-4 py-3 bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+                  <div class="flex flex-col md:flex-row gap-6">
+                    <!-- Image Column -->
+                    <div class="w-48 h-48 rounded-xl bg-muted shrink-0 flex items-center justify-center overflow-hidden border border-border">
+                      <img 
+                        v-if="activeApproval.unit_details.image_url" 
+                        :src="activeApproval.unit_details.image_url.startsWith('http') || activeApproval.unit_details.image_url.startsWith('/') ? activeApproval.unit_details.image_url : '/storage/' + activeApproval.unit_details.image_url" 
+                        class="w-full h-full object-cover" 
+                      />
+                      <img 
+                        v-else 
+                        src="https://placehold.co/400x400?text=Placeholder" 
+                        class="w-full h-full object-cover opacity-50" 
+                      />
+                    </div>
 
-                <!-- Column 2 -->
-                <div class="space-y-3.5">
-                  <p class="leading-normal font-bold">Kode LOT: <span>{{ activeApproval.unit_details.lot_code }}</span></p>
-                  <p class="leading-normal text-gray-600">Organizer: <span class="text-gray-900">{{ activeApproval.unit_details.organizer }}</span></p>
-                  <p class="leading-normal text-gray-600">Tanggal masuk: <span class="text-gray-900">{{ activeApproval.unit_details.date_of_receipt }}</span></p>
-                  <p class="leading-normal text-gray-600">Vendor: <span class="text-gray-900">{{ activeApproval.unit_details.vendor }}</span></p>
-                  <p class="leading-normal text-gray-600">Nomor PO: <span class="text-gray-900">{{ activeApproval.unit_details.po_number }}</span></p>
-                </div>
+                    <!-- Details Columns -->
+                    <div class="flex-grow grid grid-cols-1 md:grid-cols-18 gap-4 text-foreground">
+                      <!-- Column 1: Item Info -->
+                      <div class="md:col-span-5">
+                        <p class="font-bold text-foreground"><span class="text-foreground">Kode Barang:</span> {{ activeApproval.unit_details.barang_code }}</p>
+                        <p class="font-bold text-foreground"><span class="text-foreground">Merek:</span> {{ activeApproval.brand }}</p>
+                        <p class="font-bold text-foreground"><span class="text-foreground">Spesifikasi:</span> {{ activeApproval.specification }}</p>
+                        <p class="text-foreground">Kategori: {{ activeApproval.category }}</p>
+                        <p class="text-foreground">Subkategori: {{ activeApproval.subcategory }}</p>
+                        <p class="text-foreground">Satuan: {{ activeApproval.unit_details.barang_unit }}</p>
+                      </div>
 
-                <!-- Column 3 -->
-                <div class="space-y-3.5">
-                  <p class="leading-normal font-bold">Kode Aset: <span>{{ activeApproval.asset_code }}</span></p>
-                  <p class="leading-normal text-gray-600">Nopol: <span class="text-gray-900">{{ activeApproval.unit_details.vehicle_registration || '-' }}</span></p>
-                  <!-- Red color and fully bold for Status -->
-                  <p class="leading-normal text-[#E74C3C] font-bold">Status: {{ activeApproval.status_label }}</p>
-                  <p class="leading-normal text-gray-600">Kondisi: <span class="text-gray-900">{{ activeApproval.unit_details.condition }}</span></p>
-                  <p class="leading-normal text-gray-600">Nilai: <span class="text-gray-900">Rp{{ activeApproval.unit_details.price }}</span></p>
-                  <p class="leading-normal text-gray-600">Lokasi penyimpanan: <span class="text-gray-900">{{ activeApproval.unit_details.location }}</span></p>
-                  <p class="leading-normal text-gray-600">Pembaruan terakhir: <span class="text-gray-900">{{ activeApproval.requested_at }}</span></p>
-                </div>
-              </div>
-            </div>
+                      <!-- Column 2: LOT Info -->
+                      <div class="md:col-span-6">
+                        <p class="font-bold text-foreground"><span class="text-foreground">Kode LOT:</span> {{ activeApproval.unit_details.lot_code }}</p>
+                        <p class="text-foreground">Organizer: {{ activeApproval.unit_details.organizer }}</p>
+                        <p class="text-foreground">Tanggal masuk: {{ formatDateWithDashes(activeApproval.unit_details.date_of_receipt) }}</p>
+                        <p class="text-foreground">Vendor: {{ activeApproval.unit_details.vendor }}</p>
+                        <p class="text-foreground">Nomor PO: {{ activeApproval.unit_details.po_number }}</p>
+                      </div>
 
-            <!-- ── TAB 2: JEJAK AUDIT ── -->
-            <div v-if="detailActiveTab === 'Jejak Audit'" class="space-y-4">
-              <!-- Internal Search & Local Filters -->
-              <div class="flex flex-col sm:flex-row items-center gap-3 justify-between p-4 bg-gray-50 border border-gray-200 rounded-xl text-xs">
-                <div class="flex flex-wrap gap-3 items-center w-full sm:w-auto">
-                  <div class="relative w-full sm:w-[220px]">
-                    <input
-                      v-model="auditSearch"
-                      type="text"
-                      placeholder="Cari Jejak Audit"
-                      class="w-full h-10 pl-3 pr-8 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
-                    />
-                    <div class="absolute right-2.5 top-3 text-gray-400">
-                      <Search class="w-4 h-4" />
+                      <!-- Column 3: Asset Info -->
+                      <div class="md:col-span-7">
+                        <p class="font-bold text-foreground"><span class="text-foreground">Kode Aset:</span> {{ activeApproval.asset_code }}</p>
+                        <!-- TNKB (Nopol) -->
+                        <p class="font-bold text-foreground">
+                          <span class="text-foreground">Nopol:</span> {{ activeApproval.unit_details.vehicle_registration || '-' }}
+                        </p>
+                        <p class="text-foreground">
+                          Status: 
+                          <span 
+                            :class="[
+                              'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold',
+                              activeApproval.proposed_status === 'tersedia' ? 'bg-emerald-100 text-emerald-800' :
+                              activeApproval.proposed_status === 'dipinjam' ? 'bg-amber-100 text-amber-800' :
+                              activeApproval.proposed_status === 'dipakai' ? 'bg-blue-100 text-blue-800' :
+                              'bg-rose-100 text-rose-800'
+                            ]"
+                          >
+                            {{ activeApproval.status_label }}
+                          </span>
+                        </p>
+                        <p class="text-foreground">
+                          Kondisi: 
+                          <span 
+                            :class="[
+                              'font-semibold',
+                              activeApproval.unit_details.condition === 'Baik' ? 'text-emerald-600' :
+                              activeApproval.unit_details.condition === 'Kurang Baik' ? 'text-amber-600' :
+                              'text-rose-600'
+                            ]"
+                          >
+                            {{ activeApproval.unit_details.condition }}
+                          </span>
+                        </p>
+                        <p class="text-foreground">Nilai: {{ formatRupiah(activeApproval.unit_details.price) }}</p>
+                        <p class="text-foreground">Lokasi penyimpanan: {{ formatLocation(activeApproval.unit_details.location, activeApproval.unit_details.floor, activeApproval.unit_details.room) }}</p>
+                        <p class="text-foreground">Pembaruan terakhir: {{ activeApproval.requested_at }}</p>
+                      </div>
                     </div>
                   </div>
-                  
-                  <div class="w-full sm:w-[140px]">
-                    <select 
-                      v-model="auditStatusFilter" 
-                      class="w-full h-10 px-3 border border-gray-300 rounded-lg bg-white text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer"
-                    >
-                      <option value="semua">Semua Status</option>
-                      <option v-for="st in auditStatusOptions" :key="st" :value="st">{{ st }}</option>
-                    </select>
+                </div>
+
+                <!-- ── TAB 2: JEJAK AUDIT ── -->
+                <div v-if="detailActiveTab === 'Jejak Audit'" class="px-4 py-3 bg-card rounded-xl border border-border shadow-sm overflow-hidden space-y-4">
+                  <!-- Internal Search & Local Filters -->
+                  <div class="flex flex-wrap items-end gap-4">
+                    <div class="space-y-1.5 flex-1 min-w-[200px] max-w-xs">
+                      <label class="text-xs text-muted-foreground font-medium block ml-0.5">Filter</label>
+                      <TableSearch 
+                        v-model="auditSearch"
+                        placeholder="Cari Jejak Audit..." 
+                        bg-class="bg-white"
+                      />
+                    </div>
+
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" :class="['w-[180px] justify-between rounded-[14px] font-normal bg-white', (auditStatusFilter === 'semua') ? 'text-muted-foreground' : 'text-foreground']">
+                          <span class="truncate">{{ auditStatusFilter === 'semua' ? 'Semua Status' : auditStatusFilter }}</span>
+                          <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent class="w-[180px] rounded-[14px] z-[110]" align="start" :side-offset="4">
+                        <DropdownMenuItem @select="auditStatusFilter = 'semua'">Semua Status</DropdownMenuItem>
+                        <DropdownMenuItem v-for="st in auditStatusOptions" :key="st" @select="auditStatusFilter = st">
+                          {{ st }}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" :class="['w-[240px] justify-between rounded-[14px] font-normal bg-white', (auditTimeFilter === 'semua') ? 'text-muted-foreground' : 'text-foreground']">
+                          <span class="truncate">
+                            {{ 
+                              auditTimeFilter === 'semua' ? 'Semua Kurun Waktu' : 
+                              auditTimeFilter === '7-hari' ? '7 hari terakhir' : 
+                              '30 hari terakhir' 
+                            }}
+                          </span>
+                          <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent class="w-[180px] rounded-[14px] z-[110]" align="start" :side-offset="4">
+                        <DropdownMenuItem @select="auditTimeFilter = 'semua'">Semua Kurun Waktu</DropdownMenuItem>
+                        <DropdownMenuItem @select="auditTimeFilter = '7-hari'">7 hari terakhir</DropdownMenuItem>
+                        <DropdownMenuItem @select="auditTimeFilter = '30-hari'">30 hari terakhir</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    <div class="flex items-center gap-3 text-sm text-muted-foreground ml-auto">
+                      <span>Baris per halaman</span>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal bg-white', (auditRowsPerPage === 'Semua baris' || !auditRowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
+                            {{ auditRowsPerPage === 'Semua baris' ? 'Semua baris' : `${auditRowsPerPage} baris` }}
+                            <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent class="w-[140px] rounded-[14px] z-[110]" align="start" :side-offset="4">
+                          <DropdownMenuItem @select="auditRowsPerPage = '5'">5 baris</DropdownMenuItem>
+                          <DropdownMenuItem @select="auditRowsPerPage = '10'">10 baris</DropdownMenuItem>
+                          <DropdownMenuItem @select="auditRowsPerPage = '25'">25 baris</DropdownMenuItem>
+                          <DropdownMenuItem @select="auditRowsPerPage = 'Semua baris'">Semua baris</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
 
-                  <div class="w-full sm:w-[150px]">
-                    <select 
-                      v-model="auditTimeFilter" 
-                      class="w-full h-10 px-3 border border-gray-300 rounded-lg bg-white text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer"
-                    >
-                      <option value="semua">Semua Kurun Waktu</option>
-                      <option value="7-hari">7 hari terakhir</option>
-                      <option value="30-hari">30 hari terakhir</option>
-                    </select>
+                  <!-- Log table via DataTable -->
+                  <div class="pb-4">
+                    <DataTable 
+                      :columns="auditColumns" 
+                      :data="filteredLifecycles" 
+                      :filter-value="auditSearch"
+                      :page-size="computedAuditPageSize"
+                      :show-selection-count="false"
+                    />
                   </div>
                 </div>
 
-                <div class="flex items-center gap-2 w-full sm:w-auto justify-end text-gray-500">
-                  <span>Baris per halaman:</span>
-                  <select class="border border-gray-300 rounded-lg h-10 px-3 bg-white text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer w-[120px]">
-                    <option value="semua">Semua baris</option>
-                  </select>
-                </div>
               </div>
 
-              <!-- Log table -->
-              <div class="border border-gray-200 rounded-xl overflow-x-auto shadow-sm">
-                <table class="w-full text-xs text-left border-collapse">
-                  <thead>
-                    <tr class="bg-gray-50 border-b border-gray-200 text-gray-700 font-bold uppercase tracking-wider text-[10px]">
-                      <th class="py-3 px-4 w-40">Waktu ↑↓</th>
-                      <th class="py-3 px-4 w-36">Aksi / Status ↑↓</th>
-                      <th class="py-3 px-4 w-40">Aktor ↑↓</th>
-                      <th class="py-3 px-4 w-28 text-center">Durasi (hari) ↑↓</th>
-                      <th class="py-3 px-4">Catatan ↑↓</th>
-                    </tr>
-                  </thead>
-                  <tbody class="divide-y divide-gray-150">
-                    <tr 
-                      v-for="(lc, idx) in paginatedLifecycles" 
-                      :key="idx"
-                      class="hover:bg-gray-50/50 transition-colors"
-                    >
-                      <td class="py-3 px-4 font-medium text-gray-900">{{ lc.waktu }}</td>
-                      <td class="py-3 px-4 text-gray-900 font-medium">{{ lc.aksi_status }}</td>
-                      <td class="py-3 px-4 text-gray-900">{{ lc.aktor }}</td>
-                      <td class="py-3 px-4 text-center text-gray-900">{{ lc.durasi }}</td>
-                      <td class="py-3 px-4 text-gray-700 max-w-sm truncate">{{ lc.catatan }}</td>
-                    </tr>
-                    
-                    <tr v-if="paginatedLifecycles.length === 0">
-                      <td colspan="5" class="py-6 text-center text-gray-500 italic">
-                        Tidak ada log jejak audit.
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+              <!-- Bottom Footer Buttons (Right Aligned group) -->
+              <div class="py-3 px-4 flex items-center justify-end gap-3 bg-muted/10 shrink-0">
+                <!-- Purple Memo Button -->
+                <button 
+                  @click="openMemoFile(activeApproval.memo_path)"
+                  class="bg-[#6366F1] hover:bg-[#5850EC] text-white text-sm font-bold px-5 py-2.5 rounded-xl inline-flex items-center gap-2 transition-colors cursor-pointer shadow-sm"
+                >
+                  <FileText class="w-4 h-4" />
+                  Buka Memo / Berita Acara
+                </button>
 
-              <!-- Mini pagination inside Jejak Audit tab -->
-              <div class="mt-4 flex items-center justify-end text-xs text-gray-500 px-1">
-                <div class="flex items-center gap-1">
-                  <button class="h-8 px-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 text-xs disabled:opacity-50" disabled>&lt; Sebelumnya</button>
-                  <button class="w-8 h-8 border border-indigo-600 bg-indigo-50 text-indigo-600 font-bold rounded-lg text-xs">1</button>
-                  <button class="h-8 px-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 text-xs disabled:opacity-50" disabled>Selanjutnya &gt;</button>
-                </div>
+                <!-- Green Approve Button -->
+                <button 
+                  @click="openConfirmModal('approved', false)"
+                  class="bg-[#2ECC71] hover:bg-[#27AE60] text-white text-sm font-bold px-5 py-2.5 rounded-xl inline-flex items-center gap-2 transition-colors cursor-pointer shadow-sm"
+                >
+                  <ThumbsUp class="w-4 h-4" />
+                  Approve
+                </button>
+
+                <!-- Red Reject Button -->
+                <button 
+                  @click="openConfirmModal('rejected', false)"
+                  class="bg-[#E74C3C] hover:bg-[#C0392B] text-white text-sm font-bold px-5 py-2.5 rounded-xl inline-flex items-center gap-2 transition-colors cursor-pointer shadow-sm"
+                >
+                  <Ban class="w-4 h-4" />
+                  Tolak
+                </button>
+
+                <!-- White Kembali Button -->
+                <button 
+                  @click="closeDetailPopup"
+                  class="bg-background border border-input hover:bg-muted text-foreground text-sm font-bold px-5 py-2.5 rounded-xl transition-colors cursor-pointer shadow-sm"
+                >
+                  Kembali
+                </button>
               </div>
             </div>
-
-          </div>
-
-          <!-- Bottom Footer Buttons (Right Aligned group) -->
-          <div class="p-5 flex justify-end gap-3 bg-white shrink-0">
-            <!-- Purple Memo Button -->
-            <button 
-              @click="openMemoFile(activeApproval.memo_path, activeApproval.memo_name)"
-              class="bg-[#6366F1] hover:bg-[#5850EC] text-white font-bold text-xs h-10 px-5 rounded-full inline-flex items-center gap-2 transition-colors cursor-pointer shadow-sm"
-            >
-              <FileText class="w-4 h-4" />
-              Buka Memo / Berita Acara
-            </button>
-
-            <!-- Green Approve Button -->
-            <button 
-              @click="openConfirmModal('approved', false)"
-              class="bg-[#2ECC71] hover:bg-[#27AE60] text-white font-bold text-xs h-10 px-6 rounded-full inline-flex items-center gap-2 transition-colors cursor-pointer shadow-sm"
-            >
-              <ThumbsUp class="w-4 h-4" />
-              Approve
-            </button>
-
-            <!-- Red Reject Button -->
-            <button 
-              @click="openConfirmModal('rejected', false)"
-              class="bg-[#E74C3C] hover:bg-[#C0392B] text-white font-bold text-xs h-10 px-6 rounded-full inline-flex items-center gap-2 transition-colors cursor-pointer shadow-sm"
-            >
-              <Ban class="w-4 h-4" />
-              Tolak
-            </button>
-
-            <!-- White Kembali Button -->
-            <button 
-              @click="closeDetailPopup"
-              class="bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 font-bold text-xs h-10 px-6 rounded-full transition-colors cursor-pointer shadow-sm"
-            >
-              Kembali
-            </button>
-          </div>
+          </Transition>
         </div>
-      </div>
+      </Transition>
     </Teleport>
 
     <!-- ============================================================
          Confirmation Modal (Approve / Reject Action Dialog)
          ============================================================ -->
     <Teleport to="body">
-      <div 
-        v-if="isConfirmModalOpen" 
-        class="fixed inset-0 z-[10000] flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4"
-        @click="closeConfirmModal"
+      <Transition
+        enter-active-class="ease-out duration-200"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="ease-in duration-150"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
       >
         <div 
-          class="bg-white text-gray-900 rounded-xl shadow-2xl w-full max-w-xl flex flex-col overflow-hidden border border-gray-200 animate-in fade-in zoom-in-95 duration-200"
-          @click.stop
+          v-if="isConfirmModalOpen" 
+          class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+          @click="closeConfirmModal"
         >
-          <!-- Header (Always "Konfirmasi Approval" to match mockup) -->
-          <div class="flex items-center justify-between p-5 border-b border-gray-200 bg-white shrink-0">
-            <h3 class="text-base md:text-lg font-bold text-gray-900">
-              Konfirmasi Approval
-            </h3>
-            <button @click="closeConfirmModal" class="p-1.5 hover:bg-gray-100 rounded-full transition-colors cursor-pointer">
-              <X class="w-5 h-5 text-gray-500" />
-            </button>
-          </div>
-
-          <!-- Body content -->
-          <div class="overflow-y-auto max-h-[70vh] p-6 space-y-5">
-            <!-- Warning prompt message (Centered) -->
-            <div class="flex flex-col items-center justify-center text-center space-y-3 pt-2">
-              <!-- Warning icon indicator -->
-              <div 
-                class="w-14 h-14 rounded-full flex items-center justify-center"
-                :class="confirmActionType === 'approved' ? 'bg-[#EBFDF4] text-[#2ECC71]' : 'bg-red-50 text-[#E74C3C]'"
-              >
-                <AlertTriangle class="w-7 h-7" />
-              </div>
-              <p 
-                class="font-bold text-sm leading-normal max-w-md"
-                :class="confirmActionType === 'approved' ? 'text-[#2ECC71]' : 'text-[#E74C3C]'"
-              >
-                Apakah Anda yakin untuk {{ confirmActionType === 'approved' ? 'meng-approve' : 'menolak' }} {{ confirmAssets.length }} perubahan aset yang Anda pilih?
-              </p>
-            </div>
-
-            <!-- Vertical Key-Value Table (matches mockup 4 & 5) -->
-            <div v-if="confirmAssets.length === 1" class="border border-gray-200 rounded-xl bg-gray-50 divide-y divide-gray-200/60 text-xs px-5 py-1">
-              <div class="py-2.5 flex justify-between items-center">
-                <span class="text-gray-500 font-medium">Kode Aset</span>
-                <span class="text-gray-900 font-semibold font-mono">{{ confirmAssets[0].asset_code }}</span>
-              </div>
-              <div class="py-2.5 flex justify-between items-center">
-                <span class="text-gray-500 font-medium">Status</span>
-                <span class="text-gray-900 font-semibold">{{ confirmAssets[0].status_label }}</span>
-              </div>
-              <div class="py-2.5 flex justify-between items-center">
-                <span class="text-gray-500 font-medium">Kode LOT</span>
-                <span class="text-gray-900 font-semibold font-mono">{{ confirmAssets[0].unit_details.lot_code }}</span>
-              </div>
-              <div class="py-2.5 flex justify-between items-center">
-                <span class="text-gray-500 font-medium">Kategori</span>
-                <span class="text-gray-900 font-semibold">{{ confirmAssets[0].category }}</span>
-              </div>
-              <div class="py-2.5 flex justify-between items-center">
-                <span class="text-gray-500 font-medium">Subkategori</span>
-                <span class="text-gray-900 font-semibold">{{ confirmAssets[0].subcategory }}</span>
-              </div>
-              <div class="py-2.5 flex justify-between items-center">
-                <span class="text-gray-500 font-medium">Merek</span>
-                <span class="text-gray-900 font-semibold">{{ confirmAssets[0].brand }}</span>
-              </div>
-              <div class="py-2.5 flex justify-between items-center">
-                <span class="text-gray-500 font-medium">Spesifikasi</span>
-                <span class="text-gray-900 font-semibold">{{ confirmAssets[0].specification }}</span>
-              </div>
-              <div class="py-2.5 flex justify-between items-center">
-                <span class="text-gray-500 font-medium">Lokasi</span>
-                <span class="text-gray-900 font-semibold">
-                  {{ confirmAssets[0].unit_details.location }}
-                  <span v-if="confirmAssets[0].unit_details.floor">, {{ confirmAssets[0].unit_details.floor }}</span>
-                  <span v-if="confirmAssets[0].unit_details.room">, {{ confirmAssets[0].unit_details.room }}</span>
-                </span>
-              </div>
-              <div class="py-2.5 flex justify-between items-center">
-                <span class="text-gray-500 font-medium">Nomor PO</span>
-                <span class="text-gray-900 font-semibold font-mono">{{ confirmAssets[0].unit_details.po_number || '-' }}</span>
-              </div>
-              <div class="py-2.5 flex justify-between items-center">
-                <span class="text-gray-500 font-medium">Tanggal masuk</span>
-                <span class="text-gray-900 font-semibold">{{ confirmAssets[0].unit_details.date_of_receipt }}</span>
-              </div>
-              <div class="py-2.5 flex justify-between items-center">
-                <span class="text-gray-500 font-medium">Harga</span>
-                <span class="text-gray-900 font-semibold">Rp{{ confirmAssets[0].unit_details.price }}</span>
-              </div>
-              <div class="py-2.5 flex justify-between items-center">
-                <span class="text-gray-500 font-medium">Organizer</span>
-                <span class="text-gray-900 font-semibold">{{ confirmAssets[0].unit_details.organizer }}</span>
-              </div>
-              <div class="py-2.5 flex justify-between items-center">
-                <span class="text-gray-500 font-medium">Vendor</span>
-                <span class="text-gray-900 font-semibold">{{ confirmAssets[0].unit_details.vendor }}</span>
-              </div>
-              <div class="py-2.5 flex justify-between items-center">
-                <span class="text-gray-500 font-medium">Pembaruan Terakhir</span>
-                <span class="text-gray-900 font-semibold font-mono">{{ confirmAssets[0].requested_at }}</span>
-              </div>
-            </div>
-
-            <!-- If Bulk: Display simple stack of items -->
-            <div v-else class="space-y-4 max-h-[300px] overflow-y-auto">
-              <div 
-                v-for="asset in confirmAssets" 
-                :key="asset.id"
-                class="border border-gray-200 rounded-xl p-4 space-y-2 bg-gray-50/30 text-xs"
-              >
-                <div class="flex justify-between font-bold text-gray-900">
-                  <span>{{ asset.asset_code }}</span>
-                  <span class="text-[#E74C3C]">{{ asset.status_label }}</span>
-                </div>
-                <div class="text-gray-500 grid grid-cols-2 gap-1.5">
-                  <div><strong>Merek:</strong> {{ asset.brand }}</div>
-                  <div><strong>Kategori:</strong> {{ asset.category }}</div>
-                  <div class="col-span-2"><strong>Spesifikasi:</strong> {{ asset.specification }}</div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Catatan text area -->
-            <div class="space-y-1.5">
-              <label class="text-xs font-bold text-gray-500 uppercase tracking-wider block">Catatan / Alasan (Opsional)</label>
-              <textarea
-                v-model="confirmNote"
-                placeholder="Masukkan catatan persetujuan atau alasan penolakan..."
-                rows="3"
-                class="w-full text-xs border border-gray-300 rounded-lg bg-white p-3 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
-              ></textarea>
-            </div>
-          </div>
-
-          <!-- Footer Action Buttons -->
-          <div class="p-5 flex justify-end gap-3 bg-white shrink-0">
-            <button 
-              @click="closeConfirmModal"
-              class="bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 font-bold text-xs h-10 px-6 rounded-full transition-colors cursor-pointer shadow-sm"
+          <Transition
+            enter-active-class="ease-out duration-200"
+            enter-from-class="opacity-0 scale-95"
+            enter-to-class="opacity-100 scale-100"
+            leave-active-class="ease-in duration-150"
+            leave-from-class="opacity-100 scale-100"
+            leave-to-class="opacity-0 scale-95"
+          >
+            <div 
+              v-if="isConfirmModalOpen" 
+              class="bg-card text-foreground rounded-[14px] shadow-2xl w-full max-w-xl flex flex-col overflow-hidden border border-border"
+              @click.stop
             >
-              Batal
-            </button>
-            <button 
-              @click="handleConfirmSubmit"
-              class="text-white font-bold text-xs h-10 px-6 rounded-full shadow-sm transition-colors cursor-pointer"
-              :class="confirmActionType === 'approved' ? 'bg-[#2ECC71] hover:bg-[#27AE60]' : 'bg-[#E74C3C] hover:bg-[#C0392B]'"
-            >
-              {{ confirmActionType === 'approved' ? 'Konfirmasi Approval' : 'Konfirmasi Penolakan' }}
-            </button>
-          </div>
+              <!-- Header -->
+              <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
+                <h3 class="text-lg font-bold text-foreground">Konfirmasi Approval</h3>
+                <button @click="closeConfirmModal" class="p-2 hover:bg-muted rounded-full transition-colors">
+                  <X class="w-5 h-5 text-muted-foreground" />
+                </button>
+              </div>
+
+              <!-- Body content -->
+              <div class="overflow-y-auto max-h-[70vh] p-6 space-y-5">
+                <!-- Warning prompt message (Centered) -->
+                <div class="flex flex-col items-center justify-center text-center space-y-3 pt-2">
+                  <!-- Warning icon indicator -->
+                  <div 
+                    class="w-14 h-14 rounded-full flex items-center justify-center"
+                    :class="confirmActionType === 'approved' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-destructive/10 text-destructive'"
+                  >
+                    <AlertTriangle class="w-7 h-7" />
+                  </div>
+                  <p 
+                    class="font-bold text-sm leading-normal max-w-md"
+                    :class="confirmActionType === 'approved' ? 'text-emerald-500' : 'text-destructive'"
+                  >
+                    Apakah Anda yakin untuk {{ confirmActionType === 'approved' ? 'meng-approve' : 'menolak' }} {{ confirmAssets.length }} perubahan aset yang Anda pilih?
+                  </p>
+                </div>
+
+                <!-- Vertical Key-Value Table -->
+                <div v-if="confirmAssets.length === 1" class="border border-border rounded-xl bg-muted/20 divide-y divide-border text-xs px-5 py-1">
+                  <div class="py-2.5 flex justify-between items-center">
+                    <span class="text-muted-foreground font-medium">Kode Aset</span>
+                    <span class="text-foreground font-semibold font-mono">{{ confirmAssets[0].asset_code }}</span>
+                  </div>
+                  <div class="py-2.5 flex justify-between items-center">
+                    <span class="text-muted-foreground font-medium">Status</span>
+                    <span class="text-foreground font-semibold">{{ confirmAssets[0].status_label }}</span>
+                  </div>
+                  <div class="py-2.5 flex justify-between items-center">
+                    <span class="text-muted-foreground font-medium">Kode LOT</span>
+                    <span class="text-foreground font-semibold font-mono">{{ confirmAssets[0].unit_details.lot_code }}</span>
+                  </div>
+                  <div class="py-2.5 flex justify-between items-center">
+                    <span class="text-muted-foreground font-medium">Kategori</span>
+                    <span class="text-foreground font-semibold">{{ confirmAssets[0].category }}</span>
+                  </div>
+                  <div class="py-2.5 flex justify-between items-center">
+                    <span class="text-muted-foreground font-medium">Subkategori</span>
+                    <span class="text-foreground font-semibold">{{ confirmAssets[0].subcategory }}</span>
+                  </div>
+                  <div class="py-2.5 flex justify-between items-center">
+                    <span class="text-muted-foreground font-medium">Merek</span>
+                    <span class="text-foreground font-semibold">{{ confirmAssets[0].brand }}</span>
+                  </div>
+                  <div class="py-2.5 flex justify-between items-center">
+                    <span class="text-muted-foreground font-medium">Spesifikasi</span>
+                    <span class="text-foreground font-semibold">{{ confirmAssets[0].specification }}</span>
+                  </div>
+                  <div class="py-2.5 flex justify-between items-center">
+                    <span class="text-muted-foreground font-medium">Lokasi</span>
+                    <span class="text-foreground font-semibold">
+                      {{ confirmAssets[0].unit_details.location }}
+                      <span v-if="confirmAssets[0].unit_details.floor">, {{ confirmAssets[0].unit_details.floor }}</span>
+                      <span v-if="confirmAssets[0].unit_details.room">, {{ confirmAssets[0].unit_details.room }}</span>
+                    </span>
+                  </div>
+                  <div class="py-2.5 flex justify-between items-center">
+                    <span class="text-muted-foreground font-medium">Nomor PO</span>
+                    <span class="text-foreground font-semibold font-mono">{{ confirmAssets[0].unit_details.po_number || '-' }}</span>
+                  </div>
+                  <div class="py-2.5 flex justify-between items-center">
+                    <span class="text-muted-foreground font-medium">Tanggal masuk</span>
+                    <span class="text-foreground font-semibold">{{ confirmAssets[0].unit_details.date_of_receipt }}</span>
+                  </div>
+                  <div class="py-2.5 flex justify-between items-center">
+                    <span class="text-muted-foreground font-medium">Harga</span>
+                    <span class="text-foreground font-semibold">Rp{{ confirmAssets[0].unit_details.price }}</span>
+                  </div>
+                  <div class="py-2.5 flex justify-between items-center">
+                    <span class="text-muted-foreground font-medium">Organizer</span>
+                    <span class="text-foreground font-semibold">{{ confirmAssets[0].unit_details.organizer }}</span>
+                  </div>
+                  <div class="py-2.5 flex justify-between items-center">
+                    <span class="text-muted-foreground font-medium">Vendor</span>
+                    <span class="text-foreground font-semibold">{{ confirmAssets[0].unit_details.vendor }}</span>
+                  </div>
+                  <div class="py-2.5 flex justify-between items-center">
+                    <span class="text-muted-foreground font-medium">Pembaruan Terakhir</span>
+                    <span class="text-foreground font-semibold font-mono">{{ confirmAssets[0].requested_at }}</span>
+                  </div>
+                </div>
+
+                <!-- If Bulk: Display simple stack of items -->
+                <div v-else class="space-y-4 max-h-[300px] overflow-y-auto">
+                  <div 
+                    v-for="asset in confirmAssets" 
+                    :key="asset.id"
+                    class="border border-border rounded-xl p-4 space-y-2 bg-muted/10 text-xs"
+                  >
+                    <div class="flex justify-between font-bold text-foreground">
+                      <span>{{ asset.asset_code }}</span>
+                      <span class="text-[#E74C3C]">{{ asset.status_label }}</span>
+                    </div>
+                    <div class="text-muted-foreground grid grid-cols-2 gap-1.5">
+                      <div><strong>Merek:</strong> {{ asset.brand }}</div>
+                      <div><strong>Kategori:</strong> {{ asset.category }}</div>
+                      <div class="col-span-2"><strong>Spesifikasi:</strong> {{ asset.specification }}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Catatan text area -->
+                <div class="space-y-1.5">
+                  <label class="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Catatan / Alasan (Opsional)</label>
+                  <textarea
+                    v-model="confirmNote"
+                    placeholder="Masukkan catatan persetujuan atau alasan penolakan..."
+                    rows="3"
+                    class="w-full text-xs border border-input rounded-lg bg-background text-foreground p-3 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary shadow-sm"
+                  ></textarea>
+                </div>
+              </div>
+
+              <!-- Footer Action Buttons -->
+              <div class="p-5 flex justify-end gap-3 bg-card border-t border-border shrink-0">
+                <button 
+                  @click="closeConfirmModal"
+                  class="bg-background hover:bg-muted border border-input text-foreground font-bold text-xs h-10 px-6 rounded-full transition-colors cursor-pointer shadow-sm"
+                >
+                  Batal
+                </button>
+                <button 
+                  @click="handleConfirmSubmit"
+                  class="text-white font-bold text-xs h-10 px-6 rounded-full shadow-sm transition-colors cursor-pointer"
+                  :class="confirmActionType === 'approved' ? 'bg-[#2ECC71] hover:bg-[#27AE60]' : 'bg-[#E74C3C] hover:bg-[#C0392B]'"
+                >
+                  {{ confirmActionType === 'approved' ? 'Konfirmasi Approval' : 'Konfirmasi Penolakan' }}
+                </button>
+              </div>
+            </div>
+          </Transition>
         </div>
-      </div>
+      </Transition>
     </Teleport>
 
   </AppLayout>

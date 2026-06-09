@@ -71,7 +71,7 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
             Route::post('units/bulk-update', [\App\Http\Controllers\Smart\Admin\ManajemenStok\BulkUnitController::class, 'update'])->name('units.bulk-update');
             Route::post('units/bulk', [\App\Http\Controllers\Smart\Admin\ManajemenStok\BulkUnitController::class, 'store'])->name('units.bulk-store');
             Route::resource('units', \App\Http\Controllers\Smart\Admin\ManajemenStok\UnitController::class)->only(['store', 'update', 'destroy']);
-            Route::resource('unit-status-approvals', \App\Http\Controllers\Smart\Admin\ManajemenStok\UnitStatusApprovalController::class)->only(['index', 'store', 'show', 'update', 'destroy']);
+            Route::resource('unit-status-approvals', \App\Http\Controllers\MultiRoles\UnitStatusApproval\AdminUnitStatusApprovalController::class)->only(['index', 'store', 'show', 'update', 'destroy']);
         });
 
         Route::get('/inventory/{id}', [ManajemenStokController::class, 'show'])->name('inventory.show');
@@ -99,9 +99,8 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
         Route::get('/approved', [App\Http\Controllers\Smart\Manager\ApprovalController::class, 'approvedList'])->name('approved');
 
         // Asset Status Approval Routes
-        Route::get('/approve-status', [App\Http\Controllers\Smart\Manager\AssetStatusApprovalController::class, 'index'])->name('approve-status');
-        Route::post('/approve-status/action', [App\Http\Controllers\Smart\Manager\AssetStatusApprovalController::class, 'action'])->name('approve-status.action');
-        Route::get('/approved-status', [App\Http\Controllers\Smart\Manager\AssetStatusApprovalController::class, 'approvedList'])->name('approved-status');
+        Route::get('/approve-status', [\App\Http\Controllers\MultiRoles\UnitStatusApproval\ManagerUnitStatusApprovalController::class, 'index'])->name('approve-status');
+        Route::post('/approve-status/bulk', [\App\Http\Controllers\MultiRoles\UnitStatusApproval\ManagerBulkUnitStatusApprovalController::class, 'store'])->name('approve-status.bulk-store');
     });
 
     // Manager and User routes
