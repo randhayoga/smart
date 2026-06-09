@@ -113,12 +113,12 @@ class BulkUnitController extends Controller
         $validated = $request->validate([
             'ids' => 'required|array',
             'ids.*' => 'exists:units,id',
-            'status' => 'required|string',
-            'condition' => 'required|string',
-            'location_id' => 'required|string',
-            'floor_id' => 'required|string',
-            'room_id' => 'required|string',
-            'price' => 'nullable|string',
+            'status' => 'nullable|string',
+            'condition' => 'nullable|string',
+            'location_id' => 'nullable|exists:locations,id',
+            'floor_id' => 'nullable|exists:floors,id',
+            'room_id' => 'nullable|exists:rooms,id',
+            'price' => 'nullable|numeric|min:0',
             'use_lot_image' => 'nullable',
             'image_url' => 'nullable|image|max:1024',
         ]);
@@ -132,33 +132,30 @@ class BulkUnitController extends Controller
         $updateData = [];
 
         // 1. Status & Condition
-        if ($validated['status'] !== 'keep') {
-            $updateData['status'] = $validated['status'];
+        if ($request->filled('status')) {
+            $updateData['status'] = $request->input('status');
         }
-        if ($validated['condition'] !== 'keep') {
-            $updateData['condition'] = $validated['condition'];
+        if ($request->filled('condition')) {
+            $updateData['condition'] = $request->input('condition');
         }
 
         // 2. Location, Floor, Room
-        if ($validated['location_id'] !== 'keep') {
-            $updateData['location_id'] = $validated['location_id'] === 'null' ? null : $validated['location_id'];
-            
-            // If location is changing, floor/room must be cleared unless a specific new value is set
-            $updateData['floor_id'] = ($validated['floor_id'] !== 'keep' && $validated['floor_id'] !== 'null') ? $validated['floor_id'] : null;
-            $updateData['room_id'] = ($validated['room_id'] !== 'keep' && $validated['room_id'] !== 'null') ? $validated['room_id'] : null;
+        if ($request->filled('location_id')) {
+            $updateData['location_id'] = $request->input('location_id');
+            $updateData['floor_id'] = $request->input('floor_id');
+            $updateData['room_id'] = $request->input('room_id');
         } else {
-            // Location is kept, but maybe floor/room are changed specifically
-            if ($validated['floor_id'] !== 'keep') {
-                $updateData['floor_id'] = $validated['floor_id'] === 'null' ? null : $validated['floor_id'];
+            if ($request->has('floor_id')) {
+                $updateData['floor_id'] = $request->input('floor_id');
             }
-            if ($validated['room_id'] !== 'keep') {
-                $updateData['room_id'] = $validated['room_id'] === 'null' ? null : $validated['room_id'];
+            if ($request->has('room_id')) {
+                $updateData['room_id'] = $request->input('room_id');
             }
         }
 
         // 3. Price
-        if (isset($validated['price']) && $validated['price'] !== 'keep') {
-            $updateData['price'] = (float)$validated['price'];
+        if ($request->filled('price')) {
+            $updateData['price'] = (float)$request->input('price');
         }
 
         // 4. Image URL / Use LOT Image
@@ -203,7 +200,7 @@ class BulkUnitController extends Controller
 
         // 5. Handle approvals if status is changed to a status requiring approval
         $arrNeedApproval = ['rusak'];
-        if ($validated['status'] !== 'keep' && in_array($validated['status'], $arrNeedApproval)) {
+        if ($request->filled('status') && in_array($request->input('status'), $arrNeedApproval)) {
             foreach ($units as $unit) {
                 $existing = \App\Models\Inventory\UnitStatusApproval::where('unit_id', $unit->id)
                     ->where('decision', 'pending')
@@ -212,7 +209,7 @@ class BulkUnitController extends Controller
                     \App\Models\Inventory\UnitStatusApproval::create([
                         'unit_id' => $unit->id,
                         'requester_id' => $request->user()->id,
-                        'proposed_status' => $validated['status'],
+                        'proposed_status' => $request->input('status'),
                         'decision' => 'pending',
                         'note' => null,
                         'approver_id' => null,
