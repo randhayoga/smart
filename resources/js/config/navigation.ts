@@ -39,7 +39,7 @@ export interface NavSection {
 
 export const mainNavigation: NavSection[] = [
     {
-        title: 'Menu Utama',
+        title: 'MENU UTAMA',
         items: [
             {
                 title: 'Dashboard',
@@ -49,7 +49,7 @@ export const mainNavigation: NavSection[] = [
         ],
     },
     {
-        title: 'Inventory',
+        title: 'STOK',
         items: [
             {
                 title: 'Manajemen Stok',
@@ -60,7 +60,6 @@ export const mainNavigation: NavSection[] = [
                 title: 'Master Data',
                 href: '/smart/master',
                 icon: Database,
-                // badge: 'New',
             },
         ],
     },
@@ -95,7 +94,7 @@ export const mainNavigation: NavSection[] = [
         ],
     },
     {
-        title: 'Audit',
+        title: 'AUDIT',
         items: [
             {
                 title: 'Jejak Audit',
@@ -122,7 +121,7 @@ export const quickActions = [
 // Navigation for regular users (non-admin)
 export const userNavigation: NavSection[] = [
     {
-        title: 'Menu Utama',
+        title: 'MENU UTAMA',
         items: [
             {
                 title: 'Dashboard',
@@ -132,7 +131,7 @@ export const userNavigation: NavSection[] = [
         ],
     },
     {
-        title: 'Approval Permintaan',
+        title: 'APPROVAL',
         items: [
             {
                 title: 'Perlu Approval',
@@ -147,16 +146,16 @@ export const userNavigation: NavSection[] = [
         ],
     },
     {
-        title: 'Approval Status',
+        title: 'APPROVAL ASET',
         items: [
             {
-                title: 'Perlu Approval',
-                href: 'smart/approve-status',
-                icon: RotateCw,
+                title: 'Perlu Approve',
+                href: '/smart/approve-status',
+                icon: Eye,
             },
             {
-                title: 'Sudah Diproses',
-                href: 'smart/approved-status',
+                title: 'Sudah Approve',
+                href: '/smart/approved-status',
                 icon: CircleCheckBig,
             },
         ],

@@ -13,6 +13,7 @@ use App\Models\Request\RequestAdminConfirmation;
 use App\Models\Request\RequestStatusLog;
 use App\Models\Request\RequestUnitAssignment;
 use App\Models\Inventory\Unit;
+use App\Models\Inventory\Lot;
 
 class InboxController extends Controller
 {
@@ -31,7 +32,9 @@ class InboxController extends Controller
             ->get()
             ->map(function ($req) {
                 $amount = $req->items->sum('quantity_requested');
-                $type = $req->start_date ? 'Pinjam' : 'Habis Pakai';
+                // Barang dengan start_date di request_items = peminjaman (non-konsumable)
+                $hasLoanItem = $req->items->contains(fn($i) => $i->start_date !== null);
+                $type = $hasLoanItem ? 'Pinjam' : 'Habis Pakai';
                 return [
                     'id' => $req->id,
                     'number' => $req->request_number,
@@ -64,8 +67,10 @@ class InboxController extends Controller
 
         $durationDays = 0;
         $durationHours = 0;
-        if ($req->start_date && $req->end_date) {
-            $diff = $req->start_date->diff($req->end_date);
+        // start_date/end_date ada di request_items, ambil dari item pertama
+        $firstItem = $req->items->first();
+        if ($firstItem?->start_date && $firstItem?->end_date) {
+            $diff = $firstItem->start_date->diff($firstItem->end_date);
             $durationDays = $diff->days;
             $durationHours = $diff->h;
         }
@@ -73,11 +78,21 @@ class InboxController extends Controller
         $hasInsufficientStock = false;
         // Map items
         $items = $req->items->map(function ($item) use (&$hasInsufficientStock) {
-            // Count stock quantity of units in status 'tersedia'
-            $availableStock = Unit::whereHas('lot', function ($q) use ($item) {
-                $q->where('barang_id', $item->barang_id);
-            })->where('status', 'tersedia')
-              ->count();
+            $barangId = $item->barang_id;
+
+            // Cek apakah barang ini punya Unit (non-konsumable/aset)
+            // Konsumable (habis pakai) tidak punya Unit record, hanya Lot.current_quantity
+            $hasAnyUnit = Unit::whereHas('lot', fn($q) => $q->where('barang_id', $barangId))->exists();
+
+            if ($hasAnyUnit) {
+                // Non-konsumable: cek jumlah Unit status 'tersedia'
+                $availableStock = Unit::whereHas('lot', fn($q) => $q->where('barang_id', $barangId))
+                    ->where('status', 'tersedia')
+                    ->count();
+            } else {
+                // Konsumable: cek total current_quantity di semua Lot
+                $availableStock = Lot::where('barang_id', $barangId)->sum('current_quantity');
+            }
 
             if ($availableStock < $item->quantity_requested) {
                 $hasInsufficientStock = true;
@@ -117,12 +132,12 @@ class InboxController extends Controller
             'pemanfaatanDetail' => $req->utilization === 'corporate' 
                 ? ($req->department->name ?? '-') 
                 : ($req->project->name ?? '-'),
-            'durationStart' => $req->start_date ? $req->start_date->format('d-m-Y H:i') : null,
-            'durationEnd' => $req->end_date ? $req->end_date->format('d-m-Y H:i') : null,
+            'durationStart' => $firstItem?->start_date ? $firstItem->start_date->format('d-m-Y H:i') : null,
+            'durationEnd' => $firstItem?->end_date ? $firstItem->end_date->format('d-m-Y H:i') : null,
             'durationDays' => $durationDays,
             'durationHours' => $durationHours,
             'status' => $req->status,
-            'type' => $req->start_date ? 'peminjaman' : 'permintaan',
+            'type' => ($firstItem?->start_date !== null) ? 'peminjaman' : 'permintaan',
             'items' => $items,
             'approvedAt' => $approvedAt,
             'has_insufficient_stock' => $hasInsufficientStock,
@@ -194,34 +209,60 @@ class InboxController extends Controller
             }
 
             if ($req->status === 'approve') {
-                // Allocate physical units
+                // Allocate per item: bedakan konsumable vs non-konsumable
                 foreach ($req->items as $item) {
-                    $units = Unit::whereHas('lot', function ($q) use ($item) {
-                        $q->where('barang_id', $item->barang_id);
-                    })->where('status', 'tersedia')
-                      ->limit($item->quantity_requested)
-                      ->get();
+                    $barangId = $item->barang_id;
 
-                    if ($units->count() < $item->quantity_requested) {
-                        return redirect()->back()->withErrors(['error' => "Stok unit tidak mencukupi untuk barang ID: {$item->barang_id}"]);
-                    }
+                    // Cek apakah barang ini punya Unit record (non-konsumable/aset)
+                    $hasAnyUnit = Unit::whereHas('lot', fn($q) => $q->where('barang_id', $barangId))->exists();
 
-                    foreach ($units as $unit) {
-                        RequestUnitAssignment::create([
-                            'request_item_id' => $item->id,
-                            'unit_id' => $unit->id,
-                            'assigned_at' => now(),
-                        ]);
+                    if ($hasAnyUnit) {
+                        // ── NON-KONSUMABLE (Aset dengan serial number) ──
+                        $units = Unit::whereHas('lot', fn($q) => $q->where('barang_id', $barangId))
+                            ->where('status', 'tersedia')
+                            ->limit($item->quantity_requested)
+                            ->get();
 
-                        // Reserve unit status
-                        $isBorrow = (bool) $req->start_date;
-                        $status = 'dipakai';
-                        if ($isBorrow && !$unit->is_vehicle) {
-                            $status = 'dipinjam';
+                        if ($units->count() < $item->quantity_requested) {
+                            return redirect()->back()->withErrors(['error' => "Stok unit tidak mencukupi untuk barang ID: {$barangId}"]);
                         }
-                        $unit->update([
-                            'status' => $status,
-                        ]);
+
+                        foreach ($units as $unit) {
+                            RequestUnitAssignment::create([
+                                'request_item_id' => $item->id,
+                                'unit_id' => $unit->id,
+                                'assigned_at' => now(),
+                            ]);
+
+                            // start_date ada di request_items (bukan requests)
+                            $isBorrow = (bool) $item->start_date;
+                            $unitStatus = 'dipakai';
+                            if ($isBorrow && !$unit->is_vehicle) {
+                                $unitStatus = 'dipinjam';
+                            }
+                            $unit->update(['status' => $unitStatus]);
+                        }
+                    } else {
+                        // ── KONSUMABLE (Habis pakai, stok di Lot.current_quantity) ──
+                        $totalAvailable = Lot::where('barang_id', $barangId)->sum('current_quantity');
+
+                        if ($totalAvailable < $item->quantity_requested) {
+                            return redirect()->back()->withErrors(['error' => "Stok tidak mencukupi untuk barang ID: {$barangId}"]);
+                        }
+
+                        // Kurangi stok FIFO (lot terlama duluan)
+                        $remaining = $item->quantity_requested;
+                        $lots = Lot::where('barang_id', $barangId)
+                            ->where('current_quantity', '>', 0)
+                            ->orderBy('date_of_receipt')
+                            ->get();
+
+                        foreach ($lots as $lot) {
+                            if ($remaining <= 0) break;
+                            $deduct = min($lot->current_quantity, $remaining);
+                            $lot->decrement('current_quantity', $deduct);
+                            $remaining -= $deduct;
+                        }
                     }
                 }
 
