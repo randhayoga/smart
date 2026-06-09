@@ -51,6 +51,10 @@ class UnitController extends Controller
         $proposedStatus = $validated['status'];
         $needApproval = in_array($proposedStatus, $arrNeedApproval);
 
+        if ($needApproval) {
+            $validated['status'] = 'tersedia';
+        }
+
         // Single creation logic
         if ($request->boolean('use_lot_image')) {
             if ($lot->image_url && Storage::disk('public')->exists($lot->image_url)) {
@@ -159,6 +163,10 @@ class UnitController extends Controller
         }
 
         unset($validated['use_lot_image']);
+
+        if ($needApproval) {
+            unset($validated['status']);
+        }
 
         $unit->update($validated);
 

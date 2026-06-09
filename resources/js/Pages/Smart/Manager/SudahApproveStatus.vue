@@ -59,7 +59,6 @@ interface ApprovalItem {
   decided_at: string | null;
   approver_name: string | null;
   memo_path: string | null;
-  memo_name: string | null;
   unit_details: UnitDetails;
 }
 
@@ -178,7 +177,7 @@ const paginatedApprovals = computed(() => {
 });
 
 // Memo document viewer
-const openMemoFile = (path: string | null, name: string | null) => {
+const openMemoFile = (path: string | null) => {
   if (!path) {
     toast.error('File berita acara / memo tidak ditemukan.');
     return;
@@ -408,7 +407,7 @@ const auditStatusOptions = computed(() => {
               <div class="flex items-center justify-center gap-2">
                 <!-- Purple Circle Action Button -->
                 <button 
-                  @click="openMemoFile(app.memo_path, app.memo_name)"
+                  @click="openMemoFile(app.memo_path)"
                   class="w-8 h-8 rounded-full bg-[#6366F1] hover:bg-[#5850EC] text-white flex items-center justify-center transition-colors shadow-sm cursor-pointer"
                   title="Buka Berita Acara / Memo"
                 >
@@ -672,7 +671,7 @@ const auditStatusOptions = computed(() => {
           <div class="p-5 border-t border-gray-200 flex justify-end gap-3 bg-gray-50 shrink-0">
             <!-- Purple Memo Button -->
             <button 
-              @click="openMemoFile(activeApproval.memo_path, activeApproval.memo_name)"
+              @click="openMemoFile(activeApproval.memo_path)"
               class="bg-[#6366F1] hover:bg-[#5850EC] text-white font-medium text-xs px-5 py-2.5 rounded-lg inline-flex items-center gap-2 transition-colors cursor-pointer shadow-sm"
             >
               <FileText class="w-4 h-4" />

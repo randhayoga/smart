@@ -1,16 +1,16 @@
 <?php
 
-namespace App\Http\Controllers\Smart\Admin\ManajemenStok;
+namespace App\Http\Controllers\MultiRoles\UnitStatusApproval;
 
 use App\Http\Controllers\Controller;
 use App\Models\Inventory\Unit;
 use App\Models\Inventory\UnitStatusApproval;
-use App\Models\Inventory\UnitLifecycle;
+use App\Http\Resources\AdminUnitStatusApprovalResource;
+use App\Actions\Inventory\ProcessUnitStatusApproval;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
-class UnitStatusApprovalController extends Controller
+class AdminUnitStatusApprovalController extends Controller
 {
     /**
      * Display a listing of the unit status approval requests.
@@ -23,29 +23,15 @@ class UnitStatusApprovalController extends Controller
             'approver'
         ])
         ->latest()
-        ->get()
-        ->map(function ($approval) {
-            return [
-                'id' => $approval->id,
-                'unit_id' => $approval->unit_id,
-                'unit_number' => $approval->unit->number ?? '-',
-                'proposed_status' => $approval->proposed_status,
-                'decision' => $approval->decision,
-                'note' => $approval->note,
-                'requester_name' => $approval->requester->name ?? '-',
-                'approver_name' => $approval->approver->name ?? '-',
-                'requested_at' => $approval->requested_at ? $approval->requested_at->format('d/m/Y H:i') : '-',
-                'decided_at' => $approval->decided_at ? $approval->decided_at->format('d/m/Y H:i') : '-',
-            ];
-        });
+        ->get();
 
         if ($request->wantsJson() && !$request->headers->has('X-Inertia')) {
-            return response()->json($approvals);
+            return response()->json(AdminUnitStatusApprovalResource::collection($approvals));
         }
 
         return Inertia::render('Smart/Admin/ManajemenStok/UnitStatusApprovalList', [
             'user' => $request->user(),
-            'approvals' => $approvals,
+            'approvals' => AdminUnitStatusApprovalResource::collection($approvals)->resolve(),
         ]);
     }
 
@@ -96,33 +82,20 @@ class UnitStatusApprovalController extends Controller
             'approver'
         ]);
 
-        $formatted = [
-            'id' => $unitStatusApproval->id,
-            'unit_id' => $unitStatusApproval->unit_id,
-            'unit_number' => $unitStatusApproval->unit->number ?? '-',
-            'proposed_status' => $unitStatusApproval->proposed_status,
-            'decision' => $unitStatusApproval->decision,
-            'note' => $unitStatusApproval->note,
-            'requester_name' => $unitStatusApproval->requester->name ?? '-',
-            'approver_name' => $unitStatusApproval->approver->name ?? '-',
-            'requested_at' => $unitStatusApproval->requested_at ? $unitStatusApproval->requested_at->format('d/m/Y H:i') : '-',
-            'decided_at' => $unitStatusApproval->decided_at ? $unitStatusApproval->decided_at->format('d/m/Y H:i') : '-',
-        ];
-
         if ($request->wantsJson() && !$request->headers->has('X-Inertia')) {
-            return response()->json($formatted);
+            return response()->json(new AdminUnitStatusApprovalResource($unitStatusApproval));
         }
 
         return Inertia::render('Smart/Admin/ManajemenStok/UnitStatusApprovalDetail', [
             'user' => $request->user(),
-            'approval' => $formatted,
+            'approval' => (new AdminUnitStatusApprovalResource($unitStatusApproval))->resolve(),
         ]);
     }
 
     /**
      * Update the specified unit status approval request (approve/reject).
      */
-    public function update(Request $request, UnitStatusApproval $unitStatusApproval)
+    public function update(Request $request, UnitStatusApproval $unitStatusApproval, ProcessUnitStatusApproval $processApproval)
     {
         if ($unitStatusApproval->decision !== 'pending') {
             return redirect()->back()->withErrors([
@@ -135,36 +108,12 @@ class UnitStatusApprovalController extends Controller
             'note' => 'required_if:decision,rejected|nullable|string',
         ]);
 
-        DB::transaction(function () use ($unitStatusApproval, $validated, $request) {
-            $unitStatusApproval->update([
-                'decision' => $validated['decision'],
-                'note' => $validated['note'] ?? $unitStatusApproval->note,
-                'approver_id' => $request->user()->id,
-                'decided_at' => now(),
-            ]);
-
-            if ($validated['decision'] === 'approved') {
-                $unit = $unitStatusApproval->unit;
-                $unit->update([
-                    'status' => $unitStatusApproval->proposed_status,
-                ]);
-
-                // End any active lifecycles
-                UnitLifecycle::where('unit_id', $unit->id)
-                    ->whereNull('end_date')
-                    ->update(['end_date' => now()]);
-
-                // Start new lifecycle record
-                UnitLifecycle::create([
-                    'unit_id' => $unit->id,
-                    'status' => $unitStatusApproval->proposed_status,
-                    'start_date' => now(),
-                    'requester_id' => $unitStatusApproval->requester_id,
-                    'approver_id' => $request->user()->id,
-                    'note' => $validated['note'] ?? $unitStatusApproval->note,
-                ]);
-            }
-        });
+        $processApproval->execute(
+            $unitStatusApproval,
+            $validated['decision'],
+            $validated['note'] ?? null,
+            $request->user()->id
+        );
 
         $message = $validated['decision'] === 'approved'
             ? 'Pengajuan perubahan status unit disetujui.'
