@@ -10,69 +10,76 @@ import {
   ArrowUpDown,
   AlertTriangle
 } from 'lucide-vue-next';
+import { toast } from 'vue-sonner';
 
-interface RequestItem {
-  id: number;
-  barang_id: number;
-  subcategory: string;
-  brand: string;
-  spec: string;
-  quantity: number;
-  stockQuantity?: number;
-  imageUrl?: string;
-  category: string;
+interface AuditTrail {
+  waktu: string;
+  aksi_status: string;
+  aktor: string;
+  durasi: string | number;
+  catatan: string;
 }
 
-interface RequestHistory {
+interface UnitDetails {
   id: number;
   number: string;
-  type: 'permintaan' | 'peminjaman';
-  requester: string;
-  pemanfaatan: 'corporate' | 'project';
-  pemanfaatanDetail: string;
-  durationStart?: string;
-  durationEnd?: string;
-  durationDays?: number;
-  durationHours?: number;
   status: string;
-  raw_status: string;
-  created_at: string;
-  items: RequestItem[];
-  approver: string | null;
-  approval_by: string | null;
-  approval_at: string | null;
-  lifecycles: Array<{
-    waktu: string;
-    aksi_status: string;
-    aktor: string;
-    durasi: string | number;
-    catatan: string;
-  }>;
+  condition: string;
+  price: string;
+  image_url: string | null;
+  vehicle_registration: string | null;
+  location: string;
+  floor: string | null;
+  room: string | null;
+  lot_code: string;
+  organizer: string;
+  date_of_receipt: string;
+  vendor: string;
+  po_number: string;
+  barang_code: string;
+  barang_spec: string;
+  barang_unit: string;
+  lifecycles: AuditTrail[];
+}
+
+interface ApprovalItem {
+  id: number;
+  unit_id: number;
+  asset_code: string;
+  category: string;
+  subcategory: string;
+  brand: string;
+  specification: string;
+  proposed_status: string;
+  status_label: string;
+  decision: string;
+  note: string | null;
+  requested_by: string;
+  requested_at: string;
+  decided_at: string | null;
+  approver_name: string | null;
+  memo_path: string | null;
+  memo_name: string | null;
+  unit_details: UnitDetails;
 }
 
 interface Props {
   user: any;
-  requests: RequestHistory[];
+  approvals: ApprovalItem[];
 }
 
 const props = defineProps<Props>();
-
-const requests = ref<RequestHistory[]>([...props.requests]);
-
-watch(() => props.requests, (newVal) => {
-  requests.value = [...newVal];
-}, { deep: true });
 
 // ─────────────────────────────────────────────
 // States & Filters
 // ─────────────────────────────────────────────
 const searchQuery = ref('');
-const typeFilter = ref('Semua tipe');
+const categoryFilter = ref('Semua kategori');
 const decisionFilter = ref('Semua keputusan');
 const rowsPerPage = ref('Semua baris');
 
 // Sorting
-const sortBy = ref('id');
+const sortBy = ref('decided_at');
 const sortDesc = ref(true);
 
 const toggleSort = (field: string) => {
@@ -84,53 +91,63 @@ const toggleSort = (field: string) => {
   }
 };
 
+// Filter options
+const categoryOptions = computed(() => {
+  const cats = new Set<string>();
+  props.approvals.forEach(app => {
+    if (app.category) cats.add(app.category);
+  });
+  return Array.from(cats);
+});
+
 // Filtered data
-const filteredRequests = computed(() => {
-  let list = [...requests.value];
+const filteredApprovals = computed(() => {
+  let list = [...props.approvals];
 
   if (searchQuery.value.trim() !== '') {
     const q = searchQuery.value.toLowerCase();
-    list = list.filter(req => 
-      req.number.toLowerCase().includes(q) ||
-      req.requester.toLowerCase().includes(q) ||
-      req.pemanfaatanDetail.toLowerCase().includes(q)
+    list = list.filter(app => 
+      app.asset_code.toLowerCase().includes(q) ||
+      app.brand.toLowerCase().includes(q) ||
+      app.specification.toLowerCase().includes(q) ||
+      app.subcategory.toLowerCase().includes(q)
     );
   }
 
-  if (typeFilter.value !== 'Semua tipe') {
-    const type = typeFilter.value === 'Peminjaman' ? 'peminjaman' : 'permintaan';
-    list = list.filter(req => req.type === type);
+  if (categoryFilter.value !== 'Semua kategori') {
+    list = list.filter(app => app.category === categoryFilter.value);
   }
 
   if (decisionFilter.value !== 'Semua keputusan') {
-    list = list.filter(req => {
-      if (decisionFilter.value === 'Disetujui') {
-        return req.raw_status !== 'reject' && req.raw_status !== 'cancel';
-      } else if (decisionFilter.value === 'Ditolak') {
-        return req.raw_status === 'reject';
-      } else if (decisionFilter.value === 'Dibatalkan') {
-        return req.raw_status === 'cancel';
-      }
-      return true;
-    });
+    const dec = decisionFilter.value === 'Disetujui' ? 'approved' : 'rejected';
+    list = list.filter(app => app.decision === dec);
   }
 
   list.sort((a, b) => {
-    let valA: any = a[sortBy.value as keyof RequestHistory] ?? '';
-    let valB: any = b[sortBy.value as keyof RequestHistory] ?? '';
+    let valA: any = a[sortBy.value as keyof ApprovalItem] ?? '';
+    let valB: any = b[sortBy.value as keyof ApprovalItem] ?? '';
 
-    if (sortBy.value === 'number') {
-      valA = a.number;
-      valB = b.number;
-    } else if (sortBy.value === 'requester') {
-      valA = a.requester;
-      valB = b.requester;
-    } else if (sortBy.value === 'pemanfaatan') {
-      valA = a.pemanfaatanDetail;
-      valB = b.pemanfaatanDetail;
-    } else if (sortBy.value === 'created_at') {
-      valA = a.created_at;
-      valB = b.created_at;
+    if (sortBy.value === 'asset_code') {
+      valA = a.asset_code;
+      valB = b.asset_code;
+    } else if (sortBy.value === 'category') {
+      valA = a.category;
+      valB = b.category;
+    } else if (sortBy.value === 'subcategory') {
+      valA = a.subcategory;
+      valB = b.subcategory;
+    } else if (sortBy.value === 'brand') {
+      valA = a.brand;
+      valB = b.brand;
+    } else if (sortBy.value === 'specification') {
+      valA = a.specification;
+      valB = b.specification;
+    } else if (sortBy.value === 'status') {
+      valA = a.status_label;
+      valB = b.status_label;
+    } else if (sortBy.value === 'decision') {
+      valA = a.decision;
+      valB = b.decision;
     }
 
     if (typeof valA === 'string') {
@@ -149,30 +166,39 @@ const currentPage = ref(1);
 const totalPages = computed(() => {
   if (rowsPerPage.value === 'Semua baris') return 1;
   const limit = parseInt(rowsPerPage.value, 10);
-  return Math.ceil(filteredRequests.value.length / limit) || 1;
+  return Math.ceil(filteredApprovals.value.length / limit) || 1;
 });
 
-const paginatedRequests = computed(() => {
-  const list = filteredRequests.value;
+const paginatedApprovals = computed(() => {
+  const list = filteredApprovals.value;
   if (rowsPerPage.value === 'Semua baris') return list;
   const limit = parseInt(rowsPerPage.value, 10);
   const start = (currentPage.value - 1) * limit;
   return list.slice(start, start + limit);
 });
 
+// Memo document viewer
+const openMemoFile = (path: string | null, name: string | null) => {
+  if (!path) {
+    toast.error('File berita acara / memo tidak ditemukan.');
+    return;
+  }
+  window.open('/storage/' + path, '_blank');
+};
+
 // ─────────────────────────────────────────────
-// Popup Detail Request States
+// Detail Popup States
 // ─────────────────────────────────────────────
 const isDetailPopupOpen = ref(false);
-const activeRequest = ref<RequestHistory | null>(null);
+const activeApproval = ref<ApprovalItem | null>(null);
 const detailActiveTab = ref('Detail');
 
 const auditSearch = ref('');
 const auditStatusFilter = ref('semua');
 const auditTimeFilter = ref('semua');
 
-const openDetailPopup = (req: RequestHistory) => {
-  activeRequest.value = req;
+const openDetailPopup = (approval: ApprovalItem) => {
+  activeApproval.value = approval;
   detailActiveTab.value = 'Detail';
   auditSearch.value = '';
   auditStatusFilter.value = 'semua';
@@ -183,13 +209,13 @@ const openDetailPopup = (req: RequestHistory) => {
 const closeDetailPopup = () => {
   isDetailPopupOpen.value = false;
   setTimeout(() => {
-    activeRequest.value = null;
+    activeApproval.value = null;
   }, 200);
 };
 
 const filteredLifecycles = computed(() => {
-  if (!activeRequest.value) return [];
-  let logs = [...activeRequest.value.lifecycles];
+  if (!activeApproval.value) return [];
+  let logs = [...activeApproval.value.unit_details.lifecycles];
 
   if (auditSearch.value.trim() !== '') {
     const q = auditSearch.value.toLowerCase();
@@ -224,34 +250,22 @@ const filteredLifecycles = computed(() => {
 });
 
 const auditStatusOptions = computed(() => {
-  if (!activeRequest.value) return [];
+  if (!activeApproval.value) return [];
   const stats = new Set<string>();
-  activeRequest.value.lifecycles.forEach(l => {
+  activeApproval.value.unit_details.lifecycles.forEach(l => {
     if (l.aksi_status) stats.add(l.aksi_status);
   });
   return Array.from(stats);
 });
-
-const getDecisionLabel = (rawStatus: string) => {
-  if (rawStatus === 'reject') return 'Ditolak';
-  if (rawStatus === 'cancel') return 'Dibatalkan';
-  return 'Disetujui';
-};
-
-const getDecisionBadgeClass = (rawStatus: string) => {
-  if (rawStatus === 'reject') return 'bg-red-100 text-red-700';
-  if (rawStatus === 'cancel') return 'bg-gray-100 text-gray-700';
-  return 'bg-green-100 text-green-700';
-};
 </script>
 
 <template>
-  <Head title="Sudah Diproses" />
+  <Head title="Approval Aset - Sudah Approve" />
 
-  <AppLayout title="Sudah Diproses">
+  <AppLayout title="Approval Aset">
     <!-- ── Title Halaman ── -->
     <div class="mb-6">
-      <h1 class="text-[28px] font-bold text-gray-900 leading-none">Approval</h1>
+      <h1 class="text-[28px] font-bold text-gray-900 leading-none">Approval Aset</h1>
       <p class="text-base font-semibold text-gray-900 mt-2">Sudah Diproses</p>
     </div>
 
@@ -264,7 +278,7 @@ const getDecisionBadgeClass = (rawStatus: string) => {
             <input
               v-model="searchQuery"
               type="text"
-              placeholder="Cari Permintaan..."
+              placeholder="Cari Aset..."
               class="w-full h-10 pl-4 pr-10 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
             />
             <div class="absolute right-3 top-3 text-gray-400">
@@ -272,15 +286,14 @@ const getDecisionBadgeClass = (rawStatus: string) => {
             </div>
           </div>
 
-          <!-- Tipe Filter -->
+          <!-- Kategori Filter -->
           <div class="w-full sm:w-[150px]">
             <select 
-              v-model="typeFilter" 
+              v-model="categoryFilter" 
               class="w-full h-10 px-3 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer shadow-sm"
             >
-              <option value="Semua tipe">Semua tipe</option>
-              <option value="Peminjaman">Peminjaman</option>
-              <option value="Permintaan">Permintaan</option>
+              <option value="Semua kategori">Semua kategori</option>
+              <option v-for="cat in categoryOptions" :key="cat" :value="cat">{{ cat }}</option>
             </select>
           </div>
 
@@ -293,7 +306,6 @@ const getDecisionBadgeClass = (rawStatus: string) => {
               <option value="Semua keputusan">Semua keputusan</option>
               <option value="Disetujui">Disetujui</option>
               <option value="Ditolak">Ditolak</option>
-              <option value="Dibatalkan">Dibatalkan</option>
             </select>
           </div>
         </div>
@@ -319,73 +331,94 @@ const getDecisionBadgeClass = (rawStatus: string) => {
       <table class="w-full text-xs text-left border-collapse">
         <thead>
           <tr class="bg-white border-b border-gray-200 text-gray-900 font-bold">
-            <th @click="toggleSort('number')" class="py-4 px-6 cursor-pointer select-none">
+            <th @click="toggleSort('asset_code')" class="py-4 px-6 cursor-pointer select-none">
               <div class="flex items-center gap-1">
-                No. Permintaan
+                Kode Aset
                 <span class="text-gray-400 font-normal">↑↓</span>
               </div>
             </th>
-            <th @click="toggleSort('type')" class="py-4 px-4 cursor-pointer select-none">
+            <th @click="toggleSort('category')" class="py-4 px-4 cursor-pointer select-none">
               <div class="flex items-center gap-1">
-                Tipe
+                Kategori
                 <span class="text-gray-400 font-normal">↑↓</span>
               </div>
             </th>
-            <th @click="toggleSort('requester')" class="py-4 px-4 cursor-pointer select-none">
+            <th @click="toggleSort('subcategory')" class="py-4 px-4 cursor-pointer select-none">
               <div class="flex items-center gap-1">
-                Pemohon
+                Subkategori
                 <span class="text-gray-400 font-normal">↑↓</span>
               </div>
             </th>
-            <th @click="toggleSort('pemanfaatan')" class="py-4 px-4 cursor-pointer select-none">
+            <th @click="toggleSort('brand')" class="py-4 px-4 cursor-pointer select-none">
               <div class="flex items-center gap-1">
-                Pemanfaatan
+                Merek
                 <span class="text-gray-400 font-normal">↑↓</span>
               </div>
             </th>
-            <th @click="toggleSort('created_at')" class="py-4 px-4 cursor-pointer select-none">
+            <th @click="toggleSort('specification')" class="py-4 px-4 cursor-pointer select-none">
               <div class="flex items-center gap-1">
-                Tanggal Masuk
+                Spesifikasi
                 <span class="text-gray-400 font-normal">↑↓</span>
               </div>
             </th>
-            <th class="py-4 px-4 text-center">Keputusan</th>
+            <th @click="toggleSort('status')" class="py-4 px-4 cursor-pointer select-none">
+              <div class="flex items-center gap-1">
+                Status Diajukan
+                <span class="text-gray-400 font-normal">↑↓</span>
+              </div>
+            </th>
+            <th @click="toggleSort('decision')" class="py-4 px-4 cursor-pointer select-none text-center">
+              <div class="flex items-center justify-center gap-1">
+                Keputusan
+                <span class="text-gray-400 font-normal">↑↓</span>
+              </div>
+            </th>
             <th class="py-4 px-4 text-center">Diproses Oleh</th>
             <th class="py-4 px-4 text-center w-28">Aksi</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-150">
           <tr 
-            v-for="req in paginatedRequests" 
-            :key="req.id"
+            v-for="app in paginatedApprovals" 
+            :key="app.id"
             class="hover:bg-gray-50/50 transition-colors"
           >
-            <td class="py-4 px-6 font-mono font-medium text-gray-900">{{ req.number }}</td>
-            <td class="py-4 px-4 text-gray-900 capitalize">{{ req.type }}</td>
-            <td class="py-4 px-4 text-gray-900">{{ req.requester }}</td>
-            <td class="py-4 px-4 text-gray-900">
-              <span class="font-semibold capitalize">{{ req.pemanfaatan }}:</span> {{ req.pemanfaatanDetail }}
-            </td>
-            <td class="py-4 px-4 text-gray-900">{{ req.created_at }}</td>
+            <td class="py-4 px-6 font-mono font-medium text-gray-900">{{ app.asset_code }}</td>
+            <td class="py-4 px-4 text-gray-900">{{ app.category }}</td>
+            <td class="py-4 px-4 text-gray-900">{{ app.subcategory }}</td>
+            <td class="py-4 px-4 text-gray-900">{{ app.brand }}</td>
+            <td class="py-4 px-4 text-gray-900 truncate max-w-xs">{{ app.specification }}</td>
+            <!-- Plain Text Status Column (matches mockup) -->
+            <td class="py-4 px-4 text-gray-900 font-medium">{{ app.status_label }}</td>
             <td class="py-4 px-4 text-center">
               <span 
                 class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold"
-                :class="getDecisionBadgeClass(req.raw_status)"
+                :class="[
+                  app.decision === 'approved' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                ]"
               >
-                {{ getDecisionLabel(req.raw_status) }}
+                {{ app.decision === 'approved' ? 'Disetujui' : 'Ditolak' }}
               </span>
             </td>
             <td class="py-4 px-4 text-center">
-              <div class="font-semibold text-gray-900">{{ req.approval_by || '-' }}</div>
-              <div class="text-[10px] text-gray-500 font-mono mt-0.5">{{ req.approval_at || '-' }}</div>
+              <div class="font-semibold text-gray-900">{{ app.approver_name || '-' }}</div>
+              <div class="text-[10px] text-gray-500 font-mono mt-0.5">{{ app.decided_at || '-' }}</div>
             </td>
             <td class="py-4 px-4">
               <div class="flex items-center justify-center gap-2">
+                <!-- Purple Circle Action Button -->
+                <button 
+                  @click="openMemoFile(app.memo_path, app.memo_name)"
+                  class="w-8 h-8 rounded-full bg-[#6366F1] hover:bg-[#5850EC] text-white flex items-center justify-center transition-colors shadow-sm cursor-pointer"
+                  title="Buka Berita Acara / Memo"
+                >
+                  <FileText class="w-4 h-4" />
+                </button>
                 <!-- Cyan Circle Action Button -->
                 <button 
-                  @click="openDetailPopup(req)"
+                  @click="openDetailPopup(app)"
                   class="w-8 h-8 rounded-full bg-[#00BCD4] hover:bg-[#06B6D4] text-white flex items-center justify-center transition-colors shadow-sm cursor-pointer"
-                  title="Detail Permintaan"
+                  title="Detail Aset"
                 >
                   <Eye class="w-4 h-4" />
                 </button>
@@ -394,10 +427,10 @@ const getDecisionBadgeClass = (rawStatus: string) => {
           </tr>
 
           <!-- Empty State -->
-          <tr v-if="filteredRequests.length === 0">
-            <td colspan="8" class="py-12 text-center text-gray-500">
+          <tr v-if="filteredApprovals.length === 0">
+            <td colspan="9" class="py-12 text-center text-gray-500">
               <AlertTriangle class="w-8 h-8 mx-auto mb-2 text-gray-400" />
-              <p class="font-medium">Tidak ada riwayat persetujuan permintaan.</p>
+              <p class="font-medium">Tidak ada riwayat persetujuan status aset.</p>
             </td>
           </tr>
         </tbody>
@@ -407,7 +440,7 @@ const getDecisionBadgeClass = (rawStatus: string) => {
     <!-- ── Pagination & Count Display ── -->
     <div class="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4 px-2 text-xs text-gray-500">
       <div>
-        Menampilkan {{ filteredRequests.length }} riwayat persetujuan
+        Menampilkan {{ filteredApprovals.length }} riwayat persetujuan
       </div>
       
       <!-- Page numbers navigation -->
@@ -445,11 +478,11 @@ const getDecisionBadgeClass = (rawStatus: string) => {
     </div>
 
     <!-- ============================================================
-         Detail Request Popup (Overlay Backdrop & Modal Card)
+         Detail Asset Popup (Overlay Backdrop & Modal Card)
          ============================================================ -->
     <Teleport to="body">
       <div 
-        v-if="isDetailPopupOpen && activeRequest" 
+        v-if="isDetailPopupOpen && activeApproval" 
         class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4"
         @click="closeDetailPopup"
       >
@@ -459,7 +492,7 @@ const getDecisionBadgeClass = (rawStatus: string) => {
         >
           <!-- Header -->
           <div class="flex items-center justify-between p-5 border-b border-gray-200 bg-white shrink-0">
-            <h3 class="text-base md:text-lg font-bold text-gray-900">Detail Permintaan</h3>
+            <h3 class="text-base md:text-lg font-bold text-gray-900">Detail Aset</h3>
             <button @click="closeDetailPopup" class="p-1.5 hover:bg-gray-100 rounded-full transition-colors cursor-pointer">
               <X class="w-5 h-5 text-gray-500" />
             </button>
@@ -469,22 +502,22 @@ const getDecisionBadgeClass = (rawStatus: string) => {
           <div class="px-6 py-3 border-b border-gray-200 flex items-center gap-2 shrink-0">
             <button 
               @click="detailActiveTab = 'Detail'"
-              class="px-4 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer shadow-sm"
+              class="px-4 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer"
               :class="[
                 detailActiveTab === 'Detail' 
                   ? 'border-indigo-600 text-indigo-600 bg-white' 
-                  : 'border-gray-300 text-gray-500 hover:text-gray-700 bg-white'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
               ]"
             >
               Detail
             </button>
             <button 
               @click="detailActiveTab = 'Jejak Audit'"
-              class="px-4 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer shadow-sm"
+              class="px-4 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer"
               :class="[
                 detailActiveTab === 'Jejak Audit' 
                   ? 'border-indigo-600 text-indigo-600 bg-white' 
-                  : 'border-gray-300 text-gray-500 hover:text-gray-700 bg-white'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
               ]"
             >
               Jejak Audit
@@ -495,70 +528,49 @@ const getDecisionBadgeClass = (rawStatus: string) => {
           <div class="overflow-y-auto max-h-[70vh] p-6">
             
             <!-- ── TAB 1: DETAIL ── -->
-            <div v-if="detailActiveTab === 'Detail'" class="space-y-6">
-              <div class="border border-gray-200 rounded-xl p-5 flex flex-col lg:flex-row gap-6 bg-white">
-                <!-- Info Permintaan -->
-                <div class="flex-grow grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3.5 text-xs text-gray-900 align-top">
-                  <div class="space-y-3.5">
-                    <p class="leading-normal font-bold">No. Permintaan: <span>{{ activeRequest.number }}</span></p>
-                    <p class="leading-normal"><strong class="font-bold">Pemohon:</strong> {{ activeRequest.requester }}</p>
-                    <p class="leading-normal"><strong class="font-bold">Tipe:</strong> <span class="capitalize">{{ activeRequest.type }}</span></p>
-                    <p class="leading-normal text-gray-600">
-                      <strong class="font-bold text-gray-900">Keputusan:</strong> 
-                      <span 
-                        class="ml-1.5 inline-flex items-center px-2 py-0.2 rounded-full font-bold border text-[10px]"
-                        :class="getDecisionBadgeClass(activeRequest.raw_status)"
-                      >
-                        {{ getDecisionLabel(activeRequest.raw_status) }}
-                      </span>
-                    </p>
-                  </div>
-
-                  <div class="space-y-3.5">
-                    <p class="leading-normal"><strong class="font-bold">Pemanfaatan:</strong> <span class="capitalize">{{ activeRequest.pemanfaatan }}</span> ({{ activeRequest.pemanfaatanDetail }})</p>
-                    <p class="leading-normal"><strong class="font-bold">Tanggal Pengajuan:</strong> {{ activeRequest.created_at }}</p>
-                    <p v-if="activeRequest.type === 'peminjaman' && activeRequest.durationStart" class="leading-normal font-medium">
-                      <strong class="font-bold">Durasi:</strong> {{ activeRequest.durationStart }} s.d {{ activeRequest.durationEnd }} ({{ activeRequest.durationDays }} hari)
-                    </p>
-                  </div>
+            <div v-if="detailActiveTab === 'Detail'" class="flex flex-col lg:flex-row gap-6">
+              <!-- Left Side Image -->
+              <div class="w-full lg:w-48 h-48 rounded-[12px] bg-gray-150 border border-gray-200 overflow-hidden shrink-0 flex items-center justify-center">
+                <img 
+                  v-if="activeApproval.unit_details.image_url" 
+                  :src="activeApproval.unit_details.image_url" 
+                  class="w-full h-full object-cover" 
+                />
+                <div v-else class="text-xs font-bold text-gray-400 select-none text-center p-4">
+                  No Photo
                 </div>
               </div>
 
-              <!-- Daftar Barang yang Diminta -->
-              <div class="space-y-3">
-                <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider">Daftar Barang</h4>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div 
-                    v-for="item in activeRequest.items" 
-                    :key="item.id"
-                    class="flex gap-4 p-4 border border-gray-200 hover:border-indigo-500/20 transition-all rounded-[14px] items-center bg-gray-50/50"
-                  >
-                    <!-- Thumbnail Barang -->
-                    <div class="w-14 h-14 rounded-[10px] bg-gray-100 border border-gray-200 overflow-hidden shrink-0 flex items-center justify-center">
-                      <img 
-                        v-if="item.imageUrl" 
-                        :src="item.imageUrl" 
-                        class="w-full h-full object-cover" 
-                      />
-                      <div v-else class="text-xs font-black text-gray-400 select-none">
-                        {{ item.subcategory.substring(0, 3).toUpperCase() }}
-                      </div>
-                    </div>
+              <!-- Right Side Metadata (Same line labels) -->
+              <div class="flex-grow grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-3.5 text-xs text-gray-900 align-top">
+                <!-- Column 1 -->
+                <div class="space-y-3.5">
+                  <p class="leading-normal"><strong class="font-bold">Kode Barang:</strong> {{ activeApproval.unit_details.barang_code }}</p>
+                  <p class="leading-normal"><strong class="font-bold">Merek:</strong> {{ activeApproval.brand }}</p>
+                  <p class="leading-normal"><strong class="font-bold">Spesifikasi:</strong> {{ activeApproval.specification }}</p>
+                  <p class="leading-normal"><strong class="font-bold">Kategori:</strong> {{ activeApproval.category }}</p>
+                  <p class="leading-normal"><strong class="font-bold">Subkategori:</strong> {{ activeApproval.subcategory }}</p>
+                  <p class="leading-normal"><strong class="font-bold">Satuan:</strong> {{ activeApproval.unit_details.barang_unit }}</p>
+                </div>
 
-                    <!-- Deskripsi Detail Barang -->
-                    <div class="min-w-0 flex-grow space-y-0.5 text-xs">
-                      <h5 class="font-bold text-gray-900 truncate">
-                        {{ item.brand }} {{ item.spec }}
-                      </h5>
-                      <p class="text-gray-500">
-                        Kategori ({{ item.subcategory }})
-                      </p>
-                      
-                      <div class="flex flex-wrap gap-x-4 gap-y-1 font-semibold pt-0.5 text-indigo-600">
-                        <span>Jumlah diminta: {{ item.quantity }}</span>
-                      </div>
-                    </div>
-                  </div>
+                <!-- Column 2 -->
+                <div class="space-y-3.5">
+                  <p class="leading-normal"><strong class="font-bold">Kode LOT:</strong> {{ activeApproval.unit_details.lot_code }}</p>
+                  <p class="leading-normal"><strong class="font-bold">Organizer:</strong> {{ activeApproval.unit_details.organizer }}</p>
+                  <p class="leading-normal"><strong class="font-bold">Tanggal masuk:</strong> {{ activeApproval.unit_details.date_of_receipt }}</p>
+                  <p class="leading-normal"><strong class="font-bold">Vendor:</strong> {{ activeApproval.unit_details.vendor }}</p>
+                  <p class="leading-normal"><strong class="font-bold">Nomor PO:</strong> {{ activeApproval.unit_details.po_number }}</p>
+                </div>
+
+                <!-- Column 3 -->
+                <div class="space-y-3.5">
+                  <p class="leading-normal"><strong class="font-bold">Kode Aset:</strong> {{ activeApproval.asset_code }}</p>
+                  <p class="leading-normal"><strong class="font-bold">Nopol:</strong> {{ activeApproval.unit_details.vehicle_registration || '-' }}</p>
+                  <p class="leading-normal"><strong class="font-bold text-gray-900">Status Sekarang:</strong> <span class="text-indigo-600 font-semibold">{{ activeApproval.unit_details.status }}</span></p>
+                  <p class="leading-normal"><strong class="font-bold">Kondisi:</strong> {{ activeApproval.unit_details.condition }}</p>
+                  <p class="leading-normal"><strong class="font-bold">Nilai:</strong> Rp{{ activeApproval.unit_details.price }}</p>
+                  <p class="leading-normal"><strong class="font-bold">Keputusan:</strong> <span class="font-semibold" :class="activeApproval.decision === 'approved' ? 'text-green-600' : 'text-red-600'">{{ activeApproval.decision === 'approved' ? 'Disetujui' : 'Ditolak' }}</span></p>
+                  <p class="leading-normal" v-if="activeApproval.note"><strong class="font-bold">Catatan Manager:</strong> <span class="italic">"{{ activeApproval.note }}"</span></p>
                 </div>
               </div>
             </div>
@@ -618,7 +630,7 @@ const getDecisionBadgeClass = (rawStatus: string) => {
                       <th class="py-3 px-4 w-40">Waktu ↑↓</th>
                       <th class="py-3 px-4 w-36">Aksi / Status ↑↓</th>
                       <th class="py-3 px-4 w-40">Aktor ↑↓</th>
-                      <th class="py-3 px-4 w-28 text-center">Durasi ↑↓</th>
+                      <th class="py-3 px-4 w-28 text-center">Durasi (hari) ↑↓</th>
                       <th class="py-3 px-4">Catatan ↑↓</th>
                     </tr>
                   </thead>
@@ -643,12 +655,30 @@ const getDecisionBadgeClass = (rawStatus: string) => {
                   </tbody>
                 </table>
               </div>
+
+              <!-- Mini pagination inside Jejak Audit tab -->
+              <div class="mt-4 flex items-center justify-end text-xs text-gray-500 px-1">
+                <div class="flex items-center gap-1">
+                  <button class="h-8 px-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 text-xs disabled:opacity-50" disabled>&lt; Sebelumnya</button>
+                  <button class="w-8 h-8 border border-indigo-600 bg-indigo-50 text-indigo-600 font-bold rounded-lg text-xs">1</button>
+                  <button class="h-8 px-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 text-xs disabled:opacity-50" disabled>Selanjutnya &gt;</button>
+                </div>
+              </div>
             </div>
 
           </div>
 
           <!-- Bottom Footer Buttons (Right Aligned group) -->
           <div class="p-5 border-t border-gray-200 flex justify-end gap-3 bg-gray-50 shrink-0">
+            <!-- Purple Memo Button -->
+            <button 
+              @click="openMemoFile(activeApproval.memo_path, activeApproval.memo_name)"
+              class="bg-[#6366F1] hover:bg-[#5850EC] text-white font-medium text-xs px-5 py-2.5 rounded-lg inline-flex items-center gap-2 transition-colors cursor-pointer shadow-sm"
+            >
+              <FileText class="w-4 h-4" />
+              Buka Memo / Berita Acara
+            </button>
+
             <!-- White Kembali Button -->
             <button 
               @click="closeDetailPopup"
@@ -660,5 +690,6 @@ const getDecisionBadgeClass = (rawStatus: string) => {
         </div>
       </div>
     </Teleport>
+
   </AppLayout>
 </template>

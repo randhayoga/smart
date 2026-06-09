@@ -5,9 +5,10 @@ namespace App\Http\Controllers\Smart\User;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Models\AdmUser;
 use App\Models\Cart\ConsumableBasket;
-use App\Models\Department;
-use App\Models\Project;
+use App\Models\HrdOrgchart;
+use App\Models\TbProject;
 use App\Models\Request\Request as SmartRequest;
 use App\Models\Request\RequestItem;
 use App\Models\Request\RequestStatusLog;
@@ -27,15 +28,12 @@ class AssetCartConfirmationController extends Controller
             ->whereIn('id', $ids)
             ->get()
             ->map(function ($item) {
-                // Calculate stock of units with status 'tersedia'
-                $stock = \App\Models\Inventory\Unit::whereHas('lot', function ($q) use ($item) {
-                    $q->where('barang_id', $item->barang_id);
-                })->where('status', 'tersedia')->count();
+                $stock = \App\Models\Inventory\Lot::where('barang_id', $item->barang_id)->sum('current_quantity');
 
                 return [
                     'id' => $item->id,
                     'barang_id' => $item->barang_id,
-                    'brand' => $item->barang->brand->name ?? '-',
+                    'brand' => $item->barang->brand->name ?? '',
                     'spec' => $item->barang->specification ?? '',
                     'category' => $item->barang->subcategory->category->name ?? '-',
                     'subcategory' => $item->barang->subcategory->name ?? '-',
@@ -45,14 +43,14 @@ class AssetCartConfirmationController extends Controller
                 ];
             });
 
-        $departments = Department::orderBy('name')->get()->map(fn($d) => [
+        $departments = HrdOrgchart::orderBy('org_name')->get()->map(fn($d) => [
             'value' => (string) $d->id,
-            'label' => $d->name
+            'label' => $d->org_name
         ]);
 
-        $projects = Project::orderBy('name')->get()->map(fn($p) => [
+        $projects = TbProject::orderBy('project_name')->get()->map(fn($p) => [
             'value' => (string) $p->id,
-            'label' => $p->name
+            'label' => $p->project_name
         ]);
 
         return Inertia::render('Smart/User/AssetCartConfirmation', [
@@ -88,13 +86,31 @@ class AssetCartConfirmationController extends Controller
         }
         $requestNumber = $monthYear . '-' . str_pad($seq, 4, '0', STR_PAD_LEFT);
 
-        // Determine approver (manager of department)
-        $approverId = $request->user()->department?->manager_id;
-        if (!$approverId) {
-            $approverId = \App\Models\User::where('role', 'manager')->first()?->id;
+        // Determine approver: cari user yang employee_id-nya ada di hrd_orgcharts (mereka adalah manager)
+        $approverId = null;
+
+        // Cari orgchart berdasarkan department_id dari request (jika corporate)
+        if (!empty($validated['departemen'])) {
+            $orgchart = HrdOrgchart::find((int)$validated['departemen']);
+            if ($orgchart) {
+                $managerUser = AdmUser::where('employee_id', $orgchart->employee_id)->first();
+                $approverId = $managerUser?->id;
+            }
         }
+
+        // Fallback: ambil manager pertama yang ada di hrd_orgcharts
         if (!$approverId) {
-            $approverId = \App\Models\User::first()?->id; // Final fallback
+            $managerEmployeeId = HrdOrgchart::whereNotNull('employee_id')
+                ->where('org_code', '!=', 'IFS')
+                ->value('employee_id');
+            if ($managerEmployeeId) {
+                $approverId = AdmUser::where('employee_id', $managerEmployeeId)->value('id');
+            }
+        }
+
+        // Fallback terakhir: gunakan user pertama yang ada
+        if (!$approverId) {
+            $approverId = AdmUser::first()?->id;
         }
 
         // Create Request
@@ -103,7 +119,7 @@ class AssetCartConfirmationController extends Controller
             'user_id' => $request->user()->id,
             'approver_id' => $approverId,
             'utilization' => $validated['pemanfaatan'],
-            'department_id' => $validated['pemanfaatan'] === 'corporate' ? (int)$validated['departemen'] : null,
+            'org_id' => $validated['pemanfaatan'] === 'corporate' ? (int)$validated['departemen'] : null,
             'project_id' => $validated['pemanfaatan'] === 'project' ? (int)$validated['project'] : null,
             'reasoning' => $validated['alasan'],
             'status' => 'wait',

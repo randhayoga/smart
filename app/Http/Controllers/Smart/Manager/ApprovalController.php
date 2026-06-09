@@ -69,6 +69,24 @@ class ApprovalController extends Controller
             ];
         });
 
+        $lifecycles = $req->statusLogs->map(function ($log) use ($statusMap) {
+            $actorRole = 'User';
+            $actorName = $log->changer->name ?? '-';
+            if ($log->changer && $log->changer->role === 'admin') {
+                $actorRole = 'Admin';
+            } else if ($log->changer && in_array($log->changer->role, ['manager', 'ifs_manager'])) {
+                $actorRole = 'Manager';
+            }
+
+            return [
+                'waktu' => $log->created_at ? $log->created_at->format('d-m-Y H:i') : '-',
+                'aksi_status' => $statusMap[$log->status_to] ?? $log->status_to,
+                'aktor' => "{$actorRole}: {$actorName}",
+                'durasi' => '-',
+                'catatan' => $log->note ?? '-',
+            ];
+        })->toArray();
+
         return [
             'id' => $req->id,
             'number' => $req->request_number,
@@ -84,13 +102,14 @@ class ApprovalController extends Controller
             'durationHours' => $durationHours,
             'status' => $statusMap[$req->status] ?? $req->status,
             'raw_status' => $req->status,
-            'created_at' => $req->created_at ? $req->created_at->format('Y-m-d') : '-',
+            'created_at' => $req->created_at ? $req->created_at->format('d-m-Y H:i') : '-',
             'items' => $items,
             'approver' => $req->approver?->name,
             'approval_by' => $req->approval?->approver?->name,
             'approval_at' => $req->approval?->decided_at?->format('d-m-Y H:i'),
             'confirmation_by' => $req->adminConfirmation?->admin?->name,
             'confirmation_at' => $req->adminConfirmation?->decided_at?->format('d-m-Y H:i'),
+            'lifecycles' => $lifecycles,
         ];
     }
 
@@ -103,7 +122,7 @@ class ApprovalController extends Controller
             abort(403, 'Akses ditolak. Hanya Manager yang dapat mengakses halaman ini.');
         }
 
-        $requests = SmartRequest::with(['user', 'approver', 'approval.approver', 'adminConfirmation.admin', 'items.barang.subcategory.category', 'items.barang.brand', 'project', 'department'])
+        $requests = SmartRequest::with(['user', 'approver', 'approval.approver', 'adminConfirmation.admin', 'items.barang.subcategory.category', 'items.barang.brand', 'project', 'department', 'statusLogs.changer'])
             ->where('approver_id', $request->user()->id)
             ->where('status', 'wait')
             ->orderBy('id', 'desc')
@@ -125,7 +144,7 @@ class ApprovalController extends Controller
             abort(403, 'Akses ditolak. Hanya Manager yang dapat mengakses halaman ini.');
         }
 
-        $requests = SmartRequest::with(['user', 'approver', 'approval.approver', 'adminConfirmation.admin', 'items.barang.subcategory.category', 'items.barang.brand', 'project', 'department'])
+        $requests = SmartRequest::with(['user', 'approver', 'approval.approver', 'adminConfirmation.admin', 'items.barang.subcategory.category', 'items.barang.brand', 'project', 'department', 'statusLogs.changer'])
             ->where('approver_id', $request->user()->id)
             ->where('status', '!=', 'wait')
             ->orderBy('id', 'desc')
@@ -203,5 +222,65 @@ class ApprovalController extends Controller
             : 'Permintaan berhasil ditolak.';
 
         return redirect()->route('smart.approve')->with('success', $message);
+    }
+
+    /**
+     * Memproses persetujuan (approve) atau penolakan (reject) secara massal oleh manager.
+     */
+    public function bulkAction(Request $request)
+    {
+        if (!in_array($request->user()->role, ['manager', 'ifs_manager'])) {
+            abort(403, 'Akses ditolak.');
+        }
+
+        $validated = $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:requests,id',
+            'action' => 'required|string|in:approve,reject',
+            'note' => 'nullable|string',
+        ]);
+
+        $ids = $validated['ids'];
+        $decision = $validated['action'];
+        $note = $validated['note'];
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($ids, $decision, $note, $request) {
+            foreach ($ids as $id) {
+                $req = SmartRequest::where('approver_id', $request->user()->id)
+                    ->where('status', 'wait')
+                    ->find($id);
+
+                if (!$req) {
+                    continue;
+                }
+
+                $oldStatus = $req->status;
+
+                RequestApproval::create([
+                    'request_id' => $req->id,
+                    'approver_id' => $request->user()->id,
+                    'decision' => $decision,
+                    'note' => $note ?? ($decision === 'approve' ? 'Approved by Manager' : 'Rejected by Manager'),
+                    'decided_at' => now(),
+                ]);
+
+                $newStatus = $decision === 'approve' ? 'approve' : 'reject';
+                $req->update(['status' => $newStatus]);
+
+                RequestStatusLog::create([
+                    'request_id' => $req->id,
+                    'status_from' => $oldStatus,
+                    'status_to' => $newStatus,
+                    'changed_by' => $request->user()->id,
+                    'note' => $decision === 'approve' ? 'Permintaan disetujui oleh Manager.' : 'Permintaan ditolak oleh Manager.',
+                ]);
+            }
+        });
+
+        $message = $decision === 'approve' 
+            ? 'Beberapa permintaan berhasil disetujui.' 
+            : 'Beberapa permintaan berhasil ditolak.';
+
+        return redirect()->back()->with('success', $message);
     }
 }
