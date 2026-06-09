@@ -4,13 +4,13 @@ namespace App\Models\Request;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use App\Models\User;
+use App\Models\AdmUser;
 
 class RequestStatusLog extends Model
 {
     protected $table = 'request_status_logs';
 
-    public $timestamps = false;
+    const UPDATED_AT = null;
 
     protected $fillable = [
         'request_id',
@@ -27,6 +27,6 @@ class RequestStatusLog extends Model
 
     public function changer(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'changed_by');
+        return $this->belongsTo(AdmUser::class, 'changed_by');
     }
 }
