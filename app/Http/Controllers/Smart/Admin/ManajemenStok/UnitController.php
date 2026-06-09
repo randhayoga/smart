@@ -47,6 +47,10 @@ class UnitController extends Controller
 
         $validated = $request->validate($rules);
 
+        $arrNeedApproval = ['rusak'];
+        $proposedStatus = $validated['status'];
+        $needApproval = in_array($proposedStatus, $arrNeedApproval);
+
         // Single creation logic
         if ($request->boolean('use_lot_image')) {
             if ($lot->image_url && Storage::disk('public')->exists($lot->image_url)) {
@@ -64,7 +68,19 @@ class UnitController extends Controller
 
         unset($validated['use_lot_image']);
 
-        Unit::create($validated);
+        $unit = Unit::create($validated);
+
+        if ($needApproval) {
+            \App\Models\Inventory\UnitStatusApproval::create([
+                'unit_id' => $unit->id,
+                'requester_id' => $request->user()->id,
+                'proposed_status' => $proposedStatus,
+                'decision' => 'pending',
+                'note' => null,
+                'approver_id' => null,
+                'requested_at' => now(),
+            ]);
+        }
 
         return redirect()->back()->with('success', 'Aset berhasil ditambahkan.');
     }
@@ -105,6 +121,10 @@ class UnitController extends Controller
 
         $validated = $request->validate($rules);
 
+        $arrNeedApproval = ['rusak'];
+        $proposedStatus = $validated['status'];
+        $needApproval = in_array($proposedStatus, $arrNeedApproval);
+
         if ($request->boolean('use_lot_image')) {
             if ($unit->image_url && Storage::disk('public')->exists($unit->image_url)) {
                 $isShared = Unit::where('image_url', $unit->image_url)->where('id', '!=', $unit->id)->exists()
@@ -141,6 +161,23 @@ class UnitController extends Controller
         unset($validated['use_lot_image']);
 
         $unit->update($validated);
+
+        if ($needApproval) {
+            $existing = \App\Models\Inventory\UnitStatusApproval::where('unit_id', $unit->id)
+                ->where('decision', 'pending')
+                ->first();
+            if (!$existing) {
+                \App\Models\Inventory\UnitStatusApproval::create([
+                    'unit_id' => $unit->id,
+                    'requester_id' => $request->user()->id,
+                    'proposed_status' => $proposedStatus,
+                    'decision' => 'pending',
+                    'note' => null,
+                    'approver_id' => null,
+                    'requested_at' => now(),
+                ]);
+            }
+        }
 
         return redirect()->back()->with('success', 'Aset berhasil diperbarui.');
     }

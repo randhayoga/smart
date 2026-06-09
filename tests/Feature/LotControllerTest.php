@@ -296,6 +296,7 @@ class LotControllerTest extends TestCase
         ]);
 
         $response->assertRedirect();
+        $response->assertSessionHas('success', '3 LOT terpilih berhasil dihapus.');
 
         foreach ($ids as $id) {
             $this->assertDatabaseMissing('lots', [
@@ -324,9 +325,9 @@ class LotControllerTest extends TestCase
         ]);
 
         $response->assertRedirect();
-        $response->assertSessionHas('error', 'Beberapa LOT tidak dapat dihapus karena masih memiliki unit terkait.');
+        $response->assertSessionHas('error', "1 LOT terpilih berhasil dihapus.\n1 LOT tidak dapat dihapus karena masih memiliki unit terkait.");
 
-        $this->assertDatabaseHas('lots', [
+        $this->assertDatabaseMissing('lots', [
             'id' => $lotWithoutUnits->id,
         ]);
         $this->assertDatabaseHas('lots', [

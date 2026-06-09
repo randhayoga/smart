@@ -102,26 +102,37 @@ class BulkLotController extends Controller
         ]);
 
         $lots = Lot::whereIn('id', $request->input('ids'))->get();
+
+        $deletedCounter = 0;
+        $undeletedCounter = 0;
+
         foreach ($lots as $lot) {
             if ($lot->units()->exists()) {
-                return redirect()->back()->with('error', 'Beberapa LOT tidak dapat dihapus karena masih memiliki unit terkait.');
-            }
-        }
-
-        foreach ($lots as $lot) {
-            if ($lot->image_url && $lot->image_url !== 'inventory/lots/placeholder.jpg' && Storage::disk('public')->exists($lot->image_url)) {
-                $isShared = Lot::where('image_url', $lot->image_url)
-                    ->whereNotIn('id', $request->input('ids'))
-                    ->exists()
-                    || \App\Models\Inventory\Barang::where('image_url', $lot->image_url)->exists()
-                    || \App\Models\Inventory\Unit::where('image_url', $lot->image_url)->exists();
-                if (!$isShared) {
-                    Storage::disk('public')->delete($lot->image_url);
+                $undeletedCounter++;
+            } else {
+                if ($lot->image_url && $lot->image_url !== 'inventory/lots/placeholder.jpg' && Storage::disk('public')->exists($lot->image_url)) {
+                    $isShared = Lot::where('image_url', $lot->image_url)
+                        ->whereNotIn('id', $request->input('ids'))
+                        ->exists()
+                        || \App\Models\Inventory\Barang::where('image_url', $lot->image_url)->exists()
+                        || \App\Models\Inventory\Unit::where('image_url', $lot->image_url)->exists();
+                    if (!$isShared) {
+                        Storage::disk('public')->delete($lot->image_url);
+                    }
                 }
+                $lot->delete();
+                $deletedCounter++;
             }
-            $lot->delete();
         }
 
-        return redirect()->back()->with('success', 'LOT terpilih berhasil dihapus.');
+        if ($undeletedCounter > 0) {
+            $key = 'error';
+            $message = $deletedCounter . ' LOT terpilih berhasil dihapus.' . "\n" . $undeletedCounter . ' LOT tidak dapat dihapus karena masih memiliki unit terkait.';
+        } else {
+            $key = 'success';
+            $message = $deletedCounter . ' LOT terpilih berhasil dihapus.';
+        }
+
+        return redirect()->back()->with($key, $message);
     }
 }

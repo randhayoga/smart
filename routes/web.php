@@ -47,7 +47,6 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
         Route::get('/inventory', [ManajemenStokController::class, 'index'])->name('inventory');
-        Route::get('/inventory/{id}', [ManajemenStokController::class, 'show'])->name('inventory.show');
         Route::get('/master', [MasterController::class, 'index'])->name('master');
 
         Route::prefix('master')->name('master.')->group(function () {
@@ -72,7 +71,10 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
             Route::post('units/bulk-update', [\App\Http\Controllers\Smart\Admin\ManajemenStok\BulkUnitController::class, 'update'])->name('units.bulk-update');
             Route::post('units/bulk', [\App\Http\Controllers\Smart\Admin\ManajemenStok\BulkUnitController::class, 'store'])->name('units.bulk-store');
             Route::resource('units', \App\Http\Controllers\Smart\Admin\ManajemenStok\UnitController::class)->only(['store', 'update', 'destroy']);
+            Route::resource('unit-status-approvals', \App\Http\Controllers\Smart\Admin\ManajemenStok\UnitStatusApprovalController::class)->only(['index', 'store', 'show', 'update', 'destroy']);
         });
+
+        Route::get('/inventory/{id}', [ManajemenStokController::class, 'show'])->name('inventory.show');
 
         Route::get('/inbox', [InboxController::class, 'index'])->name('inbox');
         Route::get('/inbox/{id}', [InboxController::class, 'show'])->name('inbox.show');
