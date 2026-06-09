@@ -74,26 +74,36 @@ class BulkBarangController extends Controller
 
         $barangs = Barang::whereIn('id', $request->input('ids'))->get();
 
+        $deletedCounter = 0;
+        $undeletedCounter = 0;
+
         foreach ($barangs as $barang) {
             if ($barang->lots()->exists()) {
-                return redirect()->back()->with('error', 'Beberapa barang tidak dapat dihapus karena masih memiliki LOT terkait.');
-            }
-        }
-
-        foreach ($barangs as $barang) {
-            if ($barang->image_url && Storage::disk('public')->exists($barang->image_url)) {
-                $isShared = Barang::where('image_url', $barang->image_url)
-                    ->whereNotIn('id', $request->input('ids'))
-                    ->exists()
-                    || \App\Models\Inventory\Lot::where('image_url', $barang->image_url)->exists()
-                    || \App\Models\Inventory\Unit::where('image_url', $barang->image_url)->exists();
-                if (!$isShared) {
-                    Storage::disk('public')->delete($barang->image_url);
+                $undeletedCounter++;
+            } else {
+                if ($barang->image_url && Storage::disk('public')->exists($barang->image_url)) {
+                    $isShared = Barang::where('image_url', $barang->image_url)
+                        ->whereNotIn('id', $request->input('ids'))
+                        ->exists()
+                        || \App\Models\Inventory\Lot::where('image_url', $barang->image_url)->exists()
+                        || \App\Models\Inventory\Unit::where('image_url', $barang->image_url)->exists();
+                    if (!$isShared) {
+                        Storage::disk('public')->delete($barang->image_url);
+                    }
                 }
+                $barang->delete();
+                $deletedCounter++;
             }
-            $barang->delete();
         }
 
-        return redirect()->back()->with('success', 'Barang-barang terpilih berhasil dihapus.');
+        if ($undeletedCounter > 0) {
+            $key = 'error';
+            $message = $deletedCounter . ' barang terpilih berhasil dihapus.' . "\n" . $undeletedCounter . ' barang tidak dapat dihapus karena memiliki LOT terkait.';
+        } else {
+            $key = 'success';
+            $message = $deletedCounter . ' barang terpilih berhasil dihapus.';
+        }
+
+        return redirect()->back()->with($key, $message);
     }
 }

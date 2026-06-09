@@ -35,7 +35,7 @@ const emit = defineEmits(['close']);
         >
           <div 
             v-if="isOpen"
-            class="bg-card w-full max-w-[512px] rounded-[14px] shadow-2xl overflow-hidden flex flex-col"
+            class="bg-card w-full max-w-[576px] rounded-[14px] shadow-2xl overflow-hidden flex flex-col"
             @click.stop
           >
             <!-- Modal Header -->
@@ -53,9 +53,7 @@ const emit = defineEmits(['close']);
               </div>
               <div class="space-y-2">
                 <h4 class="text-destructive font-bold text-base">{{ title }}</h4>
-                <p class="text-sm text-muted-foreground leading-relaxed">
-                  {{ errorMessage }}
-                </p>
+                <p class="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{{ errorMessage }}</p>
               </div>
             </div>
 
