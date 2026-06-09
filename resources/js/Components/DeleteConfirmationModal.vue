@@ -6,14 +6,32 @@ interface Props {
   isOpen: boolean;
   itemCount: number;
   itemName?: string;
-  itemData?: Record<string, any> | null;
+  itemData?: Record<string, any> | any[] | null;
   fields?: { label: string; value: any }[] | null;
+  title?: string;
+  message?: string | null;
+  confirmButtonText?: string;
+  confirmButtonClass?: string;
+  iconClass?: string;
+  messageClass?: string;
+  showNotice?: boolean;
+  maxWidthClass?: string;
+  actionType?: 'approved' | 'rejected' | string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   itemName: 'Barang',
   itemData: null,
   fields: null,
+  title: 'Konfirmasi Penghapusan',
+  message: null,
+  confirmButtonText: 'Konfirmasi Penghapusan',
+  confirmButtonClass: 'px-5 py-2 bg-destructive hover:opacity-70 text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm active:scale-[0.98]',
+  iconClass: 'bg-rose-50 dark:bg-rose-950/20 text-[#CC0000]',
+  messageClass: 'text-destructive',
+  showNotice: true,
+  maxWidthClass: 'max-w-[576px]',
+  actionType: '',
 });
 
 const emit = defineEmits(['close', 'confirm']);
@@ -44,12 +62,102 @@ const formatLocation = (lot: any) => {
   return parts.join(', ') || '-';
 };
 
+const modalTitle = computed(() => {
+  if (props.itemName === 'Perubahan Status Aset') {
+    return props.actionType === 'approved' ? 'Konfirmasi Approval' : 'Konfirmasi Penolakan';
+  }
+  return props.title;
+});
+
+const modalMessage = computed(() => {
+  if (props.itemName === 'Perubahan Status Aset') {
+    const actionWord = props.actionType === 'approved' ? 'meng-approve' : 'menolak';
+    return `Apakah Anda yakin untuk ${actionWord} ${props.itemCount} perubahan aset yang Anda pilih?`;
+  }
+  return props.message || `Apakah Anda yakin untuk menghapus ${props.itemCount} ${props.itemName} yang Anda pilih?`;
+});
+
+const modalMessageClass = computed(() => {
+  if (props.itemName === 'Perubahan Status Aset') {
+    return props.actionType === 'approved' ? 'text-emerald-500 font-bold' : 'text-destructive font-bold';
+  }
+  return props.messageClass;
+});
+
+const modalConfirmButtonText = computed(() => {
+  if (props.itemName === 'Perubahan Status Aset') {
+    return props.actionType === 'approved' ? 'Konfirmasi Approval' : 'Konfirmasi Penolakan';
+  }
+  return props.confirmButtonText;
+});
+
+const modalConfirmButtonClass = computed(() => {
+  if (props.itemName === 'Perubahan Status Aset') {
+    return props.actionType === 'approved'
+      ? 'px-5 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm active:scale-[0.98]'
+      : 'px-5 py-2 bg-destructive hover:opacity-70 text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm active:scale-[0.98]';
+  }
+  return props.confirmButtonClass;
+});
+
+const modalIconClass = computed(() => {
+  if (props.itemName === 'Perubahan Status Aset') {
+    return props.actionType === 'approved' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-destructive/10 text-destructive';
+  }
+  return props.iconClass;
+});
+
+const modalShowNotice = computed(() => {
+  if (props.itemName === 'Perubahan Status Aset') {
+    return false;
+  }
+  return props.showNotice;
+});
+
+const modalMaxWidthClass = computed(() => {
+  if (props.itemName === 'Perubahan Status Aset') {
+    return 'max-w-2xl';
+  }
+  return props.maxWidthClass;
+});
+
 const displayFields = computed(() => {
   if (props.fields) return props.fields;
   if (!props.itemData || props.itemCount !== 1) return [];
 
-  const data = props.itemData;
+  const rawData = props.itemData;
+  const data = (Array.isArray(rawData) ? rawData[0] : rawData) as Record<string, any>;
+  if (!data) return [];
+
   const fields: { label: string; value: any }[] = [];
+
+  // Determine fields for Perubahan Status Aset
+  if (props.itemName === 'Perubahan Status Aset') {
+    if (data.asset_code) fields.push({ label: 'Kode Aset', value: data.asset_code });
+    if (data.status_label) fields.push({ label: 'Status', value: data.status_label });
+    if (data.unit_details?.lot_code) fields.push({ label: 'Kode LOT', value: data.unit_details.lot_code });
+    if (data.category) fields.push({ label: 'Kategori', value: data.category });
+    if (data.subcategory) fields.push({ label: 'Subkategori', value: data.subcategory });
+    if (data.brand) fields.push({ label: 'Merek', value: data.brand });
+    if (data.specification) fields.push({ label: 'Spesifikasi', value: data.specification });
+    if (data.unit_details) {
+      const locParts = [];
+      if (data.unit_details.location) locParts.push(data.unit_details.location);
+      if (data.unit_details.floor) locParts.push(data.unit_details.floor);
+      if (data.unit_details.room) locParts.push(data.unit_details.room);
+      fields.push({ label: 'Lokasi', value: locParts.join(', ') || '-' });
+      
+      fields.push({ label: 'Nomor PO', value: data.unit_details.po_number || '-' });
+      if (data.unit_details.date_of_receipt) fields.push({ label: 'Tanggal masuk', value: data.unit_details.date_of_receipt });
+      if (data.unit_details.price !== undefined && data.unit_details.price !== null) {
+        fields.push({ label: 'Harga', value: `Rp${data.unit_details.price}` });
+      }
+      if (data.unit_details.organizer) fields.push({ label: 'Organizer', value: data.unit_details.organizer });
+      if (data.unit_details.vendor) fields.push({ label: 'Vendor', value: data.unit_details.vendor });
+    }
+    if (data.requested_at) fields.push({ label: 'Pembaruan Terakhir', value: data.requested_at });
+    return fields;
+  }
 
   // Determine fields based on keys present in the item data (e.g. for ManajemenStok)
   if ('specification' in data || 'lastUpdate' in data || 'amount' in data) {
@@ -60,35 +168,6 @@ const displayFields = computed(() => {
     if (data.specification) fields.push({ label: 'Spesifikasi', value: data.specification });
     if (data.lastUpdate) fields.push({ label: 'Pembaruan Terakhir', value: data.lastUpdate });
     if (data.amount !== undefined) fields.push({ label: 'Jumlah', value: data.amount });
-    return fields;
-  }
-
-  // Determine fields for Asset (Unit)
-  if ('number' in data && 'status' in data && 'condition' in data) {
-    fields.push({ label: 'Kode Aset', value: data.number });
-    if (data.vehicle_registration) {
-      fields.push({ label: 'TNKB (Nopol)', value: data.vehicle_registration });
-    }
-    
-    const getStatusLabel = (status: string) => {
-      if (status === 'tersedia') return 'Tersedia';
-      if (status === 'dipinjam') return 'Dipinjam';
-      if (status === 'dipakai') return 'Dipakai';
-      if (status === 'rusak') return 'Rusak';
-      return status;
-    };
-    
-    const formatLocation = (loc: string, floor: string | null, room: string | null) => {
-      const parts = [];
-      if (loc && loc !== '-') parts.push(loc);
-      if (floor && floor !== '-') parts.push(floor);
-      if (room && room !== '-') parts.push(room);
-      return parts.join(', ') || '-';
-    };
-
-    fields.push({ label: 'Status', value: getStatusLabel(data.status) });
-    fields.push({ label: 'Kondisi', value: data.condition });
-    fields.push({ label: 'Lokasi', value: formatLocation(data.location, data.floor, data.room) });
     return fields;
   }
 
@@ -155,6 +234,40 @@ const displayFields = computed(() => {
 
   return fields;
 });
+
+const bulkItemsFields = computed(() => {
+  if (props.itemCount <= 1 || !props.itemData || !Array.isArray(props.itemData)) {
+    return [];
+  }
+  
+  return props.itemData.map(data => {
+    const fields: { label: string; value: any }[] = [];
+    if (!data) return fields;
+
+    // Check if Perubahan Status Aset
+    if (props.itemName === 'Perubahan Status Aset') {
+      if (data.asset_code) fields.push({ label: 'Kode Aset', value: data.asset_code });
+      if (data.status_label) fields.push({ label: 'Status', value: data.status_label });
+      return fields;
+    }
+
+    // Check if ManajemenStok
+    if ('specification' in data || 'lastUpdate' in data || 'amount' in data) {
+      if (data.code) fields.push({ label: 'Kode', value: data.code });
+      if (data.specification) fields.push({ label: 'Spesifikasi', value: data.specification });
+      return fields;
+    }
+
+    // Check if Lot
+    if ('lotCode' in data) {
+      if (data.lotCode) fields.push({ label: 'Kode LOT', value: data.lotCode });
+      if (data.poNumber) fields.push({ label: 'Nomor PO', value: data.poNumber });
+      return fields;
+    }
+
+    return fields;
+  });
+});
 </script>
 
 <template>
@@ -178,12 +291,13 @@ const displayFields = computed(() => {
         >
           <div 
             v-if="isOpen"
-            class="bg-card w-full max-w-[576px] rounded-[14px] shadow-2xl overflow-hidden flex flex-col"
+            class="bg-card w-full rounded-[14px] shadow-2xl overflow-hidden flex flex-col"
+            :class="modalMaxWidthClass"
             @click.stop
           >
             <!-- Modal Header -->
             <div class="flex items-center p-1 justify-between border-b border-border">
-              <h3 class="text-lg font-bold text-foreground p-2">Konfirmasi Penghapusan</h3>
+              <h3 class="text-lg font-bold text-foreground p-2">{{ modalTitle }}</h3>
               <button @click="emit('close')" class="p-2 hover:bg-muted rounded-full transition-colors">
                 <X class="w-5 h-5 text-muted-foreground" />
               </button>
@@ -191,29 +305,46 @@ const displayFields = computed(() => {
 
             <!-- Modal Body -->
             <div class="p-6 flex flex-col items-center text-center space-y-4 flex-grow">
-              <div class="w-12 h-12 rounded-full bg-rose-50 dark:bg-rose-950/20 flex items-center justify-center text-[#CC0000]">
+              <div :class="['w-12 h-12 rounded-full flex items-center justify-center', modalIconClass]">
                 <AlertTriangle class="w-6 h-6" />
               </div>
               <div class="space-y-4 w-full">
-                <p class="text-destructive font-semibold text-base">
-                  Apakah Anda yakin untuk menghapus {{ itemCount }} {{ itemName }} yang Anda pilih?
+                <p class="font-semibold text-base" :class="modalMessageClass">
+                  {{ modalMessage }}
                 </p>
 
                 <!-- Single Item Info Details -->
-                <div v-if="displayFields.length > 0" class="p-3 rounded-[14px] bg-muted/40 border border-border text-left space-y-2.5 w-full max-w-md mx-auto max-h-[45vh] overflow-y-auto">
+                <div v-if="displayFields.length > 0 && itemCount <= 1" class="p-3 rounded-[14px] bg-muted/40 border border-border text-left space-y-2.5 w-full max-w-[90%] mx-auto max-h-[45vh] overflow-y-auto">
                   <div v-for="field in displayFields" :key="field.label" class="grid grid-cols-12 gap-2 text-sm border-b border-border/50 last:border-0 pb-2 last:pb-0">
-                    <span class="col-span-5 text-muted-foreground font-medium">{{ field.label }}</span>
-                    <span class="col-span-7 text-foreground font-semibold text-right break-words">
+                    <span class="col-span-3 text-muted-foreground font-medium">{{ field.label }}</span>
+                    <span class="col-span-9 text-foreground font-semibold text-right break-words">
                       {{ field.value }}
                     </span>
                   </div>
                 </div>
+
+                <!-- Bulk Items Info Details -->
+                <div v-else-if="itemCount > 1 && bulkItemsFields.length > 0" class="p-3 rounded-[14px] bg-muted/40 border border-border text-left w-full max-w-[90%] mx-auto max-h-[45vh] overflow-y-auto space-y-3">
+                  <div v-for="(itemFields, idx) in bulkItemsFields" :key="idx" class="p-3 rounded-[12px] bg-background border border-border space-y-2.5">
+                    <div v-for="field in itemFields" :key="field.label" class="grid grid-cols-12 gap-2 text-sm border-b border-border/50 last:border-0 pb-2 last:pb-0">
+                      <span class="col-span-3 text-muted-foreground font-medium">{{ field.label }}</span>
+                      <span class="col-span-9 text-foreground font-semibold text-right break-words">
+                        {{ field.value }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Slot for additional content (e.g. textareas) -->
+                <slot />
               </div>
             </div>
 
             <!-- Modal Footer -->
             <div class="py-3 px-4 bg-muted/30 border-t border-border flex items-center justify-between">
-              <p class="text-sm text-rose-500 italic font-medium">*Wajib diisi</p>
+              <div>
+                <p v-if="modalShowNotice" class="text-sm text-rose-500 italic font-medium">*Wajib diisi</p>
+              </div>
               <div class="flex items-center gap-3">
                 <button 
                   @click="emit('close')"
@@ -223,9 +354,9 @@ const displayFields = computed(() => {
                 </button>
                 <button 
                   @click="handleConfirm"
-                  class="px-5 py-2 bg-destructive hover:opacity-70 text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm active:scale-[0.98]"
+                  :class="modalConfirmButtonClass"
                 >
-                  Konfirmasi Penghapusan
+                  {{ modalConfirmButtonText }}
                 </button>
               </div>
             </div>

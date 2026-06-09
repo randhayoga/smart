@@ -1933,7 +1933,7 @@ const closeErrorModal = () => {
       :is-open="isDeleteModalOpen"
       :item-count="itemsToDelete.length"
       :item-name="'Barang'"
-      :item-data="itemsToDelete.length === 1 ? itemsToDelete[0] : null"
+      :item-data="itemsToDelete.length === 1 ? itemsToDelete[0] : itemsToDelete"
       :fields="deleteFields"
       @close="closeDeleteModal"
       @confirm="handleConfirmDelete"

@@ -25,6 +25,7 @@ import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
 import ViewTableButton from '@/Components/ViewTableButton.vue';
 import Tabs from '@/Components/Tabs.vue';
+import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal.vue';
 
 interface AuditTrail {
   waktu: string;
@@ -264,11 +265,12 @@ const columns: ColumnDef<ApprovalItem>[] = [
       const item = row.original;
       return h('div', { class: 'flex items-center justify-center gap-2' }, [
         h('button', {
+          type: 'button',
           onClick: () => openMemoFile(item.memo_path),
-          class: 'w-8 h-8 rounded-full bg-[#6366F1] hover:bg-[#5850EC] text-white flex items-center justify-center transition-colors shadow-sm cursor-pointer',
+          class: 'p-2 bg-gradient-primary hover:opacity-90 text-white rounded-[13px] transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer',
           title: 'Buka Berita Acara / Memo'
         }, [
-          h(FileText, { class: 'w-4 h-4' })
+          h(FileText, { class: 'w-3.5 h-3.5' })
         ]),
         h(ViewTableButton, {
           onClick: () => openDetailPopup(item),
@@ -620,7 +622,7 @@ const handleConfirmSubmit = () => {
         <label class="text-xs text-muted-foreground font-medium block ml-0.5">Aksi Terpilih</label>
         <div class="flex flex-wrap gap-2">
           <button 
-            :disabled="selectedIds.length <= 1"
+            :disabled="selectedIds.length < 1"
             @click="openConfirmModal('approved', true)"
             class="flex items-center gap-2 px-4 py-2 bg-[#2ECC71] hover:opacity-70 text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm disabled:opacity-50"
           >
@@ -628,7 +630,7 @@ const handleConfirmSubmit = () => {
             <span class="hidden sm:inline">Approve Terpilih</span>
           </button>
           <button 
-            :disabled="selectedIds.length <= 1"
+            :disabled="selectedIds.length < 1"
             @click="openConfirmModal('rejected', true)"
             class="flex items-center gap-2 px-4 py-2 bg-[#E74C3C] hover:opacity-70 text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm disabled:opacity-50"
           >
@@ -901,176 +903,26 @@ const handleConfirmSubmit = () => {
     <!-- ============================================================
          Confirmation Modal (Approve / Reject Action Dialog)
          ============================================================ -->
-    <Teleport to="body">
-      <Transition
-        enter-active-class="ease-out duration-200"
-        enter-from-class="opacity-0"
-        enter-to-class="opacity-100"
-        leave-active-class="ease-in duration-150"
-        leave-from-class="opacity-100"
-        leave-to-class="opacity-0"
-      >
-        <div 
-          v-if="isConfirmModalOpen" 
-          class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
-          @click="closeConfirmModal"
-        >
-          <Transition
-            enter-active-class="ease-out duration-200"
-            enter-from-class="opacity-0 scale-95"
-            enter-to-class="opacity-100 scale-100"
-            leave-active-class="ease-in duration-150"
-            leave-from-class="opacity-100 scale-100"
-            leave-to-class="opacity-0 scale-95"
-          >
-            <div 
-              v-if="isConfirmModalOpen" 
-              class="bg-card text-foreground rounded-[14px] shadow-2xl w-full max-w-xl flex flex-col overflow-hidden border border-border"
-              @click.stop
-            >
-              <!-- Header -->
-              <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
-                <h3 class="text-lg font-bold text-foreground">Konfirmasi Approval</h3>
-                <button @click="closeConfirmModal" class="p-2 hover:bg-muted rounded-full transition-colors">
-                  <X class="w-5 h-5 text-muted-foreground" />
-                </button>
-              </div>
-
-              <!-- Body content -->
-              <div class="overflow-y-auto max-h-[70vh] p-6 space-y-5">
-                <!-- Warning prompt message (Centered) -->
-                <div class="flex flex-col items-center justify-center text-center space-y-3 pt-2">
-                  <!-- Warning icon indicator -->
-                  <div 
-                    class="w-14 h-14 rounded-full flex items-center justify-center"
-                    :class="confirmActionType === 'approved' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-destructive/10 text-destructive'"
-                  >
-                    <AlertTriangle class="w-7 h-7" />
-                  </div>
-                  <p 
-                    class="font-bold text-sm leading-normal max-w-md"
-                    :class="confirmActionType === 'approved' ? 'text-emerald-500' : 'text-destructive'"
-                  >
-                    Apakah Anda yakin untuk {{ confirmActionType === 'approved' ? 'meng-approve' : 'menolak' }} {{ confirmAssets.length }} perubahan aset yang Anda pilih?
-                  </p>
-                </div>
-
-                <!-- Vertical Key-Value Table -->
-                <div v-if="confirmAssets.length === 1" class="border border-border rounded-xl bg-muted/20 divide-y divide-border text-xs px-5 py-1">
-                  <div class="py-2.5 flex justify-between items-center">
-                    <span class="text-muted-foreground font-medium">Kode Aset</span>
-                    <span class="text-foreground font-semibold font-mono">{{ confirmAssets[0].asset_code }}</span>
-                  </div>
-                  <div class="py-2.5 flex justify-between items-center">
-                    <span class="text-muted-foreground font-medium">Status</span>
-                    <span class="text-foreground font-semibold">{{ confirmAssets[0].status_label }}</span>
-                  </div>
-                  <div class="py-2.5 flex justify-between items-center">
-                    <span class="text-muted-foreground font-medium">Kode LOT</span>
-                    <span class="text-foreground font-semibold font-mono">{{ confirmAssets[0].unit_details.lot_code }}</span>
-                  </div>
-                  <div class="py-2.5 flex justify-between items-center">
-                    <span class="text-muted-foreground font-medium">Kategori</span>
-                    <span class="text-foreground font-semibold">{{ confirmAssets[0].category }}</span>
-                  </div>
-                  <div class="py-2.5 flex justify-between items-center">
-                    <span class="text-muted-foreground font-medium">Subkategori</span>
-                    <span class="text-foreground font-semibold">{{ confirmAssets[0].subcategory }}</span>
-                  </div>
-                  <div class="py-2.5 flex justify-between items-center">
-                    <span class="text-muted-foreground font-medium">Merek</span>
-                    <span class="text-foreground font-semibold">{{ confirmAssets[0].brand }}</span>
-                  </div>
-                  <div class="py-2.5 flex justify-between items-center">
-                    <span class="text-muted-foreground font-medium">Spesifikasi</span>
-                    <span class="text-foreground font-semibold">{{ confirmAssets[0].specification }}</span>
-                  </div>
-                  <div class="py-2.5 flex justify-between items-center">
-                    <span class="text-muted-foreground font-medium">Lokasi</span>
-                    <span class="text-foreground font-semibold">
-                      {{ confirmAssets[0].unit_details.location }}
-                      <span v-if="confirmAssets[0].unit_details.floor">, {{ confirmAssets[0].unit_details.floor }}</span>
-                      <span v-if="confirmAssets[0].unit_details.room">, {{ confirmAssets[0].unit_details.room }}</span>
-                    </span>
-                  </div>
-                  <div class="py-2.5 flex justify-between items-center">
-                    <span class="text-muted-foreground font-medium">Nomor PO</span>
-                    <span class="text-foreground font-semibold font-mono">{{ confirmAssets[0].unit_details.po_number || '-' }}</span>
-                  </div>
-                  <div class="py-2.5 flex justify-between items-center">
-                    <span class="text-muted-foreground font-medium">Tanggal masuk</span>
-                    <span class="text-foreground font-semibold">{{ confirmAssets[0].unit_details.date_of_receipt }}</span>
-                  </div>
-                  <div class="py-2.5 flex justify-between items-center">
-                    <span class="text-muted-foreground font-medium">Harga</span>
-                    <span class="text-foreground font-semibold">Rp{{ confirmAssets[0].unit_details.price }}</span>
-                  </div>
-                  <div class="py-2.5 flex justify-between items-center">
-                    <span class="text-muted-foreground font-medium">Organizer</span>
-                    <span class="text-foreground font-semibold">{{ confirmAssets[0].unit_details.organizer }}</span>
-                  </div>
-                  <div class="py-2.5 flex justify-between items-center">
-                    <span class="text-muted-foreground font-medium">Vendor</span>
-                    <span class="text-foreground font-semibold">{{ confirmAssets[0].unit_details.vendor }}</span>
-                  </div>
-                  <div class="py-2.5 flex justify-between items-center">
-                    <span class="text-muted-foreground font-medium">Pembaruan Terakhir</span>
-                    <span class="text-foreground font-semibold font-mono">{{ confirmAssets[0].requested_at }}</span>
-                  </div>
-                </div>
-
-                <!-- If Bulk: Display simple stack of items -->
-                <div v-else class="space-y-4 max-h-[300px] overflow-y-auto">
-                  <div 
-                    v-for="asset in confirmAssets" 
-                    :key="asset.id"
-                    class="border border-border rounded-xl p-4 space-y-2 bg-muted/10 text-xs"
-                  >
-                    <div class="flex justify-between font-bold text-foreground">
-                      <span>{{ asset.asset_code }}</span>
-                      <span class="text-[#E74C3C]">{{ asset.status_label }}</span>
-                    </div>
-                    <div class="text-muted-foreground grid grid-cols-2 gap-1.5">
-                      <div><strong>Merek:</strong> {{ asset.brand }}</div>
-                      <div><strong>Kategori:</strong> {{ asset.category }}</div>
-                      <div class="col-span-2"><strong>Spesifikasi:</strong> {{ asset.specification }}</div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Catatan text area -->
-                <div class="space-y-1.5">
-                  <label class="text-xs font-bold text-muted-foreground uppercase tracking-wider block">Catatan / Alasan (Opsional)</label>
-                  <textarea
-                    v-model="confirmNote"
-                    placeholder="Masukkan catatan persetujuan atau alasan penolakan..."
-                    rows="3"
-                    class="w-full text-xs border border-input rounded-lg bg-background text-foreground p-3 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary shadow-sm"
-                  ></textarea>
-                </div>
-              </div>
-
-              <!-- Footer Action Buttons -->
-              <div class="p-5 flex justify-end gap-3 bg-card border-t border-border shrink-0">
-                <button 
-                  @click="closeConfirmModal"
-                  class="bg-background hover:bg-muted border border-input text-foreground font-bold text-xs h-10 px-6 rounded-full transition-colors cursor-pointer shadow-sm"
-                >
-                  Batal
-                </button>
-                <button 
-                  @click="handleConfirmSubmit"
-                  class="text-white font-bold text-xs h-10 px-6 rounded-full shadow-sm transition-colors cursor-pointer"
-                  :class="confirmActionType === 'approved' ? 'bg-[#2ECC71] hover:bg-[#27AE60]' : 'bg-[#E74C3C] hover:bg-[#C0392B]'"
-                >
-                  {{ confirmActionType === 'approved' ? 'Konfirmasi Approval' : 'Konfirmasi Penolakan' }}
-                </button>
-              </div>
-            </div>
-          </Transition>
-        </div>
-      </Transition>
-    </Teleport>
+    <DeleteConfirmationModal
+      :is-open="isConfirmModalOpen"
+      :item-count="confirmAssets.length"
+      item-name="Perubahan Status Aset"
+      :item-data="confirmAssets"
+      :action-type="confirmActionType"
+      @close="closeConfirmModal"
+      @confirm="handleConfirmSubmit"
+    >
+      <!-- Catatan text area (passed to slot) -->
+      <div class="space-y-1.5 text-left w-full max-w-[90%] mx-auto">
+        <label class="text-base font-semibold text-foreground block">Catatan / Alasan (Opsional)</label>
+        <textarea
+          v-model="confirmNote"
+          placeholder="Masukkan catatan persetujuan atau alasan penolakan..."
+          rows="3"
+          class="w-full text-base border border-input rounded-[14px] bg-background text-foreground p-3 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary shadow-sm"
+        ></textarea>
+      </div>
+    </DeleteConfirmationModal>
 
   </AppLayout>
 </template>
