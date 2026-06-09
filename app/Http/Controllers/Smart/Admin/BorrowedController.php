@@ -14,7 +14,7 @@ class BorrowedController extends Controller
      */
     public function index()
     {
-        $borrowedList = SmartRequest::with(['user', 'handover'])
+        $borrowedList = SmartRequest::with(['user', 'handover', 'items'])
             ->where('status', 'borrow')
             ->orderBy('id', 'desc')
             ->get()

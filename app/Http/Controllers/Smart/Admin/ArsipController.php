@@ -16,7 +16,7 @@ class ArsipController extends Controller
      */
     public function index()
     {
-        $archiveList = SmartRequest::with(['user'])
+        $archiveList = SmartRequest::with(['user', 'items'])
             ->whereIn('status', ['success', 'reject', 'cancel', 'pending'])
             ->orderBy('id', 'desc')
             ->get()

@@ -8,9 +8,18 @@ import {
   FileText,
   Eye,
   ArrowUpDown,
-  AlertTriangle
+  AlertTriangle,
+  ChevronDown
 } from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
+import { Button } from "@/Components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/Components/ui/dropdown-menu";
+import Combobox from '@/Components/Combobox.vue';
 
 interface AuditTrail {
   waktu: string;
@@ -275,121 +284,121 @@ const auditStatusOptions = computed(() => {
         <div class="flex flex-wrap gap-3 items-center w-full lg:w-auto">
           <!-- Search input -->
           <div class="relative w-full sm:w-[220px]">
+            <div class="absolute left-3 top-3 text-gray-400">
+              <Search class="w-4 h-4" />
+            </div>
             <input
               v-model="searchQuery"
               type="text"
               placeholder="Cari Aset..."
-              class="w-full h-10 pl-4 pr-10 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
+              class="w-full h-10 pl-9 pr-4 text-xs border border-gray-300 rounded-[14px] bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
             />
-            <div class="absolute right-3 top-3 text-gray-400">
-              <Search class="w-4 h-4" />
-            </div>
           </div>
 
           <!-- Kategori Filter -->
-          <div class="w-full sm:w-[150px]">
-            <select 
-              v-model="categoryFilter" 
-              class="w-full h-10 px-3 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer shadow-sm"
-            >
-              <option value="Semua kategori">Semua kategori</option>
-              <option v-for="cat in categoryOptions" :key="cat" :value="cat">{{ cat }}</option>
-            </select>
-          </div>
+          <Combobox
+            v-model="categoryFilter"
+            :options="categoryOptions"
+            search-placeholder="Cari kategori..."
+            default-label="Semua kategori"
+            width-class="w-full sm:w-auto min-w-[160px]"
+          />
 
           <!-- Decision Filter -->
-          <div class="w-full sm:w-[150px]">
-            <select 
-              v-model="decisionFilter" 
-              class="w-full h-10 px-3 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer shadow-sm"
-            >
-              <option value="Semua keputusan">Semua keputusan</option>
-              <option value="Disetujui">Disetujui</option>
-              <option value="Ditolak">Ditolak</option>
-            </select>
-          </div>
+          <Combobox
+            v-model="decisionFilter"
+            :options="['Disetujui', 'Ditolak']"
+            search-placeholder="Cari keputusan..."
+            default-label="Semua keputusan"
+            width-class="w-full sm:w-auto min-w-[160px]"
+          />
         </div>
 
         <!-- Page Size Selection -->
         <div class="flex items-center gap-2 text-xs text-gray-600 justify-end w-full sm:w-auto">
           <span class="whitespace-nowrap">Baris per halaman</span>
-          <select 
-            v-model="rowsPerPage" 
-            class="border border-gray-300 rounded-lg h-10 px-3 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer w-[120px]"
-          >
-            <option value="5">5 baris</option>
-            <option value="10">10 baris</option>
-            <option value="25">25 baris</option>
-            <option value="Semua baris">Semua baris</option>
-          </select>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" class="w-full sm:w-auto min-w-[130px] h-10 justify-between rounded-[14px] font-normal text-xs bg-white border-gray-300 shadow-sm text-gray-900 gap-2">
+                <span>{{ rowsPerPage === 'Semua baris' ? 'Semua baris' : `${rowsPerPage} baris` }}</span>
+                <ChevronDown class="w-4 h-4 opacity-50 shrink-0 ml-2" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent class="min-w-[130px] rounded-[14px]" align="start" :side-offset="4">
+              <DropdownMenuItem @select="rowsPerPage = '5'">5 baris</DropdownMenuItem>
+              <DropdownMenuItem @select="rowsPerPage = '10'">10 baris</DropdownMenuItem>
+              <DropdownMenuItem @select="rowsPerPage = '25'">25 baris</DropdownMenuItem>
+              <DropdownMenuItem @select="rowsPerPage = 'Semua baris'">Semua baris</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </div>
 
     <!-- ── Table Display ── -->
-    <div class="bg-white border border-gray-200 rounded-xl overflow-x-auto shadow-sm">
+    <div class="rounded-xl border border-border shadow-sm overflow-x-auto bg-card">
       <table class="w-full text-xs text-left border-collapse">
-        <thead>
-          <tr class="bg-white border-b border-gray-200 text-gray-900 font-bold">
-            <th @click="toggleSort('asset_code')" class="py-4 px-6 cursor-pointer select-none">
+        <thead class="bg-muted/50 border-b border-border text-foreground">
+          <tr class="hover:bg-transparent text-foreground font-semibold">
+            <th @click="toggleSort('asset_code')" class="py-4 px-6 cursor-pointer select-none font-semibold">
               <div class="flex items-center gap-1">
                 Kode Aset
                 <span class="text-gray-400 font-normal">↑↓</span>
               </div>
             </th>
-            <th @click="toggleSort('category')" class="py-4 px-4 cursor-pointer select-none">
+            <th @click="toggleSort('category')" class="py-4 px-4 cursor-pointer select-none font-semibold">
               <div class="flex items-center gap-1">
                 Kategori
                 <span class="text-gray-400 font-normal">↑↓</span>
               </div>
             </th>
-            <th @click="toggleSort('subcategory')" class="py-4 px-4 cursor-pointer select-none">
+            <th @click="toggleSort('subcategory')" class="py-4 px-4 cursor-pointer select-none font-semibold">
               <div class="flex items-center gap-1">
                 Subkategori
                 <span class="text-gray-400 font-normal">↑↓</span>
               </div>
             </th>
-            <th @click="toggleSort('brand')" class="py-4 px-4 cursor-pointer select-none">
+            <th @click="toggleSort('brand')" class="py-4 px-4 cursor-pointer select-none font-semibold">
               <div class="flex items-center gap-1">
                 Merek
                 <span class="text-gray-400 font-normal">↑↓</span>
               </div>
             </th>
-            <th @click="toggleSort('specification')" class="py-4 px-4 cursor-pointer select-none">
+            <th @click="toggleSort('specification')" class="py-4 px-4 cursor-pointer select-none font-semibold">
               <div class="flex items-center gap-1">
                 Spesifikasi
                 <span class="text-gray-400 font-normal">↑↓</span>
               </div>
             </th>
-            <th @click="toggleSort('status')" class="py-4 px-4 cursor-pointer select-none">
+            <th @click="toggleSort('status')" class="py-4 px-4 cursor-pointer select-none font-semibold">
               <div class="flex items-center gap-1">
                 Status Diajukan
                 <span class="text-gray-400 font-normal">↑↓</span>
               </div>
             </th>
-            <th @click="toggleSort('decision')" class="py-4 px-4 cursor-pointer select-none text-center">
+            <th @click="toggleSort('decision')" class="py-4 px-4 cursor-pointer select-none text-center font-semibold">
               <div class="flex items-center justify-center gap-1">
                 Keputusan
                 <span class="text-gray-400 font-normal">↑↓</span>
               </div>
             </th>
-            <th class="py-4 px-4 text-center">Diproses Oleh</th>
-            <th class="py-4 px-4 text-center w-28">Aksi</th>
+            <th class="py-4 px-4 text-center font-semibold">Diproses Oleh</th>
+            <th class="py-4 px-4 text-center w-28 font-semibold">Aksi</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-gray-150">
+        <tbody>
           <tr 
             v-for="app in paginatedApprovals" 
             :key="app.id"
-            class="hover:bg-gray-50/50 transition-colors"
+            class="border-b border-border hover:bg-muted/30 transition-colors last:border-none"
           >
-            <td class="py-4 px-6 font-mono font-medium text-gray-900">{{ app.asset_code }}</td>
-            <td class="py-4 px-4 text-gray-900">{{ app.category }}</td>
-            <td class="py-4 px-4 text-gray-900">{{ app.subcategory }}</td>
-            <td class="py-4 px-4 text-gray-900">{{ app.brand }}</td>
-            <td class="py-4 px-4 text-gray-900 truncate max-w-xs">{{ app.specification }}</td>
+            <td class="py-4 px-6 font-mono font-medium text-foreground">{{ app.asset_code }}</td>
+            <td class="py-4 px-4 text-foreground">{{ app.category }}</td>
+            <td class="py-4 px-4 text-foreground">{{ app.subcategory }}</td>
+            <td class="py-4 px-4 text-foreground">{{ app.brand }}</td>
+            <td class="py-4 px-4 text-foreground truncate max-w-xs">{{ app.specification }}</td>
             <!-- Plain Text Status Column (matches mockup) -->
-            <td class="py-4 px-4 text-gray-900 font-medium">{{ app.status_label }}</td>
+            <td class="py-4 px-4 text-foreground font-medium">{{ app.status_label }}</td>
             <td class="py-4 px-4 text-center">
               <span 
                 class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold"
@@ -581,70 +590,73 @@ const auditStatusOptions = computed(() => {
               <div class="flex flex-col sm:flex-row items-center gap-3 justify-between p-4 bg-gray-50 border border-gray-200 rounded-xl text-xs">
                 <div class="flex flex-wrap gap-3 items-center w-full sm:w-auto">
                   <div class="relative w-full sm:w-[220px]">
+                    <div class="absolute left-3 top-3 text-gray-400">
+                      <Search class="w-4 h-4" />
+                    </div>
                     <input
                       v-model="auditSearch"
                       type="text"
                       placeholder="Cari Jejak Audit"
-                      class="w-full h-10 pl-3 pr-8 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                      class="w-full h-10 pl-9 pr-3 text-xs border border-gray-300 rounded-[14px] bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
                     />
-                    <div class="absolute right-2.5 top-3 text-gray-400">
-                      <Search class="w-4 h-4" />
-                    </div>
                   </div>
                   
-                  <div class="w-full sm:w-[140px]">
-                    <select 
-                      v-model="auditStatusFilter" 
-                      class="w-full h-10 px-3 border border-gray-300 rounded-lg bg-white text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer"
-                    >
-                      <option value="semua">Semua Status</option>
-                      <option v-for="st in auditStatusOptions" :key="st" :value="st">{{ st }}</option>
-                    </select>
-                  </div>
+                  <Combobox
+                    v-model="auditStatusFilter"
+                    :options="auditStatusOptions"
+                    search-placeholder="Cari Status..."
+                    default-label="Semua Status"
+                    width-class="w-full sm:w-auto min-w-[140px]"
+                  />
 
-                  <div class="w-full sm:w-[150px]">
-                    <select 
-                      v-model="auditTimeFilter" 
-                      class="w-full h-10 px-3 border border-gray-300 rounded-lg bg-white text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer"
-                    >
-                      <option value="semua">Semua Kurun Waktu</option>
-                      <option value="7-hari">7 hari terakhir</option>
-                      <option value="30-hari">30 hari terakhir</option>
-                    </select>
-                  </div>
+                  <Combobox
+                    v-model="auditTimeFilter"
+                    :options="[{ id: '7-hari', name: '7 hari terakhir' }, { id: '30-hari', name: '30 hari terakhir' }]"
+                    search-placeholder="Cari kurun waktu..."
+                    default-label="Semua Kurun Waktu"
+                    width-class="w-full sm:w-auto min-w-[170px]"
+                  />
                 </div>
 
                 <div class="flex items-center gap-2 w-full sm:w-auto justify-end text-gray-500">
                   <span>Baris per halaman:</span>
-                  <select class="border border-gray-300 rounded-lg h-10 px-3 bg-white text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer w-[120px]">
-                    <option value="semua">Semua baris</option>
-                  </select>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" class="w-full sm:w-auto min-w-[130px] h-10 justify-between rounded-[14px] font-normal text-xs bg-white border-gray-300 shadow-sm text-gray-900 gap-2">
+                        <span>Semua baris</span>
+                        <ChevronDown class="w-4 h-4 opacity-50 shrink-0 ml-2" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent class="min-w-[130px] rounded-[14px] z-[10000]" align="start" :side-offset="4">
+                      <DropdownMenuItem>Semua baris</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
 
               <!-- Log table -->
-              <div class="border border-gray-200 rounded-xl overflow-x-auto shadow-sm">
+              <div class="rounded-xl border border-border shadow-sm overflow-x-auto bg-card">
                 <table class="w-full text-xs text-left border-collapse">
-                  <thead>
-                    <tr class="bg-gray-50 border-b border-gray-200 text-gray-700 font-bold uppercase tracking-wider text-[10px]">
-                      <th class="py-3 px-4 w-40">Waktu ↑↓</th>
-                      <th class="py-3 px-4 w-36">Aksi / Status ↑↓</th>
-                      <th class="py-3 px-4 w-40">Aktor ↑↓</th>
-                      <th class="py-3 px-4 w-28 text-center">Durasi (hari) ↑↓</th>
-                      <th class="py-3 px-4">Catatan ↑↓</th>
+                  <thead class="bg-muted/50 border-b border-border text-foreground">
+                    <tr class="hover:bg-transparent text-foreground font-semibold uppercase tracking-wider text-[10px]">
+                      <th class="py-3 px-4 w-40 font-semibold">Waktu ↑↓</th>
+                      <th class="py-3 px-4 w-36 font-semibold">Aksi / Status ↑↓</th>
+                      <th class="py-3 px-4 w-40 font-semibold">Aktor ↑↓</th>
+                      <th class="py-3 px-4 w-28 text-center font-semibold">Durasi (hari) ↑↓</th>
+                      <th class="py-3 px-4 font-semibold">Catatan ↑↓</th>
                     </tr>
                   </thead>
-                  <tbody class="divide-y divide-gray-150">
+                  <tbody>
                     <tr 
                       v-for="(lc, idx) in filteredLifecycles" 
                       :key="idx"
-                      class="hover:bg-gray-50/50 transition-colors"
+                      class="border-b border-border hover:bg-muted/30 transition-colors last:border-none"
                     >
-                      <td class="py-3 px-4 font-medium text-gray-900">{{ lc.waktu }}</td>
-                      <td class="py-3 px-4 text-gray-900 font-medium">{{ lc.aksi_status }}</td>
-                      <td class="py-3 px-4 text-gray-900">{{ lc.aktor }}</td>
-                      <td class="py-3 px-4 text-center text-gray-900">{{ lc.durasi }}</td>
-                      <td class="py-3 px-4 text-gray-700 max-w-sm truncate">{{ lc.catatan }}</td>
+                      <td class="py-3 px-4 font-medium text-foreground">{{ lc.waktu }}</td>
+                      <td class="py-3 px-4 text-foreground font-medium">{{ lc.aksi_status }}</td>
+                      <td class="py-3 px-4 text-foreground">{{ lc.aktor }}</td>
+                      <td class="py-3 px-4 text-center text-foreground">{{ lc.durasi }}</td>
+                      <td class="py-3 px-4 text-muted-foreground max-w-sm truncate">{{ lc.catatan }}</td>
                     </tr>
                     
                     <tr v-if="filteredLifecycles.length === 0">
