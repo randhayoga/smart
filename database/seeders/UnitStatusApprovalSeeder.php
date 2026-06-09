@@ -58,7 +58,6 @@ class UnitStatusApprovalSeeder extends Seeder
                 'note' => 'Aset hilang, berita acara sudah terlampir',
                 'requested_at' => Carbon::now()->subDays(2),
                 'memo_path' => 'memos/berita_acara_sfg14.pdf',
-                'memo_name' => 'Berita_Acara_Hilang_Laptop_Acer.pdf',
             ]);
         }
 
@@ -100,7 +99,6 @@ class UnitStatusApprovalSeeder extends Seeder
                 'note' => 'Aset rusak parah dan perlu persetujuan pergantian status',
                 'requested_at' => Carbon::now()->subDays(1),
                 'memo_path' => 'memos/berita_acara_byd.pdf',
-                'memo_name' => 'Memo_Kerusakan_BYD.pdf',
             ]);
         }
     }

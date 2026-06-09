@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             BarangSeeder::class,
             LotSeeder::class,
             UnitSeeder::class,
+            UnitStatusApprovalSeeder::class,
         ]);
     }
 }

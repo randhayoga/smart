@@ -113,40 +113,110 @@ class BulkUnitController extends Controller
         $validated = $request->validate([
             'ids' => 'required|array',
             'ids.*' => 'exists:units,id',
-            'status' => 'required|string',
-            'condition' => 'required|string',
-            'location_id' => 'required|string',
-            'floor_id' => 'required|string',
-            'room_id' => 'required|string',
+            'status' => 'nullable|string',
+            'condition' => 'nullable|string',
+            'location_id' => 'nullable|exists:locations,id',
+            'floor_id' => 'nullable|exists:floors,id',
+            'room_id' => 'nullable|exists:rooms,id',
+            'price' => 'nullable|numeric|min:0',
+            'use_lot_image' => 'nullable',
+            'image_url' => 'nullable|image|max:1024',
         ]);
 
         $ids = $validated['ids'];
+        $units = Unit::whereIn('id', $ids)->get();
+        if ($units->isEmpty()) {
+            return redirect()->back()->withErrors(['ids' => 'Tidak ada unit yang ditemukan.']);
+        }
+
         $updateData = [];
 
-        if ($validated['status'] !== 'keep') {
-            $updateData['status'] = $validated['status'];
+        // 1. Status & Condition
+        if ($request->filled('status')) {
+            $updateData['status'] = $request->input('status');
         }
-        if ($validated['condition'] !== 'keep') {
-            $updateData['condition'] = $validated['condition'];
+        if ($request->filled('condition')) {
+            $updateData['condition'] = $request->input('condition');
         }
-        if ($validated['location_id'] !== 'keep') {
-            $updateData['location_id'] = $validated['location_id'] === 'null' ? null : $validated['location_id'];
-            
-            // If location is changing, floor/room must be cleared unless a specific new value is set
-            $updateData['floor_id'] = ($validated['floor_id'] !== 'keep' && $validated['floor_id'] !== 'null') ? $validated['floor_id'] : null;
-            $updateData['room_id'] = ($validated['room_id'] !== 'keep' && $validated['room_id'] !== 'null') ? $validated['room_id'] : null;
+
+        // 2. Location, Floor, Room
+        if ($request->filled('location_id')) {
+            $updateData['location_id'] = $request->input('location_id');
+            $updateData['floor_id'] = $request->input('floor_id');
+            $updateData['room_id'] = $request->input('room_id');
         } else {
-            // Location is kept, but maybe floor/room are changed specifically
-            if ($validated['floor_id'] !== 'keep') {
-                $updateData['floor_id'] = $validated['floor_id'] === 'null' ? null : $validated['floor_id'];
+            if ($request->has('floor_id')) {
+                $updateData['floor_id'] = $request->input('floor_id');
             }
-            if ($validated['room_id'] !== 'keep') {
-                $updateData['room_id'] = $validated['room_id'] === 'null' ? null : $validated['room_id'];
+            if ($request->has('room_id')) {
+                $updateData['room_id'] = $request->input('room_id');
+            }
+        }
+
+        // 3. Price
+        if ($request->filled('price')) {
+            $updateData['price'] = (float)$request->input('price');
+        }
+
+        // 4. Image URL / Use LOT Image
+        $finalImagePath = null;
+        $hasNewImage = false;
+
+        if ($request->boolean('use_lot_image')) {
+            $lot = Lot::findOrFail($units->first()->lot_id);
+            if ($lot->image_url && Storage::disk('public')->exists($lot->image_url)) {
+                $extension = pathinfo($lot->image_url, PATHINFO_EXTENSION);
+                $newFilename = 'inventory/units/' . uniqid() . '.' . $extension;
+                Storage::disk('public')->copy($lot->image_url, $newFilename);
+                $finalImagePath = $newFilename;
+                $hasNewImage = true;
+            } else {
+                return redirect()->back()->withErrors(['image_url' => 'Foto LOT tidak ditemukan di storage.']);
+            }
+        } else if ($request->hasFile('image_url')) {
+            $finalImagePath = $request->file('image_url')->store('inventory/units', 'public');
+            $hasNewImage = true;
+        }
+
+        if ($hasNewImage) {
+            $updateData['image_url'] = $finalImagePath;
+
+            // Delete old images for each unit if they are not shared
+            foreach ($units as $unit) {
+                if ($unit->image_url && Storage::disk('public')->exists($unit->image_url)) {
+                    $isShared = Unit::where('image_url', $unit->image_url)->where('id', '!=', $unit->id)->exists()
+                        || Lot::where('image_url', $unit->image_url)->exists()
+                        || \App\Models\Inventory\Barang::where('image_url', $unit->image_url)->exists();
+                    if (!$isShared) {
+                        Storage::disk('public')->delete($unit->image_url);
+                    }
+                }
             }
         }
 
         if (!empty($updateData)) {
             Unit::whereIn('id', $ids)->update($updateData);
+        }
+
+        // 5. Handle approvals if status is changed to a status requiring approval
+        $arrNeedApproval = ['rusak'];
+        if ($request->filled('status') && in_array($request->input('status'), $arrNeedApproval)) {
+            foreach ($units as $unit) {
+                $existing = \App\Models\Inventory\UnitStatusApproval::where('unit_id', $unit->id)
+                    ->where('decision', 'pending')
+                    ->first();
+                if (!$existing) {
+                    \App\Models\Inventory\UnitStatusApproval::create([
+                        'unit_id' => $unit->id,
+                        'requester_id' => $request->user()->id,
+                        'proposed_status' => $request->input('status'),
+                        'decision' => 'pending',
+                        'note' => null,
+                        'approver_id' => null,
+                        'requested_at' => now(),
+                    ]);
+                }
+            }
         }
 
         return redirect()->back()->with('success', 'Aset berhasil diperbarui secara massal.');

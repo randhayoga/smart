@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, computed, h } from 'vue';
+import { ref, watch, onMounted, computed, h, nextTick } from 'vue';
 import { router, useForm, usePage } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 import AppLayout from '@/Layouts/AppLayout.vue';
@@ -727,6 +727,7 @@ const handleSaveChanges = () => {
 // Bulk Edit LOT Modal Logic
 const isBulkEditModalOpen = ref(false);
 const selectedLotItem = ref<any | null>(null);
+const isInitializingBulkForm = ref(false);
 
 const bulkLotForm = useForm({
   ids: [] as number[],
@@ -750,6 +751,8 @@ const openBulkEditModal = () => {
     .map((r: any) => r.original);
   
   if (selectedRows.length === 0) return;
+
+  isInitializingBulkForm.value = true;
 
   bulkLotForm.reset();
   bulkLotForm.clearErrors();
@@ -796,6 +799,9 @@ const openBulkEditModal = () => {
     selectedLotItem.value = null;
   }
   isBulkEditModalOpen.value = true;
+  nextTick(() => {
+    isInitializingBulkForm.value = false;
+  });
 };
 
 const closeBulkEditModal = () => {
@@ -873,27 +879,16 @@ const bulkFilteredRooms = computed(() => {
 });
 
 watch(() => bulkLotForm.location_id, (newVal) => {
-  if (newVal) {
-    const valid = bulkFilteredFloors.value.some(f => Number(f.id) === Number(bulkLotForm.floor_id));
-    if (!valid) {
-      bulkLotForm.floor_id = null;
-      bulkLotForm.room_id = null;
-    }
-  } else {
-    bulkLotForm.floor_id = null;
-    bulkLotForm.room_id = null;
-  }
+  if (isInitializingBulkForm.value) return;
+  console.log('[DEBUG DetailBarang] location_id watch triggered, newVal:', newVal);
+  bulkLotForm.floor_id = null;
+  bulkLotForm.room_id = null;
 });
 
 watch(() => bulkLotForm.floor_id, (newVal) => {
-  if (newVal) {
-    const valid = bulkFilteredRooms.value.some(r => Number(r.id) === Number(bulkLotForm.room_id));
-    if (!valid) {
-      bulkLotForm.room_id = null;
-    }
-  } else {
-    bulkLotForm.room_id = null;
-  }
+  if (isInitializingBulkForm.value) return;
+  console.log('[DEBUG DetailBarang] floor_id watch triggered, newVal:', newVal);
+  bulkLotForm.room_id = null;
 });
 
 const isBulkLotFormValid = computed(() => {
@@ -949,9 +944,14 @@ const handleSaveBulkChanges = () => {
     } else {
       if (data.organizer_id) formData.organizer_id = data.organizer_id;
       if (data.vendor_id) formData.vendor_id = data.vendor_id;
-      if (data.location_id) formData.location_id = data.location_id;
-      if (data.floor_id) formData.floor_id = data.floor_id;
-      if (data.room_id) formData.room_id = data.room_id;
+      if (data.location_id) {
+        formData.location_id = data.location_id;
+        formData.floor_id = data.floor_id;
+        formData.room_id = data.room_id;
+      } else {
+        if (data.floor_id) formData.floor_id = data.floor_id;
+        if (data.room_id) formData.room_id = data.room_id;
+      }
       if (data.unit_price !== '') formData.unit_price = data.unit_price;
       if (data.image_url) formData.image_url = data.image_url;
       if (data.use_parent_image) formData.use_parent_image = data.use_parent_image;
