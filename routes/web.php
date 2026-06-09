@@ -93,7 +93,13 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
         Route::get('/approve', [App\Http\Controllers\Smart\Manager\ApprovalController::class, 'index'])->name('approve');
         Route::get('/approve/{id}', [App\Http\Controllers\Smart\Manager\ApprovalController::class, 'show'])->name('approve.show');
         Route::post('/approve/{id}/action', [App\Http\Controllers\Smart\Manager\ApprovalController::class, 'action'])->name('approve.action');
+        Route::post('/approve/action', [App\Http\Controllers\Smart\Manager\ApprovalController::class, 'bulkAction'])->name('approve.bulk-action');
         Route::get('/approved', [App\Http\Controllers\Smart\Manager\ApprovalController::class, 'approvedList'])->name('approved');
+
+        // Asset Status Approval Routes
+        Route::get('/approve-status', [App\Http\Controllers\Smart\Manager\AssetStatusApprovalController::class, 'index'])->name('approve-status');
+        Route::post('/approve-status/action', [App\Http\Controllers\Smart\Manager\AssetStatusApprovalController::class, 'action'])->name('approve-status.action');
+        Route::get('/approved-status', [App\Http\Controllers\Smart\Manager\AssetStatusApprovalController::class, 'approvedList'])->name('approved-status');
     });
 
     // Manager and User routes

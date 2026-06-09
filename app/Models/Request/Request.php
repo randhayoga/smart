@@ -5,9 +5,9 @@ namespace App\Models\Request;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use App\Models\User;
-use App\Models\Department;
-use App\Models\Project;
+use App\Models\AdmUser;
+use App\Models\HrdOrgchart;
+use App\Models\TbProject;
 
 class Request extends Model
 {
@@ -18,37 +18,32 @@ class Request extends Model
         'user_id',
         'approver_id',
         'utilization',
-        'department_id',
+        'org_id',
         'project_id',
         'reasoning',
-        'start_date',
-        'end_date',
         'status',
     ];
 
-    protected $casts = [
-        'start_date' => 'datetime',
-        'end_date' => 'datetime',
-    ];
+    protected $casts = [];
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(AdmUser::class, 'user_id');
     }
 
     public function approver(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'approver_id');
+        return $this->belongsTo(AdmUser::class, 'approver_id');
     }
 
     public function department(): BelongsTo
     {
-        return $this->belongsTo(Department::class);
+        return $this->belongsTo(HrdOrgchart::class, 'org_id');
     }
 
     public function project(): BelongsTo
     {
-        return $this->belongsTo(Project::class);
+        return $this->belongsTo(TbProject::class, 'project_id');
     }
 
     public function items(): HasMany

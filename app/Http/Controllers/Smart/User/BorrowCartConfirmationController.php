@@ -5,9 +5,10 @@ namespace App\Http\Controllers\Smart\User;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Models\AdmUser;
 use App\Models\Cart\AssetBasket;
-use App\Models\Department;
-use App\Models\Project;
+use App\Models\HrdOrgchart;
+use App\Models\TbProject;
 use App\Models\Request\Request as SmartRequest;
 use App\Models\Request\RequestItem;
 use App\Models\Request\RequestStatusLog;
@@ -36,7 +37,7 @@ class BorrowCartConfirmationController extends Controller
                 return [
                     'id' => $item->id,
                     'barang_id' => $item->barang_id,
-                    'brand' => $item->barang->brand->name ?? '-',
+                    'brand' => $item->barang->brand->name ?? '',
                     'spec' => $item->barang->specification ?? '',
                     'category' => $item->barang->subcategory->category->name ?? '-',
                     'subcategory' => $item->barang->subcategory->name ?? '-',
@@ -46,14 +47,14 @@ class BorrowCartConfirmationController extends Controller
                 ];
             });
 
-        $departments = Department::orderBy('name')->get()->map(fn($d) => [
+        $departments = HrdOrgchart::orderBy('org_name')->get()->map(fn($d) => [
             'value' => (string) $d->id,
-            'label' => $d->name
+            'label' => $d->org_name
         ]);
 
-        $projects = Project::orderBy('name')->get()->map(fn($p) => [
+        $projects = TbProject::orderBy('project_name')->get()->map(fn($p) => [
             'value' => (string) $p->id,
-            'label' => $p->name
+            'label' => $p->project_name
         ]);
 
         // Default dates from query params or fallback
@@ -101,26 +102,43 @@ class BorrowCartConfirmationController extends Controller
         }
         $requestNumber = $monthYear . '-' . str_pad($seq, 4, '0', STR_PAD_LEFT);
 
-        // Determine approver
-        $approverId = $request->user()->department?->manager_id;
-        if (!$approverId) {
-            $approverId = \App\Models\User::where('role', 'manager')->first()?->id;
-        }
-        if (!$approverId) {
-            $approverId = \App\Models\User::first()?->id;
+        // Determine approver: cari user yang employee_id-nya ada di hrd_orgcharts (mereka adalah manager)
+        $currentUser = $request->user();
+        $approverId = null;
+
+        // Cari orgchart berdasarkan department_id dari request (jika corporate)
+        if (!empty($validated['departemen'])) {
+            $orgchart = HrdOrgchart::find((int)$validated['departemen']);
+            if ($orgchart) {
+                $managerUser = AdmUser::where('employee_id', $orgchart->employee_id)->first();
+                $approverId = $managerUser?->id;
+            }
         }
 
-        // Create Request with dates
+        // Fallback: ambil manager pertama yang ada di hrd_orgcharts
+        if (!$approverId) {
+            $managerEmployeeId = HrdOrgchart::whereNotNull('employee_id')
+                ->where('org_code', '!=', 'IFS')
+                ->value('employee_id');
+            if ($managerEmployeeId) {
+                $approverId = AdmUser::where('employee_id', $managerEmployeeId)->value('id');
+            }
+        }
+
+        // Fallback terakhir: gunakan user pertama yang ada
+        if (!$approverId) {
+            $approverId = AdmUser::first()?->id;
+        }
+
+        // Create Request
         $smartRequest = SmartRequest::create([
             'request_number' => $requestNumber,
             'user_id' => $request->user()->id,
             'approver_id' => $approverId,
             'utilization' => $validated['pemanfaatan'],
-            'department_id' => $validated['pemanfaatan'] === 'corporate' ? (int)$validated['departemen'] : null,
+            'org_id' => $validated['pemanfaatan'] === 'corporate' ? (int)$validated['departemen'] : null,
             'project_id' => $validated['pemanfaatan'] === 'project' ? (int)$validated['project'] : null,
             'reasoning' => $validated['alasan'],
-            'start_date' => Carbon::parse($validated['start_date']),
-            'end_date' => $validated['end_date'] ? Carbon::parse($validated['end_date']) : null,
             'status' => 'wait',
         ]);
 
@@ -133,6 +151,8 @@ class BorrowCartConfirmationController extends Controller
                 'request_id' => $smartRequest->id,
                 'barang_id' => $basketItem->barang_id,
                 'quantity_requested' => $basketItem->quantity,
+                'start_date' => Carbon::parse($validated['start_date']),
+                'end_date' => $validated['end_date'] ? Carbon::parse($validated['end_date']) : null,
             ]);
 
             $basketItem->delete();

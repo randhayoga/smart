@@ -79,9 +79,12 @@ class BrowseController extends Controller
                 'barang_id' => $barang->id,
             ]);
             $basketItem->quantity = ($basketItem->quantity ?? 0) + $validated['quantity'];
-            // Assets need a default start date if not set, or we set it to tomorrow
+            // Assets need default start and end dates if not set, or we set them to tomorrow and the day after
             if (!$basketItem->start_date) {
                 $basketItem->start_date = now()->addDay();
+            }
+            if (!$basketItem->end_date) {
+                $basketItem->end_date = now()->addDays(2);
             }
             $basketItem->save();
         }
