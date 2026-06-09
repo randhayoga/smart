@@ -4,7 +4,7 @@ namespace App\Models\Cart;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use App\Models\User;
+use App\Models\AdmUser;
 use App\Models\Inventory\Barang;
 
 class AssetBasket extends Model
@@ -26,7 +26,7 @@ class AssetBasket extends Model
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(AdmUser::class);
     }
 
     public function barang(): BelongsTo

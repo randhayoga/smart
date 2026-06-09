@@ -4,7 +4,7 @@ namespace App\Models\Request;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use App\Models\User;
+use App\Models\AdmUser;
 
 class RequestAdminConfirmation extends Model
 {
@@ -29,6 +29,6 @@ class RequestAdminConfirmation extends Model
 
     public function admin(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'admin_id');
+        return $this->belongsTo(AdmUser::class, 'admin_id');
     }
 }

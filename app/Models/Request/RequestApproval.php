@@ -4,7 +4,7 @@ namespace App\Models\Request;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use App\Models\User;
+use App\Models\AdmUser;
 
 class RequestApproval extends Model
 {
@@ -29,6 +29,6 @@ class RequestApproval extends Model
 
     public function approver(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'approver_id');
+        return $this->belongsTo(AdmUser::class, 'approver_id');
     }
 }
