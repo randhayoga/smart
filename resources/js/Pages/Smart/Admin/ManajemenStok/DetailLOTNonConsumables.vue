@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, computed, h } from 'vue';
+import { ref, watch, onMounted, computed, h, nextTick } from 'vue';
 import { router, useForm, usePage } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 import AppLayout from '@/Layouts/AppLayout.vue';
@@ -295,6 +295,8 @@ const isVehicle = computed(() => {
          category.includes('motor') || subcategory.includes('motor');
 });
 
+const isInitializingAssetForm = ref(false);
+
 const assetForm = useForm({
   _method: 'POST',
   number: '',
@@ -315,6 +317,8 @@ const assetForm = useForm({
   memo_file_name: '',
 });
 
+const arrNeedApproval = ['rusak'];
+
 const generateAssetCode = () => {
   const lotNumber = props.lot.lotCode;
   const prefix = `${lotNumber}-U`;
@@ -334,6 +338,7 @@ const generateAssetCode = () => {
 const openCreateAssetModal = () => {
   assetModalMode.value = 'create';
   selectedAssetId.value = null;
+  isInitializingAssetForm.value = true;
   assetForm.reset();
   assetForm._method = 'POST';
   assetForm.number = generateAssetCode();
@@ -352,11 +357,15 @@ const openCreateAssetModal = () => {
   assetForm.memo_file = null;
   assetForm.memo_file_name = '';
   isAssetModalOpen.value = true;
+  nextTick(() => {
+    isInitializingAssetForm.value = false;
+  });
 };
 
 const openEditAssetModal = (asset: any) => {
   assetModalMode.value = 'edit';
   selectedAssetId.value = asset.id;
+  isInitializingAssetForm.value = true;
   assetForm.reset();
   assetForm._method = 'PUT';
   assetForm.number = asset.number;
@@ -374,6 +383,9 @@ const openEditAssetModal = (asset: any) => {
   assetForm.memo_file = null;
   assetForm.memo_file_name = asset.memo_file_name || '';
   isAssetModalOpen.value = true;
+  nextTick(() => {
+    isInitializingAssetForm.value = false;
+  });
 };
 
 const handleAssetFileUpload = (e: any) => {
@@ -472,6 +484,7 @@ const filteredRoomsForAsset = computed(() => {
 });
 
 watch(() => assetForm.location_id, (newVal) => {
+  if (isInitializingAssetForm.value) return;
   if (newVal) {
     const valid = filteredFloorsForAsset.value.some(f => Number(f.id) === Number(assetForm.floor_id));
     if (!valid) {
@@ -485,6 +498,7 @@ watch(() => assetForm.location_id, (newVal) => {
 });
 
 watch(() => assetForm.floor_id, (newVal) => {
+  if (isInitializingAssetForm.value) return;
   if (newVal) {
     const valid = filteredRoomsForAsset.value.some(r => Number(r.id) === Number(assetForm.room_id));
     if (!valid) {
@@ -496,7 +510,7 @@ watch(() => assetForm.floor_id, (newVal) => {
 });
 
 watch(() => assetForm.status, (newVal) => {
-  if (newVal !== 'rusak') {
+  if (!arrNeedApproval.includes(newVal)) {
     assetForm.memo_file = null;
     assetForm.memo_file_name = '';
   }
@@ -531,7 +545,7 @@ const isAssetFormValid = computed(() => {
          assetForm.condition && 
          assetForm.price !== '' && 
          (assetForm.image_url || assetForm.image_url_name) &&
-         (assetForm.status !== 'rusak' || assetForm.memo_file_name) &&
+         (!arrNeedApproval.includes(assetForm.status) || assetForm.memo_file_name) &&
          !assetForm.processing;
 
   if (!baseValid) return false;
@@ -784,11 +798,29 @@ const openBulkVehicleEditModal = () => {
 };
 
 const handleSaveBulkVehicleEdit = () => {
-  isBulkVehicleEditModalOpen.value = false;
-  if (dataTableRef.value && dataTableRef.value.table) {
-    dataTableRef.value.table.resetRowSelection();
+  const payload: any = {
+    ids: bulkVehicleEditForm.value.ids,
+    status: bulkVehicleEditForm.value.status || 'keep',
+    condition: bulkVehicleEditForm.value.condition || 'keep',
+    location_id: bulkVehicleEditForm.value.location_id || 'keep',
+    floor_id: bulkVehicleEditForm.value.floor_id || 'keep',
+    room_id: bulkVehicleEditForm.value.room_id || 'keep',
+    price: bulkVehicleEditForm.value.price ? parseCurrencyToNumber(bulkVehicleEditForm.value.price).toString() : 'keep',
+    use_lot_image: bulkVehicleEditForm.value.use_lot_image ? '1' : '0',
+  };
+  if (bulkVehicleEditForm.value.image_url instanceof File) {
+    payload.image_url = bulkVehicleEditForm.value.image_url;
   }
-  toast.success('Aset kendaraan berhasil diperbarui secara massal.');
+
+  router.post('/smart/inventory/units/bulk-update', payload, {
+    onSuccess: () => {
+      isBulkVehicleEditModalOpen.value = false;
+      if (dataTableRef.value && dataTableRef.value.table) {
+        dataTableRef.value.table.resetRowSelection();
+      }
+      toast.success('Aset kendaraan berhasil diperbarui secara massal.');
+    }
+  });
 };
 
 const filteredFloorsForBulkVehicle = computed(() => {
@@ -799,30 +831,6 @@ const filteredFloorsForBulkVehicle = computed(() => {
 const filteredRoomsForBulkVehicle = computed(() => {
   if (!bulkVehicleEditForm.value.floor_id) return [];
   return props.rooms.filter(r => Number(r.floor_id) === Number(bulkVehicleEditForm.value.floor_id));
-});
-
-watch(() => bulkVehicleEditForm.value.location_id, (newVal) => {
-  if (newVal) {
-    const valid = filteredFloorsForBulkVehicle.value.some(f => Number(f.id) === Number(bulkVehicleEditForm.value.floor_id));
-    if (!valid) {
-      bulkVehicleEditForm.value.floor_id = '';
-      bulkVehicleEditForm.value.room_id = '';
-    }
-  } else {
-    bulkVehicleEditForm.value.floor_id = '';
-    bulkVehicleEditForm.value.room_id = '';
-  }
-});
-
-watch(() => bulkVehicleEditForm.value.floor_id, (newVal) => {
-  if (newVal) {
-    const valid = filteredRoomsForBulkVehicle.value.some(r => Number(r.id) === Number(bulkVehicleEditForm.value.room_id));
-    if (!valid) {
-      bulkVehicleEditForm.value.room_id = '';
-    }
-  } else {
-    bulkVehicleEditForm.value.room_id = '';
-  }
 });
 
 const handleBulkVehicleSamakanPrice = () => {
@@ -989,11 +997,29 @@ const handleBulkSamakanMemo = () => {
 };
 
 const handleSaveBulkEdit = () => {
-  isBulkEditModalOpen.value = false;
-  if (dataTableRef.value && dataTableRef.value.table) {
-    dataTableRef.value.table.resetRowSelection();
+  const payload: any = {
+    ids: bulkEditForm.value.ids,
+    status: bulkEditForm.value.status || 'keep',
+    condition: bulkEditForm.value.condition || 'keep',
+    location_id: bulkEditForm.value.location_id || 'keep',
+    floor_id: bulkEditForm.value.floor_id || 'keep',
+    room_id: bulkEditForm.value.room_id || 'keep',
+    price: bulkEditForm.value.price ? parseCurrencyToNumber(bulkEditForm.value.price).toString() : 'keep',
+    use_lot_image: bulkEditForm.value.use_lot_image ? '1' : '0',
+  };
+  if (bulkEditForm.value.image_url instanceof File) {
+    payload.image_url = bulkEditForm.value.image_url;
   }
-  toast.success('Aset berhasil diperbarui secara massal.');
+
+  router.post('/smart/inventory/units/bulk-update', payload, {
+    onSuccess: () => {
+      isBulkEditModalOpen.value = false;
+      if (dataTableRef.value && dataTableRef.value.table) {
+        dataTableRef.value.table.resetRowSelection();
+      }
+      toast.success('Aset berhasil diperbarui secara massal.');
+    }
+  });
 };
 
 const filteredFloorsForBulk = computed(() => {
@@ -1004,30 +1030,6 @@ const filteredFloorsForBulk = computed(() => {
 const filteredRoomsForBulk = computed(() => {
   if (!bulkEditForm.value.floor_id) return [];
   return props.rooms.filter(r => Number(r.floor_id) === Number(bulkEditForm.value.floor_id));
-});
-
-watch(() => bulkEditForm.value.location_id, (newVal) => {
-  if (newVal) {
-    const valid = filteredFloorsForBulk.value.some(f => Number(f.id) === Number(bulkEditForm.value.floor_id));
-    if (!valid) {
-      bulkEditForm.value.floor_id = '';
-      bulkEditForm.value.room_id = '';
-    }
-  } else {
-    bulkEditForm.value.floor_id = '';
-    bulkEditForm.value.room_id = '';
-  }
-});
-
-watch(() => bulkEditForm.value.floor_id, (newVal) => {
-  if (newVal) {
-    const valid = filteredRoomsForBulk.value.some(r => Number(r.id) === Number(bulkEditForm.value.room_id));
-    if (!valid) {
-      bulkEditForm.value.room_id = '';
-    }
-  } else {
-    bulkEditForm.value.room_id = '';
-  }
 });
 
 const handleBulkSamakanPrice = () => {
@@ -2013,7 +2015,7 @@ const totalAsetTerpilihCount = computed(() => {
                     </div>
 
                     <!-- Berita Acara / Memo -->
-                    <div v-if="assetForm.status === 'rusak'" class="space-y-1.5">
+                    <div v-if="arrNeedApproval.includes(assetForm.status)" class="space-y-1.5">
                       <label class="text-sm font-medium text-foreground block">
                         Berita Acara / Memo<span class="text-rose-500">*</span>
                       </label>
