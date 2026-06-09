@@ -15,6 +15,13 @@ class RequestItem extends Model
         'request_id',
         'barang_id',
         'quantity_requested',
+        'start_date',
+        'end_date',
+    ];
+
+    protected $casts = [
+        'start_date' => 'datetime',
+        'end_date' => 'datetime',
     ];
 
     public function request(): BelongsTo

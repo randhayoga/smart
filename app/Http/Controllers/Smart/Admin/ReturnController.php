@@ -18,7 +18,7 @@ class ReturnController extends Controller
      */
     public function index()
     {
-        $returnsList = SmartRequest::with(['user', 'return'])
+        $returnsList = SmartRequest::with(['user', 'return', 'items'])
             ->where('status', 'return')
             ->orderBy('id', 'desc')
             ->get()
