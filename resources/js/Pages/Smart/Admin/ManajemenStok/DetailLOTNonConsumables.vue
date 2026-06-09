@@ -268,7 +268,6 @@ const handleSaveLot = () => {
   }).post(`/smart/inventory/lots/${props.lot.id}`, {
     onSuccess: () => {
       isLotModalOpen.value = false;
-      toast.success('LOT berhasil diperbarui.');
     }
   });
 };
@@ -600,14 +599,12 @@ const handleSaveAsset = () => {
     assetForm.post(url, {
       onSuccess: () => {
         isAssetModalOpen.value = false;
-        toast.success(assetForm.is_bulk ? 'Aset berhasil ditambahkan secara massal.' : 'Aset berhasil ditambahkan.');
       }
     });
   } else {
     assetForm.post(`/smart/inventory/units/${selectedAssetId.value}`, {
       onSuccess: () => {
         isAssetModalOpen.value = false;
-        toast.success('Aset berhasil diperbarui.');
       }
     });
   }
@@ -727,7 +724,6 @@ const handleConfirmDelete = () => {
           return;
         }
         closeDeleteModal();
-        toast.success('LOT berhasil dihapus.');
         // Redirect to parent detail page
         router.get(`/smart/inventory/${props.lot.barang_code}`);
       }
@@ -736,7 +732,6 @@ const handleConfirmDelete = () => {
     router.delete(`/smart/inventory/units/${assetToDelete.value.id}`, {
       onSuccess: () => {
         closeDeleteModal();
-        toast.success('Aset berhasil dihapus.');
       }
     });
   }
@@ -800,14 +795,31 @@ const openBulkVehicleEditModal = () => {
 const handleSaveBulkVehicleEdit = () => {
   const payload: any = {
     ids: bulkVehicleEditForm.value.ids,
-    status: bulkVehicleEditForm.value.status || 'keep',
-    condition: bulkVehicleEditForm.value.condition || 'keep',
-    location_id: bulkVehicleEditForm.value.location_id || 'keep',
-    floor_id: bulkVehicleEditForm.value.floor_id || 'keep',
-    room_id: bulkVehicleEditForm.value.room_id || 'keep',
-    price: bulkVehicleEditForm.value.price ? parseCurrencyToNumber(bulkVehicleEditForm.value.price).toString() : 'keep',
-    use_lot_image: bulkVehicleEditForm.value.use_lot_image ? '1' : '0',
   };
+  if (bulkVehicleEditForm.value.status) {
+    payload.status = bulkVehicleEditForm.value.status;
+  }
+  if (bulkVehicleEditForm.value.condition) {
+    payload.condition = bulkVehicleEditForm.value.condition;
+  }
+  if (bulkVehicleEditForm.value.location_id) {
+    payload.location_id = bulkVehicleEditForm.value.location_id;
+    payload.floor_id = bulkVehicleEditForm.value.floor_id || null;
+    payload.room_id = bulkVehicleEditForm.value.room_id || null;
+  } else {
+    if (bulkVehicleEditForm.value.floor_id) {
+      payload.floor_id = bulkVehicleEditForm.value.floor_id;
+    }
+    if (bulkVehicleEditForm.value.room_id) {
+      payload.room_id = bulkVehicleEditForm.value.room_id;
+    }
+  }
+  if (bulkVehicleEditForm.value.price) {
+    payload.price = parseCurrencyToNumber(bulkVehicleEditForm.value.price).toString();
+  }
+  if (bulkVehicleEditForm.value.use_lot_image) {
+    payload.use_lot_image = true;
+  }
   if (bulkVehicleEditForm.value.image_url instanceof File) {
     payload.image_url = bulkVehicleEditForm.value.image_url;
   }
@@ -818,7 +830,6 @@ const handleSaveBulkVehicleEdit = () => {
       if (dataTableRef.value && dataTableRef.value.table) {
         dataTableRef.value.table.resetRowSelection();
       }
-      toast.success('Aset kendaraan berhasil diperbarui secara massal.');
     }
   });
 };
@@ -999,14 +1010,31 @@ const handleBulkSamakanMemo = () => {
 const handleSaveBulkEdit = () => {
   const payload: any = {
     ids: bulkEditForm.value.ids,
-    status: bulkEditForm.value.status || 'keep',
-    condition: bulkEditForm.value.condition || 'keep',
-    location_id: bulkEditForm.value.location_id || 'keep',
-    floor_id: bulkEditForm.value.floor_id || 'keep',
-    room_id: bulkEditForm.value.room_id || 'keep',
-    price: bulkEditForm.value.price ? parseCurrencyToNumber(bulkEditForm.value.price).toString() : 'keep',
-    use_lot_image: bulkEditForm.value.use_lot_image ? '1' : '0',
   };
+  if (bulkEditForm.value.status) {
+    payload.status = bulkEditForm.value.status;
+  }
+  if (bulkEditForm.value.condition) {
+    payload.condition = bulkEditForm.value.condition;
+  }
+  if (bulkEditForm.value.location_id) {
+    payload.location_id = bulkEditForm.value.location_id;
+    payload.floor_id = bulkEditForm.value.floor_id || null;
+    payload.room_id = bulkEditForm.value.room_id || null;
+  } else {
+    if (bulkEditForm.value.floor_id) {
+      payload.floor_id = bulkEditForm.value.floor_id;
+    }
+    if (bulkEditForm.value.room_id) {
+      payload.room_id = bulkEditForm.value.room_id;
+    }
+  }
+  if (bulkEditForm.value.price) {
+    payload.price = parseCurrencyToNumber(bulkEditForm.value.price).toString();
+  }
+  if (bulkEditForm.value.use_lot_image) {
+    payload.use_lot_image = true;
+  }
   if (bulkEditForm.value.image_url instanceof File) {
     payload.image_url = bulkEditForm.value.image_url;
   }
@@ -1017,7 +1045,6 @@ const handleSaveBulkEdit = () => {
       if (dataTableRef.value && dataTableRef.value.table) {
         dataTableRef.value.table.resetRowSelection();
       }
-      toast.success('Aset berhasil diperbarui secara massal.');
     }
   });
 };

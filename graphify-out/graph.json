@@ -396,7 +396,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/BulkBarangController.php",
       "source_location": "L1",
       "id": "manajemenstok_bulkbarangcontroller",
-      "community": 0,
+      "community": 5,
       "norm_label": "bulkbarangcontroller.php"
     },
     {
@@ -405,7 +405,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/BulkBarangController.php",
       "source_location": "L10",
       "id": "manajemenstok_bulkbarangcontroller_bulkbarangcontroller",
-      "community": 0,
+      "community": 5,
       "norm_label": "bulkbarangcontroller"
     },
     {
@@ -414,7 +414,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/BulkBarangController.php",
       "source_location": "L15",
       "id": "manajemenstok_bulkbarangcontroller_bulkbarangcontroller_update",
-      "community": 0,
+      "community": 5,
       "norm_label": ".update()"
     },
     {
@@ -423,7 +423,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/BulkBarangController.php",
       "source_location": "L15",
       "id": "app_http_controllers_smart_admin_manajemenstok_bulkbarangcontroller_php_request",
-      "community": 0,
+      "community": 5,
       "norm_label": "request"
     },
     {
@@ -432,7 +432,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/BulkBarangController.php",
       "source_location": "L68",
       "id": "manajemenstok_bulkbarangcontroller_bulkbarangcontroller_destroy",
-      "community": 0,
+      "community": 5,
       "norm_label": ".destroy()"
     },
     {
@@ -441,7 +441,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/BulkLotController.php",
       "source_location": "L1",
       "id": "manajemenstok_bulklotcontroller",
-      "community": 0,
+      "community": 5,
       "norm_label": "bulklotcontroller.php"
     },
     {
@@ -450,7 +450,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/BulkLotController.php",
       "source_location": "L10",
       "id": "manajemenstok_bulklotcontroller_bulklotcontroller",
-      "community": 0,
+      "community": 5,
       "norm_label": "bulklotcontroller"
     },
     {
@@ -459,7 +459,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/BulkLotController.php",
       "source_location": "L15",
       "id": "manajemenstok_bulklotcontroller_bulklotcontroller_update",
-      "community": 0,
+      "community": 5,
       "norm_label": ".update()"
     },
     {
@@ -468,7 +468,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/BulkLotController.php",
       "source_location": "L15",
       "id": "app_http_controllers_smart_admin_manajemenstok_bulklotcontroller_php_request",
-      "community": 0,
+      "community": 5,
       "norm_label": "request"
     },
     {
@@ -477,7 +477,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/BulkLotController.php",
       "source_location": "L97",
       "id": "manajemenstok_bulklotcontroller_bulklotcontroller_destroy",
-      "community": 0,
+      "community": 5,
       "norm_label": ".destroy()"
     },
     {
@@ -486,7 +486,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/BulkUnitController.php",
       "source_location": "L1",
       "id": "manajemenstok_bulkunitcontroller",
-      "community": 0,
+      "community": 5,
       "norm_label": "bulkunitcontroller.php"
     },
     {
@@ -495,7 +495,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/BulkUnitController.php",
       "source_location": "L11",
       "id": "manajemenstok_bulkunitcontroller_bulkunitcontroller",
-      "community": 0,
+      "community": 5,
       "norm_label": "bulkunitcontroller"
     },
     {
@@ -504,7 +504,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/BulkUnitController.php",
       "source_location": "L16",
       "id": "manajemenstok_bulkunitcontroller_bulkunitcontroller_store",
-      "community": 0,
+      "community": 5,
       "norm_label": ".store()"
     },
     {
@@ -513,7 +513,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/BulkUnitController.php",
       "source_location": "L16",
       "id": "app_http_controllers_smart_admin_manajemenstok_bulkunitcontroller_php_request",
-      "community": 0,
+      "community": 5,
       "norm_label": "request"
     },
     {
@@ -522,7 +522,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/BulkUnitController.php",
       "source_location": "L111",
       "id": "manajemenstok_bulkunitcontroller_bulkunitcontroller_update",
-      "community": 0,
+      "community": 5,
       "norm_label": ".update()"
     },
     {
@@ -531,7 +531,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/LotController.php",
       "source_location": "L1",
       "id": "manajemenstok_lotcontroller",
-      "community": 8,
+      "community": 5,
       "norm_label": "lotcontroller.php"
     },
     {
@@ -540,7 +540,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/LotController.php",
       "source_location": "L10",
       "id": "manajemenstok_lotcontroller_lotcontroller",
-      "community": 8,
+      "community": 5,
       "norm_label": "lotcontroller"
     },
     {
@@ -549,7 +549,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/LotController.php",
       "source_location": "L15",
       "id": "manajemenstok_lotcontroller_lotcontroller_store",
-      "community": 8,
+      "community": 5,
       "norm_label": ".store()"
     },
     {
@@ -558,7 +558,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/LotController.php",
       "source_location": "L15",
       "id": "app_http_controllers_smart_admin_manajemenstok_lotcontroller_php_request",
-      "community": 8,
+      "community": 5,
       "norm_label": "request"
     },
     {
@@ -567,7 +567,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/LotController.php",
       "source_location": "L60",
       "id": "manajemenstok_lotcontroller_lotcontroller_update",
-      "community": 8,
+      "community": 5,
       "norm_label": ".update()"
     },
     {
@@ -576,7 +576,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/LotController.php",
       "source_location": "L60",
       "id": "lot",
-      "community": 8,
+      "community": 5,
       "norm_label": "lot"
     },
     {
@@ -585,7 +585,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/LotController.php",
       "source_location": "L123",
       "id": "manajemenstok_lotcontroller_lotcontroller_destroy",
-      "community": 8,
+      "community": 5,
       "norm_label": ".destroy()"
     },
     {
@@ -594,7 +594,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/LotController.php",
       "source_location": "L145",
       "id": "manajemenstok_lotcontroller_lotcontroller_show",
-      "community": 8,
+      "community": 5,
       "norm_label": ".show()"
     },
     {
@@ -603,7 +603,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitController.php",
       "source_location": "L1",
       "id": "manajemenstok_unitcontroller",
-      "community": 4,
+      "community": 5,
       "norm_label": "unitcontroller.php"
     },
     {
@@ -612,7 +612,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitController.php",
       "source_location": "L12",
       "id": "manajemenstok_unitcontroller_unitcontroller",
-      "community": 4,
+      "community": 5,
       "norm_label": "unitcontroller"
     },
     {
@@ -621,7 +621,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitController.php",
       "source_location": "L17",
       "id": "manajemenstok_unitcontroller_unitcontroller_store",
-      "community": 4,
+      "community": 5,
       "norm_label": ".store()"
     },
     {
@@ -630,7 +630,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitController.php",
       "source_location": "L17",
       "id": "app_http_controllers_smart_admin_manajemenstok_unitcontroller_php_request",
-      "community": 4,
+      "community": 5,
       "norm_label": "request"
     },
     {
@@ -639,7 +639,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitController.php",
       "source_location": "L91",
       "id": "manajemenstok_unitcontroller_unitcontroller_update",
-      "community": 4,
+      "community": 5,
       "norm_label": ".update()"
     },
     {
@@ -648,7 +648,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitController.php",
       "source_location": "L91",
       "id": "unit",
-      "community": 4,
+      "community": 5,
       "norm_label": "unit"
     },
     {
@@ -657,7 +657,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitController.php",
       "source_location": "L188",
       "id": "manajemenstok_unitcontroller_unitcontroller_destroy",
-      "community": 4,
+      "community": 5,
       "norm_label": ".destroy()"
     },
     {
@@ -666,7 +666,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitStatusApprovalController.php",
       "source_location": "L1",
       "id": "manajemenstok_unitstatusapprovalcontroller",
-      "community": 6,
+      "community": 5,
       "norm_label": "unitstatusapprovalcontroller.php"
     },
     {
@@ -675,7 +675,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitStatusApprovalController.php",
       "source_location": "L13",
       "id": "manajemenstok_unitstatusapprovalcontroller_unitstatusapprovalcontroller",
-      "community": 6,
+      "community": 5,
       "norm_label": "unitstatusapprovalcontroller"
     },
     {
@@ -684,7 +684,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitStatusApprovalController.php",
       "source_location": "L18",
       "id": "manajemenstok_unitstatusapprovalcontroller_unitstatusapprovalcontroller_index",
-      "community": 6,
+      "community": 5,
       "norm_label": ".index()"
     },
     {
@@ -693,7 +693,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitStatusApprovalController.php",
       "source_location": "L18",
       "id": "app_http_controllers_smart_admin_manajemenstok_unitstatusapprovalcontroller_php_request",
-      "community": 6,
+      "community": 5,
       "norm_label": "request"
     },
     {
@@ -702,7 +702,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitStatusApprovalController.php",
       "source_location": "L55",
       "id": "manajemenstok_unitstatusapprovalcontroller_unitstatusapprovalcontroller_store",
-      "community": 6,
+      "community": 5,
       "norm_label": ".store()"
     },
     {
@@ -711,7 +711,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitStatusApprovalController.php",
       "source_location": "L91",
       "id": "manajemenstok_unitstatusapprovalcontroller_unitstatusapprovalcontroller_show",
-      "community": 6,
+      "community": 5,
       "norm_label": ".show()"
     },
     {
@@ -720,7 +720,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitStatusApprovalController.php",
       "source_location": "L91",
       "id": "unitstatusapproval",
-      "community": 6,
+      "community": 5,
       "norm_label": "unitstatusapproval"
     },
     {
@@ -729,7 +729,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitStatusApprovalController.php",
       "source_location": "L125",
       "id": "manajemenstok_unitstatusapprovalcontroller_unitstatusapprovalcontroller_update",
-      "community": 6,
+      "community": 5,
       "norm_label": ".update()"
     },
     {
@@ -738,7 +738,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitStatusApprovalController.php",
       "source_location": "L179",
       "id": "manajemenstok_unitstatusapprovalcontroller_unitstatusapprovalcontroller_destroy",
-      "community": 6,
+      "community": 5,
       "norm_label": ".destroy()"
     },
     {
@@ -801,7 +801,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/BrandController.php",
       "source_location": "L1",
       "id": "master_brandcontroller",
-      "community": 2,
+      "community": 8,
       "norm_label": "brandcontroller.php"
     },
     {
@@ -810,7 +810,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/BrandController.php",
       "source_location": "L10",
       "id": "master_brandcontroller_brandcontroller",
-      "community": 2,
+      "community": 8,
       "norm_label": "brandcontroller"
     },
     {
@@ -819,7 +819,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/BrandController.php",
       "source_location": "L15",
       "id": "master_brandcontroller_brandcontroller_store",
-      "community": 2,
+      "community": 8,
       "norm_label": ".store()"
     },
     {
@@ -828,7 +828,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/BrandController.php",
       "source_location": "L15",
       "id": "app_http_controllers_smart_admin_master_brandcontroller_php_request",
-      "community": 2,
+      "community": 8,
       "norm_label": "request"
     },
     {
@@ -837,7 +837,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/BrandController.php",
       "source_location": "L15",
       "id": "app_http_controllers_smart_admin_master_brandcontroller_php_redirectresponse",
-      "community": 2,
+      "community": 8,
       "norm_label": "redirectresponse"
     },
     {
@@ -846,7 +846,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/BrandController.php",
       "source_location": "L29",
       "id": "master_brandcontroller_brandcontroller_update",
-      "community": 2,
+      "community": 8,
       "norm_label": ".update()"
     },
     {
@@ -855,7 +855,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/BrandController.php",
       "source_location": "L29",
       "id": "brand",
-      "community": 2,
+      "community": 8,
       "norm_label": "brand"
     },
     {
@@ -864,7 +864,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/BrandController.php",
       "source_location": "L43",
       "id": "master_brandcontroller_brandcontroller_destroy",
-      "community": 2,
+      "community": 8,
       "norm_label": ".destroy()"
     },
     {
@@ -1251,7 +1251,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/SubcategoryController.php",
       "source_location": "L1",
       "id": "master_subcategorycontroller",
-      "community": 2,
+      "community": 0,
       "norm_label": "subcategorycontroller.php"
     },
     {
@@ -1260,7 +1260,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/SubcategoryController.php",
       "source_location": "L10",
       "id": "master_subcategorycontroller_subcategorycontroller",
-      "community": 2,
+      "community": 0,
       "norm_label": "subcategorycontroller"
     },
     {
@@ -1269,7 +1269,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/SubcategoryController.php",
       "source_location": "L15",
       "id": "master_subcategorycontroller_subcategorycontroller_store",
-      "community": 2,
+      "community": 0,
       "norm_label": ".store()"
     },
     {
@@ -1278,7 +1278,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/SubcategoryController.php",
       "source_location": "L15",
       "id": "app_http_controllers_smart_admin_master_subcategorycontroller_php_request",
-      "community": 2,
+      "community": 0,
       "norm_label": "request"
     },
     {
@@ -1287,7 +1287,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/SubcategoryController.php",
       "source_location": "L15",
       "id": "app_http_controllers_smart_admin_master_subcategorycontroller_php_redirectresponse",
-      "community": 2,
+      "community": 0,
       "norm_label": "redirectresponse"
     },
     {
@@ -1296,7 +1296,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/SubcategoryController.php",
       "source_location": "L31",
       "id": "master_subcategorycontroller_subcategorycontroller_update",
-      "community": 2,
+      "community": 0,
       "norm_label": ".update()"
     },
     {
@@ -1305,7 +1305,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/SubcategoryController.php",
       "source_location": "L31",
       "id": "subcategory",
-      "community": 2,
+      "community": 0,
       "norm_label": "subcategory"
     },
     {
@@ -1314,7 +1314,7 @@
       "source_file": "app/Http/Controllers/Smart/Admin/Master/SubcategoryController.php",
       "source_location": "L45",
       "id": "master_subcategorycontroller_subcategorycontroller_destroy",
-      "community": 2,
+      "community": 0,
       "norm_label": ".destroy()"
     },
     {
@@ -1899,7 +1899,7 @@
       "source_file": "app/Http/Controllers/Smart/User/RequestHistoryController.php",
       "source_location": "L1",
       "id": "user_requesthistorycontroller",
-      "community": 4,
+      "community": 6,
       "norm_label": "requesthistorycontroller.php"
     },
     {
@@ -1908,7 +1908,7 @@
       "source_file": "app/Http/Controllers/Smart/User/RequestHistoryController.php",
       "source_location": "L18",
       "id": "user_requesthistorycontroller_requesthistorycontroller",
-      "community": 4,
+      "community": 6,
       "norm_label": "requesthistorycontroller"
     },
     {
@@ -1917,7 +1917,7 @@
       "source_file": "app/Http/Controllers/Smart/User/RequestHistoryController.php",
       "source_location": "L23",
       "id": "user_requesthistorycontroller_requesthistorycontroller_maprequest",
-      "community": 4,
+      "community": 6,
       "norm_label": ".maprequest()"
     },
     {
@@ -1926,7 +1926,7 @@
       "source_file": "app/Http/Controllers/Smart/User/RequestHistoryController.php",
       "source_location": "L107",
       "id": "user_requesthistorycontroller_requesthistorycontroller_index",
-      "community": 4,
+      "community": 6,
       "norm_label": ".index()"
     },
     {
@@ -1935,7 +1935,7 @@
       "source_file": "app/Http/Controllers/Smart/User/RequestHistoryController.php",
       "source_location": "L107",
       "id": "app_http_controllers_smart_user_requesthistorycontroller_php_request",
-      "community": 4,
+      "community": 6,
       "norm_label": "request"
     },
     {
@@ -1944,7 +1944,7 @@
       "source_file": "app/Http/Controllers/Smart/User/RequestHistoryController.php",
       "source_location": "L107",
       "id": "app_http_controllers_smart_user_requesthistorycontroller_php_response",
-      "community": 4,
+      "community": 6,
       "norm_label": "response"
     },
     {
@@ -1953,7 +1953,7 @@
       "source_file": "app/Http/Controllers/Smart/User/RequestHistoryController.php",
       "source_location": "L134",
       "id": "user_requesthistorycontroller_requesthistorycontroller_show",
-      "community": 4,
+      "community": 6,
       "norm_label": ".show()"
     },
     {
@@ -1962,7 +1962,7 @@
       "source_file": "app/Http/Controllers/Smart/User/RequestHistoryController.php",
       "source_location": "L160",
       "id": "user_requesthistorycontroller_requesthistorycontroller_cancel",
-      "community": 4,
+      "community": 6,
       "norm_label": ".cancel()"
     },
     {
@@ -1971,7 +1971,7 @@
       "source_file": "app/Http/Controllers/Smart/User/RequestHistoryController.php",
       "source_location": "L181",
       "id": "user_requesthistorycontroller_requesthistorycontroller_handover",
-      "community": 4,
+      "community": 6,
       "norm_label": ".handover()"
     },
     {
@@ -1980,7 +1980,7 @@
       "source_file": "app/Http/Controllers/Smart/User/RequestHistoryController.php",
       "source_location": "L220",
       "id": "user_requesthistorycontroller_requesthistorycontroller_receive",
-      "community": 4,
+      "community": 6,
       "norm_label": ".receive()"
     },
     {
@@ -1989,7 +1989,7 @@
       "source_file": "app/Http/Controllers/Smart/User/RequestHistoryController.php",
       "source_location": "L266",
       "id": "user_requesthistorycontroller_requesthistorycontroller_returnasset",
-      "community": 4,
+      "community": 6,
       "norm_label": ".returnasset()"
     },
     {
@@ -2286,7 +2286,7 @@
       "source_file": "",
       "source_location": "",
       "id": "hasfactory",
-      "community": 18,
+      "community": 59,
       "norm_label": "hasfactory"
     },
     {
@@ -2313,7 +2313,7 @@
       "source_file": "app/Models/AdmUser.php",
       "source_location": "L50",
       "id": "models_admuser_admuser_getroleattribute",
-      "community": 7,
+      "community": 24,
       "norm_label": ".getroleattribute()"
     },
     {
@@ -2511,7 +2511,7 @@
       "source_file": "",
       "source_location": "",
       "id": "model",
-      "community": 59,
+      "community": 25,
       "norm_label": "model"
     },
     {
@@ -2673,7 +2673,7 @@
       "source_file": "app/Models/HrdOrgchart.php",
       "source_location": "L1",
       "id": "models_hrdorgchart",
-      "community": 7,
+      "community": 24,
       "norm_label": "hrdorgchart.php"
     },
     {
@@ -2682,7 +2682,7 @@
       "source_file": "app/Models/HrdOrgchart.php",
       "source_location": "L10",
       "id": "models_hrdorgchart_hrdorgchart",
-      "community": 7,
+      "community": 24,
       "norm_label": "hrdorgchart"
     },
     {
@@ -2691,7 +2691,7 @@
       "source_file": "app/Models/HrdOrgchart.php",
       "source_location": "L26",
       "id": "models_hrdorgchart_hrdorgchart_manager",
-      "community": 7,
+      "community": 24,
       "norm_label": ".manager()"
     },
     {
@@ -2700,7 +2700,7 @@
       "source_file": "app/Models/HrdOrgchart.php",
       "source_location": "L26",
       "id": "app_models_hrdorgchart_php_belongsto",
-      "community": 7,
+      "community": 24,
       "norm_label": "belongsto"
     },
     {
@@ -2709,7 +2709,7 @@
       "source_file": "app/Models/HrdOrgchart.php",
       "source_location": "L35",
       "id": "models_hrdorgchart_hrdorgchart_employees",
-      "community": 7,
+      "community": 24,
       "norm_label": ".employees()"
     },
     {
@@ -2718,7 +2718,7 @@
       "source_file": "app/Models/HrdOrgchart.php",
       "source_location": "L35",
       "id": "app_models_hrdorgchart_php_hasmany",
-      "community": 7,
+      "community": 24,
       "norm_label": "hasmany"
     },
     {
@@ -2727,7 +2727,7 @@
       "source_file": "app/Models/HrdOrgchart.php",
       "source_location": "L44",
       "id": "models_hrdorgchart_hrdorgchart_requests",
-      "community": 7,
+      "community": 24,
       "norm_label": ".requests()"
     },
     {
@@ -2997,7 +2997,7 @@
       "source_file": "app/Models/Inventory/Unit.php",
       "source_location": "L1",
       "id": "inventory_unit",
-      "community": 8,
+      "community": 10,
       "norm_label": "unit.php"
     },
     {
@@ -3006,7 +3006,7 @@
       "source_file": "app/Models/Inventory/Unit.php",
       "source_location": "L13",
       "id": "inventory_unit_unit",
-      "community": 8,
+      "community": 10,
       "norm_label": "unit"
     },
     {
@@ -3015,7 +3015,7 @@
       "source_file": "app/Models/Inventory/Unit.php",
       "source_location": "L42",
       "id": "inventory_unit_unit_lot",
-      "community": 8,
+      "community": 10,
       "norm_label": ".lot()"
     },
     {
@@ -3024,7 +3024,7 @@
       "source_file": "app/Models/Inventory/Unit.php",
       "source_location": "L42",
       "id": "app_models_inventory_unit_php_belongsto",
-      "community": 8,
+      "community": 10,
       "norm_label": "belongsto"
     },
     {
@@ -3033,7 +3033,7 @@
       "source_file": "app/Models/Inventory/Unit.php",
       "source_location": "L47",
       "id": "inventory_unit_unit_location",
-      "community": 8,
+      "community": 10,
       "norm_label": ".location()"
     },
     {
@@ -3042,7 +3042,7 @@
       "source_file": "app/Models/Inventory/Unit.php",
       "source_location": "L52",
       "id": "inventory_unit_unit_floor",
-      "community": 8,
+      "community": 10,
       "norm_label": ".floor()"
     },
     {
@@ -3051,7 +3051,7 @@
       "source_file": "app/Models/Inventory/Unit.php",
       "source_location": "L57",
       "id": "inventory_unit_unit_room",
-      "community": 8,
+      "community": 10,
       "norm_label": ".room()"
     },
     {
@@ -3060,7 +3060,7 @@
       "source_file": "app/Models/Inventory/Unit.php",
       "source_location": "L62",
       "id": "inventory_unit_unit_inventorylogs",
-      "community": 8,
+      "community": 10,
       "norm_label": ".inventorylogs()"
     },
     {
@@ -3069,7 +3069,7 @@
       "source_file": "app/Models/Inventory/Unit.php",
       "source_location": "L62",
       "id": "app_models_inventory_unit_php_hasmany",
-      "community": 8,
+      "community": 10,
       "norm_label": "hasmany"
     },
     {
@@ -3078,7 +3078,7 @@
       "source_file": "app/Models/Inventory/Unit.php",
       "source_location": "L67",
       "id": "inventory_unit_unit_statusapprovals",
-      "community": 8,
+      "community": 10,
       "norm_label": ".statusapprovals()"
     },
     {
@@ -3087,7 +3087,7 @@
       "source_file": "app/Models/Inventory/Unit.php",
       "source_location": "L72",
       "id": "inventory_unit_unit_getnumberattribute",
-      "community": 8,
+      "community": 10,
       "norm_label": ".getnumberattribute()"
     },
     {
@@ -3096,7 +3096,7 @@
       "source_file": "app/Models/Inventory/Unit.php",
       "source_location": "L77",
       "id": "inventory_unit_unit_getisvehicleattribute",
-      "community": 8,
+      "community": 10,
       "norm_label": ".getisvehicleattribute()"
     },
     {
@@ -3213,7 +3213,7 @@
       "source_file": "app/Models/Master/Brand.php",
       "source_location": "L1",
       "id": "master_brand",
-      "community": 18,
+      "community": 59,
       "norm_label": "brand.php"
     },
     {
@@ -3222,7 +3222,7 @@
       "source_file": "app/Models/Master/Brand.php",
       "source_location": "L9",
       "id": "master_brand_brand",
-      "community": 18,
+      "community": 59,
       "norm_label": "brand"
     },
     {
@@ -3231,7 +3231,7 @@
       "source_file": "app/Models/Master/Brand.php",
       "source_location": "L21",
       "id": "master_brand_brand_barangs",
-      "community": 18,
+      "community": 59,
       "norm_label": ".barangs()"
     },
     {
@@ -3240,7 +3240,7 @@
       "source_file": "app/Models/Master/Brand.php",
       "source_location": "L21",
       "id": "app_models_master_brand_php_hasmany",
-      "community": 18,
+      "community": 59,
       "norm_label": "hasmany"
     },
     {
@@ -3420,7 +3420,7 @@
       "source_file": "app/Models/Master/Organizer.php",
       "source_location": "L1",
       "id": "master_organizer",
-      "community": 59,
+      "community": 36,
       "norm_label": "organizer.php"
     },
     {
@@ -3429,7 +3429,7 @@
       "source_file": "app/Models/Master/Organizer.php",
       "source_location": "L9",
       "id": "master_organizer_organizer",
-      "community": 59,
+      "community": 36,
       "norm_label": "organizer"
     },
     {
@@ -3438,7 +3438,7 @@
       "source_file": "app/Models/Master/Organizer.php",
       "source_location": "L21",
       "id": "master_organizer_organizer_lots",
-      "community": 59,
+      "community": 36,
       "norm_label": ".lots()"
     },
     {
@@ -3447,7 +3447,7 @@
       "source_file": "app/Models/Master/Organizer.php",
       "source_location": "L21",
       "id": "app_models_master_organizer_php_hasmany",
-      "community": 59,
+      "community": 36,
       "norm_label": "hasmany"
     },
     {
@@ -3582,7 +3582,7 @@
       "source_file": "app/Models/Master/Uom.php",
       "source_location": "L1",
       "id": "master_uom",
-      "community": 18,
+      "community": 59,
       "norm_label": "uom.php"
     },
     {
@@ -3591,7 +3591,7 @@
       "source_file": "app/Models/Master/Uom.php",
       "source_location": "L9",
       "id": "master_uom_uom",
-      "community": 18,
+      "community": 59,
       "norm_label": "uom"
     },
     {
@@ -3600,7 +3600,7 @@
       "source_file": "app/Models/Master/Uom.php",
       "source_location": "L21",
       "id": "master_uom_uom_barangs",
-      "community": 18,
+      "community": 59,
       "norm_label": ".barangs()"
     },
     {
@@ -3609,7 +3609,7 @@
       "source_file": "app/Models/Master/Uom.php",
       "source_location": "L21",
       "id": "app_models_master_uom_php_hasmany",
-      "community": 18,
+      "community": 59,
       "norm_label": "hasmany"
     },
     {
@@ -3618,7 +3618,7 @@
       "source_file": "app/Models/Master/Vendor.php",
       "source_location": "L1",
       "id": "master_vendor",
-      "community": 59,
+      "community": 25,
       "norm_label": "vendor.php"
     },
     {
@@ -3627,7 +3627,7 @@
       "source_file": "app/Models/Master/Vendor.php",
       "source_location": "L9",
       "id": "master_vendor_vendor",
-      "community": 59,
+      "community": 25,
       "norm_label": "vendor"
     },
     {
@@ -3636,7 +3636,7 @@
       "source_file": "app/Models/Master/Vendor.php",
       "source_location": "L21",
       "id": "master_vendor_vendor_lots",
-      "community": 59,
+      "community": 25,
       "norm_label": ".lots()"
     },
     {
@@ -3645,7 +3645,7 @@
       "source_file": "app/Models/Master/Vendor.php",
       "source_location": "L21",
       "id": "app_models_master_vendor_php_hasmany",
-      "community": 59,
+      "community": 25,
       "norm_label": "hasmany"
     },
     {
@@ -3843,7 +3843,7 @@
       "source_file": "app/Models/Request/RequestAdminConfirmation.php",
       "source_location": "L1",
       "id": "request_requestadminconfirmation",
-      "community": 10,
+      "community": 4,
       "norm_label": "requestadminconfirmation.php"
     },
     {
@@ -3852,7 +3852,7 @@
       "source_file": "app/Models/Request/RequestAdminConfirmation.php",
       "source_location": "L9",
       "id": "request_requestadminconfirmation_requestadminconfirmation",
-      "community": 10,
+      "community": 4,
       "norm_label": "requestadminconfirmation"
     },
     {
@@ -3861,7 +3861,7 @@
       "source_file": "app/Models/Request/RequestAdminConfirmation.php",
       "source_location": "L25",
       "id": "request_requestadminconfirmation_requestadminconfirmation_request",
-      "community": 10,
+      "community": 4,
       "norm_label": ".request()"
     },
     {
@@ -3870,7 +3870,7 @@
       "source_file": "app/Models/Request/RequestAdminConfirmation.php",
       "source_location": "L25",
       "id": "app_models_request_requestadminconfirmation_php_belongsto",
-      "community": 10,
+      "community": 4,
       "norm_label": "belongsto"
     },
     {
@@ -3879,7 +3879,7 @@
       "source_file": "app/Models/Request/RequestAdminConfirmation.php",
       "source_location": "L30",
       "id": "request_requestadminconfirmation_requestadminconfirmation_admin",
-      "community": 10,
+      "community": 4,
       "norm_label": ".admin()"
     },
     {
@@ -3933,7 +3933,7 @@
       "source_file": "app/Models/Request/RequestHandover.php",
       "source_location": "L1",
       "id": "request_requesthandover",
-      "community": 4,
+      "community": 6,
       "norm_label": "requesthandover.php"
     },
     {
@@ -3942,7 +3942,7 @@
       "source_file": "app/Models/Request/RequestHandover.php",
       "source_location": "L8",
       "id": "request_requesthandover_requesthandover",
-      "community": 4,
+      "community": 6,
       "norm_label": "requesthandover"
     },
     {
@@ -3951,7 +3951,7 @@
       "source_file": "app/Models/Request/RequestHandover.php",
       "source_location": "L32",
       "id": "request_requesthandover_requesthandover_request",
-      "community": 4,
+      "community": 6,
       "norm_label": ".request()"
     },
     {
@@ -3960,7 +3960,7 @@
       "source_file": "app/Models/Request/RequestHandover.php",
       "source_location": "L32",
       "id": "app_models_request_requesthandover_php_belongsto",
-      "community": 4,
+      "community": 6,
       "norm_label": "belongsto"
     },
     {
@@ -4032,7 +4032,7 @@
       "source_file": "app/Models/Request/RequestReturn.php",
       "source_location": "L1",
       "id": "request_requestreturn",
-      "community": 4,
+      "community": 25,
       "norm_label": "requestreturn.php"
     },
     {
@@ -4041,7 +4041,7 @@
       "source_file": "app/Models/Request/RequestReturn.php",
       "source_location": "L8",
       "id": "request_requestreturn_requestreturn",
-      "community": 4,
+      "community": 25,
       "norm_label": "requestreturn"
     },
     {
@@ -4050,7 +4050,7 @@
       "source_file": "app/Models/Request/RequestReturn.php",
       "source_location": "L27",
       "id": "request_requestreturn_requestreturn_request",
-      "community": 4,
+      "community": 25,
       "norm_label": ".request()"
     },
     {
@@ -4059,7 +4059,7 @@
       "source_file": "app/Models/Request/RequestReturn.php",
       "source_location": "L27",
       "id": "app_models_request_requestreturn_php_belongsto",
-      "community": 4,
+      "community": 25,
       "norm_label": "belongsto"
     },
     {
@@ -4068,7 +4068,7 @@
       "source_file": "app/Models/Request/RequestStatusLog.php",
       "source_location": "L1",
       "id": "request_requeststatuslog",
-      "community": 4,
+      "community": 6,
       "norm_label": "requeststatuslog.php"
     },
     {
@@ -4077,7 +4077,7 @@
       "source_file": "app/Models/Request/RequestStatusLog.php",
       "source_location": "L9",
       "id": "request_requeststatuslog_requeststatuslog",
-      "community": 4,
+      "community": 6,
       "norm_label": "requeststatuslog"
     },
     {
@@ -4086,7 +4086,7 @@
       "source_file": "app/Models/Request/RequestStatusLog.php",
       "source_location": "L23",
       "id": "request_requeststatuslog_requeststatuslog_request",
-      "community": 4,
+      "community": 6,
       "norm_label": ".request()"
     },
     {
@@ -4095,7 +4095,7 @@
       "source_file": "app/Models/Request/RequestStatusLog.php",
       "source_location": "L23",
       "id": "app_models_request_requeststatuslog_php_belongsto",
-      "community": 4,
+      "community": 6,
       "norm_label": "belongsto"
     },
     {
@@ -4104,7 +4104,7 @@
       "source_file": "app/Models/Request/RequestStatusLog.php",
       "source_location": "L28",
       "id": "request_requeststatuslog_requeststatuslog_changer",
-      "community": 4,
+      "community": 6,
       "norm_label": ".changer()"
     },
     {
@@ -5148,7 +5148,7 @@
       "source_file": "database/factories/HrdEmployeeFactory.php",
       "source_location": "L13",
       "id": "factories_hrdemployeefactory_hrdemployeefactory_definition",
-      "community": 1,
+      "community": 24,
       "norm_label": ".definition()"
     },
     {
@@ -5184,7 +5184,7 @@
       "source_file": "database/factories/Inventory/BarangFactory.php",
       "source_location": "L1",
       "id": "inventory_barangfactory",
-      "community": 2,
+      "community": 1,
       "norm_label": "barangfactory.php"
     },
     {
@@ -5193,7 +5193,7 @@
       "source_file": "database/factories/Inventory/BarangFactory.php",
       "source_location": "L14",
       "id": "inventory_barangfactory_barangfactory",
-      "community": 2,
+      "community": 1,
       "norm_label": "barangfactory"
     },
     {
@@ -5202,7 +5202,7 @@
       "source_file": "database/factories/Inventory/BarangFactory.php",
       "source_location": "L28",
       "id": "inventory_barangfactory_barangfactory_definition",
-      "community": 2,
+      "community": 1,
       "norm_label": ".definition()"
     },
     {
@@ -5841,7 +5841,7 @@
       "source_file": "database/seeders/MasterSeeder.php",
       "source_location": "L1",
       "id": "seeders_masterseeder",
-      "community": 2,
+      "community": 8,
       "norm_label": "masterseeder.php"
     },
     {
@@ -5850,7 +5850,7 @@
       "source_file": "database/seeders/MasterSeeder.php",
       "source_location": "L16",
       "id": "seeders_masterseeder_masterseeder",
-      "community": 2,
+      "community": 8,
       "norm_label": "masterseeder"
     },
     {
@@ -5859,7 +5859,7 @@
       "source_file": "database/seeders/MasterSeeder.php",
       "source_location": "L21",
       "id": "seeders_masterseeder_masterseeder_run",
-      "community": 2,
+      "community": 8,
       "norm_label": ".run()"
     },
     {
@@ -5886,7 +5886,7 @@
       "source_file": "database/seeders/UnitSeeder.php",
       "source_location": "L15",
       "id": "seeders_unitseeder_unitseeder_run",
-      "community": 8,
+      "community": 10,
       "norm_label": ".run()"
     },
     {
@@ -7953,7 +7953,7 @@
       "label": "if()",
       "file_type": "code",
       "source_file": "resources/js/Pages/Smart/Admin/ManajemenStok/DetailLOTNonConsumables.vue",
-      "source_location": "L524",
+      "source_location": "L523",
       "id": "manajemenstok_detaillotnonconsumables_if",
       "community": 94,
       "norm_label": "if()"
@@ -8738,7 +8738,7 @@
       "source_file": "tests/Feature/IfsManagerRoleTest.php",
       "source_location": "L22",
       "id": "feature_ifsmanagerroletest_ifsmanagerroletest_test_dynamic_role_assignment",
-      "community": 178,
+      "community": 24,
       "norm_label": ".test_dynamic_role_assignment()"
     },
     {
@@ -8864,7 +8864,7 @@
       "source_file": "tests/Feature/MasterDataTest.php",
       "source_location": "L1",
       "id": "feature_masterdatatest",
-      "community": 32,
+      "community": 178,
       "norm_label": "masterdatatest.php"
     },
     {
@@ -8945,7 +8945,7 @@
       "source_file": "tests/Feature/UnitStatusApprovalControllerTest.php",
       "source_location": "L1",
       "id": "feature_unitstatusapprovalcontrollertest",
-      "community": 178,
+      "community": 5,
       "norm_label": "unitstatusapprovalcontrollertest.php"
     },
     {
@@ -9403,16 +9403,25 @@
       "file_type": "code",
       "source_file": "",
       "source_location": "",
-      "community": 4,
+      "community": 5,
       "norm_label": "controller",
       "id": "controller"
+    },
+    {
+      "label": "TestCase",
+      "file_type": "code",
+      "source_file": "",
+      "source_location": "",
+      "community": 42,
+      "norm_label": "testcase",
+      "id": "testcase"
     },
     {
       "label": "BelongsTo",
       "file_type": "code",
       "source_file": "app/Models/Inventory/Unit.php",
       "source_location": "L42",
-      "community": 8,
+      "community": 10,
       "norm_label": "belongsto",
       "id": "belongsto"
     },
@@ -9421,7 +9430,7 @@
       "file_type": "code",
       "source_file": "app/Models/Inventory/Unit.php",
       "source_location": "L62",
-      "community": 8,
+      "community": 10,
       "norm_label": "hasmany",
       "id": "hasmany"
     }
@@ -10954,6 +10963,17 @@
       "target": "app_http_controllers_smart_admin_manajemenstok_bulkbarangcontroller_php_request"
     },
     {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/BulkBarangController.php",
+      "source_location": "L5",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "manajemenstok_bulkbarangcontroller",
+      "target": "controller"
+    },
+    {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/BulkBarangController.php",
@@ -10962,6 +10982,16 @@
       "confidence_score": 1.0,
       "source": "manajemenstok_bulkbarangcontroller",
       "target": "manajemenstok_bulkbarangcontroller_bulkbarangcontroller"
+    },
+    {
+      "relation": "inherits",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/BulkBarangController.php",
+      "source_location": "L10",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "manajemenstok_bulkbarangcontroller_bulkbarangcontroller",
+      "target": "controller"
     },
     {
       "relation": "method",
@@ -11021,6 +11051,17 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/BulkLotController.php",
+      "source_location": "L5",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "manajemenstok_bulklotcontroller",
+      "target": "controller"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/BulkLotController.php",
       "source_location": "L7",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -11036,6 +11077,16 @@
       "confidence_score": 1.0,
       "source": "manajemenstok_bulklotcontroller",
       "target": "manajemenstok_bulklotcontroller_bulklotcontroller"
+    },
+    {
+      "relation": "inherits",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/BulkLotController.php",
+      "source_location": "L10",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "manajemenstok_bulklotcontroller_bulklotcontroller",
+      "target": "controller"
     },
     {
       "relation": "method",
@@ -11095,6 +11146,17 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/BulkUnitController.php",
+      "source_location": "L5",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "manajemenstok_bulkunitcontroller",
+      "target": "controller"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/BulkUnitController.php",
       "source_location": "L7",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -11121,6 +11183,16 @@
       "confidence_score": 1.0,
       "source": "manajemenstok_bulkunitcontroller",
       "target": "unit"
+    },
+    {
+      "relation": "inherits",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/BulkUnitController.php",
+      "source_location": "L11",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "manajemenstok_bulkunitcontroller_bulkunitcontroller",
+      "target": "controller"
     },
     {
       "relation": "method",
@@ -11157,6 +11229,17 @@
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/BulkUnitController.php",
+      "source_location": "L71",
+      "weight": 1.0,
+      "source": "manajemenstok_bulkunitcontroller_bulkunitcontroller_store",
+      "target": "unit"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/BulkUnitController.php",
       "source_location": "L180",
       "weight": 1.0,
@@ -11174,6 +11257,17 @@
       "confidence_score": 1.0,
       "source": "manajemenstok_bulkunitcontroller_bulkunitcontroller_update",
       "target": "app_http_controllers_smart_admin_manajemenstok_bulkunitcontroller_php_request"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/BulkUnitController.php",
+      "source_location": "L127",
+      "weight": 1.0,
+      "source": "manajemenstok_bulkunitcontroller_bulkunitcontroller_update",
+      "target": "unit"
     },
     {
       "relation": "imports",
@@ -11424,6 +11518,17 @@
       "target": "app_http_controllers_smart_admin_manajemenstok_unitcontroller_php_request"
     },
     {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitController.php",
+      "source_location": "L5",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "manajemenstok_unitcontroller",
+      "target": "controller"
+    },
+    {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitController.php",
@@ -11443,6 +11548,16 @@
       "confidence_score": 1.0,
       "source": "manajemenstok_unitcontroller",
       "target": "unit"
+    },
+    {
+      "relation": "inherits",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitController.php",
+      "source_location": "L12",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "manajemenstok_unitcontroller_unitcontroller",
+      "target": "controller"
     },
     {
       "relation": "method",
@@ -11541,6 +11656,28 @@
       "target": "unit"
     },
     {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/Feature/UnitStatusApprovalControllerTest.php",
+      "source_location": "L20",
+      "weight": 1.0,
+      "source": "feature_unitstatusapprovalcontrollertest_unitstatusapprovalcontrollertest_createunit",
+      "target": "unit"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/Feature/UnitStatusApprovalControllerTest.php",
+      "source_location": "L225",
+      "weight": 1.0,
+      "source": "feature_unitstatusapprovalcontrollertest_unitstatusapprovalcontrollertest_test_storing_unit_with_status_rusak_creates_pending_approval",
+      "target": "unit"
+    },
+    {
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -11571,6 +11708,17 @@
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "manajemenstok_unitstatusapprovalcontroller",
+      "target": "unit"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitStatusApprovalController.php",
+      "source_location": "L63",
+      "weight": 1.0,
+      "source": "manajemenstok_unitstatusapprovalcontroller_unitstatusapprovalcontroller_store",
       "target": "unit"
     },
     {
@@ -11629,6 +11777,17 @@
       "target": "app_http_controllers_smart_admin_manajemenstok_unitstatusapprovalcontroller_php_request"
     },
     {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitStatusApprovalController.php",
+      "source_location": "L5",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "manajemenstok_unitstatusapprovalcontroller",
+      "target": "controller"
+    },
+    {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitStatusApprovalController.php",
@@ -11648,6 +11807,16 @@
       "confidence_score": 1.0,
       "source": "manajemenstok_unitstatusapprovalcontroller",
       "target": "unitstatusapproval"
+    },
+    {
+      "relation": "inherits",
+      "confidence": "EXTRACTED",
+      "source_file": "app/Http/Controllers/Smart/Admin/ManajemenStok/UnitStatusApprovalController.php",
+      "source_location": "L13",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "manajemenstok_unitstatusapprovalcontroller_unitstatusapprovalcontroller",
+      "target": "controller"
     },
     {
       "relation": "method",
@@ -11785,6 +11954,72 @@
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "feature_unitstatusapprovalcontrollertest",
+      "target": "unitstatusapproval"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/Feature/UnitStatusApprovalControllerTest.php",
+      "source_location": "L117",
+      "weight": 1.0,
+      "source": "feature_unitstatusapprovalcontrollertest_unitstatusapprovalcontrollertest_test_can_approve_unit_status_approval_request",
+      "target": "unitstatusapproval"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/Feature/UnitStatusApprovalControllerTest.php",
+      "source_location": "L189",
+      "weight": 1.0,
+      "source": "feature_unitstatusapprovalcontrollertest_unitstatusapprovalcontrollertest_test_can_destroy_pending_unit_status_approval_request",
+      "target": "unitstatusapproval"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/Feature/UnitStatusApprovalControllerTest.php",
+      "source_location": "L36",
+      "weight": 1.0,
+      "source": "feature_unitstatusapprovalcontrollertest_unitstatusapprovalcontrollertest_test_can_list_unit_status_approval_requests",
+      "target": "unitstatusapproval"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/Feature/UnitStatusApprovalControllerTest.php",
+      "source_location": "L157",
+      "weight": 1.0,
+      "source": "feature_unitstatusapprovalcontrollertest_unitstatusapprovalcontrollertest_test_can_reject_unit_status_approval_request",
+      "target": "unitstatusapproval"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/Feature/UnitStatusApprovalControllerTest.php",
+      "source_location": "L99",
+      "weight": 1.0,
+      "source": "feature_unitstatusapprovalcontrollertest_unitstatusapprovalcontrollertest_test_can_show_unit_status_approval_request",
+      "target": "unitstatusapproval"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "tests/Feature/UnitStatusApprovalControllerTest.php",
+      "source_location": "L77",
+      "weight": 1.0,
+      "source": "feature_unitstatusapprovalcontrollertest_unitstatusapprovalcontrollertest_test_cannot_store_duplicate_pending_request",
       "target": "unitstatusapproval"
     },
     {
@@ -15693,9 +15928,9 @@
       "source_file": "app/Http/Requests/Auth/LoginRequest.php",
       "source_location": "L41",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "auth_loginrequest_loginrequest",
-      "target": "auth_loginrequest_loginrequest_messages",
-      "confidence_score": 1.0
+      "target": "auth_loginrequest_loginrequest_messages"
     },
     {
       "relation": "method",
@@ -24086,6 +24321,17 @@
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "feature_barangcontrollertest",
+      "target": "testcase"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/Feature/BarangControllerTest.php",
+      "source_location": "L13",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "feature_barangcontrollertest",
       "target": "tests_testcase_testcase"
     },
     {
@@ -24147,6 +24393,16 @@
       "confidence_score": 1.0,
       "source": "feature_barangcontrollertest_barangcontrollertest",
       "target": "feature_barangcontrollertest_barangcontrollertest_test_cannot_destroy_barang_with_lots"
+    },
+    {
+      "relation": "inherits",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/Feature/BarangControllerTest.php",
+      "source_location": "L15",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "feature_barangcontrollertest_barangcontrollertest",
+      "target": "testcase"
     },
     {
       "relation": "inherits",
@@ -24279,6 +24535,17 @@
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "feature_lotcontrollertest",
+      "target": "testcase"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/Feature/LotControllerTest.php",
+      "source_location": "L16",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "feature_lotcontrollertest",
       "target": "tests_testcase_testcase"
     },
     {
@@ -24380,6 +24647,16 @@
       "confidence_score": 1.0,
       "source": "feature_lotcontrollertest_lotcontrollertest",
       "target": "feature_lotcontrollertest_lotcontrollertest_test_cannot_destroy_lot_with_units"
+    },
+    {
+      "relation": "inherits",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/Feature/LotControllerTest.php",
+      "source_location": "L18",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "feature_lotcontrollertest_lotcontrollertest",
+      "target": "testcase"
     },
     {
       "relation": "inherits",
@@ -24511,6 +24788,17 @@
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "feature_unitstatusapprovalcontrollertest",
+      "target": "testcase"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/Feature/UnitStatusApprovalControllerTest.php",
+      "source_location": "L11",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "feature_unitstatusapprovalcontrollertest",
       "target": "tests_testcase_testcase"
     },
     {
@@ -24612,6 +24900,16 @@
       "confidence_score": 1.0,
       "source": "feature_unitstatusapprovalcontrollertest_unitstatusapprovalcontrollertest",
       "target": "feature_unitstatusapprovalcontrollertest_unitstatusapprovalcontrollertest_test_updating_unit_with_status_rusak_creates_pending_approval"
+    },
+    {
+      "relation": "inherits",
+      "confidence": "EXTRACTED",
+      "source_file": "tests/Feature/UnitStatusApprovalControllerTest.php",
+      "source_location": "L13",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "feature_unitstatusapprovalcontrollertest_unitstatusapprovalcontrollertest",
+      "target": "testcase"
     },
     {
       "relation": "inherits",
@@ -25035,5 +25333,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "1ce6d8ae62dd02d7be95dd90a1b72a083074ce3f"
+  "built_at_commit": "a0cfe103cfa053203f65487c7e1a861330dd0c59"
 }
