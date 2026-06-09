@@ -33,60 +33,81 @@ const isIfsManager = computed(() => (page.props.auth as { user: any })?.user?.ro
 
 // Select navigation based on user role
 const navigation = computed<NavSection[]>(() => {
+  let sections: NavSection[] = [];
+
   if (isIfsManager.value) {
     // Manager IFS:
     // - Menu Utama
     // - Approval Status
     // - Approval Permintaan
     // - Rest of Admin Menus (Inventory, Permintaan, Audit)
-    const menuUtama = mainNavigation.find(section => section.title === 'Menu Utama');
-    const approvalStatus = userNavigation.find(section => section.title === 'Approval Status');
-    const approvalPermintaan = userNavigation.find(section => section.title === 'Approval Permintaan');
-    const restOfAdmin = mainNavigation.filter(section => section.title !== 'Menu Utama' && section.title !== 'Permintaan');
+    const menuUtama = mainNavigation.find(section => section.title === 'MENU UTAMA');
+    const approvalStatus = userNavigation.find(section => section.title === 'APPROVAL ASET');
+    const approvalPermintaan = userNavigation.find(section => section.title === 'APPROVAL');
+    const restOfAdmin = mainNavigation.filter(section => section.title !== 'MENU UTAMA' && section.title !== 'Permintaan');
     
-    return [
+    sections = [
       menuUtama,
       approvalStatus,
       approvalPermintaan,
       ...restOfAdmin
     ].filter((section): section is NavSection => !!section);
-  }
-  
-  if (isAdmin.value) {
+  } else if (isAdmin.value) {
     // Admin:
     // - Menu Utama
     // - Inventory
     // - Permintaan
     // - Audit
-    return mainNavigation;
-  }
-  
-  if (isManager.value) {
+    sections = mainNavigation;
+  } else if (isManager.value) {
     // Manager:
     // - Menu Utama
     // - Approval Permintaan
     // - Permintaan
-    const menuUtama = userNavigation.find(section => section.title === 'Menu Utama');
-    const approvalPermintaan = userNavigation.find(section => section.title === 'Approval Permintaan');
+    const menuUtama = userNavigation.find(section => section.title === 'MENU UTAMA');
+    const approvalPermintaan = userNavigation.find(section => section.title === 'APPROVAL');
     const permintaan = userNavigation.find(section => section.title === 'Permintaan');
     
-    return [
+    sections = [
       menuUtama,
       approvalPermintaan,
       permintaan
     ].filter((section): section is NavSection => !!section);
+  } else {
+    // User:
+    // - Menu Utama
+    // - Permintaan
+    const menuUtama = userNavigation.find(section => section.title === 'Menu Utama');
+    const permintaan = userNavigation.find(section => section.title === 'Permintaan');
+    
+    sections = [
+      menuUtama,
+      permintaan
+    ].filter((section): section is NavSection => !!section);
   }
-  
-  // User:
-  // - Menu Utama
-  // - Permintaan
-  const menuUtama = userNavigation.find(section => section.title === 'Menu Utama');
-  const permintaan = userNavigation.find(section => section.title === 'Permintaan');
-  
-  return [
-    menuUtama,
-    permintaan
-  ].filter((section): section is NavSection => !!section);
+
+  // Get dynamic counts from shared Inertia page props
+  const pendingRequestCount = (page.props.auth as any)?.pendingRequestCount ?? 0;
+  const pendingAssetStatusCount = (page.props.auth as any)?.pendingAssetStatusCount ?? 0;
+
+  // Map the navigation items to inject badges dynamically
+  return sections.map(section => ({
+    ...section,
+    items: section.items.map(item => {
+      let badge = item.badge;
+      
+      if (item.href === '/smart/approve') {
+        badge = pendingRequestCount > 0 ? 'Baru' : undefined;
+      } else if (item.href === '/smart/approve-status') {
+        badge = pendingAssetStatusCount > 0 ? 'Baru' : undefined;
+      }
+      
+      return {
+        ...item,
+        badge
+      };
+    })
+  }));
 });
 
 const isActive = (href: string): boolean => {
