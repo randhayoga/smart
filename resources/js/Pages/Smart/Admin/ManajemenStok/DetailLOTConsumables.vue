@@ -141,6 +141,7 @@ const handleDelete = () => {
                   <div class="md:col-span-4">
                     <p class="font-bold text-foreground"><span class="text-foreground">Kode Barang:</span> {{ lotDetails.barang_code }}</p>
                     <p class="font-bold text-foreground"><span class="text-foreground">Merek:</span> {{ lotDetails.barang_brand }}</p>
+                    <p class="font-bold text-foreground"><span class="text-foreground">Nama:</span> {{ lotDetails.barang_nama }}</p>
                     <p class="font-bold text-foreground"><span class="text-foreground">Spesifikasi:</span> {{ lotDetails.barang_specification }}</p>
                     <p class="text-foreground">Kategori: {{ lotDetails.barang_category }}</p>
                     <p class="text-foreground">Subkategori: {{ lotDetails.barang_subcategory }}</p>

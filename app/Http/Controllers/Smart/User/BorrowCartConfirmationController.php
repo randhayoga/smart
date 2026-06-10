@@ -38,6 +38,7 @@ class BorrowCartConfirmationController extends Controller
                     'id' => $item->id,
                     'barang_id' => $item->barang_id,
                     'brand' => $item->barang->brand->name ?? '',
+                    'nama' => $item->barang->nama ?? '',
                     'spec' => $item->barang->specification ?? '',
                     'category' => $item->barang->subcategory->category->name ?? '-',
                     'subcategory' => $item->barang->subcategory->name ?? '-',

@@ -40,6 +40,7 @@ interface Props {
     category: string;
     subcategory: string;
     brand: string;
+    nama: string;
     specification: string;
     lastUpdate: string;
     amount: number;
@@ -637,6 +638,7 @@ const editForm = useForm({
   subkategori: props.barang.subcategory,
   satuan: props.barang.uom,
   merek: props.barang.brand,
+  nama: props.barang.nama,
   spesifikasi: props.barang.specification,
   foto: null as File | null,
   fotoName: props.barang.image_url ? props.barang.image_url.split('/').pop() : '',
@@ -653,6 +655,7 @@ const openEditModal = () => {
   editForm.satuan = props.barang.uom;
   editForm.brand_id = props.barang.brand_id;
   editForm.merek = props.barang.brand;
+  editForm.nama = props.barang.nama;
   editForm.spesifikasi = props.barang.specification;
   editForm.foto = null;
   editForm.fotoName = props.barang.image_url ? props.barang.image_url.split('/').pop() : '';
@@ -698,7 +701,7 @@ const viewImageInNewTab = () => {
 };
 
 const isEditFormValid = computed(() => {
-  return editForm.uom_id && editForm.brand_id && editForm.spesifikasi && !editForm.processing;
+  return editForm.uom_id && editForm.brand_id && editForm.nama && editForm.spesifikasi && !editForm.processing;
 });
 
 const handleSaveChanges = () => {
@@ -710,6 +713,7 @@ const handleSaveChanges = () => {
       subcategory_id: data.subcategory_id,
       brand_id: data.brand_id,
       uom_id: data.uom_id,
+      nama: data.nama,
       specification: data.spesifikasi,
     };
     if (data.foto) {
@@ -1010,6 +1014,7 @@ const deleteFields = computed(() => {
       { label: 'Kategori', value: props.barang.category },
       { label: 'Subkategori', value: props.barang.subcategory },
       { label: 'Merek', value: props.barang.brand },
+      { label: 'Nama', value: props.barang.nama },
       { label: 'Spesifikasi', value: props.barang.specification },
       { label: 'Jumlah stok tersedia', value: availableStock },
       { label: 'Jumlah stok diawal', value: initialStock },
@@ -1036,6 +1041,7 @@ const openDeleteModal = () => {
     category: props.barang.category,
     subcategory: props.barang.subcategory,
     brand: props.barang.brand,
+    nama: props.barang.nama,
     specification: props.barang.specification,
     lastUpdate: props.barang.lastUpdate,
     amount: 0
@@ -1050,6 +1056,7 @@ const openDeleteLotModal = (lots: any | any[]) => {
     ...lot,
     barang_code: lot.barang_code || props.barang.code,
     barang_brand: lot.barang_brand || props.barang.brand,
+    barang_nama: lot.barang_nama || props.barang.nama,
     barang_specification: lot.barang_specification || props.barang.specification,
     barang_category: lot.barang_category || props.barang.category,
     barang_subcategory: lot.barang_subcategory || props.barang.subcategory,
@@ -1174,6 +1181,7 @@ const closeErrorModal = () => {
           <div class="flex-grow">
             <p class="font-bold text-foreground"><span class="text-foreground">Kode Barang:</span> {{ props.barang.code }}</p>
             <p class="font-bold text-foreground"><span class="text-foreground">Merek:</span> {{ props.barang.brand }}</p>
+            <p class="font-bold text-foreground"><span class="text-foreground">Nama:</span> {{ props.barang.nama }}</p>
             <p class="font-bold text-foreground"><span class="text-foreground">Spesifikasi:</span> {{ props.barang.specification }}</p>
             <p class="text-foreground">Kategori: {{ props.barang.category }}</p>
             <p class="text-foreground">Subkategori: {{ props.barang.subcategory }}</p>
@@ -1384,6 +1392,17 @@ const closeErrorModal = () => {
                         search-placeholder="Cari merek..."
                         default-label="Pilih merek"
                         width-class="w-full h-10 px-4"
+                      />
+                    </div>
+
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-medium text-foreground block">Nama Barang<span class="text-rose-500">*</span></label>
+                      <input 
+                        type="text" 
+                        v-model="editForm.nama"
+                        maxlength="255"
+                        placeholder="Input nama barang di sini..." 
+                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
                       />
                     </div>
 

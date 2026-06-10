@@ -19,6 +19,7 @@ class BarangController extends Controller
             'subcategory_id' => 'required|exists:subcategories,id',
             'brand_id' => 'required|exists:brands,id',
             'uom_id' => 'required|exists:uoms,id',
+            'nama' => 'required|string|max:255',
             'specification' => 'required|string|max:255',
             'image_url' => 'nullable|image|max:1024',
         ]);
@@ -44,6 +45,7 @@ class BarangController extends Controller
             'subcategory_id' => 'required|exists:subcategories,id',
             'brand_id' => 'required|exists:brands,id',
             'uom_id' => 'required|exists:uoms,id',
+            'nama' => 'required|string|max:255',
             'specification' => 'required|string|max:255',
             'image_url' => 'nullable|image|max:1024',
         ]);

@@ -60,6 +60,7 @@ class ApprovalController extends Controller
                 'barang_id' => $item->barang_id,
                 'subcategory' => $item->barang->subcategory->name ?? '-',
                 'brand' => $item->barang->brand->name ?? '-',
+                'nama' => $item->barang->nama ?? '',
                 'spec' => $item->barang->specification ?? '',
                 'quantity' => $item->quantity_requested,
                 'stockQuantity' => $stockQuantity,

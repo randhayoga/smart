@@ -139,6 +139,7 @@ const displayFields = computed(() => {
     if (data.category) fields.push({ label: 'Kategori', value: data.category });
     if (data.subcategory) fields.push({ label: 'Subkategori', value: data.subcategory });
     if (data.brand) fields.push({ label: 'Merek', value: data.brand });
+    if (data.nama) fields.push({ label: 'Nama', value: data.nama });
     if (data.specification) fields.push({ label: 'Spesifikasi', value: data.specification });
     if (data.unit_details) {
       const locParts = [];
@@ -165,6 +166,7 @@ const displayFields = computed(() => {
     if (data.category) fields.push({ label: 'Kategori', value: data.category });
     if (data.subcategory) fields.push({ label: 'Subkategori', value: data.subcategory });
     if (data.brand) fields.push({ label: 'Merek', value: data.brand });
+    if (data.nama) fields.push({ label: 'Nama', value: data.nama });
     if (data.specification) fields.push({ label: 'Spesifikasi', value: data.specification });
     if (data.lastUpdate) fields.push({ label: 'Pembaruan Terakhir', value: data.lastUpdate });
     if (data.amount !== undefined) fields.push({ label: 'Jumlah', value: data.amount });
@@ -177,6 +179,7 @@ const displayFields = computed(() => {
     if (data.barang_category) fields.push({ label: 'Kategori', value: data.barang_category });
     if (data.barang_subcategory) fields.push({ label: 'Subkategori', value: data.barang_subcategory });
     if (data.barang_brand) fields.push({ label: 'Merek', value: data.barang_brand });
+    if (data.barang_nama) fields.push({ label: 'Nama', value: data.barang_nama });
     if (data.barang_specification) fields.push({ label: 'Spesifikasi', value: data.barang_specification });
     
     const uom = data.barang_uom || '';
@@ -254,6 +257,7 @@ const bulkItemsFields = computed(() => {
     // Check if ManajemenStok
     if ('specification' in data || 'lastUpdate' in data || 'amount' in data) {
       if (data.code) fields.push({ label: 'Kode', value: data.code });
+      if (data.nama) fields.push({ label: 'Nama', value: data.nama });
       if (data.specification) fields.push({ label: 'Spesifikasi', value: data.specification });
       return fields;
     }

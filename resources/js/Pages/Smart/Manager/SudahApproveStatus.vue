@@ -61,6 +61,7 @@ interface ApprovalItem {
   category: string;
   subcategory: string;
   brand: string;
+  nama: string;
   specification: string;
   proposed_status: string;
   status_label: string;
@@ -383,6 +384,20 @@ const columns: ColumnDef<ApprovalItem>[] = [
     cell: ({ row }) => h('div', { class: 'text-foreground' }, row.getValue('brand')),
   },
   {
+    accessorKey: 'nama',
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'Nama',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'text-foreground truncate', title: row.getValue('nama') }, row.getValue('nama')),
+  },
+  {
     accessorKey: 'specification',
     header: ({ column }) => {
       return h(Button, {
@@ -633,6 +648,7 @@ const isVehicle = (item: ApprovalItem | null) => {
                       <div class="md:col-span-5">
                         <p class="font-bold text-foreground"><span class="text-foreground">Kode Barang:</span> {{ activeApproval.unit_details.barang_code }}</p>
                         <p class="font-bold text-foreground"><span class="text-foreground">Merek:</span> {{ activeApproval.brand }}</p>
+                        <p class="font-bold text-foreground"><span class="text-foreground">Nama:</span> {{ activeApproval.nama }}</p>
                         <p class="font-bold text-foreground"><span class="text-foreground">Spesifikasi:</span> {{ activeApproval.specification }}</p>
                         <p class="text-foreground">Kategori: {{ activeApproval.category }}</p>
                         <p class="text-foreground">Subkategori: {{ activeApproval.subcategory }}</p>

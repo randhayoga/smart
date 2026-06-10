@@ -51,9 +51,11 @@ class BarangControllerTest extends TestCase
         $user = User::factory()->create();
         
         $barang1 = Barang::factory()->create([
+            'nama' => 'Nama Old 1',
             'specification' => 'Spec Old 1',
         ]);
         $barang2 = Barang::factory()->create([
+            'nama' => 'Nama Old 2',
             'specification' => 'Spec Old 2',
         ]);
 
@@ -65,6 +67,7 @@ class BarangControllerTest extends TestCase
             'ids' => [$barang1->id, $barang2->id],
             'brand_id' => $newBrand->id,
             'uom_id' => $newUom->id,
+            'nama' => 'Nama New Bulk',
             'specification' => 'Spec New Bulk',
             'image_url' => $file,
         ]);
@@ -76,6 +79,7 @@ class BarangControllerTest extends TestCase
             'id' => $barang1->id,
             'brand_id' => $newBrand->id,
             'uom_id' => $newUom->id,
+            'nama' => 'Nama New Bulk',
             'specification' => 'Spec New Bulk',
         ]);
 
@@ -83,6 +87,7 @@ class BarangControllerTest extends TestCase
             'id' => $barang2->id,
             'brand_id' => $newBrand->id,
             'uom_id' => $newUom->id,
+            'nama' => 'Nama New Bulk',
             'specification' => 'Spec New Bulk',
         ]);
 
@@ -101,11 +106,13 @@ class BarangControllerTest extends TestCase
         $barang1 = Barang::factory()->create([
             'brand_id' => $brand->id,
             'uom_id' => $uom->id,
+            'nama' => 'Nama Keep 1',
             'specification' => 'Spec Keep 1',
         ]);
         $barang2 = Barang::factory()->create([
             'brand_id' => $brand->id,
             'uom_id' => $uom->id,
+            'nama' => 'Nama Keep 2',
             'specification' => 'Spec Keep 2',
         ]);
 
@@ -114,7 +121,7 @@ class BarangControllerTest extends TestCase
         $response = $this->actingAs($user)->put(route('smart.inventory.barangs.bulk-update'), [
             'ids' => [$barang1->id, $barang2->id],
             'brand_id' => $newBrand->id,
-            // uom_id and specification are not sent/empty
+            // uom_id, nama and specification are not sent/empty
         ]);
 
         $response->assertRedirect();
@@ -123,6 +130,7 @@ class BarangControllerTest extends TestCase
             'id' => $barang1->id,
             'brand_id' => $newBrand->id,
             'uom_id' => $uom->id, // kept old uom
+            'nama' => 'Nama Keep 1', // kept old nama
             'specification' => 'Spec Keep 1', // kept old spec
         ]);
 
@@ -130,6 +138,7 @@ class BarangControllerTest extends TestCase
             'id' => $barang2->id,
             'brand_id' => $newBrand->id,
             'uom_id' => $uom->id, // kept old uom
+            'nama' => 'Nama Keep 2', // kept old nama
             'specification' => 'Spec Keep 2', // kept old spec
         ]);
     }
