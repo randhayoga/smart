@@ -1,16 +1,28 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, h } from 'vue';
 import { Head } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import {
   Search,
   X,
   FileText,
-  Eye,
   ArrowUpDown,
-  AlertTriangle
+  AlertTriangle,
+  ChevronDown
 } from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
+import { Button } from "@/Components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/Components/ui/dropdown-menu";
+import TableSearch from '@/Components/TableSearch.vue';
+import type { ColumnDef } from '@tanstack/vue-table';
+import DataTable from '@/Components/DataTable.vue';
+import ViewTableButton from '@/Components/ViewTableButton.vue';
+import Tabs from '@/Components/Tabs.vue';
 
 interface AuditTrail {
   waktu: string;
@@ -73,110 +85,232 @@ const props = defineProps<Props>();
 // States & Filters
 // ─────────────────────────────────────────────
 const searchQuery = ref('');
-const categoryFilter = ref('Semua kategori');
 const decisionFilter = ref('Semua keputusan');
 const rowsPerPage = ref('Semua baris');
-
-// Sorting
-const sortBy = ref('decided_at');
-const sortDesc = ref(true);
-
-const toggleSort = (field: string) => {
-  if (sortBy.value === field) {
-    sortDesc.value = !sortDesc.value;
-  } else {
-    sortBy.value = field;
-    sortDesc.value = false;
-  }
-};
-
-// Filter options
-const categoryOptions = computed(() => {
-  const cats = new Set<string>();
-  props.approvals.forEach(app => {
-    if (app.category) cats.add(app.category);
-  });
-  return Array.from(cats);
-});
 
 // Filtered data
 const filteredApprovals = computed(() => {
   let list = [...props.approvals];
-
-  if (searchQuery.value.trim() !== '') {
-    const q = searchQuery.value.toLowerCase();
-    list = list.filter(app => 
-      app.asset_code.toLowerCase().includes(q) ||
-      app.brand.toLowerCase().includes(q) ||
-      app.specification.toLowerCase().includes(q) ||
-      app.subcategory.toLowerCase().includes(q)
-    );
-  }
-
-  if (categoryFilter.value !== 'Semua kategori') {
-    list = list.filter(app => app.category === categoryFilter.value);
-  }
 
   if (decisionFilter.value !== 'Semua keputusan') {
     const dec = decisionFilter.value === 'Disetujui' ? 'approved' : 'rejected';
     list = list.filter(app => app.decision === dec);
   }
 
+  // default sort by decided_at desc
   list.sort((a, b) => {
-    let valA: any = a[sortBy.value as keyof ApprovalItem] ?? '';
-    let valB: any = b[sortBy.value as keyof ApprovalItem] ?? '';
-
-    if (sortBy.value === 'asset_code') {
-      valA = a.asset_code;
-      valB = b.asset_code;
-    } else if (sortBy.value === 'category') {
-      valA = a.category;
-      valB = b.category;
-    } else if (sortBy.value === 'subcategory') {
-      valA = a.subcategory;
-      valB = b.subcategory;
-    } else if (sortBy.value === 'brand') {
-      valA = a.brand;
-      valB = b.brand;
-    } else if (sortBy.value === 'specification') {
-      valA = a.specification;
-      valB = b.specification;
-    } else if (sortBy.value === 'status') {
-      valA = a.status_label;
-      valB = b.status_label;
-    } else if (sortBy.value === 'decision') {
-      valA = a.decision;
-      valB = b.decision;
-    }
-
-    if (typeof valA === 'string') {
-      return sortDesc.value ? valB.localeCompare(valA) : valA.localeCompare(valB);
-    } else {
-      return sortDesc.value ? valB - valA : valA - valB;
-    }
+    const timeA = a.decided_at ? new Date(a.decided_at).getTime() : 0;
+    const timeB = b.decided_at ? new Date(b.decided_at).getTime() : 0;
+    return timeB - timeA;
   });
 
   return list;
 });
 
-// Pagination
-const currentPage = ref(1);
-
-const totalPages = computed(() => {
-  if (rowsPerPage.value === 'Semua baris') return 1;
-  const limit = parseInt(rowsPerPage.value, 10);
-  return Math.ceil(filteredApprovals.value.length / limit) || 1;
+const computedPageSize = computed(() => {
+  if (rowsPerPage.value === 'Semua baris') {
+    return filteredApprovals.value.length || 10;
+  }
+  return parseInt(rowsPerPage.value, 10);
 });
 
-const paginatedApprovals = computed(() => {
-  const list = filteredApprovals.value;
-  if (rowsPerPage.value === 'Semua baris') return list;
-  const limit = parseInt(rowsPerPage.value, 10);
-  const start = (currentPage.value - 1) * limit;
-  return list.slice(start, start + limit);
-});
+const columns: ColumnDef<ApprovalItem>[] = [
+  {
+    accessorKey: 'asset_code',
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 pl-1 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'Kode Aset',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'pl-1 text-muted-foreground font-mono text-sm truncate font-medium' }, row.getValue('asset_code')),
+  },
 
-// Memo document viewer
+  {
+    accessorKey: 'brand',
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'Merek',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'text-foreground truncate' }, row.getValue('brand')),
+  },
+  {
+    accessorKey: 'specification',
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'Spesifikasi',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'text-foreground truncate', title: row.getValue('specification') }, row.getValue('specification')),
+  },
+  {
+    accessorKey: 'status_label',
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'Status Diajukan',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'text-foreground font-medium truncate' }, row.getValue('status_label')),
+  },
+  {
+    accessorKey: 'decision',
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'Keputusan',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => {
+      const decision = row.getValue('decision') as string;
+      return h('div', { class: 'text-left' }, [
+        h('span', {
+          class: [
+            'inline-flex items-center px-2 py-0.1 rounded-full font-semibold',
+            decision === 'approved' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+          ]
+        }, decision === 'approved' ? 'Disetujui' : 'Ditolak')
+      ]);
+    },
+  },
+  {
+    accessorKey: 'approver_name',
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'Diproses Oleh',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => {
+      const item = row.original;
+      return h('div', { class: 'text-left' }, [
+        h('div', { class: 'font-semibold text-foreground' }, item.approver_name || '-'),
+        h('div', { class: 'text-[10px] text-muted-foreground font-mono mt-0.5' }, item.decided_at || '-')
+      ]);
+    },
+  },
+  {
+    id: 'actions',
+    size: 100,
+    header: () => h('div', { class: 'text-center font-semibold text-foreground' }, 'Aksi'),
+    cell: ({ row }) => {
+      const item = row.original;
+      return h('div', { class: 'flex items-center justify-center gap-2' }, [
+        h(ViewTableButton, {
+          onClick: () => openDetailPopup(item),
+          title: 'Detail Aset'
+        })
+      ]);
+    },
+    enableSorting: false,
+  }
+];
+
+const auditColumns: ColumnDef<AuditTrail>[] = [
+  {
+    accessorKey: 'waktu',
+    size: 160,
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'Waktu',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'text-foreground truncate' }, row.getValue('waktu')),
+  },
+  {
+    accessorKey: 'aksi_status',
+    size: 144,
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'Aksi / Status',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'text-foreground font-semibold truncate' }, row.getValue('aksi_status')),
+  },
+  {
+    accessorKey: 'aktor',
+    size: 160,
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'Aktor',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'text-foreground truncate' }, row.getValue('aktor')),
+  },
+  {
+    accessorKey: 'durasi',
+    size: 112,
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-center w-full'
+      }, () => [
+        'Durasi (hari)',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'text-center text-foreground truncate' }, row.getValue('durasi')),
+  },
+  {
+    accessorKey: 'catatan',
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'Catatan',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'text-muted-foreground max-w-sm truncate' }, row.getValue('catatan')),
+  }
+];
+
+// Memo document opener
 const openMemoFile = (path: string | null) => {
   if (!path) {
     toast.error('File berita acara / memo tidak ditemukan.');
@@ -185,8 +319,37 @@ const openMemoFile = (path: string | null) => {
   window.open('/storage/' + path, '_blank');
 };
 
+// Formats & Helpers
+const formatRupiah = (val: number | string | null | undefined) => {
+  if (val === null || val === undefined || val === '') return 'Rp0';
+  let num: number;
+  if (typeof val === 'string') {
+    const cleanStr = val.replace(/[^0-9,-]/g, '');
+    if (!cleanStr) return 'Rp0';
+    num = parseFloat(cleanStr.replace(/,/g, '.'));
+  } else {
+    num = val;
+  }
+  if (isNaN(num)) return 'Rp0';
+  const formatted = Math.floor(num).toLocaleString('id-ID');
+  return `Rp${formatted}`;
+};
+
+const formatLocation = (loc: string | null | undefined, floor: string | null, room: string | null) => {
+  const parts = [];
+  if (loc && loc !== '-') parts.push(loc);
+  if (floor && floor !== '-') parts.push(floor);
+  if (room && room !== '-') parts.push(room);
+  return parts.join(', ') || '-';
+};
+
+const formatDateWithDashes = (dateStr: string | null | undefined) => {
+  if (!dateStr || dateStr === '-') return '-';
+  return dateStr.replace(/\//g, '-');
+};
+
 // ─────────────────────────────────────────────
-// Detail Popup States
+// Popup Detail Asset States
 // ─────────────────────────────────────────────
 const isDetailPopupOpen = ref(false);
 const activeApproval = ref<ApprovalItem | null>(null);
@@ -195,6 +358,7 @@ const detailActiveTab = ref('Detail');
 const auditSearch = ref('');
 const auditStatusFilter = ref('semua');
 const auditTimeFilter = ref('semua');
+const auditRowsPerPage = ref('Semua baris');
 
 const openDetailPopup = (approval: ApprovalItem) => {
   activeApproval.value = approval;
@@ -202,6 +366,7 @@ const openDetailPopup = (approval: ApprovalItem) => {
   auditSearch.value = '';
   auditStatusFilter.value = 'semua';
   auditTimeFilter.value = 'semua';
+  auditRowsPerPage.value = 'Semua baris';
   isDetailPopupOpen.value = true;
 };
 
@@ -211,6 +376,13 @@ const closeDetailPopup = () => {
     activeApproval.value = null;
   }, 200);
 };
+
+const computedAuditPageSize = computed(() => {
+  if (auditRowsPerPage.value === 'Semua baris') {
+    return filteredLifecycles.value.length || 10;
+  }
+  return parseInt(auditRowsPerPage.value, 10);
+});
 
 const filteredLifecycles = computed(() => {
   if (!activeApproval.value) return [];
@@ -256,438 +428,330 @@ const auditStatusOptions = computed(() => {
   });
   return Array.from(stats);
 });
+
+const isVehicle = (item: ApprovalItem | null) => {
+  if (!item) return false;
+  const category = (item.category || '').toLowerCase();
+  const subcategory = (item.subcategory || '').toLowerCase();
+  return category.includes('kendaraan') || subcategory.includes('kendaraan') ||
+         category.includes('mobil') || subcategory.includes('mobil') ||
+         category.includes('motor') || subcategory.includes('motor');
+};
 </script>
 
 <template>
-  <Head title="Approval Aset - Sudah Approve" />
+  <Head title="Approval Aset" />
 
   <AppLayout title="Approval Aset">
     <!-- ── Title Halaman ── -->
     <div class="mb-6">
-      <h1 class="text-[28px] font-bold text-gray-900 leading-none">Approval Aset</h1>
-      <p class="text-base font-semibold text-gray-900 mt-2">Sudah Diproses</p>
+      <h1 class="text-xl font-bold text-gray-900 leading-none">Approval Aset</h1>
+      <p class="text-lg font-bold text-gray-900 mt-2">Sudah Diproses</p>
     </div>
 
     <!-- ── Filter & Search Section ── -->
-    <div class="flex flex-col gap-4 mb-6">
-      <div class="flex flex-wrap gap-3 items-center justify-between">
-        <div class="flex flex-wrap gap-3 items-center w-full lg:w-auto">
-          <!-- Search input -->
-          <div class="relative w-full sm:w-[220px]">
-            <input
-              v-model="searchQuery"
-              type="text"
-              placeholder="Cari Aset..."
-              class="w-full h-10 pl-4 pr-10 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
-            />
-            <div class="absolute right-3 top-3 text-gray-400">
-              <Search class="w-4 h-4" />
-            </div>
-          </div>
-
-          <!-- Kategori Filter -->
-          <div class="w-full sm:w-[150px]">
-            <select 
-              v-model="categoryFilter" 
-              class="w-full h-10 px-3 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer shadow-sm"
-            >
-              <option value="Semua kategori">Semua kategori</option>
-              <option v-for="cat in categoryOptions" :key="cat" :value="cat">{{ cat }}</option>
-            </select>
-          </div>
-
-          <!-- Decision Filter -->
-          <div class="w-full sm:w-[150px]">
-            <select 
-              v-model="decisionFilter" 
-              class="w-full h-10 px-3 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer shadow-sm"
-            >
-              <option value="Semua keputusan">Semua keputusan</option>
-              <option value="Disetujui">Disetujui</option>
-              <option value="Ditolak">Ditolak</option>
-            </select>
-          </div>
+    <div class="space-y-4 mb-6">
+      <!-- Filters Row -->
+      <div class="flex flex-wrap items-end gap-4">
+        <div class="space-y-1.5 flex-1 min-w-[300px] max-w-sm">
+          <label class="text-xs text-muted-foreground font-medium block ml-0.5">Filter</label>
+          <TableSearch 
+            v-model="searchQuery"
+            placeholder="Cari Aset..." 
+            bg-class="bg-white"
+          />
         </div>
 
-        <!-- Page Size Selection -->
-        <div class="flex items-center gap-2 text-xs text-gray-600 justify-end w-full sm:w-auto">
-          <span class="whitespace-nowrap">Baris per halaman</span>
-          <select 
-            v-model="rowsPerPage" 
-            class="border border-gray-300 rounded-lg h-10 px-3 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer w-[120px]"
-          >
-            <option value="5">5 baris</option>
-            <option value="10">10 baris</option>
-            <option value="25">25 baris</option>
-            <option value="Semua baris">Semua baris</option>
-          </select>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal bg-white', (!decisionFilter || decisionFilter === 'Semua keputusan') ? 'text-muted-foreground' : 'text-foreground']">
+              <span class="truncate">{{ decisionFilter || 'Semua keputusan' }}</span>
+              <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
+            <DropdownMenuItem @select="decisionFilter = 'Semua keputusan'">Semua keputusan</DropdownMenuItem>
+            <DropdownMenuItem @select="decisionFilter = 'Disetujui'">Disetujui</DropdownMenuItem>
+            <DropdownMenuItem @select="decisionFilter = 'Ditolak'">Ditolak</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <div class="flex items-center gap-3 text-sm text-muted-foreground ml-auto">
+          <span>Baris per halaman</span>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal bg-white', (rowsPerPage === 'Semua baris' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
+                {{ rowsPerPage === 'Semua baris' ? 'Semua baris' : `${rowsPerPage} baris` }}
+                <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent class="w-[140px] rounded-[14px]" align="start" :side-offset="4">
+              <DropdownMenuItem @select="rowsPerPage = '5'">5 baris</DropdownMenuItem>
+              <DropdownMenuItem @select="rowsPerPage = '10'">10 baris</DropdownMenuItem>
+              <DropdownMenuItem @select="rowsPerPage = '25'">25 baris</DropdownMenuItem>
+              <DropdownMenuItem @select="rowsPerPage = 'Semua baris'">Semua baris</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </div>
 
     <!-- ── Table Display ── -->
-    <div class="bg-white border border-gray-200 rounded-xl overflow-x-auto shadow-sm">
-      <table class="w-full text-xs text-left border-collapse">
-        <thead>
-          <tr class="bg-white border-b border-gray-200 text-gray-900 font-bold">
-            <th @click="toggleSort('asset_code')" class="py-4 px-6 cursor-pointer select-none">
-              <div class="flex items-center gap-1">
-                Kode Aset
-                <span class="text-gray-400 font-normal">↑↓</span>
-              </div>
-            </th>
-            <th @click="toggleSort('category')" class="py-4 px-4 cursor-pointer select-none">
-              <div class="flex items-center gap-1">
-                Kategori
-                <span class="text-gray-400 font-normal">↑↓</span>
-              </div>
-            </th>
-            <th @click="toggleSort('subcategory')" class="py-4 px-4 cursor-pointer select-none">
-              <div class="flex items-center gap-1">
-                Subkategori
-                <span class="text-gray-400 font-normal">↑↓</span>
-              </div>
-            </th>
-            <th @click="toggleSort('brand')" class="py-4 px-4 cursor-pointer select-none">
-              <div class="flex items-center gap-1">
-                Merek
-                <span class="text-gray-400 font-normal">↑↓</span>
-              </div>
-            </th>
-            <th @click="toggleSort('specification')" class="py-4 px-4 cursor-pointer select-none">
-              <div class="flex items-center gap-1">
-                Spesifikasi
-                <span class="text-gray-400 font-normal">↑↓</span>
-              </div>
-            </th>
-            <th @click="toggleSort('status')" class="py-4 px-4 cursor-pointer select-none">
-              <div class="flex items-center gap-1">
-                Status Diajukan
-                <span class="text-gray-400 font-normal">↑↓</span>
-              </div>
-            </th>
-            <th @click="toggleSort('decision')" class="py-4 px-4 cursor-pointer select-none text-center">
-              <div class="flex items-center justify-center gap-1">
-                Keputusan
-                <span class="text-gray-400 font-normal">↑↓</span>
-              </div>
-            </th>
-            <th class="py-4 px-4 text-center">Diproses Oleh</th>
-            <th class="py-4 px-4 text-center w-28">Aksi</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-150">
-          <tr 
-            v-for="app in paginatedApprovals" 
-            :key="app.id"
-            class="hover:bg-gray-50/50 transition-colors"
-          >
-            <td class="py-4 px-6 font-mono font-medium text-gray-900">{{ app.asset_code }}</td>
-            <td class="py-4 px-4 text-gray-900">{{ app.category }}</td>
-            <td class="py-4 px-4 text-gray-900">{{ app.subcategory }}</td>
-            <td class="py-4 px-4 text-gray-900">{{ app.brand }}</td>
-            <td class="py-4 px-4 text-gray-900 truncate max-w-xs">{{ app.specification }}</td>
-            <!-- Plain Text Status Column (matches mockup) -->
-            <td class="py-4 px-4 text-gray-900 font-medium">{{ app.status_label }}</td>
-            <td class="py-4 px-4 text-center">
-              <span 
-                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold"
-                :class="[
-                  app.decision === 'approved' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                ]"
-              >
-                {{ app.decision === 'approved' ? 'Disetujui' : 'Ditolak' }}
-              </span>
-            </td>
-            <td class="py-4 px-4 text-center">
-              <div class="font-semibold text-gray-900">{{ app.approver_name || '-' }}</div>
-              <div class="text-[10px] text-gray-500 font-mono mt-0.5">{{ app.decided_at || '-' }}</div>
-            </td>
-            <td class="py-4 px-4">
-              <div class="flex items-center justify-center gap-2">
-                <!-- Purple Circle Action Button -->
-                <button 
-                  @click="openMemoFile(app.memo_path)"
-                  class="w-8 h-8 rounded-full bg-[#6366F1] hover:bg-[#5850EC] text-white flex items-center justify-center transition-colors shadow-sm cursor-pointer"
-                  title="Buka Berita Acara / Memo"
-                >
-                  <FileText class="w-4 h-4" />
-                </button>
-                <!-- Cyan Circle Action Button -->
-                <button 
-                  @click="openDetailPopup(app)"
-                  class="w-8 h-8 rounded-full bg-[#00BCD4] hover:bg-[#06B6D4] text-white flex items-center justify-center transition-colors shadow-sm cursor-pointer"
-                  title="Detail Aset"
-                >
-                  <Eye class="w-4 h-4" />
-                </button>
-              </div>
-            </td>
-          </tr>
-
-          <!-- Empty State -->
-          <tr v-if="filteredApprovals.length === 0">
-            <td colspan="9" class="py-12 text-center text-gray-500">
-              <AlertTriangle class="w-8 h-8 mx-auto mb-2 text-gray-400" />
-              <p class="font-medium">Tidak ada riwayat persetujuan status aset.</p>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- ── Pagination & Count Display ── -->
-    <div class="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4 px-2 text-xs text-gray-500">
-      <div>
-        Menampilkan {{ filteredApprovals.length }} riwayat persetujuan
-      </div>
-      
-      <!-- Page numbers navigation -->
-      <div v-if="totalPages > 1" class="flex items-center gap-1">
-        <button 
-          :disabled="currentPage === 1"
-          @click="currentPage--"
-          class="h-8 px-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none transition-colors"
-        >
-          &lt; Sebelumnya
-        </button>
-        
-        <button 
-          v-for="page in totalPages" 
-          :key="page"
-          @click="currentPage = page"
-          class="w-8 h-8 border rounded-lg transition-all"
-          :class="[
-            currentPage === page 
-              ? 'border-indigo-600 bg-indigo-50 text-indigo-600 font-bold shadow-sm' 
-              : 'border-gray-300 hover:bg-gray-50 text-gray-700'
-          ]"
-        >
-          {{ page }}
-        </button>
-
-        <button 
-          :disabled="currentPage === totalPages"
-          @click="currentPage++"
-          class="h-8 px-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none transition-colors"
-        >
-          Selanjutnya &gt;
-        </button>
-      </div>
+    <div class="pb-4">
+      <DataTable 
+        :columns="columns" 
+        :data="filteredApprovals" 
+        :filter-value="searchQuery"
+        :page-size="computedPageSize"
+        :show-selection-count="false"
+      />
     </div>
 
     <!-- ============================================================
          Detail Asset Popup (Overlay Backdrop & Modal Card)
          ============================================================ -->
     <Teleport to="body">
-      <div 
-        v-if="isDetailPopupOpen && activeApproval" 
-        class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4"
-        @click="closeDetailPopup"
+      <Transition
+        enter-active-class="ease-out duration-200"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="ease-in duration-150"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
       >
         <div 
-          class="bg-white text-gray-900 rounded-xl shadow-2xl w-full max-w-5xl flex flex-col overflow-hidden border border-gray-200 animate-in fade-in zoom-in-95 duration-200"
-          @click.stop
+          v-if="isDetailPopupOpen && activeApproval" 
+          class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+          @click="closeDetailPopup"
         >
-          <!-- Header -->
-          <div class="flex items-center justify-between p-5 border-b border-gray-200 bg-white shrink-0">
-            <h3 class="text-base md:text-lg font-bold text-gray-900">Detail Aset</h3>
-            <button @click="closeDetailPopup" class="p-1.5 hover:bg-gray-100 rounded-full transition-colors cursor-pointer">
-              <X class="w-5 h-5 text-gray-500" />
-            </button>
-          </div>
-
-          <!-- Popup Tab pills -->
-          <div class="px-6 py-3 border-b border-gray-200 flex items-center gap-2 shrink-0">
-            <button 
-              @click="detailActiveTab = 'Detail'"
-              class="px-4 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer"
-              :class="[
-                detailActiveTab === 'Detail' 
-                  ? 'border-indigo-600 text-indigo-600 bg-white' 
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              ]"
+          <Transition
+            enter-active-class="ease-out duration-200"
+            enter-from-class="opacity-0 scale-95"
+            enter-to-class="opacity-100 scale-100"
+            leave-active-class="ease-in duration-150"
+            leave-from-class="opacity-100 scale-100"
+            leave-to-class="opacity-0 scale-95"
+          >
+            <div 
+              v-if="isDetailPopupOpen && activeApproval"
+              class="bg-card w-full max-w-[90%] rounded-[14px] shadow-2xl overflow-hidden flex flex-col border border-border"
+              @click.stop
             >
-              Detail
-            </button>
-            <button 
-              @click="detailActiveTab = 'Jejak Audit'"
-              class="px-4 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer"
-              :class="[
-                detailActiveTab === 'Jejak Audit' 
-                  ? 'border-indigo-600 text-indigo-600 bg-white' 
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              ]"
-            >
-              Jejak Audit
-            </button>
-          </div>
-
-          <!-- Body contents -->
-          <div class="overflow-y-auto max-h-[70vh] p-6">
-            
-            <!-- ── TAB 1: DETAIL ── -->
-            <div v-if="detailActiveTab === 'Detail'" class="flex flex-col lg:flex-row gap-6">
-              <!-- Left Side Image -->
-              <div class="w-full lg:w-48 h-48 rounded-[12px] bg-gray-150 border border-gray-200 overflow-hidden shrink-0 flex items-center justify-center">
-                <img 
-                  v-if="activeApproval.unit_details.image_url" 
-                  :src="activeApproval.unit_details.image_url" 
-                  class="w-full h-full object-cover" 
-                />
-                <div v-else class="text-xs font-bold text-gray-400 select-none text-center p-4">
-                  No Photo
-                </div>
+              <!-- Header -->
+              <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
+                <h3 class="text-lg font-bold text-foreground">Detail Aset</h3>
+                <button @click="closeDetailPopup" class="p-2 hover:bg-muted rounded-full transition-colors">
+                  <X class="w-5 h-5 text-muted-foreground" />
+                </button>
               </div>
 
-              <!-- Right Side Metadata (Same line labels) -->
-              <div class="flex-grow grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-3.5 text-xs text-gray-900 align-top">
-                <!-- Column 1 -->
-                <div class="space-y-3.5">
-                  <p class="leading-normal"><strong class="font-bold">Kode Barang:</strong> {{ activeApproval.unit_details.barang_code }}</p>
-                  <p class="leading-normal"><strong class="font-bold">Merek:</strong> {{ activeApproval.brand }}</p>
-                  <p class="leading-normal"><strong class="font-bold">Spesifikasi:</strong> {{ activeApproval.specification }}</p>
-                  <p class="leading-normal"><strong class="font-bold">Kategori:</strong> {{ activeApproval.category }}</p>
-                  <p class="leading-normal"><strong class="font-bold">Subkategori:</strong> {{ activeApproval.subcategory }}</p>
-                  <p class="leading-normal"><strong class="font-bold">Satuan:</strong> {{ activeApproval.unit_details.barang_unit }}</p>
+              <!-- Body contents -->
+              <div class="overflow-y-auto max-h-[70vh] px-6 py-3 space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-4 mb-2">
+                  <Tabs v-model="detailActiveTab" :tabs="['Detail', 'Jejak Audit']" />
                 </div>
+                
+                <!-- ── TAB 1: DETAIL ── -->
+                <div v-if="detailActiveTab === 'Detail'" class="px-4 py-3 bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+                  <div class="flex flex-col md:flex-row gap-6">
+                    <!-- Image Column -->
+                    <div class="w-48 h-48 rounded-xl bg-muted shrink-0 flex items-center justify-center overflow-hidden border border-border">
+                      <img 
+                        v-if="activeApproval.unit_details.image_url" 
+                        :src="activeApproval.unit_details.image_url.startsWith('http') || activeApproval.unit_details.image_url.startsWith('/') ? activeApproval.unit_details.image_url : '/storage/' + activeApproval.unit_details.image_url" 
+                        class="w-full h-full object-cover" 
+                      />
+                      <img 
+                        v-else 
+                        src="https://placehold.co/400x400?text=Placeholder" 
+                        class="w-full h-full object-cover opacity-50" 
+                      />
+                    </div>
 
-                <!-- Column 2 -->
-                <div class="space-y-3.5">
-                  <p class="leading-normal"><strong class="font-bold">Kode LOT:</strong> {{ activeApproval.unit_details.lot_code }}</p>
-                  <p class="leading-normal"><strong class="font-bold">Organizer:</strong> {{ activeApproval.unit_details.organizer }}</p>
-                  <p class="leading-normal"><strong class="font-bold">Tanggal masuk:</strong> {{ activeApproval.unit_details.date_of_receipt }}</p>
-                  <p class="leading-normal"><strong class="font-bold">Vendor:</strong> {{ activeApproval.unit_details.vendor }}</p>
-                  <p class="leading-normal"><strong class="font-bold">Nomor PO:</strong> {{ activeApproval.unit_details.po_number }}</p>
-                </div>
+                    <!-- Details Columns -->
+                    <div class="flex-grow grid grid-cols-1 md:grid-cols-18 gap-4 text-foreground">
+                      <!-- Column 1: Item Info -->
+                      <div class="md:col-span-5">
+                        <p class="font-bold text-foreground"><span class="text-foreground">Kode Barang:</span> {{ activeApproval.unit_details.barang_code }}</p>
+                        <p class="font-bold text-foreground"><span class="text-foreground">Merek:</span> {{ activeApproval.brand }}</p>
+                        <p class="font-bold text-foreground"><span class="text-foreground">Spesifikasi:</span> {{ activeApproval.specification }}</p>
+                        <p class="text-foreground">Kategori: {{ activeApproval.category }}</p>
+                        <p class="text-foreground">Subkategori: {{ activeApproval.subcategory }}</p>
+                        <p class="text-foreground">Satuan: {{ activeApproval.unit_details.barang_unit }}</p>
+                      </div>
 
-                <!-- Column 3 -->
-                <div class="space-y-3.5">
-                  <p class="leading-normal"><strong class="font-bold">Kode Aset:</strong> {{ activeApproval.asset_code }}</p>
-                  <p class="leading-normal"><strong class="font-bold">Nopol:</strong> {{ activeApproval.unit_details.vehicle_registration || '-' }}</p>
-                  <p class="leading-normal"><strong class="font-bold text-gray-900">Status Sekarang:</strong> <span class="text-indigo-600 font-semibold">{{ activeApproval.unit_details.status }}</span></p>
-                  <p class="leading-normal"><strong class="font-bold">Kondisi:</strong> {{ activeApproval.unit_details.condition }}</p>
-                  <p class="leading-normal"><strong class="font-bold">Nilai:</strong> Rp{{ activeApproval.unit_details.price }}</p>
-                  <p class="leading-normal"><strong class="font-bold">Keputusan:</strong> <span class="font-semibold" :class="activeApproval.decision === 'approved' ? 'text-green-600' : 'text-red-600'">{{ activeApproval.decision === 'approved' ? 'Disetujui' : 'Ditolak' }}</span></p>
-                  <p class="leading-normal" v-if="activeApproval.note"><strong class="font-bold">Catatan Manager:</strong> <span class="italic">"{{ activeApproval.note }}"</span></p>
-                </div>
-              </div>
-            </div>
+                      <!-- Column 2: LOT Info -->
+                      <div class="md:col-span-6">
+                        <p class="font-bold text-foreground"><span class="text-foreground">Kode LOT:</span> {{ activeApproval.unit_details.lot_code }}</p>
+                        <p class="text-foreground">Organizer: {{ activeApproval.unit_details.organizer }}</p>
+                        <p class="text-foreground">Tanggal masuk: {{ formatDateWithDashes(activeApproval.unit_details.date_of_receipt) }}</p>
+                        <p class="text-foreground">Vendor: {{ activeApproval.unit_details.vendor }}</p>
+                        <p class="text-foreground">Nomor PO: {{ activeApproval.unit_details.po_number }}</p>
+                      </div>
 
-            <!-- ── TAB 2: JEJAK AUDIT ── -->
-            <div v-if="detailActiveTab === 'Jejak Audit'" class="space-y-4">
-              <!-- Internal Search & Local Filters -->
-              <div class="flex flex-col sm:flex-row items-center gap-3 justify-between p-4 bg-gray-50 border border-gray-200 rounded-xl text-xs">
-                <div class="flex flex-wrap gap-3 items-center w-full sm:w-auto">
-                  <div class="relative w-full sm:w-[220px]">
-                    <input
-                      v-model="auditSearch"
-                      type="text"
-                      placeholder="Cari Jejak Audit"
-                      class="w-full h-10 pl-3 pr-8 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
-                    />
-                    <div class="absolute right-2.5 top-3 text-gray-400">
-                      <Search class="w-4 h-4" />
+                      <!-- Column 3: Asset Info -->
+                      <div class="md:col-span-7">
+                        <p class="font-bold text-foreground"><span class="text-foreground">Kode Aset:</span> {{ activeApproval.asset_code }}</p>
+                        <!-- TNKB (Nopol) -->
+                        <p v-if="isVehicle(activeApproval)" class="font-bold text-foreground">
+                          <span class="text-foreground">Nopol:</span> {{ activeApproval.unit_details.vehicle_registration || '-' }}
+                        </p>
+
+                        <p class="text-foreground">
+                          Status Sekarang: <span class="text-primary font-semibold">{{ activeApproval.unit_details.status }}</span>
+                        </p>
+                        <p class="text-foreground">
+                          Status Diajukan: 
+                          <span 
+                            :class="[
+                              'inline-flex items-center px-2 py-0.1 rounded-full font-semibold',
+                              activeApproval.proposed_status === 'tersedia' ? 'bg-emerald-100 text-emerald-800' :
+                              activeApproval.proposed_status === 'dipinjam' ? 'bg-amber-100 text-amber-800' :
+                              activeApproval.proposed_status === 'dipakai' ? 'bg-blue-100 text-blue-800' :
+                              'bg-rose-100 text-rose-800'
+                            ]"
+                          >
+                            {{ activeApproval.status_label }}
+                          </span>
+                        </p>
+                        <p class="text-foreground">
+                          Kondisi: 
+                          <span 
+                            :class="[
+                              'font-semibold',
+                              activeApproval.unit_details.condition === 'Baik' ? 'text-emerald-600' :
+                              activeApproval.unit_details.condition === 'Kurang Baik' ? 'text-amber-600' :
+                              'text-rose-600'
+                            ]"
+                          >
+                            {{ activeApproval.unit_details.condition }}
+                          </span>
+                        </p>
+                        <p class="text-foreground">Nilai: {{ formatRupiah(activeApproval.unit_details.price) }}</p>
+                        <p class="text-foreground">Lokasi penyimpanan: {{ formatLocation(activeApproval.unit_details.location, activeApproval.unit_details.floor, activeApproval.unit_details.room) }}</p>
+                        <p class="text-foreground">
+                          Keputusan: 
+                          <span 
+                            :class="[
+                              'font-semibold',
+                              activeApproval.decision === 'approved' ? 'text-emerald-600' : 'text-rose-600'
+                            ]"
+                          >
+                            {{ activeApproval.decision === 'approved' ? 'Disetujui' : 'Ditolak' }}
+                          </span>
+                        </p>
+                        <p class="text-foreground" v-if="activeApproval.note">
+                          Catatan Manager: <span class="italic text-muted-foreground">"{{ activeApproval.note }}"</span>
+                        </p>
+                      </div>
                     </div>
                   </div>
-                  
-                  <div class="w-full sm:w-[140px]">
-                    <select 
-                      v-model="auditStatusFilter" 
-                      class="w-full h-10 px-3 border border-gray-300 rounded-lg bg-white text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer"
-                    >
-                      <option value="semua">Semua Status</option>
-                      <option v-for="st in auditStatusOptions" :key="st" :value="st">{{ st }}</option>
-                    </select>
+                </div>
+
+                <!-- ── TAB 2: JEJAK AUDIT ── -->
+                <div v-if="detailActiveTab === 'Jejak Audit'" class="px-4 py-3 bg-card rounded-xl border border-border shadow-sm overflow-hidden space-y-4">
+                  <!-- Internal Search & Local Filters -->
+                  <div class="flex flex-wrap items-end gap-4">
+                    <div class="space-y-1.5 flex-1 min-w-[200px] max-w-xs">
+                      <label class="text-xs text-muted-foreground font-medium block ml-0.5">Filter</label>
+                      <TableSearch 
+                        v-model="auditSearch"
+                        placeholder="Cari Jejak Audit..." 
+                        bg-class="bg-white"
+                      />
+                    </div>
+
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" :class="['w-[180px] justify-between rounded-[14px] font-normal bg-white', (auditStatusFilter === 'semua') ? 'text-muted-foreground' : 'text-foreground']">
+                          <span class="truncate">{{ auditStatusFilter === 'semua' ? 'Semua Status' : auditStatusFilter }}</span>
+                          <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent class="w-[180px] rounded-[14px] z-[110]" align="start" :side-offset="4">
+                        <DropdownMenuItem @select="auditStatusFilter = 'semua'">Semua Status</DropdownMenuItem>
+                        <DropdownMenuItem v-for="st in auditStatusOptions" :key="st" @select="auditStatusFilter = st">
+                          {{ st }}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" :class="['w-[240px] justify-between rounded-[14px] font-normal bg-white', (auditTimeFilter === 'semua') ? 'text-muted-foreground' : 'text-foreground']">
+                          <span class="truncate">
+                            {{ 
+                              auditTimeFilter === 'semua' ? 'Semua Kurun Waktu' : 
+                              auditTimeFilter === '7-hari' ? '7 hari terakhir' : 
+                              '30 hari terakhir' 
+                            }}
+                          </span>
+                          <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent class="w-[180px] rounded-[14px] z-[110]" align="start" :side-offset="4">
+                        <DropdownMenuItem @select="auditTimeFilter = 'semua'">Semua Kurun Waktu</DropdownMenuItem>
+                        <DropdownMenuItem @select="auditTimeFilter = '7-hari'">7 hari terakhir</DropdownMenuItem>
+                        <DropdownMenuItem @select="auditTimeFilter = '30-hari'">30 hari terakhir</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    <div class="flex items-center gap-3 text-sm text-muted-foreground ml-auto">
+                      <span>Baris per halaman</span>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal bg-white', (auditRowsPerPage === 'Semua baris' || !auditRowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
+                            {{ auditRowsPerPage === 'Semua baris' ? 'Semua baris' : `${auditRowsPerPage} baris` }}
+                            <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent class="w-[140px] rounded-[14px] z-[110]" align="start" :side-offset="4">
+                          <DropdownMenuItem @select="auditRowsPerPage = '5'">5 baris</DropdownMenuItem>
+                          <DropdownMenuItem @select="auditRowsPerPage = '10'">10 baris</DropdownMenuItem>
+                          <DropdownMenuItem @select="auditRowsPerPage = '25'">25 baris</DropdownMenuItem>
+                          <DropdownMenuItem @select="auditRowsPerPage = 'Semua baris'">Semua baris</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
 
-                  <div class="w-full sm:w-[150px]">
-                    <select 
-                      v-model="auditTimeFilter" 
-                      class="w-full h-10 px-3 border border-gray-300 rounded-lg bg-white text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer"
-                    >
-                      <option value="semua">Semua Kurun Waktu</option>
-                      <option value="7-hari">7 hari terakhir</option>
-                      <option value="30-hari">30 hari terakhir</option>
-                    </select>
+                  <!-- Log table via DataTable -->
+                  <div class="pb-4">
+                    <DataTable 
+                      :columns="auditColumns" 
+                      :data="filteredLifecycles" 
+                      :filter-value="auditSearch"
+                      :page-size="computedAuditPageSize"
+                      :show-selection-count="false"
+                    />
                   </div>
                 </div>
 
-                <div class="flex items-center gap-2 w-full sm:w-auto justify-end text-gray-500">
-                  <span>Baris per halaman:</span>
-                  <select class="border border-gray-300 rounded-lg h-10 px-3 bg-white text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer w-[120px]">
-                    <option value="semua">Semua baris</option>
-                  </select>
-                </div>
               </div>
 
-              <!-- Log table -->
-              <div class="border border-gray-200 rounded-xl overflow-x-auto shadow-sm">
-                <table class="w-full text-xs text-left border-collapse">
-                  <thead>
-                    <tr class="bg-gray-50 border-b border-gray-200 text-gray-700 font-bold uppercase tracking-wider text-[10px]">
-                      <th class="py-3 px-4 w-40">Waktu ↑↓</th>
-                      <th class="py-3 px-4 w-36">Aksi / Status ↑↓</th>
-                      <th class="py-3 px-4 w-40">Aktor ↑↓</th>
-                      <th class="py-3 px-4 w-28 text-center">Durasi (hari) ↑↓</th>
-                      <th class="py-3 px-4">Catatan ↑↓</th>
-                    </tr>
-                  </thead>
-                  <tbody class="divide-y divide-gray-150">
-                    <tr 
-                      v-for="(lc, idx) in filteredLifecycles" 
-                      :key="idx"
-                      class="hover:bg-gray-50/50 transition-colors"
-                    >
-                      <td class="py-3 px-4 font-medium text-gray-900">{{ lc.waktu }}</td>
-                      <td class="py-3 px-4 text-gray-900 font-medium">{{ lc.aksi_status }}</td>
-                      <td class="py-3 px-4 text-gray-900">{{ lc.aktor }}</td>
-                      <td class="py-3 px-4 text-center text-gray-900">{{ lc.durasi }}</td>
-                      <td class="py-3 px-4 text-gray-700 max-w-sm truncate">{{ lc.catatan }}</td>
-                    </tr>
-                    
-                    <tr v-if="filteredLifecycles.length === 0">
-                      <td colspan="5" class="py-6 text-center text-gray-500 italic">
-                        Tidak ada log jejak audit.
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+              <!-- Bottom Footer Buttons (Right Aligned group) -->
+              <div class="py-3 px-4 flex items-center justify-end gap-3 bg-muted/10 shrink-0">
+                <!-- Purple Memo Button -->
+                <button 
+                  @click="openMemoFile(activeApproval.memo_path)"
+                  class="bg-[#6366F1] hover:bg-[#5850EC] text-white text-sm font-bold px-5 py-2.5 rounded-xl inline-flex items-center gap-2 transition-colors cursor-pointer shadow-sm"
+                >
+                  <FileText class="w-4 h-4" />
+                  Buka Memo / Berita Acara
+                </button>
 
-              <!-- Mini pagination inside Jejak Audit tab -->
-              <div class="mt-4 flex items-center justify-end text-xs text-gray-500 px-1">
-                <div class="flex items-center gap-1">
-                  <button class="h-8 px-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 text-xs disabled:opacity-50" disabled>&lt; Sebelumnya</button>
-                  <button class="w-8 h-8 border border-indigo-600 bg-indigo-50 text-indigo-600 font-bold rounded-lg text-xs">1</button>
-                  <button class="h-8 px-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 text-xs disabled:opacity-50" disabled>Selanjutnya &gt;</button>
-                </div>
+                <!-- White Kembali Button -->
+                <button 
+                  @click="closeDetailPopup"
+                  class="bg-background border border-input hover:bg-muted text-foreground text-sm font-bold px-5 py-2.5 rounded-xl transition-colors cursor-pointer shadow-sm"
+                >
+                  Kembali
+                </button>
               </div>
             </div>
-
-          </div>
-
-          <!-- Bottom Footer Buttons (Right Aligned group) -->
-          <div class="p-5 border-t border-gray-200 flex justify-end gap-3 bg-gray-50 shrink-0">
-            <!-- Purple Memo Button -->
-            <button 
-              @click="openMemoFile(activeApproval.memo_path)"
-              class="bg-[#6366F1] hover:bg-[#5850EC] text-white font-medium text-xs px-5 py-2.5 rounded-lg inline-flex items-center gap-2 transition-colors cursor-pointer shadow-sm"
-            >
-              <FileText class="w-4 h-4" />
-              Buka Memo / Berita Acara
-            </button>
-
-            <!-- White Kembali Button -->
-            <button 
-              @click="closeDetailPopup"
-              class="bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 font-medium text-xs px-5 py-2.5 rounded-lg transition-colors cursor-pointer shadow-sm"
-            >
-              Kembali
-            </button>
-          </div>
+          </Transition>
         </div>
-      </div>
+      </Transition>
     </Teleport>
 
   </AppLayout>
