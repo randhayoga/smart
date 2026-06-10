@@ -185,7 +185,7 @@ class LotController extends Controller
                 // Parent barang info
                 'barang_code' => $lot->barang->number ?? '-',
                 'barang_brand' => $lot->barang->brand->name ?? '-',
-                'barang_nama' => $lot->barang->nama ?? '-',
+                'barang_nama' => $lot->barang->name ?? '-',
                 'barang_specification' => $lot->barang->specification ?? '-',
                 'barang_category' => $lot->barang->subcategory->category->name ?? '-',
                 'barang_subcategory' => $lot->barang->subcategory->name ?? '-',
@@ -250,7 +250,7 @@ class LotController extends Controller
                 'barang_id' => $lot->barang->id ?? null,
                 'barang_code' => $lot->barang->number ?? '-',
                 'barang_brand' => $lot->barang->brand->name ?? '-',
-                'barang_nama' => $lot->barang->nama ?? '-',
+                'barang_nama' => $lot->barang->name ?? '-',
                 'barang_specification' => $lot->barang->specification ?? '-',
                 'barang_category' => $lot->barang->subcategory->category->name ?? '-',
                 'barang_subcategory' => $lot->barang->subcategory->name ?? '-',

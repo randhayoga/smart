@@ -19,7 +19,7 @@ class BulkBarangController extends Controller
             'ids.*' => 'required|exists:barangs,id',
             'brand_id' => 'nullable|exists:brands,id',
             'uom_id' => 'nullable|exists:uoms,id',
-            'nama' => 'nullable|string|max:255',
+            'name' => 'nullable|string|max:255',
             'specification' => 'nullable|string|max:255',
             'image_url' => 'nullable|image|max:1024',
         ]);
@@ -32,8 +32,8 @@ class BulkBarangController extends Controller
         if ($request->filled('uom_id')) {
             $updateData['uom_id'] = $request->input('uom_id');
         }
-        if ($request->filled('nama')) {
-            $updateData['nama'] = $request->input('nama');
+        if ($request->filled('name')) {
+            $updateData['name'] = $request->input('name');
         }
         if ($request->filled('specification')) {
             $updateData['specification'] = $request->input('specification');
