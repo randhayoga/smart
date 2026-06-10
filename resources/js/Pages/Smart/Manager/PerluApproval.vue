@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, h } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import {
@@ -11,9 +11,20 @@ import {
   Ban,
   ArrowUpDown,
   AlertTriangle,
-  ArrowRight
+  ArrowRight,
+  ChevronDown
 } from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
+import { Button } from "@/Components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/Components/ui/dropdown-menu";
+import TableSearch from '@/Components/TableSearch.vue';
+import type { ColumnDef } from '@tanstack/vue-table';
+import DataTable from '@/Components/DataTable.vue';
 
 interface RequestItem {
   id: number;
@@ -72,31 +83,19 @@ const typeFilter = ref('Semua tipe');
 const utilizationFilter = ref('Semua pemanfaatan');
 const rowsPerPage = ref('Semua baris');
 
-// Sorting
-const sortBy = ref('id');
-const sortDesc = ref(true);
+const dataTableRef = ref<any>(null);
 
-const toggleSort = (field: string) => {
-  if (sortBy.value === field) {
-    sortDesc.value = !sortDesc.value;
-  } else {
-    sortBy.value = field;
-    sortDesc.value = false;
-  }
-};
+// Selection States
+const selectedIds = computed(() => {
+  if (!dataTableRef.value || !dataTableRef.value.table) return [];
+  return dataTableRef.value.table.getFilteredRowModel().rows
+    .filter((r: any) => r.getIsSelected())
+    .map((r: any) => r.original.id);
+});
 
 // Filtered data
 const filteredRequests = computed(() => {
   let list = [...requests.value];
-
-  if (searchQuery.value.trim() !== '') {
-    const q = searchQuery.value.toLowerCase();
-    list = list.filter(req => 
-      req.number.toLowerCase().includes(q) ||
-      req.requester.toLowerCase().includes(q) ||
-      req.pemanfaatanDetail.toLowerCase().includes(q)
-    );
-  }
 
   if (typeFilter.value !== 'Semua tipe') {
     const type = typeFilter.value === 'Peminjaman' ? 'peminjaman' : 'permintaan';
@@ -108,77 +107,161 @@ const filteredRequests = computed(() => {
     list = list.filter(req => req.pemanfaatan === util);
   }
 
-  list.sort((a, b) => {
-    let valA: any = a[sortBy.value as keyof RequestHistory] ?? '';
-    let valB: any = b[sortBy.value as keyof RequestHistory] ?? '';
-
-    if (sortBy.value === 'number') {
-      valA = a.number;
-      valB = b.number;
-    } else if (sortBy.value === 'requester') {
-      valA = a.requester;
-      valB = b.requester;
-    } else if (sortBy.value === 'pemanfaatan') {
-      valA = a.pemanfaatanDetail;
-      valB = b.pemanfaatanDetail;
-    } else if (sortBy.value === 'created_at') {
-      valA = a.created_at;
-      valB = b.created_at;
-    }
-
-    if (typeof valA === 'string') {
-      return sortDesc.value ? valB.localeCompare(valA) : valA.localeCompare(valB);
-    } else {
-      return sortDesc.value ? valB - valA : valA - valB;
-    }
-  });
+  // Pre-sort by id descending (newest first)
+  list.sort((a, b) => b.id - a.id);
 
   return list;
 });
 
-// Pagination
-const currentPage = ref(1);
-
-const totalPages = computed(() => {
-  if (rowsPerPage.value === 'Semua baris') return 1;
-  const limit = parseInt(rowsPerPage.value, 10);
-  return Math.ceil(filteredRequests.value.length / limit) || 1;
-});
-
-const paginatedRequests = computed(() => {
-  const list = filteredRequests.value;
-  if (rowsPerPage.value === 'Semua baris') return list;
-  const limit = parseInt(rowsPerPage.value, 10);
-  const start = (currentPage.value - 1) * limit;
-  return list.slice(start, start + limit);
-});
-
-// Selection States
-const selectedIds = ref<number[]>([]);
-
-const isAllSelected = computed(() => {
-  const currentList = paginatedRequests.value;
-  if (currentList.length === 0) return false;
-  return currentList.every(item => selectedIds.value.includes(item.id));
-});
-
-const toggleSelectAll = () => {
-  const currentList = paginatedRequests.value;
-  if (isAllSelected.value) {
-    selectedIds.value = selectedIds.value.filter(id => !currentList.some(item => item.id === id));
-  } else {
-    const idsToAdd = currentList.map(item => item.id).filter(id => !selectedIds.value.includes(id));
-    selectedIds.value = [...selectedIds.value, ...idsToAdd];
+const computedPageSize = computed(() => {
+  if (rowsPerPage.value === 'Semua baris') {
+    return filteredRequests.value.length || 10;
   }
-};
+  return parseInt(rowsPerPage.value, 10);
+});
 
-const toggleSelectRow = (id: number) => {
-  if (selectedIds.value.includes(id)) {
-    selectedIds.value = selectedIds.value.filter(item => item !== id);
-  } else {
-    selectedIds.value.push(id);
+watch([typeFilter, utilizationFilter], () => {
+  if (dataTableRef.value && dataTableRef.value.table) {
+    dataTableRef.value.table.resetRowSelection();
   }
-};
+});
+
+const columns: ColumnDef<RequestHistory>[] = [
+  {
+    id: 'select',
+    size: 40,
+    header: ({ table }) => h('div', { class: 'text-center no-print flex items-center justify-center' }, [
+      h('input', {
+        type: 'checkbox',
+        class: 'rounded border-input text-primary focus:ring-primary/20 w-4 h-4 cursor-pointer',
+        checked: table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate'),
+        onChange: table.getToggleAllPageRowsSelectedHandler(),
+        'aria-label': 'Select all',
+      })
+    ]),
+    cell: ({ row }) => h('div', { class: 'text-center no-print flex items-center justify-center' }, [
+      h('input', {
+        type: 'checkbox',
+        class: 'rounded border-input text-primary focus:ring-primary/20 w-4 h-4 cursor-pointer',
+        checked: row.getIsSelected(),
+        onChange: row.getToggleSelectedHandler(),
+        'aria-label': 'Select row',
+      })
+    ]),
+    enableSorting: false,
+    enableHiding: false,
+  },
+  {
+    accessorKey: 'number',
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'No. Permintaan',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'text-muted-foreground font-mono text-sm truncate font-medium' }, row.getValue('number')),
+  },
+  {
+    accessorKey: 'type',
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'Tipe',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'text-foreground capitalize' }, row.getValue('type')),
+  },
+  {
+    accessorKey: 'requester',
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'Pemohon',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'text-foreground font-semibold' }, row.getValue('requester')),
+  },
+  {
+    accessorKey: 'pemanfaatan',
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'Pemanfaatan',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => {
+      const item = row.original;
+      return h('div', { class: 'text-foreground' }, [
+        h('span', { class: 'font-semibold capitalize' }, item.pemanfaatan + ': '),
+        h('span', { class: 'text-muted-foreground font-normal' }, item.pemanfaatanDetail)
+      ]);
+    }
+  },
+  {
+    accessorKey: 'created_at',
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'Tanggal Masuk',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'text-muted-foreground' }, row.getValue('created_at')),
+  },
+  {
+    accessorKey: 'status',
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'Status',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'text-foreground font-medium' }, [
+      h('span', { class: 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800' }, row.getValue('status'))
+    ]),
+  },
+  {
+    id: 'actions',
+    size: 100,
+    header: () => h('div', { class: 'text-center font-semibold text-foreground' }, 'Aksi'),
+    cell: ({ row }) => {
+      const item = row.original;
+      return h('div', { class: 'flex items-center justify-center gap-2' }, [
+        h('button', {
+          onClick: () => openDetailPopup(item),
+          class: 'w-8 h-8 rounded-full bg-[#00BCD4] hover:bg-[#06B6D4] text-white flex items-center justify-center transition-colors shadow-sm cursor-pointer',
+          title: 'Detail Permintaan'
+        }, [
+          h(Eye, { class: 'w-4 h-4' })
+        ])
+      ]);
+    },
+    enableSorting: false,
+  }
+];
 
 // ─────────────────────────────────────────────
 // Popup Detail Request States
@@ -298,7 +381,9 @@ const handleConfirmSubmit = () => {
     onSuccess: () => {
       closeConfirmModal();
       closeDetailPopup();
-      selectedIds.value = [];
+      if (dataTableRef.value && dataTableRef.value.table) {
+        dataTableRef.value.table.resetRowSelection();
+      }
       toast.success(confirmActionType.value === 'approve' 
         ? 'Permintaan berhasil disetujui.' 
         : 'Permintaan berhasil ditolak.'
@@ -323,237 +408,97 @@ const handleConfirmSubmit = () => {
 
     <!-- ── Filter & Search Section ── -->
     <div class="space-y-4 mb-6">
-      <span class="text-xs font-semibold text-gray-500 block">Filter</span>
-      
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div class="flex flex-wrap gap-3 items-center w-full sm:w-auto">
-          <!-- Search input -->
-          <div class="relative w-full sm:w-[220px]">
-            <input
-              v-model="searchQuery"
-              type="text"
-              placeholder="Cari Permintaan..."
-              class="w-full h-10 pl-4 pr-10 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
-            />
-            <div class="absolute right-3 top-3 text-gray-400">
-              <Search class="w-4 h-4" />
-            </div>
-          </div>
-
-          <!-- Tipe Filter -->
-          <div class="w-full sm:w-[150px]">
-            <select 
-              v-model="typeFilter" 
-              class="w-full h-10 px-3 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer shadow-sm"
-            >
-              <option value="Semua tipe">Semua tipe</option>
-              <option value="Peminjaman">Peminjaman</option>
-              <option value="Permintaan">Permintaan</option>
-            </select>
-          </div>
-
-          <!-- Pemanfaatan Filter -->
-          <div class="w-full sm:w-[150px]">
-            <select 
-              v-model="utilizationFilter" 
-              class="w-full h-10 px-3 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer shadow-sm"
-            >
-              <option value="Semua pemanfaatan">Semua pemanfaatan</option>
-              <option value="Corporate">Corporate</option>
-              <option value="Project">Project</option>
-            </select>
-          </div>
+      <!-- Filters Row -->
+      <div class="flex flex-wrap items-end gap-4">
+        <div class="space-y-1.5 flex-1 min-w-[300px] max-w-sm">
+          <label class="text-xs text-muted-foreground font-medium block ml-0.5">Filter</label>
+          <TableSearch 
+            v-model="searchQuery"
+            placeholder="Cari Permintaan..." 
+            bg-class="bg-white"
+          />
         </div>
 
-        <!-- Page Size Selection -->
-        <div class="flex items-center gap-2 text-xs text-gray-600 justify-end w-full sm:w-auto">
-          <span class="whitespace-nowrap">Baris per halaman</span>
-          <select 
-            v-model="rowsPerPage" 
-            class="border border-gray-300 rounded-lg h-10 px-3 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer w-[120px]"
-          >
-            <option value="5">5 baris</option>
-            <option value="10">10 baris</option>
-            <option value="25">25 baris</option>
-            <option value="Semua baris">Semua baris</option>
-          </select>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal bg-white', (!typeFilter || typeFilter === 'Semua tipe') ? 'text-muted-foreground' : 'text-foreground']">
+              <span class="truncate">{{ typeFilter || 'Semua tipe' }}</span>
+              <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
+            <DropdownMenuItem @select="typeFilter = 'Semua tipe'">Semua tipe</DropdownMenuItem>
+            <DropdownMenuItem @select="typeFilter = 'Peminjaman'">Peminjaman</DropdownMenuItem>
+            <DropdownMenuItem @select="typeFilter = 'Permintaan'">Permintaan</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal bg-white', (!utilizationFilter || utilizationFilter === 'Semua pemanfaatan') ? 'text-muted-foreground' : 'text-foreground']">
+              <span class="truncate">{{ utilizationFilter || 'Semua pemanfaatan' }}</span>
+              <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
+            <DropdownMenuItem @select="utilizationFilter = 'Semua pemanfaatan'">Semua pemanfaatan</DropdownMenuItem>
+            <DropdownMenuItem @select="utilizationFilter = 'Corporate'">Corporate</DropdownMenuItem>
+            <DropdownMenuItem @select="utilizationFilter = 'Project'">Project</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <div class="flex items-center gap-3 text-sm text-muted-foreground ml-auto">
+          <span>Baris per halaman</span>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal bg-white', (rowsPerPage === 'Semua baris' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
+                {{ rowsPerPage === 'Semua baris' ? 'Semua baris' : `${rowsPerPage} baris` }}
+                <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent class="w-[140px] rounded-[14px]" align="start" :side-offset="4">
+              <DropdownMenuItem @select="rowsPerPage = '5'">5 baris</DropdownMenuItem>
+              <DropdownMenuItem @select="rowsPerPage = '10'">10 baris</DropdownMenuItem>
+              <DropdownMenuItem @select="rowsPerPage = '25'">25 baris</DropdownMenuItem>
+              <DropdownMenuItem @select="rowsPerPage = 'Semua baris'">Semua baris</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
       <!-- ── Bulk Actions ── -->
-      <div class="flex flex-col space-y-1.5 pt-2">
-        <span class="text-xs font-bold text-gray-500 uppercase tracking-wider block">Aksi Terpilih</span>
-        <div class="flex gap-2.5">
+      <div class="space-y-2 flex-1 min-w-0 pt-2">
+        <label class="text-xs text-muted-foreground font-medium block ml-0.5">Aksi Terpilih</label>
+        <div class="flex flex-wrap gap-2">
           <button 
             :disabled="selectedIds.length <= 1"
             @click="openConfirmModal('approve', true)"
-            class="rounded-[10px] h-10 font-bold text-xs shadow-sm flex items-center gap-2 px-5 transition-all duration-200"
-            :class="selectedIds.length > 1 
-              ? 'bg-[#2ECC71] hover:bg-[#27AE60] text-white cursor-pointer' 
-              : 'bg-gray-200 text-gray-400 cursor-not-allowed'"
+            class="flex items-center gap-2 px-4 py-2 bg-[#2ECC71] hover:opacity-70 text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm disabled:opacity-50"
           >
             <ThumbsUp class="w-4 h-4" />
-            Approve Terpilih
+            <span class="hidden sm:inline">Approve Terpilih</span>
           </button>
           <button 
             :disabled="selectedIds.length <= 1"
             @click="openConfirmModal('reject', true)"
-            class="rounded-[10px] h-10 font-bold text-xs shadow-sm flex items-center gap-2 px-5 transition-all duration-200"
-            :class="selectedIds.length > 1 
-              ? 'bg-[#E74C3C] hover:bg-[#C0392B] text-white cursor-pointer' 
-              : 'bg-gray-200 text-gray-400 cursor-not-allowed'"
+            class="flex items-center gap-2 px-4 py-2 bg-[#E74C3C] hover:opacity-70 text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm disabled:opacity-50"
           >
             <Ban class="w-4 h-4" />
-            Tolak Terpilih
+            <span class="hidden sm:inline">Tolak Terpilih</span>
           </button>
         </div>
       </div>
     </div>
 
     <!-- ── Table Display ── -->
-    <div class="bg-white border border-gray-200 rounded-xl overflow-x-auto shadow-sm">
-      <table class="w-full text-xs text-left border-collapse">
-        <thead>
-          <tr class="bg-white border-b border-gray-200 text-gray-900 font-bold">
-            <th class="py-4 px-4 w-12 text-center">
-              <div class="flex items-center justify-center">
-                <!-- Circular Custom Checkbox -->
-                <button 
-                  @click="toggleSelectAll" 
-                  class="w-5 h-5 rounded-full border border-gray-300 flex items-center justify-center transition-all cursor-pointer"
-                  :class="isAllSelected ? 'bg-[#2ECC71] border-transparent text-white' : 'bg-white text-transparent'"
-                >
-                  <span class="text-[10px] font-bold">✓</span>
-                </button>
-              </div>
-            </th>
-            <th @click="toggleSort('number')" class="py-4 px-4 cursor-pointer select-none">
-              <div class="flex items-center gap-1">
-                No. Permintaan
-                <span class="text-gray-400 font-normal">↑↓</span>
-              </div>
-            </th>
-            <th @click="toggleSort('type')" class="py-4 px-4 cursor-pointer select-none">
-              <div class="flex items-center gap-1">
-                Tipe
-                <span class="text-gray-400 font-normal">↑↓</span>
-              </div>
-            </th>
-            <th @click="toggleSort('requester')" class="py-4 px-4 cursor-pointer select-none">
-              <div class="flex items-center gap-1">
-                Pemohon
-                <span class="text-gray-400 font-normal">↑↓</span>
-              </div>
-            </th>
-            <th @click="toggleSort('pemanfaatan')" class="py-4 px-4 cursor-pointer select-none">
-              <div class="flex items-center gap-1">
-                Pemanfaatan
-                <span class="text-gray-400 font-normal">↑↓</span>
-              </div>
-            </th>
-            <th @click="toggleSort('created_at')" class="py-4 px-4 cursor-pointer select-none">
-              <div class="flex items-center gap-1">
-                Tanggal Masuk
-                <span class="text-gray-400 font-normal">↑↓</span>
-              </div>
-            </th>
-            <th class="py-4 px-4">Status</th>
-            <th class="py-4 px-4 text-center w-28">Aksi</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-150">
-          <tr 
-            v-for="req in paginatedRequests" 
-            :key="req.id"
-            class="hover:bg-gray-50/50 transition-colors"
-          >
-            <td class="py-4 px-4 text-center">
-              <div class="flex items-center justify-center">
-                <!-- Circular Custom Checkbox -->
-                <button 
-                  @click="toggleSelectRow(req.id)" 
-                  class="w-5 h-5 rounded-full border border-gray-300 flex items-center justify-center transition-all cursor-pointer"
-                  :class="selectedIds.includes(req.id) ? 'bg-[#2ECC71] border-transparent text-white' : 'bg-white text-transparent'"
-                >
-                  <span class="text-[10px] font-bold">✓</span>
-                </button>
-              </div>
-            </td>
-            <td class="py-4 px-4 font-mono font-medium text-gray-900">{{ req.number }}</td>
-            <td class="py-4 px-4 text-gray-900 capitalize">{{ req.type }}</td>
-            <td class="py-4 px-4 text-gray-900">{{ req.requester }}</td>
-            <td class="py-4 px-4 text-gray-900">
-              <span class="font-semibold capitalize">{{ req.pemanfaatan }}:</span> {{ req.pemanfaatanDetail }}
-            </td>
-            <td class="py-4 px-4 text-gray-900">{{ req.created_at }}</td>
-            <td class="py-4 px-4 text-gray-900 font-medium">
-              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
-                {{ req.status }}
-              </span>
-            </td>
-            <td class="py-4 px-4">
-              <div class="flex items-center justify-center gap-2">
-                <!-- Cyan Circle Action Button -->
-                <button 
-                  @click="openDetailPopup(req)"
-                  class="w-8 h-8 rounded-full bg-[#00BCD4] hover:bg-[#06B6D4] text-white flex items-center justify-center transition-colors shadow-sm cursor-pointer"
-                  title="Detail Permintaan"
-                >
-                  <Eye class="w-4 h-4" />
-                </button>
-              </div>
-            </td>
-          </tr>
-
-          <!-- Empty State -->
-          <tr v-if="filteredRequests.length === 0">
-            <td colspan="8" class="py-12 text-center text-gray-500">
-              <AlertTriangle class="w-8 h-8 mx-auto mb-2 text-gray-400" />
-              <p class="font-medium">Tidak ada data permintaan menunggu approval.</p>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- ── Pagination & Count Display ── -->
-    <div class="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4 px-2 text-xs text-gray-500">
-      <div>
-        {{ selectedIds.length }} dari {{ filteredRequests.length }} baris dipilih
-      </div>
-      
-      <!-- Page numbers navigation -->
-      <div v-if="totalPages > 1" class="flex items-center gap-1">
-        <button 
-          :disabled="currentPage === 1"
-          @click="currentPage--"
-          class="h-8 px-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none transition-colors"
-        >
-          &lt; Sebelumnya
-        </button>
-        
-        <button 
-          v-for="page in totalPages" 
-          :key="page"
-          @click="currentPage = page"
-          class="w-8 h-8 border rounded-lg transition-all"
-          :class="[
-            currentPage === page 
-              ? 'border-indigo-600 bg-indigo-50 text-indigo-600 font-bold shadow-sm' 
-              : 'border-gray-300 hover:bg-gray-50 text-gray-700'
-          ]"
-        >
-          {{ page }}
-        </button>
-
-        <button 
-          :disabled="currentPage === totalPages"
-          @click="currentPage++"
-          class="h-8 px-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none transition-colors"
-        >
-          Selanjutnya &gt;
-        </button>
-      </div>
+    <div class="pb-4">
+      <DataTable 
+        ref="dataTableRef"
+        :columns="columns" 
+        :data="filteredRequests" 
+        :filter-value="searchQuery"
+        :page-size="computedPageSize"
+      />
     </div>
 
     <!-- ============================================================
@@ -641,7 +586,7 @@ const handleConfirmSubmit = () => {
                     <div class="w-14 h-14 rounded-[10px] bg-gray-100 border border-gray-200 overflow-hidden shrink-0 flex items-center justify-center">
                       <img 
                         v-if="item.imageUrl" 
-                        :src="item.imageUrl" 
+                        :src="item.imageUrl.startsWith('http') || item.imageUrl.startsWith('/') ? item.imageUrl : '/storage/' + item.imageUrl" 
                         class="w-full h-full object-cover" 
                       />
                       <div v-else class="text-xs font-black text-gray-400 select-none">
@@ -660,7 +605,6 @@ const handleConfirmSubmit = () => {
                       
                       <div class="flex flex-wrap gap-x-4 gap-y-1 font-semibold pt-0.5 text-indigo-600">
                         <span>Jumlah diminta: {{ item.quantity }}</span>
-                        <span v-if="item.stockQuantity !== undefined" class="text-gray-500">Stok tersedia: {{ item.stockQuantity }}</span>
                       </div>
                     </div>
                   </div>
@@ -674,74 +618,77 @@ const handleConfirmSubmit = () => {
               <div class="flex flex-col sm:flex-row items-center gap-3 justify-between p-4 bg-gray-50 border border-gray-200 rounded-xl text-xs">
                 <div class="flex flex-wrap gap-3 items-center w-full sm:w-auto">
                   <div class="relative w-full sm:w-[220px]">
+                    <div class="absolute left-3 top-3 text-gray-400">
+                      <Search class="w-4 h-4" />
+                    </div>
                     <input
                       v-model="auditSearch"
                       type="text"
                       placeholder="Cari Jejak Audit"
-                      class="w-full h-10 pl-3 pr-8 text-xs border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                      class="w-full h-10 pl-9 pr-3 text-xs border border-gray-300 rounded-[14px] bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
                     />
-                    <div class="absolute right-2.5 top-3 text-gray-400">
-                      <Search class="w-4 h-4" />
-                    </div>
                   </div>
                   
-                  <div class="w-full sm:w-[140px]">
-                    <select 
-                      v-model="auditStatusFilter" 
-                      class="w-full h-10 px-3 border border-gray-300 rounded-lg bg-white text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer"
-                    >
-                      <option value="semua">Semua Status</option>
-                      <option v-for="st in auditStatusOptions" :key="st" :value="st">{{ st }}</option>
-                    </select>
-                  </div>
+                  <Combobox
+                    v-model="auditStatusFilter"
+                    :options="auditStatusOptions"
+                    search-placeholder="Cari Status..."
+                    default-label="Semua Status"
+                    width-class="w-full sm:w-auto min-w-[140px]"
+                  />
 
-                  <div class="w-full sm:w-[150px]">
-                    <select 
-                      v-model="auditTimeFilter" 
-                      class="w-full h-10 px-3 border border-gray-300 rounded-lg bg-white text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer"
-                    >
-                      <option value="semua">Semua Kurun Waktu</option>
-                      <option value="7-hari">7 hari terakhir</option>
-                      <option value="30-hari">30 hari terakhir</option>
-                    </select>
-                  </div>
+                  <Combobox
+                    v-model="auditTimeFilter"
+                    :options="[{ id: '7-hari', name: '7 hari terakhir' }, { id: '30-hari', name: '30 hari terakhir' }]"
+                    search-placeholder="Cari kurun waktu..."
+                    default-label="Semua Kurun Waktu"
+                    width-class="w-full sm:w-auto min-w-[170px]"
+                  />
                 </div>
 
                 <div class="flex items-center gap-2 w-full sm:w-auto justify-end text-gray-500">
                   <span>Baris per halaman:</span>
-                  <select class="border border-gray-300 rounded-lg h-10 px-3 bg-white text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer w-[120px]">
-                    <option value="semua">Semua baris</option>
-                  </select>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" class="w-full sm:w-auto min-w-[130px] h-10 justify-between rounded-[14px] font-normal text-xs bg-white border-gray-300 shadow-sm text-gray-900 gap-2">
+                        <span>Semua baris</span>
+                        <ChevronDown class="w-4 h-4 opacity-50 shrink-0 ml-2" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent class="min-w-[130px] rounded-[14px] z-[10000]" align="start" :side-offset="4">
+                      <DropdownMenuItem>Semua baris</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
 
               <!-- Log table -->
-              <div class="border border-gray-200 rounded-xl overflow-x-auto shadow-sm">
+              <div class="rounded-xl border border-border shadow-sm overflow-x-auto bg-card">
                 <table class="w-full text-xs text-left border-collapse">
-                  <thead>
-                    <tr class="bg-gray-50 border-b border-gray-200 text-gray-700 font-bold uppercase tracking-wider text-[10px]">
-                      <th class="py-3 px-4 w-40">Waktu ↑↓</th>
-                      <th class="py-3 px-4 w-36">Aksi / Status ↑↓</th>
-                      <th class="py-3 px-4 w-40">Aktor ↑↓</th>
-                      <th class="py-3 px-4 w-28 text-center">Durasi ↑↓</th>
-                      <th class="py-3 px-4">Catatan ↑↓</th>
+                  <thead class="bg-muted/50 border-b border-border text-foreground">
+                    <tr class="hover:bg-transparent text-foreground font-semibold uppercase tracking-wider text-[10px]">
+                      <th class="py-3 px-4 w-40 font-semibold">Waktu ↑↓</th>
+                      <th class="py-3 px-4 w-36 font-semibold">Aksi / Status ↑↓</th>
+                      <th class="py-3 px-4 w-40 font-semibold">Aktor ↑↓</th>
+                      <th class="py-3 px-4 w-28 text-center font-semibold">Durasi ↑↓</th>
+                      <th class="py-3 px-4 font-semibold">Catatan ↑↓</th>
                     </tr>
                   </thead>
-                  <tbody class="divide-y divide-gray-150">
+                  <tbody>
                     <tr 
                       v-for="(lc, idx) in filteredLifecycles" 
                       :key="idx"
-                      class="hover:bg-gray-50/50 transition-colors"
+                      class="border-b border-border hover:bg-muted/30 transition-colors last:border-none"
                     >
-                      <td class="py-3 px-4 font-medium text-gray-900">{{ lc.waktu }}</td>
-                      <td class="py-3 px-4 text-gray-900 font-medium">{{ lc.aksi_status }}</td>
-                      <td class="py-3 px-4 text-gray-900">{{ lc.aktor }}</td>
-                      <td class="py-3 px-4 text-center text-gray-900">{{ lc.durasi }}</td>
-                      <td class="py-3 px-4 text-gray-700 max-w-sm truncate">{{ lc.catatan }}</td>
+                      <td class="py-3 px-4 font-medium text-foreground">{{ lc.waktu }}</td>
+                      <td class="py-3 px-4 text-foreground font-medium">{{ lc.aksi_status }}</td>
+                      <td class="py-3 px-4 text-foreground">{{ lc.aktor }}</td>
+                      <td class="py-3 px-4 text-center text-foreground">{{ lc.durasi }}</td>
+                      <td class="py-3 px-4 text-muted-foreground max-w-sm truncate">{{ lc.catatan }}</td>
                     </tr>
                     
                     <tr v-if="filteredLifecycles.length === 0">
-                      <td colspan="5" class="py-6 text-center text-gray-500 italic">
+                      <td colspan="5" class="py-6 text-center text-muted-foreground italic">
                         Tidak ada log jejak audit.
                       </td>
                     </tr>

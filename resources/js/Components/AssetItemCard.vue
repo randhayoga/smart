@@ -10,11 +10,13 @@ interface Props {
   assets: string[];
   quantityLabel?: string;
   imageUrl?: string | null;
+  placements?: Record<string, string>;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   quantityLabel: 'Jumlah dipinjam',
-  imageUrl: null
+  imageUrl: null,
+  placements: () => ({})
 });
 
 const showAssets = ref(true);
@@ -59,7 +61,7 @@ const showAssets = ref(true);
             <ul class="space-y-1">
               <li v-for="(asset, idx) in assets" :key="idx" class="text-xs text-foreground font-semibold flex items-center gap-1.5">
                 <span class="w-1 h-1 rounded-full bg-foreground shrink-0"></span>
-                <span>{{ asset }}</span>
+                <span>{{ asset }} <span v-if="placements && placements[asset]" class="text-muted-foreground font-normal">({{ placements[asset] }})</span></span>
               </li>
             </ul>
           </div>

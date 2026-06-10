@@ -85,23 +85,38 @@ const props = defineProps<Props>();
 // States & Filters
 // ─────────────────────────────────────────────
 const searchQuery = ref('');
+const categoryFilter = ref('Semua kategori');
 const decisionFilter = ref('Semua keputusan');
 const rowsPerPage = ref('Semua baris');
+
+// Filter options
+const categoryOptions = computed(() => {
+  const cats = new Set<string>();
+  props.approvals.forEach(app => {
+    if (app.category) cats.add(app.category);
+  });
+  return Array.from(cats);
+});
 
 // Filtered data
 const filteredApprovals = computed(() => {
   let list = [...props.approvals];
+
+  if (categoryFilter.value !== 'Semua kategori') {
+    list = list.filter(app => app.category === categoryFilter.value);
+  }
 
   if (decisionFilter.value !== 'Semua keputusan') {
     const dec = decisionFilter.value === 'Disetujui' ? 'approved' : 'rejected';
     list = list.filter(app => app.decision === dec);
   }
 
-  // default sort by decided_at desc
+  // default sort by decided_at desc (fall back to id desc)
   list.sort((a, b) => {
     const timeA = a.decided_at ? new Date(a.decided_at).getTime() : 0;
     const timeB = b.decided_at ? new Date(b.decided_at).getTime() : 0;
-    return timeB - timeA;
+    if (timeB !== timeA) return timeB - timeA;
+    return b.id - a.id;
   });
 
   return list;
@@ -113,125 +128,6 @@ const computedPageSize = computed(() => {
   }
   return parseInt(rowsPerPage.value, 10);
 });
-
-const columns: ColumnDef<ApprovalItem>[] = [
-  {
-    accessorKey: 'asset_code',
-    header: ({ column }) => {
-      return h(Button, {
-        variant: 'ghost',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-        class: 'p-0 pl-1 hover:bg-transparent font-semibold text-foreground justify-start'
-      }, () => [
-        'Kode Aset',
-        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-      ])
-    },
-    cell: ({ row }) => h('div', { class: 'pl-1 text-muted-foreground font-mono text-sm truncate font-medium' }, row.getValue('asset_code')),
-  },
-
-  {
-    accessorKey: 'brand',
-    header: ({ column }) => {
-      return h(Button, {
-        variant: 'ghost',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
-      }, () => [
-        'Merek',
-        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-      ])
-    },
-    cell: ({ row }) => h('div', { class: 'text-foreground truncate' }, row.getValue('brand')),
-  },
-  {
-    accessorKey: 'specification',
-    header: ({ column }) => {
-      return h(Button, {
-        variant: 'ghost',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
-      }, () => [
-        'Spesifikasi',
-        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-      ])
-    },
-    cell: ({ row }) => h('div', { class: 'text-foreground truncate', title: row.getValue('specification') }, row.getValue('specification')),
-  },
-  {
-    accessorKey: 'status_label',
-    header: ({ column }) => {
-      return h(Button, {
-        variant: 'ghost',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
-      }, () => [
-        'Status Diajukan',
-        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-      ])
-    },
-    cell: ({ row }) => h('div', { class: 'text-foreground font-medium truncate' }, row.getValue('status_label')),
-  },
-  {
-    accessorKey: 'decision',
-    header: ({ column }) => {
-      return h(Button, {
-        variant: 'ghost',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
-      }, () => [
-        'Keputusan',
-        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-      ])
-    },
-    cell: ({ row }) => {
-      const decision = row.getValue('decision') as string;
-      return h('div', { class: 'text-left' }, [
-        h('span', {
-          class: [
-            'inline-flex items-center px-2 py-0.1 rounded-full font-semibold',
-            decision === 'approved' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-          ]
-        }, decision === 'approved' ? 'Disetujui' : 'Ditolak')
-      ]);
-    },
-  },
-  {
-    accessorKey: 'approver_name',
-    header: ({ column }) => {
-      return h(Button, {
-        variant: 'ghost',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
-      }, () => [
-        'Diproses Oleh',
-        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-      ])
-    },
-    cell: ({ row }) => {
-      const item = row.original;
-      return h('div', { class: 'text-left' }, [
-        h('div', { class: 'font-semibold text-foreground' }, item.approver_name || '-'),
-        h('div', { class: 'text-[10px] text-muted-foreground font-mono mt-0.5' }, item.decided_at || '-')
-      ]);
-    },
-  },
-  {
-    id: 'actions',
-    size: 100,
-    header: () => h('div', { class: 'text-center font-semibold text-foreground' }, 'Aksi'),
-    cell: ({ row }) => {
-      const item = row.original;
-      return h('div', { class: 'flex items-center justify-center gap-2' }, [
-        h(ViewTableButton, {
-          onClick: () => openDetailPopup(item),
-          title: 'Detail Aset'
-        })
-      ]);
-    },
-    enableSorting: false,
-  }
-];
 
 const auditColumns: ColumnDef<AuditTrail>[] = [
   {
@@ -429,6 +325,154 @@ const auditStatusOptions = computed(() => {
   return Array.from(stats);
 });
 
+const columns: ColumnDef<ApprovalItem>[] = [
+  {
+    accessorKey: 'asset_code',
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'Kode Aset',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'text-muted-foreground font-mono text-sm truncate font-medium' }, row.getValue('asset_code')),
+  },
+  {
+    accessorKey: 'category',
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'Kategori',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'text-foreground' }, row.getValue('category')),
+  },
+  {
+    accessorKey: 'subcategory',
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'Subkategori',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'text-foreground' }, row.getValue('subcategory')),
+  },
+  {
+    accessorKey: 'brand',
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'Merek',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'text-foreground' }, row.getValue('brand')),
+  },
+  {
+    accessorKey: 'specification',
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'Spesifikasi',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'text-foreground truncate max-w-xs', title: row.getValue('specification') }, row.getValue('specification')),
+  },
+  {
+    accessorKey: 'status_label',
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'Status Diajukan',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'text-foreground font-medium' }, row.getValue('status_label')),
+  },
+  {
+    accessorKey: 'decision',
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-center w-full'
+      }, () => [
+        'Keputusan',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'text-center' }, [
+      h('span', { 
+        class: 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ' + 
+          (row.getValue('decision') === 'approved' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700')
+      }, row.getValue('decision') === 'approved' ? 'Disetujui' : 'Ditolak')
+    ]),
+  },
+  {
+    accessorKey: 'approver_name',
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-center w-full'
+      }, () => [
+        'Diproses Oleh',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => {
+      const item = row.original;
+      return h('div', { class: 'text-center' }, [
+        h('div', { class: 'font-semibold text-foreground' }, item.approver_name || '-'),
+        h('div', { class: 'text-[10px] text-muted-foreground font-mono mt-0.5' }, item.decided_at || '-')
+      ]);
+    }
+  },
+  {
+    id: 'actions',
+    size: 100,
+    header: () => h('div', { class: 'text-center font-semibold text-foreground' }, 'Aksi'),
+    cell: ({ row }) => {
+      const item = row.original;
+      return h('div', { class: 'flex items-center justify-center gap-2' }, [
+        h('button', {
+          onClick: () => openMemoFile(item.memo_path),
+          class: 'w-8 h-8 rounded-full bg-[#6366F1] hover:bg-[#5850EC] text-white flex items-center justify-center transition-colors shadow-sm cursor-pointer',
+          title: 'Buka Berita Acara / Memo'
+        }, [
+          h(FileText, { class: 'w-4 h-4' })
+        ]),
+        h(ViewTableButton, {
+          onClick: () => openDetailPopup(item),
+          title: 'Detail Aset'
+        })
+      ]);
+    },
+    enableSorting: false,
+  }
+];
+
 const isVehicle = (item: ApprovalItem | null) => {
   if (!item) return false;
   const category = (item.category || '').toLowerCase();
@@ -461,6 +505,21 @@ const isVehicle = (item: ApprovalItem | null) => {
             bg-class="bg-white"
           />
         </div>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal bg-white', (!categoryFilter || categoryFilter === 'Semua kategori') ? 'text-muted-foreground' : 'text-foreground']">
+              <span class="truncate">{{ categoryFilter || 'Semua kategori' }}</span>
+              <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
+            <DropdownMenuItem @select="categoryFilter = 'Semua kategori'">Semua kategori</DropdownMenuItem>
+            <DropdownMenuItem v-for="cat in categoryOptions" :key="cat" @select="categoryFilter = cat">
+              {{ cat }}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -739,6 +798,7 @@ const isVehicle = (item: ApprovalItem | null) => {
                   <FileText class="w-4 h-4" />
                   Buka Memo / Berita Acara
                 </button>
+>>>>>>> main
 
                 <!-- White Kembali Button -->
                 <button 

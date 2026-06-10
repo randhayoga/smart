@@ -53,6 +53,7 @@ interface RequestDetail {
 interface Props {
   returnId: string | number;
   request: RequestDetail;
+  placements?: Record<string, string>;
 }
 
 const props = defineProps<Props>();
@@ -78,6 +79,29 @@ const timeline = computed(() => {
       isFinal: true
     },
   ];
+});
+
+// Load placements from localStorage for read-only view
+const loadPlacements = (): Record<string, string> => {
+  try {
+    const stored = localStorage.getItem('smart_asset_placements');
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (e) {
+    console.error(e);
+  }
+  return {
+    'GPU-NVIDIA-2026-001': 'Mega Mendung',
+    'WBD-SAKURA-2026-101': 'Tiga Negeri',
+    'MON-DELL-2026-901': 'Mega Mendung',
+    'MON-DELL-2026-902': 'Tiga Negeri',
+  };
+};
+
+const assetPlacements = ref<Record<string, string>>({
+  ...loadPlacements(),
+  ...(props.placements || {})
 });
 
 const handleConfirmReturn = () => {
@@ -171,6 +195,7 @@ const handleConfirmReturn = () => {
             :quantity="item.quantity"
             :assets="item.assets"
             :imageUrl="item.imageUrl"
+            :placements="assetPlacements"
           />
         </div>
       </div>

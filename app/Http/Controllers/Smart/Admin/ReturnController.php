@@ -18,7 +18,7 @@ class ReturnController extends Controller
      */
     public function index()
     {
-        $returnsList = SmartRequest::with(['user', 'return'])
+        $returnsList = SmartRequest::with(['user', 'return', 'items'])
             ->where('status', 'return')
             ->orderBy('id', 'desc')
             ->get()
@@ -131,9 +131,17 @@ class ReturnController extends Controller
             'method' => $returnMethodStr,
         ];
 
+        $placements = \App\Models\Request\RequestUnitAssignment::whereIn('request_item_id', $req->items->pluck('id'))
+            ->with('unit')
+            ->get()
+            ->filter(fn($asn) => $asn->unit && $asn->placement)
+            ->mapWithKeys(fn($asn) => [$asn->unit->number => $asn->placement])
+            ->toArray();
+
         return Inertia::render('Smart/Admin/ReturnsDetail', [
             'returnId' => $req->id,
             'request' => $returnData,
+            'placements' => $placements,
             'user' => [
                 'name' => auth()->user()->name,
                 'email' => auth()->user()->email,

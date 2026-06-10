@@ -203,7 +203,7 @@ const handleGoToHistory = () => {
               <div class="w-16 h-16 flex-shrink-0 bg-muted rounded-[14px] overflow-hidden border border-border">
                 <img
                   v-if="item.imageUrl"
-                  :src="item.imageUrl"
+                  :src="item.imageUrl.startsWith('http') || item.imageUrl.startsWith('/') ? item.imageUrl : '/storage/' + item.imageUrl"
                   :alt="`${item.brand} ${item.spec}`"
                   class="w-full h-full object-cover"
                 />

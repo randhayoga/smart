@@ -19,6 +19,7 @@ class RequestUnitAssignment extends Model
         'quantity_fulfilled',
         'assigned_at',
         'completed_at',
+        'placement',
     ];
 
     protected $casts = [
