@@ -37,6 +37,7 @@ class BrowseController extends Controller
                     'subcategory_name' => $barang->subcategory->name ?? '-',
                     'is_consumable' => (bool) ($barang->subcategory->category->is_consumable ?? true),
                     'brand' => $barang->brand->name ?? '-',
+                    'nama' => $barang->nama,
                     'spec' => $barang->specification,
                     'stock' => $stock,
                     'imageUrl' => $barang->image_url ? '/storage/' . $barang->image_url : null,

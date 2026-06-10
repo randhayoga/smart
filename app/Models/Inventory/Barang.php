@@ -19,6 +19,7 @@ class Barang extends Model
         'subcategory_id',
         'brand_id',
         'uom_id',
+        'nama',
         'specification',
         'image_url',
         'last_restock_at'

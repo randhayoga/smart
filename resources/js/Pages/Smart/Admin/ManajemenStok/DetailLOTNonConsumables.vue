@@ -56,6 +56,7 @@ interface Props {
     barang_id: number;
     barang_code: string;
     barang_brand: string;
+    barang_nama: string;
     barang_specification: string;
     barang_category: string;
     barang_subcategory: string;
@@ -654,6 +655,7 @@ const deleteFields = computed(() => {
       { label: 'Kategori', value: props.lot.barang_category },
       { label: 'Subkategori', value: props.lot.barang_subcategory },
       { label: 'Merek', value: props.lot.barang_brand },
+      { label: 'Nama', value: props.lot.barang_nama },
       { label: 'Spesifikasi', value: props.lot.barang_specification },
       { label: 'Jumlah stok tersedia', value: props.units.filter(u => u.status === 'tersedia').length },
       { label: 'Jumlah stok diawal', value: props.units.length },
@@ -676,6 +678,7 @@ const deleteFields = computed(() => {
       { label: 'Kategori', value: props.lot.barang_category },
       { label: 'Subkategori', value: props.lot.barang_subcategory },
       { label: 'Merek', value: props.lot.barang_brand },
+      { label: 'Nama', value: props.lot.barang_nama },
       { label: 'Spesifikasi', value: props.lot.barang_specification },
     ];
     
@@ -1444,6 +1447,7 @@ const totalAsetTerpilihCount = computed(() => {
             <div class="md:col-span-4">
               <p class="font-bold text-foreground"><span class="text-foreground">Kode Barang:</span> {{ props.lot.barang_code }}</p>
               <p class="font-bold text-foreground"><span class="text-foreground">Merek:</span> {{ props.lot.barang_brand }}</p>
+              <p class="font-bold text-foreground"><span class="text-foreground">Nama:</span> {{ props.lot.barang_nama }}</p>
               <p class="font-bold text-foreground"><span class="text-foreground">Spesifikasi:</span> {{ props.lot.barang_specification }}</p>
               <p class="text-foreground">Kategori: {{ props.lot.barang_category }}</p>
               <p class="text-foreground">Subkategori: {{ props.lot.barang_subcategory }}</p>
@@ -2181,6 +2185,7 @@ const totalAsetTerpilihCount = computed(() => {
                     <div class="md:col-span-3">
                       <p class="font-bold text-foreground"><span class="text-foreground">Kode Barang:</span> {{ props.lot.barang_code }}</p>
                       <p class="font-bold text-foreground"><span class="text-foreground">Merek:</span> {{ props.lot.barang_brand }}</p>
+                      <p class="font-bold text-foreground"><span class="text-foreground">Nama:</span> {{ props.lot.barang_nama }}</p>
                       <p class="font-bold text-foreground"><span class="text-foreground">Spesifikasi:</span> {{ props.lot.barang_specification }}</p>
                       <p class="text-foreground">Kategori: {{ props.lot.barang_category }}</p>
                       <p class="text-foreground">Subkategori: {{ props.lot.barang_subcategory }}</p>
