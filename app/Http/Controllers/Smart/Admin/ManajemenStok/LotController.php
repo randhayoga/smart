@@ -22,13 +22,19 @@ class LotController extends Controller
             'location_id' => 'required|exists:locations,id',
             'floor_id' => 'nullable|exists:floors,id',
             'room_id' => 'nullable|exists:rooms,id',
-            'initial_quantity' => 'nullable|integer|min:0',
-            'current_quantity' => 'nullable|integer|min:0',
+            'initial_quantity' => 'nullable|integer|min:0|max:2147483647',
+            'current_quantity' => 'nullable|integer|min:0|max:2147483647',
             'po_number' => 'required|string|max:255',
             'date_of_receipt' => 'required|date',
-            'unit_price' => 'required|numeric|min:0',
+            'unit_price' => 'required|numeric|min:0|max:999999999.99',
             'image_url' => 'required_without:use_parent_image|nullable|image|max:1024',
             'use_parent_image' => 'nullable',
+            'auto_create_assets' => 'nullable|boolean',
+            'auto_create_assets_count' => 'required_if:auto_create_assets,true|nullable|integer|min:1|max:999',
+        ], [
+            'initial_quantity.integer' => 'Tidak boleh desimal.',
+            'current_quantity.integer' => 'Tidak boleh desimal.',
+            'auto_create_assets_count.integer' => 'Tidak boleh desimal.',
         ]);
 
         if ($request->boolean('use_parent_image')) {
@@ -47,6 +53,8 @@ class LotController extends Controller
         }
 
         unset($validated['use_parent_image']);
+        unset($validated['auto_create_assets']);
+        unset($validated['auto_create_assets_count']);
         $validated['initial_quantity'] = $validated['initial_quantity'] ?? 0;
 
         Lot::create($validated);
@@ -67,13 +75,16 @@ class LotController extends Controller
             'location_id' => 'required|exists:locations,id',
             'floor_id' => 'nullable|exists:floors,id',
             'room_id' => 'nullable|exists:rooms,id',
-            'initial_quantity' => 'nullable|integer|min:0',
-            'current_quantity' => 'nullable|integer|min:0',
+            'initial_quantity' => 'nullable|integer|min:0|max:2147483647',
+            'current_quantity' => 'nullable|integer|min:0|max:2147483647',
             'po_number' => 'required|string|max:255',
             'date_of_receipt' => 'required|date',
-            'unit_price' => 'required|numeric|min:0',
+            'unit_price' => 'required|numeric|min:0|max:999999999.99',
             'image_url' => 'nullable|image|max:1024',
             'use_parent_image' => 'nullable',
+        ], [
+            'initial_quantity.integer' => 'Tidak boleh desimal.',
+            'current_quantity.integer' => 'Tidak boleh desimal.',
         ]);
 
         if ($request->boolean('use_parent_image')) {

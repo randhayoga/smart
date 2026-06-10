@@ -22,7 +22,7 @@ class BulkLotController extends Controller
             'location_id' => 'nullable|exists:locations,id',
             'floor_id' => 'nullable|exists:floors,id',
             'room_id' => 'nullable|exists:rooms,id',
-            'unit_price' => 'nullable|numeric|min:0',
+            'unit_price' => 'nullable|numeric|min:0|max:999999999.99',
             'image_url' => 'nullable|image|max:1024',
             'use_parent_image' => 'nullable',
         ]);
