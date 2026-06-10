@@ -275,8 +275,8 @@ const columns = computed<ColumnDef<any>[]>(() => {
       cell: ({ row }) => h('div', { class: 'pl-2' }, [
         h('span', { 
           class: row.original.is_consumable 
-            ? 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800' 
-            : 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800'
+            ? 'inline-flex items-center px-2 py-0.5 rounded-full font-medium bg-blue-100 text-blue-800' 
+            : 'inline-flex items-center px-2 py-0.5 rounded-full font-medium bg-purple-100 text-purple-800'
         }, row.original.is_consumable ? 'Habis Pakai' : 'Aset')
       ]),
     });
@@ -670,7 +670,10 @@ const closeErrorModal = () => {
       >
         <div v-if="isEditModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4">
           <div 
-            class="bg-card text-foreground rounded-[14px] shadow-2xl w-full max-w-[1200px] min-h-[261px] p-[24px] flex flex-col"
+            :class="[
+              'bg-card text-foreground rounded-[14px] shadow-2xl w-full min-h-[261px] p-[24px] flex flex-col',
+              !['Subkategori', 'Lantai', 'Ruangan', 'Kategori'].includes(activeTab) ? 'max-w-[600px]' : 'max-w-[1200px]'
+            ]"
             @click.stop
           >
             <div class="flex items-center justify-between border-b border-border pb-4 mb-6">
@@ -721,8 +724,8 @@ const closeErrorModal = () => {
               </div>
               <div>
                 <label class="block text-sm font-medium text-foreground mb-2">Nama Lantai<span class="text-destructive">*</span></label>
-                <input type="text" v-model="editFloorForm.name" maxlength="255" placeholder="Nama lantai..."
-                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" />
+                <input type="text" v-model="editFloorForm.name" maxlength="255" placeholder="Nama lantai..." :disabled="!editFloorForm.location_id"
+                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed" />
                 <div v-if="editFloorForm.errors.name" class="text-destructive text-xs mt-1">{{ editFloorForm.errors.name }}</div>
               </div>
             </div>
@@ -839,7 +842,10 @@ const closeErrorModal = () => {
       >
         <div v-if="isCreateModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4">
           <div 
-            class="bg-card text-foreground rounded-[14px] shadow-2xl w-full max-w-[1200px] min-h-[261px] p-[24px] flex flex-col"
+            :class="[
+              'bg-card text-foreground rounded-[14px] shadow-2xl w-full min-h-[261px] p-[24px] flex flex-col',
+              !['Subkategori', 'Lantai', 'Ruangan', 'Kategori'].includes(activeTab) ? 'max-w-[600px]' : 'max-w-[1200px]'
+            ]"
             @click.stop
           >
             <div class="flex items-center justify-between border-b border-border pb-4 mb-6">
@@ -912,8 +918,8 @@ const closeErrorModal = () => {
               </div>
               <div>
                 <label class="block text-sm font-medium text-foreground mb-2">Nama Lantai<span class="text-destructive">*</span></label>
-                <input type="text" v-model="floorForm.name" maxlength="255" placeholder="Nama lantai..."
-                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" />
+                <input type="text" v-model="floorForm.name" maxlength="255" placeholder="Nama lantai..." :disabled="!floorForm.location_id"
+                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed" />
                 <div v-if="floorForm.errors.name" class="text-destructive text-xs mt-1">{{ floorForm.errors.name }}</div>
               </div>
             </div>
