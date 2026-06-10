@@ -67,6 +67,7 @@ class RequestHistoryController extends Controller
                 'quantity' => $item->quantity_requested,
                 'stockQuantity' => $stockQuantity,
                 'category' => $item->barang->subcategory->category->name ?? '-',
+                'is_consumable' => (bool) ($item->barang->subcategory->category->is_consumable ?? false),
                 'imageUrl' => $item->barang->image_url ? '/storage/' . $item->barang->image_url : null,
                 'assets' => $assets,
             ];
@@ -147,10 +148,18 @@ class RequestHistoryController extends Controller
             ->where('user_id', $request->user()->id)
             ->findOrFail($id);
 
+        $placements = \App\Models\Request\RequestUnitAssignment::whereIn('request_item_id', $req->items->pluck('id'))
+            ->with('unit')
+            ->get()
+            ->filter(fn($asn) => $asn->unit && $asn->placement)
+            ->mapWithKeys(fn($asn) => [$asn->unit->number => $asn->placement])
+            ->toArray();
+
         return Inertia::render('Smart/User/RequestHistoryDetail', [
             'user' => $request->user(),
             'requestId' => $req->id,
             'request' => $this->mapRequest($req),
+            'placements' => $placements,
         ]);
     }
 
@@ -219,22 +228,28 @@ class RequestHistoryController extends Controller
      */
     public function receive(Request $request, $id)
     {
-        $req = SmartRequest::where('user_id', $request->user()->id)->findOrFail($id);
+        $req = SmartRequest::with(['items.barang.subcategory.category'])
+            ->where('user_id', $request->user()->id)->findOrFail($id);
         
         $oldStatus = $req->status;
         $isBorrow = (bool) $req->start_date;
-        $newStatus = $isBorrow ? 'borrow' : 'success';
+
+        // Barang consumable TIDAK masuk daftar peminjaman — langsung ke arsip (success)
+        $allConsumable = $req->items->every(function ($item) {
+            return (bool) ($item->barang->subcategory->category->is_consumable ?? false);
+        });
+
+        $newStatus = ($isBorrow && !$allConsumable) ? 'borrow' : 'success';
 
         $req->update(['status' => $newStatus]);
 
-        // If it is borrow, mark units status to 'dipinjam' (or 'dipakai' if vehicle)
-        // If consumable, mark units status to 'dipakai' or 'nonaktif'
+        // Tandai status unit sesuai jenis permintaan
         $requestItems = RequestItem::where('request_id', $req->id)->get();
         foreach ($requestItems as $reqItem) {
             $assignments = \App\Models\Request\RequestUnitAssignment::where('request_item_id', $reqItem->id)->get();
             foreach ($assignments as $asn) {
                 $status = 'dipakai';
-                if ($isBorrow && !$asn->unit->is_vehicle) {
+                if ($isBorrow && !$allConsumable && !$asn->unit->is_vehicle) {
                     $status = 'dipinjam';
                 }
                 $asn->unit->update([
@@ -295,5 +310,25 @@ class RequestHistoryController extends Controller
         ]);
 
         return redirect()->back()->with('success', 'Jadwal pengembalian berhasil diajukan.');
+    }
+
+    /**
+     * Memperbarui lokasi penempatan aset (baik oleh user maupun admin).
+     */
+    public function updatePlacement(Request $request)
+    {
+        $validated = $request->validate([
+            'placements' => 'required|array',
+        ]);
+
+        foreach ($validated['placements'] as $assetNumber => $location) {
+            $unit = \App\Models\Inventory\Unit::where('number', $assetNumber)->first();
+            if ($unit) {
+                \App\Models\Request\RequestUnitAssignment::where('unit_id', $unit->id)
+                    ->update(['placement' => $location]);
+            }
+        }
+
+        return redirect()->back()->with('success', 'Penempatan aset berhasil disimpan.');
     }
 }

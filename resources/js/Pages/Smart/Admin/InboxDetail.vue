@@ -4,6 +4,7 @@ import { router } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import AssetItemCard from '@/Components/AssetItemCard.vue';
+import { Head } from '@inertiajs/vue3';
 import { 
   CheckCircle2,
   Clock,
@@ -50,6 +51,7 @@ interface Props {
   requestId: string | number;
   request: RequestDetail;
   user?: any;
+  placements?: Record<string, string>;
 }
 
 const props = defineProps<Props>();
@@ -165,15 +167,27 @@ const submitPending = () => {
   });
 };
 
+const isRejectModalOpen = ref(false);
+const rejectReason = ref('');
+const openRejectModal = () => {
+  rejectReason.value = '';
+  isRejectModalOpen.value = true;
+};
+const closeRejectModal = () => {
+  isRejectModalOpen.value = false;
+};
+
 const handleReject = () => {
-  const reason = prompt('Masukkan alasan penolakan (opsional):');
-  if (reason === null) return;
-  
+  openRejectModal();
+};
+
+const submitReject = () => {
   router.post(route('smart.inbox.action', props.requestId), {
     action: 'reject',
-    note: reason
+    note: rejectReason.value
   }, {
     onSuccess: () => {
+      closeRejectModal();
       toast.success('Permintaan berhasil ditolak.');
     },
     onError: (errors) => {
@@ -192,6 +206,7 @@ const handlePilihAlokasi = (item: any) => {
 </script>
 
 <template>
+  <Head title="Detail Permintaan" />
   <AppLayout title="Detail Permintaan">
     <!-- Breadcrumb -->
     <Breadcrumb>
@@ -276,6 +291,7 @@ const handlePilihAlokasi = (item: any) => {
             :quantity="item.quantity"
             :assets="item.assets"
             :imageUrl="item.imageUrl"
+            :placements="placements"
           >
             <template #footer>
               <button 
@@ -444,6 +460,87 @@ const handlePilihAlokasi = (item: any) => {
                 class="px-5 py-2 text-sm font-bold bg-zinc-500 hover:bg-zinc-600 text-white rounded-lg transition-all shadow-sm"
               >
                 Kirim Pending
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+    <!-- Teleport Modal Reject -->
+    <Teleport to="body">
+      <Transition
+        enter-active-class="ease-out duration-300"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="ease-in duration-200"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div 
+          v-if="isRejectModalOpen" 
+          class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4"
+          @click.self="closeRejectModal"
+        >
+          <div 
+            class="bg-card text-foreground rounded-[14px] shadow-2xl w-full max-w-lg flex flex-col overflow-hidden border border-border"
+            @click.stop
+          >
+            <!-- Header -->
+            <div class="flex items-center justify-between p-5 border-b border-border bg-card">
+              <h3 class="text-base md:text-lg font-extrabold text-foreground">Penolakan Permintaan/Peminjaman</h3>
+              <button @click="closeRejectModal" class="p-1.5 hover:bg-muted rounded-full transition-colors">
+                <X class="w-5 h-5 text-muted-foreground" />
+              </button>
+            </div>
+            
+            <!-- Body -->
+            <div class="p-6 space-y-4">
+              <!-- Request Info -->
+              <div class="space-y-1 pb-4 border-b border-border">
+                <p class="text-sm font-extrabold text-foreground">{{ request.number }}</p>
+                <p class="text-sm text-muted-foreground">Dibuat oleh: <span class="text-foreground font-medium">{{ request.requester }}</span></p>
+                <p class="text-sm text-muted-foreground">PIC Approval: <span class="text-foreground font-medium">{{ request.approval_by || request.approver }}</span></p>
+                <p class="text-sm text-muted-foreground">Waktu dibuat: <span class="text-foreground font-medium">{{ request.createdAt }}</span></p>
+                <p class="text-sm text-muted-foreground">
+                  Pemanfaatan: 
+                  <span class="text-foreground font-medium">
+                    {{ request.pemanfaatan === 'corporate' ? 'Corporate' : 'Project' }} ({{ request.pemanfaatanDetail }})
+                  </span>
+                </p>
+                <p v-if="request.type === 'peminjaman' && request.durationStart" class="text-sm text-muted-foreground">
+                  Durasi: 
+                  <span class="text-foreground font-medium">
+                    {{ request.durationStart }} s.d. {{ request.durationEnd }} ({{ request.durationDays }} hari, {{ request.durationHours }} jam)
+                  </span>
+                </p>
+              </div>
+
+              <!-- Confirmation Question -->
+              <div class="space-y-2">
+                <p class="text-sm font-bold text-red-500">Apakah Anda yakin untuk menolak permintaan/peminjaman ini?</p>
+                <label class="text-sm text-foreground">Catatan (opsional):</label>
+                <textarea
+                  v-model="rejectReason"
+                  placeholder="Ketik alasan penolakan di sini..."
+                  rows="4"
+                  class="w-full text-sm border border-input rounded-[10px] bg-background p-3 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400 transition-all resize-y"
+                ></textarea>
+              </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="flex items-center justify-end gap-3 p-5 border-t border-border bg-muted/20">
+              <button 
+                @click="closeRejectModal"
+                class="px-5 py-2 text-sm font-semibold border border-input hover:bg-muted rounded-lg transition-colors"
+              >
+                Tidak
+              </button>
+              <button 
+                @click="submitReject"
+                class="px-5 py-2 text-sm font-bold bg-[#D9534F] hover:bg-[#C9302C] text-white rounded-lg transition-all shadow-sm"
+              >
+                Iya
               </button>
             </div>
           </div>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, h } from 'vue';
 import { Head } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import {
@@ -19,7 +19,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/Components/ui/dropdown-menu";
-import Combobox from '@/Components/Combobox.vue';
+import TableSearch from '@/Components/TableSearch.vue';
+import type { ColumnDef } from '@tanstack/vue-table';
+import DataTable from '@/Components/DataTable.vue';
 
 interface RequestItem {
   id: number;
@@ -81,31 +83,9 @@ const typeFilter = ref('Semua tipe');
 const decisionFilter = ref('Semua keputusan');
 const rowsPerPage = ref('Semua baris');
 
-// Sorting
-const sortBy = ref('id');
-const sortDesc = ref(true);
-
-const toggleSort = (field: string) => {
-  if (sortBy.value === field) {
-    sortDesc.value = !sortDesc.value;
-  } else {
-    sortBy.value = field;
-    sortDesc.value = false;
-  }
-};
-
 // Filtered data
 const filteredRequests = computed(() => {
   let list = [...requests.value];
-
-  if (searchQuery.value.trim() !== '') {
-    const q = searchQuery.value.toLowerCase();
-    list = list.filter(req => 
-      req.number.toLowerCase().includes(q) ||
-      req.requester.toLowerCase().includes(q) ||
-      req.pemanfaatanDetail.toLowerCase().includes(q)
-    );
-  }
 
   if (typeFilter.value !== 'Semua tipe') {
     const type = typeFilter.value === 'Peminjaman' ? 'peminjaman' : 'permintaan';
@@ -125,49 +105,17 @@ const filteredRequests = computed(() => {
     });
   }
 
-  list.sort((a, b) => {
-    let valA: any = a[sortBy.value as keyof RequestHistory] ?? '';
-    let valB: any = b[sortBy.value as keyof RequestHistory] ?? '';
-
-    if (sortBy.value === 'number') {
-      valA = a.number;
-      valB = b.number;
-    } else if (sortBy.value === 'requester') {
-      valA = a.requester;
-      valB = b.requester;
-    } else if (sortBy.value === 'pemanfaatan') {
-      valA = a.pemanfaatanDetail;
-      valB = b.pemanfaatanDetail;
-    } else if (sortBy.value === 'created_at') {
-      valA = a.created_at;
-      valB = b.created_at;
-    }
-
-    if (typeof valA === 'string') {
-      return sortDesc.value ? valB.localeCompare(valA) : valA.localeCompare(valB);
-    } else {
-      return sortDesc.value ? valB - valA : valA - valB;
-    }
-  });
+  // Pre-sort by id descending (newest first)
+  list.sort((a, b) => b.id - a.id);
 
   return list;
 });
 
-// Pagination
-const currentPage = ref(1);
-
-const totalPages = computed(() => {
-  if (rowsPerPage.value === 'Semua baris') return 1;
-  const limit = parseInt(rowsPerPage.value, 10);
-  return Math.ceil(filteredRequests.value.length / limit) || 1;
-});
-
-const paginatedRequests = computed(() => {
-  const list = filteredRequests.value;
-  if (rowsPerPage.value === 'Semua baris') return list;
-  const limit = parseInt(rowsPerPage.value, 10);
-  const start = (currentPage.value - 1) * limit;
-  return list.slice(start, start + limit);
+const computedPageSize = computed(() => {
+  if (rowsPerPage.value === 'Semua baris') {
+    return filteredRequests.value.length || 10;
+  }
+  return parseInt(rowsPerPage.value, 10);
 });
 
 // ─────────────────────────────────────────────
@@ -253,6 +201,141 @@ const getDecisionBadgeClass = (rawStatus: string) => {
   if (rawStatus === 'cancel') return 'bg-gray-100 text-gray-700';
   return 'bg-green-100 text-green-700';
 };
+
+const columns: ColumnDef<RequestHistory>[] = [
+  {
+    accessorKey: 'number',
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'No. Permintaan',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'text-muted-foreground font-mono text-sm truncate font-medium' }, row.getValue('number')),
+  },
+  {
+    accessorKey: 'type',
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'Tipe',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'text-foreground capitalize' }, row.getValue('type')),
+  },
+  {
+    accessorKey: 'requester',
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'Pemohon',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'text-foreground font-semibold' }, row.getValue('requester')),
+  },
+  {
+    accessorKey: 'pemanfaatan',
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'Pemanfaatan',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => {
+      const item = row.original;
+      return h('div', { class: 'text-foreground' }, [
+        h('span', { class: 'font-semibold capitalize' }, item.pemanfaatan + ': '),
+        h('span', { class: 'text-muted-foreground font-normal' }, item.pemanfaatanDetail)
+      ]);
+    }
+  },
+  {
+    accessorKey: 'created_at',
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'Tanggal Masuk',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'text-muted-foreground' }, row.getValue('created_at')),
+  },
+  {
+    accessorKey: 'raw_status',
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-center w-full'
+      }, () => [
+        'Keputusan',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'text-center' }, [
+      h('span', { 
+        class: 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ' + getDecisionBadgeClass(row.getValue('raw_status')) 
+      }, getDecisionLabel(row.getValue('raw_status')))
+    ]),
+  },
+  {
+    accessorKey: 'approval_by',
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-center w-full'
+      }, () => [
+        'Diproses Oleh',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => {
+      const item = row.original;
+      return h('div', { class: 'text-center' }, [
+        h('div', { class: 'font-semibold text-foreground' }, item.approval_by || '-'),
+        h('div', { class: 'text-[10px] text-muted-foreground font-mono mt-0.5' }, item.approval_at || '-')
+      ]);
+    }
+  },
+  {
+    id: 'actions',
+    size: 100,
+    header: () => h('div', { class: 'text-center font-semibold text-foreground' }, 'Aksi'),
+    cell: ({ row }) => {
+      const item = row.original;
+      return h('div', { class: 'flex items-center justify-center gap-2' }, [
+        h('button', {
+          onClick: () => openDetailPopup(item),
+          class: 'w-8 h-8 rounded-full bg-[#00BCD4] hover:bg-[#06B6D4] text-white flex items-center justify-center transition-colors shadow-sm cursor-pointer',
+          title: 'Detail Permintaan'
+        }, [
+          h(Eye, { class: 'w-4 h-4' })
+        ])
+      ]);
+    },
+    enableSorting: false,
+  }
+];
 </script>
 
 <template>
@@ -266,52 +349,57 @@ const getDecisionBadgeClass = (rawStatus: string) => {
     </div>
 
     <!-- ── Filter & Search Section ── -->
-    <div class="flex flex-col gap-4 mb-6">
-      <div class="flex flex-wrap gap-3 items-center justify-between">
-        <div class="flex flex-wrap gap-3 items-center w-full lg:w-auto">
-          <!-- Search input -->
-          <div class="relative w-full sm:w-[220px]">
-            <div class="absolute left-3 top-3 text-gray-400">
-              <Search class="w-4 h-4" />
-            </div>
-            <input
-              v-model="searchQuery"
-              type="text"
-              placeholder="Cari Permintaan..."
-              class="w-full h-10 pl-9 pr-4 text-xs border border-gray-300 rounded-[14px] bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
-            />
-          </div>
-
-          <!-- Tipe Filter -->
-          <Combobox
-            v-model="typeFilter"
-            :options="['Peminjaman', 'Permintaan']"
-            search-placeholder="Cari tipe..."
-            default-label="Semua tipe"
-            width-class="w-full sm:w-auto min-w-[120px]"
-          />
-
-          <!-- Decision Filter -->
-          <Combobox
-            v-model="decisionFilter"
-            :options="['Disetujui', 'Ditolak', 'Dibatalkan']"
-            search-placeholder="Cari keputusan..."
-            default-label="Semua keputusan"
-            width-class="w-full sm:w-auto min-w-[160px]"
+    <div class="space-y-4 mb-6">
+      <!-- Filters Row -->
+      <div class="flex flex-wrap items-end gap-4">
+        <div class="space-y-1.5 flex-1 min-w-[300px] max-w-sm">
+          <label class="text-xs text-muted-foreground font-medium block ml-0.5">Filter</label>
+          <TableSearch 
+            v-model="searchQuery"
+            placeholder="Cari Permintaan..." 
+            bg-class="bg-white"
           />
         </div>
 
-        <!-- Page Size Selection -->
-        <div class="flex items-center gap-2 text-xs text-gray-600 justify-end w-full sm:w-auto">
-          <span class="whitespace-nowrap">Baris per halaman</span>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal bg-white', (!typeFilter || typeFilter === 'Semua tipe') ? 'text-muted-foreground' : 'text-foreground']">
+              <span class="truncate">{{ typeFilter || 'Semua tipe' }}</span>
+              <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
+            <DropdownMenuItem @select="typeFilter = 'Semua tipe'">Semua tipe</DropdownMenuItem>
+            <DropdownMenuItem @select="typeFilter = 'Peminjaman'">Peminjaman</DropdownMenuItem>
+            <DropdownMenuItem @select="typeFilter = 'Permintaan'">Permintaan</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal bg-white', (!decisionFilter || decisionFilter === 'Semua keputusan') ? 'text-muted-foreground' : 'text-foreground']">
+              <span class="truncate">{{ decisionFilter || 'Semua keputusan' }}</span>
+              <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
+            <DropdownMenuItem @select="decisionFilter = 'Semua keputusan'">Semua keputusan</DropdownMenuItem>
+            <DropdownMenuItem @select="decisionFilter = 'Disetujui'">Disetujui</DropdownMenuItem>
+            <DropdownMenuItem @select="decisionFilter = 'Ditolak'">Ditolak</DropdownMenuItem>
+            <DropdownMenuItem @select="decisionFilter = 'Dibatalkan'">Dibatalkan</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <div class="flex items-center gap-3 text-sm text-muted-foreground ml-auto">
+          <span>Baris per halaman</span>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" class="w-full sm:w-auto min-w-[130px] h-10 justify-between rounded-[14px] font-normal text-xs bg-white border-gray-300 shadow-sm text-gray-900 gap-2">
-                <span>{{ rowsPerPage === 'Semua baris' ? 'Semua baris' : `${rowsPerPage} baris` }}</span>
-                <ChevronDown class="w-4 h-4 opacity-50 shrink-0 ml-2" />
+              <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal bg-white', (rowsPerPage === 'Semua baris' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
+                {{ rowsPerPage === 'Semua baris' ? 'Semua baris' : `${rowsPerPage} baris` }}
+                <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent class="min-w-[130px] rounded-[14px]" align="start" :side-offset="4">
+            <DropdownMenuContent class="w-[140px] rounded-[14px]" align="start" :side-offset="4">
               <DropdownMenuItem @select="rowsPerPage = '5'">5 baris</DropdownMenuItem>
               <DropdownMenuItem @select="rowsPerPage = '10'">10 baris</DropdownMenuItem>
               <DropdownMenuItem @select="rowsPerPage = '25'">25 baris</DropdownMenuItem>
@@ -323,133 +411,14 @@ const getDecisionBadgeClass = (rawStatus: string) => {
     </div>
 
     <!-- ── Table Display ── -->
-    <div class="rounded-xl border border-border shadow-sm overflow-x-auto bg-card">
-      <table class="w-full text-xs text-left border-collapse">
-        <thead class="bg-muted/50 border-b border-border text-foreground">
-          <tr class="hover:bg-transparent text-foreground font-semibold">
-            <th @click="toggleSort('number')" class="py-4 px-6 cursor-pointer select-none font-semibold">
-              <div class="flex items-center gap-1">
-                No. Permintaan
-                <span class="text-gray-400 font-normal">↑↓</span>
-              </div>
-            </th>
-            <th @click="toggleSort('type')" class="py-4 px-4 cursor-pointer select-none font-semibold">
-              <div class="flex items-center gap-1">
-                Tipe
-                <span class="text-gray-400 font-normal">↑↓</span>
-              </div>
-            </th>
-            <th @click="toggleSort('requester')" class="py-4 px-4 cursor-pointer select-none font-semibold">
-              <div class="flex items-center gap-1">
-                Pemohon
-                <span class="text-gray-400 font-normal">↑↓</span>
-              </div>
-            </th>
-            <th @click="toggleSort('pemanfaatan')" class="py-4 px-4 cursor-pointer select-none font-semibold">
-              <div class="flex items-center gap-1">
-                Pemanfaatan
-                <span class="text-gray-400 font-normal">↑↓</span>
-              </div>
-            </th>
-            <th @click="toggleSort('created_at')" class="py-4 px-4 cursor-pointer select-none font-semibold">
-              <div class="flex items-center gap-1">
-                Tanggal Masuk
-                <span class="text-gray-400 font-normal">↑↓</span>
-              </div>
-            </th>
-            <th class="py-4 px-4 text-center font-semibold">Keputusan</th>
-            <th class="py-4 px-4 text-center font-semibold">Diproses Oleh</th>
-            <th class="py-4 px-4 text-center w-28 font-semibold">Aksi</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr 
-            v-for="req in paginatedRequests" 
-            :key="req.id"
-            class="border-b border-border hover:bg-muted/30 transition-colors last:border-none"
-          >
-            <td class="py-4 px-6 font-mono font-medium text-foreground">{{ req.number }}</td>
-            <td class="py-4 px-4 text-foreground capitalize">{{ req.type }}</td>
-            <td class="py-4 px-4 text-foreground">{{ req.requester }}</td>
-            <td class="py-4 px-4 text-foreground">
-              <span class="font-semibold capitalize">{{ req.pemanfaatan }}:</span> <span class="text-muted-foreground">{{ req.pemanfaatanDetail }}</span>
-            </td>
-            <td class="py-4 px-4 text-muted-foreground">{{ req.created_at }}</td>
-            <td class="py-4 px-4 text-center">
-              <span 
-                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold"
-                :class="getDecisionBadgeClass(req.raw_status)"
-              >
-                {{ getDecisionLabel(req.raw_status) }}
-              </span>
-            </td>
-            <td class="py-4 px-4 text-center">
-              <div class="font-semibold text-gray-900">{{ req.approval_by || '-' }}</div>
-              <div class="text-[10px] text-gray-500 font-mono mt-0.5">{{ req.approval_at || '-' }}</div>
-            </td>
-            <td class="py-4 px-4">
-              <div class="flex items-center justify-center gap-2">
-                <!-- Cyan Circle Action Button -->
-                <button 
-                  @click="openDetailPopup(req)"
-                  class="w-8 h-8 rounded-full bg-[#00BCD4] hover:bg-[#06B6D4] text-white flex items-center justify-center transition-colors shadow-sm cursor-pointer"
-                  title="Detail Permintaan"
-                >
-                  <Eye class="w-4 h-4" />
-                </button>
-              </div>
-            </td>
-          </tr>
-
-          <!-- Empty State -->
-          <tr v-if="filteredRequests.length === 0">
-            <td colspan="8" class="py-12 text-center text-gray-500">
-              <AlertTriangle class="w-8 h-8 mx-auto mb-2 text-gray-400" />
-              <p class="font-medium">Tidak ada riwayat persetujuan permintaan.</p>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- ── Pagination & Count Display ── -->
-    <div class="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4 px-2 text-xs text-gray-500">
-      <div>
-        Menampilkan {{ filteredRequests.length }} riwayat persetujuan
-      </div>
-      
-      <!-- Page numbers navigation -->
-      <div v-if="totalPages > 1" class="flex items-center gap-1">
-        <button 
-          :disabled="currentPage === 1"
-          @click="currentPage--"
-          class="h-8 px-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none transition-colors"
-        >
-          &lt; Sebelumnya
-        </button>
-        
-        <button 
-          v-for="page in totalPages" 
-          :key="page"
-          @click="currentPage = page"
-          class="w-8 h-8 border rounded-lg transition-all"
-          :class="[
-            currentPage === page 
-              ? 'border-indigo-600 bg-indigo-50 text-indigo-600 font-bold shadow-sm' 
-              : 'border-gray-300 hover:bg-gray-50 text-gray-700'
-          ]"
-        >
-          {{ page }}
-        </button>
-
-        <button 
-          :disabled="currentPage === totalPages"
-          @click="currentPage++"
-          class="h-8 px-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none transition-colors"
-        >
-          Selanjutnya &gt;
-        </button>
-      </div>
+    <div class="pb-4">
+      <DataTable 
+        :columns="columns" 
+        :data="filteredRequests" 
+        :filter-value="searchQuery"
+        :page-size="computedPageSize"
+        :show-selection-count="false"
+      />
     </div>
 
     <!-- ============================================================

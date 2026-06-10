@@ -121,9 +121,17 @@ class BorrowedController extends Controller
             'daysLeft' => $daysLeft,
         ];
 
+        $placements = \App\Models\Request\RequestUnitAssignment::whereIn('request_item_id', $req->items->pluck('id'))
+            ->with('unit')
+            ->get()
+            ->filter(fn($asn) => $asn->unit && $asn->placement)
+            ->mapWithKeys(fn($asn) => [$asn->unit->number => $asn->placement])
+            ->toArray();
+
         return Inertia::render('Smart/Admin/BorrowedDetail', [
             'borrowedId' => $req->id,
             'request' => $borrowedData,
+            'placements' => $placements,
             'user' => [
                 'name' => auth()->user()->name,
                 'email' => auth()->user()->email,
