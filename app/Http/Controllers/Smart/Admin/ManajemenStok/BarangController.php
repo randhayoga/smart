@@ -25,7 +25,7 @@ class BarangController extends Controller
 
         $imagePath = null;
         if ($request->hasFile('image_url')) {
-            $imagePath = $request->file('image_url')->store('inventory/barangs', 'public');
+            $imagePath = $request->file('image_url')->store('inventory', 'public');
             $validated['image_url'] = $imagePath;
         }
 
@@ -57,7 +57,7 @@ class BarangController extends Controller
                     Storage::disk('public')->delete($barang->image_url);
                 }
             }
-            $imagePath = $request->file('image_url')->store('inventory/barangs', 'public');
+            $imagePath = $request->file('image_url')->store('inventory', 'public');
             $validated['image_url'] = $imagePath;
         } else {
             unset($validated['image_url']);

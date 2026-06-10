@@ -63,10 +63,7 @@ class BulkLotController extends Controller
                 }
                 $barang = $lot->barang;
                 if ($barang && $barang->image_url && Storage::disk('public')->exists($barang->image_url)) {
-                    $extension = pathinfo($barang->image_url, PATHINFO_EXTENSION);
-                    $newFilename = 'inventory/lots/' . uniqid() . '.' . $extension;
-                    Storage::disk('public')->copy($barang->image_url, $newFilename);
-                    $lotData['image_url'] = $newFilename;
+                    $lotData['image_url'] = $barang->image_url;
                 }
             } else if ($request->hasFile('image_url')) {
                 if ($lot->image_url && $lot->image_url !== 'inventory/lots/placeholder.jpg' && Storage::disk('public')->exists($lot->image_url)) {
@@ -78,7 +75,7 @@ class BulkLotController extends Controller
                     }
                 }
                 if (!$storedImagePath) {
-                    $storedImagePath = $request->file('image_url')->store('inventory/lots', 'public');
+                    $storedImagePath = $request->file('image_url')->store('inventory', 'public');
                 }
                 $lotData['image_url'] = $storedImagePath;
             }

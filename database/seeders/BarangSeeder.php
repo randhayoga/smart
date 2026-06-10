@@ -101,12 +101,12 @@ class BarangSeeder extends Seeder
                 }
             }
 
-            $destinationPath = 'inventory/barangs/' . basename($sourcePath);
+            $destinationPath = 'inventory/' . basename($sourcePath);
             
             if (File::exists($sourcePath)) {
                 // Copy to public storage
-                if (!Storage::disk('public')->exists('inventory/barangs')) {
-                    Storage::disk('public')->makeDirectory('inventory/barangs');
+                if (!Storage::disk('public')->exists('inventory')) {
+                    Storage::disk('public')->makeDirectory('inventory');
                 }
                 Storage::disk('public')->put($destinationPath, File::get($sourcePath));
             }

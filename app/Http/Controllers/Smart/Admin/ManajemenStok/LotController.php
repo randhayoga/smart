@@ -40,15 +40,12 @@ class LotController extends Controller
         if ($request->boolean('use_parent_image')) {
             $barang = \App\Models\Inventory\Barang::findOrFail($request->input('barang_id'));
             if ($barang->image_url && Storage::disk('public')->exists($barang->image_url)) {
-                $extension = pathinfo($barang->image_url, PATHINFO_EXTENSION);
-                $newFilename = 'inventory/lots/' . uniqid() . '.' . $extension;
-                Storage::disk('public')->copy($barang->image_url, $newFilename);
-                $validated['image_url'] = $newFilename;
+                $validated['image_url'] = $barang->image_url;
             } else {
                 return redirect()->back()->withErrors(['image_url' => 'Foto barang parent tidak ditemukan di storage.']);
             }
         } else {
-            $imagePath = $request->file('image_url')->store('inventory/lots', 'public');
+            $imagePath = $request->file('image_url')->store('inventory', 'public');
             $validated['image_url'] = $imagePath;
         }
 
@@ -98,10 +95,7 @@ class LotController extends Controller
             }
             $barang = \App\Models\Inventory\Barang::findOrFail($request->input('barang_id'));
             if ($barang->image_url && Storage::disk('public')->exists($barang->image_url)) {
-                $extension = pathinfo($barang->image_url, PATHINFO_EXTENSION);
-                $newFilename = 'inventory/lots/' . uniqid() . '.' . $extension;
-                Storage::disk('public')->copy($barang->image_url, $newFilename);
-                $validated['image_url'] = $newFilename;
+                $validated['image_url'] = $barang->image_url;
             } else {
                 return redirect()->back()->withErrors(['image_url' => 'Foto barang parent tidak ditemukan di storage.']);
             }
@@ -114,7 +108,7 @@ class LotController extends Controller
                     Storage::disk('public')->delete($lot->image_url);
                 }
             }
-            $imagePath = $request->file('image_url')->store('inventory/lots', 'public');
+            $imagePath = $request->file('image_url')->store('inventory', 'public');
             $validated['image_url'] = $imagePath;
         } else {
             unset($validated['image_url']);

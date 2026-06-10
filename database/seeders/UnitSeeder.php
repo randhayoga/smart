@@ -102,23 +102,8 @@ class UnitSeeder extends Seeder
                 continue;
             }
 
-            // Copy lot image to inventory/units if it exists
-            $unitImagePath = null;
-            if ($lot->image_url) {
-                $lotImagePath = $lot->image_url;
-                $unitImagePath = 'inventory/units/' . basename($lotImagePath);
-
-                if (Storage::disk('public')->exists($lotImagePath)) {
-                    if (!Storage::disk('public')->exists('inventory/units')) {
-                        Storage::disk('public')->makeDirectory('inventory/units');
-                    }
-                    if (!Storage::disk('public')->exists($unitImagePath)) {
-                        Storage::disk('public')->copy($lotImagePath, $unitImagePath);
-                    }
-                } else {
-                    $unitImagePath = $lotImagePath;
-                }
-            }
+            // Use lot image directly without copying
+            $unitImagePath = $lot->image_url;
 
             Unit::updateOrCreate(
                 ['number' => $data['number']],
