@@ -58,15 +58,12 @@ class UnitController extends Controller
         // Single creation logic
         if ($request->boolean('use_lot_image')) {
             if ($lot->image_url && Storage::disk('public')->exists($lot->image_url)) {
-                $extension = pathinfo($lot->image_url, PATHINFO_EXTENSION);
-                $newFilename = 'inventory/units/' . uniqid() . '.' . $extension;
-                Storage::disk('public')->copy($lot->image_url, $newFilename);
-                $validated['image_url'] = $newFilename;
+                $validated['image_url'] = $lot->image_url;
             } else {
                 return redirect()->back()->withErrors(['image_url' => 'Foto LOT tidak ditemukan di storage.']);
             }
         } else if ($request->hasFile('image_url')) {
-            $imagePath = $request->file('image_url')->store('inventory/units', 'public');
+            $imagePath = $request->file('image_url')->store('inventory', 'public');
             $validated['image_url'] = $imagePath;
         }
 
@@ -140,10 +137,7 @@ class UnitController extends Controller
             }
             $lot = Lot::findOrFail($request->input('lot_id'));
             if ($lot->image_url && Storage::disk('public')->exists($lot->image_url)) {
-                $extension = pathinfo($lot->image_url, PATHINFO_EXTENSION);
-                $newFilename = 'inventory/units/' . uniqid() . '.' . $extension;
-                Storage::disk('public')->copy($lot->image_url, $newFilename);
-                $validated['image_url'] = $newFilename;
+                $validated['image_url'] = $lot->image_url;
             } else {
                 $validated['image_url'] = null;
             }
@@ -156,7 +150,7 @@ class UnitController extends Controller
                     Storage::disk('public')->delete($unit->image_url);
                 }
             }
-            $imagePath = $request->file('image_url')->store('inventory/units', 'public');
+            $imagePath = $request->file('image_url')->store('inventory', 'public');
             $validated['image_url'] = $imagePath;
         } else {
             unset($validated['image_url']);

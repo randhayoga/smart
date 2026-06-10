@@ -78,15 +78,12 @@ class BulkUnitController extends Controller
         $finalImagePath = null;
         if ($request->boolean('use_lot_image')) {
             if ($lot->image_url && Storage::disk('public')->exists($lot->image_url)) {
-                $extension = pathinfo($lot->image_url, PATHINFO_EXTENSION);
-                $newFilename = 'inventory/units/' . uniqid() . '.' . $extension;
-                Storage::disk('public')->copy($lot->image_url, $newFilename);
-                $finalImagePath = $newFilename;
+                $finalImagePath = $lot->image_url;
             } else {
                 return redirect()->back()->withErrors(['image_url' => 'Foto LOT tidak ditemukan di storage.']);
             }
         } else if ($request->hasFile('image_url')) {
-            $finalImagePath = $request->file('image_url')->store('inventory/units', 'public');
+            $finalImagePath = $request->file('image_url')->store('inventory', 'public');
         }
 
         foreach ($generatedNumbers as $num) {
@@ -167,16 +164,13 @@ class BulkUnitController extends Controller
         if ($request->boolean('use_lot_image')) {
             $lot = Lot::findOrFail($units->first()->lot_id);
             if ($lot->image_url && Storage::disk('public')->exists($lot->image_url)) {
-                $extension = pathinfo($lot->image_url, PATHINFO_EXTENSION);
-                $newFilename = 'inventory/units/' . uniqid() . '.' . $extension;
-                Storage::disk('public')->copy($lot->image_url, $newFilename);
-                $finalImagePath = $newFilename;
+                $finalImagePath = $lot->image_url;
                 $hasNewImage = true;
             } else {
                 return redirect()->back()->withErrors(['image_url' => 'Foto LOT tidak ditemukan di storage.']);
             }
         } else if ($request->hasFile('image_url')) {
-            $finalImagePath = $request->file('image_url')->store('inventory/units', 'public');
+            $finalImagePath = $request->file('image_url')->store('inventory', 'public');
             $hasNewImage = true;
         }
 

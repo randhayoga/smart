@@ -134,11 +134,11 @@ class LotSeeder extends Seeder
                 }
             }
 
-            $destinationPath = 'inventory/lots/' . basename($sourcePath);
+            $destinationPath = 'inventory/' . basename($sourcePath);
 
             if (File::exists($sourcePath)) {
-                if (!Storage::disk('public')->exists('inventory/lots')) {
-                    Storage::disk('public')->makeDirectory('inventory/lots');
+                if (!Storage::disk('public')->exists('inventory')) {
+                    Storage::disk('public')->makeDirectory('inventory');
                 }
                 Storage::disk('public')->put($destinationPath, File::get($sourcePath));
             }

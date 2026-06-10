@@ -201,7 +201,7 @@ class LotControllerTest extends TestCase
         
         $lot = Lot::first();
         $this->assertNotNull($lot->image_url);
-        $this->assertNotEquals($barangImagePath, $lot->image_url);
+        $this->assertEquals($barangImagePath, $lot->image_url);
         Storage::disk('public')->assertExists($lot->image_url);
 
         $bulkResponse = $this->actingAs($user)->post(route('smart.inventory.units.bulk-store'), [
@@ -247,8 +247,7 @@ class LotControllerTest extends TestCase
         
         $lot->refresh();
         $this->assertNotNull($lot->image_url);
-        $this->assertNotEquals($barangImagePath, $lot->image_url);
-        $this->assertNotEquals($oldLotImagePath, $lot->image_url);
+        $this->assertEquals($barangImagePath, $lot->image_url);
         Storage::disk('public')->assertExists($lot->image_url);
     }
 
