@@ -543,6 +543,15 @@ const handleConfirmSubmit = () => {
     }
   });
 };
+
+const isVehicle = (item: ApprovalItem | null) => {
+  if (!item) return false;
+  const category = (item.category || '').toLowerCase();
+  const subcategory = (item.subcategory || '').toLowerCase();
+  return category.includes('kendaraan') || subcategory.includes('kendaraan') ||
+         category.includes('mobil') || subcategory.includes('mobil') ||
+         category.includes('motor') || subcategory.includes('motor');
+};
 </script>
 
 <template>
@@ -738,14 +747,14 @@ const handleConfirmSubmit = () => {
                       <div class="md:col-span-7">
                         <p class="font-bold text-foreground"><span class="text-foreground">Kode Aset:</span> {{ activeApproval.asset_code }}</p>
                         <!-- TNKB (Nopol) -->
-                        <p class="font-bold text-foreground">
+                        <p v-if="isVehicle(activeApproval)" class="font-bold text-foreground">
                           <span class="text-foreground">Nopol:</span> {{ activeApproval.unit_details.vehicle_registration || '-' }}
                         </p>
                         <p class="text-foreground">
                           Status: 
                           <span 
                             :class="[
-                              'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold',
+                              'inline-flex items-center px-2 py-0.1 rounded-full font-semibold',
                               activeApproval.proposed_status === 'tersedia' ? 'bg-emerald-100 text-emerald-800' :
                               activeApproval.proposed_status === 'dipinjam' ? 'bg-amber-100 text-amber-800' :
                               activeApproval.proposed_status === 'dipakai' ? 'bg-blue-100 text-blue-800' :
