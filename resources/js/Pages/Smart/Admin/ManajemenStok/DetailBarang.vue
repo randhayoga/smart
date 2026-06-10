@@ -23,7 +23,6 @@ import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem, BreadcrumbS
 import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
 import ViewTableButton from '@/Components/ViewTableButton.vue';
-import EditTableButton from '@/Components/EditTableButton.vue';
 import DeleteTableButton from '@/Components/DeleteTableButton.vue';
 import ExportButtonGroup from '@/Components/ExportButtonGroup.vue';
 import Tabs from '@/Components/Tabs.vue';
@@ -1568,27 +1567,37 @@ const closeErrorModal = () => {
                           v-model="lotForm.initial_quantity"
                           placeholder="Contoh: 10"
                           min="0"
-                          class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
+                          class="w-full px-4 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors h-10"
+                          :class="[lotForm.errors.initial_quantity ? 'border-destructive focus:ring-destructive/20' : 'border-input focus:ring-primary/20 focus:border-primary']"
                           @input="lotForm.current_quantity = lotForm.initial_quantity"
                         />
+                        <div v-if="lotForm.errors.initial_quantity" class="text-destructive text-xs mt-1">
+                          {{ lotForm.errors.initial_quantity }}
+                        </div>
                       </div>
                       <div v-else-if="props.barang.category !== 'Kendaraan'" class="space-y-1.5 flex items-center gap-2 pt-2 flex-wrap">
-                        <Checkbox 
-                          id="auto-create-checkbox"
-                          v-model="lotForm.auto_create_assets"
-                        />
-                        <label for="auto-create-checkbox" class="cursor-pointer select-none text-sm font-medium text-foreground">
-                          Buat
-                        </label>
-                        <input 
-                          type="number" 
-                          v-model="lotForm.auto_create_assets_count"
-                          placeholder="..."
-                          min="1"
-                          :disabled="!lotForm.auto_create_assets"
-                          class="w-16 px-2 py-1 text-sm border border-input rounded-[10px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-8 disabled:opacity-50 disabled:cursor-not-allowed mx-1"
-                        />
-                        <span class="text-sm font-medium text-foreground">aset secara otomatis dengan nilai default.</span>
+                        <div class="flex items-center gap-2 w-full">
+                          <Checkbox 
+                            id="auto-create-checkbox"
+                            v-model="lotForm.auto_create_assets"
+                          />
+                          <label for="auto-create-checkbox" class="cursor-pointer select-none text-sm font-medium text-foreground">
+                            Buat
+                          </label>
+                          <input 
+                            type="number" 
+                            v-model="lotForm.auto_create_assets_count"
+                            placeholder="..."
+                            min="1"
+                            :disabled="!lotForm.auto_create_assets"
+                            class="w-16 px-2 py-1 text-sm border rounded-[10px] bg-background focus:outline-none focus:ring-2 transition-colors h-8 disabled:opacity-50 disabled:cursor-not-allowed mx-1"
+                            :class="[lotForm.errors.auto_create_assets_count ? 'border-destructive focus:ring-destructive/20' : 'border-input focus:ring-primary/20 focus:border-primary']"
+                          />
+                          <span class="text-sm font-medium text-foreground">aset secara otomatis dengan nilai default.</span>
+                        </div>
+                        <div v-if="lotForm.errors.auto_create_assets_count" class="text-destructive text-xs mt-1 w-full pl-6">
+                          {{ lotForm.errors.auto_create_assets_count }}
+                        </div>
                       </div>
                     </template>
                   </div>
@@ -1933,7 +1942,7 @@ const closeErrorModal = () => {
       :is-open="isDeleteModalOpen"
       :item-count="itemsToDelete.length"
       :item-name="'Barang'"
-      :item-data="itemsToDelete.length === 1 ? itemsToDelete[0] : null"
+      :item-data="itemsToDelete.length === 1 ? itemsToDelete[0] : itemsToDelete"
       :fields="deleteFields"
       @close="closeDeleteModal"
       @confirm="handleConfirmDelete"

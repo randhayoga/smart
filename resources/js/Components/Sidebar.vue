@@ -156,7 +156,7 @@ const isActive = (href: string): boolean => {
                 :class="[
                   'text-xs',
                   isActive(item.href) 
-                    ? 'bg-white/20 text-white hover:bg-white/30' 
+                    ? 'bg-white/90 text-primary hover:bg-white' 
                     : 'bg-primary/10 text-primary hover:bg-primary/20'
                 ]"
               >
@@ -238,8 +238,8 @@ const isActive = (href: string): boolean => {
                   :class="[
                     'text-xs',
                     isActive(item.href) 
-                      ? 'bg-white/20 text-white hover:bg-white/30' 
-                      : 'bg-primary/10 text-primary hover:bg-primary/20'
+                    ? 'bg-white/90 text-primary hover:bg-white' 
+                    : 'bg-primary/10 text-primary hover:bg-primary/20'
                   ]"
                 >
                   {{ item.badge }}

@@ -154,7 +154,7 @@ export const userNavigation: NavSection[] = [
                 icon: Eye,
             },
             {
-                title: 'Sudah Approve',
+                title: 'Sudah Diproses',
                 href: '/smart/approve-status?history=true',
                 icon: CircleCheckBig,
             },

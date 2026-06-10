@@ -235,8 +235,11 @@ const isLotFormValid = computed(() => {
          lotForm.vendor_id && 
          lotForm.location_id && 
          lotForm.po_number && 
+         lotForm.po_number.length <= 255 && 
          lotForm.date_of_receipt && 
          lotForm.unit_price !== '' && 
+         Number(lotForm.unit_price) >= 0 && 
+         Number(lotForm.unit_price) <= 999999999 && 
          (lotForm.image_url || lotForm.image_url_name) &&
          !lotForm.processing;
 });
@@ -538,11 +541,14 @@ const parseCurrencyToNumber = (val: string | number) => {
 };
 
 const isAssetFormValid = computed(() => {
+  const parsedPrice = parseCurrencyToNumber(assetForm.price);
   const baseValid = assetForm.number && 
          assetForm.location_id && 
          assetForm.status && 
          assetForm.condition && 
          assetForm.price !== '' && 
+         parsedPrice >= 0 && 
+         parsedPrice <= 999999999 && 
          (assetForm.image_url || assetForm.image_url_name) &&
          (!arrNeedApproval.includes(assetForm.status) || assetForm.memo_file_name) &&
          !assetForm.processing;
@@ -554,7 +560,10 @@ const isAssetFormValid = computed(() => {
   }
 
   if (assetModalMode.value === 'create' && assetForm.is_bulk) {
-    return assetForm.bulk_quantity !== '' && assetForm.bulk_quantity !== null && Number(assetForm.bulk_quantity) >= 1;
+    return assetForm.bulk_quantity !== '' && 
+           assetForm.bulk_quantity !== null && 
+           Number(assetForm.bulk_quantity) >= 1 && 
+           Number(assetForm.bulk_quantity) <= 999;
   }
 
   return true;
@@ -1310,7 +1319,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
         else if (status === 'dipakai') badgeClass = 'bg-blue-100 text-blue-800';
         else if (status === 'rusak') badgeClass = 'bg-rose-100 text-rose-800';
         
-        return h('span', { class: `inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${badgeClass}` }, getStatusLabel(status));
+        return h('span', { class: `inline-flex items-center px-2 py-0.5 rounded-full font-semibold ${badgeClass}` }, getStatusLabel(status));
       }
     },
     {
@@ -1683,6 +1692,7 @@ const totalAsetTerpilihCount = computed(() => {
                         type="text" 
                         v-model="lotForm.po_number"
                         placeholder="Contoh: PO-02"
+                        maxlength="255"
                         class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
                       />
                     </div>
@@ -1707,6 +1717,7 @@ const totalAsetTerpilihCount = computed(() => {
                           v-model="lotForm.unit_price"
                           placeholder="Contoh: 60000"
                           min="0"
+                          max="999999999"
                           class="flex-1 min-w-0 px-4 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 transition-colors h-full"
                         />
                       </div>
@@ -1897,22 +1908,29 @@ const totalAsetTerpilihCount = computed(() => {
 
                     <!-- Pembuatan massal (Create Mode Only) -->
                     <div v-if="assetModalMode === 'create' && props.lot.barang_category !== 'Kendaraan'" class="space-y-1.5 flex items-center gap-2 pt-2 flex-wrap">
-                      <Checkbox 
-                        id="is_bulk"
-                        v-model="assetForm.is_bulk"
-                      />
-                      <label for="is_bulk" class="cursor-pointer select-none text-sm font-medium text-foreground">
-                        Buat
-                      </label>
-                      <input 
-                        type="number" 
-                        v-model="assetForm.bulk_quantity"
-                        placeholder="..."
-                        min="1"
-                        :disabled="!assetForm.is_bulk"
-                        class="w-16 px-2 py-1 text-sm border border-input rounded-[10px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-8 disabled:opacity-50 disabled:cursor-not-allowed mx-1"
-                      />
-                      <span class="text-sm font-medium text-foreground">aset secara otomatis dengan nilai yang sama.</span>
+                      <div class="flex items-center gap-2 w-full">
+                        <Checkbox 
+                          id="is_bulk"
+                          v-model="assetForm.is_bulk"
+                        />
+                        <label for="is_bulk" class="cursor-pointer select-none text-sm font-medium text-foreground">
+                          Buat
+                        </label>
+                        <input 
+                          type="number" 
+                          v-model="assetForm.bulk_quantity"
+                          placeholder="..."
+                          min="1"
+                          max="999"
+                          :disabled="!assetForm.is_bulk"
+                          class="w-16 px-2 py-1 text-sm border rounded-[10px] bg-background focus:outline-none focus:ring-2 transition-colors h-8 disabled:opacity-50 disabled:cursor-not-allowed mx-1"
+                          :class="[assetForm.errors.bulk_quantity ? 'border-destructive focus:ring-destructive/20' : 'border-input focus:ring-primary/20 focus:border-primary']"
+                        />
+                        <span class="text-sm font-medium text-foreground">aset secara otomatis dengan nilai yang sama.</span>
+                      </div>
+                      <div v-if="assetForm.errors.bulk_quantity" class="text-destructive text-xs mt-1 w-full pl-6">
+                        {{ assetForm.errors.bulk_quantity }}
+                      </div>
                     </div>
 
                     <!-- TNKB (Nomor Polisi) - Shown if it's a vehicle -->
@@ -2189,7 +2207,7 @@ const totalAsetTerpilihCount = computed(() => {
                         Status: 
                         <span 
                           :class="[
-                            'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold',
+                            'inline-flex items-center px-2 py-0.5 rounded-full font-semibold',
                             selectedAssetForView.status === 'tersedia' ? 'bg-emerald-100 text-emerald-800' :
                             selectedAssetForView.status === 'dipinjam' ? 'bg-amber-100 text-amber-800' :
                             selectedAssetForView.status === 'dipakai' ? 'bg-blue-100 text-blue-800' :
