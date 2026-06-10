@@ -77,7 +77,7 @@ class ManagerAssetStatusApprovalResource extends JsonResource
             'category' => $barang->subcategory->category->name ?? '-',
             'subcategory' => $barang->subcategory->name ?? '-',
             'brand' => $barang->brand->name ?? '-',
-            'nama' => $barang->nama ?? '-',
+            'nama' => $barang->name ?? '-',
             'specification' => $barang->specification ?? '-',
             'proposed_status' => $this->proposed_status,
             'status_label' => $this->getStatusLabel($this->proposed_status),
@@ -106,7 +106,7 @@ class ManagerAssetStatusApprovalResource extends JsonResource
                 'vendor' => $lot->vendor->name ?? '-',
                 'po_number' => $lot->po_number ?? '-',
                 'barang_code' => $barang->number ?? '-',
-                'barang_nama' => $barang->nama ?? '-',
+                'barang_nama' => $barang->name ?? '-',
                 'barang_spec' => $barang->specification ?? '-',
                 'barang_unit' => $barang->uom->name ?? 'pcs',
 

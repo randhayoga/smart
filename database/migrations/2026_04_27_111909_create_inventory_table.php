@@ -13,7 +13,7 @@ return new class extends Migration {
             $table->foreignId('subcategory_id')->constrained('subcategories');
             $table->foreignId('brand_id')->constrained('brands');
             $table->foreignId('uom_id')->constrained('uoms');
-            $table->string('nama');
+            $table->string('name');
             $table->string('specification');
             $table->string('image_url')->comment('default image');
             $table->dateTime('last_restock_at')->nullable();
