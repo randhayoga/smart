@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, h } from 'vue';
 import { Head } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import {
@@ -19,7 +19,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/Components/ui/dropdown-menu";
-import Combobox from '@/Components/Combobox.vue';
+import TableSearch from '@/Components/TableSearch.vue';
+import type { ColumnDef } from '@tanstack/vue-table';
+import DataTable from '@/Components/DataTable.vue';
 
 interface AuditTrail {
   waktu: string;
@@ -86,19 +88,6 @@ const categoryFilter = ref('Semua kategori');
 const decisionFilter = ref('Semua keputusan');
 const rowsPerPage = ref('Semua baris');
 
-// Sorting
-const sortBy = ref('decided_at');
-const sortDesc = ref(true);
-
-const toggleSort = (field: string) => {
-  if (sortBy.value === field) {
-    sortDesc.value = !sortDesc.value;
-  } else {
-    sortBy.value = field;
-    sortDesc.value = false;
-  }
-};
-
 // Filter options
 const categoryOptions = computed(() => {
   const cats = new Set<string>();
@@ -112,16 +101,6 @@ const categoryOptions = computed(() => {
 const filteredApprovals = computed(() => {
   let list = [...props.approvals];
 
-  if (searchQuery.value.trim() !== '') {
-    const q = searchQuery.value.toLowerCase();
-    list = list.filter(app => 
-      app.asset_code.toLowerCase().includes(q) ||
-      app.brand.toLowerCase().includes(q) ||
-      app.specification.toLowerCase().includes(q) ||
-      app.subcategory.toLowerCase().includes(q)
-    );
-  }
-
   if (categoryFilter.value !== 'Semua kategori') {
     list = list.filter(app => app.category === categoryFilter.value);
   }
@@ -131,58 +110,17 @@ const filteredApprovals = computed(() => {
     list = list.filter(app => app.decision === dec);
   }
 
-  list.sort((a, b) => {
-    let valA: any = a[sortBy.value as keyof ApprovalItem] ?? '';
-    let valB: any = b[sortBy.value as keyof ApprovalItem] ?? '';
-
-    if (sortBy.value === 'asset_code') {
-      valA = a.asset_code;
-      valB = b.asset_code;
-    } else if (sortBy.value === 'category') {
-      valA = a.category;
-      valB = b.category;
-    } else if (sortBy.value === 'subcategory') {
-      valA = a.subcategory;
-      valB = b.subcategory;
-    } else if (sortBy.value === 'brand') {
-      valA = a.brand;
-      valB = b.brand;
-    } else if (sortBy.value === 'specification') {
-      valA = a.specification;
-      valB = b.specification;
-    } else if (sortBy.value === 'status') {
-      valA = a.status_label;
-      valB = b.status_label;
-    } else if (sortBy.value === 'decision') {
-      valA = a.decision;
-      valB = b.decision;
-    }
-
-    if (typeof valA === 'string') {
-      return sortDesc.value ? valB.localeCompare(valA) : valA.localeCompare(valB);
-    } else {
-      return sortDesc.value ? valB - valA : valA - valB;
-    }
-  });
+  // Pre-sort by id descending (newest first)
+  list.sort((a, b) => b.id - a.id);
 
   return list;
 });
 
-// Pagination
-const currentPage = ref(1);
-
-const totalPages = computed(() => {
-  if (rowsPerPage.value === 'Semua baris') return 1;
-  const limit = parseInt(rowsPerPage.value, 10);
-  return Math.ceil(filteredApprovals.value.length / limit) || 1;
-});
-
-const paginatedApprovals = computed(() => {
-  const list = filteredApprovals.value;
-  if (rowsPerPage.value === 'Semua baris') return list;
-  const limit = parseInt(rowsPerPage.value, 10);
-  const start = (currentPage.value - 1) * limit;
-  return list.slice(start, start + limit);
+const computedPageSize = computed(() => {
+  if (rowsPerPage.value === 'Semua baris') {
+    return filteredApprovals.value.length || 10;
+  }
+  return parseInt(rowsPerPage.value, 10);
 });
 
 // Memo document viewer
@@ -265,6 +203,157 @@ const auditStatusOptions = computed(() => {
   });
   return Array.from(stats);
 });
+
+const columns: ColumnDef<ApprovalItem>[] = [
+  {
+    accessorKey: 'asset_code',
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'Kode Aset',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'text-muted-foreground font-mono text-sm truncate font-medium' }, row.getValue('asset_code')),
+  },
+  {
+    accessorKey: 'category',
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'Kategori',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'text-foreground' }, row.getValue('category')),
+  },
+  {
+    accessorKey: 'subcategory',
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'Subkategori',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'text-foreground' }, row.getValue('subcategory')),
+  },
+  {
+    accessorKey: 'brand',
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'Merek',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'text-foreground' }, row.getValue('brand')),
+  },
+  {
+    accessorKey: 'specification',
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'Spesifikasi',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'text-foreground truncate max-w-xs', title: row.getValue('specification') }, row.getValue('specification')),
+  },
+  {
+    accessorKey: 'status_label',
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'Status Diajukan',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'text-foreground font-medium' }, row.getValue('status_label')),
+  },
+  {
+    accessorKey: 'decision',
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-center w-full'
+      }, () => [
+        'Keputusan',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'text-center' }, [
+      h('span', { 
+        class: 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ' + 
+          (row.getValue('decision') === 'approved' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700')
+      }, row.getValue('decision') === 'approved' ? 'Disetujui' : 'Ditolak')
+    ]),
+  },
+  {
+    accessorKey: 'approver_name',
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-center w-full'
+      }, () => [
+        'Diproses Oleh',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => {
+      const item = row.original;
+      return h('div', { class: 'text-center' }, [
+        h('div', { class: 'font-semibold text-foreground' }, item.approver_name || '-'),
+        h('div', { class: 'text-[10px] text-muted-foreground font-mono mt-0.5' }, item.decided_at || '-')
+      ]);
+    }
+  },
+  {
+    id: 'actions',
+    size: 100,
+    header: () => h('div', { class: 'text-center font-semibold text-foreground' }, 'Aksi'),
+    cell: ({ row }) => {
+      const item = row.original;
+      return h('div', { class: 'flex items-center justify-center gap-2' }, [
+        h('button', {
+          onClick: () => openMemoFile(item.memo_path),
+          class: 'w-8 h-8 rounded-full bg-[#6366F1] hover:bg-[#5850EC] text-white flex items-center justify-center transition-colors shadow-sm cursor-pointer',
+          title: 'Buka Berita Acara / Memo'
+        }, [
+          h(FileText, { class: 'w-4 h-4' })
+        ]),
+        h('button', {
+          onClick: () => openDetailPopup(item),
+          class: 'w-8 h-8 rounded-full bg-[#00BCD4] hover:bg-[#06B6D4] text-white flex items-center justify-center transition-colors shadow-sm cursor-pointer',
+          title: 'Detail Aset'
+        }, [
+          h(Eye, { class: 'w-4 h-4' })
+        ])
+      ]);
+    },
+    enableSorting: false,
+  }
+];
 </script>
 
 <template>
@@ -278,52 +367,57 @@ const auditStatusOptions = computed(() => {
     </div>
 
     <!-- ── Filter & Search Section ── -->
-    <div class="flex flex-col gap-4 mb-6">
-      <div class="flex flex-wrap gap-3 items-center justify-between">
-        <div class="flex flex-wrap gap-3 items-center w-full lg:w-auto">
-          <!-- Search input -->
-          <div class="relative w-full sm:w-[220px]">
-            <div class="absolute left-3 top-3 text-gray-400">
-              <Search class="w-4 h-4" />
-            </div>
-            <input
-              v-model="searchQuery"
-              type="text"
-              placeholder="Cari Aset..."
-              class="w-full h-10 pl-9 pr-4 text-xs border border-gray-300 rounded-[14px] bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm"
-            />
-          </div>
-
-          <!-- Kategori Filter -->
-          <Combobox
-            v-model="categoryFilter"
-            :options="categoryOptions"
-            search-placeholder="Cari kategori..."
-            default-label="Semua kategori"
-            width-class="w-full sm:w-auto min-w-[160px]"
-          />
-
-          <!-- Decision Filter -->
-          <Combobox
-            v-model="decisionFilter"
-            :options="['Disetujui', 'Ditolak']"
-            search-placeholder="Cari keputusan..."
-            default-label="Semua keputusan"
-            width-class="w-full sm:w-auto min-w-[160px]"
+    <div class="space-y-4 mb-6">
+      <!-- Filters Row -->
+      <div class="flex flex-wrap items-end gap-4">
+        <div class="space-y-1.5 flex-1 min-w-[300px] max-w-sm">
+          <label class="text-xs text-muted-foreground font-medium block ml-0.5">Filter</label>
+          <TableSearch 
+            v-model="searchQuery"
+            placeholder="Cari Aset..." 
+            bg-class="bg-white"
           />
         </div>
 
-        <!-- Page Size Selection -->
-        <div class="flex items-center gap-2 text-xs text-gray-600 justify-end w-full sm:w-auto">
-          <span class="whitespace-nowrap">Baris per halaman</span>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal bg-white', (!categoryFilter || categoryFilter === 'Semua kategori') ? 'text-muted-foreground' : 'text-foreground']">
+              <span class="truncate">{{ categoryFilter || 'Semua kategori' }}</span>
+              <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
+            <DropdownMenuItem @select="categoryFilter = 'Semua kategori'">Semua kategori</DropdownMenuItem>
+            <DropdownMenuItem v-for="cat in categoryOptions" :key="cat" @select="categoryFilter = cat">
+              {{ cat }}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal bg-white', (!decisionFilter || decisionFilter === 'Semua keputusan') ? 'text-muted-foreground' : 'text-foreground']">
+              <span class="truncate">{{ decisionFilter || 'Semua keputusan' }}</span>
+              <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
+            <DropdownMenuItem @select="decisionFilter = 'Semua keputusan'">Semua keputusan</DropdownMenuItem>
+            <DropdownMenuItem @select="decisionFilter = 'Disetujui'">Disetujui</DropdownMenuItem>
+            <DropdownMenuItem @select="decisionFilter = 'Ditolak'">Ditolak</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <div class="flex items-center gap-3 text-sm text-muted-foreground ml-auto">
+          <span>Baris per halaman</span>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" class="w-full sm:w-auto min-w-[130px] h-10 justify-between rounded-[14px] font-normal text-xs bg-white border-gray-300 shadow-sm text-gray-900 gap-2">
-                <span>{{ rowsPerPage === 'Semua baris' ? 'Semua baris' : `${rowsPerPage} baris` }}</span>
-                <ChevronDown class="w-4 h-4 opacity-50 shrink-0 ml-2" />
+              <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal bg-white', (rowsPerPage === 'Semua baris' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
+                {{ rowsPerPage === 'Semua baris' ? 'Semua baris' : `${rowsPerPage} baris` }}
+                <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent class="min-w-[130px] rounded-[14px]" align="start" :side-offset="4">
+            <DropdownMenuContent class="w-[140px] rounded-[14px]" align="start" :side-offset="4">
               <DropdownMenuItem @select="rowsPerPage = '5'">5 baris</DropdownMenuItem>
               <DropdownMenuItem @select="rowsPerPage = '10'">10 baris</DropdownMenuItem>
               <DropdownMenuItem @select="rowsPerPage = '25'">25 baris</DropdownMenuItem>
@@ -335,154 +429,14 @@ const auditStatusOptions = computed(() => {
     </div>
 
     <!-- ── Table Display ── -->
-    <div class="rounded-xl border border-border shadow-sm overflow-x-auto bg-card">
-      <table class="w-full text-xs text-left border-collapse">
-        <thead class="bg-muted/50 border-b border-border text-foreground">
-          <tr class="hover:bg-transparent text-foreground font-semibold">
-            <th @click="toggleSort('asset_code')" class="py-4 px-6 cursor-pointer select-none font-semibold">
-              <div class="flex items-center gap-1">
-                Kode Aset
-                <span class="text-gray-400 font-normal">↑↓</span>
-              </div>
-            </th>
-            <th @click="toggleSort('category')" class="py-4 px-4 cursor-pointer select-none font-semibold">
-              <div class="flex items-center gap-1">
-                Kategori
-                <span class="text-gray-400 font-normal">↑↓</span>
-              </div>
-            </th>
-            <th @click="toggleSort('subcategory')" class="py-4 px-4 cursor-pointer select-none font-semibold">
-              <div class="flex items-center gap-1">
-                Subkategori
-                <span class="text-gray-400 font-normal">↑↓</span>
-              </div>
-            </th>
-            <th @click="toggleSort('brand')" class="py-4 px-4 cursor-pointer select-none font-semibold">
-              <div class="flex items-center gap-1">
-                Merek
-                <span class="text-gray-400 font-normal">↑↓</span>
-              </div>
-            </th>
-            <th @click="toggleSort('specification')" class="py-4 px-4 cursor-pointer select-none font-semibold">
-              <div class="flex items-center gap-1">
-                Spesifikasi
-                <span class="text-gray-400 font-normal">↑↓</span>
-              </div>
-            </th>
-            <th @click="toggleSort('status')" class="py-4 px-4 cursor-pointer select-none font-semibold">
-              <div class="flex items-center gap-1">
-                Status Diajukan
-                <span class="text-gray-400 font-normal">↑↓</span>
-              </div>
-            </th>
-            <th @click="toggleSort('decision')" class="py-4 px-4 cursor-pointer select-none text-center font-semibold">
-              <div class="flex items-center justify-center gap-1">
-                Keputusan
-                <span class="text-gray-400 font-normal">↑↓</span>
-              </div>
-            </th>
-            <th class="py-4 px-4 text-center font-semibold">Diproses Oleh</th>
-            <th class="py-4 px-4 text-center w-28 font-semibold">Aksi</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr 
-            v-for="app in paginatedApprovals" 
-            :key="app.id"
-            class="border-b border-border hover:bg-muted/30 transition-colors last:border-none"
-          >
-            <td class="py-4 px-6 font-mono font-medium text-foreground">{{ app.asset_code }}</td>
-            <td class="py-4 px-4 text-foreground">{{ app.category }}</td>
-            <td class="py-4 px-4 text-foreground">{{ app.subcategory }}</td>
-            <td class="py-4 px-4 text-foreground">{{ app.brand }}</td>
-            <td class="py-4 px-4 text-foreground truncate max-w-xs">{{ app.specification }}</td>
-            <!-- Plain Text Status Column (matches mockup) -->
-            <td class="py-4 px-4 text-foreground font-medium">{{ app.status_label }}</td>
-            <td class="py-4 px-4 text-center">
-              <span 
-                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold"
-                :class="[
-                  app.decision === 'approved' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                ]"
-              >
-                {{ app.decision === 'approved' ? 'Disetujui' : 'Ditolak' }}
-              </span>
-            </td>
-            <td class="py-4 px-4 text-center">
-              <div class="font-semibold text-gray-900">{{ app.approver_name || '-' }}</div>
-              <div class="text-[10px] text-gray-500 font-mono mt-0.5">{{ app.decided_at || '-' }}</div>
-            </td>
-            <td class="py-4 px-4">
-              <div class="flex items-center justify-center gap-2">
-                <!-- Purple Circle Action Button -->
-                <button 
-                  @click="openMemoFile(app.memo_path)"
-                  class="w-8 h-8 rounded-full bg-[#6366F1] hover:bg-[#5850EC] text-white flex items-center justify-center transition-colors shadow-sm cursor-pointer"
-                  title="Buka Berita Acara / Memo"
-                >
-                  <FileText class="w-4 h-4" />
-                </button>
-                <!-- Cyan Circle Action Button -->
-                <button 
-                  @click="openDetailPopup(app)"
-                  class="w-8 h-8 rounded-full bg-[#00BCD4] hover:bg-[#06B6D4] text-white flex items-center justify-center transition-colors shadow-sm cursor-pointer"
-                  title="Detail Aset"
-                >
-                  <Eye class="w-4 h-4" />
-                </button>
-              </div>
-            </td>
-          </tr>
-
-          <!-- Empty State -->
-          <tr v-if="filteredApprovals.length === 0">
-            <td colspan="9" class="py-12 text-center text-gray-500">
-              <AlertTriangle class="w-8 h-8 mx-auto mb-2 text-gray-400" />
-              <p class="font-medium">Tidak ada riwayat persetujuan status aset.</p>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- ── Pagination & Count Display ── -->
-    <div class="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4 px-2 text-xs text-gray-500">
-      <div>
-        Menampilkan {{ filteredApprovals.length }} riwayat persetujuan
-      </div>
-      
-      <!-- Page numbers navigation -->
-      <div v-if="totalPages > 1" class="flex items-center gap-1">
-        <button 
-          :disabled="currentPage === 1"
-          @click="currentPage--"
-          class="h-8 px-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none transition-colors"
-        >
-          &lt; Sebelumnya
-        </button>
-        
-        <button 
-          v-for="page in totalPages" 
-          :key="page"
-          @click="currentPage = page"
-          class="w-8 h-8 border rounded-lg transition-all"
-          :class="[
-            currentPage === page 
-              ? 'border-indigo-600 bg-indigo-50 text-indigo-600 font-bold shadow-sm' 
-              : 'border-gray-300 hover:bg-gray-50 text-gray-700'
-          ]"
-        >
-          {{ page }}
-        </button>
-
-        <button 
-          :disabled="currentPage === totalPages"
-          @click="currentPage++"
-          class="h-8 px-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none transition-colors"
-        >
-          Selanjutnya &gt;
-        </button>
-      </div>
+    <div class="pb-4">
+      <DataTable 
+        :columns="columns" 
+        :data="filteredApprovals" 
+        :filter-value="searchQuery"
+        :page-size="computedPageSize"
+        :show-selection-count="false"
+      />
     </div>
 
     <!-- ============================================================

@@ -227,9 +227,8 @@ const handleProceed = () => {
               </svg>
             </div>
 
-            <!-- Gambar Barang -->
             <div class="w-16 h-16 flex-shrink-0 bg-muted rounded-[14px] overflow-hidden border border-border">
-              <img v-if="item.imageUrl" :src="item.imageUrl" :alt="item.brand" class="w-full h-full object-cover" />
+              <img v-if="item.imageUrl" :src="item.imageUrl.startsWith('http') || item.imageUrl.startsWith('/') ? item.imageUrl : '/storage/' + item.imageUrl" :alt="item.brand" class="w-full h-full object-cover" />
               <img v-else src="https://placehold.co/200x200?text=Barang" :alt="item.brand" class="w-full h-full object-cover opacity-50" />
             </div>
 

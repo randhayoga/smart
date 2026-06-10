@@ -48,6 +48,7 @@ interface RequestDetail {
 interface Props {
   borrowedId: string | number;
   request: RequestDetail;
+  placements?: Record<string, string>;
 }
 
 const props = defineProps<Props>();
@@ -72,9 +73,28 @@ const timeline = computed(() => {
   ];
 });
 
-const handleCatatPenempatan = (item: any) => {
-  alert('Penempatan aset dicatat oleh pengguna di halaman riwayat.');
+// Load placements from localStorage for read-only view
+const loadPlacements = (): Record<string, string> => {
+  try {
+    const stored = localStorage.getItem('smart_asset_placements');
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (e) {
+    console.error(e);
+  }
+  return {
+    'GPU-NVIDIA-2026-001': 'Mega Mendung',
+    'WBD-SAKURA-2026-101': 'Tiga Negeri',
+    'MON-DELL-2026-901': 'Mega Mendung',
+    'MON-DELL-2026-902': 'Tiga Negeri',
+  };
 };
+
+const assetPlacements = ref<Record<string, string>>({
+  ...loadPlacements(),
+  ...(props.placements || {})
+});
 </script>
 
 <template>
@@ -142,16 +162,8 @@ const handleCatatPenempatan = (item: any) => {
             :quantity="item.quantity"
             :assets="item.assets"
             :imageUrl="item.imageUrl"
-          >
-            <template #footer>
-              <button 
-                @click="handleCatatPenempatan(item)"
-                class="px-5 py-2.5 bg-[#5BC0DE] hover:bg-[#46B8DA] text-white text-sm font-bold rounded-[14px] transition-all shadow-sm"
-              >
-                Catat Penempatan Aset
-              </button>
-            </template>
-          </AssetItemCard>
+            :placements="assetPlacements"
+          />
         </div>
       </div>
 

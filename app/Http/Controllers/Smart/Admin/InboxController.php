@@ -143,10 +143,18 @@ class InboxController extends Controller
             'has_insufficient_stock' => $hasInsufficientStock,
         ];
 
+        $placements = \App\Models\Request\RequestUnitAssignment::whereIn('request_item_id', $req->items->pluck('id'))
+            ->with('unit')
+            ->get()
+            ->filter(fn($asn) => $asn->unit && $asn->placement)
+            ->mapWithKeys(fn($asn) => [$asn->unit->number => $asn->placement])
+            ->toArray();
+
         return Inertia::render('Smart/Admin/InboxDetail', [
             'user' => $request->user(),
             'requestId' => $req->id,
             'request' => $mappedRequest,
+            'placements' => $placements,
         ]);
     }
 

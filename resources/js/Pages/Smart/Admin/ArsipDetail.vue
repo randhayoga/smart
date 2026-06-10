@@ -44,6 +44,7 @@ interface RequestDetail {
 interface Props {
   requestId: string | number;
   request: RequestDetail;
+  placements?: Record<string, string>;
 }
 
 const props = defineProps<Props>();
@@ -156,6 +157,7 @@ const timeline = computed(() => {
             :quantity="item.quantity"
             :assets="item.assets"
             :imageUrl="item.imageUrl"
+            :placements="placements"
           />
         </div>
       </div>
