@@ -23,10 +23,10 @@ class BulkUnitController extends Controller
             'room_id' => 'nullable|exists:rooms,id',
             'status' => 'required|string|max:255',
             'condition' => 'required|string|max:255',
-            'price' => 'required|numeric|min:0',
+            'price' => 'required|numeric|min:0|max:999999999.99',
             'image_url' => 'required_without:use_lot_image|nullable|image|max:1024',
             'use_lot_image' => 'nullable',
-            'bulk_quantity' => 'required|integer|min:1|max:100',
+            'bulk_quantity' => 'required|integer|min:1|max:999',
         ];
 
         $lot = Lot::with('barang.subcategory.category')->findOrFail($request->input('lot_id'));
@@ -45,7 +45,9 @@ class BulkUnitController extends Controller
             $rules['vehicle_registration'] = 'nullable|string|max:15';
         }
 
-        $validated = $request->validate($rules);
+        $validated = $request->validate($rules, [
+            'bulk_quantity.integer' => 'Tidak boleh desimal.',
+        ]);
 
         $quantity = (int)$validated['bulk_quantity'];
         $baseNumber = $validated['number'];
@@ -118,7 +120,7 @@ class BulkUnitController extends Controller
             'location_id' => 'nullable|exists:locations,id',
             'floor_id' => 'nullable|exists:floors,id',
             'room_id' => 'nullable|exists:rooms,id',
-            'price' => 'nullable|numeric|min:0',
+            'price' => 'nullable|numeric|min:0|max:999999999.99',
             'use_lot_image' => 'nullable',
             'image_url' => 'nullable|image|max:1024',
         ]);
