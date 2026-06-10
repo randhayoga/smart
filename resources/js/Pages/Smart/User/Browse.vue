@@ -221,7 +221,7 @@ const filteredAndSortedItems = computed(() => {
           <!-- Image (Left Column) -->
           <div class="w-32 h-32 sm:w-[180px] sm:h-[180px] shrink-0 bg-muted rounded-[14px] overflow-hidden flex items-center justify-center border border-border relative">
             <div class="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-white/40"></div>
-            <img v-if="selectedProduct.imageUrl" :src="selectedProduct.imageUrl" alt="Product" class="w-full h-full object-cover relative z-10" />
+            <img v-if="selectedProduct.imageUrl" :src="selectedProduct.imageUrl.startsWith('http') || selectedProduct.imageUrl.startsWith('/') ? selectedProduct.imageUrl : '/storage/' + selectedProduct.imageUrl" alt="Product" class="w-full h-full object-cover relative z-10" />
             <img v-else src="https://placehold.co/400x400?text=Barang" alt="Product" class="w-full h-full object-cover opacity-50" />
           </div>
 

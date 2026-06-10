@@ -99,24 +99,81 @@ class HandoverController extends Controller
                 ->pluck('unit.number')
                 ->toArray();
 
+            $availableUnits = \App\Models\Inventory\Unit::with(['lot', 'location'])
+                ->whereHas('lot', function ($query) use ($item) {
+                    $query->where('barang_id', $item->barang_id);
+                })
+                ->get()
+                ->map(function ($unit) {
+                    return [
+                        'id' => $unit->id,
+                        'assetCode' => $unit->number,
+                        'lotCode' => $unit->lot->number,
+                        'status' => $unit->status === 'tersedia' ? 'Tersedia' : ucfirst($unit->status),
+                        'condition' => $unit->condition,
+                        'location' => $unit->location->name ?? '-',
+                    ];
+                });
+
             return [
                 'id' => $item->id,
+                'barang_id' => $item->barang_id,
                 'brand' => ($item->barang->brand->name ?? '-') . ' ' . ($item->barang->specification ?? ''),
                 'category' => $item->barang->subcategory->category->name ?? '-',
                 'subcategory' => $item->barang->subcategory->name ?? '-',
                 'quantity' => $item->quantity_requested,
                 'assets' => $assets,
                 'imageUrl' => $item->barang->image_url ?? null,
+                'availableUnits' => $availableUnits,
             ];
         });
+
+        $placements = \App\Models\Request\RequestUnitAssignment::whereIn('request_item_id', $req->items->pluck('id'))
+            ->with('unit')
+            ->get()
+            ->filter(fn($asn) => $asn->unit && $asn->placement)
+            ->mapWithKeys(fn($asn) => [$asn->unit->number => $asn->placement])
+            ->toArray();
 
         return Inertia::render('Smart/Admin/SerahTerimaDetail', [
             'handover' => $handoverData,
             'items' => $items,
+            'placements' => $placements,
             'user' => [
                 'name' => auth()->user()->name,
                 'email' => auth()->user()->email,
             ]
         ]);
+    }
+
+    /**
+     * Menyimpan alokasi unit aset untuk detail permintaan.
+     */
+    public function allocate(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'request_item_id' => 'required|exists:request_items,id',
+            'unit_numbers' => 'required|array',
+        ]);
+
+        $item = \App\Models\Request\RequestItem::findOrFail($validated['request_item_id']);
+
+        // Find the units corresponding to the unit numbers
+        $units = \App\Models\Inventory\Unit::whereIn('number', $validated['unit_numbers'])->get();
+
+        // Clear existing assignments for this request item
+        \App\Models\Request\RequestUnitAssignment::where('request_item_id', $item->id)->delete();
+
+        // Create new assignments
+        foreach ($units as $unit) {
+            \App\Models\Request\RequestUnitAssignment::create([
+                'request_item_id' => $item->id,
+                'unit_id' => $unit->id,
+                'quantity_fulfilled' => 1,
+                'assigned_at' => now(),
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Alokasi aset berhasil disimpan.');
     }
 }

@@ -84,7 +84,7 @@ const handleSelect = (val: string | number | null) => {
         <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
       </Button>
     </PopoverTrigger>
-    <PopoverContent class="w-(--reka-popover-trigger-width) min-w-(--reka-popover-trigger-width) p-0 rounded-[14px] overflow-hidden z-[1001]" align="start">
+    <PopoverContent class="w-(--reka-popover-trigger-width) min-w-(--reka-popover-trigger-width) p-0 rounded-[14px] overflow-hidden z-[10000]" align="start">
       <Command :highlight-on-hover="true">
         <CommandInput :placeholder="searchPlaceholder" />
         <CommandEmpty>{{ emptyText }}</CommandEmpty>

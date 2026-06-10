@@ -42,6 +42,8 @@ Route::get('/', function (\Illuminate\Http\Request $request) {
 
 // Smart routes - protected
 Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () {
+    Route::post('/placement/update', [RequestHistoryController::class, 'updatePlacement'])->name('placement.update');
+
     // Admin only routes
     Route::middleware(['role:admin'])->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -81,6 +83,7 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
         Route::post('/inbox/{id}/action', [InboxController::class, 'action'])->name('inbox.action');
         Route::get('/handover', [HandoverController::class, 'index'])->name('handover');
         Route::get('/handover/{id}', [HandoverController::class, 'show'])->name('handover.show');
+        Route::post('/handover/{id}/allocate', [HandoverController::class, 'allocate'])->name('handover.allocate');
         Route::get('/borrowed', [BorrowedController::class, 'index'])->name('borrowed');
         Route::get('/borrowed/{id}', [BorrowedController::class, 'show'])->name('borrowed.show');
         Route::get('/returns', [ReturnController::class, 'index'])->name('returns');

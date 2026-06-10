@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
+import { toast } from 'vue-sonner';
+import { addNotification } from '@/stores/notificationStore';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import AssetItemCard from '@/Components/AssetItemCard.vue';
 import { Button } from '@/Components/ui/button';
 import {
   Breadcrumb,
@@ -46,6 +49,7 @@ interface RequestItem {
   stockQuantity?: number;
   imageUrl?: string;
   category: string;
+  is_consumable?: boolean;
   assets?: string[];
 }
 
@@ -77,12 +81,12 @@ interface RequestHistory {
 
 import { watch } from 'vue';
 import { router } from '@inertiajs/vue3';
-import { toast } from 'vue-sonner';
 
 const props = defineProps<{
   requestId: string | number;
   user?: any;
   request: RequestHistory;
+  placements?: Record<string, string>;
 }>();
 
 const requestState = ref<RequestHistory>(props.request);
@@ -354,11 +358,14 @@ const toggleAssets = (itemId: number) => {
 
 // Asset placement state
 const assetPlacements = ref<Record<string, string>>({
-  'GPU-NVIDIA-2026-001': 'Mega Mendung',
-  'WBD-SAKURA-2026-101': 'Tiga Negeri',
-  'MON-DELL-2026-901': 'Mega Mendung',
-  'MON-DELL-2026-902': 'Tiga Negeri',
+  ...(props.placements || {})
 });
+
+watch(() => props.placements, (newPlacements) => {
+  if (newPlacements) {
+    assetPlacements.value = { ...assetPlacements.value, ...newPlacements };
+  }
+}, { deep: true });
 
 // Placement Modal State
 const isAssetPlacementModalOpen = ref(false);
@@ -456,31 +463,45 @@ const confirmAssetPlacement = () => {
   const item = activeItemForPlacement.value;
   if (!item || !item.assets) return;
 
+  const tempPlacements = { ...assetPlacements.value };
+
   if (returnPlacementType.value === 'seragam') {
     if (!singlePlacementLocation.value) {
-      alert('Tolong pilih lokasi penempatan aset.');
+      toast.warning('Tolong pilih lokasi penempatan aset.');
       return;
     }
     item.assets.forEach(asset => {
-      assetPlacements.value[asset] = singlePlacementLocation.value;
+      tempPlacements[asset] = singlePlacementLocation.value;
     });
   } else {
     const unselected = item.assets.some(asset => !beragamPlacementLocations.value[asset]);
     if (unselected) {
-      alert('Tolong pilih lokasi penempatan untuk semua aset.');
+      toast.warning('Tolong pilih lokasi penempatan untuk semua aset.');
       return;
     }
     item.assets.forEach(asset => {
-      assetPlacements.value[asset] = beragamPlacementLocations.value[asset];
+      tempPlacements[asset] = beragamPlacementLocations.value[asset];
     });
   }
 
-  isAssetPlacementModalOpen.value = false;
-  alertToastMessage.value = 'Penempatan aset berhasil disimpan!';
-  showToast.value = true;
-  setTimeout(() => {
-    showToast.value = false;
-  }, 4000);
+  router.post(route('smart.placement.update'), {
+    placements: tempPlacements
+  }, {
+    onSuccess: () => {
+      assetPlacements.value = tempPlacements;
+      isAssetPlacementModalOpen.value = false;
+      toast.success('Penempatan aset berhasil disimpan!');
+      const itemName = item.brand ? `${item.brand} ${item.spec || ''}` : 'Aset';
+      addNotification(
+        'Penempatan Aset',
+        `Penempatan aset untuk "${itemName}" berhasil disimpan.`,
+        'success'
+      );
+    },
+    onError: () => {
+      toast.error('Gagal menyimpan penempatan aset.');
+    }
+  });
 };
 
 // ─────────────────────────────────────────────
@@ -722,15 +743,7 @@ const timelineSteps = computed((): TimelineStep[] => {
       </Button>
     </div>
 
-    <!-- ── Warning Banner for Dipinjam Status (Tolong catat penempatan Aset) ── -->
-    <div 
-      v-if="request.status === 'Dipinjam' && request.type === 'peminjaman'" 
-      class="mb-6 p-4 border border-[#6366F1] bg-[#6366F1]/5 rounded-[12px] flex justify-start items-center animate-in fade-in slide-in-from-top-1 duration-300"
-    >
-      <span class="text-sm font-semibold text-[#6366F1]">
-        Tolong catat penempatan Aset
-      </span>
-    </div>
+
 
     <!-- ── Grid Layout Dua Kolom ── -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -769,81 +782,31 @@ const timelineSteps = computed((): TimelineStep[] => {
           <h3 class="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-4">Daftar barang:</h3>
           
           <div class="space-y-4">
-            <div 
+            <AssetItemCard 
               v-for="item in request.items" 
               :key="item.id"
-              class="flex gap-4 p-4 border border-border/70 hover:border-primary/20 hover:bg-muted/5 transition-all rounded-[14px] items-start"
+              :brand="item.spec ? `${item.brand} ${item.spec}` : item.brand"
+              :category="item.category"
+              :subcategory="item.subcategory"
+              :quantity="item.quantity"
+              :assets="item.assets || []"
+              :imageUrl="item.imageUrl"
+              :placements="assetPlacements"
             >
-              <!-- Thumbnail Barang -->
-              <div class="w-16 h-16 rounded-[12px] bg-muted border border-border overflow-hidden shrink-0 flex items-center justify-center mt-0.5">
-                <img 
-                  v-if="item.imageUrl" 
-                  :src="item.imageUrl" 
-                  class="w-full h-full object-cover" 
-                />
-                <div v-else class="text-sm font-black text-muted-foreground/50 select-none">
-                  {{ item.subcategory.substring(0, 3).toUpperCase() }}
-                </div>
-              </div>
-
-              <!-- Detail Detail Deskripsi Barang -->
-              <div class="min-w-0 flex-grow space-y-1">
-                <h4 class="text-sm md:text-base font-bold text-foreground truncate">
-                  {{ item.brand }} {{ item.spec }}
-                </h4>
-                
-                <p class="text-xs text-muted-foreground">
-                  Kategori: {{ item.category }} ({{ item.subcategory }})
-                </p>
-                
-                <p class="text-xs text-foreground font-semibold">
-                  Jumlah dipinjam: {{ item.quantity }} satuan
-                </p>
-
-                <!-- Asset list toggle button (hanya jika ada aset teralokasi) -->
-                <div v-if="item.assets && item.assets.length > 0" class="pt-1.5">
+              <template #footer>
+                <div
+                  v-if="['wait', 'approve', 'confirm'].includes(request.raw_status) && !item.is_consumable && item.assets && item.assets.length > 0"
+                  class="flex gap-2.5"
+                >
                   <button 
-                    @click="toggleAssets(item.id)"
-                    class="text-xs font-bold text-[#6366F1] hover:text-[#5558EB] flex items-center gap-1 transition-colors focus:outline-none"
+                    @click="openAssetPlacementModal(item)"
+                    class="px-5 py-2.5 bg-[#00BCD4] hover:bg-[#00ACC1] text-white text-sm font-bold rounded-[14px] transition-all shadow-sm cursor-pointer"
                   >
-                    <span>{{ expandedAssets[item.id] ? 'Sembunyikan Alokasi Aset' : 'Lihat Alokasi Aset' }}</span>
-                    <ChevronUp v-if="expandedAssets[item.id]" class="w-3.5 h-3.5" />
-                    <ChevronDown v-else class="w-3.5 h-3.5" />
+                    Catat Penempatan Aset
                   </button>
-
-                  <!-- Expanded Asset List -->
-                  <div 
-                    v-if="expandedAssets[item.id]" 
-                    class="mt-2 pl-3 py-1 space-y-1 animate-in fade-in slide-in-from-top-1 duration-200"
-                  >
-                    <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Aset:</p>
-                    <ul class="space-y-1">
-                      <li 
-                        v-for="asset in item.assets" 
-                        :key="asset" 
-                        class="text-xs text-foreground font-semibold flex items-center gap-1.5"
-                      >
-                        <span class="w-1 h-1 rounded-full bg-foreground shrink-0"></span>
-                        <span>{{ asset }} <span class="text-muted-foreground font-normal">({{ assetPlacements[asset] || 'Tempat Penempatan' }})</span></span>
-                      </li>
-                    </ul>
-                  </div>
-
-                  <!-- Catat Penempatan Aset Button -->
-                  <div 
-                    v-if="request.status === 'Dipinjam' && request.type === 'peminjaman' && item.assets && item.assets.length > 0" 
-                    class="pt-3 flex justify-end"
-                  >
-                    <Button 
-                      @click="openAssetPlacementModal(item)"
-                      class="bg-[#00BCD4] hover:bg-[#00ACC1] text-white font-bold px-4 h-9 rounded-lg text-xs shadow-sm transition-colors"
-                    >
-                      Catat Penempatan Aset
-                    </Button>
-                  </div>
                 </div>
-              </div>
-            </div>
+              </template>
+            </AssetItemCard>
           </div>
         </div>
 
@@ -1174,6 +1137,138 @@ const timelineSteps = computed((): TimelineStep[] => {
       </Transition>
     </Teleport>
 
+
+
+    <!-- ============================================================
+         Modal Atur Pengembalian (Teleport & Backdrop)
+         ============================================================ -->
+    <Teleport to="body">
+      <Transition
+        enter-active-class="ease-out duration-300"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="ease-in duration-200"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div 
+          v-if="isReturnModalOpen" 
+          class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+        >
+          <div 
+            class="bg-card text-foreground rounded-[20px] shadow-2xl w-full max-w-[850px] flex flex-col overflow-hidden border border-border"
+            @click.stop
+          >
+            <!-- Header -->
+            <div class="flex items-center justify-between p-6 bg-card shrink-0">
+              <h3 class="text-lg font-bold text-foreground">Pengembalian</h3>
+              <button @click="closeReturnModal" class="p-1.5 hover:bg-muted rounded-full transition-colors">
+                <X class="w-5 h-5 text-muted-foreground" />
+              </button>
+            </div>
+            
+            <!-- Metadata Area (Indented / Styled) -->
+            <div class="px-6 pb-4 space-y-1 text-sm text-foreground shrink-0">
+              <h4 class="font-extrabold text-base">{{ request.number }}</h4>
+              <p class="text-muted-foreground text-xs md:text-sm">
+                Pemanfaatan: {{ request.pemanfaatan === 'corporate' ? 'Corporate' : 'Project' }} ({{ request.pemanfaatanDetail }})
+              </p>
+              <p v-if="request.type === 'peminjaman' && request.durationStart" class="text-muted-foreground text-xs md:text-sm">
+                Durasi: {{ request.durationStart }} s.d. {{ request.durationEnd }} ({{ request.durationDays }} hari, {{ request.durationHours || 0 }} jam)
+              </p>
+            </div>
+
+            <div class="mx-6 border-b border-border"></div>
+
+            <!-- Form Content -->
+            <div class="p-6 space-y-6">
+              
+              <!-- Row: Metode Pengembalian -->
+              <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+                <label class="w-full sm:w-44 text-sm font-semibold text-foreground shrink-0">
+                  Metode pengembalian<span class="text-red-500">*</span>:
+                </label>
+                <div class="flex-grow max-w-xs relative">
+                  <!-- Custom Select -->
+                  <Select v-model="returnMethod" @update:modelValue="onReturnInputChange">
+                    <SelectTrigger class="w-full rounded-full border-input bg-background h-10 px-4">
+                      <SelectValue placeholder="Pilih" />
+                    </SelectTrigger>
+                    <SelectContent 
+                      class="bg-card border border-border rounded-xl shadow-lg z-[10000]"
+                      style="width: var(--reka-select-trigger-width);"
+                    >
+                      <SelectItem value="Kembalikan sendiri">Kembalikan sendiri</SelectItem>
+                      <SelectItem value="Diantar ke GA / IT Support">Diantar ke GA / IT Support</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <!-- Row: Jadwal Pengembalian -->
+              <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+                <label class="w-full sm:w-44 text-sm font-semibold text-foreground shrink-0">
+                  Jadwal pengembalian<span class="text-red-500">*</span>:
+                </label>
+                <div class="flex flex-wrap items-center gap-3">
+                  <!-- Date Input -->
+                  <div class="relative">
+                    <input 
+                      type="date" 
+                      v-model="returnDate" 
+                      @change="onReturnInputChange"
+                      class="h-10 px-4 rounded-full border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors text-muted-foreground w-48"
+                      placeholder="Pilih tanggal"
+                    />
+                  </div>
+
+                  <!-- Time Input -->
+                  <div class="relative">
+                    <input 
+                      type="time" 
+                      v-model="returnTimeOnly" 
+                      @change="onReturnInputChange"
+                      class="h-10 px-4 rounded-full border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors text-muted-foreground w-36"
+                      placeholder="Pilih jam"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Validation Error Message -->
+              <div v-if="returnErrorMessage" class="pl-0 sm:pl-48">
+                <p class="text-xs font-bold text-red-500 bg-red-500/5 border border-red-500/20 px-3 py-2 rounded-lg animate-in fade-in duration-200">
+                  {{ returnErrorMessage }}
+                </p>
+              </div>
+
+            </div>
+
+            <!-- Footer Action Section -->
+            <div class="flex items-center justify-between p-6 border-t border-border bg-card shrink-0">
+              <span class="text-xs italic text-red-500">*Wajib diisi</span>
+              
+              <div class="flex items-center gap-3">
+                <Button 
+                  variant="outline"
+                  @click="closeReturnModal"
+                  class="rounded-full h-10 px-6 font-bold text-sm border-input hover:bg-muted transition-colors"
+                >
+                  Batal
+                </Button>
+                <Button 
+                  @click="handleSaveReturn"
+                  class="rounded-full h-10 px-6 font-bold text-sm bg-[#6366F1] hover:bg-[#5558EB] text-white shadow-sm transition-colors"
+                >
+                  Konfirmasi Pengembalian
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
     <!-- ============================================================
          Modal Pilih Penempatan Aset (Teleport & Backdrop)
          ============================================================ -->
@@ -1199,7 +1294,7 @@ const timelineSteps = computed((): TimelineStep[] => {
               <div>
                 <h3 class="text-lg font-bold text-foreground">Pilih Penempatan Aset</h3>
                 <p class="text-xs text-muted-foreground mt-1">
-                  Tolong pilih dimana penempatan aset dengan kode tertentu yang sedang Anda pinjam
+                  Tolong pilih lokasi penempatan untuk aset yang akan diserahterimakan
                 </p>
               </div>
               <button @click="isAssetPlacementModalOpen = false" class="p-1.5 hover:bg-muted rounded-full transition-colors">
@@ -1215,7 +1310,7 @@ const timelineSteps = computed((): TimelineStep[] => {
               <div class="w-[84px] h-[84px] rounded-[16px] bg-gradient-to-br from-gray-100 to-gray-200 border border-gray-200/50 overflow-hidden shrink-0 flex items-center justify-center shadow-sm">
                 <img 
                   v-if="activeItemForPlacement.imageUrl" 
-                  :src="activeItemForPlacement.imageUrl" 
+                  :src="activeItemForPlacement.imageUrl.startsWith('http') || activeItemForPlacement.imageUrl.startsWith('/') ? activeItemForPlacement.imageUrl : '/storage/' + activeItemForPlacement.imageUrl" 
                   class="w-full h-full object-cover" 
                 />
                 <div v-else class="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 opacity-60"></div>
@@ -1223,7 +1318,7 @@ const timelineSteps = computed((): TimelineStep[] => {
               <!-- Details -->
               <div class="min-w-0 flex-grow">
                 <h4 class="text-base md:text-lg font-bold text-foreground leading-snug">
-                  {{ activeItemForPlacement.brand }} {{ activeItemForPlacement.spec }}
+                  {{ activeItemForPlacement.brand }}
                 </h4>
                 <p class="text-xs md:text-sm text-muted-foreground mt-0.5">
                   {{ activeItemForPlacement.category }} ({{ activeItemForPlacement.subcategory }})
@@ -1410,136 +1505,6 @@ const timelineSteps = computed((): TimelineStep[] => {
               >
                 Konfirmasi Penempatan Aset
               </Button>
-            </div>
-          </div>
-        </div>
-      </Transition>
-    </Teleport>
-
-    <!-- ============================================================
-         Modal Atur Pengembalian (Teleport & Backdrop)
-         ============================================================ -->
-    <Teleport to="body">
-      <Transition
-        enter-active-class="ease-out duration-300"
-        enter-from-class="opacity-0"
-        enter-to-class="opacity-100"
-        leave-active-class="ease-in duration-200"
-        leave-from-class="opacity-100"
-        leave-to-class="opacity-0"
-      >
-        <div 
-          v-if="isReturnModalOpen" 
-          class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-200"
-        >
-          <div 
-            class="bg-card text-foreground rounded-[20px] shadow-2xl w-full max-w-[850px] flex flex-col overflow-hidden border border-border"
-            @click.stop
-          >
-            <!-- Header -->
-            <div class="flex items-center justify-between p-6 bg-card shrink-0">
-              <h3 class="text-lg font-bold text-foreground">Pengembalian</h3>
-              <button @click="closeReturnModal" class="p-1.5 hover:bg-muted rounded-full transition-colors">
-                <X class="w-5 h-5 text-muted-foreground" />
-              </button>
-            </div>
-            
-            <!-- Metadata Area (Indented / Styled) -->
-            <div class="px-6 pb-4 space-y-1 text-sm text-foreground shrink-0">
-              <h4 class="font-extrabold text-base">{{ request.number }}</h4>
-              <p class="text-muted-foreground text-xs md:text-sm">
-                Pemanfaatan: {{ request.pemanfaatan === 'corporate' ? 'Corporate' : 'Project' }} ({{ request.pemanfaatanDetail }})
-              </p>
-              <p v-if="request.type === 'peminjaman' && request.durationStart" class="text-muted-foreground text-xs md:text-sm">
-                Durasi: {{ request.durationStart }} s.d. {{ request.durationEnd }} ({{ request.durationDays }} hari, {{ request.durationHours || 0 }} jam)
-              </p>
-            </div>
-
-            <div class="mx-6 border-b border-border"></div>
-
-            <!-- Form Content -->
-            <div class="p-6 space-y-6">
-              
-              <!-- Row: Metode Pengembalian -->
-              <div class="flex flex-col sm:flex-row sm:items-center gap-4">
-                <label class="w-full sm:w-44 text-sm font-semibold text-foreground shrink-0">
-                  Metode pengembalian<span class="text-red-500">*</span>:
-                </label>
-                <div class="flex-grow max-w-xs relative">
-                  <!-- Custom Select -->
-                  <Select v-model="returnMethod" @update:modelValue="onReturnInputChange">
-                    <SelectTrigger class="w-full rounded-full border-input bg-background h-10 px-4">
-                      <SelectValue placeholder="Pilih" />
-                    </SelectTrigger>
-                    <SelectContent 
-                      class="bg-card border border-border rounded-xl shadow-lg z-[10000]"
-                      style="width: var(--reka-select-trigger-width);"
-                    >
-                      <SelectItem value="Kembalikan sendiri">Kembalikan sendiri</SelectItem>
-                      <SelectItem value="Diantar ke GA / IT Support">Diantar ke GA / IT Support</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <!-- Row: Jadwal Pengembalian -->
-              <div class="flex flex-col sm:flex-row sm:items-center gap-4">
-                <label class="w-full sm:w-44 text-sm font-semibold text-foreground shrink-0">
-                  Jadwal pengembalian<span class="text-red-500">*</span>:
-                </label>
-                <div class="flex flex-wrap items-center gap-3">
-                  <!-- Date Input -->
-                  <div class="relative">
-                    <input 
-                      type="date" 
-                      v-model="returnDate" 
-                      @change="onReturnInputChange"
-                      class="h-10 px-4 rounded-full border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors text-muted-foreground w-48"
-                      placeholder="Pilih tanggal"
-                    />
-                  </div>
-
-                  <!-- Time Input -->
-                  <div class="relative">
-                    <input 
-                      type="time" 
-                      v-model="returnTimeOnly" 
-                      @change="onReturnInputChange"
-                      class="h-10 px-4 rounded-full border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors text-muted-foreground w-36"
-                      placeholder="Pilih jam"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <!-- Validation Error Message -->
-              <div v-if="returnErrorMessage" class="pl-0 sm:pl-48">
-                <p class="text-xs font-bold text-red-500 bg-red-500/5 border border-red-500/20 px-3 py-2 rounded-lg animate-in fade-in duration-200">
-                  {{ returnErrorMessage }}
-                </p>
-              </div>
-
-            </div>
-
-            <!-- Footer Action Section -->
-            <div class="flex items-center justify-between p-6 border-t border-border bg-card shrink-0">
-              <span class="text-xs italic text-red-500">*Wajib diisi</span>
-              
-              <div class="flex items-center gap-3">
-                <Button 
-                  variant="outline"
-                  @click="closeReturnModal"
-                  class="rounded-full h-10 px-6 font-bold text-sm border-input hover:bg-muted transition-colors"
-                >
-                  Batal
-                </Button>
-                <Button 
-                  @click="handleSaveReturn"
-                  class="rounded-full h-10 px-6 font-bold text-sm bg-[#6366F1] hover:bg-[#5558EB] text-white shadow-sm transition-colors"
-                >
-                  Konfirmasi Pengembalian
-                </Button>
-              </div>
             </div>
           </div>
         </div>

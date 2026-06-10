@@ -16,7 +16,7 @@ class ArsipController extends Controller
      */
     public function index()
     {
-        $archiveList = SmartRequest::with(['user'])
+        $archiveList = SmartRequest::with(['user', 'items'])
             ->whereIn('status', ['success', 'reject', 'cancel', 'pending'])
             ->orderBy('id', 'desc')
             ->get()
@@ -117,9 +117,17 @@ class ArsipController extends Controller
             'items' => $items,
         ];
 
+        $placements = \App\Models\Request\RequestUnitAssignment::whereIn('request_item_id', $req->items->pluck('id'))
+            ->with('unit')
+            ->get()
+            ->filter(fn($asn) => $asn->unit && $asn->placement)
+            ->mapWithKeys(fn($asn) => [$asn->unit->number => $asn->placement])
+            ->toArray();
+
         return Inertia::render('Smart/Admin/ArsipDetail', [
             'requestId' => $req->id,
             'request' => $mappedRequest,
+            'placements' => $placements,
             'user' => [
                 'name' => auth()->user()->name,
                 'email' => auth()->user()->email,

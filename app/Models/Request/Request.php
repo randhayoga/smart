@@ -75,5 +75,21 @@ class Request extends Model
     {
         return $this->hasOne(RequestReturn::class, 'request_id');
     }
+
+    /**
+     * Accessor for start_date from the first request item.
+     */
+    public function getStartDateAttribute()
+    {
+        return $this->items->first()?->start_date;
+    }
+
+    /**
+     * Accessor for end_date from the first request item.
+     */
+    public function getEndDateAttribute()
+    {
+        return $this->items->first()?->end_date;
+    }
 }
 
