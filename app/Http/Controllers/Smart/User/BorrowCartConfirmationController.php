@@ -150,6 +150,7 @@ class BorrowCartConfirmationController extends Controller
 
             RequestItem::create([
                 'request_id' => $smartRequest->id,
+                'subcategory_id' => $basketItem->subcategory_id,
                 'barang_id' => $basketItem->barang_id,
                 'quantity_requested' => $basketItem->quantity,
                 'start_date' => Carbon::parse($validated['start_date']),

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Models\Inventory\Barang;
+use App\Models\Master\Subcategory;
 
 class RequestItem extends Model
 {
@@ -13,6 +14,7 @@ class RequestItem extends Model
 
     protected $fillable = [
         'request_id',
+        'subcategory_id',
         'barang_id',
         'quantity_requested',
         'start_date',
@@ -27,6 +29,11 @@ class RequestItem extends Model
     public function request(): BelongsTo
     {
         return $this->belongsTo(Request::class);
+    }
+
+    public function subcategory(): BelongsTo
+    {
+        return $this->belongsTo(Subcategory::class);
     }
 
     public function barang(): BelongsTo
