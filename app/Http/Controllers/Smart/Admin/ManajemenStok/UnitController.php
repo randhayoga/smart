@@ -24,7 +24,7 @@ class UnitController extends Controller
             'room_id' => 'nullable|exists:rooms,id',
             'status' => 'required|string|max:255',
             'condition' => 'required|string|max:255',
-            'price' => 'required|numeric|min:0|max:999999999.99',
+            'price' => 'nullable|numeric|min:0|max:999999999.99',
             'image_url' => 'required_without:use_lot_image|nullable|image|max:1024',
             'use_lot_image' => 'nullable',
         ];
@@ -47,12 +47,12 @@ class UnitController extends Controller
 
         $validated = $request->validate($rules);
 
-        $arrNeedApproval = ['rusak'];
+        $arrNeedApproval = ['Loss', 'Lost'];
         $proposedStatus = $validated['status'];
         $needApproval = in_array($proposedStatus, $arrNeedApproval);
 
         if ($needApproval) {
-            $validated['status'] = 'tersedia';
+            $validated['status'] = 'Available';
         }
 
         // Single creation logic
@@ -72,6 +72,10 @@ class UnitController extends Controller
         $unit = Unit::create($validated);
 
         if ($needApproval) {
+            $docUrl = 'memos/placeholder.pdf';
+            if ($request->hasFile('memo_file')) {
+                $docUrl = $request->file('memo_file')->store('memos', 'public');
+            }
             \App\Models\Inventory\UnitStatusApproval::create([
                 'unit_id' => $unit->id,
                 'requester_id' => $request->user()->id,
@@ -80,6 +84,7 @@ class UnitController extends Controller
                 'note' => null,
                 'approver_id' => null,
                 'requested_at' => now(),
+                'doc_url' => $docUrl,
             ]);
         }
 
@@ -99,7 +104,7 @@ class UnitController extends Controller
             'room_id' => 'nullable|exists:rooms,id',
             'status' => 'required|string|max:255',
             'condition' => 'required|string|max:255',
-            'price' => 'required|numeric|min:0|max:999999999.99',
+            'price' => 'nullable|numeric|min:0|max:999999999.99',
             'image_url' => 'nullable|image|max:1024',
             'use_lot_image' => 'nullable',
         ];
@@ -122,7 +127,7 @@ class UnitController extends Controller
 
         $validated = $request->validate($rules);
 
-        $arrNeedApproval = ['rusak'];
+        $arrNeedApproval = ['Loss', 'Lost'];
         $proposedStatus = $validated['status'];
         $needApproval = in_array($proposedStatus, $arrNeedApproval);
 
@@ -169,6 +174,10 @@ class UnitController extends Controller
                 ->where('decision', 'pending')
                 ->first();
             if (!$existing) {
+                $docUrl = 'memos/placeholder.pdf';
+                if ($request->hasFile('memo_file')) {
+                    $docUrl = $request->file('memo_file')->store('memos', 'public');
+                }
                 \App\Models\Inventory\UnitStatusApproval::create([
                     'unit_id' => $unit->id,
                     'requester_id' => $request->user()->id,
@@ -177,6 +186,7 @@ class UnitController extends Controller
                     'note' => null,
                     'approver_id' => null,
                     'requested_at' => now(),
+                    'doc_url' => $docUrl,
                 ]);
             }
         }

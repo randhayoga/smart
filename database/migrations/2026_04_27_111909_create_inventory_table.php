@@ -13,7 +13,8 @@ return new class extends Migration {
             $table->foreignId('subcategory_id')->constrained('subcategories');
             $table->foreignId('brand_id')->constrained('brands');
             $table->foreignId('uom_id')->constrained('uoms');
-            $table->string('specification');
+            $table->string('name');
+            $table->string('specification')->nullable();
             $table->string('image_url')->comment('default image');
             $table->dateTime('last_restock_at')->nullable();
             $table->timestamps();
@@ -32,7 +33,7 @@ return new class extends Migration {
             $table->integer('current_quantity')->nullable()->comment('for consumables');
             $table->string('po_number');
             $table->dateTime('date_of_receipt');
-            $table->decimal('unit_price', 15, 2)->comment('default unit price');
+            $table->decimal('unit_price', 15, 2)->nullable()->comment('default unit price');
             $table->string('image_url')->comment('default image');
             $table->timestamps();
         });
@@ -46,7 +47,7 @@ return new class extends Migration {
             $table->foreignId('room_id')->nullable()->constrained('rooms');
             $table->string('status');
             $table->string('condition');
-            $table->decimal('price', 15, 2);
+            $table->decimal('price', 15, 2)->nullable();
             $table->string('image_url');
             $table->string('vehicle_registration')->nullable();
             $table->timestamps();
@@ -58,6 +59,7 @@ return new class extends Migration {
             $table->foreignId('requester_id')->constrained('adm_users')->comment("ADM_USER's id")->noActionOnDelete();
             $table->foreignId('approver_id')->nullable()->constrained('adm_users')->comment("nullable | ADM_USER's id")->noActionOnDelete();
             $table->string('proposed_status');
+            $table->string('doc_url');
             $table->string('decision')->default('pending')->comment('pending | approved | rejected');
             $table->text('note')->nullable()->comment('nullable | required if rejected');
             $table->dateTime('requested_at');

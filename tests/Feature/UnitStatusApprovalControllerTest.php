@@ -21,7 +21,7 @@ class UnitStatusApprovalControllerTest extends TestCase
             'number' => $lot->number . '-U01',
             'lot_id' => $lot->id,
             'location_id' => $lot->location_id,
-            'status' => 'available',
+            'status' => 'Available',
             'condition' => 'Baik',
             'price' => $lot->unit_price,
             'image_url' => 'inventory/lots/placeholder.jpg',
@@ -36,9 +36,10 @@ class UnitStatusApprovalControllerTest extends TestCase
         $approval = UnitStatusApproval::create([
             'unit_id' => $unit->id,
             'requester_id' => $user->id,
-            'proposed_status' => 'maintenance',
+            'proposed_status' => 'Repair',
             'decision' => 'pending',
             'requested_at' => now(),
+            'doc_url' => 'memos/placeholder.pdf',
         ]);
 
         $response = $this->actingAs($user)->get(route('smart.inventory.unit-status-approvals.index'));
@@ -53,7 +54,7 @@ class UnitStatusApprovalControllerTest extends TestCase
 
         $response = $this->actingAs($user)->post(route('smart.inventory.unit-status-approvals.store'), [
             'unit_id' => $unit->id,
-            'proposed_status' => 'maintenance',
+            'proposed_status' => 'Repair',
             'note' => 'Butuh perbaikan rutin',
         ]);
 
@@ -63,7 +64,7 @@ class UnitStatusApprovalControllerTest extends TestCase
         $this->assertDatabaseHas('unit_status_approvals', [
             'unit_id' => $unit->id,
             'requester_id' => $user->id,
-            'proposed_status' => 'maintenance',
+            'proposed_status' => 'Repair',
             'decision' => 'pending',
             'note' => 'Butuh perbaikan rutin',
         ]);
@@ -77,14 +78,15 @@ class UnitStatusApprovalControllerTest extends TestCase
         UnitStatusApproval::create([
             'unit_id' => $unit->id,
             'requester_id' => $user->id,
-            'proposed_status' => 'maintenance',
+            'proposed_status' => 'Repair',
             'decision' => 'pending',
             'requested_at' => now(),
+            'doc_url' => 'memos/placeholder.pdf',
         ]);
 
         $response = $this->actingAs($user)->post(route('smart.inventory.unit-status-approvals.store'), [
             'unit_id' => $unit->id,
-            'proposed_status' => 'broken',
+            'proposed_status' => 'Loss',
         ]);
 
         $response->assertSessionHasErrors(['unit_id']);
@@ -99,9 +101,10 @@ class UnitStatusApprovalControllerTest extends TestCase
         $approval = UnitStatusApproval::create([
             'unit_id' => $unit->id,
             'requester_id' => $user->id,
-            'proposed_status' => 'maintenance',
+            'proposed_status' => 'Repair',
             'decision' => 'pending',
             'requested_at' => now(),
+            'doc_url' => 'memos/placeholder.pdf',
         ]);
 
         $response = $this->actingAs($user)->get(route('smart.inventory.unit-status-approvals.show', $approval));
@@ -117,14 +120,15 @@ class UnitStatusApprovalControllerTest extends TestCase
         $approval = UnitStatusApproval::create([
             'unit_id' => $unit->id,
             'requester_id' => $user->id,
-            'proposed_status' => 'maintenance',
+            'proposed_status' => 'Repair',
             'decision' => 'pending',
             'requested_at' => now(),
+            'doc_url' => 'memos/placeholder.pdf',
         ]);
 
         $response = $this->actingAs($user)->put(route('smart.inventory.unit-status-approvals.update', $approval), [
             'decision' => 'approved',
-            'note' => 'Disetujui untuk maintenance',
+            'note' => 'Disetujui untuk Repair',
         ]);
 
         $response->assertRedirect();
@@ -134,18 +138,18 @@ class UnitStatusApprovalControllerTest extends TestCase
             'id' => $approval->id,
             'decision' => 'approved',
             'approver_id' => $user->id,
-            'note' => 'Disetujui untuk maintenance',
+            'note' => 'Disetujui untuk Repair',
         ]);
 
         $unit->refresh();
-        $this->assertEquals('maintenance', $unit->status);
+        $this->assertEquals('Repair', $unit->status);
 
         $this->assertDatabaseHas('unit_lifecycles', [
             'unit_id' => $unit->id,
-            'status' => 'maintenance',
+            'status' => 'Repair',
             'requester_id' => $approval->requester_id,
             'approver_id' => $user->id,
-            'note' => 'Disetujui untuk maintenance',
+            'note' => 'Disetujui untuk Repair',
         ]);
     }
 
@@ -157,9 +161,10 @@ class UnitStatusApprovalControllerTest extends TestCase
         $approval = UnitStatusApproval::create([
             'unit_id' => $unit->id,
             'requester_id' => $user->id,
-            'proposed_status' => 'maintenance',
+            'proposed_status' => 'Repair',
             'decision' => 'pending',
             'requested_at' => now(),
+            'doc_url' => 'memos/placeholder.pdf',
         ]);
 
         $response = $this->actingAs($user)->put(route('smart.inventory.unit-status-approvals.update', $approval), [
@@ -178,7 +183,7 @@ class UnitStatusApprovalControllerTest extends TestCase
         ]);
 
         $unit->refresh();
-        $this->assertEquals('available', $unit->status); // unchanged
+        $this->assertEquals('Available', $unit->status); // unchanged
     }
 
     public function test_can_destroy_pending_unit_status_approval_request(): void
@@ -189,9 +194,10 @@ class UnitStatusApprovalControllerTest extends TestCase
         $approval = UnitStatusApproval::create([
             'unit_id' => $unit->id,
             'requester_id' => $user->id,
-            'proposed_status' => 'maintenance',
+            'proposed_status' => 'Repair',
             'decision' => 'pending',
             'requested_at' => now(),
+            'doc_url' => 'memos/placeholder.pdf',
         ]);
 
         $response = $this->actingAs($user)->delete(route('smart.inventory.unit-status-approvals.destroy', $approval));
@@ -213,7 +219,7 @@ class UnitStatusApprovalControllerTest extends TestCase
             'number' => $lot->number . '-U99',
             'lot_id' => $lot->id,
             'location_id' => $location->id,
-            'status' => 'rusak',
+            'status' => 'Loss',
             'condition' => 'Rusak',
             'price' => 50000,
             'image_url' => $file,
@@ -223,12 +229,12 @@ class UnitStatusApprovalControllerTest extends TestCase
         $response->assertRedirect();
         
         $unit = Unit::where('number', $lot->number . '-U99')->firstOrFail();
-        $this->assertEquals('tersedia', $unit->status);
+        $this->assertEquals('Available', $unit->status);
 
         $this->assertDatabaseHas('unit_status_approvals', [
             'unit_id' => $unit->id,
             'requester_id' => $user->id,
-            'proposed_status' => 'rusak',
+            'proposed_status' => 'Loss',
             'decision' => 'pending',
             'approver_id' => null,
             'note' => null,
@@ -244,7 +250,7 @@ class UnitStatusApprovalControllerTest extends TestCase
             'number' => $unit->number,
             'lot_id' => $unit->lot_id,
             'location_id' => $unit->location_id,
-            'status' => 'rusak',
+            'status' => 'Loss',
             'condition' => 'Rusak',
             'price' => $unit->price,
         ]);
@@ -252,15 +258,47 @@ class UnitStatusApprovalControllerTest extends TestCase
         $response->assertRedirect();
         
         $unit->refresh();
-        $this->assertEquals('available', $unit->status);
+        $this->assertEquals('Available', $unit->status);
 
         $this->assertDatabaseHas('unit_status_approvals', [
             'unit_id' => $unit->id,
             'requester_id' => $user->id,
-            'proposed_status' => 'rusak',
+            'proposed_status' => 'Loss',
             'decision' => 'pending',
             'approver_id' => null,
             'note' => null,
+        ]);
+    }
+
+    public function test_approving_unit_status_approval_with_loss_status_sets_unit_to_inactive(): void
+    {
+        $user = User::factory()->create();
+        $unit = $this->createUnit();
+
+        $approval = UnitStatusApproval::create([
+            'unit_id' => $unit->id,
+            'requester_id' => $user->id,
+            'proposed_status' => 'Loss',
+            'decision' => 'pending',
+            'requested_at' => now(),
+            'doc_url' => 'memos/placeholder.pdf',
+        ]);
+
+        $response = $this->actingAs($user)->put(route('smart.inventory.unit-status-approvals.update', $approval), [
+            'decision' => 'approved',
+            'note' => 'Disetujui rusak',
+        ]);
+
+        $response->assertRedirect();
+        
+        $unit->refresh();
+        $this->assertEquals('Inactive', $unit->status);
+
+        $this->assertDatabaseHas('unit_lifecycles', [
+            'unit_id' => $unit->id,
+            'status' => 'Inactive',
+            'requester_id' => $approval->requester_id,
+            'approver_id' => $user->id,
         ]);
     }
 }

@@ -3,13 +3,11 @@ import { ref, computed, watch, h } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import {
-  Search,
   X,
   FileText,
   ThumbsUp,
   Ban,
   ArrowUpDown,
-  AlertTriangle,
   ChevronDown
 } from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
@@ -64,6 +62,7 @@ interface ApprovalItem {
   category: string;
   subcategory: string;
   brand: string;
+  nama: string;
   specification: string;
   proposed_status: string;
   status_label: string;
@@ -71,7 +70,7 @@ interface ApprovalItem {
   note: string | null;
   requested_by: string;
   requested_at: string;
-  memo_path: string | null;
+  doc_url: string | null;
   unit_details: UnitDetails;
 }
 
@@ -230,6 +229,20 @@ const columns: ColumnDef<ApprovalItem>[] = [
     cell: ({ row }) => h('div', { class: 'text-foreground truncate' }, row.getValue('brand')),
   },
   {
+    accessorKey: 'nama',
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'Nama',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'text-foreground truncate', title: row.getValue('nama') }, row.getValue('nama')),
+  },
+  {
     accessorKey: 'specification',
     header: ({ column }) => {
       return h(Button, {
@@ -255,7 +268,7 @@ const columns: ColumnDef<ApprovalItem>[] = [
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
-    cell: ({ row }) => h('div', { class: 'text-foreground font-medium truncate' }, row.getValue('status_label')),
+    cell: ({ row }) => h('div', { class: 'text-destructive font-semibold truncate' }, row.getValue('status_label')),
   },
   {
     id: 'actions',
@@ -266,7 +279,7 @@ const columns: ColumnDef<ApprovalItem>[] = [
       return h('div', { class: 'flex items-center justify-center gap-2' }, [
         h('button', {
           type: 'button',
-          onClick: () => openMemoFile(item.memo_path),
+          onClick: () => openMemoFile(item.doc_url),
           class: 'p-2 bg-gradient-primary hover:opacity-90 text-white rounded-[13px] transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer',
           title: 'Buka Berita Acara / Memo'
         }, [
@@ -370,16 +383,16 @@ const openMemoFile = (path: string | null) => {
 
 // Formats & Helpers
 const formatRupiah = (val: number | string | null | undefined) => {
-  if (val === null || val === undefined || val === '') return 'Rp0';
+  if (val === null || val === undefined || val === '') return '-';
   let num: number;
   if (typeof val === 'string') {
     const cleanStr = val.replace(/[^0-9,-]/g, '');
-    if (!cleanStr) return 'Rp0';
+    if (!cleanStr) return '-';
     num = parseFloat(cleanStr.replace(/,/g, '.'));
   } else {
     num = val;
   }
-  if (isNaN(num)) return 'Rp0';
+  if (isNaN(num)) return '-';
   const formatted = Math.floor(num).toLocaleString('id-ID');
   return `Rp${formatted}`;
 };
@@ -606,30 +619,12 @@ const isVehicle = (item: ApprovalItem | null) => {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-
-        <div class="flex items-center gap-3 text-sm text-muted-foreground ml-auto">
-          <span>Baris per halaman</span>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal bg-white', (rowsPerPage === 'Semua baris' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
-                {{ rowsPerPage === 'Semua baris' ? 'Semua baris' : `${rowsPerPage} baris` }}
-                <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent class="w-[140px] rounded-[14px]" align="start" :side-offset="4">
-              <DropdownMenuItem @select="rowsPerPage = '5'">5 baris</DropdownMenuItem>
-              <DropdownMenuItem @select="rowsPerPage = '10'">10 baris</DropdownMenuItem>
-              <DropdownMenuItem @select="rowsPerPage = '25'">25 baris</DropdownMenuItem>
-              <DropdownMenuItem @select="rowsPerPage = 'Semua baris'">Semua baris</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
       </div>
 
       <!-- ── Bulk Actions ── -->
       <div class="space-y-2 flex-1 min-w-0 pt-2">
         <label class="text-xs text-muted-foreground font-medium block ml-0.5">Aksi Terpilih</label>
-        <div class="flex flex-wrap gap-2">
+        <div class="flex flex-wrap items-center gap-2">
           <button 
             :disabled="selectedIds.length < 1"
             @click="openConfirmModal('approved', true)"
@@ -646,6 +641,23 @@ const isVehicle = (item: ApprovalItem | null) => {
             <Ban class="w-4 h-4" />
             <span class="hidden sm:inline">Tolak Terpilih</span>
           </button>
+          <div class="flex items-center gap-3 text-sm text-muted-foreground ml-auto">
+            <span>Baris per halaman</span>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal bg-white', (rowsPerPage === 'Semua baris' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
+                  {{ rowsPerPage === 'Semua baris' ? 'Semua baris' : `${rowsPerPage} baris` }}
+                  <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent class="w-[140px] rounded-[14px]" align="start" :side-offset="4">
+                <DropdownMenuItem @select="rowsPerPage = '5'">5 baris</DropdownMenuItem>
+                <DropdownMenuItem @select="rowsPerPage = '10'">10 baris</DropdownMenuItem>
+                <DropdownMenuItem @select="rowsPerPage = '25'">25 baris</DropdownMenuItem>
+                <DropdownMenuItem @select="rowsPerPage = 'Semua baris'">Semua baris</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </div>
     </div>
@@ -688,7 +700,7 @@ const isVehicle = (item: ApprovalItem | null) => {
           >
             <div 
               v-if="isDetailPopupOpen && activeApproval"
-              class="bg-card w-full rounded-[14px] shadow-2xl overflow-hidden flex flex-col border border-border"
+              class="bg-card w-full max-w-[95%] rounded-[14px] shadow-2xl overflow-hidden flex flex-col border border-border"
               @click.stop
             >
               <!-- Header -->
@@ -723,11 +735,12 @@ const isVehicle = (item: ApprovalItem | null) => {
                     </div>
 
                     <!-- Details Columns -->
-                    <div class="flex-grow grid grid-cols-1 md:grid-cols-18 gap-4 text-foreground">
+                    <div class="flex-grow grid grid-cols-1 md:grid-cols-15 gap-4 text-foreground">
                       <!-- Column 1: Item Info -->
-                      <div class="md:col-span-5">
+                      <div class="md:col-span-4">
                         <p class="font-bold text-foreground"><span class="text-foreground">Kode Barang:</span> {{ activeApproval.unit_details.barang_code }}</p>
                         <p class="font-bold text-foreground"><span class="text-foreground">Merek:</span> {{ activeApproval.brand }}</p>
+                        <p class="font-bold text-foreground"><span class="text-foreground">Nama:</span> {{ activeApproval.nama }}</p>
                         <p class="font-bold text-foreground"><span class="text-foreground">Spesifikasi:</span> {{ activeApproval.specification }}</p>
                         <p class="text-foreground">Kategori: {{ activeApproval.category }}</p>
                         <p class="text-foreground">Subkategori: {{ activeApproval.subcategory }}</p>
@@ -735,7 +748,7 @@ const isVehicle = (item: ApprovalItem | null) => {
                       </div>
 
                       <!-- Column 2: LOT Info -->
-                      <div class="md:col-span-6">
+                      <div class="md:col-span-5">
                         <p class="font-bold text-foreground"><span class="text-foreground">Kode LOT:</span> {{ activeApproval.unit_details.lot_code }}</p>
                         <p class="text-foreground">Organizer: {{ activeApproval.unit_details.organizer }}</p>
                         <p class="text-foreground">Tanggal masuk: {{ formatDateWithDashes(activeApproval.unit_details.date_of_receipt) }}</p>
@@ -744,25 +757,14 @@ const isVehicle = (item: ApprovalItem | null) => {
                       </div>
 
                       <!-- Column 3: Asset Info -->
-                      <div class="md:col-span-7">
+                      <div class="md:col-span-6">
                         <p class="font-bold text-foreground"><span class="text-foreground">Kode Aset:</span> {{ activeApproval.asset_code }}</p>
                         <!-- TNKB (Nopol) -->
                         <p v-if="isVehicle(activeApproval)" class="font-bold text-foreground">
                           <span class="text-foreground">Nopol:</span> {{ activeApproval.unit_details.vehicle_registration || '-' }}
                         </p>
-                        <p class="text-foreground">
-                          Status: 
-                          <span 
-                            :class="[
-                              'inline-flex items-center px-2 py-0.1 rounded-full font-semibold',
-                              activeApproval.proposed_status === 'tersedia' ? 'bg-emerald-100 text-emerald-800' :
-                              activeApproval.proposed_status === 'dipinjam' ? 'bg-amber-100 text-amber-800' :
-                              activeApproval.proposed_status === 'dipakai' ? 'bg-blue-100 text-blue-800' :
-                              'bg-rose-100 text-rose-800'
-                            ]"
-                          >
-                            {{ activeApproval.status_label }}
-                          </span>
+                        <p class="text-destructive font-bold">
+                          <span>Status:</span> {{ activeApproval.unit_details.status }}
                         </p>
                         <p class="text-foreground">
                           Kondisi: 
@@ -870,7 +872,7 @@ const isVehicle = (item: ApprovalItem | null) => {
               <div class="py-3 px-4 flex items-center justify-end gap-3 bg-muted/10 shrink-0">
                 <!-- Purple Memo Button -->
                 <button 
-                  @click="openMemoFile(activeApproval.memo_path)"
+                  @click="openMemoFile(activeApproval.doc_url)"
                   class="bg-[#6366F1] hover:bg-[#5850EC] text-white text-sm font-bold px-5 py-2.5 rounded-xl inline-flex items-center gap-2 transition-colors cursor-pointer shadow-sm"
                 >
                   <FileText class="w-4 h-4" />

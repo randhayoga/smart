@@ -3,11 +3,9 @@ import { ref, computed, watch, h } from 'vue';
 import { Head } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import {
-  Search,
   X,
   FileText,
   ArrowUpDown,
-  AlertTriangle,
   ChevronDown
 } from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
@@ -23,6 +21,7 @@ import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
 import ViewTableButton from '@/Components/ViewTableButton.vue';
 import Tabs from '@/Components/Tabs.vue';
+import Combobox from '@/Components/Combobox.vue';
 
 interface AuditTrail {
   waktu: string;
@@ -61,6 +60,7 @@ interface ApprovalItem {
   category: string;
   subcategory: string;
   brand: string;
+  nama: string;
   specification: string;
   proposed_status: string;
   status_label: string;
@@ -70,7 +70,7 @@ interface ApprovalItem {
   requested_at: string;
   decided_at: string | null;
   approver_name: string | null;
-  memo_path: string | null;
+  doc_url: string | null;
   unit_details: UnitDetails;
 }
 
@@ -85,25 +85,25 @@ const props = defineProps<Props>();
 // States & Filters
 // ─────────────────────────────────────────────
 const searchQuery = ref('');
-const categoryFilter = ref('Semua kategori');
+const subcategoryFilter = ref('');
 const decisionFilter = ref('Semua keputusan');
 const rowsPerPage = ref('Semua baris');
 
 // Filter options
-const categoryOptions = computed(() => {
-  const cats = new Set<string>();
+const subcategoryOptions = computed(() => {
+  const subs = new Set<string>();
   props.approvals.forEach(app => {
-    if (app.category) cats.add(app.category);
+    if (app.subcategory) subs.add(app.subcategory);
   });
-  return Array.from(cats);
+  return Array.from(subs);
 });
 
 // Filtered data
 const filteredApprovals = computed(() => {
   let list = [...props.approvals];
 
-  if (categoryFilter.value !== 'Semua kategori') {
-    list = list.filter(app => app.category === categoryFilter.value);
+  if (subcategoryFilter.value) {
+    list = list.filter(app => app.subcategory === subcategoryFilter.value);
   }
 
   if (decisionFilter.value !== 'Semua keputusan') {
@@ -217,16 +217,16 @@ const openMemoFile = (path: string | null) => {
 
 // Formats & Helpers
 const formatRupiah = (val: number | string | null | undefined) => {
-  if (val === null || val === undefined || val === '') return 'Rp0';
+  if (val === null || val === undefined || val === '') return '-';
   let num: number;
   if (typeof val === 'string') {
     const cleanStr = val.replace(/[^0-9,-]/g, '');
-    if (!cleanStr) return 'Rp0';
+    if (!cleanStr) return '-';
     num = parseFloat(cleanStr.replace(/,/g, '.'));
   } else {
     num = val;
   }
-  if (isNaN(num)) return 'Rp0';
+  if (isNaN(num)) return '-';
   const formatted = Math.floor(num).toLocaleString('id-ID');
   return `Rp${formatted}`;
 };
@@ -341,20 +341,6 @@ const columns: ColumnDef<ApprovalItem>[] = [
     cell: ({ row }) => h('div', { class: 'text-muted-foreground font-mono text-sm truncate font-medium' }, row.getValue('asset_code')),
   },
   {
-    accessorKey: 'category',
-    header: ({ column }) => {
-      return h(Button, {
-        variant: 'ghost',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
-      }, () => [
-        'Kategori',
-        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-      ])
-    },
-    cell: ({ row }) => h('div', { class: 'text-foreground' }, row.getValue('category')),
-  },
-  {
     accessorKey: 'subcategory',
     header: ({ column }) => {
       return h(Button, {
@@ -381,6 +367,20 @@ const columns: ColumnDef<ApprovalItem>[] = [
       ])
     },
     cell: ({ row }) => h('div', { class: 'text-foreground' }, row.getValue('brand')),
+  },
+  {
+    accessorKey: 'nama',
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'Nama',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'text-foreground truncate', title: row.getValue('nama') }, row.getValue('nama')),
   },
   {
     accessorKey: 'specification',
@@ -457,7 +457,7 @@ const columns: ColumnDef<ApprovalItem>[] = [
       const item = row.original;
       return h('div', { class: 'flex items-center justify-center gap-2' }, [
         h('button', {
-          onClick: () => openMemoFile(item.memo_path),
+          onClick: () => openMemoFile(item.doc_url),
           class: 'w-8 h-8 rounded-full bg-[#6366F1] hover:bg-[#5850EC] text-white flex items-center justify-center transition-colors shadow-sm cursor-pointer',
           title: 'Buka Berita Acara / Memo'
         }, [
@@ -506,20 +506,14 @@ const isVehicle = (item: ApprovalItem | null) => {
           />
         </div>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal bg-white', (!categoryFilter || categoryFilter === 'Semua kategori') ? 'text-muted-foreground' : 'text-foreground']">
-              <span class="truncate">{{ categoryFilter || 'Semua kategori' }}</span>
-              <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
-            <DropdownMenuItem @select="categoryFilter = 'Semua kategori'">Semua kategori</DropdownMenuItem>
-            <DropdownMenuItem v-for="cat in categoryOptions" :key="cat" @select="categoryFilter = cat">
-              {{ cat }}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <!-- Subcategory Combobox (searchable/scrollable) -->
+        <Combobox
+          v-model="subcategoryFilter"
+          :options="subcategoryOptions"
+          search-placeholder="Cari subkategori..."
+          default-label="Semua subkategori"
+          width-class="w-[200px] bg-white"
+        />
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -633,6 +627,7 @@ const isVehicle = (item: ApprovalItem | null) => {
                       <div class="md:col-span-5">
                         <p class="font-bold text-foreground"><span class="text-foreground">Kode Barang:</span> {{ activeApproval.unit_details.barang_code }}</p>
                         <p class="font-bold text-foreground"><span class="text-foreground">Merek:</span> {{ activeApproval.brand }}</p>
+                        <p class="font-bold text-foreground"><span class="text-foreground">Nama:</span> {{ activeApproval.nama }}</p>
                         <p class="font-bold text-foreground"><span class="text-foreground">Spesifikasi:</span> {{ activeApproval.specification }}</p>
                         <p class="text-foreground">Kategori: {{ activeApproval.category }}</p>
                         <p class="text-foreground">Subkategori: {{ activeApproval.subcategory }}</p>
@@ -792,13 +787,12 @@ const isVehicle = (item: ApprovalItem | null) => {
               <div class="py-3 px-4 flex items-center justify-end gap-3 bg-muted/10 shrink-0">
                 <!-- Purple Memo Button -->
                 <button 
-                  @click="openMemoFile(activeApproval.memo_path)"
+                  @click="openMemoFile(activeApproval.doc_url)"
                   class="bg-[#6366F1] hover:bg-[#5850EC] text-white text-sm font-bold px-5 py-2.5 rounded-xl inline-flex items-center gap-2 transition-colors cursor-pointer shadow-sm"
                 >
                   <FileText class="w-4 h-4" />
                   Buka Memo / Berita Acara
                 </button>
->>>>>>> main
 
                 <!-- White Kembali Button -->
                 <button 

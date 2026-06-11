@@ -23,7 +23,7 @@ class BulkUnitController extends Controller
             'room_id' => 'nullable|exists:rooms,id',
             'status' => 'required|string|max:255',
             'condition' => 'required|string|max:255',
-            'price' => 'required|numeric|min:0|max:999999999.99',
+            'price' => 'nullable|numeric|min:0|max:999999999.99',
             'image_url' => 'required_without:use_lot_image|nullable|image|max:1024',
             'use_lot_image' => 'nullable',
             'bulk_quantity' => 'required|integer|min:1|max:999',
@@ -48,6 +48,14 @@ class BulkUnitController extends Controller
         $validated = $request->validate($rules, [
             'bulk_quantity.integer' => 'Tidak boleh desimal.',
         ]);
+
+        $arrNeedApproval = ['Loss', 'Lost'];
+        $proposedStatus = $validated['status'];
+        $needApproval = in_array($proposedStatus, $arrNeedApproval);
+
+        if ($needApproval) {
+            $validated['status'] = 'Available';
+        }
 
         $quantity = (int)$validated['bulk_quantity'];
         $baseNumber = $validated['number'];
@@ -87,7 +95,7 @@ class BulkUnitController extends Controller
         }
 
         foreach ($generatedNumbers as $num) {
-            Unit::create([
+            $unit = Unit::create([
                 'number' => $num,
                 'lot_id' => $validated['lot_id'],
                 'location_id' => $validated['location_id'],
@@ -99,6 +107,23 @@ class BulkUnitController extends Controller
                 'image_url' => $finalImagePath,
                 'vehicle_registration' => $validated['vehicle_registration'] ?? null,
             ]);
+
+            if ($needApproval) {
+                $docUrl = 'memos/placeholder.pdf';
+                if ($request->hasFile('memo_file')) {
+                    $docUrl = $request->file('memo_file')->store('memos', 'public');
+                }
+                \App\Models\Inventory\UnitStatusApproval::create([
+                    'unit_id' => $unit->id,
+                    'requester_id' => $request->user()->id,
+                    'proposed_status' => $proposedStatus,
+                    'decision' => 'pending',
+                    'note' => null,
+                    'approver_id' => null,
+                    'requested_at' => now(),
+                    'doc_url' => $docUrl,
+                ]);
+            }
         }
 
         return redirect()->back()->with('success', "Berhasil membuat {$quantity} aset secara otomatis.");
@@ -128,11 +153,15 @@ class BulkUnitController extends Controller
             return redirect()->back()->withErrors(['ids' => 'Tidak ada unit yang ditemukan.']);
         }
 
+        $arrNeedApproval = ['Loss', 'Lost'];
+        $proposedStatus = $request->input('status');
+        $needApproval = $request->filled('status') && in_array($proposedStatus, $arrNeedApproval);
+
         $updateData = [];
 
         // 1. Status & Condition
-        if ($request->filled('status')) {
-            $updateData['status'] = $request->input('status');
+        if ($request->filled('status') && !$needApproval) {
+            $updateData['status'] = $proposedStatus;
         }
         if ($request->filled('condition')) {
             $updateData['condition'] = $request->input('condition');
@@ -153,8 +182,8 @@ class BulkUnitController extends Controller
         }
 
         // 3. Price
-        if ($request->filled('price')) {
-            $updateData['price'] = (float)$request->input('price');
+        if ($request->has('price')) {
+            $updateData['price'] = $request->input('price') !== null ? (float)$request->input('price') : null;
         }
 
         // 4. Image URL / Use LOT Image
@@ -195,8 +224,11 @@ class BulkUnitController extends Controller
         }
 
         // 5. Handle approvals if status is changed to a status requiring approval
-        $arrNeedApproval = ['rusak'];
-        if ($request->filled('status') && in_array($request->input('status'), $arrNeedApproval)) {
+        if ($needApproval) {
+            $docUrl = 'memos/placeholder.pdf';
+            if ($request->hasFile('memo_file')) {
+                $docUrl = $request->file('memo_file')->store('memos', 'public');
+            }
             foreach ($units as $unit) {
                 $existing = \App\Models\Inventory\UnitStatusApproval::where('unit_id', $unit->id)
                     ->where('decision', 'pending')
@@ -205,11 +237,12 @@ class BulkUnitController extends Controller
                     \App\Models\Inventory\UnitStatusApproval::create([
                         'unit_id' => $unit->id,
                         'requester_id' => $request->user()->id,
-                        'proposed_status' => $request->input('status'),
+                        'proposed_status' => $proposedStatus,
                         'decision' => 'pending',
                         'note' => null,
                         'approver_id' => null,
                         'requested_at' => now(),
+                        'doc_url' => $docUrl,
                     ]);
                 }
             }

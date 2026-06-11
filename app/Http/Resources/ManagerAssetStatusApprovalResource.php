@@ -18,6 +18,7 @@ class ManagerAssetStatusApprovalResource extends JsonResource
             'tersedia' => 'Tersedia',
             'borrowed' => 'Dipinjam',
             'dipinjam' => 'Dipinjam',
+            'dipakai' => 'Dipinjam',
             'maintenance' => 'Perbaikan',
             'perbaikan' => 'Perbaikan',
             'repair' => 'Perbaikan',
@@ -25,8 +26,10 @@ class ManagerAssetStatusApprovalResource extends JsonResource
             'inactive' => 'Tidak Aktif',
             'broken' => 'Rusak',
             'rusak' => 'Rusak',
+            'loss' => 'Rusak',
             'lost' => 'Hilang',
             'hilang' => 'Hilang',
+            'tidak aktif' => 'Tidak Aktif',
         ];
         return $statusMap[strtolower($status)] ?? $status;
     }
@@ -77,6 +80,7 @@ class ManagerAssetStatusApprovalResource extends JsonResource
             'category' => $barang->subcategory->category->name ?? '-',
             'subcategory' => $barang->subcategory->name ?? '-',
             'brand' => $barang->brand->name ?? '-',
+            'nama' => $barang->name ?? '-',
             'specification' => $barang->specification ?? '-',
             'proposed_status' => $this->proposed_status,
             'status_label' => $this->getStatusLabel($this->proposed_status),
@@ -86,7 +90,7 @@ class ManagerAssetStatusApprovalResource extends JsonResource
             'requested_at' => $this->requested_at ? $this->requested_at->format('d-m-Y H:i') : '-',
             'decided_at' => $this->decided_at ? $this->decided_at->format('d-m-Y H:i') : null,
             'approver_name' => $this->approver->name ?? null,
-            'memo_path' => $this->memo_path,
+            'doc_url' => $this->doc_url,
             'unit_details' => [
                 'id' => $unit->id,
                 'number' => $unit->number ?? '-',
@@ -105,6 +109,7 @@ class ManagerAssetStatusApprovalResource extends JsonResource
                 'vendor' => $lot->vendor->name ?? '-',
                 'po_number' => $lot->po_number ?? '-',
                 'barang_code' => $barang->number ?? '-',
+                'barang_nama' => $barang->name ?? '-',
                 'barang_spec' => $barang->specification ?? '-',
                 'barang_unit' => $barang->uom->name ?? 'pcs',
 

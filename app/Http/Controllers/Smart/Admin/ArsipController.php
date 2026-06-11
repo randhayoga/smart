@@ -84,6 +84,7 @@ class ArsipController extends Controller
             return [
                 'id' => $item->id,
                 'brand' => ($item->barang->brand->name ?? '-') . ' ' . ($item->barang->specification ?? ''),
+                'name' => $item->barang->name ?? '-',
                 'category' => $item->barang->subcategory->category->name ?? '-',
                 'subcategory' => $item->barang->subcategory->name ?? '-',
                 'quantity' => $item->quantity_requested,

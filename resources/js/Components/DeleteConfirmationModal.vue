@@ -41,9 +41,9 @@ const handleConfirm = () => {
 };
 
 const formatRupiah = (val: number | string | null | undefined) => {
-  if (val === null || val === undefined || val === '') return 'Rp0';
+  if (val === null || val === undefined || val === '') return '-';
   const num = typeof val === 'string' ? parseFloat(val) : val;
-  if (isNaN(num)) return 'Rp0';
+  if (isNaN(num)) return '-';
   const formatted = Math.floor(num).toLocaleString('id-ID');
   return `Rp${formatted}`;
 };
@@ -94,7 +94,7 @@ const modalConfirmButtonText = computed(() => {
 const modalConfirmButtonClass = computed(() => {
   if (props.itemName === 'Perubahan Status Aset') {
     return props.actionType === 'approved'
-      ? 'px-5 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm active:scale-[0.98]'
+      ? 'px-5 py-2 bg-[#2ECC71] hover:opacity-70 text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm active:scale-[0.98]'
       : 'px-5 py-2 bg-destructive hover:opacity-70 text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm active:scale-[0.98]';
   }
   return props.confirmButtonClass;
@@ -139,6 +139,7 @@ const displayFields = computed(() => {
     if (data.category) fields.push({ label: 'Kategori', value: data.category });
     if (data.subcategory) fields.push({ label: 'Subkategori', value: data.subcategory });
     if (data.brand) fields.push({ label: 'Merek', value: data.brand });
+    if (data.name || data.nama) fields.push({ label: 'Nama', value: data.name || data.nama });
     if (data.specification) fields.push({ label: 'Spesifikasi', value: data.specification });
     if (data.unit_details) {
       const locParts = [];
@@ -165,6 +166,7 @@ const displayFields = computed(() => {
     if (data.category) fields.push({ label: 'Kategori', value: data.category });
     if (data.subcategory) fields.push({ label: 'Subkategori', value: data.subcategory });
     if (data.brand) fields.push({ label: 'Merek', value: data.brand });
+    if (data.name || data.nama) fields.push({ label: 'Nama', value: data.name || data.nama });
     if (data.specification) fields.push({ label: 'Spesifikasi', value: data.specification });
     if (data.lastUpdate) fields.push({ label: 'Pembaruan Terakhir', value: data.lastUpdate });
     if (data.amount !== undefined) fields.push({ label: 'Jumlah', value: data.amount });
@@ -177,6 +179,7 @@ const displayFields = computed(() => {
     if (data.barang_category) fields.push({ label: 'Kategori', value: data.barang_category });
     if (data.barang_subcategory) fields.push({ label: 'Subkategori', value: data.barang_subcategory });
     if (data.barang_brand) fields.push({ label: 'Merek', value: data.barang_brand });
+    if (data.barang_nama) fields.push({ label: 'Nama', value: data.barang_nama });
     if (data.barang_specification) fields.push({ label: 'Spesifikasi', value: data.barang_specification });
     
     const uom = data.barang_uom || '';
@@ -253,7 +256,8 @@ const bulkItemsFields = computed(() => {
 
     // Check if ManajemenStok
     if ('specification' in data || 'lastUpdate' in data || 'amount' in data) {
-      if (data.code) fields.push({ label: 'Kode', value: data.code });
+      if (data.brand) fields.push({ label: 'Merek', value: data.brand });
+      if (data.name || data.nama) fields.push({ label: 'Nama', value: data.name || data.nama });
       if (data.specification) fields.push({ label: 'Spesifikasi', value: data.specification });
       return fields;
     }
@@ -314,10 +318,10 @@ const bulkItemsFields = computed(() => {
                 </p>
 
                 <!-- Single Item Info Details -->
-                <div v-if="displayFields.length > 0 && itemCount <= 1" class="p-3 rounded-[14px] bg-muted/40 border border-border text-left space-y-2.5 w-full max-w-[90%] mx-auto max-h-[45vh] overflow-y-auto">
+                <div v-if="displayFields.length > 0 && itemCount <= 1" class="p-3 rounded-[14px] bg-muted/40 border border-border text-left space-y-2.5 w-full max-w-[90%] mx-auto max-h-[40vh] overflow-y-auto">
                   <div v-for="field in displayFields" :key="field.label" class="grid grid-cols-12 gap-2 text-sm border-b border-border/50 last:border-0 pb-2 last:pb-0">
-                    <span class="col-span-3 text-muted-foreground font-medium">{{ field.label }}</span>
-                    <span class="col-span-9 text-foreground font-semibold text-right break-words">
+                    <span class="col-span-4 text-muted-foreground font-medium">{{ field.label }}</span>
+                    <span class="col-span-8 text-foreground font-semibold text-right break-words">
                       {{ field.value }}
                     </span>
                   </div>
@@ -327,8 +331,8 @@ const bulkItemsFields = computed(() => {
                 <div v-else-if="itemCount > 1 && bulkItemsFields.length > 0" class="p-3 rounded-[14px] bg-muted/40 border border-border text-left w-full max-w-[90%] mx-auto max-h-[45vh] overflow-y-auto space-y-3">
                   <div v-for="(itemFields, idx) in bulkItemsFields" :key="idx" class="p-3 rounded-[12px] bg-background border border-border space-y-2.5">
                     <div v-for="field in itemFields" :key="field.label" class="grid grid-cols-12 gap-2 text-sm border-b border-border/50 last:border-0 pb-2 last:pb-0">
-                      <span class="col-span-3 text-muted-foreground font-medium">{{ field.label }}</span>
-                      <span class="col-span-9 text-foreground font-semibold text-right break-words">
+                      <span class="col-span-4 text-muted-foreground font-medium">{{ field.label }}</span>
+                      <span class="col-span-8 text-foreground font-semibold text-right break-words">
                         {{ field.value }}
                       </span>
                     </div>
@@ -341,11 +345,8 @@ const bulkItemsFields = computed(() => {
             </div>
 
             <!-- Modal Footer -->
-            <div class="py-3 px-4 bg-muted/30 border-t border-border flex items-center justify-between">
-              <div>
-                <p v-if="modalShowNotice" class="text-sm text-rose-500 italic font-medium">*Wajib diisi</p>
-              </div>
-              <div class="flex items-center gap-3">
+            <div class="py-3 px-4 bg-muted/30 border-t border-border">
+              <div class="flex items-center justify-end gap-3">
                 <button 
                   @click="emit('close')"
                   class="px-5 py-2 bg-background border border-input hover:bg-muted text-foreground text-sm font-medium rounded-[14px] transition-colors shadow-sm"

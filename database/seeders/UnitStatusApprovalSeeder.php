@@ -33,7 +33,7 @@ class UnitStatusApprovalSeeder extends Seeder
             // Seed lifecycles (Audit Trail)
             UnitLifecycle::create([
                 'unit_id' => $laptop->id,
-                'status' => 'available',
+                'status' => 'Available',
                 'start_date' => Carbon::now()->subDays(30),
                 'end_date' => Carbon::now()->subDays(2),
                 'requester_id' => 1, // Admin: Radifa
@@ -42,7 +42,7 @@ class UnitStatusApprovalSeeder extends Seeder
 
             UnitLifecycle::create([
                 'unit_id' => $laptop->id,
-                'status' => 'lost',
+                'status' => 'Lost',
                 'start_date' => Carbon::now()->subDays(2),
                 'end_date' => null,
                 'requester_id' => 1, // Admin: Radifa
@@ -53,11 +53,11 @@ class UnitStatusApprovalSeeder extends Seeder
             UnitStatusApproval::create([
                 'unit_id' => $laptop->id,
                 'requester_id' => 1, // Admin Radifa
-                'proposed_status' => 'lost',
+                'proposed_status' => 'Lost',
                 'decision' => 'pending',
                 'note' => 'Aset hilang, berita acara sudah terlampir',
                 'requested_at' => Carbon::now()->subDays(2),
-                'memo_path' => 'memos/berita_acara_sfg14.pdf',
+                'doc_url' => 'memos/berita_acara_sfg14.pdf',
             ]);
         }
 
@@ -65,7 +65,7 @@ class UnitStatusApprovalSeeder extends Seeder
             // Seed lifecycles (Audit Trail)
             UnitLifecycle::create([
                 'unit_id' => $vehicle->id,
-                'status' => 'available',
+                'status' => 'Available',
                 'start_date' => Carbon::now()->subDays(45),
                 'end_date' => Carbon::now()->subDays(15),
                 'requester_id' => 1,
@@ -74,7 +74,7 @@ class UnitStatusApprovalSeeder extends Seeder
 
             UnitLifecycle::create([
                 'unit_id' => $vehicle->id,
-                'status' => 'repair',
+                'status' => 'Repair',
                 'start_date' => Carbon::now()->subDays(15),
                 'end_date' => Carbon::now()->subDays(1),
                 'requester_id' => 1,
@@ -83,7 +83,7 @@ class UnitStatusApprovalSeeder extends Seeder
 
             UnitLifecycle::create([
                 'unit_id' => $vehicle->id,
-                'status' => 'broken',
+                'status' => 'Loss',
                 'start_date' => Carbon::now()->subDays(1),
                 'end_date' => null,
                 'requester_id' => 1,
@@ -94,11 +94,11 @@ class UnitStatusApprovalSeeder extends Seeder
             UnitStatusApproval::create([
                 'unit_id' => $vehicle->id,
                 'requester_id' => 1, // Admin Radifa
-                'proposed_status' => 'broken',
+                'proposed_status' => 'Loss',
                 'decision' => 'pending',
                 'note' => 'Aset rusak parah dan perlu persetujuan pergantian status',
                 'requested_at' => Carbon::now()->subDays(1),
-                'memo_path' => 'memos/berita_acara_byd.pdf',
+                'doc_url' => 'memos/berita_acara_byd.pdf',
             ]);
         }
     }

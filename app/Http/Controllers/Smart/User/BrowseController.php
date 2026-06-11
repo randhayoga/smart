@@ -37,6 +37,7 @@ class BrowseController extends Controller
                     'subcategory_name' => $barang->subcategory->name ?? '-',
                     'is_consumable' => (bool) ($barang->subcategory->category->is_consumable ?? true),
                     'brand' => $barang->brand->name ?? '-',
+                    'name' => $barang->name,
                     'spec' => $barang->specification,
                     'stock' => $stock,
                     'imageUrl' => $barang->image_url ? '/storage/' . $barang->image_url : null,
@@ -70,6 +71,7 @@ class BrowseController extends Controller
                 'user_id' => $userId,
                 'barang_id' => $barang->id,
             ]);
+            $basketItem->subcategory_id = $barang->subcategory_id;
             $basketItem->quantity = ($basketItem->quantity ?? 0) + $validated['quantity'];
             $basketItem->save();
         } else {
@@ -78,6 +80,7 @@ class BrowseController extends Controller
                 'user_id' => $userId,
                 'barang_id' => $barang->id,
             ]);
+            $basketItem->subcategory_id = $barang->subcategory_id;
             $basketItem->quantity = ($basketItem->quantity ?? 0) + $validated['quantity'];
             // Assets need default start and end dates if not set, or we set them to tomorrow and the day after
             if (!$basketItem->start_date) {

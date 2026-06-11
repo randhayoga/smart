@@ -56,6 +56,7 @@ interface Props {
     barang_id: number;
     barang_code: string;
     barang_brand: string;
+    barang_nama: string;
     barang_specification: string;
     barang_category: string;
     barang_subcategory: string;
@@ -230,6 +231,8 @@ watch(() => lotForm.floor_id, (newVal) => {
 });
 
 const isLotFormValid = computed(() => {
+  const priceProvided = lotForm.unit_price !== '' && lotForm.unit_price !== null && lotForm.unit_price !== undefined;
+  const priceValid = !priceProvided || (Number(lotForm.unit_price) >= 0 && Number(lotForm.unit_price) <= 999999999);
   return lotForm.number && 
          lotForm.organizer_id && 
          lotForm.vendor_id && 
@@ -237,9 +240,7 @@ const isLotFormValid = computed(() => {
          lotForm.po_number && 
          lotForm.po_number.length <= 255 && 
          lotForm.date_of_receipt && 
-         lotForm.unit_price !== '' && 
-         Number(lotForm.unit_price) >= 0 && 
-         Number(lotForm.unit_price) <= 999999999 && 
+         priceValid && 
          (lotForm.image_url || lotForm.image_url_name) &&
          !lotForm.processing;
 });
@@ -469,8 +470,8 @@ const viewAssetMemoInNewTab = () => {
     window.open(url, '_blank');
   } else if (assetModalMode.value === 'edit' && selectedAssetId.value) {
     const asset = props.units.find(u => u.id === selectedAssetId.value);
-    if (asset && (asset as any).memo_path) {
-      window.open('/storage/' + (asset as any).memo_path, '_blank');
+    if (asset && (asset as any).doc_url) {
+      window.open('/storage/' + (asset as any).doc_url, '_blank');
     }
   }
 };
@@ -541,14 +542,14 @@ const parseCurrencyToNumber = (val: string | number) => {
 };
 
 const isAssetFormValid = computed(() => {
-  const parsedPrice = parseCurrencyToNumber(assetForm.price);
+  const priceProvided = assetForm.price !== '' && assetForm.price !== null && assetForm.price !== undefined;
+  const parsedPrice = priceProvided ? parseCurrencyToNumber(assetForm.price) : null;
+  const priceValid = !priceProvided || (parsedPrice !== null && parsedPrice >= 0 && parsedPrice <= 999999999);
   const baseValid = assetForm.number && 
          assetForm.location_id && 
          assetForm.status && 
          assetForm.condition && 
-         assetForm.price !== '' && 
-         parsedPrice >= 0 && 
-         parsedPrice <= 999999999 && 
+         priceValid && 
          (assetForm.image_url || assetForm.image_url_name) &&
          (!arrNeedApproval.includes(assetForm.status) || assetForm.memo_file_name) &&
          !assetForm.processing;
@@ -582,7 +583,7 @@ const handleSaveAsset = () => {
       room_id: data.room_id,
       status: data.status,
       condition: data.condition,
-      price: parseCurrencyToNumber(data.price),
+      price: data.price !== '' && data.price !== null && data.price !== undefined ? parseCurrencyToNumber(data.price) : null,
     };
     if (isVehicle.value) {
       formData.vehicle_registration = data.vehicle_registration;
@@ -621,9 +622,9 @@ const handleSaveAsset = () => {
 
 // Formats & Helpers
 const formatRupiah = (val: number | string | null | undefined) => {
-  if (val === null || val === undefined || val === '') return 'Rp0';
+  if (val === null || val === undefined || val === '') return '-';
   const num = typeof val === 'string' ? parseFloat(val) : val;
-  if (isNaN(num)) return 'Rp0';
+  if (isNaN(num)) return '-';
   const formatted = Math.floor(num).toLocaleString('id-ID');
   return `Rp${formatted}`;
 };
@@ -654,6 +655,7 @@ const deleteFields = computed(() => {
       { label: 'Kategori', value: props.lot.barang_category },
       { label: 'Subkategori', value: props.lot.barang_subcategory },
       { label: 'Merek', value: props.lot.barang_brand },
+      { label: 'Nama', value: props.lot.barang_nama },
       { label: 'Spesifikasi', value: props.lot.barang_specification },
       { label: 'Jumlah stok tersedia', value: props.units.filter(u => u.status === 'tersedia').length },
       { label: 'Jumlah stok diawal', value: props.units.length },
@@ -676,6 +678,7 @@ const deleteFields = computed(() => {
       { label: 'Kategori', value: props.lot.barang_category },
       { label: 'Subkategori', value: props.lot.barang_subcategory },
       { label: 'Merek', value: props.lot.barang_brand },
+      { label: 'Nama', value: props.lot.barang_nama },
       { label: 'Spesifikasi', value: props.lot.barang_specification },
     ];
     
@@ -1237,14 +1240,19 @@ const filteredUnits = computed(() => {
 });
 
 // Dynamic values for dropdown filters
-const availableStatuses = ['tersedia', 'dipinjam', 'dipakai', 'rusak'];
+const availableStatuses = ['Available', 'Borrowed', 'Repair', 'Loss', 'Lost', 'Inactive'];
 const availableConditions = ['Baik', 'Kurang Baik', 'Rusak'];
 
 const getStatusLabel = (status: string) => {
-  if (status === 'tersedia') return 'Tersedia';
-  if (status === 'dipinjam') return 'Dipinjam';
-  if (status === 'dipakai') return 'Dipakai';
-  if (status === 'rusak') return 'Rusak';
+  if (!status) return '';
+  const lower = status.toLowerCase();
+  if (lower === 'available' || lower === 'tersedia') return 'Tersedia';
+  if (lower === 'borrowed' || lower === 'dipinjam') return 'Dipinjam';
+  if (lower === 'dipakai') return 'Dipinjam';
+  if (lower === 'repair' || lower === 'perbaikan') return 'Perbaikan';
+  if (lower === 'loss' || lower === 'rusak') return 'Rusak';
+  if (lower === 'lost' || lower === 'hilang') return 'Hilang';
+  if (lower === 'inactive' || lower === 'tidak aktif') return 'Tidak Aktif';
   return status;
 };
 
@@ -1312,12 +1320,14 @@ const columns = computed<ColumnDef<any>[]>(() => {
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ]),
       cell: ({ row }) => {
-        const status = row.getValue('status') as string;
+        const status = (row.getValue('status') as string || '').toLowerCase();
         let badgeClass = 'bg-gray-100 text-gray-800';
-        if (status === 'tersedia') badgeClass = 'bg-emerald-100 text-emerald-800';
-        else if (status === 'dipinjam') badgeClass = 'bg-amber-100 text-amber-800';
-        else if (status === 'dipakai') badgeClass = 'bg-blue-100 text-blue-800';
-        else if (status === 'rusak') badgeClass = 'bg-rose-100 text-rose-800';
+        if (status === 'available' || status === 'tersedia') badgeClass = 'bg-emerald-100 text-emerald-800';
+        else if (status === 'borrowed' || status === 'dipinjam' || status === 'dipakai') badgeClass = 'bg-amber-100 text-amber-800';
+        else if (status === 'repair' || status === 'perbaikan') badgeClass = 'bg-blue-100 text-blue-800';
+        else if (status === 'loss' || status === 'rusak') badgeClass = 'bg-red-100 text-red-800';
+        else if (status === 'lost' || status === 'hilang') badgeClass = 'bg-rose-100 text-rose-800';
+        else if (status === 'inactive' || status === 'tidak aktif') badgeClass = 'bg-gray-200 text-gray-800';
         
         return h('span', { class: `inline-flex items-center px-2 py-0.5 rounded-full font-semibold ${badgeClass}` }, getStatusLabel(status));
       }
@@ -1444,6 +1454,7 @@ const totalAsetTerpilihCount = computed(() => {
             <div class="md:col-span-4">
               <p class="font-bold text-foreground"><span class="text-foreground">Kode Barang:</span> {{ props.lot.barang_code }}</p>
               <p class="font-bold text-foreground"><span class="text-foreground">Merek:</span> {{ props.lot.barang_brand }}</p>
+              <p class="font-bold text-foreground"><span class="text-foreground">Nama:</span> {{ props.lot.barang_nama }}</p>
               <p class="font-bold text-foreground"><span class="text-foreground">Spesifikasi:</span> {{ props.lot.barang_specification }}</p>
               <p class="text-foreground">Kategori: {{ props.lot.barang_category }}</p>
               <p class="text-foreground">Subkategori: {{ props.lot.barang_subcategory }}</p>
@@ -1707,7 +1718,7 @@ const totalAsetTerpilihCount = computed(() => {
                     </div>
 
                     <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Harga Satuan <span class="italic text-muted-foreground">default</span><span class="text-rose-500">*</span></label>
+                      <label class="text-sm font-medium text-foreground block">Harga Satuan <span class="italic text-muted-foreground">default</span></label>
                       <div class="flex w-full rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors h-10 overflow-hidden">
                         <span class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-r border-input select-none font-medium">
                           Rp
@@ -1843,7 +1854,7 @@ const totalAsetTerpilihCount = computed(() => {
 
                     <!-- Nilai (Price) -->
                     <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Nilai<span class="text-rose-500">*</span></label>
+                      <label class="text-sm font-medium text-foreground block">Nilai</label>
                       <div class="flex gap-2">
                         <div class="flex flex-grow rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors h-10 overflow-hidden">
                           <span class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-r border-input select-none font-medium">
@@ -2181,6 +2192,7 @@ const totalAsetTerpilihCount = computed(() => {
                     <div class="md:col-span-3">
                       <p class="font-bold text-foreground"><span class="text-foreground">Kode Barang:</span> {{ props.lot.barang_code }}</p>
                       <p class="font-bold text-foreground"><span class="text-foreground">Merek:</span> {{ props.lot.barang_brand }}</p>
+                      <p class="font-bold text-foreground"><span class="text-foreground">Nama:</span> {{ props.lot.barang_nama }}</p>
                       <p class="font-bold text-foreground"><span class="text-foreground">Spesifikasi:</span> {{ props.lot.barang_specification }}</p>
                       <p class="text-foreground">Kategori: {{ props.lot.barang_category }}</p>
                       <p class="text-foreground">Subkategori: {{ props.lot.barang_subcategory }}</p>
