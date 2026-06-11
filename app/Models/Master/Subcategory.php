@@ -35,6 +35,21 @@ class Subcategory extends Model
         return $this->hasMany(\App\Models\Inventory\Barang::class);
     }
 
+    public function consumableBaskets(): HasMany
+    {
+        return $this->hasMany(\App\Models\Cart\ConsumableBasket::class);
+    }
+
+    public function assetBaskets(): HasMany
+    {
+        return $this->hasMany(\App\Models\Cart\AssetBasket::class);
+    }
+
+    public function requestItems(): HasMany
+    {
+        return $this->hasMany(\App\Models\Request\RequestItem::class);
+    }
+
     public function getCodeAttribute($value)
     {
         return $value !== null ? trim($value) : null;
