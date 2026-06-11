@@ -47,12 +47,12 @@ class UnitController extends Controller
 
         $validated = $request->validate($rules);
 
-        $arrNeedApproval = ['rusak'];
+        $arrNeedApproval = ['Loss', 'Lost'];
         $proposedStatus = $validated['status'];
         $needApproval = in_array($proposedStatus, $arrNeedApproval);
 
         if ($needApproval) {
-            $validated['status'] = 'tersedia';
+            $validated['status'] = 'Available';
         }
 
         // Single creation logic
@@ -127,7 +127,7 @@ class UnitController extends Controller
 
         $validated = $request->validate($rules);
 
-        $arrNeedApproval = ['rusak'];
+        $arrNeedApproval = ['Loss', 'Lost'];
         $proposedStatus = $validated['status'];
         $needApproval = in_array($proposedStatus, $arrNeedApproval);
 

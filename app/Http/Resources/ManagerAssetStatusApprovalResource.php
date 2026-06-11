@@ -18,6 +18,7 @@ class ManagerAssetStatusApprovalResource extends JsonResource
             'tersedia' => 'Tersedia',
             'borrowed' => 'Dipinjam',
             'dipinjam' => 'Dipinjam',
+            'dipakai' => 'Dipinjam',
             'maintenance' => 'Perbaikan',
             'perbaikan' => 'Perbaikan',
             'repair' => 'Perbaikan',
@@ -25,8 +26,10 @@ class ManagerAssetStatusApprovalResource extends JsonResource
             'inactive' => 'Tidak Aktif',
             'broken' => 'Rusak',
             'rusak' => 'Rusak',
+            'loss' => 'Rusak',
             'lost' => 'Hilang',
             'hilang' => 'Hilang',
+            'tidak aktif' => 'Tidak Aktif',
         ];
         return $statusMap[strtolower($status)] ?? $status;
     }
