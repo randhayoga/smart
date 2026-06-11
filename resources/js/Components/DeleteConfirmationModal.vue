@@ -41,9 +41,9 @@ const handleConfirm = () => {
 };
 
 const formatRupiah = (val: number | string | null | undefined) => {
-  if (val === null || val === undefined || val === '') return 'Rp0';
+  if (val === null || val === undefined || val === '') return '-';
   const num = typeof val === 'string' ? parseFloat(val) : val;
-  if (isNaN(num)) return 'Rp0';
+  if (isNaN(num)) return '-';
   const formatted = Math.floor(num).toLocaleString('id-ID');
   return `Rp${formatted}`;
 };

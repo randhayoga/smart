@@ -23,7 +23,7 @@ class BulkUnitController extends Controller
             'room_id' => 'nullable|exists:rooms,id',
             'status' => 'required|string|max:255',
             'condition' => 'required|string|max:255',
-            'price' => 'required|numeric|min:0|max:999999999.99',
+            'price' => 'nullable|numeric|min:0|max:999999999.99',
             'image_url' => 'required_without:use_lot_image|nullable|image|max:1024',
             'use_lot_image' => 'nullable',
             'bulk_quantity' => 'required|integer|min:1|max:999',
@@ -182,8 +182,8 @@ class BulkUnitController extends Controller
         }
 
         // 3. Price
-        if ($request->filled('price')) {
-            $updateData['price'] = (float)$request->input('price');
+        if ($request->has('price')) {
+            $updateData['price'] = $request->input('price') !== null ? (float)$request->input('price') : null;
         }
 
         // 4. Image URL / Use LOT Image

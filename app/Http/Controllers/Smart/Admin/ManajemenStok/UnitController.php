@@ -24,7 +24,7 @@ class UnitController extends Controller
             'room_id' => 'nullable|exists:rooms,id',
             'status' => 'required|string|max:255',
             'condition' => 'required|string|max:255',
-            'price' => 'required|numeric|min:0|max:999999999.99',
+            'price' => 'nullable|numeric|min:0|max:999999999.99',
             'image_url' => 'required_without:use_lot_image|nullable|image|max:1024',
             'use_lot_image' => 'nullable',
         ];
@@ -104,7 +104,7 @@ class UnitController extends Controller
             'room_id' => 'nullable|exists:rooms,id',
             'status' => 'required|string|max:255',
             'condition' => 'required|string|max:255',
-            'price' => 'required|numeric|min:0|max:999999999.99',
+            'price' => 'nullable|numeric|min:0|max:999999999.99',
             'image_url' => 'nullable|image|max:1024',
             'use_lot_image' => 'nullable',
         ];

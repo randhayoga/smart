@@ -383,16 +383,16 @@ const openMemoFile = (path: string | null) => {
 
 // Formats & Helpers
 const formatRupiah = (val: number | string | null | undefined) => {
-  if (val === null || val === undefined || val === '') return 'Rp0';
+  if (val === null || val === undefined || val === '') return '-';
   let num: number;
   if (typeof val === 'string') {
     const cleanStr = val.replace(/[^0-9,-]/g, '');
-    if (!cleanStr) return 'Rp0';
+    if (!cleanStr) return '-';
     num = parseFloat(cleanStr.replace(/,/g, '.'));
   } else {
     num = val;
   }
-  if (isNaN(num)) return 'Rp0';
+  if (isNaN(num)) return '-';
   const formatted = Math.floor(num).toLocaleString('id-ID');
   return `Rp${formatted}`;
 };

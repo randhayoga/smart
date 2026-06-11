@@ -43,9 +43,9 @@ watch(() => props.isOpen, (newVal) => {
 });
 
 const formatRupiah = (val: number | string | null | undefined) => {
-  if (val === null || val === undefined || val === '') return 'Rp0';
+  if (val === null || val === undefined || val === '') return '-';
   const num = typeof val === 'string' ? parseFloat(val) : val;
-  if (isNaN(num)) return 'Rp0';
+  if (isNaN(num)) return '-';
   
   // Format to RpXXX.XXX (dot as thousands separator, no decimal)
   const formatted = Math.floor(num).toLocaleString('id-ID');

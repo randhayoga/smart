@@ -48,7 +48,7 @@ class BulkLotController extends Controller
             if ($request->has('room_id')) {
                 $lotData['room_id'] = $request->input('room_id');
             }
-            if ($request->filled('unit_price')) {
+            if ($request->has('unit_price')) {
                 $lotData['unit_price'] = $request->input('unit_price');
             }
 
