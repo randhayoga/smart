@@ -33,7 +33,7 @@ return new class extends Migration {
             $table->integer('current_quantity')->nullable()->comment('for consumables');
             $table->string('po_number');
             $table->dateTime('date_of_receipt');
-            $table->decimal('unit_price', 15, 2)->comment('default unit price');
+            $table->decimal('unit_price', 15, 2)->nullable()->comment('default unit price');
             $table->string('image_url')->comment('default image');
             $table->timestamps();
         });
@@ -47,7 +47,7 @@ return new class extends Migration {
             $table->foreignId('room_id')->nullable()->constrained('rooms');
             $table->string('status');
             $table->string('condition');
-            $table->decimal('price', 15, 2);
+            $table->decimal('price', 15, 2)->nullable();
             $table->string('image_url');
             $table->string('vehicle_registration')->nullable();
             $table->timestamps();

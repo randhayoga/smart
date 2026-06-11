@@ -305,7 +305,6 @@ const isLotFormValid = computed(() => {
          lotForm.location_id && 
          lotForm.po_number && 
          lotForm.date_of_receipt && 
-         lotForm.unit_price !== '' && 
          (lotForm.image_url || lotForm.image_url_name) &&
          !lotForm.processing;
 
@@ -906,7 +905,6 @@ const isBulkLotFormValid = computed(() => {
       bulkLotForm.location_id &&
       bulkLotForm.po_number &&
       bulkLotForm.date_of_receipt &&
-      bulkLotForm.unit_price !== '' &&
       (bulkLotForm.image_url || bulkLotForm.use_parent_image || bulkLotForm.image_url_name) &&
       !bulkLotForm.processing
     );
@@ -1002,9 +1000,9 @@ const deleteFields = computed(() => {
     };
     
     const formatRupiah = (val: number | string | null | undefined) => {
-      if (val === null || val === undefined || val === '') return 'Rp0';
+      if (val === null || val === undefined || val === '') return '-';
       const num = typeof val === 'string' ? parseFloat(val) : val;
-      if (isNaN(num)) return 'Rp0';
+      if (isNaN(num)) return '-';
       const formatted = Math.floor(num).toLocaleString('id-ID');
       return `Rp${formatted}`;
     };
@@ -1659,7 +1657,7 @@ const closeErrorModal = () => {
                     </div>
 
                     <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Harga Satuan <span v-if="!props.barang.is_consumable" class="italic text-muted-foreground">default</span><span class="text-rose-500">*</span></label>
+                      <label class="text-sm font-medium text-foreground block">Harga Satuan <span v-if="!props.barang.is_consumable" class="italic text-muted-foreground">default</span></label>
                       <div class="flex w-full rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors h-10 overflow-hidden">
                         <span class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-r border-input select-none font-medium">
                           Rp
@@ -1877,7 +1875,7 @@ const closeErrorModal = () => {
                     </div>
 
                     <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Harga Satuan <span v-if="!props.barang.is_consumable" class="italic text-muted-foreground">default</span><span v-if="bulkLotForm.ids.length === 1" class="text-rose-500">*</span></label>
+                      <label class="text-sm font-medium text-foreground block">Harga Satuan <span v-if="!props.barang.is_consumable" class="italic text-muted-foreground">default</span></label>
                       <div class="flex w-full rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors h-10 overflow-hidden">
                         <span class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-r border-input select-none font-medium">
                           Rp

@@ -26,7 +26,7 @@ class LotController extends Controller
             'current_quantity' => 'nullable|integer|min:0|max:2147483647',
             'po_number' => 'required|string|max:255',
             'date_of_receipt' => 'required|date',
-            'unit_price' => 'required|numeric|min:0|max:999999999.99',
+            'unit_price' => 'nullable|numeric|min:0|max:999999999.99',
             'image_url' => 'required_without:use_parent_image|nullable|image|max:1024',
             'use_parent_image' => 'nullable',
             'auto_create_assets' => 'nullable|boolean',
@@ -76,7 +76,7 @@ class LotController extends Controller
             'current_quantity' => 'nullable|integer|min:0|max:2147483647',
             'po_number' => 'required|string|max:255',
             'date_of_receipt' => 'required|date',
-            'unit_price' => 'required|numeric|min:0|max:999999999.99',
+            'unit_price' => 'nullable|numeric|min:0|max:999999999.99',
             'image_url' => 'nullable|image|max:1024',
             'use_parent_image' => 'nullable',
         ], [

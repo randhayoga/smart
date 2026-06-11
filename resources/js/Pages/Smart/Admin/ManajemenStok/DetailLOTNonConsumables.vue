@@ -231,6 +231,8 @@ watch(() => lotForm.floor_id, (newVal) => {
 });
 
 const isLotFormValid = computed(() => {
+  const priceProvided = lotForm.unit_price !== '' && lotForm.unit_price !== null && lotForm.unit_price !== undefined;
+  const priceValid = !priceProvided || (Number(lotForm.unit_price) >= 0 && Number(lotForm.unit_price) <= 999999999);
   return lotForm.number && 
          lotForm.organizer_id && 
          lotForm.vendor_id && 
@@ -238,9 +240,7 @@ const isLotFormValid = computed(() => {
          lotForm.po_number && 
          lotForm.po_number.length <= 255 && 
          lotForm.date_of_receipt && 
-         lotForm.unit_price !== '' && 
-         Number(lotForm.unit_price) >= 0 && 
-         Number(lotForm.unit_price) <= 999999999 && 
+         priceValid && 
          (lotForm.image_url || lotForm.image_url_name) &&
          !lotForm.processing;
 });
@@ -542,14 +542,14 @@ const parseCurrencyToNumber = (val: string | number) => {
 };
 
 const isAssetFormValid = computed(() => {
-  const parsedPrice = parseCurrencyToNumber(assetForm.price);
+  const priceProvided = assetForm.price !== '' && assetForm.price !== null && assetForm.price !== undefined;
+  const parsedPrice = priceProvided ? parseCurrencyToNumber(assetForm.price) : null;
+  const priceValid = !priceProvided || (parsedPrice !== null && parsedPrice >= 0 && parsedPrice <= 999999999);
   const baseValid = assetForm.number && 
          assetForm.location_id && 
          assetForm.status && 
          assetForm.condition && 
-         assetForm.price !== '' && 
-         parsedPrice >= 0 && 
-         parsedPrice <= 999999999 && 
+         priceValid && 
          (assetForm.image_url || assetForm.image_url_name) &&
          (!arrNeedApproval.includes(assetForm.status) || assetForm.memo_file_name) &&
          !assetForm.processing;
@@ -583,7 +583,7 @@ const handleSaveAsset = () => {
       room_id: data.room_id,
       status: data.status,
       condition: data.condition,
-      price: parseCurrencyToNumber(data.price),
+      price: data.price !== '' && data.price !== null && data.price !== undefined ? parseCurrencyToNumber(data.price) : null,
     };
     if (isVehicle.value) {
       formData.vehicle_registration = data.vehicle_registration;
@@ -622,9 +622,9 @@ const handleSaveAsset = () => {
 
 // Formats & Helpers
 const formatRupiah = (val: number | string | null | undefined) => {
-  if (val === null || val === undefined || val === '') return 'Rp0';
+  if (val === null || val === undefined || val === '') return '-';
   const num = typeof val === 'string' ? parseFloat(val) : val;
-  if (isNaN(num)) return 'Rp0';
+  if (isNaN(num)) return '-';
   const formatted = Math.floor(num).toLocaleString('id-ID');
   return `Rp${formatted}`;
 };
@@ -1718,7 +1718,7 @@ const totalAsetTerpilihCount = computed(() => {
                     </div>
 
                     <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Harga Satuan <span class="italic text-muted-foreground">default</span><span class="text-rose-500">*</span></label>
+                      <label class="text-sm font-medium text-foreground block">Harga Satuan <span class="italic text-muted-foreground">default</span></label>
                       <div class="flex w-full rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors h-10 overflow-hidden">
                         <span class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-r border-input select-none font-medium">
                           Rp
@@ -1854,7 +1854,7 @@ const totalAsetTerpilihCount = computed(() => {
 
                     <!-- Nilai (Price) -->
                     <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Nilai<span class="text-rose-500">*</span></label>
+                      <label class="text-sm font-medium text-foreground block">Nilai</label>
                       <div class="flex gap-2">
                         <div class="flex flex-grow rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors h-10 overflow-hidden">
                           <span class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-r border-input select-none font-medium">
