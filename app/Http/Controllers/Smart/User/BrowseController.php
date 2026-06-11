@@ -8,6 +8,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 use App\Models\Inventory\Barang;
 use App\Models\Master\Category;
+use App\Models\Master\Subcategory;
 use App\Models\Cart\ConsumableBasket;
 use App\Models\Cart\AssetBasket;
 
@@ -20,27 +21,25 @@ class BrowseController extends Controller
     {
         $categories = Category::orderBy('name')->get();
         
-        $items = Barang::with(['subcategory.category', 'brand', 'uom'])
+        $items = Subcategory::with(['category', 'barangs'])
             ->get()
-            ->map(function ($barang) {
-                // Calculate stock of units with status 'tersedia'
-                $stock = \App\Models\Inventory\Unit::whereHas('lot', function ($q) use ($barang) {
-                    $q->where('barang_id', $barang->id);
-                })->where('status', 'tersedia')->count();
+            ->map(function ($subcategory) {
+                $firstBarang = $subcategory->barangs->first();
 
                 return [
-                    'id' => $barang->id,
-                    'code' => $barang->number,
-                    'category' => ($barang->subcategory->category->name ?? '-') . ' (' . ($barang->subcategory->name ?? '-') . ')',
-                    'category_id' => $barang->subcategory->category_id ?? null,
-                    'category_name' => $barang->subcategory->category->name ?? '-',
-                    'subcategory_name' => $barang->subcategory->name ?? '-',
-                    'is_consumable' => (bool) ($barang->subcategory->category->is_consumable ?? true),
-                    'brand' => $barang->brand->name ?? '-',
-                    'name' => $barang->name,
-                    'spec' => $barang->specification,
-                    'stock' => $stock,
-                    'imageUrl' => $barang->image_url ? '/storage/' . $barang->image_url : null,
+                    'id' => $subcategory->id,
+                    'barang_id' => $firstBarang ? $firstBarang->id : null,
+                    'code' => $firstBarang ? $firstBarang->number : '-',
+                    'category' => $subcategory->category->name ?? '-',
+                    'category_id' => $subcategory->category_id,
+                    'category_name' => $subcategory->category->name ?? '-',
+                    'subcategory_name' => $subcategory->name,
+                    'is_consumable' => (bool) ($subcategory->category->is_consumable ?? true),
+                    'brand' => $firstBarang && $firstBarang->brand ? $firstBarang->brand->name : '-',
+                    'name' => $subcategory->name,
+                    'spec' => $firstBarang ? $firstBarang->specification : '-',
+                    'stock' => 0,
+                    'imageUrl' => $firstBarang && $firstBarang->image_url ? '/storage/' . $firstBarang->image_url : null,
                 ];
             });
 
