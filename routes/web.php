@@ -81,6 +81,7 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
         Route::get('/inbox', [InboxController::class, 'index'])->name('inbox');
         Route::get('/inbox/{id}', [InboxController::class, 'show'])->name('inbox.show');
         Route::post('/inbox/{id}/action', [InboxController::class, 'action'])->name('inbox.action');
+        Route::get('/partial', [InboxController::class, 'partial'])->name('partial');
         Route::get('/handover', [HandoverController::class, 'index'])->name('handover');
         Route::get('/handover/{id}', [HandoverController::class, 'show'])->name('handover.show');
         Route::post('/handover/{id}/allocate', [HandoverController::class, 'allocate'])->name('handover.allocate');

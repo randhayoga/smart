@@ -51,6 +51,8 @@ interface RequestItem {
   category: string;
   is_consumable?: boolean;
   assets?: string[];
+  stock?: number | null;
+  status?: string;
 }
 
 interface RequestHistory {
@@ -63,8 +65,8 @@ interface RequestHistory {
   durationEnd?: string;
   durationDays?: number;
   durationHours?: number;
-  status: 'Menunggu approval' | 'Disetujui' | 'Ditolak' | 'Serah Terima' | 'Dipinjam' | 'Selesai' | 'Dibatalkan' | 'Pending';
-  raw_status: 'wait' | 'approve' | 'confirm' | 'handover' | 'borrow' | 'return' | 'success' | 'reject' | 'cancel' | 'pending';
+  status: 'Menunggu approval' | 'Disetujui' | 'Ditolak' | 'Serah Terima' | 'Dipinjam' | 'Selesai' | 'Dibatalkan' | 'Pending' | 'Partial';
+  raw_status: 'wait' | 'approve' | 'confirm' | 'handover' | 'borrow' | 'return' | 'success' | 'reject' | 'cancel' | 'pending' | 'partial';
   created_at: string; // format YYYY-MM-DD
   items: RequestItem[];
   approval_by?: string | null;
@@ -77,6 +79,7 @@ interface RequestHistory {
   handover_time?: string | null;
   handover_location?: string | null;
   handover_note?: string | null;
+  logs?: any[];
 }
 
 import { watch } from 'vue';
@@ -514,7 +517,6 @@ interface TimelineStep {
   description?: string;
   user?: string;
 }
-
 const timelineSteps = computed((): TimelineStep[] => {
   const r = request.value;
   if (!r) return [];
@@ -524,152 +526,128 @@ const timelineSteps = computed((): TimelineStep[] => {
   // Step 1: Permintaan dibuat
   steps.push({
     title: 'Permintaan dibuat',
-    time: `${baseDate} 08:30`,
+    time: r.created_at ? `${formatDate(r.created_at)} 08:30` : '',
     status: 'done'
   });
 
-  // Handle Cancel / Reject statuses early
-  if (r.raw_status === 'cancel') {
-    steps.push({
-      title: 'Dibatalkan oleh Pengguna',
-      time: r.approval_at || `${baseDate} 09:45`,
-      status: 'rejected',
-      description: 'Anda telah membatalkan permintaan ini.'
+  // Step 2: Historical Logs
+  if (r.logs && Array.isArray(r.logs)) {
+    const sortedLogs = [...r.logs].sort((a, b) => a.id - b.id);
+    sortedLogs.forEach(log => {
+      if (log.status_to === 'wait') return;
+
+      let title = '';
+      let status: 'done' | 'rejected' | 'pending' = 'done';
+      let description = log.note || '';
+
+      if (log.status_to === 'approve') {
+        title = 'Di-approve';
+        description = description || 'Permintaan disetujui oleh Manager.';
+      } else if (log.status_to === 'partial') {
+        title = 'Disetujui sebagian (Partial)';
+        description = description || 'Permintaan disetujui sebagian oleh Admin.';
+      } else if (log.status_to === 'confirm') {
+        if (log.status_from === 'partial') {
+          title = 'Alokasi Barang Tambahan Dikonfirmasi';
+        } else {
+          if (log.note && log.note.includes('diatur oleh pengguna')) {
+            title = 'Jadwal Serah Terima Diatur';
+          } else {
+            title = 'Dikonfirmasi';
+          }
+        }
+        description = description || 'Permintaan dikonfirmasi oleh Admin.';
+      } else if (log.status_to === 'borrow') {
+        title = 'Serah Terima Selesai & Dipinjam';
+        description = description || 'Aset telah diserahkan dan dipinjam.';
+      } else if (log.status_to === 'return') {
+        title = 'Pengembalian Diajukan';
+        description = description || 'Jadwal pengembalian telah diajukan.';
+      } else if (log.status_to === 'success') {
+        if (log.status_from === 'return') {
+          title = 'Pengembalian Selesai';
+          description = description || 'Aset dikembalikan & semua proses selesai.';
+        } else {
+          title = 'Serah Terima Selesai';
+          description = description || 'Barang habis pakai telah diserahkan & proses selesai.';
+        }
+      } else if (log.status_to === 'reject') {
+        title = 'Ditolak';
+        status = 'rejected';
+        description = description || 'Permintaan ditolak.';
+      } else if (log.status_to === 'cancel') {
+        title = 'Dibatalkan';
+        status = 'rejected';
+        description = description || 'Permintaan dibatalkan.';
+      } else if (log.status_to === 'pending') {
+        if (log.status_from === 'confirm') {
+          title = 'Serah Terima Sebagian Diterima';
+          status = 'done'; // Mark as done since it is a completed receipt step
+        } else {
+          title = 'Pending';
+          status = 'pending';
+        }
+        description = description || (log.status_from === 'confirm' ? 'Barang telah diterima oleh pengguna.' : 'Permintaan ditunda (pending) oleh Admin.');
+      }
+
+      if (title) {
+        steps.push({
+          title,
+          time: log.time,
+          status,
+          user: log.user || undefined,
+          description
+        });
+      }
     });
-    return steps;
   }
 
-  if (r.raw_status === 'reject') {
-    steps.push({
-      title: 'Ditolak',
-      time: r.approval_at || `${baseDate} 11:20`,
-      status: 'rejected',
-      description: 'Permintaan ditolak karena stok di gudang tidak mencukupi atau spesifikasi tidak sesuai.'
-    });
-    return steps;
-  }
-
-  // Active Lifecycle steps:
-  // Step 2: Di-approve (Manager Approval)
-  if (r.raw_status === 'wait') {
-    steps.push({
-      title: 'Menunggu approval',
-      status: 'active',
-      description: 'Menunggu approval dari Manager.'
-    });
-    steps.push({
-      title: 'Konfirmasi Admin',
-      status: 'pending',
-      description: 'Belum diproses.'
-    });
-    steps.push({
-      title: 'Serah Terima',
-      status: 'pending'
-    });
-    steps.push({
-      title: r.type === 'peminjaman' ? 'Sedang Dipinjam' : 'Selesai',
-      status: 'pending'
-    });
-  } else {
-    // If raw_status is approve, confirm, borrow, return, success:
-    steps.push({
-      title: 'Di-approve',
-      user: r.approval_by || r.approver_name || 'Manager',
-      time: r.approval_at || `${baseDate} 14:15`,
-      status: 'done'
-    });
-
-    // Step 3: Dikonfirmasi (Admin Confirmation)
-    if (r.raw_status === 'approve') {
+  // Step 3: Active / Next steps
+  const isFinalStatus = ['success', 'reject', 'cancel'].includes(r.raw_status);
+  if (!isFinalStatus) {
+    if (r.raw_status === 'wait') {
+      steps.push({
+        title: 'Menunggu approval',
+        status: 'active',
+        description: 'Menunggu approval dari Manager.'
+      });
+    } else if (r.raw_status === 'approve') {
       steps.push({
         title: 'Menunggu konfirmasi Admin',
         status: 'active',
         description: 'Permintaan disetujui Manager. Menunggu alokasi aset dan konfirmasi Admin.'
       });
-      steps.push({
-        title: 'Serah Terima',
-        status: 'pending'
-      });
-      steps.push({
-        title: r.type === 'peminjaman' ? 'Sedang Dipinjam' : 'Selesai',
-        status: 'pending'
-      });
     } else if (r.raw_status === 'pending') {
       steps.push({
         title: 'Pending',
         status: 'pending',
-        user: r.confirmation_by || 'Admin',
-        time: r.confirmation_at || `${baseDate} 15:30`,
         description: 'Pemesanan pending/ditunda oleh Admin karena stok barang habis.'
       });
+    } else if (r.raw_status === 'partial') {
       steps.push({
         title: 'Serah Terima',
-        status: 'pending'
+        status: 'action-required',
+        description: 'Serah Terima perlu diatur!'
       });
+    } else if (r.raw_status === 'confirm') {
+      const isScheduled = !!r.handover_time || isAutoScheduled.value;
       steps.push({
-        title: r.type === 'peminjaman' ? 'Sedang Dipinjam' : 'Selesai',
-        status: 'pending'
+        title: 'Serah Terima',
+        status: 'action-required',
+        description: isScheduled ? 'scheduled-details' : 'Serah Terima perlu diatur!'
       });
-    } else {
-      // If raw_status is confirm, borrow, return, success:
+    } else if (r.raw_status === 'borrow') {
       steps.push({
-        title: 'Dikonfirmasi',
-        user: r.confirmation_by || 'Admin',
-        time: r.confirmation_at || `${baseDate} 15:30`,
-        status: 'done'
+        title: r.type === 'peminjaman' ? 'Aset sedang Anda pinjam' : 'Aset sedang Anda gunakan',
+        status: 'action-required',
+        description: 'show-return-action'
       });
-
-      // Step 4: Serah Terima
-      if (r.raw_status === 'confirm') {
-        const isScheduled = !!r.handover_time || isAutoScheduled.value;
-        steps.push({
-          title: 'Serah Terima',
-          status: 'action-required',
-          description: isScheduled ? 'scheduled-details' : 'Serah Terima perlu diatur!'
-        });
-        steps.push({
-          title: r.type === 'peminjaman' ? 'Sedang Dipinjam' : 'Selesai Digunakan',
-          status: 'pending',
-          description: r.type === 'peminjaman' ? 'Aset sedang Anda gunakan. Harap dikembalikan sebelum jatuh tempo.' : 'Barang habis pakai sudah diserahkan.'
-        });
-      } else if (r.raw_status === 'borrow' || r.raw_status === 'return') {
-        steps.push({
-          title: 'Serah Terima Selesai',
-          time: effectiveHandoverTime.value || `${baseDate} 16:00`,
-          status: 'done',
-          description: `Serah terima diselesaikan secara ${effectiveHandoverMethod.value.toLowerCase()} di ${effectiveHandoverLocation.value}.`
-        });
-
-        // Step 5: Penggunaan / Pengembalian
-        if (r.raw_status === 'borrow') {
-          steps.push({
-            title: r.type === 'peminjaman' ? 'Aset sedang Anda pinjam' : 'Aset sedang Anda gunakan',
-            status: 'action-required',
-            description: 'show-return-action'
-          });
-        } else {
-          // 'return'
-          steps.push({
-            title: 'Dalam Proses Pengembalian',
-            status: 'active',
-            description: 'Jadwal pengembalian telah diajukan. Menunggu konfirmasi Admin.'
-          });
-        }
-      } else if (r.raw_status === 'success') {
-        steps.push({
-          title: 'Serah Terima Selesai',
-          time: effectiveHandoverTime.value || `${baseDate} 16:00`,
-          status: 'done'
-        });
-        steps.push({
-          title: r.type === 'peminjaman' ? 'Barang Dikembalikan & Selesai' : 'Selesai',
-          time: returnTime.value || `${baseDate} 17:00`,
-          status: 'done',
-          description: r.type === 'peminjaman' 
-            ? `Pengembalian diselesaikan secara ${effectiveReturnMethod.value.toLowerCase()} di ${effectiveReturnLocation.value}${r.return_confirmed_by ? ' dan dikonfirmasi oleh ' + r.return_confirmed_by : ''}.` 
-            : 'Semua proses permintaan telah diselesaikan dengan sukses.'
-        });
-      }
+    } else if (r.raw_status === 'return') {
+      steps.push({
+        title: 'Dalam Proses Pengembalian',
+        status: 'active',
+        description: 'Jadwal pengembalian telah diajukan. Menunggu konfirmasi Admin.'
+      });
     }
   }
 
@@ -717,7 +695,7 @@ const timelineSteps = computed((): TimelineStep[] => {
 
     <!-- ── Alert Banner: Tindakan Diperlukan atau Pengingat Serah Terima ── -->
     <div 
-      v-if="request.raw_status === 'confirm'" 
+      v-if="request.raw_status === 'confirm' || request.raw_status === 'partial'" 
       class="mb-6 p-4 border border-[#6366F1] bg-[#6366F1]/5 rounded-[12px] flex flex-col sm:flex-row justify-between items-center gap-4 animate-in fade-in slide-in-from-top-1 duration-300"
     >
       <span v-if="!request.handover_time && !isAutoScheduled" class="text-sm font-semibold text-[#6366F1]">
@@ -792,10 +770,13 @@ const timelineSteps = computed((): TimelineStep[] => {
               :assets="item.assets || []"
               :imageUrl="item.imageUrl"
               :placements="assetPlacements"
+              :stock="item.stock"
+              :status="item.status"
+              :is-consumable="item.is_consumable"
             >
               <template #footer>
                 <div
-                  v-if="['wait', 'approve', 'confirm'].includes(request.raw_status) && !item.is_consumable && item.assets && item.assets.length > 0"
+                  v-if="['wait', 'approve', 'confirm', 'partial'].includes(request.raw_status) && !item.is_consumable && item.assets && item.assets.length > 0"
                   class="flex gap-2.5"
                 >
                   <button 

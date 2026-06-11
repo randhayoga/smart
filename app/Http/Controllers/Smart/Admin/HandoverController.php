@@ -54,7 +54,7 @@ class HandoverController extends Controller
      */
     public function show($id)
     {
-        $req = SmartRequest::with(['user', 'handover', 'approver', 'approval.approver', 'adminConfirmation.admin', 'project', 'department', 'items.barang.subcategory.category', 'items.barang.brand'])
+        $req = SmartRequest::with(['user', 'handover', 'approver', 'approval.approver', 'adminConfirmation.admin', 'project', 'department', 'items.barang.subcategory.category', 'items.barang.brand', 'statusLogs.changer'])
             ->findOrFail($id);
 
         $durationDays = 0;
@@ -64,6 +64,26 @@ class HandoverController extends Controller
             $durationDays = $diff->days;
             $durationHours = $diff->h;
         }
+
+        $logs = $req->statusLogs->map(function ($log) {
+            $actorRole = 'User';
+            $actorName = $log->changer->name ?? '-';
+            if ($log->changer && $log->changer->role === 'admin') {
+                $actorRole = 'Admin';
+            } else if ($log->changer && in_array($log->changer->role, ['manager', 'ifs_manager'])) {
+                $actorRole = 'Manager';
+            }
+
+            return [
+                'id' => $log->id,
+                'status_from' => $log->status_from,
+                'status_to' => $log->status_to,
+                'time' => $log->created_at ? $log->created_at->format('d-m-Y H:i') : '-',
+                'actor' => "{$actorRole}: {$actorName}",
+                'user' => $actorName,
+                'note' => $log->note ?? '',
+            ];
+        })->toArray();
 
         $ho = $req->handover;
         $handoverData = [
@@ -90,6 +110,7 @@ class HandoverController extends Controller
             'approval_at' => $req->approval?->decided_at?->format('d-m-Y H:i'),
             'confirmation_by' => $req->adminConfirmation?->admin?->name,
             'confirmation_at' => $req->adminConfirmation?->decided_at?->format('d-m-Y H:i'),
+            'logs' => $logs,
         ];
 
         $items = $req->items->map(function ($item) {
@@ -97,6 +118,8 @@ class HandoverController extends Controller
                 ->with('unit')
                 ->get()
                 ->pluck('unit.number')
+                ->filter()
+                ->values()
                 ->toArray();
 
             $availableUnits = \App\Models\Inventory\Unit::with(['lot', 'location'])
@@ -115,6 +138,17 @@ class HandoverController extends Controller
                     ];
                 });
 
+            $barangId = $item->barang_id;
+            $hasAnyUnit = \App\Models\Inventory\Unit::whereHas('lot', fn($q) => $q->where('barang_id', $barangId))->exists();
+
+            if ($hasAnyUnit) {
+                $availableStock = \App\Models\Inventory\Unit::whereHas('lot', fn($q) => $q->where('barang_id', $barangId))
+                    ->where('status', 'tersedia')
+                    ->count();
+            } else {
+                $availableStock = \App\Models\Inventory\Lot::where('barang_id', $barangId)->sum('current_quantity');
+            }
+
             return [
                 'id' => $item->id,
                 'barang_id' => $item->barang_id,
@@ -125,6 +159,9 @@ class HandoverController extends Controller
                 'assets' => $assets,
                 'imageUrl' => $item->barang->image_url ?? null,
                 'availableUnits' => $availableUnits,
+                'is_consumable' => (bool) ($item->barang->subcategory->category->is_consumable ?? false),
+                'stock' => $availableStock,
+                'status' => $item->status,
             ];
         });
 

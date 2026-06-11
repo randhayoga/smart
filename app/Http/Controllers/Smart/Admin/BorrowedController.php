@@ -61,7 +61,7 @@ class BorrowedController extends Controller
      */
     public function show($id)
     {
-        $req = SmartRequest::with(['user', 'approver', 'approval.approver', 'adminConfirmation.admin', 'items.barang.subcategory.category', 'items.barang.brand', 'project', 'department'])
+        $req = SmartRequest::with(['user', 'approver', 'approval.approver', 'adminConfirmation.admin', 'items.barang.subcategory.category', 'items.barang.brand', 'project', 'department', 'statusLogs.changer'])
             ->findOrFail($id);
 
         $daysLeft = '-';
@@ -80,12 +80,37 @@ class BorrowedController extends Controller
             $durationHours = $diff->h;
         }
 
+        $logs = $req->statusLogs->map(function ($log) {
+            $actorRole = 'User';
+            $actorName = $log->changer->name ?? '-';
+            if ($log->changer && $log->changer->role === 'admin') {
+                $actorRole = 'Admin';
+            } else if ($log->changer && in_array($log->changer->role, ['manager', 'ifs_manager'])) {
+                $actorRole = 'Manager';
+            }
+
+            return [
+                'id' => $log->id,
+                'status_from' => $log->status_from,
+                'status_to' => $log->status_to,
+                'time' => $log->created_at ? $log->created_at->format('d-m-Y H:i') : '-',
+                'actor' => "{$actorRole}: {$actorName}",
+                'user' => $actorName,
+                'note' => $log->note ?? '',
+            ];
+        })->toArray();
+
         $items = $req->items->map(function ($item) {
             $assets = \App\Models\Request\RequestUnitAssignment::where('request_item_id', $item->id)
                 ->with('unit')
                 ->get()
                 ->pluck('unit.number')
+                ->filter()
+                ->values()
                 ->toArray();
+
+            $barangId = $item->barang_id;
+            $hasAnyUnit = \App\Models\Inventory\Unit::whereHas('lot', fn($q) => $q->where('barang_id', $barangId))->exists();
 
             return [
                 'id' => $item->id,
@@ -95,6 +120,7 @@ class BorrowedController extends Controller
                 'quantity' => $item->quantity_requested,
                 'assets' => $assets,
                 'imageUrl' => $item->barang->image_url ?? null,
+                'is_consumable' => (bool) ($item->barang->subcategory->category->is_consumable ?? false),
             ];
         });
 
@@ -119,6 +145,7 @@ class BorrowedController extends Controller
             'items' => $items,
             'dueDate' => $dueDateStr,
             'daysLeft' => $daysLeft,
+            'logs' => $logs,
         ];
 
         $placements = \App\Models\Request\RequestUnitAssignment::whereIn('request_item_id', $req->items->pluck('id'))

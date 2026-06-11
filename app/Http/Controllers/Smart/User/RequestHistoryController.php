@@ -33,6 +33,7 @@ class RequestHistoryController extends Controller
             'reject' => 'Ditolak',
             'cancel' => 'Dibatalkan',
             'pending' => 'Pending',
+            'partial' => 'Partial',
         ];
 
         $type = $req->start_date ? 'peminjaman' : 'permintaan';
@@ -46,16 +47,25 @@ class RequestHistoryController extends Controller
         }
 
         $items = $req->items->map(function ($item) {
-            // Count stock quantity of units in status 'tersedia'
-            $stockQuantity = Unit::whereHas('lot', function ($q) use ($item) {
-                $q->where('barang_id', $item->barang_id);
-            })->where('status', 'tersedia')->count();
+            // Count stock quantity of units in status 'tersedia' for non-consumable, or sum current_quantity for consumable
+            $barangId = $item->barang_id;
+            $hasAnyUnit = Unit::whereHas('lot', fn($q) => $q->where('barang_id', $barangId))->exists();
+
+            if ($hasAnyUnit) {
+                $stockQuantity = Unit::whereHas('lot', fn($q) => $q->where('barang_id', $barangId))
+                    ->where('status', 'tersedia')
+                    ->count();
+            } else {
+                $stockQuantity = \App\Models\Inventory\Lot::where('barang_id', $barangId)->sum('current_quantity');
+            }
 
             // Get assigned assets (serial numbers)
             $assets = \App\Models\Request\RequestUnitAssignment::where('request_item_id', $item->id)
                 ->with('unit')
                 ->get()
                 ->pluck('unit.number')
+                ->filter()
+                ->values()
                 ->toArray();
 
             return [
@@ -66,12 +76,34 @@ class RequestHistoryController extends Controller
                 'spec' => $item->barang->specification ?? '',
                 'quantity' => $item->quantity_requested,
                 'stockQuantity' => $stockQuantity,
+                'stock' => $stockQuantity,
                 'category' => $item->barang->subcategory->category->name ?? '-',
                 'is_consumable' => (bool) ($item->barang->subcategory->category->is_consumable ?? false),
                 'imageUrl' => $item->barang->image_url ? '/storage/' . $item->barang->image_url : null,
                 'assets' => $assets,
+                'status' => $item->status,
             ];
         });
+
+        $logs = $req->statusLogs->map(function ($log) {
+            $actorRole = 'User';
+            $actorName = $log->changer->name ?? '-';
+            if ($log->changer && $log->changer->role === 'admin') {
+                $actorRole = 'Admin';
+            } else if ($log->changer && in_array($log->changer->role, ['manager', 'ifs_manager'])) {
+                $actorRole = 'Manager';
+            }
+
+            return [
+                'id' => $log->id,
+                'status_from' => $log->status_from,
+                'status_to' => $log->status_to,
+                'time' => $log->created_at ? $log->created_at->format('d-m-Y H:i') : '-',
+                'actor' => "{$actorRole}: {$actorName}",
+                'user' => $actorName,
+                'note' => $log->note ?? '',
+            ];
+        })->toArray();
 
         return [
             'id' => $req->id,
@@ -99,6 +131,7 @@ class RequestHistoryController extends Controller
             'handover_time' => $req->handover?->scheduled_date?->format('d-m-Y H:i'),
             'handover_location' => $req->handover?->location,
             'handover_note' => $req->handover?->note,
+            'logs' => $logs,
         ];
     }
 
@@ -234,12 +267,26 @@ class RequestHistoryController extends Controller
         $oldStatus = $req->status;
         $isBorrow = (bool) $req->start_date;
 
+        // Check if there are still any pending items that haven't been fulfilled
+        $hasPendingItems = $req->items->contains(fn($item) => $item->status === 'pending');
+
         // Barang consumable TIDAK masuk daftar peminjaman — langsung ke arsip (success)
         $allConsumable = $req->items->every(function ($item) {
             return (bool) ($item->barang->subcategory->category->is_consumable ?? false);
         });
 
-        $newStatus = ($isBorrow && !$allConsumable) ? 'borrow' : 'success';
+        if ($hasPendingItems) {
+            $newStatus = 'pending';
+            // Delete the completed handover to prepare for the next schedule
+            RequestHandover::where('request_id', $req->id)->delete();
+        } else {
+            $newStatus = ($isBorrow && !$allConsumable) ? 'borrow' : 'success';
+            // Set handover user_confirmed_at
+            $handover = RequestHandover::where('request_id', $req->id)->first();
+            if ($handover) {
+                $handover->update(['user_confirmed_at' => now()]);
+            }
+        }
 
         $req->update(['status' => $newStatus]);
 
@@ -248,20 +295,16 @@ class RequestHistoryController extends Controller
         foreach ($requestItems as $reqItem) {
             $assignments = \App\Models\Request\RequestUnitAssignment::where('request_item_id', $reqItem->id)->get();
             foreach ($assignments as $asn) {
-                $status = 'dipakai';
-                if ($isBorrow && !$allConsumable && !$asn->unit->is_vehicle) {
-                    $status = 'dipinjam';
+                if ($asn->unit) {
+                    $status = 'dipakai';
+                    if ($isBorrow && !$allConsumable && !$asn->unit->is_vehicle) {
+                        $status = 'dipinjam';
+                    }
+                    $asn->unit->update([
+                        'status' => $status,
+                    ]);
                 }
-                $asn->unit->update([
-                    'status' => $status,
-                ]);
             }
-        }
-
-        // Set handover user_confirmed_at
-        $handover = RequestHandover::where('request_id', $req->id)->first();
-        if ($handover) {
-            $handover->update(['user_confirmed_at' => now()]);
         }
 
         RequestStatusLog::create([
