@@ -52,3 +52,10 @@ phpunit.xml
 .DS_Store
 graphify-out/cache/
 graphify-out/cost.json
+
+# ==========================================
+# Assets & Uploads (Images/Media)
+# ==========================================
+public/storage/
+storage/app/
+database/seeders/assets/
