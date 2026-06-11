@@ -8,8 +8,6 @@ import {
   ArrowUpDown, 
   Plus, 
   Trash2,
-  Printer,
-  FileDown,
   X,
   Pencil
 } from 'lucide-vue-next';
@@ -104,21 +102,6 @@ const columns: ColumnDef<any>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: 'code',
-    size: 117,
-    header: ({ column }) => {
-      return h(Button, {
-        variant: 'ghost',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
-      }, () => [
-        'Kode',
-        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-      ])
-    },
-    cell: ({ row }) => h('div', { class: 'text-muted-foreground font-mono text-sm truncate' }, row.getValue('code')),
-  },
-  {
     accessorKey: 'category',
     header: ({ column }) => {
       return h(Button, {
@@ -173,7 +156,8 @@ const columns: ColumnDef<any>[] = [
     }
   },
   {
-    accessorKey: 'nama',
+    accessorKey: 'name',
+    size: 225,
     header: ({ column }) => {
       return h(Button, {
         variant: 'ghost',
@@ -184,10 +168,11 @@ const columns: ColumnDef<any>[] = [
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
-    cell: ({ row }) => h('div', { class: 'text-foreground truncate', title: row.getValue('nama') }, row.getValue('nama')),
+    cell: ({ row }) => h('div', { class: 'text-foreground truncate', title: row.getValue('name') }, row.getValue('name')),
   },
   {
     accessorKey: 'specification',
+    size: 225,
     header: ({ column }) => {
       return h(Button, {
         variant: 'ghost',
@@ -198,7 +183,13 @@ const columns: ColumnDef<any>[] = [
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
-    cell: ({ row }) => h('div', { class: 'text-foreground truncate', title: row.getValue('specification') }, row.getValue('specification')),
+    cell: ({ row }) => {
+      const spec = row.getValue('specification') as string | null | undefined;
+      return h('div', {
+        class: `${spec ? 'text-foreground' : 'text-muted-foreground'} truncate`,
+        title: spec || '-'
+      }, spec || '-');
+    },
   },
   {
     accessorKey: 'lastUpdate',
@@ -250,7 +241,7 @@ const columns: ColumnDef<any>[] = [
   {
     id: 'actions',
     size: 84,
-    header: () => h('div', { class: 'text-right no-print' }, 'Aksi'),
+    header: () => h('div', { class: 'no-print' }, 'Aksi'),
     cell: ({ row }) => {
       return h('div', { class: 'flex items-center justify-end gap-2 no-print' }, [
         h(ViewTableButton, {
@@ -320,7 +311,7 @@ const handleExportCSV = () => {
     `"${item.category}"`,
     `"${item.subcategory}"`,
     `"${item.brand}"`,
-    `"${item.nama}"`,
+    `"${item.name}"`,
     `"${item.specification}"`,
     `"${item.lastUpdate}"`,
     `"${item.amount}"`
@@ -352,7 +343,7 @@ const newItem = useForm({
   subcategory_id: null as number | null,
   brand_id: null as number | null,
   uom_id: null as number | null,
-  nama: '',
+  name: '',
   specification: '',
   photo: null as File | null,
   photoName: ''
@@ -464,8 +455,7 @@ const isFormValid = computed(() => {
          newItem.subcategory_id && 
          newItem.brand_id && 
          newItem.uom_id && 
-         newItem.nama &&
-         newItem.specification &&
+         newItem.name &&
          newItem.photo && !newItem.processing;
 });
 
@@ -476,7 +466,7 @@ const handleCreateItem = () => {
     subcategory_id: data.subcategory_id,
     brand_id: data.brand_id,
     uom_id: data.uom_id,
-    nama: data.nama,
+    name: data.name,
     specification: data.specification,
     image_url: data.photo,
   })).post('/smart/inventory/barangs', {
@@ -493,7 +483,7 @@ const bulkEditForm = useForm({
   ids: [] as number[],
   uom_id: null as number | null,
   brand_id: null as number | null,
-  nama: '',
+  name: '',
   specification: '',
   photo: null as File | null,
   photoName: ''
@@ -514,7 +504,7 @@ const openBulkEditModal = () => {
   // Explicitly reset the edit values first
   bulkEditForm.uom_id = null;
   bulkEditForm.brand_id = null;
-  bulkEditForm.nama = '';
+  bulkEditForm.name = '';
   bulkEditForm.specification = '';
   bulkEditForm.photo = null;
   bulkEditForm.photoName = '';
@@ -523,7 +513,7 @@ const openBulkEditModal = () => {
     selectedItem.value = selectedRows[0];
     bulkEditForm.uom_id = selectedItem.value.uom_id;
     bulkEditForm.brand_id = selectedItem.value.brand_id;
-    bulkEditForm.nama = selectedItem.value.nama;
+    bulkEditForm.name = selectedItem.value.name;
     bulkEditForm.specification = selectedItem.value.specification;
     bulkEditForm.photo = null;
     bulkEditForm.photoName = selectedItem.value.image_url ? selectedItem.value.image_url.split('/').pop() : '';
@@ -539,7 +529,7 @@ const closeBulkEditModal = () => {
   bulkEditForm.ids = [];
   bulkEditForm.uom_id = null;
   bulkEditForm.brand_id = null;
-  bulkEditForm.nama = '';
+  bulkEditForm.name = '';
   bulkEditForm.specification = '';
   bulkEditForm.photo = null;
   bulkEditForm.photoName = '';
@@ -585,15 +575,14 @@ const isBulkEditFormValid = computed(() => {
     return !!(
       bulkEditForm.uom_id &&
       bulkEditForm.brand_id &&
-      bulkEditForm.nama &&
-      bulkEditForm.specification &&
+      bulkEditForm.name &&
       !bulkEditForm.processing
     );
   } else {
     const hasAtLeastOneField = !!(
       bulkEditForm.uom_id || 
       bulkEditForm.brand_id || 
-      bulkEditForm.nama ||
+      bulkEditForm.name ||
       bulkEditForm.specification || 
       bulkEditForm.photo
     );
@@ -612,7 +601,7 @@ const handleSaveBulkChanges = () => {
     if (data.ids.length === 1) {
       formData.uom_id = data.uom_id;
       formData.brand_id = data.brand_id;
-      formData.nama = data.nama;
+      formData.name = data.name;
       formData.specification = data.specification;
       if (data.photo) {
         formData.image_url = data.photo;
@@ -624,8 +613,8 @@ const handleSaveBulkChanges = () => {
       if (data.brand_id) {
         formData.brand_id = data.brand_id;
       }
-      if (data.nama) {
-        formData.nama = data.nama;
+      if (data.name) {
+        formData.name = data.name;
       }
       if (data.specification) {
         formData.specification = data.specification;
@@ -999,8 +988,8 @@ const closeErrorModal = () => {
                       <input 
                         type="text" 
                         id="newItemNama"
-                        name="nama"
-                        v-model="newItem.nama"
+                        name="name"
+                        v-model="newItem.name"
                         maxlength="255"
                         placeholder="Input nama barang di sini..." 
                         class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
@@ -1008,7 +997,7 @@ const closeErrorModal = () => {
                     </div>
 
                     <div class="space-y-1.5">
-                      <label for="newItemSpecification" class="text-sm font-medium text-foreground block">Spesifikasi<span class="text-rose-500">*</span></label>
+                      <label for="newItemSpecification" class="text-sm font-medium text-foreground block">Spesifikasi</label>
                       <input 
                         type="text" 
                         id="newItemSpecification"
@@ -1175,7 +1164,7 @@ const closeErrorModal = () => {
                       </label>
                       <input 
                         type="text" 
-                        v-model="bulkEditForm.nama"
+                        v-model="bulkEditForm.name"
                         maxlength="255"
                         placeholder="Input nama barang di sini..." 
                         class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
@@ -1184,7 +1173,7 @@ const closeErrorModal = () => {
 
                     <div class="space-y-1.5">
                       <label class="text-sm font-medium text-foreground block">
-                        Spesifikasi<span v-if="bulkEditForm.ids.length === 1" class="text-rose-500">*</span>
+                        Spesifikasi
                       </label>
                       <input 
                         type="text" 

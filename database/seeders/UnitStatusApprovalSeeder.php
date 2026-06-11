@@ -57,7 +57,7 @@ class UnitStatusApprovalSeeder extends Seeder
                 'decision' => 'pending',
                 'note' => 'Aset hilang, berita acara sudah terlampir',
                 'requested_at' => Carbon::now()->subDays(2),
-                'memo_path' => 'memos/berita_acara_sfg14.pdf',
+                'doc_url' => 'memos/berita_acara_sfg14.pdf',
             ]);
         }
 
@@ -98,7 +98,7 @@ class UnitStatusApprovalSeeder extends Seeder
                 'decision' => 'pending',
                 'note' => 'Aset rusak parah dan perlu persetujuan pergantian status',
                 'requested_at' => Carbon::now()->subDays(1),
-                'memo_path' => 'memos/berita_acara_byd.pdf',
+                'doc_url' => 'memos/berita_acara_byd.pdf',
             ]);
         }
     }

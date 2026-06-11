@@ -72,6 +72,10 @@ class UnitController extends Controller
         $unit = Unit::create($validated);
 
         if ($needApproval) {
+            $docUrl = 'memos/placeholder.pdf';
+            if ($request->hasFile('memo_file')) {
+                $docUrl = $request->file('memo_file')->store('memos', 'public');
+            }
             \App\Models\Inventory\UnitStatusApproval::create([
                 'unit_id' => $unit->id,
                 'requester_id' => $request->user()->id,
@@ -80,6 +84,7 @@ class UnitController extends Controller
                 'note' => null,
                 'approver_id' => null,
                 'requested_at' => now(),
+                'doc_url' => $docUrl,
             ]);
         }
 
@@ -169,6 +174,10 @@ class UnitController extends Controller
                 ->where('decision', 'pending')
                 ->first();
             if (!$existing) {
+                $docUrl = 'memos/placeholder.pdf';
+                if ($request->hasFile('memo_file')) {
+                    $docUrl = $request->file('memo_file')->store('memos', 'public');
+                }
                 \App\Models\Inventory\UnitStatusApproval::create([
                     'unit_id' => $unit->id,
                     'requester_id' => $request->user()->id,
@@ -177,6 +186,7 @@ class UnitController extends Controller
                     'note' => null,
                     'approver_id' => null,
                     'requested_at' => now(),
+                    'doc_url' => $docUrl,
                 ]);
             }
         }

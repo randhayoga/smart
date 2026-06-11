@@ -20,7 +20,7 @@ class BarangController extends Controller
             'brand_id' => 'required|exists:brands,id',
             'uom_id' => 'required|exists:uoms,id',
             'name' => 'required|string|max:255',
-            'specification' => 'required|string|max:255',
+            'specification' => 'nullable|string|max:255',
             'image_url' => 'nullable|image|max:1024',
         ]);
 
@@ -46,7 +46,7 @@ class BarangController extends Controller
             'brand_id' => 'required|exists:brands,id',
             'uom_id' => 'required|exists:uoms,id',
             'name' => 'required|string|max:255',
-            'specification' => 'required|string|max:255',
+            'specification' => 'nullable|string|max:255',
             'image_url' => 'nullable|image|max:1024',
         ]);
 

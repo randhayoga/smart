@@ -14,7 +14,7 @@ return new class extends Migration {
             $table->foreignId('brand_id')->constrained('brands');
             $table->foreignId('uom_id')->constrained('uoms');
             $table->string('name');
-            $table->string('specification');
+            $table->string('specification')->nullable();
             $table->string('image_url')->comment('default image');
             $table->dateTime('last_restock_at')->nullable();
             $table->timestamps();
@@ -59,6 +59,7 @@ return new class extends Migration {
             $table->foreignId('requester_id')->constrained('adm_users')->comment("ADM_USER's id")->noActionOnDelete();
             $table->foreignId('approver_id')->nullable()->constrained('adm_users')->comment("nullable | ADM_USER's id")->noActionOnDelete();
             $table->string('proposed_status');
+            $table->string('doc_url');
             $table->string('decision')->default('pending')->comment('pending | approved | rejected');
             $table->text('note')->nullable()->comment('nullable | required if rejected');
             $table->dateTime('requested_at');

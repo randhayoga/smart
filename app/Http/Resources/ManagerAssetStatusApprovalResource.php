@@ -87,7 +87,7 @@ class ManagerAssetStatusApprovalResource extends JsonResource
             'requested_at' => $this->requested_at ? $this->requested_at->format('d-m-Y H:i') : '-',
             'decided_at' => $this->decided_at ? $this->decided_at->format('d-m-Y H:i') : null,
             'approver_name' => $this->approver->name ?? null,
-            'memo_path' => $this->memo_path,
+            'doc_url' => $this->doc_url,
             'unit_details' => [
                 'id' => $unit->id,
                 'number' => $unit->number ?? '-',

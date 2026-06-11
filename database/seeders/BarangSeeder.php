@@ -21,7 +21,7 @@ class BarangSeeder extends Seeder
                 'brand_id' => 5,
                 'uom_id' => 2,
                 'name' => 'Kertas HVS A4',
-                'specification' => 'A4',
+                'specification' => '75 GSM',
                 'image_url' => 'database/seeders/assets/sidu.jpg',
             ],
             [
@@ -48,7 +48,6 @@ class BarangSeeder extends Seeder
                 'brand_id' => 9,
                 'uom_id' => 3,
                 'name' => 'Kursi Kantor FLINTAN',
-                'specification' => '',
                 'image_url' => 'database/seeders/assets/ikea.jpg',
             ],
             [
@@ -56,8 +55,7 @@ class BarangSeeder extends Seeder
                 'subcategory_id' => 4,
                 'brand_id' => 10,
                 'uom_id' => 3,
-                'name' => 'Meja Kerja Informa Halley',
-                'specification' => '',
+                'name' => 'Meja Kerja Halley',
                 'image_url' => 'database/seeders/assets/informa.jpg',
             ],
             [
@@ -90,6 +88,8 @@ class BarangSeeder extends Seeder
         ];
 
         foreach ($barangs as $data) {
+            $sourcePath = base_path(ltrim($data['image_url'], '/'));
+
             $destinationPath = 'inventory/' . basename($sourcePath);
             
             if (File::exists($sourcePath)) {
@@ -107,7 +107,7 @@ class BarangSeeder extends Seeder
                     'brand_id' => $data['brand_id'],
                     'uom_id' => $data['uom_id'],
                     'name' => $data['name'],
-                    'specification' => $data['specification'],
+                    'specification' => $data['specification'] ?? null,
                     'image_url' => $destinationPath,
                 ]
             );
