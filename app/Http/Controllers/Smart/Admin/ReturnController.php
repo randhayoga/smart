@@ -84,7 +84,12 @@ class ReturnController extends Controller
                 ->with('unit')
                 ->get()
                 ->pluck('unit.number')
+                ->filter()
+                ->values()
                 ->toArray();
+
+            $barangId = $item->barang_id;
+            $hasAnyUnit = \App\Models\Inventory\Unit::whereHas('lot', fn($q) => $q->where('barang_id', $barangId))->exists();
 
             return [
                 'id' => $item->id,
@@ -95,6 +100,7 @@ class ReturnController extends Controller
                 'quantity' => $item->quantity_requested,
                 'assets' => $assets,
                 'imageUrl' => $item->barang->image_url ?? null,
+                'is_consumable' => (bool) ($item->barang->subcategory->category->is_consumable ?? false),
             ];
         });
 
@@ -106,6 +112,26 @@ class ReturnController extends Controller
             ->where('status_from', 'return')
             ->where('status_to', 'success')
             ->first();
+
+        $logs = $req->statusLogs->map(function ($log) {
+            $actorRole = 'User';
+            $actorName = $log->changer->name ?? '-';
+            if ($log->changer && $log->changer->role === 'admin') {
+                $actorRole = 'Admin';
+            } else if ($log->changer && in_array($log->changer->role, ['manager', 'ifs_manager'])) {
+                $actorRole = 'Manager';
+            }
+
+            return [
+                'id' => $log->id,
+                'status_from' => $log->status_from,
+                'status_to' => $log->status_to,
+                'time' => $log->created_at ? $log->created_at->format('d-m-Y H:i') : '-',
+                'actor' => "{$actorRole}: {$actorName}",
+                'user' => $actorName,
+                'note' => $log->note ?? '',
+            ];
+        })->toArray();
 
         $returnData = [
             'id' => $req->id,
@@ -130,6 +156,7 @@ class ReturnController extends Controller
             'returnTime' => $returnTimeStr,
             'location' => $returnLocationStr,
             'method' => $returnMethodStr,
+            'logs' => $logs,
         ];
 
         $placements = \App\Models\Request\RequestUnitAssignment::whereIn('request_item_id', $req->items->pluck('id'))
