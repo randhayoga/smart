@@ -18,6 +18,7 @@ interface RequestItem {
   quantity: number;
   assets: string[];
   imageUrl?: string | null;
+  is_consumable?: boolean;
 }
 
 interface RequestDetail {
@@ -39,6 +40,7 @@ interface RequestDetail {
   status: string;
   type: 'permintaan' | 'peminjaman';
   items: RequestItem[];
+  logs?: any[];
 }
 
 interface Props {
@@ -51,35 +53,91 @@ const props = defineProps<Props>();
 
 const items = computed(() => props.request.items);
 
-const timeline = computed(() => {
+interface TimelineStep {
+  status: string;
+  user?: string;
+  time?: string;
+  completed?: boolean;
+  rejected?: boolean;
+  isPending?: boolean;
+  note?: string;
+  info?: string;
+}
+
+const timeline = computed((): TimelineStep[] => {
   const r = props.request;
   if (!r) return [];
 
   const steps = [];
-  steps.push({ status: 'Permintaan dibuat', time: r.createdAt, completed: true });
   
-  if (r.status === 'reject') {
-    steps.push({ 
-      status: 'Ditolak', 
-      user: r.approval_by || r.approver || 'Manager', 
-      time: r.updatedAt || r.createdAt, 
-      rejected: true 
+  // Step 1: Initial creation
+  steps.push({
+    status: 'Permintaan dibuat',
+    time: r.createdAt,
+    completed: true,
+  });
+
+  // Step 2: Historical Logs
+  if (r.logs && Array.isArray(r.logs)) {
+    const sortedLogs = [...r.logs].sort((a, b) => a.id - b.id);
+    sortedLogs.forEach(log => {
+      if (log.status_to === 'wait') return;
+
+      let statusName = '';
+      let completed = true;
+      let rejected = false;
+
+      if (log.status_to === 'approve') {
+        statusName = 'Di-approve';
+      } else if (log.status_to === 'partial') {
+        statusName = 'Disetujui sebagian (Partial)';
+      } else if (log.status_to === 'confirm') {
+        if (log.status_from === 'partial') {
+          statusName = 'Alokasi Barang Tambahan Dikonfirmasi';
+        } else {
+          if (log.note && log.note.includes('diatur oleh pengguna')) {
+            statusName = 'Jadwal Serah Terima Diatur';
+          } else {
+            statusName = 'Dikonfirmasi';
+          }
+        }
+      } else if (log.status_to === 'borrow') {
+        statusName = 'Serah Terima Selesai & Dipinjam';
+      } else if (log.status_to === 'return') {
+        statusName = 'Pengembalian Diajukan';
+      } else if (log.status_to === 'success') {
+        if (log.status_from === 'return') {
+          statusName = 'Pengembalian Selesai';
+        } else {
+          statusName = 'Serah Terima Selesai';
+        }
+      } else if (log.status_to === 'reject') {
+        statusName = 'Ditolak';
+        completed = false;
+        rejected = true;
+      } else if (log.status_to === 'cancel') {
+        statusName = 'Dibatalkan oleh Pengguna';
+      } else if (log.status_to === 'pending') {
+        if (log.status_from === 'confirm') {
+          statusName = 'Serah Terima Sebagian Diterima';
+        } else {
+          statusName = 'Pending';
+        }
+      }
+
+      if (statusName) {
+        steps.push({
+          status: statusName,
+          user: log.user || undefined,
+          time: log.time,
+          completed,
+          rejected,
+          note: log.note || '',
+        });
+      }
     });
-  } else if (r.status === 'cancel') {
-    steps.push({ status: 'Dibatalkan oleh Pengguna', time: r.updatedAt || r.createdAt, completed: true });
-  } else if (r.status === 'pending') {
-    steps.push({ status: 'Di-approve', user: r.approval_by || r.approver || 'Manager', time: r.createdAt, completed: true });
-    steps.push({ status: 'Pending', user: r.confirmation_by || 'Admin', time: r.updatedAt || r.createdAt, completed: true, isPending: true });
-  } else {
-    steps.push({ status: 'Di-approve', user: r.approval_by || r.approver || 'Manager', time: r.createdAt, completed: true });
-    steps.push({ status: 'Dikonfirmasi', user: r.confirmation_by || 'Admin', time: r.createdAt, completed: true });
-    steps.push({ status: 'Serah Terima', time: r.createdAt, completed: true });
-    if (r.type === 'peminjaman') {
-      steps.push({ status: 'Aset selesai dipinjam', time: r.createdAt, completed: true });
-      steps.push({ status: 'Pengembalian aset', info: r.return_confirmed_by ? `dikonfirmasi oleh ${r.return_confirmed_by}` : 'dikonfirmasi oleh Admin', time: r.updatedAt || r.createdAt, completed: true });
-    }
-    steps.push({ status: 'Selesai', time: r.updatedAt || r.createdAt, completed: true });
   }
+
   return steps;
 });
 </script>
@@ -158,6 +216,7 @@ const timeline = computed(() => {
             :assets="item.assets"
             :imageUrl="item.imageUrl"
             :placements="placements"
+            :is-consumable="item.is_consumable"
           />
         </div>
       </div>
@@ -176,15 +235,11 @@ const timeline = computed(() => {
             >
               <!-- Icon/Indicator -->
               <div class="absolute -left-[32px] top-0 w-8 h-8 rounded-full bg-card flex items-center justify-center z-10">
-                <!-- Status Pending (Grey Dot) -->
-                <div v-if="step.isPending" class="w-6 h-6 rounded-full border-2 border-muted-foreground/30 flex items-center justify-center bg-card">
-                  <div class="w-2 h-2 rounded-full bg-muted-foreground/30"></div>
-                </div>
-                <!-- Status Done (Green Check Circle) -->
-                <!-- Status Done (Green Check Circle) / Status Rejected (Red X) -->
-                <div v-else-if="step.rejected" class="w-7 h-7 rounded-full border-2 border-red-500 flex items-center justify-center bg-card">
+                <!-- Status Rejected (Red X) -->
+                <div v-if="step.rejected" class="w-7 h-7 rounded-full border-2 border-red-500 flex items-center justify-center bg-card">
                   <X class="w-4 h-4 text-red-500 stroke-[3.5]" />
                 </div>
+                <!-- Status Done (Green Check Circle) -->
                 <div v-else class="w-7 h-7 rounded-full border-2 border-green-500 flex items-center justify-center bg-card">
                   <Check class="w-4 h-4 text-green-500 stroke-[3.5]" />
                 </div>
@@ -196,9 +251,8 @@ const timeline = computed(() => {
                   <h4 
                     class="text-sm font-bold"
                     :class="{
-                      'text-muted-foreground': step.isPending,
                       'text-red-600': step.rejected,
-                      'text-green-600': !step.isPending && !step.rejected
+                      'text-green-600': !step.rejected
                     }"
                   >
                     {{ step.status }}
@@ -207,9 +261,8 @@ const timeline = computed(() => {
                     v-if="step.user" 
                     class="text-xs font-semibold mt-0.5" 
                     :class="{
-                      'text-muted-foreground/80': step.isPending,
                       'text-red-600': step.rejected,
-                      'text-green-600': !step.isPending && !step.rejected
+                      'text-green-600': !step.rejected
                     }"
                   >
                     oleh {{ step.user }}
@@ -217,13 +270,15 @@ const timeline = computed(() => {
                   <p v-if="step.time" class="text-xs text-muted-foreground mt-0.5">
                     {{ step.time }}
                   </p>
+                  <p v-if="step.note" class="text-xs text-muted-foreground leading-relaxed pt-0.5">
+                    {{ step.note }}
+                  </p>
                   <p 
                     v-if="step.info" 
                     class="text-xs font-medium mt-0.5" 
                     :class="{
-                      'text-muted-foreground/80': step.isPending,
                       'text-red-600/80': step.rejected,
-                      'text-green-600/80': !step.isPending && !step.rejected
+                      'text-green-600/80': !step.rejected
                     }"
                   >
                     {{ step.info }}

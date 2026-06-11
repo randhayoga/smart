@@ -25,6 +25,7 @@ interface RequestItem {
   imageUrl?: string;
   category: string;
   assets?: string[];
+  is_consumable?: boolean;
 }
 
 interface RequestHistory {
@@ -245,6 +246,7 @@ const timeline = computed(() => {
               :assets="item.assets || []"
               :imageUrl="item.imageUrl"
               :quantityLabel="request.type === 'peminjaman' ? 'Jumlah dipinjam' : 'Jumlah diminta'"
+              :is-consumable="item.is_consumable"
             />
           </div>
         </div>

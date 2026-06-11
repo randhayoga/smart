@@ -28,8 +28,8 @@ interface RequestHistory {
   durationEnd?: string;
   durationDays?: number;
   durationHours?: number;
-  status: 'Menunggu approval' | 'Disetujui' | 'Ditolak' | 'Serah Terima' | 'Dipinjam' | 'Selesai' | 'Dibatalkan' | 'Pending';
-  raw_status: 'wait' | 'approve' | 'confirm' | 'handover' | 'borrow' | 'return' | 'success' | 'reject' | 'cancel' | 'pending';
+  status: 'Menunggu approval' | 'Disetujui' | 'Ditolak' | 'Serah Terima' | 'Dipinjam' | 'Selesai' | 'Dibatalkan' | 'Pending' | 'Partial';
+  raw_status: 'wait' | 'approve' | 'confirm' | 'handover' | 'borrow' | 'return' | 'success' | 'reject' | 'cancel' | 'pending' | 'partial';
   created_at: string;
   items: RequestItem[];
 }
@@ -77,6 +77,8 @@ const getStatusClasses = (status: string) => {
     case 'Dibatalkan':
     case 'Pending':
       return 'bg-zinc-500 text-white border-transparent'; // gray
+    case 'Partial':
+      return 'bg-[#5BC0DE] text-white border-transparent'; // light blue
     default:
       return 'bg-muted text-muted-foreground border-border';
   }
@@ -226,9 +228,9 @@ const getStatusClasses = (status: string) => {
         Batalkan Permintaan
       </Button>
 
-      <!-- Tampilkan Atur Serah Terima jika status Serah Terima (confirm) -->
+      <!-- Tampilkan Atur Serah Terima jika status Serah Terima (confirm) atau Partial (partial) -->
       <Link
-        v-if="request.raw_status === 'confirm'"
+        v-if="request.raw_status === 'confirm' || request.raw_status === 'partial'"
         :href="route('smart.history.show', request.id)"
         class="h-9 px-5 rounded-lg text-xs font-bold bg-[#6366F1] hover:bg-[#5558EB] text-white shadow-sm flex items-center justify-center transition-colors"
       >
