@@ -2,8 +2,8 @@
 import { ref, computed } from 'vue';
 import { router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import { Input } from "@/Components/ui/input";
-import { Search, ChevronDown } from 'lucide-vue-next';
+import TableSearch from '@/Components/TableSearch.vue';
+import { ChevronDown } from 'lucide-vue-next';
 import { Button } from "@/Components/ui/button";
 import ProductCard from '@/Components/ProductCard.vue';
 import { toast } from 'vue-sonner';
@@ -28,6 +28,7 @@ interface Category {
 
 interface Item {
   id: number;
+  barang_id: number | null;
   code: string;
   category: string;
   category_id: number;
@@ -73,10 +74,10 @@ const openAddToCartModal = (product: Item) => {
 };
 
 const handleConfirmAddToCart = () => {
-  if (!selectedProduct.value) return;
+  if (!selectedProduct.value || !selectedProduct.value.barang_id) return;
 
   router.post(route('smart.browse.add-to-cart'), {
-    barang_id: selectedProduct.value.id,
+    barang_id: selectedProduct.value.barang_id,
     quantity: quantity.value,
   }, {
     onSuccess: () => {
@@ -98,9 +99,7 @@ const filteredAndSortedItems = computed(() => {
   if (searchQuery.value.trim()) {
     const q = searchQuery.value.toLowerCase();
     list = list.filter(item => 
-      item.brand.toLowerCase().includes(q) || 
-      item.spec.toLowerCase().includes(q) || 
-      item.code.toLowerCase().includes(q)
+      item.subcategory_name.toLowerCase().includes(q)
     );
   }
 
@@ -113,9 +112,9 @@ const filteredAndSortedItems = computed(() => {
 
   // Sort
   if (selectedSort.value === 'Urutkan: A-Z') {
-    list.sort((a, b) => a.brand.localeCompare(b.brand));
+    list.sort((a, b) => (a.subcategory_name || '').localeCompare(b.subcategory_name || ''));
   } else if (selectedSort.value === 'Urutkan: Z-A') {
-    list.sort((a, b) => b.brand.localeCompare(a.brand));
+    list.sort((a, b) => (b.subcategory_name || '').localeCompare(a.subcategory_name || ''));
   }
 
   return list;
@@ -126,78 +125,78 @@ const filteredAndSortedItems = computed(() => {
   <AppLayout title="Pilih Barang">
     <div class="space-y-6">
       <div>
-        <h1 class="text-2xl font-bold text-foreground mb-4">Pilih barang</h1>
+        <h1 class="text-xl font-bold text-gray-900 leading-none mb-6">Pilih barang</h1>
         
-        <!-- Search bar -->
-        <div class="relative w-full max-w-full sm:max-w-xl md:max-w-2xl mb-6">
-          <Input 
-            v-model="searchQuery" 
-            placeholder="Cari barang..." 
-            class="w-full pl-4 pr-12 py-2 h-10 border border-input rounded-full focus:outline-none focus:ring-1 focus:ring-primary/20 bg-background"
-          />
-          <Search class="h-5 w-5 text-muted-foreground absolute right-4 top-1/2 -translate-y-1/2" />
-        </div>
+        <!-- Filter & Search Section -->
+        <div class="space-y-3 mb-5">
+          <div class="flex flex-wrap items-end gap-4">
+            <!-- Search Row -->
+            <div class="space-y-1.5 flex-1 min-w-[300px] max-w-sm">
+              <label class="text-xs text-muted-foreground font-medium block ml-0.5">Pencarian</label>
+              <TableSearch 
+                v-model="searchQuery" 
+                placeholder="Cari subkategori..." 
+                bg-class="bg-white"
+              />
+            </div>
 
-        <!-- Filters -->
-        <div class="space-y-2 mb-8">
-          <label class="text-sm text-foreground block font-medium">Filter</label>
-          <div class="flex flex-wrap items-center gap-4">
-            <!-- Category Filter -->
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" :class="['w-64 justify-between rounded-full font-normal h-10', selectedCategory === 'Semua kategori' ? 'text-muted-foreground' : 'text-foreground']">
-                  <span class="truncate">{{ selectedCategory }}</span>
-                  <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+            <!-- Filter Row -->
+            <div class="space-y-1.5">
+              <label class="text-xs text-muted-foreground font-medium block ml-0.5">Filter</label>
+              <div class="flex items-center gap-3">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal bg-white', selectedCategory === 'Semua kategori' ? 'text-muted-foreground' : 'text-foreground']">
+                      <span class="truncate">{{ selectedCategory }}</span>
+                      <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
+                    <DropdownMenuItem @select="selectedCategory = 'Semua kategori'">Semua kategori</DropdownMenuItem>
+                    <DropdownMenuItem 
+                      v-for="cat in props.categories" 
+                      :key="cat.id" 
+                      @select="selectedCategory = cat.name"
+                    >
+                      {{ cat.name }}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <!-- Sort -->
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal bg-white', selectedSort === 'Urutkan: A-Z' ? 'text-muted-foreground' : 'text-foreground']">
+                      <span class="truncate">{{ selectedSort }}</span>
+                      <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
+                    <DropdownMenuItem @select="selectedSort = 'Urutkan: A-Z'">Urutkan: A-Z</DropdownMenuItem>
+                    <DropdownMenuItem @select="selectedSort = 'Urutkan: Z-A'">Urutkan: Z-A</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <!-- Clear Filter Button -->
+                <Button variant="destructive" @click="clearFilter" class="hover:opacity-70 rounded-[14px] px-6 font-semibold text-white">
+                  Hapus filter
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent class="w-64 rounded-[14px]" align="start">
-                <DropdownMenuItem @select="selectedCategory = 'Semua kategori'">Semua kategori</DropdownMenuItem>
-                <DropdownMenuItem 
-                  v-for="cat in props.categories" 
-                  :key="cat.id" 
-                  @select="selectedCategory = cat.name"
-                >
-                  {{ cat.name }}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <!-- Sort -->
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" :class="['w-48 justify-between rounded-full font-normal h-10', selectedSort === 'Urutkan: A-Z' ? 'text-muted-foreground' : 'text-foreground']">
-                  <span class="truncate">{{ selectedSort }}</span>
-                  <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent class="w-48 rounded-[14px]" align="start">
-                <DropdownMenuItem @select="selectedSort = 'Urutkan: A-Z'">Urutkan: A-Z</DropdownMenuItem>
-                <DropdownMenuItem @select="selectedSort = 'Urutkan: Z-A'">Urutkan: Z-A</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-
-
-            <!-- Clear Filter Button -->
-            <Button @click="clearFilter" class="bg-[#cb3a31] hover:bg-[#b02e26] text-white rounded-full px-6 h-10 font-semibold">
-              Hapus filter
-            </Button>
+              </div>
+            </div> 
           </div>
         </div>
 
-        <p class="text-sm text-foreground mb-4">Hasil Pencarian dan Filter:</p>
-
+        <p class="text-sm text-muted-foreground font-medium mb-3">Hasil Pencarian dan Filter:</p>
         <!-- Grid -->
         <div class="border border-border rounded-[14px] p-6 bg-card">
           <div class="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-6">
             <ProductCard 
               v-for="item in filteredAndSortedItems" 
               :key="item.id" 
-              :brand="item.brand" 
-              :spec="item.spec" 
-              :category="item.category"
-              :stock="item.stock"
-              :imageUrl="item.imageUrl"
+              :subcategory-name="item.subcategory_name" 
+              :category-name="item.category_name"
+              :image-url="item.imageUrl"
+              :disabled="!item.barang_id"
               @add-to-cart="openAddToCartModal(item)"
             />
           </div>
@@ -228,10 +227,8 @@ const filteredAndSortedItems = computed(() => {
           <!-- Content & Actions (Right Column) -->
           <div class="flex flex-col flex-grow">
             <!-- Info -->
-            <h3 class="text-xl font-bold text-foreground">{{ selectedProduct.brand }}</h3>
-            <p class="text-lg font-semibold text-foreground mb-1">{{ selectedProduct.spec }}</p>
-            <p class="text-sm text-muted-foreground">{{ selectedProduct.category }}</p>
-            <p class="text-sm text-muted-foreground">{{ selectedProduct.code }}</p>
+            <h3 class="text-xl font-bold text-foreground">{{ selectedProduct.subcategory_name }}</h3>
+            <p class="text-sm text-muted-foreground">{{ selectedProduct.category_name }}</p>
 
             <hr class="border-border my-6" />
 
