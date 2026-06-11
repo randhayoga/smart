@@ -165,7 +165,7 @@ class ReturnController extends Controller
             $assignments = RequestUnitAssignment::where('request_item_id', $reqItem->id)->get();
             foreach ($assignments as $asn) {
                 $asn->unit->update([
-                    'status' => 'tersedia',
+                    'status' => 'Available',
                 ]);
                 $asn->update(['completed_at' => now()]);
             }

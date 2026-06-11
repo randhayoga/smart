@@ -14,13 +14,12 @@ class Unit extends Model
 {
     use HasFactory;
 
-    // Asset statuses (Consumables do not get individual UNIT records)
-    public const STATUS_AVAILABLE = 'available';
-    public const STATUS_BORROWED = 'borrowed';
-    public const STATUS_MAINTENANCE = 'maintenance';
-    public const STATUS_RESERVED = 'reserved';
-    public const STATUS_INACTIVE = 'inactive';
-    public const STATUS_BROKEN = 'broken';
+    public const STATUS_AVAILABLE = 'Available';
+    public const STATUS_BORROWED = 'Borrowed';
+    public const STATUS_REPAIR = 'Repair';
+    public const STATUS_LOSS = 'Loss';
+    public const STATUS_LOST = 'Lost';
+    public const STATUS_INACTIVE = 'Inactive';
 
     protected $fillable = [
         'number',

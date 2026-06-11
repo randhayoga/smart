@@ -1240,14 +1240,19 @@ const filteredUnits = computed(() => {
 });
 
 // Dynamic values for dropdown filters
-const availableStatuses = ['tersedia', 'dipinjam', 'dipakai', 'rusak'];
+const availableStatuses = ['Available', 'Borrowed', 'Repair', 'Loss', 'Lost', 'Inactive'];
 const availableConditions = ['Baik', 'Kurang Baik', 'Rusak'];
 
 const getStatusLabel = (status: string) => {
-  if (status === 'tersedia') return 'Tersedia';
-  if (status === 'dipinjam') return 'Dipinjam';
-  if (status === 'dipakai') return 'Dipakai';
-  if (status === 'rusak') return 'Rusak';
+  if (!status) return '';
+  const lower = status.toLowerCase();
+  if (lower === 'available' || lower === 'tersedia') return 'Tersedia';
+  if (lower === 'borrowed' || lower === 'dipinjam') return 'Dipinjam';
+  if (lower === 'dipakai') return 'Dipinjam';
+  if (lower === 'repair' || lower === 'perbaikan') return 'Perbaikan';
+  if (lower === 'loss' || lower === 'rusak') return 'Rusak';
+  if (lower === 'lost' || lower === 'hilang') return 'Hilang';
+  if (lower === 'inactive' || lower === 'tidak aktif') return 'Tidak Aktif';
   return status;
 };
 
@@ -1315,12 +1320,14 @@ const columns = computed<ColumnDef<any>[]>(() => {
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ]),
       cell: ({ row }) => {
-        const status = row.getValue('status') as string;
+        const status = (row.getValue('status') as string || '').toLowerCase();
         let badgeClass = 'bg-gray-100 text-gray-800';
-        if (status === 'tersedia') badgeClass = 'bg-emerald-100 text-emerald-800';
-        else if (status === 'dipinjam') badgeClass = 'bg-amber-100 text-amber-800';
-        else if (status === 'dipakai') badgeClass = 'bg-blue-100 text-blue-800';
-        else if (status === 'rusak') badgeClass = 'bg-rose-100 text-rose-800';
+        if (status === 'available' || status === 'tersedia') badgeClass = 'bg-emerald-100 text-emerald-800';
+        else if (status === 'borrowed' || status === 'dipinjam' || status === 'dipakai') badgeClass = 'bg-amber-100 text-amber-800';
+        else if (status === 'repair' || status === 'perbaikan') badgeClass = 'bg-blue-100 text-blue-800';
+        else if (status === 'loss' || status === 'rusak') badgeClass = 'bg-red-100 text-red-800';
+        else if (status === 'lost' || status === 'hilang') badgeClass = 'bg-rose-100 text-rose-800';
+        else if (status === 'inactive' || status === 'tidak aktif') badgeClass = 'bg-gray-200 text-gray-800';
         
         return h('span', { class: `inline-flex items-center px-2 py-0.5 rounded-full font-semibold ${badgeClass}` }, getStatusLabel(status));
       }
