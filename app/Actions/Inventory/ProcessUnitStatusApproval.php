@@ -13,18 +13,11 @@ class ProcessUnitStatusApproval
     {
         $statusMap = [
             'available' => 'Tersedia',
-            'tersedia' => 'Tersedia',
             'borrowed' => 'Dipinjam',
-            'dipinjam' => 'Dipinjam',
-            'maintenance' => 'Perbaikan',
-            'perbaikan' => 'Perbaikan',
             'repair' => 'Perbaikan',
-            'reserved' => 'Dipesan',
-            'inactive' => 'Tidak Aktif',
-            'broken' => 'Rusak',
-            'rusak' => 'Rusak',
+            'loss' => 'Rusak',
             'lost' => 'Hilang',
-            'hilang' => 'Hilang',
+            'inactive' => 'Tidak Aktif',
         ];
         return $statusMap[strtolower($status)] ?? $status;
     }
@@ -48,6 +41,10 @@ class ProcessUnitStatusApproval
                 $unit = $approval->unit;
                 $oldStatus = $unit->status;
                 $newStatus = $approval->proposed_status;
+
+                if (in_array($newStatus, ['Loss', 'Lost'])) {
+                    $newStatus = 'Inactive';
+                }
 
                 // Update unit status
                 $unit->update(['status' => $newStatus]);

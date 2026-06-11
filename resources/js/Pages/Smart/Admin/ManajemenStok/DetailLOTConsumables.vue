@@ -43,9 +43,9 @@ watch(() => props.isOpen, (newVal) => {
 });
 
 const formatRupiah = (val: number | string | null | undefined) => {
-  if (val === null || val === undefined || val === '') return 'Rp0';
+  if (val === null || val === undefined || val === '') return '-';
   const num = typeof val === 'string' ? parseFloat(val) : val;
-  if (isNaN(num)) return 'Rp0';
+  if (isNaN(num)) return '-';
   
   // Format to RpXXX.XXX (dot as thousands separator, no decimal)
   const formatted = Math.floor(num).toLocaleString('id-ID');
@@ -141,6 +141,7 @@ const handleDelete = () => {
                   <div class="md:col-span-4">
                     <p class="font-bold text-foreground"><span class="text-foreground">Kode Barang:</span> {{ lotDetails.barang_code }}</p>
                     <p class="font-bold text-foreground"><span class="text-foreground">Merek:</span> {{ lotDetails.barang_brand }}</p>
+                    <p class="font-bold text-foreground"><span class="text-foreground">Nama:</span> {{ lotDetails.barang_nama }}</p>
                     <p class="font-bold text-foreground"><span class="text-foreground">Spesifikasi:</span> {{ lotDetails.barang_specification }}</p>
                     <p class="text-foreground">Kategori: {{ lotDetails.barang_category }}</p>
                     <p class="text-foreground">Subkategori: {{ lotDetails.barang_subcategory }}</p>

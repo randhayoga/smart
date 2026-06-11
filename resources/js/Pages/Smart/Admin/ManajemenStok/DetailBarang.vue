@@ -40,6 +40,7 @@ interface Props {
     category: string;
     subcategory: string;
     brand: string;
+    name: string;
     specification: string;
     lastUpdate: string;
     amount: number;
@@ -304,7 +305,6 @@ const isLotFormValid = computed(() => {
          lotForm.location_id && 
          lotForm.po_number && 
          lotForm.date_of_receipt && 
-         lotForm.unit_price !== '' && 
          (lotForm.image_url || lotForm.image_url_name) &&
          !lotForm.processing;
 
@@ -589,7 +589,11 @@ const uniqueOrganizers = computed(() => {
 });
 
 const totalStok = computed(() => {
-  return (props.lots || []).reduce((acc, lot) => acc + (Number(lot.current_quantity) || 0), 0);
+  const isConsumable = props.barang.is_consumable;
+  return (props.lots || []).reduce((acc, lot) => {
+    const qty = isConsumable ? (lot.current_quantity ?? 0) : (lot.assetCount ?? 0);
+    return acc + Number(qty);
+  }, 0);
 });
 
 const getExportData = () => {
@@ -637,6 +641,7 @@ const editForm = useForm({
   subkategori: props.barang.subcategory,
   satuan: props.barang.uom,
   merek: props.barang.brand,
+  name: props.barang.name,
   spesifikasi: props.barang.specification,
   foto: null as File | null,
   fotoName: props.barang.image_url ? props.barang.image_url.split('/').pop() : '',
@@ -653,6 +658,7 @@ const openEditModal = () => {
   editForm.satuan = props.barang.uom;
   editForm.brand_id = props.barang.brand_id;
   editForm.merek = props.barang.brand;
+  editForm.name = props.barang.name;
   editForm.spesifikasi = props.barang.specification;
   editForm.foto = null;
   editForm.fotoName = props.barang.image_url ? props.barang.image_url.split('/').pop() : '';
@@ -698,7 +704,7 @@ const viewImageInNewTab = () => {
 };
 
 const isEditFormValid = computed(() => {
-  return editForm.uom_id && editForm.brand_id && editForm.spesifikasi && !editForm.processing;
+  return editForm.uom_id && editForm.brand_id && editForm.name && !editForm.processing;
 });
 
 const handleSaveChanges = () => {
@@ -710,6 +716,7 @@ const handleSaveChanges = () => {
       subcategory_id: data.subcategory_id,
       brand_id: data.brand_id,
       uom_id: data.uom_id,
+      name: data.name,
       specification: data.spesifikasi,
     };
     if (data.foto) {
@@ -898,7 +905,6 @@ const isBulkLotFormValid = computed(() => {
       bulkLotForm.location_id &&
       bulkLotForm.po_number &&
       bulkLotForm.date_of_receipt &&
-      bulkLotForm.unit_price !== '' &&
       (bulkLotForm.image_url || bulkLotForm.use_parent_image || bulkLotForm.image_url_name) &&
       !bulkLotForm.processing
     );
@@ -994,9 +1000,9 @@ const deleteFields = computed(() => {
     };
     
     const formatRupiah = (val: number | string | null | undefined) => {
-      if (val === null || val === undefined || val === '') return 'Rp0';
+      if (val === null || val === undefined || val === '') return '-';
       const num = typeof val === 'string' ? parseFloat(val) : val;
-      if (isNaN(num)) return 'Rp0';
+      if (isNaN(num)) return '-';
       const formatted = Math.floor(num).toLocaleString('id-ID');
       return `Rp${formatted}`;
     };
@@ -1010,7 +1016,8 @@ const deleteFields = computed(() => {
       { label: 'Kategori', value: props.barang.category },
       { label: 'Subkategori', value: props.barang.subcategory },
       { label: 'Merek', value: props.barang.brand },
-      { label: 'Spesifikasi', value: props.barang.specification },
+      { label: 'Nama', value: props.barang.name },
+      { label: 'Spesifikasi', value: props.barang.specification || '-' },
       { label: 'Jumlah stok tersedia', value: availableStock },
       { label: 'Jumlah stok diawal', value: initialStock },
       { label: 'Lokasi', value: formatLocation(data.location, data.floor, data.room) },
@@ -1036,9 +1043,10 @@ const openDeleteModal = () => {
     category: props.barang.category,
     subcategory: props.barang.subcategory,
     brand: props.barang.brand,
+    name: props.barang.name,
     specification: props.barang.specification,
     lastUpdate: props.barang.lastUpdate,
-    amount: 0
+    amount: totalStok.value,
   }];
   isDeleteModalOpen.value = true;
 };
@@ -1050,6 +1058,7 @@ const openDeleteLotModal = (lots: any | any[]) => {
     ...lot,
     barang_code: lot.barang_code || props.barang.code,
     barang_brand: lot.barang_brand || props.barang.brand,
+    barang_nama: lot.barang_nama || props.barang.name,
     barang_specification: lot.barang_specification || props.barang.specification,
     barang_category: lot.barang_category || props.barang.category,
     barang_subcategory: lot.barang_subcategory || props.barang.subcategory,
@@ -1174,11 +1183,12 @@ const closeErrorModal = () => {
           <div class="flex-grow">
             <p class="font-bold text-foreground"><span class="text-foreground">Kode Barang:</span> {{ props.barang.code }}</p>
             <p class="font-bold text-foreground"><span class="text-foreground">Merek:</span> {{ props.barang.brand }}</p>
-            <p class="font-bold text-foreground"><span class="text-foreground">Spesifikasi:</span> {{ props.barang.specification }}</p>
+            <p class="font-bold text-foreground"><span class="text-foreground">Nama:</span> {{ props.barang.name }}</p>
+            <p class="font-bold text-foreground"><span class="text-foreground">Spesifikasi:</span> {{ props.barang.specification || '-' }}</p>
             <p class="text-foreground">Kategori: {{ props.barang.category }}</p>
             <p class="text-foreground">Subkategori: {{ props.barang.subcategory }}</p>
             <p class="text-foreground">Jumlah LOT: {{ props.lots.length }}</p>
-            <p class="text-foreground">Total stok: {{ totalStok }}</p>
+            <p class="text-foreground">Total stok: {{ totalStok }} {{ props.barang.uom }}</p>
             <p class="text-foreground">Satuan: {{ props.barang.uom }}</p>
             <p class="text-foreground">Pembaruan terakhir: {{ props.barang.lastUpdate }}</p>
           </div>
@@ -1388,7 +1398,18 @@ const closeErrorModal = () => {
                     </div>
 
                     <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Spesifikasi<span class="text-rose-500">*</span></label>
+                      <label class="text-sm font-medium text-foreground block">Nama Barang<span class="text-rose-500">*</span></label>
+                      <input 
+                        type="text" 
+                        v-model="editForm.name"
+                        maxlength="255"
+                        placeholder="Input nama barang di sini..." 
+                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
+                      />
+                    </div>
+
+                    <div class="space-y-1.5">
+                      <label class="text-sm font-medium text-foreground block">Spesifikasi</label>
                       <input 
                         type="text" 
                         v-model="editForm.spesifikasi"
@@ -1636,7 +1657,7 @@ const closeErrorModal = () => {
                     </div>
 
                     <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Harga Satuan <span v-if="!props.barang.is_consumable" class="italic text-muted-foreground">default</span><span class="text-rose-500">*</span></label>
+                      <label class="text-sm font-medium text-foreground block">Harga Satuan <span v-if="!props.barang.is_consumable" class="italic text-muted-foreground">default</span></label>
                       <div class="flex w-full rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors h-10 overflow-hidden">
                         <span class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-r border-input select-none font-medium">
                           Rp
@@ -1854,7 +1875,7 @@ const closeErrorModal = () => {
                     </div>
 
                     <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Harga Satuan <span v-if="!props.barang.is_consumable" class="italic text-muted-foreground">default</span><span v-if="bulkLotForm.ids.length === 1" class="text-rose-500">*</span></label>
+                      <label class="text-sm font-medium text-foreground block">Harga Satuan <span v-if="!props.barang.is_consumable" class="italic text-muted-foreground">default</span></label>
                       <div class="flex w-full rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors h-10 overflow-hidden">
                         <span class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-r border-input select-none font-medium">
                           Rp
@@ -1944,6 +1965,7 @@ const closeErrorModal = () => {
       :item-name="'Barang'"
       :item-data="itemsToDelete.length === 1 ? itemsToDelete[0] : itemsToDelete"
       :fields="deleteFields"
+      :max-width-class="itemsToDelete.length === 1 ? 'max-w-2xl' : undefined"
       @close="closeDeleteModal"
       @confirm="handleConfirmDelete"
     />

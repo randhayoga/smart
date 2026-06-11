@@ -27,6 +27,7 @@ class BorrowCartController extends Controller
                     'id' => $item->id,
                     'barang_id' => $item->barang_id,
                     'brand' => $item->barang->brand->name ?? '-',
+                    'name' => $item->barang->name ?? '-',
                     'spec' => $item->barang->specification ?? '',
                     'category' => ($item->barang->subcategory->category->name ?? '-') . ' (' . ($item->barang->subcategory->name ?? '-') . ')',
                     'code' => $item->barang->number ?? '',

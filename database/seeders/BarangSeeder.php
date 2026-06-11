@@ -20,7 +20,8 @@ class BarangSeeder extends Seeder
                 'subcategory_id' => 1,
                 'brand_id' => 5,
                 'uom_id' => 2,
-                'specification' => 'HVS A4',
+                'name' => 'Kertas HVS A4',
+                'specification' => '75 GSM',
                 'image_url' => 'database/seeders/assets/sidu.jpg',
             ],
             [
@@ -28,7 +29,8 @@ class BarangSeeder extends Seeder
                 'subcategory_id' => 2,
                 'brand_id' => 7,
                 'uom_id' => 3,
-                'specification' => 'Pulpen Hitam',
+                'name' => 'Pulpen Hitam',
+                'specification' => 'v5 0,7',
                 'image_url' => 'database/seeders/assets/snowman.jpg',
             ],
             [
@@ -36,15 +38,16 @@ class BarangSeeder extends Seeder
                 'subcategory_id' => 2,
                 'brand_id' => 8,
                 'uom_id' => 3,
-                'specification' => 'Pulpen Hitam',
-                'image_url' => 'database/seeders/assets/joyko.jpg',
+                'name' => 'Pulpen Hitam',
+                'specification' => 'AE7 0,5',
+                'image_url' => 'database/seeders/assets/standard.jpg',
             ],
             [
                 'number' => 'FUR-KUR-0001',
                 'subcategory_id' => 3,
                 'brand_id' => 9,
                 'uom_id' => 3,
-                'specification' => 'Kursi Kantor FLINTAN',
+                'name' => 'Kursi Kantor FLINTAN',
                 'image_url' => 'database/seeders/assets/ikea.jpg',
             ],
             [
@@ -52,7 +55,7 @@ class BarangSeeder extends Seeder
                 'subcategory_id' => 4,
                 'brand_id' => 10,
                 'uom_id' => 3,
-                'specification' => 'Meja Kerja Informa Halley',
+                'name' => 'Meja Kerja Halley',
                 'image_url' => 'database/seeders/assets/informa.jpg',
             ],
             [
@@ -60,7 +63,8 @@ class BarangSeeder extends Seeder
                 'subcategory_id' => 5,
                 'brand_id' => 3,
                 'uom_id' => 3,
-                'specification' => 'Swift Go SFG14 Ultra 5 32GB 512GB',
+                'name' => 'Acer Swift Go SFG14',
+                'specification' => 'Ultra 5 32GB 512GB',
                 'image_url' => 'database/seeders/assets/acer.jpg',
             ],
             [
@@ -68,38 +72,23 @@ class BarangSeeder extends Seeder
                 'subcategory_id' => 7,
                 'brand_id' => 12,
                 'uom_id' => 1,
-                'specification' => 'M6 EV Superior 7 Seater',
-                'image_url' => 'database/seeders/assets/byd.jpg',
+                'name' => 'BYD M6 EV',
+                'specification' => 'Superior',
+                'image_url' => 'database/seeders/assets/byd.jpeg',
             ],
             [
                 'number' => 'KEN-MOB-0002',
                 'subcategory_id' => 7,
                 'brand_id' => 11,
                 'uom_id' => 1,
-                'specification' => 'Innova Zenix Q Hybrid',
-                'image_url' => 'database/seeders/assets/zenix.jpg',
+                'name' => 'Innova Zenix Hybrid',
+                'specification' => 'Q Modellista',
+                'image_url' => 'database/seeders/assets/zenix.jpeg',
             ],
         ];
 
         foreach ($barangs as $data) {
-            // Check if the asset file exists (handling possible .jpg / .jpeg mixups)
-            $sourcePath = base_path($data['image_url']);
-            if (!File::exists($sourcePath)) {
-                // Try .jpeg if .jpg is not found
-                if (str_ends_with($sourcePath, '.jpg')) {
-                    $fallback = substr($sourcePath, 0, -4) . '.jpeg';
-                    if (File::exists($fallback)) {
-                        $sourcePath = $fallback;
-                    }
-                }
-                // Try standard.jpg if joyko.jpg is not found
-                if (str_contains($sourcePath, 'joyko.jpg')) {
-                    $fallback = str_replace('joyko.jpg', 'standard.jpg', $sourcePath);
-                    if (File::exists($fallback)) {
-                        $sourcePath = $fallback;
-                    }
-                }
-            }
+            $sourcePath = base_path(ltrim($data['image_url'], '/'));
 
             $destinationPath = 'inventory/' . basename($sourcePath);
             
@@ -117,7 +106,8 @@ class BarangSeeder extends Seeder
                     'subcategory_id' => $data['subcategory_id'],
                     'brand_id' => $data['brand_id'],
                     'uom_id' => $data['uom_id'],
-                    'specification' => $data['specification'],
+                    'name' => $data['name'],
+                    'specification' => $data['specification'] ?? null,
                     'image_url' => $destinationPath,
                 ]
             );

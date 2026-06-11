@@ -94,6 +94,7 @@ class ReturnController extends Controller
             return [
                 'id' => $item->id,
                 'brand' => ($item->barang->brand->name ?? '-') . ' ' . ($item->barang->specification ?? ''),
+                'name' => $item->barang->name ?? '-',
                 'category' => $item->barang->subcategory->category->name ?? '-',
                 'subcategory' => $item->barang->subcategory->name ?? '-',
                 'quantity' => $item->quantity_requested,
@@ -191,7 +192,7 @@ class ReturnController extends Controller
             $assignments = RequestUnitAssignment::where('request_item_id', $reqItem->id)->get();
             foreach ($assignments as $asn) {
                 $asn->unit->update([
-                    'status' => 'tersedia',
+                    'status' => 'Available',
                 ]);
                 $asn->update(['completed_at' => now()]);
             }
