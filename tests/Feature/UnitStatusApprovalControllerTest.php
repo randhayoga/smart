@@ -39,6 +39,7 @@ class UnitStatusApprovalControllerTest extends TestCase
             'proposed_status' => 'maintenance',
             'decision' => 'pending',
             'requested_at' => now(),
+            'doc_url' => 'memos/placeholder.pdf',
         ]);
 
         $response = $this->actingAs($user)->get(route('smart.inventory.unit-status-approvals.index'));
@@ -80,6 +81,7 @@ class UnitStatusApprovalControllerTest extends TestCase
             'proposed_status' => 'maintenance',
             'decision' => 'pending',
             'requested_at' => now(),
+            'doc_url' => 'memos/placeholder.pdf',
         ]);
 
         $response = $this->actingAs($user)->post(route('smart.inventory.unit-status-approvals.store'), [
@@ -102,6 +104,7 @@ class UnitStatusApprovalControllerTest extends TestCase
             'proposed_status' => 'maintenance',
             'decision' => 'pending',
             'requested_at' => now(),
+            'doc_url' => 'memos/placeholder.pdf',
         ]);
 
         $response = $this->actingAs($user)->get(route('smart.inventory.unit-status-approvals.show', $approval));
@@ -120,6 +123,7 @@ class UnitStatusApprovalControllerTest extends TestCase
             'proposed_status' => 'maintenance',
             'decision' => 'pending',
             'requested_at' => now(),
+            'doc_url' => 'memos/placeholder.pdf',
         ]);
 
         $response = $this->actingAs($user)->put(route('smart.inventory.unit-status-approvals.update', $approval), [
@@ -160,6 +164,7 @@ class UnitStatusApprovalControllerTest extends TestCase
             'proposed_status' => 'maintenance',
             'decision' => 'pending',
             'requested_at' => now(),
+            'doc_url' => 'memos/placeholder.pdf',
         ]);
 
         $response = $this->actingAs($user)->put(route('smart.inventory.unit-status-approvals.update', $approval), [
@@ -192,6 +197,7 @@ class UnitStatusApprovalControllerTest extends TestCase
             'proposed_status' => 'maintenance',
             'decision' => 'pending',
             'requested_at' => now(),
+            'doc_url' => 'memos/placeholder.pdf',
         ]);
 
         $response = $this->actingAs($user)->delete(route('smart.inventory.unit-status-approvals.destroy', $approval));

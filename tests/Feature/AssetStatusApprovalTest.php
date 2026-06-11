@@ -72,6 +72,7 @@ class AssetStatusApprovalTest extends TestCase
             'proposed_status' => 'maintenance',
             'decision' => 'pending',
             'requested_at' => now(),
+            'doc_url' => 'memos/placeholder.pdf',
         ]);
 
         $app2 = UnitStatusApproval::create([
@@ -80,6 +81,7 @@ class AssetStatusApprovalTest extends TestCase
             'proposed_status' => 'broken',
             'decision' => 'pending',
             'requested_at' => now(),
+            'doc_url' => 'memos/placeholder.pdf',
         ]);
 
         $response = $this->actingAs($manager)->post(route('smart.approve-status.bulk-store'), [
@@ -130,6 +132,7 @@ class AssetStatusApprovalTest extends TestCase
             'proposed_status' => 'maintenance',
             'decision' => 'pending',
             'requested_at' => now(),
+            'doc_url' => 'memos/placeholder.pdf',
         ]);
 
         $app2 = UnitStatusApproval::create([
@@ -138,6 +141,7 @@ class AssetStatusApprovalTest extends TestCase
             'proposed_status' => 'broken',
             'decision' => 'pending',
             'requested_at' => now(),
+            'doc_url' => 'memos/placeholder.pdf',
         ]);
 
         $response = $this->actingAs($manager)->post(route('smart.approve-status.bulk-store'), [

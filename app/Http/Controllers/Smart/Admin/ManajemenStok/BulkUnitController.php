@@ -197,6 +197,10 @@ class BulkUnitController extends Controller
         // 5. Handle approvals if status is changed to a status requiring approval
         $arrNeedApproval = ['rusak'];
         if ($request->filled('status') && in_array($request->input('status'), $arrNeedApproval)) {
+            $docUrl = 'memos/placeholder.pdf';
+            if ($request->hasFile('memo_file')) {
+                $docUrl = $request->file('memo_file')->store('memos', 'public');
+            }
             foreach ($units as $unit) {
                 $existing = \App\Models\Inventory\UnitStatusApproval::where('unit_id', $unit->id)
                     ->where('decision', 'pending')
@@ -210,6 +214,7 @@ class BulkUnitController extends Controller
                         'note' => null,
                         'approver_id' => null,
                         'requested_at' => now(),
+                        'doc_url' => $docUrl,
                     ]);
                 }
             }

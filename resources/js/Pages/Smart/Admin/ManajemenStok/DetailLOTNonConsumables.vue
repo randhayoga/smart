@@ -470,8 +470,8 @@ const viewAssetMemoInNewTab = () => {
     window.open(url, '_blank');
   } else if (assetModalMode.value === 'edit' && selectedAssetId.value) {
     const asset = props.units.find(u => u.id === selectedAssetId.value);
-    if (asset && (asset as any).memo_path) {
-      window.open('/storage/' + (asset as any).memo_path, '_blank');
+    if (asset && (asset as any).doc_url) {
+      window.open('/storage/' + (asset as any).doc_url, '_blank');
     }
   }
 };

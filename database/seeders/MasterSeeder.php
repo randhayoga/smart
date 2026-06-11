@@ -52,23 +52,23 @@ class MasterSeeder extends Seeder
         // 2. Subcategories
         $subcategories = [
             [
-                'code' => 'KER',
-                'name' => 'Kertas',
+                'code' => 'KA4',
+                'name' => 'Kertas HVS A4',
                 'category_code' => 'ATK',
             ],
             [
-                'code' => 'PUL',
-                'name' => 'Pulpen',
+                'code' => 'PHI',
+                'name' => 'Pulpen Hitam',
                 'category_code' => 'ATK',
             ],
             [
-                'code' => 'KUR',
-                'name' => 'Kursi',
+                'code' => 'KKJ',
+                'name' => 'Kursi Kerja',
                 'category_code' => 'FUR',
             ],
             [
-                'code' => 'MEJ',
-                'name' => 'Meja',
+                'code' => 'MKJ',
+                'name' => 'Meja Kerja',
                 'category_code' => 'FUR',
             ],
             [

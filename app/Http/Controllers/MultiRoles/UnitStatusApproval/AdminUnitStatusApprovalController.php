@@ -44,6 +44,7 @@ class AdminUnitStatusApprovalController extends Controller
             'unit_id' => 'required|exists:units,id',
             'proposed_status' => 'required|string|max:255',
             'note' => 'nullable|string',
+            'memo_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
         ]);
 
         $unit = Unit::findOrFail($validated['unit_id']);
@@ -59,6 +60,11 @@ class AdminUnitStatusApprovalController extends Controller
             ]);
         }
 
+        $docUrl = 'memos/placeholder.pdf';
+        if ($request->hasFile('memo_file')) {
+            $docUrl = $request->file('memo_file')->store('memos', 'public');
+        }
+
         UnitStatusApproval::create([
             'unit_id' => $validated['unit_id'],
             'requester_id' => $request->user()->id,
@@ -66,6 +72,7 @@ class AdminUnitStatusApprovalController extends Controller
             'decision' => 'pending',
             'note' => $validated['note'] ?? null,
             'requested_at' => now(),
+            'doc_url' => $docUrl,
         ]);
 
         return redirect()->back()->with('success', 'Pengajuan perubahan status unit berhasil dikirim.');
