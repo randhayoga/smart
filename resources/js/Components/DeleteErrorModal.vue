@@ -42,7 +42,7 @@ const emit = defineEmits(['close']);
             <div class="flex items-center p-1 justify-between border-b border-border">
               <h3 class="text-lg font-bold text-foreground p-2">Pemberitahuan</h3>
               <button @click="emit('close')" class="p-2 hover:bg-muted rounded-full transition-colors">
-                <X class="w-5 h-5 text-muted-foreground" />
+                <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
               </button>
             </div>
 

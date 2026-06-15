@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { X, AlertTriangle } from 'lucide-vue-next';
+import { Button } from "@/Components/ui/button";
 
 interface Props {
   isOpen: boolean;
@@ -91,13 +92,11 @@ const modalConfirmButtonText = computed(() => {
   return props.confirmButtonText;
 });
 
-const modalConfirmButtonClass = computed(() => {
+const confirmButtonVariant = computed(() => {
   if (props.itemName === 'Perubahan Status Aset') {
-    return props.actionType === 'approved'
-      ? 'px-5 py-2 bg-[#2ECC71] hover:opacity-70 text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm active:scale-[0.98]'
-      : 'px-5 py-2 bg-destructive hover:opacity-70 text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm active:scale-[0.98]';
+    return props.actionType === 'approved' ? 'success' : 'destructive';
   }
-  return props.confirmButtonClass;
+  return 'destructive';
 });
 
 const modalIconClass = computed(() => {
@@ -303,7 +302,7 @@ const bulkItemsFields = computed(() => {
             <div class="flex items-center p-1 justify-between border-b border-border">
               <h3 class="text-lg font-bold text-foreground p-2">{{ modalTitle }}</h3>
               <button @click="emit('close')" class="p-2 hover:bg-muted rounded-full transition-colors">
-                <X class="w-5 h-5 text-muted-foreground" />
+                <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
               </button>
             </div>
 
@@ -347,18 +346,20 @@ const bulkItemsFields = computed(() => {
             <!-- Modal Footer -->
             <div class="py-3 px-4 bg-muted/30 border-t border-border">
               <div class="flex items-center justify-end gap-3">
-                <button 
+                <Button 
                   @click="emit('close')"
-                  class="px-5 py-2 bg-background border border-input hover:bg-muted text-foreground text-sm font-medium rounded-[14px] transition-colors shadow-sm"
+                  variant="white"
+                  class="px-5"
                 >
                   Batal
-                </button>
-                <button 
+                </Button>
+                <Button 
                   @click="handleConfirm"
-                  :class="modalConfirmButtonClass"
+                  :variant="confirmButtonVariant"
+                  class="px-5 active:scale-[0.98]"
                 >
                   {{ modalConfirmButtonText }}
-                </button>
+                </Button>
               </div>
             </div>
           </div>

@@ -21,7 +21,7 @@ class BrowseController extends Controller
     {
         $categories = Category::orderBy('name')->get();
         
-        $items = Subcategory::with(['category', 'barangs'])
+        $items = Subcategory::with(['category', 'barangs.brand'])
             ->get()
             ->map(function ($subcategory) {
                 $firstBarang = $subcategory->barangs->first();
@@ -40,6 +40,16 @@ class BrowseController extends Controller
                     'spec' => $firstBarang ? $firstBarang->specification : '-',
                     'stock' => 0,
                     'imageUrl' => $firstBarang && $firstBarang->image_url ? '/storage/' . $firstBarang->image_url : null,
+                    'barangs' => $subcategory->barangs->map(function ($barang) {
+                        return [
+                            'id' => $barang->id,
+                            'number' => $barang->number,
+                            'name' => $barang->name,
+                            'brand' => $barang->brand ? $barang->brand->name : '-',
+                            'specification' => $barang->specification,
+                            'imageUrl' => $barang->image_url ? '/storage/' . $barang->image_url : null,
+                        ];
+                    }),
                 ];
             });
 

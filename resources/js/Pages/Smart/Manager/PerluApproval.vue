@@ -518,7 +518,7 @@ const handleConfirmSubmit = () => {
           <div class="flex items-center justify-between p-5 border-b border-gray-200 bg-white shrink-0">
             <h3 class="text-base md:text-lg font-bold text-gray-900">Detail Permintaan</h3>
             <button @click="closeDetailPopup" class="p-1.5 hover:bg-gray-100 rounded-full transition-colors cursor-pointer">
-              <X class="w-5 h-5 text-gray-500" />
+              <X class="w-5 h-5 text-gray-500 cursor-pointer" />
             </button>
           </div>
 
@@ -757,7 +757,7 @@ const handleConfirmSubmit = () => {
                 {{ confirmActionType === 'approve' ? 'Setujui Permintaan' : 'Tolak Permintaan' }}
               </h3>
               <button @click="closeConfirmModal" class="p-1.5 hover:bg-gray-100 rounded-full transition-colors cursor-pointer">
-                <X class="w-5 h-5 text-gray-500" />
+                <X class="w-5 h-5 text-gray-500 cursor-pointer" />
               </button>
             </div>
             

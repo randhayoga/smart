@@ -3,7 +3,7 @@ import { ref, computed } from 'vue';
 import { router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import TableSearch from '@/Components/TableSearch.vue';
-import { ChevronDown } from 'lucide-vue-next';
+import { ChevronDown, X } from 'lucide-vue-next';
 import { Button } from "@/Components/ui/button";
 import ProductCard from '@/Components/ProductCard.vue';
 import { toast } from 'vue-sonner';
@@ -16,7 +16,6 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
   DialogDescription,
 } from "@/Components/ui/dialog";
@@ -24,6 +23,15 @@ import {
 interface Category {
   id: number;
   name: string;
+}
+
+interface BarangVariant {
+  id: number;
+  number: string;
+  name: string;
+  brand: string;
+  specification: string | null;
+  imageUrl: string | null;
 }
 
 interface Item {
@@ -39,6 +47,7 @@ interface Item {
   spec: string;
   stock: number;
   imageUrl?: string;
+  barangs?: BarangVariant[];
 }
 
 interface Props {
@@ -66,18 +75,37 @@ const clearFilter = () => {
 const isModalOpen = ref(false);
 const selectedProduct = ref<Item | null>(null);
 const quantity = ref(1);
+const selectedBarangId = ref<number | null>(null);
 
 const openAddToCartModal = (product: Item) => {
   selectedProduct.value = product;
   quantity.value = 1;
+  selectedBarangId.value = product.barang_id;
   isModalOpen.value = true;
 };
 
+const getBarangDisplayName = (barang: BarangVariant) => {
+  const parts = [];
+  if (barang.brand && barang.brand !== '-') {
+    parts.push(barang.brand);
+  }
+  if (barang.name) {
+    parts.push(barang.name);
+  }
+  if (barang.specification && barang.specification !== '-') {
+    parts.push(barang.specification);
+  }
+  if (parts.length === 0) {
+    return barang.number || 'Varian Tanpa Nama';
+  }
+  return parts.join(' ');
+};
+
 const handleConfirmAddToCart = () => {
-  if (!selectedProduct.value || !selectedProduct.value.barang_id) return;
+  if (!selectedProduct.value || !selectedBarangId.value) return;
 
   router.post(route('smart.browse.add-to-cart'), {
-    barang_id: selectedProduct.value.barang_id,
+    barang_id: selectedBarangId.value,
     quantity: quantity.value,
   }, {
     onSuccess: () => {
@@ -206,52 +234,97 @@ const filteredAndSortedItems = computed(() => {
 
     <!-- Modal Tambah ke Keranjang -->
     <Dialog :open="isModalOpen" @update:open="isModalOpen = $event">
-      <DialogContent class="sm:max-w-[886px] rounded-[14px]">
-        <DialogHeader>
-          <DialogTitle class="text-xl font-bold">Tambah ke Keranjang</DialogTitle>
-          <DialogDescription class="sr-only">
-            Formulir untuk menentukan jumlah barang yang ingin ditambahkan ke keranjang.
-          </DialogDescription>
-        </DialogHeader>
-        
-        <hr class="border-border my-0" />
-        
-        <div v-if="selectedProduct" class="mt-4 flex flex-col sm:flex-row gap-6">
-          <!-- Image (Left Column) -->
-          <div class="w-32 h-32 sm:w-[180px] sm:h-[180px] shrink-0 bg-muted rounded-[14px] overflow-hidden flex items-center justify-center border border-border relative">
-            <div class="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-white/40"></div>
-            <img v-if="selectedProduct.imageUrl" :src="selectedProduct.imageUrl.startsWith('http') || selectedProduct.imageUrl.startsWith('/') ? selectedProduct.imageUrl : '/storage/' + selectedProduct.imageUrl" alt="Product" class="w-full h-full object-cover relative z-10" />
-            <img v-else src="https://placehold.co/400x400?text=Barang" alt="Product" class="w-full h-full object-cover opacity-50" />
+      <DialogContent class="sm:max-w-[75%] rounded-2xl bg-card shadow-2xl p-0 gap-0 border border-border" :show-close-button="false">
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between py-4 px-6 border-b border-border">
+          <div>
+            <DialogTitle class="text-lg font-bold text-foreground">Tambah ke Keranjang</DialogTitle>
+            <DialogDescription class="sr-only">
+              Formulir untuk menentukan jumlah barang yang ingin ditambahkan ke keranjang.
+            </DialogDescription>
           </div>
+          <button @click="isModalOpen = false" class="p-1.5 hover:bg-muted rounded-full transition-colors text-muted-foreground hover:text-foreground">
+            <X class="w-5 h-5 cursor-pointer" />
+          </button>
+        </div>
+        
+        <div v-if="selectedProduct">
+          <!-- Modal Body -->
+          <div class="p-6 space-y-6">
+            <!-- Barang Terpilih -->
+            <div class="space-y-2.5">
+              <span class="text-sm font-medium text-muted-foreground block">Barang terpilih:</span>
+              <div class="flex items-center gap-4">
+                <!-- Image -->
+                <div class="w-16 h-16 sm:w-20 sm:h-20 shrink-0 bg-muted rounded-2xl overflow-hidden flex items-center justify-center border border-border relative">
+                  <div class="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-white/40"></div>
+                  <img v-if="selectedProduct.imageUrl" :src="selectedProduct.imageUrl.startsWith('http') || selectedProduct.imageUrl.startsWith('/') ? selectedProduct.imageUrl : '/storage/' + selectedProduct.imageUrl" alt="Product" class="w-full h-full object-cover relative z-10" />
+                  <img v-else src="https://placehold.co/400x400?text=Barang" alt="Product" class="w-full h-full object-cover opacity-50" />
+                </div>
+                <!-- Info -->
+                <div class="flex flex-col">
+                  <h3 class="text-lg font-bold text-foreground leading-snug">{{ selectedProduct.subcategory_name }}</h3>
+                  <p class="text-sm text-muted-foreground leading-normal">{{ selectedProduct.category_name }}</p>
+                </div>
+              </div>
+            </div>
 
-          <!-- Content & Actions (Right Column) -->
-          <div class="flex flex-col flex-grow">
-            <!-- Info -->
-            <h3 class="text-xl font-bold text-foreground">{{ selectedProduct.subcategory_name }}</h3>
-            <p class="text-sm text-muted-foreground">{{ selectedProduct.category_name }}</p>
+            <!-- Pilih Varian -->
+            <div class="space-y-2.5">
+              <span class="text-sm font-medium text-muted-foreground block">Pilih varian:</span>
+              <div class="border border-border rounded-2xl p-4 bg-background flex flex-wrap gap-2.5">
+                <!-- Tidak Spesifik -->
+                <button
+                  type="button"
+                  :class="[
+                    'px-4 py-2 text-xs font-semibold rounded-full border transition-all duration-200',
+                    selectedBarangId === selectedProduct.barang_id
+                      ? 'border-[#6366f1] text-[#6366f1] bg-[#6366f1]/5'
+                      : 'border-border text-foreground hover:bg-muted/50'
+                  ]"
+                  @click="selectedBarangId = selectedProduct.barang_id"
+                >
+                  Tidak Spesifik
+                </button>
 
-            <hr class="border-border my-6" />
+                <!-- Variants -->
+                <button
+                  v-for="barang in selectedProduct.barangs"
+                  :key="barang.id"
+                  type="button"
+                  :class="[
+                    'px-4 py-2 text-xs font-semibold rounded-full border transition-all duration-200',
+                    selectedBarangId === barang.id
+                      ? 'border-[#6366f1] text-[#6366f1] bg-[#6366f1]/5'
+                      : 'border-border text-foreground hover:bg-muted/50'
+                  ]"
+                  @click="selectedBarangId = barang.id"
+                >
+                  {{ getBarangDisplayName(barang) }}
+                </button>
+              </div>
+            </div>
 
             <!-- Jumlah -->
-            <div class="mb-8">
-              <label class="text-sm font-medium text-foreground block mb-3">
+            <div class="space-y-2.5">
+              <label class="text-sm font-medium text-foreground block">
                 Atur jumlah barang yang akan diminta (dalam satuan)<span class="text-rose-500">*</span>
               </label>
               <div class="flex items-center">
-                <div class="flex items-center border border-input rounded-[14px] bg-background">
+                <div class="flex items-center border border-input rounded-lg bg-background">
                   <button 
                     type="button" 
-                    class="w-10 h-10 flex items-center justify-center text-muted-foreground hover:bg-muted/50 rounded-l-[14px] transition-colors"
+                    class="w-9 h-9 flex items-center justify-center text-muted-foreground hover:bg-muted/50 rounded-l-lg transition-colors"
                     @click="quantity > 1 && quantity--"
                   >
                     <span class="text-lg leading-none">-</span>
                   </button>
-                  <div class="w-12 h-10 flex items-center justify-center border-x border-input text-sm font-medium">
+                  <div class="w-12 h-9 flex items-center justify-center border-x border-input text-sm font-medium text-foreground bg-background">
                     {{ quantity }}
                   </div>
                   <button 
                     type="button" 
-                    class="w-10 h-10 flex items-center justify-center text-muted-foreground hover:bg-muted/50 rounded-r-[14px] transition-colors"
+                    class="w-9 h-9 flex items-center justify-center text-muted-foreground hover:bg-muted/50 rounded-r-lg transition-colors"
                     @click="quantity++"
                   >
                     <span class="text-lg leading-none">+</span>
@@ -259,18 +332,24 @@ const filteredAndSortedItems = computed(() => {
                 </div>
               </div>
             </div>
+          </div>
 
-            <!-- Footer Actions -->
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-auto">
-              <div class="text-xs text-rose-500 italic">*Wajib diisi</div>
-              <div class="flex gap-3 w-full sm:w-auto">
-                <Button variant="outline" @click="isModalOpen = false" class="rounded-[14px] w-full sm:w-auto h-[42px] px-8">
-                  Batal
-                </Button>
-                <Button @click="handleConfirmAddToCart" class="bg-gradient-primary shadow-button hover:opacity-90 text-white rounded-[14px] w-full sm:w-auto h-[42px] px-8">
-                  Tambah ke Keranjang
-                </Button>
-              </div>
+          <!-- Modal Footer -->
+          <div class="py-4 px-6 border-t border-border flex items-center justify-between">
+            <p class="text-xs text-rose-500 font-medium">*Wajib diisi</p>
+            <div class="flex items-center gap-3">
+              <button 
+                @click="isModalOpen = false"
+                class="px-5 py-2 bg-background border border-input hover:bg-muted text-foreground text-sm font-semibold rounded-full transition-colors"
+              >
+                Batal
+              </button>
+              <button 
+                @click="handleConfirmAddToCart"
+                class="px-5 py-2 bg-[#6366f1] hover:bg-[#5053e3] text-white text-sm font-semibold rounded-full transition-colors shadow-sm active:scale-[0.98] disabled:opacity-50"
+              >
+                Tambah ke Keranjang
+              </button>
             </div>
           </div>
         </div>

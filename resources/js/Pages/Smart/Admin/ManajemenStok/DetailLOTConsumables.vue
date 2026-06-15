@@ -2,6 +2,7 @@
 import { ref, watch } from 'vue';
 import axios from 'axios';
 import { X } from 'lucide-vue-next';
+import { Button } from '@/Components/ui/button';
 
 interface Props {
   isOpen: boolean;
@@ -110,7 +111,7 @@ const handleDelete = () => {
             <div class="flex items-center p-1 justify-between border-b border-border">
               <h3 class="text-lg font-bold text-foreground p-2">Detail LOT</h3>
               <button @click="emit('close')" class="p-2 hover:bg-muted rounded-full transition-colors">
-                <X class="w-5 h-5 text-muted-foreground" />
+                <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
               </button>
             </div>
 
@@ -167,24 +168,27 @@ const handleDelete = () => {
 
             <!-- Modal Footer -->
             <div v-if="!isLoading && lotDetails" class="py-3 px-4 bg-muted/30 border-t border-border flex items-center justify-end gap-3">
-              <button 
+              <Button
                 @click="handleEdit"
-                class="px-5 py-2 bg-gradient-primary hover:opacity-90 text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm active:scale-[0.98]"
+                variant="primary"
+                size="lg"
               >
                 Edit Detail LOT
-              </button>
-              <button 
+              </Button>
+              <Button
                 @click="handleDelete"
-                class="px-5 py-2 bg-destructive hover:opacity-70 text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm active:scale-[0.98]"
+                variant="destructive"
+                size="lg"
               >
                 Hapus LOT
-              </button>
-              <button 
+              </Button>
+              <Button
                 @click="emit('close')"
-                class="px-5 py-2 bg-background border border-input hover:bg-muted text-foreground text-sm font-medium rounded-[14px] transition-colors shadow-sm active:scale-[0.98]"
+                variant="white"
+                size="lg"
               >
                 Kembali
-              </button>
+              </Button>
             </div>
           </div>
         </Transition>

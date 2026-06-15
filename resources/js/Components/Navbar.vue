@@ -87,7 +87,7 @@ const formatTime = (isoString: string) => {
           @click="emit('toggle-sidebar')"
         >
           <Menu v-if="!sidebarOpen" class="h-5 w-5" />
-          <X v-else class="h-5 w-5" />
+          <X v-else class="h-5 w-5 cursor-pointer" />
         </Button>
         
         <!-- Logo -->
