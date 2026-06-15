@@ -1240,20 +1240,11 @@ const filteredUnits = computed(() => {
 });
 
 // Dynamic values for dropdown filters
-const availableStatuses = ['available', 'borrowed', 'repair', 'loss', 'lost', 'inactive'];
+const availableStatuses = ['Tersedia', 'Dipinjam', 'Perbaikan', 'Rusak', 'Hilang', 'Tidak Aktif'];
 const availableConditions = ['baik', 'kurang baik', 'rusak'];
 
 const getStatusLabel = (status: string) => {
-  if (!status) return '';
-  const lower = status.toLowerCase();
-  if (lower === 'available' || lower === 'tersedia') return 'Tersedia';
-  if (lower === 'borrowed' || lower === 'dipinjam') return 'Dipinjam';
-  if (lower === 'dipakai') return 'Dipinjam';
-  if (lower === 'repair' || lower === 'perbaikan') return 'Perbaikan';
-  if (lower === 'loss' || lower === 'rusak') return 'Rusak';
-  if (lower === 'lost' || lower === 'hilang') return 'Hilang';
-  if (lower === 'inactive' || lower === 'tidak aktif') return 'Tidak Aktif';
-  return status;
+  return status || '';
 };
 
 const getConditionLabel = (cond: string) => {
@@ -1266,14 +1257,6 @@ const getConditionLabel = (cond: string) => {
 };
 
 const mapStatusToBackend = (status: string) => {
-  if (!status) return status;
-  const lower = status.toLowerCase();
-  if (lower === 'available') return 'Available';
-  if (lower === 'borrowed') return 'Borrowed';
-  if (lower === 'repair') return 'Repair';
-  if (lower === 'loss') return 'Loss';
-  if (lower === 'lost') return 'Lost';
-  if (lower === 'inactive') return 'Inactive';
   return status;
 };
 

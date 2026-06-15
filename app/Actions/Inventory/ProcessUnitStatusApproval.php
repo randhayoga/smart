@@ -18,6 +18,12 @@ class ProcessUnitStatusApproval
             'loss' => 'Rusak',
             'lost' => 'Hilang',
             'inactive' => 'Tidak Aktif',
+            'tersedia' => 'Tersedia',
+            'dipinjam' => 'Dipinjam',
+            'perbaikan' => 'Perbaikan',
+            'rusak' => 'Rusak',
+            'hilang' => 'Hilang',
+            'tidak aktif' => 'Tidak Aktif',
         ];
         return $statusMap[strtolower($status)] ?? $status;
     }
@@ -42,8 +48,8 @@ class ProcessUnitStatusApproval
                 $oldStatus = $unit->status;
                 $newStatus = $approval->proposed_status;
 
-                if (in_array($newStatus, ['Loss', 'Lost'])) {
-                    $newStatus = 'Inactive';
+                if (in_array($newStatus, ['Rusak', 'Hilang'])) {
+                    $newStatus = 'Tidak Aktif';
                 }
 
                 // Update unit status

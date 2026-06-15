@@ -39,7 +39,7 @@ class AssetStatusApprovalTest extends TestCase
             'number' => $lot->number . '-U01',
             'lot_id' => $lot->id,
             'location_id' => $lot->location_id,
-            'status' => 'Available',
+            'status' => 'Tersedia',
             'condition' => 'Baik',
             'price' => $lot->unit_price,
             'image_url' => 'inventory/lots/placeholder.jpg',
@@ -69,7 +69,7 @@ class AssetStatusApprovalTest extends TestCase
         $app1 = UnitStatusApproval::create([
             'unit_id' => $unit1->id,
             'requester_id' => $manager->id,
-            'proposed_status' => 'Repair',
+            'proposed_status' => 'Perbaikan',
             'decision' => 'pending',
             'requested_at' => now(),
             'doc_url' => 'memos/placeholder.pdf',
@@ -78,7 +78,7 @@ class AssetStatusApprovalTest extends TestCase
         $app2 = UnitStatusApproval::create([
             'unit_id' => $unit2->id,
             'requester_id' => $manager->id,
-            'proposed_status' => 'Loss',
+            'proposed_status' => 'Rusak',
             'decision' => 'pending',
             'requested_at' => now(),
             'doc_url' => 'memos/placeholder.pdf',
@@ -100,12 +100,12 @@ class AssetStatusApprovalTest extends TestCase
         $this->assertEquals('approved', $app1->decision);
         $this->assertEquals('approved', $app2->decision);
         
-        $this->assertEquals('Repair', $unit1->status);
-        $this->assertEquals('Inactive', $unit2->status);
+        $this->assertEquals('Perbaikan', $unit1->status);
+        $this->assertEquals('Tidak Aktif', $unit2->status);
 
         $this->assertDatabaseHas('unit_lifecycles', [
             'unit_id' => $unit1->id,
-            'status' => 'Repair',
+            'status' => 'Perbaikan',
             'requester_id' => $app1->requester_id,
             'approver_id' => $manager->id,
             'note' => 'Bulk approval works',
@@ -113,7 +113,7 @@ class AssetStatusApprovalTest extends TestCase
 
         $this->assertDatabaseHas('unit_lifecycles', [
             'unit_id' => $unit2->id,
-            'status' => 'Inactive',
+            'status' => 'Tidak Aktif',
             'requester_id' => $app2->requester_id,
             'approver_id' => $manager->id,
             'note' => 'Bulk approval works',
@@ -129,7 +129,7 @@ class AssetStatusApprovalTest extends TestCase
         $app1 = UnitStatusApproval::create([
             'unit_id' => $unit1->id,
             'requester_id' => $manager->id,
-            'proposed_status' => 'Repair',
+            'proposed_status' => 'Perbaikan',
             'decision' => 'pending',
             'requested_at' => now(),
             'doc_url' => 'memos/placeholder.pdf',
@@ -138,7 +138,7 @@ class AssetStatusApprovalTest extends TestCase
         $app2 = UnitStatusApproval::create([
             'unit_id' => $unit2->id,
             'requester_id' => $manager->id,
-            'proposed_status' => 'Loss',
+            'proposed_status' => 'Rusak',
             'decision' => 'pending',
             'requested_at' => now(),
             'doc_url' => 'memos/placeholder.pdf',
@@ -160,8 +160,8 @@ class AssetStatusApprovalTest extends TestCase
         $this->assertEquals('rejected', $app1->decision);
         $this->assertEquals('rejected', $app2->decision);
         
-        $this->assertEquals('Available', $unit1->status); // unchanged
-        $this->assertEquals('Available', $unit2->status); // unchanged
+        $this->assertEquals('Tersedia', $unit1->status); // unchanged
+        $this->assertEquals('Tersedia', $unit2->status); // unchanged
 
         $this->assertDatabaseHas('unit_status_approvals', [
             'id' => $app1->id,

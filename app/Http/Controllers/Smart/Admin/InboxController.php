@@ -85,9 +85,9 @@ class InboxController extends Controller
             $hasAnyUnit = Unit::whereHas('lot', fn($q) => $q->where('barang_id', $barangId))->exists();
 
             if ($hasAnyUnit) {
-                // Non-konsumable: cek jumlah Unit status 'Available'
+                // Non-konsumable: cek jumlah Unit status 'Tersedia'
                 $availableStock = Unit::whereHas('lot', fn($q) => $q->where('barang_id', $barangId))
-                    ->where('status', 'Available')
+                    ->where('status', 'Tersedia')
                     ->count();
             } else {
                 // Konsumable: cek total current_quantity di semua Lot
@@ -228,7 +228,7 @@ class InboxController extends Controller
                     if ($hasAnyUnit) {
                         // ── NON-KONSUMABLE (Aset dengan serial number) ──
                         $units = Unit::whereHas('lot', fn($q) => $q->where('barang_id', $barangId))
-                            ->where('status', 'Available')
+                            ->where('status', 'Tersedia')
                             ->limit($item->quantity_requested)
                             ->get();
 
@@ -243,7 +243,7 @@ class InboxController extends Controller
                                 'assigned_at' => now(),
                             ]);
 
-                            $unit->update(['status' => 'Borrowed']);
+                            $unit->update(['status' => 'Dipinjam']);
                         }
                     } else {
                         // ── KONSUMABLE (Habis pakai, stok di Lot.current_quantity) ──
