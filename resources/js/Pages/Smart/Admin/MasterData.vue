@@ -8,7 +8,8 @@ import {
   ArrowUpDown, 
   Plus, 
   X,
-  AlertTriangle
+  Trash2,
+  Pencil
 } from 'lucide-vue-next';
 
 import { Button } from "@/Components/ui/button";
@@ -28,8 +29,6 @@ import DataTable from '@/Components/DataTable.vue';
 import TableSearch from '@/Components/TableSearch.vue';
 import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal.vue';
 import DeleteErrorModal from '@/Components/DeleteErrorModal.vue';
-import DeleteTableButton from '@/Components/DeleteTableButton.vue';
-import EditTableButton from '@/Components/EditTableButton.vue';
 import Tabs from '@/Components/Tabs.vue';
 
 interface Category    { id: number; code: string; name: string; is_consumable: boolean; }
@@ -375,12 +374,24 @@ const columns = computed<ColumnDef<any>[]>(() => {
     cell: ({ row }) => {
       const item = row.original;
       return h('div', { class: 'flex items-center justify-end gap-2' }, [
-        h(EditTableButton, {
+        h(Button, {
+          variant: 'table-edit',
+          size: 'icon-sm',
+          title: 'Edit',
           onClick: () => openEditModal(item),
-        }),
-        h(DeleteTableButton, {
+        }, () => [
+          h(Pencil),
+          h('span', { class: 'sr-only' }, 'Edit')
+        ]),
+        h(Button, {
+          variant: 'table-destructive',
+          size: 'icon-sm',
+          title: 'Hapus',
           onClick: () => openDeleteModal(item),
-        })
+        }, () => [
+          h(Trash2),
+          h('span', { class: 'sr-only' }, 'Hapus')
+        ])
       ]);
     },
   });
@@ -636,10 +647,10 @@ const closeErrorModal = () => {
                 </DropdownMenu>
               </div>
 
-              <button @click="openCreateModal" class="flex items-center gap-1.5 bg-gradient-primary hover:opacity-90 text-primary-foreground px-4 py-2 rounded-[14px] text-sm font-medium transition-colors shadow-sm">
+              <Button @click="openCreateModal" variant="primary">
                 <Plus class="w-4 h-4" />
                 <span>{{ activeTab }} Baru</span>
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -671,158 +682,162 @@ const closeErrorModal = () => {
         <div v-if="isEditModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4">
           <div 
             :class="[
-              'bg-card text-foreground rounded-[14px] shadow-2xl w-full min-h-[261px] p-[24px] flex flex-col',
+              'bg-card text-foreground rounded-[14px] shadow-2xl w-full min-h-[261px] overflow-hidden flex flex-col',
               !['Subkategori', 'Lantai', 'Ruangan', 'Kategori'].includes(activeTab) ? 'max-w-[600px]' : 'max-w-[1200px]'
             ]"
             @click.stop
           >
-            <div class="flex items-center justify-between border-b border-border pb-4 mb-6">
-              <h3 class="text-lg font-bold">Edit {{ activeTab }}</h3>
-              <button @click="closeEditModal" class="text-muted-foreground hover:text-foreground transition-colors">
-                <X class="w-5 h-5" />
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
+              <h3 class="text-lg font-bold text-foreground">Edit {{ activeTab }}</h3>
+              <button @click="closeEditModal" class="p-2 hover:bg-muted rounded-full transition-colors">
+                <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
               </button>
             </div>
             
-            <!-- Edit: Subkategori -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 flex-grow" v-if="activeTab === 'Subkategori'">
-              <div>
-                <label class="block text-sm font-medium text-foreground mb-2">Kategori Induk</label>
-                <input type="text" :value="editingItem?.category?.name ?? ''" disabled
-                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-muted/50 text-muted-foreground cursor-not-allowed" />
+            <!-- Modal Body -->
+            <div class="p-6 flex-grow">
+              <!-- Edit: Subkategori -->
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-6" v-if="activeTab === 'Subkategori'">
+                <div>
+                  <label class="block text-sm font-medium text-foreground mb-2">Kategori Induk</label>
+                  <input type="text" :value="editingItem?.category?.name ?? ''" disabled
+                    class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-muted/50 text-muted-foreground cursor-not-allowed" />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-foreground mb-2">Kode Subkategori (tidak dapat diubah)</label>
+                  <input type="text" :value="editingItem?.code" disabled
+                    class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-muted/50 text-muted-foreground cursor-not-allowed" />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-foreground mb-2">Nama Subkategori<span class="text-destructive">*</span></label>
+                  <input type="text" v-model="editSubcategoryForm.name" maxlength="255"
+                    class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" />
+                  <div v-if="editSubcategoryForm.errors.name" class="text-destructive text-xs mt-1">{{ editSubcategoryForm.errors.name }}</div>
+                </div>
               </div>
-              <div>
-                <label class="block text-sm font-medium text-foreground mb-2">Kode Subkategori (tidak dapat diubah)</label>
-                <input type="text" :value="editingItem?.code" disabled
-                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-muted/50 text-muted-foreground cursor-not-allowed" />
+
+              <!-- Edit: Lantai -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6" v-else-if="activeTab === 'Lantai'">
+                <div>
+                  <label class="block text-sm font-medium text-foreground mb-2">Lokasi Induk<span class="text-destructive">*</span></label>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal', !editFloorForm.location_id ? 'text-muted-foreground' : 'text-foreground']">
+                        {{ editFloorForm.location_id ? (props.locations.find(l => l.id === editFloorForm.location_id)?.name || 'Pilih Lokasi Induk') : 'Pilih Lokasi Induk' }}
+                        <ChevronDown class="w-4 h-4 opacity-50" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
+                      <DropdownMenuItem v-for="loc in props.locations" :key="loc.id" @select="editFloorForm.location_id = loc.id">
+                        {{ loc.name }}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  <div v-if="editFloorForm.errors.location_id" class="text-destructive text-xs mt-1">{{ editFloorForm.errors.location_id }}</div>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-foreground mb-2">Nama Lantai<span class="text-destructive">*</span></label>
+                  <input type="text" v-model="editFloorForm.name" maxlength="255" placeholder="Nama lantai..." :disabled="!editFloorForm.location_id"
+                    class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed" />
+                  <div v-if="editFloorForm.errors.name" class="text-destructive text-xs mt-1">{{ editFloorForm.errors.name }}</div>
+                </div>
               </div>
-              <div>
-                <label class="block text-sm font-medium text-foreground mb-2">Nama Subkategori<span class="text-destructive">*</span></label>
-                <input type="text" v-model="editSubcategoryForm.name" maxlength="255"
+
+              <!-- Edit: Ruangan -->
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-6" v-else-if="activeTab === 'Ruangan'">
+                <div>
+                  <label class="block text-sm font-medium text-foreground mb-2">Lokasi<span class="text-destructive">*</span></label>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal', !editRoomForm.location_id ? 'text-muted-foreground' : 'text-foreground']">
+                        {{ editRoomForm.location_id ? (props.locations.find(l => l.id == editRoomForm.location_id)?.name || 'Pilih Lokasi') : 'Pilih Lokasi' }}
+                        <ChevronDown class="w-4 h-4 opacity-50" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
+                      <DropdownMenuItem v-for="loc in props.locations" :key="loc.id" @select="editRoomForm.location_id = loc.id; editRoomForm.floor_id = null">
+                        {{ loc.name }}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  <div v-if="editRoomForm.errors.location_id" class="text-destructive text-xs mt-1">{{ editRoomForm.errors.location_id }}</div>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-foreground mb-2">Lantai<span class="text-destructive">*</span></label>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger :disabled="!editRoomForm.location_id" asChild>
+                      <Button :disabled="!editRoomForm.location_id" variant="outline" :class="['w-full justify-between rounded-[14px] font-normal', !editRoomForm.floor_id ? 'text-muted-foreground' : 'text-foreground']">
+                        {{ editRoomForm.floor_id ? (props.floors.find(f => f.id == editRoomForm.floor_id)?.name || 'Pilih Lantai') : 'Pilih Lantai' }}
+                        <ChevronDown class="w-4 h-4 opacity-50" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
+                      <DropdownMenuItem v-for="fl in props.floors.filter(f => f.location_id == editRoomForm.location_id)" :key="fl.id" @select="editRoomForm.floor_id = fl.id">
+                        {{ fl.name }}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  <div v-if="editRoomForm.errors.floor_id" class="text-destructive text-xs mt-1">{{ editRoomForm.errors.floor_id }}</div>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-foreground mb-2">Nama Ruangan<span class="text-destructive">*</span></label>
+                  <input type="text" v-model="editRoomForm.name" maxlength="255" placeholder="Nama ruangan..." :disabled="!editRoomForm.floor_id"
+                    class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed" />
+                  <div v-if="editRoomForm.errors.name" class="text-destructive text-xs mt-1">{{ editRoomForm.errors.name }}</div>
+                </div>
+              </div>
+
+              <!-- Edit: Kategori -->
+              <div v-else-if="activeTab === 'Kategori'" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                  <label class="block text-sm font-medium text-foreground mb-2">Kode Kategori (tidak dapat diubah)</label>
+                  <input type="text" v-model="editCategoryForm.code" disabled
+                    class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-muted/50 text-muted-foreground cursor-not-allowed" />
+                  <div v-if="editCategoryForm.errors.code" class="text-destructive text-xs mt-1">{{ editCategoryForm.errors.code }}</div>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-foreground mb-2">Nama Kategori<span class="text-destructive">*</span></label>
+                  <input type="text" v-model="editCategoryForm.name" maxlength="255"
+                    class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" />
+                  <div v-if="editCategoryForm.errors.name" class="text-destructive text-xs mt-1">{{ editCategoryForm.errors.name }}</div>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-foreground mb-3">Klasifikasi<span class="text-destructive">*</span></label>
+                  <RadioGroup v-model="editCategoryForm.is_consumable" disabled class="flex gap-6">
+                    <div class="flex items-center space-x-2 opacity-60">
+                      <RadioGroupItem id="edit-consumable-true" value="1" class="cursor-not-allowed" />
+                      <Label for="edit-consumable-true" class="font-normal cursor-not-allowed">Habis Pakai</Label>
+                    </div>
+                    <div class="flex items-center space-x-2 opacity-60">
+                      <RadioGroupItem id="edit-consumable-false" value="0" class="cursor-not-allowed" />
+                      <Label for="edit-consumable-false" class="font-normal cursor-not-allowed">Aset</Label>
+                    </div>
+                  </RadioGroup>
+                  <div v-if="editCategoryForm.errors.is_consumable" class="text-destructive text-xs mt-1">{{ editCategoryForm.errors.is_consumable }}</div>
+                </div>
+              </div>
+
+              <!-- Edit: Satuan / Merek / Organizer / Vendor / Lokasi (name-only) -->
+              <div v-else>
+                <label class="block text-sm font-medium text-foreground mb-2">Nama {{ activeTab }}<span class="text-destructive">*</span></label>
+                <input type="text" v-model="(activeEditForm as any).name" maxlength="255"
+                  :placeholder="`${activeTab} sekarang`"
                   class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" />
-                <div v-if="editSubcategoryForm.errors.name" class="text-destructive text-xs mt-1">{{ editSubcategoryForm.errors.name }}</div>
+                <div v-if="(activeEditForm as any).errors?.name" class="text-destructive text-xs mt-1">{{ (activeEditForm as any).errors.name }}</div>
               </div>
             </div>
 
-            <!-- Edit: Lantai -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 flex-grow" v-else-if="activeTab === 'Lantai'">
-              <div>
-                <label class="block text-sm font-medium text-foreground mb-2">Lokasi Induk<span class="text-destructive">*</span></label>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal', !editFloorForm.location_id ? 'text-muted-foreground' : 'text-foreground']">
-                      {{ editFloorForm.location_id ? (props.locations.find(l => l.id === editFloorForm.location_id)?.name || 'Pilih Lokasi Induk') : 'Pilih Lokasi Induk' }}
-                      <ChevronDown class="w-4 h-4 opacity-50" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
-                    <DropdownMenuItem v-for="loc in props.locations" :key="loc.id" @select="editFloorForm.location_id = loc.id">
-                      {{ loc.name }}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                <div v-if="editFloorForm.errors.location_id" class="text-destructive text-xs mt-1">{{ editFloorForm.errors.location_id }}</div>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-foreground mb-2">Nama Lantai<span class="text-destructive">*</span></label>
-                <input type="text" v-model="editFloorForm.name" maxlength="255" placeholder="Nama lantai..." :disabled="!editFloorForm.location_id"
-                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed" />
-                <div v-if="editFloorForm.errors.name" class="text-destructive text-xs mt-1">{{ editFloorForm.errors.name }}</div>
-              </div>
-            </div>
-
-            <!-- Edit: Ruangan -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 flex-grow" v-else-if="activeTab === 'Ruangan'">
-              <div>
-                <label class="block text-sm font-medium text-foreground mb-2">Lokasi<span class="text-destructive">*</span></label>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal', !editRoomForm.location_id ? 'text-muted-foreground' : 'text-foreground']">
-                      {{ editRoomForm.location_id ? (props.locations.find(l => l.id == editRoomForm.location_id)?.name || 'Pilih Lokasi') : 'Pilih Lokasi' }}
-                      <ChevronDown class="w-4 h-4 opacity-50" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
-                    <DropdownMenuItem v-for="loc in props.locations" :key="loc.id" @select="editRoomForm.location_id = loc.id; editRoomForm.floor_id = null">
-                      {{ loc.name }}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                <div v-if="editRoomForm.errors.location_id" class="text-destructive text-xs mt-1">{{ editRoomForm.errors.location_id }}</div>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-foreground mb-2">Lantai<span class="text-destructive">*</span></label>
-                <DropdownMenu>
-                  <DropdownMenuTrigger :disabled="!editRoomForm.location_id" asChild>
-                    <Button :disabled="!editRoomForm.location_id" variant="outline" :class="['w-full justify-between rounded-[14px] font-normal', !editRoomForm.floor_id ? 'text-muted-foreground' : 'text-foreground']">
-                      {{ editRoomForm.floor_id ? (props.floors.find(f => f.id == editRoomForm.floor_id)?.name || 'Pilih Lantai') : 'Pilih Lantai' }}
-                      <ChevronDown class="w-4 h-4 opacity-50" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
-                    <DropdownMenuItem v-for="fl in props.floors.filter(f => f.location_id == editRoomForm.location_id)" :key="fl.id" @select="editRoomForm.floor_id = fl.id">
-                      {{ fl.name }}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                <div v-if="editRoomForm.errors.floor_id" class="text-destructive text-xs mt-1">{{ editRoomForm.errors.floor_id }}</div>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-foreground mb-2">Nama Ruangan<span class="text-destructive">*</span></label>
-                <input type="text" v-model="editRoomForm.name" maxlength="255" placeholder="Nama ruangan..." :disabled="!editRoomForm.floor_id"
-                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed" />
-                <div v-if="editRoomForm.errors.name" class="text-destructive text-xs mt-1">{{ editRoomForm.errors.name }}</div>
-              </div>
-            </div>
-
-            <!-- Edit: Kategori -->
-            <div v-else-if="activeTab === 'Kategori'" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 flex-grow">
-              <div>
-                <label class="block text-sm font-medium text-foreground mb-2">Kode Kategori (tidak dapat diubah)</label>
-                <input type="text" v-model="editCategoryForm.code" disabled
-                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-muted/50 text-muted-foreground cursor-not-allowed" />
-                <div v-if="editCategoryForm.errors.code" class="text-destructive text-xs mt-1">{{ editCategoryForm.errors.code }}</div>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-foreground mb-2">Nama Kategori<span class="text-destructive">*</span></label>
-                <input type="text" v-model="editCategoryForm.name" maxlength="255"
-                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" />
-                <div v-if="editCategoryForm.errors.name" class="text-destructive text-xs mt-1">{{ editCategoryForm.errors.name }}</div>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-foreground mb-3">Klasifikasi<span class="text-destructive">*</span></label>
-                <RadioGroup v-model="editCategoryForm.is_consumable" class="flex gap-6">
-                  <div class="flex items-center space-x-2">
-                    <RadioGroupItem id="edit-consumable-true" value="1" />
-                    <Label for="edit-consumable-true" class="font-normal cursor-pointer">Habis Pakai</Label>
-                  </div>
-                  <div class="flex items-center space-x-2">
-                    <RadioGroupItem id="edit-consumable-false" value="0" />
-                    <Label for="edit-consumable-false" class="font-normal cursor-pointer">Aset</Label>
-                  </div>
-                </RadioGroup>
-                <div v-if="editCategoryForm.errors.is_consumable" class="text-destructive text-xs mt-1">{{ editCategoryForm.errors.is_consumable }}</div>
-              </div>
-            </div>
-
-            <!-- Edit: Satuan / Merek / Organizer / Vendor / Lokasi (name-only) -->
-            <div class="mb-8 flex-grow" v-else>
-              <label class="block text-sm font-medium text-foreground mb-2">Nama {{ activeTab }}<span class="text-destructive">*</span></label>
-              <input type="text" v-model="(activeEditForm as any).name" maxlength="255"
-                :placeholder="`${activeTab} sekarang`"
-                class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" />
-              <div v-if="(activeEditForm as any).errors?.name" class="text-destructive text-xs mt-1">{{ (activeEditForm as any).errors.name }}</div>
-            </div>
-
-            <div class="flex items-center justify-between mt-auto">
-              <span class="text-sm text-destructive italic">*Wajib diisi</span>
+            <!-- Modal Footer -->
+            <div class="py-3 px-4 border-t border-border flex items-center justify-between">
+              <p class="text-sm text-rose-500 italic font-medium">*Wajib diisi</p>
               <div class="flex items-center gap-3">
-                <button @click="closeEditModal" class="px-4 py-2 text-sm font-medium border border-input rounded-[14px] hover:bg-muted transition-colors">
+                <Button @click="closeEditModal" variant="white" size="xl">
                   Batal
-                </button>
-                <button @click="submitUpdate" :disabled="(activeEditForm as any).processing"
-                  class="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-[14px] hover:bg-primary/90 transition-colors disabled:opacity-50">
+                </Button>
+                <Button @click="submitUpdate" :disabled="(activeEditForm as any).processing" variant="primary" size="xl">
                   {{ (activeEditForm as any).processing ? 'Menyimpan...' : 'Simpan Perubahan' }}
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -843,183 +858,187 @@ const closeErrorModal = () => {
         <div v-if="isCreateModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4">
           <div 
             :class="[
-              'bg-card text-foreground rounded-[14px] shadow-2xl w-full min-h-[261px] p-[24px] flex flex-col',
+              'bg-card text-foreground rounded-[14px] shadow-2xl w-full min-h-[261px] overflow-hidden flex flex-col',
               !['Subkategori', 'Lantai', 'Ruangan', 'Kategori'].includes(activeTab) ? 'max-w-[600px]' : 'max-w-[1200px]'
             ]"
             @click.stop
           >
-            <div class="flex items-center justify-between border-b border-border pb-4 mb-6">
-              <h3 class="text-lg font-bold">Pembuatan {{ activeTab }} Baru</h3>
-              <button @click="closeCreateModal" class="text-muted-foreground hover:text-foreground transition-colors">
-                <X class="w-5 h-5" />
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
+              <h3 class="text-lg font-bold text-foreground">Pembuatan {{ activeTab }} Baru</h3>
+              <button @click="closeCreateModal" class="p-2 hover:bg-muted rounded-full transition-colors">
+                <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
               </button>
             </div>
             
-            <!-- Create: Subkategori -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 flex-grow" v-if="activeTab === 'Subkategori'">
-              <div>
-                <label class="block text-sm font-medium text-foreground mb-2">Kategori Induk<span class="text-destructive">*</span></label>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal', !subcategoryForm.category_id ? 'text-muted-foreground' : 'text-foreground']">
-                      {{ subcategoryForm.category_id ? (props.categories.find(c => c.id === subcategoryForm.category_id)?.name || 'Pilih Kategori Induk') : 'Pilih Kategori Induk' }}
-                      <ChevronDown class="w-4 h-4 opacity-50" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
-                    <DropdownMenuItem v-for="cat in props.categories" :key="cat.id" @select="subcategoryForm.category_id = cat.id">
-                      {{ cat.name }}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                <div v-if="subcategoryForm.errors.category_id" class="text-destructive text-xs mt-1">{{ subcategoryForm.errors.category_id }}</div>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-foreground mb-2">Kode Subkategori<span class="text-destructive">*</span></label>
-                <div class="flex rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors"
-                  :class="{ 'opacity-50 bg-muted/50': !subcategoryForm.category_id }">
-                  <span class="pl-3 py-2 text-sm text-muted-foreground flex items-center bg-transparent select-none whitespace-nowrap">
-                    {{ subcategoryForm.category_id ? (props.categories.find(c => c.id === subcategoryForm.category_id)?.code ?? 'KOD') + '-' : 'KOD-' }}
-                  </span>
-                  <input type="text" v-model="subcategoryForm.code"
-                    @input="subcategoryForm.code = subcategoryForm.code.replace(/[^A-Za-z0-9]/g, '').toUpperCase()"
-                    maxlength="3" :disabled="!subcategoryForm.category_id" placeholder="3 huruf kapital/angka..."
-                    class="w-full pr-3 py-2 text-sm bg-transparent border-none focus:ring-0 focus:outline-none"
-                    :class="{ 'cursor-not-allowed': !subcategoryForm.category_id }" />
+            <!-- Modal Body -->
+            <div class="p-6 flex-grow">
+              <!-- Create: Subkategori -->
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-6" v-if="activeTab === 'Subkategori'">
+                <div>
+                  <label class="block text-sm font-medium text-foreground mb-2">Kategori Induk<span class="text-destructive">*</span></label>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal', !subcategoryForm.category_id ? 'text-muted-foreground' : 'text-foreground']">
+                        {{ subcategoryForm.category_id ? (props.categories.find(c => c.id === subcategoryForm.category_id)?.name || 'Pilih Kategori Induk') : 'Pilih Kategori Induk' }}
+                        <ChevronDown class="w-4 h-4 opacity-50" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
+                      <DropdownMenuItem v-for="cat in props.categories" :key="cat.id" @select="subcategoryForm.category_id = cat.id">
+                        {{ cat.name }}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  <div v-if="subcategoryForm.errors.category_id" class="text-destructive text-xs mt-1">{{ subcategoryForm.errors.category_id }}</div>
                 </div>
-                <div v-if="subcategoryForm.errors.code" class="text-destructive text-xs mt-1">{{ subcategoryForm.errors.code }}</div>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-foreground mb-2">Nama Subkategori<span class="text-destructive">*</span></label>
-                <input type="text" v-model="subcategoryForm.name" maxlength="255" placeholder="Nama subkategori..."
-                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" />
-                <div v-if="subcategoryForm.errors.name" class="text-destructive text-xs mt-1">{{ subcategoryForm.errors.name }}</div>
-              </div>
-            </div>
-
-            <!-- Create: Lantai -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 flex-grow" v-else-if="activeTab === 'Lantai'">
-              <div>
-                <label class="block text-sm font-medium text-foreground mb-2">Lokasi Induk<span class="text-destructive">*</span></label>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal', !floorForm.location_id ? 'text-muted-foreground' : 'text-foreground']">
-                      {{ floorForm.location_id ? (props.locations.find(l => l.id === floorForm.location_id)?.name || 'Pilih Lokasi Induk') : 'Pilih Lokasi Induk' }}
-                      <ChevronDown class="w-4 h-4 opacity-50" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
-                    <DropdownMenuItem v-for="loc in props.locations" :key="loc.id" @select="floorForm.location_id = loc.id">
-                      {{ loc.name }}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                <div v-if="floorForm.errors.location_id" class="text-destructive text-xs mt-1">{{ floorForm.errors.location_id }}</div>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-foreground mb-2">Nama Lantai<span class="text-destructive">*</span></label>
-                <input type="text" v-model="floorForm.name" maxlength="255" placeholder="Nama lantai..." :disabled="!floorForm.location_id"
-                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed" />
-                <div v-if="floorForm.errors.name" class="text-destructive text-xs mt-1">{{ floorForm.errors.name }}</div>
-              </div>
-            </div>
-
-            <!-- Create: Ruangan -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 flex-grow" v-else-if="activeTab === 'Ruangan'">
-              <div>
-                <label class="block text-sm font-medium text-foreground mb-2">Lokasi<span class="text-destructive">*</span></label>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal', !roomForm.location_id ? 'text-muted-foreground' : 'text-foreground']">
-                      {{ roomForm.location_id ? (props.locations.find(l => l.id == roomForm.location_id)?.name || 'Pilih Lokasi') : 'Pilih Lokasi' }}
-                      <ChevronDown class="w-4 h-4 opacity-50" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
-                    <DropdownMenuItem v-for="loc in props.locations" :key="loc.id" @select="roomForm.location_id = loc.id; roomForm.floor_id = null">
-                      {{ loc.name }}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                <div v-if="roomForm.errors.location_id" class="text-destructive text-xs mt-1">{{ roomForm.errors.location_id }}</div>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-foreground mb-2">Lantai<span class="text-destructive">*</span></label>
-                <DropdownMenu>
-                  <DropdownMenuTrigger :disabled="!roomForm.location_id" asChild>
-                    <Button :disabled="!roomForm.location_id" variant="outline" :class="['w-full justify-between rounded-[14px] font-normal', !roomForm.floor_id ? 'text-muted-foreground' : 'text-foreground']">
-                      {{ roomForm.floor_id ? (props.floors.find(f => f.id == roomForm.floor_id)?.name || 'Pilih Lantai') : 'Pilih Lantai' }}
-                      <ChevronDown class="w-4 h-4 opacity-50" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
-                    <DropdownMenuItem v-for="fl in props.floors.filter(f => f.location_id == roomForm.location_id)" :key="fl.id" @select="roomForm.floor_id = fl.id">
-                      {{ fl.name }}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                <div v-if="roomForm.errors.floor_id" class="text-destructive text-xs mt-1">{{ roomForm.errors.floor_id }}</div>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-foreground mb-2">Nama Ruangan<span class="text-destructive">*</span></label>
-                <input type="text" v-model="roomForm.name" maxlength="255" placeholder="Nama ruangan..." :disabled="!roomForm.floor_id"
-                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed" />
-                <div v-if="roomForm.errors.name" class="text-destructive text-xs mt-1">{{ roomForm.errors.name }}</div>
-              </div>
-            </div>
-
-            <!-- Create: Kategori -->
-            <div v-else-if="activeTab === 'Kategori'" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 flex-grow">
-              <div>
-                <label class="block text-sm font-medium text-foreground mb-2">Kode Kategori<span class="text-destructive">*</span></label>
-                <input type="text" v-model="categoryForm.code"
-                  @input="categoryForm.code = categoryForm.code.replace(/[^A-Za-z0-9]/g, '').toUpperCase()"
-                  maxlength="3" placeholder="Contoh: ATK, FUR, ELE..."
-                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" />
-                <div v-if="categoryForm.errors.code" class="text-destructive text-xs mt-1">{{ categoryForm.errors.code }}</div>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-foreground mb-2">Nama Kategori<span class="text-destructive">*</span></label>
-                <input type="text" v-model="categoryForm.name" maxlength="255" placeholder="Nama kategori..."
-                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" />
-                <div v-if="categoryForm.errors.name" class="text-destructive text-xs mt-1">{{ categoryForm.errors.name }}</div>
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-foreground mb-3">Klasifikasi<span class="text-destructive">*</span></label>
-                <RadioGroup v-model="categoryForm.is_consumable" class="flex gap-6">
-                  <div class="flex items-center space-x-2">
-                    <RadioGroupItem id="consumable-true" value="1" />
-                    <Label for="consumable-true" class="font-normal cursor-pointer">Habis Pakai</Label>
+                <div>
+                  <label class="block text-sm font-medium text-foreground mb-2">Kode Subkategori<span class="text-destructive">*</span></label>
+                  <div class="flex rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors"
+                    :class="{ 'opacity-50 bg-muted/50': !subcategoryForm.category_id }">
+                    <span class="pl-3 py-2 text-sm text-muted-foreground flex items-center bg-transparent select-none whitespace-nowrap">
+                      {{ subcategoryForm.category_id ? (props.categories.find(c => c.id === subcategoryForm.category_id)?.code ?? 'KOD') + '-' : 'KOD-' }}
+                    </span>
+                    <input type="text" v-model="subcategoryForm.code"
+                      @input="subcategoryForm.code = subcategoryForm.code.replace(/[^A-Za-z0-9]/g, '').toUpperCase()"
+                      maxlength="3" :disabled="!subcategoryForm.category_id" placeholder="3 huruf kapital/angka..."
+                      class="w-full pr-3 py-2 text-sm bg-transparent border-none focus:ring-0 focus:outline-none"
+                      :class="{ 'cursor-not-allowed': !subcategoryForm.category_id }" />
                   </div>
-                  <div class="flex items-center space-x-2">
-                    <RadioGroupItem id="consumable-false" value="0" />
-                    <Label for="consumable-false" class="font-normal cursor-pointer">Aset</Label>
-                  </div>
-                </RadioGroup>
-                <div v-if="categoryForm.errors.is_consumable" class="text-destructive text-xs mt-1">{{ categoryForm.errors.is_consumable }}</div>
+                  <div v-if="subcategoryForm.errors.code" class="text-destructive text-xs mt-1">{{ subcategoryForm.errors.code }}</div>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-foreground mb-2">Nama Subkategori<span class="text-destructive">*</span></label>
+                  <input type="text" v-model="subcategoryForm.name" maxlength="255" placeholder="Nama subkategori..."
+                    class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" />
+                  <div v-if="subcategoryForm.errors.name" class="text-destructive text-xs mt-1">{{ subcategoryForm.errors.name }}</div>
+                </div>
+              </div>
+
+              <!-- Create: Lantai -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6" v-else-if="activeTab === 'Lantai'">
+                <div>
+                  <label class="block text-sm font-medium text-foreground mb-2">Lokasi Induk<span class="text-destructive">*</span></label>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal', !floorForm.location_id ? 'text-muted-foreground' : 'text-foreground']">
+                        {{ floorForm.location_id ? (props.locations.find(l => l.id === floorForm.location_id)?.name || 'Pilih Lokasi Induk') : 'Pilih Lokasi Induk' }}
+                        <ChevronDown class="w-4 h-4 opacity-50" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
+                      <DropdownMenuItem v-for="loc in props.locations" :key="loc.id" @select="floorForm.location_id = loc.id">
+                        {{ loc.name }}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  <div v-if="floorForm.errors.location_id" class="text-destructive text-xs mt-1">{{ floorForm.errors.location_id }}</div>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-foreground mb-2">Nama Lantai<span class="text-destructive">*</span></label>
+                  <input type="text" v-model="floorForm.name" maxlength="255" placeholder="Nama lantai..." :disabled="!floorForm.location_id"
+                    class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed" />
+                  <div v-if="floorForm.errors.name" class="text-destructive text-xs mt-1">{{ floorForm.errors.name }}</div>
+                </div>
+              </div>
+
+              <!-- Create: Ruangan -->
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-6" v-else-if="activeTab === 'Ruangan'">
+                <div>
+                  <label class="block text-sm font-medium text-foreground mb-2">Lokasi<span class="text-destructive">*</span></label>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal', !roomForm.location_id ? 'text-muted-foreground' : 'text-foreground']">
+                        {{ roomForm.location_id ? (props.locations.find(l => l.id == roomForm.location_id)?.name || 'Pilih Lokasi') : 'Pilih Lokasi' }}
+                        <ChevronDown class="w-4 h-4 opacity-50" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
+                      <DropdownMenuItem v-for="loc in props.locations" :key="loc.id" @select="roomForm.location_id = loc.id; roomForm.floor_id = null">
+                        {{ loc.name }}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  <div v-if="roomForm.errors.location_id" class="text-destructive text-xs mt-1">{{ roomForm.errors.location_id }}</div>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-foreground mb-2">Lantai<span class="text-destructive">*</span></label>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger :disabled="!roomForm.location_id" asChild>
+                      <Button :disabled="!roomForm.location_id" variant="outline" :class="['w-full justify-between rounded-[14px] font-normal', !roomForm.floor_id ? 'text-muted-foreground' : 'text-foreground']">
+                        {{ roomForm.floor_id ? (props.floors.find(f => f.id == roomForm.floor_id)?.name || 'Pilih Lantai') : 'Pilih Lantai' }}
+                        <ChevronDown class="w-4 h-4 opacity-50" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
+                      <DropdownMenuItem v-for="fl in props.floors.filter(f => f.location_id == roomForm.location_id)" :key="fl.id" @select="roomForm.floor_id = fl.id">
+                        {{ fl.name }}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  <div v-if="roomForm.errors.floor_id" class="text-destructive text-xs mt-1">{{ roomForm.errors.floor_id }}</div>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-foreground mb-2">Nama Ruangan<span class="text-destructive">*</span></label>
+                  <input type="text" v-model="roomForm.name" maxlength="255" placeholder="Nama ruangan..." :disabled="!roomForm.floor_id"
+                    class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed" />
+                  <div v-if="roomForm.errors.name" class="text-destructive text-xs mt-1">{{ roomForm.errors.name }}</div>
+                </div>
+              </div>
+
+              <!-- Create: Kategori -->
+              <div v-else-if="activeTab === 'Kategori'" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                  <label class="block text-sm font-medium text-foreground mb-2">Kode Kategori<span class="text-destructive">*</span></label>
+                  <input type="text" v-model="categoryForm.code"
+                    @input="categoryForm.code = categoryForm.code.replace(/[^A-Za-z0-9]/g, '').toUpperCase()"
+                    maxlength="3" placeholder="Contoh: ATK, FUR, ELE..."
+                    class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" />
+                  <div v-if="categoryForm.errors.code" class="text-destructive text-xs mt-1">{{ categoryForm.errors.code }}</div>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-foreground mb-2">Nama Kategori<span class="text-destructive">*</span></label>
+                  <input type="text" v-model="categoryForm.name" maxlength="255" placeholder="Nama kategori..."
+                    class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" />
+                  <div v-if="categoryForm.errors.name" class="text-destructive text-xs mt-1">{{ categoryForm.errors.name }}</div>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-foreground mb-3">Klasifikasi<span class="text-destructive">*</span></label>
+                  <RadioGroup v-model="categoryForm.is_consumable" class="flex gap-6">
+                    <div class="flex items-center space-x-2">
+                      <RadioGroupItem id="consumable-true" value="1" class="cursor-pointer" />
+                      <Label for="consumable-true" class="font-normal cursor-pointer">Habis Pakai</Label>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                      <RadioGroupItem id="consumable-false" value="0" class="cursor-pointer" />
+                      <Label for="consumable-false" class="font-normal cursor-pointer">Aset</Label>
+                    </div>
+                  </RadioGroup>
+                  <div v-if="categoryForm.errors.is_consumable" class="text-destructive text-xs mt-1">{{ categoryForm.errors.is_consumable }}</div>
+                </div>
+              </div>
+
+              <!-- Create: Satuan / Merek / Organizer / Vendor / Lokasi (name-only) -->
+              <div v-else>
+                <label class="block text-sm font-medium text-foreground mb-2">Nama {{ activeTab }}<span class="text-destructive">*</span></label>
+                <input type="text" v-model="(activeCreateForm as any).name" maxlength="255"
+                  :placeholder="`Nama ${activeTab}...`"
+                  class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" />
+                <div v-if="(activeCreateForm as any).errors?.name" class="text-destructive text-xs mt-1">{{ (activeCreateForm as any).errors.name }}</div>
               </div>
             </div>
 
-            <!-- Create: Satuan / Merek / Organizer / Vendor / Lokasi (name-only) -->
-            <div class="mb-8 flex-grow" v-else>
-              <label class="block text-sm font-medium text-foreground mb-2">Nama {{ activeTab }}<span class="text-destructive">*</span></label>
-              <input type="text" v-model="(activeCreateForm as any).name" maxlength="255"
-                :placeholder="`Nama ${activeTab}...`"
-                class="w-full px-3 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" />
-              <div v-if="(activeCreateForm as any).errors?.name" class="text-destructive text-xs mt-1">{{ (activeCreateForm as any).errors.name }}</div>
-            </div>
-
-            <div class="flex items-center justify-between mt-auto">
-              <span class="text-sm text-destructive italic">*Wajib diisi</span>
+            <!-- Modal Footer -->
+            <div class="py-3 px-4 border-t border-border flex items-center justify-between">
+              <p class="text-sm text-rose-500 italic font-medium">*Wajib diisi</p>
               <div class="flex items-center gap-3">
-                <button @click="closeCreateModal" class="px-4 py-2 text-sm font-medium border border-input rounded-[14px] hover:bg-muted transition-colors">
+                <Button @click="closeCreateModal" variant="white" size="xl">
                   Batal
-                </button>
-                <button @click="submitCreate" :disabled="(activeCreateForm as any).processing"
-                  class="px-4 py-2 text-sm font-medium text-primary-foreground bg-primary rounded-[14px] hover:bg-primary/90 transition-colors disabled:opacity-50">
+                </Button>
+                <Button @click="submitCreate" variant="primary" :disabled="(activeCreateForm as any).processing" size="xl">
                   {{ (activeCreateForm as any).processing ? 'Memproses...' : `Buat ${activeTab}` }}
-                </button>
+                </Button>
               </div>
             </div>
           </div>

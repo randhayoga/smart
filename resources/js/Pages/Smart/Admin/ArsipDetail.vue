@@ -183,7 +183,7 @@ const timeline = computed(() => {
                 <!-- Status Done (Green Check Circle) -->
                 <!-- Status Done (Green Check Circle) / Status Rejected (Red X) -->
                 <div v-else-if="step.rejected" class="w-7 h-7 rounded-full border-2 border-red-500 flex items-center justify-center bg-card">
-                  <X class="w-4 h-4 text-red-500 stroke-[3.5]" />
+                  <X class="w-4 h-4 text-red-500 stroke-[3.5] cursor-pointer" />
                 </div>
                 <div v-else class="w-7 h-7 rounded-full border-2 border-green-500 flex items-center justify-center bg-card">
                   <Check class="w-4 h-4 text-green-500 stroke-[3.5]" />

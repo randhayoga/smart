@@ -308,7 +308,7 @@ const assetForm = useForm({
   floor_id: null as string | number | null,
   room_id: null as string | number | null,
   status: 'tersedia',
-  condition: 'Baik',
+  condition: 'baik',
   price: '' as string | number,
   image_url: null as File | null,
   image_url_name: '',
@@ -320,7 +320,7 @@ const assetForm = useForm({
   memo_file_name: '',
 });
 
-const arrNeedApproval = ['rusak'];
+const arrNeedApproval = ['loss', 'lost'];
 
 const generateAssetCode = () => {
   const lotNumber = props.lot.lotCode;
@@ -376,8 +376,8 @@ const openEditAssetModal = (asset: any) => {
   assetForm.floor_id = asset.floor_id;
   assetForm.room_id = asset.room_id;
   assetForm.price = asset.price;
-  assetForm.status = asset.status;
-  assetForm.condition = asset.condition;
+  assetForm.status = (asset.status || '').toLowerCase();
+  assetForm.condition = (asset.condition || '').toLowerCase();
   assetForm.use_lot_image = false;
   assetForm.image_url_name = asset.image_url ? asset.image_url.split('/').pop() || '' : '';
   assetForm.is_bulk = false;
@@ -581,8 +581,8 @@ const handleSaveAsset = () => {
       location_id: data.location_id,
       floor_id: data.floor_id,
       room_id: data.room_id,
-      status: data.status,
-      condition: data.condition,
+      status: mapStatusToBackend(data.status),
+      condition: mapConditionToBackend(data.condition),
       price: data.price !== '' && data.price !== null && data.price !== undefined ? parseCurrencyToNumber(data.price) : null,
     };
     if (isVehicle.value) {
@@ -809,10 +809,10 @@ const handleSaveBulkVehicleEdit = () => {
     ids: bulkVehicleEditForm.value.ids,
   };
   if (bulkVehicleEditForm.value.status) {
-    payload.status = bulkVehicleEditForm.value.status;
+    payload.status = mapStatusToBackend(bulkVehicleEditForm.value.status);
   }
   if (bulkVehicleEditForm.value.condition) {
-    payload.condition = bulkVehicleEditForm.value.condition;
+    payload.condition = mapConditionToBackend(bulkVehicleEditForm.value.condition);
   }
   if (bulkVehicleEditForm.value.location_id) {
     payload.location_id = bulkVehicleEditForm.value.location_id;
@@ -1024,10 +1024,10 @@ const handleSaveBulkEdit = () => {
     ids: bulkEditForm.value.ids,
   };
   if (bulkEditForm.value.status) {
-    payload.status = bulkEditForm.value.status;
+    payload.status = mapStatusToBackend(bulkEditForm.value.status);
   }
   if (bulkEditForm.value.condition) {
-    payload.condition = bulkEditForm.value.condition;
+    payload.condition = mapConditionToBackend(bulkEditForm.value.condition);
   }
   if (bulkEditForm.value.location_id) {
     payload.location_id = bulkEditForm.value.location_id;
@@ -1229,19 +1229,19 @@ const filteredUnits = computed(() => {
   }
 
   if (statusFilter.value) {
-    list = list.filter(u => u.status === statusFilter.value);
+    list = list.filter(u => (u.status || '').toLowerCase() === statusFilter.value.toLowerCase());
   }
 
   if (conditionFilter.value) {
-    list = list.filter(u => u.condition === conditionFilter.value);
+    list = list.filter(u => (u.condition || '').toLowerCase() === conditionFilter.value.toLowerCase());
   }
 
   return list;
 });
 
 // Dynamic values for dropdown filters
-const availableStatuses = ['Available', 'Borrowed', 'Repair', 'Loss', 'Lost', 'Inactive'];
-const availableConditions = ['Baik', 'Kurang Baik', 'Rusak'];
+const availableStatuses = ['available', 'borrowed', 'repair', 'loss', 'lost', 'inactive'];
+const availableConditions = ['baik', 'kurang baik', 'rusak'];
 
 const getStatusLabel = (status: string) => {
   if (!status) return '';
@@ -1254,6 +1254,36 @@ const getStatusLabel = (status: string) => {
   if (lower === 'lost' || lower === 'hilang') return 'Hilang';
   if (lower === 'inactive' || lower === 'tidak aktif') return 'Tidak Aktif';
   return status;
+};
+
+const getConditionLabel = (cond: string) => {
+  if (!cond) return '';
+  const lower = cond.toLowerCase();
+  if (lower === 'baik') return 'Baik';
+  if (lower === 'kurang baik') return 'Kurang Baik';
+  if (lower === 'rusak') return 'Rusak';
+  return cond;
+};
+
+const mapStatusToBackend = (status: string) => {
+  if (!status) return status;
+  const lower = status.toLowerCase();
+  if (lower === 'available') return 'Available';
+  if (lower === 'borrowed') return 'Borrowed';
+  if (lower === 'repair') return 'Repair';
+  if (lower === 'loss') return 'Loss';
+  if (lower === 'lost') return 'Lost';
+  if (lower === 'inactive') return 'Inactive';
+  return status;
+};
+
+const mapConditionToBackend = (cond: string) => {
+  if (!cond) return cond;
+  const lower = cond.toLowerCase();
+  if (lower === 'baik') return 'Baik';
+  if (lower === 'kurang baik') return 'Kurang Baik';
+  if (lower === 'rusak') return 'Rusak';
+  return cond;
 };
 
 // Table Columns configuration
@@ -1343,13 +1373,13 @@ const columns = computed<ColumnDef<any>[]>(() => {
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ]),
       cell: ({ row }) => {
-        const cond = row.getValue('condition') as string;
+        const cond = (row.getValue('condition') as string || '').toLowerCase();
         let textClass = 'text-foreground';
-        if (cond === 'Baik') textClass = 'text-emerald-600 font-semibold';
-        else if (cond === 'Kurang Baik') textClass = 'text-amber-600 font-semibold';
-        else if (cond === 'Rusak') textClass = 'text-rose-600 font-semibold';
+        if (cond === 'baik') textClass = 'text-emerald-600 font-semibold';
+        else if (cond === 'kurang baik') textClass = 'text-amber-600 font-semibold';
+        else if (cond === 'rusak') textClass = 'text-rose-600 font-semibold';
         
-        return h('span', { class: textClass }, cond);
+        return h('span', { class: textClass }, row.getValue('condition') as string);
       }
     },
     {
@@ -1373,9 +1403,15 @@ const columns = computed<ColumnDef<any>[]>(() => {
       header: () => h('div', { class: 'text-center font-semibold text-foreground no-print' }, 'Aksi'),
       cell: ({ row }) => {
         return h('div', { class: 'flex items-center justify-center gap-2 no-print' }, [
-          h(ViewTableButton, {
+          h(Button, {
+            variant: 'table-view',
+            size: 'icon-sm',
+            title: 'Lihat Detail',
             onClick: () => openViewAssetModal(row.original)
-          })
+          }, () => [
+            h(Eye),
+            h('span', { class: 'sr-only' }, 'Lihat Detail')
+          ])
         ]);
       }
     }
@@ -1430,12 +1466,12 @@ const totalAsetTerpilihCount = computed(() => {
       <Tabs v-model="activeTab" :tabs="tabs" />
 
       <div class="flex items-center gap-3">
-        <button @click="openEditLotModal" class="flex items-center gap-1.5 bg-gradient-primary hover:opacity-90 text-primary-foreground px-5 py-2.5 rounded-[14px] text-sm font-bold shadow-sm">
+        <Button @click="openEditLotModal" variant="primary" size="lg">
           Edit Detail LOT
-        </button>
-        <button @click="openDeleteLotModal" class="flex items-center gap-1.5 bg-destructive hover:opacity-70 text-primary-foreground px-5 py-2.5 rounded-[14px] text-sm font-bold shadow-sm">
+        </Button>
+        <Button @click="openDeleteLotModal" variant="destructive" size="lg">
           Hapus LOT
-        </button>
+        </Button>
       </div>
     </div>
 
@@ -1509,14 +1545,14 @@ const totalAsetTerpilihCount = computed(() => {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal', !conditionFilter ? 'text-muted-foreground' : 'text-foreground']">
-                  <span class="truncate">{{ conditionFilter || 'Semua kondisi' }}</span>
+                  <span class="truncate">{{ conditionFilter ? getConditionLabel(conditionFilter) : 'Semua kondisi' }}</span>
                   <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
                 <DropdownMenuItem @select="conditionFilter = ''">Semua kondisi</DropdownMenuItem>
                 <DropdownMenuItem v-for="cond in availableConditions" :key="cond" @select="conditionFilter = cond">
-                  {{ cond }}
+                  {{ getConditionLabel(cond) }}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -1545,14 +1581,14 @@ const totalAsetTerpilihCount = computed(() => {
               <label class="text-xs text-muted-foreground font-medium block ml-0.5">Aksi Terpilih</label>
               <div class="flex flex-wrap gap-2">
                 <!-- Edit Terpilih -->
-                <button 
+                <Button 
                   @click="isVehicle ? openBulkVehicleEditModal() : openBulkEditModal()"
                   :disabled="totalAsetTerpilihCount === 0"
-                  class="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:opacity-70 text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm disabled:opacity-50 font-bold"
+                  variant="more-round-warning"
                 >
                   <Pencil class="w-4 h-4" />
                   <span class="hidden sm:inline">Edit Terpilih</span>
-                </button>
+                </Button>
                 <ExportButtonGroup 
                   @export-excel="handleExportExcel"
                   @export-csv="handleExportCSV"
@@ -1560,10 +1596,10 @@ const totalAsetTerpilihCount = computed(() => {
               </div>
             </div>
             
-            <button @click="openCreateAssetModal" class="px-5 py-2.5 bg-gradient-primary hover:opacity-90 text-white text-sm font-bold rounded-xl transition-all shadow-sm flex items-center gap-2">
+            <Button @click="openCreateAssetModal" variant="primary" size="lg">
               <Plus class="w-4 h-4" />
-              Aset Baru
-            </button>
+              <span>Aset Baru</span>
+            </Button>
           </div>
         </div>
 
@@ -1612,7 +1648,7 @@ const totalAsetTerpilihCount = computed(() => {
               <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
                 <h3 class="text-lg font-bold text-foreground">Edit LOT Details</h3>
                 <button @click="isLotModalOpen = false" class="p-2 hover:bg-muted rounded-full transition-colors">
-                  <X class="w-5 h-5 text-muted-foreground" />
+                  <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
                 </button>
               </div>
 
@@ -1755,20 +1791,21 @@ const totalAsetTerpilihCount = computed(() => {
                           accept=".jpg,.jpeg,.png"
                           @change="handleLotFileUpload"
                         />
-                        <button 
+                        <Button 
                           type="button"
                           @click="handleSamakanPhoto"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-orange-400 hover:opacity-90 text-white text-sm font-medium rounded-[14px] transition-colors h-10"
+                          variant="warning"
+                          size="lg"
                         >
                           Samakan
-                        </button>
-                        <button 
+                        </Button>
+                        <Button 
                           type="button"
                           @click="triggerLotFileInput"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors h-10"
+                          size="lg"
                         >
                           Pilih File
-                        </button>
+                        </Button>
                       </div>
                       <p class="text-[10px] text-muted-foreground ml-1">Maksimal ukuran 1 MB</p>
                     </div>
@@ -1780,19 +1817,21 @@ const totalAsetTerpilihCount = computed(() => {
               <div class="py-3 px-4 border-t border-border flex items-center justify-between">
                 <p class="text-sm text-rose-500 italic font-medium">*Wajib diisi</p>
                 <div class="flex items-center gap-3">
-                  <button 
+                  <Button 
                     @click="isLotModalOpen = false"
-                    class="px-8 py-2.5 bg-background border border-input hover:bg-muted text-foreground text-sm font-medium rounded-[14px] transition-colors"
+                    variant="white"
+                    size="xl"
                   >
                     Batal
-                  </button>
-                  <button 
+                  </Button>
+                  <Button 
                     @click="handleSaveLot"
                     :disabled="!isLotFormValid"
-                    class="px-8 py-2.5 bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors shadow-sm active:scale-[0.98] disabled:opacity-50"
+                    variant="primary"
+                    size="xl"
                   >
                     Simpan Perubahan
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>
@@ -1831,7 +1870,7 @@ const totalAsetTerpilihCount = computed(() => {
                   {{ assetModalMode === 'create' ? 'Pembuatan Aset Baru' : 'Edit Detail Aset' }}
                 </h3>
                 <button @click="isAssetModalOpen = false" class="p-2 hover:bg-muted rounded-full transition-colors">
-                  <X class="w-5 h-5 text-muted-foreground" />
+                  <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
                 </button>
               </div>
 
@@ -1868,13 +1907,14 @@ const totalAsetTerpilihCount = computed(() => {
                             class="flex-1 min-w-0 px-4 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 transition-colors h-full"
                           />
                         </div>
-                        <button 
+                        <Button 
                           type="button"
                           @click="assetForm.price = props.lot.unitPrice"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-orange-400 hover:opacity-90 text-white text-sm font-medium rounded-[14px] transition-colors h-10"
+                          variant="warning"
+                          size="lg"
                         >
                           Samakan
-                        </button>
+                        </Button>
                       </div>
                     </div>
 
@@ -1900,20 +1940,21 @@ const totalAsetTerpilihCount = computed(() => {
                           accept=".jpg,.jpeg,.png"
                           @change="handleAssetFileUpload"
                         />
-                        <button 
+                        <Button 
                           type="button"
                           @click="triggerAssetFileInput"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors h-10"
+                          size="lg"
                         >
                           Pilih File
-                        </button>
-                        <button 
+                        </Button>
+                        <Button 
                           type="button"
                           @click="handleSamakanAssetPhoto"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-orange-400 hover:opacity-90 text-white text-sm font-medium rounded-[14px] transition-colors h-10"
+                          variant="warning"
+                          size="lg"
                         >
                           Samakan
-                        </button>
+                        </Button>
                       </div>
                     </div>
 
@@ -1968,13 +2009,13 @@ const totalAsetTerpilihCount = computed(() => {
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 disabled:opacity-50 disabled:cursor-not-allowed" :class="[!assetForm.condition ? 'text-muted-foreground' : 'text-foreground']">
-                              {{ assetForm.condition || 'Pilih kondisi aset' }}
+                              {{ assetForm.condition ? getConditionLabel(assetForm.condition) : 'Pilih kondisi aset' }}
                               <ChevronDown class="w-4 h-4 opacity-50" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
                             <DropdownMenuItem v-for="cond in availableConditions" :key="cond" @select="assetForm.condition = cond">
-                              {{ cond }}
+                              {{ getConditionLabel(cond) }}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -2010,17 +2051,18 @@ const totalAsetTerpilihCount = computed(() => {
                           default-label="Pilih lokasi aset"
                           width-class="flex-grow h-10 px-4"
                         />
-                        <button 
+                        <Button 
                           type="button"
                           @click="
                             assetForm.location_id = props.lot.location_id; 
                             assetForm.floor_id = props.lot.floor_id; 
                             assetForm.room_id = props.lot.room_id;
                           "
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-orange-400 hover:opacity-90 text-white text-sm font-medium rounded-[14px] transition-colors h-10 disabled:opacity-50 disabled:cursor-not-allowed"
+                          variant="warning"
+                          size="lg"
                         >
                           Samakan
-                        </button>
+                        </Button>
                       </div>
                     </div>
 
@@ -2036,14 +2078,15 @@ const totalAsetTerpilihCount = computed(() => {
                           width-class="flex-grow h-10 px-4"
                           :disabled="!assetForm.location_id"
                         />
-                        <button 
+                        <Button 
                           type="button"
                           :disabled="!assetForm.location_id"
                           @click="assetForm.floor_id = props.lot.floor_id"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-orange-400 hover:opacity-90 text-white text-sm font-medium rounded-[14px] transition-colors h-10 disabled:opacity-50 disabled:cursor-not-allowed"
+                          variant="warning"
+                          size="lg"
                         >
                           Samakan
-                        </button>
+                        </Button>
                       </div>
                     </div>
 
@@ -2059,14 +2102,15 @@ const totalAsetTerpilihCount = computed(() => {
                           width-class="flex-grow h-10 px-4"
                           :disabled="!assetForm.floor_id"
                         />
-                        <button 
+                        <Button 
                           type="button"
                           :disabled="!assetForm.floor_id"
                           @click="assetForm.room_id = props.lot.room_id"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-orange-400 hover:opacity-90 text-white text-sm font-medium rounded-[14px] transition-colors h-10 disabled:opacity-50 disabled:cursor-not-allowed"
+                          variant="warning"
+                          size="lg"
                         >
                           Samakan
-                        </button>
+                        </Button>
                       </div>
                     </div>
 
@@ -2094,13 +2138,13 @@ const totalAsetTerpilihCount = computed(() => {
                           accept=".pdf,.jpg,.jpeg,.png"
                           @change="handleAssetMemoUpload"
                         />
-                        <button 
+                        <Button 
                           type="button"
                           @click="triggerAssetMemoInput"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors h-10 disabled:opacity-50 disabled:cursor-not-allowed"
+                          size="lg"
                         >
                           Pilih File
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   </div>
@@ -2111,19 +2155,21 @@ const totalAsetTerpilihCount = computed(() => {
               <div class="py-3 px-4 border-t border-border flex items-center justify-between">
                 <p class="text-sm text-rose-500 italic font-medium">*Wajib diisi</p>
                 <div class="flex items-center gap-3">
-                  <button 
+                  <Button 
                     @click="isAssetModalOpen = false"
-                    class="px-8 py-2.5 bg-background border border-input hover:bg-muted text-foreground text-sm font-medium rounded-[14px] transition-colors"
+                    variant="white"
+                    size="xl"
                   >
                     Batal
-                  </button>
-                  <button 
+                  </Button>
+                  <Button 
                     @click="handleSaveAsset"
                     :disabled="!isAssetFormValid"
-                    class="px-8 py-2.5 bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors shadow-sm active:scale-[0.98] disabled:opacity-50"
+                    variant="primary"
+                    size="xl"
                   >
                     {{ assetModalMode === 'create' ? 'Buat Aset' : 'Simpan Perubahan' }}
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>
@@ -2160,7 +2206,7 @@ const totalAsetTerpilihCount = computed(() => {
               <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
                 <h3 class="text-lg font-bold text-foreground">Detail Aset</h3>
                 <button @click="isViewAssetModalOpen = false" class="p-2 hover:bg-muted rounded-full transition-colors">
-                  <X class="w-5 h-5 text-muted-foreground" />
+                  <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
                 </button>
               </div>
 
@@ -2234,12 +2280,12 @@ const totalAsetTerpilihCount = computed(() => {
                         <span 
                           :class="[
                             'font-semibold',
-                            selectedAssetForView.condition === 'Baik' ? 'text-emerald-600' :
-                            selectedAssetForView.condition === 'Kurang Baik' ? 'text-amber-600' :
+                            selectedAssetForView.condition?.toLowerCase() === 'baik' ? 'text-emerald-600' :
+                            selectedAssetForView.condition?.toLowerCase() === 'kurang baik' ? 'text-amber-600' :
                             'text-rose-600'
                           ]"
                         >
-                          {{ selectedAssetForView.condition }}
+                          {{ getConditionLabel(selectedAssetForView.condition) }}
                         </span>
                       </p>
                       <p class="text-foreground">Nilai: {{ formatRupiah(selectedAssetForView.price) }}</p>
@@ -2252,22 +2298,24 @@ const totalAsetTerpilihCount = computed(() => {
 
               <!-- Modal Footer -->
               <div class="py-3 px-4 border-t border-border flex items-center justify-end gap-3 bg-muted/10">
-                <button 
+                <Button 
                   @click="
                     isViewAssetModalOpen = false;
                     openEditAssetModal(selectedAssetForView);
                   "
-                  class="px-5 py-2.5 bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-bold rounded-xl transition-colors shadow-sm"
+                  variant="primary"
+                  size="lg"
                 >
                   Edit Detail Aset
-                </button>
+                </Button>
 
-                <button 
+                <Button 
                   @click="isViewAssetModalOpen = false"
-                  class="px-5 py-2.5 bg-background border border-input hover:bg-muted text-foreground text-sm font-bold rounded-xl transition-colors"
+                  variant="white"
+                  size="lg"
                 >
                   Kembali
-                </button>
+                </Button>
               </div>
             </div>
           </Transition>
@@ -2314,7 +2362,7 @@ const totalAsetTerpilihCount = computed(() => {
               <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
                 <h3 class="text-lg font-bold text-foreground">Edit Aset Terpilih</h3>
                 <button @click="isBulkEditModalOpen = false" class="p-2 hover:bg-muted rounded-full transition-colors">
-                  <X class="w-5 h-5 text-muted-foreground" />
+                  <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
                 </button>
               </div>
 
@@ -2350,13 +2398,14 @@ const totalAsetTerpilihCount = computed(() => {
                             class="flex-1 min-w-0 px-4 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 transition-colors h-full"
                           />
                         </div>
-                        <button 
+                        <Button 
                           type="button"
                           @click="handleBulkSamakanPrice"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-orange-400 hover:opacity-90 text-white text-sm font-medium rounded-[14px] transition-colors h-10"
+                          variant="warning"
+                          size="lg"
                         >
                           Samakan
-                        </button>
+                        </Button>
                       </div>
                     </div>
 
@@ -2382,20 +2431,21 @@ const totalAsetTerpilihCount = computed(() => {
                           accept=".jpg,.jpeg,.png"
                           @change="handleBulkFileUpload"
                         />
-                        <button 
+                        <Button 
                           type="button"
                           @click="handleBulkSamakanPhoto"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-orange-400 hover:opacity-90 text-white text-sm font-medium rounded-[14px] transition-colors h-10"
+                          variant="warning"
+                          size="lg"
                         >
                           Samakan
-                        </button>
-                        <button 
+                        </Button>
+                        <Button 
                           type="button"
                           @click="triggerBulkFileInput"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors h-10"
+                          size="lg"
                         >
                           Pilih File
-                        </button>
+                        </Button>
                       </div>
                       <p class="text-[10px] text-muted-foreground ml-1">Maksimal ukuran 1 MB</p>
                     </div>
@@ -2411,14 +2461,14 @@ const totalAsetTerpilihCount = computed(() => {
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 disabled:opacity-50 disabled:cursor-not-allowed" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !bulkEditForm.condition ? 'text-muted-foreground' : 'text-foreground']">
-                              {{ bulkEditForm.condition || 'Pilih kondisi aset' }}
+                              {{ bulkEditForm.condition ? getConditionLabel(bulkEditForm.condition) : 'Pilih kondisi aset' }}
                               <ChevronDown class="w-4 h-4 opacity-50" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
                             <DropdownMenuItem @select="bulkEditForm.condition = ''">Pilih kondisi aset</DropdownMenuItem>
                             <DropdownMenuItem v-for="cond in availableConditions" :key="cond" @select="bulkEditForm.condition = cond">
-                              {{ cond }}
+                              {{ getConditionLabel(cond) }}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -2455,13 +2505,14 @@ const totalAsetTerpilihCount = computed(() => {
                           default-label="Pilih lokasi aset"
                           width-class="flex-grow h-10 px-4"
                         />
-                        <button 
+                        <Button 
                           type="button"
                           @click="handleBulkSamakanLocation"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-orange-400 hover:opacity-90 text-white text-sm font-medium rounded-[14px] transition-colors h-10"
+                          variant="warning"
+                          size="lg"
                         >
                           Samakan
-                        </button>
+                        </Button>
                       </div>
                     </div>
 
@@ -2477,13 +2528,14 @@ const totalAsetTerpilihCount = computed(() => {
                           width-class="flex-grow h-10 px-4"
                           :disabled="!bulkEditForm.location_id"
                         />
-                        <button 
+                        <Button 
                           type="button"
                           @click="handleBulkSamakanFloor"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-orange-400 hover:opacity-90 text-white text-sm font-medium rounded-[14px] transition-colors h-10"
+                          variant="warning"
+                          size="lg"
                         >
                           Samakan
-                        </button>
+                        </Button>
                       </div>
                     </div>
 
@@ -2499,13 +2551,14 @@ const totalAsetTerpilihCount = computed(() => {
                           width-class="flex-grow h-10 px-4"
                           :disabled="!bulkEditForm.floor_id"
                         />
-                        <button 
+                        <Button 
                           type="button"
                           @click="handleBulkSamakanRoom"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-orange-400 hover:opacity-90 text-white text-sm font-medium rounded-[14px] transition-colors h-10"
+                          variant="warning"
+                          size="lg"
                         >
                           Samakan
-                        </button>
+                        </Button>
                       </div>
                     </div>
 
@@ -2531,20 +2584,21 @@ const totalAsetTerpilihCount = computed(() => {
                           accept=".pdf,.jpg,.jpeg,.png"
                           @change="handleBulkMemoUpload"
                         />
-                        <button 
+                        <Button 
                           type="button"
                           @click="handleBulkSamakanMemo"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-orange-400 hover:opacity-90 text-white text-sm font-medium rounded-[14px] transition-colors h-10"
+                          variant="warning"
+                          size="lg"
                         >
                           Samakan
-                        </button>
-                        <button 
+                        </Button>
+                        <Button 
                           type="button"
                           @click="triggerBulkMemoInput"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors h-10"
+                          size="lg"
                         >
                           Pilih File
-                        </button>
+                        </Button>
                       </div>
                       <p class="text-[10px] text-muted-foreground ml-1">Maksimal ukuran 2 MB</p>
                     </div>
@@ -2556,18 +2610,20 @@ const totalAsetTerpilihCount = computed(() => {
               <div class="py-3 px-4 border-t border-border flex items-center justify-between bg-card">
                 <p class="text-sm text-rose-500 italic font-medium">*Kosongkan input yang tidak ingin diubah</p>
                 <div class="flex items-center gap-3">
-                  <button 
+                  <Button 
                     @click="isBulkEditModalOpen = false"
-                    class="px-8 py-2.5 bg-background border border-input hover:bg-muted text-foreground text-sm font-medium rounded-[14px] transition-colors"
+                    variant="white"
+                    size="xl"
                   >
                     Batal
-                  </button>
-                  <button 
+                  </Button>
+                  <Button 
                     @click="handleSaveBulkEdit"
-                    class="px-8 py-2.5 bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors shadow-sm active:scale-[0.98]"
+                    variant="primary"
+                    size="xl"
                   >
                     Simpan Perubahan Massal
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>
@@ -2604,7 +2660,7 @@ const totalAsetTerpilihCount = computed(() => {
               <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
                 <h3 class="text-lg font-bold text-foreground">Edit Aset Terpilih</h3>
                 <button @click="isBulkVehicleEditModalOpen = false" class="p-2 hover:bg-muted rounded-full transition-colors">
-                  <X class="w-5 h-5 text-muted-foreground" />
+                  <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
                 </button>
               </div>
 
@@ -2640,13 +2696,14 @@ const totalAsetTerpilihCount = computed(() => {
                             class="flex-1 min-w-0 px-4 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 transition-colors h-full"
                           />
                         </div>
-                        <button 
+                        <Button 
                           type="button"
                           @click="handleBulkVehicleSamakanPrice"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-orange-400 hover:opacity-90 text-white text-sm font-medium rounded-[14px] transition-colors h-10"
+                          variant="warning"
+                          size="lg"
                         >
                           Samakan
-                        </button>
+                        </Button>
                       </div>
                     </div>
 
@@ -2672,20 +2729,21 @@ const totalAsetTerpilihCount = computed(() => {
                           accept=".jpg,.jpeg,.png"
                           @change="handleBulkVehicleFileUpload"
                         />
-                        <button 
+                        <Button 
                           type="button"
                           @click="handleBulkVehicleSamakanPhoto"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-orange-400 hover:opacity-90 text-white text-sm font-medium rounded-[14px] transition-colors h-10"
+                          variant="warning"
+                          size="lg"
                         >
                           Samakan
-                        </button>
-                        <button 
+                        </Button>
+                        <Button 
                           type="button"
                           @click="triggerBulkVehicleFileInput"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors h-10"
+                          size="lg"
                         >
                           Pilih File
-                        </button>
+                        </Button>
                       </div>
                       <p class="text-[10px] text-muted-foreground ml-1">Maksimal ukuran 1 MB</p>
                     </div>
@@ -2712,14 +2770,14 @@ const totalAsetTerpilihCount = computed(() => {
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 disabled:opacity-50 disabled:cursor-not-allowed" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !bulkVehicleEditForm.condition ? 'text-muted-foreground' : 'text-foreground']">
-                              {{ bulkVehicleEditForm.condition || 'Pilih kondisi aset' }}
+                              {{ bulkVehicleEditForm.condition ? getConditionLabel(bulkVehicleEditForm.condition) : 'Pilih kondisi aset' }}
                               <ChevronDown class="w-4 h-4 opacity-50" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
                             <DropdownMenuItem @select="bulkVehicleEditForm.condition = ''">Pilih kondisi aset</DropdownMenuItem>
                             <DropdownMenuItem v-for="cond in availableConditions" :key="cond" @select="bulkVehicleEditForm.condition = cond">
-                              {{ cond }}
+                              {{ getConditionLabel(cond) }}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -2756,13 +2814,14 @@ const totalAsetTerpilihCount = computed(() => {
                           default-label="Pilih lokasi aset"
                           width-class="flex-grow h-10 px-4"
                         />
-                        <button 
+                        <Button 
                           type="button"
                           @click="handleBulkVehicleSamakanLocation"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-orange-400 hover:opacity-90 text-white text-sm font-medium rounded-[14px] transition-colors h-10"
+                          variant="warning"
+                          size="lg"
                         >
                           Samakan
-                        </button>
+                        </Button>
                       </div>
                     </div>
 
@@ -2778,13 +2837,14 @@ const totalAsetTerpilihCount = computed(() => {
                           width-class="flex-grow h-10 px-4"
                           :disabled="!bulkVehicleEditForm.location_id"
                         />
-                        <button 
+                        <Button 
                           type="button"
                           @click="handleBulkVehicleSamakanFloor"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-orange-400 hover:opacity-90 text-white text-sm font-medium rounded-[14px] transition-colors h-10"
+                          variant="warning"
+                          size="lg"
                         >
                           Samakan
-                        </button>
+                        </Button>
                       </div>
                     </div>
 
@@ -2800,13 +2860,14 @@ const totalAsetTerpilihCount = computed(() => {
                           width-class="flex-grow h-10 px-4"
                           :disabled="!bulkVehicleEditForm.floor_id"
                         />
-                        <button 
+                        <Button 
                           type="button"
                           @click="handleBulkVehicleSamakanRoom"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-orange-400 hover:opacity-90 text-white text-sm font-medium rounded-[14px] transition-colors h-10"
+                          variant="warning"
+                          size="lg"
                         >
                           Samakan
-                        </button>
+                        </Button>
                       </div>
                     </div>
 
@@ -2832,20 +2893,21 @@ const totalAsetTerpilihCount = computed(() => {
                           accept=".pdf,.jpg,.jpeg,.png"
                           @change="handleBulkVehicleMemoUpload"
                         />
-                        <button 
+                        <Button 
                           type="button"
                           @click="handleBulkVehicleSamakanMemo"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-orange-400 hover:opacity-90 text-white text-sm font-medium rounded-[14px] transition-colors h-10"
+                          variant="warning"
+                          size="lg"
                         >
                           Samakan
-                        </button>
-                        <button 
+                        </Button>
+                        <Button 
                           type="button"
                           @click="triggerBulkVehicleMemoInput"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors h-10"
+                          size="lg"
                         >
                           Pilih File
-                        </button>
+                        </Button>
                       </div>
                       <p class="text-[10px] text-muted-foreground ml-1">Maksimal ukuran 2 MB</p>
                     </div>
@@ -2857,18 +2919,20 @@ const totalAsetTerpilihCount = computed(() => {
               <div class="py-3 px-4 border-t border-border flex items-center justify-between bg-card">
                 <p class="text-sm text-rose-500 italic font-medium">*Kosongkan input yang tidak ingin diubah</p>
                 <div class="flex items-center gap-3">
-                  <button 
+                  <Button 
                     @click="isBulkVehicleEditModalOpen = false"
-                    class="px-8 py-2.5 bg-background border border-input hover:bg-muted text-foreground text-sm font-medium rounded-[14px] transition-colors"
+                    variant="white"
+                    size="xl"
                   >
                     Batal
-                  </button>
-                  <button 
+                  </Button>
+                  <Button 
                     @click="handleSaveBulkVehicleEdit"
-                    class="px-8 py-2.5 bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors shadow-sm active:scale-[0.98]"
+                    variant="primary"
+                    size="xl"
                   >
                     Simpan Perubahan Massal
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>
