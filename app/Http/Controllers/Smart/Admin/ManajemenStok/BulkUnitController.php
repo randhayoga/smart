@@ -49,12 +49,12 @@ class BulkUnitController extends Controller
             'bulk_quantity.integer' => 'Tidak boleh desimal.',
         ]);
 
-        $arrNeedApproval = ['Loss', 'Lost'];
+        $arrNeedApproval = ['Rusak', 'Hilang'];
         $proposedStatus = $validated['status'];
         $needApproval = in_array($proposedStatus, $arrNeedApproval);
 
         if ($needApproval) {
-            $validated['status'] = 'Available';
+            $validated['status'] = 'Tersedia';
         }
 
         $quantity = (int)$validated['bulk_quantity'];
@@ -153,7 +153,7 @@ class BulkUnitController extends Controller
             return redirect()->back()->withErrors(['ids' => 'Tidak ada unit yang ditemukan.']);
         }
 
-        $arrNeedApproval = ['Loss', 'Lost'];
+        $arrNeedApproval = ['Rusak', 'Hilang'];
         $proposedStatus = $request->input('status');
         $needApproval = $request->filled('status') && in_array($proposedStatus, $arrNeedApproval);
 
