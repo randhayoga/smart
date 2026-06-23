@@ -22,9 +22,10 @@ export const buttonVariants = cva(
         "table-destructive": "bg-destructive hover:opacity-70 text-white rounded-[13px] shadow-sm focus:outline-none focus:ring-2 focus:ring-rose-500/50",
         "table-edit": "bg-amber-400 hover:opacity-70 text-white rounded-[13px] shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50",
         "table-view": "bg-cyan-500 hover:opacity-70 text-white rounded-[13px] shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/50",
+        "table-primary": "bg-gradient-primary hover:opacity-70 text-white rounded-[13px] shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50",
         "more-round-warning": "bg-amber-500 hover:opacity-70 text-white rounded-[14px] shadow-sm",
         warning: "bg-amber-500 hover:opacity-70 text-white rounded-lg shadow-sm",
-        success: "bg-[#2ECC71] hover:opacity-70 text-white shadow-sm rounded-[14px]",
+        success: "bg-[#66BB6A] hover:opacity-70 text-white shadow-sm rounded-[14px]",
       },
       size: {
         "default": "h-9 px-4 py-2",

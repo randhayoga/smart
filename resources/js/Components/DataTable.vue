@@ -34,6 +34,7 @@ const props = withDefaults(defineProps<{
   pageSize?: number
   showSelectionCount?: boolean
   defaultSorting?: SortingState
+  cellClass?: string
 }>(), {
   pageSize: 10,
   showSelectionCount: true,
@@ -130,7 +131,7 @@ watch(() => props.filterValue, (val) => {
             <TableCell 
               v-for="cell in row.getVisibleCells()" 
               :key="cell.id"
-              class="text-left"
+              :class="['text-left', props.cellClass]"
               :style="{ width: cell.column.getSize() !== 150 ? `${cell.column.getSize()}px` : undefined }"
             >
               <FlexRender :render="cell.column.columnDef.cell" :props="cell.getContext()" />

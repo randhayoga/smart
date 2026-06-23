@@ -80,7 +80,7 @@ const modalMessage = computed(() => {
 
 const modalMessageClass = computed(() => {
   if (props.itemName === 'Perubahan Status Aset') {
-    return props.actionType === 'approved' ? 'text-emerald-500 font-bold' : 'text-destructive font-bold';
+    return props.actionType === 'approved' ? 'text-[#66BB6A] font-bold' : 'text-destructive font-bold';
   }
   return props.messageClass;
 });

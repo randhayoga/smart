@@ -452,15 +452,14 @@ const handleConfirmSubmit = () => {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal bg-white', (rowsPerPage === 'Semua baris' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
-                {{ rowsPerPage === 'Semua baris' ? 'Semua baris' : `${rowsPerPage} baris` }}
+                {{ rowsPerPage }}
                 <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent class="w-[140px] rounded-[14px]" align="start" :side-offset="4">
-              <DropdownMenuItem @select="rowsPerPage = '5'">5 baris</DropdownMenuItem>
-              <DropdownMenuItem @select="rowsPerPage = '10'">10 baris</DropdownMenuItem>
-              <DropdownMenuItem @select="rowsPerPage = '25'">25 baris</DropdownMenuItem>
               <DropdownMenuItem @select="rowsPerPage = 'Semua baris'">Semua baris</DropdownMenuItem>
+              <DropdownMenuItem @select="rowsPerPage = '10'">10</DropdownMenuItem>
+              <DropdownMenuItem @select="rowsPerPage = '20'">20</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -470,22 +469,22 @@ const handleConfirmSubmit = () => {
       <div class="space-y-2 flex-1 min-w-0 pt-2">
         <label class="text-xs text-muted-foreground font-medium block ml-0.5">Aksi Terpilih</label>
         <div class="flex flex-wrap gap-2">
-          <button 
+          <Button 
             :disabled="selectedIds.length <= 1"
             @click="openConfirmModal('approve', true)"
-            class="flex items-center gap-2 px-4 py-2 bg-[#2ECC71] hover:opacity-70 text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm disabled:opacity-50"
+            variant="success"
           >
             <ThumbsUp class="w-4 h-4" />
             <span class="hidden sm:inline">Approve Terpilih</span>
-          </button>
-          <button 
+          </Button>
+          <Button 
             :disabled="selectedIds.length <= 1"
             @click="openConfirmModal('reject', true)"
-            class="flex items-center gap-2 px-4 py-2 bg-[#E74C3C] hover:opacity-70 text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm disabled:opacity-50"
+            variant="destructive"
           >
             <Ban class="w-4 h-4" />
             <span class="hidden sm:inline">Tolak Terpilih</span>
-          </button>
+          </Button>
         </div>
       </div>
     </div>
