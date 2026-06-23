@@ -376,8 +376,8 @@ const openEditAssetModal = (asset: any) => {
   assetForm.floor_id = asset.floor_id;
   assetForm.room_id = asset.room_id;
   assetForm.price = asset.price;
-  assetForm.status = (asset.status || '').toLowerCase();
-  assetForm.condition = (asset.condition || '').toLowerCase();
+  assetForm.status = asset.status || '';
+  assetForm.condition = asset.condition || '';
   assetForm.use_lot_image = false;
   assetForm.image_url_name = asset.image_url ? asset.image_url.split('/').pop() || '' : '';
   assetForm.is_bulk = false;
@@ -1241,19 +1241,14 @@ const filteredUnits = computed(() => {
 
 // Dynamic values for dropdown filters
 const availableStatuses = ['Tersedia', 'Dipinjam', 'Perbaikan', 'Rusak', 'Hilang', 'Tidak Aktif'];
-const availableConditions = ['baik', 'kurang baik', 'rusak'];
+const availableConditions = ['Baik', 'Kurang Baik', 'Rusak'];
 
 const getStatusLabel = (status: string) => {
   return status || '';
 };
 
 const getConditionLabel = (cond: string) => {
-  if (!cond) return '';
-  const lower = cond.toLowerCase();
-  if (lower === 'baik') return 'Baik';
-  if (lower === 'kurang baik') return 'Kurang Baik';
-  if (lower === 'rusak') return 'Rusak';
-  return cond;
+  return cond || '';
 };
 
 const mapStatusToBackend = (status: string) => {
@@ -1261,11 +1256,6 @@ const mapStatusToBackend = (status: string) => {
 };
 
 const mapConditionToBackend = (cond: string) => {
-  if (!cond) return cond;
-  const lower = cond.toLowerCase();
-  if (lower === 'baik') return 'Baik';
-  if (lower === 'kurang baik') return 'Kurang Baik';
-  if (lower === 'rusak') return 'Rusak';
   return cond;
 };
 
@@ -1333,16 +1323,16 @@ const columns = computed<ColumnDef<any>[]>(() => {
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ]),
       cell: ({ row }) => {
-        const status = (row.getValue('status') as string || '').toLowerCase();
+        const status = row.getValue('status') as string || '';
         let badgeClass = 'bg-gray-100 text-gray-800';
-        if (status === 'available' || status === 'tersedia') badgeClass = 'bg-emerald-100 text-emerald-800';
-        else if (status === 'borrowed' || status === 'dipinjam' || status === 'dipakai') badgeClass = 'bg-amber-100 text-amber-800';
-        else if (status === 'repair' || status === 'perbaikan') badgeClass = 'bg-blue-100 text-blue-800';
-        else if (status === 'loss' || status === 'rusak') badgeClass = 'bg-red-100 text-red-800';
-        else if (status === 'lost' || status === 'hilang') badgeClass = 'bg-rose-100 text-rose-800';
-        else if (status === 'inactive' || status === 'tidak aktif') badgeClass = 'bg-gray-200 text-gray-800';
+        if (status === 'Tersedia') badgeClass = 'bg-emerald-100 text-emerald-800';
+        else if (status === 'Dipinjam') badgeClass = 'bg-amber-100 text-amber-800';
+        else if (status === 'Perbaikan') badgeClass = 'bg-blue-100 text-blue-800';
+        else if (status === 'Rusak') badgeClass = 'bg-red-100 text-red-800';
+        else if (status === 'Hilang') badgeClass = 'bg-rose-100 text-rose-800';
+        else if (status === 'Tidak Aktif') badgeClass = 'bg-gray-200 text-gray-800';
         
-        return h('span', { class: `inline-flex items-center px-2 py-0.5 rounded-full font-semibold ${badgeClass}` }, getStatusLabel(status));
+        return h('span', { class: `inline-flex items-center px-2 py-0.5 rounded-sm font-semibold ${badgeClass}` }, status);
       }
     },
     {
@@ -1356,13 +1346,13 @@ const columns = computed<ColumnDef<any>[]>(() => {
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ]),
       cell: ({ row }) => {
-        const cond = (row.getValue('condition') as string || '').toLowerCase();
+        const cond = row.getValue('condition') as string || '';
         let textClass = 'text-foreground';
-        if (cond === 'baik') textClass = 'text-emerald-600 font-semibold';
-        else if (cond === 'kurang baik') textClass = 'text-amber-600 font-semibold';
-        else if (cond === 'rusak') textClass = 'text-rose-600 font-semibold';
+        if (cond === 'Baik') textClass = 'text-emerald-600 font-semibold';
+        else if (cond === 'Kurang Baik') textClass = 'text-amber-600 font-semibold';
+        else if (cond === 'Rusak') textClass = 'text-rose-600 font-semibold';
         
-        return h('span', { class: textClass }, row.getValue('condition') as string);
+        return h('span', { class: textClass }, cond);
       }
     },
     {
@@ -2248,11 +2238,14 @@ const totalAsetTerpilihCount = computed(() => {
                         Status: 
                         <span 
                           :class="[
-                            'inline-flex items-center px-2 py-0.5 rounded-full font-semibold',
-                            selectedAssetForView.status === 'tersedia' ? 'bg-emerald-100 text-emerald-800' :
-                            selectedAssetForView.status === 'dipinjam' ? 'bg-amber-100 text-amber-800' :
-                            selectedAssetForView.status === 'dipakai' ? 'bg-blue-100 text-blue-800' :
-                            'bg-rose-100 text-rose-800'
+                            'inline-flex items-center px-2 py-0.5 rounded-md font-semibold',
+                            selectedAssetForView.status === 'Tersedia' ? 'bg-emerald-100 text-emerald-800' :
+                            selectedAssetForView.status === 'Dipinjam' ? 'bg-amber-100 text-amber-800' :
+                            selectedAssetForView.status === 'Perbaikan' ? 'bg-blue-100 text-blue-800' :
+                            selectedAssetForView.status === 'Rusak' ? 'bg-red-100 text-red-800' :
+                            selectedAssetForView.status === 'Hilang' ? 'bg-rose-100 text-rose-800' :
+                            selectedAssetForView.status === 'Tidak Aktif' ? 'bg-gray-200 text-gray-800' :
+                            'bg-gray-100 text-gray-800'
                           ]"
                         >
                           {{ getStatusLabel(selectedAssetForView.status) }}
@@ -2263,8 +2256,8 @@ const totalAsetTerpilihCount = computed(() => {
                         <span 
                           :class="[
                             'font-semibold',
-                            selectedAssetForView.condition?.toLowerCase() === 'baik' ? 'text-emerald-600' :
-                            selectedAssetForView.condition?.toLowerCase() === 'kurang baik' ? 'text-amber-600' :
+                            selectedAssetForView.condition === 'Baik' ? 'text-emerald-600' :
+                            selectedAssetForView.condition === 'Kurang Baik' ? 'text-amber-600' :
                             'text-rose-600'
                           ]"
                         >

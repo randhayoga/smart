@@ -381,7 +381,7 @@ const handleSaveLot = () => {
               location_id: newLot.location_id,
               floor_id: newLot.floor_id,
               room_id: newLot.room_id,
-              status: 'tersedia',
+              status: 'Tersedia',
               condition: 'Baik',
               price: Number(newLot.unitPrice),
               use_lot_image: true,

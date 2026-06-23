@@ -9,25 +9,6 @@ use Illuminate\Support\Facades\DB;
 
 class ProcessUnitStatusApproval
 {
-    private function getStatusLabel(string $status): string
-    {
-        $statusMap = [
-            'available' => 'Tersedia',
-            'borrowed' => 'Dipinjam',
-            'repair' => 'Perbaikan',
-            'loss' => 'Rusak',
-            'lost' => 'Hilang',
-            'inactive' => 'Tidak Aktif',
-            'tersedia' => 'Tersedia',
-            'dipinjam' => 'Dipinjam',
-            'perbaikan' => 'Perbaikan',
-            'rusak' => 'Rusak',
-            'hilang' => 'Hilang',
-            'tidak aktif' => 'Tidak Aktif',
-        ];
-        return $statusMap[strtolower($status)] ?? $status;
-    }
-
     /**
      * Execute the status approval process.
      */
@@ -61,9 +42,6 @@ class ProcessUnitStatusApproval
                     ->update(['end_date' => now()]);
 
                 // Create new lifecycle log
-                $oldLabel = $this->getStatusLabel($oldStatus);
-                $newLabel = $this->getStatusLabel($newStatus);
-                
                 UnitLifecycle::create([
                     'unit_id' => $unit->id,
                     'status' => $newStatus,
@@ -71,7 +49,7 @@ class ProcessUnitStatusApproval
                     'end_date' => null,
                     'requester_id' => $approval->requester_id,
                     'approver_id' => $approverId,
-                    'note' => $note ?? "Pembaruan status dari {$oldLabel} menjadi {$newLabel} disetujui.",
+                    'note' => $note ?? "Pembaruan status dari {$oldStatus} menjadi {$newStatus} disetujui.",
                 ]);
             }
         });
