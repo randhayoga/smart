@@ -400,10 +400,9 @@ const columns: ColumnDef<RequestHistory>[] = [
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent class="w-[140px] rounded-[14px]" align="start" :side-offset="4">
-              <DropdownMenuItem @select="rowsPerPage = '5'">5 baris</DropdownMenuItem>
-              <DropdownMenuItem @select="rowsPerPage = '10'">10 baris</DropdownMenuItem>
-              <DropdownMenuItem @select="rowsPerPage = '25'">25 baris</DropdownMenuItem>
               <DropdownMenuItem @select="rowsPerPage = 'Semua baris'">Semua baris</DropdownMenuItem>
+              <DropdownMenuItem @select="rowsPerPage = '10'">10</DropdownMenuItem>
+              <DropdownMenuItem @select="rowsPerPage = '25'">25</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
