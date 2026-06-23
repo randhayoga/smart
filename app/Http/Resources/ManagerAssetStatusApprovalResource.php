@@ -8,32 +8,6 @@ use App\Models\Inventory\UnitLifecycle;
 
 class ManagerAssetStatusApprovalResource extends JsonResource
 {
-    private function getStatusLabel(?string $status): string
-    {
-        if (!$status) {
-            return '-';
-        }
-        $statusMap = [
-            'available' => 'Tersedia',
-            'tersedia' => 'Tersedia',
-            'borrowed' => 'Dipinjam',
-            'dipinjam' => 'Dipinjam',
-            'dipakai' => 'Dipinjam',
-            'maintenance' => 'Perbaikan',
-            'perbaikan' => 'Perbaikan',
-            'repair' => 'Perbaikan',
-            'reserved' => 'Dipesan',
-            'inactive' => 'Tidak Aktif',
-            'broken' => 'Rusak',
-            'rusak' => 'Rusak',
-            'loss' => 'Rusak',
-            'lost' => 'Hilang',
-            'hilang' => 'Hilang',
-            'tidak aktif' => 'Tidak Aktif',
-        ];
-        return $statusMap[strtolower($status)] ?? $status;
-    }
-
     /**
      * Transform the resource into an array.
      *
@@ -66,7 +40,7 @@ class ManagerAssetStatusApprovalResource extends JsonResource
 
                 return [
                     'waktu' => $lc->start_date ? $lc->start_date->format('d-m-Y H:i') : '-',
-                    'aksi_status' => $this->getStatusLabel($lc->status),
+                    'aksi_status' => $lc->status ?? '-',
                     'aktor' => "{$actorRole}: {$actorName}",
                     'durasi' => $duration,
                     'catatan' => $lc->note ?? '-',
@@ -83,7 +57,7 @@ class ManagerAssetStatusApprovalResource extends JsonResource
             'nama' => $barang->name ?? '-',
             'specification' => $barang->specification ?? '-',
             'proposed_status' => $this->proposed_status,
-            'status_label' => $this->getStatusLabel($this->proposed_status),
+            'status_label' => $this->proposed_status ?? '-',
             'decision' => $this->decision,
             'note' => $this->note,
             'requested_by' => $this->requester->name ?? '-',
@@ -94,7 +68,7 @@ class ManagerAssetStatusApprovalResource extends JsonResource
             'unit_details' => [
                 'id' => $unit->id,
                 'number' => $unit->number ?? '-',
-                'status' => $this->getStatusLabel($unit->status),
+                'status' => $unit->status ?? '-',
                 'condition' => $unit->condition ?? '-',
                 'price' => $unit->price ? number_format($unit->price, 0, ',', '.') : '-',
                 'image_url' => $unit->image_url ? '/storage/' . $unit->image_url : ($lot->image_url ? '/storage/' . $lot->image_url : null),
