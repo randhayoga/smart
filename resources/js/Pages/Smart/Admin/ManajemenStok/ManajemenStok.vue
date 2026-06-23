@@ -1151,7 +1151,7 @@ const closeErrorModal = () => {
                         v-model="bulkEditForm.uom_id"
                         :options="props.uoms"
                         search-placeholder="Cari satuan..."
-                        default-label="Pilih satuan"
+                        default-label="Tidak berubah"
                         width-class="w-full h-10 px-4"
                       />
                     </div>
@@ -1167,7 +1167,7 @@ const closeErrorModal = () => {
                         v-model="bulkEditForm.brand_id"
                         :options="props.brands"
                         search-placeholder="Cari merek..."
-                        default-label="Pilih merek"
+                        default-label="Tidak berubah"
                         width-class="w-full h-10 px-4"
                       />
                     </div>
@@ -1180,7 +1180,7 @@ const closeErrorModal = () => {
                         type="text" 
                         v-model="bulkEditForm.name"
                         maxlength="255"
-                        placeholder="Input nama barang di sini..." 
+                        placeholder="Tidak berubah" 
                         class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
                       />
                     </div>
@@ -1193,7 +1193,7 @@ const closeErrorModal = () => {
                         type="text" 
                         v-model="bulkEditForm.specification"
                         maxlength="255"
-                        placeholder="Input spesifikasinya di sini..." 
+                        placeholder="Tidak berubah" 
                         class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
                       />
                     </div>
@@ -1210,7 +1210,7 @@ const closeErrorModal = () => {
                           ]"
                           @click="(bulkEditForm.photo || (selectedItem && selectedItem.image_url)) && viewBulkEditImageInNewTab()"
                         >
-                          {{ bulkEditForm.photoName || 'Belum ada foto yang dipilih' }}
+                          {{ bulkEditForm.photoName || 'Tidak berubah' }}
                         </div>
                         <input 
                           type="file" 

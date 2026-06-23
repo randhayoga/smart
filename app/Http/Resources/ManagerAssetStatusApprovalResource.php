@@ -57,6 +57,7 @@ class ManagerAssetStatusApprovalResource extends JsonResource
             'nama' => $barang->name ?? '-',
             'specification' => $barang->specification ?? '-',
             'proposed_status' => $this->proposed_status,
+            'previous_status' => $this->previous_status,
             'status_label' => $this->proposed_status ?? '-',
             'decision' => $this->decision,
             'note' => $this->note,

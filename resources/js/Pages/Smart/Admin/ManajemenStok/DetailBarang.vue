@@ -1815,7 +1815,7 @@ const closeErrorModal = () => {
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !bulkLotForm.organizer_id ? 'text-muted-foreground' : 'text-foreground']">
-                            {{ props.organizers.find(o => o.id == bulkLotForm.organizer_id)?.name || 'Pilih organizer' }}
+                            {{ props.organizers.find(o => o.id == bulkLotForm.organizer_id)?.name || 'Tidak berubah' }}
                             <ChevronDown class="w-4 h-4 opacity-50" />
                           </Button>
                         </DropdownMenuTrigger>
@@ -1833,7 +1833,7 @@ const closeErrorModal = () => {
                         v-model="bulkLotForm.vendor_id"
                         :options="props.vendors"
                         search-placeholder="Cari vendor..."
-                        default-label="Pilih vendor"
+                        default-label="Tidak berubah"
                         width-class="w-full h-10 px-4"
                       />
                     </div>
@@ -1844,7 +1844,7 @@ const closeErrorModal = () => {
                         v-model="bulkLotForm.location_id"
                         :options="props.locations"
                         search-placeholder="Cari lokasi..."
-                        default-label="Pilih lokasi"
+                        default-label="Tidak berubah"
                         width-class="w-full h-10 px-4"
                       />
                     </div>
@@ -1855,7 +1855,7 @@ const closeErrorModal = () => {
                         v-model="bulkLotForm.floor_id"
                         :options="bulkFilteredFloors"
                         search-placeholder="Cari lantai..."
-                        default-label="Pilih lantai (opsional)"
+                        default-label="Tidak berubah"
                         width-class="w-full h-10 px-4"
                         :disabled="!bulkLotForm.location_id"
                       />
@@ -1870,7 +1870,7 @@ const closeErrorModal = () => {
                         v-model="bulkLotForm.room_id"
                         :options="bulkFilteredRooms"
                         search-placeholder="Cari ruangan..."
-                        default-label="Pilih ruangan (opsional)"
+                        default-label="Tidak berubah"
                         width-class="w-full h-10 px-4"
                         :disabled="!bulkLotForm.floor_id"
                       />
@@ -1882,7 +1882,7 @@ const closeErrorModal = () => {
                         type="text" 
                         v-model="bulkLotForm.po_number"
                         :disabled="bulkLotForm.ids.length > 1"
-                        :placeholder="bulkLotForm.ids.length > 1 ? 'Tidak dapat diubah' : 'Contoh: PO-02'"
+                        :placeholder="bulkLotForm.ids.length > 1 ? 'Tidak dapat diubah secara massal' : 'Contoh: PO-02'"
                         class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10 disabled:bg-muted/30 disabled:text-muted-foreground disabled:cursor-not-allowed"
                       />
                     </div>
@@ -1906,7 +1906,7 @@ const closeErrorModal = () => {
                         <input 
                           type="number" 
                           v-model="bulkLotForm.unit_price"
-                          placeholder="Contoh: 60000"
+                          placeholder="Tidak berubah"
                           min="0"
                           class="flex-1 min-w-0 px-4 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 transition-colors h-full"
                         />
@@ -1925,7 +1925,7 @@ const closeErrorModal = () => {
                           ]"
                           @click="(bulkLotForm.image_url || bulkLotForm.image_url_name) && viewBulkLotImageInNewTab()"
                         >
-                          {{ bulkLotForm.image_url_name || 'Belum ada foto yang dipilih' }}
+                          {{ bulkLotForm.image_url_name || 'Tidak berubah' }}
                         </div>
                         <input 
                           type="file" 

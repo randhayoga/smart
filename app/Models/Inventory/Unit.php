@@ -17,9 +17,10 @@ class Unit extends Model
     public const STATUS_AVAILABLE = 'Tersedia';
     public const STATUS_BORROWED = 'Dipinjam';
     public const STATUS_REPAIR = 'Perbaikan';
-    public const STATUS_LOSS = 'Rusak';
+    public const STATUS_LOSS = 'Rusak Total';
     public const STATUS_LOST = 'Hilang';
     public const STATUS_INACTIVE = 'Tidak Aktif';
+    public const STATUS_PENDING = 'Pending';
 
     protected $fillable = [
         'number',

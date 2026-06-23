@@ -49,12 +49,12 @@ class BulkUnitController extends Controller
             'bulk_quantity.integer' => 'Tidak boleh desimal.',
         ]);
 
-        $arrNeedApproval = ['Rusak', 'Hilang'];
+        $arrNeedApproval = ['Rusak Total', 'Hilang'];
         $proposedStatus = $validated['status'];
         $needApproval = in_array($proposedStatus, $arrNeedApproval);
 
         if ($needApproval) {
-            $validated['status'] = 'Tersedia';
+            $validated['status'] = 'Pending';
         }
 
         $quantity = (int)$validated['bulk_quantity'];
@@ -117,6 +117,7 @@ class BulkUnitController extends Controller
                     'unit_id' => $unit->id,
                     'requester_id' => $request->user()->id,
                     'proposed_status' => $proposedStatus,
+                    'previous_status' => 'Tersedia',
                     'decision' => 'pending',
                     'note' => null,
                     'approver_id' => null,
@@ -153,15 +154,19 @@ class BulkUnitController extends Controller
             return redirect()->back()->withErrors(['ids' => 'Tidak ada unit yang ditemukan.']);
         }
 
-        $arrNeedApproval = ['Rusak', 'Hilang'];
+        $arrNeedApproval = ['Rusak Total', 'Hilang'];
         $proposedStatus = $request->input('status');
         $needApproval = $request->filled('status') && in_array($proposedStatus, $arrNeedApproval);
 
         $updateData = [];
 
         // 1. Status & Condition
-        if ($request->filled('status') && !$needApproval) {
-            $updateData['status'] = $proposedStatus;
+        if ($request->filled('status')) {
+            if ($needApproval) {
+                $updateData['status'] = 'Pending';
+            } else {
+                $updateData['status'] = $proposedStatus;
+            }
         }
         if ($request->filled('condition')) {
             $updateData['condition'] = $request->input('condition');
@@ -238,6 +243,7 @@ class BulkUnitController extends Controller
                         'unit_id' => $unit->id,
                         'requester_id' => $request->user()->id,
                         'proposed_status' => $proposedStatus,
+                        'previous_status' => $unit->status,
                         'decision' => 'pending',
                         'note' => null,
                         'approver_id' => null,

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\MultiRoles\UnitStatusApproval;
+namespace App\Http\Controllers\Smart\MultiRoles\UnitStatusApproval;
 
 use App\Http\Controllers\Controller;
 use App\Models\Inventory\UnitStatusApproval;

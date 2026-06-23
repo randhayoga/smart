@@ -24,14 +24,10 @@ class ProcessUnitStatusApproval
                 'decided_at' => now(),
             ]);
 
+            $unit = $approval->unit;
             if ($decision === 'approved') {
-                $unit = $approval->unit;
-                $oldStatus = $unit->status;
+                $oldStatus = $approval->previous_status;
                 $newStatus = $approval->proposed_status;
-
-                if (in_array($newStatus, ['Rusak', 'Hilang'])) {
-                    $newStatus = 'Tidak Aktif';
-                }
 
                 // Update unit status
                 $unit->update(['status' => $newStatus]);
@@ -51,6 +47,10 @@ class ProcessUnitStatusApproval
                     'approver_id' => $approverId,
                     'note' => $note ?? "Pembaruan status dari {$oldStatus} menjadi {$newStatus} disetujui.",
                 ]);
+            } else {
+                if ($unit) {
+                    $unit->update(['status' => $approval->previous_status]);
+                }
             }
         });
     }
