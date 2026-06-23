@@ -16,6 +16,7 @@ class UnitStatusApproval extends Model
         'requester_id',
         'approver_id',
         'proposed_status',
+        'previous_status',
         'decision',
         'note',
         'requested_at',

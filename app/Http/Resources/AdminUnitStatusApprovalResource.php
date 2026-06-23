@@ -19,6 +19,7 @@ class AdminUnitStatusApprovalResource extends JsonResource
             'unit_id' => $this->unit_id,
             'unit_number' => $this->unit->number ?? '-',
             'proposed_status' => $this->proposed_status,
+            'previous_status' => $this->previous_status,
             'decision' => $this->decision,
             'note' => $this->note,
             'requester_name' => $this->requester->name ?? '-',

@@ -47,12 +47,12 @@ class UnitController extends Controller
 
         $validated = $request->validate($rules);
 
-        $arrNeedApproval = ['Rusak', 'Hilang'];
+        $arrNeedApproval = ['Rusak Total', 'Hilang'];
         $proposedStatus = $validated['status'];
         $needApproval = in_array($proposedStatus, $arrNeedApproval);
 
         if ($needApproval) {
-            $validated['status'] = 'Tersedia';
+            $validated['status'] = 'Pending';
         }
 
         // Single creation logic
@@ -80,6 +80,7 @@ class UnitController extends Controller
                 'unit_id' => $unit->id,
                 'requester_id' => $request->user()->id,
                 'proposed_status' => $proposedStatus,
+                'previous_status' => 'Tersedia',
                 'decision' => 'pending',
                 'note' => null,
                 'approver_id' => null,
@@ -127,7 +128,7 @@ class UnitController extends Controller
 
         $validated = $request->validate($rules);
 
-        $arrNeedApproval = ['Rusak', 'Hilang'];
+        $arrNeedApproval = ['Rusak Total', 'Hilang'];
         $proposedStatus = $validated['status'];
         $needApproval = in_array($proposedStatus, $arrNeedApproval);
 
@@ -163,8 +164,10 @@ class UnitController extends Controller
 
         unset($validated['use_lot_image']);
 
+        $previousStatus = $unit->status;
+
         if ($needApproval) {
-            unset($validated['status']);
+            $validated['status'] = 'Pending';
         }
 
         $unit->update($validated);
@@ -182,6 +185,7 @@ class UnitController extends Controller
                     'unit_id' => $unit->id,
                     'requester_id' => $request->user()->id,
                     'proposed_status' => $proposedStatus,
+                    'previous_status' => $previousStatus,
                     'decision' => 'pending',
                     'note' => null,
                     'approver_id' => null,
