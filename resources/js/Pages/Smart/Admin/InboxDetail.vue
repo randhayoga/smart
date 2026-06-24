@@ -452,7 +452,7 @@ const handleAturSerahTerima = () => {
                   v-else-if="step.rejected" 
                   class="w-7 h-7 rounded-full border-2 border-red-500 flex items-center justify-center bg-card"
                 >
-                  <X class="w-4 h-4 text-red-500 stroke-[3.5]" />
+                  <X class="w-4 h-4 text-red-500 stroke-[3.5] cursor-pointer" />
                 </div>
 
                 <!-- Status Action Required / Active -->
@@ -548,7 +548,7 @@ const handleAturSerahTerima = () => {
             <div class="flex items-center justify-between p-5 border-b border-border bg-card">
               <h3 class="text-base md:text-lg font-extrabold text-foreground">Pending Permintaan</h3>
               <button @click="closePendingModal" class="p-1.5 hover:bg-muted rounded-full transition-colors">
-                <X class="w-5 h-5 text-muted-foreground" />
+                <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
               </button>
             </div>
             
@@ -611,7 +611,7 @@ const handleAturSerahTerima = () => {
             <div class="flex items-center justify-between p-5 border-b border-border bg-card">
               <h3 class="text-base md:text-lg font-extrabold text-foreground">Penolakan Permintaan/Peminjaman</h3>
               <button @click="closeRejectModal" class="p-1.5 hover:bg-muted rounded-full transition-colors">
-                <X class="w-5 h-5 text-muted-foreground" />
+                <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
               </button>
             </div>
             

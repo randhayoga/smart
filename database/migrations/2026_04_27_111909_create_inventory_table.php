@@ -59,6 +59,7 @@ return new class extends Migration {
             $table->foreignId('requester_id')->constrained('adm_users')->comment("ADM_USER's id")->noActionOnDelete();
             $table->foreignId('approver_id')->nullable()->constrained('adm_users')->comment("nullable | ADM_USER's id")->noActionOnDelete();
             $table->string('proposed_status');
+            $table->string('previous_status');
             $table->string('doc_url');
             $table->string('decision')->default('pending')->comment('pending | approved | rejected');
             $table->text('note')->nullable()->comment('nullable | required if rejected');

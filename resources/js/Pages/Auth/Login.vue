@@ -2,6 +2,7 @@
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { Loader2, ArrowRight } from 'lucide-vue-next';
 import ApplicationLogo from '@/Components/ApplicationLogo.vue';
+import { Button } from '@/Components/ui/button';
 
 defineProps<{
   status?: string;
@@ -102,9 +103,11 @@ const submit = () => {
           </p>
           
           <!-- Submit button -->
-          <button
+          <Button
             type="submit"
-            class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 w-full h-11 bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-button"
+            variant="primary"
+            size="lg"
+            class="w-full"
             :disabled="form.processing"
           >
             <Loader2 v-if="form.processing" class="mr-2 h-5 w-5 animate-spin" />
@@ -112,7 +115,7 @@ const submit = () => {
               <span>Masuk</span>
               <ArrowRight class="h-5 w-5 shrink-0" />
             </template>
-          </button>
+          </Button>
         </form>
       </div>
     </div>

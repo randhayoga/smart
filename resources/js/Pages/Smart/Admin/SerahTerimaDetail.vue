@@ -788,7 +788,7 @@ const openFirstItemPlacementModal = () => {
                 <p class="text-sm text-muted-foreground">Pilih {{ activeItemToAllocate?.quantity || 0 }} aset dari tabel di bawah:</p>
               </div>
               <button @click="closeAllocModal" class="p-1 hover:bg-muted rounded-full transition-colors">
-                <X class="w-5 h-5 text-muted-foreground" />
+                <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
               </button>
             </div>
             
@@ -886,7 +886,7 @@ const openFirstItemPlacementModal = () => {
             <div class="flex items-center justify-between p-6 border-b border-border bg-card shrink-0">
               <h3 class="text-xl font-bold">Pembatalan Permintaan/Peminjaman</h3>
               <button @click="closeCancelModal" class="p-1 hover:bg-muted rounded-full transition-colors">
-                <X class="w-5 h-5 text-muted-foreground" />
+                <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
               </button>
             </div>
             
@@ -965,7 +965,7 @@ const openFirstItemPlacementModal = () => {
                 </p>
               </div>
               <button @click="isAssetPlacementModalOpen = false" class="p-1.5 hover:bg-muted rounded-full transition-colors">
-                <X class="w-5 h-5 text-muted-foreground" />
+                <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
               </button>
             </div>
             

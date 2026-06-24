@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\MultiRoles\UnitStatusApproval;
+namespace App\Http\Controllers\Smart\MultiRoles\UnitStatusApproval;
 
 use App\Http\Controllers\Controller;
 use App\Models\Inventory\Unit;
@@ -69,11 +69,14 @@ class AdminUnitStatusApprovalController extends Controller
             'unit_id' => $validated['unit_id'],
             'requester_id' => $request->user()->id,
             'proposed_status' => $validated['proposed_status'],
+            'previous_status' => $unit->status,
             'decision' => 'pending',
             'note' => $validated['note'] ?? null,
             'requested_at' => now(),
             'doc_url' => $docUrl,
         ]);
+
+        $unit->update(['status' => 'Pending']);
 
         return redirect()->back()->with('success', 'Pengajuan perubahan status unit berhasil dikirim.');
     }
@@ -140,7 +143,14 @@ class AdminUnitStatusApprovalController extends Controller
             ]);
         }
 
+        $unit = $unitStatusApproval->unit;
+        $previousStatus = $unitStatusApproval->previous_status;
+
         $unitStatusApproval->delete();
+
+        if ($unit) {
+            $unit->update(['status' => $previousStatus]);
+        }
 
         return redirect()->back()->with('success', 'Pengajuan perubahan status unit berhasil dibatalkan.');
     }

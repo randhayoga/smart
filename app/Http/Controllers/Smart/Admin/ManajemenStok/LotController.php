@@ -194,14 +194,17 @@ class LotController extends Controller
         }
 
         // Ambil data unit (aset) terkait LOT ini
-        $units = \App\Models\Inventory\Unit::with(['location', 'floor', 'room'])
+        $units = \App\Models\Inventory\Unit::with(['location', 'floor', 'room', 'statusApprovals'])
             ->where('lot_id', $lot->id)
             ->get()
             ->map(function ($unit) {
+                $pendingApproval = $unit->statusApprovals->firstWhere('decision', 'pending');
                 return [
                     'id' => $unit->id,
                     'number' => $unit->number,
                     'status' => $unit->status,
+                    'proposed_status' => $pendingApproval ? $pendingApproval->proposed_status : null,
+                    'doc_url' => $pendingApproval ? $pendingApproval->doc_url : null,
                     'condition' => $unit->condition,
                     'location' => $unit->location->name ?? '-',
                     'location_id' => $unit->location_id,

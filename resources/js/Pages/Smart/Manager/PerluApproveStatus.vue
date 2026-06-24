@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, h } from 'vue';
+import { ref, computed, watch, h, onMounted, onUnmounted } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import {
@@ -8,7 +8,8 @@ import {
   ThumbsUp,
   Ban,
   ArrowUpDown,
-  ChevronDown
+  ChevronDown,
+  Eye
 } from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
 import { Button } from "@/Components/ui/button";
@@ -21,9 +22,10 @@ import {
 import TableSearch from '@/Components/TableSearch.vue';
 import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
-import ViewTableButton from '@/Components/ViewTableButton.vue';
+
 import Tabs from '@/Components/Tabs.vue';
 import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal.vue';
+import StatusBadge from '@/Components/StatusBadge.vue';
 
 interface AuditTrail {
   waktu: string;
@@ -65,6 +67,7 @@ interface ApprovalItem {
   nama: string;
   specification: string;
   proposed_status: string;
+  previous_status: string;
   status_label: string;
   decision: string;
   note: string | null;
@@ -277,18 +280,24 @@ const columns: ColumnDef<ApprovalItem>[] = [
     cell: ({ row }) => {
       const item = row.original;
       return h('div', { class: 'flex items-center justify-center gap-2' }, [
-        h('button', {
-          type: 'button',
-          onClick: () => openMemoFile(item.doc_url),
-          class: 'p-2 bg-gradient-primary hover:opacity-90 text-white rounded-[13px] transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer',
-          title: 'Buka Berita Acara / Memo'
-        }, [
-          h(FileText, { class: 'w-3.5 h-3.5' })
+        h(Button, {
+          variant: 'table-primary',
+          size: 'icon-sm',
+          title: 'Buka Berita Acara / Memo',
+          onClick: () => openMemoFile(item.doc_url)
+        }, () => [
+          h(FileText),
+          h('span', { class: 'sr-only' }, 'Buka Berita Acara / Memo')
         ]),
-        h(ViewTableButton, {
-          onClick: () => openDetailPopup(item),
-          title: 'Detail Aset'
-        })
+        h(Button, {
+          variant: 'table-view',
+          size: 'icon-sm',
+          title: 'Detail Aset',
+          onClick: () => openDetailPopup(item)
+        }, () => [
+          h(Eye),
+          h('span', { class: 'sr-only' }, 'Detail Aset')
+        ])
       ]);
     },
     enableSorting: false,
@@ -565,6 +574,24 @@ const isVehicle = (item: ApprovalItem | null) => {
          category.includes('mobil') || subcategory.includes('mobil') ||
          category.includes('motor') || subcategory.includes('motor');
 };
+
+const closeOnEscape = (e: KeyboardEvent) => {
+  if (e.key === 'Escape') {
+    if (isDetailPopupOpen.value) {
+      closeDetailPopup();
+    } else if (isConfirmModalOpen.value) {
+      closeConfirmModal();
+    }
+  }
+};
+
+onMounted(() => {
+  document.addEventListener('keydown', closeOnEscape);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', closeOnEscape);
+});
 </script>
 
 <template>
@@ -625,36 +652,35 @@ const isVehicle = (item: ApprovalItem | null) => {
       <div class="space-y-2 flex-1 min-w-0 pt-2">
         <label class="text-xs text-muted-foreground font-medium block ml-0.5">Aksi Terpilih</label>
         <div class="flex flex-wrap items-center gap-2">
-          <button 
+          <Button 
             :disabled="selectedIds.length < 1"
             @click="openConfirmModal('approved', true)"
-            class="flex items-center gap-2 px-4 py-2 bg-[#2ECC71] hover:opacity-70 text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm disabled:opacity-50"
+            variant="success"
           >
             <ThumbsUp class="w-4 h-4" />
             <span class="hidden sm:inline">Approve Terpilih</span>
-          </button>
-          <button 
+          </Button>
+          <Button 
             :disabled="selectedIds.length < 1"
             @click="openConfirmModal('rejected', true)"
-            class="flex items-center gap-2 px-4 py-2 bg-[#E74C3C] hover:opacity-70 text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm disabled:opacity-50"
+            variant="destructive"
           >
             <Ban class="w-4 h-4" />
             <span class="hidden sm:inline">Tolak Terpilih</span>
-          </button>
+          </Button>
           <div class="flex items-center gap-3 text-sm text-muted-foreground ml-auto">
             <span>Baris per halaman</span>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal bg-white', (rowsPerPage === 'Semua baris' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
-                  {{ rowsPerPage === 'Semua baris' ? 'Semua baris' : `${rowsPerPage} baris` }}
+                  {{ rowsPerPage }}
                   <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent class="w-[140px] rounded-[14px]" align="start" :side-offset="4">
-                <DropdownMenuItem @select="rowsPerPage = '5'">5 baris</DropdownMenuItem>
-                <DropdownMenuItem @select="rowsPerPage = '10'">10 baris</DropdownMenuItem>
-                <DropdownMenuItem @select="rowsPerPage = '25'">25 baris</DropdownMenuItem>
                 <DropdownMenuItem @select="rowsPerPage = 'Semua baris'">Semua baris</DropdownMenuItem>
+                <DropdownMenuItem @select="rowsPerPage = '10'">10</DropdownMenuItem>
+                <DropdownMenuItem @select="rowsPerPage = '25'">25</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -707,7 +733,7 @@ const isVehicle = (item: ApprovalItem | null) => {
               <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
                 <h3 class="text-lg font-bold text-foreground">Detail Aset</h3>
                 <button @click="closeDetailPopup" class="p-2 hover:bg-muted rounded-full transition-colors">
-                  <X class="w-5 h-5 text-muted-foreground" />
+                  <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
                 </button>
               </div>
 
@@ -763,8 +789,15 @@ const isVehicle = (item: ApprovalItem | null) => {
                         <p v-if="isVehicle(activeApproval)" class="font-bold text-foreground">
                           <span class="text-foreground">Nopol:</span> {{ activeApproval.unit_details.vehicle_registration || '-' }}
                         </p>
-                        <p class="text-destructive font-bold">
-                          <span>Status:</span> {{ activeApproval.unit_details.status }}
+                        <p class="text-foreground flex flex-col gap-1.5">
+                          <span>
+                            Status sebelumnya: 
+                            <StatusBadge :status="activeApproval.previous_status" />
+                          </span>
+                          <span>
+                            Status diajukan: 
+                            <StatusBadge :status="activeApproval.proposed_status" />
+                          </span>
                         </p>
                         <p class="text-foreground">
                           Kondisi: 
@@ -840,15 +873,14 @@ const isVehicle = (item: ApprovalItem | null) => {
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal bg-white', (auditRowsPerPage === 'Semua baris' || !auditRowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
-                            {{ auditRowsPerPage === 'Semua baris' ? 'Semua baris' : `${auditRowsPerPage} baris` }}
+                            {{ auditRowsPerPage }}
                             <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent class="w-[140px] rounded-[14px] z-[110]" align="start" :side-offset="4">
-                          <DropdownMenuItem @select="auditRowsPerPage = '5'">5 baris</DropdownMenuItem>
-                          <DropdownMenuItem @select="auditRowsPerPage = '10'">10 baris</DropdownMenuItem>
-                          <DropdownMenuItem @select="auditRowsPerPage = '25'">25 baris</DropdownMenuItem>
                           <DropdownMenuItem @select="auditRowsPerPage = 'Semua baris'">Semua baris</DropdownMenuItem>
+                          <DropdownMenuItem @select="auditRowsPerPage = '10'">10</DropdownMenuItem>
+                          <DropdownMenuItem @select="auditRowsPerPage = '25'">25</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
@@ -857,6 +889,8 @@ const isVehicle = (item: ApprovalItem | null) => {
                   <!-- Log table via DataTable -->
                   <div class="pb-4">
                     <DataTable 
+                      class="mb-6"
+                      cell-class="py-2.5"
                       :columns="auditColumns" 
                       :data="filteredLifecycles" 
                       :filter-value="auditSearch"
@@ -871,39 +905,43 @@ const isVehicle = (item: ApprovalItem | null) => {
               <!-- Bottom Footer Buttons (Right Aligned group) -->
               <div class="py-3 px-4 flex items-center justify-end gap-3 bg-muted/10 shrink-0">
                 <!-- Purple Memo Button -->
-                <button 
+                <Button 
                   @click="openMemoFile(activeApproval.doc_url)"
-                  class="bg-[#6366F1] hover:bg-[#5850EC] text-white text-sm font-bold px-5 py-2.5 rounded-xl inline-flex items-center gap-2 transition-colors cursor-pointer shadow-sm"
+                  variant="primary"
+                  size="lg"
                 >
                   <FileText class="w-4 h-4" />
                   Buka Memo / Berita Acara
-                </button>
+                </Button>
 
                 <!-- Green Approve Button -->
-                <button 
+                <Button 
                   @click="openConfirmModal('approved', false)"
-                  class="bg-[#2ECC71] hover:bg-[#27AE60] text-white text-sm font-bold px-5 py-2.5 rounded-xl inline-flex items-center gap-2 transition-colors cursor-pointer shadow-sm"
+                  variant="success"
+                  size="lg"
                 >
                   <ThumbsUp class="w-4 h-4" />
                   Approve
-                </button>
+                </Button>
 
                 <!-- Red Reject Button -->
-                <button 
+                <Button 
                   @click="openConfirmModal('rejected', false)"
-                  class="bg-[#E74C3C] hover:bg-[#C0392B] text-white text-sm font-bold px-5 py-2.5 rounded-xl inline-flex items-center gap-2 transition-colors cursor-pointer shadow-sm"
+                  variant="destructive"
+                  size="lg"
                 >
                   <Ban class="w-4 h-4" />
                   Tolak
-                </button>
+                </Button>
 
                 <!-- White Kembali Button -->
-                <button 
+                <Button 
                   @click="closeDetailPopup"
-                  class="bg-background border border-input hover:bg-muted text-foreground text-sm font-bold px-5 py-2.5 rounded-xl transition-colors cursor-pointer shadow-sm"
+                  variant="white"
+                  size="lg"
                 >
                   Kembali
-                </button>
+                </Button>
               </div>
             </div>
           </Transition>

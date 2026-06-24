@@ -9,19 +9,6 @@ use Illuminate\Support\Facades\DB;
 
 class ProcessUnitStatusApproval
 {
-    private function getStatusLabel(string $status): string
-    {
-        $statusMap = [
-            'available' => 'Tersedia',
-            'borrowed' => 'Dipinjam',
-            'repair' => 'Perbaikan',
-            'loss' => 'Rusak',
-            'lost' => 'Hilang',
-            'inactive' => 'Tidak Aktif',
-        ];
-        return $statusMap[strtolower($status)] ?? $status;
-    }
-
     /**
      * Execute the status approval process.
      */
@@ -37,14 +24,10 @@ class ProcessUnitStatusApproval
                 'decided_at' => now(),
             ]);
 
+            $unit = $approval->unit;
             if ($decision === 'approved') {
-                $unit = $approval->unit;
-                $oldStatus = $unit->status;
+                $oldStatus = $approval->previous_status;
                 $newStatus = $approval->proposed_status;
-
-                if (in_array($newStatus, ['Loss', 'Lost'])) {
-                    $newStatus = 'Inactive';
-                }
 
                 // Update unit status
                 $unit->update(['status' => $newStatus]);
@@ -55,9 +38,6 @@ class ProcessUnitStatusApproval
                     ->update(['end_date' => now()]);
 
                 // Create new lifecycle log
-                $oldLabel = $this->getStatusLabel($oldStatus);
-                $newLabel = $this->getStatusLabel($newStatus);
-                
                 UnitLifecycle::create([
                     'unit_id' => $unit->id,
                     'status' => $newStatus,
@@ -65,8 +45,12 @@ class ProcessUnitStatusApproval
                     'end_date' => null,
                     'requester_id' => $approval->requester_id,
                     'approver_id' => $approverId,
-                    'note' => $note ?? "Pembaruan status dari {$oldLabel} menjadi {$newLabel} disetujui.",
+                    'note' => $note ?? "Pembaruan status dari {$oldStatus} menjadi {$newStatus} disetujui.",
                 ]);
+            } else {
+                if ($unit) {
+                    $unit->update(['status' => $approval->previous_status]);
+                }
             }
         });
     }
