@@ -82,22 +82,107 @@ const items = computed(() => props.items || [
   }
 ]);
 
-const timeline = computed(() => {
+interface TimelineStep {
+  status: string;
+  time?: any;
+  completed?: boolean;
+  rejected?: boolean;
+  active?: boolean;
+  user?: string;
+  note?: string;
+  method?: any;
+  location?: any;
+}
+
+const timeline = computed((): TimelineStep[] => {
   const hData = props.handover;
   if (!hData) return [];
 
-  return [
-    { status: 'Permintaan dibuat', time: hData.createdAt, completed: true },
-    { status: 'Di-approve', user: hData.approval_by || hData.approver || 'Manager', time: hData.approval_at || hData.createdAt, completed: true },
-    { status: 'Dikonfirmasi', user: hData.confirmation_by || 'Admin', time: hData.confirmation_at || hData.createdAt, completed: true },
-    { 
-      status: 'Serah Terima', 
-      method: hData.method, 
-      location: hData.location, 
-      time: hData.time, 
-      active: true 
-    },
-  ];
+  const steps = [];
+  
+  // Step 1: Initial creation
+  steps.push({
+    status: 'Permintaan dibuat',
+    time: hData.createdAt,
+    completed: true,
+  });
+
+  // Step 2: Historical Logs
+  if (hData.logs && Array.isArray(hData.logs)) {
+    const sortedLogs = [...hData.logs].sort((a, b) => a.id - b.id);
+    sortedLogs.forEach(log => {
+      if (log.status_to === 'wait') return;
+
+      let statusName = '';
+      let completed = true;
+      let rejected = false;
+
+      if (log.status_to === 'approve') {
+        statusName = 'Di-approve';
+      } else if (log.status_to === 'partial') {
+        statusName = 'Disetujui sebagian (Partial)';
+      } else if (log.status_to === 'confirm') {
+        if (log.status_from === 'partial') {
+          statusName = 'Alokasi Barang Tambahan Dikonfirmasi';
+        } else {
+          if (log.note && log.note.includes('diatur oleh pengguna')) {
+            statusName = 'Jadwal Serah Terima Diatur';
+          } else {
+            statusName = 'Dikonfirmasi';
+          }
+        }
+      } else if (log.status_to === 'borrow') {
+        statusName = 'Serah Terima Selesai & Dipinjam';
+      } else if (log.status_to === 'return') {
+        statusName = 'Pengembalian Diajukan';
+      } else if (log.status_to === 'success') {
+        if (log.status_from === 'return') {
+          statusName = 'Pengembalian Selesai';
+        } else {
+          statusName = 'Serah Terima Selesai';
+        }
+      } else if (log.status_to === 'reject') {
+        statusName = 'Ditolak';
+        completed = false;
+        rejected = true;
+      } else if (log.status_to === 'cancel') {
+        statusName = 'Dibatalkan oleh Pengguna';
+      } else if (log.status_to === 'pending') {
+        if (log.status_from === 'confirm') {
+          statusName = 'Serah Terima Sebagian Diterima';
+        } else {
+          statusName = 'Pending';
+        }
+      }
+
+      if (statusName) {
+        steps.push({
+          status: statusName,
+          user: log.user || undefined,
+          time: log.time,
+          completed,
+          rejected,
+          note: log.note || '',
+        });
+      }
+    });
+  }
+
+  // Step 3: Active step if not final
+  const isFinalStatus = ['success', 'reject', 'cancel'].includes(hData.status);
+  if (!isFinalStatus) {
+    if (hData.status === 'confirm' || hData.status === 'partial') {
+      steps.push({
+        status: 'Serah Terima',
+        method: hData.method,
+        location: hData.location,
+        time: hData.time,
+        active: true,
+      });
+    }
+  }
+
+  return steps;
 });
 
 // Allocation Modal State
@@ -563,11 +648,15 @@ const openFirstItemPlacementModal = () => {
             :assets="item.assets"
             :imageUrl="item.imageUrl"
             :placements="assetPlacements"
+            :stock="item.stock"
+            :status="item.status"
+            :is-admin="true"
+            :is-consumable="item.is_consumable"
           >
             <template #footer>
-              <div class="flex gap-2.5">
+              <div v-if="!item.is_consumable" class="flex gap-2.5">
                 <button 
-                  v-if="['approve', 'confirm'].includes(handover?.status)"
+                  v-if="['approve', 'confirm'].includes(handover?.status) && item.status !== 'fulfilled'"
                   @click="openAllocModal(item)"
                   class="px-5 py-2.5 bg-[#5BC0DE] hover:bg-[#46B8DA] text-white text-sm font-bold rounded-[14px] transition-all shadow-sm cursor-pointer"
                 >
@@ -600,9 +689,17 @@ const openFirstItemPlacementModal = () => {
             >
               <!-- Icon/Indicator -->
               <div class="absolute -left-[32px] top-0 w-8 h-8 rounded-full bg-card flex items-center justify-center z-10">
+                <!-- Status Rejected (Red X) -->
+                <div 
+                  v-if="step.rejected" 
+                  class="w-7 h-7 rounded-full border-2 border-red-500 flex items-center justify-center bg-card"
+                >
+                  <X class="w-4 h-4 text-red-500 stroke-[3.5]" />
+                </div>
+
                 <!-- Status Done (Green Check Circle) -->
                 <div 
-                  v-if="step.completed" 
+                  v-else-if="step.completed" 
                   class="w-7 h-7 rounded-full border-2 border-green-500 flex items-center justify-center bg-card"
                 >
                   <Check class="w-4 h-4 text-green-500 stroke-[3.5]" />
@@ -633,8 +730,9 @@ const openFirstItemPlacementModal = () => {
                     class="text-sm font-bold"
                     :class="{
                       'text-green-600': step.completed,
+                      'text-red-600': step.rejected,
                       'text-[#6366F1]': step.active && !step.completed,
-                      'text-muted-foreground': !step.completed && !step.active
+                      'text-muted-foreground': !step.completed && !step.active && !step.rejected
                     }"
                   >
                     {{ step.status }}
@@ -644,6 +742,9 @@ const openFirstItemPlacementModal = () => {
                   </p>
                   <p v-if="step.time && !step.active" class="text-xs text-muted-foreground mt-0.5">
                     {{ step.time }}
+                  </p>
+                  <p v-if="step.note" class="text-xs text-muted-foreground leading-relaxed pt-0.5">
+                    {{ step.note }}
                   </p>
                   
                   <div v-if="step.active" class="mt-2 space-y-1 text-xs text-muted-foreground">

@@ -53,6 +53,8 @@ class ApprovalController extends Controller
                 ->with('unit')
                 ->get()
                 ->pluck('unit.number')
+                ->filter()
+                ->values()
                 ->toArray();
 
             return [
@@ -67,6 +69,7 @@ class ApprovalController extends Controller
                 'category' => $item->barang->subcategory->category->name ?? '-',
                 'imageUrl' => $item->barang->image_url ? '/storage/' . $item->barang->image_url : null,
                 'assets' => $assets,
+                'is_consumable' => (bool) ($item->barang->subcategory->category->is_consumable ?? false),
             ];
         });
 

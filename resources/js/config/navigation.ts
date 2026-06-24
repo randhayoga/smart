@@ -72,6 +72,11 @@ export const mainNavigation: NavSection[] = [
                 icon: LayoutList,
             },
             {
+                title: 'Partial',
+                href: '/smart/partial',
+                icon: RotateCw,
+            },
+            {
                 title: 'Serah Terima',
                 href: '/smart/handover',
                 icon: Handshake,
