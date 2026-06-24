@@ -137,7 +137,7 @@ const handleConfirmAddToCart = () => {
   }, {
     onSuccess: () => {
       isModalOpen.value = false;
-      toast.success(`Berhasil menambahkan ${quantity.value} item ke keranjang!`);
+      toast.success(`Berhasil menambahkan ${quantity.value} barang ke keranjang!`);
     },
     onError: (errors) => {
       toast.error(Object.values(errors)[0] as string);
@@ -346,9 +346,9 @@ const filteredAndSortedItems = computed(() => {
               <div class="flex items-center gap-3">
                 <NumberField v-model="quantity" :min="1" :max="999999" locale="id-ID" class="w-32">
                   <NumberFieldContent>
-                    <NumberFieldDecrement />
+                    <NumberFieldDecrement class="cursor-pointer" />
                     <NumberFieldInput />
-                    <NumberFieldIncrement />
+                    <NumberFieldIncrement class="cursor-pointer" />
                   </NumberFieldContent>
                 </NumberField>
                 <span class="text-sm font-medium text-muted-foreground">{{ selectedUom }}</span>
