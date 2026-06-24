@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, h, onMounted, computed } from 'vue';
+import { ref, watch, h, onMounted, onUnmounted, computed } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { router, usePage } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
@@ -716,6 +716,28 @@ const closeErrorModal = () => {
     (page.props as any).flash.error = null;
   }
 };
+
+const closeOnEscape = (e: KeyboardEvent) => {
+  if (e.key === 'Escape') {
+    if (isCreateModalOpen.value) {
+      closeCreateModal();
+    } else if (isBulkEditModalOpen.value) {
+      closeBulkEditModal();
+    } else if (isDeleteModalOpen.value) {
+      closeDeleteModal();
+    } else if (isErrorModalOpen.value) {
+      closeErrorModal();
+    }
+  }
+};
+
+onMounted(() => {
+  document.addEventListener('keydown', closeOnEscape);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', closeOnEscape);
+});
 </script>
 
 <template>
@@ -892,7 +914,7 @@ const closeErrorModal = () => {
         leave-from-class="opacity-100"
         leave-to-class="opacity-0"
       >
-        <div v-if="isCreateModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+        <div v-if="isCreateModalOpen" @click="closeCreateModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <Transition
             enter-active-class="ease-out duration-200"
             enter-from-class="opacity-0 scale-95"
@@ -1084,7 +1106,7 @@ const closeErrorModal = () => {
         leave-from-class="opacity-100"
         leave-to-class="opacity-0"
       >
-        <div v-if="isBulkEditModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+        <div v-if="isBulkEditModalOpen" @click="closeBulkEditModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <Transition
             enter-active-class="ease-out duration-200"
             enter-from-class="opacity-0 scale-95"

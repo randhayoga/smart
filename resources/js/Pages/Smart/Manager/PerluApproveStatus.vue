@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, h } from 'vue';
+import { ref, computed, watch, h, onMounted, onUnmounted } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import {
@@ -25,6 +25,7 @@ import DataTable from '@/Components/DataTable.vue';
 
 import Tabs from '@/Components/Tabs.vue';
 import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal.vue';
+import StatusBadge from '@/Components/StatusBadge.vue';
 
 interface AuditTrail {
   waktu: string;
@@ -573,6 +574,24 @@ const isVehicle = (item: ApprovalItem | null) => {
          category.includes('mobil') || subcategory.includes('mobil') ||
          category.includes('motor') || subcategory.includes('motor');
 };
+
+const closeOnEscape = (e: KeyboardEvent) => {
+  if (e.key === 'Escape') {
+    if (isDetailPopupOpen.value) {
+      closeDetailPopup();
+    } else if (isConfirmModalOpen.value) {
+      closeConfirmModal();
+    }
+  }
+};
+
+onMounted(() => {
+  document.addEventListener('keydown', closeOnEscape);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', closeOnEscape);
+});
 </script>
 
 <template>
@@ -773,39 +792,11 @@ const isVehicle = (item: ApprovalItem | null) => {
                         <p class="text-foreground flex flex-col gap-1.5">
                           <span>
                             Status sebelumnya: 
-                            <span 
-                              :class="[
-                                'inline-flex items-center px-2 py-0.5 rounded-md font-semibold',
-                                activeApproval.previous_status === 'Tersedia' ? 'bg-emerald-100 text-emerald-800' :
-                                activeApproval.previous_status === 'Dipinjam' ? 'bg-amber-100 text-amber-800' :
-                                activeApproval.previous_status === 'Perbaikan' ? 'bg-blue-100 text-blue-800' :
-                                activeApproval.previous_status === 'Rusak Total' ? 'bg-red-100 text-red-800' :
-                                activeApproval.previous_status === 'Hilang' ? 'bg-rose-100 text-rose-800' :
-                                activeApproval.previous_status === 'Tidak Aktif' ? 'bg-gray-200 text-gray-800' :
-                                activeApproval.previous_status === 'Pending' ? 'bg-purple-100 text-purple-800' :
-                                'bg-gray-100 text-gray-800'
-                              ]"
-                            >
-                              {{ activeApproval.previous_status }}
-                            </span>
+                            <StatusBadge :status="activeApproval.previous_status" />
                           </span>
                           <span>
                             Status diajukan: 
-                            <span 
-                              :class="[
-                                'inline-flex items-center px-2 py-0.5 rounded-md font-semibold',
-                                activeApproval.proposed_status === 'Tersedia' ? 'bg-emerald-100 text-emerald-800' :
-                                activeApproval.proposed_status === 'Dipinjam' ? 'bg-amber-100 text-amber-800' :
-                                activeApproval.proposed_status === 'Perbaikan' ? 'bg-blue-100 text-blue-800' :
-                                activeApproval.proposed_status === 'Rusak Total' ? 'bg-red-100 text-red-800' :
-                                activeApproval.proposed_status === 'Hilang' ? 'bg-rose-100 text-rose-800' :
-                                activeApproval.proposed_status === 'Tidak Aktif' ? 'bg-gray-200 text-gray-800' :
-                                activeApproval.proposed_status === 'Pending' ? 'bg-purple-100 text-purple-800' :
-                                'bg-gray-100 text-gray-800'
-                              ]"
-                            >
-                              {{ activeApproval.proposed_status }}
-                            </span>
+                            <StatusBadge :status="activeApproval.proposed_status" />
                           </span>
                         </p>
                         <p class="text-foreground">

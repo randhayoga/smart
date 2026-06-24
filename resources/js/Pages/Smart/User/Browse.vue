@@ -19,6 +19,13 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/Components/ui/dialog";
+import {
+  NumberField,
+  NumberFieldContent,
+  NumberFieldDecrement,
+  NumberFieldIncrement,
+  NumberFieldInput,
+} from "@/Components/ui/number-field";
 
 interface Category {
   id: number;
@@ -32,6 +39,7 @@ interface BarangVariant {
   brand: string;
   specification: string | null;
   imageUrl: string | null;
+  uom?: string;
 }
 
 interface Item {
@@ -48,6 +56,7 @@ interface Item {
   stock: number;
   imageUrl?: string;
   barangs?: BarangVariant[];
+  uom?: string;
 }
 
 interface Props {
@@ -77,10 +86,24 @@ const selectedProduct = ref<Item | null>(null);
 const quantity = ref(1);
 const selectedBarangId = ref<number | null>(null);
 
+const selectedVariant = computed(() => {
+  if (!selectedProduct.value || !selectedBarangId.value) return null;
+  return selectedProduct.value.barangs?.find(b => b.id === selectedBarangId.value) || null;
+});
+
+const selectedUom = computed(() => {
+  if (!selectedProduct.value) return 'satuan';
+  const selectedBarang = selectedProduct.value.barangs?.find(b => b.id === selectedBarangId.value);
+  if (selectedBarang && selectedBarang.uom) {
+    return selectedBarang.uom;
+  }
+  return selectedProduct.value.uom || 'satuan';
+});
+
 const openAddToCartModal = (product: Item) => {
   selectedProduct.value = product;
   quantity.value = 1;
-  selectedBarangId.value = product.barang_id;
+  selectedBarangId.value = null;
   isModalOpen.value = true;
 };
 
@@ -102,9 +125,13 @@ const getBarangDisplayName = (barang: BarangVariant) => {
 };
 
 const handleConfirmAddToCart = () => {
-  if (!selectedProduct.value || !selectedBarangId.value) return;
+  if (!selectedProduct.value) return;
 
-  router.post(route('smart.browse.add-to-cart'), {
+  const isConsumable = selectedProduct.value.is_consumable;
+  const routeName = isConsumable ? 'smart.asset-cart.store' : 'smart.borrow-cart.store';
+
+  router.post(route(routeName), {
+    subcategory_id: selectedProduct.value.id,
     barang_id: selectedBarangId.value,
     quantity: quantity.value,
   }, {
@@ -117,8 +144,6 @@ const handleConfirmAddToCart = () => {
     }
   });
 };
-
-
 
 const filteredAndSortedItems = computed(() => {
   let list = [...props.items];
@@ -135,8 +160,6 @@ const filteredAndSortedItems = computed(() => {
   if (selectedCategory.value !== 'Semua kategori') {
     list = list.filter(item => item.category_name === selectedCategory.value);
   }
-
-
 
   // Sort
   if (selectedSort.value === 'Urutkan: A-Z') {
@@ -234,122 +257,123 @@ const filteredAndSortedItems = computed(() => {
 
     <!-- Modal Tambah ke Keranjang -->
     <Dialog :open="isModalOpen" @update:open="isModalOpen = $event">
-      <DialogContent class="sm:max-w-[75%] rounded-2xl bg-card shadow-2xl p-0 gap-0 border border-border" :show-close-button="false">
+      <DialogContent class="sm:max-w-[1000px] rounded-[14px] bg-card shadow-2xl p-0 gap-0 border border-border overflow-hidden" :show-close-button="false">
         <!-- Modal Header -->
-        <div class="flex items-center justify-between py-4 px-6 border-b border-border">
+        <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
           <div>
             <DialogTitle class="text-lg font-bold text-foreground">Tambah ke Keranjang</DialogTitle>
             <DialogDescription class="sr-only">
               Formulir untuk menentukan jumlah barang yang ingin ditambahkan ke keranjang.
             </DialogDescription>
           </div>
-          <button @click="isModalOpen = false" class="p-1.5 hover:bg-muted rounded-full transition-colors text-muted-foreground hover:text-foreground">
-            <X class="w-5 h-5 cursor-pointer" />
+          <button @click="isModalOpen = false" class="p-2 hover:bg-muted rounded-full transition-colors">
+            <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
           </button>
         </div>
         
         <div v-if="selectedProduct">
           <!-- Modal Body -->
-          <div class="p-6 space-y-6">
+          <div class="px-6 py-3 overflow-y-auto max-h-[70vh] space-y-6">
             <!-- Barang Terpilih -->
-            <div class="space-y-2.5">
-              <span class="text-sm font-medium text-muted-foreground block">Barang terpilih:</span>
+            <div class="space-y-1">
+              <span class="text-sm font-medium text-foreground block">Barang terpilih:</span>
               <div class="flex items-center gap-4">
                 <!-- Image -->
-                <div class="w-16 h-16 sm:w-20 sm:h-20 shrink-0 bg-muted rounded-2xl overflow-hidden flex items-center justify-center border border-border relative">
+                <div class="w-40 h-40 shrink-0 bg-muted rounded-[14px] overflow-hidden flex items-center justify-center border border-border relative">
                   <div class="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-white/40"></div>
-                  <img v-if="selectedProduct.imageUrl" :src="selectedProduct.imageUrl.startsWith('http') || selectedProduct.imageUrl.startsWith('/') ? selectedProduct.imageUrl : '/storage/' + selectedProduct.imageUrl" alt="Product" class="w-full h-full object-cover relative z-10" />
+                  <img v-if="selectedVariant && selectedVariant.imageUrl" :src="selectedVariant.imageUrl.startsWith('http') || selectedVariant.imageUrl.startsWith('/') ? selectedVariant.imageUrl : '/storage/' + selectedVariant.imageUrl" alt="Product" class="w-full h-full object-cover relative z-10" />
+                  <img v-else-if="selectedProduct.imageUrl" :src="selectedProduct.imageUrl.startsWith('http') || selectedProduct.imageUrl.startsWith('/') ? selectedProduct.imageUrl : '/storage/' + selectedProduct.imageUrl" alt="Product" class="w-full h-full object-cover relative z-10" />
                   <img v-else src="https://placehold.co/400x400?text=Barang" alt="Product" class="w-full h-full object-cover opacity-50" />
                 </div>
                 <!-- Info -->
-                <div class="flex flex-col">
-                  <h3 class="text-lg font-bold text-foreground leading-snug">{{ selectedProduct.subcategory_name }}</h3>
-                  <p class="text-sm text-muted-foreground leading-normal">{{ selectedProduct.category_name }}</p>
+                <div class="flex flex-col justify-center">
+                  <template v-if="!selectedBarangId">
+                    <h3 class="text-lg font-bold text-foreground leading-snug">{{ selectedProduct.subcategory_name }}</h3>
+                    <p class="text-sm text-muted-foreground leading-normal">{{ selectedProduct.category_name }}</p>
+                    <p class="text-xs text-muted-foreground italic">*gambar hanya illustrasi</p>
+                  </template>
+                  <template v-else-if="selectedVariant">
+                    <span v-if="selectedVariant.brand && selectedVariant.brand !== '-'" class="text-lg font-bold text-foreground leading-tight">
+                      {{ selectedVariant.brand }}
+                    </span>
+                    <h3 class="text-lg font-bold text-foreground leading-snug">
+                      {{ selectedVariant.name }}{{ selectedVariant.specification && selectedVariant.specification !== '-' ? ' ' + selectedVariant.specification : '' }}
+                    </h3>
+                    <p class="text-sm text-muted-foreground leading-normal">
+                      {{ selectedProduct.category_name }} ({{ selectedProduct.subcategory_name }})
+                    </p>
+                    <p class="text-xs text-muted-foreground mt-1">
+                      {{ selectedVariant.number }}
+                    </p>
+                  </template>
                 </div>
               </div>
             </div>
 
             <!-- Pilih Varian -->
-            <div class="space-y-2.5">
-              <span class="text-sm font-medium text-muted-foreground block">Pilih varian:</span>
-              <div class="border border-border rounded-2xl p-4 bg-background flex flex-wrap gap-2.5">
+            <div class="space-y-1.5">
+              <span class="text-sm font-medium text-foreground block">Pilih varian <span class="text-rose-500">*</span></span>
+              <div class="border border-border rounded-[14px] p-4 bg-background flex flex-wrap gap-2.5">
                 <!-- Tidak Spesifik -->
-                <button
+                <Button
                   type="button"
-                  :class="[
-                    'px-4 py-2 text-xs font-semibold rounded-full border transition-all duration-200',
-                    selectedBarangId === selectedProduct.barang_id
-                      ? 'border-[#6366f1] text-[#6366f1] bg-[#6366f1]/5'
-                      : 'border-border text-foreground hover:bg-muted/50'
-                  ]"
-                  @click="selectedBarangId = selectedProduct.barang_id"
+                  :variant="selectedBarangId === null ? 'primary-border' : 'white'"
+                  size="lg"
+                  @click="selectedBarangId = null"
                 >
                   Tidak Spesifik
-                </button>
+                </Button>
 
                 <!-- Variants -->
-                <button
+                <Button
                   v-for="barang in selectedProduct.barangs"
                   :key="barang.id"
                   type="button"
-                  :class="[
-                    'px-4 py-2 text-xs font-semibold rounded-full border transition-all duration-200',
-                    selectedBarangId === barang.id
-                      ? 'border-[#6366f1] text-[#6366f1] bg-[#6366f1]/5'
-                      : 'border-border text-foreground hover:bg-muted/50'
-                  ]"
+                  :variant="selectedBarangId === barang.id ? 'primary-border' : 'white'"
+                  size="lg"
                   @click="selectedBarangId = barang.id"
                 >
                   {{ getBarangDisplayName(barang) }}
-                </button>
+                </Button>
               </div>
             </div>
 
             <!-- Jumlah -->
-            <div class="space-y-2.5">
+            <div class="space-y-1.5 pb-3">
               <label class="text-sm font-medium text-foreground block">
-                Atur jumlah barang yang akan diminta (dalam satuan)<span class="text-rose-500">*</span>
+                Jumlah barang yang diminta <span class="text-rose-500">*</span>
               </label>
-              <div class="flex items-center">
-                <div class="flex items-center border border-input rounded-lg bg-background">
-                  <button 
-                    type="button" 
-                    class="w-9 h-9 flex items-center justify-center text-muted-foreground hover:bg-muted/50 rounded-l-lg transition-colors"
-                    @click="quantity > 1 && quantity--"
-                  >
-                    <span class="text-lg leading-none">-</span>
-                  </button>
-                  <div class="w-12 h-9 flex items-center justify-center border-x border-input text-sm font-medium text-foreground bg-background">
-                    {{ quantity }}
-                  </div>
-                  <button 
-                    type="button" 
-                    class="w-9 h-9 flex items-center justify-center text-muted-foreground hover:bg-muted/50 rounded-r-lg transition-colors"
-                    @click="quantity++"
-                  >
-                    <span class="text-lg leading-none">+</span>
-                  </button>
-                </div>
+              <div class="flex items-center gap-3">
+                <NumberField v-model="quantity" :min="1" :max="999999" locale="id-ID" class="w-32">
+                  <NumberFieldContent>
+                    <NumberFieldDecrement />
+                    <NumberFieldInput />
+                    <NumberFieldIncrement />
+                  </NumberFieldContent>
+                </NumberField>
+                <span class="text-sm font-medium text-muted-foreground">{{ selectedUom }}</span>
               </div>
             </div>
           </div>
 
           <!-- Modal Footer -->
-          <div class="py-4 px-6 border-t border-border flex items-center justify-between">
-            <p class="text-xs text-rose-500 font-medium">*Wajib diisi</p>
+          <div class="py-3 px-4 border-t border-border flex items-center justify-between">
+            <p class="text-sm text-rose-500 italic font-medium">*Wajib diisi</p>
             <div class="flex items-center gap-3">
-              <button 
+              <Button 
                 @click="isModalOpen = false"
-                class="px-5 py-2 bg-background border border-input hover:bg-muted text-foreground text-sm font-semibold rounded-full transition-colors"
+                variant="white"
+                size="xl"
               >
                 Batal
-              </button>
-              <button 
+              </Button>
+              <Button 
                 @click="handleConfirmAddToCart"
-                class="px-5 py-2 bg-[#6366f1] hover:bg-[#5053e3] text-white text-sm font-semibold rounded-full transition-colors shadow-sm active:scale-[0.98] disabled:opacity-50"
+                variant="primary"
+                size="xl"
               >
                 Tambah ke Keranjang
-              </button>
+              </Button>
             </div>
           </div>
         </div>

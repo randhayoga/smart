@@ -98,7 +98,7 @@ class ManajemenStokController extends Controller
 
         $lots = \App\Models\Inventory\Lot::with(['organizer', 'vendor', 'location', 'floor', 'room'])
             ->withCount(['units', 'units as available_units_count' => function ($query) {
-                $query->where('status', 'tersedia');
+                $query->where('status', 'Tersedia');
             }])
             ->where('barang_id', $barang->id)
             ->get()

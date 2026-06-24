@@ -5,16 +5,16 @@ namespace App\Http\Controllers\Smart\User;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use App\Models\Cart\AssetBasket;
+use App\Models\Cart\ConsumableBasket;
 
-class BorrowCartController extends Controller
+class RequestCartController extends Controller
 {
     /**
-     * Menampilkan halaman Keranjang Peminjaman.
+     * Menampilkan halaman Keranjang Habis Pakai.
      */
     public function index(Request $request)
     {
-        $cartItems = AssetBasket::with(['barang.subcategory.category', 'barang.brand', 'subcategory.category'])
+        $cartItems = ConsumableBasket::with(['barang.subcategory.category', 'barang.brand', 'subcategory.category'])
             ->where('user_id', $request->user()->id)
             ->get()
             ->map(function ($item) {
@@ -42,29 +42,17 @@ class BorrowCartController extends Controller
                     'stock' => $stock,
                     'quantity' => $item->quantity,
                     'selected' => false,
-                    'isPreorder' => false,
                     'imageUrl' => $item->barang?->image_url ? '/storage/' . $item->barang->image_url : null,
                 ];
             });
 
-        // Try to get default dates from the first item, if any
-        $firstItem = AssetBasket::where('user_id', $request->user()->id)->first();
-        $defaultStartDate = $firstItem && $firstItem->start_date ? $firstItem->start_date->format('Y-m-d') : '';
-        $defaultStartTime = $firstItem && $firstItem->start_date ? $firstItem->start_date->format('H:i') : '';
-        $defaultEndDate = $firstItem && $firstItem->end_date ? $firstItem->end_date->format('Y-m-d') : '';
-        $defaultEndTime = $firstItem && $firstItem->end_date ? $firstItem->end_date->format('H:i') : '';
-
-        return Inertia::render('Smart/User/BorrowCart', [
+        return Inertia::render('Smart/User/AssetCart', [
             'cartItems' => $cartItems,
-            'defaultStartDate' => $defaultStartDate,
-            'defaultStartTime' => $defaultStartTime,
-            'defaultEndDate' => $defaultEndDate,
-            'defaultEndTime' => $defaultEndTime,
         ]);
     }
 
     /**
-     * Menambahkan barang ke dalam keranjang peminjaman.
+     * Menambahkan barang ke dalam keranjang habis pakai.
      */
     public function store(Request $request)
     {
@@ -76,60 +64,49 @@ class BorrowCartController extends Controller
 
         $userId = $request->user()->id;
 
-        // Find or create in asset basket
+        // Find or create in consumable basket
         if (empty($validated['barang_id'])) {
-            $basketItem = AssetBasket::firstOrNew([
+            $basketItem = ConsumableBasket::firstOrNew([
                 'user_id' => $userId,
                 'subcategory_id' => $validated['subcategory_id'],
                 'barang_id' => null,
             ]);
         } else {
-            $basketItem = AssetBasket::firstOrNew([
+            $basketItem = ConsumableBasket::firstOrNew([
                 'user_id' => $userId,
                 'subcategory_id' => null,
                 'barang_id' => $validated['barang_id'],
             ]);
         }
         $basketItem->quantity = ($basketItem->quantity ?? 0) + $validated['quantity'];
-
-        // Assets need default start and end dates if not set, or we set them to tomorrow and the day after
-        if (!$basketItem->start_date) {
-            $basketItem->start_date = now()->addDay();
-        }
-        if (!$basketItem->end_date) {
-            $basketItem->end_date = now()->addDays(2);
-        }
-
         $basketItem->save();
 
         return redirect()->back()->with('success', 'Barang berhasil ditambahkan ke keranjang!');
     }
 
     /**
-     * Memperbarui kuantitas atau tanggal pada item keranjang peminjaman.
+     * Memperbarui kuantitas item keranjang habis pakai.
      */
     public function update(Request $request, $id)
     {
         $validated = $request->validate([
-            'quantity' => 'sometimes|integer|min:1',
-            'start_date' => 'sometimes|nullable|date',
-            'end_date' => 'sometimes|nullable|date',
+            'quantity' => 'required|integer|min:1',
         ]);
 
-        $item = AssetBasket::where('user_id', $request->user()->id)
+        $item = ConsumableBasket::where('user_id', $request->user()->id)
             ->findOrFail($id);
 
-        $item->update($validated);
+        $item->update(['quantity' => $validated['quantity']]);
 
-        return redirect()->back()->with('success', 'Keranjang peminjaman diperbarui.');
+        return redirect()->back()->with('success', 'Jumlah barang diperbarui.');
     }
 
     /**
-     * Menghapus item dari keranjang peminjaman.
+     * Menghapus item dari keranjang habis pakai.
      */
     public function destroy(Request $request, $id)
     {
-        $item = AssetBasket::where('user_id', $request->user()->id)
+        $item = ConsumableBasket::where('user_id', $request->user()->id)
             ->findOrFail($id);
 
         $item->delete();

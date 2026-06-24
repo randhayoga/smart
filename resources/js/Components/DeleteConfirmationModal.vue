@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onMounted, onUnmounted } from 'vue';
 import { X, AlertTriangle } from 'lucide-vue-next';
 import { Button } from "@/Components/ui/button";
 
@@ -271,6 +271,20 @@ const bulkItemsFields = computed(() => {
     return fields;
   });
 });
+
+const closeOnEscape = (e: KeyboardEvent) => {
+  if (e.key === 'Escape' && props.isOpen) {
+    emit('close');
+  }
+};
+
+onMounted(() => {
+  document.addEventListener('keydown', closeOnEscape);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', closeOnEscape);
+});
 </script>
 
 <template>
@@ -283,7 +297,7 @@ const bulkItemsFields = computed(() => {
       leave-from-class="opacity-100"
       leave-to-class="opacity-0"
     >
-      <div v-if="isOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+      <div v-if="isOpen" @click="emit('close')" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
         <Transition
           enter-active-class="ease-out duration-200"
           enter-from-class="opacity-0 scale-95"

@@ -10,7 +10,7 @@ use App\Http\Controllers\Smart\Admin\BorrowedController;
 use App\Http\Controllers\Smart\Admin\ReturnController;
 use App\Http\Controllers\Smart\User\UserDashboardController;
 use App\Http\Controllers\Smart\User\BrowseController;
-use App\Http\Controllers\Smart\User\AssetCartController;
+use App\Http\Controllers\Smart\User\RequestCartController;
 use App\Http\Controllers\Smart\User\BorrowCartController;
 use App\Http\Controllers\Smart\User\AssetCartConfirmationController;
 use App\Http\Controllers\Smart\User\BorrowCartConfirmationController;
@@ -110,15 +110,16 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
     Route::middleware(['role:manager,user'])->group(function () {
         Route::get('/user/dashboard', [UserDashboardController::class, 'index'])->name('user.dashboard');
         Route::get('/browse', [BrowseController::class, 'index'])->name('browse');
-        Route::post('/browse/add-to-cart', [BrowseController::class, 'addToCart'])->name('browse.add-to-cart');
 
-        Route::get('/asset-cart', [AssetCartController::class, 'index'])->name('asset-cart');
-        Route::put('/asset-cart/{id}', [AssetCartController::class, 'update'])->name('asset-cart.update');
-        Route::delete('/asset-cart/{id}', [AssetCartController::class, 'destroy'])->name('asset-cart.destroy');
+        Route::get('/asset-cart', [RequestCartController::class, 'index'])->name('asset-cart');
+        Route::post('/asset-cart', [RequestCartController::class, 'store'])->name('asset-cart.store');
+        Route::put('/asset-cart/{id}', [RequestCartController::class, 'update'])->name('asset-cart.update');
+        Route::delete('/asset-cart/{id}', [RequestCartController::class, 'destroy'])->name('asset-cart.destroy');
         Route::get('/asset-cart/confirmation', [AssetCartConfirmationController::class, 'index'])->name('asset-cart.confirmation');
         Route::post('/asset-cart/confirmation', [AssetCartConfirmationController::class, 'store'])->name('asset-cart.confirmation.store');
 
         Route::get('/borrow-cart', [BorrowCartController::class, 'index'])->name('borrow-cart');
+        Route::post('/borrow-cart', [BorrowCartController::class, 'store'])->name('borrow-cart.store');
         Route::put('/borrow-cart/{id}', [BorrowCartController::class, 'update'])->name('borrow-cart.update');
         Route::delete('/borrow-cart/{id}', [BorrowCartController::class, 'destroy'])->name('borrow-cart.destroy');
         Route::get('/borrow-cart/confirmation', [BorrowCartConfirmationController::class, 'index'])->name('borrow-cart.confirmation');
