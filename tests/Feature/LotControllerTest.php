@@ -73,7 +73,7 @@ class LotControllerTest extends TestCase
             'location_id' => $location->id,
             'floor_id' => $floor->id,
             'room_id' => $room->id,
-            'status' => 'Available',
+            'status' => 'Tersedia',
             'condition' => 'Baik',
             'price' => 60000,
             'use_lot_image' => true,
@@ -85,7 +85,7 @@ class LotControllerTest extends TestCase
         $this->assertDatabaseHas('units', [
             'lot_id' => $lot->id,
             'number' => 'LOT-2026-ATK-KER-0001-0001-U01',
-            'status' => 'Available',
+            'status' => 'Tersedia',
             'price' => 60000,
         ]);
     }
@@ -151,7 +151,7 @@ class LotControllerTest extends TestCase
             'number' => $lot->number . '-U01',
             'lot_id' => $lot->id,
             'location_id' => $lot->location_id ?? 1,
-            'status' => 'Available',
+            'status' => 'Tersedia',
             'condition' => 'Baik',
             'price' => $lot->unit_price ?? 0,
             'image_url' => $lot->image_url ?? 'inventory/lots/placeholder.jpg',
@@ -208,7 +208,7 @@ class LotControllerTest extends TestCase
             'number' => 'LOT-2026-ATK-KER-0001-0001-U01',
             'lot_id' => $lot->id,
             'location_id' => $location->id,
-            'status' => 'Available',
+            'status' => 'Tersedia',
             'condition' => 'Baik',
             'price' => 60000,
             'use_lot_image' => true,
@@ -313,7 +313,7 @@ class LotControllerTest extends TestCase
             'number' => $lotWithUnits->number . '-U01',
             'lot_id' => $lotWithUnits->id,
             'location_id' => $lotWithUnits->location_id ?? 1,
-            'status' => 'Available',
+            'status' => 'Tersedia',
             'condition' => 'Baik',
             'price' => $lotWithUnits->unit_price ?? 0,
             'image_url' => $lotWithUnits->image_url ?? 'inventory/lots/placeholder.jpg',
@@ -348,7 +348,7 @@ class LotControllerTest extends TestCase
                 'number' => $lot->number . '-U0' . ($i + 1),
                 'lot_id' => $lot->id,
                 'location_id' => $lot->location_id ?? 1,
-                'status' => 'Available',
+                'status' => 'Tersedia',
                 'condition' => 'Baik',
                 'price' => $lot->unit_price ?? 0,
                 'image_url' => $lot->image_url ?? 'inventory/lots/placeholder.jpg',
@@ -358,7 +358,7 @@ class LotControllerTest extends TestCase
 
         $response = $this->actingAs($user)->post(route('smart.inventory.units.bulk-update'), [
             'ids' => $ids,
-            'status' => 'Repair',
+            'status' => 'Perbaikan',
             'condition' => 'Perbaikan',
             'location_id' => (string) $location->id,
             'floor_id' => (string) $floor->id,
@@ -371,7 +371,7 @@ class LotControllerTest extends TestCase
         foreach ($ids as $id) {
             $this->assertDatabaseHas('units', [
                 'id' => $id,
-                'status' => 'Repair',
+                'status' => 'Perbaikan',
                 'condition' => 'Perbaikan',
                 'location_id' => $location->id,
                 'floor_id' => $floor->id,

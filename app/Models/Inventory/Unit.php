@@ -14,12 +14,13 @@ class Unit extends Model
 {
     use HasFactory;
 
-    public const STATUS_AVAILABLE = 'Available';
-    public const STATUS_BORROWED = 'Borrowed';
-    public const STATUS_REPAIR = 'Repair';
-    public const STATUS_LOSS = 'Loss';
-    public const STATUS_LOST = 'Lost';
-    public const STATUS_INACTIVE = 'Inactive';
+    public const STATUS_AVAILABLE = 'Tersedia';
+    public const STATUS_BORROWED = 'Dipinjam';
+    public const STATUS_REPAIR = 'Perbaikan';
+    public const STATUS_LOSS = 'Rusak Total';
+    public const STATUS_LOST = 'Hilang';
+    public const STATUS_INACTIVE = 'Tidak Aktif';
+    public const STATUS_PENDING = 'Pending';
 
     protected $fillable = [
         'number',

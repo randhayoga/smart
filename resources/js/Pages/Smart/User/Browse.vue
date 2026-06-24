@@ -2,8 +2,8 @@
 import { ref, computed } from 'vue';
 import { router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import { Input } from "@/Components/ui/input";
-import { Search, ChevronDown } from 'lucide-vue-next';
+import TableSearch from '@/Components/TableSearch.vue';
+import { ChevronDown, X } from 'lucide-vue-next';
 import { Button } from "@/Components/ui/button";
 import ProductCard from '@/Components/ProductCard.vue';
 import { toast } from 'vue-sonner';
@@ -16,18 +16,35 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
   DialogDescription,
 } from "@/Components/ui/dialog";
+import {
+  NumberField,
+  NumberFieldContent,
+  NumberFieldDecrement,
+  NumberFieldIncrement,
+  NumberFieldInput,
+} from "@/Components/ui/number-field";
 
 interface Category {
   id: number;
   name: string;
 }
 
+interface BarangVariant {
+  id: number;
+  number: string;
+  name: string;
+  brand: string;
+  specification: string | null;
+  imageUrl: string | null;
+  uom?: string;
+}
+
 interface Item {
   id: number;
+  barang_id: number | null;
   code: string;
   category: string;
   category_id: number;
@@ -38,6 +55,8 @@ interface Item {
   spec: string;
   stock: number;
   imageUrl?: string;
+  barangs?: BarangVariant[];
+  uom?: string;
 }
 
 interface Props {
@@ -65,18 +84,55 @@ const clearFilter = () => {
 const isModalOpen = ref(false);
 const selectedProduct = ref<Item | null>(null);
 const quantity = ref(1);
+const selectedBarangId = ref<number | null>(null);
+
+const selectedVariant = computed(() => {
+  if (!selectedProduct.value || !selectedBarangId.value) return null;
+  return selectedProduct.value.barangs?.find(b => b.id === selectedBarangId.value) || null;
+});
+
+const selectedUom = computed(() => {
+  if (!selectedProduct.value) return 'satuan';
+  const selectedBarang = selectedProduct.value.barangs?.find(b => b.id === selectedBarangId.value);
+  if (selectedBarang && selectedBarang.uom) {
+    return selectedBarang.uom;
+  }
+  return selectedProduct.value.uom || 'satuan';
+});
 
 const openAddToCartModal = (product: Item) => {
   selectedProduct.value = product;
   quantity.value = 1;
+  selectedBarangId.value = null;
   isModalOpen.value = true;
+};
+
+const getBarangDisplayName = (barang: BarangVariant) => {
+  const parts = [];
+  if (barang.brand && barang.brand !== '-') {
+    parts.push(barang.brand);
+  }
+  if (barang.name) {
+    parts.push(barang.name);
+  }
+  if (barang.specification && barang.specification !== '-') {
+    parts.push(barang.specification);
+  }
+  if (parts.length === 0) {
+    return barang.number || 'Varian Tanpa Nama';
+  }
+  return parts.join(' ');
 };
 
 const handleConfirmAddToCart = () => {
   if (!selectedProduct.value) return;
 
-  router.post(route('smart.browse.add-to-cart'), {
-    barang_id: selectedProduct.value.id,
+  const isConsumable = selectedProduct.value.is_consumable;
+  const routeName = isConsumable ? 'smart.asset-cart.store' : 'smart.borrow-cart.store';
+
+  router.post(route(routeName), {
+    subcategory_id: selectedProduct.value.id,
+    barang_id: selectedBarangId.value,
     quantity: quantity.value,
   }, {
     onSuccess: () => {
@@ -89,8 +145,6 @@ const handleConfirmAddToCart = () => {
   });
 };
 
-
-
 const filteredAndSortedItems = computed(() => {
   let list = [...props.items];
 
@@ -98,9 +152,7 @@ const filteredAndSortedItems = computed(() => {
   if (searchQuery.value.trim()) {
     const q = searchQuery.value.toLowerCase();
     list = list.filter(item => 
-      item.brand.toLowerCase().includes(q) || 
-      item.spec.toLowerCase().includes(q) || 
-      item.code.toLowerCase().includes(q)
+      item.subcategory_name.toLowerCase().includes(q)
     );
   }
 
@@ -109,13 +161,11 @@ const filteredAndSortedItems = computed(() => {
     list = list.filter(item => item.category_name === selectedCategory.value);
   }
 
-
-
   // Sort
   if (selectedSort.value === 'Urutkan: A-Z') {
-    list.sort((a, b) => a.brand.localeCompare(b.brand));
+    list.sort((a, b) => (a.subcategory_name || '').localeCompare(b.subcategory_name || ''));
   } else if (selectedSort.value === 'Urutkan: Z-A') {
-    list.sort((a, b) => b.brand.localeCompare(a.brand));
+    list.sort((a, b) => (b.subcategory_name || '').localeCompare(a.subcategory_name || ''));
   }
 
   return list;
@@ -126,78 +176,78 @@ const filteredAndSortedItems = computed(() => {
   <AppLayout title="Pilih Barang">
     <div class="space-y-6">
       <div>
-        <h1 class="text-2xl font-bold text-foreground mb-4">Pilih barang</h1>
+        <h1 class="text-xl font-bold text-gray-900 leading-none mb-6">Pilih barang</h1>
         
-        <!-- Search bar -->
-        <div class="relative w-full max-w-full sm:max-w-xl md:max-w-2xl mb-6">
-          <Input 
-            v-model="searchQuery" 
-            placeholder="Cari barang..." 
-            class="w-full pl-4 pr-12 py-2 h-10 border border-input rounded-full focus:outline-none focus:ring-1 focus:ring-primary/20 bg-background"
-          />
-          <Search class="h-5 w-5 text-muted-foreground absolute right-4 top-1/2 -translate-y-1/2" />
-        </div>
+        <!-- Filter & Search Section -->
+        <div class="space-y-3 mb-5">
+          <div class="flex flex-wrap items-end gap-4">
+            <!-- Search Row -->
+            <div class="space-y-1.5 flex-1 min-w-[300px] max-w-sm">
+              <label class="text-xs text-muted-foreground font-medium block ml-0.5">Pencarian</label>
+              <TableSearch 
+                v-model="searchQuery" 
+                placeholder="Cari subkategori..." 
+                bg-class="bg-white"
+              />
+            </div>
 
-        <!-- Filters -->
-        <div class="space-y-2 mb-8">
-          <label class="text-sm text-foreground block font-medium">Filter</label>
-          <div class="flex flex-wrap items-center gap-4">
-            <!-- Category Filter -->
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" :class="['w-64 justify-between rounded-full font-normal h-10', selectedCategory === 'Semua kategori' ? 'text-muted-foreground' : 'text-foreground']">
-                  <span class="truncate">{{ selectedCategory }}</span>
-                  <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+            <!-- Filter Row -->
+            <div class="space-y-1.5">
+              <label class="text-xs text-muted-foreground font-medium block ml-0.5">Filter</label>
+              <div class="flex items-center gap-3">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal bg-white', selectedCategory === 'Semua kategori' ? 'text-muted-foreground' : 'text-foreground']">
+                      <span class="truncate">{{ selectedCategory }}</span>
+                      <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
+                    <DropdownMenuItem @select="selectedCategory = 'Semua kategori'">Semua kategori</DropdownMenuItem>
+                    <DropdownMenuItem 
+                      v-for="cat in props.categories" 
+                      :key="cat.id" 
+                      @select="selectedCategory = cat.name"
+                    >
+                      {{ cat.name }}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <!-- Sort -->
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal bg-white', selectedSort === 'Urutkan: A-Z' ? 'text-muted-foreground' : 'text-foreground']">
+                      <span class="truncate">{{ selectedSort }}</span>
+                      <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
+                    <DropdownMenuItem @select="selectedSort = 'Urutkan: A-Z'">Urutkan: A-Z</DropdownMenuItem>
+                    <DropdownMenuItem @select="selectedSort = 'Urutkan: Z-A'">Urutkan: Z-A</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <!-- Clear Filter Button -->
+                <Button variant="destructive" @click="clearFilter" class="hover:opacity-70 rounded-[14px] px-6 font-semibold text-white">
+                  Hapus filter
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent class="w-64 rounded-[14px]" align="start">
-                <DropdownMenuItem @select="selectedCategory = 'Semua kategori'">Semua kategori</DropdownMenuItem>
-                <DropdownMenuItem 
-                  v-for="cat in props.categories" 
-                  :key="cat.id" 
-                  @select="selectedCategory = cat.name"
-                >
-                  {{ cat.name }}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <!-- Sort -->
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" :class="['w-48 justify-between rounded-full font-normal h-10', selectedSort === 'Urutkan: A-Z' ? 'text-muted-foreground' : 'text-foreground']">
-                  <span class="truncate">{{ selectedSort }}</span>
-                  <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent class="w-48 rounded-[14px]" align="start">
-                <DropdownMenuItem @select="selectedSort = 'Urutkan: A-Z'">Urutkan: A-Z</DropdownMenuItem>
-                <DropdownMenuItem @select="selectedSort = 'Urutkan: Z-A'">Urutkan: Z-A</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-
-
-            <!-- Clear Filter Button -->
-            <Button @click="clearFilter" class="bg-[#cb3a31] hover:bg-[#b02e26] text-white rounded-full px-6 h-10 font-semibold">
-              Hapus filter
-            </Button>
+              </div>
+            </div> 
           </div>
         </div>
 
-        <p class="text-sm text-foreground mb-4">Hasil Pencarian dan Filter:</p>
-
+        <p class="text-sm text-muted-foreground font-medium mb-3">Hasil Pencarian dan Filter:</p>
         <!-- Grid -->
         <div class="border border-border rounded-[14px] p-6 bg-card">
           <div class="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-6">
             <ProductCard 
               v-for="item in filteredAndSortedItems" 
               :key="item.id" 
-              :brand="item.brand" 
-              :spec="item.spec" 
-              :category="item.category"
-              :stock="item.stock"
-              :imageUrl="item.imageUrl"
+              :subcategory-name="item.subcategory_name" 
+              :category-name="item.category_name"
+              :image-url="item.imageUrl"
+              :disabled="!item.barang_id"
               @add-to-cart="openAddToCartModal(item)"
             />
           </div>
@@ -207,73 +257,123 @@ const filteredAndSortedItems = computed(() => {
 
     <!-- Modal Tambah ke Keranjang -->
     <Dialog :open="isModalOpen" @update:open="isModalOpen = $event">
-      <DialogContent class="sm:max-w-[886px] rounded-[14px]">
-        <DialogHeader>
-          <DialogTitle class="text-xl font-bold">Tambah ke Keranjang</DialogTitle>
-          <DialogDescription class="sr-only">
-            Formulir untuk menentukan jumlah barang yang ingin ditambahkan ke keranjang.
-          </DialogDescription>
-        </DialogHeader>
-        
-        <hr class="border-border my-0" />
-        
-        <div v-if="selectedProduct" class="mt-4 flex flex-col sm:flex-row gap-6">
-          <!-- Image (Left Column) -->
-          <div class="w-32 h-32 sm:w-[180px] sm:h-[180px] shrink-0 bg-muted rounded-[14px] overflow-hidden flex items-center justify-center border border-border relative">
-            <div class="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-white/40"></div>
-            <img v-if="selectedProduct.imageUrl" :src="selectedProduct.imageUrl.startsWith('http') || selectedProduct.imageUrl.startsWith('/') ? selectedProduct.imageUrl : '/storage/' + selectedProduct.imageUrl" alt="Product" class="w-full h-full object-cover relative z-10" />
-            <img v-else src="https://placehold.co/400x400?text=Barang" alt="Product" class="w-full h-full object-cover opacity-50" />
+      <DialogContent class="sm:max-w-[1000px] rounded-[14px] bg-card shadow-2xl p-0 gap-0 border border-border overflow-hidden" :show-close-button="false">
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
+          <div>
+            <DialogTitle class="text-lg font-bold text-foreground">Tambah ke Keranjang</DialogTitle>
+            <DialogDescription class="sr-only">
+              Formulir untuk menentukan jumlah barang yang ingin ditambahkan ke keranjang.
+            </DialogDescription>
           </div>
-
-          <!-- Content & Actions (Right Column) -->
-          <div class="flex flex-col flex-grow">
-            <!-- Info -->
-            <h3 class="text-xl font-bold text-foreground">{{ selectedProduct.brand }}</h3>
-            <p class="text-lg font-semibold text-foreground mb-1">{{ selectedProduct.spec }}</p>
-            <p class="text-sm text-muted-foreground">{{ selectedProduct.category }}</p>
-            <p class="text-sm text-muted-foreground">{{ selectedProduct.code }}</p>
-
-            <hr class="border-border my-6" />
-
-            <!-- Jumlah -->
-            <div class="mb-8">
-              <label class="text-sm font-medium text-foreground block mb-3">
-                Atur jumlah barang yang akan diminta (dalam satuan)<span class="text-rose-500">*</span>
-              </label>
-              <div class="flex items-center">
-                <div class="flex items-center border border-input rounded-[14px] bg-background">
-                  <button 
-                    type="button" 
-                    class="w-10 h-10 flex items-center justify-center text-muted-foreground hover:bg-muted/50 rounded-l-[14px] transition-colors"
-                    @click="quantity > 1 && quantity--"
-                  >
-                    <span class="text-lg leading-none">-</span>
-                  </button>
-                  <div class="w-12 h-10 flex items-center justify-center border-x border-input text-sm font-medium">
-                    {{ quantity }}
-                  </div>
-                  <button 
-                    type="button" 
-                    class="w-10 h-10 flex items-center justify-center text-muted-foreground hover:bg-muted/50 rounded-r-[14px] transition-colors"
-                    @click="quantity++"
-                  >
-                    <span class="text-lg leading-none">+</span>
-                  </button>
+          <button @click="isModalOpen = false" class="p-2 hover:bg-muted rounded-full transition-colors">
+            <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
+          </button>
+        </div>
+        
+        <div v-if="selectedProduct">
+          <!-- Modal Body -->
+          <div class="px-6 py-3 overflow-y-auto max-h-[70vh] space-y-6">
+            <!-- Barang Terpilih -->
+            <div class="space-y-1">
+              <span class="text-sm font-medium text-foreground block">Barang terpilih:</span>
+              <div class="flex items-center gap-4">
+                <!-- Image -->
+                <div class="w-40 h-40 shrink-0 bg-muted rounded-[14px] overflow-hidden flex items-center justify-center border border-border relative">
+                  <div class="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-white/40"></div>
+                  <img v-if="selectedVariant && selectedVariant.imageUrl" :src="selectedVariant.imageUrl.startsWith('http') || selectedVariant.imageUrl.startsWith('/') ? selectedVariant.imageUrl : '/storage/' + selectedVariant.imageUrl" alt="Product" class="w-full h-full object-cover relative z-10" />
+                  <img v-else-if="selectedProduct.imageUrl" :src="selectedProduct.imageUrl.startsWith('http') || selectedProduct.imageUrl.startsWith('/') ? selectedProduct.imageUrl : '/storage/' + selectedProduct.imageUrl" alt="Product" class="w-full h-full object-cover relative z-10" />
+                  <img v-else src="https://placehold.co/400x400?text=Barang" alt="Product" class="w-full h-full object-cover opacity-50" />
+                </div>
+                <!-- Info -->
+                <div class="flex flex-col justify-center">
+                  <template v-if="!selectedBarangId">
+                    <h3 class="text-lg font-bold text-foreground leading-snug">{{ selectedProduct.subcategory_name }}</h3>
+                    <p class="text-sm text-muted-foreground leading-normal">{{ selectedProduct.category_name }}</p>
+                    <p class="text-xs text-muted-foreground italic">*gambar hanya illustrasi</p>
+                  </template>
+                  <template v-else-if="selectedVariant">
+                    <span v-if="selectedVariant.brand && selectedVariant.brand !== '-'" class="text-lg font-bold text-foreground leading-tight">
+                      {{ selectedVariant.brand }}
+                    </span>
+                    <h3 class="text-lg font-bold text-foreground leading-snug">
+                      {{ selectedVariant.name }}{{ selectedVariant.specification && selectedVariant.specification !== '-' ? ' ' + selectedVariant.specification : '' }}
+                    </h3>
+                    <p class="text-sm text-muted-foreground leading-normal">
+                      {{ selectedProduct.category_name }} ({{ selectedProduct.subcategory_name }})
+                    </p>
+                    <p class="text-xs text-muted-foreground mt-1">
+                      {{ selectedVariant.number }}
+                    </p>
+                  </template>
                 </div>
               </div>
             </div>
 
-            <!-- Footer Actions -->
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-auto">
-              <div class="text-xs text-rose-500 italic">*Wajib diisi</div>
-              <div class="flex gap-3 w-full sm:w-auto">
-                <Button variant="outline" @click="isModalOpen = false" class="rounded-[14px] w-full sm:w-auto h-[42px] px-8">
-                  Batal
+            <!-- Pilih Varian -->
+            <div class="space-y-1.5">
+              <span class="text-sm font-medium text-foreground block">Pilih varian <span class="text-rose-500">*</span></span>
+              <div class="border border-border rounded-[14px] p-4 bg-background flex flex-wrap gap-2.5">
+                <!-- Tidak Spesifik -->
+                <Button
+                  type="button"
+                  :variant="selectedBarangId === null ? 'primary-border' : 'white'"
+                  size="lg"
+                  @click="selectedBarangId = null"
+                >
+                  Tidak Spesifik
                 </Button>
-                <Button @click="handleConfirmAddToCart" class="bg-gradient-primary shadow-button hover:opacity-90 text-white rounded-[14px] w-full sm:w-auto h-[42px] px-8">
-                  Tambah ke Keranjang
+
+                <!-- Variants -->
+                <Button
+                  v-for="barang in selectedProduct.barangs"
+                  :key="barang.id"
+                  type="button"
+                  :variant="selectedBarangId === barang.id ? 'primary-border' : 'white'"
+                  size="lg"
+                  @click="selectedBarangId = barang.id"
+                >
+                  {{ getBarangDisplayName(barang) }}
                 </Button>
               </div>
+            </div>
+
+            <!-- Jumlah -->
+            <div class="space-y-1.5 pb-3">
+              <label class="text-sm font-medium text-foreground block">
+                Jumlah barang yang diminta <span class="text-rose-500">*</span>
+              </label>
+              <div class="flex items-center gap-3">
+                <NumberField v-model="quantity" :min="1" :max="999999" locale="id-ID" class="w-32">
+                  <NumberFieldContent>
+                    <NumberFieldDecrement />
+                    <NumberFieldInput />
+                    <NumberFieldIncrement />
+                  </NumberFieldContent>
+                </NumberField>
+                <span class="text-sm font-medium text-muted-foreground">{{ selectedUom }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Modal Footer -->
+          <div class="py-3 px-4 border-t border-border flex items-center justify-between">
+            <p class="text-sm text-rose-500 italic font-medium">*Wajib diisi</p>
+            <div class="flex items-center gap-3">
+              <Button 
+                @click="isModalOpen = false"
+                variant="white"
+                size="xl"
+              >
+                Batal
+              </Button>
+              <Button 
+                @click="handleConfirmAddToCart"
+                variant="primary"
+                size="xl"
+              >
+                Tambah ke Keranjang
+              </Button>
             </div>
           </div>
         </div>

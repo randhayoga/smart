@@ -235,9 +235,14 @@ const timeline = computed((): TimelineStep[] => {
             >
               <!-- Icon/Indicator -->
               <div class="absolute -left-[32px] top-0 w-8 h-8 rounded-full bg-card flex items-center justify-center z-10">
-                <!-- Status Rejected (Red X) -->
-                <div v-if="step.rejected" class="w-7 h-7 rounded-full border-2 border-red-500 flex items-center justify-center bg-card">
-                  <X class="w-4 h-4 text-red-500 stroke-[3.5]" />
+                <!-- Status Pending (Grey Dot) -->
+                <div v-if="step.isPending" class="w-6 h-6 rounded-full border-2 border-muted-foreground/30 flex items-center justify-center bg-card">
+                  <div class="w-2 h-2 rounded-full bg-muted-foreground/30"></div>
+                </div>
+                <!-- Status Done (Green Check Circle) -->
+                <!-- Status Done (Green Check Circle) / Status Rejected (Red X) -->
+                <div v-else-if="step.rejected" class="w-7 h-7 rounded-full border-2 border-red-500 flex items-center justify-center bg-card">
+                  <X class="w-4 h-4 text-red-500 stroke-[3.5] cursor-pointer" />
                 </div>
                 <!-- Status Done (Green Check Circle) -->
                 <div v-else class="w-7 h-7 rounded-full border-2 border-green-500 flex items-center justify-center bg-card">

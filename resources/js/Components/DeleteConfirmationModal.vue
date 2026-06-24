@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onMounted, onUnmounted } from 'vue';
 import { X, AlertTriangle } from 'lucide-vue-next';
+import { Button } from "@/Components/ui/button";
 
 interface Props {
   isOpen: boolean;
@@ -79,7 +80,7 @@ const modalMessage = computed(() => {
 
 const modalMessageClass = computed(() => {
   if (props.itemName === 'Perubahan Status Aset') {
-    return props.actionType === 'approved' ? 'text-emerald-500 font-bold' : 'text-destructive font-bold';
+    return props.actionType === 'approved' ? 'text-[#66BB6A] font-bold' : 'text-destructive font-bold';
   }
   return props.messageClass;
 });
@@ -91,13 +92,11 @@ const modalConfirmButtonText = computed(() => {
   return props.confirmButtonText;
 });
 
-const modalConfirmButtonClass = computed(() => {
+const confirmButtonVariant = computed(() => {
   if (props.itemName === 'Perubahan Status Aset') {
-    return props.actionType === 'approved'
-      ? 'px-5 py-2 bg-[#2ECC71] hover:opacity-70 text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm active:scale-[0.98]'
-      : 'px-5 py-2 bg-destructive hover:opacity-70 text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm active:scale-[0.98]';
+    return props.actionType === 'approved' ? 'success' : 'destructive';
   }
-  return props.confirmButtonClass;
+  return 'destructive';
 });
 
 const modalIconClass = computed(() => {
@@ -272,6 +271,20 @@ const bulkItemsFields = computed(() => {
     return fields;
   });
 });
+
+const closeOnEscape = (e: KeyboardEvent) => {
+  if (e.key === 'Escape' && props.isOpen) {
+    emit('close');
+  }
+};
+
+onMounted(() => {
+  document.addEventListener('keydown', closeOnEscape);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', closeOnEscape);
+});
 </script>
 
 <template>
@@ -284,7 +297,7 @@ const bulkItemsFields = computed(() => {
       leave-from-class="opacity-100"
       leave-to-class="opacity-0"
     >
-      <div v-if="isOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+      <div v-if="isOpen" @click="emit('close')" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
         <Transition
           enter-active-class="ease-out duration-200"
           enter-from-class="opacity-0 scale-95"
@@ -303,7 +316,7 @@ const bulkItemsFields = computed(() => {
             <div class="flex items-center p-1 justify-between border-b border-border">
               <h3 class="text-lg font-bold text-foreground p-2">{{ modalTitle }}</h3>
               <button @click="emit('close')" class="p-2 hover:bg-muted rounded-full transition-colors">
-                <X class="w-5 h-5 text-muted-foreground" />
+                <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
               </button>
             </div>
 
@@ -347,18 +360,20 @@ const bulkItemsFields = computed(() => {
             <!-- Modal Footer -->
             <div class="py-3 px-4 bg-muted/30 border-t border-border">
               <div class="flex items-center justify-end gap-3">
-                <button 
+                <Button 
                   @click="emit('close')"
-                  class="px-5 py-2 bg-background border border-input hover:bg-muted text-foreground text-sm font-medium rounded-[14px] transition-colors shadow-sm"
+                  variant="white"
+                  class="px-5"
                 >
                   Batal
-                </button>
-                <button 
+                </Button>
+                <Button 
                   @click="handleConfirm"
-                  :class="modalConfirmButtonClass"
+                  :variant="confirmButtonVariant"
+                  class="px-5 active:scale-[0.98]"
                 >
                   {{ modalConfirmButtonText }}
-                </button>
+                </Button>
               </div>
             </div>
           </div>

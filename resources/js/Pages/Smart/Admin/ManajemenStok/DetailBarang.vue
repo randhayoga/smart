@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, computed, h, nextTick } from 'vue';
+import { ref, watch, onMounted, onUnmounted, computed, h, nextTick } from 'vue';
 import { router, useForm, usePage } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 import AppLayout from '@/Layouts/AppLayout.vue';
@@ -9,7 +9,8 @@ import {
   Plus,
   X,
   Pencil,
-  Trash2
+  Trash2,
+  Eye
 } from 'lucide-vue-next';
 import { Button } from "@/Components/ui/button";
 import {
@@ -22,8 +23,7 @@ import TableSearch from '@/Components/TableSearch.vue';
 import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem, BreadcrumbSeparator } from '@/Components/ui/breadcrumb';
 import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
-import ViewTableButton from '@/Components/ViewTableButton.vue';
-import DeleteTableButton from '@/Components/DeleteTableButton.vue';
+
 import ExportButtonGroup from '@/Components/ExportButtonGroup.vue';
 import Tabs from '@/Components/Tabs.vue';
 import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal.vue';
@@ -381,7 +381,7 @@ const handleSaveLot = () => {
               location_id: newLot.location_id,
               floor_id: newLot.floor_id,
               room_id: newLot.room_id,
-              status: 'tersedia',
+              status: 'Tersedia',
               condition: 'Baik',
               price: Number(newLot.unitPrice),
               use_lot_image: true,
@@ -511,21 +511,39 @@ const columns: ColumnDef<any>[] = [
       const buttons = [];
       if (props.barang.is_consumable) {
         buttons.push(
-          h(ViewTableButton, {
+          h(Button, {
+            variant: 'table-view',
+            size: 'icon-sm',
+            title: 'Lihat Detail',
             onClick: () => openDetailLOTConsumables(row.original)
-          })
+          }, () => [
+            h(Eye),
+            h('span', { class: 'sr-only' }, 'Lihat Detail')
+          ])
         );
       } else {
         buttons.push(
-          h(ViewTableButton, {
+          h(Button, {
+            variant: 'table-view',
+            size: 'icon-sm',
+            title: 'Lihat Detail',
             onClick: () => router.get(`/smart/inventory/lots/${row.original.id}`)
-          })
+          }, () => [
+            h(Eye),
+            h('span', { class: 'sr-only' }, 'Lihat Detail')
+          ])
         );
       }
       buttons.push(
-        h(DeleteTableButton, {
+        h(Button, {
+          variant: 'table-destructive',
+          size: 'icon-sm',
+          title: 'Hapus',
           onClick: () => openDeleteLotModal(row.original),
-        })
+        }, () => [
+          h(Trash2),
+          h('span', { class: 'sr-only' }, 'Hapus')
+        ])
       );
       return h('div', { class: 'flex items-center justify-center gap-2 no-print' }, buttons);
     }
@@ -1138,6 +1156,32 @@ const closeErrorModal = () => {
     (page.props as any).flash.error = null;
   }
 };
+
+const closeOnEscape = (e: KeyboardEvent) => {
+  if (e.key === 'Escape') {
+    if (isEditModalOpen.value) {
+      closeEditModal();
+    } else if (isLotModalOpen.value) {
+      isLotModalOpen.value = false;
+    } else if (isBulkEditModalOpen.value) {
+      closeBulkEditModal();
+    } else if (isDeleteModalOpen.value) {
+      closeDeleteModal();
+    } else if (isErrorModalOpen.value) {
+      closeErrorModal();
+    } else if (isDetailConsumablesOpen.value) {
+      isDetailConsumablesOpen.value = false;
+    }
+  }
+};
+
+onMounted(() => {
+  document.addEventListener('keydown', closeOnEscape);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', closeOnEscape);
+});
 </script>
 
 <template>
@@ -1160,12 +1204,12 @@ const closeErrorModal = () => {
       <Tabs v-model="activeTab" :tabs="tabs" />
 
       <div class="flex items-center gap-3">
-        <button @click="openEditModal" class="flex items-center gap-1.5 bg-gradient-primary hover:opacity-90 text-primary-foreground px-5 py-2.5 rounded-[14px] text-sm font-bold">
+        <Button @click="openEditModal" variant="primary" size="lg">
           Edit Detail Barang
-        </button>
-        <button @click="openDeleteModal" class="flex items-center gap-1.5 bg-destructive hover:opacity-70 text-primary-foreground px-5 py-2.5 rounded-[14px] text-sm font-bold">
+        </Button>
+        <Button @click="openDeleteModal" variant="destructive" size="lg">
           Hapus Barang
-        </button>
+        </Button>
       </div>
     </div>
 
@@ -1262,22 +1306,22 @@ const closeErrorModal = () => {
             <div class="space-y-2 flex-1 min-w-0">
               <label class="text-xs text-muted-foreground font-medium block ml-0.5">Aksi Terpilih</label>
               <div class="flex flex-wrap gap-2">
-                <button 
+                <Button 
                   @click="openBulkEditModal"
                   :disabled="!dataTableRef || Object.keys(dataTableRef.table.getState().rowSelection).length === 0"
-                  class="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:opacity-70 text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm disabled:opacity-50 font-bold"
+                  variant="more-round-warning"
                 >
                   <Pencil class="w-4 h-4" />
                   <span class="hidden sm:inline">Edit Terpilih</span>
-                </button>
-                <button 
+                </Button>
+                <Button 
                   @click="openDeleteLotModal(dataTableRef.table.getFilteredRowModel().rows.filter((r: any) => r.getIsSelected()).map((r: any) => r.original))"
                   :disabled="!dataTableRef || Object.keys(dataTableRef.table.getState().rowSelection).length === 0"
-                  class="flex items-center gap-2 px-4 py-2 bg-destructive hover:opacity-70 text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm disabled:opacity-50 font-bold"
+                  variant="destructive"
                 >
                   <Trash2 class="w-4 h-4" />
                   <span class="hidden sm:inline">Hapus Terpilih</span>
-                </button>
+                </Button>
                 <ExportButtonGroup 
                   @export-excel="handleExportExcel"
                   @export-csv="handleExportCSV"
@@ -1285,10 +1329,10 @@ const closeErrorModal = () => {
               </div>
             </div>
             
-            <button @click="openCreateLotModal" class="px-5 py-2.5 bg-gradient-primary hover:opacity-90 text-white text-sm font-bold rounded-xl transition-all shadow-sm flex items-center gap-2">
+            <Button @click="openCreateLotModal" variant="primary" size="lg">
               <Plus class="w-4 h-4" />
-              LOT Baru
-            </button>
+              <span>LOT Baru</span>
+            </Button>
           </div>
         </div>
 
@@ -1315,7 +1359,7 @@ const closeErrorModal = () => {
         leave-from-class="opacity-100"
         leave-to-class="opacity-0"
       >
-        <div v-if="isEditModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+        <div v-if="isEditModalOpen" @click="closeEditModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <Transition
             enter-active-class="ease-out duration-200"
             enter-from-class="opacity-0 scale-95"
@@ -1333,7 +1377,7 @@ const closeErrorModal = () => {
               <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
                 <h3 class="text-lg font-bold text-foreground">Edit Detail Barang</h3>
                 <button @click="closeEditModal" class="p-2 hover:bg-muted rounded-full transition-colors">
-                  <X class="w-5 h-5 text-muted-foreground" />
+                  <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
                 </button>
               </div>
 
@@ -1440,12 +1484,13 @@ const closeErrorModal = () => {
                           accept=".jpg,.jpeg,.png"
                           @change="handleEditFileUpload"
                         />
-                        <button 
+                        <Button 
                           @click="triggerEditFileInput"
-                          class="w-[120px] shrink-0 flex items-center justify-center bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors h-10"
+                          size="lg"
+                          type="button"
                         >
                           Pilih File
-                        </button>
+                        </Button>
                       </div>
                       <p class="text-[10px] text-muted-foreground ml-1">Maksimal ukuran 1 MB</p>
                     </div>
@@ -1457,19 +1502,21 @@ const closeErrorModal = () => {
               <div class="py-3 px-4 border-t border-border flex items-center justify-between">
                 <p class="text-sm text-rose-500 italic font-medium">*Wajib diisi</p>
                 <div class="flex items-center gap-3">
-                  <button 
+                  <Button 
                     @click="closeEditModal"
-                    class="px-8 py-2.5 bg-background border border-input hover:bg-muted text-foreground text-sm font-medium rounded-[14px] transition-colors"
+                    variant="white"
+                    size="xl"
                   >
                     Batal
-                  </button>
-                  <button 
+                  </Button>
+                  <Button 
                     @click="handleSaveChanges"
                     :disabled="!isEditFormValid"
-                    class="px-8 py-2.5 bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors shadow-sm active:scale-[0.98] disabled:opacity-50"
+                    variant="primary"
+                    size="xl"
                   >
                     Simpan Perubahan
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>
@@ -1488,7 +1535,7 @@ const closeErrorModal = () => {
         leave-from-class="opacity-100"
         leave-to-class="opacity-0"
       >
-        <div v-if="isLotModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+        <div v-if="isLotModalOpen" @click="isLotModalOpen = false" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <Transition
             enter-active-class="ease-out duration-200"
             enter-from-class="opacity-0 scale-95"
@@ -1508,7 +1555,7 @@ const closeErrorModal = () => {
                   {{ lotModalMode === 'create' ? 'Tambah LOT Baru' : 'Edit LOT' }}
                 </h3>
                 <button @click="isLotModalOpen = false" class="p-2 hover:bg-muted rounded-full transition-colors">
-                  <X class="w-5 h-5 text-muted-foreground" />
+                  <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
                 </button>
               </div>
 
@@ -1693,19 +1740,19 @@ const closeErrorModal = () => {
                           accept=".jpg,.jpeg,.png"
                           @change="handleLotFileUpload"
                         />
-                        <button 
-                          type="button"
+                        <Button 
                           @click="handleSamakanPhoto"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-orange-400 hover:opacity-90 text-white text-sm font-medium rounded-[14px] transition-colors h-10"
+                          variant="warning"
+                          size="lg"
                         >
                           Samakan
-                        </button>
-                        <button 
+                        </Button>
+                        <Button 
                           @click="triggerLotFileInput"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors h-10"
+                          size="lg"
                         >
                           Pilih File
-                        </button>
+                        </Button>
                       </div>
                       <p class="text-[10px] text-muted-foreground ml-1">Maksimal ukuran 1 MB</p>
                     </div>
@@ -1717,19 +1764,21 @@ const closeErrorModal = () => {
               <div class="py-3 px-4 border-t border-border flex items-center justify-between">
                 <p class="text-sm text-rose-500 italic font-medium">*Wajib diisi</p>
                 <div class="flex items-center gap-3">
-                  <button 
+                  <Button 
                     @click="isLotModalOpen = false"
-                    class="px-8 py-2.5 bg-background border border-input hover:bg-muted text-foreground text-sm font-medium rounded-[14px] transition-colors"
+                    variant="white"
+                    size="xl"
                   >
                     Batal
-                  </button>
-                  <button 
+                  </Button>
+                  <Button 
                     @click="handleSaveLot"
                     :disabled="!isLotFormValid"
-                    class="px-8 py-2.5 bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors shadow-sm active:scale-[0.98] disabled:opacity-50"
+                    variant="primary"
+                    size="xl"
                   >
                     {{ lotModalMode === 'create' ? 'Tambah LOT' : 'Simpan Perubahan' }}
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>
@@ -1748,7 +1797,7 @@ const closeErrorModal = () => {
         leave-from-class="opacity-100"
         leave-to-class="opacity-0"
       >
-        <div v-if="isBulkEditModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+        <div v-if="isBulkEditModalOpen" @click="closeBulkEditModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <Transition
             enter-active-class="ease-out duration-200"
             enter-from-class="opacity-0 scale-95"
@@ -1768,7 +1817,7 @@ const closeErrorModal = () => {
                   {{ bulkLotForm.ids.length === 1 ? 'Edit LOT' : 'Edit LOT Terpilih' }}
                 </h3>
                 <button @click="closeBulkEditModal" class="p-2 hover:bg-muted rounded-full transition-colors">
-                  <X class="w-5 h-5 text-muted-foreground" />
+                  <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
                 </button>
               </div>
 
@@ -1792,7 +1841,7 @@ const closeErrorModal = () => {
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !bulkLotForm.organizer_id ? 'text-muted-foreground' : 'text-foreground']">
-                            {{ props.organizers.find(o => o.id == bulkLotForm.organizer_id)?.name || 'Pilih organizer' }}
+                            {{ props.organizers.find(o => o.id == bulkLotForm.organizer_id)?.name || 'Tidak berubah' }}
                             <ChevronDown class="w-4 h-4 opacity-50" />
                           </Button>
                         </DropdownMenuTrigger>
@@ -1810,7 +1859,7 @@ const closeErrorModal = () => {
                         v-model="bulkLotForm.vendor_id"
                         :options="props.vendors"
                         search-placeholder="Cari vendor..."
-                        default-label="Pilih vendor"
+                        default-label="Tidak berubah"
                         width-class="w-full h-10 px-4"
                       />
                     </div>
@@ -1821,7 +1870,7 @@ const closeErrorModal = () => {
                         v-model="bulkLotForm.location_id"
                         :options="props.locations"
                         search-placeholder="Cari lokasi..."
-                        default-label="Pilih lokasi"
+                        default-label="Tidak berubah"
                         width-class="w-full h-10 px-4"
                       />
                     </div>
@@ -1832,7 +1881,7 @@ const closeErrorModal = () => {
                         v-model="bulkLotForm.floor_id"
                         :options="bulkFilteredFloors"
                         search-placeholder="Cari lantai..."
-                        default-label="Pilih lantai (opsional)"
+                        default-label="Tidak berubah"
                         width-class="w-full h-10 px-4"
                         :disabled="!bulkLotForm.location_id"
                       />
@@ -1847,7 +1896,7 @@ const closeErrorModal = () => {
                         v-model="bulkLotForm.room_id"
                         :options="bulkFilteredRooms"
                         search-placeholder="Cari ruangan..."
-                        default-label="Pilih ruangan (opsional)"
+                        default-label="Tidak berubah"
                         width-class="w-full h-10 px-4"
                         :disabled="!bulkLotForm.floor_id"
                       />
@@ -1859,7 +1908,7 @@ const closeErrorModal = () => {
                         type="text" 
                         v-model="bulkLotForm.po_number"
                         :disabled="bulkLotForm.ids.length > 1"
-                        :placeholder="bulkLotForm.ids.length > 1 ? 'Tidak dapat diubah' : 'Contoh: PO-02'"
+                        :placeholder="bulkLotForm.ids.length > 1 ? 'Tidak dapat diubah secara massal' : 'Contoh: PO-02'"
                         class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10 disabled:bg-muted/30 disabled:text-muted-foreground disabled:cursor-not-allowed"
                       />
                     </div>
@@ -1883,7 +1932,7 @@ const closeErrorModal = () => {
                         <input 
                           type="number" 
                           v-model="bulkLotForm.unit_price"
-                          placeholder="Contoh: 60000"
+                          placeholder="Tidak berubah"
                           min="0"
                           class="flex-1 min-w-0 px-4 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 transition-colors h-full"
                         />
@@ -1902,7 +1951,7 @@ const closeErrorModal = () => {
                           ]"
                           @click="(bulkLotForm.image_url || bulkLotForm.image_url_name) && viewBulkLotImageInNewTab()"
                         >
-                          {{ bulkLotForm.image_url_name || 'Belum ada foto yang dipilih' }}
+                          {{ bulkLotForm.image_url_name || 'Tidak berubah' }}
                         </div>
                         <input 
                           type="file" 
@@ -1911,20 +1960,19 @@ const closeErrorModal = () => {
                           accept=".jpg,.jpeg,.png"
                           @change="handleBulkLotFileUpload"
                         />
-                        <button 
-                          type="button"
+                        <Button 
                           @click="handleBulkLotSamakanPhoto"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-orange-400 hover:opacity-90 text-white text-sm font-medium rounded-[14px] transition-colors h-10"
+                          variant="warning"
+                          size="lg"
                         >
                           Samakan
-                        </button>
-                        <button 
-                          type="button"
+                        </Button>
+                        <Button 
                           @click="triggerBulkLotFileInput"
-                          class="w-[90px] shrink-0 flex items-center justify-center bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors h-10"
+                          size="lg"
                         >
                           Pilih File
-                        </button>
+                        </Button>
                       </div>
                       <p class="text-[10px] text-muted-foreground ml-1">Maksimal ukuran 1 MB</p>
                     </div>
@@ -1938,19 +1986,21 @@ const closeErrorModal = () => {
                   {{ bulkLotForm.ids.length === 1 ? '*Wajib diisi' : '*Kosongkan input yang tidak ingin diubah' }}
                 </p>
                 <div class="flex items-center gap-3">
-                  <button 
+                  <Button 
                     @click="closeBulkEditModal"
-                    class="px-8 py-2.5 bg-background border border-input hover:bg-muted text-foreground text-sm font-medium rounded-[14px] transition-colors"
+                    variant="white"
+                    size="xl"
                   >
                     Batal
-                  </button>
-                  <button 
+                  </Button>
+                  <Button 
                     @click="handleSaveBulkChanges"
                     :disabled="!isBulkLotFormValid"
-                    class="px-8 py-2.5 bg-gradient-primary hover:opacity-90 text-primary-foreground text-sm font-medium rounded-[14px] transition-colors shadow-sm active:scale-[0.98] disabled:opacity-50"
+                    variant="primary"
+                    size="xl"
                   >
                     {{ bulkLotForm.ids.length === 1 ? 'Simpan Perubahan' : 'Simpan Perubahan Massal' }}
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>

@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { ref, computed, watch, h } from 'vue';
+import { ref, computed, watch, h, onMounted, onUnmounted } from 'vue';
 import { Head } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import {
   X,
   FileText,
   ArrowUpDown,
-  ChevronDown
+  ChevronDown,
+  Eye
 } from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
 import { Button } from "@/Components/ui/button";
@@ -19,9 +20,10 @@ import {
 import TableSearch from '@/Components/TableSearch.vue';
 import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
-import ViewTableButton from '@/Components/ViewTableButton.vue';
+
 import Tabs from '@/Components/Tabs.vue';
 import Combobox from '@/Components/Combobox.vue';
+import StatusBadge from '@/Components/StatusBadge.vue';
 
 interface AuditTrail {
   waktu: string;
@@ -63,6 +65,7 @@ interface ApprovalItem {
   nama: string;
   specification: string;
   proposed_status: string;
+  previous_status: string;
   status_label: string;
   decision: string;
   note: string | null;
@@ -416,15 +419,15 @@ const columns: ColumnDef<ApprovalItem>[] = [
       return h(Button, {
         variant: 'ghost',
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-center w-full'
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
         'Keputusan',
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
-    cell: ({ row }) => h('div', { class: 'text-center' }, [
+    cell: ({ row }) => h('div', { class: 'text-left' }, [
       h('span', { 
-        class: 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ' + 
+        class: 'inline-flex items-center px-2 py-0.5 rounded-md font-semibold ' + 
           (row.getValue('decision') === 'approved' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700')
       }, row.getValue('decision') === 'approved' ? 'Disetujui' : 'Ditolak')
     ]),
@@ -435,7 +438,7 @@ const columns: ColumnDef<ApprovalItem>[] = [
       return h(Button, {
         variant: 'ghost',
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-center w-full'
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
         'Diproses Oleh',
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
@@ -443,9 +446,9 @@ const columns: ColumnDef<ApprovalItem>[] = [
     },
     cell: ({ row }) => {
       const item = row.original;
-      return h('div', { class: 'text-center' }, [
+      return h('div', { class: 'text-left' }, [
         h('div', { class: 'font-semibold text-foreground' }, item.approver_name || '-'),
-        h('div', { class: 'text-[10px] text-muted-foreground font-mono mt-0.5' }, item.decided_at || '-')
+        h('div', { class: 'text-xs text-muted-foreground font-mono mt-0.5' }, item.decided_at || '-')
       ]);
     }
   },
@@ -456,17 +459,24 @@ const columns: ColumnDef<ApprovalItem>[] = [
     cell: ({ row }) => {
       const item = row.original;
       return h('div', { class: 'flex items-center justify-center gap-2' }, [
-        h('button', {
-          onClick: () => openMemoFile(item.doc_url),
-          class: 'w-8 h-8 rounded-full bg-[#6366F1] hover:bg-[#5850EC] text-white flex items-center justify-center transition-colors shadow-sm cursor-pointer',
-          title: 'Buka Berita Acara / Memo'
-        }, [
-          h(FileText, { class: 'w-4 h-4' })
+        h(Button, {
+          variant: 'table-primary',
+          size: 'icon-sm',
+          title: 'Buka Berita Acara / Memo',
+          onClick: () => openMemoFile(item.doc_url)
+        }, () => [
+          h(FileText),
+          h('span', { class: 'sr-only' }, 'Buka Berita Acara / Memo')
         ]),
-        h(ViewTableButton, {
-          onClick: () => openDetailPopup(item),
-          title: 'Detail Aset'
-        })
+        h(Button, {
+          variant: 'table-view',
+          size: 'icon-sm',
+          title: 'Detail Aset',
+          onClick: () => openDetailPopup(item)
+        }, () => [
+          h(Eye),
+          h('span', { class: 'sr-only' }, 'Detail Aset')
+        ])
       ]);
     },
     enableSorting: false,
@@ -481,6 +491,22 @@ const isVehicle = (item: ApprovalItem | null) => {
          category.includes('mobil') || subcategory.includes('mobil') ||
          category.includes('motor') || subcategory.includes('motor');
 };
+
+const closeOnEscape = (e: KeyboardEvent) => {
+  if (e.key === 'Escape') {
+    if (isDetailPopupOpen.value) {
+      closeDetailPopup();
+    }
+  }
+};
+
+onMounted(() => {
+  document.addEventListener('keydown', closeOnEscape);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', closeOnEscape);
+});
 </script>
 
 <template>
@@ -534,15 +560,14 @@ const isVehicle = (item: ApprovalItem | null) => {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal bg-white', (rowsPerPage === 'Semua baris' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
-                {{ rowsPerPage === 'Semua baris' ? 'Semua baris' : `${rowsPerPage} baris` }}
+                {{ rowsPerPage }}
                 <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent class="w-[140px] rounded-[14px]" align="start" :side-offset="4">
-              <DropdownMenuItem @select="rowsPerPage = '5'">5 baris</DropdownMenuItem>
-              <DropdownMenuItem @select="rowsPerPage = '10'">10 baris</DropdownMenuItem>
-              <DropdownMenuItem @select="rowsPerPage = '25'">25 baris</DropdownMenuItem>
               <DropdownMenuItem @select="rowsPerPage = 'Semua baris'">Semua baris</DropdownMenuItem>
+              <DropdownMenuItem @select="rowsPerPage = '10'">10</DropdownMenuItem>
+              <DropdownMenuItem @select="rowsPerPage = '25'">25</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -594,7 +619,7 @@ const isVehicle = (item: ApprovalItem | null) => {
               <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
                 <h3 class="text-lg font-bold text-foreground">Detail Aset</h3>
                 <button @click="closeDetailPopup" class="p-2 hover:bg-muted rounded-full transition-colors">
-                  <X class="w-5 h-5 text-muted-foreground" />
+                  <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
                 </button>
               </div>
 
@@ -650,23 +675,33 @@ const isVehicle = (item: ApprovalItem | null) => {
                         <p v-if="isVehicle(activeApproval)" class="font-bold text-foreground">
                           <span class="text-foreground">Nopol:</span> {{ activeApproval.unit_details.vehicle_registration || '-' }}
                         </p>
-
                         <p class="text-foreground">
-                          Status Sekarang: <span class="text-primary font-semibold">{{ activeApproval.unit_details.status }}</span>
-                        </p>
-                        <p class="text-foreground">
-                          Status Diajukan: 
+                          Keputusan: 
                           <span 
                             :class="[
-                              'inline-flex items-center px-2 py-0.1 rounded-full font-semibold',
-                              activeApproval.proposed_status === 'tersedia' ? 'bg-emerald-100 text-emerald-800' :
-                              activeApproval.proposed_status === 'dipinjam' ? 'bg-amber-100 text-amber-800' :
-                              activeApproval.proposed_status === 'dipakai' ? 'bg-blue-100 text-blue-800' :
-                              'bg-rose-100 text-rose-800'
+                              'font-semibold',
+                              activeApproval.decision === 'approved' ? 'text-emerald-600' : 'text-rose-600'
                             ]"
                           >
-                            {{ activeApproval.status_label }}
+                            {{ activeApproval.decision === 'approved' ? 'Disetujui' : 'Ditolak' }}
                           </span>
+                        </p>
+                        <p class="text-foreground flex flex-col gap-1.5">
+                          <span>
+                            Status sebelumnya: 
+                            <StatusBadge :status="activeApproval.previous_status" />
+                          </span>
+                          <span>
+                            Status diajukan: 
+                            <StatusBadge :status="activeApproval.proposed_status" />
+                          </span>
+                          <span>
+                            Status setelah approval: 
+                            <StatusBadge :status="activeApproval.unit_details.status" />
+                          </span>
+                        </p>
+                        <p class="text-foreground" v-if="activeApproval.note">
+                          Catatan Manager: <span class="italic text-muted-foreground">"{{ activeApproval.note }}"</span>
                         </p>
                         <p class="text-foreground">
                           Kondisi: 
@@ -682,21 +717,7 @@ const isVehicle = (item: ApprovalItem | null) => {
                           </span>
                         </p>
                         <p class="text-foreground">Nilai: {{ formatRupiah(activeApproval.unit_details.price) }}</p>
-                        <p class="text-foreground">Lokasi penyimpanan: {{ formatLocation(activeApproval.unit_details.location, activeApproval.unit_details.floor, activeApproval.unit_details.room) }}</p>
-                        <p class="text-foreground">
-                          Keputusan: 
-                          <span 
-                            :class="[
-                              'font-semibold',
-                              activeApproval.decision === 'approved' ? 'text-emerald-600' : 'text-rose-600'
-                            ]"
-                          >
-                            {{ activeApproval.decision === 'approved' ? 'Disetujui' : 'Ditolak' }}
-                          </span>
-                        </p>
-                        <p class="text-foreground" v-if="activeApproval.note">
-                          Catatan Manager: <span class="italic text-muted-foreground">"{{ activeApproval.note }}"</span>
-                        </p>
+                        <p class="text-foreground">Lokasi penyimpanan: {{ formatLocation(activeApproval.unit_details.location, activeApproval.unit_details.floor, activeApproval.unit_details.room) }}</p> 
                       </div>
                     </div>
                   </div>
@@ -755,15 +776,14 @@ const isVehicle = (item: ApprovalItem | null) => {
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal bg-white', (auditRowsPerPage === 'Semua baris' || !auditRowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
-                            {{ auditRowsPerPage === 'Semua baris' ? 'Semua baris' : `${auditRowsPerPage} baris` }}
+                            {{ auditRowsPerPage }}
                             <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent class="w-[140px] rounded-[14px] z-[110]" align="start" :side-offset="4">
-                          <DropdownMenuItem @select="auditRowsPerPage = '5'">5 baris</DropdownMenuItem>
-                          <DropdownMenuItem @select="auditRowsPerPage = '10'">10 baris</DropdownMenuItem>
-                          <DropdownMenuItem @select="auditRowsPerPage = '25'">25 baris</DropdownMenuItem>
                           <DropdownMenuItem @select="auditRowsPerPage = 'Semua baris'">Semua baris</DropdownMenuItem>
+                          <DropdownMenuItem @select="auditRowsPerPage = '10'">10</DropdownMenuItem>
+                          <DropdownMenuItem @select="auditRowsPerPage = '25'">25</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
@@ -772,6 +792,8 @@ const isVehicle = (item: ApprovalItem | null) => {
                   <!-- Log table via DataTable -->
                   <div class="pb-4">
                     <DataTable 
+                      class="mb-6"
+                      cell-class="py-2.5"
                       :columns="auditColumns" 
                       :data="filteredLifecycles" 
                       :filter-value="auditSearch"
@@ -786,21 +808,23 @@ const isVehicle = (item: ApprovalItem | null) => {
               <!-- Bottom Footer Buttons (Right Aligned group) -->
               <div class="py-3 px-4 flex items-center justify-end gap-3 bg-muted/10 shrink-0">
                 <!-- Purple Memo Button -->
-                <button 
+                <Button 
                   @click="openMemoFile(activeApproval.doc_url)"
-                  class="bg-[#6366F1] hover:bg-[#5850EC] text-white text-sm font-bold px-5 py-2.5 rounded-xl inline-flex items-center gap-2 transition-colors cursor-pointer shadow-sm"
+                  variant="primary"
+                  size="lg"
                 >
                   <FileText class="w-4 h-4" />
                   Buka Memo / Berita Acara
-                </button>
+                </Button>
 
                 <!-- White Kembali Button -->
-                <button 
+                <Button 
                   @click="closeDetailPopup"
-                  class="bg-background border border-input hover:bg-muted text-foreground text-sm font-bold px-5 py-2.5 rounded-xl transition-colors cursor-pointer shadow-sm"
+                  variant="white"
+                  size="lg"
                 >
                   Kembali
-                </button>
+                </Button>
               </div>
             </div>
           </Transition>
