@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, computed, h, nextTick } from 'vue';
+import { ref, watch, onMounted, onUnmounted, computed, h, nextTick } from 'vue';
 import { router, useForm, usePage } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 import AppLayout from '@/Layouts/AppLayout.vue';
@@ -1156,6 +1156,32 @@ const closeErrorModal = () => {
     (page.props as any).flash.error = null;
   }
 };
+
+const closeOnEscape = (e: KeyboardEvent) => {
+  if (e.key === 'Escape') {
+    if (isEditModalOpen.value) {
+      closeEditModal();
+    } else if (isLotModalOpen.value) {
+      isLotModalOpen.value = false;
+    } else if (isBulkEditModalOpen.value) {
+      closeBulkEditModal();
+    } else if (isDeleteModalOpen.value) {
+      closeDeleteModal();
+    } else if (isErrorModalOpen.value) {
+      closeErrorModal();
+    } else if (isDetailConsumablesOpen.value) {
+      isDetailConsumablesOpen.value = false;
+    }
+  }
+};
+
+onMounted(() => {
+  document.addEventListener('keydown', closeOnEscape);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', closeOnEscape);
+});
 </script>
 
 <template>
@@ -1333,7 +1359,7 @@ const closeErrorModal = () => {
         leave-from-class="opacity-100"
         leave-to-class="opacity-0"
       >
-        <div v-if="isEditModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+        <div v-if="isEditModalOpen" @click="closeEditModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <Transition
             enter-active-class="ease-out duration-200"
             enter-from-class="opacity-0 scale-95"
@@ -1509,7 +1535,7 @@ const closeErrorModal = () => {
         leave-from-class="opacity-100"
         leave-to-class="opacity-0"
       >
-        <div v-if="isLotModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+        <div v-if="isLotModalOpen" @click="isLotModalOpen = false" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <Transition
             enter-active-class="ease-out duration-200"
             enter-from-class="opacity-0 scale-95"
@@ -1771,7 +1797,7 @@ const closeErrorModal = () => {
         leave-from-class="opacity-100"
         leave-to-class="opacity-0"
       >
-        <div v-if="isBulkEditModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+        <div v-if="isBulkEditModalOpen" @click="closeBulkEditModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <Transition
             enter-active-class="ease-out duration-200"
             enter-from-class="opacity-0 scale-95"

@@ -56,7 +56,7 @@ class UnitStatusApprovalSeeder extends Seeder
                 'proposed_status' => 'Hilang',
                 'previous_status' => 'Tersedia',
                 'decision' => 'pending',
-                'note' => 'Aset hilang, berita acara sudah terlampir',
+                'note' => '',
                 'requested_at' => Carbon::now()->subDays(2),
                 'doc_url' => 'memos/berita_acara_sfg14.pdf',
             ]);
@@ -99,7 +99,7 @@ class UnitStatusApprovalSeeder extends Seeder
                 'proposed_status' => 'Rusak Total',
                 'previous_status' => 'Perbaikan',
                 'decision' => 'pending',
-                'note' => 'Aset rusak parah and perlu persetujuan pergantian status',
+                'note' => '',
                 'requested_at' => Carbon::now()->subDays(1),
                 'doc_url' => 'memos/berita_acara_byd.pdf',
             ]);

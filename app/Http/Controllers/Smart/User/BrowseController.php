@@ -21,7 +21,7 @@ class BrowseController extends Controller
     {
         $categories = Category::orderBy('name')->get();
         
-        $items = Subcategory::with(['category', 'barangs.brand'])
+        $items = Subcategory::with(['category', 'barangs.brand', 'barangs.uom'])
             ->get()
             ->map(function ($subcategory) {
                 $firstBarang = $subcategory->barangs->first();
@@ -40,6 +40,7 @@ class BrowseController extends Controller
                     'spec' => $firstBarang ? $firstBarang->specification : '-',
                     'stock' => 0,
                     'imageUrl' => $firstBarang && $firstBarang->image_url ? '/storage/' . $firstBarang->image_url : null,
+                    'uom' => $firstBarang && $firstBarang->uom ? $firstBarang->uom->name : 'satuan',
                     'barangs' => $subcategory->barangs->map(function ($barang) {
                         return [
                             'id' => $barang->id,
@@ -48,6 +49,7 @@ class BrowseController extends Controller
                             'brand' => $barang->brand ? $barang->brand->name : '-',
                             'specification' => $barang->specification,
                             'imageUrl' => $barang->image_url ? '/storage/' . $barang->image_url : null,
+                            'uom' => $barang->uom ? $barang->uom->name : 'satuan',
                         ];
                     }),
                 ];
@@ -60,47 +62,4 @@ class BrowseController extends Controller
         ]);
     }
 
-    /**
-     * Menambahkan barang ke dalam keranjang pengguna (baik barang pinjam maupun habis pakai).
-     */
-    public function addToCart(Request $request)
-    {
-        $validated = $request->validate([
-            'barang_id' => 'required|exists:barangs,id',
-            'quantity' => 'required|integer|min:1',
-        ]);
-
-        $barang = Barang::findOrFail($validated['barang_id']);
-        $isConsumable = $barang->subcategory->category->is_consumable ?? true;
-        $userId = $request->user()->id;
-
-        if ($isConsumable) {
-            // Find or create in consumable basket
-            $basketItem = ConsumableBasket::firstOrNew([
-                'user_id' => $userId,
-                'barang_id' => $barang->id,
-            ]);
-            $basketItem->subcategory_id = $barang->subcategory_id;
-            $basketItem->quantity = ($basketItem->quantity ?? 0) + $validated['quantity'];
-            $basketItem->save();
-        } else {
-            // Find or create in asset basket
-            $basketItem = AssetBasket::firstOrNew([
-                'user_id' => $userId,
-                'barang_id' => $barang->id,
-            ]);
-            $basketItem->subcategory_id = $barang->subcategory_id;
-            $basketItem->quantity = ($basketItem->quantity ?? 0) + $validated['quantity'];
-            // Assets need default start and end dates if not set, or we set them to tomorrow and the day after
-            if (!$basketItem->start_date) {
-                $basketItem->start_date = now()->addDay();
-            }
-            if (!$basketItem->end_date) {
-                $basketItem->end_date = now()->addDays(2);
-            }
-            $basketItem->save();
-        }
-
-        return redirect()->back()->with('success', 'Barang berhasil ditambahkan ke keranjang!');
-    }
 }

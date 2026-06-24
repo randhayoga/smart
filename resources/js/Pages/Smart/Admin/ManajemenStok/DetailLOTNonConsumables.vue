@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, computed, h, nextTick } from 'vue';
+import { ref, watch, onMounted, onUnmounted, computed, h, nextTick } from 'vue';
 import { router, useForm, usePage } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 import AppLayout from '@/Layouts/AppLayout.vue';
@@ -29,6 +29,7 @@ import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal.vue';
 import DeleteErrorModal from '@/Components/DeleteErrorModal.vue';
 import Combobox from '@/Components/Combobox.vue';
 import { Checkbox } from '@/Components/ui/checkbox';
+import StatusBadge from '@/Components/StatusBadge.vue';
 
 interface Props {
   lot: {
@@ -662,7 +663,7 @@ const deleteFields = computed(() => {
       { label: 'Merek', value: props.lot.barang_brand },
       { label: 'Nama', value: props.lot.barang_nama },
       { label: 'Spesifikasi', value: props.lot.barang_specification },
-      { label: 'Jumlah stok tersedia', value: props.units.filter(u => u.status === 'tersedia').length },
+      { label: 'Jumlah stok tersedia', value: props.units.filter(u => u.status === 'Tersedia').length },
       { label: 'Jumlah stok diawal', value: props.units.length },
       { label: 'Lokasi', value: formatLocation(props.lot.location, props.lot.floor, props.lot.room) },
       { label: 'Nomor PO', value: props.lot.poNumber },
@@ -1378,18 +1379,12 @@ const columns = computed<ColumnDef<any>[]>(() => {
       ]),
       cell: ({ row }) => {
         const status = row.getValue('status') as string || '';
-        let badgeClass = 'bg-gray-100 text-gray-800';
-        if (status === 'Tersedia') badgeClass = 'bg-emerald-100 text-emerald-800';
-        else if (status === 'Dipinjam') badgeClass = 'bg-amber-100 text-amber-800';
-        else if (status === 'Perbaikan') badgeClass = 'bg-blue-100 text-blue-800';
-        else if (status === 'Rusak Total') badgeClass = 'bg-red-100 text-red-800';
-        else if (status === 'Hilang') badgeClass = 'bg-rose-100 text-rose-800';
-        else if (status === 'Tidak Aktif') badgeClass = 'bg-gray-200 text-gray-800';
-        else if (status === 'Pending') badgeClass = 'bg-purple-100 text-purple-800';
-        
         const proposedStatus = row.original.proposed_status;
-        const displayText = (status === 'Pending' && proposedStatus) ? `Pending: ${proposedStatus}` : status;
-        return h('span', { class: `inline-flex items-center px-2 py-0.5 rounded-sm font-semibold ${badgeClass}` }, displayText);
+        return h(StatusBadge, {
+          status,
+          proposedStatus,
+          class: 'rounded-sm'
+        });
       }
     },
     {
@@ -1464,6 +1459,31 @@ onMounted(() => {
   if (dataTableRef.value && dataTableRef.value.table && rowsPerPage.value === 'Semua baris') {
     dataTableRef.value.table.setPageSize(999999);
   }
+  document.addEventListener('keydown', closeOnEscape);
+});
+
+const closeOnEscape = (e: KeyboardEvent) => {
+  if (e.key === 'Escape') {
+    if (isLotModalOpen.value) {
+      isLotModalOpen.value = false;
+    } else if (isAssetModalOpen.value) {
+      isAssetModalOpen.value = false;
+    } else if (isViewAssetModalOpen.value) {
+      isViewAssetModalOpen.value = false;
+    } else if (isBulkEditModalOpen.value) {
+      isBulkEditModalOpen.value = false;
+    } else if (isBulkVehicleEditModalOpen.value) {
+      isBulkVehicleEditModalOpen.value = false;
+    } else if (isDeleteModalOpen.value) {
+      closeDeleteModal();
+    } else if (isErrorModalOpen.value) {
+      closeErrorModal();
+    }
+  }
+};
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', closeOnEscape);
 });
 
 const totalAsetTerpilihCount = computed(() => {
@@ -1660,7 +1680,7 @@ const totalAsetTerpilihCount = computed(() => {
         leave-from-class="opacity-100"
         leave-to-class="opacity-0"
       >
-        <div v-if="isLotModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+        <div v-if="isLotModalOpen" @click="isLotModalOpen = false" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <Transition
             enter-active-class="ease-out duration-200"
             enter-from-class="opacity-0 scale-95"
@@ -1880,7 +1900,7 @@ const totalAsetTerpilihCount = computed(() => {
         leave-from-class="opacity-100"
         leave-to-class="opacity-0"
       >
-        <div v-if="isAssetModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+        <div v-if="isAssetModalOpen" @click="isAssetModalOpen = false" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <Transition
             enter-active-class="ease-out duration-200"
             enter-from-class="opacity-0 scale-95"
@@ -2220,7 +2240,7 @@ const totalAsetTerpilihCount = computed(() => {
         leave-from-class="opacity-100"
         leave-to-class="opacity-0"
       >
-        <div v-if="isViewAssetModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+        <div v-if="isViewAssetModalOpen" @click="isViewAssetModalOpen = false" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <Transition
             enter-active-class="ease-out duration-200"
             enter-from-class="opacity-0 scale-95"
@@ -2295,26 +2315,10 @@ const totalAsetTerpilihCount = computed(() => {
                       </p>
                       <p class="text-foreground">
                         Status: 
-                        <span 
-                          :class="[
-                            'inline-flex items-center px-2 py-0.5 rounded-md font-semibold',
-                            selectedAssetForView.status === 'Tersedia' ? 'bg-emerald-100 text-emerald-800' :
-                            selectedAssetForView.status === 'Dipinjam' ? 'bg-amber-100 text-amber-800' :
-                            selectedAssetForView.status === 'Perbaikan' ? 'bg-blue-100 text-blue-800' :
-                            selectedAssetForView.status === 'Rusak Total' ? 'bg-red-100 text-red-800' :
-                            selectedAssetForView.status === 'Hilang' ? 'bg-rose-100 text-rose-800' :
-                            selectedAssetForView.status === 'Tidak Aktif' ? 'bg-gray-200 text-gray-800' :
-                            selectedAssetForView.status === 'Pending' ? 'bg-purple-100 text-purple-800' :
-                            'bg-gray-100 text-gray-800'
-                          ]"
-                        >
-                          <span v-if="selectedAssetForView.status === 'Pending'">
-                            Pending: {{ selectedAssetForView.proposed_status }}
-                          </span>
-                          <template v-else>
-                            {{ getStatusLabel(selectedAssetForView.status) }}
-                          </template>
-                        </span>
+                        <StatusBadge 
+                          :status="selectedAssetForView.status" 
+                          :proposed-status="selectedAssetForView.proposed_status" 
+                        />
                       </p>
                       <p class="text-foreground">
                         Kondisi: 
@@ -2385,7 +2389,7 @@ const totalAsetTerpilihCount = computed(() => {
         leave-from-class="opacity-100"
         leave-to-class="opacity-0"
       >
-        <div v-if="isBulkEditModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+        <div v-if="isBulkEditModalOpen" @click="isBulkEditModalOpen = false" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <Transition
             enter-active-class="ease-out duration-200"
             enter-from-class="opacity-0 scale-95"
@@ -2687,7 +2691,7 @@ const totalAsetTerpilihCount = computed(() => {
         leave-from-class="opacity-100"
         leave-to-class="opacity-0"
       >
-        <div v-if="isBulkVehicleEditModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+        <div v-if="isBulkVehicleEditModalOpen" @click="isBulkVehicleEditModalOpen = false" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <Transition
             enter-active-class="ease-out duration-200"
             enter-from-class="opacity-0 scale-95"

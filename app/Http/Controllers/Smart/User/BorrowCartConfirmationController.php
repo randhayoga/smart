@@ -24,27 +24,37 @@ class BorrowCartConfirmationController extends Controller
         $idsStr = $request->query('ids', '');
         $ids = array_filter(explode(',', $idsStr));
 
-        $selectedItems = AssetBasket::with(['barang.subcategory.category', 'barang.brand'])
+        $selectedItems = AssetBasket::with(['barang.subcategory.category', 'barang.brand', 'subcategory.category'])
             ->where('user_id', $request->user()->id)
             ->whereIn('id', $ids)
             ->get()
             ->map(function ($item) {
                 // Calculate stock of units with status 'tersedia'
-                $stock = \App\Models\Inventory\Unit::whereHas('lot', function ($q) use ($item) {
-                    $q->where('barang_id', $item->barang_id);
-                })->where('status', 'tersedia')->count();
+                if ($item->barang_id) {
+                    $stock = \App\Models\Inventory\Unit::whereHas('lot', function ($q) use ($item) {
+                        $q->where('barang_id', $item->barang_id);
+                    })->where('status', 'tersedia')->count();
+                } else {
+                    $stock = \App\Models\Inventory\Unit::whereHas('lot.barang', function ($q) use ($item) {
+                        $q->where('subcategory_id', $item->subcategory_id);
+                    })->where('status', 'tersedia')->count();
+                }
 
                 return [
                     'id' => $item->id,
                     'barang_id' => $item->barang_id,
-                    'brand' => $item->barang->brand->name ?? '',
-                    'name' => $item->barang->name ?? '',
-                    'spec' => $item->barang->specification ?? '',
-                    'category' => $item->barang->subcategory->category->name ?? '-',
-                    'subcategory' => $item->barang->subcategory->name ?? '-',
+                    'brand' => $item->barang?->brand->name ?? '-',
+                    'name' => $item->barang?->name ?? 'Tidak Spesifik',
+                    'spec' => $item->barang?->specification ?? '',
+                    'category' => $item->barang 
+                        ? ($item->barang->subcategory->category->name ?? '-') 
+                        : ($item->subcategory->category->name ?? '-'),
+                    'subcategory' => $item->barang 
+                        ? ($item->barang->subcategory->name ?? '-') 
+                        : ($item->subcategory->name ?? '-'),
                     'stock' => $stock,
                     'quantity' => $item->quantity,
-                    'imageUrl' => $item->barang->image_url ? '/storage/' . $item->barang->image_url : null,
+                    'imageUrl' => $item->barang?->image_url ? '/storage/' . $item->barang->image_url : null,
                 ];
             });
 
