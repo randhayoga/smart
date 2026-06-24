@@ -54,6 +54,42 @@ class InboxController extends Controller
     }
 
     /**
+     * Menampilkan halaman daftar permintaan yang pending (Partial).
+     */
+    public function partial(Request $request): Response
+    {
+        if (!in_array($request->user()->role, ['admin', 'ifs_manager'])) {
+            abort(403, 'Akses ditolak. Hanya Admin yang dapat mengakses halaman ini.');
+        }
+
+        $requests = SmartRequest::with(['user', 'items'])
+            ->whereIn('status', ['pending', 'partial'])
+            ->orderBy('id', 'desc')
+            ->get()
+            ->map(function ($req) {
+                $amount = $req->items->sum('quantity_requested');
+                // Barang dengan start_date di request_items = peminjaman (non-konsumable)
+                $hasLoanItem = $req->items->contains(fn($i) => $i->start_date !== null);
+                $type = $hasLoanItem ? 'Pinjam' : 'Habis Pakai';
+                return [
+                    'id' => $req->id,
+                    'number' => $req->request_number,
+                    'amount' => $amount,
+                    'requester' => $req->user->name ?? '-',
+                    'createdAt' => $req->created_at ? $req->created_at->format('d-m-Y H:i') : '-',
+                    'startTime' => $req->start_date ? $req->start_date->format('d-m-Y H:i') : '-',
+                    'endTime' => $req->end_date ? $req->end_date->format('d-m-Y H:i') : '-',
+                    'type' => $type,
+                ];
+            });
+
+        return Inertia::render('Smart/Admin/Partial', [
+            'user' => $request->user(),
+            'inboxItems' => $requests,
+        ]);
+    }
+
+    /**
      * Menampilkan detail permintaan di halaman Inbox Admin.
      */
     public function show(Request $request, string $id): Response
@@ -62,7 +98,7 @@ class InboxController extends Controller
             abort(403, 'Akses ditolak. Hanya Admin yang dapat mengakses halaman ini.');
         }
 
-        $req = SmartRequest::with(['user', 'approver', 'approval.approver', 'adminConfirmation.admin', 'items.barang.subcategory.category', 'items.barang.brand', 'project', 'department'])
+        $req = SmartRequest::with(['user', 'approver', 'approval.approver', 'adminConfirmation.admin', 'items.barang.subcategory.category', 'items.barang.brand', 'project', 'department', 'statusLogs.changer'])
             ->findOrFail($id);
 
         $durationDays = 0;
@@ -103,6 +139,8 @@ class InboxController extends Controller
                 ->with('unit')
                 ->get()
                 ->pluck('unit.number')
+                ->filter()
+                ->values()
                 ->toArray();
 
             return [
@@ -114,12 +152,35 @@ class InboxController extends Controller
                 'quantity' => $item->quantity_requested,
                 'assets' => $assets,
                 'imageUrl' => $item->barang->image_url ?? null,
+                'is_consumable' => (bool) ($item->barang->subcategory->category->is_consumable ?? false),
+                'stock' => $availableStock,
+                'status' => $item->status,
             ];
         });
 
         // Try to find approval time
         $approval = RequestApproval::where('request_id', $req->id)->where('decision', 'approve')->first();
         $approvedAt = $approval ? $approval->decided_at->format('d-m-Y H:i') : null;
+
+        $logs = $req->statusLogs->map(function ($log) {
+            $actorRole = 'User';
+            $actorName = $log->changer->name ?? '-';
+            if ($log->changer && $log->changer->role === 'admin') {
+                $actorRole = 'Admin';
+            } else if ($log->changer && in_array($log->changer->role, ['manager', 'ifs_manager'])) {
+                $actorRole = 'Manager';
+            }
+
+            return [
+                'id' => $log->id,
+                'status_from' => $log->status_from,
+                'status_to' => $log->status_to,
+                'time' => $log->created_at ? $log->created_at->format('d-m-Y H:i') : '-',
+                'actor' => "{$actorRole}: {$actorName}",
+                'user' => $actorName,
+                'note' => $log->note ?? '',
+            ];
+        })->toArray();
 
         $mappedRequest = [
             'id' => $req->id,
@@ -142,6 +203,7 @@ class InboxController extends Controller
             'items' => $items,
             'approvedAt' => $approvedAt,
             'has_insufficient_stock' => $hasInsufficientStock,
+            'logs' => $logs,
         ];
 
         $placements = \App\Models\Request\RequestUnitAssignment::whereIn('request_item_id', $req->items->pluck('id'))
@@ -169,7 +231,7 @@ class InboxController extends Controller
         }
 
         $validated = $request->validate([
-            'action' => 'required|string|in:approve,reject,pending',
+            'action' => 'required|string|in:approve,reject,pending,partially_approve',
             'note' => 'nullable|string',
         ]);
 
@@ -195,6 +257,98 @@ class InboxController extends Controller
 
             $req->status = 'pending';
             $req->save();
+        } else if ($validated['action'] === 'partially_approve') {
+            // Allocate per item: only allocate items that have enough stock
+            foreach ($req->items as $item) {
+                if ($item->status === 'fulfilled') {
+                    continue;
+                }
+
+                $barangId = $item->barang_id;
+
+                // Cek apakah barang ini punya Unit record (non-konsumable/aset)
+                $hasAnyUnit = Unit::whereHas('lot', fn($q) => $q->where('barang_id', $barangId))->exists();
+
+                if ($hasAnyUnit) {
+                    // ── NON-KONSUMABLE (Aset dengan serial number) ──
+                    $units = Unit::whereHas('lot', fn($q) => $q->where('barang_id', $barangId))
+                        ->where('status', 'tersedia')
+                        ->limit($item->quantity_requested)
+                        ->get();
+
+                    if ($units->count() < $item->quantity_requested) {
+                        // Skip if insufficient stock for partial approval
+                        continue;
+                    }
+
+                    foreach ($units as $unit) {
+                        RequestUnitAssignment::create([
+                            'request_item_id' => $item->id,
+                            'unit_id' => $unit->id,
+                            'assigned_at' => now(),
+                        ]);
+
+                        $isBorrow = (bool) $item->start_date;
+                        $unitStatus = 'dipakai';
+                        if ($isBorrow && !$unit->is_vehicle) {
+                            $unitStatus = 'dipinjam';
+                        }
+                        $unit->update(['status' => $unitStatus]);
+                    }
+                } else {
+                    // ── KONSUMABLE (Habis pakai, stok di Lot.current_quantity) ──
+                    $totalAvailable = Lot::where('barang_id', $barangId)->sum('current_quantity');
+
+                    if ($totalAvailable < $item->quantity_requested) {
+                        // Skip if insufficient stock for partial approval
+                        continue;
+                    }
+
+                    // Kurangi stok FIFO (lot terlama duluan)
+                    $remaining = $item->quantity_requested;
+                    $lots = Lot::where('barang_id', $barangId)
+                        ->where('current_quantity', '>', 0)
+                        ->orderBy('date_of_receipt')
+                        ->get();
+
+                    foreach ($lots as $lot) {
+                        if ($remaining <= 0) break;
+                        $deduct = min($lot->current_quantity, $remaining);
+                        $lot->decrement('current_quantity', $deduct);
+
+                        RequestUnitAssignment::create([
+                            'request_item_id' => $item->id,
+                            'lot_id' => $lot->id,
+                            'quantity_fulfilled' => $deduct,
+                            'assigned_at' => now(),
+                        ]);
+
+                        $remaining -= $deduct;
+                    }
+                }
+
+                // Mark item as fulfilled
+                $item->update(['status' => 'fulfilled']);
+            }
+
+            RequestAdminConfirmation::create([
+                'request_id' => $req->id,
+                'admin_id' => $request->user()->id,
+                'action' => 'partial',
+                'note' => $validated['note'] ?? 'Partially Approved by Admin due to partial stock',
+                'decided_at' => now(),
+            ]);
+
+            RequestStatusLog::create([
+                'request_id' => $req->id,
+                'status_from' => $oldStatus,
+                'status_to' => 'partial',
+                'changed_by' => $request->user()->id,
+                'note' => 'Permintaan disetujui sebagian oleh Admin (Partial allocation).',
+            ]);
+
+            $req->status = 'partial';
+            $req->save();
         } else if ($validated['action'] === 'approve') {
             if ($req->status === 'wait') {
                 RequestApproval::create([
@@ -217,9 +371,13 @@ class InboxController extends Controller
                 $req->save();
             }
 
-            if ($req->status === 'approve') {
+            if ($req->status === 'approve' || $req->status === 'pending' || $req->status === 'partial') {
                 // Allocate per item: bedakan konsumable vs non-konsumable
                 foreach ($req->items as $item) {
+                    if ($item->status === 'fulfilled') {
+                        continue;
+                    }
+
                     $barangId = $item->barang_id;
 
                     // Cek apakah barang ini punya Unit record (non-konsumable/aset)
@@ -264,9 +422,20 @@ class InboxController extends Controller
                             if ($remaining <= 0) break;
                             $deduct = min($lot->current_quantity, $remaining);
                             $lot->decrement('current_quantity', $deduct);
+
+                            RequestUnitAssignment::create([
+                                'request_item_id' => $item->id,
+                                'lot_id' => $lot->id,
+                                'quantity_fulfilled' => $deduct,
+                                'assigned_at' => now(),
+                            ]);
+
                             $remaining -= $deduct;
                         }
                     }
+
+                    // Mark item as fulfilled
+                    $item->update(['status' => 'fulfilled']);
                 }
 
                 RequestAdminConfirmation::create([
@@ -279,7 +448,7 @@ class InboxController extends Controller
 
                 RequestStatusLog::create([
                     'request_id' => $req->id,
-                    'status_from' => 'approve',
+                    'status_from' => $oldStatus,
                     'status_to' => 'confirm',
                     'changed_by' => $request->user()->id,
                     'note' => 'Permintaan dikonfirmasi oleh Admin (Asset allocated).',
@@ -298,7 +467,7 @@ class InboxController extends Controller
                     'note' => $validated['note'] ?? 'Rejected by Admin',
                     'decided_at' => now(),
                 ]);
-            } else if ($req->status === 'approve') {
+            } else if ($req->status === 'approve' || $req->status === 'pending' || $req->status === 'partial') {
                 RequestAdminConfirmation::create([
                     'request_id' => $req->id,
                     'admin_id' => $request->user()->id,
@@ -319,6 +488,9 @@ class InboxController extends Controller
             ]);
         }
 
+        if ($oldStatus === 'pending' || $req->status === 'partial') {
+            return redirect()->route('smart.partial')->with('success', 'Permintaan berhasil diproses.');
+        }
         return redirect()->route('smart.inbox')->with('success', 'Permintaan berhasil diproses.');
     }
 }

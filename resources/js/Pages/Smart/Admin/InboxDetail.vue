@@ -24,6 +24,9 @@ interface RequestItem {
   quantity: number;
   assets: string[];
   imageUrl?: string | null;
+  stock?: number | null;
+  status?: string;
+  is_consumable?: boolean;
 }
 
 interface RequestDetail {
@@ -45,6 +48,7 @@ interface RequestDetail {
   items: RequestItem[];
   approvedAt?: string;
   has_insufficient_stock?: boolean;
+  logs?: any[];
 }
 
 interface Props {
@@ -58,11 +62,51 @@ const props = defineProps<Props>();
 
 const items = computed(() => props.request.items);
 
-const timeline = computed(() => {
+const canPartiallyApprove = computed(() => {
+  const pendingItems = items.value.filter((item: any) => item.status === 'pending');
+  if (pendingItems.length === 0) return false;
+  
+  const hasInStock = pendingItems.some((item: any) => item.stock !== null && item.stock >= Number(item.quantity));
+  const hasOutOfStock = pendingItems.some((item: any) => item.stock !== null && item.stock < Number(item.quantity));
+  
+  return hasInStock && hasOutOfStock;
+});
+
+const canConfirm = computed(() => {
+  const pendingItems = items.value.filter((item: any) => item.status === 'pending');
+  if (pendingItems.length === 0) return false;
+  
+  return pendingItems.every((item: any) => item.stock !== null && item.stock >= Number(item.quantity));
+});
+
+const isAllConsumable = computed(() => {
+  return items.value.every((item: any) => item.is_consumable);
+});
+
+const hasPassedFirstHandover = computed(() => {
+  const logs = props.request.logs || [];
+  return logs.some((log: any) => log.status_to === 'partial');
+});
+
+interface TimelineStep {
+  status: string;
+  user?: string;
+  time?: string;
+  completed?: boolean;
+  rejected?: boolean;
+  isPending?: boolean;
+  isAction?: boolean;
+  active?: boolean;
+  note?: string;
+}
+
+const timeline = computed((): TimelineStep[] => {
   const r = props.request;
   if (!r) return [];
 
   const steps = [];
+  
+  // Step 1: Initial creation
   steps.push({
     status: 'Permintaan dibuat',
     user: r.requester,
@@ -70,60 +114,107 @@ const timeline = computed(() => {
     completed: true,
   });
 
-  if (r.status === 'wait') {
-    steps.push({
-      status: 'Menunggu approval manager',
-      user: r.approval_by || r.approver || 'Manager',
-      completed: false,
-      active: true,
-      isAction: false,
+  // Step 2: Historical Logs
+  if (r.logs && Array.isArray(r.logs)) {
+    const sortedLogs = [...r.logs].sort((a, b) => a.id - b.id);
+    sortedLogs.forEach(log => {
+      if (log.status_to === 'wait') return;
+
+      let statusName = '';
+      let completed = true;
+      let rejected = false;
+      let isPending = false;
+
+      if (log.status_to === 'approve') {
+        statusName = 'Di-approve';
+      } else if (log.status_to === 'partial') {
+        statusName = 'Disetujui sebagian (Partial)';
+      } else if (log.status_to === 'confirm') {
+        if (log.status_from === 'partial') {
+          statusName = 'Alokasi Barang Tambahan Dikonfirmasi';
+        } else {
+          if (log.note && log.note.includes('diatur oleh pengguna')) {
+            statusName = 'Jadwal Serah Terima Diatur';
+          } else {
+            statusName = 'Dikonfirmasi';
+          }
+        }
+      } else if (log.status_to === 'borrow') {
+        statusName = 'Serah Terima Selesai & Dipinjam';
+      } else if (log.status_to === 'return') {
+        statusName = 'Pengembalian Diajukan';
+      } else if (log.status_to === 'success') {
+        if (log.status_from === 'return') {
+          statusName = 'Pengembalian Selesai';
+        } else {
+          statusName = 'Serah Terima Selesai';
+        }
+      } else if (log.status_to === 'reject') {
+        statusName = 'Ditolak';
+        completed = false;
+        rejected = true;
+      } else if (log.status_to === 'cancel') {
+        statusName = 'Dibatalkan oleh Pengguna';
+        completed = true;
+      } else if (log.status_to === 'pending') {
+        if (log.status_from === 'confirm') {
+          statusName = 'Serah Terima Sebagian Diterima';
+        } else {
+          statusName = 'Pending';
+        }
+      }
+
+      if (statusName) {
+        steps.push({
+          status: statusName,
+          user: log.user || undefined,
+          time: log.time,
+          completed,
+          rejected,
+          isPending,
+          note: log.note || '',
+        });
+      }
     });
-  } else if (r.status === 'approve') {
-    steps.push({
-      status: 'Di-approve',
-      user: r.approval_by || r.approver || 'Manager',
-      time: r.approvedAt || r.createdAt,
-      completed: true,
-    });
-    steps.push({
-      status: 'Perlu alokasi & konfirmasi',
-      completed: false,
-      active: true,
-      isAction: true,
-    });
-  } else if (r.status === 'pending') {
-    steps.push({
-      status: 'Di-approve',
-      user: r.approval_by || r.approver || 'Manager',
-      time: r.approvedAt || r.createdAt,
-      completed: true,
-    });
-    steps.push({
-      status: 'Pending',
-      user: r.confirmation_by || 'Admin',
-      time: r.createdAt,
-      completed: true,
-      isPending: true,
-    });
-  } else if (r.status === 'reject') {
-    steps.push({
-      status: 'Ditolak',
-      completed: false,
-      active: true,
-      rejected: true,
-    });
-  } else {
-    steps.push({
-      status: 'Di-approve',
-      user: r.approval_by || r.approver || 'Manager',
-      time: r.approvedAt || r.createdAt,
-      completed: true,
-    });
-    steps.push({
-      status: 'Dikonfirmasi',
-      user: r.confirmation_by || 'Admin',
-      completed: true,
-    });
+  }
+
+  // Step 3: Active / Next steps
+  const isFinalStatus = ['success', 'reject', 'cancel'].includes(r.status);
+  if (!isFinalStatus) {
+    if (r.status === 'wait') {
+      steps.push({
+        status: 'Perlu approval Manager',
+        completed: false,
+        active: true,
+      });
+    } else if (r.status === 'approve' || r.status === 'pending' || r.status === 'partial') {
+      steps.push({
+        status: r.status === 'partial' 
+          ? 'Perlu alokasi & konfirmasi sisa barang' 
+          : 'Perlu alokasi & konfirmasi Admin',
+        completed: false,
+        active: true,
+        isAction: true,
+      });
+    } else if (r.status === 'confirm') {
+      steps.push({
+        status: 'Serah Terima (Jadwal diatur)',
+        completed: false,
+        active: true,
+      });
+    } else if (r.status === 'borrow') {
+      steps.push({
+        status: 'Aset sedang dipinjam',
+        completed: false,
+        active: true,
+      });
+    } else if (r.status === 'return') {
+      steps.push({
+        status: 'Pengembalian aset',
+        completed: false,
+        active: true,
+      });
+    }
   }
 
   return steps;
@@ -142,10 +233,28 @@ const handleApprove = () => {
   });
 };
 
+const handleReject = () => {
+  openRejectModal();
+};
+
+const handlePartiallyApprove = () => {
+  router.post(route('smart.inbox.action', props.requestId), {
+    action: 'partially_approve'
+  }, {
+    onSuccess: () => {
+      toast.success('Permintaan berhasil disetujui sebagian (Partial).');
+    },
+    onError: (errors) => {
+      toast.error(Object.values(errors).join(', '));
+    }
+  });
+};
+
 const isPendingModalOpen = ref(false);
-const pendingReason = ref('');
+const pendingNote = ref('');
+
 const openPendingModal = () => {
-  pendingReason.value = '';
+  pendingNote.value = '';
   isPendingModalOpen.value = true;
 };
 const closePendingModal = () => {
@@ -155,11 +264,11 @@ const closePendingModal = () => {
 const submitPending = () => {
   router.post(route('smart.inbox.action', props.requestId), {
     action: 'pending',
-    note: pendingReason.value
+    note: pendingNote.value,
   }, {
     onSuccess: () => {
       closePendingModal();
-      toast.success('Status pemesanan berhasil diubah menjadi pending.');
+      toast.success('Permintaan berhasil di-pending.');
     },
     onError: (errors) => {
       toast.error(Object.values(errors).join(', '));
@@ -169,16 +278,14 @@ const submitPending = () => {
 
 const isRejectModalOpen = ref(false);
 const rejectReason = ref('');
+
 const openRejectModal = () => {
   rejectReason.value = '';
   isRejectModalOpen.value = true;
 };
+
 const closeRejectModal = () => {
   isRejectModalOpen.value = false;
-};
-
-const handleReject = () => {
-  openRejectModal();
 };
 
 const submitReject = () => {
@@ -196,21 +303,21 @@ const submitReject = () => {
   });
 };
 
-const handleAturSerahTerima = () => {
-  router.get('/smart/handover');
+const handlePilihAlokasi = (item: any) => {
+  router.get(route('smart.handover.show', props.requestId));
 };
 
-const handlePilihAlokasi = (item: any) => {
-  toast.info('Alokasi aset dilakukan secara otomatis saat persetujuan/konfirmasi.');
+const handleAturSerahTerima = () => {
+  router.get(route('smart.handover.show', props.requestId));
 };
 </script>
 
 <template>
-  <Head title="Detail Permintaan" />
+  <Head :title="'Detail ' + request.number" />
   <AppLayout title="Detail Permintaan">
     <!-- Breadcrumb -->
     <Breadcrumb>
-      <BreadcrumbList class="pb-3">
+      <BreadcrumbList class="pb-3 text-xs md:text-sm">
         <BreadcrumbItem>
           <BreadcrumbLink href="/smart/inbox">Inbox</BreadcrumbLink>
         </BreadcrumbItem>
@@ -228,7 +335,7 @@ const handlePilihAlokasi = (item: any) => {
     <!-- Info Banner -->
     <div v-if="user?.role === 'admin' || user?.role === 'ifs_manager'" class="mb-6 p-1.5 pl-6 rounded-xl border border-indigo-200 bg-white flex items-center justify-between gap-3 text-indigo-600">
       <p class="text-sm font-semibold">
-        Tolong pastikan bahwa alokasi aset sudah sesuai dan konfirmasi permintaan/peminjaman ini
+        {{ isAllConsumable ? 'Tolong konfirmasi permintaan ini' : 'Tolong pastikan bahwa alokasi aset sudah sesuai dan konfirmasi permintaan/peminjaman ini' }}
       </p>
       <button 
         @click="handleAturSerahTerima"
@@ -292,9 +399,14 @@ const handlePilihAlokasi = (item: any) => {
             :assets="item.assets"
             :imageUrl="item.imageUrl"
             :placements="placements"
+            :stock="item.stock"
+            :status="item.status"
+            :is-admin="true"
+            :is-consumable="item.is_consumable"
           >
             <template #footer>
               <button 
+                v-if="!item.is_consumable"
                 @click="handlePilihAlokasi(item)"
                 class="px-5 py-2.5 bg-[#5BC0DE] hover:bg-[#46B8DA] text-white text-sm font-bold rounded-[14px] transition-all shadow-sm"
               >
@@ -373,22 +485,32 @@ const handlePilihAlokasi = (item: any) => {
                   <p v-if="step.time" class="text-xs text-muted-foreground mt-0.5">
                     {{ step.time }}
                   </p>
+                  <p v-if="step.note" class="text-xs text-muted-foreground leading-relaxed pt-0.5">
+                    {{ step.note }}
+                  </p>
                   
                   <!-- Action Buttons inside timeline step -->
                   <div v-if="step.isAction && (user?.role === 'admin' || user?.role === 'ifs_manager')" class="pt-3 flex gap-2">
                     <button 
-                      v-if="request.has_insufficient_stock"
-                      @click="openPendingModal"
-                      class="px-4 py-1.5 bg-zinc-500 hover:bg-zinc-600 text-white text-sm font-bold rounded-lg transition-all shadow-sm"
+                      v-if="canPartiallyApprove"
+                      @click="handlePartiallyApprove"
+                      class="px-4 py-1.5 bg-[#5BC0DE] hover:bg-[#46B8DA] text-white text-sm font-bold rounded-lg transition-all shadow-sm"
                     >
-                      Pending
+                      {{ hasPassedFirstHandover ? 'Partial' : 'Partially Approve' }}
                     </button>
                     <button 
-                      v-else
+                      v-if="canConfirm"
                       @click="handleApprove"
                       class="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-lg transition-all shadow-sm"
                     >
                       Konfirmasi
+                    </button>
+                    <button 
+                      v-if="request.has_insufficient_stock && request.status !== 'pending' && request.status !== 'partial'"
+                      @click="openPendingModal"
+                      class="px-4 py-1.5 bg-zinc-500 hover:bg-zinc-600 text-white text-sm font-bold rounded-lg transition-all shadow-sm"
+                    >
+                      Pending
                     </button>
                     <button 
                       @click="handleReject"
@@ -439,7 +561,7 @@ const handlePilihAlokasi = (item: any) => {
               <div class="space-y-2">
                 <label class="text-xs font-semibold text-foreground">Catatan / Alasan Penundaan:</label>
                 <textarea
-                  v-model="pendingReason"
+                  v-model="pendingNote"
                   placeholder="Masukkan alasan penundaan (contoh: Stok habis di gudang pusat)..."
                   rows="4"
                   class="w-full text-sm border border-input rounded-[10px] bg-background p-3 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none"
