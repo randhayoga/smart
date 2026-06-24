@@ -59,7 +59,7 @@ class RequestCartController extends Controller
         $validated = $request->validate([
             'subcategory_id' => 'nullable|exists:subcategories,id',
             'barang_id' => 'nullable|exists:barangs,id',
-            'quantity' => 'required|integer|min:1',
+            'quantity' => 'required|integer|min:1|max:999999',
         ]);
 
         $userId = $request->user()->id;
