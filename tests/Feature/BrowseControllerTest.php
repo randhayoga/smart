@@ -52,7 +52,7 @@ class BrowseControllerTest extends TestCase
         $response->assertRedirect();
         $this->assertDatabaseHas('consumable_baskets', [
             'user_id' => $user->id,
-            'subcategory_id' => null,
+            'subcategory_id' => $subcategory->id,
             'barang_id' => $barang->id,
             'quantity' => 3,
         ]);
@@ -107,7 +107,7 @@ class BrowseControllerTest extends TestCase
         $response->assertRedirect();
         $this->assertDatabaseHas('asset_baskets', [
             'user_id' => $user->id,
-            'subcategory_id' => null,
+            'subcategory_id' => $subcategory->id,
             'barang_id' => $barang->id,
             'quantity' => 1,
         ]);

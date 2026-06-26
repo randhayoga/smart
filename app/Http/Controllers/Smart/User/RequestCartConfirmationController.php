@@ -13,7 +13,7 @@ use App\Models\Request\Request as SmartRequest;
 use App\Models\Request\RequestItem;
 use App\Models\Request\RequestStatusLog;
 
-class AssetCartConfirmationController extends Controller
+class RequestCartConfirmationController extends Controller
 {
     /**
      * Menampilkan halaman Konfirmasi Permintaan (Keranjang Habis Pakai).

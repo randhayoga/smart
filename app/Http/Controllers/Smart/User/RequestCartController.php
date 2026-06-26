@@ -14,7 +14,12 @@ class RequestCartController extends Controller
      */
     public function index(Request $request)
     {
-        $cartItems = ConsumableBasket::with(['barang.subcategory.category', 'barang.brand', 'subcategory.category'])
+        $cartItems = ConsumableBasket::with([
+            'barang.subcategory.category',
+            'barang.brand',
+            'subcategory.category',
+            'subcategory.barangs',
+        ])
             ->where('user_id', $request->user()->id)
             ->get()
             ->map(function ($item) {
@@ -38,15 +43,23 @@ class RequestCartController extends Controller
                     'category' => $item->barang 
                         ? ($item->barang->subcategory->category->name ?? '-') . ' (' . ($item->barang->subcategory->name ?? '-') . ')'
                         : ($item->subcategory->category->name ?? '-') . ' (' . ($item->subcategory->name ?? '-') . ')',
+                    'category_name' => $item->barang 
+                        ? ($item->barang->subcategory->category->name ?? '-') 
+                        : ($item->subcategory->category->name ?? '-'),
+                    'subcategory_name' => $item->barang 
+                        ? ($item->barang->subcategory->name ?? '-') 
+                        : ($item->subcategory->name ?? '-'),
                     'code' => $item->barang?->number ?? '-',
                     'stock' => $stock,
                     'quantity' => $item->quantity,
                     'selected' => false,
-                    'imageUrl' => $item->barang?->image_url ? '/storage/' . $item->barang->image_url : null,
+                    'imageUrl' => $item->barang_id
+                        ? ($item->barang?->image_url ? '/storage/' . $item->barang->image_url : null)
+                        : (($firstBarang = $item->subcategory?->barangs?->first()) && $firstBarang->image_url ? '/storage/' . $firstBarang->image_url : null),
                 ];
             });
 
-        return Inertia::render('Smart/User/AssetCart', [
+        return Inertia::render('Smart/User/RequestCart', [
             'cartItems' => $cartItems,
         ]);
     }
@@ -74,7 +87,7 @@ class RequestCartController extends Controller
         } else {
             $basketItem = ConsumableBasket::firstOrNew([
                 'user_id' => $userId,
-                'subcategory_id' => null,
+                'subcategory_id' => $validated['subcategory_id'],
                 'barang_id' => $validated['barang_id'],
             ]);
         }

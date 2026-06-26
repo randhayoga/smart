@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
-import { router } from '@inertiajs/vue3';
+import { ref, computed } from 'vue';
+import { Head, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import { Input } from '@/Components/ui/input';
 import { Button } from '@/Components/ui/button';
 import { Trash2 } from 'lucide-vue-next';
 import Checkbox from '@/Components/ui/checkbox/Checkbox.vue';
@@ -15,21 +14,14 @@ import {
   NumberFieldInput,
 } from "@/Components/ui/number-field";
 
+import { watch } from 'vue';
+
 interface Props {
   user?: any;
   cartItems?: CartItem[];
-  defaultStartDate?: string;
-  defaultStartTime?: string;
-  defaultEndDate?: string;
-  defaultEndTime?: string;
 }
-
 const props = withDefaults(defineProps<Props>(), {
-  cartItems: () => [],
-  defaultStartDate: '',
-  defaultStartTime: '',
-  defaultEndDate: '',
-  defaultEndTime: '',
+  cartItems: () => []
 });
 
 // --- Tipe Data ---
@@ -43,42 +35,11 @@ interface CartItem {
   category_name: string;
   subcategory_name: string;
   code: string;
-  stock: number;       // Stok total tersedia
-  quantity: number;    // Jumlah yang diminta
+  stock: number; // Total stok tersedia
+  quantity: number; // Jumlah yang diminta user
   selected: boolean;
-  isPreorder?: boolean; // Bisa pre-order tapi stok saat ini 0
   imageUrl?: string;
 }
-
-// --- Helper: Mendapatkan tanggal & waktu lokal client ---
-const getClientDefaultDate = () => {
-  const now = new Date();
-  const yyyy = now.getFullYear();
-  const mm = String(now.getMonth() + 1).padStart(2, '0');
-  const dd = String(now.getDate()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd}`;
-};
-
-const getClientDefaultTime = () => {
-  const now = new Date();
-  const hh = String(now.getHours()).padStart(2, '0');
-  const min = String(now.getMinutes()).padStart(2, '0');
-  return `${hh}:${min}`;
-};
-
-const handlePickerClick = (e: Event) => {
-  const target = e.target as HTMLInputElement;
-  if (target && typeof target.showPicker === 'function') {
-    target.showPicker();
-  }
-};
-
-// --- State Tanggal Peminjaman ---
-// HARUS diisi lebih dulu — semua aksi lain disabled sampai tanggal mulai diisi
-const startDate = ref(getClientDefaultDate());
-const startTime = ref(getClientDefaultTime());
-const endDate   = ref('');
-const endTime   = ref('');
 
 const cartItems = ref<CartItem[]>(props.cartItems.map(item => ({ ...item, selected: false })));
 
@@ -90,64 +51,36 @@ watch(() => props.cartItems, (newVal) => {
   }));
 }, { deep: true });
 
-const isDateSelected = computed(() => startDate.value && startDate.value.trim() !== '');
-
-// Jika tanggal mulai berubah → reset semua pilihan (karena ketersediaan bisa berubah)
-watch(startDate, () => {
-  cartItems.value.forEach(item => {
-    item.selected = false;
-    item.quantity = 1;
-  });
-});
-watch(startTime, () => {
-  cartItems.value.forEach(item => {
-    item.selected = false;
-    item.quantity = 1;
-  });
-});
-
-watch(endDate, (newVal) => {
-  if (!newVal || newVal.trim() === '') {
-    endTime.value = '';
-  }
-});
-
 const filteredItems = computed(() => {
   return cartItems.value;
 });
 
-// --- Computed: Item yang dipilih untuk ringkasan ---
+// --- Computed: Item yang dipilih (untuk ringkasan & validasi) ---
 const selectedItems = computed(() => cartItems.value.filter(item => item.selected));
 
-// Tombol "Lanjut ke Konfirmasi" aktif jika ada tanggal mulai DAN minimal 1 item dipilih
-const canProceed = computed(() => isDateSelected.value && selectedItems.value.length > 0);
+// Tombol "Lanjut ke Konfirmasi" hanya aktif jika ada minimal 1 item yang dipilih
+const canProceed = computed(() => selectedItems.value.length > 0);
 
 // --- Aksi: Hapus item dari keranjang ---
 const removeItem = (id: number) => {
-  router.delete(route('smart.borrow-cart.destroy', id), {
+  router.delete(route('smart.asset-cart.destroy', id), {
     preserveScroll: true,
   });
 };
 
 // --- Aksi: Update jumlah ---
 const updateQty = (item: CartItem, value: number) => {
-  router.put(route('smart.borrow-cart.update', item.id), {
+  router.put(route('smart.asset-cart.update', item.id), {
     quantity: value
   }, {
     preserveScroll: true,
   });
 };
 
-// --- Aksi: Lanjut ke konfirmasi ---
+// --- Aksi: Lanjut ke halaman konfirmasi ---
 const handleProceed = () => {
   const ids = selectedItems.value.map(i => i.id).join(',');
-  router.get(route('smart.borrow-cart.confirmation'), {
-    ids,
-    start_date: startDate.value,
-    start_time: startTime.value,
-    end_date: endDate.value,
-    end_time: endTime.value,
-  });
+  router.get(route('smart.asset-cart.confirmation'), { ids });
 };
 
 const getItemDisplayName = (item: CartItem) => {
@@ -169,92 +102,25 @@ const getItemDisplayName = (item: CartItem) => {
 </script>
 
 <template>
-  <AppLayout title="Keranjang Peminjaman">
+  <Head title="Keranjang Habis Pakai" />
+
+  <AppLayout title="Keranjang Habis Pakai">
     <!-- Judul Halaman -->
     <div class="mb-2">
-      <h1 class="text-xl font-bold text-gray-900 leading-none">Keranjang Peminjaman</h1>
-      <p class="text-muted-foreground mt-2">Pilih tanggal peminjaman lalu pilih barang-barang yang ingin dimasukkan dalam peminjaman.</p>
+      <h1 class="text-xl font-bold text-gray-900 leading-none">Keranjang Habis Pakai</h1>
+      <p class="text-muted-foreground mt-2">Pilih barang-barang yang ingin dimasukkan dalam permintaan.</p>
     </div>
 
     <div class="flex flex-col lg:flex-row gap-6 mt-6">
       <!-- ============================================================ -->
-      <!-- Kolom Kiri: Form Tanggal + Daftar Barang                     -->
+      <!-- Kolom Kiri: Daftar Barang di Keranjang                        -->
       <!-- ============================================================ -->
-      <div class="flex-1 min-w-0 space-y-4">
-
-        <!-- === Blok Tanggal Peminjaman (Must be selected first) === -->
-        <div class="bg-card border border-border rounded-[14px] p-5">
-          <h2 class="text-lg font-bold text-foreground mb-2">Tanggal Peminjaman</h2>
-
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 items-start">
-            <!-- Tanggal Mulai -->
-            <div class="space-y-1">
-              <label class="text-sm font-medium text-foreground">
-                Tanggal mulai<span class="text-destructive">*</span>
-              </label>
-              <Input
-                v-model="startDate"
-                type="date"
-                class="h-10 rounded-[14px] text-sm w-full cursor-pointer"
-                @click="handlePickerClick"
-                @keydown.prevent
-              />
-            </div>
-
-            <!-- Waktu Mulai -->
-            <div class="space-y-1">
-              <label class="text-sm font-medium text-foreground">
-                Waktu mulai<span class="text-destructive">*</span>
-              </label>
-              <Input
-                v-model="startTime"
-                type="time"
-                class="h-10 rounded-[14px] text-sm w-full cursor-pointer"
-                :disabled="!startDate"
-                @click="handlePickerClick"
-                @keydown.prevent
-              />
-            </div>
-
-            <!-- Tanggal Selesai -->
-            <div class="space-y-1">
-              <label class="text-sm font-medium text-muted-foreground">Tanggal selesai</label>
-              <Input
-                v-model="endDate"
-                type="date"
-                class="h-10 rounded-[14px] text-sm w-full cursor-pointer"
-                :disabled="!startDate"
-                @click="handlePickerClick"
-                @keydown.prevent
-              />
-            </div>
-
-            <!-- Waktu Selesai -->
-            <div class="space-y-1">
-              <label class="text-sm font-medium text-muted-foreground">Waktu selesai</label>
-              <Input
-                v-model="endTime"
-                type="time"
-                class="h-10 rounded-[14px] text-sm w-full cursor-pointer"
-                :disabled="!endDate"
-                @click="handlePickerClick"
-                @keydown.prevent
-              />
-            </div>
-          </div>
-
-          <!-- Pesan bantu -->
-          <div class="text-sm italic flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 mt-3">
-            <p class="text-destructive font-medium">*harus diisi</p>
-            <p class="text-muted-foreground">tanggal &amp; waktu selesai dapat dikosongkan</p>
-          </div>
-        </div>
-
-        <!-- === Daftar Item Keranjang === -->
-        <ScrollArea class="border border-border rounded-[14px] bg-card h-[calc(100vh-380px)] sm:h-[calc(100vh-380px)]">
+      <div class="flex-1 min-w-0">
+        <!-- Daftar Item -->
+        <ScrollArea class="border border-border rounded-[14px] bg-card h-[calc(100vh-200px)] sm:h-[calc(100vh-200px)]">
           <div class="p-6">
             <div class="space-y-3">
-              <!-- Pesan jika kosong -->
+              <!-- Jika keranjang kosong -->
               <div v-if="filteredItems.length === 0" class="text-center py-10">
                 <p class="text-muted-foreground text-sm">Keranjang kosong atau tidak ada barang yang sesuai filter.</p>
               </div>
@@ -264,16 +130,12 @@ const getItemDisplayName = (item: CartItem) => {
                 v-for="item in filteredItems"
                 :key="item.id"
                 class="bg-card border rounded-[14px] p-4 flex items-center gap-4 transition-colors"
-                :class="[
-                  item.selected ? 'border-primary/50 bg-primary/5' : 'border-border',
-                  !isDateSelected ? 'opacity-60' : ''
-                ]"
+                :class="item.selected ? 'border-primary/50 bg-primary/5' : 'border-border'"
               >
                 <!-- Checkbox seleksi -->
                 <Checkbox 
                   v-model="item.selected"
                   class="cursor-pointer"
-                  :disabled="!isDateSelected"
                 />
 
                 <!-- Image -->
@@ -288,7 +150,7 @@ const getItemDisplayName = (item: CartItem) => {
                   <template v-if="!item.barang_id">
                     <h3 class="text-lg font-bold text-foreground leading-snug">{{ item.subcategory_name }}</h3>
                     <p class="text-sm text-muted-foreground leading-normal">{{ item.category_name }}</p>
-                    <p class="text-xs text-muted-foreground italic">*gambar hanya ilustrasi</p>
+                    <p class="text-xs text-muted-foreground italic">*gambar hanya illustrasi</p>
                   </template>
                   <template v-else>
                     <span v-if="item.brand && item.brand !== '-'" class="text-lg font-bold text-foreground leading-tight">
@@ -326,7 +188,6 @@ const getItemDisplayName = (item: CartItem) => {
                     :max="999999" 
                     locale="id-ID" 
                     class="w-32"
-                    :disabled="!isDateSelected"
                   >
                     <NumberFieldContent>
                       <NumberFieldDecrement />
@@ -342,7 +203,7 @@ const getItemDisplayName = (item: CartItem) => {
       </div>
 
       <!-- ============================================================ -->
-      <!-- Kolom Kanan: Ringkasan Peminjaman (sticky)                    -->
+      <!-- Kolom Kanan: Ringkasan Peminjaman                             -->
       <!-- ============================================================ -->
       <div class="w-full w-lg flex-shrink-0">
         <div class="bg-card border border-border rounded-[14px] p-5 sticky top-24">
@@ -351,7 +212,7 @@ const getItemDisplayName = (item: CartItem) => {
           <!-- Daftar item yang dipilih -->
           <div class="space-y-3 mb-6">
             <div v-if="selectedItems.length === 0" class="text-sm text-muted-foreground italic">
-              {{ !isDateSelected ? 'Pilih tanggal peminjaman terlebih dahulu.' : 'Belum ada barang yang dipilih.' }}
+              Belum ada barang yang dipilih.
             </div>
             <div
               v-for="item in selectedItems"
@@ -370,7 +231,7 @@ const getItemDisplayName = (item: CartItem) => {
           <hr class="border-border mb-5" />
 
           <!-- Tombol Lanjut ke Konfirmasi -->
-          <!-- Disabled jika: tanggal belum diisi ATAU tidak ada item yang dipilih -->
+          <!-- Disabled jika tidak ada item yang dipilih -->
           <Button
             variant="primary"
             size="lg"
@@ -380,11 +241,6 @@ const getItemDisplayName = (item: CartItem) => {
           >
             Lanjut ke Konfirmasi
           </Button>
-
-          <!-- Petunjuk kontekstual -->
-          <p v-if="!isDateSelected" class="text-xs text-muted-foreground text-center mt-3">
-            Pilih tanggal mulai terlebih dahulu.
-          </p>
         </div>
       </div>
     </div>
