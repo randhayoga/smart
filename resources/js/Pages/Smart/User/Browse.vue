@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, h } from 'vue';
 import { router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import TableSearch from '@/Components/TableSearch.vue';
 import { ChevronDown, X } from 'lucide-vue-next';
 import { Button } from "@/Components/ui/button";
 import ProductCard from '@/Components/ProductCard.vue';
+import { ScrollArea } from "@/Components/ui/scroll-area";
 import { toast } from 'vue-sonner';
 import {
   DropdownMenu,
@@ -137,7 +138,25 @@ const handleConfirmAddToCart = () => {
   }, {
     onSuccess: () => {
       isModalOpen.value = false;
-      toast.success(`Berhasil menambahkan ${quantity.value} barang ke keranjang!`);
+      
+      const cartName = isConsumable ? 'keranjang habis pakai' : 'keranjang pinjam';
+      const cartUrl = isConsumable ? '/smart/asset-cart' : '/smart/borrow-cart';
+
+      toast.success(
+        h('span', [
+          'Berhasil menambahkan ',
+          h('span', { class: 'font-semibold' }, quantity.value),
+          ' barang ke ',
+          h('a', {
+            href: cartUrl,
+            class: 'underline font-semibold text-primary hover:text-indigo-700 transition-colors cursor-pointer',
+            onClick: (e: MouseEvent) => {
+              e.preventDefault();
+              router.visit(cartUrl);
+            }
+          }, cartName)
+        ])
+      );
     },
     onError: (errors) => {
       toast.error(Object.values(errors)[0] as string);
@@ -239,19 +258,21 @@ const filteredAndSortedItems = computed(() => {
 
         <p class="text-sm text-muted-foreground font-medium mb-3">Hasil Pencarian dan Filter:</p>
         <!-- Grid -->
-        <div class="border border-border rounded-[14px] p-6 bg-card">
-          <div class="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-6">
-            <ProductCard 
-              v-for="item in filteredAndSortedItems" 
-              :key="item.id" 
-              :subcategory-name="item.subcategory_name" 
-              :category-name="item.category_name"
-              :image-url="item.imageUrl"
-              :disabled="!item.barang_id"
-              @add-to-cart="openAddToCartModal(item)"
-            />
+        <ScrollArea class="border border-border rounded-[14px] bg-card h-[calc(100vh-320px)] sm:h-[calc(100vh-270px)]">
+          <div class="p-6">
+            <div class="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-6">
+              <ProductCard 
+                v-for="item in filteredAndSortedItems" 
+                :key="item.id" 
+                :subcategory-name="item.subcategory_name" 
+                :category-name="item.category_name"
+                :image-url="item.imageUrl"
+                :disabled="!item.barang_id"
+                @add-to-cart="openAddToCartModal(item)"
+              />
+            </div>
           </div>
-        </div>
+        </ScrollArea>
       </div>
     </div>
 
@@ -346,9 +367,9 @@ const filteredAndSortedItems = computed(() => {
               <div class="flex items-center gap-3">
                 <NumberField v-model="quantity" :min="1" :max="999999" locale="id-ID" class="w-32">
                   <NumberFieldContent>
-                    <NumberFieldDecrement class="cursor-pointer" />
+                    <NumberFieldDecrement />
                     <NumberFieldInput />
-                    <NumberFieldIncrement class="cursor-pointer" />
+                    <NumberFieldIncrement />
                   </NumberFieldContent>
                 </NumberField>
                 <span class="text-sm font-medium text-muted-foreground">{{ selectedUom }}</span>

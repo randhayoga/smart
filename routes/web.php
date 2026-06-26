@@ -12,7 +12,7 @@ use App\Http\Controllers\Smart\User\UserDashboardController;
 use App\Http\Controllers\Smart\User\BrowseController;
 use App\Http\Controllers\Smart\User\RequestCartController;
 use App\Http\Controllers\Smart\User\BorrowCartController;
-use App\Http\Controllers\Smart\User\AssetCartConfirmationController;
+use App\Http\Controllers\Smart\User\RequestCartConfirmationController;
 use App\Http\Controllers\Smart\User\BorrowCartConfirmationController;
 use App\Http\Controllers\Smart\User\RequestHistoryController;
 use App\Http\Controllers\Smart\Admin\Master\CategoryController;
@@ -116,8 +116,8 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
         Route::post('/asset-cart', [RequestCartController::class, 'store'])->name('asset-cart.store');
         Route::put('/asset-cart/{id}', [RequestCartController::class, 'update'])->name('asset-cart.update');
         Route::delete('/asset-cart/{id}', [RequestCartController::class, 'destroy'])->name('asset-cart.destroy');
-        Route::get('/asset-cart/confirmation', [AssetCartConfirmationController::class, 'index'])->name('asset-cart.confirmation');
-        Route::post('/asset-cart/confirmation', [AssetCartConfirmationController::class, 'store'])->name('asset-cart.confirmation.store');
+        Route::get('/asset-cart/confirmation', [RequestCartConfirmationController::class, 'index'])->name('asset-cart.confirmation');
+        Route::post('/asset-cart/confirmation', [RequestCartConfirmationController::class, 'store'])->name('asset-cart.confirmation.store');
 
         Route::get('/borrow-cart', [BorrowCartController::class, 'index'])->name('borrow-cart');
         Route::post('/borrow-cart', [BorrowCartController::class, 'store'])->name('borrow-cart.store');
