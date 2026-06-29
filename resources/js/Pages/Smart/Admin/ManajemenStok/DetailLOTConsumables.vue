@@ -170,7 +170,7 @@ onUnmounted(() => {
                     <p class="font-bold text-foreground"><span class="text-foreground">Jumlah stok diawal:</span> {{ lotDetails.initial_quantity ?? 0 }}</p>
                     <p class="text-foreground">Lokasi: {{ formatLocation(lotDetails) }}</p>
                     <p class="text-foreground">Nomor PO: {{ lotDetails.poNumber }}</p>
-                    <p class="text-foreground">Tanggal masuk: {{ formatDateWithDashes(lotDetails.entryDate) }}</p>
+                    <p class="text-foreground">Tanggal registrasi: {{ formatDateWithDashes(lotDetails.entryDate) }}</p>
                     <p class="text-foreground">Harga satuan: {{ formatRupiah(lotDetails.unitPrice) }}</p>
                     <p class="text-foreground">Organizer: {{ lotDetails.organizer }}</p>
                     <p class="text-foreground">Vendor: {{ lotDetails.vendor }}</p>

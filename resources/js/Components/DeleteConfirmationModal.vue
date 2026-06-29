@@ -21,7 +21,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  itemName: 'Barang',
+  itemName: 'Tipe',
   itemData: null,
   fields: null,
   title: 'Konfirmasi Penghapusan',
@@ -148,7 +148,7 @@ const displayFields = computed(() => {
       fields.push({ label: 'Lokasi', value: locParts.join(', ') || '-' });
       
       fields.push({ label: 'Nomor PO', value: data.unit_details.po_number || '-' });
-      if (data.unit_details.date_of_receipt) fields.push({ label: 'Tanggal masuk', value: data.unit_details.date_of_receipt });
+      if (data.unit_details.date_of_receipt) fields.push({ label: 'Tanggal registrasi', value: data.unit_details.date_of_receipt });
       if (data.unit_details.price !== undefined && data.unit_details.price !== null) {
         fields.push({ label: 'Harga', value: `Rp${data.unit_details.price}` });
       }
@@ -194,7 +194,7 @@ const displayFields = computed(() => {
     }
     
     if (data.poNumber) fields.push({ label: 'Nomor PO', value: data.poNumber });
-    if (data.entryDate) fields.push({ label: 'Tanggal masuk', value: formatDateWithDashes(data.entryDate) });
+    if (data.entryDate) fields.push({ label: 'Tanggal registrasi', value: formatDateWithDashes(data.entryDate) });
     
     if (!data.is_consumable) {
       fields.push({ label: 'Harga Satuan (default)', value: formatRupiah(data.unitPrice) });

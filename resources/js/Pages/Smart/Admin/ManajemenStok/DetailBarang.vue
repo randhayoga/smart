@@ -260,7 +260,7 @@ const handleSamakanPhoto = () => {
     lotForm.image_url = null;
     lotForm.image_url_name = props.barang.image_url.split('/').pop() || '';
   } else {
-    toast.error('Barang parent tidak memiliki foto.');
+    toast.error('Tipe parent tidak memiliki foto.');
   }
 };
 
@@ -459,7 +459,7 @@ const columns: ColumnDef<any>[] = [
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
       class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
     }, () => [
-      'Tanggal Masuk',
+      'Tanggal Registrasi',
       h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
     ]),
     cell: ({ row }) => h('div', { class: 'pl-0 text-muted-foreground' }, row.getValue('entryDate')),
@@ -623,7 +623,7 @@ const handleExportCSV = () => {
   const data = getExportData();
   if (data.length === 0) return;
   
-  const headers = ['Kode LOT', 'Nomor PO', 'Tanggal Masuk', 'Organizer', 'Jml. Stok'];
+  const headers = ['Kode LOT', 'Nomor PO', 'Tanggal Registrasi', 'Organizer', 'Jml. Stok'];
   const rows = data.map((item: any) => [
     `"${item.lotCode}"`,
     `"${item.poNumber}"`,
@@ -877,7 +877,7 @@ const handleBulkLotSamakanPhoto = () => {
     bulkLotForm.image_url = null;
     bulkLotForm.image_url_name = props.barang.image_url.split('/').pop() || '';
   } else {
-    toast.error('Barang parent tidak memiliki foto.');
+    toast.error('Tipe parent tidak memiliki foto.');
   }
 };
 
@@ -1040,7 +1040,7 @@ const deleteFields = computed(() => {
       { label: 'Jumlah stok diawal', value: initialStock },
       { label: 'Lokasi', value: formatLocation(data.location, data.floor, data.room) },
       { label: 'Nomor PO', value: data.poNumber },
-      { label: 'Tanggal masuk', value: formatDateWithDashes(data.entryDate) },
+      { label: 'Tanggal registrasi', value: formatDateWithDashes(data.entryDate) },
       { label: 'Harga satuan', value: formatRupiah(data.unitPrice) },
       { label: 'Organizer', value: data.organizer },
       { label: 'Vendor', value: data.vendor },
@@ -1185,7 +1185,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <AppLayout title="Detail Barang">
+  <AppLayout title="Detail Tipe">
     <!-- Breadcrumb -->
     <Breadcrumb class="no-print">
       <BreadcrumbList class="pb-3">
@@ -1205,10 +1205,10 @@ onUnmounted(() => {
 
       <div class="flex items-center gap-3">
         <Button @click="openEditModal" variant="primary" size="lg">
-          Edit Detail Barang
+          Edit Detail Tipe
         </Button>
         <Button @click="openDeleteModal" variant="destructive" size="lg">
-          Hapus Barang
+          Hapus Tipe
         </Button>
       </div>
     </div>
@@ -1216,7 +1216,7 @@ onUnmounted(() => {
     <div class="space-y-4">
       <!-- Detail Barang Card -->
       <div class="px-4 py-3 bg-card rounded-xl border border-border shadow-sm overflow-hidden no-print">
-        <h2 class="text-lg font-bold text-foreground mb-4">Detail Barang</h2>
+        <h2 class="text-lg font-bold text-foreground mb-4">Detail Tipe</h2>
         
         <div class="flex flex-col md:flex-row gap-6">
           <div class="w-48 h-48 rounded-xl bg-muted shrink-0 flex items-center justify-center overflow-hidden border border-border">
@@ -1225,7 +1225,7 @@ onUnmounted(() => {
           </div>
 
           <div class="flex-grow">
-            <p class="font-bold text-foreground"><span class="text-foreground">Kode Barang:</span> {{ props.barang.code }}</p>
+            <p class="font-bold text-foreground"><span class="text-foreground">Kode Tipe:</span> {{ props.barang.code }}</p>
             <p class="font-bold text-foreground"><span class="text-foreground">Merek:</span> {{ props.barang.brand }}</p>
             <p class="font-bold text-foreground"><span class="text-foreground">Nama:</span> {{ props.barang.name }}</p>
             <p class="font-bold text-foreground"><span class="text-foreground">Spesifikasi:</span> {{ props.barang.specification || '-' }}</p>
@@ -1375,7 +1375,7 @@ onUnmounted(() => {
             >
               <!-- Modal Header -->
               <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
-                <h3 class="text-lg font-bold text-foreground">Edit Detail Barang</h3>
+                <h3 class="text-lg font-bold text-foreground">Edit Detail Tipe</h3>
                 <button @click="closeEditModal" class="p-2 hover:bg-muted rounded-full transition-colors">
                   <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
                 </button>
@@ -1387,7 +1387,7 @@ onUnmounted(() => {
                   <!-- Left Column -->
                   <div class="space-y-6">
                     <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Kode Barang</label>
+                      <label class="text-sm font-medium text-foreground block">Kode Tipe</label>
                       <input 
                         type="text" 
                         v-model="editForm.kode"
@@ -1442,12 +1442,12 @@ onUnmounted(() => {
                     </div>
 
                     <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Nama Barang<span class="text-rose-500">*</span></label>
+                      <label class="text-sm font-medium text-foreground block">Nama Tipe<span class="text-rose-500">*</span></label>
                       <input 
                         type="text" 
                         v-model="editForm.name"
                         maxlength="255"
-                        placeholder="Input nama barang di sini..." 
+                        placeholder="Input nama tipe di sini..." 
                         class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
                       />
                     </div>
@@ -1695,7 +1695,7 @@ onUnmounted(() => {
                     </div>
 
                     <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Tanggal Masuk<span class="text-rose-500">*</span></label>
+                      <label class="text-sm font-medium text-foreground block">Tanggal Registrasi<span class="text-rose-500">*</span></label>
                       <input 
                         type="date" 
                         v-model="lotForm.date_of_receipt"
@@ -1914,7 +1914,7 @@ onUnmounted(() => {
                     </div>
 
                     <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Tanggal Masuk<span v-if="bulkLotForm.ids.length === 1" class="text-rose-500">*</span></label>
+                      <label class="text-sm font-medium text-foreground block">Tanggal Registrasi<span v-if="bulkLotForm.ids.length === 1" class="text-rose-500">*</span></label>
                       <input 
                         type="date" 
                         v-model="bulkLotForm.date_of_receipt"
@@ -2012,7 +2012,7 @@ onUnmounted(() => {
     <DeleteConfirmationModal 
       :is-open="isDeleteModalOpen"
       :item-count="itemsToDelete.length"
-      :item-name="'Barang'"
+      :item-name="deleteMode === 'barang' ? 'Tipe' : 'LOT'"
       :item-data="itemsToDelete.length === 1 ? itemsToDelete[0] : itemsToDelete"
       :fields="deleteFields"
       :max-width-class="itemsToDelete.length === 1 ? 'max-w-2xl' : undefined"

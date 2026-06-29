@@ -777,7 +777,7 @@ onUnmounted(() => {
                       <div class="md:col-span-5">
                         <p class="font-bold text-foreground"><span class="text-foreground">Kode LOT:</span> {{ activeApproval.unit_details.lot_code }}</p>
                         <p class="text-foreground">Organizer: {{ activeApproval.unit_details.organizer }}</p>
-                        <p class="text-foreground">Tanggal masuk: {{ formatDateWithDashes(activeApproval.unit_details.date_of_receipt) }}</p>
+                        <p class="text-foreground">Tanggal registrasi: {{ formatDateWithDashes(activeApproval.unit_details.date_of_receipt) }}</p>
                         <p class="text-foreground">Vendor: {{ activeApproval.unit_details.vendor }}</p>
                         <p class="text-foreground">Nomor PO: {{ activeApproval.unit_details.po_number }}</p>
                       </div>

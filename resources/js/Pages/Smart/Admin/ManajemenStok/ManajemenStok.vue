@@ -101,6 +101,42 @@ const columns: ColumnDef<any>[] = [
     enableHiding: false,
   },
   {
+    accessorKey: 'name',
+    size: 225,
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'Nama',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'text-foreground truncate', title: row.getValue('name') }, row.getValue('name')),
+  },
+  {
+    accessorKey: 'specification',
+    size: 225,
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'Spesifikasi',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => {
+      const spec = row.getValue('specification') as string | null | undefined;
+      return h('div', {
+        class: `${spec ? 'text-foreground' : 'text-muted-foreground'} truncate`,
+        title: spec || '-'
+      }, spec || '-');
+    },
+  },
+  {
     accessorKey: 'category',
     header: ({ column }) => {
       return h(Button, {
@@ -138,6 +174,7 @@ const columns: ColumnDef<any>[] = [
   },
   {
     accessorKey: 'brand',
+    size: 225,
     header: ({ column }) => {
       return h(Button, {
         variant: 'ghost',
@@ -155,40 +192,19 @@ const columns: ColumnDef<any>[] = [
     }
   },
   {
-    accessorKey: 'name',
-    size: 225,
+    accessorKey: 'amount',
+    size: 95,
     header: ({ column }) => {
       return h(Button, {
         variant: 'ghost',
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Nama',
+        'Total',
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
-    cell: ({ row }) => h('div', { class: 'text-foreground truncate', title: row.getValue('name') }, row.getValue('name')),
-  },
-  {
-    accessorKey: 'specification',
-    size: 225,
-    header: ({ column }) => {
-      return h(Button, {
-        variant: 'ghost',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
-      }, () => [
-        'Spesifikasi',
-        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-      ])
-    },
-    cell: ({ row }) => {
-      const spec = row.getValue('specification') as string | null | undefined;
-      return h('div', {
-        class: `${spec ? 'text-foreground' : 'text-muted-foreground'} truncate`,
-        title: spec || '-'
-      }, spec || '-');
-    },
+    cell: ({ row }) => h('div', { class: 'font-medium text-foreground' }, row.getValue('amount')),
   },
   {
     accessorKey: 'lastUpdate',
@@ -221,21 +237,6 @@ const columns: ColumnDef<any>[] = [
       };
       return parseDate(rowA.getValue(columnId)) - parseDate(rowB.getValue(columnId));
     }
-  },
-  {
-    accessorKey: 'amount',
-    size: 95,
-    header: ({ column }) => {
-      return h(Button, {
-        variant: 'ghost',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
-      }, () => [
-        'Total',
-        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-      ])
-    },
-    cell: ({ row }) => h('div', { class: 'font-medium text-foreground' }, row.getValue('amount')),
   },
   {
     id: 'actions',
@@ -769,7 +770,7 @@ onUnmounted(() => {
                     id="search-barang"
                     name="search"
                     v-model="searchQuery"
-                    placeholder="Cari Barang..." 
+                    placeholder="Cari Tipe..." 
                   />
                 </div>
 
@@ -874,7 +875,7 @@ onUnmounted(() => {
                 size="lg"
               >
                 <Plus class="w-4 h-4" />
-                <span>Barang Baru</span>               
+                <span>Tipe Baru</span>               
               </Button>
             </div>
           </div>
@@ -930,7 +931,7 @@ onUnmounted(() => {
             >
               <!-- Modal Header -->
               <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
-                <h3 class="text-lg font-bold text-foreground">Pembuatan Barang Baru</h3>
+                <h3 class="text-lg font-bold text-foreground">Pembuatan Tipe Baru</h3>
                 <button @click="closeCreateModal" class="p-2 hover:bg-muted rounded-full transition-colors">
                   <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
                 </button>
@@ -942,7 +943,7 @@ onUnmounted(() => {
                   <!-- Left Column -->
                   <div class="space-y-6">
                     <div class="space-y-1.5">
-                      <label for="newItemCode" class="text-sm font-medium text-foreground block">Kode Barang<span class="text-rose-500">*</span></label>
+                      <label for="newItemCode" class="text-sm font-medium text-foreground block">Kode Tipe<span class="text-rose-500">*</span></label>
                       <div class="flex gap-2">
                         <input 
                           type="text" 
@@ -950,7 +951,7 @@ onUnmounted(() => {
                           name="code"
                           v-model="newItem.code"
                           disabled
-                          placeholder="Kode Barang belum di-generate" 
+                          placeholder="Kode Tipe belum di-generate" 
                           class="flex-grow px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed"
                         />
                         <Button
@@ -998,7 +999,7 @@ onUnmounted(() => {
                         v-model="newItem.uom_id"
                         :options="props.uoms"
                         search-placeholder="Cari satuan..."
-                        default-label="Pilih satuan barang"
+                        default-label="Pilih satuan tipe"
                         width-class="w-full h-10 px-4"
                       />
                     </div>
@@ -1018,14 +1019,14 @@ onUnmounted(() => {
                     </div>
 
                     <div class="space-y-1.5">
-                      <label for="newItemNama" class="text-sm font-medium text-foreground block">Nama Barang<span class="text-rose-500">*</span></label>
+                      <label for="newItemNama" class="text-sm font-medium text-foreground block">Nama Tipe<span class="text-rose-500">*</span></label>
                       <input 
                         type="text" 
                         id="newItemNama"
                         name="name"
                         v-model="newItem.name"
                         maxlength="255"
-                        placeholder="Input nama barang di sini..." 
+                        placeholder="Input nama tipe di sini..." 
                         class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
                       />
                     </div>
@@ -1087,7 +1088,7 @@ onUnmounted(() => {
                     variant="primary"
                     size="xl"
                   >
-                    Buat Barang
+                    Buat Tipe
                   </Button>
                 </div>
               </div>
@@ -1123,7 +1124,7 @@ onUnmounted(() => {
               <!-- Modal Header -->
               <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
                 <h3 class="text-lg font-bold text-foreground">
-                  {{ bulkEditForm.ids.length === 1 ? 'Edit Barang' : 'Edit Barang Terpilih' }}
+                  {{ bulkEditForm.ids.length === 1 ? 'Edit Tipe' : 'Edit Tipe Terpilih' }}
                 </h3>
                 <button @click="closeBulkEditModal" class="p-2 hover:bg-muted rounded-full transition-colors">
                   <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
@@ -1136,7 +1137,7 @@ onUnmounted(() => {
                   <!-- Left Column -->
                   <div class="space-y-6">
                     <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Kode Barang</label>
+                      <label class="text-sm font-medium text-foreground block">Kode Tipe</label>
                       <input 
                         type="text" 
                         :value="selectedItem ? selectedItem.code : 'Tidak dapat diubah'"
@@ -1196,7 +1197,7 @@ onUnmounted(() => {
 
                     <div class="space-y-1.5">
                       <label class="text-sm font-medium text-foreground block">
-                        Nama Barang<span v-if="bulkEditForm.ids.length === 1" class="text-rose-500">*</span>
+                        Nama Tipe<span v-if="bulkEditForm.ids.length === 1" class="text-rose-500">*</span>
                       </label>
                       <input 
                         type="text" 
@@ -1285,7 +1286,7 @@ onUnmounted(() => {
     <DeleteConfirmationModal 
       :is-open="isDeleteModalOpen"
       :item-count="itemsToDelete.length"
-      item-name="Barang"
+      item-name="Tipe"
       :item-data="itemsToDelete.length === 1 ? itemsToDelete[0] : itemsToDelete"
       @close="closeDeleteModal"
       @confirm="handleConfirmDelete"

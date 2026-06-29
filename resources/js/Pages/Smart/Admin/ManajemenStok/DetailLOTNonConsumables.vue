@@ -308,8 +308,8 @@ const assetForm = useForm({
   location_id: '' as string | number,
   floor_id: null as string | number | null,
   room_id: null as string | number | null,
-  status: 'tersedia',
-  condition: 'baik',
+  status: 'Tersedia',
+  condition: 'Baik',
   price: '' as string | number,
   image_url: null as File | null,
   image_url_name: '',
@@ -667,7 +667,7 @@ const deleteFields = computed(() => {
       { label: 'Jumlah stok diawal', value: props.units.length },
       { label: 'Lokasi', value: formatLocation(props.lot.location, props.lot.floor, props.lot.room) },
       { label: 'Nomor PO', value: props.lot.poNumber },
-      { label: 'Tanggal masuk', value: formatDateWithDashes(props.lot.entryDate) },
+      { label: 'Tanggal registrasi', value: formatDateWithDashes(props.lot.entryDate) },
       { label: 'Harga satuan', value: formatRupiah(props.lot.unitPrice) },
       { label: 'Organizer', value: props.lot.organizer },
       { label: 'Vendor', value: props.lot.vendor },
@@ -697,7 +697,7 @@ const deleteFields = computed(() => {
       { label: 'Kondisi', value: data.condition },
       { label: 'Lokasi', value: formatLocation(data.location, data.floor, data.room) },
       { label: 'Nomor PO', value: props.lot.poNumber },
-      { label: 'Tanggal masuk', value: formatDateWithDashes(props.lot.entryDate) },
+      { label: 'Tanggal registrasi', value: formatDateWithDashes(props.lot.entryDate) },
       { label: 'Harga', value: formatRupiah(data.price) },
       { label: 'Organizer', value: props.lot.organizer },
       { label: 'Vendor', value: props.lot.vendor },
@@ -1548,11 +1548,11 @@ const totalAsetTerpilihCount = computed(() => {
             </div>
             <div class="md:col-span-8">
               <p class="font-bold text-foreground"><span class="text-foreground">Kode LOT:</span> {{ props.lot.lotCode }}</p>
-              <p class="text-foreground">Jumlah stok tersedia: {{ props.units.filter(u => u.status === 'tersedia').length }}</p>
+              <p class="text-foreground">Jumlah stok tersedia: {{ props.units.filter(u => u.status === 'Tersedia').length }}</p>
               <p class="text-foreground">Jumlah stok diawal: {{ props.units.length }}</p>
               <p class="text-foreground">Lokasi <span class="italic text-muted-foreground">default</span>: {{ formatLocation(props.lot.location, props.lot.floor, props.lot.room) }}</p>
               <p class="text-foreground">Nomor PO: {{ props.lot.poNumber }}</p>
-              <p class="text-foreground">Tanggal masuk: {{ formatDateWithDashes(props.lot.entryDate) }}</p>
+              <p class="text-foreground">Tanggal registrasi: {{ formatDateWithDashes(props.lot.entryDate) }}</p>
               <p class="text-foreground">Harga satuan <span class="italic text-muted-foreground">default</span>: {{ formatRupiah(props.lot.unitPrice) }}</p>
               <p class="text-foreground">Organizer: {{ props.lot.organizer }}</p>
               <p class="text-foreground">Vendor: {{ props.lot.vendor }}</p>
@@ -1795,7 +1795,7 @@ const totalAsetTerpilihCount = computed(() => {
                     </div>
 
                     <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Tanggal Masuk<span class="text-rose-500">*</span></label>
+                      <label class="text-sm font-medium text-foreground block">Tanggal Registrasi<span class="text-rose-500">*</span></label>
                       <input 
                         type="date" 
                         v-model="lotForm.date_of_receipt"
@@ -2301,7 +2301,7 @@ const totalAsetTerpilihCount = computed(() => {
                     <div class="md:col-span-4">
                       <p class="font-bold text-foreground"><span class="text-foreground">Kode LOT:</span> {{ props.lot.lotCode }}</p>
                       <p class="text-foreground">Organizer: {{ props.lot.organizer }}</p>
-                      <p class="text-foreground">Tanggal masuk: {{ formatDateWithDashes(props.lot.entryDate) }}</p>
+                      <p class="text-foreground">Tanggal registrasi: {{ formatDateWithDashes(props.lot.entryDate) }}</p>
                       <p class="text-foreground">Vendor: {{ props.lot.vendor }}</p>
                       <p class="text-foreground">Nomor PO: {{ props.lot.poNumber }}</p>
                     </div>
