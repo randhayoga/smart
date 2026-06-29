@@ -4,16 +4,9 @@ import { router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { Input } from '@/Components/ui/input';
 import { Button } from '@/Components/ui/button';
-import { Trash2 } from 'lucide-vue-next';
-import Checkbox from '@/Components/ui/checkbox/Checkbox.vue';
 import { ScrollArea } from "@/Components/ui/scroll-area";
-import {
-  NumberField,
-  NumberFieldContent,
-  NumberFieldDecrement,
-  NumberFieldIncrement,
-  NumberFieldInput,
-} from "@/Components/ui/number-field";
+import CartItemCard from '@/Components/CartItemCard.vue';
+import Checkbox from '@/Components/ui/checkbox/Checkbox.vue';
 
 interface Props {
   user?: any;
@@ -32,7 +25,7 @@ const props = withDefaults(defineProps<Props>(), {
   defaultEndTime: '',
 });
 
-// --- Tipe Data ---
+// --- Data Types ---
 interface CartItem {
   id: number;
   barang_id: number | null;
@@ -43,14 +36,14 @@ interface CartItem {
   category_name: string;
   subcategory_name: string;
   code: string;
-  stock: number;       // Stok total tersedia
-  quantity: number;    // Jumlah yang diminta
+  stock: number;       // Total available stock
+  quantity: number;    // Requested quantity
   selected: boolean;
-  isPreorder?: boolean; // Bisa pre-order tapi stok saat ini 0
+  isPreorder?: boolean; // Pre-order allowed but current stock is 0
   imageUrl?: string;
 }
 
-// --- Helper: Mendapatkan tanggal & waktu lokal client ---
+// --- Helper: Get client local date & time ---
 const getClientDefaultDate = () => {
   const now = new Date();
   const yyyy = now.getFullYear();
@@ -73,8 +66,8 @@ const handlePickerClick = (e: Event) => {
   }
 };
 
-// --- State Tanggal Peminjaman ---
-// HARUS diisi lebih dulu — semua aksi lain disabled sampai tanggal mulai diisi
+// --- Borrow Date State ---
+// MUST be filled first - all other actions are disabled until the start date is filled
 const startDate = ref(getClientDefaultDate());
 const startTime = ref(getClientDefaultTime());
 const endDate   = ref('');
@@ -92,7 +85,20 @@ watch(() => props.cartItems, (newVal) => {
 
 const isDateSelected = computed(() => startDate.value && startDate.value.trim() !== '');
 
-// Jika tanggal mulai berubah → reset semua pilihan (karena ketersediaan bisa berubah)
+const isAllSelected = computed({
+  get() {
+    if (cartItems.value.length === 0) return false;
+    return cartItems.value.every(item => item.selected);
+  },
+  set(val: boolean) {
+    if (!isDateSelected.value) return;
+    cartItems.value.forEach(item => {
+      item.selected = val;
+    });
+  }
+});
+
+// If start date changes → reset all selections (since availability can change)
 watch(startDate, () => {
   cartItems.value.forEach(item => {
     item.selected = false;
@@ -116,20 +122,20 @@ const filteredItems = computed(() => {
   return cartItems.value;
 });
 
-// --- Computed: Item yang dipilih untuk ringkasan ---
+// --- Computed: Selected items for summary ---
 const selectedItems = computed(() => cartItems.value.filter(item => item.selected));
 
-// Tombol "Lanjut ke Konfirmasi" aktif jika ada tanggal mulai DAN minimal 1 item dipilih
+// "Proceed to Confirmation" button is active if start date is filled AND at least 1 item is selected
 const canProceed = computed(() => isDateSelected.value && selectedItems.value.length > 0);
 
-// --- Aksi: Hapus item dari keranjang ---
+// --- Actions: Remove item from cart ---
 const removeItem = (id: number) => {
   router.delete(route('smart.borrow-cart.destroy', id), {
     preserveScroll: true,
   });
 };
 
-// --- Aksi: Update jumlah ---
+// --- Actions: Update quantity ---
 const updateQty = (item: CartItem, value: number) => {
   router.put(route('smart.borrow-cart.update', item.id), {
     quantity: value
@@ -138,7 +144,7 @@ const updateQty = (item: CartItem, value: number) => {
   });
 };
 
-// --- Aksi: Lanjut ke konfirmasi ---
+// --- Actions: Proceed to confirmation ---
 const handleProceed = () => {
   const ids = selectedItems.value.map(i => i.id).join(',');
   router.get(route('smart.borrow-cart.confirmation'), {
@@ -170,72 +176,106 @@ const getItemDisplayName = (item: CartItem) => {
 
 <template>
   <AppLayout title="Keranjang Peminjaman">
-    <!-- Judul Halaman -->
-    <div class="mb-2">
-      <h1 class="text-xl font-bold text-gray-900 leading-none">Keranjang Peminjaman</h1>
-      <p class="text-muted-foreground mt-2">Pilih tanggal peminjaman lalu pilih barang-barang yang ingin dimasukkan dalam peminjaman.</p>
+    <!-- Page Title -->
+    <div class="mb-2 flex flex-row items-center justify-between sm:flex-col sm:items-start">
+      <div class="min-w-0">
+        <h1 class="text-xl font-bold text-gray-900 leading-none">Keranjang Peminjaman</h1>
+        <p class="text-muted-foreground mt-2 hidden sm:block">Pilih tanggal peminjaman lalu pilih barang-barang yang ingin dimasukkan dalam peminjaman.</p>
+      </div>
+
+      <!-- Pilih Semua Checkbox -->
+      <div 
+        class="items-center gap-2 bg-card border border-border px-3 py-1.5 sm:py-2 rounded-lg w-fit sm:mt-3 transition-opacity duration-200"
+        :class="[
+          cartItems.length === 0 
+            ? 'hidden sm:flex opacity-50 cursor-not-allowed select-none' 
+            : 'flex',
+          (!isDateSelected && cartItems.length > 0)
+            ? 'opacity-50 cursor-not-allowed' 
+            : ''
+        ]"
+      >
+        <Checkbox 
+          id="select-all"
+          :model-value="isAllSelected"
+          @update:model-value="(val) => isAllSelected = !!val"
+          :disabled="!isDateSelected || cartItems.length === 0"
+          class="cursor-pointer disabled:cursor-not-allowed"
+        />
+        <label 
+          for="select-all" 
+          class="text-sm font-medium text-foreground select-none"
+          :class="(!isDateSelected || cartItems.length === 0) ? 'cursor-not-allowed text-muted-foreground' : 'cursor-pointer'"
+        >
+          Pilih Semua
+        </label>
+      </div>
     </div>
 
-    <div class="flex flex-col lg:flex-row gap-6 mt-6">
+    <div class="flex flex-col lg:flex-row sm:gap-6 mt-3 pb-20 lg:pb-0">
       <!-- ============================================================ -->
-      <!-- Kolom Kiri: Form Tanggal + Daftar Barang                     -->
+      <!-- Left Column: Date Form + Items List                          -->
       <!-- ============================================================ -->
       <div class="flex-1 min-w-0 space-y-4">
 
-        <!-- === Blok Tanggal Peminjaman (Must be selected first) === -->
-        <div class="bg-card border border-border rounded-[14px] p-5">
-          <h2 class="text-lg font-bold text-foreground mb-2">Tanggal Peminjaman</h2>
+        <!-- === Borrow Date Block (Must be selected first) === -->
+        <div class="bg-card border border-border rounded-[0.875rem] p-5">
+          <h2 class="text-base text-foreground mb-1">Tanggal Peminjaman</h2>
 
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 items-start">
-            <!-- Tanggal Mulai -->
-            <div class="space-y-1">
+            <!-- Start Date -->
+            <div class="space-y-1 order-1 sm:order-1">
               <label class="text-sm font-medium text-foreground">
-                Tanggal mulai<span class="text-destructive">*</span>
+                <span class="sm:hidden">Mulai</span>
+                <span class="hidden sm:inline">Tanggal mulai</span><span class="text-destructive">*</span>
               </label>
               <Input
                 v-model="startDate"
                 type="date"
-                class="h-10 rounded-[14px] text-sm w-full cursor-pointer"
+                class="h-10 rounded-[0.875rem] text-sm w-full cursor-pointer"
                 @click="handlePickerClick"
                 @keydown.prevent
               />
             </div>
 
-            <!-- Waktu Mulai -->
-            <div class="space-y-1">
-              <label class="text-sm font-medium text-foreground">
+            <!-- Start Time -->
+            <div class="space-y-1 order-3 sm:order-2">
+              <label class="text-sm font-medium text-foreground hidden sm:block">
                 Waktu mulai<span class="text-destructive">*</span>
               </label>
               <Input
                 v-model="startTime"
                 type="time"
-                class="h-10 rounded-[14px] text-sm w-full cursor-pointer"
+                class="h-10 rounded-[0.875rem] text-sm w-full cursor-pointer"
                 :disabled="!startDate"
                 @click="handlePickerClick"
                 @keydown.prevent
               />
             </div>
 
-            <!-- Tanggal Selesai -->
-            <div class="space-y-1">
-              <label class="text-sm font-medium text-muted-foreground">Tanggal selesai</label>
+            <!-- End Date -->
+            <div class="space-y-1 order-2 sm:order-3">
+              <label class="text-sm font-medium text-muted-foreground">
+                <span class="sm:hidden">Selesai</span>
+                <span class="hidden sm:inline">Tanggal selesai</span>
+              </label>
               <Input
                 v-model="endDate"
                 type="date"
-                class="h-10 rounded-[14px] text-sm w-full cursor-pointer"
+                class="h-10 rounded-[0.875rem] text-sm w-full cursor-pointer"
                 :disabled="!startDate"
                 @click="handlePickerClick"
                 @keydown.prevent
               />
             </div>
 
-            <!-- Waktu Selesai -->
-            <div class="space-y-1">
-              <label class="text-sm font-medium text-muted-foreground">Waktu selesai</label>
+            <!-- End Time -->
+            <div class="space-y-1 order-4 sm:order-4">
+              <label class="text-sm font-medium text-muted-foreground hidden sm:block">Waktu selesai</label>
               <Input
                 v-model="endTime"
                 type="time"
-                class="h-10 rounded-[14px] text-sm w-full cursor-pointer"
+                class="h-10 rounded-[0.875rem] text-sm w-full cursor-pointer"
                 :disabled="!endDate"
                 @click="handlePickerClick"
                 @keydown.prevent
@@ -243,112 +283,44 @@ const getItemDisplayName = (item: CartItem) => {
             </div>
           </div>
 
-          <!-- Pesan bantu -->
-          <div class="text-sm italic flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 mt-3">
+          <!-- Helper message -->
+          <div class="text-xs sm:text-sm italic hidden sm:flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 mt-3">
             <p class="text-destructive font-medium">*harus diisi</p>
             <p class="text-muted-foreground">tanggal &amp; waktu selesai dapat dikosongkan</p>
           </div>
         </div>
 
-        <!-- === Daftar Item Keranjang === -->
-        <ScrollArea class="border border-border rounded-[14px] bg-card h-[calc(100vh-390px)] sm:h-[calc(100vh-390px)]">
-          <div class="p-6">
+        <ScrollArea class="border border-border rounded-[0.875rem] bg-card h-[calc(100vh-26.23rem)] sm:h-[calc(100vh-27rem)]">
+          <div class="p-3 sm:p-6">
             <div class="space-y-3">
-              <!-- Pesan jika kosong -->
+              <!-- Message if empty -->
               <div v-if="filteredItems.length === 0" class="text-center py-10">
                 <p class="text-muted-foreground text-sm">Keranjang kosong atau tidak ada barang yang sesuai filter.</p>
               </div>
 
               <!-- Item Card -->
-              <div
+              <CartItemCard
                 v-for="item in filteredItems"
                 :key="item.id"
-                class="bg-card border rounded-[14px] p-4 flex items-center gap-4 transition-colors"
-                :class="[
-                  item.selected ? 'border-primary/50 bg-primary/5' : 'border-border',
-                  !isDateSelected ? 'opacity-60' : ''
-                ]"
-              >
-                <!-- Checkbox seleksi -->
-                <Checkbox 
-                  v-model="item.selected"
-                  class="cursor-pointer"
-                  :disabled="!isDateSelected"
-                />
-
-                <!-- Image -->
-                <div class="w-24 h-24 shrink-0 bg-muted rounded-[14px] overflow-hidden flex items-center justify-center border border-border relative">
-                  <div class="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-white/40"></div>
-                  <img v-if="item.imageUrl" :src="item.imageUrl.startsWith('http') || item.imageUrl.startsWith('/') ? item.imageUrl : '/storage/' + item.imageUrl" alt="Product" class="w-full h-full object-cover relative z-10" />
-                  <img v-else src="https://placehold.co/400x400?text=Barang" alt="Product" class="w-full h-full object-cover opacity-50" />
-                </div>
-
-                <!-- Info -->
-                <div class="flex-1 min-w-0 flex flex-col justify-center">
-                  <template v-if="!item.barang_id">
-                    <h3 class="text-lg font-bold text-foreground leading-snug">{{ item.subcategory_name }}</h3>
-                    <p class="text-sm text-muted-foreground leading-normal">{{ item.category_name }}</p>
-                    <p class="text-xs text-muted-foreground italic">*gambar hanya ilustrasi</p>
-                  </template>
-                  <template v-else>
-                    <span v-if="item.brand && item.brand !== '-'" class="text-lg font-bold text-foreground leading-tight">
-                      {{ item.brand }}
-                    </span>
-                    <h3 class="text-lg font-bold text-foreground leading-snug">
-                      {{ item.name }}{{ item.spec && item.spec !== '-' ? ' ' + item.spec : '' }}
-                    </h3>
-                    <p class="text-sm text-muted-foreground leading-normal">
-                      {{ item.category_name }} ({{ item.subcategory_name }})
-                    </p>
-                    <p class="text-xs text-muted-foreground mt-1">
-                      {{ item.code }}
-                    </p>
-                  </template>
-                </div>
-
-                <!-- Tombol Hapus -->
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  class="text-destructive hover:bg-destructive/10 hover:text-destructive flex-shrink-0 rounded-full"
-                  @click="removeItem(item.id)"
-                  title="Hapus dari keranjang"
-                >
-                  <Trash2 class="w-4 h-4" />
-                </Button>
-
-                <!-- Kontrol Jumlah -->
-                <div class="flex-shrink-0">
-                  <NumberField 
-                    :model-value="item.quantity" 
-                    @update:model-value="(val) => updateQty(item, val)"
-                    :min="1" 
-                    :max="999999" 
-                    locale="id-ID" 
-                    class="w-32"
-                    :disabled="!isDateSelected"
-                  >
-                    <NumberFieldContent>
-                      <NumberFieldDecrement />
-                      <NumberFieldInput />
-                      <NumberFieldIncrement />
-                    </NumberFieldContent>
-                  </NumberField>
-                </div>
-              </div>
+                :item="item"
+                v-model:selected="item.selected"
+                :disabled="!isDateSelected"
+                @remove="removeItem(item.id)"
+                @update:quantity="(qty) => updateQty(item, qty)"
+              />
             </div>
           </div>
         </ScrollArea>
       </div>
 
       <!-- ============================================================ -->
-      <!-- Kolom Kanan: Ringkasan Peminjaman (sticky)                    -->
+      <!-- Right Column: Borrow Summary (sticky)                        -->
       <!-- ============================================================ -->
-      <div class="w-full w-lg flex-shrink-0">
-        <div class="bg-card border border-border rounded-[14px] p-5 sticky top-24">
+      <div class="hidden lg:block lg:w-80 xl:w-96 flex-shrink-0">
+        <div class="bg-card border border-border rounded-[0.875rem] p-5 sticky top-24">
           <h2 class="text-lg font-bold text-foreground mb-4">Ringkasan Peminjaman</h2>
 
-          <!-- Daftar item yang dipilih -->
+          <!-- List of selected items -->
           <div class="space-y-3 mb-6">
             <div v-if="selectedItems.length === 0" class="text-sm text-muted-foreground italic">
               {{ !isDateSelected ? 'Pilih tanggal peminjaman terlebih dahulu.' : 'Belum ada barang yang dipilih.' }}
@@ -369,8 +341,8 @@ const getItemDisplayName = (item: CartItem) => {
 
           <hr class="border-border mb-5" />
 
-          <!-- Tombol Lanjut ke Konfirmasi -->
-          <!-- Disabled jika: tanggal belum diisi ATAU tidak ada item yang dipilih -->
+          <!-- Proceed to Confirmation Button -->
+          <!-- Disabled if: start date is not filled OR no items are selected -->
           <Button
             variant="primary"
             size="lg"
@@ -381,11 +353,30 @@ const getItemDisplayName = (item: CartItem) => {
             Lanjut ke Konfirmasi
           </Button>
 
-          <!-- Petunjuk kontekstual -->
+          <!-- Contextual hint -->
           <p v-if="!isDateSelected" class="text-xs text-muted-foreground text-center mt-3">
             Pilih tanggal mulai terlebih dahulu.
           </p>
         </div>
+      </div>
+
+      <!-- Mobile Sticky Bottom Footer -->
+      <div class="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border px-4 py-3 shadow-lg flex items-center justify-between pb-safe">
+        <div class="flex flex-col">
+          <span class="text-xs text-muted-foreground font-medium">Total:</span>
+          <span class="text-sm font-bold text-foreground">
+            {{ selectedItems.length }} jenis barang
+          </span>
+        </div>
+        <Button
+          variant="primary"
+          size="default"
+          class="px-6 rounded-xl"
+          :disabled="!canProceed"
+          @click="handleProceed"
+        >
+          Konfirmasi
+        </Button>
       </div>
     </div>
   </AppLayout>

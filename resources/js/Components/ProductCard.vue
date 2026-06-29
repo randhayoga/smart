@@ -18,9 +18,14 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div class="flex flex-col border border-border rounded-[14px] bg-card overflow-hidden h-full shadow-sm">
+  <div
+    class="flex flex-col border rounded-[0.875rem] bg-card overflow-hidden h-full transition-all duration-300 shadow-card"
+    :class="[
+      disabled ? 'opacity-60 border-border' : 'border-border hover:shadow-card-hover hover:-translate-y-0.5'
+    ]"
+  >
     <!-- Image Placeholder or Actual Image -->
-    <div class="aspect-square bg-muted rounded-[14px] overflow-hidden flex items-center justify-center shrink-0 relative w-full">
+    <div class="aspect-square bg-muted rounded-[0.875rem] overflow-hidden flex items-center justify-center shrink-0 relative w-full">
       <img v-if="imageUrl" :src="imageUrl" alt="Product Image" class="w-full h-full object-cover relative z-10" />
       <img v-else src="https://placehold.co/400x400?text=Barang" class="w-full h-full object-cover opacity-50" />
     </div>
@@ -29,21 +34,20 @@ const emit = defineEmits<{
     <div class="flex flex-col flex-grow p-4">
       <p class="font-bold text-foreground">{{ subcategoryName }}</p>
       <p class="text-sm text-muted-foreground">{{ categoryName }}</p>
-
+ 
       <!-- Spacer to push button to bottom -->
       <div class="flex-grow pt-3"></div>
       
       <Button 
         @click="emit('add-to-cart')"
         :disabled="disabled"
-        class="w-full mt-auto bg-gradient-primary shadow-button hover:opacity-90 text-white rounded-[12px] h-[38px] text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed px-2"
+        class="w-full mt-auto bg-gradient-primary shadow-button hover:opacity-90 text-white rounded-[0.75rem] h-[2.375rem] text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed px-2"
       >
         <template v-if="disabled">
           Tidak Tersedia
         </template>
         <template v-else>
-          <span class="sm:hidden">Tambah</span>
-          <span class="hidden sm:inline">Tambah ke Keranjang</span>
+          <span>Tambah</span>
         </template>
       </Button>
     </div>
