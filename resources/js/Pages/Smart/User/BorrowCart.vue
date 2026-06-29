@@ -251,7 +251,7 @@ const getItemDisplayName = (item: CartItem) => {
         </div>
 
         <!-- === Daftar Item Keranjang === -->
-        <ScrollArea class="border border-border rounded-[14px] bg-card h-[calc(100vh-380px)] sm:h-[calc(100vh-380px)]">
+        <ScrollArea class="border border-border rounded-[14px] bg-card h-[calc(100vh-390px)] sm:h-[calc(100vh-390px)]">
           <div class="p-6">
             <div class="space-y-3">
               <!-- Pesan jika kosong -->
