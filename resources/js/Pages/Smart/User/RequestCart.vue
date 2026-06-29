@@ -108,7 +108,7 @@ const getItemDisplayName = (item: CartItem) => {
     <!-- Judul Halaman -->
     <div class="mb-2">
       <h1 class="text-xl font-bold text-gray-900 leading-none">Keranjang Habis Pakai</h1>
-      <p class="text-muted-foreground mt-2">Pilih barang-barang yang ingin dimasukkan dalam permintaan.</p>
+      <p class="text-muted-foreground mt-2 hidden sm:block">Pilih barang-barang yang ingin dimasukkan dalam permintaan.</p>
     </div>
 
     <div class="flex flex-col lg:flex-row gap-6 mt-6">
@@ -117,8 +117,8 @@ const getItemDisplayName = (item: CartItem) => {
       <!-- ============================================================ -->
       <div class="flex-1 min-w-0">
         <!-- Daftar Item -->
-        <ScrollArea class="border border-border rounded-[14px] bg-card h-[calc(100vh-200px)] sm:h-[calc(100vh-200px)]">
-          <div class="p-6">
+        <ScrollArea class="border border-border rounded-[14px] bg-card h-[380px] lg:h-[calc(100vh-200px)]">
+          <div class="p-4 sm:p-6">
             <div class="space-y-3">
               <!-- Jika keranjang kosong -->
               <div v-if="filteredItems.length === 0" class="text-center py-10">
@@ -129,72 +129,78 @@ const getItemDisplayName = (item: CartItem) => {
               <div
                 v-for="item in filteredItems"
                 :key="item.id"
-                class="bg-card border rounded-[14px] p-4 flex items-center gap-4 transition-colors"
+                class="bg-card border rounded-[14px] p-3 sm:p-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 transition-colors"
                 :class="item.selected ? 'border-primary/50 bg-primary/5' : 'border-border'"
               >
-                <!-- Checkbox seleksi -->
-                <Checkbox 
-                  v-model="item.selected"
-                  class="cursor-pointer"
-                />
+                <!-- Top/Main Content Area for Checkbox, Image & Info -->
+                <div class="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                  <!-- Checkbox seleksi -->
+                  <Checkbox 
+                    v-model="item.selected"
+                    class="cursor-pointer shrink-0"
+                  />
 
-                <!-- Image -->
-                <div class="w-24 h-24 shrink-0 bg-muted rounded-[14px] overflow-hidden flex items-center justify-center border border-border relative">
-                  <div class="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-white/40"></div>
-                  <img v-if="item.imageUrl" :src="item.imageUrl.startsWith('http') || item.imageUrl.startsWith('/') ? item.imageUrl : '/storage/' + item.imageUrl" alt="Product" class="w-full h-full object-cover relative z-10" />
-                  <img v-else src="https://placehold.co/400x400?text=Barang" alt="Product" class="w-full h-full object-cover opacity-50" />
+                  <!-- Image -->
+                  <div class="w-16 h-16 sm:w-24 sm:h-24 shrink-0 bg-muted rounded-[14px] overflow-hidden flex items-center justify-center border border-border relative">
+                    <div class="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-white/40"></div>
+                    <img v-if="item.imageUrl" :src="item.imageUrl.startsWith('http') || item.imageUrl.startsWith('/') ? item.imageUrl : '/storage/' + item.imageUrl" alt="Product" class="w-full h-full object-cover relative z-10" />
+                    <img v-else src="https://placehold.co/400x400?text=Barang" alt="Product" class="w-full h-full object-cover opacity-50" />
+                  </div>
+
+                  <!-- Info -->
+                  <div class="flex-1 min-w-0 flex flex-col justify-center">
+                    <template v-if="!item.barang_id">
+                      <h3 class="text-sm sm:text-lg font-bold text-foreground leading-snug truncate">{{ item.subcategory_name }}</h3>
+                      <p class="text-xs sm:text-sm text-muted-foreground leading-normal truncate">{{ item.category_name }}</p>
+                      <p class="text-[10px] sm:text-xs text-muted-foreground italic hidden sm:block">*gambar hanya illustrasi</p>
+                    </template>
+                    <template v-else>
+                      <span v-if="item.brand && item.brand !== '-'" class="text-xs sm:text-lg font-bold text-foreground leading-tight truncate">
+                        {{ item.brand }}
+                      </span>
+                      <h3 class="text-sm sm:text-lg font-bold text-foreground leading-snug truncate">
+                        {{ item.name }}{{ item.spec && item.spec !== '-' ? ' ' + item.spec : '' }}
+                      </h3>
+                      <p class="text-xs sm:text-sm text-muted-foreground leading-normal truncate">
+                        {{ item.category_name }} ({{ item.subcategory_name }})
+                      </p>
+                      <p class="text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1 truncate">
+                        {{ item.code }}
+                      </p>
+                    </template>
+                  </div>
                 </div>
 
-                <!-- Info -->
-                <div class="flex-1 min-w-0 flex flex-col justify-center">
-                  <template v-if="!item.barang_id">
-                    <h3 class="text-lg font-bold text-foreground leading-snug">{{ item.subcategory_name }}</h3>
-                    <p class="text-sm text-muted-foreground leading-normal">{{ item.category_name }}</p>
-                    <p class="text-xs text-muted-foreground italic">*gambar hanya illustrasi</p>
-                  </template>
-                  <template v-else>
-                    <span v-if="item.brand && item.brand !== '-'" class="text-lg font-bold text-foreground leading-tight">
-                      {{ item.brand }}
-                    </span>
-                    <h3 class="text-lg font-bold text-foreground leading-snug">
-                      {{ item.name }}{{ item.spec && item.spec !== '-' ? ' ' + item.spec : '' }}
-                    </h3>
-                    <p class="text-sm text-muted-foreground leading-normal">
-                      {{ item.category_name }} ({{ item.subcategory_name }})
-                    </p>
-                    <p class="text-xs text-muted-foreground mt-1">
-                      {{ item.code }}
-                    </p>
-                  </template>
-                </div>
-
-                <!-- Tombol Hapus -->
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  class="text-destructive hover:bg-destructive/10 hover:text-destructive flex-shrink-0 rounded-full"
-                  @click="removeItem(item.id)"
-                  title="Hapus dari keranjang"
-                >
-                  <Trash2 class="w-4 h-4" />
-                </Button>
-
-                <!-- Kontrol Jumlah -->
-                <div class="flex-shrink-0">
-                  <NumberField 
-                    :model-value="item.quantity" 
-                    @update:model-value="(val) => updateQty(item, val)"
-                    :min="1" 
-                    :max="999999" 
-                    locale="id-ID" 
-                    class="w-32"
+                <!-- Bottom/Controls Area for Mobile (re-aligns to side on Desktop) -->
+                <div class="flex items-center justify-between sm:justify-end gap-3 border-t sm:border-t-0 border-border pt-3 sm:pt-0">
+                  <!-- Tombol Hapus -->
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    class="text-destructive hover:bg-destructive/10 hover:text-destructive flex-shrink-0 rounded-full"
+                    @click="removeItem(item.id)"
+                    title="Hapus dari keranjang"
                   >
-                    <NumberFieldContent>
-                      <NumberFieldDecrement />
-                      <NumberFieldInput />
-                      <NumberFieldIncrement />
-                    </NumberFieldContent>
-                  </NumberField>
+                    <Trash2 class="w-4 h-4" />
+                  </Button>
+
+                  <!-- Kontrol Jumlah -->
+                  <div class="flex-shrink-0">
+                    <NumberField 
+                      :model-value="item.quantity" 
+                      @update:model-value="(val) => updateQty(item, val)"
+                      :min="1" 
+                      :max="999999" 
+                      locale="id-ID" 
+                      class="w-28 sm:w-32"
+                    >
+                      <NumberFieldContent>
+                        <NumberFieldDecrement />
+                        <NumberFieldInput class="h-9 text-xs sm:text-sm" />
+                        <NumberFieldIncrement />
+                      </NumberFieldContent>
+                    </NumberField>
+                  </div>
                 </div>
               </div>
             </div>
@@ -205,7 +211,7 @@ const getItemDisplayName = (item: CartItem) => {
       <!-- ============================================================ -->
       <!-- Kolom Kanan: Ringkasan Peminjaman                             -->
       <!-- ============================================================ -->
-      <div class="w-full w-lg flex-shrink-0">
+      <div class="w-full lg:w-lg flex-shrink-0">
         <div class="bg-card border border-border rounded-[14px] p-5 sticky top-24">
           <h2 class="text-lg font-bold text-foreground mb-4">Ringkasan Peminjaman</h2>
 

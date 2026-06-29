@@ -36,9 +36,15 @@ const emit = defineEmits<{
       <Button 
         @click="emit('add-to-cart')"
         :disabled="disabled"
-        class="w-full mt-auto bg-gradient-primary shadow-button hover:opacity-90 text-white rounded-[12px] h-[38px] text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+        class="w-full mt-auto bg-gradient-primary shadow-button hover:opacity-90 text-white rounded-[12px] h-[38px] text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed px-2"
       >
-        {{ disabled ? 'Tidak Tersedia' : 'Tambah ke Keranjang' }}
+        <template v-if="disabled">
+          Tidak Tersedia
+        </template>
+        <template v-else>
+          <span class="sm:hidden">Tambah</span>
+          <span class="hidden sm:inline">Tambah ke Keranjang</span>
+        </template>
       </Button>
     </div>
   </div>

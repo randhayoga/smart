@@ -199,9 +199,9 @@ const filteredAndSortedItems = computed(() => {
         
         <!-- Filter & Search Section -->
         <div class="space-y-3 mb-5">
-          <div class="flex flex-wrap items-end gap-4">
+          <div class="flex flex-col sm:flex-row sm:items-end gap-4">
             <!-- Search Row -->
-            <div class="space-y-1.5 flex-1 min-w-[300px] max-w-sm">
+            <div class="space-y-1.5 w-full sm:max-w-sm">
               <label class="text-xs text-muted-foreground font-medium block ml-0.5">Pencarian</label>
               <TableSearch 
                 v-model="searchQuery" 
@@ -211,12 +211,12 @@ const filteredAndSortedItems = computed(() => {
             </div>
 
             <!-- Filter Row -->
-            <div class="space-y-1.5">
-              <label class="text-xs text-muted-foreground font-medium block ml-0.5">Filter</label>
-              <div class="flex items-center gap-3">
+            <div class="space-y-1.5 w-full sm:w-auto flex-1">
+              <label class="text-xs text-muted-foreground font-medium block ml-0.5">Filter & Urutkan</label>
+              <div class="grid grid-cols-2 sm:flex sm:items-center gap-3">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal bg-white', selectedCategory === 'Semua kategori' ? 'text-muted-foreground' : 'text-foreground']">
+                    <Button variant="outline" :class="['w-full sm:w-[180px] md:w-[200px] justify-between rounded-[14px] font-normal bg-white', selectedCategory === 'Semua kategori' ? 'text-muted-foreground' : 'text-foreground']">
                       <span class="truncate">{{ selectedCategory }}</span>
                       <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                     </Button>
@@ -236,7 +236,7 @@ const filteredAndSortedItems = computed(() => {
                 <!-- Sort -->
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal bg-white', selectedSort === 'Urutkan: A-Z' ? 'text-muted-foreground' : 'text-foreground']">
+                    <Button variant="outline" :class="['w-full sm:w-[180px] md:w-[200px] justify-between rounded-[14px] font-normal bg-white', selectedSort === 'Urutkan: A-Z' ? 'text-muted-foreground' : 'text-foreground']">
                       <span class="truncate">{{ selectedSort }}</span>
                       <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                     </Button>
@@ -248,7 +248,7 @@ const filteredAndSortedItems = computed(() => {
                 </DropdownMenu>
 
                 <!-- Clear Filter Button -->
-                <Button variant="destructive" @click="clearFilter" class="hover:opacity-70 rounded-[14px] px-6 font-semibold text-white">
+                <Button variant="destructive" @click="clearFilter" class="hover:opacity-70 rounded-[14px] px-6 font-semibold text-white w-full sm:w-auto col-span-2 sm:col-span-1">
                   Hapus filter
                 </Button>
               </div>
@@ -258,9 +258,9 @@ const filteredAndSortedItems = computed(() => {
 
         <p class="text-sm text-muted-foreground font-medium mb-3">Hasil Pencarian dan Filter:</p>
         <!-- Grid -->
-        <ScrollArea class="border border-border rounded-[14px] bg-card h-[calc(100vh-320px)] sm:h-[calc(100vh-270px)]">
-          <div class="p-6">
-            <div class="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-6">
+        <ScrollArea class="border border-border rounded-[14px] bg-card h-[calc(100vh-350px)] sm:h-[calc(100vh-270px)]">
+          <div class="p-4 sm:p-6">
+            <div class="grid grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3 sm:gap-6">
               <ProductCard 
                 v-for="item in filteredAndSortedItems" 
                 :key="item.id" 
@@ -294,20 +294,20 @@ const filteredAndSortedItems = computed(() => {
         
         <div v-if="selectedProduct">
           <!-- Modal Body -->
-          <div class="px-6 py-3 overflow-y-auto max-h-[70vh] space-y-6">
+          <div class="px-4 sm:px-6 py-3 overflow-y-auto max-h-[70vh] space-y-6">
             <!-- Barang Terpilih -->
             <div class="space-y-1">
               <span class="text-sm font-medium text-foreground block">Barang terpilih:</span>
-              <div class="flex items-center gap-4">
+              <div class="flex flex-col sm:flex-row items-center sm:items-start gap-4">
                 <!-- Image -->
-                <div class="w-40 h-40 shrink-0 bg-muted rounded-[14px] overflow-hidden flex items-center justify-center border border-border relative">
+                <div class="w-32 h-32 sm:w-40 sm:h-40 shrink-0 bg-muted rounded-[14px] overflow-hidden flex items-center justify-center border border-border relative">
                   <div class="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-white/40"></div>
                   <img v-if="selectedVariant && selectedVariant.imageUrl" :src="selectedVariant.imageUrl.startsWith('http') || selectedVariant.imageUrl.startsWith('/') ? selectedVariant.imageUrl : '/storage/' + selectedVariant.imageUrl" alt="Product" class="w-full h-full object-cover relative z-10" />
                   <img v-else-if="selectedProduct.imageUrl" :src="selectedProduct.imageUrl.startsWith('http') || selectedProduct.imageUrl.startsWith('/') ? selectedProduct.imageUrl : '/storage/' + selectedProduct.imageUrl" alt="Product" class="w-full h-full object-cover relative z-10" />
                   <img v-else src="https://placehold.co/400x400?text=Barang" alt="Product" class="w-full h-full object-cover opacity-50" />
                 </div>
                 <!-- Info -->
-                <div class="flex flex-col justify-center">
+                <div class="flex flex-col justify-center text-center sm:text-left">
                   <template v-if="!selectedBarangId">
                     <h3 class="text-lg font-bold text-foreground leading-snug">{{ selectedProduct.subcategory_name }}</h3>
                     <p class="text-sm text-muted-foreground leading-normal">{{ selectedProduct.category_name }}</p>
@@ -334,13 +334,14 @@ const filteredAndSortedItems = computed(() => {
             <!-- Pilih Varian -->
             <div class="space-y-1.5">
               <span class="text-sm font-medium text-foreground block">Pilih varian <span class="text-rose-500">*</span></span>
-              <div class="border border-border rounded-[14px] p-4 bg-background flex flex-wrap gap-2.5">
+              <div class="border border-border rounded-[14px] p-3 sm:p-4 bg-background flex flex-wrap gap-2 sm:gap-2.5">
                 <!-- Tidak Spesifik -->
                 <Button
                   type="button"
                   :variant="selectedBarangId === null ? 'primary-border' : 'white'"
                   size="lg"
                   @click="selectedBarangId = null"
+                  class="whitespace-normal h-auto py-2.5 text-left"
                 >
                   Tidak Spesifik
                 </Button>
@@ -353,6 +354,7 @@ const filteredAndSortedItems = computed(() => {
                   :variant="selectedBarangId === barang.id ? 'primary-border' : 'white'"
                   size="lg"
                   @click="selectedBarangId = barang.id"
+                  class="whitespace-normal h-auto py-2.5 text-left"
                 >
                   {{ getBarangDisplayName(barang) }}
                 </Button>
@@ -378,13 +380,14 @@ const filteredAndSortedItems = computed(() => {
           </div>
 
           <!-- Modal Footer -->
-          <div class="py-3 px-4 border-t border-border flex items-center justify-between">
+          <div class="py-4 px-4 sm:px-6 border-t border-border flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-3">
             <p class="text-sm text-rose-500 italic font-medium">*Wajib diisi</p>
-            <div class="flex items-center gap-3">
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
               <Button 
                 @click="isModalOpen = false"
                 variant="white"
                 size="xl"
+                class="w-full sm:w-auto"
               >
                 Batal
               </Button>
@@ -392,6 +395,7 @@ const filteredAndSortedItems = computed(() => {
                 @click="handleConfirmAddToCart"
                 variant="primary"
                 size="xl"
+                class="w-full sm:w-auto"
               >
                 Tambah ke Keranjang
               </Button>
