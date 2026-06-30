@@ -30,6 +30,7 @@ import DeleteErrorModal from '@/Components/DeleteErrorModal.vue';
 import Combobox from '@/Components/Combobox.vue';
 import { Checkbox } from '@/Components/ui/checkbox';
 import StatusBadge from '@/Components/StatusBadge.vue';
+import { Field, FieldLabel, FieldContent, FieldError } from '@/Components/ui/field';
 
 interface Props {
   lot: {
@@ -118,6 +119,16 @@ const lotForm = useForm({
   use_parent_image: false,
 });
 
+const lotFormErrors = ref({
+  number: '',
+  organizer_id: '',
+  vendor_id: '',
+  location_id: '',
+  po_number: '',
+  date_of_receipt: '',
+  image_url: '',
+});
+
 const openEditLotModal = () => {
   lotForm.clearErrors();
   lotForm.number = props.lot.lotCode;
@@ -144,6 +155,15 @@ const openEditLotModal = () => {
   lotForm.image_url = null;
   lotForm.image_url_name = props.lot.imageUrl ? props.lot.imageUrl.split('/').pop() || '' : '';
   lotForm.use_parent_image = false;
+  lotFormErrors.value = {
+    number: '',
+    organizer_id: '',
+    vendor_id: '',
+    location_id: '',
+    po_number: '',
+    date_of_receipt: '',
+    image_url: '',
+  };
   isLotModalOpen.value = true;
 };
 
@@ -231,23 +251,54 @@ watch(() => lotForm.floor_id, (newVal) => {
   }
 });
 
-const isLotFormValid = computed(() => {
+const handleSaveLot = () => {
+  lotFormErrors.value = {
+    number: '',
+    organizer_id: '',
+    vendor_id: '',
+    location_id: '',
+    po_number: '',
+    date_of_receipt: '',
+    image_url: '',
+  };
+
+  let isValid = true;
+  if (!lotForm.number) {
+    lotFormErrors.value.number = 'Kode LOT belum diisi';
+    isValid = false;
+  }
+  if (!lotForm.organizer_id) {
+    lotFormErrors.value.organizer_id = 'Organizer belum dipilih';
+    isValid = false;
+  }
+  if (!lotForm.vendor_id) {
+    lotFormErrors.value.vendor_id = 'Vendor belum dipilih';
+    isValid = false;
+  }
+  if (!lotForm.location_id) {
+    lotFormErrors.value.location_id = 'Lokasi belum dipilih';
+    isValid = false;
+  }
+  if (!lotForm.po_number) {
+    lotFormErrors.value.po_number = 'Nomor PO belum diisi';
+    isValid = false;
+  }
+  if (!lotForm.date_of_receipt) {
+    lotFormErrors.value.date_of_receipt = 'Tanggal Registrasi belum diisi';
+    isValid = false;
+  }
+  if (!lotForm.image_url && !lotForm.image_url_name) {
+    lotFormErrors.value.image_url = 'Foto default belum dipilih';
+    isValid = false;
+  }
+
   const priceProvided = lotForm.unit_price !== '' && lotForm.unit_price !== null && lotForm.unit_price !== undefined;
   const priceValid = !priceProvided || (Number(lotForm.unit_price) >= 0 && Number(lotForm.unit_price) <= 999999999);
-  return lotForm.number && 
-         lotForm.organizer_id && 
-         lotForm.vendor_id && 
-         lotForm.location_id && 
-         lotForm.po_number && 
-         lotForm.po_number.length <= 255 && 
-         lotForm.date_of_receipt && 
-         priceValid && 
-         (lotForm.image_url || lotForm.image_url_name) &&
-         !lotForm.processing;
-});
+  if (!priceValid) {
+    isValid = false;
+  }
 
-const handleSaveLot = () => {
-  if (!isLotFormValid.value) return;
+  if (!isValid) return;
   
   lotForm.transform((data) => {
     const formData: any = {
@@ -321,6 +372,35 @@ const assetForm = useForm({
   memo_file_name: '',
 });
 
+const assetFormErrors = ref({
+  location_id: '',
+  status: '',
+  condition: '',
+  image_url: '',
+  vehicle_registration: '',
+  bulk_quantity: '',
+  memo_file: '',
+});
+
+// --- Reactive error clearing ---
+// lotForm
+watch(() => lotForm.organizer_id, (v) => { if (v && lotFormErrors.value.organizer_id) lotFormErrors.value.organizer_id = ''; });
+watch(() => lotForm.vendor_id, (v) => { if (v && lotFormErrors.value.vendor_id) lotFormErrors.value.vendor_id = ''; });
+watch(() => lotForm.location_id, (v) => { if (v && lotFormErrors.value.location_id) lotFormErrors.value.location_id = ''; });
+watch(() => lotForm.po_number, (v) => { if (v && lotFormErrors.value.po_number) lotFormErrors.value.po_number = ''; });
+watch(() => lotForm.date_of_receipt, (v) => { if (v && lotFormErrors.value.date_of_receipt) lotFormErrors.value.date_of_receipt = ''; });
+watch(() => lotForm.image_url, (v) => { if (v && lotFormErrors.value.image_url) lotFormErrors.value.image_url = ''; });
+watch(() => lotForm.image_url_name, (v) => { if (v && lotFormErrors.value.image_url) lotFormErrors.value.image_url = ''; });
+// assetForm
+watch(() => assetForm.location_id, (v) => { if (v && assetFormErrors.value.location_id) assetFormErrors.value.location_id = ''; });
+watch(() => assetForm.status, (v) => { if (v && assetFormErrors.value.status) assetFormErrors.value.status = ''; });
+watch(() => assetForm.condition, (v) => { if (v && assetFormErrors.value.condition) assetFormErrors.value.condition = ''; });
+watch(() => assetForm.image_url, (v) => { if (v && assetFormErrors.value.image_url) assetFormErrors.value.image_url = ''; });
+watch(() => assetForm.image_url_name, (v) => { if (v && assetFormErrors.value.image_url) assetFormErrors.value.image_url = ''; });
+watch(() => assetForm.vehicle_registration, (v) => { if (v && assetFormErrors.value.vehicle_registration) assetFormErrors.value.vehicle_registration = ''; });
+watch(() => assetForm.bulk_quantity, (v) => { if ((v !== '' && v !== null) && assetFormErrors.value.bulk_quantity) assetFormErrors.value.bulk_quantity = ''; });
+watch(() => assetForm.memo_file, (v) => { if (v && assetFormErrors.value.memo_file) assetFormErrors.value.memo_file = ''; });
+
 const arrNeedApproval = ['Rusak Total', 'Hilang'];
 
 const generateAssetCode = () => {
@@ -360,6 +440,15 @@ const openCreateAssetModal = () => {
   assetForm.vehicle_registration = '';
   assetForm.memo_file = null;
   assetForm.memo_file_name = '';
+  assetFormErrors.value = {
+    location_id: '',
+    status: '',
+    condition: '',
+    image_url: '',
+    vehicle_registration: '',
+    bulk_quantity: '',
+    memo_file: '',
+  };
   isAssetModalOpen.value = true;
   nextTick(() => {
     isInitializingAssetForm.value = false;
@@ -389,6 +478,15 @@ const openEditAssetModal = (assetRaw: any) => {
   assetForm.vehicle_registration = asset.vehicle_registration || '';
   assetForm.memo_file = null;
   assetForm.memo_file_name = asset.memo_file_name || (asset.doc_url ? asset.doc_url.split('/').pop() || '' : '');
+  assetFormErrors.value = {
+    location_id: '',
+    status: '',
+    condition: '',
+    image_url: '',
+    vehicle_registration: '',
+    bulk_quantity: '',
+    memo_file: '',
+  };
   isAssetModalOpen.value = true;
   nextTick(() => {
     isInitializingAssetForm.value = false;
@@ -547,37 +645,57 @@ const parseCurrencyToNumber = (val: string | number) => {
   return isNaN(parsed) ? 0 : parsed;
 };
 
-const isAssetFormValid = computed(() => {
+const handleSaveAsset = () => {
+  assetFormErrors.value = {
+    location_id: '',
+    status: '',
+    condition: '',
+    image_url: '',
+    vehicle_registration: '',
+    bulk_quantity: '',
+    memo_file: '',
+  };
+
+  let isValid = true;
+  if (!assetForm.location_id) {
+    assetFormErrors.value.location_id = 'Lokasi belum dipilih';
+    isValid = false;
+  }
+  if (!assetForm.status) {
+    assetFormErrors.value.status = 'Status belum dipilih';
+    isValid = false;
+  }
+  if (!assetForm.condition) {
+    assetFormErrors.value.condition = 'Kondisi belum dipilih';
+    isValid = false;
+  }
+  if (!assetForm.image_url && !assetForm.image_url_name) {
+    assetFormErrors.value.image_url = 'Foto belum dipilih';
+    isValid = false;
+  }
+  if (arrNeedApproval.includes(assetForm.status) && !assetForm.memo_file_name) {
+    assetFormErrors.value.memo_file = 'Berita Acara / Memo belum dipilih';
+    isValid = false;
+  }
+  if (isVehicle.value && !assetForm.vehicle_registration) {
+    assetFormErrors.value.vehicle_registration = 'TNKB (Nomor Polisi) belum diisi';
+    isValid = false;
+  }
+  if (assetModalMode.value === 'create' && assetForm.is_bulk) {
+    if (assetForm.bulk_quantity === '' || assetForm.bulk_quantity === null) {
+      assetFormErrors.value.bulk_quantity = 'Jumlah aset belum diisi';
+      isValid = false;
+    }
+  }
+
   const priceProvided = assetForm.price !== '' && assetForm.price !== null && assetForm.price !== undefined;
   const parsedPrice = priceProvided ? parseCurrencyToNumber(assetForm.price) : null;
   const priceValid = !priceProvided || (parsedPrice !== null && parsedPrice >= 0 && parsedPrice <= 999999999);
-  const baseValid = assetForm.number && 
-         assetForm.location_id && 
-         assetForm.status && 
-         assetForm.condition && 
-         priceValid && 
-         (assetForm.image_url || assetForm.image_url_name) &&
-         (!arrNeedApproval.includes(assetForm.status) || assetForm.memo_file_name) &&
-         !assetForm.processing;
-
-  if (!baseValid) return false;
-
-  if (isVehicle.value && !assetForm.vehicle_registration) {
-    return false;
+  if (!priceValid) {
+    isValid = false;
   }
 
-  if (assetModalMode.value === 'create' && assetForm.is_bulk) {
-    return assetForm.bulk_quantity !== '' && 
-           assetForm.bulk_quantity !== null && 
-           Number(assetForm.bulk_quantity) >= 1 && 
-           Number(assetForm.bulk_quantity) <= 999;
-  }
-
-  return true;
-});
-
-const handleSaveAsset = () => {
-  if (!isAssetFormValid.value) return;
+  if (!isValid) return;
 
   assetForm.transform((data) => {
     const formData: any = {
@@ -1707,158 +1825,191 @@ const totalAsetTerpilihCount = computed(() => {
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
                   <!-- Left Column -->
                   <div class="space-y-6">
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Kode LOT<span class="text-rose-500">*</span></label>
-                      <input 
-                        type="text" 
-                        v-model="lotForm.number"
-                        disabled
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
-                      />
-                    </div>
+                    <Field>
+                      <FieldLabel><span>Kode LOT<span class="text-rose-500">*</span></span></FieldLabel>
+                      <FieldContent>
+                        <input 
+                          type="text" 
+                          v-model="lotForm.number"
+                          disabled
+                          class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
+                        />
+                      </FieldContent>
+                    </Field>
 
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Organizer<span class="text-rose-500">*</span></label>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !lotForm.organizer_id ? 'text-muted-foreground' : 'text-foreground']">
-                            {{ props.organizers.find(o => o.id == lotForm.organizer_id)?.name || 'Pilih organizer' }}
-                            <ChevronDown class="w-4 h-4 opacity-50" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
-                          <DropdownMenuItem v-for="org in props.organizers" :key="org.id" @select="lotForm.organizer_id = org.id">
-                            {{ org.name }}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
+                    <Field :data-invalid="!!lotFormErrors.organizer_id || undefined">
+                      <FieldLabel><span>Organizer<span class="text-rose-500">*</span></span></FieldLabel>
+                      <FieldContent>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !lotForm.organizer_id ? 'text-muted-foreground' : 'text-foreground', lotFormErrors.organizer_id ? '!border-destructive focus:!ring-destructive/20 focus:!border-destructive' : '']">
+                              {{ props.organizers.find(o => o.id == lotForm.organizer_id)?.name || 'Pilih organizer' }}
+                              <ChevronDown class="w-4 h-4 opacity-50" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
+                            <DropdownMenuItem v-for="org in props.organizers" :key="org.id" @select="lotForm.organizer_id = org.id">
+                              {{ org.name }}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </FieldContent>
+                      <FieldError v-if="lotFormErrors.organizer_id">{{ lotFormErrors.organizer_id }}</FieldError>
+                    </Field>
 
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Vendor<span class="text-rose-500">*</span></label>
-                      <Combobox
-                        v-model="lotForm.vendor_id"
-                        :options="props.vendors"
-                        search-placeholder="Cari vendor..."
-                        default-label="Pilih vendor"
-                        width-class="w-full h-10 px-4"
-                      />
-                    </div>
+                    <Field :data-invalid="!!lotFormErrors.vendor_id || undefined">
+                      <FieldLabel><span>Vendor<span class="text-rose-500">*</span></span></FieldLabel>
+                      <FieldContent>
+                        <Combobox
+                          v-model="lotForm.vendor_id"
+                          :options="props.vendors"
+                          search-placeholder="Cari vendor..."
+                          default-label="Pilih vendor"
+                          width-class="w-full h-10 px-4"
+                          :error="!!lotFormErrors.vendor_id"
+                        />
+                      </FieldContent>
+                      <FieldError v-if="lotFormErrors.vendor_id">{{ lotFormErrors.vendor_id }}</FieldError>
+                    </Field>
 
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Lokasi <span class="italic text-muted-foreground">default</span><span class="text-rose-500">*</span></label>
-                      <Combobox
-                        v-model="lotForm.location_id"
-                        :options="props.locations"
-                        search-placeholder="Cari lokasi..."
-                        default-label="Pilih lokasi"
-                        width-class="w-full h-10 px-4"
-                      />
-                    </div>
+                    <Field :data-invalid="!!lotFormErrors.location_id || undefined">
+                      <FieldLabel><span>Lokasi <span class="italic text-muted-foreground">default</span><span class="text-rose-500">*</span></span></FieldLabel>
+                      <FieldContent>
+                        <Combobox
+                          v-model="lotForm.location_id"
+                          :options="props.locations"
+                          search-placeholder="Cari lokasi..."
+                          default-label="Pilih lokasi"
+                          width-class="w-full h-10 px-4"
+                          :error="!!lotFormErrors.location_id"
+                        />
+                      </FieldContent>
+                      <FieldError v-if="lotFormErrors.location_id">{{ lotFormErrors.location_id }}</FieldError>
+                    </Field>
 
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Lantai <span class="italic text-muted-foreground">default</span></label>
-                      <Combobox
-                        v-model="lotForm.floor_id"
-                        :options="filteredFloorsForLot"
-                        search-placeholder="Cari lantai..."
-                        default-label="Pilih lantai (opsional)"
-                        width-class="w-full h-10 px-4"
-                        :disabled="!lotForm.location_id"
-                      />
-                    </div>
+                    <Field :data-disabled="!lotForm.location_id || undefined">
+                      <FieldLabel>Lantai <span class="italic text-muted-foreground">default</span></FieldLabel>
+                      <FieldContent>
+                        <Combobox
+                          v-model="lotForm.floor_id"
+                          :options="filteredFloorsForLot"
+                          search-placeholder="Cari lantai..."
+                          default-label="Pilih lantai (opsional)"
+                          width-class="w-full h-10 px-4"
+                          :disabled="!lotForm.location_id"
+                        />
+                      </FieldContent>
+                    </Field>
                   </div>
 
                   <!-- Right Column -->
                   <div class="space-y-6">
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Ruangan <span class="italic text-muted-foreground">default</span></label>
-                      <Combobox
-                        v-model="lotForm.room_id"
-                        :options="filteredRoomsForLot"
-                        search-placeholder="Cari ruangan..."
-                        default-label="Pilih ruangan (opsional)"
-                        width-class="w-full h-10 px-4"
-                        :disabled="!lotForm.floor_id"
-                      />
-                    </div>
-
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Nomor PO<span class="text-rose-500">*</span></label>
-                      <input 
-                        type="text" 
-                        v-model="lotForm.po_number"
-                        placeholder="Contoh: PO-02"
-                        maxlength="255"
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
-                      />
-                    </div>
-
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Tanggal Registrasi<span class="text-rose-500">*</span></label>
-                      <input 
-                        type="date" 
-                        v-model="lotForm.date_of_receipt"
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
-                      />
-                    </div>
-
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Harga Satuan <span class="italic text-muted-foreground">default</span></label>
-                      <div class="flex w-full rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors h-10 overflow-hidden">
-                        <span class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-r border-input select-none font-medium">
-                          Rp
-                        </span>
-                        <input 
-                          type="number" 
-                          v-model="lotForm.unit_price"
-                          placeholder="Contoh: 60000"
-                          min="0"
-                          max="999999999"
-                          class="flex-1 min-w-0 px-4 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 transition-colors h-full"
+                    <Field :data-disabled="!lotForm.floor_id || undefined">
+                      <FieldLabel>Ruangan <span class="italic text-muted-foreground">default</span></FieldLabel>
+                      <FieldContent>
+                        <Combobox
+                          v-model="lotForm.room_id"
+                          :options="filteredRoomsForLot"
+                          search-placeholder="Cari ruangan..."
+                          default-label="Pilih ruangan (opsional)"
+                          width-class="w-full h-10 px-4"
+                          :disabled="!lotForm.floor_id"
                         />
-                      </div>
-                    </div>
+                      </FieldContent>
+                    </Field>
 
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Foto <span class="italic text-muted-foreground">default</span><span class="text-rose-500">*</span></label>
-                      <div class="flex gap-2">
-                        <div 
-                          class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/10 truncate flex items-center h-10"
-                          :class="[
-                            (lotForm.image_url || lotForm.image_url_name) 
-                              ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' 
-                              : 'text-muted-foreground cursor-default'
-                          ]"
-                          @click="(lotForm.image_url || lotForm.image_url_name) && viewLotImageInNewTab()"
-                        >
-                          {{ lotForm.image_url_name || 'Belum ada foto yang dipilih' }}
+                    <Field :data-invalid="!!lotFormErrors.po_number || undefined">
+                      <FieldLabel><span>Nomor PO<span class="text-rose-500">*</span></span></FieldLabel>
+                      <FieldContent>
+                        <input 
+                          type="text" 
+                          v-model="lotForm.po_number"
+                          placeholder="Contoh: PO-02"
+                          maxlength="255"
+                          class="w-full px-4 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors h-10"
+                          :class="[lotFormErrors.po_number ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']"
+                        />
+                      </FieldContent>
+                      <FieldError v-if="lotFormErrors.po_number">{{ lotFormErrors.po_number }}</FieldError>
+                    </Field>
+
+                    <Field :data-invalid="!!lotFormErrors.date_of_receipt || undefined">
+                      <FieldLabel><span>Tanggal Registrasi<span class="text-rose-500">*</span></span></FieldLabel>
+                      <FieldContent>
+                        <input 
+                          type="date" 
+                          v-model="lotForm.date_of_receipt"
+                          class="w-full px-4 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors h-10"
+                          :class="[lotFormErrors.date_of_receipt ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']"
+                        />
+                      </FieldContent>
+                      <FieldError v-if="lotFormErrors.date_of_receipt">{{ lotFormErrors.date_of_receipt }}</FieldError>
+                    </Field>
+
+                    <Field>
+                      <FieldLabel>Harga Satuan <span class="italic text-muted-foreground">default</span></FieldLabel>
+                      <FieldContent>
+                        <div class="flex w-full rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors h-10 overflow-hidden">
+                          <span class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-r border-input select-none font-medium">
+                            Rp
+                          </span>
+                          <input 
+                            type="number" 
+                            v-model="lotForm.unit_price"
+                            placeholder="Contoh: 60000"
+                            min="0"
+                            max="999999999"
+                            class="flex-1 min-w-0 px-4 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 transition-colors h-full"
+                          />
                         </div>
-                        <input 
-                          type="file" 
-                          id="lot-photo-upload" 
-                          class="hidden" 
-                          accept=".jpg,.jpeg,.png"
-                          @change="handleLotFileUpload"
-                        />
-                        <Button 
-                          type="button"
-                          @click="handleSamakanPhoto"
-                          variant="warning"
-                          size="lg"
-                        >
-                          Samakan
-                        </Button>
-                        <Button 
-                          type="button"
-                          @click="triggerLotFileInput"
-                          size="lg"
-                        >
-                          Pilih File
-                        </Button>
-                      </div>
-                      <p class="text-[10px] text-muted-foreground ml-1">Maksimal ukuran 1 MB</p>
-                    </div>
+                      </FieldContent>
+                    </Field>
+
+                    <Field :data-invalid="!!lotFormErrors.image_url || undefined">
+                      <FieldLabel><span>Foto <span class="italic text-muted-foreground">default</span><span class="text-rose-500">*</span></span></FieldLabel>
+                      <FieldContent>
+                        <div class="flex gap-2">
+                          <div 
+                            class="flex-grow min-w-0 px-4 py-2 text-sm border rounded-[14px] bg-muted/10 truncate flex items-center h-10"
+                            :class="[
+                              (lotForm.image_url || lotForm.image_url_name) 
+                                ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' 
+                                : 'text-muted-foreground cursor-default',
+                              lotFormErrors.image_url ? 'border-destructive' : 'border-input'
+                            ]"
+                            @click="(lotForm.image_url || lotForm.image_url_name) && viewLotImageInNewTab()"
+                          >
+                            {{ lotForm.image_url_name || 'Belum ada foto yang dipilih' }}
+                          </div>
+                          <input 
+                            type="file" 
+                            id="lot-photo-upload" 
+                            class="hidden" 
+                            accept=".jpg,.jpeg,.png"
+                            @change="handleLotFileUpload"
+                          />
+                          <Button 
+                            type="button"
+                            @click="handleSamakanPhoto"
+                            variant="warning"
+                            size="lg"
+                            :disabled="lotForm.processing"
+                          >
+                            Samakan
+                          </Button>
+                          <Button 
+                            type="button"
+                            @click="triggerLotFileInput"
+                            size="lg"
+                            :disabled="lotForm.processing"
+                          >
+                            Pilih File
+                          </Button>
+                        </div>
+                        <p class="text-[10px] text-muted-foreground ml-1">Maksimal ukuran 1 MB</p>
+                      </FieldContent>
+                      <FieldError v-if="lotFormErrors.image_url">{{ lotFormErrors.image_url }}</FieldError>
+                    </Field>
                   </div>
                 </div>
               </div>
@@ -1876,7 +2027,7 @@ const totalAsetTerpilihCount = computed(() => {
                   </Button>
                   <Button 
                     @click="handleSaveLot"
-                    :disabled="!isLotFormValid"
+                    :disabled="lotForm.processing"
                     variant="primary"
                     size="xl"
                   >
@@ -1930,123 +2081,137 @@ const totalAsetTerpilihCount = computed(() => {
                   <!-- Left Column -->
                   <div class="space-y-6">
                     <!-- Kode Aset -->
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Kode Aset<span class="text-rose-500">*</span></label>
-                      <input 
-                        type="text" 
-                        v-model="assetForm.number"
-                        disabled
-                        placeholder="Kode Aset belum di-generate"
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
-                      />
-                    </div>
+                    <Field>
+                      <FieldLabel><span>Kode Aset<span class="text-rose-500">*</span></span></FieldLabel>
+                      <FieldContent>
+                        <input 
+                          type="text" 
+                          v-model="assetForm.number"
+                          disabled
+                          placeholder="Kode Aset belum di-generate"
+                          class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
+                        />
+                      </FieldContent>
+                    </Field>
 
                     <!-- Nilai (Price) -->
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Nilai</label>
-                      <div class="flex gap-2">
-                        <div class="flex flex-grow rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors h-10 overflow-hidden">
-                          <span class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-r border-input select-none font-medium">
-                            Rp
-                          </span>
-                          <input 
-                            type="text" 
-                            v-model="assetForm.price"
-                            @input="assetForm.price = assetForm.price.toString().replace(/[^0-9.,]/g, '')"
-                            placeholder="Nilai aset"
-                            class="flex-1 min-w-0 px-4 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 transition-colors h-full"
-                          />
+                    <Field>
+                      <FieldLabel>Nilai</FieldLabel>
+                      <FieldContent>
+                        <div class="flex gap-2">
+                          <div class="flex flex-grow rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors h-10 overflow-hidden">
+                            <span class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-r border-input select-none font-medium">
+                              Rp
+                            </span>
+                            <input 
+                              type="text" 
+                              v-model="assetForm.price"
+                              @input="assetForm.price = assetForm.price.toString().replace(/[^0-9.,]/g, '')"
+                              placeholder="Nilai aset"
+                              class="flex-1 min-w-0 px-4 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 transition-colors h-full"
+                            />
+                          </div>
+                          <Button 
+                            type="button"
+                            @click="assetForm.price = props.lot.unitPrice"
+                            variant="warning"
+                            size="lg"
+                          >
+                            Samakan
+                          </Button>
                         </div>
-                        <Button 
-                          type="button"
-                          @click="assetForm.price = props.lot.unitPrice"
-                          variant="warning"
-                          size="lg"
-                        >
-                          Samakan
-                        </Button>
-                      </div>
-                    </div>
+                      </FieldContent>
+                    </Field>
 
                     <!-- Foto Aset -->
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Foto<span class="text-rose-500">*</span></label>
-                      <div class="flex gap-2">
-                        <div 
-                          class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/10 truncate flex items-center h-10"
-                          :class="[
-                            (assetForm.image_url || assetForm.image_url_name) 
-                              ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' 
-                              : 'text-muted-foreground cursor-default'
-                          ]"
-                          @click="(assetForm.image_url || assetForm.image_url_name) && viewAssetImageInNewTab()"
-                        >
-                          {{ assetForm.image_url_name || 'Belum ada foto yang dipilih' }}
+                    <Field :data-invalid="!!assetFormErrors.image_url || undefined">
+                      <FieldLabel><span>Foto Aset<span class="text-rose-500">*</span></span></FieldLabel>
+                      <FieldContent>
+                        <div class="flex gap-2">
+                          <div 
+                            class="flex-grow min-w-0 px-4 py-2 text-sm border rounded-[14px] bg-muted/10 truncate flex items-center h-10"
+                            :class="[
+                              (assetForm.image_url || assetForm.image_url_name) 
+                                ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' 
+                                : 'text-muted-foreground cursor-default',
+                              assetFormErrors.image_url ? 'border-destructive' : 'border-input'
+                            ]"
+                            @click="(assetForm.image_url || assetForm.image_url_name) && viewAssetImageInNewTab()"
+                          >
+                            {{ assetForm.image_url_name || 'Belum ada foto yang dipilih' }}
+                          </div>
+                          <input 
+                            type="file" 
+                            id="asset-photo-upload" 
+                            class="hidden" 
+                            accept=".jpg,.jpeg,.png"
+                            @change="handleAssetFileUpload"
+                          />
+                          <Button 
+                            type="button"
+                            @click="triggerAssetFileInput"
+                            size="lg"
+                            :disabled="assetForm.processing"
+                          >
+                            Pilih File
+                          </Button>
+                          <Button 
+                            type="button"
+                            @click="handleSamakanAssetPhoto"
+                            variant="warning"
+                            size="lg"
+                            :disabled="assetForm.processing"
+                          >
+                            Samakan
+                          </Button>
                         </div>
-                        <input 
-                          type="file" 
-                          id="asset-photo-upload" 
-                          class="hidden" 
-                          accept=".jpg,.jpeg,.png"
-                          @change="handleAssetFileUpload"
-                        />
-                        <Button 
-                          type="button"
-                          @click="triggerAssetFileInput"
-                          size="lg"
-                        >
-                          Pilih File
-                        </Button>
-                        <Button 
-                          type="button"
-                          @click="handleSamakanAssetPhoto"
-                          variant="warning"
-                          size="lg"
-                        >
-                          Samakan
-                        </Button>
-                      </div>
-                    </div>
+                      </FieldContent>
+                      <FieldError v-if="assetFormErrors.image_url">{{ assetFormErrors.image_url }}</FieldError>
+                    </Field>
 
                     <!-- Pembuatan massal (Create Mode Only) -->
-                    <div v-if="assetModalMode === 'create' && props.lot.barang_category !== 'Kendaraan'" class="space-y-1.5 flex items-center gap-2 pt-2 flex-wrap">
-                      <div class="flex items-center gap-2 w-full">
-                        <Checkbox 
-                          id="is_bulk"
-                          v-model="assetForm.is_bulk"
-                        />
-                        <label for="is_bulk" class="cursor-pointer select-none text-sm font-medium text-foreground">
-                          Buat
-                        </label>
-                        <input 
-                          type="number" 
-                          v-model="assetForm.bulk_quantity"
-                          placeholder="..."
-                          min="1"
-                          max="999"
-                          :disabled="!assetForm.is_bulk"
-                          class="w-16 px-2 py-1 text-sm border rounded-[10px] bg-background focus:outline-none focus:ring-2 transition-colors h-8 disabled:opacity-50 disabled:cursor-not-allowed mx-1"
-                          :class="[assetForm.errors.bulk_quantity ? 'border-destructive focus:ring-destructive/20' : 'border-input focus:ring-primary/20 focus:border-primary']"
-                        />
-                        <span class="text-sm font-medium text-foreground">aset secara otomatis dengan nilai yang sama.</span>
-                      </div>
-                      <div v-if="assetForm.errors.bulk_quantity" class="text-destructive text-xs mt-1 w-full pl-6">
-                        {{ assetForm.errors.bulk_quantity }}
-                      </div>
-                    </div>
+                    <Field v-if="assetModalMode === 'create' && props.lot.barang_category !== 'Kendaraan'" :data-invalid="!!assetFormErrors.bulk_quantity || undefined">
+                      <FieldContent>
+                        <div class="flex items-center gap-2 w-full pt-2">
+                          <Checkbox 
+                            id="is_bulk"
+                            v-model="assetForm.is_bulk"
+                          />
+                          <label for="is_bulk" class="cursor-pointer select-none text-sm font-medium text-foreground">
+                            Buat
+                          </label>
+                          <input 
+                            type="number" 
+                            v-model="assetForm.bulk_quantity"
+                            placeholder="..."
+                            min="1"
+                            max="999"
+                            :disabled="!assetForm.is_bulk"
+                            class="w-16 px-2 py-1 text-sm border rounded-[10px] bg-background focus:outline-none focus:ring-2 transition-colors h-8 disabled:opacity-50 disabled:cursor-not-allowed mx-1"
+                            :class="[assetFormErrors.bulk_quantity ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']"
+                          />
+                          <span class="text-sm font-medium text-foreground">aset secara otomatis dengan nilai yang sama.</span>
+                        </div>
+                      </FieldContent>
+                      <FieldError v-if="assetFormErrors.bulk_quantity" class="pl-6">{{ assetFormErrors.bulk_quantity }}</FieldError>
+                    </Field>
 
                     <!-- TNKB (Nomor Polisi) - Shown if it's a vehicle -->
-                    <div v-if="isVehicle" class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">TNKB (Nomor Polisi)<span class="text-rose-500">*</span></label>
-                      <input 
-                        type="text" 
-                        v-model="assetForm.vehicle_registration"
-                        maxlength="15"
-                        :placeholder="assetModalMode === 'create' ? 'B XXXX YYY' : 'B 1234 ABC'"
-                        @input="assetForm.vehicle_registration = assetForm.vehicle_registration.toUpperCase()"
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10 disabled:opacity-50 disabled:cursor-not-allowed uppercase"
-                      />
-                    </div>
+                    <Field v-if="isVehicle" :data-invalid="!!assetFormErrors.vehicle_registration || undefined">
+                      <FieldLabel><span>TNKB (Nomor Polisi)<span class="text-rose-500">*</span></span></FieldLabel>
+                      <FieldContent>
+                        <input 
+                          type="text" 
+                          v-model="assetForm.vehicle_registration"
+                          maxlength="15"
+                          :placeholder="assetModalMode === 'create' ? 'B XXXX YYY' : 'B 1234 ABC'"
+                          @input="assetForm.vehicle_registration = assetForm.vehicle_registration.toUpperCase()"
+                          class="w-full px-4 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors h-10 disabled:opacity-50 disabled:cursor-not-allowed uppercase"
+                          :class="[assetFormErrors.vehicle_registration ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']"
+                        />
+                      </FieldContent>
+                      <FieldError v-if="assetFormErrors.vehicle_registration">{{ assetFormErrors.vehicle_registration }}</FieldError>
+                    </Field>
                   </div>
 
                   <!-- Right Column -->
@@ -2054,151 +2219,168 @@ const totalAsetTerpilihCount = computed(() => {
                     <!-- Kondisi & Status (Side-by-Side) -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <!-- Kondisi -->
-                      <div class="space-y-1.5">
-                        <label class="text-sm font-medium text-foreground block">Kondisi<span class="text-rose-500">*</span></label>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 disabled:opacity-50 disabled:cursor-not-allowed" :class="[!assetForm.condition ? 'text-muted-foreground' : 'text-foreground']">
-                              {{ assetForm.condition ? getConditionLabel(assetForm.condition) : 'Pilih kondisi aset' }}
-                              <ChevronDown class="w-4 h-4 opacity-50" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
-                            <DropdownMenuItem v-for="cond in availableConditions" :key="cond" @select="assetForm.condition = cond">
-                              {{ getConditionLabel(cond) }}
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
+                      <Field :data-invalid="!!assetFormErrors.condition || undefined">
+                        <FieldLabel><span>Kondisi<span class="text-rose-500">*</span></span></FieldLabel>
+                        <FieldContent>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 disabled:opacity-50 disabled:cursor-not-allowed" :class="[!assetForm.condition ? 'text-muted-foreground' : 'text-foreground', assetFormErrors.condition ? '!border-destructive focus:!ring-destructive/20 focus:!border-destructive' : '']">
+                                {{ assetForm.condition ? getConditionLabel(assetForm.condition) : 'Pilih kondisi aset' }}
+                                <ChevronDown class="w-4 h-4 opacity-50" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
+                              <DropdownMenuItem v-for="cond in availableConditions" :key="cond" @select="assetForm.condition = cond">
+                                {{ getConditionLabel(cond) }}
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </FieldContent>
+                        <FieldError v-if="assetFormErrors.condition">{{ assetFormErrors.condition }}</FieldError>
+                      </Field>
 
                       <!-- Status -->
-                      <div class="space-y-1.5">
-                        <label class="text-sm font-medium text-foreground block">Status<span class="text-rose-500">*</span></label>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="outline" :disabled="assetForm.status === 'Pending'" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 disabled:opacity-50 disabled:cursor-not-allowed" :class="[!assetForm.status ? 'text-muted-foreground' : 'text-foreground']">
-                              {{ assetForm.status ? getStatusLabel(assetForm.status) : 'Pilih status aset' }}
-                              <ChevronDown class="w-4 h-4 opacity-50" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
-                            <DropdownMenuItem v-for="st in availableStatuses" :key="st" @select="assetForm.status = st">
-                              {{ getStatusLabel(st) }}
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
+                      <Field :data-invalid="!!assetFormErrors.status || undefined">
+                        <FieldLabel><span>Status<span class="text-rose-500">*</span></span></FieldLabel>
+                        <FieldContent>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" :disabled="assetForm.status === 'Pending'" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 disabled:opacity-50 disabled:cursor-not-allowed" :class="[!assetForm.status ? 'text-muted-foreground' : 'text-foreground', assetFormErrors.status ? '!border-destructive focus:!ring-destructive/20 focus:!border-destructive' : '']">
+                                {{ assetForm.status ? getStatusLabel(assetForm.status) : 'Pilih status aset' }}
+                                <ChevronDown class="w-4 h-4 opacity-50" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
+                              <DropdownMenuItem v-for="st in availableStatuses" :key="st" @select="assetForm.status = st">
+                                {{ getStatusLabel(st) }}
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </FieldContent>
+                        <FieldError v-if="assetFormErrors.status">{{ assetFormErrors.status }}</FieldError>
+                      </Field>
                     </div>
 
                     <!-- Lokasi -->
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Lokasi<span class="text-rose-500">*</span></label>
-                      <div class="flex gap-2">
-                        <Combobox
-                          v-model="assetForm.location_id"
-                          :options="props.locations"
-                          search-placeholder="Cari lokasi..."
-                          default-label="Pilih lokasi aset"
-                          width-class="flex-grow h-10 px-4"
-                        />
-                        <Button 
-                          type="button"
-                          @click="
-                            assetForm.location_id = props.lot.location_id; 
-                            assetForm.floor_id = props.lot.floor_id; 
-                            assetForm.room_id = props.lot.room_id;
-                          "
-                          variant="warning"
-                          size="lg"
-                        >
-                          Samakan
-                        </Button>
-                      </div>
-                    </div>
+                    <Field :data-invalid="!!assetFormErrors.location_id || undefined">
+                      <FieldLabel><span>Lokasi<span class="text-rose-500">*</span></span></FieldLabel>
+                      <FieldContent>
+                        <div class="flex gap-2">
+                          <Combobox
+                            v-model="assetForm.location_id"
+                            :options="props.locations"
+                            search-placeholder="Cari lokasi..."
+                            default-label="Pilih lokasi aset"
+                            width-class="flex-grow h-10 px-4"
+                            :error="!!assetFormErrors.location_id"
+                          />
+                          <Button 
+                            type="button"
+                            @click="
+                              assetForm.location_id = props.lot.location_id; 
+                              assetForm.floor_id = props.lot.floor_id; 
+                              assetForm.room_id = props.lot.room_id;
+                            "
+                            variant="warning"
+                            size="lg"
+                            :disabled="assetForm.processing"
+                          >
+                            Samakan
+                          </Button>
+                        </div>
+                      </FieldContent>
+                      <FieldError v-if="assetFormErrors.location_id">{{ assetFormErrors.location_id }}</FieldError>
+                    </Field>
 
                     <!-- Lantai -->
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Lantai</label>
-                      <div class="flex gap-2">
-                        <Combobox
-                          v-model="assetForm.floor_id"
-                          :options="filteredFloorsForAsset"
-                          search-placeholder="Cari lantai..."
-                          default-label="Pilih lokasi aset"
-                          width-class="flex-grow h-10 px-4"
-                          :disabled="!assetForm.location_id"
-                        />
-                        <Button 
-                          type="button"
-                          :disabled="!assetForm.location_id"
-                          @click="assetForm.floor_id = props.lot.floor_id"
-                          variant="warning"
-                          size="lg"
-                        >
-                          Samakan
-                        </Button>
-                      </div>
-                    </div>
+                    <Field :data-disabled="!assetForm.location_id || undefined">
+                      <FieldLabel>Lantai</FieldLabel>
+                      <FieldContent>
+                        <div class="flex gap-2">
+                          <Combobox
+                            v-model="assetForm.floor_id"
+                            :options="filteredFloorsForAsset"
+                            search-placeholder="Cari lantai..."
+                            default-label="Pilih lokasi aset"
+                            width-class="flex-grow h-10 px-4"
+                            :disabled="!assetForm.location_id"
+                          />
+                          <Button 
+                            type="button"
+                            :disabled="!assetForm.location_id || assetForm.processing"
+                            @click="assetForm.floor_id = props.lot.floor_id"
+                            variant="warning"
+                            size="lg"
+                          >
+                            Samakan
+                          </Button>
+                        </div>
+                      </FieldContent>
+                    </Field>
 
                     <!-- Ruangan -->
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Ruangan</label>
-                      <div class="flex gap-2">
-                        <Combobox
-                          v-model="assetForm.room_id"
-                          :options="filteredRoomsForAsset"
-                          search-placeholder="Cari ruangan..."
-                          default-label="Pilih lokasi aset"
-                          width-class="flex-grow h-10 px-4"
-                          :disabled="!assetForm.floor_id"
-                        />
-                        <Button 
-                          type="button"
-                          :disabled="!assetForm.floor_id"
-                          @click="assetForm.room_id = props.lot.room_id"
-                          variant="warning"
-                          size="lg"
-                        >
-                          Samakan
-                        </Button>
-                      </div>
-                    </div>
+                    <Field :data-disabled="!assetForm.floor_id || undefined">
+                      <FieldLabel>Ruangan</FieldLabel>
+                      <FieldContent>
+                        <div class="flex gap-2">
+                          <Combobox
+                            v-model="assetForm.room_id"
+                            :options="filteredRoomsForAsset"
+                            search-placeholder="Cari ruangan..."
+                            default-label="Pilih lokasi aset"
+                            width-class="flex-grow h-10 px-4"
+                            :disabled="!assetForm.floor_id"
+                          />
+                          <Button 
+                            type="button"
+                            :disabled="!assetForm.floor_id || assetForm.processing"
+                            @click="assetForm.room_id = props.lot.room_id"
+                            variant="warning"
+                            size="lg"
+                          >
+                            Samakan
+                          </Button>
+                        </div>
+                      </FieldContent>
+                    </Field>
 
                     <!-- Berita Acara / Memo -->
-                    <div v-if="arrNeedApproval.includes(assetForm.status) || assetForm.status === 'Pending'" class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">
-                        Berita Acara / Memo<span v-if="assetForm.status !== 'Pending'" class="text-rose-500">*</span>
-                      </label>
-                      <div class="flex gap-2">
-                        <div 
-                          class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] truncate flex items-center h-10 transition-colors"
-                          :class="[
-                            (assetForm.memo_file || assetForm.memo_file_name)
-                              ? 'bg-muted/10 cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted'
-                              : 'bg-muted/10 text-muted-foreground cursor-default'
-                          ]"
-                          @click="(assetForm.memo_file || assetForm.memo_file_name) && viewAssetMemoInNewTab()"
-                        >
-                          {{ assetForm.memo_file_name || 'Belum ada file yang dipilih' }}
+                    <Field v-if="arrNeedApproval.includes(assetForm.status) || assetForm.status === 'Pending'" :data-invalid="!!assetFormErrors.memo_file || undefined">
+                      <FieldLabel><span>Berita Acara / Memo<span v-if="assetForm.status !== 'Pending'" class="text-rose-500">*</span></span></FieldLabel>
+                      <FieldContent>
+                        <div class="flex gap-2">
+                          <div 
+                            class="flex-grow min-w-0 px-4 py-2 text-sm border rounded-[14px] truncate flex items-center h-10 transition-colors"
+                            :class="[
+                              (assetForm.memo_file || assetForm.memo_file_name)
+                                ? 'bg-muted/10 cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted'
+                                : 'bg-muted/10 text-muted-foreground cursor-default',
+                              assetFormErrors.memo_file ? 'border-destructive' : 'border-input'
+                            ]"
+                            @click="(assetForm.memo_file || assetForm.memo_file_name) && viewAssetMemoInNewTab()"
+                          >
+                            {{ assetForm.memo_file_name || 'Belum ada file yang dipilih' }}
+                          </div>
+                          <input 
+                            type="file" 
+                            id="asset-memo-upload" 
+                            class="hidden" 
+                            accept=".pdf,.jpg,.jpeg,.png"
+                            @change="handleAssetMemoUpload"
+                            :disabled="assetForm.status === 'Pending'"
+                          />
+                          <Button 
+                            type="button"
+                            @click="triggerAssetMemoInput"
+                            size="lg"
+                            :disabled="assetForm.status === 'Pending' || assetForm.processing"
+                          >
+                            Pilih File
+                          </Button>
                         </div>
-                        <input 
-                          type="file" 
-                          id="asset-memo-upload" 
-                          class="hidden" 
-                          accept=".pdf,.jpg,.jpeg,.png"
-                          @change="handleAssetMemoUpload"
-                          :disabled="assetForm.status === 'Pending'"
-                        />
-                        <Button 
-                          type="button"
-                          @click="triggerAssetMemoInput"
-                          size="lg"
-                          :disabled="assetForm.status === 'Pending'"
-                        >
-                          Pilih File
-                        </Button>
-                      </div>
-                    </div>
+                      </FieldContent>
+                      <FieldError v-if="assetFormErrors.memo_file">{{ assetFormErrors.memo_file }}</FieldError>
+                    </Field>
                   </div>
                 </div>
               </div>
@@ -2216,7 +2398,7 @@ const totalAsetTerpilihCount = computed(() => {
                   </Button>
                   <Button 
                     @click="handleSaveAsset"
-                    :disabled="!isAssetFormValid"
+                    :disabled="assetForm.processing"
                     variant="primary"
                     size="xl"
                   >
@@ -2417,83 +2599,89 @@ const totalAsetTerpilihCount = computed(() => {
                   <!-- Left Column -->
                   <div class="space-y-6">
                     <!-- Kode LOT -->
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Kode LOT</label>
-                      <input 
-                        type="text" 
-                        value="Tidak dapat diubah"
-                        disabled
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
-                      />
-                    </div>
+                    <Field>
+                      <FieldLabel>Kode LOT</FieldLabel>
+                      <FieldContent>
+                        <input 
+                          type="text" 
+                          value="Tidak dapat diubah"
+                          disabled
+                          class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
+                        />
+                      </FieldContent>
+                    </Field>
 
                     <!-- Nilai (Price) -->
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Nilai</label>
-                      <div class="flex gap-2">
-                        <div class="flex flex-grow rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors h-10 overflow-hidden">
-                          <span class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-r border-input select-none font-medium">
-                            Rp
-                          </span>
-                          <input 
-                            type="text" 
-                            v-model="bulkEditForm.price"
-                            @input="bulkEditForm.price = bulkEditForm.price.toString().replace(/[^0-9.,]/g, '')"
-                            placeholder="Tidak berubah"
-                            class="flex-1 min-w-0 px-4 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 transition-colors h-full"
-                          />
+                    <Field>
+                      <FieldLabel>Nilai</FieldLabel>
+                      <FieldContent>
+                        <div class="flex gap-2">
+                          <div class="flex flex-grow rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors h-10 overflow-hidden">
+                            <span class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-r border-input select-none font-medium">
+                              Rp
+                            </span>
+                            <input 
+                              type="text" 
+                              v-model="bulkEditForm.price"
+                              @input="bulkEditForm.price = bulkEditForm.price.toString().replace(/[^0-9.,]/g, '')"
+                              placeholder="Tidak berubah"
+                              class="flex-1 min-w-0 px-4 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 transition-colors h-full"
+                            />
+                          </div>
+                          <Button 
+                            type="button"
+                            @click="handleBulkSamakanPrice"
+                            variant="warning"
+                            size="lg"
+                          >
+                            Samakan
+                          </Button>
                         </div>
-                        <Button 
-                          type="button"
-                          @click="handleBulkSamakanPrice"
-                          variant="warning"
-                          size="lg"
-                        >
-                          Samakan
-                        </Button>
-                      </div>
-                    </div>
+                      </FieldContent>
+                    </Field>
 
                     <!-- Foto -->
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Foto</label>
-                      <div class="flex gap-2">
-                        <div 
-                          class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/10 truncate flex items-center h-10"
-                          :class="[
-                            (bulkEditForm.image_url || bulkEditForm.image_url_name) 
-                              ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' 
-                              : 'text-muted-foreground cursor-default'
-                          ]"
-                          @click="(bulkEditForm.image_url || bulkEditForm.image_url_name) && viewBulkImageInNewTab()"
-                        >
-                          {{ bulkEditForm.image_url_name || 'Tidak berubah' }}
+                    <Field>
+                      <FieldLabel>Foto</FieldLabel>
+                      <FieldContent>
+                        <div class="flex gap-2">
+                          <div 
+                            class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/10 truncate flex items-center h-10"
+                            :class="[
+                              (bulkEditForm.image_url || bulkEditForm.image_url_name) 
+                                ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' 
+                                : 'text-muted-foreground cursor-default'
+                            ]"
+                            @click="(bulkEditForm.image_url || bulkEditForm.image_url_name) && viewBulkImageInNewTab()"
+                          >
+                            {{ bulkEditForm.image_url_name || 'Tidak berubah' }}
+                          </div>
+                          <input 
+                            type="file" 
+                            id="bulk-photo-upload" 
+                            class="hidden" 
+                            accept=".jpg,.jpeg,.png"
+                            @change="handleBulkFileUpload"
+                          />
+                          <Button 
+                            type="button"
+                            @click="handleBulkSamakanPhoto"
+                            variant="warning"
+                            size="lg"
+                          >
+                            Samakan
+                          </Button>
+                          <Button 
+                            type="button"
+                            @click="triggerBulkFileInput"
+                            size="lg"
+                          >
+                            Pilih File
+                          </Button>
                         </div>
-                        <input 
-                          type="file" 
-                          id="bulk-photo-upload" 
-                          class="hidden" 
-                          accept=".jpg,.jpeg,.png"
-                          @change="handleBulkFileUpload"
-                        />
-                        <Button 
-                          type="button"
-                          @click="handleBulkSamakanPhoto"
-                          variant="warning"
-                          size="lg"
-                        >
-                          Samakan
-                        </Button>
-                        <Button 
-                          type="button"
-                          @click="triggerBulkFileInput"
-                          size="lg"
-                        >
-                          Pilih File
-                        </Button>
-                      </div>
-                      <p class="text-[10px] text-muted-foreground ml-1">Maksimal ukuran 1 MB</p>
-                    </div>
+                        <p class="text-[10px] text-muted-foreground ml-1">Maksimal ukuran 1 MB</p>
+                      </FieldContent>
+                    </Field>
                   </div>
 
                   <!-- Right Column -->
@@ -2501,156 +2689,166 @@ const totalAsetTerpilihCount = computed(() => {
                     <!-- Kondisi & Status (Side-by-Side) -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <!-- Kondisi -->
-                      <div class="space-y-1.5">
-                        <label class="text-sm font-medium text-foreground block">Kondisi</label>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 disabled:opacity-50 disabled:cursor-not-allowed" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !bulkEditForm.condition ? 'text-muted-foreground' : 'text-foreground']">
-                              {{ bulkEditForm.condition ? getConditionLabel(bulkEditForm.condition) : 'Tidak berubah' }}
-                              <ChevronDown class="w-4 h-4 opacity-50" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
-                            <DropdownMenuItem @select="bulkEditForm.condition = ''">Tidak berubah</DropdownMenuItem>
-                            <DropdownMenuItem v-for="cond in availableConditions" :key="cond" @select="bulkEditForm.condition = cond">
-                              {{ getConditionLabel(cond) }}
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
+                      <Field>
+                        <FieldLabel>Kondisi</FieldLabel>
+                        <FieldContent>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 disabled:opacity-50 disabled:cursor-not-allowed" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !bulkEditForm.condition ? 'text-muted-foreground' : 'text-foreground']">
+                                {{ bulkEditForm.condition ? getConditionLabel(bulkEditForm.condition) : 'Tidak berubah' }}
+                                <ChevronDown class="w-4 h-4 opacity-50" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
+                              <DropdownMenuItem @select="bulkEditForm.condition = ''">Tidak berubah</DropdownMenuItem>
+                              <DropdownMenuItem v-for="cond in availableConditions" :key="cond" @select="bulkEditForm.condition = cond">
+                                {{ getConditionLabel(cond) }}
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </FieldContent>
+                      </Field>
 
                       <!-- Status -->
-                      <div class="space-y-1.5">
-                        <label class="text-sm font-medium text-foreground block">Status</label>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="outline" :disabled="isBulkPendingSelected" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 disabled:opacity-50 disabled:cursor-not-allowed" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !bulkEditForm.status ? 'text-muted-foreground' : 'text-foreground']">
-                              {{ bulkEditForm.status ? getStatusLabel(bulkEditForm.status) : (isBulkPendingSelected ? 'Tidak bisa massal' : 'Tidak berubah') }}
-                              <ChevronDown class="w-4 h-4 opacity-50" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
-                            <DropdownMenuItem @select="bulkEditForm.status = ''">
-                              {{ isBulkPendingSelected ? 'Tidak bisa massal' : 'Tidak berubah' }}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem v-for="st in availableStatuses" :key="st" @select="bulkEditForm.status = st">
-                              {{ getStatusLabel(st) }}
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
+                      <Field>
+                        <FieldLabel>Status</FieldLabel>
+                        <FieldContent>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" :disabled="isBulkPendingSelected" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 disabled:opacity-50 disabled:cursor-not-allowed" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !bulkEditForm.status ? 'text-muted-foreground' : 'text-foreground']">
+                                {{ bulkEditForm.status ? getStatusLabel(bulkEditForm.status) : (isBulkPendingSelected ? 'Tidak bisa massal' : 'Tidak berubah') }}
+                                <ChevronDown class="w-4 h-4 opacity-50" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
+                              <DropdownMenuItem @select="bulkEditForm.status = ''">
+                                {{ isBulkPendingSelected ? 'Tidak bisa massal' : 'Tidak berubah' }}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem v-for="st in availableStatuses" :key="st" @select="bulkEditForm.status = st">
+                                {{ getStatusLabel(st) }}
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </FieldContent>
+                      </Field>
                     </div>
 
                     <!-- Lokasi -->
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Lokasi</label>
-                      <div class="flex gap-2">
-                        <Combobox
-                          v-model="bulkEditForm.location_id"
-                          :options="props.locations"
-                          search-placeholder="Cari lokasi..."
-                          default-label="Tidak berubah"
-                          width-class="flex-grow h-10 px-4"
-                        />
-                        <Button 
-                          type="button"
-                          @click="handleBulkSamakanLocation"
-                          variant="warning"
-                          size="lg"
-                        >
-                          Samakan
-                        </Button>
-                      </div>
-                    </div>
+                    <Field>
+                      <FieldLabel>Lokasi</FieldLabel>
+                      <FieldContent>
+                        <div class="flex gap-2">
+                          <Combobox
+                            v-model="bulkEditForm.location_id"
+                            :options="props.locations"
+                            search-placeholder="Cari lokasi..."
+                            default-label="Tidak berubah"
+                            width-class="flex-grow h-10 px-4"
+                          />
+                          <Button 
+                            type="button"
+                            @click="handleBulkSamakanLocation"
+                            variant="warning"
+                            size="lg"
+                          >
+                            Samakan
+                          </Button>
+                        </div>
+                      </FieldContent>
+                    </Field>
 
                     <!-- Lantai -->
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Lantai</label>
-                      <div class="flex gap-2">
-                        <Combobox
-                          v-model="bulkEditForm.floor_id"
-                          :options="filteredFloorsForBulk"
-                          search-placeholder="Cari lantai..."
-                          default-label="Tidak berubah"
-                          width-class="flex-grow h-10 px-4"
-                          :disabled="!bulkEditForm.location_id"
-                        />
-                        <Button 
-                          type="button"
-                          @click="handleBulkSamakanFloor"
-                          variant="warning"
-                          size="lg"
-                        >
-                          Samakan
-                        </Button>
-                      </div>
-                    </div>
+                    <Field :data-disabled="!bulkEditForm.location_id || undefined">
+                      <FieldLabel>Lantai</FieldLabel>
+                      <FieldContent>
+                        <div class="flex gap-2">
+                          <Combobox
+                            v-model="bulkEditForm.floor_id"
+                            :options="filteredFloorsForBulk"
+                            search-placeholder="Cari lantai..."
+                            default-label="Tidak berubah"
+                            width-class="flex-grow h-10 px-4"
+                            :disabled="!bulkEditForm.location_id"
+                          />
+                          <Button 
+                            type="button"
+                            @click="handleBulkSamakanFloor"
+                            variant="warning"
+                            size="lg"
+                          >
+                            Samakan
+                          </Button>
+                        </div>
+                      </FieldContent>
+                    </Field>
 
                     <!-- Ruangan -->
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Ruangan</label>
-                      <div class="flex gap-2">
-                        <Combobox
-                          v-model="bulkEditForm.room_id"
-                          :options="filteredRoomsForBulk"
-                          search-placeholder="Cari ruangan..."
-                          default-label="Tidak berubah"
-                          width-class="flex-grow h-10 px-4"
-                          :disabled="!bulkEditForm.floor_id"
-                        />
-                        <Button 
-                          type="button"
-                          @click="handleBulkSamakanRoom"
-                          variant="warning"
-                          size="lg"
-                        >
-                          Samakan
-                        </Button>
-                      </div>
-                    </div>
+                    <Field :data-disabled="!bulkEditForm.floor_id || undefined">
+                      <FieldLabel>Ruangan</FieldLabel>
+                      <FieldContent>
+                        <div class="flex gap-2">
+                          <Combobox
+                            v-model="bulkEditForm.room_id"
+                            :options="filteredRoomsForBulk"
+                            search-placeholder="Cari ruangan..."
+                            default-label="Tidak berubah"
+                            width-class="flex-grow h-10 px-4"
+                            :disabled="!bulkEditForm.floor_id"
+                          />
+                          <Button 
+                            type="button"
+                            @click="handleBulkSamakanRoom"
+                            variant="warning"
+                            size="lg"
+                          >
+                            Samakan
+                          </Button>
+                        </div>
+                      </FieldContent>
+                    </Field>
 
                     <!-- Berita Acara / Memo -->
-                    <div v-if="arrNeedApproval.includes(bulkEditForm.status)" class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">
-                        Berita Acara / Memo<span class="text-rose-500">*</span>
-                      </label>
-                      <div class="flex gap-2">
-                        <div 
-                          class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/10 truncate flex items-center h-10"
-                          :class="[
-                            (bulkEditForm.memo_file || bulkEditForm.memo_file_name) 
-                              ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' 
-                              : 'text-muted-foreground cursor-default'
-                          ]"
-                          @click="(bulkEditForm.memo_file || bulkEditForm.memo_file_name) && viewBulkMemoInNewTab()"
-                        >
-                          {{ bulkEditForm.memo_file_name || 'Belum ada dokumen yang dipilih' }}
+                    <Field v-if="arrNeedApproval.includes(bulkEditForm.status)">
+                      <FieldLabel><span>Berita Acara / Memo<span class="text-rose-500">*</span></span></FieldLabel>
+                      <FieldContent>
+                        <div class="flex gap-2">
+                          <div 
+                            class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/10 truncate flex items-center h-10"
+                            :class="[
+                              (bulkEditForm.memo_file || bulkEditForm.memo_file_name) 
+                                ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' 
+                                : 'text-muted-foreground cursor-default'
+                            ]"
+                            @click="(bulkEditForm.memo_file || bulkEditForm.memo_file_name) && viewBulkMemoInNewTab()"
+                          >
+                            {{ bulkEditForm.memo_file_name || 'Belum ada dokumen yang dipilih' }}
+                          </div>
+                          <input 
+                            type="file" 
+                            id="bulk-memo-upload" 
+                            class="hidden" 
+                            accept=".pdf,.jpg,.jpeg,.png"
+                            @change="handleBulkMemoUpload"
+                          />
+                          <Button 
+                            type="button"
+                            @click="handleBulkSamakanMemo"
+                            variant="warning"
+                            size="lg"
+                          >
+                            Samakan
+                          </Button>
+                          <Button 
+                            type="button"
+                            @click="triggerBulkMemoInput"
+                            size="lg"
+                          >
+                            Pilih File
+                          </Button>
                         </div>
-                        <input 
-                          type="file" 
-                          id="bulk-memo-upload" 
-                          class="hidden" 
-                          accept=".pdf,.jpg,.jpeg,.png"
-                          @change="handleBulkMemoUpload"
-                        />
-                        <Button 
-                          type="button"
-                          @click="handleBulkSamakanMemo"
-                          variant="warning"
-                          size="lg"
-                        >
-                          Samakan
-                        </Button>
-                        <Button 
-                          type="button"
-                          @click="triggerBulkMemoInput"
-                          size="lg"
-                        >
-                          Pilih File
-                        </Button>
-                      </div>
-                      <p class="text-[10px] text-muted-foreground ml-1">Maksimal ukuran 2 MB</p>
-                    </div>
+                        <p class="text-[10px] text-muted-foreground ml-1">Maksimal ukuran 2 MB</p>
+                      </FieldContent>
+                    </Field>
                   </div>
                 </div>
               </div>
@@ -2719,94 +2917,102 @@ const totalAsetTerpilihCount = computed(() => {
                   <!-- Left Column -->
                   <div class="space-y-6">
                     <!-- Kode LOT -->
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Kode LOT</label>
-                      <input 
-                        type="text" 
-                        value="Tidak dapat diubah"
-                        disabled
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
-                      />
-                    </div>
+                    <Field>
+                      <FieldLabel>Kode LOT</FieldLabel>
+                      <FieldContent>
+                        <input 
+                          type="text" 
+                          value="Tidak dapat diubah"
+                          disabled
+                          class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
+                        />
+                      </FieldContent>
+                    </Field>
 
                     <!-- Nilai (Price) -->
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Nilai</label>
-                      <div class="flex gap-2">
-                        <div class="flex flex-grow rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors h-10 overflow-hidden">
-                          <span class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-r border-input select-none font-medium">
-                            Rp
-                          </span>
-                          <input 
-                            type="text" 
-                            v-model="bulkVehicleEditForm.price"
-                            @input="bulkVehicleEditForm.price = bulkVehicleEditForm.price.toString().replace(/[^0-9.,]/g, '')"
-                            placeholder="Tidak berubah"
-                            class="flex-1 min-w-0 px-4 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 transition-colors h-full"
-                          />
+                    <Field>
+                      <FieldLabel>Nilai</FieldLabel>
+                      <FieldContent>
+                        <div class="flex gap-2">
+                          <div class="flex flex-grow rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors h-10 overflow-hidden">
+                            <span class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-r border-input select-none font-medium">
+                              Rp
+                            </span>
+                            <input 
+                              type="text" 
+                              v-model="bulkVehicleEditForm.price"
+                              @input="bulkVehicleEditForm.price = bulkVehicleEditForm.price.toString().replace(/[^0-9.,]/g, '')"
+                              placeholder="Tidak berubah"
+                              class="flex-1 min-w-0 px-4 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 transition-colors h-full"
+                            />
+                          </div>
+                          <Button 
+                            type="button"
+                            @click="handleBulkVehicleSamakanPrice"
+                            variant="warning"
+                            size="lg"
+                          >
+                            Samakan
+                          </Button>
                         </div>
-                        <Button 
-                          type="button"
-                          @click="handleBulkVehicleSamakanPrice"
-                          variant="warning"
-                          size="lg"
-                        >
-                          Samakan
-                        </Button>
-                      </div>
-                    </div>
+                      </FieldContent>
+                    </Field>
 
                     <!-- Foto -->
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Foto</label>
-                      <div class="flex gap-2">
-                        <div 
-                          class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/10 truncate flex items-center h-10"
-                          :class="[
-                            (bulkVehicleEditForm.image_url || bulkVehicleEditForm.image_url_name) 
-                              ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' 
-                              : 'text-muted-foreground cursor-default'
-                          ]"
-                          @click="(bulkVehicleEditForm.image_url || bulkVehicleEditForm.image_url_name) && viewBulkVehicleImageInNewTab()"
-                        >
-                          {{ bulkVehicleEditForm.image_url_name || 'Tidak berubah' }}
+                    <Field>
+                      <FieldLabel>Foto</FieldLabel>
+                      <FieldContent>
+                        <div class="flex gap-2">
+                          <div 
+                            class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/10 truncate flex items-center h-10"
+                            :class="[
+                              (bulkVehicleEditForm.image_url || bulkVehicleEditForm.image_url_name) 
+                                ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' 
+                                : 'text-muted-foreground cursor-default'
+                            ]"
+                            @click="(bulkVehicleEditForm.image_url || bulkVehicleEditForm.image_url_name) && viewBulkVehicleImageInNewTab()"
+                          >
+                            {{ bulkVehicleEditForm.image_url_name || 'Tidak berubah' }}
+                          </div>
+                          <input 
+                            type="file" 
+                            id="bulk-vehicle-photo-upload" 
+                            class="hidden" 
+                            accept=".jpg,.jpeg,.png"
+                            @change="handleBulkVehicleFileUpload"
+                          />
+                          <Button 
+                            type="button"
+                            @click="handleBulkVehicleSamakanPhoto"
+                            variant="warning"
+                            size="lg"
+                          >
+                            Samakan
+                          </Button>
+                          <Button 
+                            type="button"
+                            @click="triggerBulkVehicleFileInput"
+                            size="lg"
+                          >
+                            Pilih File
+                          </Button>
                         </div>
-                        <input 
-                          type="file" 
-                          id="bulk-vehicle-photo-upload" 
-                          class="hidden" 
-                          accept=".jpg,.jpeg,.png"
-                          @change="handleBulkVehicleFileUpload"
-                        />
-                        <Button 
-                          type="button"
-                          @click="handleBulkVehicleSamakanPhoto"
-                          variant="warning"
-                          size="lg"
-                        >
-                          Samakan
-                        </Button>
-                        <Button 
-                          type="button"
-                          @click="triggerBulkVehicleFileInput"
-                          size="lg"
-                        >
-                          Pilih File
-                        </Button>
-                      </div>
-                      <p class="text-[10px] text-muted-foreground ml-1">Maksimal ukuran 1 MB</p>
-                    </div>
+                        <p class="text-[10px] text-muted-foreground ml-1">Maksimal ukuran 1 MB</p>
+                      </FieldContent>
+                    </Field>
 
                     <!-- TNKB (Nomor Polisi) -->
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">TNKB (Nomor Polisi)</label>
-                      <input 
-                        type="text" 
-                        value="Tidak dapat diubah secara massal"
-                        disabled
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
-                      />
-                    </div>
+                    <Field>
+                      <FieldLabel>TNKB (Nomor Polisi)</FieldLabel>
+                      <FieldContent>
+                        <input 
+                          type="text" 
+                          value="Tidak dapat diubah secara massal"
+                          disabled
+                          class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
+                        />
+                      </FieldContent>
+                    </Field>
                   </div>
 
                   <!-- Right Column -->
@@ -2814,156 +3020,166 @@ const totalAsetTerpilihCount = computed(() => {
                     <!-- Kondisi & Status (Side-by-Side) -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <!-- Kondisi -->
-                      <div class="space-y-1.5">
-                        <label class="text-sm font-medium text-foreground block">Kondisi</label>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 disabled:opacity-50 disabled:cursor-not-allowed" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !bulkVehicleEditForm.condition ? 'text-muted-foreground' : 'text-foreground']">
-                              {{ bulkVehicleEditForm.condition ? getConditionLabel(bulkVehicleEditForm.condition) : 'Tidak berubah' }}
-                              <ChevronDown class="w-4 h-4 opacity-50" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
-                            <DropdownMenuItem @select="bulkVehicleEditForm.condition = ''">Tidak berubah</DropdownMenuItem>
-                            <DropdownMenuItem v-for="cond in availableConditions" :key="cond" @select="bulkVehicleEditForm.condition = cond">
-                              {{ getConditionLabel(cond) }}
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
+                      <Field>
+                        <FieldLabel>Kondisi</FieldLabel>
+                        <FieldContent>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 disabled:opacity-50 disabled:cursor-not-allowed" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !bulkVehicleEditForm.condition ? 'text-muted-foreground' : 'text-foreground']">
+                                {{ bulkVehicleEditForm.condition ? getConditionLabel(bulkVehicleEditForm.condition) : 'Tidak berubah' }}
+                                <ChevronDown class="w-4 h-4 opacity-50" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
+                              <DropdownMenuItem @select="bulkVehicleEditForm.condition = ''">Tidak berubah</DropdownMenuItem>
+                              <DropdownMenuItem v-for="cond in availableConditions" :key="cond" @select="bulkVehicleEditForm.condition = cond">
+                                {{ getConditionLabel(cond) }}
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </FieldContent>
+                      </Field>
 
                       <!-- Status -->
-                      <div class="space-y-1.5">
-                        <label class="text-sm font-medium text-foreground block">Status</label>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="outline" :disabled="isBulkPendingSelected" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 disabled:opacity-50 disabled:cursor-not-allowed" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !bulkVehicleEditForm.status ? 'text-muted-foreground' : 'text-foreground']">
-                              {{ bulkVehicleEditForm.status ? getStatusLabel(bulkVehicleEditForm.status) : (isBulkPendingSelected ? 'Tidak bisa massal' : 'Tidak berubah') }}
-                              <ChevronDown class="w-4 h-4 opacity-50" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
-                            <DropdownMenuItem @select="bulkVehicleEditForm.status = ''">
-                              {{ isBulkPendingSelected ? 'Tidak bisa massal' : 'Tidak berubah' }}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem v-for="st in availableStatuses" :key="st" @select="bulkVehicleEditForm.status = st">
-                              {{ getStatusLabel(st) }}
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
+                      <Field>
+                        <FieldLabel>Status</FieldLabel>
+                        <FieldContent>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" :disabled="isBulkPendingSelected" class="w-full justify-between rounded-[14px] font-normal h-10 px-4 disabled:opacity-50 disabled:cursor-not-allowed" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !bulkVehicleEditForm.status ? 'text-muted-foreground' : 'text-foreground']">
+                                {{ bulkVehicleEditForm.status ? getStatusLabel(bulkVehicleEditForm.status) : (isBulkPendingSelected ? 'Tidak bisa massal' : 'Tidak berubah') }}
+                                <ChevronDown class="w-4 h-4 opacity-50" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
+                              <DropdownMenuItem @select="bulkVehicleEditForm.status = ''">
+                                {{ isBulkPendingSelected ? 'Tidak bisa massal' : 'Tidak berubah' }}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem v-for="st in availableStatuses" :key="st" @select="bulkVehicleEditForm.status = st">
+                                {{ getStatusLabel(st) }}
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </FieldContent>
+                      </Field>
                     </div>
 
                     <!-- Lokasi -->
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Lokasi</label>
-                      <div class="flex gap-2">
-                        <Combobox
-                          v-model="bulkVehicleEditForm.location_id"
-                          :options="props.locations"
-                          search-placeholder="Cari lokasi..."
-                          default-label="Tidak berubah"
-                          width-class="flex-grow h-10 px-4"
-                        />
-                        <Button 
-                          type="button"
-                          @click="handleBulkVehicleSamakanLocation"
-                          variant="warning"
-                          size="lg"
-                        >
-                          Samakan
-                        </Button>
-                      </div>
-                    </div>
+                    <Field>
+                      <FieldLabel>Lokasi</FieldLabel>
+                      <FieldContent>
+                        <div class="flex gap-2">
+                          <Combobox
+                            v-model="bulkVehicleEditForm.location_id"
+                            :options="props.locations"
+                            search-placeholder="Cari lokasi..."
+                            default-label="Tidak berubah"
+                            width-class="flex-grow h-10 px-4"
+                          />
+                          <Button 
+                            type="button"
+                            @click="handleBulkVehicleSamakanLocation"
+                            variant="warning"
+                            size="lg"
+                          >
+                            Samakan
+                          </Button>
+                        </div>
+                      </FieldContent>
+                    </Field>
 
                     <!-- Lantai -->
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Lantai</label>
-                      <div class="flex gap-2">
-                        <Combobox
-                          v-model="bulkVehicleEditForm.floor_id"
-                          :options="filteredFloorsForBulkVehicle"
-                          search-placeholder="Cari lantai..."
-                          default-label="Tidak berubah"
-                          width-class="flex-grow h-10 px-4"
-                          :disabled="!bulkVehicleEditForm.location_id"
-                        />
-                        <Button 
-                          type="button"
-                          @click="handleBulkVehicleSamakanFloor"
-                          variant="warning"
-                          size="lg"
-                        >
-                          Samakan
-                        </Button>
-                      </div>
-                    </div>
+                    <Field :data-disabled="!bulkVehicleEditForm.location_id || undefined">
+                      <FieldLabel>Lantai</FieldLabel>
+                      <FieldContent>
+                        <div class="flex gap-2">
+                          <Combobox
+                            v-model="bulkVehicleEditForm.floor_id"
+                            :options="filteredFloorsForBulkVehicle"
+                            search-placeholder="Cari lantai..."
+                            default-label="Tidak berubah"
+                            width-class="flex-grow h-10 px-4"
+                            :disabled="!bulkVehicleEditForm.location_id"
+                          />
+                          <Button 
+                            type="button"
+                            @click="handleBulkVehicleSamakanFloor"
+                            variant="warning"
+                            size="lg"
+                          >
+                            Samakan
+                          </Button>
+                        </div>
+                      </FieldContent>
+                    </Field>
 
                     <!-- Ruangan -->
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Ruangan</label>
-                      <div class="flex gap-2">
-                        <Combobox
-                          v-model="bulkVehicleEditForm.room_id"
-                          :options="filteredRoomsForBulkVehicle"
-                          search-placeholder="Cari ruangan..."
-                          default-label="Tidak berubah"
-                          width-class="flex-grow h-10 px-4"
-                          :disabled="!bulkVehicleEditForm.floor_id"
-                        />
-                        <Button 
-                          type="button"
-                          @click="handleBulkVehicleSamakanRoom"
-                          variant="warning"
-                          size="lg"
-                        >
-                          Samakan
-                        </Button>
-                      </div>
-                    </div>
+                    <Field :data-disabled="!bulkVehicleEditForm.floor_id || undefined">
+                      <FieldLabel>Ruangan</FieldLabel>
+                      <FieldContent>
+                        <div class="flex gap-2">
+                          <Combobox
+                            v-model="bulkVehicleEditForm.room_id"
+                            :options="filteredRoomsForBulkVehicle"
+                            search-placeholder="Cari ruangan..."
+                            default-label="Tidak berubah"
+                            width-class="flex-grow h-10 px-4"
+                            :disabled="!bulkVehicleEditForm.floor_id"
+                          />
+                          <Button 
+                            type="button"
+                            @click="handleBulkVehicleSamakanRoom"
+                            variant="warning"
+                            size="lg"
+                          >
+                            Samakan
+                          </Button>
+                        </div>
+                      </FieldContent>
+                    </Field>
 
                     <!-- Berita Acara / Memo -->
-                    <div v-if="arrNeedApproval.includes(bulkVehicleEditForm.status)" class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">
-                        Berita Acara / Memo<span class="text-rose-500">*</span>
-                      </label>
-                      <div class="flex gap-2">
-                        <div 
-                          class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/10 truncate flex items-center h-10"
-                          :class="[
-                            (bulkVehicleEditForm.memo_file || bulkVehicleEditForm.memo_file_name) 
-                              ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' 
-                              : 'text-muted-foreground cursor-default'
-                          ]"
-                          @click="(bulkVehicleEditForm.memo_file || bulkVehicleEditForm.memo_file_name) && viewBulkVehicleMemoInNewTab()"
-                        >
-                          {{ bulkVehicleEditForm.memo_file_name || 'Belum ada dokumen yang dipilih' }}
+                    <Field v-if="arrNeedApproval.includes(bulkVehicleEditForm.status)">
+                      <FieldLabel><span>Berita Acara / Memo<span class="text-rose-500">*</span></span></FieldLabel>
+                      <FieldContent>
+                        <div class="flex gap-2">
+                          <div 
+                            class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/10 truncate flex items-center h-10"
+                            :class="[
+                              (bulkVehicleEditForm.memo_file || bulkVehicleEditForm.memo_file_name) 
+                                ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' 
+                                : 'text-muted-foreground cursor-default'
+                            ]"
+                            @click="(bulkVehicleEditForm.memo_file || bulkVehicleEditForm.memo_file_name) && viewBulkVehicleMemoInNewTab()"
+                          >
+                            {{ bulkVehicleEditForm.memo_file_name || 'Belum ada dokumen yang dipilih' }}
+                          </div>
+                          <input 
+                            type="file" 
+                            id="bulk-vehicle-memo-upload" 
+                            class="hidden" 
+                            accept=".pdf,.jpg,.jpeg,.png"
+                            @change="handleBulkVehicleMemoUpload"
+                          />
+                          <Button 
+                            type="button"
+                            @click="handleBulkVehicleSamakanMemo"
+                            variant="warning"
+                            size="lg"
+                          >
+                            Samakan
+                          </Button>
+                          <Button 
+                            type="button"
+                            @click="triggerBulkVehicleMemoInput"
+                            size="lg"
+                          >
+                            Pilih File
+                          </Button>
                         </div>
-                        <input 
-                          type="file" 
-                          id="bulk-vehicle-memo-upload" 
-                          class="hidden" 
-                          accept=".pdf,.jpg,.jpeg,.png"
-                          @change="handleBulkVehicleMemoUpload"
-                        />
-                        <Button 
-                          type="button"
-                          @click="handleBulkVehicleSamakanMemo"
-                          variant="warning"
-                          size="lg"
-                        >
-                          Samakan
-                        </Button>
-                        <Button 
-                          type="button"
-                          @click="triggerBulkVehicleMemoInput"
-                          size="lg"
-                        >
-                          Pilih File
-                        </Button>
-                      </div>
-                      <p class="text-[10px] text-muted-foreground ml-1">Maksimal ukuran 2 MB</p>
-                    </div>
+                        <p class="text-[10px] text-muted-foreground ml-1">Maksimal ukuran 2 MB</p>
+                      </FieldContent>
+                    </Field>
                   </div>
                 </div>
               </div>

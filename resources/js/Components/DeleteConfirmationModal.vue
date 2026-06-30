@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted } from 'vue';
-import { X, AlertTriangle } from 'lucide-vue-next';
+import { X, AlertTriangle, Loader2 } from 'lucide-vue-next';
 import { Button } from "@/Components/ui/button";
 
 interface Props {
@@ -18,6 +18,7 @@ interface Props {
   showNotice?: boolean;
   maxWidthClass?: string;
   actionType?: 'approved' | 'rejected' | string;
+  processing?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -33,6 +34,7 @@ const props = withDefaults(defineProps<Props>(), {
   showNotice: true,
   maxWidthClass: 'max-w-[576px]',
   actionType: '',
+  processing: false,
 });
 
 const emit = defineEmits(['close', 'confirm']);
@@ -370,9 +372,13 @@ onUnmounted(() => {
                 <Button 
                   @click="handleConfirm"
                   :variant="confirmButtonVariant"
-                  class="px-5 active:scale-[0.98]"
+                  :disabled="processing"
+                  class="px-5 active:scale-[0.98] relative"
                 >
-                  {{ modalConfirmButtonText }}
+                  <Loader2 v-if="processing" class="absolute inset-0 m-auto h-5 w-5 animate-spin" />
+                  <span :class="{ 'opacity-0': processing }">
+                    {{ modalConfirmButtonText }}
+                  </span>
                 </Button>
               </div>
             </div>

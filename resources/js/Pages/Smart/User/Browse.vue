@@ -5,6 +5,7 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import TableSearch from '@/Components/TableSearch.vue';
 import { ChevronDown, X } from 'lucide-vue-next';
 import { Button } from "@/Components/ui/button";
+import { Spinner } from "@/Components/ui/spinner";
 import ProductCard from '@/Components/ProductCard.vue';
 import { ScrollArea } from "@/Components/ui/scroll-area";
 import { toast } from 'vue-sonner';
@@ -86,6 +87,7 @@ const isModalOpen = ref(false);
 const selectedProduct = ref<Item | null>(null);
 const quantity = ref(1);
 const selectedBarangId = ref<number | null>(null);
+const isSubmitting = ref(false);
 
 const selectedVariant = computed(() => {
   if (!selectedProduct.value || !selectedBarangId.value) return null;
@@ -106,6 +108,7 @@ const openAddToCartModal = (product: Item) => {
   quantity.value = 1;
   selectedBarangId.value = null;
   isModalOpen.value = true;
+  isSubmitting.value = false;
 };
 
 const getBarangDisplayName = (barang: BarangVariant) => {
@@ -126,7 +129,7 @@ const getBarangDisplayName = (barang: BarangVariant) => {
 };
 
 const handleConfirmAddToCart = () => {
-  if (!selectedProduct.value) return;
+  if (!selectedProduct.value || isSubmitting.value) return;
 
   const isConsumable = selectedProduct.value.is_consumable;
   const routeName = isConsumable ? 'smart.asset-cart.store' : 'smart.borrow-cart.store';
@@ -136,6 +139,9 @@ const handleConfirmAddToCart = () => {
     barang_id: selectedBarangId.value,
     quantity: quantity.value,
   }, {
+    onBefore: () => {
+      isSubmitting.value = true;
+    },
     onSuccess: () => {
       isModalOpen.value = false;
       
@@ -160,6 +166,9 @@ const handleConfirmAddToCart = () => {
     },
     onError: (errors) => {
       toast.error(Object.values(errors)[0] as string);
+    },
+    onFinish: () => {
+      isSubmitting.value = false;
     }
   });
 };
@@ -278,7 +287,7 @@ const filteredAndSortedItems = computed(() => {
     </div>
 
     <!-- Add to Cart Modal -->
-    <Dialog :open="isModalOpen" @update:open="isModalOpen = $event">
+    <Dialog :open="isModalOpen" @update:open="val => { if (!isSubmitting) isModalOpen = val }">
       <DialogContent class="sm:max-w-[62.5rem] rounded-[0.875rem] bg-card shadow-2xl p-0 gap-0 border border-border overflow-hidden" :show-close-button="false">
         <!-- Modal Header -->
         <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
@@ -288,7 +297,7 @@ const filteredAndSortedItems = computed(() => {
               Formulir untuk menentukan jumlah barang yang ingin ditambahkan ke keranjang.
             </DialogDescription>
           </div>
-          <button @click="isModalOpen = false" class="p-2 hover:bg-muted rounded-full transition-colors">
+          <button :disabled="isSubmitting" @click="isModalOpen = false" class="p-2 hover:bg-muted rounded-full transition-colors disabled:opacity-50">
             <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
           </button>
         </div>
@@ -388,6 +397,7 @@ const filteredAndSortedItems = computed(() => {
                 variant="white"
                 size="xl"
                 class="flex-1 sm:flex-none sm:w-auto"
+                :disabled="isSubmitting"
               >
                 Batal
               </Button>
@@ -395,9 +405,11 @@ const filteredAndSortedItems = computed(() => {
                 @click="handleConfirmAddToCart"
                 variant="primary"
                 size="xl"
-                class="flex-1 sm:flex-none sm:w-auto"
+                class="flex-1 sm:flex-none sm:w-auto flex items-center justify-center gap-2"
+                :disabled="isSubmitting"
               >
-                Tambah ke Keranjang
+                <Spinner v-if="isSubmitting" class="text-primary-foreground" />
+                <span v-else>Tambah ke Keranjang</span>
               </Button>
             </div>
           </div>

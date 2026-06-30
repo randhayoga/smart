@@ -28,13 +28,15 @@ const props = withDefaults(defineProps<{
   defaultLabel?: string;
   widthClass?: string;
   disabled?: boolean;
+  error?: boolean;
 }>(), {
   placeholder: 'Pilih...',
   searchPlaceholder: 'Cari...',
   emptyText: 'Tidak ditemukan.',
   defaultLabel: 'Semua',
   widthClass: 'w-[200px]',
-  disabled: false
+  disabled: false,
+  error: false
 });
 
 const emit = defineEmits<{
@@ -77,7 +79,8 @@ const handleSelect = (val: string | number | null) => {
         :class="[
           widthClass,
           'justify-between rounded-[14px] font-normal',
-          !modelValue ? 'text-muted-foreground' : 'text-foreground'
+          !modelValue ? 'text-muted-foreground' : 'text-foreground',
+          error ? '!border-destructive focus:!ring-destructive/20 focus:!border-destructive' : ''
         ]"
       >
         <span class="truncate">{{ selectedLabel }}</span>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted } from 'vue';
 import { X, AlertTriangle } from 'lucide-vue-next';
+import { Button } from "@/Components/ui/button";
 
 interface Props {
   isOpen: boolean;
@@ -74,12 +75,14 @@ onUnmounted(() => {
 
             <!-- Modal Footer -->
             <div class="p-4 bg-muted/30 border-t border-border flex items-center justify-center">
-              <button 
+              <Button 
                 @click="emit('close')"
-                class="w-full py-2.5 border border-input rounded-[14px] hover:bg-muted transition-colors shadow-card active:scale-[0.98]"
+                variant="white"
+                size="xl"
+                class="px-5 w-full"
               >
-                Mengerti
-              </button>
+                Batal
+              </Button>
             </div>
           </div>
         </Transition>
