@@ -31,6 +31,7 @@ import DeleteErrorModal from '@/Components/DeleteErrorModal.vue';
 import Combobox from '@/Components/Combobox.vue';
 import { Checkbox } from '@/Components/ui/checkbox';
 import DetailLOTConsumables from './DetailLOTConsumables.vue';
+import { Field, FieldLabel, FieldContent, FieldError } from '@/Components/ui/field';
 
 interface Props {
   itemId: string | number;
@@ -130,6 +131,18 @@ const lotForm = useForm({
   total_item: 1,
 });
 
+const lotFormErrors = ref({
+  number: '',
+  organizer_id: '',
+  vendor_id: '',
+  location_id: '',
+  po_number: '',
+  date_of_receipt: '',
+  image_url: '',
+  initial_quantity: '',
+  auto_create_assets_count: '',
+});
+
 const generateLotCode = () => {
   const year = new Date().getFullYear();
   const barangCode = props.barang.code;
@@ -174,6 +187,17 @@ const openCreateLotModal = () => {
   lotForm.use_parent_image = false;
   lotForm.total_item = 1;
   lotForm.clearErrors();
+  lotFormErrors.value = {
+    number: '',
+    organizer_id: '',
+    vendor_id: '',
+    location_id: '',
+    po_number: '',
+    date_of_receipt: '',
+    image_url: '',
+    initial_quantity: '',
+    auto_create_assets_count: '',
+  };
   isLotModalOpen.value = true;
 };
 
@@ -181,6 +205,17 @@ const openEditLotModal = (lot: any) => {
   lotModalMode.value = 'edit';
   selectedLotId.value = lot.id;
   lotForm.clearErrors();
+  lotFormErrors.value = {
+    number: '',
+    organizer_id: '',
+    vendor_id: '',
+    location_id: '',
+    po_number: '',
+    date_of_receipt: '',
+    image_url: '',
+    initial_quantity: '',
+    auto_create_assets_count: '',
+  };
   
   lotForm._method = 'PUT';
   lotForm.number = lot.lotCode;
@@ -298,34 +333,66 @@ watch(() => lotForm.floor_id, (newVal) => {
   }
 });
 
-const isLotFormValid = computed(() => {
-  const baseValid = lotForm.number && 
-         lotForm.organizer_id && 
-         lotForm.vendor_id && 
-         lotForm.location_id && 
-         lotForm.po_number && 
-         lotForm.date_of_receipt && 
-         (lotForm.image_url || lotForm.image_url_name) &&
-         !lotForm.processing;
+const handleSaveLot = () => {
+  lotFormErrors.value = {
+    number: '',
+    organizer_id: '',
+    vendor_id: '',
+    location_id: '',
+    po_number: '',
+    date_of_receipt: '',
+    image_url: '',
+    initial_quantity: '',
+    auto_create_assets_count: '',
+  };
 
-  if (!baseValid) return false;
-
+  let isValid = true;
+  if (!lotForm.number) {
+    lotFormErrors.value.number = 'Kode LOT belum diisi';
+    isValid = false;
+  }
+  if (!lotForm.organizer_id) {
+    lotFormErrors.value.organizer_id = 'Organizer belum dipilih';
+    isValid = false;
+  }
+  if (!lotForm.vendor_id) {
+    lotFormErrors.value.vendor_id = 'Vendor belum dipilih';
+    isValid = false;
+  }
+  if (!lotForm.location_id) {
+    lotFormErrors.value.location_id = 'Lokasi belum dipilih';
+    isValid = false;
+  }
+  if (!lotForm.po_number) {
+    lotFormErrors.value.po_number = 'Nomor PO belum diisi';
+    isValid = false;
+  }
+  if (!lotForm.date_of_receipt) {
+    lotFormErrors.value.date_of_receipt = 'Tanggal Registrasi belum diisi';
+    isValid = false;
+  }
+  if (!lotForm.image_url && !lotForm.image_url_name) {
+    const photoLabel = props.barang.is_consumable ? 'Foto' : 'Foto default';
+    lotFormErrors.value.image_url = `${photoLabel} belum dipilih`;
+    isValid = false;
+  }
   if (lotModalMode.value === 'create') {
     if (props.barang.is_consumable) {
-      return lotForm.initial_quantity !== '' && lotForm.initial_quantity !== null && Number(lotForm.initial_quantity) >= 0;
+      if (lotForm.initial_quantity === '' || lotForm.initial_quantity === null) {
+        lotFormErrors.value.initial_quantity = 'Jumlah stok belum diisi';
+        isValid = false;
+      }
     } else {
       if (lotForm.auto_create_assets) {
-        return lotForm.auto_create_assets_count !== '' && lotForm.auto_create_assets_count !== null && Number(lotForm.auto_create_assets_count) >= 1;
+        if (lotForm.auto_create_assets_count === '' || lotForm.auto_create_assets_count === null) {
+          lotFormErrors.value.auto_create_assets_count = 'Jumlah aset belum diisi';
+          isValid = false;
+        }
       }
-      return lotForm.total_item !== null && lotForm.total_item !== undefined && Number(lotForm.total_item) >= 1;
     }
   }
 
-  return true;
-});
-
-const handleSaveLot = () => {
-  if (!isLotFormValid.value) return;
+  if (!isValid) return;
 
   const autoCreate = lotForm.auto_create_assets;
   const autoCreateCount = Number(lotForm.auto_create_assets_count);
@@ -668,6 +735,12 @@ const editForm = useForm({
   subcategory_id: props.barang.subcategory_id,
 });
 
+const editFormErrors = ref({
+  uom_id: '',
+  brand_id: '',
+  name: '',
+});
+
 const openEditModal = () => {
   editForm.kode = props.barang.code;
   editForm.kategori = props.barang.category;
@@ -681,11 +754,21 @@ const openEditModal = () => {
   editForm.foto = null;
   editForm.fotoName = props.barang.image_url ? props.barang.image_url.split('/').pop() : '';
   editForm.clearErrors();
+  editFormErrors.value = {
+    uom_id: '',
+    brand_id: '',
+    name: '',
+  };
   isEditModalOpen.value = true;
 };
 
 const closeEditModal = () => {
   isEditModalOpen.value = false;
+  editFormErrors.value = {
+    uom_id: '',
+    brand_id: '',
+    name: '',
+  };
 };
 
 const handleEditFileUpload = (e: any) => {
@@ -721,12 +804,28 @@ const viewImageInNewTab = () => {
   }
 };
 
-const isEditFormValid = computed(() => {
-  return editForm.uom_id && editForm.brand_id && editForm.name && !editForm.processing;
-});
-
 const handleSaveChanges = () => {
-  if (!isEditFormValid.value) return;
+  editFormErrors.value = {
+    uom_id: '',
+    brand_id: '',
+    name: '',
+  };
+
+  let isValid = true;
+  if (!editForm.uom_id) {
+    editFormErrors.value.uom_id = 'Satuan belum dipilih';
+    isValid = false;
+  }
+  if (!editForm.brand_id) {
+    editFormErrors.value.brand_id = 'Merek belum dipilih';
+    isValid = false;
+  }
+  if (!editForm.name) {
+    editFormErrors.value.name = 'Nama Tipe belum diisi';
+    isValid = false;
+  }
+
+  if (!isValid) return;
   editForm.transform((data) => {
     const formData: any = {
       _method: 'PUT',
@@ -768,6 +867,38 @@ const bulkLotForm = useForm({
   date_of_receipt: '',
 });
 
+const bulkLotFormErrors = ref({
+  organizer_id: '',
+  vendor_id: '',
+  location_id: '',
+  po_number: '',
+  date_of_receipt: '',
+  image_url: '',
+});
+
+// --- Reactive error clearing ---
+// lotForm
+watch(() => lotForm.organizer_id, (v) => { if (v && lotFormErrors.value.organizer_id) lotFormErrors.value.organizer_id = ''; });
+watch(() => lotForm.vendor_id, (v) => { if (v && lotFormErrors.value.vendor_id) lotFormErrors.value.vendor_id = ''; });
+watch(() => lotForm.location_id, (v) => { if (v && lotFormErrors.value.location_id) lotFormErrors.value.location_id = ''; });
+watch(() => lotForm.po_number, (v) => { if (v && lotFormErrors.value.po_number) lotFormErrors.value.po_number = ''; });
+watch(() => lotForm.date_of_receipt, (v) => { if (v && lotFormErrors.value.date_of_receipt) lotFormErrors.value.date_of_receipt = ''; });
+watch(() => lotForm.image_url, (v) => { if (v && lotFormErrors.value.image_url) lotFormErrors.value.image_url = ''; });
+watch(() => lotForm.image_url_name, (v) => { if (v && lotFormErrors.value.image_url) lotFormErrors.value.image_url = ''; });
+watch(() => lotForm.initial_quantity, (v) => { if ((v !== '' && v !== null) && lotFormErrors.value.initial_quantity) lotFormErrors.value.initial_quantity = ''; });
+// editForm
+watch(() => editForm.uom_id, (v) => { if (v && editFormErrors.value.uom_id) editFormErrors.value.uom_id = ''; });
+watch(() => editForm.brand_id, (v) => { if (v && editFormErrors.value.brand_id) editFormErrors.value.brand_id = ''; });
+watch(() => editForm.name, (v) => { if (v && editFormErrors.value.name) editFormErrors.value.name = ''; });
+// bulkLotForm
+watch(() => bulkLotForm.organizer_id, (v) => { if (v && bulkLotFormErrors.value.organizer_id) bulkLotFormErrors.value.organizer_id = ''; });
+watch(() => bulkLotForm.vendor_id, (v) => { if (v && bulkLotFormErrors.value.vendor_id) bulkLotFormErrors.value.vendor_id = ''; });
+watch(() => bulkLotForm.location_id, (v) => { if (v && bulkLotFormErrors.value.location_id) bulkLotFormErrors.value.location_id = ''; });
+watch(() => bulkLotForm.po_number, (v) => { if (v && bulkLotFormErrors.value.po_number) bulkLotFormErrors.value.po_number = ''; });
+watch(() => bulkLotForm.date_of_receipt, (v) => { if (v && bulkLotFormErrors.value.date_of_receipt) bulkLotFormErrors.value.date_of_receipt = ''; });
+watch(() => bulkLotForm.image_url, (v) => { if (v && bulkLotFormErrors.value.image_url) bulkLotFormErrors.value.image_url = ''; });
+watch(() => bulkLotForm.image_url_name, (v) => { if (v && bulkLotFormErrors.value.image_url) bulkLotFormErrors.value.image_url = ''; });
+
 const openBulkEditModal = () => {
   if (!dataTableRef.value) return;
   const selectedRows = dataTableRef.value.table.getFilteredRowModel().rows
@@ -780,6 +911,14 @@ const openBulkEditModal = () => {
 
   bulkLotForm.reset();
   bulkLotForm.clearErrors();
+  bulkLotFormErrors.value = {
+    organizer_id: '',
+    vendor_id: '',
+    location_id: '',
+    po_number: '',
+    date_of_receipt: '',
+    image_url: '',
+  };
   bulkLotForm.ids = selectedRows.map((r: any) => r.id);
   
   // Explicitly reset the edit values first
@@ -843,6 +982,14 @@ const closeBulkEditModal = () => {
   bulkLotForm.po_number = '';
   bulkLotForm.date_of_receipt = '';
   bulkLotForm.clearErrors();
+  bulkLotFormErrors.value = {
+    organizer_id: '',
+    vendor_id: '',
+    location_id: '',
+    po_number: '',
+    date_of_receipt: '',
+    image_url: '',
+  };
   selectedLotItem.value = null;
 };
 
@@ -915,18 +1062,46 @@ watch(() => bulkLotForm.floor_id, (newVal) => {
   bulkLotForm.room_id = null;
 });
 
-const isBulkLotFormValid = computed(() => {
+const handleSaveBulkChanges = () => {
+  bulkLotFormErrors.value = {
+    organizer_id: '',
+    vendor_id: '',
+    location_id: '',
+    po_number: '',
+    date_of_receipt: '',
+    image_url: '',
+  };
+
   if (bulkLotForm.ids.length === 1) {
-    return !!(
-      bulkLotForm.organizer_id &&
-      bulkLotForm.vendor_id &&
-      bulkLotForm.location_id &&
-      bulkLotForm.po_number &&
-      bulkLotForm.date_of_receipt &&
-      (bulkLotForm.image_url || bulkLotForm.use_parent_image || bulkLotForm.image_url_name) &&
-      !bulkLotForm.processing
-    );
+    let isValid = true;
+    if (!bulkLotForm.organizer_id) {
+      bulkLotFormErrors.value.organizer_id = 'Organizer belum dipilih';
+      isValid = false;
+    }
+    if (!bulkLotForm.vendor_id) {
+      bulkLotFormErrors.value.vendor_id = 'Vendor belum dipilih';
+      isValid = false;
+    }
+    if (!bulkLotForm.location_id) {
+      bulkLotFormErrors.value.location_id = 'Lokasi belum dipilih';
+      isValid = false;
+    }
+    if (!bulkLotForm.po_number) {
+      bulkLotFormErrors.value.po_number = 'Nomor PO belum diisi';
+      isValid = false;
+    }
+    if (!bulkLotForm.date_of_receipt) {
+      bulkLotFormErrors.value.date_of_receipt = 'Tanggal Registrasi belum diisi';
+      isValid = false;
+    }
+    if (!bulkLotForm.image_url && !bulkLotForm.use_parent_image && !bulkLotForm.image_url_name) {
+      const photoLabel = props.barang.is_consumable ? 'Foto' : 'Foto default';
+      bulkLotFormErrors.value.image_url = `${photoLabel} belum dipilih`;
+      isValid = false;
+    }
+    if (!isValid) return;
   } else {
+    // Mass edit validation: requires at least one field to be filled
     const hasAtLeastOneField = !!(
       bulkLotForm.organizer_id ||
       bulkLotForm.vendor_id ||
@@ -937,12 +1112,11 @@ const isBulkLotFormValid = computed(() => {
       bulkLotForm.image_url ||
       bulkLotForm.use_parent_image
     );
-    return hasAtLeastOneField && !bulkLotForm.processing;
+    if (!hasAtLeastOneField) {
+      toast.error('Harap isi minimal satu input untuk melakukan perubahan massal.');
+      return;
+    }
   }
-});
-
-const handleSaveBulkChanges = () => {
-  if (!isBulkLotFormValid.value) return;
 
   bulkLotForm.transform((data) => {
     const formData: any = {
@@ -1386,114 +1560,138 @@ onUnmounted(() => {
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
                   <!-- Left Column -->
                   <div class="space-y-6">
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Kode Tipe</label>
-                      <input 
-                        type="text" 
-                        v-model="editForm.kode"
-                        disabled
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
-                      />
-                    </div>
+                    <Field>
+                      <FieldLabel>Kode Tipe</FieldLabel>
+                      <FieldContent>
+                        <input 
+                          type="text" 
+                          v-model="editForm.kode"
+                          disabled
+                          class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
+                        />
+                      </FieldContent>
+                    </Field>
 
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Kategori</label>
-                      <input 
-                        type="text" 
-                        v-model="editForm.kategori"
-                        disabled
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
-                      />
-                    </div>
+                    <Field>
+                      <FieldLabel>Kategori</FieldLabel>
+                      <FieldContent>
+                        <input 
+                          type="text" 
+                          v-model="editForm.kategori"
+                          disabled
+                          class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
+                        />
+                      </FieldContent>
+                    </Field>
 
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Subkategori</label>
-                      <input 
-                        type="text" 
-                        v-model="editForm.subkategori"
-                        disabled
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
-                      />
-                    </div>
+                    <Field>
+                      <FieldLabel>Subkategori</FieldLabel>
+                      <FieldContent>
+                        <input 
+                          type="text" 
+                          v-model="editForm.subkategori"
+                          disabled
+                          class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
+                        />
+                      </FieldContent>
+                    </Field>
 
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Satuan<span class="text-rose-500">*</span></label>
-                      <Combobox
-                        v-model="editForm.uom_id"
-                        :options="props.uoms"
-                        search-placeholder="Cari satuan..."
-                        default-label="Pilih satuan"
-                        width-class="w-full h-10 px-4"
-                      />
-                    </div>
+                    <Field :data-invalid="!!editFormErrors.uom_id || undefined">
+                      <FieldLabel><span>Satuan<span class="text-rose-500">*</span></span></FieldLabel>
+                      <FieldContent>
+                        <Combobox
+                          v-model="editForm.uom_id"
+                          :options="props.uoms"
+                          search-placeholder="Cari satuan..."
+                          default-label="Pilih satuan"
+                          width-class="w-full h-10 px-4"
+                          :error="!!editFormErrors.uom_id"
+                        />
+                      </FieldContent>
+                      <FieldError v-if="editFormErrors.uom_id">{{ editFormErrors.uom_id }}</FieldError>
+                    </Field>
                   </div>
 
                   <!-- Right Column -->
                   <div class="space-y-6">
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Merek<span class="text-rose-500">*</span></label>
-                      <Combobox
-                        v-model="editForm.brand_id"
-                        :options="props.brands"
-                        search-placeholder="Cari merek..."
-                        default-label="Pilih merek"
-                        width-class="w-full h-10 px-4"
-                      />
-                    </div>
-
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Nama Tipe<span class="text-rose-500">*</span></label>
-                      <input 
-                        type="text" 
-                        v-model="editForm.name"
-                        maxlength="255"
-                        placeholder="Input nama tipe di sini..." 
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
-                      />
-                    </div>
-
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Spesifikasi</label>
-                      <input 
-                        type="text" 
-                        v-model="editForm.spesifikasi"
-                        maxlength="255"
-                        placeholder="Input spesifikasinya di sini..." 
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
-                      />
-                    </div>
-
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Foto <span class="italic text-muted-foreground">default</span><span class="text-rose-500">*</span></label>
-                      <div class="flex gap-2">
-                        <div 
-                          class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/10 truncate flex items-center h-10"
-                          :class="[
-                            (editForm.foto || props.barang.image_url) 
-                              ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' 
-                              : 'text-muted-foreground cursor-default'
-                          ]"
-                          @click="(editForm.foto || props.barang.image_url) && viewImageInNewTab()"
-                        >
-                          {{ editForm.fotoName || 'Belum ada foto yang dipilih' }}
-                        </div>
-                        <input 
-                          type="file" 
-                          id="edit-photo-upload" 
-                          class="hidden" 
-                          accept=".jpg,.jpeg,.png"
-                          @change="handleEditFileUpload"
+                    <Field :data-invalid="!!editFormErrors.brand_id || undefined">
+                      <FieldLabel><span>Merek<span class="text-rose-500">*</span></span></FieldLabel>
+                      <FieldContent>
+                        <Combobox
+                          v-model="editForm.brand_id"
+                          :options="props.brands"
+                          search-placeholder="Cari merek..."
+                          default-label="Pilih merek"
+                          width-class="w-full h-10 px-4"
+                          :error="!!editFormErrors.brand_id"
                         />
-                        <Button 
-                          @click="triggerEditFileInput"
-                          size="lg"
-                          type="button"
-                        >
-                          Pilih File
-                        </Button>
-                      </div>
-                      <p class="text-[10px] text-muted-foreground ml-1">Maksimal ukuran 1 MB</p>
-                    </div>
+                      </FieldContent>
+                      <FieldError v-if="editFormErrors.brand_id">{{ editFormErrors.brand_id }}</FieldError>
+                    </Field>
+
+                    <Field :data-invalid="!!editFormErrors.name || undefined">
+                      <FieldLabel><span>Nama Tipe<span class="text-rose-500">*</span></span></FieldLabel>
+                      <FieldContent>
+                        <input 
+                          type="text" 
+                          v-model="editForm.name"
+                          maxlength="255"
+                          placeholder="Input nama tipe di sini..." 
+                          class="w-full px-4 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors h-10"
+                          :class="[editFormErrors.name ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']"
+                        />
+                      </FieldContent>
+                      <FieldError v-if="editFormErrors.name">{{ editFormErrors.name }}</FieldError>
+                    </Field>
+
+                    <Field>
+                      <FieldLabel>Spesifikasi</FieldLabel>
+                      <FieldContent>
+                        <input 
+                          type="text" 
+                          v-model="editForm.spesifikasi"
+                          maxlength="255"
+                          placeholder="Input spesifikasinya di sini..." 
+                          class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
+                        />
+                      </FieldContent>
+                    </Field>
+
+                    <Field>
+                      <FieldLabel>
+                        <span>Foto<span class="italic text-muted-foreground"> default</span><span class="text-rose-500">*</span></span>
+                      </FieldLabel>
+                      <FieldContent>
+                        <div class="flex gap-2">
+                          <div 
+                            class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/10 truncate flex items-center h-10"
+                            :class="[
+                              (editForm.foto || props.barang.image_url) 
+                                ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' 
+                                : 'text-muted-foreground cursor-default'
+                            ]"
+                            @click="(editForm.foto || props.barang.image_url) && viewImageInNewTab()"
+                          >
+                            {{ editForm.fotoName || 'Belum ada foto yang dipilih' }}
+                          </div>
+                          <input 
+                            type="file" 
+                            id="edit-photo-upload" 
+                            class="hidden" 
+                            accept=".jpg,.jpeg,.png"
+                            @change="handleEditFileUpload"
+                          />
+                          <Button 
+                            @click="triggerEditFileInput"
+                            size="lg"
+                            type="button"
+                          >
+                            Pilih File
+                          </Button>
+                        </div>
+                        <p class="text-[10px] text-muted-foreground ml-1 mt-1">Maksimal ukuran 1 MB</p>
+                      </FieldContent>
+                    </Field>
                   </div>
                 </div>
               </div>
@@ -1511,7 +1709,7 @@ onUnmounted(() => {
                   </Button>
                   <Button 
                     @click="handleSaveChanges"
-                    :disabled="!isEditFormValid"
+                    :disabled="editForm.processing"
                     variant="primary"
                     size="xl"
                   >
@@ -1560,202 +1758,259 @@ onUnmounted(() => {
               </div>
 
               <!-- Modal Body -->
-              <div class="p-6 overflow-y-auto max-h-[70vh]">
+              <div class="p-6 overflow-y-auto max-h-[90vh]">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
                   <!-- Left Column -->
                   <div class="space-y-6">
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Kode LOT<span class="text-rose-500">*</span></label>
-                      <input 
-                        type="text" 
-                        v-model="lotForm.number"
-                        disabled
-                        placeholder="Kode LOT belum di-generate"
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
-                      />
-                    </div>
+                    <!-- Kode LOT -->
+                    <Field>
+                      <FieldLabel><span>Kode LOT<span class="text-rose-500">*</span></span></FieldLabel>
+                      <FieldContent>
+                        <input 
+                          type="text" 
+                          v-model="lotForm.number"
+                          disabled
+                          placeholder="Kode LOT belum di-generate"
+                          class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
+                        />
+                      </FieldContent>
+                    </Field>
 
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Organizer<span class="text-rose-500">*</span></label>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !lotForm.organizer_id ? 'text-muted-foreground' : 'text-foreground']">
-                            {{ props.organizers.find(o => o.id == lotForm.organizer_id)?.name || 'Pilih organizer' }}
-                            <ChevronDown class="w-4 h-4 opacity-50" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
-                          <DropdownMenuItem v-for="org in props.organizers" :key="org.id" @select="lotForm.organizer_id = org.id">
-                            {{ org.name }}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
+                    <!-- Organizer -->
+                    <Field :data-invalid="!!lotFormErrors.organizer_id || undefined">
+                      <FieldLabel><span>Organizer<span class="text-rose-500">*</span></span></FieldLabel>
+                      <FieldContent>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !lotForm.organizer_id ? 'text-muted-foreground' : 'text-foreground', lotFormErrors.organizer_id ? '!border-destructive focus:!ring-destructive/20 focus:!border-destructive' : '']">
+                              {{ props.organizers.find(o => o.id == lotForm.organizer_id)?.name || 'Pilih organizer' }}
+                              <ChevronDown class="w-4 h-4 opacity-50" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
+                            <DropdownMenuItem v-for="org in props.organizers" :key="org.id" @select="lotForm.organizer_id = org.id">
+                              {{ org.name }}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </FieldContent>
+                      <FieldError v-if="lotFormErrors.organizer_id">{{ lotFormErrors.organizer_id }}</FieldError>
+                    </Field>
 
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Vendor<span class="text-rose-500">*</span></label>
-                      <Combobox
-                        v-model="lotForm.vendor_id"
-                        :options="props.vendors"
-                        search-placeholder="Cari vendor..."
-                        default-label="Pilih vendor"
-                        width-class="w-full h-10 px-4"
-                      />
-                    </div>
+                    <!-- Vendor -->
+                    <Field :data-invalid="!!lotFormErrors.vendor_id || undefined">
+                      <FieldLabel><span>Vendor<span class="text-rose-500">*</span></span></FieldLabel>
+                      <FieldContent>
+                        <Combobox
+                          v-model="lotForm.vendor_id"
+                          :options="props.vendors"
+                          search-placeholder="Cari vendor..."
+                          default-label="Pilih vendor"
+                          width-class="w-full h-10 px-4"
+                          :error="!!lotFormErrors.vendor_id"
+                        />
+                      </FieldContent>
+                      <FieldError v-if="lotFormErrors.vendor_id">{{ lotFormErrors.vendor_id }}</FieldError>
+                    </Field>
 
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Lokasi <span v-if="!props.barang.is_consumable" class="italic text-muted-foreground">default</span><span class="text-rose-500">*</span></label>
-                      <Combobox
-                        v-model="lotForm.location_id"
-                        :options="props.locations"
-                        search-placeholder="Cari lokasi..."
-                        default-label="Pilih lokasi"
-                        width-class="w-full h-10 px-4"
-                      />
-                    </div>
+                    <!-- Lokasi -->
+                    <Field :data-invalid="!!lotFormErrors.location_id || undefined">
+                      <FieldLabel>
+                        <span>Lokasi<span v-if="!props.barang.is_consumable" class="italic text-muted-foreground"> default</span><span class="text-rose-500">*</span></span>
+                      </FieldLabel>
+                      <FieldContent>
+                        <Combobox
+                          v-model="lotForm.location_id"
+                          :options="props.locations"
+                          search-placeholder="Cari lokasi..."
+                          default-label="Pilih lokasi"
+                          width-class="w-full h-10 px-4"
+                          :error="!!lotFormErrors.location_id"
+                        />
+                      </FieldContent>
+                      <FieldError v-if="lotFormErrors.location_id">{{ lotFormErrors.location_id }}</FieldError>
+                    </Field>
 
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Lantai <span v-if="!props.barang.is_consumable" class="italic text-muted-foreground">default</span></label>
-                      <Combobox
-                        v-model="lotForm.floor_id"
-                        :options="filteredFloors"
-                        search-placeholder="Cari lantai..."
-                        default-label="Pilih lantai (opsional)"
-                        width-class="w-full h-10 px-4"
-                        :disabled="!lotForm.location_id"
-                      />
-                    </div>
+                    <!-- Lantai -->
+                    <Field :data-disabled="!lotForm.location_id || undefined">
+                      <FieldLabel>
+                        <span>Lantai<span v-if="!props.barang.is_consumable" class="italic text-muted-foreground"> default</span></span>
+                      </FieldLabel>
+                      <FieldContent>
+                        <Combobox
+                          v-model="lotForm.floor_id"
+                          :options="filteredFloors"
+                          search-placeholder="Cari lantai..."
+                          default-label="Pilih lantai (opsional)"
+                          width-class="w-full h-10 px-4"
+                          :disabled="!lotForm.location_id"
+                        />
+                      </FieldContent>
+                    </Field>
 
                     <!-- Conditional Stock Input / Auto Asset Creation Field (Create Mode Only) -->
                     <template v-if="lotModalMode === 'create'">
-                      <div v-if="props.barang.is_consumable" class="space-y-1.5">
-                        <label class="text-sm font-medium text-foreground block">Jumlah stok<span class="text-rose-500">*</span></label>
-                        <input 
-                          type="number" 
-                          v-model="lotForm.initial_quantity"
-                          placeholder="Contoh: 10"
-                          min="0"
-                          class="w-full px-4 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors h-10"
-                          :class="[lotForm.errors.initial_quantity ? 'border-destructive focus:ring-destructive/20' : 'border-input focus:ring-primary/20 focus:border-primary']"
-                          @input="lotForm.current_quantity = lotForm.initial_quantity"
-                        />
-                        <div v-if="lotForm.errors.initial_quantity" class="text-destructive text-xs mt-1">
-                          {{ lotForm.errors.initial_quantity }}
-                        </div>
-                      </div>
-                      <div v-else-if="props.barang.category !== 'Kendaraan'" class="space-y-1.5 flex items-center gap-2 pt-2 flex-wrap">
-                        <div class="flex items-center gap-2 w-full">
-                          <Checkbox 
-                            id="auto-create-checkbox"
-                            v-model="lotForm.auto_create_assets"
-                          />
-                          <label for="auto-create-checkbox" class="cursor-pointer select-none text-sm font-medium text-foreground">
-                            Buat
-                          </label>
+                      <Field v-if="props.barang.is_consumable" :data-invalid="!!(lotForm.errors.initial_quantity || lotFormErrors.initial_quantity) || undefined">
+                        <FieldLabel><span>Jumlah stok<span class="text-rose-500">*</span></span></FieldLabel>
+                        <FieldContent>
                           <input 
                             type="number" 
-                            v-model="lotForm.auto_create_assets_count"
-                            placeholder="..."
-                            min="1"
-                            :disabled="!lotForm.auto_create_assets"
-                            class="w-16 px-2 py-1 text-sm border rounded-[10px] bg-background focus:outline-none focus:ring-2 transition-colors h-8 disabled:opacity-50 disabled:cursor-not-allowed mx-1"
-                            :class="[lotForm.errors.auto_create_assets_count ? 'border-destructive focus:ring-destructive/20' : 'border-input focus:ring-primary/20 focus:border-primary']"
+                            v-model="lotForm.initial_quantity"
+                            placeholder="Contoh: 10"
+                            min="0"
+                            class="w-full px-4 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors h-10"
+                            :class="[(lotForm.errors.initial_quantity || lotFormErrors.initial_quantity) ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']"
+                            @input="lotForm.current_quantity = lotForm.initial_quantity"
                           />
-                          <span class="text-sm font-medium text-foreground">aset secara otomatis dengan nilai default.</span>
-                        </div>
-                        <div v-if="lotForm.errors.auto_create_assets_count" class="text-destructive text-xs mt-1 w-full pl-6">
-                          {{ lotForm.errors.auto_create_assets_count }}
-                        </div>
-                      </div>
+                        </FieldContent>
+                        <FieldError v-if="lotForm.errors.initial_quantity || lotFormErrors.initial_quantity">
+                          {{ lotForm.errors.initial_quantity || lotFormErrors.initial_quantity }}
+                        </FieldError>
+                      </Field>
+                      <Field v-else-if="props.barang.category !== 'Kendaraan'" :data-invalid="!!(lotForm.errors.auto_create_assets_count || lotFormErrors.auto_create_assets_count) || undefined">
+                        <FieldContent>
+                          <div class="flex items-center gap-2 w-full pt-2">
+                            <Checkbox 
+                              id="auto-create-checkbox"
+                              v-model="lotForm.auto_create_assets"
+                            />
+                            <label for="auto-create-checkbox" class="cursor-pointer select-none text-sm font-medium text-foreground">
+                              Buat
+                            </label>
+                            <input 
+                              type="number" 
+                              v-model="lotForm.auto_create_assets_count"
+                              placeholder="..."
+                              min="1"
+                              :disabled="!lotForm.auto_create_assets"
+                              class="w-16 px-2 py-1 text-sm border rounded-[10px] bg-background focus:outline-none focus:ring-2 transition-colors h-8 disabled:opacity-50 disabled:cursor-not-allowed mx-1"
+                              :class="[(lotForm.errors.auto_create_assets_count || lotFormErrors.auto_create_assets_count) ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']"
+                            />
+                            <span class="text-sm font-medium text-foreground">aset secara otomatis dengan nilai default.</span>
+                          </div>
+                        </FieldContent>
+                        <FieldError v-if="lotForm.errors.auto_create_assets_count || lotFormErrors.auto_create_assets_count" class="pl-6">
+                          {{ lotForm.errors.auto_create_assets_count || lotFormErrors.auto_create_assets_count }}
+                        </FieldError>
+                      </Field>
                     </template>
                   </div>
 
                   <!-- Right Column -->
                   <div class="space-y-6">
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Ruangan <span v-if="!props.barang.is_consumable" class="italic text-muted-foreground">default</span></label>
-                      <Combobox
-                        v-model="lotForm.room_id"
-                        :options="filteredRooms"
-                        search-placeholder="Cari ruangan..."
-                        default-label="Pilih ruangan (opsional)"
-                        width-class="w-full h-10 px-4"
-                        :disabled="!lotForm.floor_id"
-                      />
-                    </div>
-
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Nomor PO<span class="text-rose-500">*</span></label>
-                      <input 
-                        type="text" 
-                        v-model="lotForm.po_number"
-                        placeholder="Contoh: PO-02"
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
-                      />
-                    </div>
-
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Tanggal Registrasi<span class="text-rose-500">*</span></label>
-                      <input 
-                        type="date" 
-                        v-model="lotForm.date_of_receipt"
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
-                      />
-                    </div>
-
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Harga Satuan <span v-if="!props.barang.is_consumable" class="italic text-muted-foreground">default</span></label>
-                      <div class="flex w-full rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors h-10 overflow-hidden">
-                        <span class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-r border-input select-none font-medium">
-                          Rp
-                        </span>
-                        <input 
-                          type="number" 
-                          v-model="lotForm.unit_price"
-                          placeholder="Contoh: 60000"
-                          min="0"
-                          class="flex-1 min-w-0 px-4 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 transition-colors h-full"
+                    <!-- Ruangan -->
+                    <Field :data-disabled="!lotForm.floor_id || undefined">
+                      <FieldLabel>
+                        <span>Ruangan<span v-if="!props.barang.is_consumable" class="italic text-muted-foreground"> default</span></span>
+                      </FieldLabel>
+                      <FieldContent>
+                        <Combobox
+                          v-model="lotForm.room_id"
+                          :options="filteredRooms"
+                          search-placeholder="Cari ruangan..."
+                          default-label="Pilih ruangan (opsional)"
+                          width-class="w-full h-10 px-4"
+                          :disabled="!lotForm.floor_id"
                         />
-                      </div>
-                    </div>
+                      </FieldContent>
+                    </Field>
 
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Foto <span v-if="!props.barang.is_consumable" class="italic text-muted-foreground">default</span><span class="text-rose-500">*</span></label>
-                      <div class="flex gap-2">
-                        <div 
-                          class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/10 truncate flex items-center h-10"
-                          :class="[
-                            (lotForm.image_url || lotForm.image_url_name) 
-                              ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' 
-                              : 'text-muted-foreground cursor-default'
-                          ]"
-                          @click="(lotForm.image_url || lotForm.image_url_name) && viewLotImageInNewTab()"
-                        >
-                          {{ lotForm.image_url_name || 'Belum ada foto yang dipilih' }}
+                    <!-- Nomor PO -->
+                    <Field :data-invalid="!!lotFormErrors.po_number || undefined">
+                      <FieldLabel><span>Nomor PO<span class="text-rose-500">*</span></span></FieldLabel>
+                      <FieldContent>
+                        <input 
+                          type="text" 
+                          v-model="lotForm.po_number"
+                          placeholder="Contoh: PO-02"
+                          class="w-full px-4 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors h-10"
+                          :class="[lotFormErrors.po_number ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']"
+                        />
+                      </FieldContent>
+                      <FieldError v-if="lotFormErrors.po_number">{{ lotFormErrors.po_number }}</FieldError>
+                    </Field>
+
+                    <!-- Tanggal Registrasi -->
+                    <Field :data-invalid="!!lotFormErrors.date_of_receipt || undefined">
+                      <FieldLabel><span>Tanggal Registrasi<span class="text-rose-500">*</span></span></FieldLabel>
+                      <FieldContent>
+                        <input 
+                          type="date" 
+                          v-model="lotForm.date_of_receipt"
+                          class="w-full px-4 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors h-10"
+                          :class="[lotFormErrors.date_of_receipt ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']"
+                        />
+                      </FieldContent>
+                      <FieldError v-if="lotFormErrors.date_of_receipt">{{ lotFormErrors.date_of_receipt }}</FieldError>
+                    </Field>
+
+                    <!-- Harga Satuan -->
+                    <Field>
+                      <FieldLabel>
+                        <span>Harga Satuan<span v-if="!props.barang.is_consumable" class="italic text-muted-foreground"> default</span></span>
+                      </FieldLabel>
+                      <FieldContent>
+                        <div class="flex w-full rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors h-10 overflow-hidden">
+                          <span class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-r border-input select-none font-medium">
+                            Rp
+                          </span>
+                          <input 
+                            type="number" 
+                            v-model="lotForm.unit_price"
+                            placeholder="Contoh: 60000"
+                            min="0"
+                            class="flex-1 min-w-0 px-4 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 transition-colors h-full"
+                          />
                         </div>
-                        <input 
-                          type="file" 
-                          id="lot-photo-upload" 
-                          class="hidden" 
-                          accept=".jpg,.jpeg,.png"
-                          @change="handleLotFileUpload"
-                        />
-                        <Button 
-                          @click="handleSamakanPhoto"
-                          variant="warning"
-                          size="lg"
-                        >
-                          Samakan
-                        </Button>
-                        <Button 
-                          @click="triggerLotFileInput"
-                          size="lg"
-                        >
-                          Pilih File
-                        </Button>
-                      </div>
-                      <p class="text-[10px] text-muted-foreground ml-1">Maksimal ukuran 1 MB</p>
-                    </div>
+                      </FieldContent>
+                    </Field>
+
+                    <!-- Foto -->
+                    <Field :data-invalid="!!lotFormErrors.image_url || undefined">
+                      <FieldLabel>
+                        <span>Foto<span v-if="!props.barang.is_consumable" class="italic text-muted-foreground"> default</span><span class="text-rose-500">*</span></span>
+                      </FieldLabel>
+                      <FieldContent>
+                        <div class="flex gap-2">
+                          <div 
+                            class="flex-grow min-w-0 px-4 py-2 text-sm border rounded-[14px] bg-muted/10 truncate flex items-center h-10"
+                            :class="[
+                              (lotForm.image_url || lotForm.image_url_name) 
+                                ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' 
+                                : 'text-muted-foreground cursor-default',
+                              lotFormErrors.image_url ? 'border-destructive' : 'border-input'
+                            ]"
+                            @click="(lotForm.image_url || lotForm.image_url_name) && viewLotImageInNewTab()"
+                          >
+                            {{ lotForm.image_url_name || 'Belum ada foto yang dipilih' }}
+                          </div>
+                          <input 
+                            type="file" 
+                            id="lot-photo-upload" 
+                            class="hidden" 
+                            accept=".jpg,.jpeg,.png"
+                            @change="handleLotFileUpload"
+                          />
+                          <Button 
+                            type="button"
+                            @click="handleSamakanPhoto"
+                            variant="warning"
+                            size="lg"
+                          >
+                            Samakan
+                          </Button>
+                          <Button 
+                            type="button"
+                            @click="triggerLotFileInput"
+                            size="lg"
+                          >
+                            Pilih File
+                          </Button>
+                        </div>
+                        <p class="text-[10px] text-muted-foreground ml-1 mt-1">Maksimal ukuran 1 MB</p>
+                      </FieldContent>
+                      <FieldError v-if="lotFormErrors.image_url">{{ lotFormErrors.image_url }}</FieldError>
+                    </Field>
                   </div>
                 </div>
               </div>
@@ -1773,7 +2028,7 @@ onUnmounted(() => {
                   </Button>
                   <Button 
                     @click="handleSaveLot"
-                    :disabled="!isLotFormValid"
+                    :disabled="lotForm.processing"
                     variant="primary"
                     size="xl"
                   >
@@ -1826,156 +2081,220 @@ onUnmounted(() => {
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
                   <!-- Left Column -->
                   <div class="space-y-6">
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Kode LOT</label>
-                      <input 
-                        type="text" 
-                        :value="bulkLotForm.ids.length === 1 && selectedLotItem ? selectedLotItem.lotCode : 'Tidak dapat diubah'"
-                        disabled
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
-                      />
-                    </div>
+                    <!-- Kode LOT -->
+                    <Field>
+                      <FieldLabel>Kode LOT</FieldLabel>
+                      <FieldContent>
+                        <input 
+                          type="text" 
+                          :value="bulkLotForm.ids.length === 1 && selectedLotItem ? selectedLotItem.lotCode : 'Tidak dapat diubah'"
+                          disabled
+                          class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
+                        />
+                      </FieldContent>
+                    </Field>
 
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Organizer<span v-if="bulkLotForm.ids.length === 1" class="text-rose-500">*</span></label>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !bulkLotForm.organizer_id ? 'text-muted-foreground' : 'text-foreground']">
-                            {{ props.organizers.find(o => o.id == bulkLotForm.organizer_id)?.name || 'Tidak berubah' }}
-                            <ChevronDown class="w-4 h-4 opacity-50" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
-                          <DropdownMenuItem v-for="org in props.organizers" :key="org.id" @select="bulkLotForm.organizer_id = org.id">
-                            {{ org.name }}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
+                    <!-- Organizer -->
+                    <Field :data-invalid="(bulkLotForm.ids.length === 1 && !!bulkLotFormErrors.organizer_id) || undefined">
+                      <FieldLabel>
+                        <span>Organizer<span v-if="bulkLotForm.ids.length === 1" class="text-rose-500">*</span></span>
+                      </FieldLabel>
+                      <FieldContent>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !bulkLotForm.organizer_id ? 'text-muted-foreground' : 'text-foreground']">
+                              {{ props.organizers.find(o => o.id == bulkLotForm.organizer_id)?.name || 'Tidak berubah' }}
+                              <ChevronDown class="w-4 h-4 opacity-50" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
+                            <DropdownMenuItem v-for="org in props.organizers" :key="org.id" @select="bulkLotForm.organizer_id = org.id">
+                              {{ org.name }}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </FieldContent>
+                      <FieldError v-if="bulkLotForm.ids.length === 1 && bulkLotFormErrors.organizer_id">
+                        {{ bulkLotFormErrors.organizer_id }}
+                      </FieldError>
+                    </Field>
 
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Vendor<span v-if="bulkLotForm.ids.length === 1" class="text-rose-500">*</span></label>
-                      <Combobox
-                        v-model="bulkLotForm.vendor_id"
-                        :options="props.vendors"
-                        search-placeholder="Cari vendor..."
-                        default-label="Tidak berubah"
-                        width-class="w-full h-10 px-4"
-                      />
-                    </div>
+                    <!-- Vendor -->
+                    <Field :data-invalid="(bulkLotForm.ids.length === 1 && !!bulkLotFormErrors.vendor_id) || undefined">
+                      <FieldLabel>
+                        <span>Vendor<span v-if="bulkLotForm.ids.length === 1" class="text-rose-500">*</span></span>
+                      </FieldLabel>
+                      <FieldContent>
+                        <Combobox
+                          v-model="bulkLotForm.vendor_id"
+                          :options="props.vendors"
+                          search-placeholder="Cari vendor..."
+                          default-label="Tidak berubah"
+                          width-class="w-full h-10 px-4"
+                        />
+                      </FieldContent>
+                      <FieldError v-if="bulkLotForm.ids.length === 1 && bulkLotFormErrors.vendor_id">
+                        {{ bulkLotFormErrors.vendor_id }}
+                      </FieldError>
+                    </Field>
 
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Lokasi <span v-if="!props.barang.is_consumable" class="italic text-muted-foreground">default</span><span v-if="bulkLotForm.ids.length === 1" class="text-rose-500">*</span></label>
-                      <Combobox
-                        v-model="bulkLotForm.location_id"
-                        :options="props.locations"
-                        search-placeholder="Cari lokasi..."
-                        default-label="Tidak berubah"
-                        width-class="w-full h-10 px-4"
-                      />
-                    </div>
+                    <!-- Lokasi -->
+                    <Field :data-invalid="(bulkLotForm.ids.length === 1 && !!bulkLotFormErrors.location_id) || undefined">
+                      <FieldLabel>
+                        <span>Lokasi<span v-if="!props.barang.is_consumable" class="italic text-muted-foreground"> default</span><span v-if="bulkLotForm.ids.length === 1" class="text-rose-500">*</span></span>
+                      </FieldLabel>
+                      <FieldContent>
+                        <Combobox
+                          v-model="bulkLotForm.location_id"
+                          :options="props.locations"
+                          search-placeholder="Cari lokasi..."
+                          default-label="Tidak berubah"
+                          width-class="w-full h-10 px-4"
+                        />
+                      </FieldContent>
+                      <FieldError v-if="bulkLotForm.ids.length === 1 && bulkLotFormErrors.location_id">
+                        {{ bulkLotFormErrors.location_id }}
+                      </FieldError>
+                    </Field>
 
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Lantai <span v-if="!props.barang.is_consumable" class="italic text-muted-foreground">default</span></label>
-                      <Combobox
-                        v-model="bulkLotForm.floor_id"
-                        :options="bulkFilteredFloors"
-                        search-placeholder="Cari lantai..."
-                        default-label="Tidak berubah"
-                        width-class="w-full h-10 px-4"
-                        :disabled="!bulkLotForm.location_id"
-                      />
-                    </div>
+                    <!-- Lantai -->
+                    <Field :data-disabled="!bulkLotForm.location_id || undefined">
+                      <FieldLabel>
+                        <span>Lantai<span v-if="!props.barang.is_consumable" class="italic text-muted-foreground"> default</span></span>
+                      </FieldLabel>
+                      <FieldContent>
+                        <Combobox
+                          v-model="bulkLotForm.floor_id"
+                          :options="bulkFilteredFloors"
+                          search-placeholder="Cari lantai..."
+                          default-label="Tidak berubah"
+                          width-class="w-full h-10 px-4"
+                          :disabled="!bulkLotForm.location_id"
+                        />
+                      </FieldContent>
+                    </Field>
                   </div>
 
                   <!-- Right Column -->
                   <div class="space-y-6">
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Ruangan <span v-if="!props.barang.is_consumable" class="italic text-muted-foreground">default</span></label>
-                      <Combobox
-                        v-model="bulkLotForm.room_id"
-                        :options="bulkFilteredRooms"
-                        search-placeholder="Cari ruangan..."
-                        default-label="Tidak berubah"
-                        width-class="w-full h-10 px-4"
-                        :disabled="!bulkLotForm.floor_id"
-                      />
-                    </div>
-
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Nomor PO<span v-if="bulkLotForm.ids.length === 1" class="text-rose-500">*</span></label>
-                      <input 
-                        type="text" 
-                        v-model="bulkLotForm.po_number"
-                        :disabled="bulkLotForm.ids.length > 1"
-                        :placeholder="bulkLotForm.ids.length > 1 ? 'Tidak dapat diubah secara massal' : 'Contoh: PO-02'"
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10 disabled:bg-muted/30 disabled:text-muted-foreground disabled:cursor-not-allowed"
-                      />
-                    </div>
-
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Tanggal Registrasi<span v-if="bulkLotForm.ids.length === 1" class="text-rose-500">*</span></label>
-                      <input 
-                        type="date" 
-                        v-model="bulkLotForm.date_of_receipt"
-                        :disabled="bulkLotForm.ids.length > 1"
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10 disabled:bg-muted/30 disabled:text-muted-foreground disabled:cursor-not-allowed"
-                      />
-                    </div>
-
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Harga Satuan <span v-if="!props.barang.is_consumable" class="italic text-muted-foreground">default</span></label>
-                      <div class="flex w-full rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors h-10 overflow-hidden">
-                        <span class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-r border-input select-none font-medium">
-                          Rp
-                        </span>
-                        <input 
-                          type="number" 
-                          v-model="bulkLotForm.unit_price"
-                          placeholder="Tidak berubah"
-                          min="0"
-                          class="flex-1 min-w-0 px-4 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 transition-colors h-full"
+                    <!-- Ruangan -->
+                    <Field :data-disabled="!bulkLotForm.floor_id || undefined">
+                      <FieldLabel>
+                        <span>Ruangan<span v-if="!props.barang.is_consumable" class="italic text-muted-foreground"> default</span></span>
+                      </FieldLabel>
+                      <FieldContent>
+                        <Combobox
+                          v-model="bulkLotForm.room_id"
+                          :options="bulkFilteredRooms"
+                          search-placeholder="Cari ruangan..."
+                          default-label="Tidak berubah"
+                          width-class="w-full h-10 px-4"
+                          :disabled="!bulkLotForm.floor_id"
                         />
-                      </div>
-                    </div>
+                      </FieldContent>
+                    </Field>
 
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Foto <span v-if="!props.barang.is_consumable" class="italic text-muted-foreground">default</span><span v-if="bulkLotForm.ids.length === 1" class="text-rose-500">*</span></label>
-                      <div class="flex gap-2">
-                        <div 
-                          class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/10 truncate flex items-center h-10"
-                          :class="[
-                            (bulkLotForm.image_url || bulkLotForm.image_url_name) 
-                              ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' 
-                              : 'text-muted-foreground cursor-default'
-                          ]"
-                          @click="(bulkLotForm.image_url || bulkLotForm.image_url_name) && viewBulkLotImageInNewTab()"
-                        >
-                          {{ bulkLotForm.image_url_name || 'Tidak berubah' }}
+                    <!-- Nomor PO -->
+                    <Field :data-invalid="(bulkLotForm.ids.length === 1 && !!bulkLotFormErrors.po_number) || undefined" :data-disabled="bulkLotForm.ids.length > 1 || undefined">
+                      <FieldLabel><span>Nomor PO<span class="text-rose-500">*</span></span></FieldLabel>
+                      <FieldContent>
+                        <input 
+                          type="text" 
+                          v-model="bulkLotForm.po_number"
+                          :disabled="bulkLotForm.ids.length > 1"
+                          :placeholder="bulkLotForm.ids.length > 1 ? 'Tidak dapat diubah secara massal' : 'Contoh: PO-02'"
+                          class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10 disabled:bg-muted/30 disabled:text-muted-foreground disabled:cursor-not-allowed"
+                        />
+                      </FieldContent>
+                      <FieldError v-if="bulkLotForm.ids.length === 1 && bulkLotFormErrors.po_number">
+                        {{ bulkLotFormErrors.po_number }}
+                      </FieldError>
+                    </Field>
+
+                    <!-- Tanggal Registrasi -->
+                    <Field :data-invalid="(bulkLotForm.ids.length === 1 && !!bulkLotFormErrors.date_of_receipt) || undefined" :data-disabled="bulkLotForm.ids.length > 1 || undefined">
+                      <FieldLabel><span>Tanggal Registrasi<span class="text-rose-500">*</span></span></FieldLabel>
+                      <FieldContent>
+                        <input 
+                          type="date" 
+                          v-model="bulkLotForm.date_of_receipt"
+                          :disabled="bulkLotForm.ids.length > 1"
+                          class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10 disabled:bg-muted/30 disabled:text-muted-foreground disabled:cursor-not-allowed"
+                        />
+                      </FieldContent>
+                      <FieldError v-if="bulkLotForm.ids.length === 1 && bulkLotFormErrors.date_of_receipt">
+                        {{ bulkLotFormErrors.date_of_receipt }}
+                      </FieldError>
+                    </Field>
+
+                    <!-- Harga Satuan -->
+                    <Field>
+                      <FieldLabel>
+                        <span>Harga Satuan<span v-if="!props.barang.is_consumable" class="italic text-muted-foreground"> default</span></span>
+                      </FieldLabel>
+                      <FieldContent>
+                        <div class="flex w-full rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors h-10 overflow-hidden">
+                          <span class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-r border-input select-none font-medium">
+                            Rp
+                          </span>
+                          <input 
+                            type="number" 
+                            v-model="bulkLotForm.unit_price"
+                            placeholder="Tidak berubah"
+                            min="0"
+                            class="flex-1 min-w-0 px-4 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 transition-colors h-full"
+                          />
                         </div>
-                        <input 
-                          type="file" 
-                          id="bulk-lot-photo-upload" 
-                          class="hidden" 
-                          accept=".jpg,.jpeg,.png"
-                          @change="handleBulkLotFileUpload"
-                        />
-                        <Button 
-                          @click="handleBulkLotSamakanPhoto"
-                          variant="warning"
-                          size="lg"
-                        >
-                          Samakan
-                        </Button>
-                        <Button 
-                          @click="triggerBulkLotFileInput"
-                          size="lg"
-                        >
-                          Pilih File
-                        </Button>
-                      </div>
-                      <p class="text-[10px] text-muted-foreground ml-1">Maksimal ukuran 1 MB</p>
-                    </div>
+                      </FieldContent>
+                    </Field>
+
+                    <!-- Foto -->
+                    <Field :data-invalid="(bulkLotForm.ids.length === 1 && !!bulkLotFormErrors.image_url) || undefined">
+                      <FieldLabel>
+                        <span>Foto<span v-if="!props.barang.is_consumable" class="italic text-muted-foreground"> default</span><span v-if="bulkLotForm.ids.length === 1" class="text-rose-500">*</span></span>
+                      </FieldLabel>
+                      <FieldContent>
+                        <div class="flex gap-2">
+                          <div 
+                            class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/10 truncate flex items-center h-10"
+                            :class="[
+                              (bulkLotForm.image_url || bulkLotForm.image_url_name) 
+                                ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' 
+                                : 'text-muted-foreground cursor-default'
+                            ]"
+                            @click="(bulkLotForm.image_url || bulkLotForm.image_url_name) && viewBulkLotImageInNewTab()"
+                          >
+                            {{ bulkLotForm.image_url_name || 'Tidak berubah' }}
+                          </div>
+                          <input 
+                            type="file" 
+                            id="bulk-lot-photo-upload" 
+                            class="hidden" 
+                            accept=".jpg,.jpeg,.png"
+                            @change="handleBulkLotFileUpload"
+                          />
+                          <Button 
+                            type="button"
+                            @click="handleBulkLotSamakanPhoto"
+                            variant="warning"
+                            size="lg"
+                          >
+                            Samakan
+                          </Button>
+                          <Button 
+                            type="button"
+                            @click="triggerBulkLotFileInput"
+                            size="lg"
+                          >
+                            Pilih File
+                          </Button>
+                        </div>
+                        <p class="text-[10px] text-muted-foreground ml-1 mt-1">Maksimal ukuran 1 MB</p>
+                      </FieldContent>
+                      <FieldError v-if="bulkLotForm.ids.length === 1 && bulkLotFormErrors.image_url">
+                        {{ bulkLotFormErrors.image_url }}
+                      </FieldError>
+                    </Field>
                   </div>
                 </div>
               </div>
@@ -1995,7 +2314,7 @@ onUnmounted(() => {
                   </Button>
                   <Button 
                     @click="handleSaveBulkChanges"
-                    :disabled="!isBulkLotFormValid"
+                    :disabled="bulkLotForm.processing"
                     variant="primary"
                     size="xl"
                   >

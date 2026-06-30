@@ -18,6 +18,7 @@ import ExportButtonGroup from '@/Components/ExportButtonGroup.vue';
 import ResetFilterButton from '@/Components/ResetFilterButton.vue';
 import Combobox from '@/Components/Combobox.vue';
 import DeleteErrorModal from '@/Components/DeleteErrorModal.vue';
+import { Field, FieldLabel, FieldContent, FieldError } from '@/Components/ui/field';
 
 import { Button } from "@/Components/ui/button";
 import {
@@ -361,6 +362,16 @@ const newItem = useForm({
   photoName: ''
 });
 
+const newItemErrors = ref({
+  code: '',
+  category_id: '',
+  subcategory_id: '',
+  uom_id: '',
+  brand_id: '',
+  name: '',
+  photo: '',
+});
+
 const filteredSubcategories = computed(() => {
   return newItem.category_id ? props.subcategories.filter(s => s.category_id == newItem.category_id) : props.subcategories;
 });
@@ -392,12 +403,30 @@ watch(subcategoryFilter, () => {
 const openCreateModal = () => {
   newItem.reset();
   newItem.clearErrors();
+  newItemErrors.value = {
+    code: '',
+    category_id: '',
+    subcategory_id: '',
+    uom_id: '',
+    brand_id: '',
+    name: '',
+    photo: '',
+  };
   newItem.photoName = '';
   isCreateModalOpen.value = true;
 };
 
 const closeCreateModal = () => {
   isCreateModalOpen.value = false;
+  newItemErrors.value = {
+    code: '',
+    category_id: '',
+    subcategory_id: '',
+    uom_id: '',
+    brand_id: '',
+    name: '',
+    photo: '',
+  };
 };
 
 const generateCode = () => {
@@ -461,18 +490,50 @@ const triggerFileInput = () => {
   input?.click();
 };
 
-const isFormValid = computed(() => {
-  return newItem.code && 
-         newItem.category_id && 
-         newItem.subcategory_id && 
-         newItem.brand_id && 
-         newItem.uom_id && 
-         newItem.name &&
-         newItem.photo && !newItem.processing;
-});
-
 const handleCreateItem = () => {
-  if (!isFormValid.value) return;
+  newItemErrors.value = {
+    code: '',
+    category_id: '',
+    subcategory_id: '',
+    uom_id: '',
+    brand_id: '',
+    name: '',
+    photo: '',
+  };
+
+  let isValid = true;
+  
+  if (!newItem.code) {
+    newItemErrors.value.code = 'Kode Tipe belum diisi';
+    isValid = false;
+  }
+  if (!newItem.category_id) {
+    newItemErrors.value.category_id = 'Kategori belum dipilih';
+    isValid = false;
+  }
+  if (!newItem.subcategory_id) {
+    newItemErrors.value.subcategory_id = 'Subkategori belum dipilih';
+    isValid = false;
+  }
+  if (!newItem.uom_id) {
+    newItemErrors.value.uom_id = 'Satuan belum dipilih';
+    isValid = false;
+  }
+  if (!newItem.brand_id) {
+    newItemErrors.value.brand_id = 'Merek belum dipilih';
+    isValid = false;
+  }
+  if (!newItem.name) {
+    newItemErrors.value.name = 'Nama Tipe belum diisi';
+    isValid = false;
+  }
+  if (!newItem.photo) {
+    newItemErrors.value.photo = 'Foto default belum dipilih';
+    isValid = false;
+  }
+
+  if (!isValid) return;
+
   newItem.transform((data) => ({
     number: data.code,
     subcategory_id: data.subcategory_id,
@@ -501,6 +562,26 @@ const bulkEditForm = useForm({
   photoName: ''
 });
 
+const bulkEditFormErrors = ref({
+  uom_id: '',
+  brand_id: '',
+  name: '',
+});
+
+// --- Reactive error clearing ---
+// newItem form
+watch(() => newItem.code, (v) => { if (v && newItemErrors.value.code) newItemErrors.value.code = ''; });
+watch(() => newItem.category_id, (v) => { if (v && newItemErrors.value.category_id) newItemErrors.value.category_id = ''; });
+watch(() => newItem.subcategory_id, (v) => { if (v && newItemErrors.value.subcategory_id) newItemErrors.value.subcategory_id = ''; });
+watch(() => newItem.uom_id, (v) => { if (v && newItemErrors.value.uom_id) newItemErrors.value.uom_id = ''; });
+watch(() => newItem.brand_id, (v) => { if (v && newItemErrors.value.brand_id) newItemErrors.value.brand_id = ''; });
+watch(() => newItem.name, (v) => { if (v && newItemErrors.value.name) newItemErrors.value.name = ''; });
+watch(() => newItem.photo, (v) => { if (v && newItemErrors.value.photo) newItemErrors.value.photo = ''; });
+// bulkEditForm
+watch(() => bulkEditForm.uom_id, (v) => { if (v && bulkEditFormErrors.value.uom_id) bulkEditFormErrors.value.uom_id = ''; });
+watch(() => bulkEditForm.brand_id, (v) => { if (v && bulkEditFormErrors.value.brand_id) bulkEditFormErrors.value.brand_id = ''; });
+watch(() => bulkEditForm.name, (v) => { if (v && bulkEditFormErrors.value.name) bulkEditFormErrors.value.name = ''; });
+
 const openBulkEditModal = () => {
   if (!dataTableRef.value) return;
   const selectedRows = dataTableRef.value.table.getFilteredRowModel().rows
@@ -511,6 +592,11 @@ const openBulkEditModal = () => {
 
   bulkEditForm.reset();
   bulkEditForm.clearErrors();
+  bulkEditFormErrors.value = {
+    uom_id: '',
+    brand_id: '',
+    name: '',
+  };
   bulkEditForm.ids = selectedRows.map((r: any) => r.id);
   
   // Explicitly reset the edit values first
@@ -546,6 +632,11 @@ const closeBulkEditModal = () => {
   bulkEditForm.photo = null;
   bulkEditForm.photoName = '';
   bulkEditForm.clearErrors();
+  bulkEditFormErrors.value = {
+    uom_id: '',
+    brand_id: '',
+    name: '',
+  };
   selectedItem.value = null;
 };
 
@@ -582,15 +673,30 @@ const viewBulkEditImageInNewTab = () => {
   }
 };
 
-const isBulkEditFormValid = computed(() => {
+const handleSaveBulkChanges = () => {
+  bulkEditFormErrors.value = {
+    uom_id: '',
+    brand_id: '',
+    name: '',
+  };
+
   if (bulkEditForm.ids.length === 1) {
-    return !!(
-      bulkEditForm.uom_id &&
-      bulkEditForm.brand_id &&
-      bulkEditForm.name &&
-      !bulkEditForm.processing
-    );
+    let isValid = true;
+    if (!bulkEditForm.uom_id) {
+      bulkEditFormErrors.value.uom_id = 'Satuan belum dipilih';
+      isValid = false;
+    }
+    if (!bulkEditForm.brand_id) {
+      bulkEditFormErrors.value.brand_id = 'Merek belum dipilih';
+      isValid = false;
+    }
+    if (!bulkEditForm.name) {
+      bulkEditFormErrors.value.name = 'Nama Tipe belum diisi';
+      isValid = false;
+    }
+    if (!isValid) return;
   } else {
+    // Mass edit validation: requires at least one field to be filled
     const hasAtLeastOneField = !!(
       bulkEditForm.uom_id || 
       bulkEditForm.brand_id || 
@@ -598,12 +704,11 @@ const isBulkEditFormValid = computed(() => {
       bulkEditForm.specification || 
       bulkEditForm.photo
     );
-    return hasAtLeastOneField && !bulkEditForm.processing;
+    if (!hasAtLeastOneField) {
+      toast.error('Harap isi minimal satu input untuk melakukan perubahan massal.');
+      return;
+    }
   }
-});
-
-const handleSaveBulkChanges = () => {
-  if (!isBulkEditFormValid.value) return;
 
   bulkEditForm.transform((data) => {
     const formData: any = {
@@ -942,131 +1047,164 @@ onUnmounted(() => {
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
                   <!-- Left Column -->
                   <div class="space-y-6">
-                    <div class="space-y-1.5">
-                      <label for="newItemCode" class="text-sm font-medium text-foreground block">Kode Tipe<span class="text-rose-500">*</span></label>
-                      <div class="flex gap-2">
-                        <input 
-                          type="text" 
-                          id="newItemCode"
-                          name="code"
-                          v-model="newItem.code"
-                          disabled
-                          placeholder="Kode Tipe belum di-generate" 
-                          class="flex-grow px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed"
-                        />
-                        <Button
-                           @click="generateCode"
-                          :disabled="!newItem.category_id || !newItem.subcategory_id"
-                          size="lg"                       
-                        >
-                          Generate
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Kategori<span class="text-rose-500">*</span></label>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !newItem.category_id ? 'text-muted-foreground' : 'text-foreground']">
-                            {{ props.categories.find(c => c.id === newItem.category_id)?.name || 'Pilih kategori' }}
-                            <ChevronDown class="w-4 h-4 opacity-50" />
+                    <Field :data-invalid="!!newItemErrors.code || undefined">
+                      <FieldLabel for="newItemCode"><span>Kode Tipe<span class="text-rose-500">*</span></span></FieldLabel>
+                      <FieldContent>
+                        <div class="flex gap-2 w-full">
+                          <input 
+                            type="text" 
+                            id="newItemCode"
+                            name="code"
+                            v-model="newItem.code"
+                            disabled
+                            placeholder="Kode Tipe belum di-generate" 
+                            class="flex-grow px-4 py-2 text-sm border rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed"
+                            :class="[newItemErrors.code ? 'border-destructive' : 'border-input']"
+                          />
+                          <Button
+                            @click="generateCode"
+                            :disabled="!newItem.category_id || !newItem.subcategory_id"
+                            size="lg"                       
+                          >
+                            Generate
                           </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
-                          <DropdownMenuItem v-for="cat in props.categories" :key="cat.id" @select="newItem.category_id = cat.id">
-                            {{ cat.name }}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
+                        </div>
+                      </FieldContent>
+                      <FieldError>{{ newItemErrors.code }}</FieldError>
+                    </Field>
 
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Subkategori<span class="text-rose-500">*</span></label>
-                      <Combobox
-                        v-model="newItem.subcategory_id"
-                        :options="filteredSubcategories"
-                        search-placeholder="Cari subkategori..."
-                        default-label="Pilih subkategori"
-                        width-class="w-full h-10 px-4"
-                        :disabled="!newItem.category_id"
-                      />
-                    </div>
+                    <Field :data-invalid="!!newItemErrors.category_id || undefined">
+                      <FieldLabel><span>Kategori<span class="text-rose-500">*</span></span></FieldLabel>
+                      <FieldContent>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !newItem.category_id ? 'text-muted-foreground' : 'text-foreground', newItemErrors.category_id ? '!border-destructive focus:!ring-destructive/20 focus:!border-destructive' : '']">
+                              {{ props.categories.find(c => c.id === newItem.category_id)?.name || 'Pilih kategori' }}
+                              <ChevronDown class="w-4 h-4 opacity-50" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
+                            <DropdownMenuItem v-for="cat in props.categories" :key="cat.id" @select="newItem.category_id = cat.id">
+                              {{ cat.name }}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </FieldContent>
+                      <FieldError>{{ newItemErrors.category_id }}</FieldError>
+                    </Field>
 
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Satuan<span class="text-rose-500">*</span></label>
-                      <Combobox
-                        v-model="newItem.uom_id"
-                        :options="props.uoms"
-                        search-placeholder="Cari satuan..."
-                        default-label="Pilih satuan tipe"
-                        width-class="w-full h-10 px-4"
-                      />
-                    </div>
+                    <Field :data-invalid="!!newItemErrors.subcategory_id || undefined" :data-disabled="!newItem.category_id || undefined">
+                      <FieldLabel><span>Subkategori<span class="text-rose-500">*</span></span></FieldLabel>
+                      <FieldContent>
+                        <Combobox
+                          v-model="newItem.subcategory_id"
+                          :options="filteredSubcategories"
+                          search-placeholder="Cari subkategori..."
+                          default-label="Pilih subkategori"
+                          width-class="w-full h-10 px-4"
+                          :disabled="!newItem.category_id"
+                          :error="!!newItemErrors.subcategory_id"
+                        />
+                      </FieldContent>
+                      <FieldError>{{ newItemErrors.subcategory_id }}</FieldError>
+                    </Field>
+
+                    <Field :data-invalid="!!newItemErrors.uom_id || undefined">
+                      <FieldLabel><span>Satuan<span class="text-rose-500">*</span></span></FieldLabel>
+                      <FieldContent>
+                        <Combobox
+                          v-model="newItem.uom_id"
+                          :options="props.uoms"
+                          search-placeholder="Cari satuan..."
+                          default-label="Pilih satuan tipe"
+                          width-class="w-full h-10 px-4"
+                          :error="!!newItemErrors.uom_id"
+                        />
+                      </FieldContent>
+                      <FieldError>{{ newItemErrors.uom_id }}</FieldError>
+                    </Field>
                   </div>
 
                   <!-- Right Column -->
                   <div class="space-y-6">
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Merek<span class="text-rose-500">*</span></label>
-                      <Combobox
-                        v-model="newItem.brand_id"
-                        :options="props.brands"
-                        search-placeholder="Cari merek..."
-                        default-label="Pilih merek"
-                        width-class="w-full h-10 px-4"
-                      />
-                    </div>
-
-                    <div class="space-y-1.5">
-                      <label for="newItemNama" class="text-sm font-medium text-foreground block">Nama Tipe<span class="text-rose-500">*</span></label>
-                      <input 
-                        type="text" 
-                        id="newItemNama"
-                        name="name"
-                        v-model="newItem.name"
-                        maxlength="255"
-                        placeholder="Input nama tipe di sini..." 
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
-                      />
-                    </div>
-
-                    <div class="space-y-1.5">
-                      <label for="newItemSpecification" class="text-sm font-medium text-foreground block">Spesifikasi</label>
-                      <input 
-                        type="text" 
-                        id="newItemSpecification"
-                        name="specification"
-                        v-model="newItem.specification"
-                        maxlength="255"
-                        placeholder="Input spesifikasinya di sini..." 
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
-                      />
-                    </div>
-
-                    <div class="space-y-1.5">
-                      <label for="photo-upload" class="text-sm font-medium text-foreground block">Foto <span class="italic text-muted-foreground">default</span><span class="text-rose-500">*</span></label>
-                      <div class="flex gap-2">
-                        <div class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/10 text-muted-foreground truncate flex items-center h-10">
-                          {{ newItem.photoName || 'Belum ada foto yang dipilih' }}
-                        </div>
-                        <input 
-                          type="file" 
-                          id="photo-upload" 
-                          name="photo"
-                          class="hidden" 
-                          accept=".jpg,.jpeg,.png"
-                          @change="handleFileUpload"
+                    <Field :data-invalid="!!newItemErrors.brand_id || undefined">
+                      <FieldLabel><span>Merek<span class="text-rose-500">*</span></span></FieldLabel>
+                      <FieldContent>
+                        <Combobox
+                          v-model="newItem.brand_id"
+                          :options="props.brands"
+                          search-placeholder="Cari merek..."
+                          default-label="Pilih merek"
+                          width-class="w-full h-10 px-4"
+                          :error="!!newItemErrors.brand_id"
                         />
-                        <Button
-                          @click="triggerFileInput"
-                          size="lg"
-                        >
-                          Pilih File
-                        </Button>
-                      </div>
-                      <p class="text-[10px] text-muted-foreground ml-1">Maksimal ukuran 1 MB</p>
-                    </div>
+                      </FieldContent>
+                      <FieldError>{{ newItemErrors.brand_id }}</FieldError>
+                    </Field>
+
+                    <Field :data-invalid="!!newItemErrors.name || undefined">
+                      <FieldLabel for="newItemNama"><span>Nama Tipe<span class="text-rose-500">*</span></span></FieldLabel>
+                      <FieldContent>
+                        <input 
+                          type="text" 
+                          id="newItemNama"
+                          name="name"
+                          v-model="newItem.name"
+                          maxlength="255"
+                          placeholder="Input nama tipe di sini..." 
+                          class="w-full px-4 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors h-10"
+                          :class="[newItemErrors.name ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']"
+                        />
+                      </FieldContent>
+                      <FieldError>{{ newItemErrors.name }}</FieldError>
+                    </Field>
+
+                    <Field>
+                      <FieldLabel for="newItemSpecification">Spesifikasi</FieldLabel>
+                      <FieldContent>
+                        <input 
+                          type="text" 
+                          id="newItemSpecification"
+                          name="specification"
+                          v-model="newItem.specification"
+                          maxlength="255"
+                          placeholder="Input spesifikasinya di sini..." 
+                          class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
+                        />
+                      </FieldContent>
+                    </Field>
+
+                    <Field :data-invalid="!!newItemErrors.photo || undefined">
+                      <FieldLabel for="photo-upload"><span>Foto <span class="italic text-muted-foreground">default</span><span class="text-rose-500">*</span></span></FieldLabel>
+                      <FieldContent>
+                        <div class="flex flex-col gap-1 w-full">
+                          <div class="flex gap-2 w-full">
+                            <div 
+                              class="flex-grow min-w-0 px-4 py-2 text-sm border rounded-[14px] bg-muted/10 text-muted-foreground truncate flex items-center h-10"
+                              :class="[newItemErrors.photo ? 'border-destructive' : 'border-input']"
+                            >
+                              {{ newItem.photoName || 'Belum ada foto yang dipilih' }}
+                            </div>
+                            <input 
+                              type="file" 
+                              id="photo-upload" 
+                              name="photo"
+                              class="hidden" 
+                              accept=".jpg,.jpeg,.png"
+                              @change="handleFileUpload"
+                            />
+                            <Button
+                              @click="triggerFileInput"
+                              size="lg"
+                            >
+                              Pilih File
+                            </Button>
+                          </div>
+                          <p class="text-[10px] text-muted-foreground ml-1">Maksimal ukuran 1 MB</p>
+                        </div>
+                      </FieldContent>
+                      <FieldError>{{ newItemErrors.photo }}</FieldError>
+                    </Field>
                   </div>
                 </div>
               </div>
@@ -1084,7 +1222,7 @@ onUnmounted(() => {
                   </Button>
                   <Button
                     @click="handleCreateItem"
-                    :disabled="!isFormValid"
+                    :disabled="newItem.processing"
                     variant="primary"
                     size="xl"
                   >
@@ -1136,121 +1274,145 @@ onUnmounted(() => {
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
                   <!-- Left Column -->
                   <div class="space-y-6">
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Kode Tipe</label>
-                      <input 
-                        type="text" 
-                        :value="selectedItem ? selectedItem.code : 'Tidak dapat diubah'"
-                        disabled
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
-                      />
-                    </div>
+                    <Field data-disabled>
+                      <FieldLabel>Kode Tipe</FieldLabel>
+                      <FieldContent>
+                        <input 
+                          type="text" 
+                          :value="selectedItem ? selectedItem.code : 'Tidak dapat diubah'"
+                          disabled
+                          class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
+                        />
+                      </FieldContent>
+                    </Field>
 
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Kategori</label>
-                      <input 
-                        type="text" 
-                        :value="selectedItem ? selectedItem.category : 'Tidak dapat diubah'"
-                        disabled
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
-                      />
-                    </div>
+                    <Field data-disabled>
+                      <FieldLabel>Kategori</FieldLabel>
+                      <FieldContent>
+                        <input 
+                          type="text" 
+                          :value="selectedItem ? selectedItem.category : 'Tidak dapat diubah'"
+                          disabled
+                          class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
+                        />
+                      </FieldContent>
+                    </Field>
 
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Subkategori</label>
-                      <input 
-                        type="text" 
-                        :value="selectedItem ? selectedItem.subcategory : 'Tidak dapat diubah'"
-                        disabled
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
-                      />
-                    </div>
+                    <Field data-disabled>
+                      <FieldLabel>Subkategori</FieldLabel>
+                      <FieldContent>
+                        <input 
+                          type="text" 
+                          :value="selectedItem ? selectedItem.subcategory : 'Tidak dapat diubah'"
+                          disabled
+                          class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
+                        />
+                      </FieldContent>
+                    </Field>
 
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">
-                        Satuan<span v-if="bulkEditForm.ids.length === 1" class="text-rose-500">*</span>
-                      </label>
-                      <Combobox
-                        v-model="bulkEditForm.uom_id"
-                        :options="props.uoms"
-                        search-placeholder="Cari satuan..."
-                        default-label="Tidak berubah"
-                        width-class="w-full h-10 px-4"
-                      />
-                    </div>
+                    <Field :data-invalid="(bulkEditForm.ids.length === 1 && !!bulkEditFormErrors.uom_id) || undefined">
+                      <FieldLabel>
+                        <span>Satuan<span v-if="bulkEditForm.ids.length === 1" class="text-rose-500">*</span></span>
+                      </FieldLabel>
+                      <FieldContent>
+                        <Combobox
+                          v-model="bulkEditForm.uom_id"
+                          :options="props.uoms"
+                          search-placeholder="Cari satuan..."
+                          default-label="Tidak berubah"
+                          width-class="w-full h-10 px-4"
+                          :error="bulkEditForm.ids.length === 1 && !!bulkEditFormErrors.uom_id"
+                        />
+                      </FieldContent>
+                      <FieldError v-if="bulkEditForm.ids.length === 1">{{ bulkEditFormErrors.uom_id }}</FieldError>
+                    </Field>
                   </div>
 
                   <!-- Right Column -->
                   <div class="space-y-6">
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">
-                        Merek<span v-if="bulkEditForm.ids.length === 1" class="text-rose-500">*</span>
-                      </label>
-                      <Combobox
-                        v-model="bulkEditForm.brand_id"
-                        :options="props.brands"
-                        search-placeholder="Cari merek..."
-                        default-label="Tidak berubah"
-                        width-class="w-full h-10 px-4"
-                      />
-                    </div>
-
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">
-                        Nama Tipe<span v-if="bulkEditForm.ids.length === 1" class="text-rose-500">*</span>
-                      </label>
-                      <input 
-                        type="text" 
-                        v-model="bulkEditForm.name"
-                        maxlength="255"
-                        placeholder="Tidak berubah" 
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
-                      />
-                    </div>
-
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">
-                        Spesifikasi
-                      </label>
-                      <input 
-                        type="text" 
-                        v-model="bulkEditForm.specification"
-                        maxlength="255"
-                        placeholder="Tidak berubah" 
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
-                      />
-                    </div>
-
-                    <div class="space-y-1.5">
-                      <label class="text-sm font-medium text-foreground block">Foto <span class="italic text-muted-foreground">default</span></label>
-                      <div class="flex gap-2">
-                        <div 
-                          class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/10 truncate flex items-center h-10"
-                          :class="[
-                            (bulkEditForm.photo || (selectedItem && selectedItem.image_url)) 
-                              ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' 
-                              : 'text-muted-foreground cursor-default'
-                          ]"
-                          @click="(bulkEditForm.photo || (selectedItem && selectedItem.image_url)) && viewBulkEditImageInNewTab()"
-                        >
-                          {{ bulkEditForm.photoName || 'Tidak berubah' }}
-                        </div>
-                        <input 
-                          type="file" 
-                          id="bulk-edit-photo-upload" 
-                          class="hidden" 
-                          accept=".jpg,.jpeg,.png"
-                          @change="handleBulkEditFileUpload"
+                    <Field :data-invalid="(bulkEditForm.ids.length === 1 && !!bulkEditFormErrors.brand_id) || undefined">
+                      <FieldLabel>
+                        <span>Merek<span v-if="bulkEditForm.ids.length === 1" class="text-rose-500">*</span></span>
+                      </FieldLabel>
+                      <FieldContent>
+                        <Combobox
+                          v-model="bulkEditForm.brand_id"
+                          :options="props.brands"
+                          search-placeholder="Cari merek..."
+                          default-label="Tidak berubah"
+                          width-class="w-full h-10 px-4"
+                          :error="bulkEditForm.ids.length === 1 && !!bulkEditFormErrors.brand_id"
                         />
-                        <Button 
-                          @click="triggerBulkEditFileInput"
-                          size="lg"
-                        >
-                          Pilih File
-                        </Button>
-                      </div>
-                      <p class="text-[10px] text-muted-foreground ml-1">Maksimal ukuran 1 MB</p>
-                    </div>
+                      </FieldContent>
+                      <FieldError v-if="bulkEditForm.ids.length === 1">{{ bulkEditFormErrors.brand_id }}</FieldError>
+                    </Field>
+
+                    <Field :data-invalid="(bulkEditForm.ids.length === 1 && !!bulkEditFormErrors.name) || undefined">
+                      <FieldLabel>
+                        <span>Nama Tipe<span v-if="bulkEditForm.ids.length === 1" class="text-rose-500">*</span></span>
+                      </FieldLabel>
+                      <FieldContent>
+                        <input 
+                          type="text" 
+                          v-model="bulkEditForm.name"
+                          maxlength="255"
+                          placeholder="Tidak berubah" 
+                          class="w-full px-4 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors h-10"
+                          :class="[bulkEditForm.ids.length === 1 && bulkEditFormErrors.name ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']"
+                        />
+                      </FieldContent>
+                      <FieldError v-if="bulkEditForm.ids.length === 1">{{ bulkEditFormErrors.name }}</FieldError>
+                    </Field>
+
+                    <Field>
+                      <FieldLabel>
+                        Spesifikasi
+                      </FieldLabel>
+                      <FieldContent>
+                        <input 
+                          type="text" 
+                          v-model="bulkEditForm.specification"
+                          maxlength="255"
+                          placeholder="Tidak berubah" 
+                          class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
+                        />
+                      </FieldContent>
+                    </Field>
+
+                    <Field>
+                      <FieldLabel>Foto <span class="italic text-muted-foreground">default</span></FieldLabel>
+                      <FieldContent>
+                        <div class="flex flex-col gap-1 w-full">
+                          <div class="flex gap-2 w-full">
+                            <div 
+                              class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/10 truncate flex items-center h-10"
+                              :class="[
+                                (bulkEditForm.photo || (selectedItem && selectedItem.image_url)) 
+                                  ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' 
+                                  : 'text-muted-foreground cursor-default'
+                              ]"
+                              @click="(bulkEditForm.photo || (selectedItem && selectedItem.image_url)) && viewBulkEditImageInNewTab()"
+                            >
+                              {{ bulkEditForm.photoName || 'Tidak berubah' }}
+                            </div>
+                            <input 
+                              type="file" 
+                              id="bulk-edit-photo-upload" 
+                              class="hidden" 
+                              accept=".jpg,.jpeg,.png"
+                              @change="handleBulkEditFileUpload"
+                            />
+                            <Button 
+                              @click="triggerBulkEditFileInput"
+                              size="lg"
+                            >
+                              Pilih File
+                            </Button>
+                          </div>
+                          <p class="text-[10px] text-muted-foreground ml-1">Maksimal ukuran 1 MB</p>
+                        </div>
+                      </FieldContent>
+                    </Field>
                   </div>
                 </div>
               </div>
@@ -1270,7 +1432,7 @@ onUnmounted(() => {
                   </Button>
                   <Button 
                     @click="handleSaveBulkChanges"
-                    :disabled="!isBulkEditFormValid"
+                    :disabled="bulkEditForm.processing"
                     variant="primary"
                     size="xl"
                   >
