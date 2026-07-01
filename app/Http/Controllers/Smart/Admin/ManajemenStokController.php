@@ -105,9 +105,10 @@ class ManajemenStokController extends Controller
             ->map(function ($lot) {
                 return [
                     'id' => $lot->id,
-                    'lotCode' => $lot->number,
-                    'poNumber' => $lot->po_number,
-                    'entryDate' => $lot->date_of_receipt ? $lot->date_of_receipt->format('d/m/Y') : '-',
+                    'number' => $lot->number,
+                    'barang_id' => $lot->barang_id,
+                    'po_number' => $lot->po_number,
+                    'date_of_receipt' => $lot->date_of_receipt ? $lot->date_of_receipt->format('Y-m-d') : null,
                     'organizer' => $lot->organizer->name ?? '-',
                     'organizer_id' => $lot->organizer_id,
                     'vendor' => $lot->vendor->name ?? '-',

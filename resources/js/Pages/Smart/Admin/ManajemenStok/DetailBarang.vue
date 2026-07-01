@@ -32,6 +32,9 @@ import Combobox from '@/Components/Combobox.vue';
 import { Checkbox } from '@/Components/ui/checkbox';
 import DetailLOTConsumables from './DetailLOTConsumables.vue';
 import { Field, FieldLabel, FieldContent, FieldError } from '@/Components/ui/field';
+import EditTipeModal from './Modals/EditTipeModal.vue';
+import CreateLotModal from './Modals/CreateLotModal.vue';
+import EditLotModal from './Modals/EditLotModal.vue';
 
 interface Props {
   itemId: string | number;
@@ -57,9 +60,9 @@ interface Props {
   uoms: { id: number; name: string; }[];
   lots: {
     id: number;
-    lotCode: string;
-    poNumber: string;
-    entryDate: string;
+    number: string;
+    po_number: string;
+    date_of_receipt: string;
     organizer: string;
     organizer_id: number;
     vendor: string;
@@ -97,9 +100,9 @@ const rowsPerPage = ref('Semua baris');
 const dataTableRef = ref<any>(null);
 
 // Lot Modal Setup
-const isLotModalOpen = ref(false);
-const lotModalMode = ref<'create' | 'edit'>('create');
-const selectedLotId = ref<number | null>(null);
+const isCreateLotModalOpen = ref(false);
+const isBulkEditModalOpen = ref(false);
+const selectedLotsForEdit = ref<any[]>([]);
 
 const isDetailConsumablesOpen = ref(false);
 const selectedLotForDetail = ref<number | null>(null);
@@ -109,369 +112,48 @@ const openDetailLOTConsumables = (lot: any) => {
   isDetailConsumablesOpen.value = true;
 };
 
-const lotForm = useForm({
-  _method: 'POST',
-  number: '',
-  barang_id: props.barang.id,
-  organizer_id: '' as string | number,
-  vendor_id: '' as string | number,
-  location_id: '' as string | number,
-  floor_id: null as string | number | null,
-  room_id: null as string | number | null,
-  initial_quantity: '' as string | number,
-  current_quantity: '' as string | number,
-  auto_create_assets: false,
-  auto_create_assets_count: '' as string | number,
-  po_number: '',
-  date_of_receipt: '',
-  unit_price: '' as string | number,
-  image_url: null as File | null,
-  image_url_name: '',
-  use_parent_image: false,
-  total_item: 1,
-});
-
-const lotFormErrors = ref({
-  number: '',
-  organizer_id: '',
-  vendor_id: '',
-  location_id: '',
-  po_number: '',
-  date_of_receipt: '',
-  image_url: '',
-  initial_quantity: '',
-  auto_create_assets_count: '',
-});
-
 const generateLotCode = () => {
   const year = new Date().getFullYear();
   const barangCode = props.barang.code;
   const prefix = `LOT-${year}-${barangCode}-`;
   
-  const matchingLots = (props.lots || []).filter(lot => lot.lotCode.startsWith(prefix));
+  const matchingLots = (props.lots || []).filter(lot => lot.number.startsWith(prefix));
   
   let nextNum = 1;
   if (matchingLots.length > 0) {
     const numbers = matchingLots.map(lot => {
-      const suffix = lot.lotCode.replace(prefix, '');
+      const suffix = lot.number.replace(prefix, '');
       return parseInt(suffix, 10) || 0;
     });
     nextNum = Math.max(...numbers) + 1;
   }
   
   const paddedNum = String(nextNum).padStart(4, '0');
-  lotForm.number = `${prefix}${paddedNum}`;
+  return `${prefix}${paddedNum}`;
 };
 
 const openCreateLotModal = () => {
-  lotModalMode.value = 'create';
-  selectedLotId.value = null;
-  lotForm.reset();
-  lotForm.barang_id = props.barang.id;
-  lotForm._method = 'POST';
-  generateLotCode();
-  lotForm.organizer_id = '';
-  lotForm.vendor_id = '';
-  lotForm.location_id = '';
-  lotForm.floor_id = null;
-  lotForm.room_id = null;
-  lotForm.initial_quantity = '';
-  lotForm.current_quantity = '';
-  lotForm.auto_create_assets = false;
-  lotForm.auto_create_assets_count = '';
-  lotForm.po_number = '';
-  lotForm.date_of_receipt = '';
-  lotForm.unit_price = '';
-  lotForm.image_url = null;
-  lotForm.image_url_name = '';
-  lotForm.use_parent_image = false;
-  lotForm.total_item = 1;
-  lotForm.clearErrors();
-  lotFormErrors.value = {
-    number: '',
-    organizer_id: '',
-    vendor_id: '',
-    location_id: '',
-    po_number: '',
-    date_of_receipt: '',
-    image_url: '',
-    initial_quantity: '',
-    auto_create_assets_count: '',
-  };
-  isLotModalOpen.value = true;
+  isCreateLotModalOpen.value = true;
 };
 
 const openEditLotModal = (lot: any) => {
-  lotModalMode.value = 'edit';
-  selectedLotId.value = lot.id;
-  lotForm.clearErrors();
-  lotFormErrors.value = {
-    number: '',
-    organizer_id: '',
-    vendor_id: '',
-    location_id: '',
-    po_number: '',
-    date_of_receipt: '',
-    image_url: '',
-    initial_quantity: '',
-    auto_create_assets_count: '',
-  };
-  
-  lotForm._method = 'PUT';
-  lotForm.number = lot.lotCode;
-  lotForm.barang_id = props.barang.id;
-  lotForm.organizer_id = lot.organizer_id;
-  lotForm.vendor_id = lot.vendor_id;
-  lotForm.location_id = lot.location_id;
-  lotForm.floor_id = lot.floor_id;
-  lotForm.room_id = lot.room_id;
-  lotForm.initial_quantity = lot.initial_quantity ?? '';
-  lotForm.current_quantity = lot.current_quantity ?? '';
-  lotForm.auto_create_assets = false;
-  lotForm.auto_create_assets_count = '';
-  lotForm.po_number = lot.poNumber;
-  
-  if (lot.entryDate && lot.entryDate !== '-') {
-    const parts = lot.entryDate.split(/[-/]/);
-    if (parts.length === 3) {
-      lotForm.date_of_receipt = `${parts[2]}-${parts[1]}-${parts[0]}`;
-    } else {
-      lotForm.date_of_receipt = '';
-    }
-  } else {
-    lotForm.date_of_receipt = '';
-  }
-  
-  lotForm.unit_price = lot.unitPrice;
-  lotForm.image_url = null;
-  lotForm.image_url_name = lot.imageUrl ? lot.imageUrl.split('/').pop() : '';
-  lotForm.use_parent_image = false;
-  
-  isLotModalOpen.value = true;
+  selectedLotsForEdit.value = [{ ...lot, barang_id: lot.barang_id || props.barang.id }];
+  isBulkEditModalOpen.value = true;
 };
 
-const handleLotFileUpload = (e: any) => {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
-  if (!allowedTypes.includes(file.type)) {
-    alert('Format file salah! Hanya diperbolehkan file .jpg, .jpeg, atau .png');
-    return;
-  }
-
-  if (file.size > 1024 * 1024) {
-    alert('Gagal! Ukuran foto maksimal 1MB');
-    return;
-  }
-
-  lotForm.image_url = file;
-  lotForm.image_url_name = file.name;
-  lotForm.use_parent_image = false;
-};
-
-const triggerLotFileInput = () => {
-  const input = document.getElementById('lot-photo-upload') as HTMLInputElement;
-  input?.click();
-};
-
-const viewLotImageInNewTab = () => {
-  if (lotForm.image_url) {
-    const url = URL.createObjectURL(lotForm.image_url);
-    window.open(url, '_blank');
-  } else if (lotForm.use_parent_image && props.barang.image_url) {
-    window.open('/storage/' + props.barang.image_url, '_blank');
-  } else if (lotModalMode.value === 'edit') {
-    const lot = props.lots.find(l => l.id === selectedLotId.value);
-    if (lot && lot.imageUrl) {
-      window.open('/storage/' + lot.imageUrl, '_blank');
-    }
+const handleEditSuccess = () => {
+  if (dataTableRef.value) {
+    dataTableRef.value.table.resetRowSelection();
   }
 };
 
-const handleSamakanPhoto = () => {
-  if (props.barang.image_url) {
-    lotForm.use_parent_image = true;
-    lotForm.image_url = null;
-    lotForm.image_url_name = props.barang.image_url.split('/').pop() || '';
-  } else {
-    toast.error('Tipe parent tidak memiliki foto.');
+const formatDateWithSlashes = (dateStr: string | null) => {
+  if (!dateStr || dateStr === '-') return '-';
+  if (dateStr.includes('-') && dateStr.indexOf('-') === 4) {
+    const [y, m, d] = dateStr.split('-');
+    return `${d}/${m}/${y}`;
   }
-};
-
-const filteredFloors = computed(() => {
-  if (!lotForm.location_id) return [];
-  return props.floors.filter(f => Number(f.location_id) === Number(lotForm.location_id));
-});
-
-const filteredRooms = computed(() => {
-  if (!lotForm.floor_id) return [];
-  return props.rooms.filter(r => Number(r.floor_id) === Number(lotForm.floor_id));
-});
-
-watch(() => lotForm.location_id, (newVal) => {
-  if (newVal) {
-    const valid = filteredFloors.value.some(f => Number(f.id) === Number(lotForm.floor_id));
-    if (!valid) {
-      lotForm.floor_id = null;
-      lotForm.room_id = null;
-    }
-  } else {
-    lotForm.floor_id = null;
-    lotForm.room_id = null;
-  }
-});
-
-watch(() => lotForm.floor_id, (newVal) => {
-  if (newVal) {
-    const valid = filteredRooms.value.some(r => Number(r.id) === Number(lotForm.room_id));
-    if (!valid) {
-      lotForm.room_id = null;
-    }
-  } else {
-    lotForm.room_id = null;
-  }
-});
-
-const handleSaveLot = () => {
-  lotFormErrors.value = {
-    number: '',
-    organizer_id: '',
-    vendor_id: '',
-    location_id: '',
-    po_number: '',
-    date_of_receipt: '',
-    image_url: '',
-    initial_quantity: '',
-    auto_create_assets_count: '',
-  };
-
-  let isValid = true;
-  if (!lotForm.number) {
-    lotFormErrors.value.number = 'Kode LOT belum diisi';
-    isValid = false;
-  }
-  if (!lotForm.organizer_id) {
-    lotFormErrors.value.organizer_id = 'Organizer belum dipilih';
-    isValid = false;
-  }
-  if (!lotForm.vendor_id) {
-    lotFormErrors.value.vendor_id = 'Vendor belum dipilih';
-    isValid = false;
-  }
-  if (!lotForm.location_id) {
-    lotFormErrors.value.location_id = 'Lokasi belum dipilih';
-    isValid = false;
-  }
-  if (!lotForm.po_number) {
-    lotFormErrors.value.po_number = 'Nomor PO belum diisi';
-    isValid = false;
-  }
-  if (!lotForm.date_of_receipt) {
-    lotFormErrors.value.date_of_receipt = 'Tanggal Registrasi belum diisi';
-    isValid = false;
-  }
-  if (!lotForm.image_url && !lotForm.image_url_name) {
-    const photoLabel = props.barang.is_consumable ? 'Foto' : 'Foto default';
-    lotFormErrors.value.image_url = `${photoLabel} belum dipilih`;
-    isValid = false;
-  }
-  if (lotModalMode.value === 'create') {
-    if (props.barang.is_consumable) {
-      if (lotForm.initial_quantity === '' || lotForm.initial_quantity === null) {
-        lotFormErrors.value.initial_quantity = 'Jumlah stok belum diisi';
-        isValid = false;
-      }
-    } else {
-      if (lotForm.auto_create_assets) {
-        if (lotForm.auto_create_assets_count === '' || lotForm.auto_create_assets_count === null) {
-          lotFormErrors.value.auto_create_assets_count = 'Jumlah aset belum diisi';
-          isValid = false;
-        }
-      }
-    }
-  }
-
-  if (!isValid) return;
-
-  const autoCreate = lotForm.auto_create_assets;
-  const autoCreateCount = Number(lotForm.auto_create_assets_count);
-  const lotNumber = lotForm.number;
-  
-  lotForm.transform((data) => {
-    const formData: any = {
-      _method: data._method,
-      number: data.number,
-      barang_id: data.barang_id,
-      organizer_id: data.organizer_id,
-      vendor_id: data.vendor_id,
-      location_id: data.location_id,
-      floor_id: data.floor_id,
-      room_id: data.room_id,
-      po_number: data.po_number,
-      date_of_receipt: data.date_of_receipt,
-      unit_price: data.unit_price,
-    };
-    if (lotModalMode.value === 'create') {
-      if (props.barang.is_consumable) {
-        formData.initial_quantity = data.initial_quantity;
-        formData.current_quantity = data.current_quantity;
-      } else {
-        formData.auto_create_assets = data.auto_create_assets;
-        formData.auto_create_assets_count = data.auto_create_assets_count;
-      }
-    }
-    if (data.image_url) {
-      formData.image_url = data.image_url;
-    }
-    if (data.use_parent_image) {
-      formData.use_parent_image = data.use_parent_image;
-    }
-    if (lotModalMode.value === 'create') {
-      formData.total_item = data.total_item;
-    }
-    return formData;
-  });
-
-  if (lotModalMode.value === 'create') {
-    lotForm.post('/smart/inventory/lots', {
-      onSuccess: (page) => {
-        isLotModalOpen.value = false;
-        
-        if (autoCreate && autoCreateCount > 0) {
-          const updatedLots = (page.props as any).lots || props.lots;
-          const newLot = updatedLots.find((l: any) => l.lotCode === lotNumber);
-          if (newLot) {
-            router.post('/smart/inventory/units/bulk', {
-              number: `${newLot.lotCode}-U01`,
-              lot_id: newLot.id,
-              location_id: newLot.location_id,
-              floor_id: newLot.floor_id,
-              room_id: newLot.room_id,
-              status: 'Tersedia',
-              condition: 'Baik',
-              price: Number(newLot.unitPrice),
-              use_lot_image: true,
-              bulk_quantity: autoCreateCount
-            }, {
-              onError: (errors) => {
-                const errMsg = Object.values(errors).join(', ');
-                toast.error(`Gagal membuat unit secara otomatis: ${errMsg}`);
-              }
-            });
-          } else {
-            toast.error('Gagal menemukan data LOT yang baru dibuat untuk pembuatan aset otomatis.');
-          }
-        }
-      }
-    });
-  } else {
-    lotForm.post(`/smart/inventory/lots/${selectedLotId.value}`, {
-      onSuccess: () => {
-        isLotModalOpen.value = false;
-      }
-    });
-  }
+  return dateStr.replace(/-/g, '/');
 };
 
 const columns: ColumnDef<any>[] = [
@@ -496,7 +178,7 @@ const columns: ColumnDef<any>[] = [
     ]),
   },
   {
-    accessorKey: 'lotCode',
+    accessorKey: 'number',
     header: ({ column }) => h(Button, {
       variant: 'ghost',
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
@@ -505,10 +187,10 @@ const columns: ColumnDef<any>[] = [
       'Kode LOT',
       h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
     ]),
-    cell: ({ row }) => h('div', { class: 'text-muted-foreground font-mono text-sm truncate' }, row.getValue('lotCode')),
+    cell: ({ row }) => h('div', { class: 'text-muted-foreground font-mono text-sm truncate' }, row.original.number),
   },
   {
-    accessorKey: 'poNumber',
+    accessorKey: 'po_number',
     header: ({ column }) => h(Button, {
       variant: 'ghost',
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
@@ -517,10 +199,10 @@ const columns: ColumnDef<any>[] = [
       'Nomor PO',
       h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
     ]),
-    cell: ({ row }) => h('div', { class: 'pl-0 font-medium' }, row.getValue('poNumber')),
+    cell: ({ row }) => h('div', { class: 'pl-0 font-medium' }, row.original.po_number),
   },
   {
-    accessorKey: 'entryDate',
+    accessorKey: 'date_of_receipt',
     header: ({ column }) => h(Button, {
       variant: 'ghost',
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
@@ -529,17 +211,11 @@ const columns: ColumnDef<any>[] = [
       'Tanggal Registrasi',
       h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
     ]),
-    cell: ({ row }) => h('div', { class: 'pl-0 text-muted-foreground' }, row.getValue('entryDate')),
-    sortingFn: (rowA, rowB, columnId) => {
-      const parseDate = (str: string) => {
-        if (!str || str === '-') return 0;
-        const parts = str.trim().split(/\s+/);
-        const dateParts = parts[0].split('/').map(Number);
-        if (dateParts.length !== 3) return 0;
-        const [d, m, y] = dateParts;
-        return new Date(y, m - 1, d).getTime();
-      };
-      return parseDate(rowA.getValue(columnId)) - parseDate(rowB.getValue(columnId));
+    cell: ({ row }) => h('div', { class: 'pl-0 text-muted-foreground' }, formatDateWithSlashes(row.original.date_of_receipt)),
+    sortingFn: (rowA, rowB) => {
+      const valA = String(rowA.original.date_of_receipt || '');
+      const valB = String(rowB.original.date_of_receipt || '');
+      return valA.localeCompare(valB);
     }
   },
   {
@@ -552,7 +228,7 @@ const columns: ColumnDef<any>[] = [
       'Organizer',
       h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
     ]),
-    cell: ({ row }) => h('div', { class: 'pl-0' }, row.getValue('organizer')),
+    cell: ({ row }) => h('div', { class: 'pl-0' }, row.original.organizer),
   },
   {
     accessorKey: 'assetCount',
@@ -567,7 +243,7 @@ const columns: ColumnDef<any>[] = [
     cell: ({ row }) => h('div', { class: 'pl-0 text-muted-foreground' }, 
       props.barang.is_consumable 
         ? (row.original.current_quantity !== null && row.original.current_quantity !== undefined ? row.original.current_quantity : 0) 
-        : row.getValue('assetCount')
+        : row.original.assetCount
     ),
   },
   {
@@ -639,8 +315,8 @@ const filteredLots = computed(() => {
   if (searchQuery.value) {
     const q = searchQuery.value.toLowerCase();
     list = list.filter(lot => 
-      (lot.lotCode && lot.lotCode.toLowerCase().includes(q)) || 
-      (lot.poNumber && lot.poNumber.toLowerCase().includes(q))
+      (lot.number && lot.number.toLowerCase().includes(q)) || 
+      (lot.po_number && lot.po_number.toLowerCase().includes(q))
     );
   }
 
@@ -651,10 +327,9 @@ const filteredLots = computed(() => {
   if (timeFilter.value) {
     const today = new Date();
     list = list.filter(lot => {
-      if (!lot.entryDate || lot.entryDate === '-') return false;
-      const parts = lot.entryDate.split(/[-/]/);
-      if (parts.length !== 3) return false;
-      const entryDateObj = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+      if (!lot.date_of_receipt) return false;
+      const entryDateObj = new Date(lot.date_of_receipt);
+      if (isNaN(entryDateObj.getTime())) return false;
       
       if (timeFilter.value === 'Hari ini') {
         return entryDateObj.toDateString() === today.toDateString();
@@ -692,9 +367,9 @@ const handleExportCSV = () => {
   
   const headers = ['Kode LOT', 'Nomor PO', 'Tanggal Registrasi', 'Organizer', 'Jml. Stok'];
   const rows = data.map((item: any) => [
-    `"${item.lotCode}"`,
-    `"${item.poNumber}"`,
-    `"${item.entryDate}"`,
+    `"${item.number}"`,
+    `"${item.po_number}"`,
+    `"${formatDateWithSlashes(item.date_of_receipt)}"`,
     `"${item.organizer}"`,
     `"${props.barang.is_consumable ? (item.current_quantity ?? 0) : item.assetCount}"`
   ]);
@@ -717,451 +392,20 @@ const handleExportExcel = () => {
   handleExportCSV();
 };
 
-// Edit Modal Logic
 const isEditModalOpen = ref(false);
-const editForm = useForm({
-  _method: 'PUT',
-  kode: props.barang.code,
-  kategori: props.barang.category,
-  subkategori: props.barang.subcategory,
-  satuan: props.barang.uom,
-  merek: props.barang.brand,
-  name: props.barang.name,
-  spesifikasi: props.barang.specification,
-  foto: null as File | null,
-  fotoName: props.barang.image_url ? props.barang.image_url.split('/').pop() : '',
-  uom_id: props.barang.uom_id,
-  brand_id: props.barang.brand_id,
-  subcategory_id: props.barang.subcategory_id,
-});
-
-const editFormErrors = ref({
-  uom_id: '',
-  brand_id: '',
-  name: '',
-});
-
 const openEditModal = () => {
-  editForm.kode = props.barang.code;
-  editForm.kategori = props.barang.category;
-  editForm.subkategori = props.barang.subcategory;
-  editForm.uom_id = props.barang.uom_id;
-  editForm.satuan = props.barang.uom;
-  editForm.brand_id = props.barang.brand_id;
-  editForm.merek = props.barang.brand;
-  editForm.name = props.barang.name;
-  editForm.spesifikasi = props.barang.specification;
-  editForm.foto = null;
-  editForm.fotoName = props.barang.image_url ? props.barang.image_url.split('/').pop() : '';
-  editForm.clearErrors();
-  editFormErrors.value = {
-    uom_id: '',
-    brand_id: '',
-    name: '',
-  };
   isEditModalOpen.value = true;
 };
 
-const closeEditModal = () => {
-  isEditModalOpen.value = false;
-  editFormErrors.value = {
-    uom_id: '',
-    brand_id: '',
-    name: '',
-  };
-};
-
-const handleEditFileUpload = (e: any) => {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
-  if (!allowedTypes.includes(file.type)) {
-    alert('Format file salah! Hanya diperbolehkan file .jpg, .jpeg, atau .png');
-    return;
-  }
-
-  if (file.size > 1024 * 1024) {
-    alert('Gagal! Ukuran foto maksimal 1MB');
-    return;
-  }
-
-  editForm.foto = file;
-  editForm.fotoName = file.name;
-};
-
-const triggerEditFileInput = () => {
-  const input = document.getElementById('edit-photo-upload') as HTMLInputElement;
-  input?.click();
-};
-
-const viewImageInNewTab = () => {
-  if (editForm.foto) {
-    const url = URL.createObjectURL(editForm.foto);
-    window.open(url, '_blank');
-  } else if (props.barang.image_url) {
-    window.open('/storage/' + props.barang.image_url, '_blank');
-  }
-};
-
-const handleSaveChanges = () => {
-  editFormErrors.value = {
-    uom_id: '',
-    brand_id: '',
-    name: '',
-  };
-
-  let isValid = true;
-  if (!editForm.uom_id) {
-    editFormErrors.value.uom_id = 'Satuan belum dipilih';
-    isValid = false;
-  }
-  if (!editForm.brand_id) {
-    editFormErrors.value.brand_id = 'Merek belum dipilih';
-    isValid = false;
-  }
-  if (!editForm.name) {
-    editFormErrors.value.name = 'Nama Tipe belum diisi';
-    isValid = false;
-  }
-
-  if (!isValid) return;
-  editForm.transform((data) => {
-    const formData: any = {
-      _method: 'PUT',
-      number: data.kode,
-      subcategory_id: data.subcategory_id,
-      brand_id: data.brand_id,
-      uom_id: data.uom_id,
-      name: data.name,
-      specification: data.spesifikasi,
-    };
-    if (data.foto) {
-      formData.image_url = data.foto;
-    }
-    return formData;
-  }).post(`/smart/inventory/barangs/${props.barang.id}`, {
-    onSuccess: () => {
-      closeEditModal();
-    },
-  });
-};
-
-// Bulk Edit LOT Modal Logic
-const isBulkEditModalOpen = ref(false);
-const selectedLotItem = ref<any | null>(null);
-const isInitializingBulkForm = ref(false);
-
-const bulkLotForm = useForm({
-  ids: [] as number[],
-  organizer_id: '' as string | number,
-  vendor_id: '' as string | number,
-  location_id: '' as string | number,
-  floor_id: null as string | number | null,
-  room_id: null as string | number | null,
-  unit_price: '' as string | number,
-  image_url: null as File | null,
-  image_url_name: '',
-  use_parent_image: false,
-  po_number: '',
-  date_of_receipt: '',
-});
-
-const bulkLotFormErrors = ref({
-  organizer_id: '',
-  vendor_id: '',
-  location_id: '',
-  po_number: '',
-  date_of_receipt: '',
-  image_url: '',
-});
-
-// --- Reactive error clearing ---
-// lotForm
-watch(() => lotForm.organizer_id, (v) => { if (v && lotFormErrors.value.organizer_id) lotFormErrors.value.organizer_id = ''; });
-watch(() => lotForm.vendor_id, (v) => { if (v && lotFormErrors.value.vendor_id) lotFormErrors.value.vendor_id = ''; });
-watch(() => lotForm.location_id, (v) => { if (v && lotFormErrors.value.location_id) lotFormErrors.value.location_id = ''; });
-watch(() => lotForm.po_number, (v) => { if (v && lotFormErrors.value.po_number) lotFormErrors.value.po_number = ''; });
-watch(() => lotForm.date_of_receipt, (v) => { if (v && lotFormErrors.value.date_of_receipt) lotFormErrors.value.date_of_receipt = ''; });
-watch(() => lotForm.image_url, (v) => { if (v && lotFormErrors.value.image_url) lotFormErrors.value.image_url = ''; });
-watch(() => lotForm.image_url_name, (v) => { if (v && lotFormErrors.value.image_url) lotFormErrors.value.image_url = ''; });
-watch(() => lotForm.initial_quantity, (v) => { if ((v !== '' && v !== null) && lotFormErrors.value.initial_quantity) lotFormErrors.value.initial_quantity = ''; });
-// editForm
-watch(() => editForm.uom_id, (v) => { if (v && editFormErrors.value.uom_id) editFormErrors.value.uom_id = ''; });
-watch(() => editForm.brand_id, (v) => { if (v && editFormErrors.value.brand_id) editFormErrors.value.brand_id = ''; });
-watch(() => editForm.name, (v) => { if (v && editFormErrors.value.name) editFormErrors.value.name = ''; });
-// bulkLotForm
-watch(() => bulkLotForm.organizer_id, (v) => { if (v && bulkLotFormErrors.value.organizer_id) bulkLotFormErrors.value.organizer_id = ''; });
-watch(() => bulkLotForm.vendor_id, (v) => { if (v && bulkLotFormErrors.value.vendor_id) bulkLotFormErrors.value.vendor_id = ''; });
-watch(() => bulkLotForm.location_id, (v) => { if (v && bulkLotFormErrors.value.location_id) bulkLotFormErrors.value.location_id = ''; });
-watch(() => bulkLotForm.po_number, (v) => { if (v && bulkLotFormErrors.value.po_number) bulkLotFormErrors.value.po_number = ''; });
-watch(() => bulkLotForm.date_of_receipt, (v) => { if (v && bulkLotFormErrors.value.date_of_receipt) bulkLotFormErrors.value.date_of_receipt = ''; });
-watch(() => bulkLotForm.image_url, (v) => { if (v && bulkLotFormErrors.value.image_url) bulkLotFormErrors.value.image_url = ''; });
-watch(() => bulkLotForm.image_url_name, (v) => { if (v && bulkLotFormErrors.value.image_url) bulkLotFormErrors.value.image_url = ''; });
-
-const openBulkEditModal = () => {
-  if (!dataTableRef.value) return;
-  const selectedRows = dataTableRef.value.table.getFilteredRowModel().rows
-    .filter((r: any) => r.getIsSelected())
-    .map((r: any) => r.original);
-  
-  if (selectedRows.length === 0) return;
-
-  isInitializingBulkForm.value = true;
-
-  bulkLotForm.reset();
-  bulkLotForm.clearErrors();
-  bulkLotFormErrors.value = {
-    organizer_id: '',
-    vendor_id: '',
-    location_id: '',
-    po_number: '',
-    date_of_receipt: '',
-    image_url: '',
-  };
-  bulkLotForm.ids = selectedRows.map((r: any) => r.id);
-  
-  // Explicitly reset the edit values first
-  bulkLotForm.organizer_id = '';
-  bulkLotForm.vendor_id = '';
-  bulkLotForm.location_id = '';
-  bulkLotForm.floor_id = null;
-  bulkLotForm.room_id = null;
-  bulkLotForm.unit_price = '';
-  bulkLotForm.image_url = null;
-  bulkLotForm.image_url_name = '';
-  bulkLotForm.use_parent_image = false;
-  bulkLotForm.po_number = '';
-  bulkLotForm.date_of_receipt = '';
-
+const handleEditTerpilih = () => {
+  if (!dataTableRef.value || !dataTableRef.value.table) return;
+  const selectedRows = dataTableRef.value.table.getFilteredSelectedRowModel().rows;
   if (selectedRows.length === 1) {
-    selectedLotItem.value = selectedRows[0];
-    bulkLotForm.organizer_id = selectedLotItem.value.organizer_id;
-    bulkLotForm.vendor_id = selectedLotItem.value.vendor_id;
-    bulkLotForm.location_id = selectedLotItem.value.location_id;
-    bulkLotForm.floor_id = selectedLotItem.value.floor_id;
-    bulkLotForm.room_id = selectedLotItem.value.room_id;
-    bulkLotForm.unit_price = selectedLotItem.value.unitPrice;
-    bulkLotForm.po_number = selectedLotItem.value.poNumber || '';
-    
-    if (selectedLotItem.value.entryDate && selectedLotItem.value.entryDate !== '-') {
-      const parts = selectedLotItem.value.entryDate.split(/[-/]/);
-      if (parts.length === 3) {
-        bulkLotForm.date_of_receipt = `${parts[2]}-${parts[1]}-${parts[0]}`;
-      } else {
-        bulkLotForm.date_of_receipt = '';
-      }
-    } else {
-      bulkLotForm.date_of_receipt = '';
-    }
-
-    bulkLotForm.image_url = null;
-    bulkLotForm.image_url_name = selectedLotItem.value.imageUrl ? selectedLotItem.value.imageUrl.split('/').pop() : '';
-    bulkLotForm.use_parent_image = false;
-  } else {
-    selectedLotItem.value = null;
+    openEditLotModal(selectedRows[0].original);
+  } else if (selectedRows.length > 1) {
+    selectedLotsForEdit.value = selectedRows.map((row: any) => row.original);
+    isBulkEditModalOpen.value = true;
   }
-  isBulkEditModalOpen.value = true;
-  nextTick(() => {
-    isInitializingBulkForm.value = false;
-  });
-};
-
-const closeBulkEditModal = () => {
-  isBulkEditModalOpen.value = false;
-  bulkLotForm.ids = [];
-  bulkLotForm.organizer_id = '';
-  bulkLotForm.vendor_id = '';
-  bulkLotForm.location_id = '';
-  bulkLotForm.floor_id = null;
-  bulkLotForm.room_id = null;
-  bulkLotForm.unit_price = '';
-  bulkLotForm.image_url = null;
-  bulkLotForm.image_url_name = '';
-  bulkLotForm.use_parent_image = false;
-  bulkLotForm.po_number = '';
-  bulkLotForm.date_of_receipt = '';
-  bulkLotForm.clearErrors();
-  bulkLotFormErrors.value = {
-    organizer_id: '',
-    vendor_id: '',
-    location_id: '',
-    po_number: '',
-    date_of_receipt: '',
-    image_url: '',
-  };
-  selectedLotItem.value = null;
-};
-
-const handleBulkLotFileUpload = (e: any) => {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
-  if (!allowedTypes.includes(file.type)) {
-    alert('Format file salah! Hanya diperbolehkan file .jpg, .jpeg, atau .png');
-    return;
-  }
-
-  if (file.size > 1024 * 1024) {
-    alert('Gagal! Ukuran foto maksimal 1MB');
-    return;
-  }
-
-  bulkLotForm.image_url = file;
-  bulkLotForm.image_url_name = file.name;
-  bulkLotForm.use_parent_image = false;
-};
-
-const triggerBulkLotFileInput = () => {
-  const input = document.getElementById('bulk-lot-photo-upload') as HTMLInputElement;
-  input?.click();
-};
-
-const handleBulkLotSamakanPhoto = () => {
-  if (props.barang.image_url) {
-    bulkLotForm.use_parent_image = true;
-    bulkLotForm.image_url = null;
-    bulkLotForm.image_url_name = props.barang.image_url.split('/').pop() || '';
-  } else {
-    toast.error('Tipe parent tidak memiliki foto.');
-  }
-};
-
-const viewBulkLotImageInNewTab = () => {
-  if (bulkLotForm.image_url) {
-    const url = URL.createObjectURL(bulkLotForm.image_url);
-    window.open(url, '_blank');
-  } else if (bulkLotForm.use_parent_image && props.barang.image_url) {
-    window.open('/storage/' + props.barang.image_url, '_blank');
-  } else if (bulkLotForm.ids.length === 1 && selectedLotItem.value && selectedLotItem.value.imageUrl) {
-    window.open('/storage/' + selectedLotItem.value.imageUrl, '_blank');
-  }
-};
-
-const bulkFilteredFloors = computed(() => {
-  if (!bulkLotForm.location_id) return [];
-  return props.floors.filter(f => Number(f.location_id) === Number(bulkLotForm.location_id));
-});
-
-const bulkFilteredRooms = computed(() => {
-  if (!bulkLotForm.floor_id) return [];
-  return props.rooms.filter(r => Number(r.floor_id) === Number(bulkLotForm.floor_id));
-});
-
-watch(() => bulkLotForm.location_id, (newVal) => {
-  if (isInitializingBulkForm.value) return;
-  console.log('[DEBUG DetailBarang] location_id watch triggered, newVal:', newVal);
-  bulkLotForm.floor_id = null;
-  bulkLotForm.room_id = null;
-});
-
-watch(() => bulkLotForm.floor_id, (newVal) => {
-  if (isInitializingBulkForm.value) return;
-  console.log('[DEBUG DetailBarang] floor_id watch triggered, newVal:', newVal);
-  bulkLotForm.room_id = null;
-});
-
-const handleSaveBulkChanges = () => {
-  bulkLotFormErrors.value = {
-    organizer_id: '',
-    vendor_id: '',
-    location_id: '',
-    po_number: '',
-    date_of_receipt: '',
-    image_url: '',
-  };
-
-  if (bulkLotForm.ids.length === 1) {
-    let isValid = true;
-    if (!bulkLotForm.organizer_id) {
-      bulkLotFormErrors.value.organizer_id = 'Organizer belum dipilih';
-      isValid = false;
-    }
-    if (!bulkLotForm.vendor_id) {
-      bulkLotFormErrors.value.vendor_id = 'Vendor belum dipilih';
-      isValid = false;
-    }
-    if (!bulkLotForm.location_id) {
-      bulkLotFormErrors.value.location_id = 'Lokasi belum dipilih';
-      isValid = false;
-    }
-    if (!bulkLotForm.po_number) {
-      bulkLotFormErrors.value.po_number = 'Nomor PO belum diisi';
-      isValid = false;
-    }
-    if (!bulkLotForm.date_of_receipt) {
-      bulkLotFormErrors.value.date_of_receipt = 'Tanggal Registrasi belum diisi';
-      isValid = false;
-    }
-    if (!bulkLotForm.image_url && !bulkLotForm.use_parent_image && !bulkLotForm.image_url_name) {
-      const photoLabel = props.barang.is_consumable ? 'Foto' : 'Foto default';
-      bulkLotFormErrors.value.image_url = `${photoLabel} belum dipilih`;
-      isValid = false;
-    }
-    if (!isValid) return;
-  } else {
-    // Mass edit validation: requires at least one field to be filled
-    const hasAtLeastOneField = !!(
-      bulkLotForm.organizer_id ||
-      bulkLotForm.vendor_id ||
-      bulkLotForm.location_id ||
-      bulkLotForm.floor_id ||
-      bulkLotForm.room_id ||
-      bulkLotForm.unit_price !== '' ||
-      bulkLotForm.image_url ||
-      bulkLotForm.use_parent_image
-    );
-    if (!hasAtLeastOneField) {
-      toast.error('Harap isi minimal satu input untuk melakukan perubahan massal.');
-      return;
-    }
-  }
-
-  bulkLotForm.transform((data) => {
-    const formData: any = {
-      _method: 'PUT',
-      ids: data.ids,
-    };
-    if (data.ids.length === 1) {
-      formData.organizer_id = data.organizer_id;
-      formData.vendor_id = data.vendor_id;
-      formData.location_id = data.location_id;
-      formData.floor_id = data.floor_id;
-      formData.room_id = data.room_id;
-      formData.po_number = data.po_number;
-      formData.date_of_receipt = data.date_of_receipt;
-      formData.unit_price = data.unit_price;
-      if (data.image_url) {
-        formData.image_url = data.image_url;
-      }
-      if (data.use_parent_image) {
-        formData.use_parent_image = data.use_parent_image;
-      }
-    } else {
-      if (data.organizer_id) formData.organizer_id = data.organizer_id;
-      if (data.vendor_id) formData.vendor_id = data.vendor_id;
-      if (data.location_id) {
-        formData.location_id = data.location_id;
-        formData.floor_id = data.floor_id;
-        formData.room_id = data.room_id;
-      } else {
-        if (data.floor_id) formData.floor_id = data.floor_id;
-        if (data.room_id) formData.room_id = data.room_id;
-      }
-      if (data.unit_price !== '') formData.unit_price = data.unit_price;
-      if (data.image_url) formData.image_url = data.image_url;
-      if (data.use_parent_image) formData.use_parent_image = data.use_parent_image;
-    }
-    return formData;
-  }).post('/smart/inventory/lots/bulk', {
-    onSuccess: () => {
-      closeBulkEditModal();
-      if (dataTableRef.value) {
-        dataTableRef.value.table.resetRowSelection();
-      }
-    },
-  });
 };
 
 // Delete Modal Logic
@@ -1188,6 +432,10 @@ const deleteFields = computed(() => {
     
     const formatDateWithDashes = (dateStr: string) => {
       if (!dateStr || dateStr === '-') return '-';
+      if (dateStr.includes('-') && dateStr.indexOf('-') === 4) {
+        const [y, m, d] = dateStr.split('-');
+        return `${d}-${m}-${y}`;
+      }
       return dateStr.replace(/\//g, '-');
     };
     
@@ -1204,7 +452,7 @@ const deleteFields = computed(() => {
     const initialStock = isConsumable ? (data.initial_quantity ?? 0) : (data.assetCount ?? 0);
 
     const fields = [
-      { label: 'Kode LOT', value: data.lotCode },
+      { label: 'Kode LOT', value: data.number },
       { label: 'Kategori', value: props.barang.category },
       { label: 'Subkategori', value: props.barang.subcategory },
       { label: 'Merek', value: props.barang.brand },
@@ -1213,8 +461,8 @@ const deleteFields = computed(() => {
       { label: 'Jumlah stok tersedia', value: availableStock },
       { label: 'Jumlah stok diawal', value: initialStock },
       { label: 'Lokasi', value: formatLocation(data.location, data.floor, data.room) },
-      { label: 'Nomor PO', value: data.poNumber },
-      { label: 'Tanggal registrasi', value: formatDateWithDashes(data.entryDate) },
+      { label: 'Nomor PO', value: data.po_number },
+      { label: 'Tanggal registrasi', value: formatDateWithDashes(data.date_of_receipt) },
       { label: 'Harga satuan', value: formatRupiah(data.unitPrice) },
       { label: 'Organizer', value: data.organizer },
       { label: 'Vendor', value: data.vendor },
@@ -1334,11 +582,11 @@ const closeErrorModal = () => {
 const closeOnEscape = (e: KeyboardEvent) => {
   if (e.key === 'Escape') {
     if (isEditModalOpen.value) {
-      closeEditModal();
-    } else if (isLotModalOpen.value) {
-      isLotModalOpen.value = false;
+      isEditModalOpen.value = false;
+    } else if (isCreateLotModalOpen.value) {
+      isCreateLotModalOpen.value = false;
     } else if (isBulkEditModalOpen.value) {
-      closeBulkEditModal();
+      isBulkEditModalOpen.value = false;
     } else if (isDeleteModalOpen.value) {
       closeDeleteModal();
     } else if (isErrorModalOpen.value) {
@@ -1481,7 +729,7 @@ onUnmounted(() => {
               <label class="text-xs text-muted-foreground font-medium block ml-0.5">Aksi Terpilih</label>
               <div class="flex flex-wrap gap-2">
                 <Button 
-                  @click="openBulkEditModal"
+                  @click="handleEditTerpilih"
                   :disabled="!dataTableRef || Object.keys(dataTableRef.table.getState().rowSelection).length === 0"
                   variant="more-round-warning"
                 >
@@ -1517,816 +765,44 @@ onUnmounted(() => {
             :columns="columns" 
             :data="filteredLots" 
             :filter-value="searchQuery"
-            :default-sorting="[{ id: 'entryDate', desc: true }]"
+            :default-sorting="[{ id: 'date_of_receipt', desc: true }]"
           />
         </div>
       </div>
     </div>
 
-    <!-- Edit Modal -->
-    <Teleport to="body">
-      <Transition
-        enter-active-class="ease-out duration-200"
-        enter-from-class="opacity-0"
-        enter-to-class="opacity-100"
-        leave-active-class="ease-in duration-150"
-        leave-from-class="opacity-100"
-        leave-to-class="opacity-0"
-      >
-        <div v-if="isEditModalOpen" @click="closeEditModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <Transition
-            enter-active-class="ease-out duration-200"
-            enter-from-class="opacity-0 scale-95"
-            enter-to-class="opacity-100 scale-100"
-            leave-active-class="ease-in duration-150"
-            leave-from-class="opacity-100 scale-100"
-            leave-to-class="opacity-0 scale-95"
-          >
-            <div 
-              v-if="isEditModalOpen" 
-              class="bg-card w-full max-w-[1000px] rounded-[14px] shadow-2xl overflow-hidden flex flex-col" 
-              @click.stop
-            >
-              <!-- Modal Header -->
-              <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
-                <h3 class="text-lg font-bold text-foreground">Edit Detail Tipe</h3>
-                <button @click="closeEditModal" class="p-2 hover:bg-muted rounded-full transition-colors">
-                  <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
-                </button>
-              </div>
 
-              <!-- Modal Body -->
-              <div class="p-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
-                  <!-- Left Column -->
-                  <div class="space-y-6">
-                    <Field>
-                      <FieldLabel>Kode Tipe</FieldLabel>
-                      <FieldContent>
-                        <input 
-                          type="text" 
-                          v-model="editForm.kode"
-                          disabled
-                          class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
-                        />
-                      </FieldContent>
-                    </Field>
 
-                    <Field>
-                      <FieldLabel>Kategori</FieldLabel>
-                      <FieldContent>
-                        <input 
-                          type="text" 
-                          v-model="editForm.kategori"
-                          disabled
-                          class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
-                        />
-                      </FieldContent>
-                    </Field>
+    <EditTipeModal
+      v-model:open="isEditModalOpen"
+      :items="[props.barang]"
+      :uoms="props.uoms"
+      :brands="props.brands"
+    />
 
-                    <Field>
-                      <FieldLabel>Subkategori</FieldLabel>
-                      <FieldContent>
-                        <input 
-                          type="text" 
-                          v-model="editForm.subkategori"
-                          disabled
-                          class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
-                        />
-                      </FieldContent>
-                    </Field>
+    <CreateLotModal
+      v-model:open="isCreateLotModalOpen"
+      :barang="props.barang"
+      :lots="props.lots"
+      :organizers="props.organizers"
+      :vendors="props.vendors"
+      :locations="props.locations"
+      :floors="props.floors"
+      :rooms="props.rooms"
+    />
 
-                    <Field :data-invalid="!!editFormErrors.uom_id || undefined">
-                      <FieldLabel><span>Satuan<span class="text-rose-500">*</span></span></FieldLabel>
-                      <FieldContent>
-                        <Combobox
-                          v-model="editForm.uom_id"
-                          :options="props.uoms"
-                          search-placeholder="Cari satuan..."
-                          default-label="Pilih satuan"
-                          width-class="w-full h-10 px-4"
-                          :error="!!editFormErrors.uom_id"
-                        />
-                      </FieldContent>
-                      <FieldError v-if="editFormErrors.uom_id">{{ editFormErrors.uom_id }}</FieldError>
-                    </Field>
-                  </div>
-
-                  <!-- Right Column -->
-                  <div class="space-y-6">
-                    <Field :data-invalid="!!editFormErrors.brand_id || undefined">
-                      <FieldLabel><span>Merek<span class="text-rose-500">*</span></span></FieldLabel>
-                      <FieldContent>
-                        <Combobox
-                          v-model="editForm.brand_id"
-                          :options="props.brands"
-                          search-placeholder="Cari merek..."
-                          default-label="Pilih merek"
-                          width-class="w-full h-10 px-4"
-                          :error="!!editFormErrors.brand_id"
-                        />
-                      </FieldContent>
-                      <FieldError v-if="editFormErrors.brand_id">{{ editFormErrors.brand_id }}</FieldError>
-                    </Field>
-
-                    <Field :data-invalid="!!editFormErrors.name || undefined">
-                      <FieldLabel><span>Nama Tipe<span class="text-rose-500">*</span></span></FieldLabel>
-                      <FieldContent>
-                        <input 
-                          type="text" 
-                          v-model="editForm.name"
-                          maxlength="255"
-                          placeholder="Input nama tipe di sini..." 
-                          class="w-full px-4 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors h-10"
-                          :class="[editFormErrors.name ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']"
-                        />
-                      </FieldContent>
-                      <FieldError v-if="editFormErrors.name">{{ editFormErrors.name }}</FieldError>
-                    </Field>
-
-                    <Field>
-                      <FieldLabel>Spesifikasi</FieldLabel>
-                      <FieldContent>
-                        <input 
-                          type="text" 
-                          v-model="editForm.spesifikasi"
-                          maxlength="255"
-                          placeholder="Input spesifikasinya di sini..." 
-                          class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
-                        />
-                      </FieldContent>
-                    </Field>
-
-                    <Field>
-                      <FieldLabel>
-                        <span>Foto<span class="italic text-muted-foreground"> default</span><span class="text-rose-500">*</span></span>
-                      </FieldLabel>
-                      <FieldContent>
-                        <div class="flex gap-2">
-                          <div 
-                            class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/10 truncate flex items-center h-10"
-                            :class="[
-                              (editForm.foto || props.barang.image_url) 
-                                ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' 
-                                : 'text-muted-foreground cursor-default'
-                            ]"
-                            @click="(editForm.foto || props.barang.image_url) && viewImageInNewTab()"
-                          >
-                            {{ editForm.fotoName || 'Belum ada foto yang dipilih' }}
-                          </div>
-                          <input 
-                            type="file" 
-                            id="edit-photo-upload" 
-                            class="hidden" 
-                            accept=".jpg,.jpeg,.png"
-                            @change="handleEditFileUpload"
-                          />
-                          <Button 
-                            @click="triggerEditFileInput"
-                            size="lg"
-                            type="button"
-                          >
-                            Pilih File
-                          </Button>
-                        </div>
-                        <p class="text-[10px] text-muted-foreground ml-1 mt-1">Maksimal ukuran 1 MB</p>
-                      </FieldContent>
-                    </Field>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Modal Footer -->
-              <div class="py-3 px-4 border-t border-border flex items-center justify-between">
-                <p class="text-sm text-rose-500 italic font-medium">*Wajib diisi</p>
-                <div class="flex items-center gap-3">
-                  <Button 
-                    @click="closeEditModal"
-                    variant="white"
-                    size="xl"
-                  >
-                    Batal
-                  </Button>
-                  <Button 
-                    @click="handleSaveChanges"
-                    :disabled="editForm.processing"
-                    variant="primary"
-                    size="xl"
-                  >
-                    Simpan Perubahan
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </Transition>
-        </div>
-      </Transition>
-    </Teleport>
-
-    <!-- Add/Edit LOT Modal -->
-    <Teleport to="body">
-      <Transition
-        enter-active-class="ease-out duration-200"
-        enter-from-class="opacity-0"
-        enter-to-class="opacity-100"
-        leave-active-class="ease-in duration-150"
-        leave-from-class="opacity-100"
-        leave-to-class="opacity-0"
-      >
-        <div v-if="isLotModalOpen" @click="isLotModalOpen = false" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <Transition
-            enter-active-class="ease-out duration-200"
-            enter-from-class="opacity-0 scale-95"
-            enter-to-class="opacity-100 scale-100"
-            leave-active-class="ease-in duration-150"
-            leave-from-class="opacity-100 scale-100"
-            leave-to-class="opacity-0 scale-95"
-          >
-            <div 
-              v-if="isLotModalOpen" 
-              class="bg-card w-full max-w-[1000px] rounded-[14px] shadow-2xl overflow-hidden flex flex-col" 
-              @click.stop
-            >
-              <!-- Modal Header -->
-              <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
-                <h3 class="text-lg font-bold text-foreground">
-                  {{ lotModalMode === 'create' ? 'Tambah LOT Baru' : 'Edit LOT' }}
-                </h3>
-                <button @click="isLotModalOpen = false" class="p-2 hover:bg-muted rounded-full transition-colors">
-                  <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
-                </button>
-              </div>
-
-              <!-- Modal Body -->
-              <div class="p-6 overflow-y-auto max-h-[90vh]">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
-                  <!-- Left Column -->
-                  <div class="space-y-6">
-                    <!-- Kode LOT -->
-                    <Field>
-                      <FieldLabel><span>Kode LOT<span class="text-rose-500">*</span></span></FieldLabel>
-                      <FieldContent>
-                        <input 
-                          type="text" 
-                          v-model="lotForm.number"
-                          disabled
-                          placeholder="Kode LOT belum di-generate"
-                          class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
-                        />
-                      </FieldContent>
-                    </Field>
-
-                    <!-- Organizer -->
-                    <Field :data-invalid="!!lotFormErrors.organizer_id || undefined">
-                      <FieldLabel><span>Organizer<span class="text-rose-500">*</span></span></FieldLabel>
-                      <FieldContent>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !lotForm.organizer_id ? 'text-muted-foreground' : 'text-foreground', lotFormErrors.organizer_id ? '!border-destructive focus:!ring-destructive/20 focus:!border-destructive' : '']">
-                              {{ props.organizers.find(o => o.id == lotForm.organizer_id)?.name || 'Pilih organizer' }}
-                              <ChevronDown class="w-4 h-4 opacity-50" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
-                            <DropdownMenuItem v-for="org in props.organizers" :key="org.id" @select="lotForm.organizer_id = org.id">
-                              {{ org.name }}
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </FieldContent>
-                      <FieldError v-if="lotFormErrors.organizer_id">{{ lotFormErrors.organizer_id }}</FieldError>
-                    </Field>
-
-                    <!-- Vendor -->
-                    <Field :data-invalid="!!lotFormErrors.vendor_id || undefined">
-                      <FieldLabel><span>Vendor<span class="text-rose-500">*</span></span></FieldLabel>
-                      <FieldContent>
-                        <Combobox
-                          v-model="lotForm.vendor_id"
-                          :options="props.vendors"
-                          search-placeholder="Cari vendor..."
-                          default-label="Pilih vendor"
-                          width-class="w-full h-10 px-4"
-                          :error="!!lotFormErrors.vendor_id"
-                        />
-                      </FieldContent>
-                      <FieldError v-if="lotFormErrors.vendor_id">{{ lotFormErrors.vendor_id }}</FieldError>
-                    </Field>
-
-                    <!-- Lokasi -->
-                    <Field :data-invalid="!!lotFormErrors.location_id || undefined">
-                      <FieldLabel>
-                        <span>Lokasi<span v-if="!props.barang.is_consumable" class="italic text-muted-foreground"> default</span><span class="text-rose-500">*</span></span>
-                      </FieldLabel>
-                      <FieldContent>
-                        <Combobox
-                          v-model="lotForm.location_id"
-                          :options="props.locations"
-                          search-placeholder="Cari lokasi..."
-                          default-label="Pilih lokasi"
-                          width-class="w-full h-10 px-4"
-                          :error="!!lotFormErrors.location_id"
-                        />
-                      </FieldContent>
-                      <FieldError v-if="lotFormErrors.location_id">{{ lotFormErrors.location_id }}</FieldError>
-                    </Field>
-
-                    <!-- Lantai -->
-                    <Field :data-disabled="!lotForm.location_id || undefined">
-                      <FieldLabel>
-                        <span>Lantai<span v-if="!props.barang.is_consumable" class="italic text-muted-foreground"> default</span></span>
-                      </FieldLabel>
-                      <FieldContent>
-                        <Combobox
-                          v-model="lotForm.floor_id"
-                          :options="filteredFloors"
-                          search-placeholder="Cari lantai..."
-                          default-label="Pilih lantai (opsional)"
-                          width-class="w-full h-10 px-4"
-                          :disabled="!lotForm.location_id"
-                        />
-                      </FieldContent>
-                    </Field>
-
-                    <!-- Conditional Stock Input / Auto Asset Creation Field (Create Mode Only) -->
-                    <template v-if="lotModalMode === 'create'">
-                      <Field v-if="props.barang.is_consumable" :data-invalid="!!(lotForm.errors.initial_quantity || lotFormErrors.initial_quantity) || undefined">
-                        <FieldLabel><span>Jumlah stok<span class="text-rose-500">*</span></span></FieldLabel>
-                        <FieldContent>
-                          <input 
-                            type="number" 
-                            v-model="lotForm.initial_quantity"
-                            placeholder="Contoh: 10"
-                            min="0"
-                            class="w-full px-4 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors h-10"
-                            :class="[(lotForm.errors.initial_quantity || lotFormErrors.initial_quantity) ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']"
-                            @input="lotForm.current_quantity = lotForm.initial_quantity"
-                          />
-                        </FieldContent>
-                        <FieldError v-if="lotForm.errors.initial_quantity || lotFormErrors.initial_quantity">
-                          {{ lotForm.errors.initial_quantity || lotFormErrors.initial_quantity }}
-                        </FieldError>
-                      </Field>
-                      <Field v-else-if="props.barang.category !== 'Kendaraan'" :data-invalid="!!(lotForm.errors.auto_create_assets_count || lotFormErrors.auto_create_assets_count) || undefined">
-                        <FieldContent>
-                          <div class="flex items-center gap-2 w-full pt-2">
-                            <Checkbox 
-                              id="auto-create-checkbox"
-                              v-model="lotForm.auto_create_assets"
-                            />
-                            <label for="auto-create-checkbox" class="cursor-pointer select-none text-sm font-medium text-foreground">
-                              Buat
-                            </label>
-                            <input 
-                              type="number" 
-                              v-model="lotForm.auto_create_assets_count"
-                              placeholder="..."
-                              min="1"
-                              :disabled="!lotForm.auto_create_assets"
-                              class="w-16 px-2 py-1 text-sm border rounded-[10px] bg-background focus:outline-none focus:ring-2 transition-colors h-8 disabled:opacity-50 disabled:cursor-not-allowed mx-1"
-                              :class="[(lotForm.errors.auto_create_assets_count || lotFormErrors.auto_create_assets_count) ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']"
-                            />
-                            <span class="text-sm font-medium text-foreground">aset secara otomatis dengan nilai default.</span>
-                          </div>
-                        </FieldContent>
-                        <FieldError v-if="lotForm.errors.auto_create_assets_count || lotFormErrors.auto_create_assets_count" class="pl-6">
-                          {{ lotForm.errors.auto_create_assets_count || lotFormErrors.auto_create_assets_count }}
-                        </FieldError>
-                      </Field>
-                    </template>
-                  </div>
-
-                  <!-- Right Column -->
-                  <div class="space-y-6">
-                    <!-- Ruangan -->
-                    <Field :data-disabled="!lotForm.floor_id || undefined">
-                      <FieldLabel>
-                        <span>Ruangan<span v-if="!props.barang.is_consumable" class="italic text-muted-foreground"> default</span></span>
-                      </FieldLabel>
-                      <FieldContent>
-                        <Combobox
-                          v-model="lotForm.room_id"
-                          :options="filteredRooms"
-                          search-placeholder="Cari ruangan..."
-                          default-label="Pilih ruangan (opsional)"
-                          width-class="w-full h-10 px-4"
-                          :disabled="!lotForm.floor_id"
-                        />
-                      </FieldContent>
-                    </Field>
-
-                    <!-- Nomor PO -->
-                    <Field :data-invalid="!!lotFormErrors.po_number || undefined">
-                      <FieldLabel><span>Nomor PO<span class="text-rose-500">*</span></span></FieldLabel>
-                      <FieldContent>
-                        <input 
-                          type="text" 
-                          v-model="lotForm.po_number"
-                          placeholder="Contoh: PO-02"
-                          class="w-full px-4 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors h-10"
-                          :class="[lotFormErrors.po_number ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']"
-                        />
-                      </FieldContent>
-                      <FieldError v-if="lotFormErrors.po_number">{{ lotFormErrors.po_number }}</FieldError>
-                    </Field>
-
-                    <!-- Tanggal Registrasi -->
-                    <Field :data-invalid="!!lotFormErrors.date_of_receipt || undefined">
-                      <FieldLabel><span>Tanggal Registrasi<span class="text-rose-500">*</span></span></FieldLabel>
-                      <FieldContent>
-                        <input 
-                          type="date" 
-                          v-model="lotForm.date_of_receipt"
-                          class="w-full px-4 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors h-10"
-                          :class="[lotFormErrors.date_of_receipt ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']"
-                        />
-                      </FieldContent>
-                      <FieldError v-if="lotFormErrors.date_of_receipt">{{ lotFormErrors.date_of_receipt }}</FieldError>
-                    </Field>
-
-                    <!-- Harga Satuan -->
-                    <Field>
-                      <FieldLabel>
-                        <span>Harga Satuan<span v-if="!props.barang.is_consumable" class="italic text-muted-foreground"> default</span></span>
-                      </FieldLabel>
-                      <FieldContent>
-                        <div class="flex w-full rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors h-10 overflow-hidden">
-                          <span class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-r border-input select-none font-medium">
-                            Rp
-                          </span>
-                          <input 
-                            type="number" 
-                            v-model="lotForm.unit_price"
-                            placeholder="Contoh: 60000"
-                            min="0"
-                            class="flex-1 min-w-0 px-4 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 transition-colors h-full"
-                          />
-                        </div>
-                      </FieldContent>
-                    </Field>
-
-                    <!-- Foto -->
-                    <Field :data-invalid="!!lotFormErrors.image_url || undefined">
-                      <FieldLabel>
-                        <span>Foto<span v-if="!props.barang.is_consumable" class="italic text-muted-foreground"> default</span><span class="text-rose-500">*</span></span>
-                      </FieldLabel>
-                      <FieldContent>
-                        <div class="flex gap-2">
-                          <div 
-                            class="flex-grow min-w-0 px-4 py-2 text-sm border rounded-[14px] bg-muted/10 truncate flex items-center h-10"
-                            :class="[
-                              (lotForm.image_url || lotForm.image_url_name) 
-                                ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' 
-                                : 'text-muted-foreground cursor-default',
-                              lotFormErrors.image_url ? 'border-destructive' : 'border-input'
-                            ]"
-                            @click="(lotForm.image_url || lotForm.image_url_name) && viewLotImageInNewTab()"
-                          >
-                            {{ lotForm.image_url_name || 'Belum ada foto yang dipilih' }}
-                          </div>
-                          <input 
-                            type="file" 
-                            id="lot-photo-upload" 
-                            class="hidden" 
-                            accept=".jpg,.jpeg,.png"
-                            @change="handleLotFileUpload"
-                          />
-                          <Button 
-                            type="button"
-                            @click="handleSamakanPhoto"
-                            variant="warning"
-                            size="lg"
-                          >
-                            Samakan
-                          </Button>
-                          <Button 
-                            type="button"
-                            @click="triggerLotFileInput"
-                            size="lg"
-                          >
-                            Pilih File
-                          </Button>
-                        </div>
-                        <p class="text-[10px] text-muted-foreground ml-1 mt-1">Maksimal ukuran 1 MB</p>
-                      </FieldContent>
-                      <FieldError v-if="lotFormErrors.image_url">{{ lotFormErrors.image_url }}</FieldError>
-                    </Field>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Modal Footer -->
-              <div class="py-3 px-4 border-t border-border flex items-center justify-between">
-                <p class="text-sm text-rose-500 italic font-medium">*Wajib diisi</p>
-                <div class="flex items-center gap-3">
-                  <Button 
-                    @click="isLotModalOpen = false"
-                    variant="white"
-                    size="xl"
-                  >
-                    Batal
-                  </Button>
-                  <Button 
-                    @click="handleSaveLot"
-                    :disabled="lotForm.processing"
-                    variant="primary"
-                    size="xl"
-                  >
-                    {{ lotModalMode === 'create' ? 'Tambah LOT' : 'Simpan Perubahan' }}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </Transition>
-        </div>
-      </Transition>
-    </Teleport>
-
-    <!-- Bulk Edit LOT Modal -->
-    <Teleport to="body">
-      <Transition
-        enter-active-class="ease-out duration-200"
-        enter-from-class="opacity-0"
-        enter-to-class="opacity-100"
-        leave-active-class="ease-in duration-150"
-        leave-from-class="opacity-100"
-        leave-to-class="opacity-0"
-      >
-        <div v-if="isBulkEditModalOpen" @click="closeBulkEditModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <Transition
-            enter-active-class="ease-out duration-200"
-            enter-from-class="opacity-0 scale-95"
-            enter-to-class="opacity-100 scale-100"
-            leave-active-class="ease-in duration-150"
-            leave-from-class="opacity-100 scale-100"
-            leave-to-class="opacity-0 scale-95"
-          >
-            <div 
-              v-if="isBulkEditModalOpen" 
-              class="bg-card w-full max-w-[1000px] rounded-[14px] shadow-2xl overflow-hidden flex flex-col" 
-              @click.stop
-            >
-              <!-- Modal Header -->
-              <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
-                <h3 class="text-lg font-bold text-foreground">
-                  {{ bulkLotForm.ids.length === 1 ? 'Edit LOT' : 'Edit LOT Terpilih' }}
-                </h3>
-                <button @click="closeBulkEditModal" class="p-2 hover:bg-muted rounded-full transition-colors">
-                  <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
-                </button>
-              </div>
-
-              <!-- Modal Body -->
-              <div class="p-6 overflow-y-auto max-h-[70vh]">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
-                  <!-- Left Column -->
-                  <div class="space-y-6">
-                    <!-- Kode LOT -->
-                    <Field>
-                      <FieldLabel>Kode LOT</FieldLabel>
-                      <FieldContent>
-                        <input 
-                          type="text" 
-                          :value="bulkLotForm.ids.length === 1 && selectedLotItem ? selectedLotItem.lotCode : 'Tidak dapat diubah'"
-                          disabled
-                          class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
-                        />
-                      </FieldContent>
-                    </Field>
-
-                    <!-- Organizer -->
-                    <Field :data-invalid="(bulkLotForm.ids.length === 1 && !!bulkLotFormErrors.organizer_id) || undefined">
-                      <FieldLabel>
-                        <span>Organizer<span v-if="bulkLotForm.ids.length === 1" class="text-rose-500">*</span></span>
-                      </FieldLabel>
-                      <FieldContent>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !bulkLotForm.organizer_id ? 'text-muted-foreground' : 'text-foreground']">
-                              {{ props.organizers.find(o => o.id == bulkLotForm.organizer_id)?.name || 'Tidak berubah' }}
-                              <ChevronDown class="w-4 h-4 opacity-50" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
-                            <DropdownMenuItem v-for="org in props.organizers" :key="org.id" @select="bulkLotForm.organizer_id = org.id">
-                              {{ org.name }}
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </FieldContent>
-                      <FieldError v-if="bulkLotForm.ids.length === 1 && bulkLotFormErrors.organizer_id">
-                        {{ bulkLotFormErrors.organizer_id }}
-                      </FieldError>
-                    </Field>
-
-                    <!-- Vendor -->
-                    <Field :data-invalid="(bulkLotForm.ids.length === 1 && !!bulkLotFormErrors.vendor_id) || undefined">
-                      <FieldLabel>
-                        <span>Vendor<span v-if="bulkLotForm.ids.length === 1" class="text-rose-500">*</span></span>
-                      </FieldLabel>
-                      <FieldContent>
-                        <Combobox
-                          v-model="bulkLotForm.vendor_id"
-                          :options="props.vendors"
-                          search-placeholder="Cari vendor..."
-                          default-label="Tidak berubah"
-                          width-class="w-full h-10 px-4"
-                        />
-                      </FieldContent>
-                      <FieldError v-if="bulkLotForm.ids.length === 1 && bulkLotFormErrors.vendor_id">
-                        {{ bulkLotFormErrors.vendor_id }}
-                      </FieldError>
-                    </Field>
-
-                    <!-- Lokasi -->
-                    <Field :data-invalid="(bulkLotForm.ids.length === 1 && !!bulkLotFormErrors.location_id) || undefined">
-                      <FieldLabel>
-                        <span>Lokasi<span v-if="!props.barang.is_consumable" class="italic text-muted-foreground"> default</span><span v-if="bulkLotForm.ids.length === 1" class="text-rose-500">*</span></span>
-                      </FieldLabel>
-                      <FieldContent>
-                        <Combobox
-                          v-model="bulkLotForm.location_id"
-                          :options="props.locations"
-                          search-placeholder="Cari lokasi..."
-                          default-label="Tidak berubah"
-                          width-class="w-full h-10 px-4"
-                        />
-                      </FieldContent>
-                      <FieldError v-if="bulkLotForm.ids.length === 1 && bulkLotFormErrors.location_id">
-                        {{ bulkLotFormErrors.location_id }}
-                      </FieldError>
-                    </Field>
-
-                    <!-- Lantai -->
-                    <Field :data-disabled="!bulkLotForm.location_id || undefined">
-                      <FieldLabel>
-                        <span>Lantai<span v-if="!props.barang.is_consumable" class="italic text-muted-foreground"> default</span></span>
-                      </FieldLabel>
-                      <FieldContent>
-                        <Combobox
-                          v-model="bulkLotForm.floor_id"
-                          :options="bulkFilteredFloors"
-                          search-placeholder="Cari lantai..."
-                          default-label="Tidak berubah"
-                          width-class="w-full h-10 px-4"
-                          :disabled="!bulkLotForm.location_id"
-                        />
-                      </FieldContent>
-                    </Field>
-                  </div>
-
-                  <!-- Right Column -->
-                  <div class="space-y-6">
-                    <!-- Ruangan -->
-                    <Field :data-disabled="!bulkLotForm.floor_id || undefined">
-                      <FieldLabel>
-                        <span>Ruangan<span v-if="!props.barang.is_consumable" class="italic text-muted-foreground"> default</span></span>
-                      </FieldLabel>
-                      <FieldContent>
-                        <Combobox
-                          v-model="bulkLotForm.room_id"
-                          :options="bulkFilteredRooms"
-                          search-placeholder="Cari ruangan..."
-                          default-label="Tidak berubah"
-                          width-class="w-full h-10 px-4"
-                          :disabled="!bulkLotForm.floor_id"
-                        />
-                      </FieldContent>
-                    </Field>
-
-                    <!-- Nomor PO -->
-                    <Field :data-invalid="(bulkLotForm.ids.length === 1 && !!bulkLotFormErrors.po_number) || undefined" :data-disabled="bulkLotForm.ids.length > 1 || undefined">
-                      <FieldLabel><span>Nomor PO<span class="text-rose-500">*</span></span></FieldLabel>
-                      <FieldContent>
-                        <input 
-                          type="text" 
-                          v-model="bulkLotForm.po_number"
-                          :disabled="bulkLotForm.ids.length > 1"
-                          :placeholder="bulkLotForm.ids.length > 1 ? 'Tidak dapat diubah secara massal' : 'Contoh: PO-02'"
-                          class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10 disabled:bg-muted/30 disabled:text-muted-foreground disabled:cursor-not-allowed"
-                        />
-                      </FieldContent>
-                      <FieldError v-if="bulkLotForm.ids.length === 1 && bulkLotFormErrors.po_number">
-                        {{ bulkLotFormErrors.po_number }}
-                      </FieldError>
-                    </Field>
-
-                    <!-- Tanggal Registrasi -->
-                    <Field :data-invalid="(bulkLotForm.ids.length === 1 && !!bulkLotFormErrors.date_of_receipt) || undefined" :data-disabled="bulkLotForm.ids.length > 1 || undefined">
-                      <FieldLabel><span>Tanggal Registrasi<span class="text-rose-500">*</span></span></FieldLabel>
-                      <FieldContent>
-                        <input 
-                          type="date" 
-                          v-model="bulkLotForm.date_of_receipt"
-                          :disabled="bulkLotForm.ids.length > 1"
-                          class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10 disabled:bg-muted/30 disabled:text-muted-foreground disabled:cursor-not-allowed"
-                        />
-                      </FieldContent>
-                      <FieldError v-if="bulkLotForm.ids.length === 1 && bulkLotFormErrors.date_of_receipt">
-                        {{ bulkLotFormErrors.date_of_receipt }}
-                      </FieldError>
-                    </Field>
-
-                    <!-- Harga Satuan -->
-                    <Field>
-                      <FieldLabel>
-                        <span>Harga Satuan<span v-if="!props.barang.is_consumable" class="italic text-muted-foreground"> default</span></span>
-                      </FieldLabel>
-                      <FieldContent>
-                        <div class="flex w-full rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors h-10 overflow-hidden">
-                          <span class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-r border-input select-none font-medium">
-                            Rp
-                          </span>
-                          <input 
-                            type="number" 
-                            v-model="bulkLotForm.unit_price"
-                            placeholder="Tidak berubah"
-                            min="0"
-                            class="flex-1 min-w-0 px-4 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 transition-colors h-full"
-                          />
-                        </div>
-                      </FieldContent>
-                    </Field>
-
-                    <!-- Foto -->
-                    <Field :data-invalid="(bulkLotForm.ids.length === 1 && !!bulkLotFormErrors.image_url) || undefined">
-                      <FieldLabel>
-                        <span>Foto<span v-if="!props.barang.is_consumable" class="italic text-muted-foreground"> default</span><span v-if="bulkLotForm.ids.length === 1" class="text-rose-500">*</span></span>
-                      </FieldLabel>
-                      <FieldContent>
-                        <div class="flex gap-2">
-                          <div 
-                            class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/10 truncate flex items-center h-10"
-                            :class="[
-                              (bulkLotForm.image_url || bulkLotForm.image_url_name) 
-                                ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' 
-                                : 'text-muted-foreground cursor-default'
-                            ]"
-                            @click="(bulkLotForm.image_url || bulkLotForm.image_url_name) && viewBulkLotImageInNewTab()"
-                          >
-                            {{ bulkLotForm.image_url_name || 'Tidak berubah' }}
-                          </div>
-                          <input 
-                            type="file" 
-                            id="bulk-lot-photo-upload" 
-                            class="hidden" 
-                            accept=".jpg,.jpeg,.png"
-                            @change="handleBulkLotFileUpload"
-                          />
-                          <Button 
-                            type="button"
-                            @click="handleBulkLotSamakanPhoto"
-                            variant="warning"
-                            size="lg"
-                          >
-                            Samakan
-                          </Button>
-                          <Button 
-                            type="button"
-                            @click="triggerBulkLotFileInput"
-                            size="lg"
-                          >
-                            Pilih File
-                          </Button>
-                        </div>
-                        <p class="text-[10px] text-muted-foreground ml-1 mt-1">Maksimal ukuran 1 MB</p>
-                      </FieldContent>
-                      <FieldError v-if="bulkLotForm.ids.length === 1 && bulkLotFormErrors.image_url">
-                        {{ bulkLotFormErrors.image_url }}
-                      </FieldError>
-                    </Field>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Modal Footer -->
-              <div class="py-3 px-4 border-t border-border flex items-center justify-between">
-                <p class="text-sm text-rose-500 italic font-medium">
-                  {{ bulkLotForm.ids.length === 1 ? '*Wajib diisi' : '*Kosongkan input yang tidak ingin diubah' }}
-                </p>
-                <div class="flex items-center gap-3">
-                  <Button 
-                    @click="closeBulkEditModal"
-                    variant="white"
-                    size="xl"
-                  >
-                    Batal
-                  </Button>
-                  <Button 
-                    @click="handleSaveBulkChanges"
-                    :disabled="bulkLotForm.processing"
-                    variant="primary"
-                    size="xl"
-                  >
-                    {{ bulkLotForm.ids.length === 1 ? 'Simpan Perubahan' : 'Simpan Perubahan Massal' }}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </Transition>
-        </div>
-      </Transition>
-    </Teleport>
+    <EditLotModal
+      v-model:open="isBulkEditModalOpen"
+      :items="selectedLotsForEdit"
+      :isConsumable="props.barang.is_consumable"
+      :parentImageUrl="props.barang.image_url"
+      :organizers="props.organizers"
+      :vendors="props.vendors"
+      :locations="props.locations"
+      :floors="props.floors"
+      :rooms="props.rooms"
+      @success="handleEditSuccess"
+    />
 
     <DeleteConfirmationModal 
       :is-open="isDeleteModalOpen"

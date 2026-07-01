@@ -55,7 +55,10 @@ const formatRupiah = (val: number | string | null | undefined) => {
 
 const formatDateWithDashes = (dateStr: string) => {
   if (!dateStr || dateStr === '-') return '-';
-  // Replace slashes with dashes to match DD-MM-YYYY format
+  if (dateStr.includes('-') && dateStr.indexOf('-') === 4) {
+    const [y, m, d] = dateStr.split('-');
+    return `${d}-${m}-${y}`;
+  }
   return dateStr.replace(/\//g, '-');
 };
 
@@ -165,12 +168,12 @@ onUnmounted(() => {
 
                   <!-- Right Details Column -->
                   <div class="md:col-span-8">
-                    <p class="font-bold text-foreground"><span class="text-foreground">Kode LOT:</span> {{ lotDetails.lotCode }}</p>
+                    <p class="font-bold text-foreground"><span class="text-foreground">Kode LOT:</span> {{ lotDetails.number }}</p>
                     <p class="font-bold text-foreground"><span class="text-foreground">Jumlah stok tersedia:</span> {{ lotDetails.current_quantity ?? 0 }}</p>
                     <p class="font-bold text-foreground"><span class="text-foreground">Jumlah stok diawal:</span> {{ lotDetails.initial_quantity ?? 0 }}</p>
                     <p class="text-foreground">Lokasi: {{ formatLocation(lotDetails) }}</p>
-                    <p class="text-foreground">Nomor PO: {{ lotDetails.poNumber }}</p>
-                    <p class="text-foreground">Tanggal registrasi: {{ formatDateWithDashes(lotDetails.entryDate) }}</p>
+                    <p class="text-foreground">Nomor PO: {{ lotDetails.po_number }}</p>
+                    <p class="text-foreground">Tanggal registrasi: {{ formatDateWithDashes(lotDetails.date_of_receipt) }}</p>
                     <p class="text-foreground">Harga satuan: {{ formatRupiah(lotDetails.unitPrice) }}</p>
                     <p class="text-foreground">Organizer: {{ lotDetails.organizer }}</p>
                     <p class="text-foreground">Vendor: {{ lotDetails.vendor }}</p>

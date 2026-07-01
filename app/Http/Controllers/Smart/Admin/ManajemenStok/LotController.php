@@ -163,9 +163,10 @@ class LotController extends Controller
         if ($request->wantsJson() && !$request->headers->has('X-Inertia')) {
             return response()->json([
                 'id' => $lot->id,
-                'lotCode' => $lot->number,
-                'poNumber' => $lot->po_number,
-                'entryDate' => $lot->date_of_receipt ? $lot->date_of_receipt->format('d/m/Y') : '-',
+                'number' => $lot->number,
+                'barang_id' => $lot->barang_id,
+                'po_number' => $lot->po_number,
+                'date_of_receipt' => $lot->date_of_receipt ? $lot->date_of_receipt->format('Y-m-d') : null,
                 'organizer' => $lot->organizer->name ?? '-',
                 'organizer_id' => $lot->organizer_id,
                 'vendor' => $lot->vendor->name ?? '-',
@@ -230,9 +231,10 @@ class LotController extends Controller
         return \Inertia\Inertia::render('Smart/Admin/ManajemenStok/DetailLOTNonConsumables', [
             'lot' => [
                 'id' => $lot->id,
-                'lotCode' => $lot->number,
-                'poNumber' => $lot->po_number,
-                'entryDate' => $lot->date_of_receipt ? $lot->date_of_receipt->format('d/m/Y') : '-',
+                'number' => $lot->number,
+                'barang_id' => $lot->barang_id,
+                'po_number' => $lot->po_number,
+                'date_of_receipt' => $lot->date_of_receipt ? $lot->date_of_receipt->format('Y-m-d') : null,
                 'organizer' => $lot->organizer->name ?? '-',
                 'organizer_id' => $lot->organizer_id,
                 'vendor' => $lot->vendor->name ?? '-',
