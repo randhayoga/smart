@@ -53,6 +53,10 @@ const formatRupiah = (val: number | string | null | undefined) => {
 
 const formatDateWithDashes = (dateStr: string) => {
   if (!dateStr || dateStr === '-') return '-';
+  if (dateStr.includes('-') && dateStr.indexOf('-') === 4) {
+    const [y, m, d] = dateStr.split('-');
+    return `${d}-${m}-${y}`;
+  }
   return dateStr.replace(/\//g, '-');
 };
 
@@ -175,8 +179,8 @@ const displayFields = computed(() => {
   }
 
   // Determine fields for Lot
-  if ('lotCode' in data) {
-    fields.push({ label: 'Kode LOT', value: data.lotCode });
+  if ('number' in data && 'po_number' in data) {
+    fields.push({ label: 'Kode LOT', value: data.number });
     if (data.barang_category) fields.push({ label: 'Kategori', value: data.barang_category });
     if (data.barang_subcategory) fields.push({ label: 'Subkategori', value: data.barang_subcategory });
     if (data.barang_brand) fields.push({ label: 'Merek', value: data.barang_brand });
@@ -195,8 +199,8 @@ const displayFields = computed(() => {
       fields.push({ label: 'Lokasi', value: formatLocation(data) });
     }
     
-    if (data.poNumber) fields.push({ label: 'Nomor PO', value: data.poNumber });
-    if (data.entryDate) fields.push({ label: 'Tanggal registrasi', value: formatDateWithDashes(data.entryDate) });
+    if (data.po_number) fields.push({ label: 'Nomor PO', value: data.po_number });
+    if (data.date_of_receipt) fields.push({ label: 'Tanggal registrasi', value: formatDateWithDashes(data.date_of_receipt) });
     
     if (!data.is_consumable) {
       fields.push({ label: 'Harga Satuan (default)', value: formatRupiah(data.unitPrice) });
@@ -264,9 +268,9 @@ const bulkItemsFields = computed(() => {
     }
 
     // Check if Lot
-    if ('lotCode' in data) {
-      if (data.lotCode) fields.push({ label: 'Kode LOT', value: data.lotCode });
-      if (data.poNumber) fields.push({ label: 'Nomor PO', value: data.poNumber });
+    if ('number' in data && 'po_number' in data) {
+      if (data.number) fields.push({ label: 'Kode LOT', value: data.number });
+      if (data.po_number) fields.push({ label: 'Nomor PO', value: data.po_number });
       return fields;
     }
 
