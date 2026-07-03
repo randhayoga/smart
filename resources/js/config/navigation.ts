@@ -21,7 +21,8 @@ import {
     ShoppingBasket,
     ShoppingCart,
     Archive,
-    RefreshCcw
+    RefreshCcw,
+    ScrollText
 } from 'lucide-vue-next';
 
 export interface NavItem {
@@ -55,6 +56,11 @@ export const mainNavigation: NavSection[] = [
                 title: 'Manajemen Stok',
                 href: '/smart/inventory',
                 icon: Package,
+            },
+            {
+                title: 'Daftar Aset',
+                href: '/smart/inventory/assets',
+                icon: ScrollText,
             },
             {
                 title: 'Master Data',
