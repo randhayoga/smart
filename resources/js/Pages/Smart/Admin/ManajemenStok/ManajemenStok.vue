@@ -60,18 +60,18 @@ const searchQuery = ref('');
 const categoryFilter = ref('');
 const subcategoryFilter = ref('');
 const brandFilter = ref('');
+const typeFilter = ref('');
 const rowsPerPage = ref('Semua baris');
 
-
-
 const hasActiveFilters = computed(() => {
-  return !!(categoryFilter.value || subcategoryFilter.value || brandFilter.value || searchQuery.value);
+  return !!(categoryFilter.value || subcategoryFilter.value || brandFilter.value || typeFilter.value || searchQuery.value);
 });
 
 const clearFilters = () => {
   categoryFilter.value = '';
   subcategoryFilter.value = '';
   brandFilter.value = '';
+  typeFilter.value = '';
   searchQuery.value = '';
 };
 
@@ -305,7 +305,7 @@ onMounted(() => {
 });
 
 const getExportData = () => {
-  if (!dataTableRef.value) return props.barangs || [];
+  if (!dataTableRef.value) return filteredBarangs.value;
   return dataTableRef.value.table.getFilteredRowModel().rows.map((row: any) => row.original);
 };
 
@@ -355,8 +355,28 @@ const openCreateModal = () => {
   isCreateModalOpen.value = true;
 };
 
+const filteredBarangs = computed(() => {
+  let list = props.barangs || [];
+  if (typeFilter.value === 'Habis pakai') {
+    list = list.filter(item => item.is_consumable === true);
+  } else if (typeFilter.value === 'Aset') {
+    list = list.filter(item => item.is_consumable === false);
+  }
+  return list;
+});
+
+const filteredCategories = computed(() => {
+  let list = props.categories || [];
+  if (typeFilter.value === 'Habis pakai') {
+    return list.filter(c => c.is_consumable);
+  } else if (typeFilter.value === 'Aset') {
+    return list.filter(c => !c.is_consumable);
+  }
+  return list;
+});
+
 const mainFilteredSubcategories = computed(() => {
-  const cat = props.categories.find(c => c.name === categoryFilter.value);
+  const cat = filteredCategories.value.find(c => c.name === categoryFilter.value);
   if (!cat) return props.subcategories.map(s => s.name);
   return props.subcategories.filter(s => s.category_id == cat.id).map(s => s.name);
 });
@@ -368,6 +388,10 @@ const mainFilteredBrands = computed(() => {
 // Update filters on mount and when category changes
 onMounted(() => {
   // Filters updated via computed
+});
+
+watch(typeFilter, () => {
+  categoryFilter.value = '';
 });
 
 watch(categoryFilter, () => {
@@ -515,7 +539,7 @@ onUnmounted(() => {
       <!-- Main Card -->
       <div class="px-4 bg-card rounded-xl border border-border shadow-sm overflow-hidden">
         <div class="py-3 no-print">
-          <h2 class="text-lg font-bold text-foreground">Daftar Stok</h2>
+          <h2 class="text-lg font-bold text-foreground">Manajemen Stok (Hierarkis)</h2>
           
           <!-- Filters & Actions -->
           <div class="mt-4 flex flex-col space-y-4">
@@ -541,6 +565,21 @@ onUnmounted(() => {
                   default-label="Semua merek"
                 />
 
+                <!-- Type Dropdown (regular) -->
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal', !typeFilter ? 'text-muted-foreground' : 'text-foreground']">
+                      <span class="truncate">{{ typeFilter || 'Semua jenis' }}</span>
+                      <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px]" align="start" :side-offset="4">
+                    <DropdownMenuItem @select="typeFilter = ''">Semua jenis</DropdownMenuItem>
+                    <DropdownMenuItem @select="typeFilter = 'Habis pakai'">Habis pakai</DropdownMenuItem>
+                    <DropdownMenuItem @select="typeFilter = 'Aset'">Aset</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
                 <!-- Category Dropdown (regular) -->
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -551,7 +590,7 @@ onUnmounted(() => {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px]" align="start" :side-offset="4">
                     <DropdownMenuItem @select="categoryFilter = ''">Semua kategori</DropdownMenuItem>
-                    <DropdownMenuItem v-for="cat in props.categories" :key="cat.id" @select="categoryFilter = cat.name">
+                    <DropdownMenuItem v-for="cat in filteredCategories" :key="cat.id" @select="categoryFilter = cat.name">
                       {{ cat.name }}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -643,10 +682,11 @@ onUnmounted(() => {
         <!-- Table -->
         <div class="pb-4">
           <!-- Print-only Filter Info -->
-          <div v-if="searchQuery || categoryFilter || subcategoryFilter || brandFilter" class="print-only mb-4 text-left">
+          <div v-if="searchQuery || typeFilter || categoryFilter || subcategoryFilter || brandFilter" class="print-only mb-4 text-left">
             <div class="font-bold text-xs text-foreground mb-1">Filter:</div>
             <div class="text-[10px] text-muted-foreground space-y-0.5">
               <div v-if="searchQuery">Pencarian: {{ searchQuery }}</div>
+              <div v-if="typeFilter">Jenis: {{ typeFilter }}</div>
               <div v-if="categoryFilter">Kategori: {{ categoryFilter }}</div>
               <div v-if="subcategoryFilter">Subkategori: {{ subcategoryFilter }}</div>
               <div v-if="brandFilter">Merek: {{ brandFilter }}</div>
@@ -656,7 +696,7 @@ onUnmounted(() => {
           <DataTable 
             ref="dataTableRef"
             :columns="columns" 
-            :data="props.barangs || []" 
+            :data="filteredBarangs" 
             :filter-value="searchQuery"
             :default-sorting="[{ id: 'lastUpdate', desc: true }]"
           />
