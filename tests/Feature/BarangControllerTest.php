@@ -24,7 +24,7 @@ class BarangControllerTest extends TestCase
         $response = $this->actingAs($user)->delete(route('smart.inventory.barangs.destroy', $barang));
 
         $response->assertRedirect(route('smart.inventory'));
-        $response->assertSessionHas('success', 'Barang berhasil dihapus.');
+        $response->assertSessionHas('success', 'Tipe berhasil dihapus.');
         $this->assertDatabaseMissing('barangs', [
             'id' => $barang->id,
         ]);
@@ -42,6 +42,38 @@ class BarangControllerTest extends TestCase
         $response->assertSessionHas('error', 'Barang tidak dapat dihapus karena masih memiliki LOT terkait.');
         $this->assertDatabaseHas('barangs', [
             'id' => $barang->id,
+        ]);
+    }
+
+    public function test_can_update_barang(): void
+    {
+        $user = User::factory()->create();
+        $barang = Barang::factory()->create([
+            'name' => 'Nama Old',
+            'specification' => 'Spec Old',
+        ]);
+
+        $newBrand = Brand::factory()->create();
+        $newUom = Uom::factory()->create();
+
+        $response = $this->actingAs($user)->put(route('smart.inventory.barangs.update', $barang), [
+            'number' => $barang->number,
+            'subcategory_id' => $barang->subcategory_id,
+            'brand_id' => $newBrand->id,
+            'uom_id' => $newUom->id,
+            'name' => 'Nama New',
+            'specification' => 'Spec New',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success', 'Tipe berhasil diperbarui.');
+
+        $this->assertDatabaseHas('barangs', [
+            'id' => $barang->id,
+            'brand_id' => $newBrand->id,
+            'uom_id' => $newUom->id,
+            'name' => 'Nama New',
+            'specification' => 'Spec New',
         ]);
     }
 
@@ -73,7 +105,7 @@ class BarangControllerTest extends TestCase
         ]);
 
         $response->assertRedirect();
-        $response->assertSessionHas('success', 'Barang-barang terpilih berhasil diperbarui.');
+        $response->assertSessionHas('success', '2 tipe terpilih berhasil diperbarui.');
 
         $this->assertDatabaseHas('barangs', [
             'id' => $barang1->id,

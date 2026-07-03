@@ -48,7 +48,7 @@ const submit = () => {
           Selamat Datang di <span class="text-gradient-primary">SMART</span>
         </h3>
         <p class="text-sm text-muted-foreground mt-2">
-          Stock Management And Request Tracking
+          Stock Management and Request Tracking
         </p>
       </div>
       
@@ -122,7 +122,7 @@ const submit = () => {
     
     <!-- Footer -->
     <div class="absolute bottom-4 left-0 right-0 text-center text-sm text-muted-foreground">
-      © {{ new Date().getFullYear() }} Integrated Facilites Services, IT Dev Team
+      © {{ new Date().getFullYear() }} Integrated Facilites Services
     </div>
   </div>
 </template>

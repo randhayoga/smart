@@ -254,6 +254,7 @@ class BulkUnitController extends Controller
             }
         }
 
-        return redirect()->back()->with('success', 'Aset berhasil diperbarui secara massal.');
+        $count = count($ids);
+        return redirect()->back()->with('success', $count . ' aset terpilih berhasil diperbarui.');
     }
 }
