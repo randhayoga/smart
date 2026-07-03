@@ -34,6 +34,7 @@ import { Field, FieldLabel, FieldContent, FieldError } from '@/Components/ui/fie
 import EditLotModal from './Modals/EditLotModal.vue';
 import CreateAssetModal from './Modals/CreateAssetModal.vue';
 import EditAssetModal from './Modals/EditAssetModal.vue';
+import DetailAssetModal from './Modals/DetailAssetModal.vue';
 
 interface Props {
   lot: {
@@ -259,7 +260,7 @@ const filteredUnits = computed(() => {
 });
 
 // Dynamic values for dropdown filters
-const availableStatuses = ['Tersedia', 'Dipinjam', 'Perbaikan', 'Rusak Total', 'Hilang', 'Tidak Aktif'];
+const availableStatuses = ['Tersedia', 'Dipinjam', 'Perbaikan', 'Rusak Total', 'Hilang', 'Pending', 'Tidak Aktif'];
 const availableConditions = ['Baik', 'Kurang Baik', 'Rusak'];
 
 const getStatusLabel = (status: string) => {
@@ -764,142 +765,12 @@ const totalAsetTerpilihCount = computed(() => {
     />
 
     <!-- Detail Asset Modal (Units) -->
-    <Teleport to="body">
-      <Transition
-        enter-active-class="ease-out duration-200"
-        enter-from-class="opacity-0"
-        enter-to-class="opacity-100"
-        leave-active-class="ease-in duration-150"
-        leave-from-class="opacity-100"
-        leave-to-class="opacity-0"
-      >
-        <div v-if="isViewAssetModalOpen" @click="isViewAssetModalOpen = false" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <Transition
-            enter-active-class="ease-out duration-200"
-            enter-from-class="opacity-0 scale-95"
-            enter-to-class="opacity-100 scale-100"
-            leave-active-class="ease-in duration-150"
-            leave-from-class="opacity-100 scale-100"
-            leave-to-class="opacity-0 scale-95"
-          >
-            <div 
-              v-if="isViewAssetModalOpen" 
-              class="bg-card w-full md:max-w-[90%] rounded-[14px] shadow-2xl overflow-hidden flex flex-col" 
-              @click.stop
-            >
-              <!-- Modal Header -->
-              <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
-                <h3 class="text-lg font-bold text-foreground">Detail Aset</h3>
-                <button @click="isViewAssetModalOpen = false" class="p-2 hover:bg-muted rounded-full transition-colors">
-                  <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
-                </button>
-              </div>
-
-              <!-- Modal Body -->
-              <div class="p-6 overflow-y-auto max-h-[70vh]">
-                <div class="flex flex-col md:flex-row gap-6">
-                  <!-- Image Column -->
-                  <div class="w-48 h-48 rounded-xl bg-muted shrink-0 flex items-center justify-center overflow-hidden border border-border">
-                    <img 
-                      v-if="selectedAssetForView && selectedAssetForView.image_url" 
-                      :src="'/storage/' + selectedAssetForView.image_url" 
-                      class="w-full h-full object-cover" 
-                    />
-                    <img 
-                      v-else-if="props.lot.imageUrl" 
-                      :src="'/storage/' + props.lot.imageUrl" 
-                      class="w-full h-full object-cover" 
-                    />
-                    <img 
-                      v-else 
-                      src="https://placehold.co/400x400?text=Placeholder" 
-                      class="w-full h-full object-cover opacity-50" 
-                    />
-                  </div>
-
-                  <!-- Details Columns -->
-                  <div v-if="selectedAssetForView" class="flex-grow grid grid-cols-1 md:grid-cols-12 gap-4 text-foreground">
-                    <!-- Column 1: Item Info -->
-                    <div class="md:col-span-3">
-                      <p class="font-bold text-foreground"><span class="text-foreground">Kode Barang:</span> {{ props.lot.barang_code }}</p>
-                      <p class="font-bold text-foreground"><span class="text-foreground">Merek:</span> {{ props.lot.barang_brand }}</p>
-                      <p class="font-bold text-foreground"><span class="text-foreground">Nama:</span> {{ props.lot.barang_nama }}</p>
-                      <p class="font-bold text-foreground"><span class="text-foreground">Spesifikasi:</span> {{ props.lot.barang_specification }}</p>
-                      <p class="text-foreground">Kategori: {{ props.lot.barang_category }}</p>
-                      <p class="text-foreground">Subkategori: {{ props.lot.barang_subcategory }}</p>
-                      <p class="text-foreground">Satuan: {{ props.lot.barang_uom }}</p>
-                    </div>
-
-                    <!-- Column 2: LOT Info -->
-                    <div class="md:col-span-4">
-                      <p class="font-bold text-foreground"><span class="text-foreground">Kode LOT:</span> {{ props.lot.number }}</p>
-                      <p class="text-foreground">Organizer: {{ props.lot.organizer }}</p>
-                      <p class="text-foreground">Tanggal registrasi: {{ formatDateWithDashes(props.lot.date_of_receipt) }}</p>
-                      <p class="text-foreground">Vendor: {{ props.lot.vendor }}</p>
-                      <p class="text-foreground">Nomor PO: {{ props.lot.po_number }}</p>
-                    </div>
-
-                    <!-- Column 3: Asset Info -->
-                    <div class="md:col-span-5">
-                      <p class="font-bold text-foreground"><span class="text-foreground">Kode Aset:</span> {{ selectedAssetForView.number }}</p>
-                      <!-- TNKB (Nopol) -->
-                      <p v-if="isVehicle" class="font-bold text-foreground">
-                        <span class="text-foreground">Nopol:</span> {{ selectedAssetForView.vehicle_registration || '-' }}
-                      </p>
-                      <p class="text-foreground">
-                        Status: 
-                        <StatusBadge 
-                          :status="selectedAssetForView.status" 
-                          :proposed-status="selectedAssetForView.proposed_status" 
-                        />
-                      </p>
-                      <p class="text-foreground">
-                        Kondisi: 
-                        <span 
-                          :class="[
-                            'font-semibold',
-                            selectedAssetForView.condition === 'Baik' ? 'text-emerald-600' :
-                            selectedAssetForView.condition === 'Kurang Baik' ? 'text-amber-600' :
-                            'text-rose-600'
-                          ]"
-                        >
-                          {{ getConditionLabel(selectedAssetForView.condition) }}
-                        </span>
-                      </p>
-                      <p class="text-foreground">Nilai: {{ formatRupiah(selectedAssetForView.price) }}</p>
-                      <p class="text-foreground">Lokasi penyimpanan: {{ formatLocation(selectedAssetForView.location, selectedAssetForView.floor, selectedAssetForView.room) }}</p>
-                      <p class="text-foreground">Pembaruan terakhir: {{ selectedAssetForView.updated_at || '-' }}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Modal Footer -->
-              <div class="py-3 px-4 border-t border-border flex items-center justify-end gap-3 bg-muted/10">
-                <Button 
-                  @click="
-                    isViewAssetModalOpen = false;
-                    openEditAssetModal(selectedAssetForView);
-                  "
-                  variant="primary"
-                  size="lg"
-                >
-                  Edit Detail Aset
-                </Button>
-
-                <Button 
-                  @click="isViewAssetModalOpen = false"
-                  variant="white"
-                  size="lg"
-                >
-                  Kembali
-                </Button>
-              </div>
-            </div>
-          </Transition>
-        </div>
-      </Transition>
-    </Teleport>
+    <DetailAssetModal
+      v-model:open="isViewAssetModalOpen"
+      :asset="selectedAssetForView"
+      :lot="props.lot"
+      @edit="openEditAssetModal"
+    />
 
     <!-- Delete Confirmation Modal -->
     <DeleteConfirmationModal 
