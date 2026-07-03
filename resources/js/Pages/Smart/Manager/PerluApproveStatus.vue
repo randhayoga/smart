@@ -513,6 +513,7 @@ const isConfirmModalOpen = ref(false);
 const confirmActionType = ref<'approved' | 'rejected'>('approved');
 const confirmNote = ref('');
 const isBulkAction = ref(false);
+const processing = ref(false);
 
 const openConfirmModal = (type: 'approved' | 'rejected', bulk: boolean) => {
   confirmActionType.value = type;
@@ -549,6 +550,8 @@ const handleConfirmSubmit = () => {
     decision: confirmActionType.value,
     note: confirmNote.value,
   }, {
+    onStart: () => { processing.value = true; },
+    onFinish: () => { processing.value = false; },
     onSuccess: () => {
       closeConfirmModal();
       closeDetailPopup();
@@ -958,6 +961,7 @@ onUnmounted(() => {
       item-name="Perubahan Status Aset"
       :item-data="confirmAssets"
       :action-type="confirmActionType"
+      :processing="processing"
       @close="closeConfirmModal"
       @confirm="handleConfirmSubmit"
     >
