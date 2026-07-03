@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue';
 import { useForm } from '@inertiajs/vue3';
-import { X, ChevronDown } from 'lucide-vue-next';
+import { X, ChevronDown, Loader2 } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
 import {
   DropdownMenu,
@@ -373,8 +373,12 @@ const handleSubmit = () => {
                   :disabled="newItem.processing"
                   variant="primary"
                   size="xl"
+                  class="relative"
                 >
-                  Buat Tipe
+                  <Loader2 v-if="newItem.processing" class="absolute inset-0 m-auto h-5 w-5 animate-spin" />
+                  <span :class="{ 'opacity-0': newItem.processing }">
+                    Buat Tipe
+                  </span>
                 </Button>
               </div>
             </div>

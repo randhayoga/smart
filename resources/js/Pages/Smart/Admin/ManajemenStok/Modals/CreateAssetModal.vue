@@ -2,7 +2,7 @@
 import { ref, watch, computed, nextTick } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
-import { X, ChevronDown } from 'lucide-vue-next';
+import { X, ChevronDown, Loader2 } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -471,7 +471,10 @@ const handleSubmit = () => {
               <p class="text-sm text-rose-500 italic font-medium">*Wajib diisi</p>
               <div class="flex items-center gap-3">
                 <Button @click="closeModal" variant="white" size="xl">Batal</Button>
-                <Button @click="handleSubmit" :disabled="form.processing" variant="primary" size="xl">Buat Aset</Button>
+                <Button @click="handleSubmit" :disabled="form.processing" variant="primary" size="xl" class="relative">
+                  <Loader2 v-if="form.processing" class="absolute inset-0 m-auto h-5 w-5 animate-spin" />
+                  <span :class="{ 'opacity-0': form.processing }">Buat Aset</span>
+                </Button>
               </div>
             </div>
           </div>

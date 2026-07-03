@@ -63,7 +63,8 @@ class BulkBarangController extends Controller
             Barang::whereIn('id', $request->input('ids'))->update($updateData);
         }
 
-        return redirect()->back()->with('success', 'Barang-barang terpilih berhasil diperbarui.');
+        $count = count($request->input('ids'));
+        return redirect()->back()->with('success', $count . ' tipe terpilih berhasil diperbarui.');
     }
 
     /**

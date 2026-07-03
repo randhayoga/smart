@@ -2,7 +2,7 @@
 import { ref, watch, computed, nextTick } from 'vue';
 import { useForm, router } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
-import { X, ChevronDown } from 'lucide-vue-next';
+import { X, ChevronDown, Loader2 } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -259,6 +259,7 @@ const handleSubmit = () => {
       const fd: any = {
         _method: 'PUT',
         number: data.number,
+        lot_id: props.lot.id,
         location_id: data.location_id,
         floor_id: data.floor_id,
         room_id: data.room_id,
@@ -497,8 +498,11 @@ const handleSubmit = () => {
               </p>
               <div class="flex items-center gap-3">
                 <Button @click="closeModal" variant="white" size="xl">Batal</Button>
-                <Button @click="handleSubmit" :disabled="form.processing" variant="primary" size="xl">
-                  {{ isSingle ? 'Simpan Perubahan' : 'Simpan Perubahan Massal' }}
+                <Button @click="handleSubmit" :disabled="form.processing" variant="primary" size="xl" class="relative">
+                  <Loader2 v-if="form.processing" class="absolute inset-0 m-auto h-5 w-5 animate-spin" />
+                  <span :class="{ 'opacity-0': form.processing }">
+                    {{ isSingle ? 'Simpan Perubahan' : 'Simpan Perubahan Massal' }}
+                  </span>
                 </Button>
               </div>
             </div>

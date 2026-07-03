@@ -139,6 +139,25 @@ const columns: ColumnDef<any>[] = [
     },
   },
   {
+    accessorKey: 'brand',
+    size: 225,
+    header: ({ column }) => {
+      return h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'Merek',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ])
+    },
+    cell: ({ row }) => h('div', { class: 'text-foreground truncate' }, row.getValue('brand')),
+    filterFn: (row, id, value) => {
+      if (!value) return true;
+      return row.getValue(id) === value;
+    }
+  },
+  {
     accessorKey: 'category',
     header: ({ column }) => {
       return h(Button, {
@@ -169,25 +188,6 @@ const columns: ColumnDef<any>[] = [
       ])
     },
     cell: ({ row }) => h('div', { class: 'text-foreground truncate' }, row.getValue('subcategory')),
-    filterFn: (row, id, value) => {
-      if (!value) return true;
-      return row.getValue(id) === value;
-    }
-  },
-  {
-    accessorKey: 'brand',
-    size: 225,
-    header: ({ column }) => {
-      return h(Button, {
-        variant: 'ghost',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
-      }, () => [
-        'Merek',
-        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-      ])
-    },
-    cell: ({ row }) => h('div', { class: 'text-foreground truncate' }, row.getValue('brand')),
     filterFn: (row, id, value) => {
       if (!value) return true;
       return row.getValue(id) === value;
@@ -528,6 +528,14 @@ onUnmounted(() => {
                   />
                 </div>
 
+                <!-- Brand Combobox (searchable/scrollable) -->
+                <Combobox
+                  v-model="brandFilter"
+                  :options="mainFilteredBrands"
+                  search-placeholder="Cari merek..."
+                  default-label="Semua merek"
+                />
+
                 <!-- Category Dropdown (regular) -->
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -550,15 +558,7 @@ onUnmounted(() => {
                   :options="mainFilteredSubcategories"
                   search-placeholder="Cari subkategori..."
                   default-label="Semua subkategori"
-                />
-
-                <!-- Brand Combobox (searchable/scrollable) -->
-                <Combobox
-                  v-model="brandFilter"
-                  :options="mainFilteredBrands"
-                  search-placeholder="Cari merek..."
-                  default-label="Semua merek"
-                />
+                /> 
 
                 <Transition
                   enter-active-class="transition ease-out duration-200"

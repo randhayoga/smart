@@ -2,7 +2,7 @@
 import { ref, watch, computed } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
-import { X } from 'lucide-vue-next';
+import { X, Loader2 } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
 import Combobox from '@/Components/Combobox.vue';
 import { Field, FieldLabel, FieldContent, FieldError } from '@/Components/ui/field';
@@ -139,6 +139,8 @@ const handleSubmit = () => {
       ids: data.ids,
     };
     if (isSingle.value) {
+      formData.number = selectedItem.value ? selectedItem.value.code : '';
+      formData.subcategory_id = selectedItem.value ? selectedItem.value.subcategory_id : null;
       formData.uom_id = data.uom_id;
       formData.brand_id = data.brand_id;
       formData.name = data.name;
@@ -152,7 +154,7 @@ const handleSubmit = () => {
       if (data.photo) formData.image_url = data.photo;
     }
     return formData;
-  }).post('/smart/inventory/barangs/bulk', {
+  }).post(isSingle.value && selectedItem.value ? `/smart/inventory/barangs/${selectedItem.value.id}` : '/smart/inventory/barangs/bulk', {
     onSuccess: () => {
       closeModal();
       emit('success');
@@ -359,8 +361,12 @@ const handleSubmit = () => {
                   :disabled="form.processing"
                   variant="primary"
                   size="xl"
+                  class="relative"
                 >
-                  {{ isSingle ? 'Simpan Perubahan' : 'Simpan Perubahan Massal' }}
+                  <Loader2 v-if="form.processing" class="absolute inset-0 m-auto h-5 w-5 animate-spin" />
+                  <span :class="{ 'opacity-0': form.processing }">
+                    {{ isSingle ? 'Simpan Perubahan' : 'Simpan Perubahan Massal' }}
+                  </span>
                 </Button>
               </div>
             </div>

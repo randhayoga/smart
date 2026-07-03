@@ -85,7 +85,8 @@ class BulkLotController extends Controller
             }
         }
 
-        return redirect()->back()->with('success', 'LOT terpilih berhasil diperbarui.');
+        $count = count($request->input('ids'));
+        return redirect()->back()->with('success', $count . ' LOT terpilih berhasil diperbarui.');
     }
 
     /**
