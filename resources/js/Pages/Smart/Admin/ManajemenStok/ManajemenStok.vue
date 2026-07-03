@@ -403,6 +403,7 @@ const handleEditSuccess = () => {
 // Delete Modal Logic
 const isDeleteModalOpen = ref(false);
 const itemsToDelete = ref<any[]>([]);
+const processing = ref(false);
 
 const openDeleteModal = (items: any | any[]) => {
   itemsToDelete.value = Array.isArray(items) ? items : [items];
@@ -421,6 +422,8 @@ const handleConfirmDelete = () => {
   
   if (ids.length === 1) {
     router.delete(`/smart/inventory/barangs/${ids[0]}`, {
+      onStart: () => { processing.value = true; },
+      onFinish: () => { processing.value = false; },
       onSuccess: () => {
         if (dataTableRef.value) {
           dataTableRef.value.table.resetRowSelection();
@@ -431,6 +434,8 @@ const handleConfirmDelete = () => {
   } else {
     router.delete('/smart/inventory/barangs/bulk', {
       data: { ids },
+      onStart: () => { processing.value = true; },
+      onFinish: () => { processing.value = false; },
       onSuccess: () => {
         if (dataTableRef.value) {
           dataTableRef.value.table.resetRowSelection();
@@ -680,6 +685,7 @@ onUnmounted(() => {
       :item-count="itemsToDelete.length"
       item-name="Tipe"
       :item-data="itemsToDelete.length === 1 ? itemsToDelete[0] : itemsToDelete"
+      :processing="processing"
       @close="closeDeleteModal"
       @confirm="handleConfirmDelete"
     />

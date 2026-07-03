@@ -412,6 +412,7 @@ const handleEditTerpilih = () => {
 const isDeleteModalOpen = ref(false);
 const deleteMode = ref<'barang' | 'lot'>('barang');
 const itemsToDelete = ref<any[]>([]);
+const processing = ref(false);
 
 const deleteFields = computed(() => {
   if (deleteMode.value === 'barang') {
@@ -520,6 +521,8 @@ const handleConfirmDelete = () => {
   
   if (deleteMode.value === 'barang') {
     router.delete(`/smart/inventory/barangs/${ids[0]}`, {
+      onStart: () => { processing.value = true; },
+      onFinish: () => { processing.value = false; },
       onSuccess: () => {
         closeDeleteModal();
       }
@@ -527,6 +530,8 @@ const handleConfirmDelete = () => {
   } else {
     if (ids.length === 1) {
       router.delete(`/smart/inventory/lots/${ids[0]}`, {
+        onStart: () => { processing.value = true; },
+        onFinish: () => { processing.value = false; },
         onSuccess: () => {
           closeDeleteModal();
           if (dataTableRef.value) {
@@ -537,6 +542,8 @@ const handleConfirmDelete = () => {
     } else {
       router.delete('/smart/inventory/lots/bulk', {
         data: { ids },
+        onStart: () => { processing.value = true; },
+        onFinish: () => { processing.value = false; },
         onSuccess: () => {
           closeDeleteModal();
           if (dataTableRef.value) {
@@ -811,6 +818,7 @@ onUnmounted(() => {
       :item-data="itemsToDelete.length === 1 ? itemsToDelete[0] : itemsToDelete"
       :fields="deleteFields"
       :max-width-class="itemsToDelete.length === 1 ? 'max-w-2xl' : undefined"
+      :processing="processing"
       @close="closeDeleteModal"
       @confirm="handleConfirmDelete"
     />

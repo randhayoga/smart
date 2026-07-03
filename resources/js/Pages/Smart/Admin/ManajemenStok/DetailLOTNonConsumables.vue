@@ -456,6 +456,7 @@ const isDeleteModalOpen = ref(false);
 const deleteMode = ref<'lot' | 'asset'>('lot');
 const lotToDelete = ref<any>(null);
 const assetToDelete = ref<any>(null);
+const processing = ref(false);
 
 const deleteFields = computed(() => {
   if (deleteMode.value === 'lot') {
@@ -500,6 +501,8 @@ const errorModalMessage = ref('');
 const handleConfirmDelete = () => {
   if (deleteMode.value === 'lot') {
     router.delete(`/smart/inventory/lots/${props.lot.id}`, {
+      onStart: () => { processing.value = true; },
+      onFinish: () => { processing.value = false; },
       onSuccess: () => {
         closeDeleteModal();
       },
@@ -511,6 +514,8 @@ const handleConfirmDelete = () => {
     });
   } else if (deleteMode.value === 'asset' && assetToDelete.value) {
     router.delete(`/smart/inventory/units/${assetToDelete.value.id}`, {
+      onStart: () => { processing.value = true; },
+      onFinish: () => { processing.value = false; },
       onSuccess: () => {
         closeDeleteModal();
       }
@@ -903,6 +908,7 @@ const totalAsetTerpilihCount = computed(() => {
       :item-name="deleteMode === 'lot' ? 'LOT' : 'Barang'"
       :item-data="deleteMode === 'lot' ? lotToDelete : assetToDelete"
       :fields="deleteFields"
+      :processing="processing"
       @close="closeDeleteModal"
       @confirm="handleConfirmDelete"
     />
