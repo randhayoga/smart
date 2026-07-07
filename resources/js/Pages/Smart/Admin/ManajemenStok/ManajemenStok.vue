@@ -525,21 +525,20 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <AppLayout title="Manajemen Stok">
+  <AppLayout title="Manajemen Barang">
     <Breadcrumb>
       <BreadcrumbList class="pb-3">
         <BreadcrumbItem>
-          <BreadcrumbLink href="/smart/inventory">Manajemen Stok</BreadcrumbLink>
+          <BreadcrumbLink href="/smart/inventory">Manajemen Barang</BreadcrumbLink>
         </BreadcrumbItem>
       </BreadcrumbList>
     </Breadcrumb>
-
 
     <div class="space-y-4">
       <!-- Main Card -->
       <div class="px-4 bg-card rounded-xl border border-border shadow-sm overflow-hidden">
         <div class="py-3 no-print">
-          <h2 class="text-lg font-bold text-foreground">Manajemen Stok (Hierarkis)</h2>
+          <h2 class="text-lg font-bold text-foreground">Manajemen Barang (Hierarkis)</h2>
           
           <!-- Filters & Actions -->
           <div class="mt-4 flex flex-col space-y-4">

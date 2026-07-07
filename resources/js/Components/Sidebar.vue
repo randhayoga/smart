@@ -113,7 +113,7 @@ const navigation = computed<NavSection[]>(() => {
 const isActive = (href: string): boolean => {
   const currentPath = page.url;
   if (currentPath === href) return true;
-  if (href === '/smart/inventory' && currentPath.startsWith('/smart/inventory/assets')) {
+  if (href === '/smart/inventory' && (currentPath.startsWith('/smart/inventory/assets') || currentPath.startsWith('/smart/inventory/stok-habis-pakai'))) {
     return false;
   }
   return currentPath.startsWith(href + '/');
