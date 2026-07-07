@@ -75,6 +75,7 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
             Route::resource('units', \App\Http\Controllers\Smart\Admin\ManajemenStok\UnitController::class)->only(['store', 'update', 'destroy']);
             Route::resource('unit-status-approvals', \App\Http\Controllers\Smart\MultiRoles\UnitStatusApproval\AdminUnitStatusApprovalController::class)->only(['index', 'store', 'show', 'update', 'destroy']);
             Route::get('assets', \App\Http\Controllers\Smart\Admin\DaftarAsetController::class)->name('assets');
+            Route::get('stok-habis-pakai', \App\Http\Controllers\Smart\Admin\DaftarStokHabisPakaiController::class)->name('stok-habis-pakai');
         });
 
         Route::get('/inventory/{id}', [ManajemenStokController::class, 'show'])->name('inventory.show');

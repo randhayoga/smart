@@ -1,38 +1,29 @@
 <script setup lang="ts">
 import AppLayout from '@/Layouts/AppLayout.vue';
-import DaftarAsetTab from './Tabs/DaftarAsetTab.vue';
+import DaftarStokHabisPakaiTab from './Tabs/DaftarStokHabisPakaiTab.vue';
 
 interface Props {
-  units: {
+  lots: {
     id: number;
     number: string;
-    status: string;
-    proposed_status: string | null;
-    doc_url: string | null;
-    condition: string;
-    price: number | string;
-    image_url: string;
-    vehicle_registration: string | null;
-    updated_at: string;
-    
-    // Location info
+    po_number: string;
+    date_of_receipt: string;
+    organizer: string;
+    organizer_id: number;
+    vendor: string;
+    vendor_id: number;
     location: string;
     location_id: number;
     floor: string | null;
     floor_id: number | null;
     room: string | null;
     room_id: number | null;
-
-    // Parent lot info
-    lot_id: number;
-    lot_number: string;
-    lot_imageUrl: string | null;
-    lot_unitPrice: number | string | null;
-    organizer: string;
-    organizer_id: number | null;
-    vendor: string;
-    vendor_id: number | null;
-
+    unitPrice: number | string;
+    imageUrl: string;
+    initial_quantity: number | null;
+    current_quantity: number | null;
+    updated_at: string;
+    
     // Parent barang info
     barang_id: number;
     barang_code: string;
@@ -43,25 +34,25 @@ interface Props {
     barang_subcategory: string;
     barang_uom: string;
   }[];
+  organizers: { id: number; name: string; }[];
+  vendors: { id: number; name: string; }[];
   locations: { id: number; name: string; }[];
   floors: { id: number; name: string; location_id: number; }[];
   rooms: { id: number; name: string; floor_id: number; }[];
-  organizers: { id: number; name: string; }[];
-  vendors: { id: number; name: string; }[];
 }
 
 const props = defineProps<Props>();
 </script>
 
 <template>
-  <AppLayout title="Daftar Aset">
-    <DaftarAsetTab
-      :units="props.units"
+  <AppLayout title="Daftar Stok (Habis Pakai)">
+    <DaftarStokHabisPakaiTab
+      :lots="props.lots"
+      :organizers="props.organizers"
+      :vendors="props.vendors"
       :locations="props.locations"
       :floors="props.floors"
       :rooms="props.rooms"
-      :organizers="props.organizers"
-      :vendors="props.vendors"
     />
   </AppLayout>
 </template>

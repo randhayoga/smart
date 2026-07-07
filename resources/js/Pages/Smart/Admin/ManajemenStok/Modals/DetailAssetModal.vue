@@ -93,7 +93,7 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
         >
           <div 
             v-if="open" 
-            class="bg-card w-full md:max-w-[90%] rounded-[14px] shadow-2xl overflow-hidden flex flex-col" 
+            class="bg-card w-full md:max-w-[80%] rounded-[14px] shadow-2xl overflow-hidden flex flex-col" 
             @click.stop
           >
             <!-- Modal Header -->

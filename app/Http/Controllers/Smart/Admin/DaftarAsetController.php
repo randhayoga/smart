@@ -16,7 +16,8 @@ class DaftarAsetController extends Controller
     {
         $units = \App\Models\Inventory\Unit::with([
             'location', 'floor', 'room', 'statusApprovals',
-            'lot.barang.subcategory.category', 'lot.barang.brand'
+            'lot.barang.subcategory.category', 'lot.barang.brand',
+            'lot.organizer', 'lot.vendor'
         ])
         ->get()
         ->map(function ($unit) {
@@ -47,6 +48,10 @@ class DaftarAsetController extends Controller
                 'lot_number' => $unit->lot->number ?? '-',
                 'lot_imageUrl' => $unit->lot->image_url ?? null,
                 'lot_unitPrice' => $unit->lot->unit_price ?? null,
+                'organizer' => $unit->lot->organizer->name ?? '-',
+                'organizer_id' => $unit->lot->organizer_id ?? null,
+                'vendor' => $unit->lot->vendor->name ?? '-',
+                'vendor_id' => $unit->lot->vendor_id ?? null,
 
                 // Parent barang info
                 'barang_id' => $barang->id ?? null,
@@ -63,6 +68,8 @@ class DaftarAsetController extends Controller
         $locations = \App\Models\Master\Location::orderBy('name')->get();
         $floors = \App\Models\Master\Floor::with('location')->orderBy('name')->get();
         $rooms = \App\Models\Master\Room::with('floor.location')->orderBy('name')->get();
+        $organizers = \App\Models\Master\Organizer::orderBy('name')->get();
+        $vendors = \App\Models\Master\Vendor::orderBy('name')->get();
 
         return Inertia::render('Smart/Admin/ManajemenStok/DaftarAset', [
             'user' => $request->user(),
@@ -70,6 +77,8 @@ class DaftarAsetController extends Controller
             'locations' => $locations,
             'floors' => $floors,
             'rooms' => $rooms,
+            'organizers' => $organizers,
+            'vendors' => $vendors,
         ]);
     }
 }
