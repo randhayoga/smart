@@ -1,18 +1,18 @@
 <?php
 
-namespace App\Http\Controllers\Smart\Admin;
+namespace App\Http\Controllers\Smart\Admin\ManajemenStok;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class DaftarStokHabisPakaiController extends Controller
+class ConsumableLotController extends Controller
 {
     /**
      * Menampilkan halaman daftar stok habis pakai (Daftar Stok (Habis Pakai)).
      */
-    public function __invoke(Request $request): Response
+    public function index(Request $request): Response
     {
         $lots = \App\Models\Inventory\Lot::with([
             'barang.subcategory.category',

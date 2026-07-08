@@ -98,7 +98,6 @@ const totalStok = computed(() => {
       :locations="props.locations"
       :floors="props.floors"
       :rooms="props.rooms"
-      variant="detail"
     />
   </div>
 </template>

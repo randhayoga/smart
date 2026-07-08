@@ -243,6 +243,8 @@ onUnmounted(() => {
         :locations="props.locations"
         :floors="props.floors"
         :rooms="props.rooms"
+        :organizers="props.organizers"
+        :vendors="props.vendors"
       />
 
       <DaftarAsetTab
@@ -251,6 +253,8 @@ onUnmounted(() => {
         :locations="props.locations"
         :floors="props.floors"
         :rooms="props.rooms"
+        :organizers="props.organizers"
+        :vendors="props.vendors"
         :hide-barang-columns="true"
         :lot="props.lot"
         :barang="{ category: props.lot.barang_category }"
