@@ -78,11 +78,7 @@ interface Props {
   organizers?: { id: number; name: string; }[];
   vendors?: { id: number; name: string; }[];
   hideBarangColumns?: boolean;
-  lot?: {
-    id: number;
-    imageUrl?: string | null;
-    unitPrice?: number | string | null;
-  };
+  lot?: any;
   barang?: {
     category: string;
   };
@@ -969,6 +965,7 @@ const totalAsetTerpilihCount = computed(() => {
   <DetailAssetModal
     v-model:open="isViewAssetModalOpen"
     :asset="selectedAssetForView"
+    :lot="props.lot"
     @edit="openEditAssetModal"
   />
 </template>

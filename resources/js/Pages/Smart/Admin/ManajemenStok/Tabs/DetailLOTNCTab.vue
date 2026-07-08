@@ -25,6 +25,10 @@ interface Props {
     imageUrl: string;
     initial_quantity?: number | null;
     current_quantity?: number | null;
+    burden?: string;
+    project_id?: number | null;
+    project_name?: string | null;
+    project_no?: string | null;
     updated_at: string;
     
     // Parent barang info
@@ -144,6 +148,8 @@ onUnmounted(() => {
             <p class="text-foreground">Nomor PO: {{ props.lot.po_number }}</p>
             <p class="text-foreground">Tanggal registrasi: {{ formatDateWithDashes(props.lot.date_of_receipt) }}</p>
             <p class="text-foreground">Harga satuan <span class="italic">default</span>: {{ formatRupiah(props.lot.unitPrice) }}</p>
+            <p class="text-foreground">Pembebanan: {{ props.lot.burden || '-' }}</p>
+            <p v-if="props.lot.burden === 'Project'" class="text-foreground">Proyek: {{ props.lot.project_no ? `${props.lot.project_no} - ${props.lot.project_name || '-'}` : '-' }}</p>
             <p class="text-foreground">Organizer: {{ props.lot.organizer }}</p>
             <p class="text-foreground">Vendor: {{ props.lot.vendor }}</p>
             <p class="text-foreground">Pembaruan terakhir: {{ props.lot.updated_at }}</p>

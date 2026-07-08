@@ -9,6 +9,7 @@ import {
 } from '@/Components/ui/dropdown-menu';
 import Combobox from '@/Components/Combobox.vue';
 import { Field, FieldLabel, FieldContent, FieldError } from '@/Components/ui/field';
+import { RadioGroup, RadioGroupItem } from '@/Components/ui/radio-group';
 
 interface Props {
   open: boolean;
@@ -23,6 +24,7 @@ interface Props {
   locations: { id: number; name: string; }[];
   floors: { id: number; name: string; location_id: number; }[];
   rooms: { id: number; name: string; floor_id: number; }[];
+  projects: { id: number; no_project: string; project_name: string; client_id: string; }[];
 }
 
 const props = defineProps<Props>();
@@ -49,16 +51,27 @@ const form = useForm({
   image_url_name: '',
   use_parent_image: false,
   number: '',
+  burden: '',
+  project_id: '' as string | number,
 });
 
 const errors = ref({
   organizer_id: '', vendor_id: '', location_id: '',
   po_number: '', date_of_receipt: '', image_url: '',
+  burden: '',
+  project_id: '',
 });
 
 const resetErrors = () => {
-  errors.value = { organizer_id: '', vendor_id: '', location_id: '', po_number: '', date_of_receipt: '', image_url: '' };
+  errors.value = { organizer_id: '', vendor_id: '', location_id: '', po_number: '', date_of_receipt: '', image_url: '', burden: '', project_id: '' };
 };
+
+const projectOptions = computed(() => {
+  return (props.projects || []).map(p => ({
+    id: p.id,
+    name: `${p.no_project} - ${p.project_name}`
+  }));
+});
 
 // Reactive error clearing
 watch(() => form.organizer_id, v => { if (v && errors.value.organizer_id) errors.value.organizer_id = ''; });
@@ -68,6 +81,14 @@ watch(() => form.po_number, v => { if (v && errors.value.po_number) errors.value
 watch(() => form.date_of_receipt, v => { if (v && errors.value.date_of_receipt) errors.value.date_of_receipt = ''; });
 watch(() => form.image_url, v => { if (v && errors.value.image_url) errors.value.image_url = ''; });
 watch(() => form.image_url_name, v => { if (v && errors.value.image_url) errors.value.image_url = ''; });
+watch(() => form.burden, v => { if (v && errors.value.burden) errors.value.burden = ''; });
+watch(() => form.project_id, v => { if (v && errors.value.project_id) errors.value.project_id = ''; });
+watch(() => form.burden, v => {
+  if (v !== 'Project') {
+    form.project_id = '';
+    errors.value.project_id = '';
+  }
+});
 
 const filteredFloors = computed(() => {
   if (!form.location_id) return [];
@@ -126,6 +147,8 @@ watch(() => props.open, (val) => {
 
     form.unit_price = item.unitPrice || item.unit_price || '';
     form.image_url_name = (item.imageUrl || item.image_url || '').split('/').pop() || '';
+    form.burden = item.burden || '';
+    form.project_id = item.project_id || '';
   } else {
     form.organizer_id = '';
     form.vendor_id = '';
@@ -137,6 +160,8 @@ watch(() => props.open, (val) => {
     form.unit_price = '';
     form.number = '';
     form.barang_id = '';
+    form.burden = '';
+    form.project_id = '';
   }
 });
 
@@ -186,6 +211,8 @@ const handleSubmit = () => {
     let isValid = true;
     if (!form.organizer_id) { errors.value.organizer_id = 'Organizer belum dipilih'; isValid = false; }
     if (!form.vendor_id) { errors.value.vendor_id = 'Vendor belum dipilih'; isValid = false; }
+    if (!form.burden) { errors.value.burden = 'Pembebanan belum dipilih'; isValid = false; }
+    if (form.burden === 'Project' && !form.project_id) { errors.value.project_id = 'Proyek belum dipilih'; isValid = false; }
     if (!form.location_id) { errors.value.location_id = 'Lokasi belum dipilih'; isValid = false; }
     if (!form.po_number) { errors.value.po_number = 'Nomor PO belum diisi'; isValid = false; }
     if (!form.date_of_receipt) { errors.value.date_of_receipt = 'Tanggal Registrasi belum diisi'; isValid = false; }
@@ -209,6 +236,8 @@ const handleSubmit = () => {
         po_number: data.po_number,
         date_of_receipt: data.date_of_receipt,
         unit_price: data.unit_price,
+        burden: data.burden,
+        project_id: data.burden === 'Project' ? data.project_id : null,
       };
       if (data.image_url) fd.image_url = data.image_url;
       if (data.use_parent_image) fd.use_parent_image = data.use_parent_image;
@@ -229,7 +258,7 @@ const handleSubmit = () => {
     const hasField = !!(
       form.organizer_id || form.vendor_id || form.location_id || form.floor_id ||
       form.room_id || form.po_number || form.date_of_receipt || form.unit_price ||
-      form.image_url || form.use_parent_image
+      form.image_url || form.use_parent_image || form.burden
     );
     if (!hasField) {
       toast.error('Harap isi minimal satu input untuk melakukan perubahan massal.');
@@ -248,6 +277,7 @@ const handleSubmit = () => {
       if (data.unit_price) fd.unit_price = data.unit_price;
       if (data.image_url) fd.image_url = data.image_url;
       if (data.use_parent_image) fd.use_parent_image = data.use_parent_image;
+      if (data.burden) fd.burden = data.burden;
       return fd;
     }).post('/smart/inventory/lots/bulk', {
       onSuccess: () => { closeModal(); emit('success'); },
@@ -276,7 +306,7 @@ const handleSubmit = () => {
             </div>
 
             <!-- Body -->
-            <div class="p-6 overflow-y-auto max-h-[70vh]">
+            <div class="p-6 overflow-y-auto max-h-[80vh]">
               <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
                 <!-- Left Column -->
                 <div class="space-y-6">
@@ -285,6 +315,26 @@ const handleSubmit = () => {
                     <FieldContent>
                       <input type="text" :value="isSingle && selectedItem ? (selectedItem.number ) : 'Tidak dapat diubah'" disabled class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10" />
                     </FieldContent>
+                  </Field>
+
+                  <Field :data-invalid="(isSingle && !!errors.po_number) || undefined" :data-disabled="(!isSingle) || undefined">
+                    <FieldLabel><span>Nomor PO<span class="text-rose-500">*</span></span></FieldLabel>
+                    <FieldContent>
+                      <input type="text" v-model="form.po_number" :disabled="!isSingle" :placeholder="!isSingle ? 'Tidak dapat diubah secara massal' : 'Contoh: PO-02'"
+                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10 disabled:bg-muted/30 disabled:text-muted-foreground disabled:cursor-not-allowed"
+                      />
+                    </FieldContent>
+                    <FieldError v-if="isSingle && errors.po_number">{{ errors.po_number }}</FieldError>
+                  </Field>
+
+                  <Field :data-invalid="(isSingle && !!errors.date_of_receipt) || undefined" :data-disabled="(!isSingle) || undefined">
+                    <FieldLabel><span>Tanggal Registrasi<span class="text-rose-500">*</span></span></FieldLabel>
+                    <FieldContent>
+                      <input type="date" v-model="form.date_of_receipt" :disabled="!isSingle"
+                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10 disabled:bg-muted/30 disabled:text-muted-foreground disabled:cursor-not-allowed"
+                      />
+                    </FieldContent>
+                    <FieldError v-if="isSingle && errors.date_of_receipt">{{ errors.date_of_receipt }}</FieldError>
                   </Field>
 
                    <Field :data-invalid="(isSingle && !!errors.organizer_id) || undefined">
@@ -317,6 +367,37 @@ const handleSubmit = () => {
                     <FieldError v-if="isSingle && errors.vendor_id">{{ errors.vendor_id }}</FieldError>
                   </Field>
 
+                  <Field :data-invalid="(isSingle && !!errors.burden) || undefined">
+                    <FieldLabel>
+                      <span>Pembebanan<span v-if="isSingle" class="text-rose-500">*</span></span>
+                    </FieldLabel>
+                    <FieldContent>
+                      <RadioGroup v-model="form.burden" class="flex items-center gap-6 h-10">
+                        <div class="flex items-center space-x-2">
+                          <RadioGroupItem id="edit-burden-corporate" value="Corporate" />
+                          <label for="edit-burden-corporate" class="text-sm font-medium text-foreground cursor-pointer select-none">Corporate</label>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                          <RadioGroupItem id="edit-burden-project" value="Project" />
+                          <label for="edit-burden-project" class="text-sm font-medium text-foreground cursor-pointer select-none">Project</label>
+                        </div>
+                      </RadioGroup>
+                    </FieldContent>
+                    <FieldError v-if="isSingle && errors.burden">{{ errors.burden }}</FieldError>
+                  </Field>
+
+                  <Field v-if="isSingle && form.burden === 'Project'" :data-invalid="!!errors.project_id || undefined">
+                    <FieldLabel><span>Proyek<span class="text-rose-500">*</span></span></FieldLabel>
+                    <FieldContent>
+                      <Combobox v-model="form.project_id" :options="projectOptions" search-placeholder="Cari proyek..." default-label="Pilih proyek" width-class="w-full h-10 px-4" :error="!!errors.project_id" />
+                    </FieldContent>
+                    <FieldError v-if="errors.project_id">{{ errors.project_id }}</FieldError>
+                  </Field>
+
+                </div>
+
+                <!-- Right Column -->
+                <div class="space-y-6">
                   <Field :data-invalid="(isSingle && !!errors.location_id) || undefined">
                     <FieldLabel>
                       <span>Lokasi<span v-if="!isConsumable" class="italic"> default</span><span v-if="isSingle" class="text-rose-500">*</span></span>
@@ -335,10 +416,7 @@ const handleSubmit = () => {
                       <Combobox v-model="form.floor_id" :options="filteredFloors" search-placeholder="Cari lantai..." :default-label="isSingle ? 'Pilih lantai (opsional)' : 'Tidak berubah'" width-class="w-full h-10 px-4" :disabled="!form.location_id" />
                     </FieldContent>
                   </Field>
-                </div>
 
-                <!-- Right Column -->
-                <div class="space-y-6">
                   <Field :data-disabled="!form.floor_id || undefined">
                     <FieldLabel>
                       <span>Ruangan<span v-if="!isConsumable" class="italic"> default</span></span>
@@ -346,26 +424,6 @@ const handleSubmit = () => {
                     <FieldContent>
                       <Combobox v-model="form.room_id" :options="filteredRooms" search-placeholder="Cari ruangan..." :default-label="isSingle ? 'Pilih ruangan (opsional)' : 'Tidak berubah'" width-class="w-full h-10 px-4" :disabled="!form.floor_id" />
                     </FieldContent>
-                  </Field>
-
-                  <Field :data-invalid="(isSingle && !!errors.po_number) || undefined" :data-disabled="(!isSingle) || undefined">
-                    <FieldLabel><span>Nomor PO<span class="text-rose-500">*</span></span></FieldLabel>
-                    <FieldContent>
-                      <input type="text" v-model="form.po_number" :disabled="!isSingle" :placeholder="!isSingle ? 'Tidak dapat diubah secara massal' : 'Contoh: PO-02'"
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10 disabled:bg-muted/30 disabled:text-muted-foreground disabled:cursor-not-allowed"
-                      />
-                    </FieldContent>
-                    <FieldError v-if="isSingle && errors.po_number">{{ errors.po_number }}</FieldError>
-                  </Field>
-
-                  <Field :data-invalid="(isSingle && !!errors.date_of_receipt) || undefined" :data-disabled="(!isSingle) || undefined">
-                    <FieldLabel><span>Tanggal Registrasi<span class="text-rose-500">*</span></span></FieldLabel>
-                    <FieldContent>
-                      <input type="date" v-model="form.date_of_receipt" :disabled="!isSingle"
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10 disabled:bg-muted/30 disabled:text-muted-foreground disabled:cursor-not-allowed"
-                      />
-                    </FieldContent>
-                    <FieldError v-if="isSingle && errors.date_of_receipt">{{ errors.date_of_receipt }}</FieldError>
                   </Field>
 
                   <Field>
@@ -377,6 +435,16 @@ const handleSubmit = () => {
                         <span class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-r border-input select-none font-medium">Rp</span>
                         <input type="number" v-model="form.unit_price" :placeholder="isSingle ? 'Contoh: 60000' : 'Tidak berubah'" min="0" class="flex-1 min-w-0 px-4 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 transition-colors h-full" />
                       </div>
+                    </FieldContent>
+                  </Field>
+
+                  <!-- Consumable: Stock input (Disabled in Edit) -->
+                  <Field v-if="isConsumable">
+                    <FieldLabel><span>Jumlah stok</span></FieldLabel>
+                    <FieldContent>
+                      <input type="text" value="Tidak dapat diubah" disabled
+                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
+                      />
                     </FieldContent>
                   </Field>
 

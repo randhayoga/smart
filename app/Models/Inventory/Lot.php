@@ -32,6 +32,8 @@ class Lot extends Model
         'date_of_receipt',
         'unit_price',
         'image_url',
+        'burden',
+        'project_id',
     ];
 
     protected $casts = [
@@ -69,6 +71,11 @@ class Lot extends Model
     public function room(): BelongsTo
     {
         return $this->belongsTo(Room::class);
+    }
+
+    public function project(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\TbProject::class);
     }
 
     public function units(): HasMany

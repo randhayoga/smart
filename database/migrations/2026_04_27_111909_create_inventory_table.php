@@ -35,6 +35,8 @@ return new class extends Migration {
             $table->dateTime('date_of_receipt');
             $table->decimal('unit_price', 15, 2)->nullable()->comment('default unit price');
             $table->string('image_url')->comment('default image');
+            $table->string('burden')->default('Corporate');
+            $table->foreignId('project_id')->nullable()->constrained('tb_projects');
             $table->timestamps();
         });
 

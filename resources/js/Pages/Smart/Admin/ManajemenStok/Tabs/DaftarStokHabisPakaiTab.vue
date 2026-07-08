@@ -48,6 +48,7 @@ interface Props {
     imageUrl: string;
     initial_quantity: number | null;
     current_quantity: number | null;
+    burden?: string;
     updated_at: string;
     
     // Parent barang info
@@ -65,6 +66,7 @@ interface Props {
   locations: { id: number; name: string; }[];
   floors: { id: number; name: string; location_id: number; }[];
   rooms: { id: number; name: string; floor_id: number; }[];
+  projects: { id: number; no_project: string; project_name: string; client_id: string; }[];
 }
 
 const props = defineProps<Props>();
@@ -530,6 +532,7 @@ const deleteFields = computed(() => {
       { label: 'Harga satuan', value: formatRupiah(data.unitPrice) },
       { label: 'Organizer', value: data.organizer },
       { label: 'Vendor', value: data.vendor },
+      { label: 'Pembebanan', value: data.burden || '-' },
       { label: 'Pembaruan Terakhir', value: data.updated_at || '-' }
     ];
     
@@ -1000,6 +1003,7 @@ const clearFilters = () => {
     :locations="props.locations"
     :floors="props.floors"
     :rooms="props.rooms"
+    :projects="props.projects"
     @success="handleEditSuccess"
   />
 
