@@ -25,6 +25,7 @@ class BulkLotController extends Controller
             'unit_price' => 'nullable|numeric|min:0|max:999999999.99',
             'image_url' => 'nullable|image|max:1024',
             'use_parent_image' => 'nullable',
+            'burden' => 'nullable|string|in:Corporate,Project',
         ]);
 
         $lots = Lot::whereIn('id', $request->input('ids'))->get();
@@ -50,6 +51,9 @@ class BulkLotController extends Controller
             }
             if ($request->has('unit_price')) {
                 $lotData['unit_price'] = $request->input('unit_price');
+            }
+            if ($request->filled('burden')) {
+                $lotData['burden'] = $request->input('burden');
             }
 
             if ($request->boolean('use_parent_image')) {

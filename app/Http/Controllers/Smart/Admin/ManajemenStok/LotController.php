@@ -31,6 +31,8 @@ class LotController extends Controller
             'use_parent_image' => 'nullable',
             'auto_create_assets' => 'nullable|boolean',
             'auto_create_assets_count' => 'required_if:auto_create_assets,true|nullable|integer|min:1|max:999',
+            'burden' => 'nullable|string|in:Corporate,Project',
+            'project_id' => 'required_if:burden,Project|nullable|exists:tb_projects,id',
         ], [
             'initial_quantity.integer' => 'Tidak boleh desimal.',
             'current_quantity.integer' => 'Tidak boleh desimal.',
@@ -53,6 +55,8 @@ class LotController extends Controller
         unset($validated['auto_create_assets']);
         unset($validated['auto_create_assets_count']);
         $validated['initial_quantity'] = $validated['initial_quantity'] ?? 0;
+        $validated['burden'] = $validated['burden'] ?? 'Corporate';
+        $validated['project_id'] = ($validated['burden'] === 'Project') ? ($validated['project_id'] ?? null) : null;
 
         Lot::create($validated);
 
@@ -79,6 +83,8 @@ class LotController extends Controller
             'unit_price' => 'nullable|numeric|min:0|max:999999999.99',
             'image_url' => 'nullable|image|max:1024',
             'use_parent_image' => 'nullable',
+            'burden' => 'nullable|string|in:Corporate,Project',
+            'project_id' => 'required_if:burden,Project|nullable|exists:tb_projects,id',
         ], [
             'initial_quantity.integer' => 'Tidak boleh desimal.',
             'current_quantity.integer' => 'Tidak boleh desimal.',
@@ -116,6 +122,8 @@ class LotController extends Controller
 
         unset($validated['use_parent_image']);
         $validated['initial_quantity'] = $validated['initial_quantity'] ?? 0;
+        $validated['burden'] = $validated['burden'] ?? 'Corporate';
+        $validated['project_id'] = ($validated['burden'] === 'Project') ? ($validated['project_id'] ?? null) : null;
 
         $lot->update($validated);
 
@@ -157,7 +165,8 @@ class LotController extends Controller
             'vendor',
             'location',
             'floor',
-            'room'
+            'room',
+            'project',
         ]);
 
         if ($request->wantsJson() && !$request->headers->has('X-Inertia')) {
@@ -181,6 +190,10 @@ class LotController extends Controller
                 'imageUrl' => $lot->image_url,
                 'initial_quantity' => $lot->initial_quantity,
                 'current_quantity' => $lot->current_quantity,
+                'burden' => $lot->burden,
+                'project_id' => $lot->project_id,
+                'project_name' => $lot->project ? $lot->project->project_name : null,
+                'project_no' => $lot->project ? $lot->project->no_project : null,
                 'updated_at' => $lot->updated_at ? $lot->updated_at->format('d/m/Y H:i') : '-',
                 
                 // Parent barang info
@@ -227,6 +240,7 @@ class LotController extends Controller
         $locations = \App\Models\Master\Location::orderBy('name')->get();
         $floors = \App\Models\Master\Floor::with('location')->orderBy('name')->get();
         $rooms = \App\Models\Master\Room::with('floor.location')->orderBy('name')->get();
+        $projects = \App\Models\TbProject::orderBy('project_name')->get();
 
         return \Inertia\Inertia::render('Smart/Admin/ManajemenStok/DetailLOTNonConsumables', [
             'lot' => [
@@ -249,6 +263,10 @@ class LotController extends Controller
                 'imageUrl' => $lot->image_url,
                 'initial_quantity' => $lot->initial_quantity,
                 'current_quantity' => $lot->current_quantity,
+                'burden' => $lot->burden,
+                'project_id' => $lot->project_id,
+                'project_name' => $lot->project ? $lot->project->project_name : null,
+                'project_no' => $lot->project ? $lot->project->no_project : null,
                 'updated_at' => $lot->updated_at ? $lot->updated_at->format('d/m/Y H:i') : '-',
                 
                 // Parent barang info
@@ -269,6 +287,7 @@ class LotController extends Controller
             'locations' => $locations,
             'floors' => $floors,
             'rooms' => $rooms,
+            'projects' => $projects,
         ]);
     }
 }

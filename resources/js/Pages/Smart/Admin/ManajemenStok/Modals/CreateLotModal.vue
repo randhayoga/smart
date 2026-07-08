@@ -10,6 +10,7 @@ import {
 import Combobox from '@/Components/Combobox.vue';
 import { Checkbox } from '@/Components/ui/checkbox';
 import { Field, FieldLabel, FieldContent, FieldError } from '@/Components/ui/field';
+import { RadioGroup, RadioGroupItem } from '@/Components/ui/radio-group';
 
 interface Props {
   open: boolean;
@@ -24,6 +25,7 @@ interface Props {
   locations: { id: number; name: string; }[];
   floors: { id: number; name: string; location_id: number; }[];
   rooms: { id: number; name: string; floor_id: number; }[];
+  projects: { id: number; no_project: string; project_name: string; client_id: string; }[];
 }
 
 const props = defineProps<Props>();
@@ -52,12 +54,15 @@ const lotForm = useForm({
   image_url_name: '',
   use_parent_image: false,
   total_item: 1,
+  burden: 'Corporate',
+  project_id: '' as string | number,
 });
 
 const errors = ref({
   number: '', organizer_id: '', vendor_id: '', location_id: '',
   po_number: '', date_of_receipt: '', image_url: '',
   initial_quantity: '', auto_create_assets_count: '',
+  project_id: '',
 });
 
 const resetErrors = () => {
@@ -65,8 +70,16 @@ const resetErrors = () => {
     number: '', organizer_id: '', vendor_id: '', location_id: '',
     po_number: '', date_of_receipt: '', image_url: '',
     initial_quantity: '', auto_create_assets_count: '',
+    project_id: '',
   };
 };
+
+const projectOptions = computed(() => {
+  return (props.projects || []).map(p => ({
+    id: p.id,
+    name: `${p.no_project} - ${p.project_name}`
+  }));
+});
 
 // Reactive error clearing
 watch(() => lotForm.organizer_id, v => { if (v && errors.value.organizer_id) errors.value.organizer_id = ''; });
@@ -77,6 +90,13 @@ watch(() => lotForm.date_of_receipt, v => { if (v && errors.value.date_of_receip
 watch(() => lotForm.image_url, v => { if (v && errors.value.image_url) errors.value.image_url = ''; });
 watch(() => lotForm.image_url_name, v => { if (v && errors.value.image_url) errors.value.image_url = ''; });
 watch(() => lotForm.initial_quantity, v => { if ((v !== '' && v !== null) && errors.value.initial_quantity) errors.value.initial_quantity = ''; });
+watch(() => lotForm.project_id, v => { if (v && errors.value.project_id) errors.value.project_id = ''; });
+watch(() => lotForm.burden, v => {
+  if (v !== 'Project') {
+    lotForm.project_id = '';
+    errors.value.project_id = '';
+  }
+});
 
 const generateLotCode = () => {
   const year = new Date().getFullYear();
@@ -165,6 +185,8 @@ watch(() => props.open, (val) => {
   lotForm.po_number = ''; lotForm.date_of_receipt = '';
   lotForm.unit_price = ''; lotForm.image_url = null; lotForm.image_url_name = '';
   lotForm.use_parent_image = false; lotForm.total_item = 1;
+  lotForm.burden = 'Corporate';
+  lotForm.project_id = '';
   lotForm.clearErrors();
   resetErrors();
 });
@@ -180,6 +202,10 @@ const handleSubmit = () => {
   if (!lotForm.location_id) { errors.value.location_id = 'Lokasi belum dipilih'; isValid = false; }
   if (!lotForm.po_number) { errors.value.po_number = 'Nomor PO belum diisi'; isValid = false; }
   if (!lotForm.date_of_receipt) { errors.value.date_of_receipt = 'Tanggal Registrasi belum diisi'; isValid = false; }
+  if (lotForm.burden === 'Project' && !lotForm.project_id) {
+    errors.value.project_id = 'Proyek belum dipilih';
+    isValid = false;
+  }
   if (!lotForm.image_url && !lotForm.image_url_name) {
     const photoLabel = props.barang.is_consumable ? 'Foto' : 'Foto default';
     errors.value.image_url = `${photoLabel} belum dipilih`;
@@ -209,6 +235,8 @@ const handleSubmit = () => {
       location_id: data.location_id, floor_id: data.floor_id, room_id: data.room_id,
       po_number: data.po_number, date_of_receipt: data.date_of_receipt,
       unit_price: data.unit_price,
+      burden: data.burden,
+      project_id: data.burden === 'Project' ? data.project_id : null,
     };
     if (props.barang.is_consumable) {
       formData.initial_quantity = data.initial_quantity;
@@ -276,6 +304,28 @@ const handleSubmit = () => {
                     </FieldContent>
                   </Field>
 
+                  <Field :data-invalid="!!errors.po_number || undefined">
+                    <FieldLabel><span>Nomor PO<span class="text-rose-500">*</span></span></FieldLabel>
+                    <FieldContent>
+                      <input type="text" v-model="lotForm.po_number" placeholder="Contoh: PO-02"
+                        class="w-full px-4 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors h-10"
+                        :class="[errors.po_number ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']"
+                      />
+                    </FieldContent>
+                    <FieldError v-if="errors.po_number">{{ errors.po_number }}</FieldError>
+                  </Field>
+
+                  <Field :data-invalid="!!errors.date_of_receipt || undefined">
+                    <FieldLabel><span>Tanggal Registrasi<span class="text-rose-500">*</span></span></FieldLabel>
+                    <FieldContent>
+                      <input type="date" v-model="lotForm.date_of_receipt"
+                        class="w-full px-4 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors h-10"
+                        :class="[errors.date_of_receipt ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']"
+                      />
+                    </FieldContent>
+                    <FieldError v-if="errors.date_of_receipt">{{ errors.date_of_receipt }}</FieldError>
+                  </Field>
+
                   <Field :data-invalid="!!errors.organizer_id || undefined">
                     <FieldLabel><span>Organizer<span class="text-rose-500">*</span></span></FieldLabel>
                     <FieldContent>
@@ -302,6 +352,33 @@ const handleSubmit = () => {
                     <FieldError v-if="errors.vendor_id">{{ errors.vendor_id }}</FieldError>
                   </Field>
 
+                  <Field>
+                    <FieldLabel><span>Pembebanan<span class="text-rose-500">*</span></span></FieldLabel>
+                    <FieldContent>
+                      <RadioGroup v-model="lotForm.burden" class="flex items-center gap-6 h-10">
+                        <div class="flex items-center space-x-2">
+                          <RadioGroupItem id="create-burden-corporate" value="Corporate" />
+                          <label for="create-burden-corporate" class="text-sm font-medium text-foreground cursor-pointer select-none">Corporate</label>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                          <RadioGroupItem id="create-burden-project" value="Project" />
+                          <label for="create-burden-project" class="text-sm font-medium text-foreground cursor-pointer select-none">Project</label>
+                        </div>
+                      </RadioGroup>
+                    </FieldContent>
+                  </Field>
+
+                  <Field v-if="lotForm.burden === 'Project'" :data-invalid="!!errors.project_id || undefined">
+                    <FieldLabel><span>Proyek<span class="text-rose-500">*</span></span></FieldLabel>
+                    <FieldContent>
+                      <Combobox v-model="lotForm.project_id" :options="projectOptions" search-placeholder="Cari proyek..." default-label="Pilih proyek" width-class="w-full h-10 px-4" :error="!!errors.project_id" />
+                    </FieldContent>
+                    <FieldError v-if="errors.project_id">{{ errors.project_id }}</FieldError>
+                  </Field>
+                </div>
+
+                <!-- Right Column -->
+                <div class="space-y-6">
                   <Field :data-invalid="!!errors.location_id || undefined">
                     <FieldLabel>
                       <span>Lokasi<span v-if="!barang.is_consumable" class="italic"> default</span><span class="text-rose-500">*</span></span>
@@ -318,6 +395,27 @@ const handleSubmit = () => {
                     </FieldLabel>
                     <FieldContent>
                       <Combobox v-model="lotForm.floor_id" :options="filteredFloors" search-placeholder="Cari lantai..." default-label="Pilih lantai (opsional)" width-class="w-full h-10 px-4" :disabled="!lotForm.location_id" />
+                    </FieldContent>
+                  </Field>
+
+                  <Field :data-disabled="!lotForm.floor_id || undefined">
+                    <FieldLabel>
+                      <span>Ruangan<span v-if="!barang.is_consumable" class="italic"> default</span></span>
+                    </FieldLabel>
+                    <FieldContent>
+                      <Combobox v-model="lotForm.room_id" :options="filteredRooms" search-placeholder="Cari ruangan..." default-label="Pilih ruangan (opsional)" width-class="w-full h-10 px-4" :disabled="!lotForm.floor_id" />
+                    </FieldContent>
+                  </Field>
+
+                  <Field>
+                    <FieldLabel>
+                      <span>Harga Satuan<span v-if="!barang.is_consumable" class="italic"> default</span></span>
+                    </FieldLabel>
+                    <FieldContent>
+                      <div class="flex w-full rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors h-10 overflow-hidden">
+                        <span class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-r border-input select-none font-medium">Rp</span>
+                        <input type="number" v-model="lotForm.unit_price" placeholder="Contoh: 60000" min="0" class="flex-1 min-w-0 px-4 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 transition-colors h-full" />
+                      </div>
                     </FieldContent>
                   </Field>
 
@@ -348,52 +446,6 @@ const handleSubmit = () => {
                       </div>
                     </FieldContent>
                     <FieldError v-if="lotForm.errors.auto_create_assets_count || errors.auto_create_assets_count" class="pl-6">{{ lotForm.errors.auto_create_assets_count || errors.auto_create_assets_count }}</FieldError>
-                  </Field>
-                </div>
-
-                <!-- Right Column -->
-                <div class="space-y-6">
-                  <Field :data-disabled="!lotForm.floor_id || undefined">
-                    <FieldLabel>
-                      <span>Ruangan<span v-if="!barang.is_consumable" class="italic"> default</span></span>
-                    </FieldLabel>
-                    <FieldContent>
-                      <Combobox v-model="lotForm.room_id" :options="filteredRooms" search-placeholder="Cari ruangan..." default-label="Pilih ruangan (opsional)" width-class="w-full h-10 px-4" :disabled="!lotForm.floor_id" />
-                    </FieldContent>
-                  </Field>
-
-                  <Field :data-invalid="!!errors.po_number || undefined">
-                    <FieldLabel><span>Nomor PO<span class="text-rose-500">*</span></span></FieldLabel>
-                    <FieldContent>
-                      <input type="text" v-model="lotForm.po_number" placeholder="Contoh: PO-02"
-                        class="w-full px-4 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors h-10"
-                        :class="[errors.po_number ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']"
-                      />
-                    </FieldContent>
-                    <FieldError v-if="errors.po_number">{{ errors.po_number }}</FieldError>
-                  </Field>
-
-                  <Field :data-invalid="!!errors.date_of_receipt || undefined">
-                    <FieldLabel><span>Tanggal Registrasi<span class="text-rose-500">*</span></span></FieldLabel>
-                    <FieldContent>
-                      <input type="date" v-model="lotForm.date_of_receipt"
-                        class="w-full px-4 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors h-10"
-                        :class="[errors.date_of_receipt ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']"
-                      />
-                    </FieldContent>
-                    <FieldError v-if="errors.date_of_receipt">{{ errors.date_of_receipt }}</FieldError>
-                  </Field>
-
-                  <Field>
-                    <FieldLabel>
-                      <span>Harga Satuan<span v-if="!barang.is_consumable" class="italic"> default</span></span>
-                    </FieldLabel>
-                    <FieldContent>
-                      <div class="flex w-full rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors h-10 overflow-hidden">
-                        <span class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-r border-input select-none font-medium">Rp</span>
-                        <input type="number" v-model="lotForm.unit_price" placeholder="Contoh: 60000" min="0" class="flex-1 min-w-0 px-4 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 transition-colors h-full" />
-                      </div>
-                    </FieldContent>
                   </Field>
 
                   <Field :data-invalid="!!errors.image_url || undefined">

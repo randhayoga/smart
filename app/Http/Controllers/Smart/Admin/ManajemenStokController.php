@@ -47,6 +47,8 @@ class ManajemenStokController extends Controller
                 ];
             });
 
+        $projects = \App\Models\TbProject::orderBy('project_name')->get();
+
         return Inertia::render('Smart/Admin/ManajemenStok/ManajemenStok', [
             'user' => $request->user(),
             'categories' => $categories,
@@ -54,6 +56,7 @@ class ManajemenStokController extends Controller
             'brands' => $brands,
             'uoms' => $uoms,
             'barangs' => $barangs,
+            'projects' => $projects,
         ]);
     }
 
@@ -96,7 +99,7 @@ class ManajemenStokController extends Controller
             'uom_id' => $barang->uom_id,
         ];
 
-        $lots = \App\Models\Inventory\Lot::with(['organizer', 'vendor', 'location', 'floor', 'room'])
+        $lots = \App\Models\Inventory\Lot::with(['organizer', 'vendor', 'location', 'floor', 'room', 'project'])
             ->withCount(['units', 'units as available_units_count' => function ($query) {
                 $query->where('status', 'Tersedia');
             }])
@@ -125,6 +128,10 @@ class ManajemenStokController extends Controller
                     'availableAssetCount' => $lot->available_units_count,
                     'initial_quantity' => $lot->initial_quantity,
                     'current_quantity' => $lot->current_quantity,
+                    'burden' => $lot->burden,
+                    'project_id' => $lot->project_id,
+                    'project_name' => $lot->project ? $lot->project->project_name : null,
+                    'project_no' => $lot->project ? $lot->project->no_project : null,
                     'updated_at' => $lot->updated_at ? $lot->updated_at->format('d/m/Y H:i') : '-',
                 ];
             });
@@ -186,6 +193,8 @@ class ManajemenStokController extends Controller
             });
         }
 
+        $projects = \App\Models\TbProject::orderBy('project_name')->get();
+
         return Inertia::render('Smart/Admin/ManajemenStok/DetailBarang', [
             'user' => $request->user(),
             'itemId' => $id,
@@ -199,6 +208,7 @@ class ManajemenStokController extends Controller
             'floors' => $floors,
             'rooms' => $rooms,
             'units' => $units,
+            'projects' => $projects,
         ]);
     }
 }

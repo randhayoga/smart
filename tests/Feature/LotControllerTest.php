@@ -46,6 +46,7 @@ class LotControllerTest extends TestCase
             'date_of_receipt' => '2026-05-22',
             'unit_price' => 60000,
             'image_url' => $file,
+            'burden' => 'Corporate',
         ]);
 
         $response->assertRedirect();
@@ -101,6 +102,7 @@ class LotControllerTest extends TestCase
         $newLocation = Location::factory()->create();
         $newFloor = Floor::factory()->create(['location_id' => $newLocation->id]);
         $newRoom = Room::factory()->create(['floor_id' => $newFloor->id]);
+        $project = \App\Models\TbProject::factory()->create();
 
         $response = $this->actingAs($user)->put(route('smart.inventory.lots.update', $lot), [
             'number' => 'LOT-UPDATED',
@@ -113,6 +115,8 @@ class LotControllerTest extends TestCase
             'po_number' => 'PO-UPDATED',
             'date_of_receipt' => '2026-05-23',
             'unit_price' => 75000,
+            'burden' => 'Project',
+            'project_id' => $project->id,
         ]);
 
         $response->assertRedirect();
@@ -127,6 +131,8 @@ class LotControllerTest extends TestCase
             'room_id' => $newRoom->id,
             'po_number' => 'PO-UPDATED',
             'unit_price' => 75000,
+            'burden' => 'Project',
+            'project_id' => $project->id,
         ]);
     }
 
@@ -195,6 +201,7 @@ class LotControllerTest extends TestCase
             'date_of_receipt' => '2026-05-22',
             'unit_price' => 60000,
             'use_parent_image' => true,
+            'burden' => 'Corporate',
         ]);
 
         $response->assertRedirect();
@@ -229,7 +236,7 @@ class LotControllerTest extends TestCase
         $barang = Barang::factory()->create(['image_url' => $barangImagePath]);
         
         $lot = Lot::factory()->create(['barang_id' => $barang->id]);
-        $oldLotImagePath = $lot->image_url;
+        $project = \App\Models\TbProject::factory()->create();
         
         $response = $this->actingAs($user)->put(route('smart.inventory.lots.update', $lot), [
             'number' => $lot->number,
@@ -241,6 +248,8 @@ class LotControllerTest extends TestCase
             'date_of_receipt' => $lot->date_of_receipt->format('Y-m-d'),
             'unit_price' => $lot->unit_price,
             'use_parent_image' => true,
+            'burden' => 'Project',
+            'project_id' => $project->id,
         ]);
 
         $response->assertRedirect();

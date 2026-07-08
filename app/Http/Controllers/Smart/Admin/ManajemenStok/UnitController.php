@@ -78,6 +78,7 @@ class UnitController extends Controller
         $rooms = \App\Models\Master\Room::with('floor.location')->orderBy('name')->get();
         $organizers = \App\Models\Master\Organizer::orderBy('name')->get();
         $vendors = \App\Models\Master\Vendor::orderBy('name')->get();
+        $projects = \App\Models\TbProject::orderBy('project_name')->get();
 
         return Inertia::render('Smart/Admin/ManajemenStok/DaftarAset', [
             'user' => $request->user(),
@@ -87,6 +88,7 @@ class UnitController extends Controller
             'rooms' => $rooms,
             'organizers' => $organizers,
             'vendors' => $vendors,
+            'projects' => $projects,
         ]);
     }
     /**

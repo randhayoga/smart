@@ -175,6 +175,8 @@ onUnmounted(() => {
                     <p class="text-foreground">Nomor PO: {{ lotDetails.po_number }}</p>
                     <p class="text-foreground">Tanggal registrasi: {{ formatDateWithDashes(lotDetails.date_of_receipt) }}</p>
                     <p class="text-foreground">Harga satuan: {{ formatRupiah(lotDetails.unitPrice) }}</p>
+                    <p class="text-foreground">Pembebanan: {{ lotDetails.burden || '-' }}</p>
+                    <p v-if="lotDetails.burden === 'Project'" class="text-foreground">Proyek: {{ lotDetails.project_no ? `${lotDetails.project_no} - ${lotDetails.project_name || '-'}` : '-' }}</p>
                     <p class="text-foreground">Organizer: {{ lotDetails.organizer }}</p>
                     <p class="text-foreground">Vendor: {{ lotDetails.vendor }}</p>
                     <p class="text-foreground">Pembaruan terakhir: {{ lotDetails.updated_at }}</p>

@@ -32,6 +32,7 @@ interface Props {
     imageUrl: string;
     initial_quantity?: number | null;
     current_quantity?: number | null;
+    burden?: string;
     updated_at: string;
     
     // Parent barang info
@@ -67,6 +68,7 @@ interface Props {
   locations: { id: number; name: string; }[];
   floors: { id: number; name: string; location_id: number; }[];
   rooms: { id: number; name: string; floor_id: number; }[];
+  projects: { id: number; no_project: string; project_name: string; client_id: string; }[];
 }
 
 const props = defineProps<Props>();
@@ -146,6 +148,7 @@ const deleteFields = computed(() => {
       { label: 'Lokasi', value: formatLocation(props.lot.location, props.lot.floor, props.lot.room) },
       { label: 'Tanggal registrasi', value: formatDateWithDashes(props.lot.date_of_receipt) },
       { label: 'Harga default', value: formatRupiah(props.lot.unitPrice) },
+      { label: 'Pembebanan', value: props.lot.burden || '-' },
     ];
   }
   return [];
@@ -271,6 +274,7 @@ onUnmounted(() => {
       :locations="props.locations"
       :floors="props.floors"
       :rooms="props.rooms"
+      :projects="props.projects"
     />
 
     <!-- Delete Confirmation Modal -->

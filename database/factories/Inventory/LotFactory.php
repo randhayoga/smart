@@ -44,6 +44,7 @@ class LotFactory extends Factory
             'date_of_receipt' => $this->faker->dateTime(),
             'unit_price' => $this->faker->randomFloat(2, 10000, 10000000),
             'image_url' => 'inventory/lots/placeholder.jpg',
+            'burden' => $this->faker->randomElement(['Corporate', 'Project']),
         ];
     }
 }

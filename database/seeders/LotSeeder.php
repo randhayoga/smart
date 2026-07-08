@@ -143,6 +143,12 @@ class LotSeeder extends Seeder
                 Storage::disk('public')->put($destinationPath, File::get($sourcePath));
             }
 
+            $burden = ['Corporate', 'Project'][array_rand(['Corporate', 'Project'])];
+            $projectId = null;
+            if ($burden === 'Project') {
+                $projectId = \App\Models\TbProject::inRandomOrder()->first()?->id;
+            }
+
             $lot = Lot::updateOrCreate(
                 ['number' => $data['number']],
                 [
@@ -158,6 +164,8 @@ class LotSeeder extends Seeder
                     'date_of_receipt' => Carbon::createFromFormat('d/m/Y', $data['date_of_receipt']),
                     'unit_price' => $data['unit_price'],
                     'image_url' => $destinationPath,
+                    'burden' => $burden,
+                    'project_id' => $projectId,
                 ]
             );
         }

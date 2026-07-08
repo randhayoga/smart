@@ -22,7 +22,8 @@ class ConsumableLotController extends Controller
             'vendor',
             'location',
             'floor',
-            'room'
+            'room',
+            'project',
         ])
         ->whereHas('barang.subcategory.category', function ($query) {
             $query->where('is_consumable', true);
@@ -49,6 +50,10 @@ class ConsumableLotController extends Controller
                 'imageUrl' => $lot->image_url,
                 'initial_quantity' => $lot->initial_quantity,
                 'current_quantity' => $lot->current_quantity,
+                'burden' => $lot->burden,
+                'project_id' => $lot->project_id,
+                'project_name' => $lot->project ? $lot->project->project_name : null,
+                'project_no' => $lot->project ? $lot->project->no_project : null,
                 'updated_at' => $lot->updated_at ? $lot->updated_at->format('d/m/Y H:i') : '-',
                 
                 // Parent barang info
@@ -68,6 +73,8 @@ class ConsumableLotController extends Controller
         $floors = \App\Models\Master\Floor::with('location')->orderBy('name')->get();
         $rooms = \App\Models\Master\Room::with('floor.location')->orderBy('name')->get();
 
+        $projects = \App\Models\TbProject::orderBy('project_name')->get();
+
         return Inertia::render('Smart/Admin/ManajemenStok/DaftarStokHabisPakai', [
             'user' => $request->user(),
             'lots' => $lots,
@@ -76,6 +83,7 @@ class ConsumableLotController extends Controller
             'locations' => $locations,
             'floors' => $floors,
             'rooms' => $rooms,
+            'projects' => $projects,
         ]);
     }
 }

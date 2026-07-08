@@ -39,6 +39,7 @@ interface Props {
   locations: { id: number; name: string; }[];
   floors: { id: number; name: string; location_id: number; }[];
   rooms: { id: number; name: string; floor_id: number; }[];
+  projects: { id: number; no_project: string; project_name: string; client_id: string; }[];
 }
 
 const props = defineProps<Props>();
@@ -53,6 +54,7 @@ const props = defineProps<Props>();
       :locations="props.locations"
       :floors="props.floors"
       :rooms="props.rooms"
+      :projects="props.projects"
     />
   </AppLayout>
 </template>
