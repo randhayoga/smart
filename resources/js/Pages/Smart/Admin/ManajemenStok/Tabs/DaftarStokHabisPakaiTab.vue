@@ -26,6 +26,7 @@ import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal.vue';
 import DeleteErrorModal from '@/Components/DeleteErrorModal.vue';
 import DetailLOTConsumables from '../DetailLOTConsumables.vue';
 import EditLotModal from '../Modals/EditLotModal.vue';
+import { Switch } from '@/Components/ui/switch';
 
 interface Props {
   lots: {
@@ -78,7 +79,7 @@ const brandFilter = ref('');
 const locationFilter = ref('');
 const floorFilter = ref('');
 const roomFilter = ref('');
-const stokFilter = ref('');
+const stokFilter = ref(false);
 const showAdvancedFilters = ref(false);
 const rowsPerPage = ref('Semua baris');
 const dataTableRef = ref<any>(null);
@@ -333,11 +334,7 @@ const filteredLots = computed(() => {
   }
 
   if (stokFilter.value) {
-    if (stokFilter.value === 'tersedia') {
-      list = list.filter(lot => (lot.current_quantity ?? 0) > 0);
-    } else if (stokFilter.value === 'habis') {
-      list = list.filter(lot => (lot.current_quantity ?? 0) <= 0);
-    }
+    list = list.filter(lot => (lot.current_quantity ?? 0) > 0);
   }
 
   if (brandFilter.value) {
@@ -675,7 +672,7 @@ const clearFilters = () => {
   locationFilter.value = '';
   floorFilter.value = '';
   roomFilter.value = '';
-  stokFilter.value = '';
+  stokFilter.value = false;
 };
 </script>
 
@@ -700,6 +697,12 @@ const clearFilters = () => {
                   v-model="searchQuery"
                   placeholder="Cari Kode LOT, Nama..." 
                 />
+              </div>
+
+              <!-- Stok Tersedia Filter Switch -->
+              <div class="flex items-center justify-between gap-3 h-[34px] px-4 border border-input rounded-[14px] bg-background w-[200px] select-none">
+                <span :class="['text-sm font-normal transition-colors', stokFilter ? 'text-foreground font-medium' : 'text-muted-foreground']">Stok tersedia saja</span>
+                <Switch v-model="stokFilter" />
               </div>
 
               <!-- Kategori Filter Dropdown -->
@@ -731,23 +734,6 @@ const clearFilters = () => {
                   <DropdownMenuItem v-for="sub in availableSubcategories" :key="sub" @select="subcategoryFilter = sub">
                     {{ sub }}
                   </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              <!-- Stok Tersedia Filter Dropdown -->
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal', !stokFilter ? 'text-muted-foreground' : 'text-foreground']">
-                    <span class="truncate">
-                      {{ stokFilter === 'tersedia' ? 'Stok Tersedia' : stokFilter === 'habis' ? 'Stok Habis' : 'Semua stok' }}
-                    </span>
-                    <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
-                  <DropdownMenuItem @select="stokFilter = ''">Semua stok</DropdownMenuItem>
-                  <DropdownMenuItem @select="stokFilter = 'tersedia'">Stok Tersedia</DropdownMenuItem>
-                  <DropdownMenuItem @select="stokFilter = 'habis'">Stok Habis</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
 
@@ -978,7 +964,7 @@ const clearFilters = () => {
             <div v-if="searchQuery">Pencarian: {{ searchQuery }}</div>
             <div v-if="categoryFilter">Kategori: {{ categoryFilter }}</div>
             <div v-if="subcategoryFilter">Subkategori: {{ subcategoryFilter }}</div>
-            <div v-if="stokFilter">Stok: {{ stokFilter === 'tersedia' ? 'Tersedia' : stokFilter === 'habis' ? 'Habis' : 'Semua' }}</div>
+            <div v-if="stokFilter">Stok: Tersedia</div>
             <div v-if="brandFilter">Merek: {{ brandFilter }}</div>
             <div v-if="locationFilter">Lokasi: {{ props.locations.find(l => l.id.toString() === locationFilter)?.name }}</div>
             <div v-if="floorFilter">Lantai: {{ props.floors.find(f => f.id.toString() === floorFilter)?.name }}</div>

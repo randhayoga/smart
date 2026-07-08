@@ -32,6 +32,10 @@ interface Props {
     organizer_id: number | null;
     vendor: string;
     vendor_id: number | null;
+    lot_organizer: string;
+    lot_date_of_receipt: string | null;
+    lot_vendor: string;
+    lot_po_number: string;
 
     // Parent barang info
     barang_id: number;

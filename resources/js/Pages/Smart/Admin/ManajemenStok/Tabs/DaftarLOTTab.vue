@@ -74,12 +74,9 @@ interface Props {
   locations: { id: number; name: string; }[];
   floors: { id: number; name: string; location_id: number; }[];
   rooms: { id: number; name: string; floor_id: number; }[];
-  variant?: 'detail' | 'daftar-lot';
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  variant: 'daftar-lot',
-});
+const props = defineProps<Props>();
 
 const searchQuery = ref('');
 const timeFilter = ref('');
@@ -141,8 +138,6 @@ const formatRupiah = (val: number | string | null | undefined) => {
 };
 
 const columns = computed<ColumnDef<any>[]>(() => {
-  const isDetail = props.variant === 'detail';
-
   const cols: ColumnDef<any>[] = [
     {
       id: 'select',
@@ -235,22 +230,20 @@ const columns = computed<ColumnDef<any>[]>(() => {
     }
   ];
 
-  if (!isDetail) {
-    cols.push(
-      {
-        accessorKey: 'organizer',
-        header: ({ column }) => h(Button, {
-          variant: 'ghost',
-          onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-          class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
-        }, () => [
-          'Organizer',
-          h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-        ]),
-        cell: ({ row }) => h('div', { class: 'pl-0' }, row.original.organizer),
-      }
-    );
-  }
+  cols.push(
+    {
+      accessorKey: 'organizer',
+      header: ({ column }) => h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        'Organizer',
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ]),
+      cell: ({ row }) => h('div', { class: 'pl-0' }, row.original.organizer),
+    }
+  );
 
   cols.push(
     {

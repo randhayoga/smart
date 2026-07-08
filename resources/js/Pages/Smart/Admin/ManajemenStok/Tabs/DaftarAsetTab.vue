@@ -57,6 +57,10 @@ interface Props {
     organizer_id?: number | null;
     vendor?: string;
     vendor_id?: number | null;
+    lot_organizer?: string;
+    lot_date_of_receipt?: string | null;
+    lot_vendor?: string;
+    lot_po_number?: string;
 
     // Parent barang info
     barang_id?: number;
@@ -82,10 +86,12 @@ interface Props {
   barang?: {
     category: string;
   };
+  filterVariant?: 'simple' | 'full';
 }
 
 const props = withDefaults(defineProps<Props>(), {
   hideBarangColumns: false,
+  filterVariant: 'full',
 });
 
 const searchQuery = ref('');
@@ -648,7 +654,7 @@ const totalAsetTerpilihCount = computed(() => {
               </div>
 
               <!-- Kategori Filter Dropdown -->
-              <DropdownMenu>
+              <DropdownMenu v-if="props.filterVariant !== 'simple'">
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal', !categoryFilter ? 'text-muted-foreground' : 'text-foreground']">
                     <span class="truncate">{{ categoryFilter || 'Semua kategori' }}</span>
@@ -664,7 +670,7 @@ const totalAsetTerpilihCount = computed(() => {
               </DropdownMenu>
 
               <!-- Subkategori Filter Dropdown -->
-              <DropdownMenu>
+              <DropdownMenu v-if="props.filterVariant !== 'simple'">
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal', !subcategoryFilter ? 'text-muted-foreground' : 'text-foreground']">
                     <span class="truncate">{{ subcategoryFilter || 'Semua subkategori' }}</span>
@@ -713,6 +719,7 @@ const totalAsetTerpilihCount = computed(() => {
 
               <!-- Advanced Filter Toggle Button -->
               <Button 
+                v-if="props.filterVariant !== 'simple'"
                 variant="outline" 
                 @click="showAdvancedFilters = !showAdvancedFilters" 
                 :class="['rounded-[14px] font-normal gap-2', showAdvancedFilters ? 'bg-muted border-primary/30 text-foreground' : 'text-muted-foreground']"
@@ -760,7 +767,7 @@ const totalAsetTerpilihCount = computed(() => {
 
           <!-- Advanced Filters Row -->
           <div 
-            v-if="showAdvancedFilters" 
+            v-if="showAdvancedFilters && props.filterVariant !== 'simple'" 
             class="p-4 bg-muted/30 rounded-xl border border-border/80 flex flex-wrap gap-4"
           >
             <!-- Brand Filter -->
@@ -898,6 +905,8 @@ const totalAsetTerpilihCount = computed(() => {
                 />
               </div>
             </div>
+
+            <slot name="extra-actions"></slot>
           </div>
         </div>
       </div>
