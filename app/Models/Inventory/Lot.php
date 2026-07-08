@@ -16,6 +16,8 @@ class Lot extends Model
 {
     use HasFactory;
 
+    protected $with = ['barang'];
+
     protected $fillable = [
         'number',
         'barang_id',

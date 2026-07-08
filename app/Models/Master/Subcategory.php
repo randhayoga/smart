@@ -11,6 +11,8 @@ class Subcategory extends Model
 {
     use HasFactory;
 
+    protected $with = ['category'];
+
     protected $fillable = [
         'code',
         'name',

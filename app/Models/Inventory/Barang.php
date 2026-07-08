@@ -14,6 +14,8 @@ class Barang extends Model
 {
     use HasFactory;
 
+    protected $with = ['subcategory', 'brand', 'uom'];
+
     protected $fillable = [
         'number',
         'subcategory_id',

@@ -3,9 +3,10 @@ import type { PrimitiveProps } from "reka-ui"
 import type { HTMLAttributes } from "vue"
 import { Primitive } from "reka-ui"
 import { cn } from "@/lib/utils"
+import { Link } from "@inertiajs/vue3"
 
 const props = withDefaults(defineProps<PrimitiveProps & { class?: HTMLAttributes["class"] }>(), {
-  as: "a",
+  as: Link,
 })
 </script>
 
@@ -18,3 +19,4 @@ const props = withDefaults(defineProps<PrimitiveProps & { class?: HTMLAttributes
     <slot />
   </Primitive>
 </template>
+

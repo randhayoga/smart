@@ -14,6 +14,8 @@ class Unit extends Model
 {
     use HasFactory;
 
+    protected $with = ['lot', 'location', 'floor', 'room'];
+
     protected $fillable = [
         'number',
         'lot_id',
