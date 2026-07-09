@@ -185,7 +185,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
       ]),
       cell: ({ row }) => h('div', { class: 'pl-0 text-muted-foreground' }, 
         props.barang.is_consumable 
-          ? (row.original.current_quantity !== null && row.original.current_quantity !== undefined ? row.original.current_quantity : 0) 
+          ? `${row.original.current_quantity ?? 0}/${row.original.initial_quantity ?? 0}`
           : row.original.assetCount
       ),
     },

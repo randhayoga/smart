@@ -178,7 +178,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
         'Jml. Stok',
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ]),
-      cell: ({ row }) => h('div', { class: 'pl-0 text-muted-foreground' }, row.original.current_quantity ?? 0),
+      cell: ({ row }) => h('div', { class: 'pl-0 text-muted-foreground' }, `${row.original.current_quantity ?? 0}/${row.original.initial_quantity ?? 0}`),
     },
     {
       accessorKey: 'barang_nama',

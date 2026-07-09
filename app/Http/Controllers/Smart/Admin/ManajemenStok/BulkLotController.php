@@ -26,6 +26,7 @@ class BulkLotController extends Controller
             'image_url' => 'nullable|image|max:1024',
             'use_parent_image' => 'nullable',
             'burden' => 'nullable|string|in:Corporate,Project',
+            'project_id' => 'required_if:burden,Project|nullable|exists:tb_projects,id',
         ]);
 
         $lots = Lot::whereIn('id', $request->input('ids'))->get();
@@ -54,6 +55,7 @@ class BulkLotController extends Controller
             }
             if ($request->filled('burden')) {
                 $lotData['burden'] = $request->input('burden');
+                $lotData['project_id'] = ($request->input('burden') === 'Project') ? $request->input('project_id') : null;
             }
 
             if ($request->boolean('use_parent_image')) {
