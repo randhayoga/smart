@@ -160,7 +160,7 @@ watch(() => props.open, (val) => {
     form.unit_price = '';
     form.number = '';
     form.barang_id = '';
-    form.burden = '';
+    form.burden = 'Tidak berubah';
     form.project_id = '';
   }
 });
@@ -255,10 +255,17 @@ const handleSubmit = () => {
     });
   } else {
     // Bulk edit
+    let isValid = true;
+    if (form.burden === 'Project' && !form.project_id) {
+      errors.value.project_id = 'Proyek belum dipilih';
+      isValid = false;
+    }
+    if (!isValid) return;
+
     const hasField = !!(
       form.organizer_id || form.vendor_id || form.location_id || form.floor_id ||
       form.room_id || form.po_number || form.date_of_receipt || form.unit_price ||
-      form.image_url || form.use_parent_image || form.burden
+      form.image_url || form.use_parent_image || (form.burden && form.burden !== 'Tidak berubah')
     );
     if (!hasField) {
       toast.error('Harap isi minimal satu input untuk melakukan perubahan massal.');
@@ -277,7 +284,12 @@ const handleSubmit = () => {
       if (data.unit_price) fd.unit_price = data.unit_price;
       if (data.image_url) fd.image_url = data.image_url;
       if (data.use_parent_image) fd.use_parent_image = data.use_parent_image;
-      if (data.burden) fd.burden = data.burden;
+      if (data.burden && data.burden !== 'Tidak berubah') {
+        fd.burden = data.burden;
+        if (data.burden === 'Project') {
+          fd.project_id = data.project_id;
+        }
+      }
       return fd;
     }).post('/smart/inventory/lots/bulk', {
       onSuccess: () => { closeModal(); emit('success'); },
@@ -373,6 +385,10 @@ const handleSubmit = () => {
                     </FieldLabel>
                     <FieldContent>
                       <RadioGroup v-model="form.burden" class="flex items-center gap-6 h-10">
+                        <div v-if="!isSingle" class="flex items-center space-x-2">
+                          <RadioGroupItem id="edit-burden-none" value="Tidak berubah" />
+                          <label for="edit-burden-none" class="text-sm font-medium text-foreground cursor-pointer select-none">Tidak berubah</label>
+                        </div>
                         <div class="flex items-center space-x-2">
                           <RadioGroupItem id="edit-burden-corporate" value="Corporate" />
                           <label for="edit-burden-corporate" class="text-sm font-medium text-foreground cursor-pointer select-none">Corporate</label>
@@ -386,7 +402,7 @@ const handleSubmit = () => {
                     <FieldError v-if="isSingle && errors.burden">{{ errors.burden }}</FieldError>
                   </Field>
 
-                  <Field v-if="isSingle && form.burden === 'Project'" :data-invalid="!!errors.project_id || undefined">
+                  <Field v-if="form.burden === 'Project'" :data-invalid="!!errors.project_id || undefined">
                     <FieldLabel><span>Proyek<span class="text-rose-500">*</span></span></FieldLabel>
                     <FieldContent>
                       <Combobox v-model="form.project_id" :options="projectOptions" search-placeholder="Cari proyek..." default-label="Pilih proyek" width-class="w-full h-10 px-4" :error="!!errors.project_id" />
