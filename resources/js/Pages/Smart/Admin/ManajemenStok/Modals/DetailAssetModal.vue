@@ -55,7 +55,22 @@ const getConditionLabel = (cond: string) => {
   return cond || '';
 };
 
+const getAge = (dateStr: string | null) => {
+  if (!dateStr || dateStr === '-') return null;
+  const receipt = new Date(dateStr);
+  if (isNaN(receipt.getTime())) return null;
+  const diffTime = new Date().getTime() - receipt.getTime();
+  const years = Math.floor(diffTime / (1000 * 60 * 60 * 24 * 365));
+  return years >= 0 ? years : 0;
+};
+
 // Dynamic attribute resolution
+const finalLotAge = computed(() => {
+  if (props.lot?.age !== undefined && props.lot?.age !== null) return props.lot.age;
+  if (props.asset?.lot_age !== undefined && props.asset?.lot_age !== null) return props.asset.lot_age;
+  return getAge(finalLotDateOfReceipt.value);
+});
+
 const finalLotNumber = computed(() => props.lot?.number || props.asset?.lot_number || '');
 const finalLotOrganizer = computed(() => props.lot?.organizer || props.asset?.lot_organizer || '');
 const finalLotDateOfReceipt = computed(() => props.lot?.date_of_receipt || props.asset?.lot_date_of_receipt || '');
@@ -144,6 +159,7 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                     <p class="font-bold text-foreground"><span class="text-foreground">Kode LOT:</span> {{ finalLotNumber }}</p>
                     <p class="text-foreground">Organizer: {{ finalLotOrganizer }}</p>
                     <p class="text-foreground">Tanggal registrasi: {{ formatDateWithDashes(finalLotDateOfReceipt) }}</p>
+                    <p class="text-foreground">Umur: {{ finalLotAge !== null && finalLotAge !== undefined ? `${finalLotAge} tahun` : '-' }}</p>
                     <p class="text-foreground">Vendor: {{ finalLotVendor }}</p>
                     <p class="text-foreground">Nomor PO: {{ finalLotPoNumber }}</p>
                   </div>
