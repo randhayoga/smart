@@ -21,8 +21,9 @@ class SubcategoryFactory extends Factory
     public function definition(): array
     {
         return [
-            'code' => strtoupper(fake()->unique()->bothify('???-###')),
+            'code' => strtoupper(fake()->unique()->lexify('????-????')),
             'name' => fake()->words(2, true),
+            'description' => fake()->sentence(),
             'category_id' => Category::factory(),
         ];
     }

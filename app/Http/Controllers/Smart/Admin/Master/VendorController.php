@@ -15,7 +15,17 @@ class VendorController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:vendors,name',
+            'name'             => 'required|string|max:255|unique:vendors,name',
+            'address'          => 'required|string|max:255',
+            'phone_number'     => 'required|string|max:255',
+            'email'            => 'nullable|email|max:255',
+            'description'      => 'nullable|string|max:255',
+            'contact_person_1' => 'nullable|string|max:255',
+            'cp_email_1'       => 'nullable|email|max:255',
+            'cp_phone_1'       => 'nullable|string|max:255',
+            'contact_person_2' => 'nullable|string|max:255',
+            'cp_email_2'       => 'nullable|email|max:255',
+            'cp_phone_2'       => 'nullable|string|max:255',
         ]);
 
         Vendor::create($validated);
@@ -29,7 +39,17 @@ class VendorController extends Controller
     public function update(Request $request, Vendor $vendor): RedirectResponse
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:vendors,name,' . $vendor->id,
+            'name'             => 'required|string|max:255|unique:vendors,name,' . $vendor->id,
+            'address'          => 'required|string|max:255',
+            'phone_number'     => 'required|string|max:255',
+            'email'            => 'nullable|email|max:255',
+            'description'      => 'nullable|string|max:255',
+            'contact_person_1' => 'nullable|string|max:255',
+            'cp_email_1'       => 'nullable|email|max:255',
+            'cp_phone_1'       => 'nullable|string|max:255',
+            'contact_person_2' => 'nullable|string|max:255',
+            'cp_email_2'       => 'nullable|email|max:255',
+            'cp_phone_2'       => 'nullable|string|max:255',
         ]);
 
         $vendor->update($validated);

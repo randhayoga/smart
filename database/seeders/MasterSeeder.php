@@ -30,8 +30,12 @@ class MasterSeeder extends Seeder
                 'name' => 'Furnitur',
                 'is_consumable' => false,
             ],
-            'ELK' => [
-                'name' => 'Elektronik',
+            'COMP' => [
+                'name' => 'Computer',
+                'is_consumable' => false,
+            ],
+            'MON' => [
+                'name' => 'Monitor',
                 'is_consumable' => false,
             ],
             'KEN' => [
@@ -52,37 +56,38 @@ class MasterSeeder extends Seeder
         // 2. Subcategories
         $subcategories = [
             [
-                'code' => 'KA4',
+                'code' => 'ATK-HVS4',
                 'name' => 'Kertas HVS A4',
                 'category_code' => 'ATK',
             ],
             [
-                'code' => 'PHI',
+                'code' => 'ATK-PLPH',
                 'name' => 'Pulpen Hitam',
                 'category_code' => 'ATK',
             ],
             [
-                'code' => 'KKJ',
+                'code' => 'FUR-KK',
                 'name' => 'Kursi Kerja',
+                'description' => 'Kerja, Kerja, Kerja',
                 'category_code' => 'FUR',
             ],
             [
-                'code' => 'MKJ',
+                'code' => 'FUR-MK',
                 'name' => 'Meja Kerja',
                 'category_code' => 'FUR',
             ],
             [
-                'code' => 'LAP',
-                'name' => 'Laptop',
-                'category_code' => 'ELK',
+                'code' => 'COMP-NB',
+                'name' => 'Notebook',
+                'category_code' => 'COMP',
             ],
             [
-                'code' => 'MON',
-                'name' => 'Monitor',
-                'category_code' => 'ELK',
+                'code' => 'MON-LCD',
+                'name' => 'LCD',
+                'category_code' => 'MON',
             ],
             [
-                'code' => 'MOB',
+                'code' => 'KEN-MO',
                 'name' => 'Mobil',
                 'category_code' => 'KEN',
             ],
@@ -92,6 +97,7 @@ class MasterSeeder extends Seeder
             Subcategory::create([
                 'code' => $sub['code'],
                 'name' => $sub['name'],
+                'description' => $sub['description'] ?? null,
                 'category_id' => $categoryModels[$sub['category_code']]->id,
             ]);
         }
@@ -118,11 +124,13 @@ class MasterSeeder extends Seeder
             'BYD',
         ];
         foreach ($brands as $brandName) {
-            Brand::create(['name' => $brandName]);
+            Brand::create([
+                'name' => $brandName,
+            ]);
         }
 
         // 5. Organizers
-        $organizers = ['IFS', 'HSE'];
+        $organizers = ['CFS', 'ICT', 'HSE'];
         foreach ($organizers as $orgName) {
             Organizer::create(['name' => $orgName]);
         }
@@ -136,7 +144,16 @@ class MasterSeeder extends Seeder
             'PT Karya Indah Semesta',
         ];
         foreach ($vendors as $vendorName) {
-            Vendor::create(['name' => $vendorName]);
+            Vendor::create([
+                'name' => $vendorName,
+                'address' => 'Jl. Jenderal Sudirman No. ' . rand(1, 100) . ', Jakarta',
+                'phone_number' => '021-' . rand(5000000, 9999999),
+                'email' => strtolower(str_replace(' ', '', $vendorName)) . '@example.com',
+                'description' => 'Supplier untuk ' . $vendorName,
+                'contact_person_1' => 'Budi Santoso',
+                'cp_email_1' => 'budi.santoso@example.com',
+                'cp_phone_1' => '0812' . rand(10000000, 99999999),
+            ]);
         }
 
         // 7. Locations

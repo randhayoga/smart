@@ -21,6 +21,16 @@ class VendorFactory extends Factory
     {
         return [
             'name' => fake()->company(),
+            'address' => fake()->address(),
+            'phone_number' => fake()->phoneNumber(),
+            'email' => fake()->safeEmail(),
+            'description' => fake()->sentence(),
+            'contact_person_1' => fake()->name(),
+            'cp_email_1' => fake()->safeEmail(),
+            'cp_phone_1' => fake()->phoneNumber(),
+            'contact_person_2' => fake()->name(),
+            'cp_email_2' => fake()->safeEmail(),
+            'cp_phone_2' => fake()->phoneNumber(),
         ];
     }
 }

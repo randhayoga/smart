@@ -9,7 +9,7 @@ return new class extends Migration {
     {
         Schema::create('categories', function (Blueprint $table) {
             $table->id();
-            $table->string('code', 3)->unique();
+            $table->string('code', 4)->unique();
             $table->string('name');
             $table->boolean('is_consumable')->default(true);
             $table->timestamps();
@@ -17,8 +17,9 @@ return new class extends Migration {
 
         Schema::create('subcategories', function (Blueprint $table) {
             $table->id();
-            $table->string('code', 7)->unique();
+            $table->string('code', 9)->unique();
             $table->string('name');
+            $table->string('description')->nullable();
             $table->foreignId('category_id')->constrained('categories')->cascadeOnDelete();
             $table->timestamps();
         });
@@ -29,8 +30,31 @@ return new class extends Migration {
             $table->timestamps();
         });
 
+        Schema::create('brands', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->string('description')->nullable();
+            $table->timestamps();
+        });
+
+        Schema::create('vendors', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->string('address');
+            $table->string('phone_number');
+            $table->string('email')->nullable();
+            $table->string('description')->nullable();
+            $table->string('contact_person_1')->nullable();
+            $table->string('cp_email_1')->nullable();
+            $table->string('cp_phone_1')->nullable();
+            $table->string('contact_person_2')->nullable();
+            $table->string('cp_email_2')->nullable();
+            $table->string('cp_phone_2')->nullable();
+            $table->timestamps();
+        });
+
         // Grouping simple reference tables
-        $references = ['brands', 'organizers', 'vendors', 'locations'];
+        $references = ['organizers', 'locations'];
         foreach ($references as $ref) {
             Schema::create($ref, function (Blueprint $table) {
                 $table->id();

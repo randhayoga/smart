@@ -21,7 +21,7 @@ class CategoryFactory extends Factory
     {
         $name = ucfirst(fake()->unique()->word());
         return [
-            'code' => strtoupper(fake()->unique()->lexify('???')),
+            'code' => strtoupper(fake()->unique()->lexify('????')),
             'name' => $name,
             'is_consumable' => fake()->boolean(),
         ];

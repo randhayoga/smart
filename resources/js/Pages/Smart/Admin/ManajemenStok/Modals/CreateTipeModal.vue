@@ -70,6 +70,8 @@ const generateCode = () => {
 
   const catCode = cat.code.trim();
   const subCode = sub.code.trim();
+  const subParts = subCode.split('-');
+  const subSuffix = subParts[subParts.length - 1];
   const sameSubItems = (props.barangs || []).filter(item => item.subcategory_id == newItem.subcategory_id);
   let nextNumber = 1;
   if (sameSubItems.length > 0) {
@@ -82,7 +84,7 @@ const generateCode = () => {
     nextNumber = Math.max(...numbers) + 1;
   }
   const formattedNumber = nextNumber.toString().padStart(4, '0');
-  newItem.code = `${catCode}-${subCode}-${formattedNumber}`;
+  newItem.code = `${catCode}-${subSuffix}-${formattedNumber}`;
 };
 
 watch(() => newItem.category_id, () => { newItem.code = ''; newItem.subcategory_id = null; newItem.brand_id = null; });
