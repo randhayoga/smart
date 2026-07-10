@@ -143,11 +143,13 @@ class MasterSeeder extends Seeder
             'PT Mitra Global Solusindo',
             'PT Karya Indah Semesta',
         ];
-        foreach ($vendors as $vendorName) {
+        $vendorCodes = ['VN0001', 'VN0002', 'VN0003', 'VN0004', 'VN0005'];
+        foreach ($vendors as $index => $vendorName) {
             Vendor::create([
+                'code' => $vendorCodes[$index],
                 'name' => $vendorName,
                 'address' => 'Jl. Jenderal Sudirman No. ' . rand(1, 100) . ', Jakarta',
-                'phone_number' => '021-' . rand(5000000, 9999999),
+                'phone_number' => '08' . rand(5000000, 9999999),
                 'email' => strtolower(str_replace(' ', '', $vendorName)) . '@example.com',
                 'description' => 'Supplier untuk ' . $vendorName,
                 'contact_person_1' => 'Budi Santoso',

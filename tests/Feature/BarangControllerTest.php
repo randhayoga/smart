@@ -79,7 +79,10 @@ class BarangControllerTest extends TestCase
 
     public function test_can_bulk_update_barangs(): void
     {
-        Storage::fake('public');
+        config(['filesystems.disks.public.root' => storage_path('framework/testing/disks/public_test')]);
+        \Illuminate\Support\Facades\Storage::forgetDisk('public');
+        \Illuminate\Support\Facades\File::ensureDirectoryExists(storage_path('framework/testing/disks/public_test'));
+        \Illuminate\Support\Facades\File::cleanDirectory(storage_path('framework/testing/disks/public_test'));
         $user = User::factory()->create();
         
         $barang1 = Barang::factory()->create([
@@ -199,7 +202,9 @@ class BarangControllerTest extends TestCase
     {
         $user = User::factory()->create();
         $barangWithoutLots = Barang::factory()->create();
-        $lot = Lot::factory()->create();
+        $lot = Lot::factory()->create([
+            'barang_id' => Barang::factory()->create()->id,
+        ]);
         $barangWithLots = $lot->barang;
 
         $response = $this->actingAs($user)->delete(route('smart.inventory.barangs.bulk-destroy'), [

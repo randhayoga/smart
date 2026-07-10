@@ -40,6 +40,7 @@ interface Props {
     barang_specification: string;
     barang_category: string;
     barang_subcategory: string;
+    barang_subcategory_code?: string;
     barang_uom: string;
   };
   units: {
@@ -133,7 +134,7 @@ onUnmounted(() => {
 
         <div class="flex-grow grid grid-cols-1 md:grid-cols-12 gap-4">
           <div class="md:col-span-4">
-            <p class="font-bold text-foreground"><span class="text-foreground">Kode Barang:</span> {{ props.lot.barang_code }}</p>
+            <p class="font-bold text-foreground"><span class="text-foreground">Kode Tipe:</span> {{ props.lot.barang_code }}</p>
             <p class="font-bold text-foreground"><span class="text-foreground">Merek:</span> {{ props.lot.barang_brand }}</p>
             <p class="font-bold text-foreground"><span class="text-foreground">Nama:</span> {{ props.lot.barang_nama }}</p>
             <p class="font-bold text-foreground"><span class="text-foreground">Spesifikasi:</span> {{ props.lot.barang_specification }}</p>
@@ -186,7 +187,7 @@ onUnmounted(() => {
     v-model:open="isCreateAssetModalOpen"
     :lot="props.lot"
     :units="props.units"
-    :barang="{ category: props.lot.barang_category }"
+    :barang="{ category: props.lot.barang_category, subcategory_code: props.lot.barang_subcategory_code }"
     :locations="props.locations"
     :floors="props.floors"
     :rooms="props.rooms"

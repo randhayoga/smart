@@ -17,7 +17,7 @@ class LotSeeder extends Seeder
     {
         $lots = [
             [
-                'number' => 'LOT-2026-ATK-KER-0001-0002',
+                'number' => 'LOT-26-ATK-HVS4-0001-0002',
                 'barang_id' => 1,
                 'organizer_id' => 1,
                 'vendor_id' => 1,
@@ -32,7 +32,7 @@ class LotSeeder extends Seeder
                 'image_url' => '/database/seeders/assets/sidu.jpg',
             ],
             [
-                'number' => 'LOT-2026-ATK-KER-0001-0001',
+                'number' => 'LOT-26-ATK-HVS4-0001-0001',
                 'barang_id' => 1,
                 'organizer_id' => 1,
                 'vendor_id' => 1,
@@ -47,7 +47,7 @@ class LotSeeder extends Seeder
                 'image_url' => '/database/seeders/assets/sidu.jpg',
             ],
             [
-                'number' => 'LOT-2026-ELE-LAP-0001-0001',
+                'number' => 'LOT-26-COMP-NB-0001-0001',
                 'barang_id' => 6,
                 'organizer_id' => 2,
                 'vendor_id' => 1,
@@ -62,7 +62,7 @@ class LotSeeder extends Seeder
                 'image_url' => '/database/seeders/assets/acer.jpg',
             ],
             [
-                'number' => 'LOT-2026-KEN-MOB-0001-0001',
+                'number' => 'LOT-26-KEN-MO-0001-0001',
                 'barang_id' => 7,
                 'organizer_id' => 1,
                 'vendor_id' => 2,
@@ -77,7 +77,7 @@ class LotSeeder extends Seeder
                 'image_url' => '/database/seeders/assets/byd.jpg',
             ],
             [
-                'number' => 'LOT-2026-KEN-MOB-0001-0002',
+                'number' => 'LOT-26-KEN-MO-0001-0002',
                 'barang_id' => 7,
                 'organizer_id' => 1,
                 'vendor_id' => 3,
@@ -92,7 +92,7 @@ class LotSeeder extends Seeder
                 'image_url' => '/database/seeders/assets/byd.jpg',
             ],
             [
-                'number' => 'LOT-2026-FUR-KUR-0001-0001',
+                'number' => 'LOT-26-FUR-KK-0001-0001',
                 'barang_id' => 4,
                 'organizer_id' => 1,
                 'vendor_id' => 4,
@@ -107,7 +107,7 @@ class LotSeeder extends Seeder
                 'image_url' => '/database/seeders/assets/ikea.jpg',
             ],
             [
-                'number' => 'LOT-2026-FUR-KUR-0001-0002',
+                'number' => 'LOT-26-FUR-KK-0001-0002',
                 'barang_id' => 4,
                 'organizer_id' => 1,
                 'vendor_id' => 4,

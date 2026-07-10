@@ -27,11 +27,18 @@ class BarangFactory extends Factory
      */
     public function definition(): array
     {
+        $subcategory = Subcategory::inRandomOrder()->first() ?? Subcategory::factory()->create();
+        $subcatCode = $subcategory->code;
+        
+        static $barangSerial = 1;
+        $serial = str_pad($barangSerial++, 4, '0', STR_PAD_LEFT);
+        $number = "{$subcatCode}-{$serial}";
+
         return [
-            'number' => $this->faker->unique()->bothify('???-???-####'),
-            'subcategory_id' => Subcategory::factory(),
-            'brand_id' => Brand::factory(),
-            'uom_id' => Uom::factory(),
+            'number' => $number,
+            'subcategory_id' => $subcategory->id,
+            'brand_id' => Brand::inRandomOrder()->first() ?? Brand::factory(),
+            'uom_id' => Uom::inRandomOrder()->first() ?? Uom::factory(),
             'name' => $this->faker->words(3, true),
             'specification' => $this->faker->sentence(),
             'image_url' => 'inventory/barangs/placeholder.jpg',

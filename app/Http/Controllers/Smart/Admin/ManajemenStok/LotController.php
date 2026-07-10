@@ -204,6 +204,7 @@ class LotController extends Controller
                 'barang_specification' => $lot->barang->specification ?? '-',
                 'barang_category' => $lot->barang->subcategory->category->name ?? '-',
                 'barang_subcategory' => $lot->barang->subcategory->name ?? '-',
+                'barang_subcategory_code' => $lot->barang->subcategory->code ?? '-',
                 'barang_uom' => $lot->barang->uom->name ?? '-',
             ]);
         }
@@ -311,6 +312,7 @@ class LotController extends Controller
                 'barang_specification' => $lot->barang->specification ?? '-',
                 'barang_category' => $lot->barang->subcategory->category->name ?? '-',
                 'barang_subcategory' => $lot->barang->subcategory->name ?? '-',
+                'barang_subcategory_code' => $lot->barang->subcategory->code ?? '-',
                 'barang_uom' => $lot->barang->uom->name ?? '-',
             ],
             'units' => $units,

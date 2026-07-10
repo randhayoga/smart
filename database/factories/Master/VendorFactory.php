@@ -20,6 +20,7 @@ class VendorFactory extends Factory
     public function definition(): array
     {
         return [
+            'code' => 'VN' . fake()->unique()->numerify('####'),
             'name' => fake()->company(),
             'address' => fake()->address(),
             'phone_number' => fake()->phoneNumber(),

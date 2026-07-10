@@ -110,19 +110,33 @@ watch(() => form.status, (newVal) => {
 });
 
 const generateAssetCode = () => {
-  const lotNumber = props.lot?.number || '';
-  const prefix = `${lotNumber}-U`;
-  const matchingUnits = (props.units || []).filter(unit => unit.number?.startsWith(prefix));
+  const tipeCode = props.barang?.subcategory_code || '';
+  const organizerCode = props.lot?.organizer || '';
+  const combination = `${tipeCode}-${organizerCode}-PTRE`;
+  
+  let yy = String(new Date().getFullYear()).slice(-2);
+  if (props.lot?.date_of_receipt) {
+    const dateObj = new Date(props.lot.date_of_receipt);
+    if (!isNaN(dateObj.getTime())) {
+      yy = String(dateObj.getFullYear()).slice(-2);
+    }
+  }
+
+  const pattern = `-${combination}-`;
+  const matchingUnits = (props.units || []).filter(unit => {
+    return unit.number?.includes(pattern);
+  });
+
   let nextNum = 1;
   if (matchingUnits.length > 0) {
     const numbers = matchingUnits.map(unit => {
-      const suffix = unit.number.replace(prefix, '');
-      return parseInt(suffix, 10) || 0;
+      const firstPart = unit.number.split('-')[0];
+      return parseInt(firstPart, 10) || 0;
     });
     nextNum = Math.max(...numbers) + 1;
   }
-  const paddedNum = String(nextNum).padStart(2, '0');
-  return `${prefix}${paddedNum}`;
+  const paddedNum = String(nextNum).padStart(5, '0');
+  return `${paddedNum}-${combination}-${yy}`;
 };
 
 // Init form when modal opens

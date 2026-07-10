@@ -278,6 +278,7 @@ class MasterDataTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->post(route('smart.master.vendors.store'), [
+            'code' => 'VN0009',
             'name' => 'Vendor Baru PT',
             'address' => 'Jalan Baru No. 12',
             'phone_number' => '021-123456',
@@ -290,6 +291,7 @@ class MasterDataTest extends TestCase
 
         $response->assertRedirect();
         $this->assertDatabaseHas('vendors', [
+            'code' => 'VN0009',
             'name' => 'Vendor Baru PT',
             'address' => 'Jalan Baru No. 12',
             'phone_number' => '021-123456',
@@ -307,6 +309,7 @@ class MasterDataTest extends TestCase
         $vendor = Vendor::factory()->create();
 
         $response = $this->actingAs($user)->put(route('smart.master.vendors.update', $vendor), [
+            'code' => 'VN9999',
             'name' => 'Vendor Updated PT',
             'address' => 'Jalan Updated No. 12',
             'phone_number' => '021-654321',
@@ -320,6 +323,7 @@ class MasterDataTest extends TestCase
         $response->assertRedirect();
         $this->assertDatabaseHas('vendors', [
             'id' => $vendor->id,
+            'code' => 'VN9999',
             'name' => 'Vendor Updated PT',
             'address' => 'Jalan Updated No. 12',
             'phone_number' => '021-654321',

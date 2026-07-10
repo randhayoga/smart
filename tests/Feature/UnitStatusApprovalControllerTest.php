@@ -17,8 +17,18 @@ class UnitStatusApprovalControllerTest extends TestCase
     private function createUnit()
     {
         $lot = Lot::factory()->create();
+        
+        $tipeCode = $lot->barang->subcategory->code ?? 'SUB';
+        $organizerCode = $lot->organizer->name ?? 'ORG';
+        $combination = "{$tipeCode}-{$organizerCode}-PTRE";
+        $yy = $lot->date_of_receipt ? $lot->date_of_receipt->format('y') : date('y');
+        $unitNumber = "00001-{$combination}-{$yy}";
+        if (strlen($unitNumber) > 25) {
+            $unitNumber = substr($unitNumber, 0, 25);
+        }
+
         return Unit::create([
-            'number' => $lot->number . '-U01',
+            'number' => $unitNumber,
             'lot_id' => $lot->id,
             'location_id' => $lot->location_id,
             'status' => 'Tersedia',
@@ -226,14 +236,26 @@ class UnitStatusApprovalControllerTest extends TestCase
 
     public function test_storing_unit_with_status_rusak_creates_pending_approval(): void
     {
-        \Illuminate\Support\Facades\Storage::fake('public');
+        config(['filesystems.disks.public.root' => storage_path('framework/testing/disks/public_test')]);
+        \Illuminate\Support\Facades\Storage::forgetDisk('public');
+        \Illuminate\Support\Facades\File::ensureDirectoryExists(storage_path('framework/testing/disks/public_test'));
+        \Illuminate\Support\Facades\File::cleanDirectory(storage_path('framework/testing/disks/public_test'));
         $user = User::factory()->create();
         $lot = Lot::factory()->create();
         $location = \App\Models\Master\Location::factory()->create();
         $file = \Illuminate\Http\UploadedFile::fake()->image('unit.jpg');
 
+        $tipeCode = $lot->barang->subcategory->code ?? 'SUB';
+        $organizerCode = $lot->organizer->name ?? 'ORG';
+        $combination = "{$tipeCode}-{$organizerCode}-PTRE";
+        $yy = $lot->date_of_receipt ? $lot->date_of_receipt->format('y') : date('y');
+        $unitNumber = "00099-{$combination}-{$yy}";
+        if (strlen($unitNumber) > 25) {
+            $unitNumber = substr($unitNumber, 0, 25);
+        }
+
         $response = $this->actingAs($user)->post(route('smart.inventory.units.store'), [
-            'number' => $lot->number . '-U99',
+            'number' => $unitNumber,
             'lot_id' => $lot->id,
             'location_id' => $location->id,
             'status' => 'Rusak Total',
@@ -243,9 +265,10 @@ class UnitStatusApprovalControllerTest extends TestCase
             'use_lot_image' => false,
         ]);
 
+        $response->assertSessionHasNoErrors();
         $response->assertRedirect();
         
-        $unit = Unit::where('number', $lot->number . '-U99')->firstOrFail();
+        $unit = Unit::where('lot_id', $lot->id)->firstOrFail();
         $this->assertEquals('Pending', $unit->status);
 
         $this->assertDatabaseHas('unit_status_approvals', [
