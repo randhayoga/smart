@@ -15,7 +15,8 @@ class BrandController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:brands,name',
+            'name'        => 'required|string|max:255|unique:brands,name',
+            'description' => 'nullable|string|max:255',
         ]);
 
         Brand::create($validated);
@@ -29,7 +30,8 @@ class BrandController extends Controller
     public function update(Request $request, Brand $brand): RedirectResponse
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:brands,name,' . $brand->id,
+            'name'        => 'required|string|max:255|unique:brands,name,' . $brand->id,
+            'description' => 'nullable|string|max:255',
         ]);
 
         $brand->update($validated);

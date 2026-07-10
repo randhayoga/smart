@@ -35,7 +35,21 @@ import Tabs from '@/Components/Tabs.vue';
 
 interface Category    { id: number; code: string; name: string; is_consumable: boolean; }
 interface Subcategory { id: number; code: string; name: string; category_id: number; category: Category; }
-interface SimpleItem  { id: number; name: string; }
+interface SimpleItem  { id: number; name: string; description?: string; }
+interface VendorItem  {
+  id: number;
+  name: string;
+  address: string;
+  phone_number: string;
+  email?: string;
+  description?: string;
+  contact_person_1?: string;
+  cp_email_1?: string;
+  cp_phone_1?: string;
+  contact_person_2?: string;
+  cp_email_2?: string;
+  cp_phone_2?: string;
+}
 interface Floor       { id: number; name: string; location_id: number; location: SimpleItem; }
 interface Room        { id: number; name: string; floor_id: number; floor: Floor; }
 
@@ -46,7 +60,7 @@ interface Props {
   uoms:          SimpleItem[];
   brands:        SimpleItem[];
   organizers:    SimpleItem[];
-  vendors:       SimpleItem[];
+  vendors:       VendorItem[];
   locations:     SimpleItem[];
   floors:        Floor[];
   rooms:         Room[];
@@ -129,22 +143,47 @@ const editingItem       = ref<any>(null);
 
 // ── Create forms ────────────────────────────────────────────────
 const categoryForm    = useForm({ code: '', name: '', is_consumable: '1' });
-const subcategoryForm = useForm({ category_id: null as number | null, code: '', name: '' });
+const subcategoryForm = useForm({ category_id: null as number | null, code: '', name: '', description: '' });
 const uomForm         = useForm({ name: '' });
-const brandForm       = useForm({ name: '' });
+const brandForm       = useForm({ name: '', description: '' });
 const organizerForm   = useForm({ name: '' });
-const vendorForm      = useForm({ name: '' });
+const vendorForm      = useForm({
+  name: '',
+  address: '',
+  phone_number: '',
+  email: '',
+  description: '',
+  contact_person_1: '',
+  cp_email_1: '',
+  cp_phone_1: '',
+  contact_person_2: '',
+  cp_email_2: '',
+  cp_phone_2: '',
+});
 const locationForm    = useForm({ name: '' });
 const floorForm       = useForm({ location_id: null as number | null, name: '' });
 const roomForm        = useForm({ location_id: null as number | null, floor_id: null as number | null, name: '' });
 
 // ── Edit forms ──────────────────────────────────────────────────
 const editCategoryForm    = useForm({ id: null as number | null, code: '', name: '', is_consumable: '1' });
-const editSubcategoryForm = useForm({ id: null as number | null, name: '' });
+const editSubcategoryForm = useForm({ id: null as number | null, name: '', description: '' });
 const editUomForm         = useForm({ id: null as number | null, name: '' });
-const editBrandForm       = useForm({ id: null as number | null, name: '' });
+const editBrandForm       = useForm({ id: null as number | null, name: '', description: '' });
 const editOrganizerForm   = useForm({ id: null as number | null, name: '' });
-const editVendorForm      = useForm({ id: null as number | null, name: '' });
+const editVendorForm      = useForm({
+  id: null as number | null,
+  name: '',
+  address: '',
+  phone_number: '',
+  email: '',
+  description: '',
+  contact_person_1: '',
+  cp_email_1: '',
+  cp_phone_1: '',
+  contact_person_2: '',
+  cp_email_2: '',
+  cp_phone_2: '',
+});
 const editLocationForm    = useForm({ id: null as number | null, name: '' });
 const editFloorForm       = useForm({ id: null as number | null, location_id: null as number | null, name: '' });
 const editRoomForm        = useForm({ id: null as number | null, location_id: null as number | null, floor_id: null as number | null, name: '' });
@@ -153,6 +192,16 @@ const editRoomForm        = useForm({ id: null as number | null, location_id: nu
 const createFormErrors = ref({
   code: '',
   name: '',
+  description: '',
+  address: '',
+  phone_number: '',
+  email: '',
+  contact_person_1: '',
+  cp_email_1: '',
+  cp_phone_1: '',
+  contact_person_2: '',
+  cp_email_2: '',
+  cp_phone_2: '',
   category_id: '',
   location_id: '',
   floor_id: '',
@@ -161,9 +210,58 @@ const createFormErrors = ref({
 const editFormErrors = ref({
   code: '',
   name: '',
+  description: '',
+  address: '',
+  phone_number: '',
+  email: '',
+  contact_person_1: '',
+  cp_email_1: '',
+  cp_phone_1: '',
+  contact_person_2: '',
+  cp_email_2: '',
+  cp_phone_2: '',
   location_id: '',
   floor_id: '',
 });
+
+const resetCreateFormErrors = () => {
+  createFormErrors.value = {
+    code: '',
+    name: '',
+    description: '',
+    address: '',
+    phone_number: '',
+    email: '',
+    contact_person_1: '',
+    cp_email_1: '',
+    cp_phone_1: '',
+    contact_person_2: '',
+    cp_email_2: '',
+    cp_phone_2: '',
+    category_id: '',
+    location_id: '',
+    floor_id: '',
+  };
+};
+
+const resetEditFormErrors = () => {
+  editFormErrors.value = {
+    code: '',
+    name: '',
+    description: '',
+    address: '',
+    phone_number: '',
+    email: '',
+    contact_person_1: '',
+    cp_email_1: '',
+    cp_phone_1: '',
+    contact_person_2: '',
+    cp_email_2: '',
+    cp_phone_2: '',
+    location_id: '',
+    floor_id: '',
+  };
+};
 
 // --- Reactive error clearing (create forms) ---
 watch(() => categoryForm.code,    (v) => { if (v && createFormErrors.value.code) createFormErrors.value.code = ''; });
@@ -231,9 +329,24 @@ const activeCreateForm = computed(() => {
 const openEditModal = (item: any) => {
   editingItem.value = { ...item };
   const form = activeEditForm.value as any;
-  editFormErrors.value = { code: '', name: '', location_id: '', floor_id: '' };
+  resetEditFormErrors();
   form.id   = item.id;
   form.name = item.name;
+  if (activeTab.value === 'Subkategori' || activeTab.value === 'Merek') {
+    form.description = item.description ?? '';
+  }
+  if (activeTab.value === 'Vendor') {
+    form.address = item.address ?? '';
+    form.phone_number = item.phone_number ?? '';
+    form.email = item.email ?? '';
+    form.description = item.description ?? '';
+    form.contact_person_1 = item.contact_person_1 ?? '';
+    form.cp_email_1 = item.cp_email_1 ?? '';
+    form.cp_phone_1 = item.cp_phone_1 ?? '';
+    form.contact_person_2 = item.contact_person_2 ?? '';
+    form.cp_email_2 = item.cp_email_2 ?? '';
+    form.cp_phone_2 = item.cp_phone_2 ?? '';
+  }
   if (activeTab.value === 'Kategori') {
     form.code = item.code;
     form.is_consumable = item.is_consumable ? '1' : '0';
@@ -261,7 +374,7 @@ const closeEditModal = () => {
     editLocationForm.reset();
     editFloorForm.reset();
     editRoomForm.reset();
-    editFormErrors.value = { code: '', name: '', location_id: '', floor_id: '' };
+    resetEditFormErrors();
   }, 200);
 };
 
@@ -275,7 +388,7 @@ const openCreateModal = () => {
   locationForm.reset();
   floorForm.reset();
   roomForm.reset();
-  createFormErrors.value = { code: '', name: '', category_id: '', location_id: '', floor_id: '' };
+  resetCreateFormErrors();
   isCreateModalOpen.value = true;
 };
 
@@ -290,7 +403,7 @@ const closeCreateModal = () => {
   locationForm.reset();
   floorForm.reset();
   roomForm.reset();
-  createFormErrors.value = { code: '', name: '', category_id: '', location_id: '', floor_id: '' };
+  resetCreateFormErrors();
 };
 
 // Reset filters when tab changes
@@ -361,6 +474,48 @@ const columns = computed<ColumnDef<any>[]>(() => {
     },
     cell: ({ row }) => h('div', { class: 'pl-2 text-foreground truncate' }, row.getValue('name')),
   });
+
+  // Address & Phone & Email & Contact Person columns (Vendor only)
+  if (activeTab.value === 'Vendor') {
+    cols.push({
+      accessorKey: 'address',
+      header: () => h('span', { class: 'pl-2 font-semibold text-foreground' }, 'Alamat'),
+      cell: ({ row }) => h('div', { class: 'pl-2 text-muted-foreground truncate' }, row.getValue('address')),
+    });
+    cols.push({
+      accessorKey: 'phone_number',
+      header: () => h('span', { class: 'pl-2 font-semibold text-foreground' }, 'No. Telepon'),
+      cell: ({ row }) => h('div', { class: 'pl-2 text-muted-foreground truncate' }, row.getValue('phone_number')),
+    });
+    cols.push({
+      accessorKey: 'email',
+      header: () => h('span', { class: 'pl-2 font-semibold text-foreground' }, 'Email'),
+      cell: ({ row }) => h('div', { class: 'pl-2 text-muted-foreground truncate' }, row.getValue('email') || '-'),
+    });
+    cols.push({
+      accessorKey: 'contact_person_1',
+      header: () => h('span', { class: 'pl-2 font-semibold text-foreground' }, 'Contact Person'),
+      cell: ({ row }) => h('div', { class: 'pl-2 text-muted-foreground truncate' }, row.getValue('contact_person_1') || '-'),
+    });
+  }
+
+  // Description column (Subkategori & Merek & Vendor)
+  if (['Subkategori', 'Merek', 'Vendor'].includes(activeTab.value)) {
+    cols.push({
+      accessorKey: 'description',
+      header: ({ column }) => {
+        return h(Button, {
+          variant: 'ghost',
+          onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+          class: 'pl-2 hover:bg-transparent font-semibold text-foreground justify-start'
+        }, () => [
+          'Deskripsi',
+          h(ArrowUpDown, { class: 'ml-2 h-4 w-4 text-muted-foreground' }),
+        ])
+      },
+      cell: ({ row }) => h('div', { class: 'pl-2 text-muted-foreground truncate' }, row.getValue('description') || '-'),
+    });
+  }
 
   // Parent column (Subkategori, Lantai)
   if (['Subkategori', 'Lantai'].includes(activeTab.value)) {
@@ -547,7 +702,7 @@ const handleConfirmDelete = () => {
 
 const submitCreate = () => {
   const form = activeCreateForm.value as any;
-  createFormErrors.value = { code: '', name: '', category_id: '', location_id: '', floor_id: '' };
+  resetCreateFormErrors();
   let hasError = false;
 
   if (activeTab.value === 'Kategori') {
@@ -570,6 +725,19 @@ const submitCreate = () => {
     }
     if (!form.name || !form.name.trim()) {
       createFormErrors.value.name = 'Nama Subkategori belum diisi';
+      hasError = true;
+    }
+  } else if (activeTab.value === 'Vendor') {
+    if (!form.name || !form.name.trim()) {
+      createFormErrors.value.name = 'Nama Vendor belum diisi';
+      hasError = true;
+    }
+    if (!form.address || !form.address.trim()) {
+      createFormErrors.value.address = 'Alamat Vendor belum diisi';
+      hasError = true;
+    }
+    if (!form.phone_number || !form.phone_number.trim()) {
+      createFormErrors.value.phone_number = 'Nomor Telepon Vendor belum diisi';
       hasError = true;
     }
   } else if (activeTab.value === 'Lantai') {
@@ -595,7 +763,7 @@ const submitCreate = () => {
       hasError = true;
     }
   } else {
-    // Satuan, Merek, Organizer, Vendor, Lokasi
+    // Satuan, Merek, Organizer, Lokasi
     if (!form.name || !form.name.trim()) {
       createFormErrors.value.name = `Nama ${activeTab.value} belum diisi`;
       hasError = true;
@@ -604,7 +772,17 @@ const submitCreate = () => {
 
   if (hasError) return;
 
-  form.post(route(storeRouteMap[activeTab.value]), {
+  let submitForm = form;
+  if (activeTab.value === 'Subkategori') {
+    const category = props.categories.find(c => c.id === form.category_id);
+    const prefix = category ? category.code + '-' : '';
+    submitForm = form.transform((data: any) => ({
+      ...data,
+      code: prefix + data.code,
+    }));
+  }
+
+  submitForm.post(route(storeRouteMap[activeTab.value]), {
     onSuccess: () => closeCreateModal(),
   });
 };
@@ -612,7 +790,7 @@ const submitCreate = () => {
 const submitUpdate = () => {
   const form = activeEditForm.value as any;
   if (!form.id) return;
-  editFormErrors.value = { code: '', name: '', location_id: '', floor_id: '' };
+  resetEditFormErrors();
   let hasError = false;
 
   if (activeTab.value === 'Kategori') {
@@ -623,6 +801,19 @@ const submitUpdate = () => {
   } else if (activeTab.value === 'Subkategori') {
     if (!form.name || !form.name.trim()) {
       editFormErrors.value.name = 'Nama Subkategori belum diisi';
+      hasError = true;
+    }
+  } else if (activeTab.value === 'Vendor') {
+    if (!form.name || !form.name.trim()) {
+      editFormErrors.value.name = 'Nama Vendor belum diisi';
+      hasError = true;
+    }
+    if (!form.address || !form.address.trim()) {
+      editFormErrors.value.address = 'Alamat Vendor belum diisi';
+      hasError = true;
+    }
+    if (!form.phone_number || !form.phone_number.trim()) {
+      editFormErrors.value.phone_number = 'Nomor Telepon Vendor belum diisi';
       hasError = true;
     }
   } else if (activeTab.value === 'Lantai') {
@@ -648,7 +839,7 @@ const submitUpdate = () => {
       hasError = true;
     }
   } else {
-    // Satuan, Merek, Organizer, Vendor, Lokasi
+    // Satuan, Merek, Organizer, Lokasi
     if (!form.name || !form.name.trim()) {
       editFormErrors.value.name = `Nama ${activeTab.value} belum diisi`;
       hasError = true;
@@ -873,7 +1064,7 @@ onUnmounted(() => {
           <div 
             :class="[
               'bg-card text-foreground rounded-[14px] shadow-2xl w-full min-h-[261px] overflow-hidden flex flex-col',
-              !['Subkategori', 'Lantai', 'Ruangan', 'Kategori'].includes(activeTab) ? 'max-w-[600px]' : 'max-w-[1200px]'
+              !['Subkategori', 'Lantai', 'Ruangan', 'Kategori', 'Vendor'].includes(activeTab) ? 'max-w-[600px]' : 'max-w-[1200px]'
             ]"
             @click.stop
           >
@@ -888,7 +1079,7 @@ onUnmounted(() => {
             <!-- Modal Body -->
             <div class="p-6 flex-grow">
               <!-- Edit: Subkategori -->
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-6" v-if="activeTab === 'Subkategori'">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6" v-if="activeTab === 'Subkategori'">
                 <Field data-disabled="true">
                   <FieldLabel>Kategori Induk</FieldLabel>
                   <FieldContent>
@@ -911,6 +1102,13 @@ onUnmounted(() => {
                       :class="[editFormErrors.name ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']" />
                   </FieldContent>
                   <FieldError v-if="editFormErrors.name">{{ editFormErrors.name }}</FieldError>
+                </Field>
+                <Field>
+                  <FieldLabel><span>Deskripsi</span></FieldLabel>
+                  <FieldContent>
+                    <textarea v-model="editSubcategoryForm.description" placeholder="Deskripsi subkategori (opsional)..." rows="3"
+                      class="w-full px-3 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors border-input focus:ring-primary/20 focus:border-primary" />
+                  </FieldContent>
                 </Field>
               </div>
 
@@ -1033,6 +1231,148 @@ onUnmounted(() => {
                 </Field>
               </div>
 
+              <!-- Edit: Merek -->
+              <div v-else-if="activeTab === 'Merek'" class="grid grid-cols-1 gap-6">
+                <Field :data-invalid="!!editFormErrors.name || undefined">
+                  <FieldLabel><span>Nama Merek<span class="text-destructive">*</span></span></FieldLabel>
+                  <FieldContent>
+                    <input type="text" v-model="editBrandForm.name" maxlength="255"
+                      placeholder="Nama merek..."
+                      class="w-full px-3 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors"
+                      :class="[editFormErrors.name ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']" />
+                  </FieldContent>
+                  <FieldError v-if="editFormErrors.name">{{ editFormErrors.name }}</FieldError>
+                </Field>
+                <Field :data-invalid="!!editFormErrors.description || undefined">
+                  <FieldLabel>Deskripsi</FieldLabel>
+                  <FieldContent>
+                    <textarea v-model="editBrandForm.description" placeholder="Deskripsi merek..." rows="3"
+                      class="w-full px-3 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors border-input focus:ring-primary/20 focus:border-primary" />
+                  </FieldContent>
+                  <FieldError v-if="editFormErrors.description">{{ editFormErrors.description }}</FieldError>
+                </Field>
+              </div>
+
+              <!-- Edit: Vendor -->
+              <div v-else-if="activeTab === 'Vendor'" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Field :data-invalid="!!editFormErrors.name || undefined" class="md:col-span-2">
+                  <FieldLabel><span>Nama Vendor<span class="text-destructive">*</span></span></FieldLabel>
+                  <FieldContent>
+                    <input type="text" v-model="editVendorForm.name" maxlength="255"
+                      placeholder="Nama vendor..."
+                      class="w-full px-3 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors"
+                      :class="[editFormErrors.name ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']" />
+                  </FieldContent>
+                  <FieldError v-if="editFormErrors.name">{{ editFormErrors.name }}</FieldError>
+                </Field>
+                <Field :data-invalid="!!editFormErrors.address || undefined">
+                  <FieldLabel><span>Alamat<span class="text-destructive">*</span></span></FieldLabel>
+                  <FieldContent>
+                    <input type="text" v-model="editVendorForm.address" maxlength="255"
+                      placeholder="Alamat lengkap..."
+                      class="w-full px-3 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors"
+                      :class="[editFormErrors.address ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']" />
+                  </FieldContent>
+                  <FieldError v-if="editFormErrors.address">{{ editFormErrors.address }}</FieldError>
+                </Field>
+                <Field :data-invalid="!!editFormErrors.phone_number || undefined">
+                  <FieldLabel><span>No. Telepon<span class="text-destructive">*</span></span></FieldLabel>
+                  <FieldContent>
+                    <input type="text" v-model="editVendorForm.phone_number" maxlength="255"
+                      placeholder="Nomor telepon..."
+                      class="w-full px-3 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors"
+                      :class="[editFormErrors.phone_number ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']" />
+                  </FieldContent>
+                  <FieldError v-if="editFormErrors.phone_number">{{ editFormErrors.phone_number }}</FieldError>
+                </Field>
+                <Field :data-invalid="!!editFormErrors.email || undefined">
+                  <FieldLabel>Email</FieldLabel>
+                  <FieldContent>
+                    <input type="email" v-model="editVendorForm.email" maxlength="255"
+                      placeholder="Alamat email..."
+                      class="w-full px-3 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors border-input focus:ring-primary/20 focus:border-primary" />
+                  </FieldContent>
+                  <FieldError v-if="editFormErrors.email">{{ editFormErrors.email }}</FieldError>
+                </Field>
+                <Field :data-invalid="!!editFormErrors.description || undefined">
+                  <FieldLabel>Deskripsi</FieldLabel>
+                  <FieldContent>
+                    <input type="text" v-model="editVendorForm.description" maxlength="255"
+                      placeholder="Keterangan singkat..."
+                      class="w-full px-3 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors border-input focus:ring-primary/20 focus:border-primary" />
+                  </FieldContent>
+                  <FieldError v-if="editFormErrors.description">{{ editFormErrors.description }}</FieldError>
+                </Field>
+
+                <!-- Contact Person 1 Section -->
+                <div class="md:col-span-2 border-t pt-4 mt-2">
+                  <h4 class="text-sm font-semibold text-foreground mb-4">Contact Person 1</h4>
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Field :data-invalid="!!editFormErrors.contact_person_1 || undefined">
+                      <FieldLabel>Nama CP 1</FieldLabel>
+                      <FieldContent>
+                        <input type="text" v-model="editVendorForm.contact_person_1" maxlength="255"
+                          placeholder="Nama CP 1..."
+                          class="w-full px-3 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors border-input focus:ring-primary/20 focus:border-primary" />
+                      </FieldContent>
+                      <FieldError v-if="editFormErrors.contact_person_1">{{ editFormErrors.contact_person_1 }}</FieldError>
+                    </Field>
+                    <Field :data-invalid="!!editFormErrors.cp_email_1 || undefined">
+                      <FieldLabel>Email CP 1</FieldLabel>
+                      <FieldContent>
+                        <input type="email" v-model="editVendorForm.cp_email_1" maxlength="255"
+                          placeholder="Email CP 1..."
+                          class="w-full px-3 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors border-input focus:ring-primary/20 focus:border-primary" />
+                      </FieldContent>
+                      <FieldError v-if="editFormErrors.cp_email_1">{{ editFormErrors.cp_email_1 }}</FieldError>
+                    </Field>
+                    <Field :data-invalid="!!editFormErrors.cp_phone_1 || undefined">
+                      <FieldLabel>Telepon CP 1</FieldLabel>
+                      <FieldContent>
+                        <input type="text" v-model="editVendorForm.cp_phone_1" maxlength="255"
+                          placeholder="Telepon CP 1..."
+                          class="w-full px-3 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors border-input focus:ring-primary/20 focus:border-primary" />
+                      </FieldContent>
+                      <FieldError v-if="editFormErrors.cp_phone_1">{{ editFormErrors.cp_phone_1 }}</FieldError>
+                    </Field>
+                  </div>
+                </div>
+
+                <!-- Contact Person 2 Section -->
+                <div class="md:col-span-2 border-t pt-4 mt-2">
+                  <h4 class="text-sm font-semibold text-foreground mb-4">Contact Person 2</h4>
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Field :data-invalid="!!editFormErrors.contact_person_2 || undefined">
+                      <FieldLabel>Nama CP 2</FieldLabel>
+                      <FieldContent>
+                        <input type="text" v-model="editVendorForm.contact_person_2" maxlength="255"
+                          placeholder="Nama CP 2..."
+                          class="w-full px-3 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors border-input focus:ring-primary/20 focus:border-primary" />
+                      </FieldContent>
+                      <FieldError v-if="editFormErrors.contact_person_2">{{ editFormErrors.contact_person_2 }}</FieldError>
+                    </Field>
+                    <Field :data-invalid="!!editFormErrors.cp_email_2 || undefined">
+                      <FieldLabel>Email CP 2</FieldLabel>
+                      <FieldContent>
+                        <input type="email" v-model="editVendorForm.cp_email_2" maxlength="255"
+                          placeholder="Email CP 2..."
+                          class="w-full px-3 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors border-input focus:ring-primary/20 focus:border-primary" />
+                      </FieldContent>
+                      <FieldError v-if="editFormErrors.cp_email_2">{{ editFormErrors.cp_email_2 }}</FieldError>
+                    </Field>
+                    <Field :data-invalid="!!editFormErrors.cp_phone_2 || undefined">
+                      <FieldLabel>Telepon CP 2</FieldLabel>
+                      <FieldContent>
+                        <input type="text" v-model="editVendorForm.cp_phone_2" maxlength="255"
+                          placeholder="Telepon CP 2..."
+                          class="w-full px-3 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors border-input focus:ring-primary/20 focus:border-primary" />
+                      </FieldContent>
+                      <FieldError v-if="editFormErrors.cp_phone_2">{{ editFormErrors.cp_phone_2 }}</FieldError>
+                    </Field>
+                  </div>
+                </div>
+              </div>
+
               <!-- Edit: Satuan / Merek / Organizer / Vendor / Lokasi (name-only) -->
               <div v-else>
                 <Field :data-invalid="!!editFormErrors.name || undefined">
@@ -1082,7 +1422,7 @@ onUnmounted(() => {
           <div 
             :class="[
               'bg-card text-foreground rounded-[14px] shadow-2xl w-full min-h-[261px] overflow-hidden flex flex-col',
-              !['Subkategori', 'Lantai', 'Ruangan', 'Kategori'].includes(activeTab) ? 'max-w-[600px]' : 'max-w-[1200px]'
+              !['Subkategori', 'Lantai', 'Ruangan', 'Kategori', 'Vendor'].includes(activeTab) ? 'max-w-[600px]' : 'max-w-[1200px]'
             ]"
             @click.stop
           >
@@ -1097,7 +1437,7 @@ onUnmounted(() => {
             <!-- Modal Body -->
             <div class="p-6 flex-grow">
               <!-- Create: Subkategori -->
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-6" v-if="activeTab === 'Subkategori'">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6" v-if="activeTab === 'Subkategori'">
                 <Field :data-invalid="!!createFormErrors.category_id || undefined">
                   <FieldLabel><span>Kategori Induk<span class="text-destructive">*</span></span></FieldLabel>
                   <FieldContent>
@@ -1129,8 +1469,8 @@ onUnmounted(() => {
                         {{ subcategoryForm.category_id ? (props.categories.find(c => c.id === subcategoryForm.category_id)?.code ?? 'KOD') + '-' : 'KOD-' }}
                       </span>
                       <input type="text" v-model="subcategoryForm.code"
-                         @input="subcategoryForm.code = subcategoryForm.code.replace(/[^A-Za-z0-9]/g, '').toUpperCase()"
-                        maxlength="3" :disabled="!subcategoryForm.category_id" placeholder="3 huruf kapital/angka..."
+                         @input="subcategoryForm.code = subcategoryForm.code.replace(/[^A-Za-z]/g, '').toUpperCase()"
+                        maxlength="4" :disabled="!subcategoryForm.category_id" placeholder="4 huruf kapital..."
                         class="w-full pr-3 py-2 text-sm bg-transparent border-none focus:ring-0 focus:outline-none"
                         :class="{ 'cursor-not-allowed': !subcategoryForm.category_id }" />
                     </div>
@@ -1145,6 +1485,13 @@ onUnmounted(() => {
                       :class="[createFormErrors.name ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']" />
                   </FieldContent>
                   <FieldError v-if="createFormErrors.name">{{ createFormErrors.name }}</FieldError>
+                </Field>
+                <Field>
+                  <FieldLabel><span>Deskripsi</span></FieldLabel>
+                  <FieldContent>
+                    <textarea v-model="subcategoryForm.description" placeholder="Deskripsi subkategori (opsional)..." rows="3"
+                      class="w-full px-3 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors border-input focus:ring-primary/20 focus:border-primary" />
+                  </FieldContent>
                 </Field>
               </div>
 
@@ -1238,7 +1585,7 @@ onUnmounted(() => {
                   <FieldContent>
                     <input type="text" v-model="categoryForm.code"
                       @input="categoryForm.code = categoryForm.code.replace(/[^A-Za-z0-9]/g, '').toUpperCase()"
-                      maxlength="3" placeholder="Contoh: ATK, FUR, ELE..."
+                      maxlength="4" placeholder="Contoh: ATK, FUR, COMP..."
                       class="w-full px-3 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors"
                       :class="[createFormErrors.code ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']" />
                   </FieldContent>
@@ -1270,7 +1617,149 @@ onUnmounted(() => {
                 </Field>
               </div>
 
-              <!-- Create: Satuan / Merek / Organizer / Vendor / Lokasi (name-only) -->
+              <!-- Create: Merek -->
+              <div v-else-if="activeTab === 'Merek'" class="grid grid-cols-1 gap-6">
+                <Field :data-invalid="!!createFormErrors.name || undefined">
+                  <FieldLabel><span>Nama Merek<span class="text-destructive">*</span></span></FieldLabel>
+                  <FieldContent>
+                    <input type="text" v-model="brandForm.name" maxlength="255"
+                      placeholder="Nama merek..."
+                      class="w-full px-3 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors"
+                      :class="[createFormErrors.name ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']" />
+                  </FieldContent>
+                  <FieldError v-if="createFormErrors.name">{{ createFormErrors.name }}</FieldError>
+                </Field>
+                <Field :data-invalid="!!createFormErrors.description || undefined">
+                  <FieldLabel>Deskripsi</FieldLabel>
+                  <FieldContent>
+                    <textarea v-model="brandForm.description" placeholder="Deskripsi merek..." rows="3"
+                      class="w-full px-3 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors border-input focus:ring-primary/20 focus:border-primary" />
+                  </FieldContent>
+                  <FieldError v-if="createFormErrors.description">{{ createFormErrors.description }}</FieldError>
+                </Field>
+              </div>
+
+              <!-- Create: Vendor -->
+              <div v-else-if="activeTab === 'Vendor'" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Field :data-invalid="!!createFormErrors.name || undefined" class="md:col-span-2">
+                  <FieldLabel><span>Nama Vendor<span class="text-destructive">*</span></span></FieldLabel>
+                  <FieldContent>
+                    <input type="text" v-model="vendorForm.name" maxlength="255"
+                      placeholder="Nama vendor..."
+                      class="w-full px-3 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors"
+                      :class="[createFormErrors.name ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']" />
+                  </FieldContent>
+                  <FieldError v-if="createFormErrors.name">{{ createFormErrors.name }}</FieldError>
+                </Field>
+                <Field :data-invalid="!!createFormErrors.address || undefined">
+                  <FieldLabel><span>Alamat<span class="text-destructive">*</span></span></FieldLabel>
+                  <FieldContent>
+                    <input type="text" v-model="vendorForm.address" maxlength="255"
+                      placeholder="Alamat lengkap..."
+                      class="w-full px-3 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors"
+                      :class="[createFormErrors.address ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']" />
+                  </FieldContent>
+                  <FieldError v-if="createFormErrors.address">{{ createFormErrors.address }}</FieldError>
+                </Field>
+                <Field :data-invalid="!!createFormErrors.phone_number || undefined">
+                  <FieldLabel><span>No. Telepon<span class="text-destructive">*</span></span></FieldLabel>
+                  <FieldContent>
+                    <input type="text" v-model="vendorForm.phone_number" maxlength="255"
+                      placeholder="Nomor telepon..."
+                      class="w-full px-3 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors"
+                      :class="[createFormErrors.phone_number ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']" />
+                  </FieldContent>
+                  <FieldError v-if="createFormErrors.phone_number">{{ createFormErrors.phone_number }}</FieldError>
+                </Field>
+                <Field :data-invalid="!!createFormErrors.email || undefined">
+                  <FieldLabel>Email</FieldLabel>
+                  <FieldContent>
+                    <input type="email" v-model="vendorForm.email" maxlength="255"
+                      placeholder="Alamat email..."
+                      class="w-full px-3 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors border-input focus:ring-primary/20 focus:border-primary" />
+                  </FieldContent>
+                  <FieldError v-if="createFormErrors.email">{{ createFormErrors.email }}</FieldError>
+                </Field>
+                <Field :data-invalid="!!createFormErrors.description || undefined">
+                  <FieldLabel>Deskripsi</FieldLabel>
+                  <FieldContent>
+                    <input type="text" v-model="vendorForm.description" maxlength="255"
+                      placeholder="Keterangan singkat..."
+                      class="w-full px-3 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors border-input focus:ring-primary/20 focus:border-primary" />
+                  </FieldContent>
+                  <FieldError v-if="createFormErrors.description">{{ createFormErrors.description }}</FieldError>
+                </Field>
+
+                <!-- Contact Person 1 Section -->
+                <div class="md:col-span-2 border-t pt-4 mt-2">
+                  <h4 class="text-sm font-semibold text-foreground mb-4">Contact Person 1</h4>
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Field :data-invalid="!!createFormErrors.contact_person_1 || undefined">
+                      <FieldLabel>Nama CP 1</FieldLabel>
+                      <FieldContent>
+                        <input type="text" v-model="vendorForm.contact_person_1" maxlength="255"
+                          placeholder="Nama CP 1..."
+                          class="w-full px-3 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors border-input focus:ring-primary/20 focus:border-primary" />
+                      </FieldContent>
+                      <FieldError v-if="createFormErrors.contact_person_1">{{ createFormErrors.contact_person_1 }}</FieldError>
+                    </Field>
+                    <Field :data-invalid="!!createFormErrors.cp_email_1 || undefined">
+                      <FieldLabel>Email CP 1</FieldLabel>
+                      <FieldContent>
+                        <input type="email" v-model="vendorForm.cp_email_1" maxlength="255"
+                          placeholder="Email CP 1..."
+                          class="w-full px-3 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors border-input focus:ring-primary/20 focus:border-primary" />
+                      </FieldContent>
+                      <FieldError v-if="createFormErrors.cp_email_1">{{ createFormErrors.cp_email_1 }}</FieldError>
+                    </Field>
+                    <Field :data-invalid="!!createFormErrors.cp_phone_1 || undefined">
+                      <FieldLabel>Telepon CP 1</FieldLabel>
+                      <FieldContent>
+                        <input type="text" v-model="vendorForm.cp_phone_1" maxlength="255"
+                          placeholder="Telepon CP 1..."
+                          class="w-full px-3 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors border-input focus:ring-primary/20 focus:border-primary" />
+                      </FieldContent>
+                      <FieldError v-if="createFormErrors.cp_phone_1">{{ createFormErrors.cp_phone_1 }}</FieldError>
+                    </Field>
+                  </div>
+                </div>
+
+                <!-- Contact Person 2 Section -->
+                <div class="md:col-span-2 border-t pt-4 mt-2">
+                  <h4 class="text-sm font-semibold text-foreground mb-4">Contact Person 2</h4>
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Field :data-invalid="!!createFormErrors.contact_person_2 || undefined">
+                      <FieldLabel>Nama CP 2</FieldLabel>
+                      <FieldContent>
+                        <input type="text" v-model="vendorForm.contact_person_2" maxlength="255"
+                          placeholder="Nama CP 2..."
+                          class="w-full px-3 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors border-input focus:ring-primary/20 focus:border-primary" />
+                      </FieldContent>
+                      <FieldError v-if="createFormErrors.contact_person_2">{{ createFormErrors.contact_person_2 }}</FieldError>
+                    </Field>
+                    <Field :data-invalid="!!createFormErrors.cp_email_2 || undefined">
+                      <FieldLabel>Email CP 2</FieldLabel>
+                      <FieldContent>
+                        <input type="email" v-model="vendorForm.cp_email_2" maxlength="255"
+                          placeholder="Email CP 2..."
+                          class="w-full px-3 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors border-input focus:ring-primary/20 focus:border-primary" />
+                      </FieldContent>
+                      <FieldError v-if="createFormErrors.cp_email_2">{{ createFormErrors.cp_email_2 }}</FieldError>
+                    </Field>
+                    <Field :data-invalid="!!createFormErrors.cp_phone_2 || undefined">
+                      <FieldLabel>Telepon CP 2</FieldLabel>
+                      <FieldContent>
+                        <input type="text" v-model="vendorForm.cp_phone_2" maxlength="255"
+                          placeholder="Telepon CP 2..."
+                          class="w-full px-3 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors border-input focus:ring-primary/20 focus:border-primary" />
+                      </FieldContent>
+                      <FieldError v-if="createFormErrors.cp_phone_2">{{ createFormErrors.cp_phone_2 }}</FieldError>
+                    </Field>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Create: Satuan / Merek / Organizer / Lokasi (name-only) -->
               <div v-else>
                 <Field :data-invalid="!!createFormErrors.name || undefined">
                   <FieldLabel><span>Nama {{ activeTab }}<span class="text-destructive">*</span></span></FieldLabel>

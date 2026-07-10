@@ -14,10 +14,20 @@ class SubcategoryController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        $category = \App\Models\Master\Category::find($request->category_id);
+        $categoryCode = $category ? $category->code : '';
+
         $validated = $request->validate([
             'category_id' => 'required|integer|exists:categories,id',
-            'code'        => 'required|string|max:7|unique:subcategories,code',
+            'code'        => [
+                'required',
+                'string',
+                'max:9',
+                'unique:subcategories,code',
+                'regex:/^' . preg_quote($categoryCode, '/') . '-[A-Z]{4}$/i'
+            ],
             'name'        => 'required|string|max:255',
+            'description' => 'nullable|string|max:255',
         ]);
 
         Subcategory::create($validated);
@@ -31,7 +41,8 @@ class SubcategoryController extends Controller
     public function update(Request $request, Subcategory $subcategory): RedirectResponse
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'name'        => 'required|string|max:255',
+            'description' => 'nullable|string|max:255',
         ]);
 
         $subcategory->update($validated);

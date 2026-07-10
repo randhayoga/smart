@@ -49,7 +49,7 @@ class LotSeeder extends Seeder
             [
                 'number' => 'LOT-2026-ELE-LAP-0001-0001',
                 'barang_id' => 6,
-                'organizer_id' => 1,
+                'organizer_id' => 2,
                 'vendor_id' => 1,
                 'location_id' => 1,
                 'floor_id' => 1,

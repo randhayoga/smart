@@ -21,6 +21,7 @@ class BrandFactory extends Factory
     {
         return [
             'name' => fake()->unique()->company(),
+            'description' => fake()->sentence(),
         ];
     }
 }

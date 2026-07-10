@@ -5,6 +5,10 @@ namespace Tests\Feature;
 use App\Models\Master\Floor;
 use App\Models\Master\Location;
 use App\Models\Master\Room;
+use App\Models\Master\Category;
+use App\Models\Master\Subcategory;
+use App\Models\Master\Brand;
+use App\Models\Master\Vendor;
 use App\Models\AdmUser as User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -123,6 +127,235 @@ class MasterDataTest extends TestCase
         $response->assertRedirect();
         $this->assertDatabaseMissing('rooms', [
             'id' => $room->id,
+        ]);
+    }
+
+    public function test_can_store_subcategory_with_valid_format(): void
+    {
+        $user = User::factory()->create();
+        $category = Category::factory()->create(['code' => 'ATKS']);
+
+        $response = $this->actingAs($user)->post(route('smart.master.subcategories.store'), [
+            'category_id' => $category->id,
+            'code' => 'ATKS-AAAA',
+            'name' => 'Subcategory Baru',
+            'description' => 'Deskripsi testing subcategory',
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('subcategories', [
+            'category_id' => $category->id,
+            'code' => 'ATKS-AAAA',
+            'name' => 'Subcategory Baru',
+            'description' => 'Deskripsi testing subcategory',
+        ]);
+    }
+
+    public function test_cannot_store_subcategory_with_invalid_category_prefix(): void
+    {
+        $user = User::factory()->create();
+        $category = Category::factory()->create(['code' => 'ATKS']);
+
+        $response = $this->actingAs($user)->post(route('smart.master.subcategories.store'), [
+            'category_id' => $category->id,
+            'code' => 'FURN-AAAA', // invalid prefix
+            'name' => 'Subcategory Baru',
+        ]);
+
+        $response->assertSessionHasErrors(['code']);
+    }
+
+    public function test_cannot_store_subcategory_with_invalid_suffix_length(): void
+    {
+        $user = User::factory()->create();
+        $category = Category::factory()->create(['code' => 'ATKS']);
+
+        $response = $this->actingAs($user)->post(route('smart.master.subcategories.store'), [
+            'category_id' => $category->id,
+            'code' => 'ATKS-AAAAA', // 5-char suffix (invalid length)
+            'name' => 'Subcategory Baru',
+        ]);
+
+        $response->assertSessionHasErrors(['code']);
+    }
+
+    public function test_cannot_store_subcategory_with_digits_in_suffix(): void
+    {
+        $user = User::factory()->create();
+        $category = Category::factory()->create(['code' => 'ATKS']);
+
+        $response = $this->actingAs($user)->post(route('smart.master.subcategories.store'), [
+            'category_id' => $category->id,
+            'code' => 'ATKS-1234', // digits instead of alphabets
+            'name' => 'Subcategory Baru',
+        ]);
+
+        $response->assertSessionHasErrors(['code']);
+    }
+
+    public function test_can_update_subcategory_with_description(): void
+    {
+        $user = User::factory()->create();
+        $subcategory = Subcategory::factory()->create();
+
+        $response = $this->actingAs($user)->put(route('smart.master.subcategories.update', $subcategory), [
+            'name' => 'Subcategory Updated',
+            'description' => 'Updated Description',
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('subcategories', [
+            'id' => $subcategory->id,
+            'name' => 'Subcategory Updated',
+            'description' => 'Updated Description',
+        ]);
+    }
+
+    public function test_can_store_brand_with_description(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->post(route('smart.master.brands.store'), [
+            'name' => 'Brand Baru',
+            'description' => 'Deskripsi testing brand',
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('brands', [
+            'name' => 'Brand Baru',
+            'description' => 'Deskripsi testing brand',
+        ]);
+    }
+
+    public function test_can_update_brand_with_description(): void
+    {
+        $user = User::factory()->create();
+        $brand = Brand::factory()->create();
+
+        $response = $this->actingAs($user)->put(route('smart.master.brands.update', $brand), [
+            'name' => 'Brand Updated',
+            'description' => 'Updated Description Brand',
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('brands', [
+            'id' => $brand->id,
+            'name' => 'Brand Updated',
+            'description' => 'Updated Description Brand',
+        ]);
+    }
+
+    public function test_can_destroy_brand(): void
+    {
+        $user = User::factory()->create();
+        $brand = Brand::factory()->create();
+
+        $response = $this->actingAs($user)->delete(route('smart.master.brands.destroy', $brand));
+
+        $response->assertRedirect();
+        $this->assertDatabaseMissing('brands', [
+            'id' => $brand->id,
+        ]);
+    }
+
+    public function test_cannot_destroy_brand_if_used_by_barang(): void
+    {
+        $user = User::factory()->create();
+        $brand = Brand::factory()->create();
+        \App\Models\Inventory\Barang::factory()->create(['brand_id' => $brand->id]);
+
+        $response = $this->actingAs($user)->delete(route('smart.master.brands.destroy', $brand));
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error', 'Merek tidak dapat dihapus karena sedang digunakan oleh data barang.');
+        $this->assertDatabaseHas('brands', [
+            'id' => $brand->id,
+        ]);
+    }
+
+    public function test_can_store_vendor_with_all_fields(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->post(route('smart.master.vendors.store'), [
+            'name' => 'Vendor Baru PT',
+            'address' => 'Jalan Baru No. 12',
+            'phone_number' => '021-123456',
+            'email' => 'vendor@baru.com',
+            'description' => 'Description Vendor Baru',
+            'contact_person_1' => 'John Doe',
+            'cp_email_1' => 'john@baru.com',
+            'cp_phone_1' => '0812345678',
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('vendors', [
+            'name' => 'Vendor Baru PT',
+            'address' => 'Jalan Baru No. 12',
+            'phone_number' => '021-123456',
+            'email' => 'vendor@baru.com',
+            'description' => 'Description Vendor Baru',
+            'contact_person_1' => 'John Doe',
+            'cp_email_1' => 'john@baru.com',
+            'cp_phone_1' => '0812345678',
+        ]);
+    }
+
+    public function test_can_update_vendor_with_all_fields(): void
+    {
+        $user = User::factory()->create();
+        $vendor = Vendor::factory()->create();
+
+        $response = $this->actingAs($user)->put(route('smart.master.vendors.update', $vendor), [
+            'name' => 'Vendor Updated PT',
+            'address' => 'Jalan Updated No. 12',
+            'phone_number' => '021-654321',
+            'email' => 'vendor@updated.com',
+            'description' => 'Description Vendor Updated',
+            'contact_person_1' => 'Jane Doe',
+            'cp_email_1' => 'jane@updated.com',
+            'cp_phone_1' => '0898765432',
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('vendors', [
+            'id' => $vendor->id,
+            'name' => 'Vendor Updated PT',
+            'address' => 'Jalan Updated No. 12',
+            'phone_number' => '021-654321',
+            'email' => 'vendor@updated.com',
+            'description' => 'Description Vendor Updated',
+            'contact_person_1' => 'Jane Doe',
+            'cp_email_1' => 'jane@updated.com',
+            'cp_phone_1' => '0898765432',
+        ]);
+    }
+
+    public function test_can_destroy_vendor(): void
+    {
+        $user = User::factory()->create();
+        $vendor = Vendor::factory()->create();
+
+        $response = $this->actingAs($user)->delete(route('smart.master.vendors.destroy', $vendor));
+
+        $response->assertRedirect();
+        $this->assertDatabaseMissing('vendors', [
+            'id' => $vendor->id,
+        ]);
+    }
+
+    public function test_cannot_destroy_vendor_if_used_by_lot(): void
+    {
+        $user = User::factory()->create();
+        $vendor = Vendor::factory()->create();
+        \App\Models\Inventory\Lot::factory()->create(['vendor_id' => $vendor->id]);
+
+        $response = $this->actingAs($user)->delete(route('smart.master.vendors.destroy', $vendor));
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error', 'Vendor tidak dapat dihapus karena sedang digunakan oleh data lot barang.');
+        $this->assertDatabaseHas('vendors', [
+            'id' => $vendor->id,
         ]);
     }
 }
