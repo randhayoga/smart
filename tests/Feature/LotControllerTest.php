@@ -21,7 +21,10 @@ class LotControllerTest extends TestCase
 
     public function test_can_store_lot(): void
     {
-        Storage::fake('public');
+        config(['filesystems.disks.public.root' => storage_path('framework/testing/disks/public_test')]);
+        \Illuminate\Support\Facades\Storage::forgetDisk('public');
+        \Illuminate\Support\Facades\File::ensureDirectoryExists(storage_path('framework/testing/disks/public_test'));
+        \Illuminate\Support\Facades\File::cleanDirectory(storage_path('framework/testing/disks/public_test'));
         $user = User::factory()->create();
         $category = \App\Models\Master\Category::factory()->create(['is_consumable' => false]);
         $subcategory = \App\Models\Master\Subcategory::factory()->create(['category_id' => $category->id]);
@@ -83,17 +86,18 @@ class LotControllerTest extends TestCase
         $bulkResponse->assertRedirect();
 
         $this->assertEquals(3, $lot->units()->count());
-        $this->assertDatabaseHas('units', [
-            'lot_id' => $lot->id,
-            'number' => 'LOT-2026-ATK-KER-0001-0001-U01',
-            'status' => 'Tersedia',
-            'price' => 60000,
-        ]);
+        $unit = $lot->units()->first();
+        $this->assertMatchesRegularExpression('/^\d{5}-.+-PTRE-\d{2}$/', $unit->number);
+        $this->assertEquals('Tersedia', $unit->status);
+        $this->assertEquals(60000, $unit->price);
     }
 
     public function test_can_update_lot(): void
     {
-        Storage::fake('public');
+        config(['filesystems.disks.public.root' => storage_path('framework/testing/disks/public_test')]);
+        \Illuminate\Support\Facades\Storage::forgetDisk('public');
+        \Illuminate\Support\Facades\File::ensureDirectoryExists(storage_path('framework/testing/disks/public_test'));
+        \Illuminate\Support\Facades\File::cleanDirectory(storage_path('framework/testing/disks/public_test'));
         $user = User::factory()->create();
         $lot = Lot::factory()->create();
         
@@ -153,8 +157,18 @@ class LotControllerTest extends TestCase
     {
         $user = User::factory()->create();
         $lot = Lot::factory()->create();
+        
+        $tipeCode = $lot->barang->subcategory->code ?? 'SUB';
+        $organizerCode = $lot->organizer->name ?? 'ORG';
+        $combination = "{$tipeCode}-{$organizerCode}-PTRE";
+        $yy = $lot->date_of_receipt ? $lot->date_of_receipt->format('y') : date('y');
+        $unitNumber = "00001-{$combination}-{$yy}";
+        if (strlen($unitNumber) > 25) {
+            $unitNumber = substr($unitNumber, 0, 25);
+        }
+
         \App\Models\Inventory\Unit::create([
-            'number' => $lot->number . '-U01',
+            'number' => $unitNumber,
             'lot_id' => $lot->id,
             'location_id' => $lot->location_id ?? 1,
             'status' => 'Tersedia',
@@ -174,7 +188,10 @@ class LotControllerTest extends TestCase
 
     public function test_can_store_lot_using_parent_image(): void
     {
-        Storage::fake('public');
+        config(['filesystems.disks.public.root' => storage_path('framework/testing/disks/public_test')]);
+        \Illuminate\Support\Facades\Storage::forgetDisk('public');
+        \Illuminate\Support\Facades\File::ensureDirectoryExists(storage_path('framework/testing/disks/public_test'));
+        \Illuminate\Support\Facades\File::cleanDirectory(storage_path('framework/testing/disks/public_test'));
         $user = User::factory()->create();
         
         $barangImage = UploadedFile::fake()->image('barang.jpg');
@@ -224,11 +241,16 @@ class LotControllerTest extends TestCase
         $bulkResponse->assertRedirect();
 
         $this->assertEquals(2, $lot->units()->count());
+        $unit = $lot->units()->first();
+        $this->assertMatchesRegularExpression('/^\d{5}-.+-PTRE-\d{2}$/', $unit->number);
     }
 
     public function test_can_update_lot_using_parent_image(): void
     {
-        Storage::fake('public');
+        config(['filesystems.disks.public.root' => storage_path('framework/testing/disks/public_test')]);
+        \Illuminate\Support\Facades\Storage::forgetDisk('public');
+        \Illuminate\Support\Facades\File::ensureDirectoryExists(storage_path('framework/testing/disks/public_test'));
+        \Illuminate\Support\Facades\File::cleanDirectory(storage_path('framework/testing/disks/public_test'));
         $user = User::factory()->create();
         
         $barangImage = UploadedFile::fake()->image('barang.jpg');

@@ -30,21 +30,34 @@ class LotFactory extends Factory
      */
     public function definition(): array
     {
+        $barang = Barang::inRandomOrder()->first() ?? Barang::factory()->create();
+        $organizer = Organizer::inRandomOrder()->first() ?? Organizer::factory()->create();
+        $vendor = Vendor::inRandomOrder()->first() ?? Vendor::factory()->create();
+        $location = Location::inRandomOrder()->first() ?? Location::factory()->create();
+        
+        $dateOfReceipt = $this->faker->dateTimeBetween('-1 year', 'now');
+        $yy = $dateOfReceipt->format('y');
+        $tipeCode = $barang->number;
+        
+        static $lotSerial = 1;
+        $serial = str_pad($lotSerial++, 4, '0', STR_PAD_LEFT);
+        $number = "LOT-{$serial}-{$yy}-{$tipeCode}";
+
         return [
-            'number' => $this->faker->unique()->bothify('LOT-####-???-???-####-####'),
-            'barang_id' => Barang::factory(),
-            'organizer_id' => Organizer::factory(),
-            'vendor_id' => Vendor::factory(),
-            'location_id' => Location::factory(),
-            'floor_id' => Floor::factory(),
-            'room_id' => Room::factory(),
+            'number' => $number,
+            'barang_id' => $barang->id,
+            'organizer_id' => $organizer->id,
+            'vendor_id' => $vendor->id,
+            'location_id' => $location->id,
+            'floor_id' => null,
+            'room_id' => null,
             'initial_quantity' => 0,
             'current_quantity' => 0,
             'po_number' => $this->faker->bothify('PO-##'),
-            'date_of_receipt' => $this->faker->dateTime(),
+            'date_of_receipt' => $dateOfReceipt,
             'unit_price' => $this->faker->randomFloat(2, 10000, 10000000),
             'image_url' => 'inventory/lots/placeholder.jpg',
-            'burden' => $this->faker->randomElement(['Corporate', 'Project']),
+            'burden' => 'Corporate',
         ];
     }
 }

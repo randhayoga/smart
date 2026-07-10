@@ -15,6 +15,7 @@ class VendorController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
+            'code'             => 'required|string|size:6|regex:/^VN\d{4}$/|unique:vendors,code',
             'name'             => 'required|string|max:255|unique:vendors,name',
             'address'          => 'required|string|max:255',
             'phone_number'     => 'required|string|max:255',
@@ -39,6 +40,7 @@ class VendorController extends Controller
     public function update(Request $request, Vendor $vendor): RedirectResponse
     {
         $validated = $request->validate([
+            'code'             => 'required|string|size:6|regex:/^VN\d{4}$/|unique:vendors,code,' . $vendor->id,
             'name'             => 'required|string|max:255|unique:vendors,name,' . $vendor->id,
             'address'          => 'required|string|max:255',
             'phone_number'     => 'required|string|max:255',

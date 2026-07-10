@@ -16,7 +16,7 @@ class BarangSeeder extends Seeder
     {
         $barangs = [
             [
-                'number' => 'ATK-KER-0001',
+                'number' => 'ATK-HVS4-0001',
                 'subcategory_id' => 1,
                 'brand_id' => 5,
                 'uom_id' => 2,
@@ -25,7 +25,7 @@ class BarangSeeder extends Seeder
                 'image_url' => 'database/seeders/assets/sidu.jpg',
             ],
             [
-                'number' => 'ATK-PUL-0001',
+                'number' => 'ATK-PLPH-0001',
                 'subcategory_id' => 2,
                 'brand_id' => 7,
                 'uom_id' => 3,
@@ -34,7 +34,7 @@ class BarangSeeder extends Seeder
                 'image_url' => 'database/seeders/assets/snowman.jpg',
             ],
             [
-                'number' => 'ATK-PUL-0002',
+                'number' => 'ATK-PLPH-0002',
                 'subcategory_id' => 2,
                 'brand_id' => 8,
                 'uom_id' => 3,
@@ -43,7 +43,7 @@ class BarangSeeder extends Seeder
                 'image_url' => 'database/seeders/assets/standard.jpg',
             ],
             [
-                'number' => 'FUR-KUR-0001',
+                'number' => 'FUR-KK-0001',
                 'subcategory_id' => 3,
                 'brand_id' => 9,
                 'uom_id' => 3,
@@ -51,7 +51,7 @@ class BarangSeeder extends Seeder
                 'image_url' => 'database/seeders/assets/ikea.jpg',
             ],
             [
-                'number' => 'FUR-MEJ-0001',
+                'number' => 'FUR-MK-0001',
                 'subcategory_id' => 4,
                 'brand_id' => 10,
                 'uom_id' => 3,
@@ -59,7 +59,7 @@ class BarangSeeder extends Seeder
                 'image_url' => 'database/seeders/assets/informa.jpg',
             ],
             [
-                'number' => 'ELE-LAP-0001',
+                'number' => 'COMP-NB-0001',
                 'subcategory_id' => 5,
                 'brand_id' => 3,
                 'uom_id' => 3,
@@ -68,7 +68,7 @@ class BarangSeeder extends Seeder
                 'image_url' => 'database/seeders/assets/acer.jpg',
             ],
             [
-                'number' => 'KEN-MOB-0001',
+                'number' => 'KEN-MO-0001',
                 'subcategory_id' => 7,
                 'brand_id' => 12,
                 'uom_id' => 1,
@@ -77,7 +77,7 @@ class BarangSeeder extends Seeder
                 'image_url' => 'database/seeders/assets/byd.jpeg',
             ],
             [
-                'number' => 'KEN-MOB-0002',
+                'number' => 'KEN-MO-0002',
                 'subcategory_id' => 7,
                 'brand_id' => 11,
                 'uom_id' => 1,

@@ -121,7 +121,7 @@ onUnmounted(() => {
         >
           <div 
             v-if="isOpen" 
-            class="bg-card w-full max-w-[1000px] rounded-[14px] shadow-2xl overflow-hidden flex flex-col" 
+            class="bg-card w-full max-w-[1100px] rounded-[14px] shadow-2xl overflow-hidden flex flex-col" 
             @click.stop
           >
             <!-- Modal Header -->
@@ -157,7 +157,7 @@ onUnmounted(() => {
                 <div class="flex-grow grid grid-cols-1 md:grid-cols-12 gap-4">
                   <!-- Left Details Column -->
                   <div class="md:col-span-4">
-                    <p class="font-bold text-foreground"><span class="text-foreground">Kode Barang:</span> {{ lotDetails.barang_code }}</p>
+                    <p class="font-bold text-foreground"><span class="text-foreground">Kode Tipe:</span> {{ lotDetails.barang_code }}</p>
                     <p class="font-bold text-foreground"><span class="text-foreground">Merek:</span> {{ lotDetails.barang_brand }}</p>
                     <p class="font-bold text-foreground"><span class="text-foreground">Nama:</span> {{ lotDetails.barang_nama }}</p>
                     <p class="font-bold text-foreground"><span class="text-foreground">Spesifikasi:</span> {{ lotDetails.barang_specification }}</p>

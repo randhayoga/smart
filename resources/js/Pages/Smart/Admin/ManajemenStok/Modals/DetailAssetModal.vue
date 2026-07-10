@@ -145,7 +145,7 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                 <div v-if="asset" class="flex-grow grid grid-cols-1 md:grid-cols-12 gap-4 text-foreground">
                   <!-- Column 1: Item Info -->
                   <div class="md:col-span-3">
-                    <p class="font-bold text-foreground"><span class="text-foreground">Kode Barang:</span> {{ finalBarangCode }}</p>
+                    <p class="font-bold text-foreground"><span class="text-foreground">Kode Tipe:</span> {{ finalBarangCode }}</p>
                     <p class="font-bold text-foreground"><span class="text-foreground">Merek:</span> {{ finalBarangBrand }}</p>
                     <p class="font-bold text-foreground"><span class="text-foreground">Nama:</span> {{ finalBarangNama }}</p>
                     <p class="font-bold text-foreground"><span class="text-foreground">Spesifikasi:</span> {{ finalBarangSpecification }}</p>

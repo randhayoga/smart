@@ -9,7 +9,7 @@ return new class extends Migration {
     {
         Schema::create('barangs', function (Blueprint $table) {
             $table->id();
-            $table->string('number', 12)->unique();
+            $table->string('number', 14)->unique();
             $table->foreignId('subcategory_id')->constrained('subcategories');
             $table->foreignId('brand_id')->constrained('brands');
             $table->foreignId('uom_id')->constrained('uoms');
@@ -42,7 +42,7 @@ return new class extends Migration {
 
         Schema::create('units', function (Blueprint $table) {
             $table->id();
-            $table->string('number', 30)->unique();
+            $table->string('number', 25)->unique();
             $table->foreignId('lot_id')->constrained('lots')->cascadeOnDelete();
             $table->foreignId('location_id')->constrained('locations')->comment('current location');
             $table->foreignId('floor_id')->nullable()->constrained('floors');

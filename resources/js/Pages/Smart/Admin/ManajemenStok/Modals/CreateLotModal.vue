@@ -86,7 +86,12 @@ watch(() => lotForm.organizer_id, v => { if (v && errors.value.organizer_id) err
 watch(() => lotForm.vendor_id, v => { if (v && errors.value.vendor_id) errors.value.vendor_id = ''; });
 watch(() => lotForm.location_id, v => { if (v && errors.value.location_id) errors.value.location_id = ''; });
 watch(() => lotForm.po_number, v => { if (v && errors.value.po_number) errors.value.po_number = ''; });
-watch(() => lotForm.date_of_receipt, v => { if (v && errors.value.date_of_receipt) errors.value.date_of_receipt = ''; });
+watch(() => lotForm.date_of_receipt, v => {
+  if (v) {
+    if (errors.value.date_of_receipt) errors.value.date_of_receipt = '';
+    generateLotCode();
+  }
+});
 watch(() => lotForm.image_url, v => { if (v && errors.value.image_url) errors.value.image_url = ''; });
 watch(() => lotForm.image_url_name, v => { if (v && errors.value.image_url) errors.value.image_url = ''; });
 watch(() => lotForm.initial_quantity, v => { if ((v !== '' && v !== null) && errors.value.initial_quantity) errors.value.initial_quantity = ''; });
@@ -99,19 +104,27 @@ watch(() => lotForm.burden, v => {
 });
 
 const generateLotCode = () => {
-  const year = new Date().getFullYear();
-  const barangCode = props.barang.code;
-  const prefix = `LOT-${year}-${barangCode}-`;
-  const matchingLots = (props.lots || []).filter(lot => lot.number.startsWith(prefix));
+  let yy = String(new Date().getFullYear()).slice(-2);
+  if (lotForm.date_of_receipt) {
+    const dateObj = new Date(lotForm.date_of_receipt);
+    if (!isNaN(dateObj.getTime())) {
+      yy = String(dateObj.getFullYear()).slice(-2);
+    }
+  }
+  const tipeCode = props.barang.code;
+  const suffix = `-${yy}-${tipeCode}`;
+  const matchingLots = (props.lots || []).filter(lot => {
+    return lot.number.startsWith('LOT-') && lot.number.endsWith(suffix);
+  });
   let nextNum = 1;
   if (matchingLots.length > 0) {
     const numbers = matchingLots.map(lot => {
-      const suffix = lot.number.replace(prefix, '');
-      return parseInt(suffix, 10) || 0;
+      const parts = lot.number.split('-');
+      return parseInt(parts[1], 10) || 0;
     });
     nextNum = Math.max(...numbers) + 1;
   }
-  lotForm.number = `${prefix}${String(nextNum).padStart(4, '0')}`;
+  lotForm.number = `LOT-${String(nextNum).padStart(4, '0')}-${yy}-${tipeCode}`;
 };
 
 const filteredFloors = computed(() => {

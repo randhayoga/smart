@@ -96,8 +96,30 @@ class UnitController extends Controller
      */
     public function store(Request $request)
     {
+        $lot = Lot::with('barang.subcategory.category', 'organizer')->findOrFail($request->input('lot_id'));
+        $subcategoryCode = $lot->barang->subcategory->code ?? '';
+        $organizerCode = $lot->organizer->name ?? '';
+
+        if ($subcategoryCode && $organizerCode) {
+            $combination = "{$subcategoryCode}-{$organizerCode}-PTRE";
+            $yy = $lot->date_of_receipt ? $lot->date_of_receipt->format('y') : date('y');
+            
+            $count = Unit::where('number', 'like', "%-{$combination}-%")->count();
+            $nextSerialVal = $count + 1;
+            do {
+                $serial = str_pad($nextSerialVal, 5, '0', STR_PAD_LEFT);
+                $generatedNumber = "{$serial}-{$combination}-{$yy}";
+                $exists = Unit::where('number', $generatedNumber)->exists();
+                if ($exists) {
+                    $nextSerialVal++;
+                }
+            } while ($exists);
+            
+            $request->merge(['number' => $generatedNumber]);
+        }
+
         $rules = [
-            'number' => 'required|string|max:255|unique:units,number',
+            'number' => 'required|string|max:25|unique:units,number',
             'lot_id' => 'required|exists:lots,id',
             'location_id' => 'required|exists:locations,id',
             'floor_id' => 'nullable|exists:floors,id',
@@ -108,8 +130,7 @@ class UnitController extends Controller
             'image_url' => 'required_without:use_lot_image|nullable|image|max:1024',
             'use_lot_image' => 'nullable',
         ];
-
-        $lot = Lot::with('barang.subcategory.category')->findOrFail($request->input('lot_id'));
+ 
         $isVehicle = false;
         if ($lot->barang && $lot->barang->subcategory && $lot->barang->subcategory->category) {
             $catName = strtolower($lot->barang->subcategory->category->name);
@@ -118,23 +139,23 @@ class UnitController extends Controller
                          str_contains($catName, 'mobil') || str_contains($subcatName, 'mobil') ||
                          str_contains($catName, 'motor') || str_contains($subcatName, 'motor');
         }
-
+ 
         if ($isVehicle) {
             $rules['vehicle_registration'] = 'required|string|max:15';
         } else {
             $rules['vehicle_registration'] = 'nullable|string|max:15';
         }
-
+ 
         $validated = $request->validate($rules);
-
+ 
         $arrNeedApproval = ['Rusak Total', 'Hilang'];
         $proposedStatus = $validated['status'];
         $needApproval = in_array($proposedStatus, $arrNeedApproval);
-
+ 
         if ($needApproval) {
             $validated['status'] = 'Pending';
         }
-
+ 
         // Single creation logic
         if ($request->boolean('use_lot_image')) {
             if ($lot->image_url && Storage::disk('public')->exists($lot->image_url)) {
@@ -146,11 +167,11 @@ class UnitController extends Controller
             $imagePath = $request->file('image_url')->store('inventory', 'public');
             $validated['image_url'] = $imagePath;
         }
-
+ 
         unset($validated['use_lot_image']);
-
+ 
         $unit = Unit::create($validated);
-
+ 
         if ($needApproval) {
             $docUrl = 'memos/placeholder.pdf';
             if ($request->hasFile('memo_file')) {
@@ -168,17 +189,17 @@ class UnitController extends Controller
                 'doc_url' => $docUrl,
             ]);
         }
-
+ 
         return redirect()->back()->with('success', 'Aset berhasil ditambahkan.');
     }
-
+ 
     /**
      * Memperbarui data unit (aset) yang sudah ada di database.
      */
     public function update(Request $request, Unit $unit)
     {
         $rules = [
-            'number' => 'required|string|max:255|unique:units,number,' . $unit->id,
+            'number' => 'required|string|max:25|unique:units,number,' . $unit->id,
             'lot_id' => 'required|exists:lots,id',
             'location_id' => 'required|exists:locations,id',
             'floor_id' => 'nullable|exists:floors,id',
@@ -189,7 +210,7 @@ class UnitController extends Controller
             'image_url' => 'nullable|image|max:1024',
             'use_lot_image' => 'nullable',
         ];
-
+ 
         $lot = Lot::with('barang.subcategory.category')->findOrFail($request->input('lot_id'));
         $isVehicle = false;
         if ($lot->barang && $lot->barang->subcategory && $lot->barang->subcategory->category) {
@@ -199,13 +220,13 @@ class UnitController extends Controller
                          str_contains($catName, 'mobil') || str_contains($subcatName, 'mobil') ||
                          str_contains($catName, 'motor') || str_contains($subcatName, 'motor');
         }
-
+ 
         if ($isVehicle) {
             $rules['vehicle_registration'] = 'required|string|max:15';
         } else {
             $rules['vehicle_registration'] = 'nullable|string|max:15';
         }
-
+ 
         $validated = $request->validate($rules);
 
         $arrNeedApproval = ['Rusak Total', 'Hilang'];

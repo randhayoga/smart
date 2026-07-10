@@ -38,6 +38,7 @@ interface Subcategory { id: number; code: string; name: string; category_id: num
 interface SimpleItem  { id: number; name: string; description?: string; }
 interface VendorItem  {
   id: number;
+  code: string;
   name: string;
   address: string;
   phone_number: string;
@@ -148,6 +149,7 @@ const uomForm         = useForm({ name: '' });
 const brandForm       = useForm({ name: '', description: '' });
 const organizerForm   = useForm({ name: '' });
 const vendorForm      = useForm({
+  code: '',
   name: '',
   address: '',
   phone_number: '',
@@ -172,6 +174,7 @@ const editBrandForm       = useForm({ id: null as number | null, name: '', descr
 const editOrganizerForm   = useForm({ id: null as number | null, name: '' });
 const editVendorForm      = useForm({
   id: null as number | null,
+  code: '',
   name: '',
   address: '',
   phone_number: '',
@@ -336,6 +339,7 @@ const openEditModal = (item: any) => {
     form.description = item.description ?? '';
   }
   if (activeTab.value === 'Vendor') {
+    form.code = item.code ?? '';
     form.address = item.address ?? '';
     form.phone_number = item.phone_number ?? '';
     form.email = item.email ?? '';
@@ -378,6 +382,24 @@ const closeEditModal = () => {
   }, 200);
 };
 
+const generateVendorCode = () => {
+  const existingVendors = props.vendors || [];
+  let nextNumber = 0;
+  if (existingVendors.length > 0) {
+    const numbers = existingVendors.map(vendor => {
+      const match = vendor.code.match(/^VN(\d{4})$/);
+      return match ? parseInt(match[1]) : -1;
+    });
+    nextNumber = Math.max(...numbers) + 1;
+    if (nextNumber < 0) nextNumber = 0;
+  }
+  const formattedNumber = nextNumber.toString().padStart(4, '0');
+  vendorForm.code = `VN${formattedNumber}`;
+  if (createFormErrors.value.code) {
+    createFormErrors.value.code = '';
+  }
+};
+
 const openCreateModal = () => {
   categoryForm.reset();
   subcategoryForm.reset();
@@ -418,7 +440,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
   const cols: ColumnDef<any>[] = [];
 
   // Code column (if applicable)
-  if (!['Satuan', 'Merek', 'Organizer', 'Vendor', 'Lokasi', 'Lantai', 'Ruangan'].includes(activeTab.value)) {
+  if (!['Satuan', 'Merek', 'Organizer', 'Lokasi', 'Lantai', 'Ruangan'].includes(activeTab.value)) {
     cols.push({
       accessorKey: 'code',
       header: ({ column }) => {
@@ -728,6 +750,13 @@ const submitCreate = () => {
       hasError = true;
     }
   } else if (activeTab.value === 'Vendor') {
+    if (!form.code || !form.code.trim()) {
+      createFormErrors.value.code = 'Kode Vendor belum diisi';
+      hasError = true;
+    } else if (!/^VN\d{4}$/.test(form.code)) {
+      createFormErrors.value.code = 'Format Kode Vendor harus VN#### (contoh: VN0001)';
+      hasError = true;
+    }
     if (!form.name || !form.name.trim()) {
       createFormErrors.value.name = 'Nama Vendor belum diisi';
       hasError = true;
@@ -804,6 +833,13 @@ const submitUpdate = () => {
       hasError = true;
     }
   } else if (activeTab.value === 'Vendor') {
+    if (!form.code || !form.code.trim()) {
+      editFormErrors.value.code = 'Kode Vendor belum diisi';
+      hasError = true;
+    } else if (!/^VN\d{4}$/.test(form.code)) {
+      editFormErrors.value.code = 'Format Kode Vendor harus VN#### (contoh: VN0001)';
+      hasError = true;
+    }
     if (!form.name || !form.name.trim()) {
       editFormErrors.value.name = 'Nama Vendor belum diisi';
       hasError = true;
@@ -1254,7 +1290,17 @@ onUnmounted(() => {
               </div>
 
               <!-- Edit: Vendor -->
-              <div v-else-if="activeTab === 'Vendor'" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div v-else-if="activeTab === 'Vendor'" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <Field :data-invalid="!!editFormErrors.code || undefined">
+                  <FieldLabel><span>Kode Vendor<span class="text-destructive">*</span></span></FieldLabel>
+                  <FieldContent>
+                    <input type="text" v-model="editVendorForm.code"
+                      disabled
+                      class="w-full px-3 py-2 text-sm border rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed"
+                      :class="[editFormErrors.code ? 'border-destructive' : 'border-input']" />
+                  </FieldContent>
+                  <FieldError v-if="editFormErrors.code">{{ editFormErrors.code }}</FieldError>
+                </Field>
                 <Field :data-invalid="!!editFormErrors.name || undefined" class="md:col-span-2">
                   <FieldLabel><span>Nama Vendor<span class="text-destructive">*</span></span></FieldLabel>
                   <FieldContent>
@@ -1264,16 +1310,6 @@ onUnmounted(() => {
                       :class="[editFormErrors.name ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']" />
                   </FieldContent>
                   <FieldError v-if="editFormErrors.name">{{ editFormErrors.name }}</FieldError>
-                </Field>
-                <Field :data-invalid="!!editFormErrors.address || undefined">
-                  <FieldLabel><span>Alamat<span class="text-destructive">*</span></span></FieldLabel>
-                  <FieldContent>
-                    <input type="text" v-model="editVendorForm.address" maxlength="255"
-                      placeholder="Alamat lengkap..."
-                      class="w-full px-3 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors"
-                      :class="[editFormErrors.address ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']" />
-                  </FieldContent>
-                  <FieldError v-if="editFormErrors.address">{{ editFormErrors.address }}</FieldError>
                 </Field>
                 <Field :data-invalid="!!editFormErrors.phone_number || undefined">
                   <FieldLabel><span>No. Telepon<span class="text-destructive">*</span></span></FieldLabel>
@@ -1285,6 +1321,16 @@ onUnmounted(() => {
                   </FieldContent>
                   <FieldError v-if="editFormErrors.phone_number">{{ editFormErrors.phone_number }}</FieldError>
                 </Field>
+                <Field :data-invalid="!!editFormErrors.address || undefined" class="md:col-span-2">
+                  <FieldLabel><span>Alamat<span class="text-destructive">*</span></span></FieldLabel>
+                  <FieldContent>
+                    <input type="text" v-model="editVendorForm.address" maxlength="255"
+                      placeholder="Alamat lengkap..."
+                      class="w-full px-3 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors"
+                      :class="[editFormErrors.address ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']" />
+                  </FieldContent>
+                  <FieldError v-if="editFormErrors.address">{{ editFormErrors.address }}</FieldError>
+                </Field>
                 <Field :data-invalid="!!editFormErrors.email || undefined">
                   <FieldLabel>Email</FieldLabel>
                   <FieldContent>
@@ -1294,7 +1340,7 @@ onUnmounted(() => {
                   </FieldContent>
                   <FieldError v-if="editFormErrors.email">{{ editFormErrors.email }}</FieldError>
                 </Field>
-                <Field :data-invalid="!!editFormErrors.description || undefined">
+                <Field :data-invalid="!!editFormErrors.description || undefined" class="md:col-span-2">
                   <FieldLabel>Deskripsi</FieldLabel>
                   <FieldContent>
                     <input type="text" v-model="editVendorForm.description" maxlength="255"
@@ -1305,7 +1351,7 @@ onUnmounted(() => {
                 </Field>
 
                 <!-- Contact Person 1 Section -->
-                <div class="md:col-span-2 border-t pt-4 mt-2">
+                <div class="md:col-span-3 border-t pt-4 mt-2">
                   <h4 class="text-sm font-semibold text-foreground mb-4">Contact Person 1</h4>
                   <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <Field :data-invalid="!!editFormErrors.contact_person_1 || undefined">
@@ -1339,7 +1385,7 @@ onUnmounted(() => {
                 </div>
 
                 <!-- Contact Person 2 Section -->
-                <div class="md:col-span-2 border-t pt-4 mt-2">
+                <div class="md:col-span-3 border-t pt-4 mt-2">
                   <h4 class="text-sm font-semibold text-foreground mb-4">Contact Person 2</h4>
                   <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <Field :data-invalid="!!editFormErrors.contact_person_2 || undefined">
@@ -1640,7 +1686,30 @@ onUnmounted(() => {
               </div>
 
               <!-- Create: Vendor -->
-              <div v-else-if="activeTab === 'Vendor'" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div v-else-if="activeTab === 'Vendor'" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <Field :data-invalid="!!createFormErrors.code || undefined">
+                  <FieldLabel><span>Kode Vendor<span class="text-destructive">*</span></span></FieldLabel>
+                  <FieldContent>
+                    <div class="flex gap-2 w-full">
+                      <input 
+                        type="text" 
+                        v-model="vendorForm.code"
+                        disabled
+                        placeholder="Kode Vendor belum di-generate" 
+                        class="flex-grow px-4 py-2 text-sm border rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed"
+                        :class="[createFormErrors.code ? 'border-destructive' : 'border-input']"
+                      />
+                      <Button
+                        type="button"
+                        @click="generateVendorCode"
+                        size="lg"                       
+                      >
+                        Generate
+                      </Button>
+                    </div>
+                  </FieldContent>
+                  <FieldError v-if="createFormErrors.code">{{ createFormErrors.code }}</FieldError>
+                </Field>
                 <Field :data-invalid="!!createFormErrors.name || undefined" class="md:col-span-2">
                   <FieldLabel><span>Nama Vendor<span class="text-destructive">*</span></span></FieldLabel>
                   <FieldContent>
@@ -1650,16 +1719,6 @@ onUnmounted(() => {
                       :class="[createFormErrors.name ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']" />
                   </FieldContent>
                   <FieldError v-if="createFormErrors.name">{{ createFormErrors.name }}</FieldError>
-                </Field>
-                <Field :data-invalid="!!createFormErrors.address || undefined">
-                  <FieldLabel><span>Alamat<span class="text-destructive">*</span></span></FieldLabel>
-                  <FieldContent>
-                    <input type="text" v-model="vendorForm.address" maxlength="255"
-                      placeholder="Alamat lengkap..."
-                      class="w-full px-3 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors"
-                      :class="[createFormErrors.address ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']" />
-                  </FieldContent>
-                  <FieldError v-if="createFormErrors.address">{{ createFormErrors.address }}</FieldError>
                 </Field>
                 <Field :data-invalid="!!createFormErrors.phone_number || undefined">
                   <FieldLabel><span>No. Telepon<span class="text-destructive">*</span></span></FieldLabel>
@@ -1671,6 +1730,16 @@ onUnmounted(() => {
                   </FieldContent>
                   <FieldError v-if="createFormErrors.phone_number">{{ createFormErrors.phone_number }}</FieldError>
                 </Field>
+                <Field :data-invalid="!!createFormErrors.address || undefined" class="md:col-span-2">
+                  <FieldLabel><span>Alamat<span class="text-destructive">*</span></span></FieldLabel>
+                  <FieldContent>
+                    <input type="text" v-model="vendorForm.address" maxlength="255"
+                      placeholder="Alamat lengkap..."
+                      class="w-full px-3 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors"
+                      :class="[createFormErrors.address ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']" />
+                  </FieldContent>
+                  <FieldError v-if="createFormErrors.address">{{ createFormErrors.address }}</FieldError>
+                </Field>
                 <Field :data-invalid="!!createFormErrors.email || undefined">
                   <FieldLabel>Email</FieldLabel>
                   <FieldContent>
@@ -1680,7 +1749,7 @@ onUnmounted(() => {
                   </FieldContent>
                   <FieldError v-if="createFormErrors.email">{{ createFormErrors.email }}</FieldError>
                 </Field>
-                <Field :data-invalid="!!createFormErrors.description || undefined">
+                <Field :data-invalid="!!createFormErrors.description || undefined" class="md:col-span-2">
                   <FieldLabel>Deskripsi</FieldLabel>
                   <FieldContent>
                     <input type="text" v-model="vendorForm.description" maxlength="255"
@@ -1691,7 +1760,7 @@ onUnmounted(() => {
                 </Field>
 
                 <!-- Contact Person 1 Section -->
-                <div class="md:col-span-2 border-t pt-4 mt-2">
+                <div class="md:col-span-3 border-t pt-4 mt-2">
                   <h4 class="text-sm font-semibold text-foreground mb-4">Contact Person 1</h4>
                   <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <Field :data-invalid="!!createFormErrors.contact_person_1 || undefined">
@@ -1725,7 +1794,7 @@ onUnmounted(() => {
                 </div>
 
                 <!-- Contact Person 2 Section -->
-                <div class="md:col-span-2 border-t pt-4 mt-2">
+                <div class="md:col-span-3 border-t pt-4 mt-2">
                   <h4 class="text-sm font-semibold text-foreground mb-4">Contact Person 2</h4>
                   <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <Field :data-invalid="!!createFormErrors.contact_person_2 || undefined">

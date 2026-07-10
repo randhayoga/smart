@@ -58,24 +58,49 @@ class BulkUnitController extends Controller
         }
 
         $quantity = (int)$validated['bulk_quantity'];
-        $baseNumber = $validated['number'];
-        $suffixPos = strrpos($baseNumber, '-U');
-        
-        if ($suffixPos !== false) {
-            $prefix = substr($baseNumber, 0, $suffixPos + 2); // e.g. "LOT-2026-CAT-SUB-XXXX-0001-U"
-            $startNumStr = substr($baseNumber, $suffixPos + 2); // e.g. "06"
-            $startNum = (int)$startNumStr;
-            $padLength = strlen($startNumStr);
-        } else {
-            $prefix = $baseNumber . '-';
-            $startNum = 1;
-            $padLength = 2;
-        }
+        $subcategoryCode = $lot->barang->subcategory->code ?? '';
+        $organizerCode = $lot->organizer->name ?? '';
 
-        $generatedNumbers = [];
-        for ($i = 0; $i < $quantity; $i++) {
-            $num = $prefix . str_pad($startNum + $i, $padLength, '0', STR_PAD_LEFT);
-            $generatedNumbers[] = $num;
+        if ($subcategoryCode && $organizerCode) {
+            $combination = "{$subcategoryCode}-{$organizerCode}-PTRE";
+            $yy = $lot->date_of_receipt ? $lot->date_of_receipt->format('y') : date('y');
+            
+            $count = Unit::where('number', 'like', "%-{$combination}-%")->count();
+            $nextSerialVal = $count + 1;
+            
+            $generatedNumbers = [];
+            for ($i = 0; $i < $quantity; $i++) {
+                do {
+                    $serial = str_pad($nextSerialVal, 5, '0', STR_PAD_LEFT);
+                    $num = "{$serial}-{$combination}-{$yy}";
+                    $exists = Unit::where('number', $num)->exists() || in_array($num, $generatedNumbers);
+                    if ($exists) {
+                        $nextSerialVal++;
+                    }
+                } while ($exists);
+                $generatedNumbers[] = $num;
+                $nextSerialVal++;
+            }
+        } else {
+            $baseNumber = $validated['number'];
+            $suffixPos = strrpos($baseNumber, '-U');
+            
+            if ($suffixPos !== false) {
+                $prefix = substr($baseNumber, 0, $suffixPos + 2);
+                $startNumStr = substr($baseNumber, $suffixPos + 2);
+                $startNum = (int)$startNumStr;
+                $padLength = strlen($startNumStr);
+            } else {
+                $prefix = $baseNumber . '-';
+                $startNum = 1;
+                $padLength = 2;
+            }
+
+            $generatedNumbers = [];
+            for ($i = 0; $i < $quantity; $i++) {
+                $num = $prefix . str_pad($startNum + $i, $padLength, '0', STR_PAD_LEFT);
+                $generatedNumbers[] = $num;
+            }
         }
 
         $existing = Unit::whereIn('number', $generatedNumbers)->pluck('number')->toArray();

@@ -15,81 +15,76 @@ class UnitSeeder extends Seeder
     public function run(): void
     {
         $units = [
-            // LOT-2026-FUR-KUR-0001-0002 (Lot ID: 7)
             [
-                'number' => 'LOT-2026-FUR-KUR-0001-0002-U01',
-                'lot_id' => 7,
-                'status' => 'Tersedia',
-                'condition' => 'Baik',
-                'vehicle_registration' => null,
-            ],
-            [
-                'number' => 'LOT-2026-FUR-KUR-0001-0002-U02',
-                'lot_id' => 7,
-                'status' => 'Tersedia',
-                'condition' => 'Baik',
-                'vehicle_registration' => null,
-            ],
-
-            // LOT-2026-FUR-KUR-0001-0001 (Lot ID: 6)
-            [
-                'number' => 'LOT-2026-FUR-KUR-0001-0001-U01',
+                'number' => '00001-FUR-KK-CFS-PTRE-26',
                 'lot_id' => 6,
                 'status' => 'Tersedia',
                 'condition' => 'Baik',
                 'vehicle_registration' => null,
             ],
             [
-                'number' => 'LOT-2026-FUR-KUR-0001-0001-U02',
+                'number' => '00002-FUR-KK-CFS-PTRE-26',
                 'lot_id' => 6,
                 'status' => 'Tersedia',
                 'condition' => 'Baik',
                 'vehicle_registration' => null,
             ],
 
-            // LOT-2026-ELE-LAP-0001-0001 (Lot ID: 3)
             [
-                'number' => 'LOT-2026-ELE-LAP-0001-0001-U01',
+                'number' => '00003-FUR-KK-CFS-PTRE-26',
+                'lot_id' => 7,
+                'status' => 'Tersedia',
+                'condition' => 'Baik',
+                'vehicle_registration' => null,
+            ],
+            [
+                'number' => '00004-FUR-KK-CFS-PTRE-26',
+                'lot_id' => 7,
+                'status' => 'Tersedia',
+                'condition' => 'Baik',
+                'vehicle_registration' => null,
+            ],
+
+            [
+                'number' => '00001-COMP-NB-ICT-PTRE-26',
                 'lot_id' => 3,
                 'status' => 'Tersedia',
                 'condition' => 'Baik',
                 'vehicle_registration' => null,
             ],
             [
-                'number' => 'LOT-2026-ELE-LAP-0001-0001-U02',
+                'number' => '00002-COMP-NB-ICT-PTRE-26',
                 'lot_id' => 3,
                 'status' => 'Tersedia',
                 'condition' => 'Baik',
                 'vehicle_registration' => null,
             ],
 
-            // LOT-2026-KEN-MOB-0001-0002 (Lot ID: 5)
             [
-                'number' => 'LOT-2026-KEN-MOB-0001-0002-U01',
-                'lot_id' => 5,
+                'number' => '00001-KEN-MO-CFS-PTRE-26',
+                'lot_id' => 4,
                 'status' => 'Tersedia',
                 'condition' => 'Baik',
                 'vehicle_registration' => 'B 1234 RE',
             ],
             [
-                'number' => 'LOT-2026-KEN-MOB-0001-0002-U02',
-                'lot_id' => 5,
+                'number' => '00002-KEN-MO-CFS-PTRE-26',
+                'lot_id' => 4,
                 'status' => 'Tersedia',
                 'condition' => 'Baik',
                 'vehicle_registration' => 'B 1235 RE',
             ],
 
-            // LOT-2026-KEN-MOB-0001-0001 (Lot ID: 4)
             [
-                'number' => 'LOT-2026-KEN-MOB-0001-0001-U01',
-                'lot_id' => 4,
+                'number' => '00003-KEN-MO-CFS-PTRE-26',
+                'lot_id' => 5,
                 'status' => 'Tersedia',
                 'condition' => 'Baik',
                 'vehicle_registration' => 'B 1236 RE',
             ],
             [
-                'number' => 'LOT-2026-KEN-MOB-0001-0001-U02',
-                'lot_id' => 4,
+                'number' => '00004-KEN-MO-CFS-PTRE-26',
+                'lot_id' => 5,
                 'status' => 'Tersedia',
                 'condition' => 'Baik',
                 'vehicle_registration' => 'B 1237 RE',

@@ -768,7 +768,7 @@ onUnmounted(() => {
                     <div class="flex-grow grid grid-cols-1 md:grid-cols-15 gap-4 text-foreground">
                       <!-- Column 1: Item Info -->
                       <div class="md:col-span-4">
-                        <p class="font-bold text-foreground"><span class="text-foreground">Kode Barang:</span> {{ activeApproval.unit_details.barang_code }}</p>
+                        <p class="font-bold text-foreground"><span class="text-foreground">Kode Tipe:</span> {{ activeApproval.unit_details.barang_code }}</p>
                         <p class="font-bold text-foreground"><span class="text-foreground">Merek:</span> {{ activeApproval.brand }}</p>
                         <p class="font-bold text-foreground"><span class="text-foreground">Nama:</span> {{ activeApproval.nama }}</p>
                         <p class="font-bold text-foreground"><span class="text-foreground">Spesifikasi:</span> {{ activeApproval.specification }}</p>
