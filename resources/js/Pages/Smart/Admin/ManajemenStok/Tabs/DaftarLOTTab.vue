@@ -468,6 +468,7 @@ const deleteFields = computed(() => {
       { label: 'Lokasi', value: formatLocation(data.location, data.floor, data.room) },
       { label: 'Nomor PO', value: data.po_number },
       { label: 'Tanggal registrasi', value: formatDateWithDashes(data.date_of_receipt) },
+      { label: 'Umur', value: data.age !== undefined && data.age !== null ? `${data.age} tahun` : '-' },
       { label: 'Harga satuan', value: formatRupiah(data.unitPrice) },
       { label: 'Organizer', value: data.organizer },
       { label: 'Vendor', value: data.vendor },

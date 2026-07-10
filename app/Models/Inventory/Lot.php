@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use Carbon\Carbon;
 use App\Models\Master\Organizer;
 use App\Models\Master\Vendor;
 use App\Models\Master\Location;
@@ -17,6 +19,8 @@ class Lot extends Model
     use HasFactory;
 
     protected $with = ['barang'];
+
+    protected $appends = ['age'];
 
     protected $fillable = [
         'number',
@@ -95,5 +99,18 @@ class Lot extends Model
     public function getNumberAttribute($value)
     {
         return $value !== null ? trim($value) : null;
+    }
+
+    /**
+     * Get the lot's age in days.
+     */
+    protected function age(): Attribute
+    {
+        return Attribute::get(function () {
+            if (!$this->date_of_receipt) {
+                return 0;
+            }
+            return (int) floor($this->date_of_receipt->diffInYears(now()));
+        });
     }
 }

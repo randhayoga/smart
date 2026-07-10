@@ -128,6 +128,7 @@ class ManajemenStokController extends Controller
                     'availableAssetCount' => $lot->available_units_count,
                     'initial_quantity' => $lot->initial_quantity,
                     'current_quantity' => $lot->current_quantity,
+                    'age' => $lot->age,
                     'burden' => $lot->burden,
                     'project_id' => $lot->project_id,
                     'project_name' => $lot->project ? $lot->project->project_name : null,
@@ -191,6 +192,7 @@ class ManajemenStokController extends Controller
                     'lot_vendor' => $unit->lot->vendor->name ?? '-',
                     'lot_po_number' => $unit->lot->po_number ?? '-',
                     'lot_date_of_receipt' => ($unit->lot && $unit->lot->date_of_receipt) ? $unit->lot->date_of_receipt->format('Y-m-d') : null,
+                    'lot_age' => $unit->lot->age ?? null,
 
                     // Parent barang info
                     'barang_id' => $barang->id ?? null,

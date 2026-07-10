@@ -60,6 +60,20 @@ const formatDateWithDashes = (dateStr: string) => {
   return dateStr.replace(/\//g, '-');
 };
 
+const getAge = (item: any) => {
+  if (!item) return '-';
+  if (item.age !== undefined && item.age !== null) return `${item.age} tahun`;
+  if (item.date_of_receipt) {
+    const receipt = new Date(item.date_of_receipt);
+    if (!isNaN(receipt.getTime())) {
+      const diffTime = new Date().getTime() - receipt.getTime();
+      const years = Math.floor(diffTime / (1000 * 60 * 60 * 24 * 365));
+      return `${years >= 0 ? years : 0} tahun`;
+    }
+  }
+  return '-';
+};
+
 const formatLocation = (lot: any) => {
   if (!lot) return '-';
   const parts = [];
@@ -154,7 +168,10 @@ const displayFields = computed(() => {
       fields.push({ label: 'Lokasi', value: locParts.join(', ') || '-' });
       
       fields.push({ label: 'Nomor PO', value: data.unit_details.po_number || '-' });
-      if (data.unit_details.date_of_receipt) fields.push({ label: 'Tanggal registrasi', value: data.unit_details.date_of_receipt });
+      if (data.unit_details.date_of_receipt) {
+        fields.push({ label: 'Tanggal registrasi', value: data.unit_details.date_of_receipt });
+        fields.push({ label: 'Umur', value: getAge(data.unit_details) });
+      }
       if (data.unit_details.price !== undefined && data.unit_details.price !== null) {
         fields.push({ label: 'Harga', value: `Rp${data.unit_details.price}` });
       }
@@ -200,7 +217,10 @@ const displayFields = computed(() => {
     }
     
     if (data.po_number) fields.push({ label: 'Nomor PO', value: data.po_number });
-    if (data.date_of_receipt) fields.push({ label: 'Tanggal registrasi', value: formatDateWithDashes(data.date_of_receipt) });
+    if (data.date_of_receipt) {
+      fields.push({ label: 'Tanggal registrasi', value: formatDateWithDashes(data.date_of_receipt) });
+      fields.push({ label: 'Umur', value: getAge(data) });
+    }
     
     if (!data.is_consumable) {
       fields.push({ label: 'Harga Satuan (default)', value: formatRupiah(data.unitPrice) });

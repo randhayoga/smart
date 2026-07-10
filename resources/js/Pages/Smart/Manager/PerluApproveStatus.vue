@@ -51,6 +51,7 @@ interface UnitDetails {
   date_of_receipt: string;
   vendor: string;
   po_number: string;
+  age?: number | null;
   barang_code: string;
   barang_spec: string;
   barang_unit: string;
@@ -781,6 +782,7 @@ onUnmounted(() => {
                         <p class="font-bold text-foreground"><span class="text-foreground">Kode LOT:</span> {{ activeApproval.unit_details.lot_code }}</p>
                         <p class="text-foreground">Organizer: {{ activeApproval.unit_details.organizer }}</p>
                         <p class="text-foreground">Tanggal registrasi: {{ formatDateWithDashes(activeApproval.unit_details.date_of_receipt) }}</p>
+                        <p class="text-foreground">Umur: {{ activeApproval.unit_details.age !== undefined && activeApproval.unit_details.age !== null ? `${activeApproval.unit_details.age} tahun` : '-' }}</p>
                         <p class="text-foreground">Vendor: {{ activeApproval.unit_details.vendor }}</p>
                         <p class="text-foreground">Nomor PO: {{ activeApproval.unit_details.po_number }}</p>
                       </div>

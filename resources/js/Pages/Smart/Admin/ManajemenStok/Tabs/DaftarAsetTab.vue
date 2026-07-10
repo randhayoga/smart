@@ -762,124 +762,133 @@ const totalAsetTerpilihCount = computed(() => {
           </div>
 
           <!-- Advanced Filters Row -->
-          <div 
-            v-if="showAdvancedFilters && props.filterVariant !== 'simple'" 
-            class="p-4 bg-muted/30 rounded-xl border border-border/80 flex flex-wrap gap-4"
+          <Transition
+            enter-active-class="transition-all ease-out duration-300 transform"
+            enter-from-class="-translate-y-4 opacity-0"
+            enter-to-class="translate-y-0 opacity-100"
+            leave-active-class="transition-all ease-in duration-200 transform"
+            leave-from-class="translate-y-0 opacity-100"
+            leave-to-class="-translate-y-4 opacity-0"
           >
-            <!-- Brand Filter -->
-            <div class="space-y-1.5 w-[200px]">
-              <label class="text-xs text-muted-foreground font-medium block ml-0.5">Merek</label>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal bg-background', !brandFilter ? 'text-muted-foreground' : 'text-foreground']">
-                    <span class="truncate">{{ brandFilter || 'Semua merek' }}</span>
-                    <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] max-h-60 overflow-y-auto" align="start" :side-offset="4">
-                  <DropdownMenuItem @select="brandFilter = ''">Semua merek</DropdownMenuItem>
-                  <DropdownMenuItem v-for="br in availableBrands" :key="br" @select="brandFilter = br">
-                    {{ br }}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+            <div 
+              v-if="showAdvancedFilters && props.filterVariant !== 'simple'" 
+              class="p-4 bg-muted/30 rounded-xl border border-border/80 flex flex-wrap gap-4"
+            >
+              <!-- Brand Filter -->
+              <div class="space-y-1.5 w-[200px]">
+                <label class="text-xs text-muted-foreground font-medium block ml-0.5">Merek</label>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal bg-background', !brandFilter ? 'text-muted-foreground' : 'text-foreground']">
+                      <span class="truncate">{{ brandFilter || 'Semua merek' }}</span>
+                      <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] max-h-60 overflow-y-auto" align="start" :side-offset="4">
+                    <DropdownMenuItem @select="brandFilter = ''">Semua merek</DropdownMenuItem>
+                    <DropdownMenuItem v-for="br in availableBrands" :key="br" @select="brandFilter = br">
+                      {{ br }}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
 
-            <!-- Location Filter (Step 1) -->
-            <div class="space-y-1.5 w-[200px]">
-              <label class="text-xs text-muted-foreground font-medium block ml-0.5">Lokasi</label>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal bg-background', !locationFilter ? 'text-muted-foreground' : 'text-foreground']">
-                    <span class="truncate">{{ locationFilter ? (props.locations.find(l => l.id.toString() === locationFilter)?.name || 'Semua lokasi') : 'Semua lokasi' }}</span>
-                    <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] max-h-60 overflow-y-auto" align="start" :side-offset="4">
-                  <DropdownMenuItem @select="locationFilter = ''; floorFilter = ''; roomFilter = ''">Semua lokasi</DropdownMenuItem>
-                  <DropdownMenuItem v-for="loc in props.locations" :key="loc.id" @select="locationFilter = loc.id.toString(); floorFilter = ''; roomFilter = ''">
-                    {{ loc.name }}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+              <!-- Location Filter (Step 1) -->
+              <div class="space-y-1.5 w-[200px]">
+                <label class="text-xs text-muted-foreground font-medium block ml-0.5">Lokasi</label>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal bg-background', !locationFilter ? 'text-muted-foreground' : 'text-foreground']">
+                      <span class="truncate">{{ locationFilter ? (props.locations.find(l => l.id.toString() === locationFilter)?.name || 'Semua lokasi') : 'Semua lokasi' }}</span>
+                      <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] max-h-60 overflow-y-auto" align="start" :side-offset="4">
+                    <DropdownMenuItem @select="locationFilter = ''; floorFilter = ''; roomFilter = ''">Semua lokasi</DropdownMenuItem>
+                    <DropdownMenuItem v-for="loc in props.locations" :key="loc.id" @select="locationFilter = loc.id.toString(); floorFilter = ''; roomFilter = ''">
+                      {{ loc.name }}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
 
-            <!-- Floor Filter (Step 2) -->
-            <div class="space-y-1.5 w-[200px]">
-              <label class="text-xs text-muted-foreground font-medium block ml-0.5">Lantai</label>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal bg-background', !floorFilter ? 'text-muted-foreground' : 'text-foreground']">
-                    <span class="truncate">{{ floorFilter ? (props.floors.find(f => f.id.toString() === floorFilter)?.name || 'Semua lantai') : 'Semua lantai' }}</span>
-                    <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] max-h-60 overflow-y-auto" align="start" :side-offset="4">
-                  <DropdownMenuItem @select="floorFilter = ''; roomFilter = ''">Semua lantai</DropdownMenuItem>
-                  <DropdownMenuItem v-for="fl in filteredFloors" :key="fl.id" @select="floorFilter = fl.id.toString(); roomFilter = ''">
-                    {{ fl.name }}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+              <!-- Floor Filter (Step 2) -->
+              <div class="space-y-1.5 w-[200px]">
+                <label class="text-xs text-muted-foreground font-medium block ml-0.5">Lantai</label>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal bg-background', !floorFilter ? 'text-muted-foreground' : 'text-foreground']">
+                      <span class="truncate">{{ floorFilter ? (props.floors.find(f => f.id.toString() === floorFilter)?.name || 'Semua lantai') : 'Semua lantai' }}</span>
+                      <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] max-h-60 overflow-y-auto" align="start" :side-offset="4">
+                    <DropdownMenuItem @select="floorFilter = ''; roomFilter = ''">Semua lantai</DropdownMenuItem>
+                    <DropdownMenuItem v-for="fl in filteredFloors" :key="fl.id" @select="floorFilter = fl.id.toString(); roomFilter = ''">
+                      {{ fl.name }}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
 
-            <!-- Room Filter (Step 3) -->
-            <div class="space-y-1.5 w-3xs">
-              <label class="text-xs text-muted-foreground font-medium block ml-0.5">Ruangan</label>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal bg-background', !roomFilter ? 'text-muted-foreground' : 'text-foreground']">
-                    <span class="truncate">{{ roomFilter ? (props.rooms.find(r => r.id.toString() === roomFilter)?.name || 'Semua ruangan') : 'Semua ruangan' }}</span>
-                    <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] max-h-60 overflow-y-auto" align="start" :side-offset="4">
-                  <DropdownMenuItem @select="roomFilter = ''">Semua ruangan</DropdownMenuItem>
-                  <DropdownMenuItem v-for="rm in filteredRooms" :key="rm.id" @select="roomFilter = rm.id.toString()">
-                    {{ rm.name }}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+              <!-- Room Filter (Step 3) -->
+              <div class="space-y-1.5 w-3xs">
+                <label class="text-xs text-muted-foreground font-medium block ml-0.5">Ruangan</label>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal bg-background', !roomFilter ? 'text-muted-foreground' : 'text-foreground']">
+                      <span class="truncate">{{ roomFilter ? (props.rooms.find(r => r.id.toString() === roomFilter)?.name || 'Semua ruangan') : 'Semua ruangan' }}</span>
+                      <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] max-h-60 overflow-y-auto" align="start" :side-offset="4">
+                    <DropdownMenuItem @select="roomFilter = ''">Semua ruangan</DropdownMenuItem>
+                    <DropdownMenuItem v-for="rm in filteredRooms" :key="rm.id" @select="roomFilter = rm.id.toString()">
+                      {{ rm.name }}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
 
-            <!-- Organizer Filter -->
-            <div class="space-y-1.5 w-[170px]">
-              <label class="text-xs text-muted-foreground font-medium block ml-0.5">Organizer</label>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal bg-background', !organizerFilter ? 'text-muted-foreground' : 'text-foreground']">
-                    <span class="truncate">{{ organizerFilter ? (props.organizers?.find(o => o.id.toString() === organizerFilter)?.name || 'Semua organizer') : 'Semua organizer' }}</span>
-                    <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] max-h-60 overflow-y-auto" align="start" :side-offset="4">
-                  <DropdownMenuItem @select="organizerFilter = ''">Semua organizer</DropdownMenuItem>
-                  <DropdownMenuItem v-for="org in props.organizers" :key="org.id" @select="organizerFilter = org.id.toString()">
-                    {{ org.name }}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+              <!-- Organizer Filter -->
+              <div class="space-y-1.5 w-[170px]">
+                <label class="text-xs text-muted-foreground font-medium block ml-0.5">Organizer</label>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal bg-background', !organizerFilter ? 'text-muted-foreground' : 'text-foreground']">
+                      <span class="truncate">{{ organizerFilter ? (props.organizers?.find(o => o.id.toString() === organizerFilter)?.name || 'Semua organizer') : 'Semua organizer' }}</span>
+                      <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] max-h-60 overflow-y-auto" align="start" :side-offset="4">
+                    <DropdownMenuItem @select="organizerFilter = ''">Semua organizer</DropdownMenuItem>
+                    <DropdownMenuItem v-for="org in props.organizers" :key="org.id" @select="organizerFilter = org.id.toString()">
+                      {{ org.name }}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
 
-            <!-- Vendor Filter -->
-            <div class="space-y-1.5 w-3xs">
-              <label class="text-xs text-muted-foreground font-medium block ml-0.5">Vendor</label>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal bg-background', !vendorFilter ? 'text-muted-foreground' : 'text-foreground']">
-                    <span class="truncate">{{ vendorFilter ? (props.vendors?.find(v => v.id.toString() === vendorFilter)?.name || 'Semua vendor') : 'Semua vendor' }}</span>
-                    <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] max-h-60 overflow-y-auto" align="start" :side-offset="4">
-                  <DropdownMenuItem @select="vendorFilter = ''">Semua vendor</DropdownMenuItem>
-                  <DropdownMenuItem v-for="vend in props.vendors" :key="vend.id" @select="vendorFilter = vend.id.toString()">
-                    {{ vend.name }}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <!-- Vendor Filter -->
+              <div class="space-y-1.5 w-3xs">
+                <label class="text-xs text-muted-foreground font-medium block ml-0.5">Vendor</label>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal bg-background', !vendorFilter ? 'text-muted-foreground' : 'text-foreground']">
+                      <span class="truncate">{{ vendorFilter ? (props.vendors?.find(v => v.id.toString() === vendorFilter)?.name || 'Semua vendor') : 'Semua vendor' }}</span>
+                      <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] max-h-60 overflow-y-auto" align="start" :side-offset="4">
+                    <DropdownMenuItem @select="vendorFilter = ''">Semua vendor</DropdownMenuItem>
+                    <DropdownMenuItem v-for="vend in props.vendors" :key="vend.id" @select="vendorFilter = vend.id.toString()">
+                      {{ vend.name }}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
-          </div>
+          </Transition>
 
           <!-- Row 2: Bulk Actions -->
           <div class="flex flex-wrap items-end justify-between gap-4 pt-2">

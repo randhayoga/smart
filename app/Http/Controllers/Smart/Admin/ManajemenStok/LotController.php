@@ -195,6 +195,7 @@ class LotController extends Controller
                 'project_name' => $lot->project ? $lot->project->project_name : null,
                 'project_no' => $lot->project ? $lot->project->no_project : null,
                 'updated_at' => $lot->updated_at ? $lot->updated_at->format('d/m/Y H:i') : '-',
+                'age' => $lot->age,
                 
                 // Parent barang info
                 'barang_code' => $lot->barang->number ?? '-',
@@ -251,6 +252,7 @@ class LotController extends Controller
                 'lot_vendor' => $unit->lot->vendor->name ?? '-',
                 'lot_po_number' => $unit->lot->po_number ?? '-',
                 'lot_date_of_receipt' => ($unit->lot && $unit->lot->date_of_receipt) ? $unit->lot->date_of_receipt->format('Y-m-d') : null,
+                'lot_age' => $unit->lot->age ?? null,
 
                 // Parent barang info
                 'barang_id' => $barang->id ?? null,
@@ -299,6 +301,7 @@ class LotController extends Controller
                 'project_name' => $lot->project ? $lot->project->project_name : null,
                 'project_no' => $lot->project ? $lot->project->no_project : null,
                 'updated_at' => $lot->updated_at ? $lot->updated_at->format('d/m/Y H:i') : '-',
+                'age' => $lot->age,
                 
                 // Parent barang info
                 'barang_id' => $lot->barang->id ?? null,

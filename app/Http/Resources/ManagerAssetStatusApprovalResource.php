@@ -81,6 +81,7 @@ class ManagerAssetStatusApprovalResource extends JsonResource
                 'lot_code' => $lot->number ?? '-',
                 'organizer' => $lot->organizer->name ?? '-',
                 'date_of_receipt' => $lot->date_of_receipt ? $lot->date_of_receipt->format('d-m-Y') : '-',
+                'age' => $lot ? $lot->age : null,
                 'vendor' => $lot->vendor->name ?? '-',
                 'po_number' => $lot->po_number ?? '-',
                 'barang_code' => $barang->number ?? '-',
