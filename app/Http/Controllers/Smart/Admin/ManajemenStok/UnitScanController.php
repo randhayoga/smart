@@ -60,7 +60,7 @@ class UnitScanController extends Controller
             'lot_vendor' => $unit->lot->vendor->name ?? '-',
             'lot_po_number' => $unit->lot->po_number ?? '-',
             'lot_date_of_receipt' => ($unit->lot && $unit->lot->date_of_receipt) ? $unit->lot->date_of_receipt->format('Y-m-d') : null,
-            'lot_age' => $unit->lot ? ($unit->lot->date_of_receipt ? floor(now()->diffInDays($unit->lot->date_of_receipt) / 365) : null) : null,
+            'lot_age' => $unit->lot ? $unit->lot->age : null,
 
             // Parent barang info
             'barang_id' => $barang->id ?? null,
