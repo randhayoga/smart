@@ -3,17 +3,17 @@
 namespace App\Http\Controllers\Smart\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Inventory\Lot;
+use App\Models\Inventory\Unit;
+use App\Models\Request\Request as SmartRequest;
+use App\Models\Request\RequestAdminConfirmation;
+use App\Models\Request\RequestApproval;
+use App\Models\Request\RequestItem;
+use App\Models\Request\RequestStatusLog;
+use App\Models\Request\RequestUnitAssignment;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-use App\Models\Request\Request as SmartRequest;
-use App\Models\Request\RequestItem;
-use App\Models\Request\RequestApproval;
-use App\Models\Request\RequestAdminConfirmation;
-use App\Models\Request\RequestStatusLog;
-use App\Models\Request\RequestUnitAssignment;
-use App\Models\Inventory\Unit;
-use App\Models\Inventory\Lot;
 
 class InboxController extends Controller
 {
@@ -206,7 +206,7 @@ class InboxController extends Controller
             'logs' => $logs,
         ];
 
-        $placements = \App\Models\Request\RequestUnitAssignment::whereIn('request_item_id', $req->items->pluck('id'))
+        $placements = RequestUnitAssignment::whereIn('request_item_id', $req->items->pluck('id'))
             ->with('unit')
             ->get()
             ->filter(fn($asn) => $asn->unit && $asn->placement)

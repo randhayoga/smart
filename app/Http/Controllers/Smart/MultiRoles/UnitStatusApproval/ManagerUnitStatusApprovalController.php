@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Smart\MultiRoles\UnitStatusApproval;
 
 use App\Http\Controllers\Controller;
-use App\Models\Inventory\UnitStatusApproval;
 use App\Http\Resources\ManagerAssetStatusApprovalResource;
+use App\Models\Inventory\UnitStatusApproval;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;

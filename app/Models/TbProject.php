@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Request\Request;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -33,6 +34,6 @@ class TbProject extends Model
      */
     public function requests(): HasMany
     {
-        return $this->hasMany(\App\Models\Request\Request::class, 'project_id');
+        return $this->hasMany(Request::class, 'project_id');
     }
 }

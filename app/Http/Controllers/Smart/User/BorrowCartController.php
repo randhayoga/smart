@@ -3,9 +3,10 @@
 namespace App\Http\Controllers\Smart\User;
 
 use App\Http\Controllers\Controller;
+use App\Models\Cart\AssetBasket;
+use App\Models\Inventory\Unit;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use App\Models\Cart\AssetBasket;
 
 class BorrowCartController extends Controller
 {
@@ -25,11 +26,11 @@ class BorrowCartController extends Controller
             ->map(function ($item) {
                 // Calculate stock of units with status 'tersedia'
                 if ($item->barang_id) {
-                    $stock = \App\Models\Inventory\Unit::whereHas('lot', function ($q) use ($item) {
+                    $stock = Unit::whereHas('lot', function ($q) use ($item) {
                         $q->where('barang_id', $item->barang_id);
                     })->where('status', 'tersedia')->count();
                 } else {
-                    $stock = \App\Models\Inventory\Unit::whereHas('lot.barang', function ($q) use ($item) {
+                    $stock = Unit::whereHas('lot.barang', function ($q) use ($item) {
                         $q->where('subcategory_id', $item->subcategory_id);
                     })->where('status', 'tersedia')->count();
                 }

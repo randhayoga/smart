@@ -2,6 +2,7 @@
 
 namespace App\Models\Master;
 
+use App\Models\Inventory\Lot;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -31,6 +32,6 @@ class Vendor extends Model
      */
     public function lots(): HasMany
     {
-        return $this->hasMany(\App\Models\Inventory\Lot::class);
+        return $this->hasMany(Lot::class);
     }
 }

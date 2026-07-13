@@ -3,9 +3,17 @@
 namespace App\Http\Controllers\Smart\Admin\ManajemenStok;
 
 use App\Http\Controllers\Controller;
-use App\Models\Inventory\Unit;
+use App\Models\Inventory\Barang;
 use App\Models\Inventory\Lot;
+use App\Models\Inventory\Unit;
+use App\Models\Inventory\UnitStatusApproval;
+use App\Models\Master\Floor;
+use App\Models\Master\Location;
+use App\Models\Master\Organizer;
+use App\Models\Master\Room;
+use App\Models\Master\Vendor;
 use App\Models\Request\RequestUnitAssignment;
+use App\Models\TbProject;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -73,12 +81,12 @@ class UnitController extends Controller
             ];
         });
 
-        $locations = \App\Models\Master\Location::orderBy('name')->get();
-        $floors = \App\Models\Master\Floor::with('location')->orderBy('name')->get();
-        $rooms = \App\Models\Master\Room::with('floor.location')->orderBy('name')->get();
-        $organizers = \App\Models\Master\Organizer::orderBy('name')->get();
-        $vendors = \App\Models\Master\Vendor::orderBy('name')->get();
-        $projects = \App\Models\TbProject::orderBy('project_name')->get();
+        $locations = Location::orderBy('name')->get();
+        $floors = Floor::with('location')->orderBy('name')->get();
+        $rooms = Room::with('floor.location')->orderBy('name')->get();
+        $organizers = Organizer::orderBy('name')->get();
+        $vendors = Vendor::orderBy('name')->get();
+        $projects = TbProject::orderBy('project_name')->get();
 
         return Inertia::render('Smart/Admin/ManajemenStok/DaftarAset', [
             'user' => $request->user(),
@@ -177,7 +185,7 @@ class UnitController extends Controller
             if ($request->hasFile('memo_file')) {
                 $docUrl = $request->file('memo_file')->store('memos', 'public');
             }
-            \App\Models\Inventory\UnitStatusApproval::create([
+            UnitStatusApproval::create([
                 'unit_id' => $unit->id,
                 'requester_id' => $request->user()->id,
                 'proposed_status' => $proposedStatus,
@@ -236,8 +244,8 @@ class UnitController extends Controller
         if ($request->boolean('use_lot_image')) {
             if ($unit->image_url && Storage::disk('public')->exists($unit->image_url)) {
                 $isShared = Unit::where('image_url', $unit->image_url)->where('id', '!=', $unit->id)->exists()
-                    || \App\Models\Inventory\Lot::where('image_url', $unit->image_url)->exists()
-                    || \App\Models\Inventory\Barang::where('image_url', $unit->image_url)->exists();
+                    || Lot::where('image_url', $unit->image_url)->exists()
+                    || Barang::where('image_url', $unit->image_url)->exists();
                 if (!$isShared) {
                     Storage::disk('public')->delete($unit->image_url);
                 }
@@ -251,8 +259,8 @@ class UnitController extends Controller
         } else if ($request->hasFile('image_url')) {
             if ($unit->image_url && Storage::disk('public')->exists($unit->image_url)) {
                 $isShared = Unit::where('image_url', $unit->image_url)->where('id', '!=', $unit->id)->exists()
-                    || \App\Models\Inventory\Lot::where('image_url', $unit->image_url)->exists()
-                    || \App\Models\Inventory\Barang::where('image_url', $unit->image_url)->exists();
+                    || Lot::where('image_url', $unit->image_url)->exists()
+                    || Barang::where('image_url', $unit->image_url)->exists();
                 if (!$isShared) {
                     Storage::disk('public')->delete($unit->image_url);
                 }
@@ -274,7 +282,7 @@ class UnitController extends Controller
         $unit->update($validated);
 
         if ($needApproval) {
-            $existing = \App\Models\Inventory\UnitStatusApproval::where('unit_id', $unit->id)
+            $existing = UnitStatusApproval::where('unit_id', $unit->id)
                 ->where('decision', 'pending')
                 ->first();
             if (!$existing) {
@@ -282,7 +290,7 @@ class UnitController extends Controller
                 if ($request->hasFile('memo_file')) {
                     $docUrl = $request->file('memo_file')->store('memos', 'public');
                 }
-                \App\Models\Inventory\UnitStatusApproval::create([
+                UnitStatusApproval::create([
                     'unit_id' => $unit->id,
                     'requester_id' => $request->user()->id,
                     'proposed_status' => $proposedStatus,
@@ -310,8 +318,8 @@ class UnitController extends Controller
 
         if ($unit->image_url && Storage::disk('public')->exists($unit->image_url)) {
             $isShared = Unit::where('image_url', $unit->image_url)->where('id', '!=', $unit->id)->exists()
-                || \App\Models\Inventory\Lot::where('image_url', $unit->image_url)->exists()
-                || \App\Models\Inventory\Barang::where('image_url', $unit->image_url)->exists();
+                || Lot::where('image_url', $unit->image_url)->exists()
+                || Barang::where('image_url', $unit->image_url)->exists();
             if (!$isShared) {
                 Storage::disk('public')->delete($unit->image_url);
             }

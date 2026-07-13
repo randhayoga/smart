@@ -3,6 +3,13 @@
 namespace App\Http\Controllers\Smart\Admin\ManajemenStok;
 
 use App\Http\Controllers\Controller;
+use App\Models\Inventory\Lot;
+use App\Models\Master\Floor;
+use App\Models\Master\Location;
+use App\Models\Master\Organizer;
+use App\Models\Master\Room;
+use App\Models\Master\Vendor;
+use App\Models\TbProject;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -14,7 +21,7 @@ class ConsumableLotController extends Controller
      */
     public function index(Request $request): Response
     {
-        $lots = \App\Models\Inventory\Lot::with([
+        $lots = Lot::with([
             'barang.subcategory.category',
             'barang.brand',
             'barang.uom',
@@ -67,13 +74,13 @@ class ConsumableLotController extends Controller
             ];
         });
 
-        $organizers = \App\Models\Master\Organizer::orderBy('name')->get();
-        $vendors = \App\Models\Master\Vendor::orderBy('name')->get();
-        $locations = \App\Models\Master\Location::orderBy('name')->get();
-        $floors = \App\Models\Master\Floor::with('location')->orderBy('name')->get();
-        $rooms = \App\Models\Master\Room::with('floor.location')->orderBy('name')->get();
+        $organizers = Organizer::orderBy('name')->get();
+        $vendors = Vendor::orderBy('name')->get();
+        $locations = Location::orderBy('name')->get();
+        $floors = Floor::with('location')->orderBy('name')->get();
+        $rooms = Room::with('floor.location')->orderBy('name')->get();
 
-        $projects = \App\Models\TbProject::orderBy('project_name')->get();
+        $projects = TbProject::orderBy('project_name')->get();
 
         return Inertia::render('Smart/Admin/ManajemenStok/DaftarStokHabisPakai', [
             'user' => $request->user(),

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Master\Location;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class LocationController extends Controller
 {
@@ -46,8 +47,8 @@ class LocationController extends Controller
             return redirect()->back()->with('error', 'Lokasi tidak dapat dihapus karena masih memiliki lantai.');
         }
 
-        if (\Illuminate\Support\Facades\DB::table('lots')->where('location_id', $location->id)->exists() ||
-            \Illuminate\Support\Facades\DB::table('units')->where('location_id', $location->id)->exists()) {
+        if (DB::table('lots')->where('location_id', $location->id)->exists() ||
+            DB::table('units')->where('location_id', $location->id)->exists()) {
             return redirect()->back()->with('error', 'Lokasi tidak dapat dihapus karena sedang digunakan oleh data lot/unit barang.');
         }
 

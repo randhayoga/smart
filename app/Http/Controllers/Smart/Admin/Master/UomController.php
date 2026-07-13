@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Master\Uom;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class UomController extends Controller
 {
@@ -42,7 +43,7 @@ class UomController extends Controller
      */
     public function destroy(Uom $uom): RedirectResponse
     {
-        if (\Illuminate\Support\Facades\DB::table('barangs')->where('uom_id', $uom->id)->exists()) {
+        if (DB::table('barangs')->where('uom_id', $uom->id)->exists()) {
             return redirect()->back()->with('error', 'Satuan tidak dapat dihapus karena sedang digunakan oleh data barang.');
         }
 

@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\Smart\MultiRoles\UnitStatusApproval;
 
+use App\Actions\Inventory\ProcessUnitStatusApproval;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\AdminUnitStatusApprovalResource;
 use App\Models\Inventory\Unit;
 use App\Models\Inventory\UnitStatusApproval;
-use App\Http\Resources\AdminUnitStatusApprovalResource;
-use App\Actions\Inventory\ProcessUnitStatusApproval;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Master\Organizer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class OrganizerController extends Controller
 {
@@ -42,7 +43,7 @@ class OrganizerController extends Controller
      */
     public function destroy(Organizer $organizer): RedirectResponse
     {
-        if (\Illuminate\Support\Facades\DB::table('lots')->where('organizer_id', $organizer->id)->exists()) {
+        if (DB::table('lots')->where('organizer_id', $organizer->id)->exists()) {
             return redirect()->back()->with('error', 'Organizer tidak dapat dihapus karena sedang digunakan oleh data lot barang.');
         }
 

@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Smart\Admin\ManajemenStok;
 
 use App\Http\Controllers\Controller;
 use App\Models\Inventory\Unit;
-use App\Models\Master\Location;
 use App\Models\Master\Floor;
+use App\Models\Master\Location;
 use App\Models\Master\Room;
 use Illuminate\Http\Request;
 use Inertia\Inertia;

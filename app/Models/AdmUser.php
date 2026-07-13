@@ -2,11 +2,19 @@
 
 namespace App\Models;
 
+use App\Models\Cart\AssetBasket;
+use App\Models\Cart\ConsumableBasket;
+use App\Models\Inventory\InventoryLog;
+use App\Models\Inventory\UnitStatusApproval;
+use App\Models\Request\Request;
+use App\Models\Request\RequestAdminConfirmation;
+use App\Models\Request\RequestApproval;
+use App\Models\Request\RequestStatusLog;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 
 class AdmUser extends Authenticatable
 {
@@ -130,7 +138,7 @@ class AdmUser extends Authenticatable
      */
     public function consumableBaskets(): HasMany
     {
-        return $this->hasMany(\App\Models\Cart\ConsumableBasket::class, 'user_id');
+        return $this->hasMany(ConsumableBasket::class, 'user_id');
     }
 
     /**
@@ -139,7 +147,7 @@ class AdmUser extends Authenticatable
      */
     public function assetBaskets(): HasMany
     {
-        return $this->hasMany(\App\Models\Cart\AssetBasket::class, 'user_id');
+        return $this->hasMany(AssetBasket::class, 'user_id');
     }
 
     /**
@@ -148,7 +156,7 @@ class AdmUser extends Authenticatable
      */
     public function submittedRequests(): HasMany
     {
-        return $this->hasMany(\App\Models\Request\Request::class, 'user_id');
+        return $this->hasMany(Request::class, 'user_id');
     }
 
     /**
@@ -157,7 +165,7 @@ class AdmUser extends Authenticatable
      */
     public function assignedApprovals(): HasMany
     {
-        return $this->hasMany(\App\Models\Request\Request::class, 'approver_id');
+        return $this->hasMany(Request::class, 'approver_id');
     }
 
     /**
@@ -166,7 +174,7 @@ class AdmUser extends Authenticatable
      */
     public function unitStatusRequests(): HasMany
     {
-        return $this->hasMany(\App\Models\Inventory\UnitStatusApproval::class, 'requester_id');
+        return $this->hasMany(UnitStatusApproval::class, 'requester_id');
     }
 
     /**
@@ -175,7 +183,7 @@ class AdmUser extends Authenticatable
      */
     public function unitStatusDecisions(): HasMany
     {
-        return $this->hasMany(\App\Models\Inventory\UnitStatusApproval::class, 'approver_id');
+        return $this->hasMany(UnitStatusApproval::class, 'approver_id');
     }
 
     /**
@@ -184,7 +192,7 @@ class AdmUser extends Authenticatable
      */
     public function inventoryLogs(): HasMany
     {
-        return $this->hasMany(\App\Models\Inventory\InventoryLog::class, 'user_id');
+        return $this->hasMany(InventoryLog::class, 'user_id');
     }
 
     /**
@@ -193,7 +201,7 @@ class AdmUser extends Authenticatable
      */
     public function requestApprovals(): HasMany
     {
-        return $this->hasMany(\App\Models\Request\RequestApproval::class, 'approver_id');
+        return $this->hasMany(RequestApproval::class, 'approver_id');
     }
 
     /**
@@ -202,7 +210,7 @@ class AdmUser extends Authenticatable
      */
     public function requestAdminConfirmations(): HasMany
     {
-        return $this->hasMany(\App\Models\Request\RequestAdminConfirmation::class, 'admin_id');
+        return $this->hasMany(RequestAdminConfirmation::class, 'admin_id');
     }
 
     /**
@@ -211,6 +219,6 @@ class AdmUser extends Authenticatable
      */
     public function requestStatusLogs(): HasMany
     {
-        return $this->hasMany(\App\Models\Request\RequestStatusLog::class, 'changed_by');
+        return $this->hasMany(RequestStatusLog::class, 'changed_by');
     }
 }

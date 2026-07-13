@@ -2,11 +2,11 @@
 
 namespace App\Models\Cart;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Models\AdmUser;
 use App\Models\Inventory\Barang;
 use App\Models\Master\Subcategory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class AssetBasket extends Model
 {

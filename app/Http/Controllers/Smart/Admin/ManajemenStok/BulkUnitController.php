@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Smart\Admin\ManajemenStok;
 
 use App\Http\Controllers\Controller;
-use App\Models\Inventory\Unit;
+use App\Models\Inventory\Barang;
 use App\Models\Inventory\Lot;
+use App\Models\Inventory\Unit;
+use App\Models\Inventory\UnitStatusApproval;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -138,7 +140,7 @@ class BulkUnitController extends Controller
                 if ($request->hasFile('memo_file')) {
                     $docUrl = $request->file('memo_file')->store('memos', 'public');
                 }
-                \App\Models\Inventory\UnitStatusApproval::create([
+                UnitStatusApproval::create([
                     'unit_id' => $unit->id,
                     'requester_id' => $request->user()->id,
                     'proposed_status' => $proposedStatus,
@@ -241,7 +243,7 @@ class BulkUnitController extends Controller
                 if ($unit->image_url && Storage::disk('public')->exists($unit->image_url)) {
                     $isShared = Unit::where('image_url', $unit->image_url)->where('id', '!=', $unit->id)->exists()
                         || Lot::where('image_url', $unit->image_url)->exists()
-                        || \App\Models\Inventory\Barang::where('image_url', $unit->image_url)->exists();
+                        || Barang::where('image_url', $unit->image_url)->exists();
                     if (!$isShared) {
                         Storage::disk('public')->delete($unit->image_url);
                     }
@@ -260,11 +262,11 @@ class BulkUnitController extends Controller
                 $docUrl = $request->file('memo_file')->store('memos', 'public');
             }
             foreach ($units as $unit) {
-                $existing = \App\Models\Inventory\UnitStatusApproval::where('unit_id', $unit->id)
+                $existing = UnitStatusApproval::where('unit_id', $unit->id)
                     ->where('decision', 'pending')
                     ->first();
                 if (!$existing) {
-                    \App\Models\Inventory\UnitStatusApproval::create([
+                    UnitStatusApproval::create([
                         'unit_id' => $unit->id,
                         'requester_id' => $request->user()->id,
                         'proposed_status' => $proposedStatus,

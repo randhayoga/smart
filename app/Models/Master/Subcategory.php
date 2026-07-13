@@ -2,6 +2,10 @@
 
 namespace App\Models\Master;
 
+use App\Models\Cart\AssetBasket;
+use App\Models\Cart\ConsumableBasket;
+use App\Models\Inventory\Barang;
+use App\Models\Request\RequestItem;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -35,22 +39,22 @@ class Subcategory extends Model
      */
     public function barangs(): HasMany
     {
-        return $this->hasMany(\App\Models\Inventory\Barang::class);
+        return $this->hasMany(Barang::class);
     }
 
     public function consumableBaskets(): HasMany
     {
-        return $this->hasMany(\App\Models\Cart\ConsumableBasket::class);
+        return $this->hasMany(ConsumableBasket::class);
     }
 
     public function assetBaskets(): HasMany
     {
-        return $this->hasMany(\App\Models\Cart\AssetBasket::class);
+        return $this->hasMany(AssetBasket::class);
     }
 
     public function requestItems(): HasMany
     {
-        return $this->hasMany(\App\Models\Request\RequestItem::class);
+        return $this->hasMany(RequestItem::class);
     }
 
     public function getCodeAttribute($value)

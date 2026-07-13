@@ -5,15 +5,15 @@ namespace App\Http\Controllers\Smart\Admin\ManajemenStok;
 use App\Http\Controllers\Controller;
 use App\Models\Inventory\Unit;
 use Endroid\QrCode\Builder\Builder;
-use Endroid\QrCode\Writer\PngWriter;
 use Endroid\QrCode\Encoding\Encoding;
 use Endroid\QrCode\ErrorCorrectionLevel;
+use Endroid\QrCode\Writer\PngWriter;
+use Intervention\Image\Drivers\Gd\Driver;
+use Intervention\Image\Encoders\PngEncoder;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Typography\FontFactory;
 use Symfony\Component\HttpFoundation\Response;
 
-use Intervention\Image\ImageManager;
-use Intervention\Image\Drivers\Gd\Driver;
-use Intervention\Image\Typography\FontFactory;
-use Intervention\Image\Encoders\PngEncoder;
 
 class UnitQrCodeController extends Controller
 {

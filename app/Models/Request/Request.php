@@ -2,12 +2,13 @@
 
 namespace App\Models\Request;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Models\AdmUser;
 use App\Models\HrdOrgchart;
 use App\Models\TbProject;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Request extends Model
 {
@@ -56,22 +57,22 @@ class Request extends Model
         return $this->hasMany(RequestStatusLog::class);
     }
 
-    public function approval(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function approval(): HasOne
     {
         return $this->hasOne(RequestApproval::class, 'request_id')->latestOfMany();
     }
 
-    public function adminConfirmation(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function adminConfirmation(): HasOne
     {
         return $this->hasOne(RequestAdminConfirmation::class, 'request_id')->latestOfMany();
     }
 
-    public function handover(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function handover(): HasOne
     {
         return $this->hasOne(RequestHandover::class, 'request_id');
     }
 
-    public function return(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function return(): HasOne
     {
         return $this->hasOne(RequestReturn::class, 'request_id');
     }

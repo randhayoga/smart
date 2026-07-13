@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Smart\Admin\Master;
 
 use App\Http\Controllers\Controller;
+use App\Models\Master\Category;
 use App\Models\Master\Subcategory;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class SubcategoryController extends Controller
 {
@@ -14,7 +16,7 @@ class SubcategoryController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        $category = \App\Models\Master\Category::find($request->category_id);
+        $category = Category::find($request->category_id);
         $categoryCode = $category ? $category->code : '';
 
         $validated = $request->validate([
@@ -55,7 +57,7 @@ class SubcategoryController extends Controller
      */
     public function destroy(Subcategory $subcategory): RedirectResponse
     {
-        if (\Illuminate\Support\Facades\DB::table('barangs')->where('subcategory_id', $subcategory->id)->exists()) {
+        if (DB::table('barangs')->where('subcategory_id', $subcategory->id)->exists()) {
             return redirect()->back()->with('error', 'Subkategori tidak dapat dihapus karena sedang digunakan oleh data barang.');
         }
 

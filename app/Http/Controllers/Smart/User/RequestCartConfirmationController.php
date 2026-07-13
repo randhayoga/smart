@@ -3,15 +3,16 @@
 namespace App\Http\Controllers\Smart\User;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Inertia\Inertia;
 use App\Models\AdmUser;
 use App\Models\Cart\ConsumableBasket;
 use App\Models\HrdOrgchart;
-use App\Models\TbProject;
+use App\Models\Inventory\Lot;
 use App\Models\Request\Request as SmartRequest;
 use App\Models\Request\RequestItem;
 use App\Models\Request\RequestStatusLog;
+use App\Models\TbProject;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class RequestCartConfirmationController extends Controller
 {
@@ -29,9 +30,9 @@ class RequestCartConfirmationController extends Controller
             ->get()
             ->map(function ($item) {
                 if ($item->barang_id) {
-                    $stock = \App\Models\Inventory\Lot::where('barang_id', $item->barang_id)->sum('current_quantity');
+                    $stock = Lot::where('barang_id', $item->barang_id)->sum('current_quantity');
                 } else {
-                    $stock = \App\Models\Inventory\Lot::whereHas('barang', function ($q) use ($item) {
+                    $stock = Lot::whereHas('barang', function ($q) use ($item) {
                         $q->where('subcategory_id', $item->subcategory_id);
                     })->sum('current_quantity');
                 }

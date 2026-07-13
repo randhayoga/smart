@@ -2,13 +2,13 @@
 
 namespace App\Models\Inventory;
 
+use App\Models\Master\Floor;
+use App\Models\Master\Location;
+use App\Models\Master\Room;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use App\Models\Master\Location;
-use App\Models\Master\Floor;
-use App\Models\Master\Room;
 
 class Unit extends Model
 {

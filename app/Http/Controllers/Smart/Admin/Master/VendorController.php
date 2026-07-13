@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Master\Vendor;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class VendorController extends Controller
 {
@@ -64,7 +65,7 @@ class VendorController extends Controller
      */
     public function destroy(Vendor $vendor): RedirectResponse
     {
-        if (\Illuminate\Support\Facades\DB::table('lots')->where('vendor_id', $vendor->id)->exists()) {
+        if (DB::table('lots')->where('vendor_id', $vendor->id)->exists()) {
             return redirect()->back()->with('error', 'Vendor tidak dapat dihapus karena sedang digunakan oleh data lot barang.');
         }
 

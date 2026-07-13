@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Master\Brand;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class BrandController extends Controller
 {
@@ -44,7 +45,7 @@ class BrandController extends Controller
      */
     public function destroy(Brand $brand): RedirectResponse
     {
-        if (\Illuminate\Support\Facades\DB::table('barangs')->where('brand_id', $brand->id)->exists()) {
+        if (DB::table('barangs')->where('brand_id', $brand->id)->exists()) {
             return redirect()->back()->with('error', 'Merek tidak dapat dihapus karena sedang digunakan oleh data barang.');
         }
 
