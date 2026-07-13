@@ -372,7 +372,7 @@ watch(floorFilter, () => {
 });
 
 // Dynamic values for dropdown filters
-const availableStatuses = ['Tersedia', 'Dipinjam', 'Perbaikan', 'Rusak Total', 'Hilang', 'Pending', 'Tidak Aktif'];
+const availableStatuses = ['Tersedia', 'Dipinjam', 'Perbaikan', 'Rusak Total', 'Hilang', 'Pending', 'Tidak Aktif', 'Dihapus'];
 const availableConditions = ['Baik', 'Kurang Baik', 'Rusak'];
 
 const getStatusLabel = (status: string) => {

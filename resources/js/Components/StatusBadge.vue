@@ -17,6 +17,7 @@ const badgeClass = computed(() => {
   if (s === 'Hilang') return 'bg-rose-100 text-rose-800';
   if (s === 'Tidak Aktif') return 'bg-gray-200 text-gray-800';
   if (s === 'Pending') return 'bg-purple-100 text-purple-800';
+  if (s === 'Dihapus') return 'bg-neutral-950 text-neutral-50';
   return 'bg-gray-100 text-gray-800';
 });
 
