@@ -56,4 +56,23 @@ class UnitQrCodeTest extends TestCase
         $response->assertHeader('Content-Type', 'image/png');
         $this->assertNotEmpty($response->getContent());
     }
+
+    public function test_guest_cannot_access_scan_page(): void
+    {
+        $unit = $this->createUnit();
+
+        $response = $this->get(route('smart.inventory.units.scan', $unit));
+
+        $response->assertRedirect(route('login'));
+    }
+
+    public function test_admin_can_access_scan_page(): void
+    {
+        $user = User::factory()->create();
+        $unit = $this->createUnit();
+
+        $response = $this->actingAs($user)->get(route('smart.inventory.units.scan', $unit));
+
+        $response->assertStatus(200);
+    }
 }
