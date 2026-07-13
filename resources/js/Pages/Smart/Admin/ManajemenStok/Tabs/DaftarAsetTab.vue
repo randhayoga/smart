@@ -262,7 +262,12 @@ const filteredUnits = computed(() => {
   }
 
   if (statusFilter.value) {
-    list = list.filter(u => (u.status || '').toLowerCase() === statusFilter.value.toLowerCase());
+    const filterVal = statusFilter.value.toLowerCase();
+    list = list.filter(u => {
+      const status = (u.status || '').toLowerCase();
+      const proposed = (u.proposed_status || '').toLowerCase();
+      return status === filterVal || (['pending', 'dihapus'].includes(status) && proposed === filterVal);
+    });
   }
 
   if (conditionFilter.value) {

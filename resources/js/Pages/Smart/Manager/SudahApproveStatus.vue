@@ -699,7 +699,10 @@ onUnmounted(() => {
                           </span>
                           <span>
                             Status setelah approval: 
-                            <StatusBadge :status="activeApproval.unit_details.status" />
+                            <StatusBadge 
+                              :status="activeApproval.unit_details.status" 
+                              :proposed-status="activeApproval.proposed_status"
+                            />
                           </span>
                         </p>
                         <p class="text-foreground" v-if="activeApproval.note">
