@@ -35,7 +35,7 @@ const isVehicle = computed(() => {
          category.includes('motor') || subcategory.includes('motor');
 });
 
-const arrNeedApproval = ['Rusak Total', 'Hilang', 'Pending'];
+const arrNeedApproval = ['Rusak Total', 'Hilang'];
 
 // Form setup for editing
 const form = useForm({
@@ -425,7 +425,7 @@ const handleSubmit = () => {
               <span class="text-foreground font-semibold">{{ formatDateWithDashes(props.asset.lot_date_of_receipt) }}</span>
             </div>
             <div class="flex justify-between items-start">
-              <span class="text-muted-foreground font-medium">Umur Lot</span>
+              <span class="text-muted-foreground font-medium">Umur</span>
               <span class="text-foreground font-semibold">{{ props.asset.lot_age !== null ? `${props.asset.lot_age} tahun` : '-' }}</span>
             </div>
             <div class="flex justify-between items-start">
@@ -556,7 +556,6 @@ const handleSubmit = () => {
                     <DropdownMenuItem @select="form.status = 'Perbaikan'">Perbaikan</DropdownMenuItem>
                     <DropdownMenuItem @select="form.status = 'Rusak Total'">Rusak Total</DropdownMenuItem>
                     <DropdownMenuItem @select="form.status = 'Hilang'">Hilang</DropdownMenuItem>
-                    <DropdownMenuItem @select="form.status = 'Pending'">Pending</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </FieldContent>

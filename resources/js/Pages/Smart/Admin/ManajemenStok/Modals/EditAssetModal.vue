@@ -33,7 +33,7 @@ const isSingle = computed(() => props.items.length === 1);
 const selectedItem = computed(() => isSingle.value ? props.items[0] : null);
 const isVehicle = computed(() => props.barang?.category === 'Kendaraan');
 
-const arrNeedApproval = ['Rusak Total', 'Hilang', 'Pending'];
+const arrNeedApproval = ['Rusak Total', 'Hilang'];
 
 const form = useForm({
   ids: [] as number[],
@@ -390,7 +390,6 @@ const handleSubmit = () => {
                           <DropdownMenuItem @select="form.status = 'Perbaikan'">Perbaikan</DropdownMenuItem>
                           <DropdownMenuItem @select="form.status = 'Rusak Total'">Rusak Total</DropdownMenuItem>
                           <DropdownMenuItem @select="form.status = 'Hilang'">Hilang</DropdownMenuItem>
-                          <DropdownMenuItem @select="form.status = 'Pending'">Pending</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </FieldContent>
