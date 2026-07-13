@@ -3,6 +3,19 @@
 namespace App\Http\Controllers\Smart\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Inventory\Barang;
+use App\Models\Inventory\Lot;
+use App\Models\Inventory\Unit;
+use App\Models\Master\Brand;
+use App\Models\Master\Category;
+use App\Models\Master\Floor;
+use App\Models\Master\Location;
+use App\Models\Master\Organizer;
+use App\Models\Master\Room;
+use App\Models\Master\Subcategory;
+use App\Models\Master\Uom;
+use App\Models\Master\Vendor;
+use App\Models\TbProject;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -14,12 +27,12 @@ class ManajemenStokController extends Controller
      */
     public function index(Request $request): Response
     {
-        $categories = \App\Models\Master\Category::orderBy('code')->get();
-        $subcategories = \App\Models\Master\Subcategory::with('category')->orderBy('code')->get();
-        $brands = \App\Models\Master\Brand::orderBy('name')->get();
-        $uoms = \App\Models\Master\Uom::orderBy('name')->get();
+        $categories = Category::orderBy('code')->get();
+        $subcategories = Subcategory::with('category')->orderBy('code')->get();
+        $brands = Brand::orderBy('name')->get();
+        $uoms = Uom::orderBy('name')->get();
         
-        $barangs = \App\Models\Inventory\Barang::with(['subcategory.category', 'brand', 'uom'])
+        $barangs = Barang::with(['subcategory.category', 'brand', 'uom'])
             ->get()
             ->map(function ($barang) {
                 $isConsumable = (bool)($barang->subcategory->category->is_consumable ?? false);
@@ -47,7 +60,7 @@ class ManajemenStokController extends Controller
                 ];
             });
 
-        $projects = \App\Models\TbProject::orderBy('project_name')->get();
+        $projects = TbProject::orderBy('project_name')->get();
 
         return Inertia::render('Smart/Admin/ManajemenStok/ManajemenStok', [
             'user' => $request->user(),
@@ -65,7 +78,7 @@ class ManajemenStokController extends Controller
      */
     public function show(Request $request, string $id): Response
     {
-        $query = \App\Models\Inventory\Barang::with(['subcategory.category', 'brand', 'uom']);
+        $query = Barang::with(['subcategory.category', 'brand', 'uom']);
         if (is_numeric($id)) {
             $query->where(function ($q) use ($id) {
                 $q->where('id', $id)->orWhere('number', $id);
@@ -99,7 +112,7 @@ class ManajemenStokController extends Controller
             'uom_id' => $barang->uom_id,
         ];
 
-        $lots = \App\Models\Inventory\Lot::with(['organizer', 'vendor', 'location', 'floor', 'room', 'project'])
+        $lots = Lot::with(['organizer', 'vendor', 'location', 'floor', 'room', 'project'])
             ->withCount(['units', 'units as available_units_count' => function ($query) {
                 $query->where('status', 'Tersedia');
             }])
@@ -137,17 +150,17 @@ class ManajemenStokController extends Controller
                 ];
             });
 
-        $brands = \App\Models\Master\Brand::orderBy('name')->get();
-        $uoms = \App\Models\Master\Uom::orderBy('name')->get();
-        $organizers = \App\Models\Master\Organizer::orderBy('name')->get();
-        $vendors = \App\Models\Master\Vendor::orderBy('name')->get();
-        $locations = \App\Models\Master\Location::orderBy('name')->get();
-        $floors = \App\Models\Master\Floor::with('location')->orderBy('name')->get();
-        $rooms = \App\Models\Master\Room::with('floor.location')->orderBy('name')->get();
+        $brands = Brand::orderBy('name')->get();
+        $uoms = Uom::orderBy('name')->get();
+        $organizers = Organizer::orderBy('name')->get();
+        $vendors = Vendor::orderBy('name')->get();
+        $locations = Location::orderBy('name')->get();
+        $floors = Floor::with('location')->orderBy('name')->get();
+        $rooms = Room::with('floor.location')->orderBy('name')->get();
 
         $units = [];
         if (!$isConsumable) {
-            $units = \App\Models\Inventory\Unit::with([
+            $units = Unit::with([
                 'location', 'floor', 'room', 'statusApprovals',
                 'lot.barang.subcategory.category', 'lot.barang.brand', 'lot.barang.uom',
                 'lot.organizer', 'lot.vendor'
@@ -207,7 +220,7 @@ class ManajemenStokController extends Controller
             });
         }
 
-        $projects = \App\Models\TbProject::orderBy('project_name')->get();
+        $projects = TbProject::orderBy('project_name')->get();
 
         return Inertia::render('Smart/Admin/ManajemenStok/DetailBarang', [
             'user' => $request->user(),

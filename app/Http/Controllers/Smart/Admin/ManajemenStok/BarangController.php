@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Smart\Admin\ManajemenStok;
 
 use App\Http\Controllers\Controller;
 use App\Models\Inventory\Barang;
+use App\Models\Inventory\Lot;
+use App\Models\Inventory\Unit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -53,8 +55,8 @@ class BarangController extends Controller
         if ($request->hasFile('image_url')) {
             if ($barang->image_url && Storage::disk('public')->exists($barang->image_url)) {
                 $isShared = Barang::where('image_url', $barang->image_url)->where('id', '!=', $barang->id)->exists()
-                    || \App\Models\Inventory\Lot::where('image_url', $barang->image_url)->exists()
-                    || \App\Models\Inventory\Unit::where('image_url', $barang->image_url)->exists();
+                    || Lot::where('image_url', $barang->image_url)->exists()
+                    || Unit::where('image_url', $barang->image_url)->exists();
                 if (!$isShared) {
                     Storage::disk('public')->delete($barang->image_url);
                 }
@@ -82,8 +84,8 @@ class BarangController extends Controller
 
         if ($barang->image_url && Storage::disk('public')->exists($barang->image_url)) {
             $isShared = Barang::where('image_url', $barang->image_url)->where('id', '!=', $barang->id)->exists()
-                || \App\Models\Inventory\Lot::where('image_url', $barang->image_url)->exists()
-                || \App\Models\Inventory\Unit::where('image_url', $barang->image_url)->exists();
+                || Lot::where('image_url', $barang->image_url)->exists()
+                || Unit::where('image_url', $barang->image_url)->exists();
             if (!$isShared) {
                 Storage::disk('public')->delete($barang->image_url);
             }

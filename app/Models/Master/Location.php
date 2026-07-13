@@ -2,6 +2,8 @@
 
 namespace App\Models\Master;
 
+use App\Models\Inventory\Lot;
+use App\Models\Inventory\Unit;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -25,7 +27,7 @@ class Location extends Model
      */
     public function lots(): HasMany
     {
-        return $this->hasMany(\App\Models\Inventory\Lot::class);
+        return $this->hasMany(Lot::class);
     }
 
     /**
@@ -34,6 +36,6 @@ class Location extends Model
      */
     public function units(): HasMany
     {
-        return $this->hasMany(\App\Models\Inventory\Unit::class);
+        return $this->hasMany(Unit::class);
     }
 }

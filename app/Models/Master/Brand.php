@@ -2,6 +2,7 @@
 
 namespace App\Models\Master;
 
+use App\Models\Inventory\Barang;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -21,6 +22,6 @@ class Brand extends Model
      */
     public function barangs(): HasMany
     {
-        return $this->hasMany(\App\Models\Inventory\Barang::class);
+        return $this->hasMany(Barang::class);
     }
 }

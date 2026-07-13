@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Smart\Admin\ManajemenStok;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Models\Inventory\Barang;
 use App\Models\Inventory\Lot;
+use App\Models\Inventory\Unit;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class BulkLotController extends Controller
@@ -61,8 +63,8 @@ class BulkLotController extends Controller
             if ($request->boolean('use_parent_image')) {
                 if ($lot->image_url && $lot->image_url !== 'inventory/lots/placeholder.jpg' && Storage::disk('public')->exists($lot->image_url)) {
                     $isShared = Lot::where('image_url', $lot->image_url)->where('id', '!=', $lot->id)->exists()
-                        || \App\Models\Inventory\Barang::where('image_url', $lot->image_url)->exists()
-                        || \App\Models\Inventory\Unit::where('image_url', $lot->image_url)->exists();
+                        || Barang::where('image_url', $lot->image_url)->exists()
+                        || Unit::where('image_url', $lot->image_url)->exists();
                     if (!$isShared) {
                         Storage::disk('public')->delete($lot->image_url);
                     }
@@ -74,8 +76,8 @@ class BulkLotController extends Controller
             } else if ($request->hasFile('image_url')) {
                 if ($lot->image_url && $lot->image_url !== 'inventory/lots/placeholder.jpg' && Storage::disk('public')->exists($lot->image_url)) {
                     $isShared = Lot::where('image_url', $lot->image_url)->where('id', '!=', $lot->id)->exists()
-                        || \App\Models\Inventory\Barang::where('image_url', $lot->image_url)->exists()
-                        || \App\Models\Inventory\Unit::where('image_url', $lot->image_url)->exists();
+                        || Barang::where('image_url', $lot->image_url)->exists()
+                        || Unit::where('image_url', $lot->image_url)->exists();
                     if (!$isShared) {
                         Storage::disk('public')->delete($lot->image_url);
                     }
@@ -118,8 +120,8 @@ class BulkLotController extends Controller
                     $isShared = Lot::where('image_url', $lot->image_url)
                         ->whereNotIn('id', $request->input('ids'))
                         ->exists()
-                        || \App\Models\Inventory\Barang::where('image_url', $lot->image_url)->exists()
-                        || \App\Models\Inventory\Unit::where('image_url', $lot->image_url)->exists();
+                        || Barang::where('image_url', $lot->image_url)->exists()
+                        || Unit::where('image_url', $lot->image_url)->exists();
                     if (!$isShared) {
                         Storage::disk('public')->delete($lot->image_url);
                     }

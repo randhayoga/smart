@@ -2,9 +2,9 @@
 
 namespace App\Models\Request;
 
+use App\Models\Inventory\Unit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use App\Models\Inventory\Unit;
 
 class RequestUnitAssignment extends Model
 {

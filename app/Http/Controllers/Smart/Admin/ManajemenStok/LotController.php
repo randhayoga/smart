@@ -3,9 +3,20 @@
 namespace App\Http\Controllers\Smart\Admin\ManajemenStok;
 
 use App\Http\Controllers\Controller;
+use App\Models\Inventory\Barang;
 use App\Models\Inventory\Lot;
+use App\Models\Inventory\Unit;
+use App\Models\Master\Brand;
+use App\Models\Master\Floor;
+use App\Models\Master\Location;
+use App\Models\Master\Organizer;
+use App\Models\Master\Room;
+use App\Models\Master\Uom;
+use App\Models\Master\Vendor;
+use App\Models\TbProject;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
 
 class LotController extends Controller
 {
@@ -40,7 +51,7 @@ class LotController extends Controller
         ]);
 
         if ($request->boolean('use_parent_image')) {
-            $barang = \App\Models\Inventory\Barang::findOrFail($request->input('barang_id'));
+            $barang = Barang::findOrFail($request->input('barang_id'));
             if ($barang->image_url && Storage::disk('public')->exists($barang->image_url)) {
                 $validated['image_url'] = $barang->image_url;
             } else {
@@ -93,13 +104,13 @@ class LotController extends Controller
         if ($request->boolean('use_parent_image')) {
             if ($lot->image_url && $lot->image_url !== 'inventory/lots/placeholder.jpg' && Storage::disk('public')->exists($lot->image_url)) {
                 $isShared = Lot::where('image_url', $lot->image_url)->where('id', '!=', $lot->id)->exists()
-                    || \App\Models\Inventory\Barang::where('image_url', $lot->image_url)->exists()
-                    || \App\Models\Inventory\Unit::where('image_url', $lot->image_url)->exists();
+                    || Barang::where('image_url', $lot->image_url)->exists()
+                    || Unit::where('image_url', $lot->image_url)->exists();
                 if (!$isShared) {
                     Storage::disk('public')->delete($lot->image_url);
                 }
             }
-            $barang = \App\Models\Inventory\Barang::findOrFail($request->input('barang_id'));
+            $barang = Barang::findOrFail($request->input('barang_id'));
             if ($barang->image_url && Storage::disk('public')->exists($barang->image_url)) {
                 $validated['image_url'] = $barang->image_url;
             } else {
@@ -108,8 +119,8 @@ class LotController extends Controller
         } else if ($request->hasFile('image_url')) {
             if ($lot->image_url && $lot->image_url !== 'inventory/lots/placeholder.jpg' && Storage::disk('public')->exists($lot->image_url)) {
                 $isShared = Lot::where('image_url', $lot->image_url)->where('id', '!=', $lot->id)->exists()
-                    || \App\Models\Inventory\Barang::where('image_url', $lot->image_url)->exists()
-                    || \App\Models\Inventory\Unit::where('image_url', $lot->image_url)->exists();
+                    || Barang::where('image_url', $lot->image_url)->exists()
+                    || Unit::where('image_url', $lot->image_url)->exists();
                 if (!$isShared) {
                     Storage::disk('public')->delete($lot->image_url);
                 }
@@ -141,8 +152,8 @@ class LotController extends Controller
 
         if ($lot->image_url && $lot->image_url !== 'inventory/lots/placeholder.jpg' && Storage::disk('public')->exists($lot->image_url)) {
             $isShared = Lot::where('image_url', $lot->image_url)->where('id', '!=', $lot->id)->exists()
-                || \App\Models\Inventory\Barang::where('image_url', $lot->image_url)->exists()
-                || \App\Models\Inventory\Unit::where('image_url', $lot->image_url)->exists();
+                || Barang::where('image_url', $lot->image_url)->exists()
+                || Unit::where('image_url', $lot->image_url)->exists();
             if (!$isShared) {
                 Storage::disk('public')->delete($lot->image_url);
             }
@@ -210,7 +221,7 @@ class LotController extends Controller
         }
 
         // Ambil data unit (aset) terkait LOT ini
-        $units = \App\Models\Inventory\Unit::with([
+        $units = Unit::with([
             'location', 'floor', 'room', 'statusApprovals',
             'lot.barang.subcategory.category', 'lot.barang.brand', 'lot.barang.uom',
             'lot.organizer', 'lot.vendor'
@@ -267,16 +278,16 @@ class LotController extends Controller
             ];
         });
 
-        $brands = \App\Models\Master\Brand::orderBy('name')->get();
-        $uoms = \App\Models\Master\Uom::orderBy('name')->get();
-        $organizers = \App\Models\Master\Organizer::orderBy('name')->get();
-        $vendors = \App\Models\Master\Vendor::orderBy('name')->get();
-        $locations = \App\Models\Master\Location::orderBy('name')->get();
-        $floors = \App\Models\Master\Floor::with('location')->orderBy('name')->get();
-        $rooms = \App\Models\Master\Room::with('floor.location')->orderBy('name')->get();
-        $projects = \App\Models\TbProject::orderBy('project_name')->get();
+        $brands = Brand::orderBy('name')->get();
+        $uoms = Uom::orderBy('name')->get();
+        $organizers = Organizer::orderBy('name')->get();
+        $vendors = Vendor::orderBy('name')->get();
+        $locations = Location::orderBy('name')->get();
+        $floors = Floor::with('location')->orderBy('name')->get();
+        $rooms = Room::with('floor.location')->orderBy('name')->get();
+        $projects = TbProject::orderBy('project_name')->get();
 
-        return \Inertia\Inertia::render('Smart/Admin/ManajemenStok/DetailLOTNonConsumables', [
+        return Inertia::render('Smart/Admin/ManajemenStok/DetailLOTNonConsumables', [
             'lot' => [
                 'id' => $lot->id,
                 'number' => $lot->number,

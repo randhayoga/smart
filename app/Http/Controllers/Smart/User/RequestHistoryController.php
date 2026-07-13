@@ -3,17 +3,19 @@
 namespace App\Http\Controllers\Smart\User;
 
 use App\Http\Controllers\Controller;
+use App\Models\Inventory\Barang;
+use App\Models\Inventory\Lot;
+use App\Models\Inventory\Unit;
+use App\Models\Request\Request as SmartRequest;
+use App\Models\Request\RequestHandover;
+use App\Models\Request\RequestItem;
+use App\Models\Request\RequestReturn;
+use App\Models\Request\RequestStatusLog;
+use App\Models\Request\RequestUnitAssignment;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-use App\Models\Request\Request as SmartRequest;
-use App\Models\Request\RequestItem;
-use App\Models\Request\RequestStatusLog;
-use App\Models\Request\RequestHandover;
-use App\Models\Request\RequestReturn;
-use App\Models\Inventory\Unit;
-use App\Models\Inventory\Barang;
-use Carbon\Carbon;
 
 class RequestHistoryController extends Controller
 {
@@ -56,11 +58,11 @@ class RequestHistoryController extends Controller
                     ->where('status', 'tersedia')
                     ->count();
             } else {
-                $stockQuantity = \App\Models\Inventory\Lot::where('barang_id', $barangId)->sum('current_quantity');
+                $stockQuantity = Lot::where('barang_id', $barangId)->sum('current_quantity');
             }
 
             // Get assigned assets (serial numbers)
-            $assets = \App\Models\Request\RequestUnitAssignment::where('request_item_id', $item->id)
+            $assets = RequestUnitAssignment::where('request_item_id', $item->id)
                 ->with('unit')
                 ->get()
                 ->pluck('unit.number')
@@ -182,7 +184,7 @@ class RequestHistoryController extends Controller
             ->where('user_id', $request->user()->id)
             ->findOrFail($id);
 
-        $placements = \App\Models\Request\RequestUnitAssignment::whereIn('request_item_id', $req->items->pluck('id'))
+        $placements = RequestUnitAssignment::whereIn('request_item_id', $req->items->pluck('id'))
             ->with('unit')
             ->get()
             ->filter(fn($asn) => $asn->unit && $asn->placement)
@@ -294,7 +296,7 @@ class RequestHistoryController extends Controller
         // Tandai status unit sesuai jenis permintaan
         $requestItems = RequestItem::where('request_id', $req->id)->get();
         foreach ($requestItems as $reqItem) {
-            $assignments = \App\Models\Request\RequestUnitAssignment::where('request_item_id', $reqItem->id)->get();
+            $assignments = RequestUnitAssignment::where('request_item_id', $reqItem->id)->get();
             foreach ($assignments as $asn) {
                 if ($asn->unit) {
                     $status = 'dipakai';
@@ -366,9 +368,9 @@ class RequestHistoryController extends Controller
         ]);
 
         foreach ($validated['placements'] as $assetNumber => $location) {
-            $unit = \App\Models\Inventory\Unit::where('number', $assetNumber)->first();
+            $unit = Unit::where('number', $assetNumber)->first();
             if ($unit) {
-                \App\Models\Request\RequestUnitAssignment::where('unit_id', $unit->id)
+                RequestUnitAssignment::where('unit_id', $unit->id)
                     ->update(['placement' => $location]);
             }
         }

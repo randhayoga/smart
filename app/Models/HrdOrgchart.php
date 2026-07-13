@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Request\Request;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -43,6 +44,6 @@ class HrdOrgchart extends Model
      */
     public function requests(): HasMany
     {
-        return $this->hasMany(\App\Models\Request\Request::class, 'org_id');
+        return $this->hasMany(Request::class, 'org_id');
     }
 }

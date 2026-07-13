@@ -2,17 +2,18 @@
 
 namespace App\Models\Inventory;
 
+use App\Models\Master\Floor;
+use App\Models\Master\Location;
+use App\Models\Master\Organizer;
+use App\Models\Master\Room;
+use App\Models\Master\Vendor;
+use App\Models\TbProject;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Casts\Attribute;
-use Carbon\Carbon;
-use App\Models\Master\Organizer;
-use App\Models\Master\Vendor;
-use App\Models\Master\Location;
-use App\Models\Master\Floor;
-use App\Models\Master\Room;
 
 class Lot extends Model
 {
@@ -79,7 +80,7 @@ class Lot extends Model
 
     public function project(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\TbProject::class);
+        return $this->belongsTo(TbProject::class);
     }
 
     public function units(): HasMany

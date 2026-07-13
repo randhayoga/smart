@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Smart\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Inventory\Unit;
+use App\Models\Request\Request as SmartRequest;
+use App\Models\Request\RequestUnitAssignment;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use App\Models\Request\Request as SmartRequest;
 
 class BorrowedController extends Controller
 {
@@ -101,7 +103,7 @@ class BorrowedController extends Controller
         })->toArray();
 
         $items = $req->items->map(function ($item) {
-            $assets = \App\Models\Request\RequestUnitAssignment::where('request_item_id', $item->id)
+            $assets = RequestUnitAssignment::where('request_item_id', $item->id)
                 ->with('unit')
                 ->get()
                 ->pluck('unit.number')
@@ -110,7 +112,7 @@ class BorrowedController extends Controller
                 ->toArray();
 
             $barangId = $item->barang_id;
-            $hasAnyUnit = \App\Models\Inventory\Unit::whereHas('lot', fn($q) => $q->where('barang_id', $barangId))->exists();
+            $hasAnyUnit = Unit::whereHas('lot', fn($q) => $q->where('barang_id', $barangId))->exists();
 
             return [
                 'id' => $item->id,
@@ -149,7 +151,7 @@ class BorrowedController extends Controller
             'logs' => $logs,
         ];
 
-        $placements = \App\Models\Request\RequestUnitAssignment::whereIn('request_item_id', $req->items->pluck('id'))
+        $placements = RequestUnitAssignment::whereIn('request_item_id', $req->items->pluck('id'))
             ->with('unit')
             ->get()
             ->filter(fn($asn) => $asn->unit && $asn->placement)

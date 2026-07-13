@@ -3,15 +3,17 @@
 namespace App\Http\Controllers\Smart\Manager;
 
 use App\Http\Controllers\Controller;
+use App\Models\Inventory\Unit;
+use App\Models\Request\Request as SmartRequest;
+use App\Models\Request\RequestApproval;
+use App\Models\Request\RequestItem;
+use App\Models\Request\RequestStatusLog;
+use App\Models\Request\RequestUnitAssignment;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
-use App\Models\Request\Request as SmartRequest;
-use App\Models\Request\RequestItem;
-use App\Models\Request\RequestApproval;
-use App\Models\Request\RequestStatusLog;
-use App\Models\Inventory\Unit;
-use Carbon\Carbon;
 
 class ApprovalController extends Controller
 {
@@ -49,7 +51,7 @@ class ApprovalController extends Controller
             })->where('status', 'tersedia')->count();
 
             // Get assigned assets (serial numbers)
-            $assets = \App\Models\Request\RequestUnitAssignment::where('request_item_id', $item->id)
+            $assets = RequestUnitAssignment::where('request_item_id', $item->id)
                 ->with('unit')
                 ->get()
                 ->pluck('unit.number')
@@ -248,7 +250,7 @@ class ApprovalController extends Controller
         $decision = $validated['action'];
         $note = $validated['note'];
 
-        \Illuminate\Support\Facades\DB::transaction(function () use ($ids, $decision, $note, $request) {
+        DB::transaction(function () use ($ids, $decision, $note, $request) {
             foreach ($ids as $id) {
                 $req = SmartRequest::where('approver_id', $request->user()->id)
                     ->where('status', 'wait')

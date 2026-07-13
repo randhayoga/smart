@@ -2,9 +2,9 @@
 
 namespace App\Models\Request;
 
+use App\Models\AdmUser;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use App\Models\AdmUser;
 
 class RequestStatusLog extends Model
 {

@@ -3,16 +3,17 @@
 namespace App\Http\Controllers\Smart\User;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Inertia\Inertia;
 use App\Models\AdmUser;
 use App\Models\Cart\AssetBasket;
 use App\Models\HrdOrgchart;
-use App\Models\TbProject;
+use App\Models\Inventory\Unit;
 use App\Models\Request\Request as SmartRequest;
 use App\Models\Request\RequestItem;
 use App\Models\Request\RequestStatusLog;
+use App\Models\TbProject;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class BorrowCartConfirmationController extends Controller
 {
@@ -31,11 +32,11 @@ class BorrowCartConfirmationController extends Controller
             ->map(function ($item) {
                 // Calculate stock of units with status 'tersedia'
                 if ($item->barang_id) {
-                    $stock = \App\Models\Inventory\Unit::whereHas('lot', function ($q) use ($item) {
+                    $stock = Unit::whereHas('lot', function ($q) use ($item) {
                         $q->where('barang_id', $item->barang_id);
                     })->where('status', 'tersedia')->count();
                 } else {
-                    $stock = \App\Models\Inventory\Unit::whereHas('lot.barang', function ($q) use ($item) {
+                    $stock = Unit::whereHas('lot.barang', function ($q) use ($item) {
                         $q->where('subcategory_id', $item->subcategory_id);
                     })->where('status', 'tersedia')->count();
                 }

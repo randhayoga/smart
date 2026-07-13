@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Smart\MultiRoles\UnitStatusApproval;
 
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Models\Inventory\UnitStatusApproval;
 use App\Actions\Inventory\ProcessUnitStatusApproval;
+use App\Http\Controllers\Controller;
+use App\Models\Inventory\UnitStatusApproval;
+use Illuminate\Http\Request;
 
 class ManagerBulkUnitStatusApprovalController extends Controller
 {

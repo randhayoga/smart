@@ -3,9 +3,13 @@
 namespace App\Http\Controllers\Smart\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Inventory\Lot;
+use App\Models\Inventory\Unit;
+use App\Models\Request\Request as SmartRequest;
+use App\Models\Request\RequestItem;
+use App\Models\Request\RequestUnitAssignment;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use App\Models\Request\Request as SmartRequest;
 
 class HandoverController extends Controller
 {
@@ -114,7 +118,7 @@ class HandoverController extends Controller
         ];
 
         $items = $req->items->map(function ($item) {
-            $assets = \App\Models\Request\RequestUnitAssignment::where('request_item_id', $item->id)
+            $assets = RequestUnitAssignment::where('request_item_id', $item->id)
                 ->with('unit')
                 ->get()
                 ->pluck('unit.number')
@@ -122,7 +126,7 @@ class HandoverController extends Controller
                 ->values()
                 ->toArray();
 
-            $availableUnits = \App\Models\Inventory\Unit::with(['lot', 'location'])
+            $availableUnits = Unit::with(['lot', 'location'])
                 ->whereHas('lot', function ($query) use ($item) {
                     $query->where('barang_id', $item->barang_id);
                 })
@@ -139,14 +143,14 @@ class HandoverController extends Controller
                 });
 
             $barangId = $item->barang_id;
-            $hasAnyUnit = \App\Models\Inventory\Unit::whereHas('lot', fn($q) => $q->where('barang_id', $barangId))->exists();
+            $hasAnyUnit = Unit::whereHas('lot', fn($q) => $q->where('barang_id', $barangId))->exists();
 
             if ($hasAnyUnit) {
-                $availableStock = \App\Models\Inventory\Unit::whereHas('lot', fn($q) => $q->where('barang_id', $barangId))
+                $availableStock = Unit::whereHas('lot', fn($q) => $q->where('barang_id', $barangId))
                     ->where('status', 'tersedia')
                     ->count();
             } else {
-                $availableStock = \App\Models\Inventory\Lot::where('barang_id', $barangId)->sum('current_quantity');
+                $availableStock = Lot::where('barang_id', $barangId)->sum('current_quantity');
             }
 
             return [
@@ -166,7 +170,7 @@ class HandoverController extends Controller
             ];
         });
 
-        $placements = \App\Models\Request\RequestUnitAssignment::whereIn('request_item_id', $req->items->pluck('id'))
+        $placements = RequestUnitAssignment::whereIn('request_item_id', $req->items->pluck('id'))
             ->with('unit')
             ->get()
             ->filter(fn($asn) => $asn->unit && $asn->placement)
@@ -194,17 +198,17 @@ class HandoverController extends Controller
             'unit_numbers' => 'required|array',
         ]);
 
-        $item = \App\Models\Request\RequestItem::findOrFail($validated['request_item_id']);
+        $item = RequestItem::findOrFail($validated['request_item_id']);
 
         // Find the units corresponding to the unit numbers
-        $units = \App\Models\Inventory\Unit::whereIn('number', $validated['unit_numbers'])->get();
+        $units = Unit::whereIn('number', $validated['unit_numbers'])->get();
 
         // Clear existing assignments for this request item
-        \App\Models\Request\RequestUnitAssignment::where('request_item_id', $item->id)->delete();
+        RequestUnitAssignment::where('request_item_id', $item->id)->delete();
 
         // Create new assignments
         foreach ($units as $unit) {
-            \App\Models\Request\RequestUnitAssignment::create([
+            RequestUnitAssignment::create([
                 'request_item_id' => $item->id,
                 'unit_id' => $unit->id,
                 'quantity_fulfilled' => 1,
