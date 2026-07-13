@@ -27,7 +27,7 @@ class ProcessUnitStatusApproval
             $unit = $approval->unit;
             if ($decision === 'approved') {
                 $oldStatus = $approval->previous_status;
-                $newStatus = $approval->proposed_status;
+                $newStatus = 'Dihapus';
 
                 // Update unit status
                 $unit->update(['status' => $newStatus]);
@@ -45,7 +45,7 @@ class ProcessUnitStatusApproval
                     'end_date' => null,
                     'requester_id' => $approval->requester_id,
                     'approver_id' => $approverId,
-                    'note' => $note ?? "Pembaruan status dari {$oldStatus} menjadi {$newStatus} disetujui.",
+                    'note' => $note ?? "Pembaruan status dari {$oldStatus} menjadi {$newStatus} (pengajuan: {$approval->proposed_status}) disetujui.",
                 ]);
             } else {
                 if ($unit) {

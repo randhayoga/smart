@@ -148,7 +148,7 @@ class UnitQrCodeController extends Controller
 
         // 6. Draw Company Name Text
         $fontPath = public_path('fonts/MirandaSans-SemiBold.ttf');
-        $canvas->text('PT REKAYASA ENGINEERING', 10, 1, function (FontFactory $font) use ($fontPath) {
+        $canvas->text('PT REKAYASA ENGINEERING', 10, 5, function (FontFactory $font) use ($fontPath) {
             if (file_exists($fontPath)) {
                 $font->filename($fontPath);
             }
@@ -158,7 +158,7 @@ class UnitQrCodeController extends Controller
         });
 
         // 7. Draw Unit Code Text
-        $canvas->text($unitCode, 10, 29, function (FontFactory $font) use ($fontPath) {
+        $canvas->text($unitCode, 10, 34, function (FontFactory $font) use ($fontPath) {
             if (file_exists($fontPath)) {
                 $font->filename($fontPath);
             }

@@ -104,12 +104,12 @@ class AssetStatusApprovalTest extends TestCase
         $this->assertEquals('approved', $app1->decision);
         $this->assertEquals('approved', $app2->decision);
         
-        $this->assertEquals('Perbaikan', $unit1->status);
-        $this->assertEquals('Rusak Total', $unit2->status);
+        $this->assertEquals('Dihapus', $unit1->status);
+        $this->assertEquals('Dihapus', $unit2->status);
 
         $this->assertDatabaseHas('unit_lifecycles', [
             'unit_id' => $unit1->id,
-            'status' => 'Perbaikan',
+            'status' => 'Dihapus',
             'requester_id' => $app1->requester_id,
             'approver_id' => $manager->id,
             'note' => 'Bulk approval works',
@@ -117,7 +117,7 @@ class AssetStatusApprovalTest extends TestCase
 
         $this->assertDatabaseHas('unit_lifecycles', [
             'unit_id' => $unit2->id,
-            'status' => 'Rusak Total',
+            'status' => 'Dihapus',
             'requester_id' => $app2->requester_id,
             'approver_id' => $manager->id,
             'note' => 'Bulk approval works',

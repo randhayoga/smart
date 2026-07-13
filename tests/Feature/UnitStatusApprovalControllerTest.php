@@ -162,11 +162,11 @@ class UnitStatusApprovalControllerTest extends TestCase
         ]);
 
         $unit->refresh();
-        $this->assertEquals('Perbaikan', $unit->status);
+        $this->assertEquals('Dihapus', $unit->status);
 
         $this->assertDatabaseHas('unit_lifecycles', [
             'unit_id' => $unit->id,
-            'status' => 'Perbaikan',
+            'status' => 'Dihapus',
             'requester_id' => $approval->requester_id,
             'approver_id' => $user->id,
             'note' => 'Disetujui untuk Perbaikan',
@@ -336,11 +336,11 @@ class UnitStatusApprovalControllerTest extends TestCase
         $response->assertRedirect();
         
         $unit->refresh();
-        $this->assertEquals('Rusak Total', $unit->status);
+        $this->assertEquals('Dihapus', $unit->status);
 
         $this->assertDatabaseHas('unit_lifecycles', [
             'unit_id' => $unit->id,
-            'status' => 'Rusak Total',
+            'status' => 'Dihapus',
             'requester_id' => $approval->requester_id,
             'approver_id' => $user->id,
         ]);
