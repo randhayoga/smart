@@ -22,8 +22,8 @@ const badgeClass = computed(() => {
 });
 
 const displayText = computed(() => {
-  if (props.status === 'Pending' && props.proposedStatus) {
-    return `Pending: ${props.proposedStatus}`;
+  if ((props.status === 'Pending' || props.status === 'Dihapus') && props.proposedStatus) {
+    return `${props.status}: ${props.proposedStatus}`;
   }
   return props.status || '';
 });

@@ -171,13 +171,20 @@ class ManajemenStokController extends Controller
             ->get()
             ->map(function ($unit) {
                 $pendingApproval = $unit->statusApprovals->firstWhere('decision', 'pending');
+                $approvedApproval = $unit->status === 'Dihapus' 
+                    ? $unit->statusApprovals->where('decision', 'approved')->sortByDesc('updated_at')->first() 
+                    : null;
                 $barang = $unit->lot->barang ?? null;
                 return [
                     'id' => $unit->id,
                     'number' => $unit->number,
                     'status' => $unit->status,
-                    'proposed_status' => $pendingApproval ? $pendingApproval->proposed_status : null,
-                    'doc_url' => $pendingApproval ? $pendingApproval->doc_url : null,
+                    'proposed_status' => $pendingApproval 
+                        ? $pendingApproval->proposed_status 
+                        : ($approvedApproval ? $approvedApproval->proposed_status : null),
+                    'doc_url' => $pendingApproval 
+                        ? $pendingApproval->doc_url 
+                        : ($approvedApproval ? $approvedApproval->doc_url : null),
                     'condition' => $unit->condition,
                     'price' => $unit->price,
                     'image_url' => $unit->image_url,
