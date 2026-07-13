@@ -198,41 +198,37 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                 </div>
               </div>
 
-              <!-- QR Code Section -->
-              <div v-if="asset" class="mt-6 pt-6 border-t border-border flex flex-col items-center md:items-start gap-3">
-                <h4 class="text-sm font-semibold text-muted-foreground uppercase tracking-wider">QR Code Aset</h4>
-                <div class="w-full flex flex-col sm:flex-row items-center gap-4 bg-muted/30 p-4 rounded-xl border border-border/50">
-                  <div class="p-2 bg-white rounded-lg border border-border shadow-sm flex items-center justify-center">
-                    <img 
-                      :src="`/smart/inventory/units/${asset.id}/qr-code`" 
-                      :alt="asset.number"
-                      class="w-32 h-32 object-contain"
-                    />
-                  </div>
-                  <div class="text-center sm:text-left space-y-1">
-                    <p class="text-xs text-muted-foreground">Pindai QR Code untuk identifikasi fisik unit aset ini.</p>
-                    <p class="font-mono text-sm font-bold text-foreground">{{ asset.number }}</p>
-                    <Button 
-                      as="a"
-                      :href="`/smart/inventory/units/${asset.id}/qr-code`" 
-                      download 
-                      target="_blank"
-                      variant="primary"
-                      size="sm"
-                      class="mt-2 inline-flex items-center gap-2"
-                    >
-                      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                      </svg>
-                      Unduh QR Code
-                    </Button>
-                  </div>
+              <!-- DEBUG: Preview Label Aset
+              <div v-if="asset" class="mt-6 pt-6 border-t border-border flex flex-col items-center gap-2">
+                <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Preview Label Aset</span>
+                <div class="border border-border rounded-lg p-1 bg-white shadow-sm overflow-hidden max-w-full">
+                  <img 
+                    :src="`/smart/inventory/units/${asset.id}/qr-code`" 
+                    alt="Preview Label Aset"
+                    class="h-28 object-contain rounded"
+                  />
                 </div>
-              </div>
+              </div> -->
             </div>
 
             <!-- Modal Footer -->
             <div class="py-3 px-4 border-t border-border flex items-center justify-end gap-3 bg-muted/10">
+              <Button 
+                v-if="asset"
+                as="a"
+                :href="`/smart/inventory/units/${asset.id}/qr-code`" 
+                download 
+                target="_blank"
+                variant="warning"
+                size="lg"
+                class="inline-flex items-center gap-2"
+              >
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Unduh QR Code
+              </Button>
+
               <Button 
                 @click="
                   emit('update:open', false);
