@@ -109,17 +109,27 @@ class AssetStatusApprovalTest extends TestCase
 
         $this->assertDatabaseHas('unit_lifecycles', [
             'unit_id' => $unit1->id,
+            'status' => 'Perbaikan',
+            'actor_id' => $app1->requester_id,
+        ]);
+
+        $this->assertDatabaseHas('unit_lifecycles', [
+            'unit_id' => $unit1->id,
             'status' => 'Dihapus',
-            'requester_id' => $app1->requester_id,
-            'approver_id' => $manager->id,
+            'actor_id' => $manager->id,
             'note' => 'Bulk approval works',
         ]);
 
         $this->assertDatabaseHas('unit_lifecycles', [
             'unit_id' => $unit2->id,
+            'status' => 'Rusak Total',
+            'actor_id' => $app2->requester_id,
+        ]);
+
+        $this->assertDatabaseHas('unit_lifecycles', [
+            'unit_id' => $unit2->id,
             'status' => 'Dihapus',
-            'requester_id' => $app2->requester_id,
-            'approver_id' => $manager->id,
+            'actor_id' => $manager->id,
             'note' => 'Bulk approval works',
         ]);
     }

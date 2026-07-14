@@ -20,21 +20,21 @@ class ManagerAssetStatusApprovalResource extends JsonResource
         $barang = $lot->barang ?? null;
 
         // Fetch lifecycles for audit trail
-        $lifecycles = UnitLifecycle::with(['requester', 'approver'])
+        $lifecycles = UnitLifecycle::with(['actor'])
             ->where('unit_id', $this->unit_id)
             ->orderBy('id', 'desc')
             ->get()
             ->map(function ($lc) {
                 $duration = '-';
                 if ($lc->start_date && $lc->end_date) {
-                    $duration = $lc->start_date->diffInDays($lc->end_date);
+                    $duration = (int) floor($lc->start_date->diffInDays($lc->end_date));
                 }
 
                 $actorRole = 'User';
-                $actorName = $lc->requester->name ?? '-';
-                if ($lc->requester && $lc->requester->role === 'admin') {
+                $actorName = $lc->actor->name ?? '-';
+                if ($lc->actor && $lc->actor->role === 'admin') {
                     $actorRole = 'Admin';
-                } else if ($lc->requester && in_array($lc->requester->role, ['manager', 'ifs_manager'])) {
+                } else if ($lc->actor && in_array($lc->actor->role, ['manager', 'ifs_manager'])) {
                     $actorRole = 'Manager';
                 }
 

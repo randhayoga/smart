@@ -87,11 +87,10 @@ return new class extends Migration {
         Schema::create('unit_lifecycles', function (Blueprint $table) {
             $table->id();
             $table->foreignId('unit_id')->constrained('units')->noActionOnDelete();
-            $table->string('status')->comment('available | repair | lost | broken | inactive');
+            $table->string('status');
             $table->dateTime('start_date');
             $table->dateTime('end_date')->nullable();
-            $table->foreignId('requester_id')->constrained('adm_users')->noActionOnDelete()->comment("ADM_USER's id | who created/requested the state");
-            $table->foreignId('approver_id')->nullable()->constrained('adm_users')->noActionOnDelete()->comment("nullable | ADM_USER's id | who approved it");
+            $table->foreignId('actor_id')->constrained('adm_users')->noActionOnDelete()->comment("ADM_USER's id | who performed the action");
             $table->text('note')->nullable();
         });
     }
