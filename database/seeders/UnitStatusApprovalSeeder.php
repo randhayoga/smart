@@ -59,7 +59,8 @@ class UnitStatusApprovalSeeder extends Seeder
                     'decision' => 'pending',
                     'note' => '',
                     'requested_at' => Carbon::now()->subDays(2),
-                    'doc_url' => 'memos/berita_acara_sfg14.pdf',
+                    'memo_url' => 'memos/berita_acara_sfg14.pdf',
+                    'lost_doc_url' => 'lost_docs/surat_kehilangan_sfg14.pdf',
                 ]);
             });
             $laptop->update(['status' => 'Pending']);
@@ -104,7 +105,8 @@ class UnitStatusApprovalSeeder extends Seeder
                     'decision' => 'pending',
                     'note' => '',
                     'requested_at' => Carbon::now()->subDays(1),
-                    'doc_url' => 'memos/berita_acara_byd.pdf',
+                    'memo_url' => 'memos/berita_acara_byd.pdf',
+                    'lost_doc_url' => null,
                 ]);
             });
             $vehicle->update(['status' => 'Pending']);

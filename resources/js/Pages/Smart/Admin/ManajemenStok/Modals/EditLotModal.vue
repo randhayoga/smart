@@ -480,7 +480,7 @@ const handleSubmit = () => {
                         <Button type="button" @click="handleSamakanPhoto" variant="warning" size="lg">Samakan</Button>
                         <Button type="button" @click="triggerFileInput" size="lg">Pilih File</Button>
                       </div>
-                      <p class="text-[10px] text-muted-foreground ml-1 mt-1">Maksimal ukuran 1 MB</p>
+                      <p class="text-[10px] text-muted-foreground ml-1 mt-1">Maksimal ukuran 1 MB (.jpg, .jpeg, .png)</p>
                     </FieldContent>
                     <FieldError v-if="isSingle && errors.image_url">{{ errors.image_url }}</FieldError>
                   </Field>

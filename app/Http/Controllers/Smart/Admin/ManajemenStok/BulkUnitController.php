@@ -47,13 +47,20 @@ class BulkUnitController extends Controller
             $rules['vehicle_registration'] = 'nullable|string|max:15';
         }
 
+        $arrNeedApproval = ['Rusak Total', 'Hilang'];
+        $proposedStatus = $request->input('status');
+        $needApproval = in_array($proposedStatus, $arrNeedApproval);
+
+        if ($needApproval) {
+            $rules['memo_file'] = 'required|file|max:2048';
+            if ($proposedStatus === 'Hilang') {
+                $rules['lost_doc_file'] = 'required|file|max:2048';
+            }
+        }
+
         $validated = $request->validate($rules, [
             'bulk_quantity.integer' => 'Tidak boleh desimal.',
         ]);
-
-        $arrNeedApproval = ['Rusak Total', 'Hilang'];
-        $proposedStatus = $validated['status'];
-        $needApproval = in_array($proposedStatus, $arrNeedApproval);
 
         if ($needApproval) {
             $validated['status'] = 'Pending';
@@ -136,9 +143,13 @@ class BulkUnitController extends Controller
             ]);
 
             if ($needApproval) {
-                $docUrl = 'memos/placeholder.pdf';
+                $memoUrl = 'memos/placeholder.pdf';
                 if ($request->hasFile('memo_file')) {
-                    $docUrl = $request->file('memo_file')->store('memos', 'public');
+                    $memoUrl = $request->file('memo_file')->store('memos', 'public');
+                }
+                $lostDocUrl = null;
+                if ($proposedStatus === 'Hilang' && $request->hasFile('lost_doc_file')) {
+                    $lostDocUrl = $request->file('lost_doc_file')->store('lost_docs', 'public');
                 }
                 UnitStatusApproval::create([
                     'unit_id' => $unit->id,
@@ -149,7 +160,8 @@ class BulkUnitController extends Controller
                     'note' => null,
                     'approver_id' => null,
                     'requested_at' => now(),
-                    'doc_url' => $docUrl,
+                    'memo_url' => $memoUrl,
+                    'lost_doc_url' => $lostDocUrl,
                 ]);
             }
         }
@@ -184,6 +196,16 @@ class BulkUnitController extends Controller
         $arrNeedApproval = ['Rusak Total', 'Hilang'];
         $proposedStatus = $request->input('status');
         $needApproval = $request->filled('status') && in_array($proposedStatus, $arrNeedApproval);
+
+        if ($needApproval) {
+            $rulesForApproval = [
+                'memo_file' => 'required|file|max:2048',
+            ];
+            if ($proposedStatus === 'Hilang') {
+                $rulesForApproval['lost_doc_file'] = 'required|file|max:2048';
+            }
+            $request->validate($rulesForApproval);
+        }
 
         $updateData = [];
 
@@ -257,9 +279,13 @@ class BulkUnitController extends Controller
 
         // 5. Handle approvals if status is changed to a status requiring approval
         if ($needApproval) {
-            $docUrl = 'memos/placeholder.pdf';
+            $memoUrl = 'memos/placeholder.pdf';
             if ($request->hasFile('memo_file')) {
-                $docUrl = $request->file('memo_file')->store('memos', 'public');
+                $memoUrl = $request->file('memo_file')->store('memos', 'public');
+            }
+            $lostDocUrl = null;
+            if ($proposedStatus === 'Hilang' && $request->hasFile('lost_doc_file')) {
+                $lostDocUrl = $request->file('lost_doc_file')->store('lost_docs', 'public');
             }
             foreach ($units as $unit) {
                 $existing = UnitStatusApproval::where('unit_id', $unit->id)
@@ -275,7 +301,8 @@ class BulkUnitController extends Controller
                         'note' => null,
                         'approver_id' => null,
                         'requested_at' => now(),
-                        'doc_url' => $docUrl,
+                        'memo_url' => $memoUrl,
+                        'lost_doc_url' => $lostDocUrl,
                     ]);
                 }
             }

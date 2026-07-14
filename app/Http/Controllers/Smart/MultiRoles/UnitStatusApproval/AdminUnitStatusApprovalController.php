@@ -40,12 +40,18 @@ class AdminUnitStatusApprovalController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $rules = [
             'unit_id' => 'required|exists:units,id',
             'proposed_status' => 'required|string|max:255',
             'note' => 'nullable|string',
-            'memo_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
-        ]);
+            'memo_file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:2048',
+        ];
+
+        if ($request->input('proposed_status') === 'Hilang') {
+            $rules['lost_doc_file'] = 'required|file|mimes:pdf,jpg,jpeg,png|max:2048';
+        }
+
+        $validated = $request->validate($rules);
 
         $unit = Unit::findOrFail($validated['unit_id']);
 
@@ -60,9 +66,14 @@ class AdminUnitStatusApprovalController extends Controller
             ]);
         }
 
-        $docUrl = 'memos/placeholder.pdf';
+        $memoUrl = 'memos/placeholder.pdf';
         if ($request->hasFile('memo_file')) {
-            $docUrl = $request->file('memo_file')->store('memos', 'public');
+            $memoUrl = $request->file('memo_file')->store('memos', 'public');
+        }
+
+        $lostDocUrl = null;
+        if ($validated['proposed_status'] === 'Hilang' && $request->hasFile('lost_doc_file')) {
+            $lostDocUrl = $request->file('lost_doc_file')->store('lost_docs', 'public');
         }
 
         UnitStatusApproval::create([
@@ -73,7 +84,8 @@ class AdminUnitStatusApprovalController extends Controller
             'decision' => 'pending',
             'note' => $validated['note'] ?? null,
             'requested_at' => now(),
-            'doc_url' => $docUrl,
+            'memo_url' => $memoUrl,
+            'lost_doc_url' => $lostDocUrl,
         ]);
 
         $unit->update(['status' => 'Pending']);

@@ -62,7 +62,8 @@ class UnitStatusApproval extends Model
         'note',
         'requested_at',
         'decided_at',
-        'doc_url',
+        'memo_url',
+        'lost_doc_url',
     ];
 
     protected $casts = [
