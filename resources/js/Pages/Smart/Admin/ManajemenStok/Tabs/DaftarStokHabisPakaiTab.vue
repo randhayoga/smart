@@ -24,6 +24,7 @@ import ExportButtonGroup from '@/Components/ExportButtonGroup.vue';
 import ResetFilterButton from '@/Components/ResetFilterButton.vue';
 import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal.vue';
 import DeleteErrorModal from '@/Components/DeleteErrorModal.vue';
+import Combobox from '@/Components/Combobox.vue';
 import DetailLOTConsumables from '../DetailLOTConsumables.vue';
 import EditLotModal from '../Modals/EditLotModal.vue';
 import { Switch } from '@/Components/ui/switch';
@@ -344,23 +345,23 @@ const filteredLots = computed(() => {
   }
 
   if (locationFilter.value) {
-    list = list.filter(lot => String(lot.location_id) === locationFilter.value);
+    list = list.filter(lot => String(lot.location_id) === String(locationFilter.value));
   }
 
   if (floorFilter.value) {
-    list = list.filter(lot => String(lot.floor_id) === floorFilter.value);
+    list = list.filter(lot => String(lot.floor_id) === String(floorFilter.value));
   }
 
   if (roomFilter.value) {
-    list = list.filter(lot => String(lot.room_id) === roomFilter.value);
+    list = list.filter(lot => String(lot.room_id) === String(roomFilter.value));
   }
 
   if (organizerFilter.value) {
-    list = list.filter(lot => lot.organizer_id === Number(organizerFilter.value));
+    list = list.filter(lot => String(lot.organizer_id) === String(organizerFilter.value));
   }
 
   if (vendorFilter.value) {
-    list = list.filter(lot => lot.vendor_id === Number(vendorFilter.value));
+    list = list.filter(lot => String(lot.vendor_id) === String(vendorFilter.value));
   }
 
   if (timeFilter.value) {
@@ -403,12 +404,12 @@ const availableBrands = computed<string[]>(() => {
 
 const filteredFloors = computed(() => {
   if (!locationFilter.value) return props.floors;
-  return props.floors.filter(f => f.location_id.toString() === locationFilter.value);
+  return props.floors.filter(f => String(f.location_id) === String(locationFilter.value));
 });
 
 const filteredRooms = computed(() => {
   if (!floorFilter.value) return props.rooms;
-  return props.rooms.filter(r => r.floor_id.toString() === floorFilter.value);
+  return props.rooms.filter(r => String(r.floor_id) === String(floorFilter.value));
 });
 
 // Watch category to reset subcategory
@@ -725,21 +726,13 @@ const clearFilters = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              <!-- Subkategori Filter Dropdown -->
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal', !subcategoryFilter ? 'text-muted-foreground' : 'text-foreground']">
-                    <span class="truncate">{{ subcategoryFilter || 'Semua subkategori' }}</span>
-                    <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent class="w-[200px] rounded-[14px] max-h-60 overflow-y-auto" align="start" :side-offset="4">
-                  <DropdownMenuItem @select="subcategoryFilter = ''">Semua subkategori</DropdownMenuItem>
-                  <DropdownMenuItem v-for="sub in availableSubcategories" :key="sub" @select="subcategoryFilter = sub">
-                    {{ sub }}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <!-- Subkategori Filter Combobox -->
+              <Combobox 
+                v-model="subcategoryFilter"
+                :options="availableSubcategories"
+                search-placeholder="Cari subkategori..."
+                default-label="Semua subkategori"
+              />
 
               <!-- Advanced Filter Toggle Button -->
               <Button 
@@ -804,77 +797,51 @@ const clearFilters = () => {
               <!-- Brand Filter -->
               <div class="space-y-1.5 w-[200px]">
                 <label class="text-xs text-muted-foreground font-medium block ml-0.5">Merek</label>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal bg-background', !brandFilter ? 'text-muted-foreground' : 'text-foreground']">
-                      <span class="truncate">{{ brandFilter || 'Semua merek' }}</span>
-                      <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] max-h-60 overflow-y-auto" align="start" :side-offset="4">
-                    <DropdownMenuItem @select="brandFilter = ''">Semua merek</DropdownMenuItem>
-                    <DropdownMenuItem v-for="br in availableBrands" :key="br" @select="brandFilter = br">
-                      {{ br }}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <Combobox
+                  v-model="brandFilter"
+                  :options="availableBrands"
+                  search-placeholder="Cari merek..."
+                  default-label="Semua merek"
+                  width-class="w-full bg-background"
+                />
               </div>
 
               <!-- Location Filter (Step 1) -->
               <div class="space-y-1.5 w-[200px]">
                 <label class="text-xs text-muted-foreground font-medium block ml-0.5">Lokasi</label>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal bg-background', !locationFilter ? 'text-muted-foreground' : 'text-foreground']">
-                      <span class="truncate">{{ locationFilter ? (props.locations.find(l => l.id.toString() === locationFilter)?.name || 'Semua lokasi') : 'Semua lokasi' }}</span>
-                      <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] max-h-60 overflow-y-auto" align="start" :side-offset="4">
-                    <DropdownMenuItem @select="locationFilter = ''; floorFilter = ''; roomFilter = ''">Semua lokasi</DropdownMenuItem>
-                    <DropdownMenuItem v-for="loc in props.locations" :key="loc.id" @select="locationFilter = loc.id.toString(); floorFilter = ''; roomFilter = ''">
-                      {{ loc.name }}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <Combobox
+                  v-model="locationFilter"
+                  :options="props.locations"
+                  search-placeholder="Cari lokasi..."
+                  default-label="Semua lokasi"
+                  width-class="w-full bg-background"
+                />
               </div>
 
               <!-- Floor Filter (Step 2) -->
               <div class="space-y-1.5 w-[200px]">
                 <label class="text-xs text-muted-foreground font-medium block ml-0.5">Lantai</label>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal bg-background', !floorFilter ? 'text-muted-foreground' : 'text-foreground']">
-                      <span class="truncate">{{ floorFilter ? (props.floors.find(f => f.id.toString() === floorFilter)?.name || 'Semua lantai') : 'Semua lantai' }}</span>
-                      <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] max-h-60 overflow-y-auto" align="start" :side-offset="4">
-                    <DropdownMenuItem @select="floorFilter = ''; roomFilter = ''">Semua lantai</DropdownMenuItem>
-                    <DropdownMenuItem v-for="fl in filteredFloors" :key="fl.id" @select="floorFilter = fl.id.toString(); roomFilter = ''">
-                      {{ fl.name }}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <Combobox
+                  v-model="floorFilter"
+                  :options="filteredFloors"
+                  search-placeholder="Cari lantai..."
+                  default-label="Semua lantai"
+                  width-class="w-full bg-background"
+                  :disabled="!locationFilter"
+                />
               </div>
 
               <!-- Room Filter (Step 3) -->
               <div class="space-y-1.5 w-3xs">
                 <label class="text-xs text-muted-foreground font-medium block ml-0.5">Ruangan</label>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal bg-background', !roomFilter ? 'text-muted-foreground' : 'text-foreground']">
-                      <span class="truncate">{{ roomFilter ? (props.rooms.find(r => r.id.toString() === roomFilter)?.name || 'Semua ruangan') : 'Semua ruangan' }}</span>
-                      <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] max-h-60 overflow-y-auto" align="start" :side-offset="4">
-                    <DropdownMenuItem @select="roomFilter = ''">Semua ruangan</DropdownMenuItem>
-                    <DropdownMenuItem v-for="rm in filteredRooms" :key="rm.id" @select="roomFilter = rm.id.toString()">
-                      {{ rm.name }}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <Combobox
+                  v-model="roomFilter"
+                  :options="filteredRooms"
+                  search-placeholder="Cari ruangan..."
+                  default-label="Semua ruangan"
+                  width-class="w-full bg-background"
+                  :disabled="!floorFilter"
+                />
               </div>
 
               <!-- Organizer Filter -->
@@ -899,20 +866,13 @@ const clearFilters = () => {
               <!-- Vendor Filter -->
               <div class="space-y-1.5 w-3xs">
                 <label class="text-xs text-muted-foreground font-medium block ml-0.5">Vendor</label>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal bg-background', !vendorFilter ? 'text-muted-foreground' : 'text-foreground']">
-                      <span class="truncate">{{ vendorFilter ? (props.vendors.find(v => v.id.toString() === vendorFilter)?.name || 'Semua vendor') : 'Semua vendor' }}</span>
-                      <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] max-h-60 overflow-y-auto" align="start" :side-offset="4">
-                    <DropdownMenuItem @select="vendorFilter = ''">Semua vendor</DropdownMenuItem>
-                    <DropdownMenuItem v-for="vend in props.vendors" :key="vend.id" @select="vendorFilter = vend.id.toString()">
-                      {{ vend.name }}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <Combobox
+                  v-model="vendorFilter"
+                  :options="props.vendors"
+                  search-placeholder="Cari vendor..."
+                  default-label="Semua vendor"
+                  width-class="w-full bg-background"
+                />
               </div>
 
               <!-- Time Filter (Kurun Waktu) -->
@@ -979,11 +939,11 @@ const clearFilters = () => {
             <div v-if="subcategoryFilter">Subkategori: {{ subcategoryFilter }}</div>
             <div v-if="stokFilter">Stok: Tersedia</div>
             <div v-if="brandFilter">Merek: {{ brandFilter }}</div>
-            <div v-if="locationFilter">Lokasi: {{ props.locations.find(l => l.id.toString() === locationFilter)?.name }}</div>
-            <div v-if="floorFilter">Lantai: {{ props.floors.find(f => f.id.toString() === floorFilter)?.name }}</div>
-            <div v-if="roomFilter">Ruangan: {{ props.rooms.find(r => r.id.toString() === roomFilter)?.name }}</div>
-            <div v-if="organizerFilter">Organizer: {{ props.organizers.find(o => o.id.toString() === organizerFilter)?.name }}</div>
-            <div v-if="vendorFilter">Vendor: {{ props.vendors.find(v => v.id.toString() === vendorFilter)?.name }}</div>
+            <div v-if="locationFilter">Lokasi: {{ props.locations.find(l => String(l.id) === String(locationFilter))?.name }}</div>
+            <div v-if="floorFilter">Lantai: {{ props.floors.find(f => String(f.id) === String(floorFilter))?.name }}</div>
+            <div v-if="roomFilter">Ruangan: {{ props.rooms.find(r => String(r.id) === String(roomFilter))?.name }}</div>
+            <div v-if="organizerFilter">Organizer: {{ props.organizers.find(o => String(o.id) === String(organizerFilter))?.name }}</div>
+            <div v-if="vendorFilter">Vendor: {{ props.vendors.find(v => String(v.id) === String(vendorFilter))?.name }}</div>
             <div v-if="timeFilter">Kurun Waktu: {{ timeFilter }}</div>
           </div>
         </div>
