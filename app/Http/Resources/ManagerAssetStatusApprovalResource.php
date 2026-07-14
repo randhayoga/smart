@@ -30,17 +30,23 @@ class ManagerAssetStatusApprovalResource extends JsonResource
                     $duration = (int) floor($lc->start_date->diffInDays($lc->end_date));
                 }
 
-                $actorRole = 'User';
-                $actorName = $lc->actor->name ?? '-';
-                if ($lc->actor && $lc->actor->role === 'admin') {
-                    $actorRole = 'Admin';
-                } else if ($lc->actor && in_array($lc->actor->role, ['manager', 'ifs_manager'])) {
-                    $actorRole = 'Manager';
+                $actorRole = 'System';
+                $actorName = 'System';
+                if ($lc->actor) {
+                    $actorName = $lc->actor->name ?? '-';
+                    if ($lc->actor->role === 'admin') {
+                        $actorRole = 'Admin';
+                    } else if (in_array($lc->actor->role, ['manager', 'ifs_manager'])) {
+                        $actorRole = 'Manager';
+                    } else {
+                        $actorRole = 'User';
+                    }
                 }
 
                 return [
-                    'waktu' => $lc->start_date ? $lc->start_date->format('d-m-Y H:i') : '-',
-                    'aksi_status' => $lc->status ?? '-',
+                    'waktu' => $lc->start_date ? $lc->start_date->format('d-m-Y H:i:s') : '-',
+                    'status' => $lc->status ?? '-',
+                    'action_type' => $lc->action_type ?? '-',
                     'aktor' => "{$actorRole}: {$actorName}",
                     'durasi' => $duration,
                     'catatan' => $lc->note ?? '-',

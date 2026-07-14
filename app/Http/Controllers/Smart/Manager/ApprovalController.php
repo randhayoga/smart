@@ -86,7 +86,7 @@ class ApprovalController extends Controller
 
             return [
                 'waktu' => $log->created_at ? $log->created_at->format('d-m-Y H:i') : '-',
-                'aksi_status' => $statusMap[$log->status_to] ?? $log->status_to,
+                'status' => $statusMap[$log->status_to] ?? $log->status_to,
                 'aktor' => "{$actorRole}: {$actorName}",
                 'durasi' => '-',
                 'catatan' => $log->note ?? '-',

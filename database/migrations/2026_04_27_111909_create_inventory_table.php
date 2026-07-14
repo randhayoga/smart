@@ -75,6 +75,7 @@ return new class extends Migration {
             $table->id();
             $table->foreignId('barang_id')->nullable()->constrained('barangs')->noActionOnDelete();
             $table->foreignId('lot_id')->nullable()->constrained('lots')->noActionOnDelete();
+            $table->foreignId('unit_id')->nullable()->constrained('units')->noActionOnDelete();
             $table->foreignId('user_id')->constrained('adm_users')->noActionOnDelete();
             $table->string('action_type')->comment('stock_in, stock_out, adjustment, relocation');
             $table->integer('quantity_change')->default(0);
@@ -87,12 +88,19 @@ return new class extends Migration {
 
         Schema::create('unit_lifecycles', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('unit_id')->constrained('units')->noActionOnDelete();
+            $table->foreignId('unit_id')->constrained('units')->cascadeOnDelete();
+            $table->string('action_type')->comment('registrasi, perubahan_status, perubahan_kondisi, pemindahan, peminjaman, pengembalian, pemeliharaan');
             $table->string('status');
+            $table->string('condition');
+            $table->foreignId('location_id')->constrained('locations')->noActionOnDelete();
+            $table->foreignId('floor_id')->nullable()->constrained('floors')->noActionOnDelete();
+            $table->foreignId('room_id')->nullable()->constrained('rooms')->noActionOnDelete();
             $table->dateTime('start_date');
             $table->dateTime('end_date')->nullable();
-            $table->foreignId('actor_id')->constrained('adm_users')->noActionOnDelete()->comment("ADM_USER's id | who performed the action");
+            $table->foreignId('actor_id')->nullable()->constrained('adm_users')->noActionOnDelete()->comment("Siapa yang melakukan aksi");
             $table->text('note')->nullable();
+            $table->json('previous_state')->nullable();
+            $table->json('new_state')->nullable();
         });
     }
 

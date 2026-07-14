@@ -224,7 +224,7 @@ class LotController extends Controller
         $units = Unit::with([
             'location', 'floor', 'room', 'statusApprovals',
             'lot.barang.subcategory.category', 'lot.barang.brand', 'lot.barang.uom',
-            'lot.organizer', 'lot.vendor'
+            'lot.organizer', 'lot.vendor', 'lifecycles.actor'
         ])
         ->where('lot_id', $lot->id)
         ->get()
@@ -285,6 +285,20 @@ class LotController extends Controller
                 'barang_category' => $barang->subcategory->category->name ?? '-',
                 'barang_subcategory' => $barang->subcategory->name ?? '-',
                 'barang_uom' => $barang->uom->name ?? '-',
+
+                // Audit trails (lifecycles)
+                'lifecycles' => $unit->lifecycles->map(function ($log) {
+                    return [
+                        'waktu' => $log->start_date ? $log->start_date->format('d-m-Y H:i:s') : '-',
+                        'status' => $log->status,
+                        'action_type' => $log->action_type,
+                        'aktor' => $log->actor->name ?? '-',
+                        'durasi' => $log->end_date && $log->start_date 
+                            ? round($log->start_date->diffInMinutes($log->end_date) / 60, 1) . ' jam' 
+                            : '-',
+                        'catatan' => $log->note ?? '-',
+                    ];
+                })->toArray(),
             ];
         });
 

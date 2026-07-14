@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-import { X } from 'lucide-vue-next';
+import { computed, ref, watch } from 'vue';
+import { X, FileText } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
 import StatusBadge from '@/Components/StatusBadge.vue';
+import Tabs from '@/Components/Tabs.vue';
+import JejakAuditTab from '@/Pages/Smart/MultiRoles/Tabs/JejakAuditTab.vue';
 
 interface Props {
   open: boolean;
@@ -15,6 +17,14 @@ const emit = defineEmits<{
   (e: 'update:open', value: boolean): void;
   (e: 'edit', asset: any): void;
 }>();
+
+const detailActiveTab = ref('Detail Aset');
+
+watch(() => props.open, (newVal) => {
+  if (newVal) {
+    detailActiveTab.value = 'Detail Aset';
+  }
+});
 
 const isVehicle = computed(() => {
   if (!props.asset) return false;
@@ -62,6 +72,11 @@ const getAge = (dateStr: string | null) => {
   const diffTime = new Date().getTime() - receipt.getTime();
   const years = Math.floor(diffTime / (1000 * 60 * 60 * 24 * 365));
   return years >= 0 ? years : 0;
+};
+
+const openMemoFile = (path: string | null) => {
+  if (!path) return;
+  window.open('/storage/' + path, '_blank');
 };
 
 // Dynamic attribute resolution
@@ -112,103 +127,111 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
             @click.stop
           >
             <!-- Modal Header -->
-            <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
-              <h3 class="text-lg font-bold text-foreground">Detail Aset</h3>
+            <div class="flex items-center justify-between pt-2 px-4 border-b border-border">
+              <Tabs v-model="detailActiveTab" :tabs="['Detail Aset', 'Jejak Audit']" />
               <button @click="emit('update:open', false)" class="p-2 hover:bg-muted rounded-full transition-colors">
                 <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
               </button>
             </div>
 
             <!-- Modal Body -->
-            <div class="p-6 overflow-y-auto max-h-[70vh]">
-              <div class="flex flex-col md:flex-row gap-6">
-                <!-- Image Column -->
-                <div class="w-48 h-48 rounded-xl bg-muted shrink-0 flex items-center justify-center overflow-hidden border border-border">
-                  <img 
-                    v-if="asset && asset.image_url" 
-                    :src="'/storage/' + asset.image_url" 
-                    class="w-full h-full object-cover" 
-                  />
-                  <img 
-                    v-else-if="finalLotImageUrl" 
-                    :src="'/storage/' + finalLotImageUrl" 
-                    class="w-full h-full object-cover" 
-                  />
-                  <img 
-                    v-else 
-                    src="https://placehold.co/400x400?text=Placeholder" 
-                    class="w-full h-full object-cover opacity-50" 
-                  />
+            <div class="p-6 overflow-y-auto max-h-[70vh] space-y-4">
+              <div v-if="detailActiveTab === 'Detail Aset'" class="space-y-6">
+                <div class="flex flex-col md:flex-row gap-6">
+                  <!-- Image Column -->
+                  <div class="w-48 h-48 rounded-xl bg-muted shrink-0 flex items-center justify-center overflow-hidden border border-border">
+                    <img 
+                      v-if="asset && asset.image_url" 
+                      :src="'/storage/' + asset.image_url" 
+                      class="w-full h-full object-cover" 
+                    />
+                    <img 
+                      v-else-if="finalLotImageUrl" 
+                      :src="'/storage/' + finalLotImageUrl" 
+                      class="w-full h-full object-cover" 
+                    />
+                    <img 
+                      v-else 
+                      src="https://placehold.co/400x400?text=Placeholder" 
+                      class="w-full h-full object-cover opacity-50" 
+                    />
+                  </div>
+
+                  <!-- Details Columns -->
+                  <div v-if="asset" class="flex-grow grid grid-cols-1 md:grid-cols-12 gap-4 text-foreground">
+                    <!-- Column 1: Item Info -->
+                    <div class="md:col-span-3">
+                      <p class="font-bold text-foreground"><span class="text-foreground">Kode Tipe:</span> {{ finalBarangCode }}</p>
+                      <p class="font-bold text-foreground"><span class="text-foreground">Merek:</span> {{ finalBarangBrand }}</p>
+                      <p class="font-bold text-foreground"><span class="text-foreground">Nama:</span> {{ finalBarangNama }}</p>
+                      <p class="font-bold text-foreground"><span class="text-foreground">Spesifikasi:</span> {{ finalBarangSpecification }}</p>
+                      <p class="text-foreground">Kategori: {{ finalBarangCategory }}</p>
+                      <p class="text-foreground">Subkategori: {{ finalBarangSubcategory }}</p>
+                      <p class="text-foreground">Satuan: {{ finalBarangUom }}</p>
+                    </div>
+
+                    <!-- Column 2: LOT Info -->
+                    <div class="md:col-span-4">
+                      <p class="font-bold text-foreground"><span class="text-foreground">Kode LOT:</span> {{ finalLotNumber }}</p>
+                      <p class="text-foreground">Organizer: {{ finalLotOrganizer }}</p>
+                      <p class="text-foreground">Tanggal registrasi: {{ formatDateWithDashes(finalLotDateOfReceipt) }}</p>
+                      <p class="text-foreground">Umur: {{ finalLotAge !== null && finalLotAge !== undefined ? `${finalLotAge} tahun` : '-' }}</p>
+                      <p class="text-foreground">Vendor: {{ finalLotVendor }}</p>
+                      <p class="text-foreground">Nomor PO: {{ finalLotPoNumber }}</p>
+                    </div>
+
+                    <!-- Column 3: Asset Info -->
+                    <div class="md:col-span-5">
+                      <p class="font-bold text-foreground"><span class="text-foreground">Kode Aset:</span> {{ asset.number }}</p>
+                      <!-- TNKB (Nopol) -->
+                      <p v-if="isVehicle" class="font-bold text-foreground">
+                        <span class="text-foreground">Nopol:</span> {{ asset.vehicle_registration || '-' }}
+                      </p>
+                      <p class="text-foreground">
+                        Status: 
+                        <StatusBadge 
+                          :status="asset.status" 
+                          :proposed-status="asset.proposed_status" 
+                        />
+                      </p>
+                      <p class="text-foreground">
+                        Kondisi: 
+                        <span 
+                          :class="[
+                            'font-semibold',
+                            asset.condition === 'Baik' ? 'text-emerald-600' :
+                            asset.condition === 'Kurang Baik' ? 'text-amber-600' :
+                            'text-rose-600'
+                          ]"
+                        >
+                          {{ getConditionLabel(asset.condition) }}
+                        </span>
+                      </p>
+                      <p class="text-foreground">Nilai: {{ formatRupiah(asset.price) }}</p>
+                      <p class="text-foreground">Lokasi penyimpanan: {{ formatLocation(asset.location, asset.floor, asset.room) }}</p>
+                      <p class="text-foreground">Pembaruan terakhir: {{ asset.updated_at || '-' }}</p>
+                    </div>
+                  </div>
                 </div>
 
-                <!-- Details Columns -->
-                <div v-if="asset" class="flex-grow grid grid-cols-1 md:grid-cols-12 gap-4 text-foreground">
-                  <!-- Column 1: Item Info -->
-                  <div class="md:col-span-3">
-                    <p class="font-bold text-foreground"><span class="text-foreground">Kode Tipe:</span> {{ finalBarangCode }}</p>
-                    <p class="font-bold text-foreground"><span class="text-foreground">Merek:</span> {{ finalBarangBrand }}</p>
-                    <p class="font-bold text-foreground"><span class="text-foreground">Nama:</span> {{ finalBarangNama }}</p>
-                    <p class="font-bold text-foreground"><span class="text-foreground">Spesifikasi:</span> {{ finalBarangSpecification }}</p>
-                    <p class="text-foreground">Kategori: {{ finalBarangCategory }}</p>
-                    <p class="text-foreground">Subkategori: {{ finalBarangSubcategory }}</p>
-                    <p class="text-foreground">Satuan: {{ finalBarangUom }}</p>
+                <!-- DEBUG: Preview Label Aset
+                <div v-if="asset" class="mt-6 pt-6 border-t border-border flex flex-col items-center gap-2">
+                  <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Preview Label Aset</span>
+                  <div class="border border-border rounded-lg p-1 bg-white shadow-sm overflow-hidden max-w-full">
+                    <img 
+                      :src="`/smart/inventory/units/${asset.id}/qr-code`" 
+                      alt="Preview Label Aset"
+                      class="h-28 object-contain rounded"
+                    />
                   </div>
-
-                  <!-- Column 2: LOT Info -->
-                  <div class="md:col-span-4">
-                    <p class="font-bold text-foreground"><span class="text-foreground">Kode LOT:</span> {{ finalLotNumber }}</p>
-                    <p class="text-foreground">Organizer: {{ finalLotOrganizer }}</p>
-                    <p class="text-foreground">Tanggal registrasi: {{ formatDateWithDashes(finalLotDateOfReceipt) }}</p>
-                    <p class="text-foreground">Umur: {{ finalLotAge !== null && finalLotAge !== undefined ? `${finalLotAge} tahun` : '-' }}</p>
-                    <p class="text-foreground">Vendor: {{ finalLotVendor }}</p>
-                    <p class="text-foreground">Nomor PO: {{ finalLotPoNumber }}</p>
-                  </div>
-
-                  <!-- Column 3: Asset Info -->
-                  <div class="md:col-span-5">
-                    <p class="font-bold text-foreground"><span class="text-foreground">Kode Aset:</span> {{ asset.number }}</p>
-                    <!-- TNKB (Nopol) -->
-                    <p v-if="isVehicle" class="font-bold text-foreground">
-                      <span class="text-foreground">Nopol:</span> {{ asset.vehicle_registration || '-' }}
-                    </p>
-                    <p class="text-foreground">
-                      Status: 
-                      <StatusBadge 
-                        :status="asset.status" 
-                        :proposed-status="asset.proposed_status" 
-                      />
-                    </p>
-                    <p class="text-foreground">
-                      Kondisi: 
-                      <span 
-                        :class="[
-                          'font-semibold',
-                          asset.condition === 'Baik' ? 'text-emerald-600' :
-                          asset.condition === 'Kurang Baik' ? 'text-amber-600' :
-                          'text-rose-600'
-                        ]"
-                      >
-                        {{ getConditionLabel(asset.condition) }}
-                      </span>
-                    </p>
-                    <p class="text-foreground">Nilai: {{ formatRupiah(asset.price) }}</p>
-                    <p class="text-foreground">Lokasi penyimpanan: {{ formatLocation(asset.location, asset.floor, asset.room) }}</p>
-                    <p class="text-foreground">Pembaruan terakhir: {{ asset.updated_at || '-' }}</p>
-                  </div>
-                </div>
+                </div> -->
               </div>
 
-              <!-- DEBUG: Preview Label Aset
-              <div v-if="asset" class="mt-6 pt-6 border-t border-border flex flex-col items-center gap-2">
-                <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Preview Label Aset</span>
-                <div class="border border-border rounded-lg p-1 bg-white shadow-sm overflow-hidden max-w-full">
-                  <img 
-                    :src="`/smart/inventory/units/${asset.id}/qr-code`" 
-                    alt="Preview Label Aset"
-                    class="h-28 object-contain rounded"
-                  />
-                </div>
-              </div> -->
+              <!-- ── TAB 2: JEJAK AUDIT ── -->
+              <JejakAuditTab 
+                v-if="detailActiveTab === 'Jejak Audit'"
+                :lifecycles="asset ? (asset.lifecycles || []) : []" 
+              />
             </div>
 
             <!-- Modal Footer -->
@@ -227,6 +250,28 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                 </svg>
                 Unduh QR Code
+              </Button>
+
+              <Button 
+                v-if="asset && asset.memo_url"
+                @click="openMemoFile(asset.memo_url)"
+                variant="warning"
+                size="lg"
+                class="inline-flex items-center gap-2"
+              >
+                <FileText class="w-4 h-4" />
+                Buka Memo / Berita Acara
+              </Button>
+
+              <Button 
+                v-if="asset && asset.lost_doc_url && (asset.proposed_status === 'Hilang' || asset.status === 'Hilang')"
+                @click="openMemoFile(asset.lost_doc_url)"
+                variant="warning"
+                size="lg"
+                class="inline-flex items-center gap-2"
+              >
+                <FileText class="w-4 h-4" />
+                Surat Keterangan Kehilangan
               </Button>
 
               <Button 

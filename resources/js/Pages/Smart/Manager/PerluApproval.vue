@@ -55,7 +55,7 @@ interface RequestHistory {
   items: RequestItem[];
   lifecycles: Array<{
     waktu: string;
-    aksi_status: string;
+    status: string;
     aktor: string;
     durasi: string | number;
     catatan: string;
@@ -268,7 +268,7 @@ const columns: ColumnDef<RequestHistory>[] = [
 // ─────────────────────────────────────────────
 const isDetailPopupOpen = ref(false);
 const activeRequest = ref<RequestHistory | null>(null);
-const detailActiveTab = ref('Detail');
+const detailActiveTab = ref('Detail Aset');
 
 const auditSearch = ref('');
 const auditStatusFilter = ref('semua');
@@ -276,7 +276,7 @@ const auditTimeFilter = ref('semua');
 
 const openDetailPopup = (req: RequestHistory) => {
   activeRequest.value = req;
-  detailActiveTab.value = 'Detail';
+  detailActiveTab.value = 'Detail Aset';
   auditSearch.value = '';
   auditStatusFilter.value = 'semua';
   auditTimeFilter.value = 'semua';
@@ -299,12 +299,12 @@ const filteredLifecycles = computed(() => {
     logs = logs.filter(l => 
       l.aktor.toLowerCase().includes(q) || 
       l.catatan.toLowerCase().includes(q) || 
-      l.aksi_status.toLowerCase().includes(q)
+      l.status.toLowerCase().includes(q)
     );
   }
 
   if (auditStatusFilter.value !== 'semua') {
-    logs = logs.filter(l => l.aksi_status === auditStatusFilter.value);
+    logs = logs.filter(l => l.status === auditStatusFilter.value);
   }
 
   if (auditTimeFilter.value !== 'semua') {
@@ -330,7 +330,7 @@ const auditStatusOptions = computed(() => {
   if (!activeRequest.value) return [];
   const stats = new Set<string>();
   activeRequest.value.lifecycles.forEach(l => {
-    if (l.aksi_status) stats.add(l.aksi_status);
+    if (l.status) stats.add(l.status);
   });
   return Array.from(stats);
 });
@@ -524,15 +524,15 @@ const handleConfirmSubmit = () => {
           <!-- Popup Tab pills -->
           <div class="px-6 py-3 border-b border-gray-200 flex items-center gap-2 shrink-0">
             <button 
-              @click="detailActiveTab = 'Detail'"
+              @click="detailActiveTab = 'Detail Aset'"
               class="px-4 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer shadow-sm"
               :class="[
-                detailActiveTab === 'Detail' 
+                detailActiveTab === 'Detail Aset' 
                   ? 'border-indigo-600 text-indigo-600 bg-white' 
                   : 'border-gray-300 text-gray-500 hover:text-gray-700 bg-white'
               ]"
             >
-              Detail
+              Detail Aset
             </button>
             <button 
               @click="detailActiveTab = 'Jejak Audit'"
@@ -551,7 +551,7 @@ const handleConfirmSubmit = () => {
           <div class="overflow-y-auto max-h-[70vh] p-6">
             
             <!-- ── TAB 1: DETAIL ── -->
-            <div v-if="detailActiveTab === 'Detail'" class="space-y-6">
+            <div v-if="detailActiveTab === 'Detail Aset'" class="space-y-6">
               <div class="border border-gray-200 rounded-xl p-5 flex flex-col lg:flex-row gap-6 bg-white">
                 <!-- Info Permintaan -->
                 <div class="flex-grow grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3.5 text-xs text-gray-900 align-top">
@@ -667,7 +667,7 @@ const handleConfirmSubmit = () => {
                   <thead class="bg-muted/50 border-b border-border text-foreground">
                     <tr class="hover:bg-transparent text-foreground font-semibold uppercase tracking-wider text-[10px]">
                       <th class="py-3 px-4 w-40 font-semibold">Waktu ↑↓</th>
-                      <th class="py-3 px-4 w-36 font-semibold">Aksi / Status ↑↓</th>
+                      <th class="py-3 px-4 w-36 font-semibold">Status ↑↓</th>
                       <th class="py-3 px-4 w-40 font-semibold">Aktor ↑↓</th>
                       <th class="py-3 px-4 w-28 text-center font-semibold">Durasi ↑↓</th>
                       <th class="py-3 px-4 font-semibold">Catatan ↑↓</th>
@@ -680,7 +680,7 @@ const handleConfirmSubmit = () => {
                       class="border-b border-border hover:bg-muted/30 transition-colors last:border-none"
                     >
                       <td class="py-3 px-4 font-medium text-foreground">{{ lc.waktu }}</td>
-                      <td class="py-3 px-4 text-foreground font-medium">{{ lc.aksi_status }}</td>
+                      <td class="py-3 px-4 text-foreground font-medium">{{ lc.status }}</td>
                       <td class="py-3 px-4 text-foreground">{{ lc.aktor }}</td>
                       <td class="py-3 px-4 text-center text-foreground">{{ lc.durasi }}</td>
                       <td class="py-3 px-4 text-muted-foreground max-w-sm truncate">{{ lc.catatan }}</td>

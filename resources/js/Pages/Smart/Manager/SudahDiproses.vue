@@ -55,7 +55,7 @@ interface RequestHistory {
   approval_at: string | null;
   lifecycles: Array<{
     waktu: string;
-    aksi_status: string;
+    status: string;
     aktor: string;
     durasi: string | number;
     catatan: string;
@@ -154,12 +154,12 @@ const filteredLifecycles = computed(() => {
     logs = logs.filter(l => 
       l.aktor.toLowerCase().includes(q) || 
       l.catatan.toLowerCase().includes(q) || 
-      l.aksi_status.toLowerCase().includes(q)
+      l.status.toLowerCase().includes(q)
     );
   }
 
   if (auditStatusFilter.value !== 'semua') {
-    logs = logs.filter(l => l.aksi_status === auditStatusFilter.value);
+    logs = logs.filter(l => l.status === auditStatusFilter.value);
   }
 
   if (auditTimeFilter.value !== 'semua') {
@@ -185,7 +185,7 @@ const auditStatusOptions = computed(() => {
   if (!activeRequest.value) return [];
   const stats = new Set<string>();
   activeRequest.value.lifecycles.forEach(l => {
-    if (l.aksi_status) stats.add(l.aksi_status);
+    if (l.status) stats.add(l.status);
   });
   return Array.from(stats);
 });
@@ -595,7 +595,7 @@ const columns: ColumnDef<RequestHistory>[] = [
                   <thead class="bg-muted/50 border-b border-border text-foreground">
                     <tr class="hover:bg-transparent text-foreground font-semibold uppercase tracking-wider text-[10px]">
                       <th class="py-3 px-4 w-40 font-semibold">Waktu ↑↓</th>
-                      <th class="py-3 px-4 w-36 font-semibold">Aksi / Status ↑↓</th>
+                      <th class="py-3 px-4 w-36 font-semibold">Status ↑↓</th>
                       <th class="py-3 px-4 w-40 font-semibold">Aktor ↑↓</th>
                       <th class="py-3 px-4 w-28 text-center font-semibold">Durasi ↑↓</th>
                       <th class="py-3 px-4 font-semibold">Catatan ↑↓</th>
@@ -608,7 +608,7 @@ const columns: ColumnDef<RequestHistory>[] = [
                       class="border-b border-border hover:bg-muted/30 transition-colors last:border-none"
                     >
                       <td class="py-3 px-4 font-medium text-foreground">{{ lc.waktu }}</td>
-                      <td class="py-3 px-4 text-foreground font-medium">{{ lc.aksi_status }}</td>
+                      <td class="py-3 px-4 text-foreground font-medium">{{ lc.status }}</td>
                       <td class="py-3 px-4 text-foreground">{{ lc.aktor }}</td>
                       <td class="py-3 px-4 text-center text-foreground">{{ lc.durasi }}</td>
                       <td class="py-3 px-4 text-muted-foreground max-w-sm truncate">{{ lc.catatan }}</td>
