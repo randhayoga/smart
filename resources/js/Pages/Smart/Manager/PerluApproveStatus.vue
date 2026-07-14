@@ -23,13 +23,12 @@ import TableSearch from '@/Components/TableSearch.vue';
 import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
 
-import Tabs from '@/Components/Tabs.vue';
 import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal.vue';
-import StatusBadge from '@/Components/StatusBadge.vue';
+import ManagerApprovalDetailModal from './Modals/ManagerApprovalDetailModal.vue';
 
 interface AuditTrail {
   waktu: string;
-  aksi_status: string;
+  status: string;
   aktor: string;
   durasi: string | number;
   catatan: string;
@@ -339,7 +338,7 @@ const auditColumns: ColumnDef<AuditTrail>[] = [
     cell: ({ row }) => h('div', { class: 'text-foreground truncate' }, row.getValue('waktu')),
   },
   {
-    accessorKey: 'aksi_status',
+    accessorKey: 'status',
     size: 144,
     header: ({ column }) => {
       return h(Button, {
@@ -347,11 +346,11 @@ const auditColumns: ColumnDef<AuditTrail>[] = [
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Aksi / Status',
+        'Status',
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
-    cell: ({ row }) => h('div', { class: 'text-foreground font-semibold truncate' }, row.getValue('aksi_status')),
+    cell: ({ row }) => h('div', { class: 'text-foreground font-semibold truncate' }, row.getValue('status')),
   },
   {
     accessorKey: 'aktor',
@@ -442,7 +441,7 @@ const formatDateWithDashes = (dateStr: string | null | undefined) => {
 // ─────────────────────────────────────────────
 const isDetailPopupOpen = ref(false);
 const activeApproval = ref<ApprovalItem | null>(null);
-const detailActiveTab = ref('Detail');
+const detailActiveTab = ref('Detail Aset');
 
 const auditSearch = ref('');
 const auditStatusFilter = ref('semua');
@@ -450,7 +449,7 @@ const auditTimeFilter = ref('semua');
 
 const openDetailPopup = (approval: ApprovalItem) => {
   activeApproval.value = approval;
-  detailActiveTab.value = 'Detail';
+  detailActiveTab.value = 'Detail Aset';
   auditSearch.value = '';
   auditStatusFilter.value = 'semua';
   auditTimeFilter.value = 'semua';
@@ -484,12 +483,12 @@ const filteredLifecycles = computed(() => {
     logs = logs.filter(l => 
       l.aktor.toLowerCase().includes(q) || 
       l.catatan.toLowerCase().includes(q) || 
-      l.aksi_status.toLowerCase().includes(q)
+      l.status.toLowerCase().includes(q)
     );
   }
 
   if (auditStatusFilter.value !== 'semua') {
-    logs = logs.filter(l => l.aksi_status === auditStatusFilter.value);
+    logs = logs.filter(l => l.status === auditStatusFilter.value);
   }
 
   if (auditTimeFilter.value !== 'semua') {
@@ -519,7 +518,7 @@ const auditStatusOptions = computed(() => {
   if (!activeApproval.value) return [];
   const stats = new Set<string>();
   activeApproval.value.unit_details.lifecycles.forEach(l => {
-    if (l.aksi_status) stats.add(l.aksi_status);
+    if (l.status) stats.add(l.status);
   });
   return Array.from(stats);
 });
@@ -720,267 +719,14 @@ onUnmounted(() => {
       />
     </div>
 
-    <!-- ============================================================
-         Detail Asset Popup (Overlay Backdrop & Modal Card)
-         ============================================================ -->
-    <Teleport to="body">
-      <Transition
-        enter-active-class="ease-out duration-200"
-        enter-from-class="opacity-0"
-        enter-to-class="opacity-100"
-        leave-active-class="ease-in duration-150"
-        leave-from-class="opacity-100"
-        leave-to-class="opacity-0"
-      >
-        <div 
-          v-if="isDetailPopupOpen && activeApproval" 
-          class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
-          @click="closeDetailPopup"
-        >
-          <Transition
-            enter-active-class="ease-out duration-200"
-            enter-from-class="opacity-0 scale-95"
-            enter-to-class="opacity-100 scale-100"
-            leave-active-class="ease-in duration-150"
-            leave-from-class="opacity-100 scale-100"
-            leave-to-class="opacity-0 scale-95"
-          >
-            <div 
-              v-if="isDetailPopupOpen && activeApproval"
-              class="bg-card w-full max-w-[95%] rounded-[14px] shadow-2xl overflow-hidden flex flex-col border border-border"
-              @click.stop
-            >
-              <!-- Header -->
-              <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
-                <h3 class="text-lg font-bold text-foreground">Detail Aset</h3>
-                <button @click="closeDetailPopup" class="p-2 hover:bg-muted rounded-full transition-colors">
-                  <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
-                </button>
-              </div>
-
-              <!-- Body contents -->
-              <div class="overflow-y-auto max-h-[70vh] px-6 py-3 space-y-4">
-                <div class="flex flex-wrap items-center justify-between gap-4 mb-2">
-                  <Tabs v-model="detailActiveTab" :tabs="['Detail', 'Jejak Audit']" />
-                </div>
-                
-                <!-- ── TAB 1: DETAIL ── -->
-                <div v-if="detailActiveTab === 'Detail'" class="px-4 py-3 bg-card rounded-xl border border-border shadow-sm overflow-hidden">
-                  <div class="flex flex-col md:flex-row gap-6">
-                    <!-- Image Column -->
-                    <div class="w-48 h-48 rounded-xl bg-muted shrink-0 flex items-center justify-center overflow-hidden border border-border">
-                      <img 
-                        v-if="activeApproval.unit_details.image_url" 
-                        :src="activeApproval.unit_details.image_url.startsWith('http') || activeApproval.unit_details.image_url.startsWith('/') ? activeApproval.unit_details.image_url : '/storage/' + activeApproval.unit_details.image_url" 
-                        class="w-full h-full object-cover" 
-                      />
-                      <img 
-                        v-else 
-                        src="https://placehold.co/400x400?text=Placeholder" 
-                        class="w-full h-full object-cover opacity-50" 
-                      />
-                    </div>
-
-                    <!-- Details Columns -->
-                    <div class="flex-grow grid grid-cols-1 md:grid-cols-15 gap-4 text-foreground">
-                      <!-- Column 1: Item Info -->
-                      <div class="md:col-span-4">
-                        <p class="font-bold text-foreground"><span class="text-foreground">Kode Tipe:</span> {{ activeApproval.unit_details.barang_code }}</p>
-                        <p class="font-bold text-foreground"><span class="text-foreground">Merek:</span> {{ activeApproval.brand }}</p>
-                        <p class="font-bold text-foreground"><span class="text-foreground">Nama:</span> {{ activeApproval.nama }}</p>
-                        <p class="font-bold text-foreground"><span class="text-foreground">Spesifikasi:</span> {{ activeApproval.specification }}</p>
-                        <p class="text-foreground">Kategori: {{ activeApproval.category }}</p>
-                        <p class="text-foreground">Subkategori: {{ activeApproval.subcategory }}</p>
-                        <p class="text-foreground">Satuan: {{ activeApproval.unit_details.barang_unit }}</p>
-                      </div>
-
-                      <!-- Column 2: LOT Info -->
-                      <div class="md:col-span-5">
-                        <p class="font-bold text-foreground"><span class="text-foreground">Kode LOT:</span> {{ activeApproval.unit_details.lot_code }}</p>
-                        <p class="text-foreground">Organizer: {{ activeApproval.unit_details.organizer }}</p>
-                        <p class="text-foreground">Tanggal registrasi: {{ formatDateWithDashes(activeApproval.unit_details.date_of_receipt) }}</p>
-                        <p class="text-foreground">Umur: {{ activeApproval.unit_details.age !== undefined && activeApproval.unit_details.age !== null ? `${activeApproval.unit_details.age} tahun` : '-' }}</p>
-                        <p class="text-foreground">Vendor: {{ activeApproval.unit_details.vendor }}</p>
-                        <p class="text-foreground">Nomor PO: {{ activeApproval.unit_details.po_number }}</p>
-                      </div>
-
-                      <!-- Column 3: Asset Info -->
-                      <div class="md:col-span-6">
-                        <p class="font-bold text-foreground"><span class="text-foreground">Kode Aset:</span> {{ activeApproval.asset_code }}</p>
-                        <!-- TNKB (Nopol) -->
-                        <p v-if="isVehicle(activeApproval)" class="font-bold text-foreground">
-                          <span class="text-foreground">Nopol:</span> {{ activeApproval.unit_details.vehicle_registration || '-' }}
-                        </p>
-                        <p class="text-foreground flex flex-col gap-1.5">
-                          <span>
-                            Status sebelumnya: 
-                            <StatusBadge :status="activeApproval.previous_status" />
-                          </span>
-                          <span>
-                            Status diajukan: 
-                            <StatusBadge :status="activeApproval.proposed_status" />
-                          </span>
-                        </p>
-                        <p class="text-foreground">
-                          Kondisi: 
-                          <span 
-                            :class="[
-                              'font-semibold',
-                              activeApproval.unit_details.condition === 'Baik' ? 'text-emerald-600' :
-                              activeApproval.unit_details.condition === 'Kurang Baik' ? 'text-amber-600' :
-                              'text-rose-600'
-                            ]"
-                          >
-                            {{ activeApproval.unit_details.condition }}
-                          </span>
-                        </p>
-                        <p class="text-foreground">Nilai: {{ formatRupiah(activeApproval.unit_details.price) }}</p>
-                        <p class="text-foreground">Lokasi penyimpanan: {{ formatLocation(activeApproval.unit_details.location, activeApproval.unit_details.floor, activeApproval.unit_details.room) }}</p>
-                        <p class="text-foreground">Pembaruan terakhir: {{ activeApproval.requested_at }}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- ── TAB 2: JEJAK AUDIT ── -->
-                <div v-if="detailActiveTab === 'Jejak Audit'" class="px-4 py-3 bg-card rounded-xl border border-border shadow-sm overflow-hidden space-y-4">
-                  <!-- Internal Search & Local Filters -->
-                  <div class="flex flex-wrap items-end gap-4">
-                    <div class="space-y-1.5 flex-1 min-w-[200px] max-w-xs">
-                      <label class="text-xs text-muted-foreground font-medium block ml-0.5">Filter</label>
-                      <TableSearch 
-                        v-model="auditSearch"
-                        placeholder="Cari Jejak Audit..." 
-                        bg-class="bg-white"
-                      />
-                    </div>
-
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" :class="['w-[180px] justify-between rounded-[14px] font-normal bg-white', (auditStatusFilter === 'semua') ? 'text-muted-foreground' : 'text-foreground']">
-                          <span class="truncate">{{ auditStatusFilter === 'semua' ? 'Semua Status' : auditStatusFilter }}</span>
-                          <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent class="w-[180px] rounded-[14px] z-[110]" align="start" :side-offset="4">
-                        <DropdownMenuItem @select="auditStatusFilter = 'semua'">Semua Status</DropdownMenuItem>
-                        <DropdownMenuItem v-for="st in auditStatusOptions" :key="st" @select="auditStatusFilter = st">
-                          {{ st }}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" :class="['w-[240px] justify-between rounded-[14px] font-normal bg-white', (auditTimeFilter === 'semua') ? 'text-muted-foreground' : 'text-foreground']">
-                          <span class="truncate">
-                            {{ 
-                              auditTimeFilter === 'semua' ? 'Semua Kurun Waktu' : 
-                              auditTimeFilter === '7-hari' ? '7 hari terakhir' : 
-                              '30 hari terakhir' 
-                            }}
-                          </span>
-                          <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent class="w-[180px] rounded-[14px] z-[110]" align="start" :side-offset="4">
-                        <DropdownMenuItem @select="auditTimeFilter = 'semua'">Semua Kurun Waktu</DropdownMenuItem>
-                        <DropdownMenuItem @select="auditTimeFilter = '7-hari'">7 hari terakhir</DropdownMenuItem>
-                        <DropdownMenuItem @select="auditTimeFilter = '30-hari'">30 hari terakhir</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-
-                    <div class="flex items-center gap-3 text-sm text-muted-foreground ml-auto">
-                      <span>Baris per halaman</span>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal bg-white', (auditRowsPerPage === 'Semua baris' || !auditRowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
-                            {{ auditRowsPerPage }}
-                            <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent class="w-[140px] rounded-[14px] z-[110]" align="start" :side-offset="4">
-                          <DropdownMenuItem @select="auditRowsPerPage = 'Semua baris'">Semua baris</DropdownMenuItem>
-                          <DropdownMenuItem @select="auditRowsPerPage = '10'">10</DropdownMenuItem>
-                          <DropdownMenuItem @select="auditRowsPerPage = '25'">25</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </div>
-
-                  <!-- Log table via DataTable -->
-                  <div class="pb-4">
-                    <DataTable 
-                      class="mb-6"
-                      cell-class="py-2.5"
-                      :columns="auditColumns" 
-                      :data="filteredLifecycles" 
-                      :filter-value="auditSearch"
-                      :page-size="computedAuditPageSize"
-                      :show-selection-count="false"
-                    />
-                  </div>
-                </div>
-
-              </div>
-
-              <!-- Bottom Footer Buttons (Right Aligned group) -->
-              <div class="py-3 px-4 flex items-center justify-end gap-3 bg-muted/10 shrink-0">
-                <!-- Purple Memo Button -->
-                 <Button 
-                  @click="openMemoFile(activeApproval.memo_url)"
-                  variant="primary"
-                  size="lg"
-                >
-                  <FileText class="w-4 h-4" />
-                  Buka Memo / Berita Acara
-                </Button>
-
-                <!-- Lost Document Button (Conditional if Hilang) -->
-                <Button 
-                  v-if="activeApproval.proposed_status === 'Hilang'"
-                  @click="openMemoFile(activeApproval.lost_doc_url)"
-                  variant="primary"
-                  size="lg"
-                >
-                  <FileText class="w-4 h-4" />
-                  Surat Keterangan Kehilangan
-                </Button>
-
-                <!-- Green Approve Button -->
-                <Button 
-                  @click="openConfirmModal('approved', false)"
-                  variant="success"
-                  size="lg"
-                >
-                  <ThumbsUp class="w-4 h-4" />
-                  Approve
-                </Button>
-
-                <!-- Red Reject Button -->
-                <Button 
-                  @click="openConfirmModal('rejected', false)"
-                  variant="destructive"
-                  size="lg"
-                >
-                  <Ban class="w-4 h-4" />
-                  Tolak
-                </Button>
-
-                <!-- White Kembali Button -->
-                <Button 
-                  @click="closeDetailPopup"
-                  variant="white"
-                  size="lg"
-                >
-                  Kembali
-                </Button>
-              </div>
-            </div>
-          </Transition>
-        </div>
-      </Transition>
-    </Teleport>
+    <!-- Detail Asset Modal -->
+    <ManagerApprovalDetailModal
+      v-model:open="isDetailPopupOpen"
+      :approval="activeApproval"
+      mode="pending"
+      @approve="openConfirmModal('approved', false)"
+      @reject="openConfirmModal('rejected', false)"
+    />
 
     <!-- ============================================================
          Confirmation Modal (Approve / Reject Action Dialog)

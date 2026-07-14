@@ -33,7 +33,12 @@ class UnitStatusApprovalSeeder extends Seeder
             // Seed lifecycles (Audit Trail)
             UnitLifecycle::create([
                 'unit_id' => $laptop->id,
+                'action_type' => 'Registrasi',
                 'status' => 'Tersedia',
+                'condition' => 'Baik',
+                'location_id' => $laptop->location_id,
+                'floor_id' => $laptop->floor_id,
+                'room_id' => $laptop->room_id,
                 'start_date' => Carbon::now()->subDays(30),
                 'end_date' => Carbon::now()->subDays(2),
                 'actor_id' => 1, // Admin: Radifa
@@ -42,7 +47,12 @@ class UnitStatusApprovalSeeder extends Seeder
 
             UnitLifecycle::create([
                 'unit_id' => $laptop->id,
+                'action_type' => 'Perubahan status',
                 'status' => 'Hilang',
+                'condition' => 'Baik',
+                'location_id' => $laptop->location_id,
+                'floor_id' => $laptop->floor_id,
+                'room_id' => $laptop->room_id,
                 'start_date' => Carbon::now()->subDays(2),
                 'end_date' => null,
                 'actor_id' => 1, // Admin: Radifa
@@ -70,7 +80,12 @@ class UnitStatusApprovalSeeder extends Seeder
             // Seed lifecycles (Audit Trail)
             UnitLifecycle::create([
                 'unit_id' => $vehicle->id,
+                'action_type' => 'Registrasi',
                 'status' => 'Tersedia',
+                'condition' => 'Baik',
+                'location_id' => $vehicle->location_id,
+                'floor_id' => $vehicle->floor_id,
+                'room_id' => $vehicle->room_id,
                 'start_date' => Carbon::now()->subDays(45),
                 'end_date' => Carbon::now()->subDays(15),
                 'actor_id' => 1,
@@ -79,7 +94,12 @@ class UnitStatusApprovalSeeder extends Seeder
 
             UnitLifecycle::create([
                 'unit_id' => $vehicle->id,
+                'action_type' => 'Pemeliharaan',
                 'status' => 'Perbaikan',
+                'condition' => 'Rusak Ringan',
+                'location_id' => $vehicle->location_id,
+                'floor_id' => $vehicle->floor_id,
+                'room_id' => $vehicle->room_id,
                 'start_date' => Carbon::now()->subDays(15),
                 'end_date' => Carbon::now()->subDays(1),
                 'actor_id' => 1,
@@ -88,7 +108,12 @@ class UnitStatusApprovalSeeder extends Seeder
 
             UnitLifecycle::create([
                 'unit_id' => $vehicle->id,
+                'action_type' => 'Perubahan status',
                 'status' => 'Rusak Total',
+                'condition' => 'Rusak Berat',
+                'location_id' => $vehicle->location_id,
+                'floor_id' => $vehicle->floor_id,
+                'room_id' => $vehicle->room_id,
                 'start_date' => Carbon::now()->subDays(1),
                 'end_date' => null,
                 'actor_id' => 1,

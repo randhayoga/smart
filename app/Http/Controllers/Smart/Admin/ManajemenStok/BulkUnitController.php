@@ -274,7 +274,9 @@ class BulkUnitController extends Controller
         }
 
         if (!empty($updateData)) {
-            Unit::whereIn('id', $ids)->update($updateData);
+            foreach ($units as $unit) {
+                $unit->update($updateData);
+            }
         }
 
         // 5. Handle approvals if status is changed to a status requiring approval

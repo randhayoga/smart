@@ -16,6 +16,8 @@ class UnitStatusApproval extends Model
     protected static function booted()
     {
         static::created(function ($approval) {
+            $unit = $approval->unit;
+
             // Close any active unit lifecycles
             UnitLifecycle::where('unit_id', $approval->unit_id)
                 ->whereNull('end_date')
@@ -24,31 +26,17 @@ class UnitStatusApproval extends Model
             // Create requester lifecycle entry
             UnitLifecycle::create([
                 'unit_id' => $approval->unit_id,
+                'action_type' => 'Perubahan status',
                 'status' => $approval->proposed_status,
+                'condition' => $unit->condition,
+                'location_id' => $unit->location_id,
+                'floor_id' => $unit->floor_id,
+                'room_id' => $unit->room_id,
                 'start_date' => now(),
                 'end_date' => null,
                 'actor_id' => $approval->requester_id,
-                'note' => $approval->note ?? 'Pengajuan perubahan status unit',
+                'note' => $approval->note ?? "Pengajuan perubahan status unit dari '{$approval->previous_status}' menjadi '{$approval->proposed_status}'",
             ]);
-        });
-
-        static::deleted(function ($approval) {
-            if ($approval->decision === 'pending') {
-                // Close any active unit lifecycles
-                UnitLifecycle::where('unit_id', $approval->unit_id)
-                    ->whereNull('end_date')
-                    ->update(['end_date' => now()]);
-
-                // Create a new active lifecycle entry for the reverted status
-                UnitLifecycle::create([
-                    'unit_id' => $approval->unit_id,
-                    'status' => $approval->previous_status,
-                    'start_date' => now(),
-                    'end_date' => null,
-                    'actor_id' => auth()->id() ?? $approval->requester_id,
-                    'note' => 'Pembatalan pengajuan perubahan status unit',
-                ]);
-            }
         });
     }
 
