@@ -20,8 +20,7 @@ class UnitLifecycle extends Model
         'status',
         'start_date',
         'end_date',
-        'requester_id',
-        'approver_id',
+        'actor_id',
         'note',
     ];
 
@@ -35,13 +34,8 @@ class UnitLifecycle extends Model
         return $this->belongsTo(Unit::class);
     }
 
-    public function requester(): BelongsTo
+    public function actor(): BelongsTo
     {
-        return $this->belongsTo(AdmUser::class, 'requester_id');
-    }
-
-    public function approver(): BelongsTo
-    {
-        return $this->belongsTo(AdmUser::class, 'approver_id');
+        return $this->belongsTo(AdmUser::class, 'actor_id');
     }
 }

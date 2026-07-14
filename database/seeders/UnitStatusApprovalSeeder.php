@@ -36,7 +36,7 @@ class UnitStatusApprovalSeeder extends Seeder
                 'status' => 'Tersedia',
                 'start_date' => Carbon::now()->subDays(30),
                 'end_date' => Carbon::now()->subDays(2),
-                'requester_id' => 1, // Admin: Radifa
+                'actor_id' => 1, // Admin: Radifa
                 'note' => 'Stok awal terdaftar dan tersedia',
             ]);
 
@@ -45,21 +45,23 @@ class UnitStatusApprovalSeeder extends Seeder
                 'status' => 'Hilang',
                 'start_date' => Carbon::now()->subDays(2),
                 'end_date' => null,
-                'requester_id' => 1, // Admin: Radifa
+                'actor_id' => 1, // Admin: Radifa
                 'note' => 'Aset dilaporkan hilang setelah dipinjam di proyek C',
             ]);
 
             // Seed status approval
-            UnitStatusApproval::create([
-                'unit_id' => $laptop->id,
-                'requester_id' => 1, // Admin Radifa
-                'proposed_status' => 'Hilang',
-                'previous_status' => 'Tersedia',
-                'decision' => 'pending',
-                'note' => '',
-                'requested_at' => Carbon::now()->subDays(2),
-                'doc_url' => 'memos/berita_acara_sfg14.pdf',
-            ]);
+            UnitStatusApproval::withoutEvents(function () use ($laptop) {
+                UnitStatusApproval::create([
+                    'unit_id' => $laptop->id,
+                    'requester_id' => 1, // Admin Radifa
+                    'proposed_status' => 'Hilang',
+                    'previous_status' => 'Tersedia',
+                    'decision' => 'pending',
+                    'note' => '',
+                    'requested_at' => Carbon::now()->subDays(2),
+                    'doc_url' => 'memos/berita_acara_sfg14.pdf',
+                ]);
+            });
             $laptop->update(['status' => 'Pending']);
         }
 
@@ -70,7 +72,7 @@ class UnitStatusApprovalSeeder extends Seeder
                 'status' => 'Tersedia',
                 'start_date' => Carbon::now()->subDays(45),
                 'end_date' => Carbon::now()->subDays(15),
-                'requester_id' => 1,
+                'actor_id' => 1,
                 'note' => 'Registrasi unit kendaraan baru',
             ]);
 
@@ -79,7 +81,7 @@ class UnitStatusApprovalSeeder extends Seeder
                 'status' => 'Perbaikan',
                 'start_date' => Carbon::now()->subDays(15),
                 'end_date' => Carbon::now()->subDays(1),
-                'requester_id' => 1,
+                'actor_id' => 1,
                 'note' => 'Perbaikan rutin berkala di bengkel resmi',
             ]);
 
@@ -88,21 +90,23 @@ class UnitStatusApprovalSeeder extends Seeder
                 'status' => 'Rusak Total',
                 'start_date' => Carbon::now()->subDays(1),
                 'end_date' => null,
-                'requester_id' => 1,
+                'actor_id' => 1,
                 'note' => 'Mengalami kerusakan mesin saat operasional',
             ]);
 
             // Seed status approval
-            UnitStatusApproval::create([
-                'unit_id' => $vehicle->id,
-                'requester_id' => 1, // Admin Radifa
-                'proposed_status' => 'Rusak Total',
-                'previous_status' => 'Perbaikan',
-                'decision' => 'pending',
-                'note' => '',
-                'requested_at' => Carbon::now()->subDays(1),
-                'doc_url' => 'memos/berita_acara_byd.pdf',
-            ]);
+            UnitStatusApproval::withoutEvents(function () use ($vehicle) {
+                UnitStatusApproval::create([
+                    'unit_id' => $vehicle->id,
+                    'requester_id' => 1, // Admin Radifa
+                    'proposed_status' => 'Rusak Total',
+                    'previous_status' => 'Perbaikan',
+                    'decision' => 'pending',
+                    'note' => '',
+                    'requested_at' => Carbon::now()->subDays(1),
+                    'doc_url' => 'memos/berita_acara_byd.pdf',
+                ]);
+            });
             $vehicle->update(['status' => 'Pending']);
         }
     }

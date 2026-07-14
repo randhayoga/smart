@@ -206,7 +206,7 @@ const auditColumns: ColumnDef<AuditTrail>[] = [
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
-    cell: ({ row }) => h('div', { class: 'text-muted-foreground max-w-sm truncate' }, row.getValue('catatan')),
+    cell: ({ row }) => h('div', { class: 'text-muted-foreground truncate' }, row.getValue('catatan')),
   }
 ];
 

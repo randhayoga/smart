@@ -166,9 +166,14 @@ class UnitStatusApprovalControllerTest extends TestCase
 
         $this->assertDatabaseHas('unit_lifecycles', [
             'unit_id' => $unit->id,
+            'status' => 'Perbaikan',
+            'actor_id' => $approval->requester_id,
+        ]);
+
+        $this->assertDatabaseHas('unit_lifecycles', [
+            'unit_id' => $unit->id,
             'status' => 'Dihapus',
-            'requester_id' => $approval->requester_id,
-            'approver_id' => $user->id,
+            'actor_id' => $user->id,
             'note' => 'Disetujui untuk Perbaikan',
         ]);
     }
@@ -340,9 +345,14 @@ class UnitStatusApprovalControllerTest extends TestCase
 
         $this->assertDatabaseHas('unit_lifecycles', [
             'unit_id' => $unit->id,
+            'status' => 'Rusak Total',
+            'actor_id' => $approval->requester_id,
+        ]);
+
+        $this->assertDatabaseHas('unit_lifecycles', [
+            'unit_id' => $unit->id,
             'status' => 'Dihapus',
-            'requester_id' => $approval->requester_id,
-            'approver_id' => $user->id,
+            'actor_id' => $user->id,
         ]);
     }
 }
