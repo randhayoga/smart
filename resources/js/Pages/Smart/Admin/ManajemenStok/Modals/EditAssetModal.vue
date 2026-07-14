@@ -50,6 +50,8 @@ const form = useForm({
   vehicle_registration: '',
   memo_file: null as File | null,
   memo_file_name: '',
+  lost_doc_file: null as File | null,
+  lost_doc_file_name: '',
 });
 
 const errors = ref({
@@ -59,6 +61,7 @@ const errors = ref({
   image_url: '',
   vehicle_registration: '',
   memo_file: '',
+  lost_doc_file: '',
 });
 
 const resetErrors = () => {
@@ -69,6 +72,7 @@ const resetErrors = () => {
     image_url: '',
     vehicle_registration: '',
     memo_file: '',
+    lost_doc_file: '',
   };
 };
 
@@ -80,6 +84,7 @@ watch(() => form.image_url, v => { if (v && errors.value.image_url) errors.value
 watch(() => form.image_url_name, v => { if (v && errors.value.image_url) errors.value.image_url = ''; });
 watch(() => form.vehicle_registration, v => { if (v && errors.value.vehicle_registration) errors.value.vehicle_registration = ''; });
 watch(() => form.memo_file, v => { if (v && errors.value.memo_file) errors.value.memo_file = ''; });
+watch(() => form.lost_doc_file, v => { if (v && errors.value.lost_doc_file) errors.value.lost_doc_file = ''; });
 
 const filteredFloors = computed(() => {
   if (!form.location_id) return [];
@@ -110,6 +115,10 @@ watch(() => form.status, (newVal) => {
     form.memo_file = null;
     form.memo_file_name = '';
   }
+  if (newVal !== 'Hilang') {
+    form.lost_doc_file = null;
+    form.lost_doc_file_name = '';
+  }
 });
 
 // Init form when modal opens
@@ -124,6 +133,8 @@ watch(() => props.open, (val) => {
   form.use_lot_image = false;
   form.memo_file = null;
   form.memo_file_name = '';
+  form.lost_doc_file = null;
+  form.lost_doc_file_name = '';
 
   if (isSingle.value && selectedItem.value) {
     const item = selectedItem.value;
@@ -136,7 +147,8 @@ watch(() => props.open, (val) => {
     form.price = item.price || '';
     form.image_url_name = item.image_url ? item.image_url.split('/').pop() || '' : '';
     form.vehicle_registration = item.vehicle_registration || '';
-    form.memo_file_name = item.memo_file_name || (item.doc_url ? item.doc_url.split('/').pop() || '' : '');
+    form.memo_file_name = item.memo_file_name || (item.memo_url ? item.memo_url.split('/').pop() || '' : '');
+    form.lost_doc_file_name = item.lost_doc_file_name || (item.lost_doc_url ? item.lost_doc_url.split('/').pop() || '' : '');
   } else {
     form.number = '';
     form.location_id = '';
@@ -205,8 +217,31 @@ const triggerMemoFileInput = () => {
 const viewMemoInNewTab = () => {
   if (form.memo_file) {
     window.open(URL.createObjectURL(form.memo_file), '_blank');
-  } else if (isSingle.value && selectedItem.value?.doc_url) {
-    window.open('/storage/' + selectedItem.value.doc_url, '_blank');
+  } else if (isSingle.value && selectedItem.value?.memo_url) {
+    window.open('/storage/' + selectedItem.value.memo_url, '_blank');
+  }
+};
+
+const handleLostDocUpload = (e: any) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+  if (!allowedTypes.includes(file.type)) { toast.error('Format file salah! Hanya diperbolehkan file .pdf, .jpg, .jpeg, atau .png'); return; }
+  if (file.size > 2 * 1024 * 1024) { toast.error('Gagal! Ukuran dokumen maksimal 2MB'); return; }
+  form.lost_doc_file = file;
+  form.lost_doc_file_name = file.name;
+};
+
+const triggerLostDocFileInput = () => {
+  const input = document.getElementById('edit-asset-lost-doc-upload') as HTMLInputElement;
+  input?.click();
+};
+
+const viewLostDocInNewTab = () => {
+  if (form.lost_doc_file) {
+    window.open(URL.createObjectURL(form.lost_doc_file), '_blank');
+  } else if (isSingle.value && selectedItem.value?.lost_doc_url) {
+    window.open('/storage/' + selectedItem.value.lost_doc_url, '_blank');
   }
 };
 
@@ -253,6 +288,7 @@ const handleSubmit = () => {
     if (!form.image_url && !form.image_url_name) { errors.value.image_url = 'Foto belum dipilih'; isValid = false; }
     if (isVehicle.value && !form.vehicle_registration) { errors.value.vehicle_registration = 'TNKB (Nomor Polisi) belum diisi'; isValid = false; }
     if (arrNeedApproval.includes(form.status) && !form.memo_file_name) { errors.value.memo_file = 'Berita Acara / Memo belum dipilih'; isValid = false; }
+    if (form.status === 'Hilang' && !form.lost_doc_file_name) { errors.value.lost_doc_file = 'Surat Keterangan Kehilangan belum dipilih'; isValid = false; }
     if (!isValid) return;
 
     form.transform((data) => {
@@ -271,6 +307,7 @@ const handleSubmit = () => {
       if (data.image_url) fd.image_url = data.image_url;
       if (data.use_lot_image) fd.use_lot_image = data.use_lot_image;
       if (data.memo_file) fd.memo_file = data.memo_file;
+      if (data.lost_doc_file) fd.lost_doc_file = data.lost_doc_file;
       return fd;
     }).post(`/smart/inventory/units/${form.ids[0]}`, {
       onSuccess: () => { closeModal(); emit('success'); },
@@ -279,7 +316,7 @@ const handleSubmit = () => {
     // Bulk edit
     const hasField = !!(
       form.status || form.condition || form.location_id || form.floor_id ||
-      form.room_id || form.price || form.image_url || form.use_lot_image || form.memo_file
+      form.room_id || form.price || form.image_url || form.use_lot_image || form.memo_file || form.lost_doc_file
     );
     if (!hasField) {
       toast.error('Harap isi minimal satu input untuk melakukan perubahan massal.');
@@ -288,6 +325,10 @@ const handleSubmit = () => {
 
     if (form.status && arrNeedApproval.includes(form.status) && !form.memo_file_name) {
       errors.value.memo_file = 'Berita Acara / Memo wajib diisi jika status Hilang, Rusak Total, atau Pending.';
+      return;
+    }
+    if (form.status === 'Hilang' && !form.lost_doc_file_name) {
+      errors.value.lost_doc_file = 'Surat Keterangan Kehilangan wajib diisi jika status Hilang.';
       return;
     }
 
@@ -308,6 +349,7 @@ const handleSubmit = () => {
     if (form.use_lot_image) payload.use_lot_image = true;
     if (form.image_url instanceof File) payload.image_url = form.image_url;
     if (form.memo_file instanceof File) payload.memo_file = form.memo_file;
+    if (form.lost_doc_file instanceof File) payload.lost_doc_file = form.lost_doc_file;
 
     router.post('/smart/inventory/units/bulk-update', payload, {
       onSuccess: () => { closeModal(); emit('success'); },
@@ -453,7 +495,7 @@ const handleSubmit = () => {
                         <Button type="button" @click="handleSamakanPhoto" variant="warning" size="lg">Samakan</Button>
                         <Button type="button" @click="triggerFileInput" size="lg">Pilih File</Button>
                       </div>
-                      <p class="text-[10px] text-muted-foreground ml-1 mt-1">Maksimal ukuran 1 MB</p>
+                      <p class="text-[10px] text-muted-foreground ml-1 mt-1">Maksimal ukuran 1 MB (.jpg, .jpeg, .png)</p>
                     </FieldContent>
                     <FieldError v-if="isSingle && errors.image_url">{{ errors.image_url }}</FieldError>
                   </Field>
@@ -474,10 +516,11 @@ const handleSubmit = () => {
                     <FieldLabel><span>Berita Acara / Memo<span class="text-rose-500">*</span></span></FieldLabel>
                     <FieldContent>
                       <div class="flex gap-2">
-                        <div class="flex-grow min-w-0 px-4 py-2 text-sm border rounded-[14px] bg-muted/10 truncate flex items-center h-10 cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted border-input"
+                        <div class="flex-grow min-w-0 px-4 py-2 text-sm border rounded-[14px] bg-muted/10 truncate flex items-center h-10"
+                          :class="[form.memo_file_name ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' : 'text-muted-foreground cursor-default', errors.memo_file ? 'border-destructive' : 'border-input']"
                           @click="form.memo_file_name && viewMemoInNewTab()"
                         >
-                          {{ form.memo_file_name || 'Pilih dokumen...' }}
+                          {{ form.memo_file_name || 'Belum ada file yang dipilih' }}
                         </div>
                         <input type="file" id="edit-asset-memo-upload" class="hidden" accept=".pdf,.jpg,.jpeg,.png" @change="handleMemoUpload" />
                         <Button type="button" @click="triggerMemoFileInput" size="lg">Pilih Dokumen</Button>
@@ -485,6 +528,25 @@ const handleSubmit = () => {
                       <p class="text-[10px] text-muted-foreground ml-1 mt-1">Maksimal ukuran 2 MB (.pdf, .jpg, .jpeg, .png)</p>
                     </FieldContent>
                     <FieldError v-if="errors.memo_file">{{ errors.memo_file }}</FieldError>
+                  </Field>
+
+                  <!-- Lost Document Upload (Required only if status is Hilang) -->
+                  <Field v-if="form.status === 'Hilang'" :data-invalid="!!errors.lost_doc_file || undefined">
+                    <FieldLabel><span>Surat Keterangan Kehilangan<span class="text-rose-500">*</span></span></FieldLabel>
+                    <FieldContent>
+                      <div class="flex gap-2">
+                        <div class="flex-grow min-w-0 px-4 py-2 text-sm border rounded-[14px] bg-muted/10 truncate flex items-center h-10"
+                          :class="[form.lost_doc_file_name ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' : 'text-muted-foreground cursor-default', errors.lost_doc_file ? 'border-destructive' : 'border-input']"
+                          @click="form.lost_doc_file_name && viewLostDocInNewTab()"
+                        >
+                          {{ form.lost_doc_file_name || 'Belum ada file yang dipilih' }}
+                        </div>
+                        <input type="file" id="edit-asset-lost-doc-upload" class="hidden" accept=".pdf,.jpg,.jpeg,.png" @change="handleLostDocUpload" />
+                        <Button type="button" @click="triggerLostDocFileInput" size="lg">Pilih Dokumen</Button>
+                      </div>
+                      <p class="text-[10px] text-muted-foreground ml-1 mt-1">Maksimal ukuran 2 MB (.pdf, .jpg, .jpeg, .png)</p>
+                    </FieldContent>
+                    <FieldError v-if="errors.lost_doc_file">{{ errors.lost_doc_file }}</FieldError>
                   </Field>
                 </div>
               </div>

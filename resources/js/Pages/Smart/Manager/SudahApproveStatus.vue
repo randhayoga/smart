@@ -74,7 +74,8 @@ interface ApprovalItem {
   requested_at: string;
   decided_at: string | null;
   approver_name: string | null;
-  doc_url: string | null;
+  memo_url: string | null;
+  lost_doc_url: string | null;
   unit_details: UnitDetails;
 }
 
@@ -456,19 +457,34 @@ const columns: ColumnDef<ApprovalItem>[] = [
   {
     id: 'actions',
     size: 100,
-    header: () => h('div', { class: 'text-center font-semibold text-foreground' }, 'Aksi'),
+    header: () => h('div', { class: 'text-right font-semibold text-foreground' }, 'Aksi'),
     cell: ({ row }) => {
       const item = row.original;
-      return h('div', { class: 'flex items-center justify-center gap-2' }, [
+      const buttons = [
         h(Button, {
           variant: 'table-primary',
           size: 'icon-sm',
           title: 'Buka Berita Acara / Memo',
-          onClick: () => openMemoFile(item.doc_url)
+          onClick: () => openMemoFile(item.memo_url)
         }, () => [
           h(FileText),
           h('span', { class: 'sr-only' }, 'Buka Berita Acara / Memo')
-        ]),
+        ])
+      ];
+      if (item.proposed_status === 'Hilang') {
+        buttons.push(
+          h(Button, {
+            variant: 'table-primary',
+            size: 'icon-sm',
+            title: 'Buka Surat Keterangan Kehilangan',
+            onClick: () => openMemoFile(item.lost_doc_url)
+          }, () => [
+            h(FileText),
+            h('span', { class: 'sr-only' }, 'Buka Surat Keterangan Kehilangan')
+          ])
+        );
+      }
+      buttons.push(
         h(Button, {
           variant: 'table-view',
           size: 'icon-sm',
@@ -478,7 +494,8 @@ const columns: ColumnDef<ApprovalItem>[] = [
           h(Eye),
           h('span', { class: 'sr-only' }, 'Detail Aset')
         ])
-      ]);
+      );
+      return h('div', { class: 'flex items-center justify-end gap-2' }, buttons);
     },
     enableSorting: false,
   }
@@ -814,12 +831,23 @@ onUnmounted(() => {
               <div class="py-3 px-4 flex items-center justify-end gap-3 bg-muted/10 shrink-0">
                 <!-- Purple Memo Button -->
                 <Button 
-                  @click="openMemoFile(activeApproval.doc_url)"
+                  @click="openMemoFile(activeApproval.memo_url)"
                   variant="primary"
                   size="lg"
                 >
                   <FileText class="w-4 h-4" />
                   Buka Memo / Berita Acara
+                </Button>
+
+                <!-- Lost Document Button (Conditional if Hilang) -->
+                <Button 
+                  v-if="activeApproval.proposed_status === 'Hilang'"
+                  @click="openMemoFile(activeApproval.lost_doc_url)"
+                  variant="primary"
+                  size="lg"
+                >
+                  <FileText class="w-4 h-4" />
+                  Surat Keterangan Kehilangan
                 </Button>
 
                 <!-- White Kembali Button -->

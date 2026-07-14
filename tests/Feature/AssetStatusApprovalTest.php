@@ -73,7 +73,8 @@ class AssetStatusApprovalTest extends TestCase
             'previous_status' => 'Tersedia',
             'decision' => 'pending',
             'requested_at' => now(),
-            'doc_url' => 'memos/placeholder.pdf',
+            'memo_url' => 'memos/placeholder.pdf',
+            'lost_doc_url' => null,
         ]);
         $unit1->update(['status' => 'Pending']);
 
@@ -84,7 +85,8 @@ class AssetStatusApprovalTest extends TestCase
             'previous_status' => 'Tersedia',
             'decision' => 'pending',
             'requested_at' => now(),
-            'doc_url' => 'memos/placeholder.pdf',
+            'memo_url' => 'memos/placeholder.pdf',
+            'lost_doc_url' => null,
         ]);
         $unit2->update(['status' => 'Pending']);
 
@@ -147,7 +149,8 @@ class AssetStatusApprovalTest extends TestCase
             'previous_status' => 'Tersedia',
             'decision' => 'pending',
             'requested_at' => now(),
-            'doc_url' => 'memos/placeholder.pdf',
+            'memo_url' => 'memos/placeholder.pdf',
+            'lost_doc_url' => null,
         ]);
         $unit1->update(['status' => 'Pending']);
 
@@ -158,7 +161,8 @@ class AssetStatusApprovalTest extends TestCase
             'previous_status' => 'Tersedia',
             'decision' => 'pending',
             'requested_at' => now(),
-            'doc_url' => 'memos/placeholder.pdf',
+            'memo_url' => 'memos/placeholder.pdf',
+            'lost_doc_url' => null,
         ]);
         $unit2->update(['status' => 'Pending']);
 

@@ -52,7 +52,9 @@ const form = useForm({
   use_lot_image: false,
   vehicle_registration: props.asset.vehicle_registration || '',
   memo_file: null as File | null,
-  memo_file_name: props.asset.doc_url ? props.asset.doc_url.split('/').pop() || '' : '',
+  memo_file_name: props.asset.memo_url ? props.asset.memo_url.split('/').pop() || '' : '',
+  lost_doc_file: null as File | null,
+  lost_doc_file_name: props.asset.lost_doc_url ? props.asset.lost_doc_url.split('/').pop() || '' : '',
 });
 
 const errors = ref({
@@ -62,6 +64,7 @@ const errors = ref({
   image_url: '',
   vehicle_registration: '',
   memo_file: '',
+  lost_doc_file: '',
 });
 
 const resetErrors = () => {
@@ -72,6 +75,7 @@ const resetErrors = () => {
     image_url: '',
     vehicle_registration: '',
     memo_file: '',
+    lost_doc_file: '',
   };
 };
 
@@ -83,6 +87,7 @@ watch(() => form.image_url, v => { if (v && errors.value.image_url) errors.value
 watch(() => form.image_url_name, v => { if (v && errors.value.image_url) errors.value.image_url = ''; });
 watch(() => form.vehicle_registration, v => { if (v && errors.value.vehicle_registration) errors.value.vehicle_registration = ''; });
 watch(() => form.memo_file, v => { if (v && errors.value.memo_file) errors.value.memo_file = ''; });
+watch(() => form.lost_doc_file, v => { if (v && errors.value.lost_doc_file) errors.value.lost_doc_file = ''; });
 
 const filteredFloors = computed(() => {
   if (!form.location_id) return [];
@@ -112,6 +117,10 @@ watch(() => form.status, (newVal) => {
   if (!arrNeedApproval.includes(newVal)) {
     form.memo_file = null;
     form.memo_file_name = '';
+  }
+  if (newVal !== 'Hilang') {
+    form.lost_doc_file = null;
+    form.lost_doc_file_name = '';
   }
 });
 
@@ -195,8 +204,31 @@ const triggerMemoFileInput = () => {
 const viewMemoInNewTab = () => {
   if (form.memo_file) {
     window.open(URL.createObjectURL(form.memo_file), '_blank');
-  } else if (props.asset?.doc_url) {
-    window.open('/storage/' + props.asset.doc_url, '_blank');
+  } else if (props.asset?.memo_url) {
+    window.open('/storage/' + props.asset.memo_url, '_blank');
+  }
+};
+
+const handleLostDocUpload = (e: any) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+  if (!allowedTypes.includes(file.type)) { toast.error('Format file salah! Hanya diperbolehkan file .pdf, .jpg, .jpeg, atau .png'); return; }
+  if (file.size > 2 * 1024 * 1024) { toast.error('Ukuran dokumen maksimal 2MB'); return; }
+  form.lost_doc_file = file;
+  form.lost_doc_file_name = file.name;
+};
+
+const triggerLostDocFileInput = () => {
+  const input = document.getElementById('edit-asset-lost-doc-upload') as HTMLInputElement;
+  input?.click();
+};
+
+const viewLostDocInNewTab = () => {
+  if (form.lost_doc_file) {
+    window.open(URL.createObjectURL(form.lost_doc_file), '_blank');
+  } else if (props.asset?.lost_doc_url) {
+    window.open('/storage/' + props.asset.lost_doc_url, '_blank');
   }
 };
 
@@ -240,6 +272,7 @@ const handleSubmit = () => {
   if (!form.image_url && !form.image_url_name) { errors.value.image_url = 'Foto belum dipilih'; isValid = false; }
   if (isVehicle.value && !form.vehicle_registration) { errors.value.vehicle_registration = 'TNKB (Nomor Polisi) belum diisi'; isValid = false; }
   if (arrNeedApproval.includes(form.status) && !form.memo_file_name) { errors.value.memo_file = 'Berita Acara / Memo belum dipilih'; isValid = false; }
+  if (form.status === 'Hilang' && !form.lost_doc_file_name) { errors.value.lost_doc_file = 'Surat Keterangan Kehilangan belum dipilih'; isValid = false; }
   if (!isValid) {
     toast.error('Harap lengkapi semua input yang wajib diisi.');
     return;
@@ -261,6 +294,7 @@ const handleSubmit = () => {
     if (data.image_url) fd.image_url = data.image_url;
     if (data.use_lot_image) fd.use_lot_image = data.use_lot_image;
     if (data.memo_file) fd.memo_file = data.memo_file;
+    if (data.lost_doc_file) fd.lost_doc_file = data.lost_doc_file;
     return fd;
   }).post(`/smart/inventory/units/${props.asset.id}`, {
     onSuccess: () => {
@@ -627,10 +661,11 @@ const handleSubmit = () => {
               <FieldContent>
                 <div class="flex gap-2 flex-col xs:flex-row">
                   <div 
-                    class="flex-grow min-w-0 px-4 py-2 text-sm border rounded-xl bg-muted/10 truncate flex items-center h-10 cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted border-input"
+                    class="flex-grow min-w-0 px-4 py-2 text-sm border rounded-xl bg-muted/10 truncate flex items-center h-10"
+                    :class="[form.memo_file_name ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' : 'text-muted-foreground cursor-default', errors.memo_file ? 'border-destructive' : 'border-input']"
                     @click="form.memo_file_name && viewMemoInNewTab()"
                   >
-                    {{ form.memo_file_name || 'Pilih dokumen...' }}
+                    {{ form.memo_file_name || 'Belum ada file yang dipilih' }}
                   </div>
                   <div class="flex gap-2 shrink-0">
                     <input type="file" id="edit-asset-memo-upload" class="hidden" accept=".pdf,.jpg,.jpeg,.png" @change="handleMemoUpload" />
@@ -640,6 +675,28 @@ const handleSubmit = () => {
                 <p class="text-[10px] text-muted-foreground ml-1 mt-1">Maksimal ukuran 2 MB (.pdf, .jpg, .jpeg, .png)</p>
               </FieldContent>
               <FieldError v-if="errors.memo_file">{{ errors.memo_file }}</FieldError>
+            </Field>
+
+            <!-- Lost Document Upload (Required only if status is Hilang) -->
+            <Field v-if="form.status === 'Hilang'" :data-invalid="!!errors.lost_doc_file || undefined">
+              <FieldLabel><span>Surat Keterangan Kehilangan<span class="text-rose-500">*</span></span></FieldLabel>
+              <FieldContent>
+                <div class="flex gap-2 flex-col xs:flex-row">
+                  <div 
+                    class="flex-grow min-w-0 px-4 py-2 text-sm border rounded-xl bg-muted/10 truncate flex items-center h-10"
+                    :class="[form.lost_doc_file_name ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' : 'text-muted-foreground cursor-default', errors.lost_doc_file ? 'border-destructive' : 'border-input']"
+                    @click="form.lost_doc_file_name && viewLostDocInNewTab()"
+                  >
+                    {{ form.lost_doc_file_name || 'Belum ada file yang dipilih' }}
+                  </div>
+                  <div class="flex gap-2 shrink-0">
+                    <input type="file" id="edit-asset-lost-doc-upload" class="hidden" accept=".pdf,.jpg,.jpeg,.png" @change="handleLostDocUpload" />
+                    <Button type="button" @click="triggerLostDocFileInput" size="lg" class="rounded-xl h-10 w-full xs:w-auto">Pilih File</Button>
+                  </div>
+                </div>
+                <p class="text-[10px] text-muted-foreground ml-1 mt-1">Maksimal ukuran 2 MB (.pdf, .jpg, .jpeg, .png)</p>
+              </FieldContent>
+              <FieldError v-if="errors.lost_doc_file">{{ errors.lost_doc_file }}</FieldError>
             </Field>
           </div>
 

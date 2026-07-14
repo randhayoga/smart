@@ -50,7 +50,8 @@ class UnitStatusApprovalControllerTest extends TestCase
             'previous_status' => 'Tersedia',
             'decision' => 'pending',
             'requested_at' => now(),
-            'doc_url' => 'memos/placeholder.pdf',
+            'memo_url' => 'memos/placeholder.pdf',
+            'lost_doc_url' => null,
         ]);
         $unit->update(['status' => 'Pending']);
 
@@ -68,6 +69,7 @@ class UnitStatusApprovalControllerTest extends TestCase
             'unit_id' => $unit->id,
             'proposed_status' => 'Perbaikan',
             'note' => 'Butuh perbaikan rutin',
+            'memo_file' => \Illuminate\Http\UploadedFile::fake()->create('memo.pdf', 100),
         ]);
 
         $response->assertRedirect();
@@ -98,12 +100,14 @@ class UnitStatusApprovalControllerTest extends TestCase
             'previous_status' => 'Tersedia',
             'decision' => 'pending',
             'requested_at' => now(),
-            'doc_url' => 'memos/placeholder.pdf',
+            'memo_url' => 'memos/placeholder.pdf',
+            'lost_doc_url' => null,
         ]);
 
         $response = $this->actingAs($user)->post(route('smart.inventory.unit-status-approvals.store'), [
             'unit_id' => $unit->id,
             'proposed_status' => 'Rusak Total',
+            'memo_file' => \Illuminate\Http\UploadedFile::fake()->create('memo.pdf', 100),
         ]);
 
         $response->assertSessionHasErrors(['unit_id']);
@@ -122,7 +126,8 @@ class UnitStatusApprovalControllerTest extends TestCase
             'previous_status' => 'Tersedia',
             'decision' => 'pending',
             'requested_at' => now(),
-            'doc_url' => 'memos/placeholder.pdf',
+            'memo_url' => 'memos/placeholder.pdf',
+            'lost_doc_url' => null,
         ]);
 
         $response = $this->actingAs($user)->get(route('smart.inventory.unit-status-approvals.show', $approval));
@@ -142,7 +147,8 @@ class UnitStatusApprovalControllerTest extends TestCase
             'previous_status' => 'Tersedia',
             'decision' => 'pending',
             'requested_at' => now(),
-            'doc_url' => 'memos/placeholder.pdf',
+            'memo_url' => 'memos/placeholder.pdf',
+            'lost_doc_url' => null,
         ]);
         $unit->update(['status' => 'Pending']);
 
@@ -190,7 +196,8 @@ class UnitStatusApprovalControllerTest extends TestCase
             'previous_status' => 'Tersedia',
             'decision' => 'pending',
             'requested_at' => now(),
-            'doc_url' => 'memos/placeholder.pdf',
+            'memo_url' => 'memos/placeholder.pdf',
+            'lost_doc_url' => null,
         ]);
         $unit->update(['status' => 'Pending']);
 
@@ -225,7 +232,8 @@ class UnitStatusApprovalControllerTest extends TestCase
             'previous_status' => 'Tersedia',
             'decision' => 'pending',
             'requested_at' => now(),
-            'doc_url' => 'memos/placeholder.pdf',
+            'memo_url' => 'memos/placeholder.pdf',
+            'lost_doc_url' => null,
         ]);
         $unit->update(['status' => 'Pending']);
 
@@ -268,6 +276,7 @@ class UnitStatusApprovalControllerTest extends TestCase
             'price' => 50000,
             'image_url' => $file,
             'use_lot_image' => false,
+            'memo_file' => \Illuminate\Http\UploadedFile::fake()->create('memo.pdf', 100),
         ]);
 
         $response->assertSessionHasNoErrors();
@@ -299,6 +308,7 @@ class UnitStatusApprovalControllerTest extends TestCase
             'status' => 'Rusak Total',
             'condition' => 'Rusak',
             'price' => $unit->price,
+            'memo_file' => \Illuminate\Http\UploadedFile::fake()->create('memo.pdf', 100),
         ]);
 
         $response->assertRedirect();
@@ -329,7 +339,8 @@ class UnitStatusApprovalControllerTest extends TestCase
             'previous_status' => 'Tersedia',
             'decision' => 'pending',
             'requested_at' => now(),
-            'doc_url' => 'memos/placeholder.pdf',
+            'memo_url' => 'memos/placeholder.pdf',
+            'lost_doc_url' => null,
         ]);
         $unit->update(['status' => 'Pending']);
 

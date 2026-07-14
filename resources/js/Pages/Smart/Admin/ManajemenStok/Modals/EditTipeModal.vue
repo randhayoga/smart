@@ -335,7 +335,7 @@ const handleSubmit = () => {
                             Pilih File
                           </Button>
                         </div>
-                        <p class="text-[10px] text-muted-foreground ml-1">Maksimal ukuran 1 MB</p>
+                        <p class="text-[10px] text-muted-foreground ml-1">Maksimal ukuran 1 MB (.jpg, .jpeg, .png)</p>
                       </div>
                     </FieldContent>
                   </Field>

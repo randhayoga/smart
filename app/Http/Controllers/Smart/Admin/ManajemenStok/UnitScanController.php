@@ -37,9 +37,12 @@ class UnitScanController extends Controller
             'proposed_status' => $pendingApproval 
                 ? $pendingApproval->proposed_status 
                 : ($approvedApproval ? $approvedApproval->proposed_status : null),
-            'doc_url' => $pendingApproval 
-                ? $pendingApproval->doc_url 
-                : ($approvedApproval ? $approvedApproval->doc_url : null),
+            'memo_url' => $pendingApproval 
+                ? $pendingApproval->memo_url 
+                : ($approvedApproval ? $approvedApproval->memo_url : null),
+            'lost_doc_url' => $pendingApproval 
+                ? $pendingApproval->lost_doc_url 
+                : ($approvedApproval ? $approvedApproval->lost_doc_url : null),
             'condition' => $unit->condition,
             'price' => $unit->price,
             'image_url' => $unit->image_url,
