@@ -36,6 +36,7 @@ const props = defineProps<{
 
 const auditSearch = ref('');
 const auditStatusFilter = ref('semua');
+const auditActionFilter = ref('semua');
 const auditTimeFilter = ref('semua');
 const auditRowsPerPage = ref('Semua baris');
 
@@ -62,6 +63,10 @@ const filteredLifecycles = computed(() => {
     logs = logs.filter(l => l.status === auditStatusFilter.value);
   }
 
+  if (auditActionFilter.value !== 'semua') {
+    logs = logs.filter(l => l.action_type === auditActionFilter.value);
+  }
+
   if (auditTimeFilter.value !== 'semua') {
     const now = new Date();
     logs = logs.filter(l => {
@@ -85,6 +90,14 @@ const auditStatusOptions = computed(() => {
     if (l.status) stats.add(l.status);
   });
   return Array.from(stats);
+});
+
+const auditActionOptions = computed(() => {
+  const actions = new Set<string>();
+  props.lifecycles.forEach(l => {
+    if (l.action_type) actions.add(l.action_type);
+  });
+  return Array.from(actions);
 });
 
 const auditColumns: ColumnDef<AuditTrail>[] = [
@@ -195,7 +208,7 @@ const auditColumns: ColumnDef<AuditTrail>[] = [
 </script>
 
 <template>
-  <div class="px-4 py-3 bg-card rounded-xl border border-border shadow-sm overflow-hidden space-y-4">
+  <div class="space-y-4">
     <!-- Internal Search & Local Filters -->
     <div class="flex flex-wrap items-end gap-4">
       <div class="space-y-1.5 flex-1 min-w-[200px] max-w-xs">
@@ -224,10 +237,25 @@ const auditColumns: ColumnDef<AuditTrail>[] = [
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
+          <Button variant="outline" :class="['w-[180px] justify-between rounded-[14px] font-normal bg-white', (auditActionFilter === 'semua') ? 'text-muted-foreground' : 'text-foreground']">
+            <span class="truncate">{{ auditActionFilter === 'semua' ? 'Semua Aksi' : auditActionFilter }}</span>
+            <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent class="w-[180px] rounded-[14px] z-[110]" align="start" :side-offset="4">
+          <DropdownMenuItem @select="auditActionFilter = 'semua'">Semua Aksi</DropdownMenuItem>
+          <DropdownMenuItem v-for="act in auditActionOptions" :key="act" @select="auditActionFilter = act">
+            {{ act }}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
           <Button variant="outline" :class="['w-[240px] justify-between rounded-[14px] font-normal bg-white', (auditTimeFilter === 'semua') ? 'text-muted-foreground' : 'text-foreground']">
             <span class="truncate">
               {{ 
-                auditTimeFilter === 'semua' ? 'Semua Kurun Waktu' : 
+                auditTimeFilter === 'semua' ? 'Semua kurun waktu' : 
                 auditTimeFilter === '7-hari' ? '7 hari terakhir' : 
                 '30 hari terakhir' 
               }}
