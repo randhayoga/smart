@@ -483,10 +483,6 @@ const handleSubmit = () => {
       <!-- Tab: Edit -->
       <div v-else-if="activeTab === 'edit'" class="space-y-6">
         <div class="bg-card rounded-2xl p-5 border border-border shadow-sm space-y-5">
-          <h3 class="text-sm font-bold text-foreground uppercase tracking-wider border-b border-border pb-2.5">
-            Form Perubahan Aset
-          </h3>
-
           <div class="space-y-4">
             <Field>
               <FieldLabel>Kode Aset</FieldLabel>
