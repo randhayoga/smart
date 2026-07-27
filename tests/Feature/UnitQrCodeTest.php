@@ -61,7 +61,7 @@ class UnitQrCodeTest extends TestCase
     {
         $unit = $this->createUnit();
 
-        $response = $this->get(route('smart.inventory.units.scan', $unit));
+        $response = $this->get(route('smart.scan', $unit));
 
         $response->assertRedirect(route('login'));
     }
@@ -71,7 +71,7 @@ class UnitQrCodeTest extends TestCase
         $user = User::factory()->create();
         $unit = $this->createUnit();
 
-        $response = $this->actingAs($user)->get(route('smart.inventory.units.scan', $unit));
+        $response = $this->actingAs($user)->get(route('smart.scan', $unit));
 
         $response->assertStatus(200);
     }

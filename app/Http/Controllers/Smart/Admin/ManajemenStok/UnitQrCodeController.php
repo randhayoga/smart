@@ -104,7 +104,7 @@ class UnitQrCodeController extends Controller
     {
         $unit->loadMissing('lot.organizer');
         $unitCode = $unit->number;
-        $scanUrl = route('smart.inventory.units.scan', $unit->id);
+        $scanUrl = route('smart.scan', $unit);
 
         // 1. Generate QR Code image
         $qrBuilder = new Builder();

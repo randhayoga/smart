@@ -42,6 +42,7 @@ return new class extends Migration {
 
         Schema::create('units', function (Blueprint $table) {
             $table->id();
+            $table->uuid('uuid')->unique();
             $table->string('number', 25)->unique();
             $table->foreignId('lot_id')->constrained('lots')->cascadeOnDelete();
             $table->foreignId('location_id')->constrained('locations')->comment('current location');
