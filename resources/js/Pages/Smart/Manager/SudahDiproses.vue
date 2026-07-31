@@ -339,13 +339,12 @@ const columns: ColumnDef<RequestHistory>[] = [
 </script>
 
 <template>
-  <Head title="Sudah Diproses" />
+  <Head title="Approval Peminjaman" />
 
-  <AppLayout title="Sudah Diproses">
+  <AppLayout title="Approval Peminjaman">
     <!-- ── Title Halaman ── -->
     <div class="mb-6">
-      <h1 class="text-[28px] font-bold text-gray-900 leading-none">Approval</h1>
-      <p class="text-base font-semibold text-gray-900 mt-2">Sudah Diproses</p>
+      <h1 class="text-xl font-bold text-gray-900 leading-none">Approval Peminjaman: Sudah Diproses</h1>
     </div>
 
     <!-- ── Filter & Search Section ── -->

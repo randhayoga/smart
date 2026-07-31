@@ -392,13 +392,12 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <Head title="Approval Aset" />
+  <Head title="Approval Penghapusan" />
 
-  <AppLayout title="Approval Aset">
+  <AppLayout title="Approval Penghapusan">
     <!-- ── Title Halaman ── -->
     <div class="mb-6">
-      <h1 class="text-xl font-bold text-gray-900 leading-none">Approval Aset</h1>
-      <p class="text-lg font-bold text-gray-900 mt-2">Sudah Diproses</p>
+      <h1 class="text-xl font-bold text-gray-900 leading-none">Approval Penghapusan: Sudah Diproses</h1>
     </div>
 
     <!-- ── Filter & Search Section ── -->

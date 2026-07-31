@@ -1,18 +1,13 @@
 import {
     LayoutDashboard,
     Package,
-    FileText,
-    BarChart3,
-    Settings,
-    Users,
     Bell,
-    CircleCheckBig,
+    Shredder,
     HelpCircle,
     Database,
     LayoutList,
     Handshake,
     Telescope,
-    BaggageClaim,
     ListCheck,
     FileClock,
     Eye,
@@ -23,7 +18,8 @@ import {
     Archive,
     RefreshCcw,
     ScrollText,
-    Scroll
+    Scroll,
+    FileX
 } from 'lucide-vue-next';
 
 export interface NavItem {
@@ -148,7 +144,7 @@ export const userNavigation: NavSection[] = [
         ],
     },
     {
-        title: 'APPROVAL',
+        title: 'APPROVAL PEMINJAMAN',
         items: [
             {
                 title: 'Perlu Approval',
@@ -163,17 +159,17 @@ export const userNavigation: NavSection[] = [
         ],
     },
     {
-        title: 'APPROVAL ASET',
+        title: 'APPROVAL PENGHAPUSAN',
         items: [
             {
-                title: 'Perlu Approve',
+                title: 'Perlu Approval',
                 href: '/smart/approve-status',
-                icon: Eye,
+                icon: FileX,
             },
             {
                 title: 'Sudah Diproses',
                 href: '/smart/approve-status?history=true',
-                icon: CircleCheckBig,
+                icon: Shredder,
             },
         ],
     },

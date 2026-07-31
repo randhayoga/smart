@@ -397,13 +397,12 @@ const handleConfirmSubmit = () => {
 </script>
 
 <template>
-  <Head title="Approval" />
+  <Head title="Approval Peminjaman" />
 
-  <AppLayout title="Approval">
+  <AppLayout title="Approval Peminjaman">
     <!-- ── Title Halaman ── -->
     <div class="mb-6">
-      <h1 class="text-[28px] font-bold text-gray-900 leading-none">Approval</h1>
-      <p class="text-base font-semibold text-gray-900 mt-2">Perlu Perhatian Anda</p>
+      <h1 class="text-xl font-bold text-gray-900 leading-none">Approval Peminjaman: Perlu Perhatian Anda</h1>
     </div>
 
     <!-- ── Filter & Search Section ── -->
