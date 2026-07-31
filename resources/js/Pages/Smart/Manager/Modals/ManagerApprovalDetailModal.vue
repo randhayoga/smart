@@ -66,7 +66,7 @@ const formatDateWithDashes = (dateStr: string | null | undefined) => {
 
 const openMemoFile = (path: string | null) => {
   if (!path) return;
-  window.open('/storage/' + path, '_blank');
+  window.open('/media/' + path, '_blank');
 };
 </script>
 
@@ -115,7 +115,7 @@ const openMemoFile = (path: string | null) => {
                 <div class="w-48 h-48 rounded-xl bg-muted shrink-0 flex items-center justify-center overflow-hidden border border-border">
                   <img 
                     v-if="approval.unit_details.image_url" 
-                    :src="approval.unit_details.image_url.startsWith('http') || approval.unit_details.image_url.startsWith('/') ? approval.unit_details.image_url : '/storage/' + approval.unit_details.image_url" 
+                    :src="approval.unit_details.image_url.startsWith('http') || approval.unit_details.image_url.startsWith('/') ? approval.unit_details.image_url : '/media/' + approval.unit_details.image_url" 
                     class="w-full h-full object-cover" 
                   />
                   <img 

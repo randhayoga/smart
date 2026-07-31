@@ -69,7 +69,7 @@ class ApprovalController extends Controller
                 'quantity' => $item->quantity_requested,
                 'stockQuantity' => $stockQuantity,
                 'category' => $item->barang->subcategory->category->name ?? '-',
-                'imageUrl' => $item->barang->image_url ? '/storage/' . $item->barang->image_url : null,
+                'imageUrl' => $item->barang->image_url ? '/media/' . $item->barang->image_url : null,
                 'assets' => $assets,
                 'is_consumable' => (bool) ($item->barang->subcategory->category->is_consumable ?? false),
             ];

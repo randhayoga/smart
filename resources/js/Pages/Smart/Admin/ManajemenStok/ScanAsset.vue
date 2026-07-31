@@ -170,9 +170,9 @@ const viewImageInNewTab = () => {
   if (form.image_url) {
     window.open(URL.createObjectURL(form.image_url), '_blank');
   } else if (form.use_lot_image && props.lot?.image_url) {
-    window.open('/storage/' + props.lot.image_url, '_blank');
+    window.open('/media/' + props.lot.image_url, '_blank');
   } else if (props.asset?.image_url) {
-    window.open('/storage/' + props.asset.image_url, '_blank');
+    window.open('/media/' + props.asset.image_url, '_blank');
   }
 };
 
@@ -205,7 +205,7 @@ const viewMemoInNewTab = () => {
   if (form.memo_file) {
     window.open(URL.createObjectURL(form.memo_file), '_blank');
   } else if (props.asset?.memo_url) {
-    window.open('/storage/' + props.asset.memo_url, '_blank');
+    window.open('/media/' + props.asset.memo_url, '_blank');
   }
 };
 
@@ -228,7 +228,7 @@ const viewLostDocInNewTab = () => {
   if (form.lost_doc_file) {
     window.open(URL.createObjectURL(form.lost_doc_file), '_blank');
   } else if (props.asset?.lost_doc_url) {
-    window.open('/storage/' + props.asset.lost_doc_url, '_blank');
+    window.open('/media/' + props.asset.lost_doc_url, '_blank');
   }
 };
 
@@ -364,12 +364,12 @@ const handleSubmit = () => {
           <div class="w-full aspect-square rounded-xl bg-muted flex items-center justify-center overflow-hidden border border-border shadow-inner">
             <img 
               v-if="props.asset.image_url" 
-              :src="'/storage/' + props.asset.image_url" 
+              :src="'/media/' + props.asset.image_url" 
               class="w-full h-full object-cover" 
             />
             <img 
               v-else-if="props.lot?.image_url" 
-              :src="'/storage/' + props.lot.image_url" 
+              :src="'/media/' + props.lot.image_url" 
               class="w-full h-full object-cover" 
             />
             <img 

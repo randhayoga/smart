@@ -51,7 +51,7 @@ class RequestCartConfirmationController extends Controller
                         : ($item->subcategory->name ?? '-'),
                     'stock' => $stock,
                     'quantity' => $item->quantity,
-                    'imageUrl' => $item->barang?->image_url ? '/storage/' . $item->barang->image_url : null,
+                    'imageUrl' => $item->barang?->image_url ? '/media/' . $item->barang->image_url : null,
                 ];
             });
 

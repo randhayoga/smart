@@ -42,20 +42,20 @@ class BulkBarangController extends Controller
         }
 
         if ($request->hasFile('image_url')) {
-            $imagePath = $request->file('image_url')->store('inventory', 'public');
+            $imagePath = $request->file('image_url')->store('inventory', 'local');
             $updateData['image_url'] = $imagePath;
 
             // Delete old images of updated barangs if they are not shared
             $barangs = Barang::whereIn('id', $request->input('ids'))->get();
             foreach ($barangs as $barang) {
-                if ($barang->image_url && Storage::disk('public')->exists($barang->image_url)) {
+                if ($barang->image_url && Storage::disk('local')->exists($barang->image_url)) {
                     $isShared = Barang::where('image_url', $barang->image_url)
                         ->whereNotIn('id', $request->input('ids'))
                         ->exists()
                         || Lot::where('image_url', $barang->image_url)->exists()
                         || Unit::where('image_url', $barang->image_url)->exists();
                     if (!$isShared) {
-                        Storage::disk('public')->delete($barang->image_url);
+                        Storage::disk('local')->delete($barang->image_url);
                     }
                 }
             }
@@ -88,14 +88,14 @@ class BulkBarangController extends Controller
             if ($barang->lots()->exists()) {
                 $undeletedCounter++;
             } else {
-                if ($barang->image_url && Storage::disk('public')->exists($barang->image_url)) {
+                if ($barang->image_url && Storage::disk('local')->exists($barang->image_url)) {
                     $isShared = Barang::where('image_url', $barang->image_url)
                         ->whereNotIn('id', $request->input('ids'))
                         ->exists()
                         || Lot::where('image_url', $barang->image_url)->exists()
                         || Unit::where('image_url', $barang->image_url)->exists();
                     if (!$isShared) {
-                        Storage::disk('public')->delete($barang->image_url);
+                        Storage::disk('local')->delete($barang->image_url);
                     }
                 }
                 $barang->delete();

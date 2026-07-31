@@ -48,7 +48,7 @@ const activeAssets = computed(() => {
       <div class="w-16 h-16 rounded-[12px] bg-muted border border-border overflow-hidden shrink-0 flex items-center justify-center mt-0.5">
         <img 
           v-if="imageUrl" 
-          :src="imageUrl.startsWith('http') || imageUrl.startsWith('/') ? imageUrl : '/storage/' + imageUrl" 
+          :src="imageUrl.startsWith('http') || imageUrl.startsWith('/') ? imageUrl : '/media/' + imageUrl" 
           class="w-full h-full object-cover" 
         />
         <div v-else class="text-sm font-black text-muted-foreground/50 select-none">

@@ -187,7 +187,7 @@ const viewImageInNewTab = () => {
   if (form.image_url) {
     window.open(URL.createObjectURL(form.image_url), '_blank');
   } else if (form.use_lot_image && props.lot?.imageUrl) {
-    window.open('/storage/' + props.lot.imageUrl, '_blank');
+    window.open('/media/' + props.lot.imageUrl, '_blank');
   }
 };
 

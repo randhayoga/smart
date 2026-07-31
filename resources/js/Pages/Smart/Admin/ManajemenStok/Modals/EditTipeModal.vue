@@ -110,7 +110,7 @@ const viewImageInNewTab = () => {
     const url = URL.createObjectURL(form.photo);
     window.open(url, '_blank');
   } else if (selectedItem.value && selectedItem.value.image_url) {
-    window.open('/storage/' + selectedItem.value.image_url, '_blank');
+    window.open('/media/' + selectedItem.value.image_url, '_blank');
   }
 };
 

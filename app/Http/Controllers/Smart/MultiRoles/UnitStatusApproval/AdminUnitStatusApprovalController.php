@@ -68,12 +68,12 @@ class AdminUnitStatusApprovalController extends Controller
 
         $memoUrl = 'memos/placeholder.pdf';
         if ($request->hasFile('memo_file')) {
-            $memoUrl = $request->file('memo_file')->store('memos', 'public');
+            $memoUrl = $request->file('memo_file')->store('memos', 'local');
         }
 
         $lostDocUrl = null;
         if ($validated['proposed_status'] === 'Hilang' && $request->hasFile('lost_doc_file')) {
-            $lostDocUrl = $request->file('lost_doc_file')->store('lost_docs', 'public');
+            $lostDocUrl = $request->file('lost_doc_file')->store('lost_docs', 'local');
         }
 
         UnitStatusApproval::create([

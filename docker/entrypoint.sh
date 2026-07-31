@@ -8,5 +8,8 @@ echo "Installing npm dependencies..."
 npm install && npm run build
 
 
+echo "Fixing storage and cache permissions..."
+chmod -R 775 storage bootstrap/cache || true
+
 echo "Starting Laravel Octane with FrankenPHP..."
 exec php artisan octane:start --server=frankenphp --host=localhost --workers=auto --max-requests=auto --port=443 --admin-port=2019 --https

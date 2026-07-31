@@ -312,8 +312,8 @@ const filteredAndSortedItems = computed(() => {
                 <!-- Image -->
                 <div class="w-32 h-32 sm:w-40 sm:h-40 shrink-0 bg-muted rounded-[0.875rem] overflow-hidden flex items-center justify-center border border-border relative">
                   <div class="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-white/40"></div>
-                  <img v-if="selectedVariant && selectedVariant.imageUrl" :src="selectedVariant.imageUrl.startsWith('http') || selectedVariant.imageUrl.startsWith('/') ? selectedVariant.imageUrl : '/storage/' + selectedVariant.imageUrl" alt="Product" class="w-full h-full object-cover relative z-10" />
-                  <img v-else-if="selectedProduct.imageUrl" :src="selectedProduct.imageUrl.startsWith('http') || selectedProduct.imageUrl.startsWith('/') ? selectedProduct.imageUrl : '/storage/' + selectedProduct.imageUrl" alt="Product" class="w-full h-full object-cover relative z-10" />
+                  <img v-if="selectedVariant && selectedVariant.imageUrl" :src="selectedVariant.imageUrl.startsWith('http') || selectedVariant.imageUrl.startsWith('/') ? selectedVariant.imageUrl : '/media/' + selectedVariant.imageUrl" alt="Product" class="w-full h-full object-cover relative z-10" />
+                  <img v-else-if="selectedProduct.imageUrl" :src="selectedProduct.imageUrl.startsWith('http') || selectedProduct.imageUrl.startsWith('/') ? selectedProduct.imageUrl : '/media/' + selectedProduct.imageUrl" alt="Product" class="w-full h-full object-cover relative z-10" />
                   <img v-else src="https://placehold.co/400x400?text=Barang" alt="Product" class="w-full h-full object-cover opacity-50" />
                 </div>
                 <!-- Info -->

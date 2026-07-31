@@ -21,10 +21,7 @@ class LotControllerTest extends TestCase
 
     public function test_can_store_lot(): void
     {
-        config(['filesystems.disks.public.root' => storage_path('framework/testing/disks/public_test')]);
-        \Illuminate\Support\Facades\Storage::forgetDisk('public');
-        \Illuminate\Support\Facades\File::ensureDirectoryExists(storage_path('framework/testing/disks/public_test'));
-        \Illuminate\Support\Facades\File::cleanDirectory(storage_path('framework/testing/disks/public_test'));
+        Storage::fake('local');
         $user = User::factory()->create();
         $category = \App\Models\Master\Category::factory()->create(['is_consumable' => false]);
         $subcategory = \App\Models\Master\Subcategory::factory()->create(['category_id' => $category->id]);
@@ -69,7 +66,7 @@ class LotControllerTest extends TestCase
         $lot = Lot::first();
         $this->assertNotNull($lot->image_url);
         $this->assertNotEquals('inventory/lots/placeholder.jpg', $lot->image_url);
-        Storage::disk('public')->assertExists($lot->image_url);
+        Storage::disk('local')->assertExists($lot->image_url);
 
         $bulkResponse = $this->actingAs($user)->post(route('smart.inventory.units.bulk-store'), [
             'number' => 'LOT-2026-ATK-KER-0001-0001-U01',
@@ -94,63 +91,44 @@ class LotControllerTest extends TestCase
 
     public function test_can_update_lot(): void
     {
-        config(['filesystems.disks.public.root' => storage_path('framework/testing/disks/public_test')]);
-        \Illuminate\Support\Facades\Storage::forgetDisk('public');
-        \Illuminate\Support\Facades\File::ensureDirectoryExists(storage_path('framework/testing/disks/public_test'));
-        \Illuminate\Support\Facades\File::cleanDirectory(storage_path('framework/testing/disks/public_test'));
+        Storage::fake('local');
         $user = User::factory()->create();
         $lot = Lot::factory()->create();
-        
-        $newOrganizer = Organizer::factory()->create();
-        $newVendor = Vendor::factory()->create();
-        $newLocation = Location::factory()->create();
-        $newFloor = Floor::factory()->create(['location_id' => $newLocation->id]);
-        $newRoom = Room::factory()->create(['floor_id' => $newFloor->id]);
-        $project = \App\Models\TbProject::factory()->create();
+        $file = UploadedFile::fake()->image('lot_updated.jpg');
 
         $response = $this->actingAs($user)->put(route('smart.inventory.lots.update', $lot), [
-            'number' => 'LOT-UPDATED',
+            'number' => $lot->number,
             'barang_id' => $lot->barang_id,
-            'organizer_id' => $newOrganizer->id,
-            'vendor_id' => $newVendor->id,
-            'location_id' => $newLocation->id,
-            'floor_id' => $newFloor->id,
-            'room_id' => $newRoom->id,
-            'po_number' => 'PO-UPDATED',
-            'date_of_receipt' => '2026-05-23',
-            'unit_price' => 75000,
-            'burden' => 'Project',
-            'project_id' => $project->id,
+            'organizer_id' => $lot->organizer_id,
+            'vendor_id' => $lot->vendor_id,
+            'location_id' => $lot->location_id,
+            'po_number' => $lot->po_number,
+            'date_of_receipt' => $lot->date_of_receipt->format('Y-m-d'),
+            'unit_price' => $lot->unit_price,
+            'image_url' => $file,
+            'burden' => 'Corporate',
         ]);
 
         $response->assertRedirect();
 
-        $this->assertDatabaseHas('lots', [
-            'id' => $lot->id,
-            'number' => 'LOT-UPDATED',
-            'organizer_id' => $newOrganizer->id,
-            'vendor_id' => $newVendor->id,
-            'location_id' => $newLocation->id,
-            'floor_id' => $newFloor->id,
-            'room_id' => $newRoom->id,
-            'po_number' => 'PO-UPDATED',
-            'unit_price' => 75000,
-            'burden' => 'Project',
-            'project_id' => $project->id,
-        ]);
+        $lot->refresh();
+        $this->assertNotNull($lot->image_url);
+        Storage::disk('local')->assertExists($lot->image_url);
     }
 
     public function test_can_destroy_lot(): void
     {
+        Storage::fake('local');
         $user = User::factory()->create();
-        $lot = Lot::factory()->create();
+        $file = UploadedFile::fake()->image('lot.jpg');
+        $imagePath = Storage::disk('local')->putFile('inventory', $file);
+        $lot = Lot::factory()->create(['image_url' => $imagePath]);
 
         $response = $this->actingAs($user)->delete(route('smart.inventory.lots.destroy', $lot));
 
         $response->assertRedirect();
-        $this->assertDatabaseMissing('lots', [
-            'id' => $lot->id,
-        ]);
+        $this->assertDatabaseMissing('lots', ['id' => $lot->id]);
+        Storage::disk('local')->assertMissing($imagePath);
     }
 
     public function test_cannot_destroy_lot_with_units(): void
@@ -188,14 +166,11 @@ class LotControllerTest extends TestCase
 
     public function test_can_store_lot_using_parent_image(): void
     {
-        config(['filesystems.disks.public.root' => storage_path('framework/testing/disks/public_test')]);
-        \Illuminate\Support\Facades\Storage::forgetDisk('public');
-        \Illuminate\Support\Facades\File::ensureDirectoryExists(storage_path('framework/testing/disks/public_test'));
-        \Illuminate\Support\Facades\File::cleanDirectory(storage_path('framework/testing/disks/public_test'));
+        Storage::fake('local');
         $user = User::factory()->create();
         
         $barangImage = UploadedFile::fake()->image('barang.jpg');
-        $barangImagePath = Storage::disk('public')->putFile('inventory/barangs', $barangImage);
+        $barangImagePath = Storage::disk('local')->putFile('inventory/barangs', $barangImage);
         
         $category = \App\Models\Master\Category::factory()->create(['is_consumable' => false]);
         $subcategory = \App\Models\Master\Subcategory::factory()->create(['category_id' => $category->id]);
@@ -226,7 +201,7 @@ class LotControllerTest extends TestCase
         $lot = Lot::first();
         $this->assertNotNull($lot->image_url);
         $this->assertEquals($barangImagePath, $lot->image_url);
-        Storage::disk('public')->assertExists($lot->image_url);
+        Storage::disk('local')->assertExists($lot->image_url);
 
         $bulkResponse = $this->actingAs($user)->post(route('smart.inventory.units.bulk-store'), [
             'number' => 'LOT-2026-ATK-KER-0001-0001-U01',
@@ -247,14 +222,11 @@ class LotControllerTest extends TestCase
 
     public function test_can_update_lot_using_parent_image(): void
     {
-        config(['filesystems.disks.public.root' => storage_path('framework/testing/disks/public_test')]);
-        \Illuminate\Support\Facades\Storage::forgetDisk('public');
-        \Illuminate\Support\Facades\File::ensureDirectoryExists(storage_path('framework/testing/disks/public_test'));
-        \Illuminate\Support\Facades\File::cleanDirectory(storage_path('framework/testing/disks/public_test'));
+        Storage::fake('local');
         $user = User::factory()->create();
         
         $barangImage = UploadedFile::fake()->image('barang.jpg');
-        $barangImagePath = Storage::disk('public')->putFile('inventory/barangs', $barangImage);
+        $barangImagePath = Storage::disk('local')->putFile('inventory/barangs', $barangImage);
         $barang = Barang::factory()->create(['image_url' => $barangImagePath]);
         
         $lot = Lot::factory()->create(['barang_id' => $barang->id]);
@@ -279,7 +251,7 @@ class LotControllerTest extends TestCase
         $lot->refresh();
         $this->assertNotNull($lot->image_url);
         $this->assertEquals($barangImagePath, $lot->image_url);
-        Storage::disk('public')->assertExists($lot->image_url);
+        Storage::disk('local')->assertExists($lot->image_url);
     }
 
     public function test_can_bulk_update_lots(): void

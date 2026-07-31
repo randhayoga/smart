@@ -119,13 +119,13 @@ class BulkUnitController extends Controller
 
         $finalImagePath = null;
         if ($request->boolean('use_lot_image')) {
-            if ($lot->image_url && Storage::disk('public')->exists($lot->image_url)) {
+            if ($lot->image_url && Storage::disk('local')->exists($lot->image_url)) {
                 $finalImagePath = $lot->image_url;
             } else {
                 return redirect()->back()->withErrors(['image_url' => 'Foto LOT tidak ditemukan di storage.']);
             }
         } else if ($request->hasFile('image_url')) {
-            $finalImagePath = $request->file('image_url')->store('inventory', 'public');
+            $finalImagePath = $request->file('image_url')->store('inventory', 'local');
         }
 
         foreach ($generatedNumbers as $num) {
@@ -145,11 +145,11 @@ class BulkUnitController extends Controller
             if ($needApproval) {
                 $memoUrl = 'memos/placeholder.pdf';
                 if ($request->hasFile('memo_file')) {
-                    $memoUrl = $request->file('memo_file')->store('memos', 'public');
+                    $memoUrl = $request->file('memo_file')->store('memos', 'local');
                 }
                 $lostDocUrl = null;
                 if ($proposedStatus === 'Hilang' && $request->hasFile('lost_doc_file')) {
-                    $lostDocUrl = $request->file('lost_doc_file')->store('lost_docs', 'public');
+                    $lostDocUrl = $request->file('lost_doc_file')->store('lost_docs', 'local');
                 }
                 UnitStatusApproval::create([
                     'unit_id' => $unit->id,
@@ -246,14 +246,14 @@ class BulkUnitController extends Controller
 
         if ($request->boolean('use_lot_image')) {
             $lot = Lot::findOrFail($units->first()->lot_id);
-            if ($lot->image_url && Storage::disk('public')->exists($lot->image_url)) {
+            if ($lot->image_url && Storage::disk('local')->exists($lot->image_url)) {
                 $finalImagePath = $lot->image_url;
                 $hasNewImage = true;
             } else {
                 return redirect()->back()->withErrors(['image_url' => 'Foto LOT tidak ditemukan di storage.']);
             }
         } else if ($request->hasFile('image_url')) {
-            $finalImagePath = $request->file('image_url')->store('inventory', 'public');
+            $finalImagePath = $request->file('image_url')->store('inventory', 'local');
             $hasNewImage = true;
         }
 
@@ -262,12 +262,12 @@ class BulkUnitController extends Controller
 
             // Delete old images for each unit if they are not shared
             foreach ($units as $unit) {
-                if ($unit->image_url && Storage::disk('public')->exists($unit->image_url)) {
+                if ($unit->image_url && Storage::disk('local')->exists($unit->image_url)) {
                     $isShared = Unit::where('image_url', $unit->image_url)->where('id', '!=', $unit->id)->exists()
                         || Lot::where('image_url', $unit->image_url)->exists()
                         || Barang::where('image_url', $unit->image_url)->exists();
                     if (!$isShared) {
-                        Storage::disk('public')->delete($unit->image_url);
+                        Storage::disk('local')->delete($unit->image_url);
                     }
                 }
             }
@@ -283,11 +283,11 @@ class BulkUnitController extends Controller
         if ($needApproval) {
             $memoUrl = 'memos/placeholder.pdf';
             if ($request->hasFile('memo_file')) {
-                $memoUrl = $request->file('memo_file')->store('memos', 'public');
+                $memoUrl = $request->file('memo_file')->store('memos', 'local');
             }
             $lostDocUrl = null;
             if ($proposedStatus === 'Hilang' && $request->hasFile('lost_doc_file')) {
-                $lostDocUrl = $request->file('lost_doc_file')->store('lost_docs', 'public');
+                $lostDocUrl = $request->file('lost_doc_file')->store('lost_docs', 'local');
             }
             foreach ($units as $unit) {
                 $existing = UnitStatusApproval::where('unit_id', $unit->id)

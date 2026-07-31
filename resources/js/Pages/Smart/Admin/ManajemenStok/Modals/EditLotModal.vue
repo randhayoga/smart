@@ -187,10 +187,10 @@ const viewImageInNewTab = () => {
   if (form.image_url) {
     window.open(URL.createObjectURL(form.image_url), '_blank');
   } else if (form.use_parent_image && props.parentImageUrl) {
-    window.open('/storage/' + props.parentImageUrl, '_blank');
+    window.open('/media/' + props.parentImageUrl, '_blank');
   } else if (isSingle.value && selectedItem.value) {
     const imageUrl = selectedItem.value.imageUrl || selectedItem.value.image_url;
-    if (imageUrl) window.open('/storage/' + imageUrl, '_blank');
+    if (imageUrl) window.open('/media/' + imageUrl, '_blank');
   }
 };
 

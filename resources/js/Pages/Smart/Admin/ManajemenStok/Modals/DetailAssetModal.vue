@@ -76,7 +76,7 @@ const getAge = (dateStr: string | null) => {
 
 const openMemoFile = (path: string | null) => {
   if (!path) return;
-  window.open('/storage/' + path, '_blank');
+  window.open('/media/' + path, '_blank');
 };
 
 // Dynamic attribute resolution
@@ -142,12 +142,12 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                   <div class="w-48 h-48 rounded-xl bg-muted shrink-0 flex items-center justify-center overflow-hidden border border-border">
                     <img 
                       v-if="asset && asset.image_url" 
-                      :src="'/storage/' + asset.image_url" 
+                      :src="'/media/' + asset.image_url" 
                       class="w-full h-full object-cover" 
                     />
                     <img 
                       v-else-if="finalLotImageUrl" 
-                      :src="'/storage/' + finalLotImageUrl" 
+                      :src="'/media/' + finalLotImageUrl" 
                       class="w-full h-full object-cover" 
                     />
                     <img 

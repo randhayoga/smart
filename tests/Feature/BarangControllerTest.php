@@ -79,10 +79,7 @@ class BarangControllerTest extends TestCase
 
     public function test_can_bulk_update_barangs(): void
     {
-        config(['filesystems.disks.public.root' => storage_path('framework/testing/disks/public_test')]);
-        \Illuminate\Support\Facades\Storage::forgetDisk('public');
-        \Illuminate\Support\Facades\File::ensureDirectoryExists(storage_path('framework/testing/disks/public_test'));
-        \Illuminate\Support\Facades\File::cleanDirectory(storage_path('framework/testing/disks/public_test'));
+        Storage::fake('local');
         $user = User::factory()->create();
         
         $barang1 = Barang::factory()->create([
@@ -128,7 +125,7 @@ class BarangControllerTest extends TestCase
 
         $barang1->refresh();
         $this->assertNotNull($barang1->image_url);
-        Storage::disk('public')->assertExists($barang1->image_url);
+        Storage::disk('local')->assertExists($barang1->image_url);
     }
 
     public function test_bulk_update_keeps_empty_inputs(): void
@@ -220,5 +217,21 @@ class BarangControllerTest extends TestCase
         $this->assertDatabaseHas('barangs', [
             'id' => $barangWithLots->id,
         ]);
+    }
+
+    public function test_media_route_requires_authentication(): void
+    {
+        Storage::fake('local');
+        Storage::disk('local')->put('inventory/test.jpg', 'fake image content');
+
+        // Unauthenticated request should be redirected to login
+        $unauthResponse = $this->get('/media/inventory/test.jpg');
+        $unauthResponse->assertRedirect(route('login'));
+
+        // Authenticated request should serve the image
+        $user = User::factory()->create();
+        $authResponse = $this->actingAs($user)->get('/media/inventory/test.jpg');
+        $authResponse->assertStatus(200);
+        $authResponse->assertHeader('Cache-Control', 'max-age=86400, private');
     }
 }

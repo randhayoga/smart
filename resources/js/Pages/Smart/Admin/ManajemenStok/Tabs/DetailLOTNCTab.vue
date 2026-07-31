@@ -128,7 +128,7 @@ onUnmounted(() => {
       
       <div class="flex flex-col md:flex-row gap-6">
         <div class="w-48 h-48 rounded-xl bg-muted shrink-0 flex items-center justify-center overflow-hidden border border-border">
-          <img v-if="props.lot.imageUrl" :src="'/storage/' + props.lot.imageUrl" class="w-full h-full object-cover" />
+          <img v-if="props.lot.imageUrl" :src="'/media/' + props.lot.imageUrl" class="w-full h-full object-cover" />
           <img v-else src="https://placehold.co/400x400?text=Placeholder" class="w-full h-full object-cover opacity-50" />
         </div>
 

@@ -63,7 +63,7 @@ const emit = defineEmits<{
       <!-- Image -->
       <div class="w-16 h-16 sm:w-24 sm:h-24 shrink-0 bg-muted rounded-[0.875rem] overflow-hidden flex items-center justify-center border border-border relative">
         <div class="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-white/40"></div>
-        <img v-if="item.imageUrl" :src="item.imageUrl.startsWith('http') || item.imageUrl.startsWith('/') ? item.imageUrl : '/storage/' + item.imageUrl" alt="Product" class="w-full h-full object-cover relative z-10" />
+        <img v-if="item.imageUrl" :src="item.imageUrl.startsWith('http') || item.imageUrl.startsWith('/') ? item.imageUrl : '/media/' + item.imageUrl" alt="Product" class="w-full h-full object-cover relative z-10" />
         <img v-else src="https://placehold.co/400x400?text=Barang" alt="Product" class="w-full h-full object-cover opacity-50" />
       </div>
 

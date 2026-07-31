@@ -149,7 +149,7 @@ onUnmounted(() => {
               <div v-else-if="lotDetails" class="flex flex-col md:flex-row gap-4">
                 <!-- Left Column: Photo -->
                 <div class="w-48 h-48 rounded-xl bg-muted shrink-0 flex items-center justify-center overflow-hidden border border-border">
-                  <img v-if="lotDetails.imageUrl" :src="'/storage/' + lotDetails.imageUrl" class="w-full h-full object-cover" />
+                  <img v-if="lotDetails.imageUrl" :src="'/media/' + lotDetails.imageUrl" class="w-full h-full object-cover" />
                   <img v-else src="https://placehold.co/400x400?text=Placeholder" class="w-full h-full object-cover opacity-50" />
                 </div>
 

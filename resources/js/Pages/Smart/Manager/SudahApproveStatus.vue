@@ -142,7 +142,7 @@ const openMemoFile = (path: string | null) => {
     toast.error('File berita acara / memo tidak ditemukan.');
     return;
   }
-  window.open('/storage/' + path, '_blank');
+  window.open('/media/' + path, '_blank');
 };
 
 // Formats & Helpers
