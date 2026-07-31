@@ -8,6 +8,7 @@ use App\Models\Inventory\UnitStatusApproval;
 use App\Models\Inventory\UnitLifecycle;
 use App\Models\AdmUser as User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class UnitStatusApprovalControllerTest extends TestCase
@@ -249,10 +250,7 @@ class UnitStatusApprovalControllerTest extends TestCase
 
     public function test_storing_unit_with_status_rusak_creates_pending_approval(): void
     {
-        config(['filesystems.disks.public.root' => storage_path('framework/testing/disks/public_test')]);
-        \Illuminate\Support\Facades\Storage::forgetDisk('public');
-        \Illuminate\Support\Facades\File::ensureDirectoryExists(storage_path('framework/testing/disks/public_test'));
-        \Illuminate\Support\Facades\File::cleanDirectory(storage_path('framework/testing/disks/public_test'));
+        Storage::fake('local');
         $user = User::factory()->create();
         $lot = Lot::factory()->create();
         $location = \App\Models\Master\Location::factory()->create();

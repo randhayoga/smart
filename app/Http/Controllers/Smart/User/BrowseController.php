@@ -39,7 +39,7 @@ class BrowseController extends Controller
                     'name' => $subcategory->name,
                     'spec' => $firstBarang ? $firstBarang->specification : '-',
                     'stock' => 0,
-                    'imageUrl' => $firstBarang && $firstBarang->image_url ? '/storage/' . $firstBarang->image_url : null,
+                    'imageUrl' => $firstBarang && $firstBarang->image_url ? '/media/' . $firstBarang->image_url : null,
                     'uom' => $firstBarang && $firstBarang->uom ? $firstBarang->uom->name : 'satuan',
                     'barangs' => $subcategory->barangs->map(function ($barang) {
                         return [
@@ -48,7 +48,7 @@ class BrowseController extends Controller
                             'name' => $barang->name,
                             'brand' => $barang->brand ? $barang->brand->name : '-',
                             'specification' => $barang->specification,
-                            'imageUrl' => $barang->image_url ? '/storage/' . $barang->image_url : null,
+                            'imageUrl' => $barang->image_url ? '/media/' . $barang->image_url : null,
                             'uom' => $barang->uom ? $barang->uom->name : 'satuan',
                         ];
                     }),

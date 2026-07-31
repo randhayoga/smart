@@ -183,9 +183,9 @@ const viewImageInNewTab = () => {
   if (form.image_url) {
     window.open(URL.createObjectURL(form.image_url), '_blank');
   } else if (form.use_lot_image && props.lot?.imageUrl) {
-    window.open('/storage/' + props.lot.imageUrl, '_blank');
+    window.open('/media/' + props.lot.imageUrl, '_blank');
   } else if (isSingle.value && selectedItem.value?.image_url) {
-    window.open('/storage/' + selectedItem.value.image_url, '_blank');
+    window.open('/media/' + selectedItem.value.image_url, '_blank');
   }
 };
 
@@ -218,7 +218,7 @@ const viewMemoInNewTab = () => {
   if (form.memo_file) {
     window.open(URL.createObjectURL(form.memo_file), '_blank');
   } else if (isSingle.value && selectedItem.value?.memo_url) {
-    window.open('/storage/' + selectedItem.value.memo_url, '_blank');
+    window.open('/media/' + selectedItem.value.memo_url, '_blank');
   }
 };
 
@@ -241,7 +241,7 @@ const viewLostDocInNewTab = () => {
   if (form.lost_doc_file) {
     window.open(URL.createObjectURL(form.lost_doc_file), '_blank');
   } else if (isSingle.value && selectedItem.value?.lost_doc_url) {
-    window.open('/storage/' + selectedItem.value.lost_doc_url, '_blank');
+    window.open('/media/' + selectedItem.value.lost_doc_url, '_blank');
   }
 };
 

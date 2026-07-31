@@ -3,6 +3,10 @@ trigger: always_on
 description: Consult the graphify knowledge graph at graphify-out/ for codebase and architecture questions.
 ---
 
+## graphify
+
+This project has a graphify knowledge graph at graphify-out/.
+
 Rules:
 
 - The website language is Indonesian (Bahasa), the codebase language is English

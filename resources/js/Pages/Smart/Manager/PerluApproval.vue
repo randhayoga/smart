@@ -585,7 +585,7 @@ const handleConfirmSubmit = () => {
                     <div class="w-14 h-14 rounded-[10px] bg-gray-100 border border-gray-200 overflow-hidden shrink-0 flex items-center justify-center">
                       <img 
                         v-if="item.imageUrl" 
-                        :src="item.imageUrl.startsWith('http') || item.imageUrl.startsWith('/') ? item.imageUrl : '/storage/' + item.imageUrl" 
+                        :src="item.imageUrl.startsWith('http') || item.imageUrl.startsWith('/') ? item.imageUrl : '/media/' + item.imageUrl" 
                         class="w-full h-full object-cover" 
                       />
                       <div v-else class="text-xs font-black text-gray-400 select-none">

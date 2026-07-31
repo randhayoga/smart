@@ -56,8 +56,8 @@ class BorrowCartController extends Controller
                     'selected' => false,
                     'isPreorder' => false,
                     'imageUrl' => $item->barang_id
-                        ? ($item->barang?->image_url ? '/storage/' . $item->barang->image_url : null)
-                        : (($firstBarang = $item->subcategory?->barangs?->first()) && $firstBarang->image_url ? '/storage/' . $firstBarang->image_url : null),
+                        ? ($item->barang?->image_url ? '/media/' . $item->barang->image_url : null)
+                        : (($firstBarang = $item->subcategory?->barangs?->first()) && $firstBarang->image_url ? '/media/' . $firstBarang->image_url : null),
                 ];
             });
 

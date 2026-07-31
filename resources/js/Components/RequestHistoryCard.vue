@@ -125,7 +125,7 @@ const getStatusClasses = (status: string) => {
           >
             <img 
               v-if="item.imageUrl" 
-              :src="item.imageUrl.startsWith('http') || item.imageUrl.startsWith('/') ? item.imageUrl : '/storage/' + item.imageUrl" 
+              :src="item.imageUrl.startsWith('http') || item.imageUrl.startsWith('/') ? item.imageUrl : '/media/' + item.imageUrl" 
               class="w-full h-full object-cover" 
             />
             <div v-else class="text-[9px] font-bold text-muted-foreground/50 select-none">
@@ -141,7 +141,7 @@ const getStatusClasses = (status: string) => {
         >
           <img 
             v-if="request.items[0]?.imageUrl" 
-            :src="request.items[0].imageUrl.startsWith('http') || request.items[0].imageUrl.startsWith('/') ? request.items[0].imageUrl : '/storage/' + request.items[0].imageUrl" 
+            :src="request.items[0].imageUrl.startsWith('http') || request.items[0].imageUrl.startsWith('/') ? request.items[0].imageUrl : '/media/' + request.items[0].imageUrl" 
             class="w-full h-full object-cover" 
           />
           <div v-else class="text-xs font-bold text-muted-foreground/60 select-none">

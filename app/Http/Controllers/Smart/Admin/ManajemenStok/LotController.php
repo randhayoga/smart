@@ -52,13 +52,13 @@ class LotController extends Controller
 
         if ($request->boolean('use_parent_image')) {
             $barang = Barang::findOrFail($request->input('barang_id'));
-            if ($barang->image_url && Storage::disk('public')->exists($barang->image_url)) {
+            if ($barang->image_url && Storage::disk('local')->exists($barang->image_url)) {
                 $validated['image_url'] = $barang->image_url;
             } else {
                 return redirect()->back()->withErrors(['image_url' => 'Foto barang parent tidak ditemukan di storage.']);
             }
         } else {
-            $imagePath = $request->file('image_url')->store('inventory', 'public');
+            $imagePath = $request->file('image_url')->store('inventory', 'local');
             $validated['image_url'] = $imagePath;
         }
 
@@ -102,30 +102,30 @@ class LotController extends Controller
         ]);
 
         if ($request->boolean('use_parent_image')) {
-            if ($lot->image_url && $lot->image_url !== 'inventory/lots/placeholder.jpg' && Storage::disk('public')->exists($lot->image_url)) {
+            if ($lot->image_url && $lot->image_url !== 'inventory/lots/placeholder.jpg' && Storage::disk('local')->exists($lot->image_url)) {
                 $isShared = Lot::where('image_url', $lot->image_url)->where('id', '!=', $lot->id)->exists()
                     || Barang::where('image_url', $lot->image_url)->exists()
                     || Unit::where('image_url', $lot->image_url)->exists();
                 if (!$isShared) {
-                    Storage::disk('public')->delete($lot->image_url);
+                    Storage::disk('local')->delete($lot->image_url);
                 }
             }
             $barang = Barang::findOrFail($request->input('barang_id'));
-            if ($barang->image_url && Storage::disk('public')->exists($barang->image_url)) {
+            if ($barang->image_url && Storage::disk('local')->exists($barang->image_url)) {
                 $validated['image_url'] = $barang->image_url;
             } else {
                 return redirect()->back()->withErrors(['image_url' => 'Foto barang parent tidak ditemukan di storage.']);
             }
         } else if ($request->hasFile('image_url')) {
-            if ($lot->image_url && $lot->image_url !== 'inventory/lots/placeholder.jpg' && Storage::disk('public')->exists($lot->image_url)) {
+            if ($lot->image_url && $lot->image_url !== 'inventory/lots/placeholder.jpg' && Storage::disk('local')->exists($lot->image_url)) {
                 $isShared = Lot::where('image_url', $lot->image_url)->where('id', '!=', $lot->id)->exists()
                     || Barang::where('image_url', $lot->image_url)->exists()
                     || Unit::where('image_url', $lot->image_url)->exists();
                 if (!$isShared) {
-                    Storage::disk('public')->delete($lot->image_url);
+                    Storage::disk('local')->delete($lot->image_url);
                 }
             }
-            $imagePath = $request->file('image_url')->store('inventory', 'public');
+            $imagePath = $request->file('image_url')->store('inventory', 'local');
             $validated['image_url'] = $imagePath;
         } else {
             unset($validated['image_url']);
@@ -150,12 +150,12 @@ class LotController extends Controller
             return redirect()->back()->with('error', 'LOT tidak dapat dihapus karena masih memiliki unit terkait.');
         }
 
-        if ($lot->image_url && $lot->image_url !== 'inventory/lots/placeholder.jpg' && Storage::disk('public')->exists($lot->image_url)) {
+        if ($lot->image_url && $lot->image_url !== 'inventory/lots/placeholder.jpg' && Storage::disk('local')->exists($lot->image_url)) {
             $isShared = Lot::where('image_url', $lot->image_url)->where('id', '!=', $lot->id)->exists()
                 || Barang::where('image_url', $lot->image_url)->exists()
                 || Unit::where('image_url', $lot->image_url)->exists();
             if (!$isShared) {
-                Storage::disk('public')->delete($lot->image_url);
+                Storage::disk('local')->delete($lot->image_url);
             }
         }
         $lot->delete();

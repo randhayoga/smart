@@ -171,7 +171,7 @@ const viewImageInNewTab = () => {
   if (lotForm.image_url) {
     window.open(URL.createObjectURL(lotForm.image_url), '_blank');
   } else if (lotForm.use_parent_image && props.barang.image_url) {
-    window.open('/storage/' + props.barang.image_url, '_blank');
+    window.open('/media/' + props.barang.image_url, '_blank');
   }
 };
 

@@ -1291,7 +1291,7 @@ const timelineSteps = computed((): TimelineStep[] => {
               <div class="w-[84px] h-[84px] rounded-[16px] bg-gradient-to-br from-gray-100 to-gray-200 border border-gray-200/50 overflow-hidden shrink-0 flex items-center justify-center shadow-sm">
                 <img 
                   v-if="activeItemForPlacement.imageUrl" 
-                  :src="activeItemForPlacement.imageUrl.startsWith('http') || activeItemForPlacement.imageUrl.startsWith('/') ? activeItemForPlacement.imageUrl : '/storage/' + activeItemForPlacement.imageUrl" 
+                  :src="activeItemForPlacement.imageUrl.startsWith('http') || activeItemForPlacement.imageUrl.startsWith('/') ? activeItemForPlacement.imageUrl : '/media/' + activeItemForPlacement.imageUrl" 
                   class="w-full h-full object-cover" 
                 />
                 <div v-else class="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 opacity-60"></div>

@@ -82,7 +82,7 @@ class RequestHistoryController extends Controller
                 'stock' => $stockQuantity,
                 'category' => $item->barang->subcategory->category->name ?? '-',
                 'is_consumable' => (bool) ($item->barang->subcategory->category->is_consumable ?? false),
-                'imageUrl' => $item->barang->image_url ? '/storage/' . $item->barang->image_url : null,
+                'imageUrl' => $item->barang->image_url ? '/media/' . $item->barang->image_url : null,
                 'assets' => $assets,
                 'status' => $item->status,
             ];

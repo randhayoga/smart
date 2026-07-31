@@ -40,6 +40,13 @@ Route::get('/', function (\Illuminate\Http\Request $request) {
 
 
 
+// Secure media route for private storage
+Route::middleware(['auth'])->group(function () {
+    Route::get('/media/{path}', [\App\Http\Controllers\MediaController::class, 'show'])
+        ->where('path', '.*')
+        ->name('media.show');
+});
+
 // Smart routes - protected
 Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () {
     Route::post('/placement/update', [RequestHistoryController::class, 'updatePlacement'])->name('placement.update');

@@ -14,12 +14,12 @@ class UnitStatusApprovalSeeder extends Seeder
     public function run(): void
     {
         // 1. Ensure dummy memo files exist in storage (for testing download/view)
-        if (!Storage::disk('public')->exists('memos')) {
-            Storage::disk('public')->makeDirectory('memos');
+        if (!Storage::disk('local')->exists('memos')) {
+            Storage::disk('local')->makeDirectory('memos');
         }
         
-        Storage::disk('public')->put('memos/berita_acara_sfg14.pdf', 'Dummy Memo Content for Acer Laptop lost status.');
-        Storage::disk('public')->put('memos/berita_acara_byd.pdf', 'Dummy Memo Content for BYD Vehicle broken status.');
+        Storage::disk('local')->put('memos/berita_acara_sfg14.pdf', 'Dummy Memo Content for Acer Laptop lost status.');
+        Storage::disk('local')->put('memos/berita_acara_byd.pdf', 'Dummy Memo Content for BYD Vehicle broken status.');
 
         // Clear existing approvals/lifecycles first to prevent duplicates
         UnitStatusApproval::truncate();

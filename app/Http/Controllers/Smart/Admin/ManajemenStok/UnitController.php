@@ -197,13 +197,13 @@ class UnitController extends Controller
  
         // Single creation logic
         if ($request->boolean('use_lot_image')) {
-            if ($lot->image_url && Storage::disk('public')->exists($lot->image_url)) {
+            if ($lot->image_url && Storage::disk('local')->exists($lot->image_url)) {
                 $validated['image_url'] = $lot->image_url;
             } else {
                 return redirect()->back()->withErrors(['image_url' => 'Foto LOT tidak ditemukan di storage.']);
             }
         } else if ($request->hasFile('image_url')) {
-            $imagePath = $request->file('image_url')->store('inventory', 'public');
+            $imagePath = $request->file('image_url')->store('inventory', 'local');
             $validated['image_url'] = $imagePath;
         }
  
@@ -214,11 +214,11 @@ class UnitController extends Controller
         if ($needApproval) {
             $memoUrl = 'memos/placeholder.pdf';
             if ($request->hasFile('memo_file')) {
-                $memoUrl = $request->file('memo_file')->store('memos', 'public');
+                $memoUrl = $request->file('memo_file')->store('memos', 'local');
             }
             $lostDocUrl = null;
             if ($proposedStatus === 'Hilang' && $request->hasFile('lost_doc_file')) {
-                $lostDocUrl = $request->file('lost_doc_file')->store('lost_docs', 'public');
+                $lostDocUrl = $request->file('lost_doc_file')->store('lost_docs', 'local');
             }
             UnitStatusApproval::create([
                 'unit_id' => $unit->id,
@@ -290,30 +290,30 @@ class UnitController extends Controller
         $validated = $request->validate($rules);
 
         if ($request->boolean('use_lot_image')) {
-            if ($unit->image_url && Storage::disk('public')->exists($unit->image_url)) {
+            if ($unit->image_url && Storage::disk('local')->exists($unit->image_url)) {
                 $isShared = Unit::where('image_url', $unit->image_url)->where('id', '!=', $unit->id)->exists()
                     || Lot::where('image_url', $unit->image_url)->exists()
                     || Barang::where('image_url', $unit->image_url)->exists();
                 if (!$isShared) {
-                    Storage::disk('public')->delete($unit->image_url);
+                    Storage::disk('local')->delete($unit->image_url);
                 }
             }
             $lot = Lot::findOrFail($request->input('lot_id'));
-            if ($lot->image_url && Storage::disk('public')->exists($lot->image_url)) {
+            if ($lot->image_url && Storage::disk('local')->exists($lot->image_url)) {
                 $validated['image_url'] = $lot->image_url;
             } else {
                 $validated['image_url'] = null;
             }
         } else if ($request->hasFile('image_url')) {
-            if ($unit->image_url && Storage::disk('public')->exists($unit->image_url)) {
+            if ($unit->image_url && Storage::disk('local')->exists($unit->image_url)) {
                 $isShared = Unit::where('image_url', $unit->image_url)->where('id', '!=', $unit->id)->exists()
                     || Lot::where('image_url', $unit->image_url)->exists()
                     || Barang::where('image_url', $unit->image_url)->exists();
                 if (!$isShared) {
-                    Storage::disk('public')->delete($unit->image_url);
+                    Storage::disk('local')->delete($unit->image_url);
                 }
             }
-            $imagePath = $request->file('image_url')->store('inventory', 'public');
+            $imagePath = $request->file('image_url')->store('inventory', 'local');
             $validated['image_url'] = $imagePath;
         } else {
             unset($validated['image_url']);
@@ -336,11 +336,11 @@ class UnitController extends Controller
             if (!$existing) {
                 $memoUrl = 'memos/placeholder.pdf';
                 if ($request->hasFile('memo_file')) {
-                    $memoUrl = $request->file('memo_file')->store('memos', 'public');
+                    $memoUrl = $request->file('memo_file')->store('memos', 'local');
                 }
                 $lostDocUrl = null;
                 if ($proposedStatus === 'Hilang' && $request->hasFile('lost_doc_file')) {
-                    $lostDocUrl = $request->file('lost_doc_file')->store('lost_docs', 'public');
+                    $lostDocUrl = $request->file('lost_doc_file')->store('lost_docs', 'local');
                 }
                 UnitStatusApproval::create([
                     'unit_id' => $unit->id,
@@ -369,12 +369,12 @@ class UnitController extends Controller
             return redirect()->back()->with('error', 'Aset tidak dapat dihapus karena sudah memiliki riwayat peminjaman/permintaan.');
         }
 
-        if ($unit->image_url && Storage::disk('public')->exists($unit->image_url)) {
+        if ($unit->image_url && Storage::disk('local')->exists($unit->image_url)) {
             $isShared = Unit::where('image_url', $unit->image_url)->where('id', '!=', $unit->id)->exists()
                 || Lot::where('image_url', $unit->image_url)->exists()
                 || Barang::where('image_url', $unit->image_url)->exists();
             if (!$isShared) {
-                Storage::disk('public')->delete($unit->image_url);
+                Storage::disk('local')->delete($unit->image_url);
             }
         }
 

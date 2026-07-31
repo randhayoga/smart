@@ -137,10 +137,10 @@ class LotSeeder extends Seeder
             $destinationPath = 'inventory/' . basename($sourcePath);
 
             if (File::exists($sourcePath)) {
-                if (!Storage::disk('public')->exists('inventory')) {
-                    Storage::disk('public')->makeDirectory('inventory');
+                if (!Storage::disk('local')->exists('inventory')) {
+                    Storage::disk('local')->makeDirectory('inventory');
                 }
-                Storage::disk('public')->put($destinationPath, File::get($sourcePath));
+                Storage::disk('local')->put($destinationPath, File::get($sourcePath));
             }
 
             $burden = ['Corporate', 'Project'][array_rand(['Corporate', 'Project'])];

@@ -28,7 +28,7 @@ class BarangController extends Controller
 
         $imagePath = null;
         if ($request->hasFile('image_url')) {
-            $imagePath = $request->file('image_url')->store('inventory', 'public');
+            $imagePath = $request->file('image_url')->store('inventory', 'local');
             $validated['image_url'] = $imagePath;
         }
 
@@ -53,15 +53,15 @@ class BarangController extends Controller
         ]);
 
         if ($request->hasFile('image_url')) {
-            if ($barang->image_url && Storage::disk('public')->exists($barang->image_url)) {
+            if ($barang->image_url && Storage::disk('local')->exists($barang->image_url)) {
                 $isShared = Barang::where('image_url', $barang->image_url)->where('id', '!=', $barang->id)->exists()
                     || Lot::where('image_url', $barang->image_url)->exists()
                     || Unit::where('image_url', $barang->image_url)->exists();
                 if (!$isShared) {
-                    Storage::disk('public')->delete($barang->image_url);
+                    Storage::disk('local')->delete($barang->image_url);
                 }
             }
-            $imagePath = $request->file('image_url')->store('inventory', 'public');
+            $imagePath = $request->file('image_url')->store('inventory', 'local');
             $validated['image_url'] = $imagePath;
         } else {
             unset($validated['image_url']);
@@ -82,12 +82,12 @@ class BarangController extends Controller
             return redirect()->back()->with('error', 'Barang tidak dapat dihapus karena masih memiliki LOT terkait.');
         }
 
-        if ($barang->image_url && Storage::disk('public')->exists($barang->image_url)) {
+        if ($barang->image_url && Storage::disk('local')->exists($barang->image_url)) {
             $isShared = Barang::where('image_url', $barang->image_url)->where('id', '!=', $barang->id)->exists()
                 || Lot::where('image_url', $barang->image_url)->exists()
                 || Unit::where('image_url', $barang->image_url)->exists();
             if (!$isShared) {
-                Storage::disk('public')->delete($barang->image_url);
+                Storage::disk('local')->delete($barang->image_url);
             }
         }
         $barang->delete();
