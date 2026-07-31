@@ -42,8 +42,8 @@ const navigation = computed<NavSection[]>(() => {
     // - Approval Permintaan
     // - Rest of Admin Menus (Inventory, Permintaan, Audit)
     const menuUtama = mainNavigation.find(section => section.title === 'MENU UTAMA');
-    const approvalStatus = userNavigation.find(section => section.title === 'APPROVAL ASET');
-    const approvalPermintaan = userNavigation.find(section => section.title === 'APPROVAL');
+    const approvalStatus = userNavigation.find(section => section.title === 'APPROVAL PENGHAPUSAN');
+    const approvalPermintaan = userNavigation.find(section => section.title === 'APPROVAL PEMINJAMAN');
     const restOfAdmin = mainNavigation.filter(section => section.title !== 'MENU UTAMA' && section.title !== 'Permintaan');
     
     sections = [
@@ -65,7 +65,7 @@ const navigation = computed<NavSection[]>(() => {
     // - Approval Permintaan
     // - Permintaan
     const menuUtama = userNavigation.find(section => section.title === 'MENU UTAMA');
-    const approvalPermintaan = userNavigation.find(section => section.title === 'APPROVAL');
+    const approvalPermintaan = userNavigation.find(section => section.title === 'APPROVAL PEMINJAMAN');
     const permintaan = userNavigation.find(section => section.title === 'Permintaan');
     
     sections = [
