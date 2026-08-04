@@ -20,7 +20,6 @@ import {
 import TableSearch from '@/Components/TableSearch.vue';
 import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
-import ExportButtonGroup from '@/Components/ExportButtonGroup.vue';
 import ResetFilterButton from '@/Components/ResetFilterButton.vue';
 import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal.vue';
 import DeleteErrorModal from '@/Components/DeleteErrorModal.vue';
@@ -28,6 +27,7 @@ import Combobox from '@/Components/Combobox.vue';
 import DetailLOTConsumables from '../DetailLOTConsumables.vue';
 import EditLotModal from '../Modals/EditLotModal.vue';
 import { Switch } from '@/Components/ui/switch';
+import { printManajemenStok } from '@/utils/printManajemenStok';
 
 interface Props {
   lots: {
@@ -470,6 +470,32 @@ const handleExportCSV = () => {
 
 const handleExportExcel = () => {
   handleExportCSV();
+};
+
+const handlePrint = () => {
+  const data = getExportData();
+  if (!data || data.length === 0) {
+    toast.error('Tidak ada data untuk dicetak');
+    return;
+  }
+
+  const filteredRuangan = roomFilter.value
+    ? (props.rooms?.find(r => String(r.id) === String(roomFilter.value))?.name || roomFilter.value)
+    : null;
+
+  const filteredLokasi = locationFilter.value
+    ? (props.locations?.find(l => String(l.id) === String(locationFilter.value))?.name || locationFilter.value)
+    : null;
+
+  const filteredLantai = floorFilter.value
+    ? (props.floors?.find(f => String(f.id) === String(floorFilter.value))?.name || floorFilter.value)
+    : null;
+
+  printManajemenStok(data, {
+    ruangan: filteredRuangan,
+    lokasi: filteredLokasi,
+    lantai: filteredLantai,
+  });
 };
 
 const handleEditTerpilih = () => {
@@ -918,10 +944,6 @@ const clearFilters = () => {
                   <Trash2 class="w-4 h-4" />
                   <span class="hidden sm:inline">Hapus Terpilih</span>
                 </Button>
-                <ExportButtonGroup 
-                  @export-excel="handleExportExcel"
-                  @export-csv="handleExportCSV"
-                />
               </div>
             </div>
           </div>
@@ -930,23 +952,7 @@ const clearFilters = () => {
 
       <!-- Table -->
       <div class="pb-4">
-        <!-- Print-only Filter Info -->
-        <div v-if="searchQuery || timeFilter || organizerFilter || vendorFilter || categoryFilter || subcategoryFilter || brandFilter || locationFilter || floorFilter || roomFilter || stokFilter" class="print-only mb-4 text-left">
-          <div class="font-bold text-xs text-foreground mb-1">Filter:</div>
-          <div class="text-[10px] text-muted-foreground space-y-0.5">
-            <div v-if="searchQuery">Pencarian: {{ searchQuery }}</div>
-            <div v-if="categoryFilter">Kategori: {{ categoryFilter }}</div>
-            <div v-if="subcategoryFilter">Subkategori: {{ subcategoryFilter }}</div>
-            <div v-if="stokFilter">Stok: Tersedia</div>
-            <div v-if="brandFilter">Merek: {{ brandFilter }}</div>
-            <div v-if="locationFilter">Lokasi: {{ props.locations.find(l => String(l.id) === String(locationFilter))?.name }}</div>
-            <div v-if="floorFilter">Lantai: {{ props.floors.find(f => String(f.id) === String(floorFilter))?.name }}</div>
-            <div v-if="roomFilter">Ruangan: {{ props.rooms.find(r => String(r.id) === String(roomFilter))?.name }}</div>
-            <div v-if="organizerFilter">Organizer: {{ props.organizers.find(o => String(o.id) === String(organizerFilter))?.name }}</div>
-            <div v-if="vendorFilter">Vendor: {{ props.vendors.find(v => String(v.id) === String(vendorFilter))?.name }}</div>
-            <div v-if="timeFilter">Kurun Waktu: {{ timeFilter }}</div>
-          </div>
-        </div>
+
 
         <DataTable 
           ref="dataTableRef"

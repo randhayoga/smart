@@ -16,7 +16,6 @@ import {
   X
 } from 'lucide-vue-next';
 import { Button } from "@/Components/ui/button";
-import ExportButtonGroup from "@/Components/ExportButtonGroup.vue";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -315,30 +314,12 @@ const handleExportExcel = () => {
               </div>
             </div>
 
-            <!-- Row 2: Export Actions -->
-            <div class="flex flex-wrap items-end justify-between gap-4 pt-2">
-              <div class="space-y-2 flex-1 min-w-0">
-                <label class="text-xs text-muted-foreground font-medium block ml-0.5">Aksi Terpilih</label>
-                <ExportButtonGroup 
-                  @export-excel="handleExportExcel"
-                  @export-csv="handleExportCSV"
-                />
-              </div>
-            </div>
+
           </div>
         </div>
 
         <!-- Table -->
         <div class="pb-4">
-          <!-- Print-only Filter Info -->
-          <div v-if="searchQuery || typeFilter || timeFilter" class="print-only mb-4 text-left">
-            <div class="font-bold text-xs text-foreground mb-1">Filter:</div>
-            <div class="text-[10px] text-muted-foreground space-y-0.5">
-              <div v-if="searchQuery">Pencarian: {{ searchQuery }}</div>
-              <div v-if="typeFilter">Jenis: {{ typeFilter }}</div>
-              <div v-if="timeFilter">Kurun Waktu: {{ { today: 'Hari Ini', week: 'Minggu Ini', month: 'Bulan Ini' }[timeFilter] || timeFilter }}</div>
-            </div>
-          </div>
 
           <DataTable 
             ref="dataTableRef"

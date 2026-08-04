@@ -14,11 +14,11 @@ import {
 } from 'lucide-vue-next';
 import TableSearch from '@/Components/TableSearch.vue';
 import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal.vue';
-import ExportButtonGroup from '@/Components/ExportButtonGroup.vue';
 import ResetFilterButton from '@/Components/ResetFilterButton.vue';
 import Combobox from '@/Components/Combobox.vue';
 import DeleteErrorModal from '@/Components/DeleteErrorModal.vue';
 import { Field, FieldLabel, FieldContent, FieldError } from '@/Components/ui/field';
+import { printManajemenStok } from '@/utils/printManajemenStok';
 
 import { Button } from "@/Components/ui/button";
 import {
@@ -349,6 +349,12 @@ const handleExportExcel = () => {
   handleExportCSV();
 };
 
+const handlePrint = () => {
+  const data = getExportData();
+  if (!data || data.length === 0) return;
+  printManajemenStok(data, {});
+};
+
 // Create Modal Logic
 const isCreateModalOpen = ref(false);
 const openCreateModal = () => {
@@ -659,10 +665,6 @@ onUnmounted(() => {
                     <Trash2 class="w-4 h-4" />
                     <span class="hidden sm:inline">Hapus Terpilih</span>
                   </Button>
-                  <ExportButtonGroup 
-                    @export-excel="handleExportExcel"
-                    @export-csv="handleExportCSV"
-                  />
                 </div>
               </div>
               
@@ -680,17 +682,7 @@ onUnmounted(() => {
 
         <!-- Table -->
         <div class="pb-4">
-          <!-- Print-only Filter Info -->
-          <div v-if="searchQuery || typeFilter || categoryFilter || subcategoryFilter || brandFilter" class="print-only mb-4 text-left">
-            <div class="font-bold text-xs text-foreground mb-1">Filter:</div>
-            <div class="text-[10px] text-muted-foreground space-y-0.5">
-              <div v-if="searchQuery">Pencarian: {{ searchQuery }}</div>
-              <div v-if="typeFilter">Jenis: {{ typeFilter }}</div>
-              <div v-if="categoryFilter">Kategori: {{ categoryFilter }}</div>
-              <div v-if="subcategoryFilter">Subkategori: {{ subcategoryFilter }}</div>
-              <div v-if="brandFilter">Merek: {{ brandFilter }}</div>
-            </div>
-          </div>
+
 
           <DataTable 
             ref="dataTableRef"

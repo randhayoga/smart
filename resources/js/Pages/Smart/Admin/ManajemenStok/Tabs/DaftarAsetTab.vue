@@ -27,6 +27,7 @@ import DeleteErrorModal from '@/Components/DeleteErrorModal.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import EditAssetModal from '../Modals/EditAssetModal.vue';
 import DetailAssetModal from '../Modals/DetailAssetModal.vue';
+import { printManajemenStok } from '@/utils/printManajemenStok';
 
 interface Props {
   units: {
@@ -209,6 +210,32 @@ const handleExportCSV = () => {
 
 const handleExportExcel = () => {
   handleExportCSV();
+};
+
+const handlePrint = () => {
+  const data = getExportData();
+  if (!data || data.length === 0) {
+    toast.error('Tidak ada data untuk dicetak');
+    return;
+  }
+
+  const filteredRuangan = roomFilter.value
+    ? (props.rooms?.find(r => String(r.id) === String(roomFilter.value))?.name || roomFilter.value)
+    : null;
+
+  const filteredLokasi = locationFilter.value
+    ? (props.locations?.find(l => String(l.id) === String(locationFilter.value))?.name || locationFilter.value)
+    : null;
+
+  const filteredLantai = floorFilter.value
+    ? (props.floors?.find(f => String(f.id) === String(floorFilter.value))?.name || floorFilter.value)
+    : null;
+
+  printManajemenStok(data, {
+    ruangan: filteredRuangan,
+    lokasi: filteredLokasi,
+    lantai: filteredLantai,
+  });
 };
 
 // Flash Notifications
@@ -871,6 +898,8 @@ const totalAsetTerpilihCount = computed(() => {
                   <span class="hidden sm:inline">Edit Terpilih</span>
                 </Button>
                 <ExportButtonGroup 
+                  @print="handlePrint"
+                  @export-pdf="handlePrint"
                   @export-excel="handleExportExcel"
                   @export-csv="handleExportCSV"
                 />
@@ -881,27 +910,8 @@ const totalAsetTerpilihCount = computed(() => {
           </div>
         </div>
       </div>
-
       <!-- Table -->
       <div class="pb-4">
-        <!-- Print-only Filter Info -->
-        <div v-if="searchQuery || statusFilter || conditionFilter || categoryFilter || subcategoryFilter || brandFilter || locationFilter || floorFilter || roomFilter || organizerFilter || vendorFilter" class="print-only mb-4 text-left">
-          <div class="font-bold text-xs text-foreground mb-1">Filter:</div>
-          <div class="text-[10px] text-muted-foreground space-y-0.5">
-            <div v-if="searchQuery">Pencarian: {{ searchQuery }}</div>
-            <div v-if="categoryFilter">Kategori: {{ categoryFilter }}</div>
-            <div v-if="subcategoryFilter">Subkategori: {{ subcategoryFilter }}</div>
-            <div v-if="statusFilter">Status: {{ statusFilter }}</div>
-            <div v-if="conditionFilter">Kondisi: {{ conditionFilter }}</div>
-            <div v-if="brandFilter">Merek: {{ brandFilter }}</div>
-            <div v-if="locationFilter">Lokasi: {{ props.locations.find(l => String(l.id) === String(locationFilter))?.name }}</div>
-            <div v-if="floorFilter">Lantai: {{ props.floors.find(f => String(f.id) === String(floorFilter))?.name }}</div>
-            <div v-if="roomFilter">Ruangan: {{ props.rooms.find(r => String(r.id) === String(roomFilter))?.name }}</div>
-            <div v-if="organizerFilter">Organizer: {{ props.organizers?.find(o => String(o.id) === String(organizerFilter))?.name }}</div>
-            <div v-if="vendorFilter">Vendor: {{ props.vendors?.find(v => String(v.id) === String(vendorFilter))?.name }}</div>
-          </div>
-        </div>
-
         <DataTable 
           ref="dataTableRef"
           :columns="columns" 
