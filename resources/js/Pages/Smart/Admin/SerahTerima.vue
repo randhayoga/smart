@@ -10,7 +10,6 @@ import {
   X
 } from 'lucide-vue-next';
 import TableSearch from '@/Components/TableSearch.vue';
-import ExportButtonGroup from '@/Components/ExportButtonGroup.vue';
 import ViewTableButton from '@/Components/ViewTableButton.vue';
 
 import { Button } from "@/Components/ui/button";
@@ -229,15 +228,7 @@ onMounted(() => {
 
           <!-- Actions Row -->
           <div class="mt-4 flex flex-wrap items-end justify-between gap-4">
-            <div class="space-y-2">
-              <label class="text-xs text-muted-foreground font-medium block ml-0.5">Aksi Terpilih</label>
-              <ExportButtonGroup 
-                @export-excel="handleExportExcel"
-                @export-csv="handleExportCSV"
-              />
-            </div>
-
-            <div class="flex items-center gap-3 text-sm text-muted-foreground">
+            <div class="flex items-center gap-3 text-sm text-muted-foreground ml-auto">
               <span>Baris per halaman</span>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -259,15 +250,6 @@ onMounted(() => {
 
         <!-- Table -->
         <div class="pb-4">
-          <!-- Print-only Filter Info -->
-          <div v-if="searchQuery || timeFilter || methodFilter" class="print-only mb-4 text-left">
-            <div class="font-bold text-xs text-foreground mb-1">Filter:</div>
-            <div class="text-[10px] text-muted-foreground space-y-0.5">
-              <div v-if="searchQuery">Pencarian: {{ searchQuery }}</div>
-              <div v-if="timeFilter">Kurun Waktu: {{ timeFilter }}</div>
-              <div v-if="methodFilter">Metode: {{ methodFilter }}</div>
-            </div>
-          </div>
 
           <DataTable 
             ref="dataTableRef"

@@ -20,12 +20,12 @@ import {
 import TableSearch from '@/Components/TableSearch.vue';
 import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
-import ExportButtonGroup from '@/Components/ExportButtonGroup.vue';
 import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal.vue';
 import DeleteErrorModal from '@/Components/DeleteErrorModal.vue';
 import DetailLOTConsumables from '../DetailLOTConsumables.vue';
 import CreateLotModal from '../Modals/CreateLotModal.vue';
 import EditLotModal from '../Modals/EditLotModal.vue';
+import { printManajemenStok } from '@/utils/printManajemenStok';
 
 interface Props {
   barang: {
@@ -406,6 +406,12 @@ const handleExportExcel = () => {
   handleExportCSV();
 };
 
+const handlePrint = () => {
+  const data = getExportData();
+  if (!data || data.length === 0) return;
+  printManajemenStok(data, {});
+};
+
 const handleEditTerpilih = () => {
   if (!dataTableRef.value || !dataTableRef.value.table) return;
   const selectedRows = dataTableRef.value.table.getFilteredSelectedRowModel().rows;
@@ -642,10 +648,6 @@ const closeOnEscape = (e: KeyboardEvent) => {
               <Trash2 class="w-4 h-4" />
               <span class="hidden sm:inline">Hapus Terpilih</span>
             </Button>
-            <ExportButtonGroup 
-              @export-excel="handleExportExcel"
-              @export-csv="handleExportCSV"
-            />
           </div>
         </div>
         
