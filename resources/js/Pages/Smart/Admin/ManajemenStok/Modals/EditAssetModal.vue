@@ -55,6 +55,10 @@ const isStatusDisabled = computed(() => {
   return arrInactiveConditions.includes(form.condition);
 });
 
+const isDocumentDisabled = computed(() => {
+  return hasRestrictedUnit.value;
+});
+
 const form = useForm({
   ids: [] as number[],
   number: '',
@@ -233,6 +237,7 @@ const handleSamakanPhoto = () => {
 };
 
 const handleMemoUpload = (e: any) => {
+  if (isDocumentDisabled.value) return;
   const file = e.target.files[0];
   if (!file) return;
   const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
@@ -243,6 +248,7 @@ const handleMemoUpload = (e: any) => {
 };
 
 const triggerMemoFileInput = () => {
+  if (isDocumentDisabled.value) return;
   const input = document.getElementById('edit-asset-memo-upload') as HTMLInputElement;
   input?.click();
 };
@@ -256,6 +262,7 @@ const viewMemoInNewTab = () => {
 };
 
 const handleLostDocUpload = (e: any) => {
+  if (isDocumentDisabled.value) return;
   const file = e.target.files[0];
   if (!file) return;
   const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
@@ -266,6 +273,7 @@ const handleLostDocUpload = (e: any) => {
 };
 
 const triggerLostDocFileInput = () => {
+  if (isDocumentDisabled.value) return;
   const input = document.getElementById('edit-asset-lost-doc-upload') as HTMLInputElement;
   input?.click();
 };
@@ -320,8 +328,8 @@ const handleSubmit = () => {
     if (!form.condition) { errors.value.condition = 'Kondisi belum dipilih'; isValid = false; }
     if (!form.image_url && !form.image_url_name) { errors.value.image_url = 'Foto belum dipilih'; isValid = false; }
     if (isVehicle.value && !form.vehicle_registration) { errors.value.vehicle_registration = 'TNKB (Nomor Polisi) belum diisi'; isValid = false; }
-    if (arrNeedApproval.includes(form.condition) && !form.memo_file_name) { errors.value.memo_file = 'Berita Acara / Memo belum dipilih'; isValid = false; }
-    if (form.condition === 'Hilang' && !form.lost_doc_file_name) { errors.value.lost_doc_file = 'Surat Keterangan Kehilangan belum dipilih'; isValid = false; }
+    if (arrNeedApproval.includes(form.condition) && !isDocumentDisabled.value && !form.memo_file_name) { errors.value.memo_file = 'Berita Acara / Memo belum dipilih'; isValid = false; }
+    if (form.condition === 'Hilang' && !isDocumentDisabled.value && !form.lost_doc_file_name) { errors.value.lost_doc_file = 'Surat Keterangan Kehilangan belum dipilih'; isValid = false; }
     if (!isValid) return;
 
     form.transform((data) => {
@@ -358,11 +366,11 @@ const handleSubmit = () => {
       return;
     }
 
-    if (form.condition && arrNeedApproval.includes(form.condition) && !form.memo_file_name) {
+    if (form.condition && !isKondisiDisabled.value && arrNeedApproval.includes(form.condition) && !isDocumentDisabled.value && !form.memo_file_name) {
       errors.value.memo_file = 'Berita Acara / Memo wajib diisi jika kondisi Hilang atau Rusak Total.';
       return;
     }
-    if (form.condition === 'Hilang' && !form.lost_doc_file_name) {
+    if (form.condition && !isKondisiDisabled.value && form.condition === 'Hilang' && !isDocumentDisabled.value && !form.lost_doc_file_name) {
       errors.value.lost_doc_file = 'Surat Keterangan Kehilangan wajib diisi jika kondisi Hilang.';
       return;
     }
@@ -555,18 +563,22 @@ const handleSubmit = () => {
                   </Field>
 
                   <!-- Document Upload (Required for approval conditions) -->
-                  <Field v-if="arrNeedApproval.includes(form.condition)" :data-invalid="!!errors.memo_file || undefined">
-                    <FieldLabel><span>Berita Acara / Memo<span class="text-rose-500">*</span></span></FieldLabel>
+                  <Field v-if="arrNeedApproval.includes(form.condition)" :data-invalid="!!errors.memo_file || undefined" :data-disabled="isDocumentDisabled || undefined">
+                    <FieldLabel><span>Berita Acara / Memo<span v-if="!isDocumentDisabled" class="text-rose-500">*</span></span></FieldLabel>
                     <FieldContent>
                       <div class="flex gap-2">
-                        <div class="flex-grow min-w-0 px-4 py-2 text-sm border rounded-[14px] bg-muted/10 truncate flex items-center h-10"
-                          :class="[form.memo_file_name ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' : 'text-muted-foreground cursor-default', errors.memo_file ? 'border-destructive' : 'border-input']"
+                        <div class="flex-grow min-w-0 px-4 py-2 text-sm border rounded-[14px] truncate flex items-center h-10"
+                          :class="[
+                            form.memo_file_name ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' : 'text-muted-foreground cursor-default',
+                            errors.memo_file ? 'border-destructive' : 'border-input',
+                            isDocumentDisabled ? 'bg-muted/30 text-muted-foreground cursor-not-allowed' : 'bg-muted/10'
+                          ]"
                           @click="form.memo_file_name && viewMemoInNewTab()"
                         >
                           {{ form.memo_file_name || 'Belum ada file yang dipilih' }}
                         </div>
-                        <input type="file" id="edit-asset-memo-upload" class="hidden" accept=".pdf,.jpg,.jpeg,.png" @change="handleMemoUpload" />
-                        <Button type="button" @click="triggerMemoFileInput" size="lg">Pilih Dokumen</Button>
+                        <input type="file" id="edit-asset-memo-upload" class="hidden" accept=".pdf,.jpg,.jpeg,.png" @change="handleMemoUpload" :disabled="isDocumentDisabled" />
+                        <Button type="button" @click="triggerMemoFileInput" size="lg" :disabled="isDocumentDisabled">Pilih Dokumen</Button>
                       </div>
                       <p class="text-[10px] text-muted-foreground ml-1 mt-1">Maksimal ukuran 2 MB (.pdf, .jpg, .jpeg, .png)</p>
                     </FieldContent>
@@ -574,18 +586,22 @@ const handleSubmit = () => {
                   </Field>
 
                   <!-- Lost Document Upload (Required only if condition is Hilang) -->
-                  <Field v-if="form.condition === 'Hilang'" :data-invalid="!!errors.lost_doc_file || undefined">
-                    <FieldLabel><span>Surat Keterangan Kehilangan<span class="text-rose-500">*</span></span></FieldLabel>
+                  <Field v-if="form.condition === 'Hilang'" :data-invalid="!!errors.lost_doc_file || undefined" :data-disabled="isDocumentDisabled || undefined">
+                    <FieldLabel><span>Surat Keterangan Kehilangan<span v-if="!isDocumentDisabled" class="text-rose-500">*</span></span></FieldLabel>
                     <FieldContent>
                       <div class="flex gap-2">
-                        <div class="flex-grow min-w-0 px-4 py-2 text-sm border rounded-[14px] bg-muted/10 truncate flex items-center h-10"
-                          :class="[form.lost_doc_file_name ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' : 'text-muted-foreground cursor-default', errors.lost_doc_file ? 'border-destructive' : 'border-input']"
+                        <div class="flex-grow min-w-0 px-4 py-2 text-sm border rounded-[14px] truncate flex items-center h-10"
+                          :class="[
+                            form.lost_doc_file_name ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' : 'text-muted-foreground cursor-default',
+                            errors.lost_doc_file ? 'border-destructive' : 'border-input',
+                            isDocumentDisabled ? 'bg-muted/30 text-muted-foreground cursor-not-allowed' : 'bg-muted/10'
+                          ]"
                           @click="form.lost_doc_file_name && viewLostDocInNewTab()"
                         >
                           {{ form.lost_doc_file_name || 'Belum ada file yang dipilih' }}
                         </div>
-                        <input type="file" id="edit-asset-lost-doc-upload" class="hidden" accept=".pdf,.jpg,.jpeg,.png" @change="handleLostDocUpload" />
-                        <Button type="button" @click="triggerLostDocFileInput" size="lg">Pilih Dokumen</Button>
+                        <input type="file" id="edit-asset-lost-doc-upload" class="hidden" accept=".pdf,.jpg,.jpeg,.png" @change="handleLostDocUpload" :disabled="isDocumentDisabled" />
+                        <Button type="button" @click="triggerLostDocFileInput" size="lg" :disabled="isDocumentDisabled">Pilih Dokumen</Button>
                       </div>
                       <p class="text-[10px] text-muted-foreground ml-1 mt-1">Maksimal ukuran 2 MB (.pdf, .jpg, .jpeg, .png)</p>
                     </FieldContent>

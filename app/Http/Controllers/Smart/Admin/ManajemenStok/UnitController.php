@@ -253,19 +253,39 @@ class UnitController extends Controller
      */
     public function update(Request $request, Unit $unit)
     {
+        $arrInactiveConditions = ['Rusak Total', 'Hilang', 'Lelang/Hibah'];
+        $arrNeedApproval = ['Rusak Total', 'Hilang'];
+
+        $currentStatusLower = strtolower(trim($unit->status ?? ''));
+        $isRestricted = in_array($currentStatusLower, ['tidak aktif', 'pending']) || in_array($unit->condition, $arrInactiveConditions);
+
         $rules = [
             'number' => 'required|string|max:25|unique:units,number,' . $unit->id,
             'lot_id' => 'required|exists:lots,id',
             'location_id' => 'required|exists:locations,id',
             'floor_id' => 'nullable|exists:floors,id',
             'room_id' => 'nullable|exists:rooms,id',
-            'status' => 'required|string|max:255',
-            'condition' => 'required|string|max:255',
+            'status' => ['required', 'string', 'in:Tersedia,Dipinjam,Standby,Tidak Aktif,Pending'],
+            'condition' => ['required', 'string', 'in:Bagus,Rusak,QC Passed,Lelang/Hibah,Rusak Total,Hilang'],
             'price' => 'nullable|numeric|min:0|max:999999999.99',
-            'image_url' => 'nullable|image|max:1024',
+            'image_url' => 'nullable|image|mimes:jpeg,jpg,png|max:1024',
             'use_lot_image' => 'nullable',
         ];
- 
+
+        if ($request->filled('floor_id')) {
+            $floor = Floor::find($request->input('floor_id'));
+            if (!$floor || (int)$floor->location_id !== (int)$request->input('location_id')) {
+                return redirect()->back()->withErrors(['floor_id' => 'Lantai tidak sesuai dengan lokasi yang dipilih.']);
+            }
+        }
+
+        if ($request->filled('room_id')) {
+            $room = Room::find($request->input('room_id'));
+            if (!$room || (int)$room->floor_id !== (int)$request->input('floor_id')) {
+                return redirect()->back()->withErrors(['room_id' => 'Ruangan tidak sesuai dengan lantai yang dipilih.']);
+            }
+        }
+
         $lot = Lot::with('barang.subcategory.category')->findOrFail($request->input('lot_id'));
         $isVehicle = false;
         if ($lot->barang && $lot->barang->subcategory && $lot->barang->subcategory->category) {
@@ -275,19 +295,19 @@ class UnitController extends Controller
                          str_contains($catName, 'mobil') || str_contains($subcatName, 'mobil') ||
                          str_contains($catName, 'motor') || str_contains($subcatName, 'motor');
         }
- 
+
         if ($isVehicle) {
             $rules['vehicle_registration'] = 'required|string|max:15';
         } else {
             $rules['vehicle_registration'] = 'nullable|string|max:15';
         }
- 
-        $arrNeedApproval = ['Rusak Total', 'Hilang'];
+
+        if (!$unit->image_url && !$request->boolean('use_lot_image') && !$request->hasFile('image_url')) {
+            return redirect()->back()->withErrors(['image_url' => 'Foto belum dipilih.']);
+        }
+
         $proposedCondition = $request->input('condition');
         $needApproval = in_array($proposedCondition, $arrNeedApproval);
-
-        $currentStatusLower = strtolower(trim($unit->status ?? ''));
-        $isRestricted = in_array($currentStatusLower, ['tidak aktif', 'pending']);
 
         if ($isRestricted) {
             if ($request->filled('status') && strtolower(trim($request->input('status'))) !== $currentStatusLower) {
@@ -302,24 +322,53 @@ class UnitController extends Controller
             ]);
         } else {
             $inputStatusLower = strtolower(trim($request->input('status', '')));
-            if ($inputStatusLower === 'tidak aktif' && !$needApproval) {
+            if ($inputStatusLower === 'tidak aktif' && !in_array($proposedCondition, $arrInactiveConditions)) {
                 return redirect()->back()->withErrors(['status' => 'Status Tidak Aktif tidak dapat dipilih secara manual.']);
             }
         }
 
-        if ($needApproval) {
+        if ($needApproval && !$isRestricted) {
             $existing = UnitStatusApproval::where('unit_id', $unit->id)
                 ->where('decision', 'pending')
                 ->first();
             if (!$existing) {
-                $rules['memo_file'] = 'required|file|max:2048';
+                $rules['memo_file'] = 'required|file|mimes:pdf,jpeg,jpg,png|max:2048';
                 if ($proposedCondition === 'Hilang') {
-                    $rules['lost_doc_file'] = 'required|file|max:2048';
+                    $rules['lost_doc_file'] = 'required|file|mimes:pdf,jpeg,jpg,png|max:2048';
                 }
             }
         }
 
-        $validated = $request->validate($rules);
+        $messages = [
+            'number.required' => 'Kode Aset wajib diisi.',
+            'number.unique' => 'Kode Aset sudah terpakai.',
+            'lot_id.required' => 'LOT belum dipilih.',
+            'lot_id.exists' => 'LOT tidak ditemukan.',
+            'location_id.required' => 'Lokasi belum dipilih.',
+            'location_id.exists' => 'Lokasi tidak ditemukan.',
+            'floor_id.exists' => 'Lantai tidak ditemukan.',
+            'room_id.exists' => 'Ruangan tidak ditemukan.',
+            'status.required' => 'Status belum dipilih.',
+            'status.in' => 'Status yang dipilih tidak valid.',
+            'condition.required' => 'Kondisi belum dipilih.',
+            'condition.in' => 'Kondisi yang dipilih tidak valid.',
+            'price.numeric' => 'Harga Satuan harus berupa angka.',
+            'price.min' => 'Harga Satuan minimal 0.',
+            'price.max' => 'Harga Satuan terlalu besar.',
+            'image_url.image' => 'Format foto salah! Hanya diperbolehkan file .jpg, .jpeg, atau .png.',
+            'image_url.mimes' => 'Format foto salah! Hanya diperbolehkan file .jpg, .jpeg, atau .png.',
+            'image_url.max' => 'Gagal! Ukuran foto maksimal 1MB.',
+            'vehicle_registration.required' => 'TNKB (Nomor Polisi) belum diisi.',
+            'vehicle_registration.max' => 'TNKB (Nomor Polisi) maksimal 15 karakter.',
+            'memo_file.required' => 'Berita Acara / Memo belum dipilih.',
+            'memo_file.mimes' => 'Format Berita Acara / Memo salah! Hanya diperbolehkan file .pdf, .jpg, .jpeg, atau .png.',
+            'memo_file.max' => 'Gagal! Ukuran Berita Acara / Memo maksimal 2MB.',
+            'lost_doc_file.required' => 'Surat Keterangan Kehilangan belum dipilih.',
+            'lost_doc_file.mimes' => 'Format Surat Keterangan Kehilangan salah! Hanya diperbolehkan file .pdf, .jpg, .jpeg, atau .png.',
+            'lost_doc_file.max' => 'Gagal! Ukuran Surat Keterangan Kehilangan maksimal 2MB.',
+        ];
+
+        $validated = $request->validate($rules, $messages);
 
         if ($request->boolean('use_lot_image')) {
             if ($unit->image_url && Storage::disk('local')->exists($unit->image_url)) {

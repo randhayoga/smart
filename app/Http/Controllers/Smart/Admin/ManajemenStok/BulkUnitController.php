@@ -7,6 +7,8 @@ use App\Models\Inventory\Barang;
 use App\Models\Inventory\Lot;
 use App\Models\Inventory\Unit;
 use App\Models\Inventory\UnitStatusApproval;
+use App\Models\Master\Floor;
+use App\Models\Master\Room;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -180,18 +182,33 @@ class BulkUnitController extends Controller
      */
     public function update(Request $request)
     {
+        $messages = [
+            'ids.required' => 'Aset belum dipilih.',
+            'status.in' => 'Status yang dipilih tidak valid.',
+            'condition.in' => 'Kondisi yang dipilih tidak valid.',
+            'location_id.exists' => 'Lokasi tidak ditemukan.',
+            'floor_id.exists' => 'Lantai tidak ditemukan.',
+            'room_id.exists' => 'Ruangan tidak ditemukan.',
+            'price.numeric' => 'Harga Satuan harus berupa angka.',
+            'price.min' => 'Harga Satuan minimal 0.',
+            'price.max' => 'Harga Satuan terlalu besar.',
+            'image_url.image' => 'Format foto salah! Hanya diperbolehkan file .jpg, .jpeg, atau .png.',
+            'image_url.mimes' => 'Format foto salah! Hanya diperbolehkan file .jpg, .jpeg, atau .png.',
+            'image_url.max' => 'Gagal! Ukuran foto maksimal 1MB.',
+        ];
+
         $validated = $request->validate([
             'ids' => 'required|array',
             'ids.*' => 'exists:units,id',
-            'status' => 'nullable|string',
-            'condition' => 'nullable|string',
+            'status' => ['nullable', 'string', 'in:Tersedia,Dipinjam,Standby,Tidak Aktif,Pending'],
+            'condition' => ['nullable', 'string', 'in:Bagus,Rusak,QC Passed,Lelang/Hibah,Rusak Total,Hilang'],
             'location_id' => 'nullable|exists:locations,id',
             'floor_id' => 'nullable|exists:floors,id',
             'room_id' => 'nullable|exists:rooms,id',
             'price' => 'nullable|numeric|min:0|max:999999999.99',
             'use_lot_image' => 'nullable',
-            'image_url' => 'nullable|image|max:1024',
-        ]);
+            'image_url' => 'nullable|image|mimes:jpeg,jpg,png|max:1024',
+        ], $messages);
 
         $ids = $validated['ids'];
         $units = Unit::whereIn('id', $ids)->get();
@@ -199,9 +216,24 @@ class BulkUnitController extends Controller
             return redirect()->back()->withErrors(['ids' => 'Tidak ada unit yang ditemukan.']);
         }
 
-        $hasRestrictedUnits = $units->contains(function ($u) {
+        if ($request->filled('floor_id') && $request->filled('location_id')) {
+            $floor = Floor::find($request->input('floor_id'));
+            if (!$floor || (int)$floor->location_id !== (int)$request->input('location_id')) {
+                return redirect()->back()->withErrors(['floor_id' => 'Lantai tidak sesuai dengan lokasi yang dipilih.']);
+            }
+        }
+
+        if ($request->filled('room_id') && $request->filled('floor_id')) {
+            $room = Room::find($request->input('room_id'));
+            if (!$room || (int)$room->floor_id !== (int)$request->input('floor_id')) {
+                return redirect()->back()->withErrors(['room_id' => 'Ruangan tidak sesuai dengan lantai yang dipilih.']);
+            }
+        }
+
+        $arrInactiveConditions = ['Rusak Total', 'Hilang', 'Lelang/Hibah'];
+        $hasRestrictedUnits = $units->contains(function ($u) use ($arrInactiveConditions) {
             $s = strtolower(trim($u->status ?? ''));
-            return in_array($s, ['tidak aktif', 'pending']);
+            return in_array($s, ['tidak aktif', 'pending']) || in_array($u->condition, $arrInactiveConditions);
         });
 
         if ($hasRestrictedUnits) {
@@ -211,7 +243,7 @@ class BulkUnitController extends Controller
         } else {
             $inputStatusLower = strtolower(trim($request->input('status', '')));
             $proposedCondition = $request->input('condition');
-            if ($inputStatusLower === 'tidak aktif' && !in_array($proposedCondition, ['Rusak Total', 'Hilang'])) {
+            if ($inputStatusLower === 'tidak aktif' && !in_array($proposedCondition, $arrInactiveConditions)) {
                 return redirect()->back()->withErrors(['status' => 'Status Tidak Aktif tidak dapat dipilih secara manual.']);
             }
         }
@@ -220,14 +252,22 @@ class BulkUnitController extends Controller
         $proposedCondition = $request->input('condition');
         $needApproval = $request->filled('condition') && in_array($proposedCondition, $arrNeedApproval);
 
-        if ($needApproval) {
+        if ($needApproval && !$hasRestrictedUnits) {
             $rulesForApproval = [
-                'memo_file' => 'required|file|max:2048',
+                'memo_file' => 'required|file|mimes:pdf,jpeg,jpg,png|max:2048',
+            ];
+            $messagesForApproval = [
+                'memo_file.required' => 'Berita Acara / Memo wajib diisi jika kondisi Hilang atau Rusak Total.',
+                'memo_file.mimes' => 'Format Berita Acara / Memo salah! Hanya diperbolehkan file .pdf, .jpg, .jpeg, atau .png.',
+                'memo_file.max' => 'Gagal! Ukuran Berita Acara / Memo maksimal 2MB.',
             ];
             if ($proposedCondition === 'Hilang') {
-                $rulesForApproval['lost_doc_file'] = 'required|file|max:2048';
-            }
-            $request->validate($rulesForApproval);
+                $rulesForApproval['lost_doc_file'] = 'required|file|mimes:pdf,jpeg,jpg,png|max:2048';
+                $messagesForApproval['lost_doc_file.required'] = 'Surat Keterangan Kehilangan wajib diisi jika kondisi Hilang.';
+                $messagesForApproval['lost_doc_file.mimes'] = 'Format Surat Keterangan Kehilangan salah! Hanya diperbolehkan file .pdf, .jpg, .jpeg, atau .png.',
+                'messagesForApproval.max' => 'Gagal! Ukuran Surat Keterangan Kehilangan maksimal 2MB.',
+            ];
+            $request->validate($rulesForApproval, $messagesForApproval);
         }
 
         $updateData = [];
