@@ -185,6 +185,11 @@ class UnitController extends Controller
         $proposedCondition = $request->input('condition');
         $needApproval = in_array($proposedCondition, $arrNeedApproval);
 
+        $inputStatusLower = strtolower(trim($request->input('status', '')));
+        if ($inputStatusLower === 'tidak aktif' && !$needApproval) {
+            return redirect()->back()->withErrors(['status' => 'Status Tidak Aktif tidak dapat dipilih secara manual.']);
+        }
+
         if ($needApproval) {
             $rules['memo_file'] = 'required|file|max:2048';
             if ($proposedCondition === 'Hilang') {
@@ -280,6 +285,27 @@ class UnitController extends Controller
         $arrNeedApproval = ['Rusak Total', 'Hilang'];
         $proposedCondition = $request->input('condition');
         $needApproval = in_array($proposedCondition, $arrNeedApproval);
+
+        $currentStatusLower = strtolower(trim($unit->status ?? ''));
+        $isRestricted = in_array($currentStatusLower, ['tidak aktif', 'pending']);
+
+        if ($isRestricted) {
+            if ($request->filled('status') && strtolower(trim($request->input('status'))) !== $currentStatusLower) {
+                return redirect()->back()->withErrors(['status' => 'Status untuk aset yang Tidak Aktif atau Pending tidak dapat diubah.']);
+            }
+            if ($request->filled('condition') && $request->input('condition') !== $unit->condition) {
+                return redirect()->back()->withErrors(['condition' => 'Kondisi untuk aset yang Tidak Aktif atau Pending tidak dapat diubah.']);
+            }
+            $request->merge([
+                'status' => $unit->status,
+                'condition' => $unit->condition,
+            ]);
+        } else {
+            $inputStatusLower = strtolower(trim($request->input('status', '')));
+            if ($inputStatusLower === 'tidak aktif' && !$needApproval) {
+                return redirect()->back()->withErrors(['status' => 'Status Tidak Aktif tidak dapat dipilih secara manual.']);
+            }
+        }
 
         if ($needApproval) {
             $existing = UnitStatusApproval::where('unit_id', $unit->id)

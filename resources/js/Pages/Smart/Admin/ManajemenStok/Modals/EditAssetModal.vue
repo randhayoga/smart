@@ -34,6 +34,26 @@ const selectedItem = computed(() => isSingle.value ? props.items[0] : null);
 const isVehicle = computed(() => props.barang?.category === 'Kendaraan');
 
 const arrNeedApproval = ['Rusak Total', 'Hilang'];
+const arrInactiveConditions = ['Rusak Total', 'Hilang', 'Lelang/Hibah'];
+
+const isRestrictedStatus = (status: string | null | undefined) => {
+  if (!status) return false;
+  const s = String(status).trim().toLowerCase();
+  return s === 'tidak aktif' || s === 'pending';
+};
+
+const hasRestrictedUnit = computed(() => {
+  return (props.items || []).some(item => isRestrictedStatus(item?.status) || arrInactiveConditions.includes(item?.condition));
+});
+
+const isKondisiDisabled = computed(() => {
+  return hasRestrictedUnit.value;
+});
+
+const isStatusDisabled = computed(() => {
+  if (hasRestrictedUnit.value) return true;
+  return arrInactiveConditions.includes(form.condition);
+});
 
 const form = useForm({
   ids: [] as number[],
@@ -110,7 +130,17 @@ watch(() => form.floor_id, (newVal) => {
   } else { form.room_id = null; }
 });
 
-watch(() => form.status, (newVal) => {
+watch(() => form.condition, (newVal, oldVal) => {
+  if (arrInactiveConditions.includes(newVal)) {
+    form.status = 'Tidak Aktif';
+  } else if (oldVal && arrInactiveConditions.includes(oldVal) && form.status === 'Tidak Aktif') {
+    if (isSingle.value && selectedItem.value?.status && !isRestrictedStatus(selectedItem.value.status)) {
+      form.status = selectedItem.value.status;
+    } else {
+      form.status = '';
+    }
+  }
+
   if (!arrNeedApproval.includes(newVal)) {
     form.memo_file = null;
     form.memo_file_name = '';
@@ -144,6 +174,9 @@ watch(() => props.open, (val) => {
     form.room_id = item.room_id || null;
     form.status = item.status || '';
     form.condition = item.condition || '';
+    if (arrInactiveConditions.includes(form.condition)) {
+      form.status = 'Tidak Aktif';
+    }
     form.price = item.price || '';
     form.image_url_name = item.image_url ? item.image_url.split('/').pop() || '' : '';
     form.vehicle_registration = item.vehicle_registration || '';
@@ -287,8 +320,8 @@ const handleSubmit = () => {
     if (!form.condition) { errors.value.condition = 'Kondisi belum dipilih'; isValid = false; }
     if (!form.image_url && !form.image_url_name) { errors.value.image_url = 'Foto belum dipilih'; isValid = false; }
     if (isVehicle.value && !form.vehicle_registration) { errors.value.vehicle_registration = 'TNKB (Nomor Polisi) belum diisi'; isValid = false; }
-    if (arrNeedApproval.includes(form.status) && !form.memo_file_name) { errors.value.memo_file = 'Berita Acara / Memo belum dipilih'; isValid = false; }
-    if (form.status === 'Hilang' && !form.lost_doc_file_name) { errors.value.lost_doc_file = 'Surat Keterangan Kehilangan belum dipilih'; isValid = false; }
+    if (arrNeedApproval.includes(form.condition) && !form.memo_file_name) { errors.value.memo_file = 'Berita Acara / Memo belum dipilih'; isValid = false; }
+    if (form.condition === 'Hilang' && !form.lost_doc_file_name) { errors.value.lost_doc_file = 'Surat Keterangan Kehilangan belum dipilih'; isValid = false; }
     if (!isValid) return;
 
     form.transform((data) => {
@@ -315,26 +348,28 @@ const handleSubmit = () => {
   } else {
     // Bulk edit
     const hasField = !!(
-      form.status || form.condition || form.location_id || form.floor_id ||
-      form.room_id || form.price || form.image_url || form.use_lot_image || form.memo_file || form.lost_doc_file
+      (form.status && !isStatusDisabled.value) ||
+      (form.condition && !isKondisiDisabled.value) ||
+      form.location_id || form.floor_id || form.room_id || form.price ||
+      form.image_url || form.use_lot_image || form.memo_file || form.lost_doc_file
     );
     if (!hasField) {
       toast.error('Harap isi minimal satu input untuk melakukan perubahan massal.');
       return;
     }
 
-    if (form.status && arrNeedApproval.includes(form.status) && !form.memo_file_name) {
-      errors.value.memo_file = 'Berita Acara / Memo wajib diisi jika status Hilang, Rusak Total, atau Pending.';
+    if (form.condition && arrNeedApproval.includes(form.condition) && !form.memo_file_name) {
+      errors.value.memo_file = 'Berita Acara / Memo wajib diisi jika kondisi Hilang atau Rusak Total.';
       return;
     }
-    if (form.status === 'Hilang' && !form.lost_doc_file_name) {
-      errors.value.lost_doc_file = 'Surat Keterangan Kehilangan wajib diisi jika status Hilang.';
+    if (form.condition === 'Hilang' && !form.lost_doc_file_name) {
+      errors.value.lost_doc_file = 'Surat Keterangan Kehilangan wajib diisi jika kondisi Hilang.';
       return;
     }
 
     const payload: any = { ids: form.ids };
-    if (form.status) payload.status = form.status;
-    if (form.condition) payload.condition = form.condition;
+    if (form.status && !isStatusDisabled.value) payload.status = form.status;
+    if (form.condition && !isKondisiDisabled.value) payload.condition = form.condition;
     
     if (form.location_id) {
       payload.location_id = form.location_id;
@@ -414,12 +449,16 @@ const handleSubmit = () => {
                     </FieldContent>
                   </Field>
 
-                  <Field :data-invalid="(isSingle && !!errors.status) || undefined">
+                  <Field :data-invalid="(isSingle && !!errors.status) || undefined" :data-disabled="isStatusDisabled || undefined">
                     <FieldLabel>
                       <span>Status<span v-if="isSingle" class="text-rose-500">*</span></span>
                     </FieldLabel>
                     <FieldContent>
-                      <DropdownMenu>
+                      <div v-if="isStatusDisabled" class="w-full flex items-center justify-between px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10 select-none">
+                        <span>{{ form.status || (isSingle ? 'Pilih status' : 'Tidak berubah') }}</span>
+                        <ChevronDown class="w-4 h-4 opacity-50" />
+                      </div>
+                      <DropdownMenu v-else>
                         <DropdownMenuTrigger asChild>
                           <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !form.status ? 'text-muted-foreground' : 'text-foreground']">
                             {{ form.status || (isSingle ? 'Pilih status' : 'Tidak berubah') }}
@@ -430,7 +469,6 @@ const handleSubmit = () => {
                           <DropdownMenuItem @select="form.status = 'Tersedia'">Tersedia</DropdownMenuItem>
                           <DropdownMenuItem @select="form.status = 'Dipinjam'">Dipinjam</DropdownMenuItem>
                           <DropdownMenuItem @select="form.status = 'Standby'">Standby</DropdownMenuItem>
-                          <DropdownMenuItem @select="form.status = 'Tidak Aktif'">Tidak Aktif</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </FieldContent>
@@ -440,12 +478,16 @@ const handleSubmit = () => {
 
                 <!-- Right Column -->
                 <div class="space-y-6">
-                  <Field :data-invalid="(isSingle && !!errors.condition) || undefined">
+                  <Field :data-invalid="(isSingle && !!errors.condition) || undefined" :data-disabled="isKondisiDisabled || undefined">
                     <FieldLabel>
                       <span>Kondisi<span v-if="isSingle" class="text-rose-500">*</span></span>
                     </FieldLabel>
                     <FieldContent>
-                      <DropdownMenu>
+                      <div v-if="isKondisiDisabled" class="w-full flex items-center justify-between px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10 select-none">
+                        <span>{{ form.condition || (isSingle ? 'Pilih kondisi' : 'Tidak berubah') }}</span>
+                        <ChevronDown class="w-4 h-4 opacity-50" />
+                      </div>
+                      <DropdownMenu v-else>
                         <DropdownMenuTrigger asChild>
                           <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !form.condition ? 'text-muted-foreground' : 'text-foreground']">
                             {{ form.condition || (isSingle ? 'Pilih kondisi' : 'Tidak berubah') }}

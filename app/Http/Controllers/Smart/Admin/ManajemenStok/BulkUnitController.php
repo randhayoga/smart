@@ -51,6 +51,11 @@ class BulkUnitController extends Controller
         $proposedCondition = $request->input('condition');
         $needApproval = in_array($proposedCondition, $arrNeedApproval);
 
+        $inputStatusLower = strtolower(trim($request->input('status', '')));
+        if ($inputStatusLower === 'tidak aktif' && !$needApproval) {
+            return redirect()->back()->withErrors(['status' => 'Status Tidak Aktif tidak dapat dipilih secara manual.']);
+        }
+
         if ($needApproval) {
             $rules['memo_file'] = 'required|file|max:2048';
             if ($proposedCondition === 'Hilang') {
@@ -192,6 +197,23 @@ class BulkUnitController extends Controller
         $units = Unit::whereIn('id', $ids)->get();
         if ($units->isEmpty()) {
             return redirect()->back()->withErrors(['ids' => 'Tidak ada unit yang ditemukan.']);
+        }
+
+        $hasRestrictedUnits = $units->contains(function ($u) {
+            $s = strtolower(trim($u->status ?? ''));
+            return in_array($s, ['tidak aktif', 'pending']);
+        });
+
+        if ($hasRestrictedUnits) {
+            if ($request->filled('status') || $request->filled('condition')) {
+                return redirect()->back()->withErrors(['status' => 'Terdapat aset dengan status Tidak Aktif atau Pending. Status dan kondisi aset tersebut tidak dapat diubah.']);
+            }
+        } else {
+            $inputStatusLower = strtolower(trim($request->input('status', '')));
+            $proposedCondition = $request->input('condition');
+            if ($inputStatusLower === 'tidak aktif' && !in_array($proposedCondition, ['Rusak Total', 'Hilang'])) {
+                return redirect()->back()->withErrors(['status' => 'Status Tidak Aktif tidak dapat dipilih secara manual.']);
+            }
         }
 
         $arrNeedApproval = ['Rusak Total', 'Hilang'];

@@ -28,7 +28,11 @@ const emit = defineEmits<{
 }>();
 
 const isVehicle = computed(() => props.barang?.category === 'Kendaraan');
-const arrNeedApproval = ['Rusak Total', 'Hilang',];
+const arrNeedApproval = ['Rusak Total', 'Hilang'];
+
+const isStatusDisabled = computed(() => {
+  return ['Rusak Total', 'Hilang'].includes(form.condition);
+});
 
 const form = useForm({
   _method: 'POST',
@@ -107,7 +111,13 @@ watch(() => form.floor_id, (newVal) => {
   if (!valid) form.room_id = null;
 });
 
-watch(() => form.status, (newVal) => {
+watch(() => form.condition, (newVal, oldVal) => {
+  if (['Rusak Total', 'Hilang'].includes(newVal)) {
+    form.status = 'Tidak Aktif';
+  } else if (oldVal && ['Rusak Total', 'Hilang'].includes(oldVal) && form.status === 'Tidak Aktif') {
+    form.status = '';
+  }
+
   if (!arrNeedApproval.includes(newVal)) {
     form.memo_file = null;
     form.memo_file_name = '';
@@ -376,12 +386,16 @@ const handleSubmit = () => {
                     </FieldContent>
                   </Field>
 
-                  <Field :data-invalid="!!errors.status || undefined">
+                  <Field :data-invalid="!!errors.status || undefined" :data-disabled="isStatusDisabled || undefined">
                     <FieldLabel>
                       <span>Status<span class="text-rose-500">*</span></span>
                     </FieldLabel>
                     <FieldContent>
-                      <DropdownMenu>
+                      <div v-if="isStatusDisabled" class="w-full flex items-center justify-between px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10 select-none">
+                        <span>{{ form.status || 'Pilih status' }}</span>
+                        <ChevronDown class="w-4 h-4 opacity-50" />
+                      </div>
+                      <DropdownMenu v-else>
                         <DropdownMenuTrigger asChild>
                           <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !form.status ? 'text-muted-foreground' : 'text-foreground', errors.status ? 'border-destructive' : '']">
                             {{ form.status || 'Pilih status' }}
@@ -392,7 +406,6 @@ const handleSubmit = () => {
                           <DropdownMenuItem @select="form.status = 'Tersedia'">Tersedia</DropdownMenuItem>
                           <DropdownMenuItem @select="form.status = 'Dipinjam'">Dipinjam</DropdownMenuItem>
                           <DropdownMenuItem @select="form.status = 'Standby'">Standby</DropdownMenuItem>
-                          <DropdownMenuItem @select="form.status = 'Tidak Aktif'">Tidak Aktif</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </FieldContent>
