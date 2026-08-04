@@ -11,6 +11,7 @@ import {
 import TableSearch from '@/Components/TableSearch.vue';
 import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
+import StatusBadge from '@/Components/StatusBadge.vue';
 
 const parseDateTime = (val: string) => {
   if (!val || val === '-') return 0;
@@ -162,7 +163,7 @@ const auditColumns: ColumnDef<AuditTrail>[] = [
   },
   {
     accessorKey: 'status',
-    size: 120,
+    size: 144,
     header: ({ column }) => {
       return h(Button, {
         variant: 'ghost',
@@ -173,7 +174,13 @@ const auditColumns: ColumnDef<AuditTrail>[] = [
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
-    cell: ({ row }) => h('div', { class: 'text-foreground font-semibold truncate' }, row.getValue('status')),
+    cell: ({ row }) => {
+      const status = row.getValue('status') as string || '';
+      return h(StatusBadge, {
+        status,
+        class: 'rounded-sm'
+      });
+    }
   },
   {
     accessorKey: 'action_type',
