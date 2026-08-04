@@ -79,7 +79,7 @@ class Unit extends Model
                             ->first();
 
                         if ($approval) {
-                            $notes[] = $approval->note ?? "Pengajuan status '{$approval->proposed_status}' " . ($approval->decision === 'approved' ? 'disetujui.' : 'ditolak.');
+                            $notes[] = $approval->note ?? "Pengajuan kondisi '{$approval->proposed_condition}' " . ($approval->decision === 'approved' ? 'disetujui.' : 'ditolak.');
                         } else {
                             $notes[] = "Status diubah dari '{$oldStatus}' menjadi '{$newStatus}'.";
                         }

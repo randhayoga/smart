@@ -429,9 +429,8 @@ const handleSubmit = () => {
                         <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
                           <DropdownMenuItem @select="form.status = 'Tersedia'">Tersedia</DropdownMenuItem>
                           <DropdownMenuItem @select="form.status = 'Dipinjam'">Dipinjam</DropdownMenuItem>
-                          <DropdownMenuItem @select="form.status = 'Perbaikan'">Perbaikan</DropdownMenuItem>
-                          <DropdownMenuItem @select="form.status = 'Rusak Total'">Rusak Total</DropdownMenuItem>
-                          <DropdownMenuItem @select="form.status = 'Hilang'">Hilang</DropdownMenuItem>
+                          <DropdownMenuItem @select="form.status = 'Standby'">Standby</DropdownMenuItem>
+                          <DropdownMenuItem @select="form.status = 'Tidak Aktif'">Tidak Aktif</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </FieldContent>
@@ -454,10 +453,12 @@ const handleSubmit = () => {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
-                          <DropdownMenuItem @select="form.condition = 'Baik'">Baik</DropdownMenuItem>
-                          <DropdownMenuItem @select="form.condition = 'Rusak Ringan'">Rusak Ringan</DropdownMenuItem>
-                          <DropdownMenuItem @select="form.condition = 'Rusak Berat'">Rusak Berat</DropdownMenuItem>
+                          <DropdownMenuItem @select="form.condition = 'Bagus'">Bagus</DropdownMenuItem>
+                          <DropdownMenuItem @select="form.condition = 'Rusak'">Rusak</DropdownMenuItem>
+                          <DropdownMenuItem @select="form.condition = 'QC Passed'">QC Passed</DropdownMenuItem>
+                          <DropdownMenuItem @select="form.condition = 'Lelang/Hibah'">Lelang/Hibah</DropdownMenuItem>
                           <DropdownMenuItem @select="form.condition = 'Rusak Total'">Rusak Total</DropdownMenuItem>
+                          <DropdownMenuItem @select="form.condition = 'Hilang'">Hilang</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </FieldContent>
@@ -511,8 +512,8 @@ const handleSubmit = () => {
                     <FieldError v-if="isSingle && errors.vehicle_registration">{{ errors.vehicle_registration }}</FieldError>
                   </Field>
 
-                  <!-- Document Upload (Required for approval statuses) -->
-                  <Field v-if="arrNeedApproval.includes(form.status)" :data-invalid="!!errors.memo_file || undefined">
+                  <!-- Document Upload (Required for approval conditions) -->
+                  <Field v-if="arrNeedApproval.includes(form.condition)" :data-invalid="!!errors.memo_file || undefined">
                     <FieldLabel><span>Berita Acara / Memo<span class="text-rose-500">*</span></span></FieldLabel>
                     <FieldContent>
                       <div class="flex gap-2">
@@ -530,8 +531,8 @@ const handleSubmit = () => {
                     <FieldError v-if="errors.memo_file">{{ errors.memo_file }}</FieldError>
                   </Field>
 
-                  <!-- Lost Document Upload (Required only if status is Hilang) -->
-                  <Field v-if="form.status === 'Hilang'" :data-invalid="!!errors.lost_doc_file || undefined">
+                  <!-- Lost Document Upload (Required only if condition is Hilang) -->
+                  <Field v-if="form.condition === 'Hilang'" :data-invalid="!!errors.lost_doc_file || undefined">
                     <FieldLabel><span>Surat Keterangan Kehilangan<span class="text-rose-500">*</span></span></FieldLabel>
                     <FieldContent>
                       <div class="flex gap-2">

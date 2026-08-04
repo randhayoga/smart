@@ -40,7 +40,7 @@ class AssetStatusApprovalTest extends TestCase
             'lot_id' => $lot->id,
             'location_id' => $lot->location_id,
             'status' => 'Tersedia',
-            'condition' => 'Baik',
+            'condition' => 'Bagus',
             'price' => $lot->unit_price,
             'image_url' => 'inventory/lots/placeholder.jpg',
         ]);
@@ -69,19 +69,21 @@ class AssetStatusApprovalTest extends TestCase
         $app1 = UnitStatusApproval::create([
             'unit_id' => $unit1->id,
             'requester_id' => $manager->id,
-            'proposed_status' => 'Perbaikan',
+            'proposed_condition' => 'Hilang',
+            'previous_condition' => 'Bagus',
             'previous_status' => 'Tersedia',
             'decision' => 'pending',
             'requested_at' => now(),
             'memo_url' => 'memos/placeholder.pdf',
-            'lost_doc_url' => null,
+            'lost_doc_url' => 'lost_docs/placeholder.pdf',
         ]);
         $unit1->update(['status' => 'Pending']);
 
         $app2 = UnitStatusApproval::create([
             'unit_id' => $unit2->id,
             'requester_id' => $manager->id,
-            'proposed_status' => 'Rusak Total',
+            'proposed_condition' => 'Rusak Total',
+            'previous_condition' => 'Bagus',
             'previous_status' => 'Tersedia',
             'decision' => 'pending',
             'requested_at' => now(),
@@ -106,33 +108,34 @@ class AssetStatusApprovalTest extends TestCase
         $this->assertEquals('approved', $app1->decision);
         $this->assertEquals('approved', $app2->decision);
         
-        $this->assertEquals('Dihapus', $unit1->status);
-        $this->assertEquals('Dihapus', $unit2->status);
+        $this->assertEquals('Tidak Aktif', $unit1->status);
+        $this->assertEquals('Hilang', $unit1->condition);
+
+        $this->assertEquals('Tidak Aktif', $unit2->status);
+        $this->assertEquals('Rusak Total', $unit2->condition);
 
         $this->assertDatabaseHas('unit_lifecycles', [
             'unit_id' => $unit1->id,
-            'status' => 'Perbaikan',
+            'condition' => 'Hilang',
             'actor_id' => $app1->requester_id,
         ]);
 
         $this->assertDatabaseHas('unit_lifecycles', [
             'unit_id' => $unit1->id,
-            'status' => 'Dihapus',
+            'status' => 'Tidak Aktif',
             'actor_id' => $manager->id,
-            'note' => 'Bulk approval works',
         ]);
 
         $this->assertDatabaseHas('unit_lifecycles', [
             'unit_id' => $unit2->id,
-            'status' => 'Rusak Total',
+            'condition' => 'Rusak Total',
             'actor_id' => $app2->requester_id,
         ]);
 
         $this->assertDatabaseHas('unit_lifecycles', [
             'unit_id' => $unit2->id,
-            'status' => 'Dihapus',
+            'status' => 'Tidak Aktif',
             'actor_id' => $manager->id,
-            'note' => 'Bulk approval works',
         ]);
     }
 
@@ -145,19 +148,21 @@ class AssetStatusApprovalTest extends TestCase
         $app1 = UnitStatusApproval::create([
             'unit_id' => $unit1->id,
             'requester_id' => $manager->id,
-            'proposed_status' => 'Perbaikan',
+            'proposed_condition' => 'Hilang',
+            'previous_condition' => 'Bagus',
             'previous_status' => 'Tersedia',
             'decision' => 'pending',
             'requested_at' => now(),
             'memo_url' => 'memos/placeholder.pdf',
-            'lost_doc_url' => null,
+            'lost_doc_url' => 'lost_docs/placeholder.pdf',
         ]);
         $unit1->update(['status' => 'Pending']);
 
         $app2 = UnitStatusApproval::create([
             'unit_id' => $unit2->id,
             'requester_id' => $manager->id,
-            'proposed_status' => 'Rusak Total',
+            'proposed_condition' => 'Rusak Total',
+            'previous_condition' => 'Bagus',
             'previous_status' => 'Tersedia',
             'decision' => 'pending',
             'requested_at' => now(),

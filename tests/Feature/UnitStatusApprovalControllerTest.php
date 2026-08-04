@@ -33,7 +33,7 @@ class UnitStatusApprovalControllerTest extends TestCase
             'lot_id' => $lot->id,
             'location_id' => $lot->location_id,
             'status' => 'Tersedia',
-            'condition' => 'Baik',
+            'condition' => 'Bagus',
             'price' => $lot->unit_price,
             'image_url' => 'inventory/lots/placeholder.jpg',
         ]);
@@ -47,7 +47,8 @@ class UnitStatusApprovalControllerTest extends TestCase
         $approval = UnitStatusApproval::create([
             'unit_id' => $unit->id,
             'requester_id' => $user->id,
-            'proposed_status' => 'Perbaikan',
+            'proposed_condition' => 'Rusak Total',
+            'previous_condition' => 'Bagus',
             'previous_status' => 'Tersedia',
             'decision' => 'pending',
             'requested_at' => now(),
@@ -68,8 +69,8 @@ class UnitStatusApprovalControllerTest extends TestCase
 
         $response = $this->actingAs($user)->post(route('smart.inventory.unit-status-approvals.store'), [
             'unit_id' => $unit->id,
-            'proposed_status' => 'Perbaikan',
-            'note' => 'Butuh perbaikan rutin',
+            'proposed_condition' => 'Rusak Total',
+            'note' => 'Butuh penggantian unit',
             'memo_file' => \Illuminate\Http\UploadedFile::fake()->create('memo.pdf', 100),
         ]);
 
@@ -79,10 +80,11 @@ class UnitStatusApprovalControllerTest extends TestCase
         $this->assertDatabaseHas('unit_status_approvals', [
             'unit_id' => $unit->id,
             'requester_id' => $user->id,
-            'proposed_status' => 'Perbaikan',
+            'proposed_condition' => 'Rusak Total',
+            'previous_condition' => 'Bagus',
             'previous_status' => 'Tersedia',
             'decision' => 'pending',
-            'note' => 'Butuh perbaikan rutin',
+            'note' => 'Butuh penggantian unit',
         ]);
 
         $unit->refresh();
@@ -97,7 +99,8 @@ class UnitStatusApprovalControllerTest extends TestCase
         UnitStatusApproval::create([
             'unit_id' => $unit->id,
             'requester_id' => $user->id,
-            'proposed_status' => 'Perbaikan',
+            'proposed_condition' => 'Rusak Total',
+            'previous_condition' => 'Bagus',
             'previous_status' => 'Tersedia',
             'decision' => 'pending',
             'requested_at' => now(),
@@ -107,8 +110,9 @@ class UnitStatusApprovalControllerTest extends TestCase
 
         $response = $this->actingAs($user)->post(route('smart.inventory.unit-status-approvals.store'), [
             'unit_id' => $unit->id,
-            'proposed_status' => 'Rusak Total',
+            'proposed_condition' => 'Hilang',
             'memo_file' => \Illuminate\Http\UploadedFile::fake()->create('memo.pdf', 100),
+            'lost_doc_file' => \Illuminate\Http\UploadedFile::fake()->create('lost.pdf', 100),
         ]);
 
         $response->assertSessionHasErrors(['unit_id']);
@@ -123,7 +127,8 @@ class UnitStatusApprovalControllerTest extends TestCase
         $approval = UnitStatusApproval::create([
             'unit_id' => $unit->id,
             'requester_id' => $user->id,
-            'proposed_status' => 'Perbaikan',
+            'proposed_condition' => 'Rusak Total',
+            'previous_condition' => 'Bagus',
             'previous_status' => 'Tersedia',
             'decision' => 'pending',
             'requested_at' => now(),
@@ -144,7 +149,8 @@ class UnitStatusApprovalControllerTest extends TestCase
         $approval = UnitStatusApproval::create([
             'unit_id' => $unit->id,
             'requester_id' => $user->id,
-            'proposed_status' => 'Perbaikan',
+            'proposed_condition' => 'Rusak Total',
+            'previous_condition' => 'Bagus',
             'previous_status' => 'Tersedia',
             'decision' => 'pending',
             'requested_at' => now(),
@@ -155,7 +161,7 @@ class UnitStatusApprovalControllerTest extends TestCase
 
         $response = $this->actingAs($user)->put(route('smart.inventory.unit-status-approvals.update', $approval), [
             'decision' => 'approved',
-            'note' => 'Disetujui untuk Perbaikan',
+            'note' => 'Disetujui untuk Rusak Total',
         ]);
 
         $response->assertRedirect();
@@ -165,23 +171,23 @@ class UnitStatusApprovalControllerTest extends TestCase
             'id' => $approval->id,
             'decision' => 'approved',
             'approver_id' => $user->id,
-            'note' => 'Disetujui untuk Perbaikan',
+            'note' => 'Disetujui untuk Rusak Total',
         ]);
 
         $unit->refresh();
-        $this->assertEquals('Dihapus', $unit->status);
+        $this->assertEquals('Tidak Aktif', $unit->status);
+        $this->assertEquals('Rusak Total', $unit->condition);
 
         $this->assertDatabaseHas('unit_lifecycles', [
             'unit_id' => $unit->id,
-            'status' => 'Perbaikan',
+            'condition' => 'Rusak Total',
             'actor_id' => $approval->requester_id,
         ]);
 
         $this->assertDatabaseHas('unit_lifecycles', [
             'unit_id' => $unit->id,
-            'status' => 'Dihapus',
+            'status' => 'Tidak Aktif',
             'actor_id' => $user->id,
-            'note' => 'Disetujui untuk Perbaikan',
         ]);
     }
 
@@ -193,7 +199,8 @@ class UnitStatusApprovalControllerTest extends TestCase
         $approval = UnitStatusApproval::create([
             'unit_id' => $unit->id,
             'requester_id' => $user->id,
-            'proposed_status' => 'Perbaikan',
+            'proposed_condition' => 'Rusak Total',
+            'previous_condition' => 'Bagus',
             'previous_status' => 'Tersedia',
             'decision' => 'pending',
             'requested_at' => now(),
@@ -229,7 +236,8 @@ class UnitStatusApprovalControllerTest extends TestCase
         $approval = UnitStatusApproval::create([
             'unit_id' => $unit->id,
             'requester_id' => $user->id,
-            'proposed_status' => 'Perbaikan',
+            'proposed_condition' => 'Rusak Total',
+            'previous_condition' => 'Bagus',
             'previous_status' => 'Tersedia',
             'decision' => 'pending',
             'requested_at' => now(),
@@ -269,8 +277,8 @@ class UnitStatusApprovalControllerTest extends TestCase
             'number' => $unitNumber,
             'lot_id' => $lot->id,
             'location_id' => $location->id,
-            'status' => 'Rusak Total',
-            'condition' => 'Rusak',
+            'status' => 'Tersedia',
+            'condition' => 'Rusak Total',
             'price' => 50000,
             'image_url' => $file,
             'use_lot_image' => false,
@@ -286,7 +294,8 @@ class UnitStatusApprovalControllerTest extends TestCase
         $this->assertDatabaseHas('unit_status_approvals', [
             'unit_id' => $unit->id,
             'requester_id' => $user->id,
-            'proposed_status' => 'Rusak Total',
+            'proposed_condition' => 'Rusak Total',
+            'previous_condition' => 'Bagus',
             'previous_status' => 'Tersedia',
             'decision' => 'pending',
             'approver_id' => null,
@@ -303,8 +312,8 @@ class UnitStatusApprovalControllerTest extends TestCase
             'number' => $unit->number,
             'lot_id' => $unit->lot_id,
             'location_id' => $unit->location_id,
-            'status' => 'Rusak Total',
-            'condition' => 'Rusak',
+            'status' => 'Tersedia',
+            'condition' => 'Rusak Total',
             'price' => $unit->price,
             'memo_file' => \Illuminate\Http\UploadedFile::fake()->create('memo.pdf', 100),
         ]);
@@ -317,7 +326,8 @@ class UnitStatusApprovalControllerTest extends TestCase
         $this->assertDatabaseHas('unit_status_approvals', [
             'unit_id' => $unit->id,
             'requester_id' => $user->id,
-            'proposed_status' => 'Rusak Total',
+            'proposed_condition' => 'Rusak Total',
+            'previous_condition' => 'Bagus',
             'previous_status' => 'Tersedia',
             'decision' => 'pending',
             'approver_id' => null,
@@ -333,7 +343,8 @@ class UnitStatusApprovalControllerTest extends TestCase
         $approval = UnitStatusApproval::create([
             'unit_id' => $unit->id,
             'requester_id' => $user->id,
-            'proposed_status' => 'Rusak Total',
+            'proposed_condition' => 'Rusak Total',
+            'previous_condition' => 'Bagus',
             'previous_status' => 'Tersedia',
             'decision' => 'pending',
             'requested_at' => now(),
@@ -350,17 +361,18 @@ class UnitStatusApprovalControllerTest extends TestCase
         $response->assertRedirect();
         
         $unit->refresh();
-        $this->assertEquals('Dihapus', $unit->status);
+        $this->assertEquals('Tidak Aktif', $unit->status);
+        $this->assertEquals('Rusak Total', $unit->condition);
 
         $this->assertDatabaseHas('unit_lifecycles', [
             'unit_id' => $unit->id,
-            'status' => 'Rusak Total',
+            'condition' => 'Rusak Total',
             'actor_id' => $approval->requester_id,
         ]);
 
         $this->assertDatabaseHas('unit_lifecycles', [
             'unit_id' => $unit->id,
-            'status' => 'Dihapus',
+            'status' => 'Tidak Aktif',
             'actor_id' => $user->id,
         ]);
     }

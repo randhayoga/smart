@@ -34,7 +34,7 @@ class UnitController extends Controller
         ->get()
         ->map(function ($unit) {
             $pendingApproval = $unit->statusApprovals->firstWhere('decision', 'pending');
-            $approvedApproval = $unit->status === 'Dihapus' 
+            $approvedApproval = $unit->status === 'Tidak Aktif' 
                 ? $unit->statusApprovals->where('decision', 'approved')->sortByDesc('updated_at')->first() 
                 : null;
             $barang = $unit->lot->barang ?? null;
@@ -43,8 +43,11 @@ class UnitController extends Controller
                 'number' => $unit->number, // Kode Aset
                 'status' => $unit->status,
                 'proposed_status' => $pendingApproval 
-                    ? $pendingApproval->proposed_status 
-                    : ($approvedApproval ? $approvedApproval->proposed_status : null),
+                    ? $pendingApproval->proposed_condition 
+                    : ($approvedApproval ? $approvedApproval->proposed_condition : null),
+                'proposed_condition' => $pendingApproval 
+                    ? $pendingApproval->proposed_condition 
+                    : ($approvedApproval ? $approvedApproval->proposed_condition : null),
                 'memo_url' => $pendingApproval 
                     ? $pendingApproval->memo_url 
                     : ($approvedApproval ? $approvedApproval->memo_url : null),
@@ -179,18 +182,20 @@ class UnitController extends Controller
         }
  
         $arrNeedApproval = ['Rusak Total', 'Hilang'];
-        $proposedStatus = $request->input('status');
-        $needApproval = in_array($proposedStatus, $arrNeedApproval);
+        $proposedCondition = $request->input('condition');
+        $needApproval = in_array($proposedCondition, $arrNeedApproval);
 
         if ($needApproval) {
             $rules['memo_file'] = 'required|file|max:2048';
-            if ($proposedStatus === 'Hilang') {
+            if ($proposedCondition === 'Hilang') {
                 $rules['lost_doc_file'] = 'required|file|max:2048';
             }
         }
 
         $validated = $request->validate($rules);
- 
+
+        $previousStatus = $validated['status'] ?? 'Tersedia';
+
         if ($needApproval) {
             $validated['status'] = 'Pending';
         }
@@ -217,14 +222,15 @@ class UnitController extends Controller
                 $memoUrl = $request->file('memo_file')->store('memos', 'local');
             }
             $lostDocUrl = null;
-            if ($proposedStatus === 'Hilang' && $request->hasFile('lost_doc_file')) {
+            if ($proposedCondition === 'Hilang' && $request->hasFile('lost_doc_file')) {
                 $lostDocUrl = $request->file('lost_doc_file')->store('lost_docs', 'local');
             }
             UnitStatusApproval::create([
                 'unit_id' => $unit->id,
                 'requester_id' => $request->user()->id,
-                'proposed_status' => $proposedStatus,
-                'previous_status' => 'Tersedia',
+                'proposed_condition' => $proposedCondition,
+                'previous_condition' => 'Bagus',
+                'previous_status' => $previousStatus,
                 'decision' => 'pending',
                 'note' => null,
                 'approver_id' => null,
@@ -272,8 +278,8 @@ class UnitController extends Controller
         }
  
         $arrNeedApproval = ['Rusak Total', 'Hilang'];
-        $proposedStatus = $request->input('status');
-        $needApproval = in_array($proposedStatus, $arrNeedApproval);
+        $proposedCondition = $request->input('condition');
+        $needApproval = in_array($proposedCondition, $arrNeedApproval);
 
         if ($needApproval) {
             $existing = UnitStatusApproval::where('unit_id', $unit->id)
@@ -281,7 +287,7 @@ class UnitController extends Controller
                 ->first();
             if (!$existing) {
                 $rules['memo_file'] = 'required|file|max:2048';
-                if ($proposedStatus === 'Hilang') {
+                if ($proposedCondition === 'Hilang') {
                     $rules['lost_doc_file'] = 'required|file|max:2048';
                 }
             }
@@ -321,7 +327,8 @@ class UnitController extends Controller
 
         unset($validated['use_lot_image']);
 
-        $previousStatus = $unit->status;
+        $previousStatus = $unit->status === 'Pending' ? 'Tersedia' : $unit->status;
+        $previousCondition = $unit->condition;
 
         if ($needApproval) {
             $validated['status'] = 'Pending';
@@ -339,13 +346,14 @@ class UnitController extends Controller
                     $memoUrl = $request->file('memo_file')->store('memos', 'local');
                 }
                 $lostDocUrl = null;
-                if ($proposedStatus === 'Hilang' && $request->hasFile('lost_doc_file')) {
+                if ($proposedCondition === 'Hilang' && $request->hasFile('lost_doc_file')) {
                     $lostDocUrl = $request->file('lost_doc_file')->store('lost_docs', 'local');
                 }
                 UnitStatusApproval::create([
                     'unit_id' => $unit->id,
                     'requester_id' => $request->user()->id,
-                    'proposed_status' => $proposedStatus,
+                    'proposed_condition' => $proposedCondition,
+                    'previous_condition' => $previousCondition,
                     'previous_status' => $previousStatus,
                     'decision' => 'pending',
                     'note' => null,

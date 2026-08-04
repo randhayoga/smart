@@ -171,7 +171,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
         'Kode LOT',
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ]),
-      cell: ({ row }) => h('div', { class: 'text-muted-foreground font-mono text-sm truncate font-medium' }, row.original.number),
+      cell: ({ row }) => h('div', { class: 'text-muted-foreground font-mono truncate font-medium' }, row.original.number),
     },
     {
       accessorKey: 'assetCount',

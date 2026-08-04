@@ -199,8 +199,8 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                         <span 
                           :class="[
                             'font-semibold',
-                            asset.condition === 'Baik' ? 'text-emerald-600' :
-                            asset.condition === 'Kurang Baik' ? 'text-amber-600' :
+                            asset.condition === 'Bagus' || asset.condition === 'QC Passed' ? 'text-emerald-600' :
+                            asset.condition === 'Lelang/Hibah' ? 'text-purple-600' :
                             'text-rose-600'
                           ]"
                         >
@@ -264,7 +264,7 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
               </Button>
 
               <Button 
-                v-if="asset && asset.lost_doc_url && (asset.proposed_status === 'Hilang' || asset.status === 'Hilang')"
+                v-if="asset && asset.lost_doc_url && (asset.proposed_status === 'Hilang' || asset.condition === 'Hilang')"
                 @click="openMemoFile(asset.lost_doc_url)"
                 variant="warning"
                 size="lg"

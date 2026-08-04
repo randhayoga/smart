@@ -27,10 +27,15 @@ class ProcessUnitStatusApproval
             $unit = $approval->unit;
 
             if ($decision === 'approved') {
-                $unit->update(['status' => 'Dihapus']);
+                if ($unit) {
+                    $unit->update([
+                        'condition' => $approval->proposed_condition,
+                        'status' => 'Tidak Aktif',
+                    ]);
+                }
             } else {
                 if ($unit) {
-                    $unit->update(['status' => $approval->previous_status]);
+                    $unit->update(['status' => $approval->previous_status ?? 'Tersedia']);
                 }
             }
         });

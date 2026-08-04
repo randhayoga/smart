@@ -65,6 +65,8 @@ interface ApprovalItem {
   brand: string;
   nama: string;
   specification: string;
+  proposed_condition?: string;
+  previous_condition?: string;
   proposed_status: string;
   previous_status: string;
   status_label: string;
@@ -335,7 +337,7 @@ const columns: ColumnDef<ApprovalItem>[] = [
           h('span', { class: 'sr-only' }, 'Buka Berita Acara / Memo')
         ])
       ];
-      if (item.proposed_status === 'Hilang') {
+      if (item.proposed_condition === 'Hilang' || item.proposed_status === 'Hilang') {
         buttons.push(
           h(Button, {
             variant: 'table-primary',

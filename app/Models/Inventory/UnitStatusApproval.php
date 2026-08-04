@@ -26,16 +26,16 @@ class UnitStatusApproval extends Model
             // Create requester lifecycle entry
             UnitLifecycle::create([
                 'unit_id' => $approval->unit_id,
-                'action_type' => 'Perubahan status',
-                'status' => $approval->proposed_status,
-                'condition' => $unit->condition,
+                'action_type' => 'Perubahan kondisi',
+                'status' => 'Pending',
+                'condition' => $approval->proposed_condition,
                 'location_id' => $unit->location_id,
                 'floor_id' => $unit->floor_id,
                 'room_id' => $unit->room_id,
                 'start_date' => now(),
                 'end_date' => null,
                 'actor_id' => $approval->requester_id,
-                'note' => $approval->note ?? "Pengajuan perubahan status unit dari '{$approval->previous_status}' menjadi '{$approval->proposed_status}'",
+                'note' => $approval->note ?? "Pengajuan perubahan kondisi unit dari '{$approval->previous_condition}' menjadi '{$approval->proposed_condition}'",
             ]);
         });
     }
@@ -44,7 +44,8 @@ class UnitStatusApproval extends Model
         'unit_id',
         'requester_id',
         'approver_id',
-        'proposed_status',
+        'proposed_condition',
+        'previous_condition',
         'previous_status',
         'decision',
         'note',
