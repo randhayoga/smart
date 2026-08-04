@@ -12,17 +12,20 @@ const badgeClass = computed(() => {
   const s = props.status;
   if (s === 'Tersedia') return 'bg-emerald-100 text-emerald-800';
   if (s === 'Dipinjam') return 'bg-amber-100 text-amber-800';
-  if (s === 'Perbaikan') return 'bg-blue-100 text-blue-800';
-  if (s === 'Rusak Total') return 'bg-red-100 text-red-800';
-  if (s === 'Hilang') return 'bg-rose-100 text-rose-800';
+  if (s === 'Standby') return 'bg-blue-100 text-blue-800';
   if (s === 'Tidak Aktif') return 'bg-gray-200 text-gray-800';
   if (s === 'Pending') return 'bg-purple-100 text-purple-800';
-  if (s === 'Dihapus') return 'bg-neutral-950 text-neutral-50';
+  if (s === 'Bagus') return 'bg-emerald-100 text-emerald-800';
+  if (s === 'Rusak') return 'bg-rose-100 text-rose-800';
+  if (s === 'QC Passed') return 'bg-sky-100 text-sky-800';
+  if (s === 'Lelang/Hibah') return 'bg-indigo-100 text-indigo-800';
+  if (s === 'Rusak Total') return 'bg-red-100 text-red-800';
+  if (s === 'Hilang') return 'bg-rose-100 text-rose-800';
   return 'bg-gray-100 text-gray-800';
 });
 
 const displayText = computed(() => {
-  if ((props.status === 'Pending' || props.status === 'Dihapus') && props.proposedStatus) {
+  if (props.status === 'Pending' && props.proposedStatus) {
     return `${props.status}: ${props.proposedStatus}`;
   }
   return props.status || '';

@@ -403,8 +403,8 @@ const handleSubmit = () => {
               <span 
                 :class="[
                   'font-semibold',
-                  props.asset.condition === 'Baik' ? 'text-emerald-600' :
-                  props.asset.condition === 'Kurang Baik' ? 'text-amber-600' :
+                  props.asset.condition === 'Bagus' || props.asset.condition === 'QC Passed' ? 'text-emerald-600' :
+                  props.asset.condition === 'Lelang/Hibah' ? 'text-purple-600' :
                   'text-rose-600'
                 ]"
               >
@@ -509,10 +509,12 @@ const handleSubmit = () => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-xl z-[1001]">
-                    <DropdownMenuItem @select="form.condition = 'Baik'">Baik</DropdownMenuItem>
-                    <DropdownMenuItem @select="form.condition = 'Rusak Ringan'">Rusak Ringan</DropdownMenuItem>
-                    <DropdownMenuItem @select="form.condition = 'Rusak Berat'">Rusak Berat</DropdownMenuItem>
+                    <DropdownMenuItem @select="form.condition = 'Bagus'">Bagus</DropdownMenuItem>
+                    <DropdownMenuItem @select="form.condition = 'Rusak'">Rusak</DropdownMenuItem>
+                    <DropdownMenuItem @select="form.condition = 'QC Passed'">QC Passed</DropdownMenuItem>
+                    <DropdownMenuItem @select="form.condition = 'Lelang/Hibah'">Lelang/Hibah</DropdownMenuItem>
                     <DropdownMenuItem @select="form.condition = 'Rusak Total'">Rusak Total</DropdownMenuItem>
+                    <DropdownMenuItem @select="form.condition = 'Hilang'">Hilang</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </FieldContent>
@@ -583,9 +585,8 @@ const handleSubmit = () => {
                   <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-xl z-[1001]">
                     <DropdownMenuItem @select="form.status = 'Tersedia'">Tersedia</DropdownMenuItem>
                     <DropdownMenuItem @select="form.status = 'Dipinjam'">Dipinjam</DropdownMenuItem>
-                    <DropdownMenuItem @select="form.status = 'Perbaikan'">Perbaikan</DropdownMenuItem>
-                    <DropdownMenuItem @select="form.status = 'Rusak Total'">Rusak Total</DropdownMenuItem>
-                    <DropdownMenuItem @select="form.status = 'Hilang'">Hilang</DropdownMenuItem>
+                    <DropdownMenuItem @select="form.status = 'Standby'">Standby</DropdownMenuItem>
+                    <DropdownMenuItem @select="form.status = 'Tidak Aktif'">Tidak Aktif</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </FieldContent>

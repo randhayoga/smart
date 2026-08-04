@@ -378,8 +378,8 @@ watch(floorFilter, () => {
 });
 
 // Dynamic values for dropdown filters
-const availableStatuses = ['Tersedia', 'Dipinjam', 'Perbaikan', 'Rusak Total', 'Hilang', 'Pending', 'Tidak Aktif', 'Dihapus'];
-const availableConditions = ['Baik', 'Kurang Baik', 'Rusak'];
+const availableStatuses = ['Tersedia', 'Dipinjam', 'Standby', 'Tidak Aktif', 'Pending'];
+const availableConditions = ['Bagus', 'Rusak', 'QC Passed', 'Lelang/Hibah', 'Rusak Total', 'Hilang'];
 
 const getStatusLabel = (status: string) => {
   return status || '';
@@ -522,9 +522,9 @@ const columns = computed<ColumnDef<any>[]>(() => {
       cell: ({ row }) => {
         const cond = row.getValue('condition') as string || '';
         let textClass = 'text-foreground';
-        if (cond === 'Baik') textClass = 'text-emerald-600 font-semibold';
-        else if (cond === 'Kurang Baik') textClass = 'text-amber-600 font-semibold';
-        else if (cond === 'Rusak' || cond === 'Rusak Berat' || cond === 'Rusak Ringan' || cond === 'Rusak Total') textClass = 'text-rose-600 font-semibold';
+        if (cond === 'Bagus' || cond === 'QC Passed') textClass = 'text-emerald-600 font-semibold';
+        else if (cond === 'Lelang/Hibah') textClass = 'text-purple-600 font-semibold';
+        else if (cond === 'Rusak' || cond === 'Rusak Total' || cond === 'Hilang') textClass = 'text-rose-600 font-semibold';
         
         return h('span', { class: textClass }, cond);
       }

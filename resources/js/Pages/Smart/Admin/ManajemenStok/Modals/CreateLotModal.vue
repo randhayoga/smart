@@ -275,7 +275,7 @@ const handleSubmit = () => {
           router.post('/smart/inventory/units/bulk', {
             number: `${newLot.number}-U01`, lot_id: newLot.id,
             location_id: newLot.location_id, floor_id: newLot.floor_id, room_id: newLot.room_id,
-            status: 'Tersedia', condition: 'Baik', price: Number(newLot.unit_price || newLot.unitPrice),
+            status: 'Tersedia', condition: 'Bagus', price: Number(newLot.unit_price || newLot.unitPrice),
             use_lot_image: true, bulk_quantity: autoCreateCount
           }, {
             onError: (errs) => {

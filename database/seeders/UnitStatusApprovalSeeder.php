@@ -18,8 +18,8 @@ class UnitStatusApprovalSeeder extends Seeder
             Storage::disk('local')->makeDirectory('memos');
         }
         
-        Storage::disk('local')->put('memos/berita_acara_sfg14.pdf', 'Dummy Memo Content for Acer Laptop lost status.');
-        Storage::disk('local')->put('memos/berita_acara_byd.pdf', 'Dummy Memo Content for BYD Vehicle broken status.');
+        Storage::disk('local')->put('memos/berita_acara_sfg14.pdf', 'Dummy Memo Content for Acer Laptop lost condition.');
+        Storage::disk('local')->put('memos/berita_acara_byd.pdf', 'Dummy Memo Content for BYD Vehicle broken condition.');
 
         // Clear existing approvals/lifecycles first to prevent duplicates
         UnitStatusApproval::truncate();
@@ -35,7 +35,7 @@ class UnitStatusApprovalSeeder extends Seeder
                 'unit_id' => $laptop->id,
                 'action_type' => 'Registrasi',
                 'status' => 'Tersedia',
-                'condition' => 'Baik',
+                'condition' => 'Bagus',
                 'location_id' => $laptop->location_id,
                 'floor_id' => $laptop->floor_id,
                 'room_id' => $laptop->room_id,
@@ -47,9 +47,9 @@ class UnitStatusApprovalSeeder extends Seeder
 
             UnitLifecycle::create([
                 'unit_id' => $laptop->id,
-                'action_type' => 'Perubahan status',
-                'status' => 'Hilang',
-                'condition' => 'Baik',
+                'action_type' => 'Perubahan kondisi',
+                'status' => 'Pending',
+                'condition' => 'Hilang',
                 'location_id' => $laptop->location_id,
                 'floor_id' => $laptop->floor_id,
                 'room_id' => $laptop->room_id,
@@ -59,12 +59,13 @@ class UnitStatusApprovalSeeder extends Seeder
                 'note' => 'Aset dilaporkan hilang setelah dipinjam di proyek C',
             ]);
 
-            // Seed status approval
+            // Seed condition approval
             UnitStatusApproval::withoutEvents(function () use ($laptop) {
                 UnitStatusApproval::create([
                     'unit_id' => $laptop->id,
                     'requester_id' => 1, // Admin Radifa
-                    'proposed_status' => 'Hilang',
+                    'proposed_condition' => 'Hilang',
+                    'previous_condition' => 'Bagus',
                     'previous_status' => 'Tersedia',
                     'decision' => 'pending',
                     'note' => '',
@@ -82,7 +83,7 @@ class UnitStatusApprovalSeeder extends Seeder
                 'unit_id' => $vehicle->id,
                 'action_type' => 'Registrasi',
                 'status' => 'Tersedia',
-                'condition' => 'Baik',
+                'condition' => 'Bagus',
                 'location_id' => $vehicle->location_id,
                 'floor_id' => $vehicle->floor_id,
                 'room_id' => $vehicle->room_id,
@@ -95,8 +96,8 @@ class UnitStatusApprovalSeeder extends Seeder
             UnitLifecycle::create([
                 'unit_id' => $vehicle->id,
                 'action_type' => 'Pemeliharaan',
-                'status' => 'Perbaikan',
-                'condition' => 'Rusak Ringan',
+                'status' => 'Standby',
+                'condition' => 'Rusak',
                 'location_id' => $vehicle->location_id,
                 'floor_id' => $vehicle->floor_id,
                 'room_id' => $vehicle->room_id,
@@ -108,9 +109,9 @@ class UnitStatusApprovalSeeder extends Seeder
 
             UnitLifecycle::create([
                 'unit_id' => $vehicle->id,
-                'action_type' => 'Perubahan status',
-                'status' => 'Rusak Total',
-                'condition' => 'Rusak Berat',
+                'action_type' => 'Perubahan kondisi',
+                'status' => 'Pending',
+                'condition' => 'Rusak Total',
                 'location_id' => $vehicle->location_id,
                 'floor_id' => $vehicle->floor_id,
                 'room_id' => $vehicle->room_id,
@@ -120,13 +121,14 @@ class UnitStatusApprovalSeeder extends Seeder
                 'note' => 'Mengalami kerusakan mesin saat operasional',
             ]);
 
-            // Seed status approval
+            // Seed condition approval
             UnitStatusApproval::withoutEvents(function () use ($vehicle) {
                 UnitStatusApproval::create([
                     'unit_id' => $vehicle->id,
                     'requester_id' => 1, // Admin Radifa
-                    'proposed_status' => 'Rusak Total',
-                    'previous_status' => 'Perbaikan',
+                    'proposed_condition' => 'Rusak Total',
+                    'previous_condition' => 'Rusak',
+                    'previous_status' => 'Standby',
                     'decision' => 'pending',
                     'note' => '',
                     'requested_at' => Carbon::now()->subDays(1),

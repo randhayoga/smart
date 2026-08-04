@@ -48,12 +48,12 @@ class BulkUnitController extends Controller
         }
 
         $arrNeedApproval = ['Rusak Total', 'Hilang'];
-        $proposedStatus = $request->input('status');
-        $needApproval = in_array($proposedStatus, $arrNeedApproval);
+        $proposedCondition = $request->input('condition');
+        $needApproval = in_array($proposedCondition, $arrNeedApproval);
 
         if ($needApproval) {
             $rules['memo_file'] = 'required|file|max:2048';
-            if ($proposedStatus === 'Hilang') {
+            if ($proposedCondition === 'Hilang') {
                 $rules['lost_doc_file'] = 'required|file|max:2048';
             }
         }
@@ -148,14 +148,15 @@ class BulkUnitController extends Controller
                     $memoUrl = $request->file('memo_file')->store('memos', 'local');
                 }
                 $lostDocUrl = null;
-                if ($proposedStatus === 'Hilang' && $request->hasFile('lost_doc_file')) {
+                if ($proposedCondition === 'Hilang' && $request->hasFile('lost_doc_file')) {
                     $lostDocUrl = $request->file('lost_doc_file')->store('lost_docs', 'local');
                 }
                 UnitStatusApproval::create([
                     'unit_id' => $unit->id,
                     'requester_id' => $request->user()->id,
-                    'proposed_status' => $proposedStatus,
-                    'previous_status' => 'Tersedia',
+                    'proposed_condition' => $proposedCondition,
+                    'previous_condition' => 'Bagus',
+                    'previous_status' => $validated['status'] ?? 'Tersedia',
                     'decision' => 'pending',
                     'note' => null,
                     'approver_id' => null,
@@ -194,14 +195,14 @@ class BulkUnitController extends Controller
         }
 
         $arrNeedApproval = ['Rusak Total', 'Hilang'];
-        $proposedStatus = $request->input('status');
-        $needApproval = $request->filled('status') && in_array($proposedStatus, $arrNeedApproval);
+        $proposedCondition = $request->input('condition');
+        $needApproval = $request->filled('condition') && in_array($proposedCondition, $arrNeedApproval);
 
         if ($needApproval) {
             $rulesForApproval = [
                 'memo_file' => 'required|file|max:2048',
             ];
-            if ($proposedStatus === 'Hilang') {
+            if ($proposedCondition === 'Hilang') {
                 $rulesForApproval['lost_doc_file'] = 'required|file|max:2048';
             }
             $request->validate($rulesForApproval);
@@ -210,13 +211,12 @@ class BulkUnitController extends Controller
         $updateData = [];
 
         // 1. Status & Condition
-        if ($request->filled('status')) {
-            if ($needApproval) {
-                $updateData['status'] = 'Pending';
-            } else {
-                $updateData['status'] = $proposedStatus;
-            }
+        if ($needApproval) {
+            $updateData['status'] = 'Pending';
+        } else if ($request->filled('status')) {
+            $updateData['status'] = $request->input('status');
         }
+
         if ($request->filled('condition')) {
             $updateData['condition'] = $request->input('condition');
         }
@@ -279,14 +279,14 @@ class BulkUnitController extends Controller
             }
         }
 
-        // 5. Handle approvals if status is changed to a status requiring approval
+        // 5. Handle approvals if condition is changed to a condition requiring approval
         if ($needApproval) {
             $memoUrl = 'memos/placeholder.pdf';
             if ($request->hasFile('memo_file')) {
                 $memoUrl = $request->file('memo_file')->store('memos', 'local');
             }
             $lostDocUrl = null;
-            if ($proposedStatus === 'Hilang' && $request->hasFile('lost_doc_file')) {
+            if ($proposedCondition === 'Hilang' && $request->hasFile('lost_doc_file')) {
                 $lostDocUrl = $request->file('lost_doc_file')->store('lost_docs', 'local');
             }
             foreach ($units as $unit) {
@@ -297,8 +297,9 @@ class BulkUnitController extends Controller
                     UnitStatusApproval::create([
                         'unit_id' => $unit->id,
                         'requester_id' => $request->user()->id,
-                        'proposed_status' => $proposedStatus,
-                        'previous_status' => $unit->status,
+                        'proposed_condition' => $proposedCondition,
+                        'previous_condition' => $unit->condition,
+                        'previous_status' => $unit->status === 'Pending' ? 'Tersedia' : $unit->status,
                         'decision' => 'pending',
                         'note' => null,
                         'approver_id' => null,

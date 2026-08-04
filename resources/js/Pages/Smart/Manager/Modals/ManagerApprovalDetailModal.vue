@@ -199,8 +199,8 @@ const openMemoFile = (path: string | null) => {
                       <span 
                         :class="[
                           'font-semibold',
-                          approval.unit_details.condition === 'Baik' ? 'text-emerald-600' :
-                          approval.unit_details.condition === 'Kurang Baik' ? 'text-amber-600' :
+                          approval.unit_details.condition === 'Bagus' || approval.unit_details.condition === 'QC Passed' ? 'text-emerald-600' :
+                          approval.unit_details.condition === 'Lelang/Hibah' ? 'text-purple-600' :
                           'text-rose-600'
                         ]"
                       >
@@ -236,7 +236,7 @@ const openMemoFile = (path: string | null) => {
 
               <!-- Lost Document Button (Conditional if Hilang) -->
               <Button 
-                v-if="approval.proposed_status === 'Hilang'"
+                v-if="approval.proposed_condition === 'Hilang' || approval.proposed_status === 'Hilang'"
                 @click="openMemoFile(approval.lost_doc_url)"
                 variant="warning"
                 size="lg"

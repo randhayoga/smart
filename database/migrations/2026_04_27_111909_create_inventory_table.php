@@ -61,8 +61,9 @@ return new class extends Migration {
             $table->foreignId('unit_id')->constrained('units')->noActionOnDelete();
             $table->foreignId('requester_id')->constrained('adm_users')->comment("ADM_USER's id")->noActionOnDelete();
             $table->foreignId('approver_id')->nullable()->constrained('adm_users')->comment("nullable | ADM_USER's id")->noActionOnDelete();
-            $table->string('proposed_status');
-            $table->string('previous_status');
+            $table->string('proposed_condition');
+            $table->string('previous_condition');
+            $table->string('previous_status')->nullable();
             $table->string('memo_url');
             $table->string('lost_doc_url')->nullable();
             $table->string('decision')->default('pending')->comment('pending | approved | rejected');
