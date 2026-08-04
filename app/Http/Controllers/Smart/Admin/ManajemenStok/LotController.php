@@ -296,9 +296,7 @@ class LotController extends Controller
                         'status' => $log->status,
                         'action_type' => $log->action_type,
                         'aktor' => $log->actor->name ?? '-',
-                        'durasi' => $log->end_date && $log->start_date 
-                            ? round($log->start_date->diffInMinutes($log->end_date) / 60, 1) . ' jam' 
-                            : '-',
+                        'durasi' => $log->formatted_duration,
                         'catatan' => $log->note ?? '-',
                     ];
                 })->toArray(),

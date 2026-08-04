@@ -352,7 +352,7 @@ class LotControllerTest extends TestCase
                 'lot_id' => $lot->id,
                 'location_id' => $lot->location_id ?? 1,
                 'status' => 'Tersedia',
-                'condition' => 'Baik',
+                'condition' => 'Bagus',
                 'price' => $lot->unit_price ?? 0,
                 'image_url' => $lot->image_url ?? 'inventory/lots/placeholder.jpg',
             ]);
@@ -361,8 +361,8 @@ class LotControllerTest extends TestCase
 
         $response = $this->actingAs($user)->post(route('smart.inventory.units.bulk-update'), [
             'ids' => $ids,
-            'status' => 'Perbaikan',
-            'condition' => 'Perbaikan',
+            'status' => 'Standby',
+            'condition' => 'Rusak',
             'location_id' => (string) $location->id,
             'floor_id' => (string) $floor->id,
             'room_id' => (string) $room->id,
@@ -374,8 +374,8 @@ class LotControllerTest extends TestCase
         foreach ($ids as $id) {
             $this->assertDatabaseHas('units', [
                 'id' => $id,
-                'status' => 'Perbaikan',
-                'condition' => 'Perbaikan',
+                'status' => 'Standby',
+                'condition' => 'Rusak',
                 'location_id' => $location->id,
                 'floor_id' => $floor->id,
                 'room_id' => $room->id,
