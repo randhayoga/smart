@@ -264,9 +264,9 @@ class BulkUnitController extends Controller
             if ($proposedCondition === 'Hilang') {
                 $rulesForApproval['lost_doc_file'] = 'required|file|mimes:pdf,jpeg,jpg,png|max:2048';
                 $messagesForApproval['lost_doc_file.required'] = 'Surat Keterangan Kehilangan wajib diisi jika kondisi Hilang.';
-                $messagesForApproval['lost_doc_file.mimes'] = 'Format Surat Keterangan Kehilangan salah! Hanya diperbolehkan file .pdf, .jpg, .jpeg, atau .png.',
-                'messagesForApproval.max' => 'Gagal! Ukuran Surat Keterangan Kehilangan maksimal 2MB.',
-            ];
+                $messagesForApproval['lost_doc_file.mimes'] = 'Format Surat Keterangan Kehilangan salah! Hanya diperbolehkan file .pdf, .jpg, .jpeg, atau .png.';
+                $messagesForApproval['lost_doc_file.max'] = 'Gagal! Ukuran Surat Keterangan Kehilangan maksimal 2MB.';
+            }
             $request->validate($rulesForApproval, $messagesForApproval);
         }
 
