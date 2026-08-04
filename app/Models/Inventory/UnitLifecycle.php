@@ -62,4 +62,34 @@ class UnitLifecycle extends Model
     {
         return $this->belongsTo(AdmUser::class, 'actor_id');
     }
+
+    public function getFormattedDurationAttribute(): string
+    {
+        if (!$this->start_date || !$this->end_date) {
+            return '-';
+        }
+
+        $days = (int) floor($this->start_date->diffInDays($this->end_date));
+        if ($days < 30) {
+            return "{$days} hari";
+        }
+
+        $years = (int) floor($days / 365);
+        $remDaysAfterYears = $days % 365;
+        $months = (int) floor($remDaysAfterYears / 30);
+        $remainingDays = $remDaysAfterYears % 30;
+
+        $parts = [];
+        if ($years > 0) {
+            $parts[] = "{$years} tahun";
+        }
+        if ($months > 0) {
+            $parts[] = "{$months} bulan";
+        }
+        if ($remainingDays > 0 || empty($parts)) {
+            $parts[] = "{$remainingDays} hari";
+        }
+
+        return implode(' ', $parts);
+    }
 }

@@ -29,10 +29,50 @@ import ManagerApprovalDetailModal from './Modals/ManagerApprovalDetailModal.vue'
 interface AuditTrail {
   waktu: string;
   status: string;
+  action_type: string;
   aktor: string;
   durasi: string | number;
   catatan: string;
 }
+
+const formatDurasi = (val: string | number) => {
+  if (val === null || val === undefined || val === '-' || val === '') return '-';
+
+  let totalDays = 0;
+
+  if (typeof val === 'number') {
+    totalDays = Math.floor(val);
+  } else if (typeof val === 'string') {
+    const trimmed = val.trim();
+    if (trimmed.endsWith('jam')) {
+      const hours = parseFloat(trimmed.replace('jam', '').trim());
+      if (isNaN(hours)) return val;
+      totalDays = Math.floor(hours / 24);
+    } else if (trimmed.includes('hari') || trimmed.includes('bulan') || trimmed.includes('tahun')) {
+      return trimmed;
+    } else {
+      const parsed = parseFloat(trimmed);
+      if (isNaN(parsed)) return val;
+      totalDays = Math.floor(parsed);
+    }
+  }
+
+  if (totalDays < 30) {
+    return `${totalDays} hari`;
+  }
+
+  const years = Math.floor(totalDays / 365);
+  const remDaysAfterYears = totalDays % 365;
+  const months = Math.floor(remDaysAfterYears / 30);
+  const days = remDaysAfterYears % 30;
+
+  const parts: string[] = [];
+  if (years > 0) parts.push(`${years} tahun`);
+  if (months > 0) parts.push(`${months} bulan`);
+  if (days > 0 || parts.length === 0) parts.push(`${days} hari`);
+
+  return parts.join(' ');
+};
 
 interface UnitDetails {
   id: number;
@@ -378,11 +418,11 @@ const auditColumns: ColumnDef<AuditTrail>[] = [
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-center w-full'
       }, () => [
-        'Durasi (hari)',
+        'Durasi',
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
-    cell: ({ row }) => h('div', { class: 'text-center text-foreground truncate' }, row.getValue('durasi')),
+    cell: ({ row }) => h('div', { class: 'text-center text-foreground truncate' }, formatDurasi(row.getValue('durasi'))),
   },
   {
     accessorKey: 'catatan',

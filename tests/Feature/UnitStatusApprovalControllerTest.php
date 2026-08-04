@@ -376,4 +376,36 @@ class UnitStatusApprovalControllerTest extends TestCase
             'actor_id' => $user->id,
         ]);
     }
+
+    public function test_multi_action_update_splits_audit_trail_entries(): void
+    {
+        $user = User::factory()->create();
+        $unit = $this->createUnit();
+        $newLocation = \App\Models\Master\Location::factory()->create();
+
+        // Perform multi-action update (Status change + Condition change + Location change)
+        $response = $this->actingAs($user)->put(route('smart.inventory.units.update', $unit), [
+            'number' => $unit->number,
+            'lot_id' => $unit->lot_id,
+            'location_id' => $newLocation->id,
+            'status' => 'Standby',
+            'condition' => 'Rusak',
+            'price' => $unit->price,
+        ]);
+
+        $response->assertSessionHasNoErrors();
+        $response->assertRedirect();
+
+        // Verify that separate lifecycle entries were created for each action
+        $lifecycles = UnitLifecycle::where('unit_id', $unit->id)
+            ->where('action_type', '!=', 'Registrasi')
+            ->get();
+
+        $this->assertCount(3, $lifecycles);
+
+        $actionTypes = $lifecycles->pluck('action_type')->toArray();
+        $this->assertContains('Perubahan status', $actionTypes);
+        $this->assertContains('Perubahan kondisi', $actionTypes);
+        $this->assertContains('Pemindahan', $actionTypes);
+    }
 }

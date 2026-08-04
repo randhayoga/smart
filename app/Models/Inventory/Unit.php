@@ -55,23 +55,16 @@ class Unit extends Model
             $changed = array_intersect(array_keys($dirty), $tracked);
 
             if (!empty($changed)) {
-                if ($unit->isDirty('status') && $unit->status === 'Pending') {
-                    return;
-                }
+                $isPendingStatus = ($unit->isDirty('status') && $unit->status === 'Pending');
 
-                UnitLifecycle::where('unit_id', $unit->id)
-                    ->whereNull('end_date')
-                    ->update(['end_date' => now()]);
+                $actions = [];
 
-                $notes = [];
-                $actionType = 'Perubahan status';
-                $approval = null;
-
-                if ($unit->isDirty('status')) {
+                // 1. Status Change
+                if ($unit->isDirty('status') && !$isPendingStatus) {
                     $oldStatus = $unit->getOriginal('status');
                     $newStatus = $unit->status;
-                    $actionType = 'Perubahan status';
 
+                    $approval = null;
                     if ($oldStatus === 'Pending') {
                         $approval = UnitStatusApproval::where('unit_id', $unit->id)
                             ->whereIn('decision', ['approved', 'rejected'])
@@ -79,25 +72,44 @@ class Unit extends Model
                             ->first();
 
                         if ($approval) {
-                            $notes[] = $approval->note ?? "Pengajuan kondisi '{$approval->proposed_condition}' " . ($approval->decision === 'approved' ? 'disetujui.' : 'ditolak.');
+                            $note = $approval->note ?? "Pengajuan kondisi '{$approval->proposed_condition}' " . ($approval->decision === 'approved' ? 'disetujui.' : 'ditolak.');
                         } else {
-                            $notes[] = "Status diubah dari '{$oldStatus}' menjadi '{$newStatus}'.";
+                            $note = "Status diubah dari '{$oldStatus}' menjadi '{$newStatus}'.";
                         }
                     } else {
-                        $notes[] = "Status diubah dari '{$oldStatus}' menjadi '{$newStatus}'.";
+                        $note = "Status diubah dari '{$oldStatus}' menjadi '{$newStatus}'.";
                     }
+
+                    $actions[] = [
+                        'action_type' => 'Perubahan status',
+                        'note' => $note,
+                        'previous_state' => ['status' => $oldStatus],
+                        'new_state' => ['status' => $newStatus],
+                        'approval' => $approval,
+                    ];
                 }
 
-                if ($unit->isDirty('condition')) {
-                    $notes[] = "Kondisi fisik diubah dari '{$unit->getOriginal('condition')}' menjadi '{$unit->condition}'.";
-                    $actionType = 'Perubahan kondisi';
+                // 2. Condition Change
+                if ($unit->isDirty('condition') && !$isPendingStatus) {
+                    $oldCondition = $unit->getOriginal('condition');
+                    $newCondition = $unit->condition;
+                    $note = "Kondisi fisik diubah dari '{$oldCondition}' menjadi '{$newCondition}'.";
+
+                    $actions[] = [
+                        'action_type' => 'Perubahan kondisi',
+                        'note' => $note,
+                        'previous_state' => ['condition' => $oldCondition],
+                        'new_state' => ['condition' => $newCondition],
+                        'approval' => null,
+                    ];
                 }
 
+                // 3. Location / Floor / Room Change (Pemindahan)
                 if ($unit->isDirty('location_id') || $unit->isDirty('floor_id') || $unit->isDirty('room_id')) {
                     $oldLoc = Location::find($unit->getOriginal('location_id'))->name ?? '-';
                     $oldFloor = $unit->getOriginal('floor_id') ? (Floor::find($unit->getOriginal('floor_id'))->name ?? '') : '';
                     $oldRoom = $unit->getOriginal('room_id') ? (Room::find($unit->getOriginal('room_id'))->name ?? '') : '';
-                    
+
                     $oldPath = $oldLoc;
                     if ($oldFloor) {
                         $oldPath .= ", {$oldFloor}";
@@ -109,7 +121,7 @@ class Unit extends Model
                     $newLoc = Location::find($unit->location_id)->name ?? '-';
                     $newFloor = $unit->floor_id ? (Floor::find($unit->floor_id)->name ?? '') : '';
                     $newRoom = $unit->room_id ? (Room::find($unit->room_id)->name ?? '') : '';
-                    
+
                     $newPath = $newLoc;
                     if ($newFloor) {
                         $newPath .= ", {$newFloor}";
@@ -118,31 +130,58 @@ class Unit extends Model
                         $newPath .= ", {$newRoom}";
                     }
 
-                    $notes[] = "Lokasi dipindahkan dari '{$oldPath}' ke '{$newPath}.'";
-                    $actionType = 'Pemindahan';
+                    $note = "Lokasi dipindahkan dari '{$oldPath}' ke '{$newPath}.'";
+
+                    $actions[] = [
+                        'action_type' => 'Pemindahan',
+                        'note' => $note,
+                        'previous_state' => [
+                            'location_id' => $unit->getOriginal('location_id'),
+                            'floor_id' => $unit->getOriginal('floor_id'),
+                            'room_id' => $unit->getOriginal('room_id'),
+                        ],
+                        'new_state' => [
+                            'location_id' => $unit->location_id,
+                            'floor_id' => $unit->floor_id,
+                            'room_id' => $unit->room_id,
+                        ],
+                        'approval' => null,
+                    ];
                 }
 
-                $note = implode(' | ', $notes) ?: 'Detail aset diperbarui.';
-                $previousState = array_intersect_key($unit->getOriginal(), array_flip($tracked));
-                $newState = array_intersect_key($unit->toArray(), array_flip($tracked));
+                if (!empty($actions)) {
+                    UnitLifecycle::where('unit_id', $unit->id)
+                        ->whereNull('end_date')
+                        ->update(['end_date' => now()]);
 
-                $actorId = auth()->id() ?? ($approval ? $approval->approver_id : null);
+                    $totalActions = count($actions);
+                    foreach ($actions as $index => $act) {
+                        if ($index > 0) {
+                            UnitLifecycle::where('unit_id', $unit->id)
+                                ->whereNull('end_date')
+                                ->update(['end_date' => now()]);
+                        }
 
-                UnitLifecycle::create([
-                    'unit_id' => $unit->id,
-                    'action_type' => $actionType,
-                    'status' => $unit->status,
-                    'condition' => $unit->condition,
-                    'location_id' => $unit->location_id,
-                    'floor_id' => $unit->floor_id,
-                    'room_id' => $unit->room_id,
-                    'start_date' => now(),
-                    'end_date' => null,
-                    'actor_id' => $actorId,
-                    'note' => $note,
-                    'previous_state' => $previousState,
-                    'new_state' => $newState,
-                ]);
+                        $actorId = auth()->id() ?? ($act['approval'] ? $act['approval']->approver_id : null);
+                        $isLast = ($index === $totalActions - 1);
+
+                        UnitLifecycle::create([
+                            'unit_id' => $unit->id,
+                            'action_type' => $act['action_type'],
+                            'status' => $unit->status,
+                            'condition' => $unit->condition,
+                            'location_id' => $unit->location_id,
+                            'floor_id' => $unit->floor_id,
+                            'room_id' => $unit->room_id,
+                            'start_date' => now(),
+                            'end_date' => $isLast ? null : now(),
+                            'actor_id' => $actorId,
+                            'note' => $act['note'],
+                            'previous_state' => $act['previous_state'],
+                            'new_state' => $act['new_state'],
+                        ]);
+                    }
+                }
             }
         });
 

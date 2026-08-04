@@ -25,10 +25,7 @@ class ManagerAssetStatusApprovalResource extends JsonResource
             ->orderBy('id', 'desc')
             ->get()
             ->map(function ($lc) {
-                $duration = '-';
-                if ($lc->start_date && $lc->end_date) {
-                    $duration = (int) floor($lc->start_date->diffInDays($lc->end_date));
-                }
+                $duration = $lc->formatted_duration;
 
                 $actorRole = 'System';
                 $actorName = 'System';
