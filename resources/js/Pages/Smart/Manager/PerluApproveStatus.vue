@@ -92,7 +92,7 @@ const props = defineProps<Props>();
 // ─────────────────────────────────────────────
 const searchQuery = ref('');
 const categoryFilter = ref('Semua kategori');
-const statusFilter = ref('Semua status');
+const kondisiFilter = ref('Semua kondisi');
 const rowsPerPage = ref('Semua baris');
 
 const dataTableRef = ref<any>(null);
@@ -114,7 +114,7 @@ const categoryOptions = computed(() => {
   return Array.from(cats);
 });
 
-const statusOptions = computed(() => {
+const kondisiOptions = computed(() => {
   const stats = new Set<string>();
   props.approvals.forEach(app => {
     if (app.status_label) stats.add(app.status_label);
@@ -130,8 +130,8 @@ const filteredApprovals = computed(() => {
     list = list.filter(app => app.category === categoryFilter.value);
   }
 
-  if (statusFilter.value !== 'Semua status') {
-    list = list.filter(app => app.status_label === statusFilter.value);
+  if (kondisiFilter.value !== 'Semua kondisi') {
+    list = list.filter(app => app.status_label === kondisiFilter.value);
   }
 
   // default sort by id desc
@@ -147,7 +147,7 @@ const computedPageSize = computed(() => {
   return parseInt(rowsPerPage.value, 10);
 });
 
-watch([categoryFilter, statusFilter], () => {
+watch([categoryFilter, kondisiFilter], () => {
   if (dataTableRef.value && dataTableRef.value.table) {
     dataTableRef.value.table.resetRowSelection();
   }
@@ -270,7 +270,7 @@ const columns: ColumnDef<ApprovalItem>[] = [
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Status',
+        'Kondisi',
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
@@ -655,14 +655,14 @@ onUnmounted(() => {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal bg-white', (!statusFilter || statusFilter === 'Semua status') ? 'text-muted-foreground' : 'text-foreground']">
-              <span class="truncate">{{ statusFilter || 'Semua status' }}</span>
+            <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal bg-white', (!kondisiFilter || kondisiFilter === 'Semua kondisi') ? 'text-muted-foreground' : 'text-foreground']">
+              <span class="truncate">{{ kondisiFilter || 'Semua kondisi' }}</span>
               <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
-            <DropdownMenuItem @select="statusFilter = 'Semua status'">Semua status</DropdownMenuItem>
-            <DropdownMenuItem v-for="st in statusOptions" :key="st" @select="statusFilter = st">
+            <DropdownMenuItem @select="kondisiFilter = 'Semua kondisi'">Semua kondisi</DropdownMenuItem>
+            <DropdownMenuItem v-for="st in kondisiOptions" :key="st" @select="kondisiFilter = st">
               {{ st }}
             </DropdownMenuItem>
           </DropdownMenuContent>

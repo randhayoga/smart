@@ -68,6 +68,13 @@ const openMemoFile = (path: string | null) => {
   if (!path) return;
   window.open('/media/' + path, '_blank');
 };
+const getConditionClass = (cond?: string | null) => {
+  if (!cond) return 'text-foreground';
+  if (cond === 'Bagus' || cond === 'QC Passed') return 'text-emerald-600 font-semibold';
+  if (cond === 'Lelang/Hibah') return 'text-purple-600 font-semibold';
+  if (cond === 'Rusak' || cond === 'Rusak Total' || cond === 'Hilang') return 'text-rose-600 font-semibold';
+  return 'text-foreground';
+};
 </script>
 
 <template>
@@ -155,6 +162,13 @@ const openMemoFile = (path: string | null) => {
                     <p v-if="isVehicle(approval)" class="font-bold text-foreground">
                       <span class="text-foreground">Nopol:</span> {{ approval.unit_details.vehicle_registration || '-' }}
                     </p>
+
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                      <span>Kondisi diajukan:</span>
+                      <span :class="getConditionClass(approval.proposed_condition || approval.proposed_status || approval.status_label)">
+                        {{ approval.proposed_condition || approval.proposed_status || approval.status_label }}
+                      </span>
+                    </div>
                     
                     <!-- Decided mode fields -->
                     <p v-if="mode === 'decided'" class="text-foreground">
@@ -169,45 +183,38 @@ const openMemoFile = (path: string | null) => {
                       </span>
                     </p>
 
-                    <p class="text-foreground flex flex-col gap-1.5">
-                      <span>
-                        Status sebelumnya: 
+                    <div class="text-foreground flex flex-col gap-1.5">
+                      <div class="flex items-center gap-1.5 flex-wrap">
+                        <span>Status & kondisi sebelumnya:</span>
                         <StatusBadge :status="approval.previous_status" />
-                      </span>
-                      <span>
-                        Status diajukan: 
-                        <StatusBadge :status="approval.proposed_status" />
-                      </span>
-                      
-                      <!-- Decided mode fields -->
-                      <span v-if="mode === 'decided'">
-                        Status setelah approval: 
-                        <StatusBadge 
-                          :status="approval.unit_details.status" 
-                          :proposed-status="approval.proposed_status"
-                        />
-                      </span>
-                    </p>
+                        <span :class="getConditionClass(approval.previous_condition || approval.unit_details.condition)">
+                          {{ approval.previous_condition || approval.unit_details.condition }}
+                        </span>
+                      </div>
+
+                      <div v-if="mode === 'decided'" class="flex items-center gap-1.5 flex-wrap">
+                        <span>Status & kondisi setelah approval:</span>
+                        <template v-if="approval.decision === 'approved'">
+                          <StatusBadge status="Tidak Aktif" />
+                          <span :class="getConditionClass(approval.proposed_condition || approval.proposed_status)">
+                            {{ approval.proposed_condition || approval.proposed_status }}
+                          </span>
+                        </template>
+                        <template v-else>
+                          <StatusBadge :status="approval.previous_status" />
+                          <span :class="getConditionClass(approval.previous_condition || approval.unit_details.condition)">
+                            {{ approval.previous_condition || approval.unit_details.condition }}
+                          </span>
+                        </template>
+                      </div>
+                    </div>
 
                     <!-- Decided mode fields -->
-                    <p class="text-foreground" v-if="mode === 'decided' && approval.note">
+                    <p class="text-foreground mt-1.5" v-if="mode === 'decided' && approval.note">
                       Catatan Manager: <span class="italic text-muted-foreground">"{{ approval.note }}"</span>
                     </p>
 
-                    <p class="text-foreground">
-                      Kondisi: 
-                      <span 
-                        :class="[
-                          'font-semibold',
-                          approval.unit_details.condition === 'Bagus' || approval.unit_details.condition === 'QC Passed' ? 'text-emerald-600' :
-                          approval.unit_details.condition === 'Lelang/Hibah' ? 'text-purple-600' :
-                          'text-rose-600'
-                        ]"
-                      >
-                        {{ approval.unit_details.condition }}
-                      </span>
-                    </p>
-                    <p class="text-foreground">Nilai: {{ formatRupiah(approval.unit_details.price) }}</p>
+                    <p class="text-foreground mt-1.5">Nilai: {{ formatRupiah(approval.unit_details.price) }}</p>
                     <p class="text-foreground">Lokasi penyimpanan: {{ formatLocation(approval.unit_details.location, approval.unit_details.floor, approval.unit_details.room) }}</p>
                     <p class="text-foreground" v-if="mode === 'pending'">Pembaruan terakhir: {{ approval.requested_at }}</p>
                   </div>

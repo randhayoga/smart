@@ -15,11 +15,9 @@ class ProcessUnitStatusApproval
     public function execute(UnitStatusApproval $approval, string $decision, ?string $note, int $approverId): void
     {
         DB::transaction(function () use ($approval, $decision, $note, $approverId) {
-            $defaultNote = $decision === 'approved' ? 'Disetujui' : 'Ditolak';
-            
             $approval->update([
                 'decision' => $decision,
-                'note' => $note ?? $approval->note ?? $defaultNote,
+                'note' => $note,
                 'approver_id' => $approverId,
                 'decided_at' => now(),
             ]);
