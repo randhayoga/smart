@@ -229,16 +229,7 @@ const auditColumns: ColumnDef<AuditTrail>[] = [
   },
   {
     accessorKey: 'catatan',
-    header: ({ column }) => {
-      return h(Button, {
-        variant: 'ghost',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
-      }, () => [
-        'Catatan',
-        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-      ])
-    },
+    header: () => h('div', { class: 'font-semibold text-foreground justify-start' }, 'Catatan'),
     cell: ({ row }) => {
       const note = String(row.getValue('catatan') || '');
       if (note.includes(' | ')) {

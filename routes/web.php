@@ -15,6 +15,7 @@ use App\Http\Controllers\Smart\User\BorrowCartController;
 use App\Http\Controllers\Smart\User\RequestCartConfirmationController;
 use App\Http\Controllers\Smart\User\BorrowCartConfirmationController;
 use App\Http\Controllers\Smart\User\RequestHistoryController;
+use App\Http\Controllers\Smart\Admin\AuditController;
 use App\Http\Controllers\Smart\Admin\Master\CategoryController;
 use App\Http\Controllers\Smart\Admin\Master\SubcategoryController;
 use App\Http\Controllers\Smart\Admin\Master\UomController;
@@ -105,6 +106,7 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
         Route::post('/returns/{id}/confirm', [ReturnController::class, 'confirm'])->name('returns.confirm');
         Route::get('/arsip', [\App\Http\Controllers\Smart\Admin\ArsipController::class, 'index'])->name('arsip');
         Route::get('/arsip/{id}', [\App\Http\Controllers\Smart\Admin\ArsipController::class, 'show'])->name('arsip.show');
+        Route::get('/audit', [AuditController::class, 'index'])->name('audit');
     });
 
     // Manager only routes
