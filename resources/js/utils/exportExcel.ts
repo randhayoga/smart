@@ -127,10 +127,9 @@ function escapeXML(str: any): string {
 }
 
 function getColumnLetter(colIndex: number): string {
-  let temp = '';
   let letter = '';
   while (colIndex >= 0) {
-    temp = colIndex % 26;
+    const temp = colIndex % 26;
     letter = String.fromCharCode(temp + 65) + letter;
     colIndex = Math.floor(colIndex / 26) - 1;
   }
@@ -237,7 +236,7 @@ export function exportExcel(
   ];
 
   const zipBytes = buildZip(files);
-  const blob = new Blob([zipBytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const blob = new Blob([zipBytes.buffer as ArrayBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.setAttribute('href', url);

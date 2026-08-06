@@ -31,6 +31,7 @@ class UnitController extends Controller
             'lot.barang.subcategory.category', 'lot.barang.brand',
             'lot.organizer', 'lot.vendor', 'lifecycles.actor'
         ])
+        ->where('status', 'not like', 'Pending%')
         ->get()
         ->map(function ($unit) {
             $pendingApproval = $unit->statusApprovals->firstWhere('decision', 'pending');
