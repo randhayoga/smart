@@ -26,8 +26,9 @@ import DeleteErrorModal from '@/Components/DeleteErrorModal.vue';
 import Combobox from '@/Components/Combobox.vue';
 import DetailLOTConsumables from '../DetailLOTConsumables.vue';
 import EditLotModal from '../Modals/EditLotModal.vue';
-import { Switch } from '@/Components/ui/switch';
 import { printManajemenStok } from '@/utils/printManajemenStok';
+import { exportCSV } from '@/utils/exportCSV';
+import { exportExcel } from '@/utils/exportExcel';
 
 interface Props {
   lots: {
@@ -437,39 +438,33 @@ const getExportData = () => {
   return dataTableRef.value.table.getFilteredRowModel().rows.map((row: any) => row.original);
 };
 
-const handleExportCSV = () => {
+const getExportPayload = () => {
   const data = getExportData();
-  if (data.length === 0) return;
-  
   const headers = ['Kode LOT', 'Jml. Stok', 'Nama', 'Merek', 'Kategori', 'Subkategori', 'Nomor PO', 'Organizer', 'Lokasi'];
   const rows = data.map((item: any) => [
-    `"${item.number}"`,
-    `"${item.current_quantity ?? 0}"`,
-    `"${item.barang_nama}"`,
-    `"${item.barang_brand}"`,
-    `"${item.barang_category}"`,
-    `"${item.barang_subcategory}"`,
-    `"${item.po_number}"`,
-    `"${item.organizer}"`,
-    `"${formatLocation(item.location, item.floor, item.room)}"`
+    item.number,
+    item.current_quantity ?? 0,
+    item.barang_nama,
+    item.barang_brand,
+    item.barang_category,
+    item.barang_subcategory,
+    item.po_number,
+    item.organizer,
+    formatLocation(item.location, item.floor, item.room)
   ]);
+  return { headers, rows };
+};
 
-  let csvContent = "\uFEFFsep=,\n" 
-    + headers.map(h => `"${h}"`).join(",") + "\n"
-    + rows.map((e: any) => e.join(",")).join("\n");
-
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.setAttribute("href", url);
-  link.setAttribute("download", `stok_habis_pakai_export_${new Date().getTime()}.csv`);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+const handleExportCSV = () => {
+  const { headers, rows } = getExportPayload();
+  if (rows.length === 0) return;
+  exportCSV(headers, rows, 'stok_habis_pakai_export');
 };
 
 const handleExportExcel = () => {
-  handleExportCSV();
+  const { headers, rows } = getExportPayload();
+  if (rows.length === 0) return;
+  exportExcel(headers, rows, 'stok_habis_pakai_export');
 };
 
 const handlePrint = () => {

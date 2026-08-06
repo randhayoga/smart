@@ -17,7 +17,7 @@ const badgeClass = computed(() => {
   if (s === 'Dipinjam' || lower === 'dipinjam') return 'bg-amber-100 text-amber-800';
   if (s === 'Standby' || lower === 'standby') return 'bg-blue-100 text-blue-800';
   if (s === 'Tidak Aktif' || lower === 'tidak aktif') return 'bg-gray-200 text-gray-800';
-  if (s === 'Pending' || lower === 'pending') return 'bg-purple-100 text-purple-800';
+  if (s === 'Pending' || lower === 'pending' || lower.startsWith('pending')) return 'bg-purple-100 text-purple-800';
   if (s === 'Bagus' || lower === 'bagus') return 'bg-emerald-100 text-emerald-800';
   if (s === 'Rusak' || lower === 'rusak') return 'bg-rose-100 text-rose-800';
   if (s === 'QC Passed' || lower === 'qc passed') return 'bg-sky-100 text-sky-800';

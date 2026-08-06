@@ -70,7 +70,7 @@ class BulkUnitController extends Controller
         ]);
 
         if ($needApproval) {
-            $validated['status'] = 'Pending';
+            $validated['status'] = 'Pending:BoD/BoC';
         }
 
         $quantity = (int)$validated['bulk_quantity'];
@@ -200,7 +200,7 @@ class BulkUnitController extends Controller
         $validated = $request->validate([
             'ids' => 'required|array',
             'ids.*' => 'exists:units,id',
-            'status' => ['nullable', 'string', 'in:Tersedia,Dipinjam,Standby,Tidak Aktif,Pending'],
+            'status' => ['nullable', 'string', 'in:Tersedia,Dipinjam,Standby,Tidak Aktif,Pending,Pending:BoD/BoC'],
             'condition' => ['nullable', 'string', 'in:Bagus,Rusak,QC Passed,Lelang/Hibah,Rusak Total,Hilang'],
             'location_id' => 'nullable|exists:locations,id',
             'floor_id' => 'nullable|exists:floors,id',
@@ -233,7 +233,7 @@ class BulkUnitController extends Controller
         $arrInactiveConditions = ['Rusak Total', 'Hilang', 'Lelang/Hibah'];
         $hasRestrictedUnits = $units->contains(function ($u) use ($arrInactiveConditions) {
             $s = strtolower(trim($u->status ?? ''));
-            return in_array($s, ['tidak aktif', 'pending']) || in_array($u->condition, $arrInactiveConditions);
+            return in_array($s, ['tidak aktif', 'pending', 'pending:bod/boc']) || str_starts_with($s, 'pending') || in_array($u->condition, $arrInactiveConditions);
         });
 
         if ($hasRestrictedUnits) {
@@ -274,7 +274,7 @@ class BulkUnitController extends Controller
 
         // 1. Status & Condition
         if ($needApproval) {
-            $updateData['status'] = 'Pending';
+            $updateData['status'] = 'Pending:BoD/BoC';
         } else if ($request->filled('status')) {
             $updateData['status'] = $request->input('status');
         }
@@ -361,7 +361,7 @@ class BulkUnitController extends Controller
                         'requester_id' => $request->user()->id,
                         'proposed_condition' => $proposedCondition,
                         'previous_condition' => $unit->condition,
-                        'previous_status' => $unit->status === 'Pending' ? 'Tersedia' : $unit->status,
+                        'previous_status' => str_starts_with($unit->status ?? '', 'Pending') ? 'Tersedia' : $unit->status,
                         'decision' => 'pending',
                         'note' => null,
                         'approver_id' => null,

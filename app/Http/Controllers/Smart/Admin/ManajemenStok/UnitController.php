@@ -200,7 +200,7 @@ class UnitController extends Controller
         $previousStatus = $validated['status'] ?? 'Tersedia';
 
         if ($needApproval) {
-            $validated['status'] = 'Pending';
+            $validated['status'] = 'Pending:BoD/BoC';
         }
  
         // Single creation logic
@@ -255,7 +255,7 @@ class UnitController extends Controller
         $arrNeedApproval = ['Rusak Total', 'Hilang'];
 
         $currentStatusLower = strtolower(trim($unit->status ?? ''));
-        $isRestricted = in_array($currentStatusLower, ['tidak aktif', 'pending']) || in_array($unit->condition, $arrInactiveConditions);
+        $isRestricted = in_array($currentStatusLower, ['tidak aktif', 'pending', 'pending:bod/boc']) || str_starts_with($currentStatusLower, 'pending') || in_array($unit->condition, $arrInactiveConditions);
 
         $rules = [
             'number' => 'required|string|max:25|unique:units,number,' . $unit->id,
@@ -263,7 +263,7 @@ class UnitController extends Controller
             'location_id' => 'required|exists:locations,id',
             'floor_id' => 'nullable|exists:floors,id',
             'room_id' => 'nullable|exists:rooms,id',
-            'status' => ['required', 'string', 'in:Tersedia,Dipinjam,Standby,Tidak Aktif,Pending'],
+            'status' => ['required', 'string', 'in:Tersedia,Dipinjam,Standby,Tidak Aktif,Pending,Pending:BoD/BoC'],
             'condition' => ['required', 'string', 'in:Bagus,Rusak,QC Passed,Lelang/Hibah,Rusak Total,Hilang'],
             'price' => 'nullable|numeric|min:0|max:999999999.99',
             'image_url' => 'nullable|image|mimes:jpeg,jpg,png|max:1024',
@@ -400,11 +400,11 @@ class UnitController extends Controller
 
         unset($validated['use_lot_image']);
 
-        $previousStatus = $unit->status === 'Pending' ? 'Tersedia' : $unit->status;
+        $previousStatus = str_starts_with($unit->status ?? '', 'Pending') ? 'Tersedia' : $unit->status;
         $previousCondition = $unit->condition;
 
         if ($needApproval) {
-            $validated['status'] = 'Pending';
+            $validated['status'] = 'Pending:BoD/BoC';
         }
 
         $unit->update($validated);

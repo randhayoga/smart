@@ -17,8 +17,9 @@ import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal.vue';
 import ResetFilterButton from '@/Components/ResetFilterButton.vue';
 import Combobox from '@/Components/Combobox.vue';
 import DeleteErrorModal from '@/Components/DeleteErrorModal.vue';
-import { Field, FieldLabel, FieldContent, FieldError } from '@/Components/ui/field';
 import { printManajemenStok } from '@/utils/printManajemenStok';
+import { exportCSV } from '@/utils/exportCSV';
+import { exportExcel } from '@/utils/exportExcel';
 
 import { Button } from "@/Components/ui/button";
 import {
@@ -315,38 +316,32 @@ const handleViewDetail = (item: any) => {
 
 // Export & Print Logic
 
-const handleExportCSV = () => {
+const getExportPayload = () => {
   const data = getExportData();
-  if (data.length === 0) return;
-  
   const headers = ['Kode', 'Kategori', 'Subkategori', 'Merek', 'Nama', 'Spesifikasi', 'Pembaruan Terakhir', 'Total'];
   const rows = data.map((item: any) => [
-    `"${item.code}"`,
-    `"${item.category}"`,
-    `"${item.subcategory}"`,
-    `"${item.brand}"`,
-    `"${item.name}"`,
-    `"${item.specification}"`,
-    `"${item.lastUpdate}"`,
-    `"${item.amount}"`
+    item.code,
+    item.category,
+    item.subcategory,
+    item.brand,
+    item.name,
+    item.specification,
+    item.lastUpdate,
+    item.amount
   ]);
+  return { headers, rows };
+};
 
-  let csvContent = "\uFEFFsep=,\n" 
-    + headers.map(h => `"${h}"`).join(",") + "\n"
-    + rows.map((e: any) => e.join(",")).join("\n");
-
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.setAttribute("href", url);
-  link.setAttribute("download", `inventory_export_${new Date().getTime()}.csv`);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+const handleExportCSV = () => {
+  const { headers, rows } = getExportPayload();
+  if (rows.length === 0) return;
+  exportCSV(headers, rows, 'inventory_export');
 };
 
 const handleExportExcel = () => {
-  handleExportCSV();
+  const { headers, rows } = getExportPayload();
+  if (rows.length === 0) return;
+  exportExcel(headers, rows, 'inventory_export');
 };
 
 const handlePrint = () => {
