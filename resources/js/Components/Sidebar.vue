@@ -97,9 +97,9 @@ const navigation = computed<NavSection[]>(() => {
       let badge = item.badge;
       
       if (item.href === '/smart/approve') {
-        badge = pendingRequestCount > 0 ? 'Baru' : undefined;
+        badge = pendingRequestCount > 0 ? pendingRequestCount : undefined;
       } else if (item.href === '/smart/approve-status') {
-        badge = pendingAssetStatusCount > 0 ? 'Baru' : undefined;
+        badge = pendingAssetStatusCount > 0 ? pendingAssetStatusCount : undefined;
       }
       
       return {
