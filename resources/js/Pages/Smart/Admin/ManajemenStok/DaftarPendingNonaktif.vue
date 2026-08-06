@@ -61,6 +61,7 @@ const handleCustomPrint = (items: any[]) => {
         :organizers="props.organizers"
         :vendors="props.vendors"
         :hide-status-filter="true"
+        :hide-export="activeTab === 'Pending:DM'"
         :custom-print-handler="handleCustomPrint"
       />
     </div>

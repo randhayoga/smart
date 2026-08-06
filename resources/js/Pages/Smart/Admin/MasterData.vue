@@ -501,22 +501,22 @@ const columns = computed<ColumnDef<any>[]>(() => {
   if (activeTab.value === 'Vendor') {
     cols.push({
       accessorKey: 'address',
-      header: () => h('span', { class: 'pl-2 font-semibold text-foreground' }, 'Alamat'),
+      header: () => h('div', { class: 'pl-2 py-1 font-semibold text-foreground leading-tight' }, 'Alamat'),
       cell: ({ row }) => h('div', { class: 'pl-2 text-muted-foreground truncate' }, row.getValue('address')),
     });
     cols.push({
       accessorKey: 'phone_number',
-      header: () => h('span', { class: 'pl-2 font-semibold text-foreground' }, 'No. Telepon'),
+      header: () => h('div', { class: 'pl-2 py-1 font-semibold text-foreground leading-tight' }, 'No. Telepon'),
       cell: ({ row }) => h('div', { class: 'pl-2 text-muted-foreground truncate' }, row.getValue('phone_number')),
     });
     cols.push({
       accessorKey: 'email',
-      header: () => h('span', { class: 'pl-2 font-semibold text-foreground' }, 'Email'),
+      header: () => h('div', { class: 'pl-2 py-1 font-semibold text-foreground leading-tight' }, 'Email'),
       cell: ({ row }) => h('div', { class: 'pl-2 text-muted-foreground truncate' }, row.getValue('email') || '-'),
     });
     cols.push({
       accessorKey: 'contact_person_1',
-      header: () => h('span', { class: 'pl-2 font-semibold text-foreground' }, 'Contact Person'),
+      header: () => h('div', { class: 'pl-2 py-1 font-semibold text-foreground leading-tight' }, 'Contact Person'),
       cell: ({ row }) => h('div', { class: 'pl-2 text-muted-foreground truncate' }, row.getValue('contact_person_1') || '-'),
     });
   }
@@ -525,16 +525,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
   if (['Subkategori', 'Merek', 'Vendor'].includes(activeTab.value)) {
     cols.push({
       accessorKey: 'description',
-      header: ({ column }) => {
-        return h(Button, {
-          variant: 'ghost',
-          onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-          class: 'pl-2 hover:bg-transparent font-semibold text-foreground justify-start'
-        }, () => [
-          'Deskripsi',
-          h(ArrowUpDown, { class: 'ml-2 h-4 w-4 text-muted-foreground' }),
-        ])
-      },
+      header: () => h('div', { class: 'pl-2 py-1 font-semibold text-foreground leading-tight' }, 'Deskripsi'),
       cell: ({ row }) => h('div', { class: 'pl-2 text-muted-foreground truncate' }, row.getValue('description') || '-'),
     });
   }
