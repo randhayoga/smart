@@ -26,6 +26,7 @@ import ResetFilterButton from '@/Components/ResetFilterButton.vue';
 import DeleteErrorModal from '@/Components/DeleteErrorModal.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import EditAssetModal from '../Modals/EditAssetModal.vue';
+import DetailAssetModal from '../Modals/DetailAssetModal.vue';
 import { printManajemenStok } from '@/utils/printManajemenStok';
 import { exportCSV } from '@/utils/exportCSV';
 import { exportExcel } from '@/utils/exportExcel';
