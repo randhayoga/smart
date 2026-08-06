@@ -48,6 +48,11 @@ class FloorController extends Controller
             return redirect()->back()->with('error', 'Lantai tidak dapat dihapus karena masih memiliki ruangan.');
         }
 
+        if (\Illuminate\Support\Facades\DB::table('units')->where('floor_id', $floor->id)->exists() ||
+            \Illuminate\Support\Facades\DB::table('lots')->where('floor_id', $floor->id)->exists()) {
+            return redirect()->back()->with('error', 'Lantai tidak dapat dihapus karena masih digunakan oleh lot atau unit.');
+        }
+
         $floor->delete();
 
         return redirect()->back()->with('success', 'Lantai berhasil dihapus.');

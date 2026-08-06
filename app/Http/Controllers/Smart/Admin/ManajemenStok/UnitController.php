@@ -17,6 +17,7 @@ use App\Models\Request\RequestUnitAssignment;
 use App\Models\TbProject;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -265,37 +266,42 @@ class UnitController extends Controller
                 'bod_boc_approval_file.max' => 'Gagal! Ukuran Formulir Approval BoD/BoC maksimal 2MB.',
             ]);
 
-            $bodBocUrl = $request->file('bod_boc_approval_file')->store('bod_boc_approvals', 'local');
+            DB::transaction(function () use ($unit, $request) {
+                $bodBocUrl = $request->file('bod_boc_approval_file')->store('bod_boc_approvals', 'local');
 
-            $approval = UnitStatusApproval::where('unit_id', $unit->id)
-                ->where('decision', 'pending')
-                ->first();
-            if ($approval) {
-                $approval->update(['bod_boc_approval_url' => $bodBocUrl]);
-            }
+                $approval = UnitStatusApproval::where('unit_id', $unit->id)
+                    ->where('decision', 'pending')
+                    ->first();
+                if ($approval) {
+                    if ($approval->bod_boc_approval_url && Storage::disk('local')->exists($approval->bod_boc_approval_url)) {
+                        Storage::disk('local')->delete($approval->bod_boc_approval_url);
+                    }
+                    $approval->update(['bod_boc_approval_url' => $bodBocUrl]);
+                }
 
-            // Change status to Pending:DM
-            $unit->update(['status' => 'Pending:DM']);
+                // Change status to Pending:DM
+                $unit->update(['status' => 'Pending:DM']);
 
-            // Close active lifecycle
-            UnitLifecycle::where('unit_id', $unit->id)
-                ->whereNull('end_date')
-                ->update(['end_date' => now()]);
+                // Close active lifecycle
+                UnitLifecycle::where('unit_id', $unit->id)
+                    ->whereNull('end_date')
+                    ->update(['end_date' => now()]);
 
-            // Save audit log
-            UnitLifecycle::create([
-                'unit_id' => $unit->id,
-                'action_type' => 'Approval',
-                'status' => 'Pending:DM',
-                'condition' => $unit->condition,
-                'location_id' => $unit->location_id,
-                'floor_id' => $unit->floor_id,
-                'room_id' => $unit->room_id,
-                'start_date' => now(),
-                'end_date' => null,
-                'actor_id' => $request->user()->id,
-                'note' => 'BoD/BoC menyetujui penghapusan asset',
-            ]);
+                // Save audit log
+                UnitLifecycle::create([
+                    'unit_id' => $unit->id,
+                    'action_type' => 'Approval',
+                    'status' => 'Pending:DM',
+                    'condition' => $unit->condition,
+                    'location_id' => $unit->location_id,
+                    'floor_id' => $unit->floor_id,
+                    'room_id' => $unit->room_id,
+                    'start_date' => now(),
+                    'end_date' => null,
+                    'actor_id' => $request->user()->id,
+                    'note' => 'BoD/BoC menyetujui penghapusan asset',
+                ]);
+            });
 
             return redirect()->back()->with('success', 'Formulir Approval BoD/BoC berhasil diunggah dan status diubah menjadi Pending:DM.');
         }

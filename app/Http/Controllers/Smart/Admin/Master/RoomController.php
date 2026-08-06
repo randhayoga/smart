@@ -44,6 +44,11 @@ class RoomController extends Controller
      */
     public function destroy(Room $room): RedirectResponse
     {
+        if (\Illuminate\Support\Facades\DB::table('units')->where('room_id', $room->id)->exists() ||
+            \Illuminate\Support\Facades\DB::table('lots')->where('room_id', $room->id)->exists()) {
+            return redirect()->back()->with('error', 'Ruangan tidak dapat dihapus karena masih digunakan oleh lot atau unit.');
+        }
+
         $room->delete();
 
         return redirect()->back()->with('success', 'Ruangan berhasil dihapus.');

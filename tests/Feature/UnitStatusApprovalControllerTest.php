@@ -88,7 +88,7 @@ class UnitStatusApprovalControllerTest extends TestCase
         ]);
 
         $unit->refresh();
-        $this->assertEquals('Pending', $unit->status);
+        $this->assertEquals('Pending:BoD/BoC', $unit->status);
     }
 
     public function test_cannot_store_duplicate_pending_request(): void
@@ -289,7 +289,7 @@ class UnitStatusApprovalControllerTest extends TestCase
         $response->assertRedirect();
         
         $unit = Unit::where('lot_id', $lot->id)->firstOrFail();
-        $this->assertEquals('Pending', $unit->status);
+        $this->assertEquals('Pending:BoD/BoC', $unit->status);
 
         $this->assertDatabaseHas('unit_status_approvals', [
             'unit_id' => $unit->id,
@@ -321,7 +321,7 @@ class UnitStatusApprovalControllerTest extends TestCase
         $response->assertRedirect();
         
         $unit->refresh();
-        $this->assertEquals('Pending', $unit->status);
+        $this->assertEquals('Pending:BoD/BoC', $unit->status);
 
         $this->assertDatabaseHas('unit_status_approvals', [
             'unit_id' => $unit->id,
