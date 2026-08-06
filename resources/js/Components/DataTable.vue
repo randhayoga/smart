@@ -158,7 +158,6 @@ watch(() => props.filterValue, (val) => {
     <div class="flex items-center space-x-2">
       <Button
         variant="outline"
-        size="sm"
         :disabled="!table.getCanPreviousPage()"
         @click="table.previousPage()"
         class="rounded-[14px]"
@@ -168,7 +167,6 @@ watch(() => props.filterValue, (val) => {
       </Button>
       <Button
         variant="outline"
-        size="sm"
         :disabled="!table.getCanNextPage()"
         @click="table.nextPage()"
         class="rounded-[14px]"
