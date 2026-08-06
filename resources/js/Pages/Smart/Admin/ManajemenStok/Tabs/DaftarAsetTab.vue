@@ -81,6 +81,8 @@ interface Props {
   organizers?: { id: number; name: string; }[];
   vendors?: { id: number; name: string; }[];
   hideBarangColumns?: boolean;
+  hideStatusFilter?: boolean;
+  customPrintHandler?: (items: any[]) => void;
   lot?: any;
   barang?: {
     category: string;
@@ -90,6 +92,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   hideBarangColumns: false,
+  hideStatusFilter: false,
   filterVariant: 'full',
 });
 
@@ -211,6 +214,11 @@ const handlePrint = () => {
   const data = getExportData();
   if (!data || data.length === 0) {
     toast.error('Tidak ada data untuk dicetak');
+    return;
+  }
+
+  if (props.customPrintHandler) {
+    props.customPrintHandler(data);
     return;
   }
 
@@ -400,7 +408,11 @@ watch(floorFilter, () => {
 });
 
 // Dynamic values for dropdown filters
-const availableStatuses = ['Tersedia', 'Dipinjam', 'Standby', 'Tidak Aktif', 'Pending'];
+const availableStatuses = computed(() => {
+  const dynamic = Array.from(new Set((props.units || []).map((u: any) => u.status).filter(Boolean)));
+  if (dynamic.length > 0) return dynamic;
+  return ['Tersedia', 'Dipinjam', 'Standby', 'Tidak Aktif'];
+});
 const availableConditions = ['Bagus', 'Rusak', 'QC Passed', 'Lelang/Hibah', 'Rusak Total', 'Hilang'];
 
 const getStatusLabel = (status: string) => {
@@ -702,7 +714,7 @@ const totalAsetTerpilihCount = computed(() => {
               />
 
               <!-- Status Filter Dropdown -->
-              <DropdownMenu>
+              <DropdownMenu v-if="!props.hideStatusFilter">
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal', !statusFilter ? 'text-muted-foreground' : 'text-foreground']">
                     <span class="truncate">{{ statusFilter ? getStatusLabel(statusFilter) : 'Semua status' }}</span>

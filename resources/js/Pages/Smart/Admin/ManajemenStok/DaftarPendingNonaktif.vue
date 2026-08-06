@@ -4,6 +4,7 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem } from '@/Components/ui/breadcrumb';
 import Tabs from '@/Components/Tabs.vue';
 import DaftarAsetTab from './Tabs/DaftarAsetTab.vue';
+import { printFormulirPersetujuanPenghapusan } from '@/utils/printFormulirPersetujuanPenghapusan';
 
 interface Props {
   units: any[];
@@ -30,6 +31,10 @@ const filteredUnits = computed(() => {
     return unit.status === activeTab.value;
   });
 });
+
+const handleCustomPrint = (items: any[]) => {
+  printFormulirPersetujuanPenghapusan(items);
+};
 </script>
 
 <template>
@@ -55,6 +60,8 @@ const filteredUnits = computed(() => {
         :rooms="props.rooms"
         :organizers="props.organizers"
         :vendors="props.vendors"
+        :hide-status-filter="true"
+        :custom-print-handler="handleCustomPrint"
       />
     </div>
   </AppLayout>
