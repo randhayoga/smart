@@ -89,12 +89,14 @@ interface Props {
     category: string;
   };
   filterVariant?: 'simple' | 'full';
+  hideExport?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   hideBarangColumns: false,
   hideStatusFilter: false,
   filterVariant: 'full',
+  hideExport: false,
 });
 
 const searchQuery = ref('');
@@ -905,6 +907,7 @@ const totalAsetTerpilihCount = computed(() => {
                   <span class="hidden sm:inline">Edit Terpilih</span>
                 </Button>
                 <ExportButtonGroup 
+                  v-if="!hideExport"
                   @print="handlePrint"
                   @export-pdf="handlePrint"
                   @export-excel="handleExportExcel"
