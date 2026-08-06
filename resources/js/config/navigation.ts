@@ -55,14 +55,14 @@ export const mainNavigation: NavSection[] = [
                 icon: Package,
             },
             {
-                title: 'Daftar Aset',
-                href: '/smart/inventory/assets',
-                icon: ScrollText,
-            },
-            {
                 title: 'Daftar Stok (Habis Pakai)',
                 href: '/smart/inventory/stok-habis-pakai',
                 icon: Scroll,
+            },
+            {
+                title: 'Daftar Aset',
+                href: '/smart/inventory/assets',
+                icon: ScrollText,
             },
             {
                 title: 'Master Data',

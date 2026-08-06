@@ -28,13 +28,6 @@ const badgeClass = computed(() => {
   if (lower === 'disetujui' || lower === 'approved' || lower === 'sukses' || lower === 'success') return 'bg-emerald-100 text-emerald-800';
   return 'bg-gray-100 text-gray-800';
 });
-
-const displayText = computed(() => {
-  if (props.status === 'Pending' && props.proposedStatus) {
-    return `${props.status}: ${props.proposedStatus}`;
-  }
-  return props.status || '';
-});
 </script>
 
 <template>
@@ -45,6 +38,6 @@ const displayText = computed(() => {
       props.class
     )"
   >
-    {{ displayText }}
+    {{ props.status || '' }}
   </span>
 </template>

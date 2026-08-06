@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Support\Facades\Auth;
 
 class Unit extends Model
 {
@@ -30,7 +31,7 @@ class Unit extends Model
     protected static function booted()
     {
         // 1. Log when a Unit is created
-        static::created(function ($unit) {
+        static::created(function (Unit $unit) {
             if ($unit->status !== 'Pending') {
                 UnitLifecycle::create([
                     'unit_id' => $unit->id,
@@ -42,14 +43,14 @@ class Unit extends Model
                     'room_id' => $unit->room_id,
                     'start_date' => now(),
                     'end_date' => null,
-                    'actor_id' => auth()->id(),
+                    'actor_id' => Auth::id(),
                     'note' => 'Aset berhasil diregistrasi ke dalam sistem.',
                 ]);
             }
         });
 
         // 2. Log when a Unit is updated
-        static::updating(function ($unit) {
+        static::updating(function (Unit $unit) {
             $dirty = $unit->getDirty();
             $tracked = ['status', 'condition', 'location_id', 'floor_id', 'room_id'];
             $changed = array_intersect(array_keys($dirty), $tracked);
@@ -162,7 +163,7 @@ class Unit extends Model
                                 ->update(['end_date' => now()]);
                         }
 
-                        $actorId = auth()->id() ?? ($act['approval'] ? $act['approval']->approver_id : null);
+                        $actorId = Auth::id() ?? ($act['approval'] ? $act['approval']->approver_id : null);
                         $isLast = ($index === $totalActions - 1);
 
                         UnitLifecycle::create([
@@ -186,7 +187,7 @@ class Unit extends Model
         });
 
         // 3. Close lifecycle on delete
-        static::deleted(function ($unit) {
+        static::deleted(function (Unit $unit) {
             UnitLifecycle::where('unit_id', $unit->id)
                 ->whereNull('end_date')
                 ->update(['end_date' => now()]);
@@ -248,7 +249,7 @@ class Unit extends Model
         return $this->hasMany(UnitLifecycle::class);
     }
 
-    public function getNumberAttribute($value)
+    public function getNumberAttribute(?string $value): ?string
     {
         return $value !== null ? trim($value) : null;
     }
