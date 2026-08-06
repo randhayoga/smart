@@ -32,7 +32,7 @@ class Unit extends Model
     {
         // 1. Log when a Unit is created
         static::created(function (Unit $unit) {
-            if ($unit->status !== 'Pending') {
+            if (!str_starts_with($unit->status ?? '', 'Pending')) {
                 UnitLifecycle::create([
                     'unit_id' => $unit->id,
                     'action_type' => 'Registrasi',
@@ -56,7 +56,7 @@ class Unit extends Model
             $changed = array_intersect(array_keys($dirty), $tracked);
 
             if (!empty($changed)) {
-                $isPendingStatus = ($unit->isDirty('status') && $unit->status === 'Pending');
+                $isPendingStatus = ($unit->isDirty('status') && str_starts_with($unit->status ?? '', 'Pending'));
 
                 $actions = [];
 
@@ -66,7 +66,7 @@ class Unit extends Model
                     $newStatus = $unit->status;
 
                     $approval = null;
-                    if ($oldStatus === 'Pending') {
+                    if (str_starts_with((string)$oldStatus, 'Pending')) {
                         $approval = UnitStatusApproval::where('unit_id', $unit->id)
                             ->whereIn('decision', ['approved', 'rejected'])
                             ->orderBy('updated_at', 'desc')

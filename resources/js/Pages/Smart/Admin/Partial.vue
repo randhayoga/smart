@@ -15,6 +15,8 @@ import {
   FileText,
   X
 } from 'lucide-vue-next';
+import { exportCSV } from '@/utils/exportCSV';
+import { exportExcel } from '@/utils/exportExcel';
 import { Button } from "@/Components/ui/button";
 import {
   DropdownMenu,
@@ -199,38 +201,31 @@ const displayData = computed<InboxItem[]>(() => {
   return dummyInbox.value;
 });
 
-const handleExportCSV = () => {
-  if (displayData.value.length === 0) return;
-  
+const getExportPayload = () => {
+  const data = displayData.value;
   const headers = ['Nomor', 'Jumlah', 'Nama Peminta', 'Waktu Dibuat', 'Waktu Mulai', 'Waktu Selesai', 'Jenis'];
-  const rows = displayData.value.map((item: InboxItem) => [
-    `"${item.number}"`,
-    `"${item.amount}"`,
-    `"${item.requester}"`,
-    `"${item.createdAt}"`,
-    `"${item.startTime}"`,
-    `"${item.endTime}"`,
-    `"${item.type}"`
+  const rows = data.map((item: InboxItem) => [
+    item.number,
+    item.amount,
+    item.requester,
+    item.createdAt,
+    item.startTime,
+    item.endTime,
+    item.type
   ]);
+  return { headers, rows };
+};
 
-  // Use \uFEFF BOM for Excel compatibility (UTF-8)
-  // Prepend "sep=," to tell Excel explicitly that the comma is the delimiter
-  let csvContent = "\uFEFFsep=,\n" 
-    + headers.map(h => `"${h}"`).join(",") + "\n"
-    + rows.map((e: string[]) => e.join(",")).join("\n");
-
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.setAttribute("href", url);
-  link.setAttribute("download", `partial_export_${new Date().getTime()}.csv`);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+const handleExportCSV = () => {
+  const { headers, rows } = getExportPayload();
+  if (rows.length === 0) return;
+  exportCSV(headers, rows, 'partial_export');
 };
 
 const handleExportExcel = () => {
-  handleExportCSV();
+  const { headers, rows } = getExportPayload();
+  if (rows.length === 0) return;
+  exportExcel(headers, rows, 'partial_export');
 };
 </script>
 

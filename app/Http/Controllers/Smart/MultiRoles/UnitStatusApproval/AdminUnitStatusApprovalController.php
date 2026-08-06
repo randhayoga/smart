@@ -58,7 +58,7 @@ class AdminUnitStatusApprovalController extends Controller
             'requester_id' => $request->user()->id,
             'proposed_condition' => $proposedCondition,
             'previous_condition' => $unit->condition,
-            'previous_status' => $unit->status === 'Pending' ? 'Tersedia' : $unit->status,
+            'previous_status' => str_starts_with($unit->status ?? '', 'Pending') ? 'Tersedia' : $unit->status,
             'decision' => 'pending',
             'note' => $validated['note'] ?? null,
             'requested_at' => now(),
@@ -66,7 +66,7 @@ class AdminUnitStatusApprovalController extends Controller
             'lost_doc_url' => $lostDocUrl,
         ]);
 
-        $unit->update(['status' => 'Pending']);
+        $unit->update(['status' => 'Pending:BoD/BoC']);
 
         return redirect()->back()->with('success', 'Pengajuan perubahan status unit berhasil dikirim.');
     }

@@ -27,7 +27,7 @@ class UnitStatusApproval extends Model
             UnitLifecycle::create([
                 'unit_id' => $approval->unit_id,
                 'action_type' => 'Perubahan kondisi',
-                'status' => 'Pending',
+                'status' => $unit->status ?? 'Pending',
                 'condition' => $approval->proposed_condition,
                 'location_id' => $unit->location_id,
                 'floor_id' => $unit->floor_id,

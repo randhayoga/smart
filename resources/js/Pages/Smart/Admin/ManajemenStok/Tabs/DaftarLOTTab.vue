@@ -26,6 +26,8 @@ import DetailLOTConsumables from '../DetailLOTConsumables.vue';
 import CreateLotModal from '../Modals/CreateLotModal.vue';
 import EditLotModal from '../Modals/EditLotModal.vue';
 import { printManajemenStok } from '@/utils/printManajemenStok';
+import { exportCSV } from '@/utils/exportCSV';
+import { exportExcel } from '@/utils/exportExcel';
 
 interface Props {
   barang: {
@@ -375,35 +377,29 @@ const getExportData = () => {
   return dataTableRef.value.table.getFilteredRowModel().rows.map((row: any) => row.original);
 };
 
-const handleExportCSV = () => {
+const getExportPayload = () => {
   const data = getExportData();
-  if (data.length === 0) return;
-  
   const headers = ['Kode LOT', 'Nomor PO', 'Tanggal Registrasi', 'Organizer', 'Jml. Stok'];
   const rows = data.map((item: any) => [
-    `"${item.number}"`,
-    `"${item.po_number}"`,
-    `"${formatDateWithSlashes(item.date_of_receipt)}"`,
-    `"${item.organizer}"`,
-    `"${props.barang.is_consumable ? (item.current_quantity ?? 0) : item.assetCount}"`
+    item.number,
+    item.po_number,
+    formatDateWithSlashes(item.date_of_receipt),
+    item.organizer,
+    props.barang.is_consumable ? (item.current_quantity ?? 0) : item.assetCount
   ]);
+  return { headers, rows };
+};
 
-  let csvContent = "\uFEFFsep=,\n" 
-    + headers.map(h => `"${h}"`).join(",") + "\n"
-    + rows.map((e: any) => e.join(",")).join("\n");
-
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.setAttribute("href", url);
-  link.setAttribute("download", `lot_export_${new Date().getTime()}.csv`);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+const handleExportCSV = () => {
+  const { headers, rows } = getExportPayload();
+  if (rows.length === 0) return;
+  exportCSV(headers, rows, 'lot_export');
 };
 
 const handleExportExcel = () => {
-  handleExportCSV();
+  const { headers, rows } = getExportPayload();
+  if (rows.length === 0) return;
+  exportExcel(headers, rows, 'lot_export');
 };
 
 const handlePrint = () => {

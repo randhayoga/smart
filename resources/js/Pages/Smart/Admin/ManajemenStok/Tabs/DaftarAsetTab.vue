@@ -26,8 +26,9 @@ import ResetFilterButton from '@/Components/ResetFilterButton.vue';
 import DeleteErrorModal from '@/Components/DeleteErrorModal.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import EditAssetModal from '../Modals/EditAssetModal.vue';
-import DetailAssetModal from '../Modals/DetailAssetModal.vue';
 import { printManajemenStok } from '@/utils/printManajemenStok';
+import { exportCSV } from '@/utils/exportCSV';
+import { exportExcel } from '@/utils/exportExcel';
 
 interface Props {
   units: {
@@ -176,40 +177,34 @@ const getExportData = () => {
   return dataTableRef.value.table.getFilteredRowModel().rows.map((row: any) => row.original);
 };
 
-const handleExportCSV = () => {
+const getExportPayload = () => {
   const data = getExportData();
-  if (data.length === 0) return;
-  
   const headers = ['Kode Aset', 'Nama', 'Brand', 'Kategori', 'Subkategori', 'Status', 'Kondisi', 'Nilai', 'Lokasi Penyimpanan', 'TNKB (Nopol)'];
   const rows = data.map((item: any) => [
-    `"${item.number}"`,
-    `"${item.barang_nama}"`,
-    `"${item.barang_brand}"`,
-    `"${item.barang_category}"`,
-    `"${item.barang_subcategory}"`,
-    `"${item.status}"`,
-    `"${item.condition}"`,
-    `"${item.price}"`,
-    `"${formatLocation(item.location, item.floor, item.room)}"`,
-    `"${item.vehicle_registration || '-'}"`
+    item.number,
+    item.barang_nama,
+    item.barang_brand,
+    item.barang_category,
+    item.barang_subcategory,
+    item.status,
+    item.condition,
+    item.price,
+    formatLocation(item.location, item.floor, item.room),
+    item.vehicle_registration || '-'
   ]);
+  return { headers, rows };
+};
 
-  let csvContent = "\uFEFFsep=,\n" 
-    + headers.map(h => `"${h}"`).join(",") + "\n"
-    + rows.map((e: any) => e.join(",")).join("\n");
-
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.setAttribute("href", url);
-  link.setAttribute("download", `daftar_aset_export_${new Date().getTime()}.csv`);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+const handleExportCSV = () => {
+  const { headers, rows } = getExportPayload();
+  if (rows.length === 0) return;
+  exportCSV(headers, rows, 'daftar_aset_export');
 };
 
 const handleExportExcel = () => {
-  handleExportCSV();
+  const { headers, rows } = getExportPayload();
+  if (rows.length === 0) return;
+  exportExcel(headers, rows, 'daftar_aset_export');
 };
 
 const handlePrint = () => {

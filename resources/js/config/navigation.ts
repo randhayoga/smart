@@ -65,6 +65,11 @@ export const mainNavigation: NavSection[] = [
                 icon: ScrollText,
             },
             {
+                title: 'Daftar Pending Nonaktif',
+                href: '/smart/inventory/pending-nonaktif',
+                icon: Shredder,
+            },
+            {
                 title: 'Master Data',
                 href: '/smart/master',
                 icon: Database,

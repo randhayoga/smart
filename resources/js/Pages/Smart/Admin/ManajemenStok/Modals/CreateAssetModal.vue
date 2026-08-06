@@ -114,8 +114,8 @@ watch(() => form.floor_id, (newVal) => {
 
 watch(() => form.condition, (newVal, oldVal) => {
   if (arrInactiveConditions.includes(newVal)) {
-    form.status = 'Pending';
-  } else if (oldVal && arrInactiveConditions.includes(oldVal) && form.status === 'Pending') {
+    form.status = 'Pending:BoD/BoC';
+  } else if (oldVal && arrInactiveConditions.includes(oldVal) && (form.status === 'Pending' || form.status === 'Pending:BoD/BoC')) {
     form.status = '';
   }
 
