@@ -136,8 +136,8 @@ watch(() => form.floor_id, (newVal) => {
 
 watch(() => form.condition, (newVal, oldVal) => {
   if (arrInactiveConditions.includes(newVal)) {
-    form.status = 'Tidak Aktif';
-  } else if (oldVal && arrInactiveConditions.includes(oldVal) && form.status === 'Tidak Aktif') {
+    form.status = 'Pending';
+  } else if (oldVal && arrInactiveConditions.includes(oldVal) && form.status === 'Pending') {
     if (isSingle.value && selectedItem.value?.status && !isRestrictedStatus(selectedItem.value.status)) {
       form.status = selectedItem.value.status;
     } else {
@@ -179,7 +179,7 @@ watch(() => props.open, (val) => {
     form.status = item.status || '';
     form.condition = item.condition || '';
     if (arrInactiveConditions.includes(form.condition)) {
-      form.status = 'Tidak Aktif';
+      form.status = 'Pending';
     }
     form.price = item.price || '';
     form.image_url_name = item.image_url ? item.image_url.split('/').pop() || '' : '';

@@ -517,7 +517,6 @@ const columns = computed<ColumnDef<any>[]>(() => {
   list.push(
     {
       accessorKey: 'status',
-      size: 175,
       header: ({ column }) => h(Button, {
         variant: 'ghost',
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),

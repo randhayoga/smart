@@ -29,9 +29,10 @@ const emit = defineEmits<{
 
 const isVehicle = computed(() => props.barang?.category === 'Kendaraan');
 const arrNeedApproval = ['Rusak Total', 'Hilang'];
+const arrInactiveConditions = ['Rusak Total', 'Hilang', 'Lelang/Hibah'];
 
 const isStatusDisabled = computed(() => {
-  return ['Rusak Total', 'Hilang'].includes(form.condition);
+  return arrInactiveConditions.includes(form.condition);
 });
 
 const form = useForm({
@@ -112,9 +113,9 @@ watch(() => form.floor_id, (newVal) => {
 });
 
 watch(() => form.condition, (newVal, oldVal) => {
-  if (['Rusak Total', 'Hilang'].includes(newVal)) {
-    form.status = 'Tidak Aktif';
-  } else if (oldVal && ['Rusak Total', 'Hilang'].includes(oldVal) && form.status === 'Tidak Aktif') {
+  if (arrInactiveConditions.includes(newVal)) {
+    form.status = 'Pending';
+  } else if (oldVal && arrInactiveConditions.includes(oldVal) && form.status === 'Pending') {
     form.status = '';
   }
 
