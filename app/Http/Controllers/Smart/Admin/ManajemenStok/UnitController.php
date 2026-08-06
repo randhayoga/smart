@@ -7,6 +7,7 @@ use App\Models\Inventory\Barang;
 use App\Models\Inventory\Lot;
 use App\Models\Inventory\Unit;
 use App\Models\Inventory\UnitStatusApproval;
+use App\Models\Inventory\UnitLifecycle;
 use App\Models\Master\Floor;
 use App\Models\Master\Location;
 use App\Models\Master\Organizer;
@@ -55,6 +56,9 @@ class UnitController extends Controller
                 'lost_doc_url' => $pendingApproval 
                     ? $pendingApproval->lost_doc_url 
                     : ($approvedApproval ? $approvedApproval->lost_doc_url : null),
+                'bod_boc_approval_url' => $pendingApproval 
+                    ? $pendingApproval->bod_boc_approval_url 
+                    : ($approvedApproval ? $approvedApproval->bod_boc_approval_url : null),
                 'condition' => $unit->condition,
                 'price' => $unit->price,
                 'image_url' => $unit->image_url,
@@ -99,7 +103,7 @@ class UnitController extends Controller
                         'waktu' => $log->start_date ? $log->start_date->format('d-m-Y H:i:s') : '-',
                         'status' => $log->status,
                         'action_type' => $log->action_type,
-                        'aktor' => $log->actor->name ?? '-',
+                        'aktor' => ($log->action_type === 'Approval' && str_contains($log->note ?? '', 'BoD/BoC')) ? 'BoD/BoC' : ($log->actor->name ?? '-'),
                         'durasi' => $log->formatted_duration,
                         'catatan' => $log->note ?? '-',
                     ];
@@ -252,6 +256,50 @@ class UnitController extends Controller
      */
     public function update(Request $request, Unit $unit)
     {
+        if ($unit->status === 'Pending:BoD/BoC' && $request->hasFile('bod_boc_approval_file')) {
+            $request->validate([
+                'bod_boc_approval_file' => 'required|file|mimes:pdf,jpeg,jpg,png|max:2048',
+            ], [
+                'bod_boc_approval_file.required' => 'Formulir Approval BoD/BoC belum dipilih.',
+                'bod_boc_approval_file.mimes' => 'Format Formulir Approval BoD/BoC salah! Hanya diperbolehkan file .pdf, .jpg, .jpeg, atau .png.',
+                'bod_boc_approval_file.max' => 'Gagal! Ukuran Formulir Approval BoD/BoC maksimal 2MB.',
+            ]);
+
+            $bodBocUrl = $request->file('bod_boc_approval_file')->store('bod_boc_approvals', 'local');
+
+            $approval = UnitStatusApproval::where('unit_id', $unit->id)
+                ->where('decision', 'pending')
+                ->first();
+            if ($approval) {
+                $approval->update(['bod_boc_approval_url' => $bodBocUrl]);
+            }
+
+            // Change status to Pending:DM
+            $unit->update(['status' => 'Pending:DM']);
+
+            // Close active lifecycle
+            UnitLifecycle::where('unit_id', $unit->id)
+                ->whereNull('end_date')
+                ->update(['end_date' => now()]);
+
+            // Save audit log
+            UnitLifecycle::create([
+                'unit_id' => $unit->id,
+                'action_type' => 'Approval',
+                'status' => 'Pending:DM',
+                'condition' => $unit->condition,
+                'location_id' => $unit->location_id,
+                'floor_id' => $unit->floor_id,
+                'room_id' => $unit->room_id,
+                'start_date' => now(),
+                'end_date' => null,
+                'actor_id' => $request->user()->id,
+                'note' => 'BoD/BoC menyetujui penghapusan asset',
+            ]);
+
+            return redirect()->back()->with('success', 'Formulir Approval BoD/BoC berhasil diunggah dan status diubah menjadi Pending:DM.');
+        }
+
         $arrInactiveConditions = ['Rusak Total', 'Hilang', 'Lelang/Hibah'];
         $arrNeedApproval = ['Rusak Total', 'Hilang'];
 

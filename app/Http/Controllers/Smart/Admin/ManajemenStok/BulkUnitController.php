@@ -7,6 +7,7 @@ use App\Models\Inventory\Barang;
 use App\Models\Inventory\Lot;
 use App\Models\Inventory\Unit;
 use App\Models\Inventory\UnitStatusApproval;
+use App\Models\Inventory\UnitLifecycle;
 use App\Models\Master\Floor;
 use App\Models\Master\Room;
 use Illuminate\Http\Request;
@@ -214,6 +215,50 @@ class BulkUnitController extends Controller
         $units = Unit::whereIn('id', $ids)->get();
         if ($units->isEmpty()) {
             return redirect()->back()->withErrors(['ids' => 'Tidak ada unit yang ditemukan.']);
+        }
+
+        $allPendingBodBoc = $units->every(fn($u) => $u->status === 'Pending:BoD/BoC');
+        if ($allPendingBodBoc && $request->hasFile('bod_boc_approval_file')) {
+            $request->validate([
+                'bod_boc_approval_file' => 'required|file|mimes:pdf,jpeg,jpg,png|max:2048',
+            ], [
+                'bod_boc_approval_file.required' => 'Formulir Approval BoD/BoC belum dipilih.',
+                'bod_boc_approval_file.mimes' => 'Format Formulir Approval BoD/BoC salah! Hanya diperbolehkan file .pdf, .jpg, .jpeg, atau .png.',
+                'bod_boc_approval_file.max' => 'Gagal! Ukuran Formulir Approval BoD/BoC maksimal 2MB.',
+            ]);
+
+            $bodBocUrl = $request->file('bod_boc_approval_file')->store('bod_boc_approvals', 'local');
+
+            foreach ($units as $unit) {
+                $approval = UnitStatusApproval::where('unit_id', $unit->id)
+                    ->where('decision', 'pending')
+                    ->first();
+                if ($approval) {
+                    $approval->update(['bod_boc_approval_url' => $bodBocUrl]);
+                }
+
+                $unit->update(['status' => 'Pending:DM']);
+
+                UnitLifecycle::where('unit_id', $unit->id)
+                    ->whereNull('end_date')
+                    ->update(['end_date' => now()]);
+
+                UnitLifecycle::create([
+                    'unit_id' => $unit->id,
+                    'action_type' => 'Approval',
+                    'status' => 'Pending:DM',
+                    'condition' => $unit->condition,
+                    'location_id' => $unit->location_id,
+                    'floor_id' => $unit->floor_id,
+                    'room_id' => $unit->room_id,
+                    'start_date' => now(),
+                    'end_date' => null,
+                    'actor_id' => $request->user()->id,
+                    'note' => 'BoD/BoC menyetujui penghapusan asset',
+                ]);
+            }
+
+            return redirect()->back()->with('success', count($units) . ' aset terpilih berhasil disetujui BoD/BoC dan status diubah menjadi Pending:DM.');
         }
 
         if ($request->filled('floor_id') && $request->filled('location_id')) {

@@ -59,6 +59,13 @@ const isDocumentDisabled = computed(() => {
   return hasRestrictedUnit.value;
 });
 
+const isBodBocFieldVisible = computed(() => {
+  if (isSingle.value) {
+    return selectedItem.value?.status === 'Pending:BoD/BoC';
+  }
+  return props.items.length > 0 && props.items.every((item: any) => item.status === 'Pending:BoD/BoC');
+});
+
 const form = useForm({
   ids: [] as number[],
   number: '',
@@ -76,6 +83,8 @@ const form = useForm({
   memo_file_name: '',
   lost_doc_file: null as File | null,
   lost_doc_file_name: '',
+  bod_boc_approval_file: null as File | null,
+  bod_boc_approval_file_name: '',
 });
 
 const errors = ref({
@@ -86,6 +95,7 @@ const errors = ref({
   vehicle_registration: '',
   memo_file: '',
   lost_doc_file: '',
+  bod_boc_approval_file: '',
 });
 
 const resetErrors = () => {
@@ -97,6 +107,7 @@ const resetErrors = () => {
     vehicle_registration: '',
     memo_file: '',
     lost_doc_file: '',
+    bod_boc_approval_file: '',
   };
 };
 
@@ -109,6 +120,7 @@ watch(() => form.image_url_name, v => { if (v && errors.value.image_url) errors.
 watch(() => form.vehicle_registration, v => { if (v && errors.value.vehicle_registration) errors.value.vehicle_registration = ''; });
 watch(() => form.memo_file, v => { if (v && errors.value.memo_file) errors.value.memo_file = ''; });
 watch(() => form.lost_doc_file, v => { if (v && errors.value.lost_doc_file) errors.value.lost_doc_file = ''; });
+watch(() => form.bod_boc_approval_file, v => { if (v && errors.value.bod_boc_approval_file) errors.value.bod_boc_approval_file = ''; });
 
 const filteredFloors = computed(() => {
   if (!form.location_id) return [];
@@ -169,6 +181,8 @@ watch(() => props.open, (val) => {
   form.memo_file_name = '';
   form.lost_doc_file = null;
   form.lost_doc_file_name = '';
+  form.bod_boc_approval_file = null;
+  form.bod_boc_approval_file_name = '';
 
   if (isSingle.value && selectedItem.value) {
     const item = selectedItem.value;
@@ -186,6 +200,7 @@ watch(() => props.open, (val) => {
     form.vehicle_registration = item.vehicle_registration || '';
     form.memo_file_name = item.memo_file_name || (item.memo_url ? item.memo_url.split('/').pop() || '' : '');
     form.lost_doc_file_name = item.lost_doc_file_name || (item.lost_doc_url ? item.lost_doc_url.split('/').pop() || '' : '');
+    form.bod_boc_approval_file_name = item.bod_boc_approval_file_name || (item.bod_boc_approval_url ? item.bod_boc_approval_url.split('/').pop() || '' : '');
   } else {
     form.number = '';
     form.location_id = '';
@@ -286,6 +301,29 @@ const viewLostDocInNewTab = () => {
   }
 };
 
+const handleBodBocDocUpload = (e: any) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+  if (!allowedTypes.includes(file.type)) { toast.error('Format file salah! Hanya diperbolehkan file .pdf, .jpg, .jpeg, atau .png'); return; }
+  if (file.size > 2 * 1024 * 1024) { toast.error('Gagal! Ukuran dokumen maksimal 2MB'); return; }
+  form.bod_boc_approval_file = file;
+  form.bod_boc_approval_file_name = file.name;
+};
+
+const triggerBodBocDocFileInput = () => {
+  const input = document.getElementById('edit-asset-bod-boc-doc-upload') as HTMLInputElement;
+  input?.click();
+};
+
+const viewBodBocDocInNewTab = () => {
+  if (form.bod_boc_approval_file) {
+    window.open(URL.createObjectURL(form.bod_boc_approval_file), '_blank');
+  } else if (isSingle.value && selectedItem.value?.bod_boc_approval_url) {
+    window.open('/media/' + selectedItem.value.bod_boc_approval_url, '_blank');
+  }
+};
+
 const handleSamakanPrice = () => {
   if (props.lot?.unitPrice) {
     form.price = props.lot.unitPrice;
@@ -322,77 +360,84 @@ const handleSubmit = () => {
   resetErrors();
 
   if (isSingle.value) {
-    let isValid = true;
-    if (!form.location_id) { errors.value.location_id = 'Lokasi belum dipilih'; isValid = false; }
-    if (!form.status) { errors.value.status = 'Status belum dipilih'; isValid = false; }
-    if (!form.condition) { errors.value.condition = 'Kondisi belum dipilih'; isValid = false; }
-    if (!form.image_url && !form.image_url_name) { errors.value.image_url = 'Foto belum dipilih'; isValid = false; }
-    if (isVehicle.value && !form.vehicle_registration) { errors.value.vehicle_registration = 'TNKB (Nomor Polisi) belum diisi'; isValid = false; }
-    if (arrNeedApproval.includes(form.condition) && !isDocumentDisabled.value && !form.memo_file_name) { errors.value.memo_file = 'Berita Acara / Memo belum dipilih'; isValid = false; }
-    if (form.condition === 'Hilang' && !isDocumentDisabled.value && !form.lost_doc_file_name) { errors.value.lost_doc_file = 'Surat Keterangan Kehilangan belum dipilih'; isValid = false; }
-    if (!isValid) return;
+      let isValid = true;
+      if (!form.location_id) { errors.value.location_id = 'Lokasi belum dipilih'; isValid = false; }
+      if (!form.status) { errors.value.status = 'Status belum dipilih'; isValid = false; }
+      if (!form.condition) { errors.value.condition = 'Kondisi belum dipilih'; isValid = false; }
+      if (!form.image_url && !form.image_url_name) { errors.value.image_url = 'Foto belum dipilih'; isValid = false; }
+      if (isVehicle.value && !form.vehicle_registration) { errors.value.vehicle_registration = 'TNKB (Nomor Polisi) belum diisi'; isValid = false; }
+      if (arrNeedApproval.includes(form.condition) && !isDocumentDisabled.value && !form.memo_file_name) { errors.value.memo_file = 'Berita Acara / Memo belum dipilih'; isValid = false; }
+      if (form.condition === 'Hilang' && !isDocumentDisabled.value && !form.lost_doc_file_name) { errors.value.lost_doc_file = 'Surat Keterangan Kehilangan belum dipilih'; isValid = false; }
+      if (isBodBocFieldVisible.value && !form.bod_boc_approval_file_name) { errors.value.bod_boc_approval_file = 'Formulir Approval BoD/BoC belum dipilih'; isValid = false; }
+      if (!isValid) return;
 
-    form.transform((data) => {
-      const fd: any = {
-        _method: 'PUT',
-        number: data.number,
-        lot_id: props.lot.id,
-        location_id: data.location_id,
-        floor_id: data.floor_id,
-        room_id: data.room_id,
-        status: data.status,
-        condition: data.condition,
-        price: data.price !== '' && data.price !== null ? parseCurrencyToNumber(data.price) : null,
-      };
-      if (isVehicle.value) fd.vehicle_registration = data.vehicle_registration;
-      if (data.image_url) fd.image_url = data.image_url;
-      if (data.use_lot_image) fd.use_lot_image = data.use_lot_image;
-      if (data.memo_file) fd.memo_file = data.memo_file;
-      if (data.lost_doc_file) fd.lost_doc_file = data.lost_doc_file;
-      return fd;
-    }).post(`/smart/inventory/units/${form.ids[0]}`, {
-      onSuccess: () => { closeModal(); emit('success'); },
-    });
-  } else {
-    // Bulk edit
-    const hasField = !!(
-      (form.status && !isStatusDisabled.value) ||
-      (form.condition && !isKondisiDisabled.value) ||
-      form.location_id || form.floor_id || form.room_id || form.price ||
-      form.image_url || form.use_lot_image || form.memo_file || form.lost_doc_file
-    );
-    if (!hasField) {
-      toast.error('Harap isi minimal satu input untuk melakukan perubahan massal.');
-      return;
-    }
-
-    if (form.condition && !isKondisiDisabled.value && arrNeedApproval.includes(form.condition) && !isDocumentDisabled.value && !form.memo_file_name) {
-      errors.value.memo_file = 'Berita Acara / Memo wajib diisi jika kondisi Hilang atau Rusak Total.';
-      return;
-    }
-    if (form.condition && !isKondisiDisabled.value && form.condition === 'Hilang' && !isDocumentDisabled.value && !form.lost_doc_file_name) {
-      errors.value.lost_doc_file = 'Surat Keterangan Kehilangan wajib diisi jika kondisi Hilang.';
-      return;
-    }
-
-    const payload: any = { ids: form.ids };
-    if (form.status && !isStatusDisabled.value) payload.status = form.status;
-    if (form.condition && !isKondisiDisabled.value) payload.condition = form.condition;
-    
-    if (form.location_id) {
-      payload.location_id = form.location_id;
-      payload.floor_id = form.floor_id || null;
-      payload.room_id = form.room_id || null;
+      form.transform((data) => {
+        const fd: any = {
+          _method: 'PUT',
+          number: data.number,
+          lot_id: props.lot.id,
+          location_id: data.location_id,
+          floor_id: data.floor_id,
+          room_id: data.room_id,
+          status: data.status,
+          condition: data.condition,
+          price: data.price !== '' && data.price !== null ? parseCurrencyToNumber(data.price) : null,
+        };
+        if (isVehicle.value) fd.vehicle_registration = data.vehicle_registration;
+        if (data.image_url) fd.image_url = data.image_url;
+        if (data.use_lot_image) fd.use_lot_image = data.use_lot_image;
+        if (data.memo_file) fd.memo_file = data.memo_file;
+        if (data.lost_doc_file) fd.lost_doc_file = data.lost_doc_file;
+        if (data.bod_boc_approval_file) fd.bod_boc_approval_file = data.bod_boc_approval_file;
+        return fd;
+      }).post(`/smart/inventory/units/${form.ids[0]}`, {
+        onSuccess: () => { closeModal(); emit('success'); },
+      });
     } else {
-      if (form.floor_id) payload.floor_id = form.floor_id;
-      if (form.room_id) payload.room_id = form.room_id;
-    }
-    
-    if (form.price) payload.price = parseCurrencyToNumber(form.price).toString();
-    if (form.use_lot_image) payload.use_lot_image = true;
-    if (form.image_url instanceof File) payload.image_url = form.image_url;
-    if (form.memo_file instanceof File) payload.memo_file = form.memo_file;
-    if (form.lost_doc_file instanceof File) payload.lost_doc_file = form.lost_doc_file;
+      // Bulk edit
+      const hasField = !!(
+        (form.status && !isStatusDisabled.value) ||
+        (form.condition && !isKondisiDisabled.value) ||
+        form.location_id || form.floor_id || form.room_id || form.price ||
+        form.image_url || form.use_lot_image || form.memo_file || form.lost_doc_file || form.bod_boc_approval_file
+      );
+      if (!hasField) {
+        toast.error('Harap isi minimal satu input untuk melakukan perubahan massal.');
+        return;
+      }
+
+      if (form.condition && !isKondisiDisabled.value && arrNeedApproval.includes(form.condition) && !isDocumentDisabled.value && !form.memo_file_name) {
+        errors.value.memo_file = 'Berita Acara / Memo wajib diisi jika kondisi Hilang atau Rusak Total.';
+        return;
+      }
+      if (form.condition && !isKondisiDisabled.value && form.condition === 'Hilang' && !isDocumentDisabled.value && !form.lost_doc_file_name) {
+        errors.value.lost_doc_file = 'Surat Keterangan Kehilangan wajib diisi jika kondisi Hilang.';
+        return;
+      }
+      if (isBodBocFieldVisible.value && !form.bod_boc_approval_file_name) {
+        errors.value.bod_boc_approval_file = 'Formulir Approval BoD/BoC wajib diisi untuk persetujuan BoD/BoC.';
+        return;
+      }
+
+      const payload: any = { ids: form.ids };
+      if (form.status && !isStatusDisabled.value) payload.status = form.status;
+      if (form.condition && !isKondisiDisabled.value) payload.condition = form.condition;
+      
+      if (form.location_id) {
+        payload.location_id = form.location_id;
+        payload.floor_id = form.floor_id || null;
+        payload.room_id = form.room_id || null;
+      } else {
+        if (form.floor_id) payload.floor_id = form.floor_id;
+        if (form.room_id) payload.room_id = form.room_id;
+      }
+      
+      if (form.price) payload.price = parseCurrencyToNumber(form.price).toString();
+      if (form.use_lot_image) payload.use_lot_image = true;
+      if (form.image_url instanceof File) payload.image_url = form.image_url;
+      if (form.memo_file instanceof File) payload.memo_file = form.memo_file;
+      if (form.lost_doc_file instanceof File) payload.lost_doc_file = form.lost_doc_file;
+      if (form.bod_boc_approval_file instanceof File) payload.bod_boc_approval_file = form.bod_boc_approval_file;
 
     router.post('/smart/inventory/units/bulk-update', payload, {
       onSuccess: () => { closeModal(); emit('success'); },
@@ -606,6 +651,28 @@ const handleSubmit = () => {
                       <p class="text-[10px] text-muted-foreground ml-1 mt-1">Maksimal ukuran 2 MB (.pdf, .jpg, .jpeg, .png)</p>
                     </FieldContent>
                     <FieldError v-if="errors.lost_doc_file">{{ errors.lost_doc_file }}</FieldError>
+                  </Field>
+
+                  <!-- Formulir Approval BoD/BoC (Only visible when existing status is Pending:BoD/BoC) -->
+                  <Field v-if="isBodBocFieldVisible" :data-invalid="!!errors.bod_boc_approval_file || undefined">
+                    <FieldLabel><span>Formulir Approval BoD/BoC<span class="text-rose-500">*</span></span></FieldLabel>
+                    <FieldContent>
+                      <div class="flex gap-2">
+                        <div class="flex-grow min-w-0 px-4 py-2 text-sm border rounded-[14px] truncate flex items-center h-10 bg-muted/10"
+                          :class="[
+                            form.bod_boc_approval_file_name ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' : 'text-muted-foreground cursor-default',
+                            errors.bod_boc_approval_file ? 'border-destructive' : 'border-input'
+                          ]"
+                          @click="form.bod_boc_approval_file_name && viewBodBocDocInNewTab()"
+                        >
+                          {{ form.bod_boc_approval_file_name || 'Belum ada file yang dipilih' }}
+                        </div>
+                        <input type="file" id="edit-asset-bod-boc-doc-upload" class="hidden" accept=".pdf,.jpg,.jpeg,.png" @change="handleBodBocDocUpload" />
+                        <Button type="button" @click="triggerBodBocDocFileInput" size="lg">Pilih Dokumen</Button>
+                      </div>
+                      <p class="text-[10px] text-muted-foreground ml-1 mt-1">Maksimal ukuran 2 MB (.pdf, .jpg, .jpeg, .png)</p>
+                    </FieldContent>
+                    <FieldError v-if="errors.bod_boc_approval_file">{{ errors.bod_boc_approval_file }}</FieldError>
                   </Field>
                 </div>
               </div>
