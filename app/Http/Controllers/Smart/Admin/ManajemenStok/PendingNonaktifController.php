@@ -50,6 +50,9 @@ class PendingNonaktifController extends Controller
                 'lost_doc_url' => $pendingApproval 
                     ? $pendingApproval->lost_doc_url 
                     : ($approvedApproval ? $approvedApproval->lost_doc_url : null),
+                'bod_boc_approval_url' => $pendingApproval 
+                    ? $pendingApproval->bod_boc_approval_url 
+                    : ($approvedApproval ? $approvedApproval->bod_boc_approval_url : null),
                 'condition' => $unit->condition,
                 'price' => $unit->price,
                 'image_url' => $unit->image_url,
@@ -94,7 +97,7 @@ class PendingNonaktifController extends Controller
                         'waktu' => $log->start_date ? $log->start_date->format('d-m-Y H:i:s') : '-',
                         'status' => $log->status,
                         'action_type' => $log->action_type,
-                        'aktor' => $log->actor->name ?? '-',
+                        'aktor' => ($log->action_type === 'Approval' && str_contains($log->note ?? '', 'BoD/BoC')) ? 'BoD/BoC' : ($log->actor->name ?? '-'),
                         'durasi' => $log->formatted_duration,
                         'catatan' => $log->note ?? '-',
                     ];

@@ -53,6 +53,7 @@ class UnitStatusApproval extends Model
         'decided_at',
         'memo_url',
         'lost_doc_url',
+        'bod_boc_approval_url',
     ];
 
     protected $casts = [

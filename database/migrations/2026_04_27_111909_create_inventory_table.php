@@ -66,6 +66,7 @@ return new class extends Migration {
             $table->string('previous_status')->nullable();
             $table->string('memo_url');
             $table->string('lost_doc_url')->nullable();
+            $table->string('bod_boc_approval_url')->nullable();
             $table->string('decision')->default('pending')->comment('pending | approved | rejected');
             $table->text('note')->nullable()->comment('nullable | required if rejected');
             $table->dateTime('requested_at');
