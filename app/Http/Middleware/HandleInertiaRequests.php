@@ -38,7 +38,7 @@ class HandleInertiaRequests extends Middleware
                     ? \App\Models\Request\Request::where('approver_id', $request->user()->id)->where('status', 'wait')->count()
                     : 0,
                 'pendingAssetStatusCount' => $request->user() && in_array($request->user()->role, ['manager', 'ifs_manager'])
-                    ? \App\Models\Inventory\UnitStatusApproval::where('decision', 'pending')->count()
+                    ? \App\Models\Inventory\UnitStatusApproval::where('decision', 'pending')->whereHas('unit', fn($q) => $q->where('status', 'Pending:DM'))->count()
                     : 0,
             ],
             'flash' => [

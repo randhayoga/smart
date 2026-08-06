@@ -64,7 +64,7 @@ const formatDateWithDashes = (dateStr: string | null | undefined) => {
   return dateStr.replace(/\//g, '-');
 };
 
-const openMemoFile = (path: string | null) => {
+const openMemoFile = (path?: string | null) => {
   if (!path) return;
   window.open('/media/' + path, '_blank');
 };
@@ -251,6 +251,18 @@ const getConditionClass = (cond?: string | null) => {
               >
                 <FileText class="w-4 h-4" />
                 Surat Keterangan Kehilangan
+              </Button>
+
+              <!-- BoD/BoC Approval Document Button (Conditional if bod_boc_approval_url exists) -->
+              <Button 
+                v-if="approval.bod_boc_approval_url"
+                @click="openMemoFile(approval.bod_boc_approval_url)"
+                variant="warning"
+                size="lg"
+                class="inline-flex items-center gap-2"
+              >
+                <FileText class="w-4 h-4" />
+                Formulir Persetujuan BoD/BoC
               </Button>
 
               <!-- Pending mode buttons -->

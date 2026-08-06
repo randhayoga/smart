@@ -72,6 +72,7 @@ class ManagerAssetStatusApprovalResource extends JsonResource
             'approver_name' => $this->approver->name ?? null,
             'memo_url' => $this->memo_url,
             'lost_doc_url' => $this->lost_doc_url,
+            'bod_boc_approval_url' => $this->bod_boc_approval_url,
             'unit_details' => [
                 'id' => $unit->id,
                 'number' => $unit->number ?? '-',
