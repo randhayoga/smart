@@ -30,10 +30,10 @@ class ManagerBulkUnitStatusApprovalController extends Controller
         $note = $validated['note'];
 
         foreach ($ids as $id) {
-            $approval = UnitStatusApproval::find($id);
+            $approval = UnitStatusApproval::with('unit')->find($id);
 
-            // Skip if not found or already processed
-            if (!$approval || $approval->decision !== 'pending') {
+            // Skip if not found, decision is not pending, or unit status is Pending:BoD/BoC
+            if (!$approval || $approval->decision !== 'pending' || $approval->unit?->status === 'Pending:BoD/BoC') {
                 continue;
             }
 

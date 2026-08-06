@@ -78,6 +78,7 @@ interface ApprovalItem {
   approver_name: string | null;
   memo_url: string | null;
   lost_doc_url: string | null;
+  bod_boc_approval_url?: string | null;
   unit_details: UnitDetails;
 }
 
@@ -328,7 +329,7 @@ const columns: ColumnDef<ApprovalItem>[] = [
       const item = row.original;
       const buttons = [
         h(Button, {
-          variant: 'table-primary',
+          variant: 'table-warning',
           size: 'icon-sm',
           title: 'Buka Berita Acara / Memo',
           onClick: () => openMemoFile(item.memo_url)
@@ -340,7 +341,7 @@ const columns: ColumnDef<ApprovalItem>[] = [
       if (item.proposed_condition === 'Hilang' || item.proposed_status === 'Hilang') {
         buttons.push(
           h(Button, {
-            variant: 'table-primary',
+            variant: 'table-warning',
             size: 'icon-sm',
             title: 'Buka Surat Keterangan Kehilangan',
             onClick: () => openMemoFile(item.lost_doc_url)
@@ -353,7 +354,7 @@ const columns: ColumnDef<ApprovalItem>[] = [
       if (item.bod_boc_approval_url) {
         buttons.push(
           h(Button, {
-            variant: 'table-primary',
+            variant: 'table-warning',
             size: 'icon-sm',
             title: 'Buka Formulir Persetujuan BoD/BoC',
             onClick: () => openMemoFile(item.bod_boc_approval_url)
