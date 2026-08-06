@@ -74,7 +74,7 @@ const getAge = (dateStr: string | null) => {
   return years >= 0 ? years : 0;
 };
 
-const openMemoFile = (path: string | null) => {
+const openMemoFile = (path?: string | null) => {
   if (!path) return;
   window.open('/media/' + path, '_blank');
 };
@@ -272,6 +272,17 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
               >
                 <FileText class="w-4 h-4" />
                 Surat Keterangan Kehilangan
+              </Button>
+
+              <Button 
+                v-if="asset && asset.bod_boc_approval_url"
+                @click="openMemoFile(asset.bod_boc_approval_url)"
+                variant="warning"
+                size="lg"
+                class="inline-flex items-center gap-2"
+              >
+                <FileText class="w-4 h-4" />
+                Formulir Persetujuan BoD/BoC
               </Button>
 
               <Button 

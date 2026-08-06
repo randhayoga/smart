@@ -139,7 +139,7 @@ const computedPageSize = computed(() => {
 
 
 // Memo document opener
-const openMemoFile = (path: string | null) => {
+const openMemoFile = (path?: string | null) => {
   if (!path) {
     toast.error('File berita acara / memo tidak ditemukan.');
     return;
@@ -347,6 +347,19 @@ const columns: ColumnDef<ApprovalItem>[] = [
           }, () => [
             h(FileText),
             h('span', { class: 'sr-only' }, 'Buka Surat Keterangan Kehilangan')
+          ])
+        );
+      }
+      if (item.bod_boc_approval_url) {
+        buttons.push(
+          h(Button, {
+            variant: 'table-primary',
+            size: 'icon-sm',
+            title: 'Buka Formulir Persetujuan BoD/BoC',
+            onClick: () => openMemoFile(item.bod_boc_approval_url)
+          }, () => [
+            h(FileText),
+            h('span', { class: 'sr-only' }, 'Buka Formulir Persetujuan BoD/BoC')
           ])
         );
       }

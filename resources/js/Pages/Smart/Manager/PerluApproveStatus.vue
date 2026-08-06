@@ -117,6 +117,7 @@ interface ApprovalItem {
   requested_at: string;
   memo_url: string | null;
   lost_doc_url: string | null;
+  bod_boc_approval_url?: string | null;
   unit_details: UnitDetails;
 }
 
@@ -346,6 +347,19 @@ const columns: ColumnDef<ApprovalItem>[] = [
           ])
         );
       }
+      if (item.bod_boc_approval_url) {
+        buttons.push(
+          h(Button, {
+            variant: 'table-primary',
+            size: 'icon-sm',
+            title: 'Buka Formulir Persetujuan BoD/BoC',
+            onClick: () => openMemoFile(item.bod_boc_approval_url)
+          }, () => [
+            h(FileText),
+            h('span', { class: 'sr-only' }, 'Buka Formulir Persetujuan BoD/BoC')
+          ])
+        );
+      }
       buttons.push(
         h(Button, {
           variant: 'table-view',
@@ -441,7 +455,7 @@ const auditColumns: ColumnDef<AuditTrail>[] = [
 ];
 
 // Memo document opener
-const openMemoFile = (path: string | null) => {
+const openMemoFile = (path?: string | null) => {
   if (!path) {
     toast.error('File berita acara / memo tidak ditemukan.');
     return;

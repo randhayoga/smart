@@ -37,7 +37,10 @@ class ManagerUnitStatusApprovalController extends Controller
             $query->where('decision', '!=', 'pending');
             $view = 'Smart/Manager/SudahApproveStatus';
         } else {
-            $query->where('decision', 'pending');
+            $query->where('decision', 'pending')
+                  ->whereHas('unit', function ($q) {
+                      $q->where('status', 'Pending:DM');
+                  });
             $view = 'Smart/Manager/PerluApproveStatus';
         }
 
