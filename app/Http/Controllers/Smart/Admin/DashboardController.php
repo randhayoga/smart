@@ -32,31 +32,38 @@ class DashboardController extends Controller
             ->select('subcategories.name as subcategory_name', \Illuminate\Support\Facades\DB::raw('SUM(lots.current_quantity) as total_quantity'))
             ->get();
 
-        // Fetch the total number of units of each non_consumable category that is under CFS organizer
-        $cfsCategoryStats = \Illuminate\Support\Facades\DB::table('units')
+        // Optimized Single Query: Fetch total number of units for non_consumable categories under CFS and ICT organizers
+        $nonConsumableCategoryStats = \Illuminate\Support\Facades\DB::table('units')
             ->join('lots', 'units.lot_id', '=', 'lots.id')
             ->join('organizers', 'lots.organizer_id', '=', 'organizers.id')
             ->join('barangs', 'lots.barang_id', '=', 'barangs.id')
             ->join('subcategories', 'barangs.subcategory_id', '=', 'subcategories.id')
             ->join('categories', 'subcategories.category_id', '=', 'categories.id')
             ->where('categories.is_consumable', false)
-            ->where('organizers.name', 'CFS')
-            ->groupBy('categories.id', 'categories.name')
-            ->select('categories.name as category_name', \Illuminate\Support\Facades\DB::raw('COUNT(units.id) as total_units'))
+            ->whereIn('organizers.name', ['CFS', 'ICT'])
+            ->groupBy('organizers.name', 'categories.id', 'categories.name')
+            ->select(
+                'organizers.name as organizer_name',
+                'categories.name as category_name',
+                \Illuminate\Support\Facades\DB::raw('COUNT(units.id) as total_units')
+            )
             ->get();
 
-        // Fetch the total number of units of each non_consumable category that is under ICT organizer
-        $ictCategoryStats = \Illuminate\Support\Facades\DB::table('units')
-            ->join('lots', 'units.lot_id', '=', 'lots.id')
-            ->join('organizers', 'lots.organizer_id', '=', 'organizers.id')
-            ->join('barangs', 'lots.barang_id', '=', 'barangs.id')
-            ->join('subcategories', 'barangs.subcategory_id', '=', 'subcategories.id')
-            ->join('categories', 'subcategories.category_id', '=', 'categories.id')
-            ->where('categories.is_consumable', false)
-            ->where('organizers.name', 'ICT')
-            ->groupBy('categories.id', 'categories.name')
-            ->select('categories.name as category_name', \Illuminate\Support\Facades\DB::raw('COUNT(units.id) as total_units'))
-            ->get();
+        $cfsCategoryStats = $nonConsumableCategoryStats
+            ->where('organizer_name', 'CFS')
+            ->map(fn ($item) => [
+                'category_name' => $item->category_name,
+                'total_units' => (int) $item->total_units,
+            ])
+            ->values();
+
+        $ictCategoryStats = $nonConsumableCategoryStats
+            ->where('organizer_name', 'ICT')
+            ->map(fn ($item) => [
+                'category_name' => $item->category_name,
+                'total_units' => (int) $item->total_units,
+            ])
+            ->values();
         
         return Inertia::render('Smart/Admin/Dashboard', [
             'user' => $user,

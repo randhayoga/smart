@@ -8,7 +8,7 @@ use App\Models\Inventory\Unit;
 use App\Models\Master\Category;
 use App\Models\Master\Organizer;
 use App\Models\Master\Subcategory;
-use App\Models\User;
+use App\Models\AdmUser;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -19,7 +19,8 @@ class DashboardControllerTest extends TestCase
     public function test_admin_dashboard_returns_stats()
     {
         // 1. Setup Admin User
-        $adminUser = User::factory()->create(['is_admin' => true]);
+        $adminEmployee = \App\Models\HrdEmployee::factory()->create(['employee_id' => '255578']);
+        $adminUser = AdmUser::factory()->create(['employee_id' => $adminEmployee->employee_id]);
 
         // 2. Setup Consumable Data
         $consumableCat = Category::factory()->create(['is_consumable' => true, 'name' => 'Consumables']);
@@ -59,7 +60,7 @@ class DashboardControllerTest extends TestCase
         Unit::factory()->create(['lot_id' => $ictLot->id]); // Total ICT units for Electronics should be 1
 
         // 5. Act
-        $response = $this->actingAs($adminUser)->get(route('smart.admin.dashboard'));
+        $response = $this->actingAs($adminUser)->get(route('smart.dashboard'));
 
         // 6. Assert
         $response->assertStatus(200);
@@ -69,7 +70,7 @@ class DashboardControllerTest extends TestCase
             ->component('Smart/Admin/Dashboard')
             ->has('consumableSubcategoryStats', 1)
             ->where('consumableSubcategoryStats.0.subcategory_name', 'Stationery')
-            ->where('consumableSubcategoryStats.0.total_quantity', "15") // DB SUM can return string depending on driver
+            ->where('consumableSubcategoryStats.0.total_quantity', fn ($val) => (int) $val === 15)
             ->has('cfsCategoryStats', 1)
             ->where('cfsCategoryStats.0.category_name', 'Electronics')
             ->where('cfsCategoryStats.0.total_units', 2)
@@ -79,12 +80,13 @@ class DashboardControllerTest extends TestCase
         );
     }
     
-    public function test_non_admin_redirected_to_user_dashboard()
+    public function test_non_admin_forbidden_on_admin_dashboard()
     {
-        $user = User::factory()->create(['is_admin' => false]);
+        config(['app.disable_test_admin_bypass' => true]);
+        $user = AdmUser::factory()->create();
         
-        $response = $this->actingAs($user)->get(route('smart.admin.dashboard'));
+        $response = $this->actingAs($user)->get(route('smart.dashboard'));
         
-        $response->assertRedirect(route('smart.user.dashboard'));
+        $response->assertForbidden();
     }
 }
