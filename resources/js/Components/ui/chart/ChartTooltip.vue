@@ -12,28 +12,19 @@ defineProps<{
 </script>
 
 <template>
-  <Card class="text-sm">
-    <CardHeader v-if="title" class="p-3 border-b">
-      <CardTitle>
+  <Card class="text-sm shadow-lg border bg-card text-card-foreground">
+    <CardHeader v-if="title" class="p-3 pb-2 border-b">
+      <CardTitle class="text-sm font-semibold text-muted-foreground">
         {{ title }}
       </CardTitle>
     </CardHeader>
-    <CardContent class="p-3 min-w-[180px] flex flex-col gap-1">
-      <div v-for="(item, key) in data" :key="key" class="flex justify-between">
-        <div class="flex items-center">
-          <span class="w-2.5 h-2.5 mr-2">
-            <svg width="100%" height="100%" viewBox="0 0 30 30">
-              <path
-                d=" M 15 15 m -14, 0 a 14,14 0 1,1 28,0 a 14,14 0 1,1 -28,0"
-                :stroke="item.color"
-                :fill="item.color"
-                stroke-width="1"
-              />
-            </svg>
-          </span>
-          <span>{{ item.name }}</span>
+    <CardContent class="p-3 min-w-[180px] flex flex-col gap-2">
+      <div v-for="(item, key) in data" :key="key" class="flex items-center justify-between gap-3">
+        <div class="flex items-center gap-2 min-w-0">
+          <span class="w-3 h-3 rounded-full shrink-0 inline-block" :style="{ backgroundColor: item.color }"></span>
+          <span class="text-sm font-medium text-foreground truncate">{{ item.name }}</span>
         </div>
-        <span class="font-semibold ml-4">{{ item.value }}</span>
+        <span class="text-sm font-bold text-foreground shrink-0 ml-3">{{ item.value }}</span>
       </div>
     </CardContent>
   </Card>
