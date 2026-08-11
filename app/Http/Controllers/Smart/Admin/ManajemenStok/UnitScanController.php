@@ -90,7 +90,7 @@ class UnitScanController extends Controller
         $floors = Floor::with('location')->orderBy('name')->get();
         $rooms = Room::with('floor.location')->orderBy('name')->get();
 
-        return Inertia::render('Smart/Admin/ManajemenStok/ScanAsset', [
+        return Inertia::render('Smart/MultiRoles/HasilPindai', [
             'asset' => $mappedUnit,
             'locations' => $locations,
             'floors' => $floors,

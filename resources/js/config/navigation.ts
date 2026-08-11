@@ -77,7 +77,7 @@ export const mainNavigation: NavSection[] = [
             },
             {
                 title: 'Pindai Barcode',
-                href: '/smart/scan-barcode',
+                href: '/smart/scan',
                 icon: QrCode,
             },
         ],
