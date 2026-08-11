@@ -3,7 +3,7 @@ import { ref, computed, watch } from 'vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 import { Toaster } from '@/Components/ui/sonner';
-import { ChevronLeft, ChevronDown, Loader2, Save, Info, FileText } from 'lucide-vue-next';
+import { ChevronLeft, ChevronDown, Loader2, Save, Info, FileText, Camera } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -26,6 +26,11 @@ interface Props {
 const props = defineProps<Props>();
 
 const activeTab = ref<'detail' | 'edit'>('detail');
+
+const photoInput = ref<HTMLInputElement | null>(null);
+const cameraInput = ref<HTMLInputElement | null>(null);
+const memoFileInput = ref<HTMLInputElement | null>(null);
+const lostDocFileInput = ref<HTMLInputElement | null>(null);
 
 const isVehicle = computed(() => {
   const category = (props.asset?.barang_category || '').toLowerCase();
@@ -162,8 +167,11 @@ const handleFileUpload = (e: any) => {
 };
 
 const triggerFileInput = () => {
-  const input = document.getElementById('edit-asset-photo-upload') as HTMLInputElement;
-  input?.click();
+  photoInput.value?.click();
+};
+
+const triggerCameraInput = () => {
+  cameraInput.value?.click();
 };
 
 const viewImageInNewTab = () => {
@@ -197,8 +205,7 @@ const handleMemoUpload = (e: any) => {
 };
 
 const triggerMemoFileInput = () => {
-  const input = document.getElementById('edit-asset-memo-upload') as HTMLInputElement;
-  input?.click();
+  memoFileInput.value?.click();
 };
 
 const viewMemoInNewTab = () => {
@@ -220,8 +227,7 @@ const handleLostDocUpload = (e: any) => {
 };
 
 const triggerLostDocFileInput = () => {
-  const input = document.getElementById('edit-asset-lost-doc-upload') as HTMLInputElement;
-  input?.click();
+  lostDocFileInput.value?.click();
 };
 
 const viewLostDocInNewTab = () => {
@@ -628,9 +634,13 @@ const handleSubmit = () => {
                     {{ form.image_url_name || 'Belum ada foto yang dipilih' }}
                   </div>
                   <div class="flex gap-2 shrink-0">
-                    <input type="file" id="edit-asset-photo-upload" class="hidden" accept=".jpg,.jpeg,.png" @change="handleFileUpload" />
+                    <input ref="cameraInput" type="file" id="edit-asset-camera-upload" class="hidden" accept="image/*" capture="environment" @change="handleFileUpload" />
+                    <input ref="photoInput" type="file" id="edit-asset-photo-upload" class="hidden" accept=".jpg,.jpeg,.png" @change="handleFileUpload" />
                     <Button type="button" @click="handleSamakanPhoto" variant="warning" size="lg" class="rounded-xl h-10 flex-1 xs:flex-none">Samakan</Button>
-                    <Button type="button" @click="triggerFileInput" size="lg" class="rounded-xl h-10 flex-1 xs:flex-none">Pilih</Button>
+                    <Button type="button" @click="triggerFileInput" size="lg" class="rounded-xl h-10 flex-1 xs:flex-none">Unggah</Button>
+                    <Button type="button" @click="triggerCameraInput" variant="success" size="lg" class="rounded-xl h-10 px-3 bg-emerald-600 hover:bg-emerald-700 text-white shrink-0" title="Ambil Foto">
+                      <Camera class="w-5 h-5" />
+                    </Button>
                   </div>
                 </div>
                 <p class="text-[10px] text-muted-foreground ml-1 mt-1">Maksimal ukuran 1 MB (.jpg, .jpeg, .png)</p>
@@ -665,7 +675,7 @@ const handleSubmit = () => {
                     {{ form.memo_file_name || 'Belum ada file yang dipilih' }}
                   </div>
                   <div class="flex gap-2 shrink-0">
-                    <input type="file" id="edit-asset-memo-upload" class="hidden" accept=".pdf,.jpg,.jpeg,.png" @change="handleMemoUpload" />
+                    <input ref="memoFileInput" type="file" id="edit-asset-memo-upload" class="hidden" accept=".pdf,.jpg,.jpeg,.png" @change="handleMemoUpload" />
                     <Button type="button" @click="triggerMemoFileInput" size="lg" class="rounded-xl h-10 w-full xs:w-auto">Pilih File</Button>
                   </div>
                 </div>
@@ -687,7 +697,7 @@ const handleSubmit = () => {
                     {{ form.lost_doc_file_name || 'Belum ada file yang dipilih' }}
                   </div>
                   <div class="flex gap-2 shrink-0">
-                    <input type="file" id="edit-asset-lost-doc-upload" class="hidden" accept=".pdf,.jpg,.jpeg,.png" @change="handleLostDocUpload" />
+                    <input ref="lostDocFileInput" type="file" id="edit-asset-lost-doc-upload" class="hidden" accept=".pdf,.jpg,.jpeg,.png" @change="handleLostDocUpload" />
                     <Button type="button" @click="triggerLostDocFileInput" size="lg" class="rounded-xl h-10 w-full xs:w-auto">Pilih File</Button>
                   </div>
                 </div>
