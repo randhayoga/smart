@@ -19,7 +19,8 @@ import {
     RefreshCcw,
     ScrollText,
     Scroll,
-    FileX
+    FileX,
+    QrCode
 } from 'lucide-vue-next';
 
 export interface NavItem {
@@ -73,6 +74,11 @@ export const mainNavigation: NavSection[] = [
                 title: 'Master Data',
                 href: '/smart/master',
                 icon: Database,
+            },
+            {
+                title: 'Pindai Barcode',
+                href: '/smart/scan-barcode',
+                icon: QrCode,
             },
         ],
     },

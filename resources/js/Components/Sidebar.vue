@@ -197,12 +197,12 @@ const isActive = (href: string): boolean => {
   <!-- Mobile Sidebar (Sheet) -->
   <Sheet :open="open && isMobile" @update:open="(val) => !val && emit('close')">
     <SheetContent side="left" class="w-[280px] max-w-[85vw] p-0 bg-sidebar flex flex-col h-full">
-      <SheetHeader class="p-4 border-b border-sidebar-border flex-shrink-0">
-        <SheetTitle class="flex items-center gap-2">
-          <div class="flex h-9 w-9 items-center justify-center rounded-lg overflow-hidden">
+      <SheetHeader class="px-4 h-14 !flex-row items-center justify-start text-left border-b border-sidebar-border flex-shrink-0">
+        <SheetTitle class="flex items-center gap-2 text-left">
+          <div class="flex h-9 w-9 items-center justify-center rounded-lg overflow-hidden shrink-0">
             <ApplicationLogo class="h-full w-full object-contain" />
           </div>
-          <span class="font-bold text-xl text-gradient-primary">SMART</span>
+          <span class="font-bold text-xl text-gradient-primary leading-none">SMART</span>
         </SheetTitle>
         <SheetDescription class="sr-only">
           Navigasi utama untuk aplikasi SMART.
@@ -211,7 +211,7 @@ const isActive = (href: string): boolean => {
       
       <!-- Scrollable Menu Area -->
       <div class="flex-1 overflow-hidden">
-        <ScrollArea class="h-full py-4">
+        <ScrollArea class="h-full">
           <nav class="px-3 space-y-6">
           <div v-for="(section, sectionIndex) in navigation" :key="sectionIndex">
             <!-- Section Title -->
