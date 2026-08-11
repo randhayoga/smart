@@ -19,6 +19,7 @@ class ScanBarcodeTest extends TestCase
 
     public function test_authenticated_user_can_access_scan_barcode_page(): void
     {
+        /** @var User $user */
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->get(route('smart.scan-barcode'));
