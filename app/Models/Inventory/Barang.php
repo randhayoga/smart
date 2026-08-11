@@ -23,6 +23,7 @@ class Barang extends Model
         'uom_id',
         'name',
         'specification',
+        'min_stock_threshold',
         'image_url',
         'last_restock_at'
     ];
@@ -32,6 +33,7 @@ class Barang extends Model
         'subcategory_id' => 'integer',
         'brand_id' => 'integer',
         'uom_id' => 'integer',
+        'min_stock_threshold' => 'integer',
     ];
 
     public function subcategory(): BelongsTo

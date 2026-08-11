@@ -1,4 +1,5 @@
-import { ref, watch, computed } from 'vue';
+import { ref, computed } from 'vue';
+import axios from 'axios';
 
 export interface NotificationItem {
   id: string;
@@ -7,46 +8,45 @@ export interface NotificationItem {
   timestamp: string;
   read: boolean;
   type: 'info' | 'success' | 'warning' | 'error';
+  url?: string | null;
 }
 
-const STORAGE_KEY = 'smart_notifications';
-
-// Load initial notifications from localStorage
-const loadNotifications = (): NotificationItem[] => {
-  try {
-    const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
-  } catch (e) {
-    console.error('Failed to parse notifications from localStorage', e);
-    return [];
-  }
-};
-
-export const notifications = ref<NotificationItem[]>(loadNotifications());
+export const notifications = ref<NotificationItem[]>([]);
 
 // Computed property for unread count
 export const unreadCount = computed(() => {
   return notifications.value.filter((n) => !n.read).length;
 });
 
-// Watch notifications and save to localStorage
-watch(
-  notifications,
-  (newVal) => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(newVal));
-    } catch (e) {
-      console.error('Failed to save notifications to localStorage', e);
-    }
-  },
-  { deep: true }
-);
+/**
+  Set notifications array directly (e.g. from Inertia page props)
+ */
+export const setNotifications = (items: NotificationItem[]) => {
+  notifications.value = items || [];
+};
 
-// Actions
+/**
+  Fetch notifications from database API
+ */
+export const fetchNotifications = async () => {
+  try {
+    const response = await axios.get('/smart/notifications');
+    if (response.data?.notifications) {
+      notifications.value = response.data.notifications;
+    }
+  } catch (e) {
+    console.error('Failed to fetch notifications from server', e);
+  }
+};
+
+/**
+  Add a client-side notification (transient or locally pushed)
+ */
 export const addNotification = (
   title: string,
   message: string,
-  type: 'info' | 'success' | 'warning' | 'error' = 'info'
+  type: 'info' | 'success' | 'warning' | 'error' = 'info',
+  url: string | null = null
 ) => {
   const newNotif: NotificationItem = {
     id: Math.random().toString(36).substring(2, 9),
@@ -55,28 +55,52 @@ export const addNotification = (
     timestamp: new Date().toISOString(),
     read: false,
     type,
+    url,
   };
   notifications.value.unshift(newNotif);
 
-  // Keep only the last 50 notifications to prevent bloat
   if (notifications.value.length > 50) {
     notifications.value = notifications.value.slice(0, 50);
   }
 };
 
-export const markAsRead = (id: string) => {
+/**
+  Mark single notification as read in UI & DB
+ */
+export const markAsRead = async (id: string) => {
   const notif = notifications.value.find((n) => n.id === id);
   if (notif) {
     notif.read = true;
   }
+  try {
+    await axios.post(`/smart/notifications/${id}/read`);
+  } catch (e) {
+    console.error(`Failed to mark notification ${id} as read`, e);
+  }
 };
 
-export const markAllAsRead = () => {
+/**
+  Mark all notifications as read in UI & DB
+ */
+export const markAllAsRead = async () => {
   notifications.value.forEach((n) => {
     n.read = true;
   });
+  try {
+    await axios.post('/smart/notifications/read-all');
+  } catch (e) {
+    console.error('Failed to mark all notifications as read', e);
+  }
 };
 
-export const clearNotifications = () => {
+/**
+  Clear all notifications in UI & DB
+ */
+export const clearNotifications = async () => {
   notifications.value = [];
+  try {
+    await axios.delete('/smart/notifications/clear');
+  } catch (e) {
+    console.error('Failed to clear notifications', e);
+  }
 };

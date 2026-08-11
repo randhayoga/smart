@@ -50,6 +50,15 @@ Route::middleware(['auth'])->group(function () {
 
 // Smart routes - protected
 Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () {
+    // Notification routes (for all authenticated users)
+    Route::prefix('notifications')->name('notifications.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Smart\NotificationController::class, 'index'])->name('index');
+        Route::post('/{id}/read', [\App\Http\Controllers\Smart\NotificationController::class, 'markAsRead'])->name('read');
+        Route::post('/read-all', [\App\Http\Controllers\Smart\NotificationController::class, 'markAllAsRead'])->name('read-all');
+        Route::delete('/clear', [\App\Http\Controllers\Smart\NotificationController::class, 'clearAll'])->name('clear');
+        Route::delete('/{id}', [\App\Http\Controllers\Smart\NotificationController::class, 'destroy'])->name('destroy');
+    });
+
     Route::post('/placement/update', [RequestHistoryController::class, 'updatePlacement'])->name('placement.update');
 
     // Admin only routes

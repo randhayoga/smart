@@ -15,6 +15,7 @@ return new class extends Migration {
             $table->foreignId('uom_id')->constrained('uoms');
             $table->string('name');
             $table->string('specification')->nullable();
+            $table->integer('min_stock_threshold')->default(0)->nullable()->comment('Threshold minimum stock untuk notifikasi barang consumable');
             $table->string('image_url')->comment('default image');
             $table->dateTime('last_restock_at')->nullable();
             $table->timestamps();

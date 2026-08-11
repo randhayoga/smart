@@ -128,6 +128,7 @@ erDiagram
         int uom_id FK ""  
         varchar name  ""  
         varchar specification  "nullable"  
+        int min_stock_threshold  "nullable | default to 0"  
         varchar image_url  "default image"  
         datetime last_restock_at  "nullable"  
     }
@@ -309,6 +310,17 @@ erDiagram
         datetime created_at  ""  
     }
 
+    NOTIFICATION {
+        uuid id PK ""  
+        varchar type ""  
+        varchar notifiable_type ""  
+        int notifiable_id FK "ADM_USER's id"  
+        text data ""  
+        datetime read_at "nullable"  
+        datetime created_at ""  
+        datetime updated_at ""  
+    }
+
     SESSION {
         varchar id PK ""  
         int user_id FK "nullable | index"  
@@ -322,7 +334,7 @@ erDiagram
         varchar key PK ""  
         mediumtext value  ""  
         int expiration  "index"  
-    }
+        }
 
     CACHE_LOCK {
         varchar key PK ""  
@@ -385,6 +397,7 @@ erDiagram
     ADM_USER||--o{UNIT_STATUS_APPROVAL:"requests status change"
     ADM_USER||--o{UNIT_STATUS_APPROVAL:"decides status change"
     ADM_USER||--o{INVENTORY_LOG:"actored"
+    ADM_USER||--o{NOTIFICATION:"notified"
     LOCATION||--o{FLOOR:"in floor"
     FLOOR||--o{ROOM:"in room"
     TB_PROJECT||--o{LOT:"associated with project"
