@@ -185,7 +185,7 @@ const auditColumns: ColumnDef<AuditTrail>[] = [
   },
   {
     accessorKey: 'kode_aset',
-    size: 180,
+    size: 200,
     header: ({ column }) => {
       return h(Button, {
         variant: 'ghost',
@@ -198,7 +198,7 @@ const auditColumns: ColumnDef<AuditTrail>[] = [
     },
     cell: ({ row }) => {
       const item = row.original;
-      return h('div', { class: 'space-y-0.5 max-w-[180px]' }, [
+      return h('div', { class: 'space-y-0.5 max-w-[200px]' }, [
         h('div', { class: 'font-mono text-sm font-medium text-foreground truncate' }, item.kode_aset),
         item.nama_aset && item.nama_aset !== '-' ? h('div', { class: 'text-xs text-muted-foreground truncate', title: item.nama_aset }, item.nama_aset) : null
       ]);
