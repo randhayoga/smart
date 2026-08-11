@@ -32,7 +32,7 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => $request->user(),
+                'user' => $request->user()?->loadMissing('hrdEmployee.orgchart'),
                 'isAdmin' => $request->user()?->is_admin ?? false,
                 'pendingRequestCount' => $request->user() && in_array($request->user()->role, ['manager', 'ifs_manager'])
                     ? \App\Models\Request\Request::where('approver_id', $request->user()->id)->where('status', 'wait')->count()

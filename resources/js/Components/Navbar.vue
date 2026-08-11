@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { Link, usePage, router } from '@inertiajs/vue3';
-import { Menu, X, Search, Bell, Info, CheckCircle2, AlertTriangle, XCircle, Trash2 } from 'lucide-vue-next';
+import { Menu, X, Search, Bell, Info, CheckCircle2, AlertTriangle, XCircle, Trash2, Building2, LogOut } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/Components/ui/avatar';
 import ApplicationLogo from '@/Components/ApplicationLogo.vue';
@@ -12,7 +12,8 @@ import {
   DropdownMenu, 
   DropdownMenuTrigger, 
   DropdownMenuContent,
-  DropdownMenuSeparator
+  DropdownMenuSeparator,
+  DropdownMenuItem
 } from '@/Components/ui/dropdown-menu';
 import { ScrollArea } from '@/Components/ui/scroll-area';
 
@@ -176,15 +177,40 @@ const formatTime = (isoString: string) => {
         </DropdownMenu>
         
         <!-- User dropdown -->
-        <!-- User Avatar -->
-        <div class="px-2">
-          <Avatar class="h-8 w-8">
-            <AvatarImage :src="user?.avatar || ''" :alt="user?.name || ''" />
-            <AvatarFallback class="bg-gradient-primary text-white text-sm">
-              {{ userInitials }}
-            </AvatarFallback>
-          </Avatar>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger as-child>
+            <button 
+              type="button" 
+              class="flex items-center gap-2 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-card cursor-pointer border-0 bg-transparent p-0.5 hover:opacity-90 transition-opacity"
+              aria-label="User Menu"
+            >
+              <Avatar class="h-8 w-8">
+                <AvatarImage :src="user?.avatar || ''" :alt="user?.name || ''" />
+                <AvatarFallback class="bg-gradient-primary text-white text-sm font-semibold">
+                  {{ userInitials }}
+                </AvatarFallback>
+              </Avatar>
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" class="w-64 p-2 bg-card border border-border rounded-lg shadow-lg">
+            <div class="px-2 pt-1">
+              <p class="text-base font-semibold text-foreground truncate">
+                {{ user?.name || 'User' }}
+              </p>
+              <div class="flex items-center gap-1.5 text-sm text-muted-foreground truncate">
+                <span class="truncate">{{ user?.org_name || 'Tanpa Organisasi' }}</span>
+              </div>
+            </div>
+            <DropdownMenuSeparator class="my-1 border-t border-border" />
+            <DropdownMenuItem 
+              @click="logout" 
+              class="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10 flex items-center gap-2"
+            >
+              <LogOut class="h-4 w-4" />
+              <span>Keluar</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   </header>

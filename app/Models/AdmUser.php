@@ -32,6 +32,7 @@ class AdmUser extends Authenticatable
         'username',
         'role',
         'is_admin',
+        'org_name',
     ];
 
     /**
@@ -80,6 +81,14 @@ class AdmUser extends Authenticatable
     public function getIsAdminAttribute(): bool
     {
         return $this->role === 'admin' || $this->role === 'ifs_manager';
+    }
+
+    /**
+     * Get the organization name of the user.
+     */
+    public function getOrgNameAttribute(): ?string
+    {
+        return $this->hrdEmployee?->orgchart?->org_name;
     }
 
     /**
