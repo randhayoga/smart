@@ -37,14 +37,25 @@ const hasTorch = ref(false);
 let html5QrCodeScanner: Html5Qrcode | null = null;
 const fileInputRef = ref<HTMLInputElement | null>(null);
 
+// Page Visibility Handler to pause/resume camera when tab active state changes
+const handleVisibilityChange = async () => {
+  if (document.hidden) {
+    await stopScanner();
+  } else if (!isScanning.value && !scanSuccessMsg.value && !fileScanning.value) {
+    await startScanner();
+  }
+};
+
 // Lifecycle Hooks
 onMounted(async () => {
+  document.addEventListener('visibilitychange', handleVisibilityChange);
   await nextTick();
   await initCameraList();
   await startScanner();
 });
 
 onUnmounted(async () => {
+  document.removeEventListener('visibilitychange', handleVisibilityChange);
   await stopScanner();
 });
 
@@ -72,8 +83,16 @@ const startScanner = async () => {
   isInitializing.value = true;
 
   try {
-    if (html5QrCodeScanner && html5QrCodeScanner.isScanning) {
-      await html5QrCodeScanner.stop();
+    if (html5QrCodeScanner) {
+      try {
+        if (html5QrCodeScanner.isScanning) {
+          await html5QrCodeScanner.stop();
+        }
+        html5QrCodeScanner.clear();
+      } catch (cleanErr) {
+        console.warn('Cleanup scanner warning:', cleanErr);
+      }
+      html5QrCodeScanner = null;
     }
 
     html5QrCodeScanner = new Html5Qrcode('qr-reader-container');
@@ -110,20 +129,23 @@ const startScanner = async () => {
   } catch (err: any) {
     isScanning.value = false;
     isInitializing.value = false;
-    scanError.value = 'Izin kamera ditolak atau kamera tidak ditemukan. Silakan izinkan akses kamera pada browser atau gunakan opsi Pindari dari Galeri di bawah.';
+    scanError.value = 'Izin kamera ditolak atau kamera tidak ditemukan. Silakan izinkan akses kamera pada browser atau gunakan opsi Pindai dari Galeri di bawah.';
     console.error('Camera Scanner error:', err);
   }
 };
 
 // Stop Camera Stream
 const stopScanner = async () => {
-  if (html5QrCodeScanner && html5QrCodeScanner.isScanning) {
+  if (html5QrCodeScanner) {
     try {
-      await html5QrCodeScanner.stop();
+      if (html5QrCodeScanner.isScanning) {
+        await html5QrCodeScanner.stop();
+      }
       html5QrCodeScanner.clear();
     } catch (err) {
       console.warn('Stop scanner warning:', err);
     }
+    html5QrCodeScanner = null;
   }
   isScanning.value = false;
   isTorchOn.value = false;
@@ -168,35 +190,16 @@ const onScanError = (_errorMessage: string) => {
   // Silent frame miss
 };
 
-// Process Scanned Text & Route User
+// Process Scanned Text & Route User safely
 const processScannedData = (rawText: string) => {
   const cleanText = rawText.trim();
+  const uuidRegex = /[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/;
 
-  // Pattern 1: Relative Path (e.g. /smart/scan/{uuid})
-  if (cleanText.startsWith('/smart/scan/')) {
-    router.visit(cleanText);
-    return;
-  }
-
-  // Pattern 2: Full URL containing /smart/scan/{uuid}
-  if (cleanText.includes('/smart/scan/')) {
-    try {
-      const parsedUrl = new URL(cleanText);
-      router.visit(parsedUrl.pathname);
-      return;
-    } catch {
-      const match = cleanText.match(/\/smart\/scan\/[a-zA-Z0-9-]+/);
-      if (match) {
-        router.visit(match[0]);
-        return;
-      }
-    }
-  }
-
-  // Pattern 3: Standard UUID string (36 chars)
-  const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
-  if (uuidRegex.test(cleanText)) {
-    router.visit(`/smart/scan/${cleanText}`);
+  // Strictly extract UUID from scanned text (whether raw UUID or contained inside full URL)
+  const match = cleanText.match(uuidRegex);
+  if (match) {
+    const uuid = match[0];
+    router.visit(`/smart/scan/${uuid}`);
     return;
   }
 
@@ -220,14 +223,14 @@ const handleFileUpload = async (event: Event) => {
   fileScanning.value = true;
   scanError.value = null;
 
+  let fileScanner: Html5Qrcode | null = null;
   try {
     // Stop live camera if running
     await stopScanner();
 
     // Create temporary scanner instance for single file scan in-memory
-    const fileScanner = new Html5Qrcode('file-scanner-temp');
+    fileScanner = new Html5Qrcode('file-scanner-temp');
     const result = await fileScanner.scanFile(file, false);
-    fileScanner.clear();
 
     fileScanning.value = false;
     scanSuccessMsg.value = 'QR Code Gambar Terbaca!';
@@ -237,6 +240,13 @@ const handleFileUpload = async (event: Event) => {
     scanError.value = 'Tidak dapat menemukan QR Code pada gambar yang dipilih.';
     console.error('File scan error:', err);
   } finally {
+    if (fileScanner) {
+      try {
+        fileScanner.clear();
+      } catch (clearErr) {
+        console.warn('File scanner clear warning:', clearErr);
+      }
+    }
     target.value = '';
   }
 };

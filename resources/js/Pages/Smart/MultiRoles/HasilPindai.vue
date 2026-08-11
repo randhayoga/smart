@@ -2,7 +2,6 @@
 import { ref, computed, watch } from 'vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
-import { Toaster } from '@/Components/ui/sonner';
 import { ChevronLeft, ChevronDown, Loader2, Save, Info, FileText, Camera } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
 import {
@@ -13,7 +12,6 @@ import { Field, FieldLabel, FieldContent, FieldError } from '@/Components/ui/fie
 import StatusBadge from '@/Components/StatusBadge.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage } from '@/Components/ui/breadcrumb';
-import 'vue-sonner/style.css';
 
 interface Props {
   asset: any;
@@ -155,12 +153,14 @@ watch(() => form.bod_boc_approval_file, v => { if (v && errors.value.bod_boc_app
 
 const filteredFloors = computed(() => {
   if (!form.location_id) return [];
-  return props.floors.filter(f => Number(f.location_id) === Number(form.location_id));
+  const locId = Number(form.location_id);
+  return props.floors.filter(f => Number(f.location_id) === locId);
 });
 
 const filteredRooms = computed(() => {
   if (!form.floor_id) return [];
-  return props.rooms.filter(r => Number(r.floor_id) === Number(form.floor_id));
+  const flId = Number(form.floor_id);
+  return props.rooms.filter(r => Number(r.floor_id) === flId);
 });
 
 watch(() => form.location_id, (newVal) => {
@@ -245,7 +245,9 @@ const triggerCameraInput = () => {
 
 const viewImageInNewTab = () => {
   if (form.image_url) {
-    window.open(URL.createObjectURL(form.image_url), '_blank');
+    const objectUrl = URL.createObjectURL(form.image_url);
+    window.open(objectUrl, '_blank');
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 10000);
   } else if (form.use_lot_image && (props.lot?.image_url || props.lot?.imageUrl)) {
     window.open('/media/' + (props.lot.image_url || props.lot.imageUrl), '_blank');
   } else if (props.asset?.image_url) {
@@ -282,7 +284,9 @@ const triggerMemoFileInput = () => {
 
 const viewMemoInNewTab = () => {
   if (form.memo_file) {
-    window.open(URL.createObjectURL(form.memo_file), '_blank');
+    const objectUrl = URL.createObjectURL(form.memo_file);
+    window.open(objectUrl, '_blank');
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 10000);
   } else if (props.asset?.memo_url) {
     window.open('/media/' + props.asset.memo_url, '_blank');
   }
@@ -306,7 +310,9 @@ const triggerLostDocFileInput = () => {
 
 const viewLostDocInNewTab = () => {
   if (form.lost_doc_file) {
-    window.open(URL.createObjectURL(form.lost_doc_file), '_blank');
+    const objectUrl = URL.createObjectURL(form.lost_doc_file);
+    window.open(objectUrl, '_blank');
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 10000);
   } else if (props.asset?.lost_doc_url) {
     window.open('/media/' + props.asset.lost_doc_url, '_blank');
   }
@@ -328,7 +334,9 @@ const triggerBodBocDocFileInput = () => {
 
 const viewBodBocDocInNewTab = () => {
   if (form.bod_boc_approval_file) {
-    window.open(URL.createObjectURL(form.bod_boc_approval_file), '_blank');
+    const objectUrl = URL.createObjectURL(form.bod_boc_approval_file);
+    window.open(objectUrl, '_blank');
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 10000);
   } else if (props.asset?.bod_boc_approval_url) {
     window.open('/media/' + props.asset.bod_boc_approval_url, '_blank');
   }
@@ -344,7 +352,7 @@ const handleSamakanPrice = () => {
 };
 
 const parseCurrencyToNumber = (val: string | number) => {
-  if (typeof val === 'number') return val;
+  if (typeof val === 'number') return Math.max(0, val);
   if (!val) return 0;
   let clean = val.toString().trim();
   if (clean.includes('.') && clean.includes(',')) {
@@ -362,7 +370,7 @@ const parseCurrencyToNumber = (val: string | number) => {
     }
   }
   const parsed = parseFloat(clean);
-  return isNaN(parsed) ? 0 : parsed;
+  return isNaN(parsed) ? 0 : Math.max(0, parsed);
 };
 
 const handleSubmit = () => {
@@ -471,11 +479,10 @@ const handleSubmit = () => {
                 :src="'/media/' + props.lot.image_url" 
                 class="w-full h-full object-cover" 
               />
-              <img 
-                v-else 
-                src="https://placehold.co/400x400?text=Placeholder" 
-                class="w-full h-full object-cover opacity-50" 
-              />
+              <div v-else class="w-full h-full flex flex-col items-center justify-center bg-muted/60 text-muted-foreground">
+                <Camera class="w-12 h-12 opacity-40 mb-1" />
+                <span class="text-xs font-medium opacity-60">Tidak Ada Foto</span>
+              </div>
             </div>
             <div class="mt-4 text-center">
               <h1 class="text-base font-bold text-foreground uppercase tracking-wider">{{ props.asset.number }}</h1>
@@ -868,6 +875,5 @@ const handleSubmit = () => {
       </div>
     </div>
     
-    <Toaster />
   </AppLayout>
 </template>
