@@ -5,10 +5,10 @@ import { toast } from 'vue-sonner';
 import { 
   ChevronDown, 
   ArrowUpDown, 
+  Plus,
   Pencil,
   Trash2,
-  Eye,
-  SlidersHorizontal
+  Eye
 } from 'lucide-vue-next';
 import { Button } from "@/Components/ui/button";
 import {
@@ -17,6 +17,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/Components/ui/dropdown-menu";
+import { 
+  Breadcrumb, 
+  BreadcrumbLink, 
+  BreadcrumbList, 
+  BreadcrumbItem, 
+  BreadcrumbSeparator 
+} from '@/Components/ui/breadcrumb';
 import TableSearch from '@/Components/TableSearch.vue';
 import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
@@ -24,277 +31,139 @@ import ResetFilterButton from '@/Components/ResetFilterButton.vue';
 import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal.vue';
 import DeleteErrorModal from '@/Components/DeleteErrorModal.vue';
 import Combobox from '@/Components/Combobox.vue';
-import DetailLOTConsumables from '../DetailLOTConsumables.vue';
-import EditLotModal from '../Modals/EditLotModal.vue';
-import { printManajemenStok } from '@/utils/printManajemenStok';
-import { exportCSV } from '@/utils/exportCSV';
-import { exportExcel } from '@/utils/exportExcel';
+import CreateTipeModal from '../Modals/CreateTipeModal.vue';
+import EditTipeModal from '../Modals/EditTipeModal.vue';
+import DaftarLOTTab from './DaftarLOTTab.vue';
 
 interface Props {
-  lots: {
-    id: number;
-    number: string;
-    po_number: string;
-    date_of_receipt: string;
-    organizer: string;
-    organizer_id: number;
-    vendor: string;
-    vendor_id: number;
-    location: string;
-    location_id: number;
-    floor: string | null;
-    floor_id: number | null;
-    room: string | null;
-    room_id: number | null;
-    unitPrice: number | string;
-    imageUrl: string;
-    initial_quantity: number | null;
-    current_quantity: number | null;
-    burden?: string;
-    updated_at: string;
-    
-    // Parent barang info
-    barang_id: number;
-    barang_code: string;
-    barang_nama: string;
-    barang_brand: string;
-    barang_specification: string;
-    barang_category: string;
-    barang_subcategory: string;
-    barang_uom: string;
-  }[];
-  organizers: { id: number; name: string; }[];
-  vendors: { id: number; name: string; }[];
-  locations: { id: number; name: string; }[];
-  floors: { id: number; name: string; location_id: number; }[];
-  rooms: { id: number; name: string; floor_id: number; }[];
-  projects: { id: number; no_project: string; project_name: string; client_id: string; }[];
+  barangs?: any[];
+  categories?: any[];
+  subcategories?: any[];
+  brands?: any[];
+  uoms?: any[];
+  lots?: any[];
+  organizers?: any[];
+  vendors?: any[];
+  locations?: any[];
+  floors?: any[];
+  rooms?: any[];
+  projects?: any[];
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+  barangs: () => [],
+  categories: () => [],
+  subcategories: () => [],
+  brands: () => [],
+  uoms: () => [],
+  lots: () => [],
+  organizers: () => [],
+  vendors: () => [],
+  locations: () => [],
+  floors: () => [],
+  rooms: () => [],
+  projects: () => [],
+});
 
+// Selected Barang for LOT view
+const selectedBarang = ref<any | null>(null);
+
+const activeBarang = computed(() => {
+  if (!selectedBarang.value) return null;
+  return props.barangs.find(b => String(b.id) === String(selectedBarang.value.id)) || selectedBarang.value;
+});
+
+const lotsForActiveBarang = computed(() => {
+  if (!activeBarang.value) return [];
+  return props.lots.filter(lot => String(lot.barang_id) === String(activeBarang.value.id));
+});
+
+onMounted(() => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const barangIdParam = urlParams.get('barang_id');
+  if (barangIdParam) {
+    const found = props.barangs.find(b => String(b.id) === barangIdParam);
+    if (found) {
+      selectedBarang.value = found;
+    }
+  }
+  document.addEventListener('keydown', closeOnEscape);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', closeOnEscape);
+});
+
+watch(selectedBarang, (newVal) => {
+  if (newVal) {
+    window.history.replaceState({}, '', `/smart/inventory/stok-habis-pakai?barang_id=${newVal.id}`);
+  } else {
+    window.history.replaceState({}, '', '/smart/inventory/stok-habis-pakai');
+  }
+});
+
+// Filters for Barang list
 const searchQuery = ref('');
-const timeFilter = ref('');
-const organizerFilter = ref('');
-const vendorFilter = ref('');
 const categoryFilter = ref('');
 const subcategoryFilter = ref('');
 const brandFilter = ref('');
-const locationFilter = ref('');
-const floorFilter = ref('');
-const roomFilter = ref('');
-const stokFilter = ref(false);
-const showAdvancedFilters = ref(false);
 const rowsPerPage = ref('Semua baris');
 const dataTableRef = ref<any>(null);
 
-// Lot Modal Setup
-const isBulkEditModalOpen = ref(false);
-const selectedLotsForEdit = ref<any[]>([]);
+const hasActiveFilters = computed(() => {
+  return !!(categoryFilter.value || subcategoryFilter.value || brandFilter.value || searchQuery.value);
+});
 
-const isDetailConsumablesOpen = ref(false);
-const selectedLotForDetail = ref<number | null>(null);
-
-const openDetailLOTConsumables = (lot: any) => {
-  selectedLotForDetail.value = lot.id;
-  isDetailConsumablesOpen.value = true;
+const clearFilters = () => {
+  categoryFilter.value = '';
+  subcategoryFilter.value = '';
+  brandFilter.value = '';
+  searchQuery.value = '';
 };
 
-const openEditLotModal = (lot: any) => {
-  selectedLotsForEdit.value = [{ ...lot }];
-  isBulkEditModalOpen.value = true;
-};
+const filteredBarangs = computed(() => {
+  let list = props.barangs || [];
 
-const handleEditSuccess = () => {
-  if (dataTableRef.value) {
-    dataTableRef.value.table.resetRowSelection();
+  if (searchQuery.value) {
+    const q = searchQuery.value.toLowerCase();
+    list = list.filter(item => 
+      (item.name && item.name.toLowerCase().includes(q)) || 
+      (item.code && item.code.toLowerCase().includes(q)) ||
+      (item.specification && item.specification.toLowerCase().includes(q))
+    );
   }
-};
 
-const formatDateWithSlashes = (dateStr: string | null) => {
-  if (!dateStr || dateStr === '-') return '-';
-  if (dateStr.includes('-') && dateStr.indexOf('-') === 4) {
-    const [y, m, d] = dateStr.split('-');
-    return `${d}/${m}/${y}`;
+  if (categoryFilter.value) {
+    list = list.filter(item => item.category === categoryFilter.value);
   }
-  return dateStr.replace(/-/g, '/');
-};
 
-const formatLocation = (loc: string | null, floor: string | null, room: string | null) => {
-  let parts: string[] = [];
-  if (loc) parts.push(loc);
-  if (floor) parts.push(floor);
-  if (room) parts.push(room);
-  return parts.join(' - ');
-};
+  if (subcategoryFilter.value) {
+    list = list.filter(item => item.subcategory === subcategoryFilter.value);
+  }
 
-const formatRupiah = (val: number | string | null | undefined) => {
-  if (val === null || val === undefined) return '-';
-  const num = typeof val === 'string' ? parseFloat(val) : val;
-  if (isNaN(num)) return '-';
-  const formatted = Math.floor(num).toLocaleString('id-ID');
-  return `Rp${formatted}`;
-};
+  if (brandFilter.value) {
+    list = list.filter(item => item.brand === brandFilter.value);
+  }
 
-const columns = computed<ColumnDef<any>[]>(() => {
-  const cols: ColumnDef<any>[] = [
-    {
-      id: 'select',
-      size: 50,
-      header: ({ table }) => h('div', { class: 'text-center no-print flex items-center justify-center' }, [
-        h('input', {
-          type: 'checkbox',
-          class: 'rounded-full border-input text-primary focus:ring-primary/20 w-4 h-4 cursor-pointer',
-          checked: table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate'),
-          onChange: table.getToggleAllPageRowsSelectedHandler(),
-        })
-      ]),
-      cell: ({ row }) => h('div', { class: 'text-center no-print flex items-center justify-center' }, [
-        h('input', {
-          type: 'checkbox',
-          class: 'rounded-full border-input text-primary focus:ring-primary/20 w-4 h-4 cursor-pointer',
-          checked: row.getIsSelected(),
-          onChange: row.getToggleSelectedHandler(),
-        })
-      ]),
-    },
-    {
-      accessorKey: 'number',
-      header: ({ column }) => h(Button, {
-        variant: 'ghost',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
-      }, () => [
-        'Kode LOT',
-        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-      ]),
-      cell: ({ row }) => h('div', { class: 'text-muted-foreground font-mono text-sm truncate font-medium' }, row.original.number),
-    },
-    {
-      accessorKey: 'current_quantity',
-      header: ({ column }) => h(Button, {
-        variant: 'ghost',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
-      }, () => [
-        'Jml. Stok',
-        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-      ]),
-      cell: ({ row }) => h('div', { class: 'pl-0 text-muted-foreground' }, `${row.original.current_quantity ?? 0}/${row.original.initial_quantity ?? 0}`),
-    },
-    {
-      accessorKey: 'barang_nama',
-      header: ({ column }) => h(Button, {
-        variant: 'ghost',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
-      }, () => [
-        'Nama',
-        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-      ]),
-      cell: ({ row }) => h('div', { class: 'text-foreground truncate font-medium', title: row.original.barang_nama }, row.original.barang_nama),
-    },
-    {
-      accessorKey: 'barang_brand',
-      header: ({ column }) => h(Button, {
-        variant: 'ghost',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
-      }, () => [
-        'Merek',
-        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-      ]),
-      cell: ({ row }) => h('div', { class: 'text-foreground truncate' }, row.original.barang_brand),
-    },
-    {
-      accessorKey: 'barang_category',
-      header: ({ column }) => h(Button, {
-        variant: 'ghost',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
-      }, () => [
-        'Kategori',
-        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-      ]),
-      cell: ({ row }) => h('div', { class: 'text-foreground truncate' }, row.original.barang_category),
-    },
-    {
-      accessorKey: 'barang_subcategory',
-      header: ({ column }) => h(Button, {
-        variant: 'ghost',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
-      }, () => [
-        'Subkategori',
-        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-      ]),
-      cell: ({ row }) => h('div', { class: 'text-foreground truncate' }, row.original.barang_subcategory),
-    },
-    {
-      accessorKey: 'po_number',
-      header: ({ column }) => h(Button, {
-        variant: 'ghost',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
-      }, () => [
-        'Nomor PO',
-        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-      ]),
-      cell: ({ row }) => h('div', { class: 'pl-0 font-medium' }, row.original.po_number),
-    },
-    {
-      accessorKey: 'organizer',
-      header: ({ column }) => h(Button, {
-        variant: 'ghost',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
-      }, () => [
-        'Organizer',
-        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-      ]),
-      cell: ({ row }) => h('div', { class: 'pl-0' }, row.original.organizer),
-    },
-    {
-      accessorKey: 'location',
-      header: ({ column }) => h(Button, {
-        variant: 'ghost',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
-      }, () => [
-        'Lokasi',
-        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-      ]),
-      cell: ({ row }) => h('div', { class: 'pl-0 text-muted-foreground text-sm' }, formatLocation(row.original.location, row.original.floor, row.original.room)),
-    },
-    {
-      id: 'actions',
-      size: 100,
-      header: () => h('div', { class: 'text-center font-semibold text-foreground no-print' }, 'Aksi'),
-      cell: ({ row }) => {
-        return h('div', { class: 'flex items-center justify-center gap-2 no-print' }, [
-          h(Button, {
-            variant: 'table-view',
-            size: 'icon-sm',
-            title: 'Lihat Detail',
-            onClick: () => openDetailLOTConsumables(row.original)
-          }, () => [
-            h(Eye),
-            h('span', { class: 'sr-only' }, 'Lihat Detail')
-          ]),
-          h(Button, {
-            variant: 'table-destructive',
-            size: 'icon-sm',
-            title: 'Hapus',
-            onClick: () => openDeleteLotModal(row.original),
-          }, () => [
-            h(Trash2),
-            h('span', { class: 'sr-only' }, 'Hapus')
-          ])
-        ]);
-      }
-    }
-  ];
-  return cols;
+  return list;
+});
+
+const filteredCategories = computed(() => {
+  return props.categories || [];
+});
+
+const filteredSubcategories = computed(() => {
+  const cat = filteredCategories.value.find(c => c.name === categoryFilter.value);
+  if (!cat) return props.subcategories.map(s => s.name);
+  return props.subcategories.filter(s => s.category_id == cat.id).map(s => s.name);
+});
+
+const filteredBrands = computed(() => {
+  return props.brands.map(b => b.name);
+});
+
+watch(categoryFilter, () => {
+  subcategoryFilter.value = '';
 });
 
 watch(rowsPerPage, (val) => {
@@ -307,277 +176,209 @@ watch(rowsPerPage, (val) => {
   }
 });
 
-onMounted(() => {
-  if (dataTableRef.value && dataTableRef.value.table && rowsPerPage.value === 'Semua baris') {
-    dataTableRef.value.table.setPageSize(999999);
-  }
-  document.addEventListener('keydown', closeOnEscape);
-});
+// Table columns for Consumable Barang
+const columns: ColumnDef<any>[] = [
+  {
+    id: 'select',
+    size: 40,
+    header: ({ table }) => h('div', { class: 'text-center no-print flex items-center justify-center' }, [
+      h('input', {
+        type: 'checkbox',
+        class: 'rounded border-input text-primary focus:ring-primary/20 w-4 h-4 cursor-pointer',
+        checked: table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate'),
+        onChange: table.getToggleAllPageRowsSelectedHandler(),
+        'aria-label': 'Select all',
+      })
+    ]),
+    cell: ({ row }) => h('div', { class: 'text-center no-print flex items-center justify-center' }, [
+      h('input', {
+        type: 'checkbox',
+        class: 'rounded border-input text-primary focus:ring-primary/20 w-4 h-4 cursor-pointer',
+        checked: row.getIsSelected(),
+        onChange: row.getToggleSelectedHandler(),
+        'aria-label': 'Select row',
+      })
+    ]),
+    enableSorting: false,
+    enableHiding: false,
+  },
+  {
+    accessorKey: 'name',
+    size: 225,
+    header: ({ column }) => h(Button, {
+      variant: 'ghost',
+      onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+      class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+    }, () => [
+      'Nama',
+      h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+    ]),
+    cell: ({ row }) => h('div', { class: 'text-foreground truncate font-medium', title: row.getValue('name') }, row.getValue('name')),
+  },
+  {
+    accessorKey: 'specification',
+    size: 225,
+    header: ({ column }) => h(Button, {
+      variant: 'ghost',
+      onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+      class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+    }, () => [
+      'Spesifikasi',
+      h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+    ]),
+    cell: ({ row }) => {
+      const spec = row.getValue('specification') as string | null | undefined;
+      return h('div', {
+        class: `${spec ? 'text-foreground' : 'text-muted-foreground'} truncate`,
+        title: spec || '-'
+      }, spec || '-');
+    },
+  },
+  {
+    accessorKey: 'brand',
+    size: 225,
+    header: ({ column }) => h(Button, {
+      variant: 'ghost',
+      onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+      class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+    }, () => [
+      'Merek',
+      h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+    ]),
+    cell: ({ row }) => h('div', { class: 'text-foreground truncate' }, row.getValue('brand')),
+  },
+  {
+    accessorKey: 'category',
+    header: ({ column }) => h(Button, {
+      variant: 'ghost',
+      onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+      class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+    }, () => [
+      'Kategori',
+      h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+    ]),
+    cell: ({ row }) => h('div', { class: 'text-foreground truncate' }, row.getValue('category')),
+  },
+  {
+    accessorKey: 'subcategory',
+    header: ({ column }) => h(Button, {
+      variant: 'ghost',
+      onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+      class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+    }, () => [
+      'Subkategori',
+      h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+    ]),
+    cell: ({ row }) => h('div', { class: 'text-foreground truncate' }, row.getValue('subcategory')),
+  },
+  {
+    accessorKey: 'amount',
+    size: 95,
+    header: ({ column }) => h(Button, {
+      variant: 'ghost',
+      onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+      class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+    }, () => [
+      'Total Stok',
+      h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+    ]),
+    cell: ({ row }) => h('div', { class: 'font-medium text-foreground' }, row.getValue('amount')),
+  },
+  {
+    accessorKey: 'lastUpdate',
+    size: 181,
+    header: ({ column }) => h(Button, {
+      variant: 'ghost',
+      onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+      class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+    }, () => [
+      'Pembaruan Terakhir',
+      h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+    ]),
+    cell: ({ row }) => h('div', { class: 'text-muted-foreground truncate' }, row.getValue('lastUpdate')),
+    sortingFn: (rowA, rowB, columnId) => {
+      const parseDate = (str: string) => {
+        if (!str || str === '-') return 0;
+        const parts = str.trim().split(/\s+/);
+        const dateParts = parts[0].split('/').map(Number);
+        if (dateParts.length !== 3) return 0;
+        const [d, m, y] = dateParts;
+        let hour = 0, minute = 0;
+        if (parts[1]) {
+          const timeParts = parts[1].split(':').map(Number);
+          hour = timeParts[0] || 0;
+          minute = timeParts[1] || 0;
+        }
+        return new Date(y, m - 1, d, hour, minute).getTime();
+      };
+      return parseDate(rowA.getValue(columnId)) - parseDate(rowB.getValue(columnId));
+    }
+  },
+  {
+    id: 'actions',
+    size: 84,
+    header: () => h('div', { class: 'text-center font-semibold text-foreground no-print' }, 'Aksi'),
+    cell: ({ row }) => {
+      return h('div', { class: 'flex items-center justify-end gap-2 no-print' }, [
+        h(Button, {
+          variant: 'table-view',
+          size: 'icon-sm',
+          title: 'Lihat Detail',
+          onClick: () => {
+            selectedBarang.value = row.original;
+          },
+        }, () => [
+          h(Eye),
+          h('span', { class: 'sr-only' }, 'Lihat Detail')
+        ]),
+        h(Button, {
+          variant: 'table-destructive',
+          size: 'icon-sm',
+          title: 'Hapus',
+          onClick: () => openDeleteModal(row.original),
+        }, () => [
+          h(Trash2),
+          h('span', { class: 'sr-only' }, 'Hapus')
+        ])
+      ]);
+    },
+  },
+];
 
-onUnmounted(() => {
-  document.removeEventListener('keydown', closeOnEscape);
-});
-
-const filteredLots = computed(() => {
-  let list = props.lots || [];
-
-  if (searchQuery.value) {
-    const q = searchQuery.value.toLowerCase();
-    list = list.filter(lot => 
-      (lot.number && lot.number.toLowerCase().includes(q)) || 
-      (lot.barang_nama && lot.barang_nama.toLowerCase().includes(q))
-    );
-  }
-
-  if (categoryFilter.value) {
-    list = list.filter(lot => (lot.barang_category || '').toLowerCase() === categoryFilter.value.toLowerCase());
-  }
-
-  if (subcategoryFilter.value) {
-    list = list.filter(lot => (lot.barang_subcategory || '').toLowerCase() === subcategoryFilter.value.toLowerCase());
-  }
-
-  if (stokFilter.value) {
-    list = list.filter(lot => (lot.current_quantity ?? 0) > 0);
-  }
-
-  if (brandFilter.value) {
-    list = list.filter(lot => (lot.barang_brand || '').toLowerCase() === brandFilter.value.toLowerCase());
-  }
-
-  if (locationFilter.value) {
-    list = list.filter(lot => String(lot.location_id) === String(locationFilter.value));
-  }
-
-  if (floorFilter.value) {
-    list = list.filter(lot => String(lot.floor_id) === String(floorFilter.value));
-  }
-
-  if (roomFilter.value) {
-    list = list.filter(lot => String(lot.room_id) === String(roomFilter.value));
-  }
-
-  if (organizerFilter.value) {
-    list = list.filter(lot => String(lot.organizer_id) === String(organizerFilter.value));
-  }
-
-  if (vendorFilter.value) {
-    list = list.filter(lot => String(lot.vendor_id) === String(vendorFilter.value));
-  }
-
-  if (timeFilter.value) {
-    const today = new Date();
-    list = list.filter(lot => {
-      if (!lot.date_of_receipt) return false;
-      const entryDateObj = new Date(lot.date_of_receipt);
-      if (isNaN(entryDateObj.getTime())) return false;
-      
-      if (timeFilter.value === 'Hari ini') {
-        return entryDateObj.toDateString() === today.toDateString();
-      } else if (timeFilter.value === 'Bulan ini') {
-        return entryDateObj.getMonth() === today.getMonth() && entryDateObj.getFullYear() === today.getFullYear();
-      }
-      return true;
-    });
-  }
-
-  return list;
-});
-
-const availableCategories = computed<string[]>(() => {
-  const cats = props.lots.map(l => l.barang_category).filter((c): c is string => !!c);
-  return [...new Set(cats)].sort();
-});
-
-const availableSubcategories = computed<string[]>(() => {
-  let list = props.lots;
-  if (categoryFilter.value) {
-    list = list.filter(l => l.barang_category === categoryFilter.value);
-  }
-  const subcats = list.map(l => l.barang_subcategory).filter((s): s is string => !!s);
-  return [...new Set(subcats)].sort();
-});
-
-const availableBrands = computed<string[]>(() => {
-  const brands = props.lots.map(l => l.barang_brand).filter((b): b is string => !!b);
-  return [...new Set(brands)].sort();
-});
-
-const filteredFloors = computed(() => {
-  if (!locationFilter.value) return props.floors;
-  return props.floors.filter(f => String(f.location_id) === String(locationFilter.value));
-});
-
-const filteredRooms = computed(() => {
-  if (!floorFilter.value) return props.rooms;
-  return props.rooms.filter(r => String(r.floor_id) === String(floorFilter.value));
-});
-
-// Watch category to reset subcategory
-watch(categoryFilter, () => {
-  subcategoryFilter.value = '';
-});
-
-// Watch location to reset floor/room
-watch(locationFilter, () => {
-  floorFilter.value = '';
-  roomFilter.value = '';
-});
-
-// Watch floor to reset room
-watch(floorFilter, () => {
-  roomFilter.value = '';
-});
-
-const getExportData = () => {
-  if (!dataTableRef.value || !dataTableRef.value.table) return filteredLots.value;
-  const selectedRows = dataTableRef.value.table.getFilteredSelectedRowModel().rows;
-  if (selectedRows.length > 0) {
-    return selectedRows.map((row: any) => row.original);
-  }
-  return dataTableRef.value.table.getFilteredRowModel().rows.map((row: any) => row.original);
+// Create Tipe Modal Logic
+const isCreateModalOpen = ref(false);
+const openCreateModal = () => {
+  isCreateModalOpen.value = true;
 };
 
-const getExportPayload = () => {
-  const data = getExportData();
-  const headers = ['Kode LOT', 'Jml. Stok', 'Nama', 'Merek', 'Kategori', 'Subkategori', 'Nomor PO', 'Organizer', 'Lokasi'];
-  const rows = data.map((item: any) => [
-    item.number,
-    item.current_quantity ?? 0,
-    item.barang_nama,
-    item.barang_brand,
-    item.barang_category,
-    item.barang_subcategory,
-    item.po_number,
-    item.organizer,
-    formatLocation(item.location, item.floor, item.room)
-  ]);
-  return { headers, rows };
+// Bulk Edit Tipe Modal Logic
+const isBulkEditModalOpen = ref(false);
+const selectedItemsForEdit = ref<any[]>([]);
+
+const openBulkEditModal = () => {
+  if (!dataTableRef.value) return;
+  const selectedRows = dataTableRef.value.table.getFilteredRowModel().rows
+    .filter((r: any) => r.getIsSelected())
+    .map((r: any) => r.original);
+  
+  if (selectedRows.length === 0) return;
+  selectedItemsForEdit.value = selectedRows;
+  isBulkEditModalOpen.value = true;
 };
 
-const handleExportCSV = () => {
-  const { headers, rows } = getExportPayload();
-  if (rows.length === 0) return;
-  exportCSV(headers, rows, 'stok_habis_pakai_export');
-};
-
-const handleExportExcel = () => {
-  const { headers, rows } = getExportPayload();
-  if (rows.length === 0) return;
-  exportExcel(headers, rows, 'stok_habis_pakai_export');
-};
-
-const handlePrint = () => {
-  const data = getExportData();
-  if (!data || data.length === 0) {
-    toast.error('Tidak ada data untuk dicetak');
-    return;
-  }
-
-  const filteredRuangan = roomFilter.value
-    ? (props.rooms?.find(r => String(r.id) === String(roomFilter.value))?.name || roomFilter.value)
-    : null;
-
-  const filteredLokasi = locationFilter.value
-    ? (props.locations?.find(l => String(l.id) === String(locationFilter.value))?.name || locationFilter.value)
-    : null;
-
-  const filteredLantai = floorFilter.value
-    ? (props.floors?.find(f => String(f.id) === String(floorFilter.value))?.name || floorFilter.value)
-    : null;
-
-  printManajemenStok(data, {
-    ruangan: filteredRuangan,
-    lokasi: filteredLokasi,
-    lantai: filteredLantai,
-  });
-};
-
-const handleEditTerpilih = () => {
-  if (!dataTableRef.value || !dataTableRef.value.table) return;
-  const selectedRows = dataTableRef.value.table.getFilteredSelectedRowModel().rows;
-  if (selectedRows.length === 1) {
-    openEditLotModal(selectedRows[0].original);
-  } else if (selectedRows.length > 1) {
-    selectedLotsForEdit.value = selectedRows.map((row: any) => row.original);
-    isBulkEditModalOpen.value = true;
+const handleEditSuccess = () => {
+  if (dataTableRef.value) {
+    dataTableRef.value.table.resetRowSelection();
   }
 };
 
-// Delete LOT Modal Logic
+// Delete Barang Modal Logic
 const isDeleteModalOpen = ref(false);
 const itemsToDelete = ref<any[]>([]);
 const processing = ref(false);
 
-const deleteFields = computed(() => {
-  if (itemsToDelete.value.length === 1) {
-    const data = itemsToDelete.value[0];
-    
-    // Helpers
-    const formatLocation = (loc: string, floor: string | null, room: string | null) => {
-      const parts = [];
-      if (loc && loc !== '-') parts.push(loc);
-      if (floor && floor !== '-') parts.push(floor);
-      if (room && room !== '-') parts.push(room);
-      return parts.join(', ') || '-';
-    };
-    
-    const formatDateWithDashes = (dateStr: string) => {
-      if (!dateStr || dateStr === '-') return '-';
-      if (dateStr.includes('-') && dateStr.indexOf('-') === 4) {
-        const [y, m, d] = dateStr.split('-');
-        return `${d}-${m}-${y}`;
-      }
-      return dateStr.replace(/\//g, '-');
-    };
-    
-    const formatRupiah = (val: number | string | null | undefined) => {
-      if (val === null || val === undefined || val === '') return '-';
-      const num = typeof val === 'string' ? parseFloat(val) : val;
-      if (isNaN(num)) return '-';
-      const formatted = Math.floor(num).toLocaleString('id-ID');
-      return `Rp${formatted}`;
-    };
-
-    const fields = [
-      { label: 'Kode LOT', value: data.number },
-      { label: 'Kategori', value: data.barang_category },
-      { label: 'Subkategori', value: data.barang_subcategory },
-      { label: 'Merek', value: data.barang_brand },
-      { label: 'Nama', value: data.barang_nama },
-      { label: 'Spesifikasi', value: data.barang_specification || '-' },
-      { label: 'Jumlah stok tersedia', value: data.current_quantity ?? 0 },
-      { label: 'Jumlah stok diawal', value: data.initial_quantity ?? 0 },
-      { label: 'Lokasi', value: formatLocation(data.location, data.floor, data.room) },
-      { label: 'Nomor PO', value: data.po_number },
-      { label: 'Tanggal registrasi', value: formatDateWithDashes(data.date_of_receipt) },
-      { label: 'Umur', value: data.age !== undefined && data.age !== null ? `${data.age} tahun` : '-' },
-      { label: 'Harga satuan', value: formatRupiah(data.unitPrice) },
-      { label: 'Organizer', value: data.organizer },
-      { label: 'Vendor', value: data.vendor },
-      { label: 'Pembebanan', value: data.burden || '-' },
-      { label: 'Pembaruan Terakhir', value: data.updated_at || '-' }
-    ];
-    
-    return fields;
-  }
-  
-  return null;
-});
-
-const openDeleteLotModal = (lots: any | any[]) => {
-  const rawLots = Array.isArray(lots) ? lots : [lots];
-  itemsToDelete.value = rawLots.map((lot: any) => ({
-    ...lot,
-    barang_code: lot.barang_code,
-    barang_brand: lot.barang_brand,
-    barang_nama: lot.barang_nama,
-    barang_specification: lot.barang_specification,
-    barang_category: lot.barang_category,
-    barang_subcategory: lot.barang_subcategory,
-    barang_uom: lot.barang_uom,
-    is_consumable: true,
-  }));
+const openDeleteModal = (items: any | any[]) => {
+  itemsToDelete.value = Array.isArray(items) ? items : [items];
   isDeleteModalOpen.value = true;
 };
 
@@ -592,49 +393,45 @@ const handleConfirmDelete = () => {
   const ids = itemsToDelete.value.map(item => item.id);
   
   if (ids.length === 1) {
-    router.delete(`/smart/inventory/lots/${ids[0]}`, {
+    router.delete(`/smart/inventory/barangs/${ids[0]}`, {
       onStart: () => { processing.value = true; },
       onFinish: () => { processing.value = false; },
       onSuccess: () => {
-        closeDeleteModal();
+        if (selectedBarang.value && ids.includes(selectedBarang.value.id)) {
+          selectedBarang.value = null;
+        }
         if (dataTableRef.value) {
           dataTableRef.value.table.resetRowSelection();
         }
+        closeDeleteModal();
       }
     });
   } else {
-    router.delete('/smart/inventory/lots/bulk', {
+    router.delete('/smart/inventory/barangs/bulk', {
       data: { ids },
       onStart: () => { processing.value = true; },
       onFinish: () => { processing.value = false; },
       onSuccess: () => {
-        closeDeleteModal();
+        if (selectedBarang.value && ids.includes(selectedBarang.value.id)) {
+          selectedBarang.value = null;
+        }
         if (dataTableRef.value) {
           dataTableRef.value.table.resetRowSelection();
         }
+        closeDeleteModal();
       }
     });
   }
 };
 
+// Error Modal
 const isErrorModalOpen = ref(false);
 const errorModalMessage = ref('');
 
 const closeErrorModal = () => {
   isErrorModalOpen.value = false;
-};
-
-const closeOnEscape = (e: KeyboardEvent) => {
-  if (e.key === 'Escape') {
-    if (isBulkEditModalOpen.value) {
-      isBulkEditModalOpen.value = false;
-    } else if (isDeleteModalOpen.value) {
-      closeDeleteModal();
-    } else if (isErrorModalOpen.value) {
-      closeErrorModal();
-    } else if (isDetailConsumablesOpen.value) {
-      isDetailConsumablesOpen.value = false;
-    }
+  if ((page.props as any).flash) {
+    (page.props as any).flash.error = null;
   }
 };
 
@@ -659,348 +456,228 @@ watch(flashError, (newVal) => {
   }
 }, { immediate: true });
 
-const totalLotsTerpilihCount = computed(() => {
-  if (!dataTableRef.value || !dataTableRef.value.table) return 0;
-  return Object.keys(dataTableRef.value.table.getState().rowSelection).length;
-});
-
-const activeParentImageUrl = computed(() => {
-  if (selectedLotsForEdit.value.length === 1) {
-    return selectedLotsForEdit.value[0].imageUrl || null;
+const closeOnEscape = (e: KeyboardEvent) => {
+  if (e.key === 'Escape') {
+    if (isCreateModalOpen.value) {
+      isCreateModalOpen.value = false;
+    } else if (isBulkEditModalOpen.value) {
+      isBulkEditModalOpen.value = false;
+    } else if (isDeleteModalOpen.value) {
+      closeDeleteModal();
+    } else if (isErrorModalOpen.value) {
+      closeErrorModal();
+    }
   }
-  return null;
-});
-
-const hasActiveFilters = computed(() => {
-  return !!(
-    timeFilter.value || 
-    organizerFilter.value || 
-    vendorFilter.value ||
-    searchQuery.value ||
-    categoryFilter.value ||
-    subcategoryFilter.value ||
-    brandFilter.value ||
-    locationFilter.value ||
-    floorFilter.value ||
-    roomFilter.value ||
-    stokFilter.value
-  );
-});
-
-const clearFilters = () => {
-  timeFilter.value = '';
-  organizerFilter.value = '';
-  vendorFilter.value = '';
-  searchQuery.value = '';
-  categoryFilter.value = '';
-  subcategoryFilter.value = '';
-  brandFilter.value = '';
-  locationFilter.value = '';
-  floorFilter.value = '';
-  roomFilter.value = '';
-  stokFilter.value = false;
 };
 </script>
 
 <template>
-  <div class="space-y-4">
-    <!-- Main Card -->
-    <div class="px-4 bg-card rounded-xl border border-border shadow-sm overflow-hidden">
-      <div class="py-3 no-print">
-        <h2 class="text-lg font-bold text-foreground">Daftar Stok (Habis Pakai)</h2>
-
-        <!-- Filters & Actions -->
-        <div class="mt-4 flex flex-col space-y-4">
-          <!-- Row 1: Filters & Rows Per Page -->
-          <div class="flex flex-wrap items-end justify-between gap-4">
-            <div class="flex flex-wrap items-end gap-3 flex-1">
-              <!-- Search -->
-              <div class="space-y-1.5 flex-1 min-w-[200px] max-w-xs">
-                <label for="search-stok-habis-pakai" class="text-xs text-muted-foreground font-medium block">Filter</label>
-                <TableSearch 
-                  id="search-stok-habis-pakai"
-                  name="search"
-                  v-model="searchQuery"
-                  placeholder="Cari Kode LOT, Nama..." 
-                />
-              </div>
-
-              <!-- Stok Tersedia Filter Switch -->
-              <div class="flex items-center justify-between gap-3 h-[34px] px-4 border border-input rounded-[14px] bg-background w-[200px] select-none">
-                <span :class="['text-sm font-normal transition-colors', stokFilter ? 'text-foreground font-medium' : 'text-muted-foreground']">Stok tersedia saja</span>
-                <Switch v-model="stokFilter" />
-              </div>
-
-              <!-- Kategori Filter Dropdown -->
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal', !categoryFilter ? 'text-muted-foreground' : 'text-foreground']">
-                    <span class="truncate">{{ categoryFilter || 'Semua kategori' }}</span>
-                    <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent class="w-[200px] rounded-[14px] max-h-60 overflow-y-auto" align="start" :side-offset="4">
-                  <DropdownMenuItem @select="categoryFilter = ''">Semua kategori</DropdownMenuItem>
-                  <DropdownMenuItem v-for="cat in availableCategories" :key="cat" @select="categoryFilter = cat">
-                    {{ cat }}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              <!-- Subkategori Filter Combobox -->
-              <Combobox 
-                v-model="subcategoryFilter"
-                :options="availableSubcategories"
-                search-placeholder="Cari subkategori..."
-                default-label="Semua subkategori"
-              />
-
-              <!-- Advanced Filter Toggle Button -->
-              <Button 
-                variant="outline" 
-                @click="showAdvancedFilters = !showAdvancedFilters" 
-                :class="['rounded-[14px] font-normal gap-2', showAdvancedFilters ? 'bg-muted border-primary/30 text-foreground' : 'text-muted-foreground']"
-              >
-                <SlidersHorizontal class="w-4 h-4 opacity-70" />
-                <span>Filter Lanjutan</span>
-                <ChevronDown :class="['w-4 h-4 opacity-50 shrink-0 transition-transform duration-200', showAdvancedFilters ? 'rotate-180' : '']" />
-              </Button>
-
-              <!-- Reset Filters Button -->
-              <Transition
-                enter-active-class="transition ease-out duration-200"
-                enter-from-class="transform scale-95 opacity-0"
-                enter-to-class="transform scale-100 opacity-100"
-                leave-active-class="transition ease-in duration-150"
-                leave-from-class="transform scale-100 opacity-100"
-                leave-to-class="transform scale-95 opacity-0"
-              >
-                <ResetFilterButton 
-                  v-if="hasActiveFilters"
-                  @click="clearFilters"
-                />
-              </Transition>
-            </div>
-
-            <!-- Rows Per Page -->
-            <div class="flex items-center gap-3 text-sm text-muted-foreground pb-0.5">
-              <span class="whitespace-nowrap text-right">Baris per halaman</span>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal', (rowsPerPage === 'Semua baris' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
-                    {{ rowsPerPage }}
-                    <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px]" align="start" :side-offset="4">
-                  <DropdownMenuItem @select="rowsPerPage = 'Semua baris'">Semua baris</DropdownMenuItem>
-                  <DropdownMenuItem @select="rowsPerPage = '10'">10</DropdownMenuItem>
-                  <DropdownMenuItem @select="rowsPerPage = '25'">25</DropdownMenuItem>
-                  <DropdownMenuItem @select="rowsPerPage = '50'">50</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-
-          <!-- Advanced Filters Row -->
-          <Transition
-            enter-active-class="transition-all ease-out duration-300 transform"
-            enter-from-class="-translate-y-4 opacity-0"
-            enter-to-class="translate-y-0 opacity-100"
-            leave-active-class="transition-all ease-in duration-200 transform"
-            leave-from-class="translate-y-0 opacity-100"
-            leave-to-class="-translate-y-4 opacity-0"
+  <div>
+    <!-- Adjusted Breadcrumb -->
+    <Breadcrumb class="no-print mb-3">
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbLink 
+            :href="selectedBarang ? undefined : '/smart/inventory/stok-habis-pakai'"
+            @click.prevent="selectedBarang = null"
+            :class="selectedBarang ? 'cursor-pointer hover:text-foreground' : ''"
           >
-            <div 
-              v-if="showAdvancedFilters" 
-              class="p-4 bg-muted/30 rounded-xl border border-border/80 flex flex-wrap gap-4"
-            >
-              <!-- Brand Filter -->
-              <div class="space-y-1.5 w-[200px]">
-                <label class="text-xs text-muted-foreground font-medium block ml-0.5">Merek</label>
+            Daftar Stok (Habis Pakai)
+          </BreadcrumbLink>
+        </BreadcrumbItem>
+        <template v-if="selectedBarang && activeBarang">
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <span class="text-muted-foreground">{{ activeBarang.code }}</span>
+          </BreadcrumbItem>
+        </template>
+      </BreadcrumbList>
+    </Breadcrumb>
+
+    <!-- Detail View: DaftarLOTTab when a consumable Barang is selected -->
+    <div v-if="selectedBarang && activeBarang">
+      <DaftarLOTTab
+        :barang="activeBarang"
+        :lots="lotsForActiveBarang"
+        :organizers="props.organizers"
+        :vendors="props.vendors"
+        :locations="props.locations"
+        :floors="props.floors"
+        :rooms="props.rooms"
+        :projects="props.projects"
+      />
+    </div>
+
+    <!-- Table View: Consumable Barangs list -->
+    <div v-else class="space-y-4">
+      <div class="px-4 bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+        <div class="py-3 no-print">
+          <h2 class="text-lg font-bold text-foreground">Daftar Stok (Habis Pakai)</h2>
+
+          <!-- Filters & Actions -->
+          <div class="mt-4 flex flex-col space-y-4">
+            <!-- Row 1: Filters & Rows Per Page -->
+            <div class="flex flex-wrap items-end justify-between gap-4">
+              <div class="flex flex-wrap items-end gap-3 flex-1">
+                <!-- Search -->
+                <div class="space-y-1.5 flex-1 min-w-[200px] max-w-xs">
+                  <label for="search-stok-habis-pakai" class="text-xs text-muted-foreground font-medium block">Filter</label>
+                  <TableSearch 
+                    id="search-stok-habis-pakai"
+                    name="search"
+                    v-model="searchQuery"
+                    placeholder="Cari Tipe..." 
+                  />
+                </div>
+
+                <!-- Merek Combobox -->
                 <Combobox
                   v-model="brandFilter"
-                  :options="availableBrands"
+                  :options="filteredBrands"
                   search-placeholder="Cari merek..."
                   default-label="Semua merek"
-                  width-class="w-full bg-background"
                 />
-              </div>
 
-              <!-- Location Filter (Step 1) -->
-              <div class="space-y-1.5 w-[200px]">
-                <label class="text-xs text-muted-foreground font-medium block ml-0.5">Lokasi</label>
-                <Combobox
-                  v-model="locationFilter"
-                  :options="props.locations"
-                  search-placeholder="Cari lokasi..."
-                  default-label="Semua lokasi"
-                  width-class="w-full bg-background"
-                />
-              </div>
-
-              <!-- Floor Filter (Step 2) -->
-              <div class="space-y-1.5 w-[200px]">
-                <label class="text-xs text-muted-foreground font-medium block ml-0.5">Lantai</label>
-                <Combobox
-                  v-model="floorFilter"
-                  :options="filteredFloors"
-                  search-placeholder="Cari lantai..."
-                  default-label="Semua lantai"
-                  width-class="w-full bg-background"
-                  :disabled="!locationFilter"
-                />
-              </div>
-
-              <!-- Room Filter (Step 3) -->
-              <div class="space-y-1.5 w-3xs">
-                <label class="text-xs text-muted-foreground font-medium block ml-0.5">Ruangan</label>
-                <Combobox
-                  v-model="roomFilter"
-                  :options="filteredRooms"
-                  search-placeholder="Cari ruangan..."
-                  default-label="Semua ruangan"
-                  width-class="w-full bg-background"
-                  :disabled="!floorFilter"
-                />
-              </div>
-
-              <!-- Organizer Filter -->
-              <div class="space-y-1.5 w-[170px]">
-                <label class="text-xs text-muted-foreground font-medium block ml-0.5">Organizer</label>
+                <!-- Kategori Dropdown -->
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal bg-background', !organizerFilter ? 'text-muted-foreground' : 'text-foreground']">
-                      <span class="truncate">{{ organizerFilter ? (props.organizers.find(o => o.id.toString() === organizerFilter)?.name || 'Semua organizer') : 'Semua organizer' }}</span>
-                      <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] max-h-60 overflow-y-auto" align="start" :side-offset="4">
-                    <DropdownMenuItem @select="organizerFilter = ''">Semua organizer</DropdownMenuItem>
-                    <DropdownMenuItem v-for="org in props.organizers" :key="org.id" @select="organizerFilter = org.id.toString()">
-                      {{ org.name }}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-
-              <!-- Vendor Filter -->
-              <div class="space-y-1.5 w-3xs">
-                <label class="text-xs text-muted-foreground font-medium block ml-0.5">Vendor</label>
-                <Combobox
-                  v-model="vendorFilter"
-                  :options="props.vendors"
-                  search-placeholder="Cari vendor..."
-                  default-label="Semua vendor"
-                  width-class="w-full bg-background"
-                />
-              </div>
-
-              <!-- Time Filter (Kurun Waktu) -->
-              <div class="space-y-1.5 w-[200px]">
-                <label class="text-xs text-muted-foreground font-medium block ml-0.5">Kurun Waktu</label>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal bg-background', !timeFilter ? 'text-muted-foreground' : 'text-foreground']">
-                      <span class="truncate">{{ timeFilter || 'Semua kurun waktu' }}</span>
+                    <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal', !categoryFilter ? 'text-muted-foreground' : 'text-foreground']">
+                      <span class="truncate">{{ categoryFilter || 'Semua kategori' }}</span>
                       <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px]" align="start" :side-offset="4">
-                    <DropdownMenuItem @select="timeFilter = ''">Semua kurun waktu</DropdownMenuItem>
-                    <DropdownMenuItem @select="timeFilter = 'Hari ini'">Hari ini</DropdownMenuItem>
-                    <DropdownMenuItem @select="timeFilter = 'Bulan ini'">Bulan ini</DropdownMenuItem>
+                    <DropdownMenuItem @select="categoryFilter = ''">Semua kategori</DropdownMenuItem>
+                    <DropdownMenuItem v-for="cat in filteredCategories" :key="cat.id" @select="categoryFilter = cat.name">
+                      {{ cat.name }}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <!-- Subkategori Combobox -->
+                <Combobox
+                  v-model="subcategoryFilter"
+                  :options="filteredSubcategories"
+                  search-placeholder="Cari subkategori..."
+                  default-label="Semua subkategori"
+                />
+
+                <Transition
+                  enter-active-class="transition ease-out duration-200"
+                  enter-from-class="transform scale-95 opacity-0"
+                  enter-to-class="transform scale-100 opacity-100"
+                  leave-active-class="transition ease-in duration-150"
+                  leave-from-class="transform scale-100 opacity-100"
+                  leave-to-class="transform scale-95 opacity-0"
+                >
+                  <ResetFilterButton 
+                    v-if="hasActiveFilters"
+                    @click="clearFilters"
+                  />
+                </Transition>
+              </div>
+
+              <!-- Rows Per Page -->
+              <div class="flex items-center gap-3 text-sm text-muted-foreground pb-0.5">
+                <span class="whitespace-nowrap text-right">Baris per halaman</span>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal', (rowsPerPage === 'Semua baris' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
+                      {{ rowsPerPage }}
+                      <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px]" align="start" :side-offset="4">
+                    <DropdownMenuItem @select="rowsPerPage = 'Semua baris'">Semua baris</DropdownMenuItem>
+                    <DropdownMenuItem @select="rowsPerPage = '10'">10</DropdownMenuItem>
+                    <DropdownMenuItem @select="rowsPerPage = '25'">25</DropdownMenuItem>
+                    <DropdownMenuItem @select="rowsPerPage = '50'">50</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
             </div>
-          </Transition>
 
-          <!-- Row 2: Bulk Actions -->
-          <div class="flex flex-wrap items-end justify-between gap-4 pt-2">
-            <div class="space-y-2 flex-1 min-w-0">
-              <label class="text-xs text-muted-foreground font-medium block ml-0.5">Aksi Terpilih</label>
-              <div class="flex flex-wrap gap-2">
-                <!-- Edit Terpilih -->
-                <Button 
-                  @click="handleEditTerpilih()"
-                  :disabled="totalLotsTerpilihCount === 0"
-                  variant="more-round-warning"
-                >
-                  <Pencil class="w-4 h-4" />
-                  <span class="hidden sm:inline">Edit Terpilih</span>
-                </Button>
-                <!-- Hapus Terpilih -->
-                <Button 
-                  @click="openDeleteLotModal(dataTableRef.table.getFilteredRowModel().rows.filter((r: any) => r.getIsSelected()).map((r: any) => r.original))"
-                  :disabled="totalLotsTerpilihCount === 0"
-                  variant="destructive"
-                >
-                  <Trash2 class="w-4 h-4" />
-                  <span class="hidden sm:inline">Hapus Terpilih</span>
-                </Button>
+            <!-- Row 2: Bulk Actions & New Item -->
+            <div class="flex flex-wrap items-end justify-between gap-4 pt-2">
+              <div class="space-y-2 flex-1 min-w-0">
+                <label class="text-xs text-muted-foreground font-medium block ml-0.5">Aksi Terpilih</label>
+                <div class="flex flex-wrap gap-2">
+                  <Button 
+                    @click="openBulkEditModal"
+                    :disabled="!dataTableRef || Object.keys(dataTableRef.table.getState().rowSelection).length === 0"
+                    variant="more-round-warning"
+                  >
+                    <Pencil class="w-4 h-4" />
+                    <span class="hidden sm:inline">Edit Terpilih</span>
+                  </Button>
+                  <Button 
+                    @click="openDeleteModal(dataTableRef.table.getFilteredRowModel().rows.filter((r: any) => r.getIsSelected()).map((r: any) => r.original))"
+                    :disabled="!dataTableRef || Object.keys(dataTableRef.table.getState().rowSelection).length === 0"
+                    variant="destructive"
+                  >
+                    <Trash2 class="w-4 h-4" />
+                    <span class="hidden sm:inline">Hapus Terpilih</span>
+                  </Button>
+                </div>
               </div>
+              
+              <Button
+                @click="openCreateModal"
+                variant="primary"
+                size="lg"
+              >
+                <Plus class="w-4 h-4" />
+                <span>Tipe Baru</span>               
+              </Button>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Table -->
-      <div class="pb-4">
-
-
-        <DataTable 
-          ref="dataTableRef"
-          :columns="columns" 
-          :data="filteredLots" 
-          :filter-value="searchQuery"
-          :default-sorting="[{ id: 'number', desc: false }]"
-        />
-
-        <div class="text-xs text-muted-foreground pl-1 mt-3 no-print">
-          {{ totalLotsTerpilihCount }} dari {{ filteredLots.length }} baris dipilih
+        <!-- Table -->
+        <div class="pb-4">
+          <DataTable 
+            ref="dataTableRef"
+            :columns="columns" 
+            :data="filteredBarangs" 
+            :filter-value="searchQuery"
+            :default-sorting="[{ id: 'lastUpdate', desc: true }]"
+          />
         </div>
       </div>
     </div>
+
+    <!-- Modals -->
+    <CreateTipeModal
+      v-model:open="isCreateModalOpen"
+      :categories="props.categories"
+      :subcategories="props.subcategories"
+      :uoms="props.uoms"
+      :brands="props.brands"
+      :barangs="props.barangs"
+    />
+
+    <EditTipeModal
+      v-model:open="isBulkEditModalOpen"
+      :items="selectedItemsForEdit"
+      :uoms="props.uoms"
+      :brands="props.brands"
+      @success="handleEditSuccess"
+    />
+
+    <DeleteConfirmationModal 
+      :is-open="isDeleteModalOpen"
+      :item-count="itemsToDelete.length"
+      item-name="Tipe"
+      :item-data="itemsToDelete.length === 1 ? itemsToDelete[0] : itemsToDelete"
+      :processing="processing"
+      @close="closeDeleteModal"
+      @confirm="handleConfirmDelete"
+    />
+
+    <DeleteErrorModal 
+      :is-open="isErrorModalOpen"
+      :error-message="errorModalMessage"
+      @close="closeErrorModal"
+    />
   </div>
-
-  <EditLotModal
-    v-model:open="isBulkEditModalOpen"
-    :items="selectedLotsForEdit"
-    :isConsumable="true"
-    :parentImageUrl="activeParentImageUrl"
-    :organizers="props.organizers"
-    :vendors="props.vendors"
-    :locations="props.locations"
-    :floors="props.floors"
-    :rooms="props.rooms"
-    :projects="props.projects"
-    @success="handleEditSuccess"
-  />
-
-  <DeleteConfirmationModal 
-    :is-open="isDeleteModalOpen"
-    :item-count="itemsToDelete.length"
-    :item-name="'LOT'"
-    :item-data="itemsToDelete.length === 1 ? itemsToDelete[0] : itemsToDelete"
-    :fields="deleteFields"
-    :max-width-class="itemsToDelete.length === 1 ? 'max-w-2xl' : undefined"
-    :processing="processing"
-    @close="closeDeleteModal"
-    @confirm="handleConfirmDelete"
-  />
-
-  <DeleteErrorModal 
-    :is-open="isErrorModalOpen"
-    :error-message="errorModalMessage"
-    @close="closeErrorModal"
-  />
-
-  <DetailLOTConsumables 
-    :is-open="isDetailConsumablesOpen"
-    :lot-id="selectedLotForDetail"
-    @close="isDetailConsumablesOpen = false"
-    @edit="openEditLotModal"
-    @delete="openDeleteLotModal"
-  />
 </template>

@@ -3,51 +3,44 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import DaftarStokHabisPakaiTab from './Tabs/DaftarStokHabisPakaiTab.vue';
 
 interface Props {
-  lots: {
-    id: number;
-    number: string;
-    po_number: string;
-    date_of_receipt: string;
-    organizer: string;
-    organizer_id: number;
-    vendor: string;
-    vendor_id: number;
-    location: string;
-    location_id: number;
-    floor: string | null;
-    floor_id: number | null;
-    room: string | null;
-    room_id: number | null;
-    unitPrice: number | string;
-    imageUrl: string;
-    initial_quantity: number | null;
-    current_quantity: number | null;
-    updated_at: string;
-    
-    // Parent barang info
-    barang_id: number;
-    barang_code: string;
-    barang_nama: string;
-    barang_brand: string;
-    barang_specification: string;
-    barang_category: string;
-    barang_subcategory: string;
-    barang_uom: string;
-  }[];
-  organizers: { id: number; name: string; }[];
-  vendors: { id: number; name: string; }[];
-  locations: { id: number; name: string; }[];
-  floors: { id: number; name: string; location_id: number; }[];
-  rooms: { id: number; name: string; floor_id: number; }[];
-  projects: { id: number; no_project: string; project_name: string; client_id: string; }[];
+  barangs?: any[];
+  categories?: any[];
+  subcategories?: any[];
+  brands?: any[];
+  uoms?: any[];
+  lots?: any[];
+  organizers?: any[];
+  vendors?: any[];
+  locations?: any[];
+  floors?: any[];
+  rooms?: any[];
+  projects?: any[];
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+  barangs: () => [],
+  categories: () => [],
+  subcategories: () => [],
+  brands: () => [],
+  uoms: () => [],
+  lots: () => [],
+  organizers: () => [],
+  vendors: () => [],
+  locations: () => [],
+  floors: () => [],
+  rooms: () => [],
+  projects: () => [],
+});
 </script>
 
 <template>
   <AppLayout title="Daftar Stok (Habis Pakai)">
     <DaftarStokHabisPakaiTab
+      :barangs="props.barangs"
+      :categories="props.categories"
+      :subcategories="props.subcategories"
+      :brands="props.brands"
+      :uoms="props.uoms"
       :lots="props.lots"
       :organizers="props.organizers"
       :vendors="props.vendors"
@@ -58,3 +51,4 @@ const props = defineProps<Props>();
     />
   </AppLayout>
 </template>
+
