@@ -23,7 +23,8 @@ import {
   unreadCount, 
   markAsRead, 
   markAllAsRead, 
-  clearNotifications 
+  clearNotifications,
+  setNotifications
 } from '@/stores/notificationStore';
 
 interface Props {
@@ -37,6 +38,17 @@ const emit = defineEmits<{
 
 const page = usePage();
 const user = computed(() => page.props.auth?.user);
+
+// Watch shared notifications from Inertia props & sync to store
+watch(
+  () => page.props.auth?.notifications,
+  (newVal: any) => {
+    if (Array.isArray(newVal)) {
+      setNotifications(newVal);
+    }
+  },
+  { immediate: true }
+);
 
 const userInitials = computed(() => {
   if (!user.value?.name) return 'U';

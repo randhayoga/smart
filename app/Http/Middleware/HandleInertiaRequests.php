@@ -40,6 +40,20 @@ class HandleInertiaRequests extends Middleware
                 'pendingAssetStatusCount' => $request->user() && in_array($request->user()->role, ['manager', 'ifs_manager'])
                     ? \App\Models\Inventory\UnitStatusApproval::where('decision', 'pending')->whereHas('unit', fn($q) => $q->where('status', 'Pending:DM'))->count()
                     : 0,
+                'notifications' => fn () => $request->user()
+                    ? $request->user()->notifications()->limit(20)->get()->map(fn ($n) => [
+                        'id' => $n->id,
+                        'title' => $n->data['title'] ?? '',
+                        'message' => $n->data['message'] ?? '',
+                        'type' => $n->data['type'] ?? 'info',
+                        'url' => $n->data['url'] ?? null,
+                        'read' => $n->read_at !== null,
+                        'timestamp' => $n->created_at->toIso8601String(),
+                    ])
+                    : [],
+                'unreadNotificationCount' => fn () => $request->user()
+                    ? $request->user()->unreadNotifications()->count()
+                    : 0,
             ],
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
