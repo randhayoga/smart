@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
+import { Link } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Heading from '@/Components/Heading.vue';
 import Tabs from '@/Components/Tabs.vue';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/Components/ui/card';
 import { DonutChart } from '@/Components/ui/chart';
-import { StickyNote, Armchair, MonitorSmartphone, Package, Box, Monitor, PieChart as PieChartIcon } from 'lucide-vue-next';
+import { StickyNote, Armchair, MonitorSmartphone, Package, Box, Monitor, PieChart as PieChartIcon, QrCode, ChevronRight } from 'lucide-vue-next';
 
 interface ConsumableStat {
   subcategory_name: string;
@@ -91,12 +92,37 @@ const ictChartColors = ['#0D9488', '#0284C7', '#F59E0B', '#E11D48', '#8B5CF6', '
 
 <template>
   <AppLayout title="Dashboard">
-    <div class="space-y-1">
+    <div class="space-y-3">
       <!-- Header -->
-      <div class="pb-3">
+      <div class="pb-1">
         <Heading as="h1">
           {{ greeting }}, <span class="text-gradient-primary">{{ user?.name || 'User' }}</span>
         </Heading>
+      </div>
+
+      <!-- Quick Pindai Barcode Shortcut Button (Visible only on Mobile & Tablet screens < lg) -->
+      <div class="lg:hidden w-full">
+        <Link
+          href="/smart/scan-barcode"
+          class="flex items-center justify-between gap-3 p-3.5 rounded-xl bg-gradient-primary text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.99] group"
+        >
+          <div class="flex items-center gap-3">
+            <div class="p-2.5 bg-white/20 backdrop-blur-sm rounded-lg text-white shrink-0">
+              <QrCode class="w-6 h-6 animate-pulse" />
+            </div>
+            <div>
+              <p class="font-semibold text-base leading-tight">
+                Pindai Barcode Aset
+              </p>
+              <p class="text-xs text-white/80 mt-0.5">
+                Klik untuk membuka kamera pemindai
+              </p>
+            </div>
+          </div>
+          <div class="p-1.5 bg-white/10 rounded-full group-hover:translate-x-1 transition-transform shrink-0">
+            <ChevronRight class="w-5 h-5 text-white" />
+          </div>
+        </Link>
       </div>
 
       <!-- Tabs -->

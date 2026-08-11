@@ -16,7 +16,7 @@ const classes = computed(() => {
   
   // Specific variants
   if (props.variant === 'page-title' || props.as === 'h1') {
-    return `${base} text-xl sm:text-3xl leading-tight pb-3`;
+    return `${base} text-xl sm:text-3xl leading-tight sm:pb-3`;
   }
   
   if (props.variant === 'section-title' || props.as === 'h2') {
