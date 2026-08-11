@@ -13,5 +13,10 @@ export type PageProps<
 > = T & {
     auth: {
         user: User;
+        isAdmin?: boolean;
+        pendingRequestCount?: number;
+        pendingAssetStatusCount?: number;
+        notifications?: any[];
+        unreadNotificationCount?: number;
     };
 };
