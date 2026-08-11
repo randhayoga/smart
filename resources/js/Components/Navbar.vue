@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { Link, usePage, router } from '@inertiajs/vue3';
 import { Menu, X, Search, Bell, Info, CheckCircle2, AlertTriangle, XCircle, Trash2, Building2, LogOut } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
@@ -41,7 +41,7 @@ const user = computed(() => page.props.auth?.user);
 
 // Watch shared notifications from Inertia props & sync to store
 watch(
-  () => page.props.auth?.notifications,
+  () => (page.props.auth as any)?.notifications,
   (newVal: any) => {
     if (Array.isArray(newVal)) {
       setNotifications(newVal);

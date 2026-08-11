@@ -65,7 +65,7 @@ class Barang extends Model
         return $this->hasMany(InventoryLog::class);
     }
 
-    public function getNumberAttribute($value)
+    public function getNumberAttribute(?string $value): ?string
     {
         return $value !== null ? trim($value) : null;
     }
