@@ -103,7 +103,7 @@ const ictChartColors = ['#0D9488', '#0284C7', '#F59E0B', '#E11D48', '#8B5CF6', '
       <!-- Quick Pindai Barcode Shortcut Button (Visible only on Mobile & Tablet screens < lg) -->
       <div class="lg:hidden w-full">
         <Link
-          href="/smart/scan-barcode"
+          href="/smart/scan"
           class="flex items-center justify-between gap-3 p-3.5 rounded-xl bg-gradient-primary text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.99] group"
         >
           <div class="flex items-center gap-3">

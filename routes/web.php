@@ -51,7 +51,7 @@ Route::middleware(['auth'])->group(function () {
 // Smart routes - protected
 Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () {
     Route::post('/placement/update', [RequestHistoryController::class, 'updatePlacement'])->name('placement.update');
-    Route::get('/scan-barcode', [\App\Http\Controllers\Smart\MultiRoles\ScanBarcodeController::class, 'show'])->name('scan-barcode');
+    Route::get('/scan', [\App\Http\Controllers\Smart\MultiRoles\ScanBarcodeController::class, 'show'])->name('scan-barcode');
 
     // Admin only routes
     Route::middleware(['role:admin'])->group(function () {

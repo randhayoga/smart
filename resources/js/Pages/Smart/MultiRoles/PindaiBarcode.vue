@@ -248,7 +248,7 @@ const handleFileUpload = async (event: Event) => {
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbLink href="/smart/scan-barcode">Pindai Barcode</BreadcrumbLink>
+            <BreadcrumbLink href="/smart/scan">Pindai Barcode</BreadcrumbLink>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
