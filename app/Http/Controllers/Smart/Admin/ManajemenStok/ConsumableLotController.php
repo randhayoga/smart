@@ -57,6 +57,7 @@ class ConsumableLotController extends Controller
                     'is_consumable' => true,
                     'brand_id' => $barang->brand_id,
                     'uom_id' => $barang->uom_id,
+                    'min_stock_threshold' => $barang->min_stock_threshold,
                 ];
             });
 
