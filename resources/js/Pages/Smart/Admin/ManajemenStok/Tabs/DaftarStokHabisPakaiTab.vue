@@ -273,7 +273,7 @@ const columns: ColumnDef<any>[] = [
   },
   {
     accessorKey: 'amount',
-    size: 95,
+    size: 110,
     header: ({ column }) => h(Button, {
       variant: 'ghost',
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
@@ -282,7 +282,26 @@ const columns: ColumnDef<any>[] = [
       'Total Stok',
       h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
     ]),
-    cell: ({ row }) => h('div', { class: 'font-medium text-foreground' }, row.getValue('amount')),
+    cell: ({ row }) => {
+      const item = row.original;
+      const remainingStock = Number(item.amount ?? 0);
+      const totalStock = (props.lots || [])
+        .filter(l => String(l.barang_id) === String(item.id))
+        .reduce((sum, l) => sum + Number(l.initial_quantity ?? 0), 0);
+
+      const threshold = item.min_stock_threshold !== null && item.min_stock_threshold !== undefined
+        ? Number(item.min_stock_threshold)
+        : null;
+
+      let textColorClass = 'text-foreground';
+      if (remainingStock === 0) {
+        textColorClass = 'text-black dark:text-black font-semibold';
+      } else if (threshold !== null && remainingStock <= threshold) {
+        textColorClass = 'text-rose-600 font-semibold';
+      }
+
+      return h('div', { class: `font-medium ${textColorClass}` }, `${remainingStock}/${totalStock}`);
+    },
   },
   {
     accessorKey: 'lastUpdate',
@@ -344,6 +363,20 @@ const columns: ColumnDef<any>[] = [
     },
   },
 ];
+
+const getRowClass = (item: any) => {
+  const remainingStock = Number(item.amount ?? 0);
+  const threshold = item.min_stock_threshold !== null && item.min_stock_threshold !== undefined
+    ? Number(item.min_stock_threshold)
+    : null;
+
+  if (remainingStock === 0) {
+    return 'bg-red-100 hover:bg-red-200 text-black font-medium border-red-200';
+  } else if (threshold !== null && remainingStock <= threshold) {
+    return 'bg-amber-100 hover:bg-amber-200 text-black font-medium border-amber-200';
+  }
+  return '';
+};
 
 // Create Tipe Modal Logic
 const isCreateModalOpen = ref(false);
@@ -641,6 +674,7 @@ const closeOnEscape = (e: KeyboardEvent) => {
             :data="filteredBarangs" 
             :filter-value="searchQuery"
             :default-sorting="[{ id: 'lastUpdate', desc: true }]"
+            :row-class="getRowClass"
           />
         </div>
       </div>

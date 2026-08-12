@@ -35,11 +35,19 @@ const props = withDefaults(defineProps<{
   showSelectionCount?: boolean
   defaultSorting?: SortingState
   cellClass?: string
+  rowClass?: string | ((row: TData) => string)
 }>(), {
   pageSize: 10,
   showSelectionCount: true,
   defaultSorting: () => []
 })
+
+const getRowClass = (row: any) => {
+  if (typeof props.rowClass === 'function') {
+    return props.rowClass(row.original)
+  }
+  return props.rowClass || ''
+}
 
 const sorting = ref<SortingState>(props.defaultSorting)
 const columnFilters = ref<ColumnFiltersState>([])
@@ -126,7 +134,7 @@ watch(() => props.filterValue, (val) => {
             v-for="row in table.getRowModel().rows"
             :key="row.id"
             :data-state="row.getIsSelected() ? 'selected' : undefined"
-            class="border-b border-border hover:bg-muted/30 transition-colors last:border-none"
+            :class="['border-b border-border hover:bg-muted/30 transition-colors last:border-none', getRowClass(row)]"
           >
             <TableCell 
               v-for="cell in row.getVisibleCells()" 
