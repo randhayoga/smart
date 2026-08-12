@@ -38,6 +38,7 @@ const newItem = useForm({
   subcategory_id: null as number | null,
   brand_id: null as number | null,
   uom_id: null as number | null,
+  min_stock_threshold: null as number | string | null,
   name: '',
   specification: '',
   photo: null as File | null,
@@ -49,14 +50,21 @@ const errors = ref({
   category_id: '',
   subcategory_id: '',
   uom_id: '',
+  min_stock_threshold: '',
   brand_id: '',
   name: '',
   photo: '',
 });
 
 const resetErrors = () => {
-  errors.value = { code: '', category_id: '', subcategory_id: '', uom_id: '', brand_id: '', name: '', photo: '' };
+  errors.value = { code: '', category_id: '', subcategory_id: '', uom_id: '', min_stock_threshold: '', brand_id: '', name: '', photo: '' };
 };
+
+const isConsumableSelected = computed(() => {
+  if (!newItem.category_id) return false;
+  const cat = props.categories.find(c => c.id === newItem.category_id);
+  return Boolean(cat?.is_consumable);
+});
 
 const filteredSubcategories = computed(() => {
   return newItem.category_id ? props.subcategories.filter(s => s.category_id == newItem.category_id) : props.subcategories;
@@ -87,7 +95,12 @@ const generateCode = () => {
   newItem.code = `${catCode}-${subSuffix}-${formattedNumber}`;
 };
 
-watch(() => newItem.category_id, () => { newItem.code = ''; newItem.subcategory_id = null; newItem.brand_id = null; });
+watch(() => newItem.category_id, () => { 
+  newItem.code = ''; 
+  newItem.subcategory_id = null; 
+  newItem.brand_id = null; 
+  newItem.min_stock_threshold = null;
+});
 watch(() => newItem.subcategory_id, () => { newItem.code = ''; });
 
 // Reactive error clearing
@@ -95,6 +108,7 @@ watch(() => newItem.code, v => { if (v && errors.value.code) errors.value.code =
 watch(() => newItem.category_id, v => { if (v && errors.value.category_id) errors.value.category_id = ''; });
 watch(() => newItem.subcategory_id, v => { if (v && errors.value.subcategory_id) errors.value.subcategory_id = ''; });
 watch(() => newItem.uom_id, v => { if (v && errors.value.uom_id) errors.value.uom_id = ''; });
+watch(() => newItem.min_stock_threshold, v => { if (errors.value.min_stock_threshold) errors.value.min_stock_threshold = ''; });
 watch(() => newItem.brand_id, v => { if (v && errors.value.brand_id) errors.value.brand_id = ''; });
 watch(() => newItem.name, v => { if (v && errors.value.name) errors.value.name = ''; });
 watch(() => newItem.photo, v => { if (v && errors.value.photo) errors.value.photo = ''; });
@@ -141,6 +155,15 @@ const handleSubmit = () => {
   if (!newItem.brand_id) { errors.value.brand_id = 'Merek belum dipilih'; isValid = false; }
   if (!newItem.name) { errors.value.name = 'Nama Tipe belum diisi'; isValid = false; }
   if (!newItem.photo) { errors.value.photo = 'Foto default belum dipilih'; isValid = false; }
+  
+  if (isConsumableSelected.value && newItem.min_stock_threshold !== null && newItem.min_stock_threshold !== '' && newItem.min_stock_threshold !== undefined) {
+    const thresholdNum = Number(newItem.min_stock_threshold);
+    if (isNaN(thresholdNum) || !Number.isInteger(thresholdNum) || thresholdNum < 0) {
+      errors.value.min_stock_threshold = 'Ambang batas notifikasi stok harus berupa angka bulat positif atau nol';
+      isValid = false;
+    }
+  }
+
   if (!isValid) return;
 
   newItem.transform((data) => ({
@@ -150,6 +173,7 @@ const handleSubmit = () => {
     uom_id: data.uom_id,
     name: data.name,
     specification: data.specification,
+    min_stock_threshold: isConsumableSelected.value && data.min_stock_threshold !== '' && data.min_stock_threshold !== null ? Number(data.min_stock_threshold) : null,
     image_url: data.photo,
   })).post('/smart/inventory/barangs', {
     onSuccess: () => {
@@ -272,6 +296,23 @@ const handleSubmit = () => {
                       />
                     </FieldContent>
                     <FieldError v-if="errors.uom_id">{{ errors.uom_id }}</FieldError>
+                  </Field>
+
+                  <Field v-if="isConsumableSelected" :data-invalid="!!errors.min_stock_threshold || undefined">
+                    <FieldLabel for="newItemMinStockThreshold">Ambang batas notifikasi stok</FieldLabel>
+                    <FieldContent>
+                      <input 
+                        type="number" 
+                        id="newItemMinStockThreshold"
+                        name="min_stock_threshold"
+                        v-model="newItem.min_stock_threshold"
+                        min="0"
+                        placeholder="Input ambang batas notifikasi stok..." 
+                        class="w-full px-4 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors h-10"
+                        :class="[errors.min_stock_threshold ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']"
+                      />
+                    </FieldContent>
+                    <FieldError v-if="errors.min_stock_threshold">{{ errors.min_stock_threshold }}</FieldError>
                   </Field>
                 </div>
 

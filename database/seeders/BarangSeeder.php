@@ -22,6 +22,7 @@ class BarangSeeder extends Seeder
                 'uom_id' => 2,
                 'name' => 'Kertas HVS A4',
                 'specification' => '75 GSM',
+                'min_stock_threshold' => 10,
                 'image_url' => 'database/seeders/assets/sidu.jpg',
             ],
             [
@@ -31,6 +32,7 @@ class BarangSeeder extends Seeder
                 'uom_id' => 3,
                 'name' => 'Pulpen Hitam',
                 'specification' => 'v5 0,7',
+                'min_stock_threshold' => 25,
                 'image_url' => 'database/seeders/assets/snowman.jpg',
             ],
             [
@@ -40,6 +42,7 @@ class BarangSeeder extends Seeder
                 'uom_id' => 3,
                 'name' => 'Pulpen Hitam',
                 'specification' => 'AE7 0,5',
+                'min_stock_threshold' => 25,
                 'image_url' => 'database/seeders/assets/standard.jpg',
             ],
             [
@@ -108,6 +111,7 @@ class BarangSeeder extends Seeder
                     'uom_id' => $data['uom_id'],
                     'name' => $data['name'],
                     'specification' => $data['specification'] ?? null,
+                    'min_stock_threshold' => $data['min_stock_threshold'] ?? null,
                     'image_url' => $destinationPath,
                 ]
             );

@@ -23,6 +23,7 @@ class BulkBarangController extends Controller
             'uom_id' => 'nullable|exists:uoms,id',
             'name' => 'nullable|string|max:255',
             'specification' => 'nullable|string|max:255',
+            'min_stock_threshold' => 'nullable|integer|min:0',
             'image_url' => 'nullable|image|max:1024',
         ]);
 
@@ -39,6 +40,9 @@ class BulkBarangController extends Controller
         }
         if ($request->filled('specification')) {
             $updateData['specification'] = $request->input('specification');
+        }
+        if ($request->filled('min_stock_threshold')) {
+            $updateData['min_stock_threshold'] = $request->input('min_stock_threshold');
         }
 
         if ($request->hasFile('image_url')) {

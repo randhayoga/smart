@@ -217,6 +217,7 @@ class LotController extends Controller
                 'barang_subcategory' => $lot->barang->subcategory->name ?? '-',
                 'barang_subcategory_code' => $lot->barang->subcategory->code ?? '-',
                 'barang_uom' => $lot->barang->uom->name ?? '-',
+                'barang_min_stock_threshold' => $lot->barang->min_stock_threshold ?? null,
             ]);
         }
 

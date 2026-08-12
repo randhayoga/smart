@@ -57,6 +57,7 @@ class ManajemenStokController extends Controller
                     'is_consumable' => (bool)($barang->subcategory->category->is_consumable ?? false),
                     'brand_id' => $barang->brand_id,
                     'uom_id' => $barang->uom_id,
+                    'min_stock_threshold' => $barang->min_stock_threshold,
                 ];
             });
 
@@ -110,6 +111,7 @@ class ManajemenStokController extends Controller
             'is_consumable' => (bool)($barang->subcategory->category->is_consumable ?? false),
             'brand_id' => $barang->brand_id,
             'uom_id' => $barang->uom_id,
+            'min_stock_threshold' => $barang->min_stock_threshold,
         ];
 
         $lots = Lot::with(['organizer', 'vendor', 'location', 'floor', 'room', 'project'])
