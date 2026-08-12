@@ -171,6 +171,7 @@ onUnmounted(() => {
                     <p class="font-bold text-foreground"><span class="text-foreground">Kode LOT:</span> {{ lotDetails.number }}</p>
                     <p class="font-bold text-foreground"><span class="text-foreground">Jumlah stok tersedia:</span> {{ lotDetails.current_quantity ?? 0 }}</p>
                     <p class="font-bold text-foreground"><span class="text-foreground">Jumlah stok diawal:</span> {{ lotDetails.initial_quantity ?? 0 }}</p>
+                    <p class="font-bold text-foreground"><span class="text-foreground">Ambang batas notifikasi stok:</span> {{ lotDetails.barang_min_stock_threshold !== null && lotDetails.barang_min_stock_threshold !== undefined ? `${lotDetails.barang_min_stock_threshold} ${lotDetails.barang_uom || ''}`.trim() : '-' }}</p>
                     <p class="text-foreground">Lokasi: {{ formatLocation(lotDetails) }}</p>
                     <p class="text-foreground">Nomor PO: {{ lotDetails.po_number }}</p>
                     <p class="text-foreground">Tanggal registrasi: {{ formatDateWithDashes(lotDetails.date_of_receipt) }}</p>

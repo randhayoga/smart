@@ -20,6 +20,7 @@ interface Props {
     brand_id: number;
     uom_id: number;
     is_consumable: boolean;
+    min_stock_threshold?: number | null;
   };
   lots: {
     id: number;
@@ -84,6 +85,7 @@ const totalStok = computed(() => {
           <p class="text-foreground">Subkategori: {{ props.barang.subcategory }}</p>
           <p class="text-foreground">Jumlah LOT: {{ props.lots.length }}</p>
           <p class="text-foreground">Total stok: {{ totalStok }} {{ props.barang.uom }}</p>
+          <p class="text-foreground">Ambang batas notifikasi stok: {{ props.barang.min_stock_threshold !== null && props.barang.min_stock_threshold !== undefined ? `${props.barang.min_stock_threshold} ${props.barang.uom}` : '-' }}</p>
           <p class="text-foreground">Satuan: {{ props.barang.uom }}</p>
           <p class="text-foreground">Pembaruan terakhir: {{ props.barang.lastUpdate }}</p>
         </div>
