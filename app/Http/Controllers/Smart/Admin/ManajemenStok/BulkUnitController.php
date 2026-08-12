@@ -243,6 +243,7 @@ class BulkUnitController extends Controller
                     }
 
                     $unit->update(['status' => 'Pending:DM']);
+                    app(\App\Services\NotificationService::class)->notifyIfsManagerPendingDm($unit);
 
                     UnitLifecycle::where('unit_id', $unit->id)
                         ->whereNull('end_date')

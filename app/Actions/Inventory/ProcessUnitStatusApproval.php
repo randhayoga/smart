@@ -33,9 +33,14 @@ class ProcessUnitStatusApproval
                 }
             } else {
                 if ($unit) {
-                    $unit->update(['status' => $approval->previous_status ?? 'Tersedia']);
+                    $unit->update([
+                        'status' => $approval->previous_status ?? 'Tersedia',
+                        'condition' => $approval->previous_condition ?? $unit->condition,
+                    ]);
                 }
             }
+
+            app(\App\Services\NotificationService::class)->notifyAdminAssetStatusDecision($approval, $decision);
         });
     }
 }

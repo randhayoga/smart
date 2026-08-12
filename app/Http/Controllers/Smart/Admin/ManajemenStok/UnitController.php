@@ -281,6 +281,7 @@ class UnitController extends Controller
 
                 // Change status to Pending:DM
                 $unit->update(['status' => 'Pending:DM']);
+                app(\App\Services\NotificationService::class)->notifyIfsManagerPendingDm($unit);
 
                 // Close active lifecycle
                 UnitLifecycle::where('unit_id', $unit->id)

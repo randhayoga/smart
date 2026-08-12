@@ -67,6 +67,10 @@ class BulkBarangController extends Controller
 
         if (!empty($updateData)) {
             Barang::whereIn('id', $request->input('ids'))->update($updateData);
+            $barangs = Barang::whereIn('id', $request->input('ids'))->get();
+            foreach ($barangs as $b) {
+                app(\App\Services\NotificationService::class)->checkAndNotifyLowStock($b);
+            }
         }
 
         $count = count($request->input('ids'));
