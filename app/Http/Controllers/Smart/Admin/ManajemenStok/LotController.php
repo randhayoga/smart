@@ -14,6 +14,7 @@ use App\Models\Master\Room;
 use App\Models\Master\Uom;
 use App\Models\Master\Vendor;
 use App\Models\TbProject;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -69,7 +70,11 @@ class LotController extends Controller
         $validated['burden'] = $validated['burden'] ?? 'Corporate';
         $validated['project_id'] = ($validated['burden'] === 'Project') ? ($validated['project_id'] ?? null) : null;
 
-        Lot::create($validated);
+        $lot = Lot::create($validated);
+
+        if ($lot->barang) {
+            app(NotificationService::class)->checkAndNotifyLowStock($lot->barang);
+        }
 
         return redirect()->back()->with('success', 'LOT berhasil ditambahkan.');    
     }
@@ -88,7 +93,7 @@ class LotController extends Controller
             'floor_id' => 'nullable|exists:floors,id',
             'room_id' => 'nullable|exists:rooms,id',
             'initial_quantity' => 'nullable|integer|min:0|max:2147483647',
-            'current_quantity' => 'nullable|integer|min:0|max:2147483647',
+            'current_quantity' => 'nullable|integer|min:0|max:' . ($lot->initial_quantity ?? 2147483647),
             'po_number' => 'required|string|max:255',
             'date_of_receipt' => 'required|date',
             'unit_price' => 'nullable|numeric|min:0|max:999999999.99',
@@ -99,6 +104,8 @@ class LotController extends Controller
         ], [
             'initial_quantity.integer' => 'Tidak boleh desimal.',
             'current_quantity.integer' => 'Tidak boleh desimal.',
+            'current_quantity.min' => 'Stok tersedia tidak boleh kurang dari 0.',
+            'current_quantity.max' => 'Stok tersedia tidak boleh melebihi stok diawal.',
         ]);
 
         if ($request->boolean('use_parent_image')) {
@@ -132,11 +139,20 @@ class LotController extends Controller
         }
 
         unset($validated['use_parent_image']);
-        $validated['initial_quantity'] = $validated['initial_quantity'] ?? 0;
+        if (!$request->has('initial_quantity')) {
+            unset($validated['initial_quantity']);
+        }
+        if (!$request->has('current_quantity')) {
+            unset($validated['current_quantity']);
+        }
         $validated['burden'] = $validated['burden'] ?? 'Corporate';
         $validated['project_id'] = ($validated['burden'] === 'Project') ? ($validated['project_id'] ?? null) : null;
 
         $lot->update($validated);
+
+        if ($lot->barang) {
+            app(NotificationService::class)->checkAndNotifyLowStock($lot->barang);
+        }
 
         return redirect()->back()->with('success', 'LOT berhasil diperbarui.');
     }
@@ -158,7 +174,12 @@ class LotController extends Controller
                 Storage::disk('local')->delete($lot->image_url);
             }
         }
+        $barang = $lot->barang;
         $lot->delete();
+
+        if ($barang) {
+            app(NotificationService::class)->checkAndNotifyLowStock($barang);
+        }
 
         return redirect()->back()->with('success', 'LOT berhasil dihapus.');
     }

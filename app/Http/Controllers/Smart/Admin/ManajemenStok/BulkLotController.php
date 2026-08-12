@@ -90,6 +90,9 @@ class BulkLotController extends Controller
 
             if (!empty($lotData)) {
                 $lot->update($lotData);
+                if ($lot->barang) {
+                    app(\App\Services\NotificationService::class)->checkAndNotifyLowStock($lot->barang);
+                }
             }
         }
 

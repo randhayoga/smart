@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Inventory\Barang;
 use App\Models\Inventory\Lot;
 use App\Models\Inventory\Unit;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -33,7 +34,8 @@ class BarangController extends Controller
             $validated['image_url'] = $imagePath;
         }
 
-        Barang::create($validated);
+        $barang = Barang::create($validated);
+        app(NotificationService::class)->checkAndNotifyLowStock($barang);
 
         return redirect()->back()->with('success', 'Tipe berhasil ditambahkan.');
     }
@@ -70,6 +72,7 @@ class BarangController extends Controller
         }
 
         $barang->update($validated);
+        app(NotificationService::class)->checkAndNotifyLowStock($barang);
 
         return redirect()->back()->with('success', 'Tipe berhasil diperbarui.');
     }

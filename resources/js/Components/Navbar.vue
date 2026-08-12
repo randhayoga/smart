@@ -128,8 +128,8 @@ const formatTime = (isoString: string) => {
               </Badge>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" class="w-80 sm:w-96 p-0 bg-card border border-border rounded-lg shadow-lg">
-            <div class="p-4 flex items-center justify-between border-b border-border">
+          <DropdownMenuContent align="end" class="w-128 sm:w-192 p-0 bg-card border border-border rounded-lg shadow-lg">
+            <div class="px-4 py-3 flex items-center justify-between border-b border-border">
               <h3 class="font-semibold text-sm">Notifikasi</h3>
               <div class="flex items-center gap-2">
                 <button 

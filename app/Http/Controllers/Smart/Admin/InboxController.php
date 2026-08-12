@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Smart\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Inventory\Barang;
 use App\Models\Inventory\Lot;
 use App\Models\Inventory\Unit;
 use App\Models\Request\Request as SmartRequest;
@@ -11,6 +12,7 @@ use App\Models\Request\RequestApproval;
 use App\Models\Request\RequestItem;
 use App\Models\Request\RequestStatusLog;
 use App\Models\Request\RequestUnitAssignment;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -325,6 +327,10 @@ class InboxController extends Controller
 
                         $remaining -= $deduct;
                     }
+
+                    if ($item->barang) {
+                        app(NotificationService::class)->checkAndNotifyLowStock($item->barang);
+                    }
                 }
 
                 // Mark item as fulfilled
@@ -431,6 +437,10 @@ class InboxController extends Controller
                             ]);
 
                             $remaining -= $deduct;
+                        }
+
+                        if ($item->barang) {
+                            app(NotificationService::class)->checkAndNotifyLowStock($item->barang);
                         }
                     }
 

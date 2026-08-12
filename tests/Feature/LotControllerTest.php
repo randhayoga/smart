@@ -382,4 +382,62 @@ class LotControllerTest extends TestCase
             ]);
         }
     }
+
+    public function test_can_update_consumable_lot_current_quantity(): void
+    {
+        $user = User::factory()->create();
+        $category = \App\Models\Master\Category::factory()->create(['is_consumable' => true]);
+        $subcategory = \App\Models\Master\Subcategory::factory()->create(['category_id' => $category->id]);
+        $barang = Barang::factory()->create(['subcategory_id' => $subcategory->id]);
+        $lot = Lot::factory()->create([
+            'barang_id' => $barang->id,
+            'initial_quantity' => 50,
+            'current_quantity' => 50,
+        ]);
+
+        $response = $this->actingAs($user)->put(route('smart.inventory.lots.update', $lot), [
+            'number' => $lot->number,
+            'barang_id' => $barang->id,
+            'organizer_id' => $lot->organizer_id,
+            'vendor_id' => $lot->vendor_id,
+            'location_id' => $lot->location_id,
+            'po_number' => $lot->po_number,
+            'date_of_receipt' => $lot->date_of_receipt->format('Y-m-d'),
+            'current_quantity' => 30,
+            'burden' => 'Corporate',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHasNoErrors();
+        $lot->refresh();
+        $this->assertEquals(30, $lot->current_quantity);
+        $this->assertEquals(50, $lot->initial_quantity);
+    }
+
+    public function test_cannot_update_current_quantity_higher_than_initial_quantity(): void
+    {
+        $user = User::factory()->create();
+        $category = \App\Models\Master\Category::factory()->create(['is_consumable' => true]);
+        $subcategory = \App\Models\Master\Subcategory::factory()->create(['category_id' => $category->id]);
+        $barang = Barang::factory()->create(['subcategory_id' => $subcategory->id]);
+        $lot = Lot::factory()->create([
+            'barang_id' => $barang->id,
+            'initial_quantity' => 50,
+            'current_quantity' => 50,
+        ]);
+
+        $response = $this->actingAs($user)->put(route('smart.inventory.lots.update', $lot), [
+            'number' => $lot->number,
+            'barang_id' => $barang->id,
+            'organizer_id' => $lot->organizer_id,
+            'vendor_id' => $lot->vendor_id,
+            'location_id' => $lot->location_id,
+            'po_number' => $lot->po_number,
+            'date_of_receipt' => $lot->date_of_receipt->format('Y-m-d'),
+            'current_quantity' => 60,
+            'burden' => 'Corporate',
+        ]);
+
+        $response->assertSessionHasErrors('current_quantity');
+    }
 }

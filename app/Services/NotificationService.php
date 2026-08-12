@@ -3,6 +3,9 @@
 namespace App\Services;
 
 use App\Models\AdmUser;
+use App\Models\Inventory\Barang;
+use App\Models\Inventory\Unit;
+use App\Models\Inventory\UnitStatusApproval;
 use App\Notifications\AppNotification;
 
 class NotificationService
@@ -76,5 +79,148 @@ class NotificationService
         foreach ($targetUsers as $user) {
             $this->sendToUser($user, $title, $message, $type, $url, $extra);
         }
+    }
+
+    /**
+     * Check if a consumable barang's stock is equal to or below its min_stock_threshold,
+     * and notify all Admins if true.
+     *
+     * @param Barang $barang
+     * @return bool Whether notifications were sent
+     */
+    public function checkAndNotifyLowStock(Barang $barang): bool
+    {
+        $barang->loadMissing(['subcategory.category', 'uom', 'brand']);
+
+        $isConsumable = (bool) ($barang->subcategory?->category?->is_consumable ?? false);
+        if (!$isConsumable) {
+            return false;
+        }
+
+        if (is_null($barang->min_stock_threshold)) {
+            return false;
+        }
+
+        $currentStock = (int) $barang->lots()->sum('current_quantity');
+
+        if ($currentStock <= $barang->min_stock_threshold) {
+            $uomName = $barang->uom->name ?? 'unit';
+            $brandName = $barang->brand->name ?? '';
+            $fullName = trim(($brandName ? $brandName . ' ' : '') . $barang->name);
+            $title = "Peringatan Stok Minimum: {$fullName}";
+            $message = "Stok barang {$barang->number} saat ini {$currentStock} {$uomName}, telah mencapai atau di bawah batas minimum ({$barang->min_stock_threshold} {$uomName}).";
+
+            $this->sendToRole(
+                'admin',
+                $title,
+                $message,
+                'warning',
+                '/smart/inventory/stok-habis-pakai',
+                [
+                    'barang_id' => $barang->id,
+                    'current_stock' => $currentStock,
+                    'min_stock_threshold' => $barang->min_stock_threshold,
+                ]
+            );
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Check all consumable barangs and send notifications for any that are at or below minimum stock threshold.
+     *
+     * @return int Number of barangs that triggered low stock notifications
+     */
+    public function checkAllConsumableLowStock(): int
+    {
+        $consumableBarangs = Barang::whereHas('subcategory.category', function ($query) {
+            $query->where('is_consumable', true);
+        })->whereNotNull('min_stock_threshold')->get();
+
+        $notifiedCount = 0;
+        foreach ($consumableBarangs as $barang) {
+            if ($this->checkAndNotifyLowStock($barang)) {
+                $notifiedCount++;
+            }
+        }
+
+        return $notifiedCount;
+    }
+
+    /**
+     * Send a notification to IFS Manager when an asset status is switched to Pending:DM.
+     *
+     * @param Unit $unit
+     */
+    public function notifyIfsManagerPendingDm(Unit $unit): void
+    {
+        $unit->loadMissing('lot.barang.brand');
+        $brand = $unit->lot?->barang?->brand?->name ?? '';
+        $assetName = $unit->lot?->barang?->name ?? '';
+        $brandAndName = trim("{$brand} {$assetName}") ?: $unit->number;
+
+        $title = "Penghapusan Aset {$brandAndName}: Perlu Perhatian Anda";
+        $message = "Penghapusan aset {$unit->number} telah disetujui oleh BoD/BoC dan sekarang memerlukan approval Anda";
+
+        $this->sendToRole(
+            'ifs_manager',
+            $title,
+            $message,
+            'warning',
+            '/smart/approve-status',
+            [
+                'unit_id' => $unit->id,
+                'unit_number' => $unit->number,
+            ]
+        );
+    }
+
+    /**
+     * Send a notification to all Admins when an asset status approval is decided by DM IFS.
+     *
+     * @param UnitStatusApproval $approval
+     * @param string $decision 'approved' | 'rejected'
+     */
+    public function notifyAdminAssetStatusDecision(UnitStatusApproval $approval, string $decision): void
+    {
+        $approval->loadMissing(['unit.lot.barang.brand']);
+        $unit = $approval->unit;
+        if (!$unit) {
+            return;
+        }
+
+        $brand = $unit->lot?->barang?->brand?->name ?? '';
+        $name = $unit->lot?->barang?->name ?? '';
+        $brandAndName = trim("{$brand} {$name}") ?: $unit->number;
+
+        if ($decision === 'approved') {
+            $currentCondition = $approval->proposed_condition;
+            $title = "Penghapusan Aset {$brandAndName} Disetujui DM IFS";
+            $message = "Status aset {$unit->number} telah berubah menjadi Tidak Aktif dan kondisi berubah menjadi {$currentCondition}.";
+            $type = 'success';
+        } else {
+            $currentStatus = $approval->previous_status ?? 'Tersedia';
+            $currentCondition = $approval->previous_condition ?? $unit->condition;
+            $title = "Penghapusan Aset {$brandAndName} Ditolak DM IFS";
+            $message = "Status aset {$unit->number} telah dikembalikan menjadi {$currentStatus} dan kondisi dikembalikan menjadi {$currentCondition}.";
+            $type = 'error';
+        }
+
+        $this->sendToRole(
+            'admin',
+            $title,
+            $message,
+            $type,
+            '/smart/inventory/daftar-aset',
+            [
+                'unit_id' => $unit->id,
+                'unit_number' => $unit->number,
+                'approval_id' => $approval->id,
+                'decision' => $decision,
+            ]
+        );
     }
 }
