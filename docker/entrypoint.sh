@@ -7,7 +7,6 @@ composer install --no-interaction --optimize-autoloader
 echo "Installing npm dependencies..."
 npm install && npm run build
 
-
 echo "Fixing storage and cache permissions..."
 chmod -R 775 storage bootstrap/cache || true
 
