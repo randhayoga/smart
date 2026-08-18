@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Notifications\Channels\MercureChannel;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 
@@ -41,11 +42,11 @@ class AppNotification extends Notification
     /**
      * Get the notification's delivery channels.
      *
-     * @return array<int, string>
+     * @return array<int, string|class-string>
      */
     public function via(object $notifiable): array
     {
-        return ['database'];
+        return ['database', MercureChannel::class];
     }
 
     /**
@@ -64,4 +65,24 @@ class AppNotification extends Notification
             'timestamp' => now()->toIso8601String(),
         ];
     }
+
+    /**
+     * Get the Mercure real-time broadcast representation of the notification.
+     *
+     * @return array<string, mixed>
+     */
+    public function toMercure(object $notifiable): array
+    {
+        return [
+            'id' => $this->id,
+            'title' => $this->title,
+            'message' => $this->message,
+            'type' => $this->type,
+            'url' => $this->url,
+            'read' => false,
+            'extra' => $this->extra,
+            'timestamp' => now()->toIso8601String(),
+        ];
+    }
 }
+

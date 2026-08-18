@@ -84,6 +84,55 @@ class AdmUser extends Authenticatable
     }
 
     /**
+     * Get users by dynamic role(s) using optimized queries.
+     *
+     * @param string|array<string> $roles 'admin' | 'ifs_manager' | 'manager' | 'user'
+     * @return \Illuminate\Database\Eloquent\Collection<int, AdmUser>
+     */
+    public static function getUsersByRole(string|array $roles)
+    {
+        $roles = (array) $roles;
+        $adminIds = ['255578'];
+        $ifsEmployeeId = HrdOrgchart::where('org_code', 'IFS')->value('employee_id');
+        $managerEmployeeIds = HrdOrgchart::whereNotNull('employee_id')->pluck('employee_id')->filter()->toArray();
+
+        $targetEmployeeIds = collect();
+        $includeAllRegularUsers = false;
+
+        foreach ($roles as $role) {
+            switch ($role) {
+                case 'admin':
+                    $targetEmployeeIds = $targetEmployeeIds->merge($adminIds);
+                    break;
+                case 'ifs_manager':
+                    if ($ifsEmployeeId) {
+                        $targetEmployeeIds->push($ifsEmployeeId);
+                    }
+                    break;
+                case 'manager':
+                    $targetEmployeeIds = $targetEmployeeIds->merge($managerEmployeeIds);
+                    break;
+                case 'user':
+                    $includeAllRegularUsers = true;
+                    break;
+            }
+        }
+
+        if ($includeAllRegularUsers) {
+            $excludeIds = array_unique(array_merge($adminIds, $managerEmployeeIds));
+            return static::whereNotIn('employee_id', $excludeIds)->get();
+        }
+
+        $uniqueIds = $targetEmployeeIds->filter()->unique()->values()->all();
+
+        if (empty($uniqueIds)) {
+            return static::whereRaw('1 = 0')->get();
+        }
+
+        return static::whereIn('employee_id', $uniqueIds)->get();
+    }
+
+    /**
      * Get the organization name of the user.
      */
     public function getOrgNameAttribute(): ?string
@@ -102,7 +151,7 @@ class AdmUser extends Authenticatable
     /**
      * Mutator for username (mapped to employee_id).
      */
-    public function setUsernameAttribute($value): void
+    public function setUsernameAttribute(string $value): void
     {
         $this->attributes['employee_id'] = $value;
     }
@@ -118,7 +167,7 @@ class AdmUser extends Authenticatable
     /**
      * Mutator for password (mapped to password_hash).
      */
-    public function setPasswordAttribute($value): void
+    public function setPasswordAttribute(string $value): void
     {
         $this->attributes['password_hash'] = $value;
     }

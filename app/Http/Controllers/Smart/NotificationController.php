@@ -82,4 +82,20 @@ class NotificationController extends Controller
 
         return response()->json(['success' => true]);
     }
+
+    /**
+     * Get real-time Mercure subscription credentials for authenticated user.
+     */
+    public function token(Request $request): JsonResponse
+    {
+        $userId = $request->user()->id;
+        $publisher = app(\App\Services\Mercure\MercurePublisher::class);
+        $jwtService = app(\App\Services\Mercure\MercureJwtService::class);
+
+        return response()->json([
+            'hubUrl' => config('mercure.public_url'),
+            'topic' => $publisher->getUserTopic($userId),
+            'token' => $jwtService->generateUserSubscriberToken($userId),
+        ]);
+    }
 }
