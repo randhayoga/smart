@@ -37,6 +37,22 @@ class MercureJwtService
     }
 
     /**
+     * Generate a dynamic JWT for a specific user to subscribe to their private notification topic.
+     *
+     * @param int|string $userId The user ID
+     * @param int|null $lifetimeSeconds Token lifetime in seconds (defaults to config)
+     * @return string Signed JWT string
+     */
+    public function generateUserSubscriberToken(
+        int|string $userId,
+        ?int $lifetimeSeconds = null
+    ): string {
+        $topic = rtrim(config('app.url', 'https://localhost'), '/') . "/notifications/users/{$userId}";
+
+        return $this->generateSubscriberToken([$topic], [], $lifetimeSeconds);
+    }
+
+    /**
      * Generate a dynamic JWT for publishing to Mercure topics.
      *
      * @param array<int, string>|string $publishTopics Topics the publisher is authorized to publish to (defaults to ['*'])

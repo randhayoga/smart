@@ -53,6 +53,7 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
     // Notification routes (for all authenticated users)
     Route::prefix('notifications')->name('notifications.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Smart\NotificationController::class, 'index'])->name('index');
+        Route::get('/mercure-token', [\App\Http\Controllers\Smart\NotificationController::class, 'token'])->name('mercure-token');
         Route::post('/{id}/read', [\App\Http\Controllers\Smart\NotificationController::class, 'markAsRead'])->name('read');
         Route::post('/read-all', [\App\Http\Controllers\Smart\NotificationController::class, 'markAllAsRead'])->name('read-all');
         Route::delete('/clear', [\App\Http\Controllers\Smart\NotificationController::class, 'clearAll'])->name('clear');

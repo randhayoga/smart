@@ -18,5 +18,10 @@ export type PageProps<
         pendingAssetStatusCount?: number;
         notifications?: any[];
         unreadNotificationCount?: number;
+        mercure?: {
+            hubUrl: string;
+            topic: string;
+            token: string;
+        } | null;
     };
 };

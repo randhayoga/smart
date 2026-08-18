@@ -54,7 +54,7 @@ class NotificationService
         ?string $url = null,
         array $extra = []
     ): void {
-        $targetUsers = AdmUser::all()->filter(fn(AdmUser $u) => $u->role === $role);
+        $targetUsers = AdmUser::getUsersByRole($role);
 
         foreach ($targetUsers as $user) {
             $this->sendToUser($user, $title, $message, $type, $url, $extra);
@@ -74,7 +74,7 @@ class NotificationService
         ?string $url = null,
         array $extra = []
     ): void {
-        $targetUsers = AdmUser::all()->filter(fn(AdmUser $u) => in_array($u->role, $roles));
+        $targetUsers = AdmUser::getUsersByRole($roles);
 
         foreach ($targetUsers as $user) {
             $this->sendToUser($user, $title, $message, $type, $url, $extra);
@@ -104,6 +104,22 @@ class NotificationService
         $currentStock = (int) $barang->lots()->sum('current_quantity');
 
         if ($currentStock <= $barang->min_stock_threshold) {
+            $targetAdmins = AdmUser::getUsersByRole('admin');
+            if ($targetAdmins->isEmpty()) {
+                return false;
+            }
+
+            // Deduplication: Avoid sending if an unread notification for this barang was sent within the last 2 hours
+            $firstAdmin = $targetAdmins->first();
+            $recentUnreadExists = $firstAdmin->unreadNotifications()
+                ->where('data', 'like', '%"barang_id":' . $barang->id . '%')
+                ->where('created_at', '>=', now()->subHours(2))
+                ->exists();
+
+            if ($recentUnreadExists) {
+                return false;
+            }
+
             $uomName = $barang->uom->name ?? 'unit';
             $brandName = $barang->brand->name ?? '';
             $fullName = trim(($brandName ? $brandName . ' ' : '') . $barang->name);

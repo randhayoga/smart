@@ -54,6 +54,20 @@ class HandleInertiaRequests extends Middleware
                 'unreadNotificationCount' => fn () => $request->user()
                     ? $request->user()->unreadNotifications()->count()
                     : 0,
+                'mercure' => fn () => $request->user() ? [
+                    'hubUrl' => config('mercure.public_url'),
+                    'topic' => app(\App\Services\Mercure\MercurePublisher::class)->getUserTopic($request->user()->id),
+                    'token' => $request->session()->has('mercure_token') && ($request->session()->get('mercure_token_expires_at', 0) > now()->timestamp)
+                        ? $request->session()->get('mercure_token')
+                        : tap(
+                            app(\App\Services\Mercure\MercureJwtService::class)->generateUserSubscriberToken($request->user()->id),
+                            function ($token) use ($request) {
+                                $request->session()->put('mercure_token', $token);
+                                // Cache for 50 minutes (token lifetime is 60 minutes)
+                                $request->session()->put('mercure_token_expires_at', now()->addMinutes(50)->timestamp);
+                            }
+                        ),
+                ] : null,
             ],
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),

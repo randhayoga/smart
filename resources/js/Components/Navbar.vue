@@ -129,8 +129,8 @@ const formatTime = (isoString: string) => {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" class="w-128 sm:w-192 p-0 bg-card border border-border rounded-lg shadow-lg">
-            <div class="px-4 py-3 flex items-center justify-between border-b border-border">
-              <h3 class="font-semibold text-sm">Notifikasi</h3>
+            <div class="px-4 py-2 flex items-center justify-between border-b border-border">
+              <h3 class="font-medium text-base">Notifikasi</h3>
               <div class="flex items-center gap-2">
                 <button 
                   v-if="unreadCount > 0"
@@ -157,15 +157,15 @@ const formatTime = (isoString: string) => {
                 <div 
                   v-for="item in notifications" 
                   :key="item.id" 
-                  class="p-4 flex gap-3 hover:bg-muted/50 transition-colors relative cursor-pointer"
+                  class="px-4 py-3 flex gap-3 hover:bg-muted/50 transition-colors relative cursor-pointer"
                   :class="[ !item.read ? 'bg-muted/30 font-medium' : '' ]"
                   @click="markAsRead(item.id)"
                 >
                   <!-- Unread indicator dot -->
-                  <span v-if="!item.read" class="absolute left-1.5 top-5 h-2 w-2 rounded-full bg-primary"></span>
+                  <span v-if="!item.read" class="absolute left-2.5 top-2 h-2 w-2 rounded-full bg-primary"></span>
                   
                   <div class="flex-shrink-0 mt-0.5">
-                    <CheckCircle2 v-if="item.type === 'success'" class="h-5 w-5 text-emerald-500" />
+                    <CheckCircle2 v-if="item.type === 'success'" class="h-6 w-6 text-emerald-500" />
                     <AlertTriangle v-else-if="item.type === 'warning'" class="h-5 w-5 text-amber-500" />
                     <XCircle v-else-if="item.type === 'error'" class="h-5 w-5 text-destructive" />
                     <Info v-else class="h-5 w-5 text-blue-500" />
@@ -205,15 +205,15 @@ const formatTime = (isoString: string) => {
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" class="w-64 p-2 bg-card border border-border rounded-lg shadow-lg">
-            <div class="px-2 pt-1">
+            <div class="px-2 py-1">
               <p class="text-base font-semibold text-foreground truncate">
                 {{ user?.name || 'User' }}
               </p>
-              <div class="flex items-center gap-1.5 text-sm text-muted-foreground truncate">
+              <div class="flex items-center gap-1.5 text-xs text-muted-foreground truncate">
                 <span class="truncate">{{ user?.org_name || 'Tanpa Organisasi' }}</span>
               </div>
             </div>
-            <DropdownMenuSeparator class="my-1 border-t border-border" />
+            <DropdownMenuSeparator class="my-1.5 border-t border-border" />
             <DropdownMenuItem 
               @click="logout" 
               class="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10 flex items-center gap-2"

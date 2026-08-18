@@ -4,6 +4,7 @@ import { Head } from '@inertiajs/vue3';
 import Navbar from '@/Components/Navbar.vue';
 import Sidebar from '@/Components/Sidebar.vue';
 import { Toaster } from '@/Components/ui/sonner';
+import { useMercureNotifications } from '@/composables/useMercureNotifications';
 import 'vue-sonner/style.css';
 
 interface Props {
@@ -13,6 +14,9 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   title: 'SMART',
 });
+
+// Initialize global real-time notifications listener
+useMercureNotifications();
 
 const sidebarOpen = ref(false);
 const isMobile = ref(false);

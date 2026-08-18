@@ -294,9 +294,7 @@ const columns: ColumnDef<any>[] = [
         : null;
 
       let textColorClass = 'text-foreground';
-      if (remainingStock === 0) {
-        textColorClass = 'text-black dark:text-black font-semibold';
-      } else if (threshold !== null && remainingStock <= threshold) {
+      if (threshold !== null && remainingStock <= threshold) {
         textColorClass = 'text-rose-600 font-semibold';
       }
 

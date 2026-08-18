@@ -65,6 +65,19 @@ export const addNotification = (
 };
 
 /**
+  Push a real-time notification received from Mercure SSE stream
+ */
+export const pushRealtimeNotification = (item: NotificationItem) => {
+  const exists = notifications.value.some((n) => n.id === item.id);
+  if (!exists) {
+    notifications.value.unshift(item);
+    if (notifications.value.length > 50) {
+      notifications.value = notifications.value.slice(0, 50);
+    }
+  }
+};
+
+/**
   Mark single notification as read in UI & DB
  */
 export const markAsRead = async (id: string) => {
