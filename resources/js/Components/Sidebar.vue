@@ -110,17 +110,46 @@ const navigation = computed<NavSection[]>(() => {
   }));
 });
 
+const parseUrlPathAndQuery = (urlStr: string) => {
+  const [cleanUrl] = urlStr.split('#');
+  const [pathname, queryString] = cleanUrl.split('?');
+  const params = new URLSearchParams(queryString || '');
+  return { pathname, params };
+};
+
 const isActive = (href: string): boolean => {
-  const currentPath = page.url;
-  if (currentPath === href) return true;
-  if (href === '/smart/inventory' && (
-    currentPath.startsWith('/smart/inventory/assets') ||
-    currentPath.startsWith('/smart/inventory/stok-habis-pakai') ||
-    currentPath.startsWith('/smart/inventory/pending-nonaktif')
+  const current = parseUrlPathAndQuery(page.url);
+  const target = parseUrlPathAndQuery(href);
+
+  // If target specified query params (like history=true), ensure current URL matches them
+  for (const [key, value] of target.params.entries()) {
+    if (current.params.get(key) !== value) {
+      return false;
+    }
+  }
+
+  // If current URL has history=true but target does not specify history, it shouldn't match
+  // (differentiates "Perlu Approval" /smart/approve-status from "Sudah Diproses" /smart/approve-status?history=true)
+  if (current.params.get('history') === 'true' && target.params.get('history') !== 'true') {
+    return false;
+  }
+
+  // Prevent parent /smart/inventory from activating on separate sub-pages
+  if (target.pathname === '/smart/inventory' && (
+    current.pathname.startsWith('/smart/inventory/assets') ||
+    current.pathname.startsWith('/smart/inventory/stok-habis-pakai') ||
+    current.pathname.startsWith('/smart/inventory/pending-nonaktif')
   )) {
     return false;
   }
-  return currentPath.startsWith(href + '/');
+
+  // Check exact pathname match
+  if (current.pathname === target.pathname) {
+    return true;
+  }
+
+  // Check nested child paths (e.g. /smart/inbox/123 -> /smart/inbox)
+  return current.pathname.startsWith(target.pathname + '/');
 };
 </script>
 
