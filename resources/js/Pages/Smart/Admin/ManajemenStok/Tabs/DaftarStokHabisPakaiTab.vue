@@ -33,6 +33,8 @@ import DeleteErrorModal from '@/Components/DeleteErrorModal.vue';
 import Combobox from '@/Components/Combobox.vue';
 import CreateTipeModal from '../Modals/CreateTipeModal.vue';
 import EditTipeModal from '../Modals/EditTipeModal.vue';
+import Tabs from '@/Components/Tabs.vue';
+import DetailBarangTab from './DetailBarangTab.vue';
 import DaftarLOTTab from './DaftarLOTTab.vue';
 
 interface Props {
@@ -67,6 +69,8 @@ const props = withDefaults(defineProps<Props>(), {
 
 // Selected Barang for LOT view
 const selectedBarang = ref<any | null>(null);
+const detailTabs = ['Detail', 'Daftar LOT'];
+const activeDetailTab = ref('Detail');
 
 const activeBarang = computed(() => {
   if (!selectedBarang.value) return null;
@@ -78,16 +82,47 @@ const lotsForActiveBarang = computed(() => {
   return props.lots.filter(lot => String(lot.barang_id) === String(activeBarang.value.id));
 });
 
-onMounted(() => {
+const page = usePage();
+
+const checkUrlParams = () => {
   const urlParams = new URLSearchParams(window.location.search);
   const barangIdParam = urlParams.get('barang_id');
   if (barangIdParam) {
-    const found = props.barangs.find(b => String(b.id) === barangIdParam);
+    const found = props.barangs.find(b => String(b.id) === String(barangIdParam));
     if (found) {
       selectedBarang.value = found;
     }
   }
+  const searchParam = urlParams.get('search');
+  if (searchParam) {
+    searchQuery.value = searchParam;
+  }
+};
+
+onMounted(() => {
+  checkUrlParams();
   document.addEventListener('keydown', closeOnEscape);
+});
+
+watch(() => props.barangs, () => {
+  checkUrlParams();
+}, { immediate: true });
+
+watch(() => page.url, (newUrl) => {
+  if (newUrl) {
+    const url = new URL(newUrl, window.location.origin);
+    const barangIdParam = url.searchParams.get('barang_id');
+    if (barangIdParam) {
+      const found = props.barangs.find(b => String(b.id) === String(barangIdParam));
+      if (found) {
+        selectedBarang.value = found;
+      }
+    }
+    const searchParam = url.searchParams.get('search');
+    if (searchParam) {
+      searchQuery.value = searchParam;
+    }
+  }
 });
 
 onUnmounted(() => {
@@ -96,6 +131,7 @@ onUnmounted(() => {
 
 watch(selectedBarang, (newVal) => {
   if (newVal) {
+    activeDetailTab.value = 'Detail';
     window.history.replaceState({}, '', `/smart/inventory/stok-habis-pakai?barang_id=${newVal.id}`);
   } else {
     window.history.replaceState({}, '', '/smart/inventory/stok-habis-pakai');
@@ -107,17 +143,25 @@ const searchQuery = ref('');
 const categoryFilter = ref('');
 const subcategoryFilter = ref('');
 const brandFilter = ref('');
+const stockStatusFilter = ref('');
 const rowsPerPage = ref('Semua baris');
 const dataTableRef = ref<any>(null);
 
+const getStockStatusLabel = (val: string) => {
+  if (val === 'tipis') return 'Stok tipis';
+  if (val === 'habis') return 'Stok habis';
+  return 'Semua status stok';
+};
+
 const hasActiveFilters = computed(() => {
-  return !!(categoryFilter.value || subcategoryFilter.value || brandFilter.value || searchQuery.value);
+  return !!(categoryFilter.value || subcategoryFilter.value || brandFilter.value || stockStatusFilter.value || searchQuery.value);
 });
 
 const clearFilters = () => {
   categoryFilter.value = '';
   subcategoryFilter.value = '';
   brandFilter.value = '';
+  stockStatusFilter.value = '';
   searchQuery.value = '';
 };
 
@@ -143,6 +187,18 @@ const filteredBarangs = computed(() => {
 
   if (brandFilter.value) {
     list = list.filter(item => item.brand === brandFilter.value);
+  }
+
+  if (stockStatusFilter.value === 'habis') {
+    list = list.filter(item => Number(item.amount ?? 0) === 0);
+  } else if (stockStatusFilter.value === 'tipis') {
+    list = list.filter(item => {
+      const remainingStock = Number(item.amount ?? 0);
+      const threshold = item.min_stock_threshold !== null && item.min_stock_threshold !== undefined
+        ? Number(item.min_stock_threshold)
+        : null;
+      return remainingStock > 0 && threshold !== null && remainingStock <= threshold;
+    });
   }
 
   return list;
@@ -467,7 +523,6 @@ const closeErrorModal = () => {
 };
 
 // Flash Notifications
-const page = usePage();
 const flashSuccess = computed(() => (page.props as any).flash?.success);
 const flashError = computed(() => (page.props as any).flash?.error);
 
@@ -525,9 +580,27 @@ const closeOnEscape = (e: KeyboardEvent) => {
       </BreadcrumbList>
     </Breadcrumb>
 
-    <!-- Detail View: DaftarLOTTab when a consumable Barang is selected -->
+    <!-- Detail View: DetailBarangTab / DaftarLOTTab with Tabs pills -->
     <div v-if="selectedBarang && activeBarang">
+      <!-- Tabs Switcher -->
+      <div class="mb-2 no-print">
+        <Tabs v-model="activeDetailTab" :tabs="detailTabs" />
+      </div>
+
+      <DetailBarangTab
+        v-if="activeDetailTab === 'Detail'"
+        :barang="activeBarang"
+        :lots="lotsForActiveBarang"
+        :organizers="props.organizers"
+        :vendors="props.vendors"
+        :locations="props.locations"
+        :floors="props.floors"
+        :rooms="props.rooms"
+        :projects="props.projects"
+      />
+
       <DaftarLOTTab
+        v-else-if="activeDetailTab === 'Daftar LOT'"
         :barang="activeBarang"
         :lots="lotsForActiveBarang"
         :organizers="props.organizers"
@@ -592,6 +665,21 @@ const closeOnEscape = (e: KeyboardEvent) => {
                   search-placeholder="Cari subkategori..."
                   default-label="Semua subkategori"
                 />
+
+                <!-- Status Stok Dropdown -->
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal', !stockStatusFilter ? 'text-muted-foreground' : 'text-foreground']">
+                      <span class="truncate">{{ stockStatusFilter ? getStockStatusLabel(stockStatusFilter) : 'Semua status stok' }}</span>
+                      <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px]" align="start" :side-offset="4">
+                    <DropdownMenuItem @select="stockStatusFilter = ''">Semua status stok</DropdownMenuItem>
+                    <DropdownMenuItem @select="stockStatusFilter = 'tipis'">Stok tipis</DropdownMenuItem>
+                    <DropdownMenuItem @select="stockStatusFilter = 'habis'">Stok habis</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
                 <Transition
                   enter-active-class="transition ease-out duration-200"

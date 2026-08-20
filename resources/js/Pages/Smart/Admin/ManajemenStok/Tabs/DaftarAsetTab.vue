@@ -631,11 +631,30 @@ watch(rowsPerPage, (val) => {
   }
 });
 
+const checkSearchParam = () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const searchParam = urlParams.get('search');
+  if (searchParam) {
+    searchQuery.value = searchParam;
+  }
+};
+
 onMounted(() => {
+  checkSearchParam();
   if (dataTableRef.value && dataTableRef.value.table && rowsPerPage.value === 'Semua baris') {
     dataTableRef.value.table.setPageSize(999999);
   }
   document.addEventListener('keydown', closeOnEscape);
+});
+
+watch(() => page.url, (newUrl) => {
+  if (newUrl) {
+    const url = new URL(newUrl, window.location.origin);
+    const searchParam = url.searchParams.get('search');
+    if (searchParam) {
+      searchQuery.value = searchParam;
+    }
+  }
 });
 
 const formatLocation = (loc: string | null, floor: string | null, room: string | null) => {

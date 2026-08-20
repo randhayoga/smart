@@ -18,6 +18,11 @@ export const unreadCount = computed(() => {
   return notifications.value.filter((n) => !n.read).length;
 });
 
+// Computed property for whether any read notifications exist
+export const hasReadNotifications = computed(() => {
+  return notifications.value.some((n) => n.read);
+});
+
 /**
   Set notifications array directly (e.g. from Inertia page props)
  */
@@ -59,8 +64,9 @@ export const addNotification = (
   };
   notifications.value.unshift(newNotif);
 
-  if (notifications.value.length > 50) {
-    notifications.value = notifications.value.slice(0, 50);
+  const maxItems = Math.max(15, unreadCount.value);
+  if (notifications.value.length > maxItems) {
+    notifications.value = notifications.value.slice(0, maxItems);
   }
 };
 
@@ -71,8 +77,9 @@ export const pushRealtimeNotification = (item: NotificationItem) => {
   const exists = notifications.value.some((n) => n.id === item.id);
   if (!exists) {
     notifications.value.unshift(item);
-    if (notifications.value.length > 50) {
-      notifications.value = notifications.value.slice(0, 50);
+    const maxItems = Math.max(15, unreadCount.value);
+    if (notifications.value.length > maxItems) {
+      notifications.value = notifications.value.slice(0, maxItems);
     }
   }
 };
@@ -93,6 +100,33 @@ export const markAsRead = async (id: string) => {
 };
 
 /**
+  Mark single notification as unread in UI & DB
+ */
+export const markAsUnread = async (id: string) => {
+  const notif = notifications.value.find((n) => n.id === id);
+  if (notif) {
+    notif.read = false;
+  }
+  try {
+    await axios.post(`/smart/notifications/${id}/unread`);
+  } catch (e) {
+    console.error(`Failed to mark notification ${id} as unread`, e);
+  }
+};
+
+/**
+  Delete single notification in UI & DB
+ */
+export const deleteNotification = async (id: string) => {
+  notifications.value = notifications.value.filter((n) => n.id !== id);
+  try {
+    await axios.delete(`/smart/notifications/${id}`);
+  } catch (e) {
+    console.error(`Failed to delete notification ${id}`, e);
+  }
+};
+
+/**
   Mark all notifications as read in UI & DB
  */
 export const markAllAsRead = async () => {
@@ -107,13 +141,13 @@ export const markAllAsRead = async () => {
 };
 
 /**
-  Clear all notifications in UI & DB
+  Clear only already read notifications in UI & DB
  */
-export const clearNotifications = async () => {
-  notifications.value = [];
+export const clearReadNotifications = async () => {
+  notifications.value = notifications.value.filter((n) => !n.read);
   try {
     await axios.delete('/smart/notifications/clear');
   } catch (e) {
-    console.error('Failed to clear notifications', e);
+    console.error('Failed to clear read notifications', e);
   }
 };

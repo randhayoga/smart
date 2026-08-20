@@ -40,17 +40,31 @@ class HandleInertiaRequests extends Middleware
                 'pendingAssetStatusCount' => $request->user() && in_array($request->user()->role, ['manager', 'ifs_manager'])
                     ? \App\Models\Inventory\UnitStatusApproval::where('decision', 'pending')->whereHas('unit', fn($q) => $q->where('status', 'Pending:DM'))->count()
                     : 0,
-                'notifications' => fn () => $request->user()
-                    ? $request->user()->notifications()->limit(20)->get()->map(fn ($n) => [
-                        'id' => $n->id,
-                        'title' => $n->data['title'] ?? '',
-                        'message' => $n->data['message'] ?? '',
-                        'type' => $n->data['type'] ?? 'info',
-                        'url' => $n->data['url'] ?? null,
-                        'read' => $n->read_at !== null,
-                        'timestamp' => $n->created_at->toIso8601String(),
-                    ])
-                    : [],
+                'notifications' => function () use ($request) {
+                    if (! $request->user()) {
+                        return [];
+                    }
+
+                    $user = $request->user();
+                    $unread = $user->unreadNotifications()->limit(50)->get();
+                    $remaining = max(0, 15 - $unread->count());
+                    $read = $remaining > 0
+                        ? $user->readNotifications()->limit($remaining)->get()
+                        : collect();
+
+                    return $unread->merge($read)
+                        ->sortByDesc('created_at')
+                        ->values()
+                        ->map(fn ($n) => [
+                            'id' => $n->id,
+                            'title' => $n->data['title'] ?? '',
+                            'message' => $n->data['message'] ?? '',
+                            'type' => $n->data['type'] ?? 'info',
+                            'url' => $n->data['url'] ?? null,
+                            'read' => $n->read_at !== null,
+                            'timestamp' => $n->created_at->toIso8601String(),
+                        ]);
+                },
                 'unreadNotificationCount' => fn () => $request->user()
                     ? $request->user()->unreadNotifications()->count()
                     : 0,

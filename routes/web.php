@@ -55,8 +55,9 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
         Route::get('/', [\App\Http\Controllers\Smart\NotificationController::class, 'index'])->name('index');
         Route::get('/mercure-token', [\App\Http\Controllers\Smart\NotificationController::class, 'token'])->name('mercure-token');
         Route::post('/{id}/read', [\App\Http\Controllers\Smart\NotificationController::class, 'markAsRead'])->name('read');
+        Route::post('/{id}/unread', [\App\Http\Controllers\Smart\NotificationController::class, 'markAsUnread'])->name('unread');
         Route::post('/read-all', [\App\Http\Controllers\Smart\NotificationController::class, 'markAllAsRead'])->name('read-all');
-        Route::delete('/clear', [\App\Http\Controllers\Smart\NotificationController::class, 'clearAll'])->name('clear');
+        Route::delete('/clear', [\App\Http\Controllers\Smart\NotificationController::class, 'clearRead'])->name('clear');
         Route::delete('/{id}', [\App\Http\Controllers\Smart\NotificationController::class, 'destroy'])->name('destroy');
     });
 

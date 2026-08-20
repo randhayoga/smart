@@ -131,7 +131,7 @@ class NotificationService
                 $title,
                 $message,
                 'warning',
-                '/smart/inventory/stok-habis-pakai',
+                "/smart/inventory/stok-habis-pakai?barang_id={$barang->id}",
                 [
                     'barang_id' => $barang->id,
                     'current_stock' => $currentStock,
@@ -186,7 +186,7 @@ class NotificationService
             $title,
             $message,
             'warning',
-            '/smart/approve-status',
+            "/smart/approve-status?search=" . urlencode($unit->number),
             [
                 'unit_id' => $unit->id,
                 'unit_number' => $unit->number,
@@ -230,7 +230,7 @@ class NotificationService
             $title,
             $message,
             $type,
-            '/smart/inventory/daftar-aset',
+            "/smart/inventory/assets?search=" . urlencode($unit->number),
             [
                 'unit_id' => $unit->id,
                 'unit_number' => $unit->number,
