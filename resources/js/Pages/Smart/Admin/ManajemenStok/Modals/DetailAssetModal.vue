@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import { X, FileText } from 'lucide-vue-next';
+import { router } from '@inertiajs/vue3';
+import { toast } from 'vue-sonner';
+import { X, FileText, Upload } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import Tabs from '@/Components/Tabs.vue';
@@ -19,10 +21,16 @@ const emit = defineEmits<{
 }>();
 
 const detailActiveTab = ref('Detail Aset');
+const fileInputRef = ref<HTMLInputElement | null>(null);
+const isUploading = ref(false);
 
 watch(() => props.open, (newVal) => {
   if (newVal) {
     detailActiveTab.value = 'Detail Aset';
+    isUploading.value = false;
+    if (fileInputRef.value) {
+      fileInputRef.value.value = '';
+    }
   }
 });
 
@@ -77,6 +85,63 @@ const getAge = (dateStr: string | null) => {
 const openMemoFile = (path?: string | null) => {
   if (!path) return;
   window.open('/media/' + path, '_blank');
+};
+
+const triggerBodBocUpload = () => {
+  if (isUploading.value) return;
+  fileInputRef.value?.click();
+};
+
+const handleBodBocUpload = (e: Event) => {
+  const target = e.target as HTMLInputElement;
+  const file = target.files?.[0];
+  if (!file || !props.asset) return;
+
+  const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+  if (!allowedTypes.includes(file.type)) {
+    toast.error('Format file salah! Hanya diperbolehkan file .pdf, .jpg, .jpeg, atau .png');
+    target.value = '';
+    return;
+  }
+  if (file.size > 2 * 1024 * 1024) {
+    toast.error('Gagal! Ukuran Formulir Approval BoD/BoC maksimal 2MB.');
+    target.value = '';
+    return;
+  }
+
+  isUploading.value = true;
+  router.post(
+    `/smart/inventory/units/${props.asset.id}`,
+    {
+      _method: 'PUT',
+      bod_boc_approval_file: file,
+    },
+    {
+      preserveScroll: true,
+      onSuccess: () => {
+        isUploading.value = false;
+        target.value = '';
+        if (props.asset) {
+          props.asset.bod_boc_approval_url = props.asset.bod_boc_approval_url || 'bod_boc_approvals/' + file.name;
+          props.asset.status = 'Pending:DM';
+        }
+        emit('update:open', false);
+      },
+      onError: (errors: any) => {
+        isUploading.value = false;
+        target.value = '';
+        if (errors.bod_boc_approval_file) {
+          toast.error(errors.bod_boc_approval_file);
+        } else {
+          toast.error('Gagal mengunggah formulir persetujuan. Silakan coba lagi.');
+        }
+      },
+      onFinish: () => {
+        isUploading.value = false;
+        target.value = '';
+      },
+    }
+  );
 };
 
 // Dynamic attribute resolution
@@ -274,6 +339,15 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                 Surat Keterangan Kehilangan
               </Button>
 
+              <!-- Hidden BoD/BoC File Input -->
+              <input 
+                ref="fileInputRef"
+                type="file"
+                class="hidden"
+                accept=".pdf,.jpg,.jpeg,.png"
+                @change="handleBodBocUpload"
+              />
+
               <Button 
                 v-if="asset && asset.bod_boc_approval_url"
                 @click="openMemoFile(asset.bod_boc_approval_url)"
@@ -282,7 +356,19 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                 class="inline-flex items-center gap-2"
               >
                 <FileText class="w-4 h-4" />
-                Formulir Persetujuan BoD/BoC
+                Buka Form Persetujuan BoD/BoC
+              </Button>
+
+              <Button 
+                v-else-if="asset && asset.memo_url"
+                @click="triggerBodBocUpload"
+                :disabled="isUploading"
+                variant="warning"
+                size="lg"
+                class="inline-flex items-center gap-2"
+              >
+                <Upload class="w-4 h-4" />
+                {{ isUploading ? 'Mengunggah...' : 'Unggah Form Persetujuan BoD/BoC' }}
               </Button>
 
               <Button 

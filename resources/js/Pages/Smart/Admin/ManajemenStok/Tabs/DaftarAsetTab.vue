@@ -122,6 +122,15 @@ const openViewAssetModal = (asset: any) => {
   isViewAssetModalOpen.value = true;
 };
 
+watch(() => props.units, (newUnits) => {
+  if (selectedAssetForView.value && newUnits) {
+    const updated = newUnits.find((u: any) => u.id === selectedAssetForView.value.id);
+    if (updated) {
+      selectedAssetForView.value = updated;
+    }
+  }
+}, { deep: true });
+
 // Edit Asset Modal Setup
 const isEditAssetModalOpen = ref(false);
 const selectedAssetsForEdit = ref<any[]>([]);
