@@ -13,10 +13,16 @@ class NotificationController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $notifications = $request->user()
-            ->notifications()
-            ->limit(50)
-            ->get()
+        $user = $request->user();
+        $unread = $user->unreadNotifications()->limit(50)->get();
+        $remaining = max(0, 15 - $unread->count());
+        $read = $remaining > 0
+            ? $user->readNotifications()->limit($remaining)->get()
+            : collect();
+
+        $notifications = $unread->merge($read)
+            ->sortByDesc('created_at')
+            ->values()
             ->map(function ($n) {
                 return [
                     'id' => $n->id,
@@ -31,7 +37,7 @@ class NotificationController extends Controller
 
         return response()->json([
             'notifications' => $notifications,
-            'unreadCount' => $request->user()->unreadNotifications()->count(),
+            'unreadCount' => $user->unreadNotifications()->count(),
         ]);
     }
 
@@ -44,6 +50,20 @@ class NotificationController extends Controller
 
         if ($notification) {
             $notification->markAsRead();
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Mark single notification as unread.
+     */
+    public function markAsUnread(Request $request, string $id): JsonResponse
+    {
+        $notification = $request->user()->notifications()->where('id', $id)->first();
+
+        if ($notification) {
+            $notification->markAsUnread();
         }
 
         return response()->json(['success' => true]);
@@ -74,11 +94,11 @@ class NotificationController extends Controller
     }
 
     /**
-     * Delete all notifications for authenticated user.
+     * Delete all read notifications for authenticated user.
      */
-    public function clearAll(Request $request): JsonResponse
+    public function clearRead(Request $request): JsonResponse
     {
-        $request->user()->notifications()->delete();
+        $request->user()->readNotifications()->delete();
 
         return response()->json(['success' => true]);
     }

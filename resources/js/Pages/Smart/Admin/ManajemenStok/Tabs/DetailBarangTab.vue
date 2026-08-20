@@ -62,6 +62,20 @@ const totalStok = computed(() => {
     return acc + Number(qty);
   }, 0);
 });
+
+const stockColorClass = computed(() => {
+  const threshold = props.barang.min_stock_threshold !== null && props.barang.min_stock_threshold !== undefined
+    ? Number(props.barang.min_stock_threshold)
+    : null;
+
+  if (totalStok.value === 0) {
+    return 'text-red-600 font-semibold';
+  }
+  if (threshold !== null && totalStok.value <= threshold) {
+    return 'text-amber-600 font-semibold';
+  }
+  return 'text-foreground';
+});
 </script>
 
 <template>
@@ -84,8 +98,8 @@ const totalStok = computed(() => {
           <p class="text-foreground">Kategori: {{ props.barang.category }}</p>
           <p class="text-foreground">Subkategori: {{ props.barang.subcategory }}</p>
           <p class="text-foreground">Jumlah LOT: {{ props.lots.length }}</p>
-          <p class="text-foreground">Total stok: {{ totalStok }} {{ props.barang.uom }}</p>
-          <p class="text-foreground">Ambang batas notifikasi stok: {{ props.barang.min_stock_threshold !== null && props.barang.min_stock_threshold !== undefined ? `${props.barang.min_stock_threshold} ${props.barang.uom}` : '-' }}</p>
+          <p :class="stockColorClass">Total stok: {{ totalStok }} {{ props.barang.uom }}</p>
+          <p v-if="props.barang.min_stock_threshold !== null && props.barang.min_stock_threshold !== undefined" class="text-foreground">Ambang batas notifikasi stok: {{ props.barang.min_stock_threshold }} {{ props.barang.uom }}</p>
           <p class="text-foreground">Satuan: {{ props.barang.uom }}</p>
           <p class="text-foreground">Pembaruan terakhir: {{ props.barang.lastUpdate }}</p>
         </div>

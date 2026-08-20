@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, h, onMounted, onUnmounted } from 'vue';
-import { Head, router } from '@inertiajs/vue3';
+import { Head, router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import {
   X,
@@ -661,8 +661,29 @@ const closeOnEscape = (e: KeyboardEvent) => {
   }
 };
 
+const page = usePage();
+
+const checkSearchParam = () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const searchParam = urlParams.get('search');
+  if (searchParam) {
+    searchQuery.value = searchParam;
+  }
+};
+
 onMounted(() => {
+  checkSearchParam();
   document.addEventListener('keydown', closeOnEscape);
+});
+
+watch(() => page.url, (newUrl) => {
+  if (newUrl) {
+    const url = new URL(newUrl, window.location.origin);
+    const searchParam = url.searchParams.get('search');
+    if (searchParam) {
+      searchQuery.value = searchParam;
+    }
+  }
 });
 
 onUnmounted(() => {

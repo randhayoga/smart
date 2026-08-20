@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import { Link, usePage, router } from '@inertiajs/vue3';
-import { Menu, X, Search, Bell, Info, CheckCircle2, AlertTriangle, XCircle, Trash2, Building2, LogOut } from 'lucide-vue-next';
+import { Menu, X, Search, Bell, Info, CheckCircle2, AlertTriangle, XCircle, Trash2, Building2, LogOut, EllipsisVertical, Mail, SquareArrowOutUpRight } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/Components/ui/avatar';
 import ApplicationLogo from '@/Components/ApplicationLogo.vue';
@@ -11,7 +11,7 @@ import { Badge } from '@/Components/ui/badge';
 import { 
   DropdownMenu, 
   DropdownMenuTrigger, 
-  DropdownMenuContent,
+  DropdownMenuContent, 
   DropdownMenuSeparator,
   DropdownMenuItem
 } from '@/Components/ui/dropdown-menu';
@@ -21,9 +21,12 @@ import { ScrollArea } from '@/Components/ui/scroll-area';
 import { 
   notifications, 
   unreadCount, 
+  hasReadNotifications,
   markAsRead, 
+  markAsUnread,
+  deleteNotification,
   markAllAsRead, 
-  clearNotifications,
+  clearReadNotifications,
   setNotifications
 } from '@/stores/notificationStore';
 
@@ -64,6 +67,14 @@ const logout = () => {
   router.post(route('logout'));
 };
 
+const goToNotification = (item: any) => {
+  if (!item.url) return;
+  if (!item.read) {
+    markAsRead(item.id);
+  }
+  router.visit(item.url);
+};
+
 const formatTime = (isoString: string) => {
   const date = new Date(isoString);
   const now = new Date();
@@ -72,8 +83,8 @@ const formatTime = (isoString: string) => {
   const diffHours = Math.floor(diffMins / 60);
 
   if (diffMins < 1) return 'Baru saja';
-  if (diffMins < 60) return `${diffMins}m lalu`;
-  if (diffHours < 24) return `${diffHours}j lalu`;
+  if (diffMins < 60) return `${diffMins} mnt lalu`;
+  if (diffHours < 24) return `${diffHours} jam lalu`;
 
   return date.toLocaleDateString('id-ID', {
     day: 'numeric',
@@ -140,16 +151,16 @@ const formatTime = (isoString: string) => {
                   Tandai semua dibaca
                 </button>
                 <button 
-                  v-if="notifications.length > 0"
-                  @click="clearNotifications" 
+                  v-if="hasReadNotifications"
+                  @click="clearReadNotifications" 
                   class="text-xs text-muted-foreground hover:text-destructive hover:underline font-medium ml-2 bg-transparent border-0 cursor-pointer"
                 >
-                  Hapus semua
+                  Hapus semua terbaca
                 </button>
               </div>
             </div>
             
-            <ScrollArea class="max-h-[300px] overflow-y-auto">
+            <ScrollArea class="max-h-[420px] overflow-y-auto">
               <div v-if="notifications.length === 0" class="p-8 text-center text-sm text-muted-foreground">
                 Tidak ada notifikasi
               </div>
@@ -157,18 +168,18 @@ const formatTime = (isoString: string) => {
                 <div 
                   v-for="item in notifications" 
                   :key="item.id" 
-                  class="px-4 py-3 flex gap-3 hover:bg-muted/50 transition-colors relative cursor-pointer"
+                  class="px-4 py-3 flex items-start gap-2 hover:bg-muted/50 transition-colors relative cursor-pointer group"
                   :class="[ !item.read ? 'bg-muted/30 font-medium' : '' ]"
                   @click="markAsRead(item.id)"
                 >
                   <!-- Unread indicator dot -->
-                  <span v-if="!item.read" class="absolute left-2.5 top-2 h-2 w-2 rounded-full bg-primary"></span>
+                  <span v-if="!item.read" class="absolute left-2.5 top-4 h-2 w-2 rounded-full bg-primary"></span>
                   
-                  <div class="flex-shrink-0 mt-0.5">
+                  <div class="flex-shrink-0 self-center">
                     <CheckCircle2 v-if="item.type === 'success'" class="h-6 w-6 text-emerald-500" />
-                    <AlertTriangle v-else-if="item.type === 'warning'" class="h-5 w-5 text-amber-500" />
-                    <XCircle v-else-if="item.type === 'error'" class="h-5 w-5 text-destructive" />
-                    <Info v-else class="h-5 w-5 text-blue-500" />
+                    <AlertTriangle v-else-if="item.type === 'warning'" class="h-6 w-6 text-amber-500" />
+                    <XCircle v-else-if="item.type === 'error'" class="h-6 w-6 text-destructive" />
+                    <Info v-else class="h-6 w-6 text-blue-500" />
                   </div>
                   
                   <div class="flex-1 min-w-0">
@@ -181,6 +192,49 @@ const formatTime = (isoString: string) => {
                     <p class="text-xs text-muted-foreground mt-1 break-words line-clamp-2 font-normal">
                       {{ item.message }}
                     </p>
+                  </div>
+
+                  <!-- Item options and Go To button -->
+                  <div class="flex-shrink-0 -mr-1 self-center flex items-center gap-0.5" @click.stop>
+                    <button
+                      v-if="item.url"
+                      type="button"
+                      @click.stop="goToNotification(item)"
+                      class="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-muted transition-colors cursor-pointer border-0 bg-transparent"
+                      title="Buka halaman terkait"
+                      aria-label="Buka halaman terkait"
+                    >
+                      <SquareArrowOutUpRight class="h-3.5 w-3.5" />
+                    </button>
+
+                    <DropdownMenu>
+                      <DropdownMenuTrigger as-child>
+                        <button
+                          type="button"
+                          class="h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer border-0 bg-transparent"
+                          aria-label="Opsi notifikasi"
+                        >
+                          <EllipsisVertical class="h-4 w-4" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" class="w-44 p-1 bg-card border border-border rounded-lg shadow-md">
+                        <DropdownMenuItem 
+                          v-if="item.read"
+                          @click.stop="markAsUnread(item.id)"
+                          class="cursor-pointer text-xs flex items-center gap-2 px-2.5 py-1.5 hover:bg-primary/10 focus:bg-primary/10 hover:text-primary focus:text-primary transition-colors"
+                        >
+                          <Mail class="h-3.5 w-3.5" />
+                          <span>Tandai belum dibaca</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          @click.stop="deleteNotification(item.id)"
+                          class="cursor-pointer text-xs flex items-center gap-2 px-2.5 py-1.5 text-destructive hover:text-destructive focus:text-destructive focus:bg-destructive/10 data-[highlighted]:text-destructive data-[highlighted]:bg-destructive/10"
+                        >
+                          <Trash2 class="h-3.5 w-3.5 text-destructive" />
+                          <span>Hapus</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
               </div>
