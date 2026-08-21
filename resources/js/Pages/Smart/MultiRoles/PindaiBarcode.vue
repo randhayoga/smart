@@ -288,13 +288,7 @@ const handleFileUpload = async (event: Event) => {
               <!-- Warning Badge for Desktop/Laptop screens -->
               <Badge variant="outline" class="hidden lg:flex w-fit bg-destructive/10 text-destructive border-destructive/20 px-3 py-1.5 items-center gap-1.5 font-medium text-xs">
                 <AlertTriangle class="w-4 h-4 shrink-0" />
-                Fitur ini didesain untuk digunakan pada Smartphone SobatRE
-              </Badge>
-
-              <!-- Privacy Badge -->
-              <Badge variant="outline" class="w-fit bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 px-3 py-1.5 flex items-center gap-1.5 font-medium text-xs">
-                <ShieldCheck class="w-4 h-4 shrink-0" />
-                Tenang, foto pemindai tidak kami simpan
+                Fitur ini didesain untuk digunakan pada Smartphone
               </Badge>
             </div>
           </div>

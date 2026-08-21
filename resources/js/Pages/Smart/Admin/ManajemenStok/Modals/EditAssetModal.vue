@@ -368,7 +368,6 @@ const handleSubmit = () => {
       if (isVehicle.value && !form.vehicle_registration) { errors.value.vehicle_registration = 'TNKB (Nomor Polisi) belum diisi'; isValid = false; }
       if (arrNeedApproval.includes(form.condition) && !isDocumentDisabled.value && !form.memo_file_name) { errors.value.memo_file = 'Berita Acara / Memo belum dipilih'; isValid = false; }
       if (form.condition === 'Hilang' && !isDocumentDisabled.value && !form.lost_doc_file_name) { errors.value.lost_doc_file = 'Surat Keterangan Kehilangan belum dipilih'; isValid = false; }
-      if (isBodBocFieldVisible.value && !form.bod_boc_approval_file_name) { errors.value.bod_boc_approval_file = 'Formulir Approval BoD/BoC belum dipilih'; isValid = false; }
       if (!isValid) return;
 
       form.transform((data) => {
@@ -412,10 +411,6 @@ const handleSubmit = () => {
       }
       if (form.condition && !isKondisiDisabled.value && form.condition === 'Hilang' && !isDocumentDisabled.value && !form.lost_doc_file_name) {
         errors.value.lost_doc_file = 'Surat Keterangan Kehilangan wajib diisi jika kondisi Hilang.';
-        return;
-      }
-      if (isBodBocFieldVisible.value && !form.bod_boc_approval_file_name) {
-        errors.value.bod_boc_approval_file = 'Formulir Approval BoD/BoC wajib diisi untuk persetujuan BoD/BoC.';
         return;
       }
 
@@ -655,7 +650,7 @@ const handleSubmit = () => {
 
                   <!-- Formulir Approval BoD/BoC (Only visible when existing status is Pending:BoD/BoC) -->
                   <Field v-if="isBodBocFieldVisible" :data-invalid="!!errors.bod_boc_approval_file || undefined">
-                    <FieldLabel><span>Formulir Approval BoD/BoC<span class="text-rose-500">*</span></span></FieldLabel>
+                    <FieldLabel><span>Formulir Approval BoD/BoC</span></FieldLabel>
                     <FieldContent>
                       <div class="flex gap-2">
                         <div class="flex-grow min-w-0 px-4 py-2 text-sm border rounded-[14px] truncate flex items-center h-10 bg-muted/10"
