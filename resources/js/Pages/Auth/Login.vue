@@ -8,14 +8,23 @@ defineProps<{
   status?: string;
 }>();
 
+const redirectParam = typeof window !== 'undefined'
+  ? new URLSearchParams(window.location.search).get('redirect')
+  : null;
+
 const form = useForm({
   username: '',
   password: '',
   remember: false,
+  redirect: redirectParam || '',
 });
 
 const submit = () => {
-  form.post(route('login'), {
+  const loginUrl = redirectParam
+    ? route('login', { redirect: redirectParam })
+    : route('login');
+
+  form.post(loginUrl, {
     onFinish: () => {
       form.reset('password');
     },
