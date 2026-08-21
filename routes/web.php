@@ -97,12 +97,12 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
             Route::resource('unit-status-approvals', \App\Http\Controllers\Smart\MultiRoles\UnitStatusApproval\AdminUnitStatusApprovalController::class)->only(['store']);
             Route::get('assets', [\App\Http\Controllers\Smart\Admin\ManajemenStok\UnitController::class, 'index'])->name('assets');
             Route::get('pending-nonaktif', [\App\Http\Controllers\Smart\Admin\ManajemenStok\PendingNonaktifController::class, 'index'])->name('pending-nonaktif');
-            Route::get('stok-habis-pakai', [\App\Http\Controllers\Smart\Admin\ManajemenStok\ConsumableLotController::class, 'index'])->name('stok-habis-pakai');
+            Route::get('stok-habis-pakai/{barang?}', [\App\Http\Controllers\Smart\Admin\ManajemenStok\ConsumableLotController::class, 'index'])->name('stok-habis-pakai');
         });
 
-        Route::get('scan/{unit:uuid}', [\App\Http\Controllers\Smart\Admin\ManajemenStok\UnitScanController::class, 'show'])->name('scan');
+        Route::get('scan/{unit}', [\App\Http\Controllers\Smart\Admin\ManajemenStok\UnitScanController::class, 'show'])->name('scan');
 
-        Route::get('/inventory/{id}', [ManajemenStokController::class, 'show'])->name('inventory.show');
+        Route::get('/inventory/{barang}', [ManajemenStokController::class, 'show'])->name('inventory.show');
 
         Route::get('/inbox', [InboxController::class, 'index'])->name('inbox');
         Route::get('/inbox/{id}', [InboxController::class, 'show'])->name('inbox.show');

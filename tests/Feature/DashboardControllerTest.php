@@ -86,7 +86,12 @@ class DashboardControllerTest extends TestCase
         $user = AdmUser::factory()->create();
         
         $response = $this->actingAs($user)->get(route('smart.dashboard'));
-        
         $response->assertForbidden();
+    }
+
+    protected function tearDown(): void
+    {
+        config(['app.disable_test_admin_bypass' => false]);
+        parent::tearDown();
     }
 }

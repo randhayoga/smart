@@ -8,6 +8,7 @@ use Endroid\QrCode\Builder\Builder;
 use Endroid\QrCode\Encoding\Encoding;
 use Endroid\QrCode\ErrorCorrectionLevel;
 use Endroid\QrCode\Writer\PngWriter;
+use Endroid\QrCode\Writer\Result\GdResult;
 use Intervention\Image\Drivers\Gd\Driver;
 use Intervention\Image\Encoders\PngEncoder;
 use Intervention\Image\ImageManager;
@@ -22,24 +23,22 @@ class UnitQrCodeController extends Controller
      */
     public function show(Unit $unit): Response
     {
-        $unit->loadMissing('lot.organizer');
         $unitCode = $unit->number;
-        $scanPath = route('smart.scan', $unit, false);
 
-        // 1. Generate QR Code image
+        // 1. Generate QR Code containing only the Unit Code
         $qrBuilder = new Builder();
+        /** @var GdResult $qrResult */
         $qrResult = $qrBuilder->build(
-            data: $scanPath,
+            data: $unitCode,
             errorCorrectionLevel: ErrorCorrectionLevel::High,
             size: 175,
             margin: 0
         );
-        $qrPngString = $qrResult->getString();
 
         // 2. Initialize Intervention Image Manager with GD Driver
         $manager = new ImageManager(new Driver());
 
-        // 3. Create a white canvas (650x177)
+        // 3. Create a white canvas (600x177)
         $canvas = $manager->createImage(600, 177);
         $canvas->setResolution(300, 300);
         $canvas->fill('ffffff');
@@ -57,10 +56,9 @@ class UnitQrCodeController extends Controller
             );
         }
 
-        // 5. Place QR Code (placed at bottom-right)
-        $qrImage = $manager->decode($qrPngString);
+        // 5. Place QR Code directly from in-memory GD resource (avoids double PNG encoding/decoding)
         $canvas->insert(
-            $qrImage,
+            $qrResult->getImage(),
             1,
             1,
             'bottom-right'

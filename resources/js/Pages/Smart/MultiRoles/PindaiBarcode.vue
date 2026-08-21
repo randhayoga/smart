@@ -193,13 +193,19 @@ const onScanError = (_errorMessage: string) => {
 // Process Scanned Text & Route User safely
 const processScannedData = (rawText: string) => {
   const cleanText = rawText.trim();
-  const uuidRegex = /[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/;
+  if (!cleanText) return;
 
-  // Strictly extract UUID from scanned text (whether raw UUID or contained inside full URL)
-  const match = cleanText.match(uuidRegex);
-  if (match) {
-    const uuid = match[0];
-    router.visit(`/smart/scan/${uuid}`);
+  // 1. If scanned text is a full URL containing /scan/... or /smart/scan/...
+  const urlMatch = cleanText.match(/(?:\/smart)?\/scan\/([^\/?#]+)/);
+  if (urlMatch && urlMatch[1]) {
+    const code = decodeURIComponent(urlMatch[1]);
+    router.visit(`/smart/scan/${encodeURIComponent(code)}`);
+    return;
+  }
+
+  // 2. Direct unit code payload (e.g. 00001-ELK-IT-26) - scanner appends to /smart/scan/
+  if (!cleanText.startsWith('http://') && !cleanText.startsWith('https://')) {
+    router.visit(`/smart/scan/${encodeURIComponent(cleanText)}`);
     return;
   }
 

@@ -146,4 +146,42 @@ class InventoryModelTest extends TestCase
         $this->assertTrue($approval->approver->is($approver));
         $this->assertTrue($unit->statusApprovals->contains($approval));
     }
+
+    public function test_barang_route_key_and_resolution(): void
+    {
+        $barang = Barang::factory()->create([
+            'number' => 'TIP-ROUTE-001',
+        ]);
+
+        $this->assertEquals('number', $barang->getRouteKeyName());
+
+        // Resolves by code
+        $resolvedByCode = (new Barang())->resolveRouteBinding('TIP-ROUTE-001');
+        $this->assertNotNull($resolvedByCode);
+        $this->assertTrue($resolvedByCode->is($barang));
+
+        // Resolves by numeric ID (backward compatibility)
+        $resolvedById = (new Barang())->resolveRouteBinding((string) $barang->id);
+        $this->assertNotNull($resolvedById);
+        $this->assertTrue($resolvedById->is($barang));
+    }
+
+    public function test_lot_route_key_and_resolution(): void
+    {
+        $lot = Lot::factory()->create([
+            'number' => 'LOT-ROUTE-001',
+        ]);
+
+        $this->assertEquals('number', $lot->getRouteKeyName());
+
+        // Resolves by code
+        $resolvedByCode = (new Lot())->resolveRouteBinding('LOT-ROUTE-001');
+        $this->assertNotNull($resolvedByCode);
+        $this->assertTrue($resolvedByCode->is($lot));
+
+        // Resolves by numeric ID (backward compatibility)
+        $resolvedById = (new Lot())->resolveRouteBinding((string) $lot->id);
+        $this->assertNotNull($resolvedById);
+        $this->assertTrue($resolvedById->is($lot));
+    }
 }

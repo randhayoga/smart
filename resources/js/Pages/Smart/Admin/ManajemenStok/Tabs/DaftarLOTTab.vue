@@ -286,7 +286,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
               variant: 'table-view',
               size: 'icon-sm',
               title: 'Lihat Detail',
-              onClick: () => router.get(`/smart/inventory/lots/${row.original.id}`)
+              onClick: () => router.get(`/smart/inventory/lots/${row.original.number || row.original.id}`)
             }, () => [
               h(Eye),
               h('span', { class: 'sr-only' }, 'Lihat Detail')

@@ -19,6 +19,12 @@ class IfsManagerRoleTest extends TestCase
         config(['app.disable_test_admin_bypass' => true]);
     }
 
+    protected function tearDown(): void
+    {
+        config(['app.disable_test_admin_bypass' => false]);
+        parent::tearDown();
+    }
+
     public function test_dynamic_role_assignment(): void
     {
         // 1. Standard user (employee exists, but is not designated as manager of any orgchart)
