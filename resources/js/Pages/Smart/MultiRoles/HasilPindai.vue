@@ -384,7 +384,6 @@ const handleSubmit = () => {
   if (isVehicle.value && !form.vehicle_registration) { errors.value.vehicle_registration = 'TNKB (Nomor Polisi) belum diisi'; isValid = false; }
   if (arrNeedApproval.includes(form.condition) && !isDocumentDisabled.value && !form.memo_file_name) { errors.value.memo_file = 'Berita Acara / Memo belum dipilih'; isValid = false; }
   if (form.condition === 'Hilang' && !isDocumentDisabled.value && !form.lost_doc_file_name) { errors.value.lost_doc_file = 'Surat Keterangan Kehilangan belum dipilih'; isValid = false; }
-  if (isBodBocFieldVisible.value && !form.bod_boc_approval_file_name) { errors.value.bod_boc_approval_file = 'Formulir Approval BoD/BoC belum dipilih'; isValid = false; }
 
   if (!isValid) {
     toast.error('Harap lengkapi semua input yang wajib diisi.');
@@ -822,7 +821,7 @@ const handleSubmit = () => {
 
               <!-- Formulir Approval BoD/BoC (Only visible when existing status is Pending:BoD/BoC) -->
               <Field v-if="isBodBocFieldVisible" :data-invalid="!!errors.bod_boc_approval_file || undefined">
-                <FieldLabel><span>Formulir Approval BoD/BoC<span class="text-rose-500">*</span></span></FieldLabel>
+                <FieldLabel><span>Formulir Approval BoD/BoC</span></FieldLabel>
                 <FieldContent>
                   <div class="flex gap-2 flex-col xs:flex-row">
                     <div 
