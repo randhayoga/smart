@@ -2,11 +2,14 @@
 
 namespace App\Services;
 
+use App\Mail\DMUnitStatusRequest;
 use App\Models\AdmUser;
 use App\Models\Inventory\Barang;
 use App\Models\Inventory\Unit;
 use App\Models\Inventory\UnitStatusApproval;
 use App\Notifications\AppNotification;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class NotificationService
 {
@@ -181,6 +184,7 @@ class NotificationService
         $title = "Penghapusan Aset {$brandAndName}: Perlu Perhatian Anda";
         $message = "Penghapusan aset {$unit->number} telah disetujui oleh BoD/BoC dan sekarang memerlukan approval Anda";
 
+        // 1. In-app database + Mercure notification
         $this->sendToRole(
             'ifs_manager',
             $title,
@@ -192,6 +196,22 @@ class NotificationService
                 'unit_number' => $unit->number,
             ]
         );
+
+        // 2. Email notification to IFS Manager(s)
+        try {
+            $ifsUsers = AdmUser::getUsersByRole('ifs_manager');
+            foreach ($ifsUsers as $ifsUser) {
+                $email = $ifsUser->email;
+                if ($email && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    Mail::to($email)->send(new DMUnitStatusRequest($unit, null, $ifsUser->name));
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::error("Gagal mengirim email DMUnitStatusRequest untuk unit {$unit->number}: " . $e->getMessage(), [
+                'exception' => $e,
+                'unit_id' => $unit->id,
+            ]);
+        }
     }
 
     /**

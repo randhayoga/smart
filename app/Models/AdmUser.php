@@ -30,6 +30,7 @@ class AdmUser extends Authenticatable
 
     protected $appends = [
         'username',
+        'email',
         'role',
         'is_admin',
         'org_name',
@@ -138,6 +139,22 @@ class AdmUser extends Authenticatable
     public function getOrgNameAttribute(): ?string
     {
         return $this->hrdEmployee?->orgchart?->org_name;
+    }
+
+    /**
+     * Get the email address from linked HRD employee record.
+     */
+    public function getEmailAttribute(): ?string
+    {
+        return $this->hrdEmployee?->email;
+    }
+
+    /**
+     * Route notifications for the mail channel.
+     */
+    public function routeNotificationForMail($notification = null): ?string
+    {
+        return $this->email;
     }
 
     /**

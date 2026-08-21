@@ -30,14 +30,30 @@ class AuthenticatedSessionController extends Controller
     {
         $request->authenticate();
 
+        $redirect = $request->input('redirect')
+            ?: $request->query('redirect')
+            ?: $request->session()->pull('url.intended');
+
         $request->session()->regenerate();
 
-        $user = Auth::user();
-        if ($user && $user->role === 'admin') {
-            return redirect()->intended(route('smart.dashboard', absolute: false));
+        if ($redirect) {
+            $appHost = parse_url(config('app.url'), PHP_URL_HOST) ?: $request->getHost();
+            $targetHost = parse_url($redirect, PHP_URL_HOST);
+
+            $isInternal = (str_starts_with($redirect, '/') && !str_starts_with($redirect, '//'))
+                || ($targetHost === null || $targetHost === $request->getHost() || $targetHost === $appHost);
+
+            if ($isInternal && !str_contains($redirect, '/auth/login') && $redirect !== route('login') && $redirect !== url('/')) {
+                return redirect()->to($redirect);
+            }
         }
 
-        return redirect()->intended(route('smart.user.dashboard', absolute: false));
+        $user = Auth::user();
+        if ($user && $user->is_admin) {
+            return redirect()->route('smart.dashboard');
+        }
+
+        return redirect()->route('smart.user.dashboard');
     }
 
     /**

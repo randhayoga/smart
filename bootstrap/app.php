@@ -20,6 +20,22 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \App\Http\Middleware\RoleMiddleware::class,
         ]);
 
+        $middleware->redirectTo(
+            guests: function (\Illuminate\Http\Request $request) {
+                if ($request->is('smart/*') || $request->has('search')) {
+                    return route('login', ['redirect' => $request->fullUrl()]);
+                }
+                return route('login');
+            },
+            users: function (\Illuminate\Http\Request $request) {
+                $user = $request->user();
+                if ($user && $user->is_admin) {
+                    return route('smart.dashboard');
+                }
+                return route('smart.user.dashboard');
+            }
+        );
+
         $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
