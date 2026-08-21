@@ -39,50 +39,61 @@ const navigation = computed<NavSection[]>(() => {
     // Manager IFS:
     // - Menu Utama
     // - Approval Status
-    // - Approval Permintaan
-    // - Rest of Admin Menus (Inventory, Permintaan, Audit)
+    // - Approval Permintaan (Hidden)
+    // - Rest of Admin Menus (Filtered STOK, Audit)
     const menuUtama = mainNavigation.find(section => section.title === 'MENU UTAMA');
     const approvalStatus = userNavigation.find(section => section.title === 'APPROVAL PENGHAPUSAN');
     const approvalPermintaan = userNavigation.find(section => section.title === 'APPROVAL PEMINJAMAN');
-    const restOfAdmin = mainNavigation.filter(section => section.title !== 'MENU UTAMA' && section.title !== 'Permintaan');
+    
+    const hiddenIfsStockTitles = [
+      'Manajemen Barang',
+      'Daftar Pending Nonaktif',
+      'Master Data',
+      'Pindai Barcode',
+    ];
+
+    const restOfAdmin = mainNavigation
+      .filter(section => section.title !== 'MENU UTAMA' && section.title !== 'Permintaan')
+      .map(section => {
+        if (section.title === 'STOK') {
+          return {
+            ...section,
+            items: section.items.filter(item => !hiddenIfsStockTitles.includes(item.title)),
+          };
+        }
+        return section;
+      });
     
     sections = [
       menuUtama,
       approvalStatus,
-      approvalPermintaan,
+      // approvalPermintaan, // Hidden
       ...restOfAdmin
     ].filter((section): section is NavSection => !!section);
   } else if (isAdmin.value) {
     // Admin:
     // - Menu Utama
     // - Inventory
-    // - Permintaan
     // - Audit
-    sections = mainNavigation;
+    sections = mainNavigation.filter(section => section.title !== 'Permintaan');
   } else if (isManager.value) {
     // Manager:
     // - Menu Utama
-    // - Approval Permintaan
-    // - Permintaan
+    // - Approval Permintaan (Hidden)
     const menuUtama = userNavigation.find(section => section.title === 'MENU UTAMA');
     const approvalPermintaan = userNavigation.find(section => section.title === 'APPROVAL PEMINJAMAN');
-    const permintaan = userNavigation.find(section => section.title === 'Permintaan');
     
     sections = [
       menuUtama,
-      approvalPermintaan,
-      permintaan
+      // approvalPermintaan, // Hidden
     ].filter((section): section is NavSection => !!section);
   } else {
     // User:
     // - Menu Utama
-    // - Permintaan
-    const menuUtama = userNavigation.find(section => section.title === 'Menu Utama');
-    const permintaan = userNavigation.find(section => section.title === 'Permintaan');
+    const menuUtama = userNavigation.find(section => section.title === 'MENU UTAMA');
     
     sections = [
-      menuUtama,
-      permintaan
+      menuUtama
     ].filter((section): section is NavSection => !!section);
   }
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { Link } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Heading from '@/Components/Heading.vue';
 import Tabs from '@/Components/Tabs.vue';
@@ -29,6 +29,12 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+
+const page = usePage();
+const isAdmin = computed(() => {
+  const auth = page.props.auth as any;
+  return (auth?.user?.role ?? (props.user as any)?.role) === 'admin';
+});
 
 const tabs = ['Klasik', 'WIP'];
 const activeTab = ref('Klasik');
@@ -100,8 +106,8 @@ const ictChartColors = ['#0D9488', '#0284C7', '#F59E0B', '#E11D48', '#8B5CF6', '
         </Heading>
       </div>
 
-      <!-- Quick Pindai Barcode Shortcut Button (Visible only on Mobile & Tablet screens < lg) -->
-      <div class="lg:hidden w-full">
+      <!-- Quick Pindai Barcode Shortcut Button (Visible only on Mobile & Tablet screens < lg for Admin) -->
+      <div v-if="isAdmin" class="lg:hidden w-full">
         <Link
           href="/smart/scan"
           class="flex items-center justify-between gap-3 p-3.5 rounded-xl bg-gradient-primary text-white shadow-md hover:shadow-lg transition-all duration-200 active:scale-[0.99] group"
