@@ -77,17 +77,9 @@ class ManajemenStokController extends Controller
     /**
      * Menampilkan halaman detail item inventaris.
      */
-    public function show(Request $request, string $id): Response
+    public function show(Request $request, Barang $barang): Response
     {
-        $query = Barang::with(['subcategory.category', 'brand', 'uom']);
-        if (is_numeric($id)) {
-            $query->where(function ($q) use ($id) {
-                $q->where('id', $id)->orWhere('number', $id);
-            });
-        } else {
-            $query->where('number', $id);
-        }
-        $barang = $query->firstOrFail();
+        $barang->loadMissing(['subcategory.category', 'brand', 'uom']);
 
         $isConsumable = (bool)($barang->subcategory->category->is_consumable ?? false);
         $amount = $isConsumable 
@@ -251,7 +243,7 @@ class ManajemenStokController extends Controller
 
         return Inertia::render('Smart/Admin/ManajemenStok/DetailBarang', [
             'user' => $request->user(),
-            'itemId' => $id,
+            'itemId' => $barang->number,
             'barang' => $formattedBarang,
             'brands' => $brands,
             'uoms' => $uoms,

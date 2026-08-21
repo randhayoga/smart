@@ -215,7 +215,7 @@ onUnmounted(() => {
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
-          <BreadcrumbLink :href="'/smart/inventory/' + props.lot.barang_id">{{ props.lot.barang_code }}</BreadcrumbLink>
+          <BreadcrumbLink :href="'/smart/inventory/' + (props.lot.barang_code || props.lot.barang_id)">{{ props.lot.barang_code }}</BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>

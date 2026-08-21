@@ -28,6 +28,12 @@ class NotificationFrameworkTest extends TestCase
         config(['app.disable_test_admin_bypass' => true]);
     }
 
+    protected function tearDown(): void
+    {
+        config(['app.disable_test_admin_bypass' => false]);
+        parent::tearDown();
+    }
+
     public function test_min_stock_threshold_attribute_on_barang(): void
     {
         $barang = Barang::factory()->create([
@@ -168,7 +174,7 @@ class NotificationFrameworkTest extends TestCase
         $this->assertStringContainsString('Peringatan Stok Minimum:', $notif->data['title']);
         $this->assertStringContainsString($barang->name, $notif->data['title']);
         $this->assertEquals('warning', $notif->data['type']);
-        $this->assertEquals('/smart/inventory/stok-habis-pakai', $notif->data['url']);
+        $this->assertEquals('/smart/inventory/stok-habis-pakai/' . $barang->number, $notif->data['url']);
         $this->assertEquals($barang->id, $notif->data['extra']['barang_id']);
         $this->assertEquals(5, $notif->data['extra']['current_stock']);
         $this->assertEquals(10, $notif->data['extra']['min_stock_threshold']);
@@ -321,7 +327,7 @@ class NotificationFrameworkTest extends TestCase
         $notif = $ifsManager->notifications->first();
         $this->assertEquals('Penghapusan Aset Dell Laptop Inspiron: Perlu Perhatian Anda', $notif->data['title']);
         $this->assertEquals('Penghapusan aset AST-DEL-001 telah disetujui oleh BoD/BoC dan sekarang memerlukan approval Anda', $notif->data['message']);
-        $this->assertEquals('/smart/approve-status', $notif->data['url']);
+        $this->assertEquals('/smart/approve-status?search=AST-DEL-001', $notif->data['url']);
     }
 
     public function test_notify_admin_when_dm_ifs_approves_asset_status(): void
@@ -371,7 +377,7 @@ class NotificationFrameworkTest extends TestCase
         $this->assertEquals('Penghapusan Aset Dell Laptop XPS Disetujui DM IFS', $notif->data['title']);
         $this->assertEquals('Status aset AST-XPS-001 telah berubah menjadi Tidak Aktif dan kondisi berubah menjadi Rusak Total.', $notif->data['message']);
         $this->assertEquals('success', $notif->data['type']);
-        $this->assertEquals('/smart/inventory/daftar-aset', $notif->data['url']);
+        $this->assertEquals('/smart/inventory/assets?search=AST-XPS-001', $notif->data['url']);
     }
 
     public function test_notify_admin_when_dm_ifs_rejects_asset_status(): void
@@ -425,6 +431,6 @@ class NotificationFrameworkTest extends TestCase
         $this->assertEquals('Penghapusan Aset Lenovo ThinkPad Ditolak DM IFS', $notif->data['title']);
         $this->assertEquals('Status aset AST-LNV-002 telah dikembalikan menjadi Tersedia dan kondisi dikembalikan menjadi Bagus.', $notif->data['message']);
         $this->assertEquals('error', $notif->data['type']);
-        $this->assertEquals('/smart/inventory/daftar-aset', $notif->data['url']);
+        $this->assertEquals('/smart/inventory/assets?search=AST-LNV-002', $notif->data['url']);
     }
 }

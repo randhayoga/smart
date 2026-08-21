@@ -50,6 +50,7 @@ interface Props {
   floors?: any[];
   rooms?: any[];
   projects?: any[];
+  selectedBarangCode?: string | null;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -65,6 +66,7 @@ const props = withDefaults(defineProps<Props>(), {
   floors: () => [],
   rooms: () => [],
   projects: () => [],
+  selectedBarangCode: null,
 });
 
 // Selected Barang for LOT view
@@ -84,46 +86,64 @@ const lotsForActiveBarang = computed(() => {
 
 const page = usePage();
 
-const checkUrlParams = () => {
-  const urlParams = new URLSearchParams(window.location.search);
-  const barangIdParam = urlParams.get('barang_id');
-  if (barangIdParam) {
-    const found = props.barangs.find(b => String(b.id) === String(barangIdParam));
-    if (found) {
-      selectedBarang.value = found;
-    }
-  }
-  const searchParam = urlParams.get('search');
+const syncFromPropsOrUrl = () => {
+  const url = new URL(page.url, window.location.origin);
+  const searchParam = url.searchParams.get('search');
   if (searchParam) {
     searchQuery.value = searchParam;
   }
+
+  // 1. If props.selectedBarangCode is provided from server
+  if (props.selectedBarangCode) {
+    const found = props.barangs.find(b => 
+      String(b.code) === String(props.selectedBarangCode) || 
+      String(b.id) === String(props.selectedBarangCode)
+    );
+    if (found) {
+      selectedBarang.value = found;
+      return;
+    }
+  }
+
+  // 2. Check path segment from page.url (e.g. /smart/inventory/stok-habis-pakai/BRG-001)
+  const pathMatch = url.pathname.match(/\/smart\/inventory\/stok-habis-pakai\/([^/?#]+)/);
+  if (pathMatch && pathMatch[1]) {
+    const codeParam = decodeURIComponent(pathMatch[1]);
+    const found = props.barangs.find(b => 
+      String(b.code) === codeParam || 
+      String(b.id) === codeParam
+    );
+    if (found) {
+      selectedBarang.value = found;
+      return;
+    }
+  }
+
+  // 3. Fallback to query params (?barang_id=... or ?code=...)
+  const barangIdParam = url.searchParams.get('barang_id') || url.searchParams.get('code');
+  if (barangIdParam) {
+    const found = props.barangs.find(b => 
+      String(b.id) === String(barangIdParam) || 
+      String(b.code) === String(barangIdParam)
+    );
+    if (found) {
+      selectedBarang.value = found;
+      return;
+    }
+  }
+
+  // If no barang code in props or URL, reset selectedBarang
+  selectedBarang.value = null;
 };
 
 onMounted(() => {
-  checkUrlParams();
+  syncFromPropsOrUrl();
   document.addEventListener('keydown', closeOnEscape);
 });
 
-watch(() => props.barangs, () => {
-  checkUrlParams();
+watch(() => [props.barangs, props.selectedBarangCode, page.url], () => {
+  syncFromPropsOrUrl();
 }, { immediate: true });
-
-watch(() => page.url, (newUrl) => {
-  if (newUrl) {
-    const url = new URL(newUrl, window.location.origin);
-    const barangIdParam = url.searchParams.get('barang_id');
-    if (barangIdParam) {
-      const found = props.barangs.find(b => String(b.id) === String(barangIdParam));
-      if (found) {
-        selectedBarang.value = found;
-      }
-    }
-    const searchParam = url.searchParams.get('search');
-    if (searchParam) {
-      searchQuery.value = searchParam;
-    }
-  }
-});
 
 onUnmounted(() => {
   document.removeEventListener('keydown', closeOnEscape);
@@ -132,9 +152,6 @@ onUnmounted(() => {
 watch(selectedBarang, (newVal) => {
   if (newVal) {
     activeDetailTab.value = 'Detail';
-    window.history.replaceState({}, '', `/smart/inventory/stok-habis-pakai?barang_id=${newVal.id}`);
-  } else {
-    window.history.replaceState({}, '', '/smart/inventory/stok-habis-pakai');
   }
 });
 
@@ -398,7 +415,8 @@ const columns: ColumnDef<any>[] = [
           size: 'icon-sm',
           title: 'Lihat Detail',
           onClick: () => {
-            selectedBarang.value = row.original;
+            const identifier = row.original.code || row.original.number || row.original.id;
+            router.get(`/smart/inventory/stok-habis-pakai/${identifier}`);
           },
         }, () => [
           h(Eye),
@@ -478,19 +496,20 @@ const handleConfirmDelete = () => {
   if (itemsToDelete.value.length === 0) return;
 
   const ids = itemsToDelete.value.map(item => item.id);
+  const isSelectedDeleted = selectedBarang.value && ids.includes(selectedBarang.value.id);
   
   if (ids.length === 1) {
     router.delete(`/smart/inventory/barangs/${ids[0]}`, {
       onStart: () => { processing.value = true; },
       onFinish: () => { processing.value = false; },
       onSuccess: () => {
-        if (selectedBarang.value && ids.includes(selectedBarang.value.id)) {
-          selectedBarang.value = null;
-        }
         if (dataTableRef.value) {
           dataTableRef.value.table.resetRowSelection();
         }
         closeDeleteModal();
+        if (isSelectedDeleted) {
+          router.get('/smart/inventory/stok-habis-pakai');
+        }
       }
     });
   } else {
@@ -499,13 +518,13 @@ const handleConfirmDelete = () => {
       onStart: () => { processing.value = true; },
       onFinish: () => { processing.value = false; },
       onSuccess: () => {
-        if (selectedBarang.value && ids.includes(selectedBarang.value.id)) {
-          selectedBarang.value = null;
-        }
         if (dataTableRef.value) {
           dataTableRef.value.table.resetRowSelection();
         }
         closeDeleteModal();
+        if (isSelectedDeleted) {
+          router.get('/smart/inventory/stok-habis-pakai');
+        }
       }
     });
   }
@@ -564,8 +583,7 @@ const closeOnEscape = (e: KeyboardEvent) => {
       <BreadcrumbList>
         <BreadcrumbItem>
           <BreadcrumbLink 
-            :href="selectedBarang ? undefined : '/smart/inventory/stok-habis-pakai'"
-            @click.prevent="selectedBarang = null"
+            :href="selectedBarang ? '/smart/inventory/stok-habis-pakai' : undefined"
             :class="selectedBarang ? 'cursor-pointer hover:text-foreground' : ''"
           >
             Daftar Stok (Habis Pakai)

@@ -15,6 +15,7 @@ interface Props {
   floors?: any[];
   rooms?: any[];
   projects?: any[];
+  selectedBarangCode?: string | null;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -30,6 +31,7 @@ const props = withDefaults(defineProps<Props>(), {
   floors: () => [],
   rooms: () => [],
   projects: () => [],
+  selectedBarangCode: null,
 });
 </script>
 
@@ -48,6 +50,7 @@ const props = withDefaults(defineProps<Props>(), {
       :floors="props.floors"
       :rooms="props.rooms"
       :projects="props.projects"
+      :selected-barang-code="props.selectedBarangCode"
     />
   </AppLayout>
 </template>

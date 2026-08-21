@@ -23,6 +23,12 @@ class RequestApprovalTest extends TestCase
         config(['app.disable_test_admin_bypass' => true]);
     }
 
+    protected function tearDown(): void
+    {
+        config(['app.disable_test_admin_bypass' => false]);
+        parent::tearDown();
+    }
+
     private function createManager(): AdmUser
     {
         $managerUser = AdmUser::factory()->create();

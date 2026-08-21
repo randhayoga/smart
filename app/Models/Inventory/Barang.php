@@ -69,4 +69,26 @@ class Barang extends Model
     {
         return $value !== null ? trim($value) : null;
     }
+
+    /**
+     * Get the route key for implicit route model binding.
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'number';
+    }
+
+    /**
+     * Retrieve the model for a bound value, supporting both code (number) and numeric ID.
+     */
+    public function resolveRouteBinding($value, $field = null)
+    {
+        $field = $field ?? $this->getRouteKeyName();
+
+        return $this->where($field, $value)
+            ->when(is_numeric($value), function ($query) use ($value) {
+                $query->orWhere('id', $value);
+            })
+            ->first();
+    }
 }

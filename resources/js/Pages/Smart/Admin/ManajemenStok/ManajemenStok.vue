@@ -311,7 +311,7 @@ const getExportData = () => {
 };
 
 const handleViewDetail = (item: any) => {
-  router.get(`/smart/inventory/${item.id}`);
+  router.get(`/smart/inventory/${item.code}`);
 };
 
 // Export & Print Logic

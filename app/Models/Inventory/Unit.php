@@ -11,22 +11,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Support\Facades\Auth;
 
 class Unit extends Model
 {
-    use HasFactory, HasUuids;
-
-    /**
-     * Get the columns that should receive a unique identifier.
-     *
-     * @return array<int, string>
-     */
-    public function uniqueIds(): array
-    {
-        return ['uuid'];
-    }
+    use HasFactory;
 
     protected static function booted()
     {
@@ -198,7 +187,6 @@ class Unit extends Model
     protected $with = ['lot', 'location', 'floor', 'room'];
 
     protected $fillable = [
-        'uuid',
         'number',
         'lot_id',
         'location_id',
@@ -267,5 +255,27 @@ class Unit extends Model
                    str_contains($catName, 'motor') || str_contains($subcatName, 'motor');
         }
         return false;
+    }
+
+    /**
+     * Get the route key for implicit route model binding.
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'number';
+    }
+
+    /**
+     * Retrieve the model for a bound value, supporting both code (number) and numeric ID.
+     */
+    public function resolveRouteBinding($value, $field = null)
+    {
+        $field = $field ?? $this->getRouteKeyName();
+
+        return $this->where($field, $value)
+            ->when(is_numeric($value), function ($query) use ($value) {
+                $query->orWhere('id', $value);
+            })
+            ->first();
     }
 }

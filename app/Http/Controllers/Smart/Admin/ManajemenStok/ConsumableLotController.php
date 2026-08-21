@@ -24,8 +24,12 @@ class ConsumableLotController extends Controller
     /**
      * Menampilkan halaman daftar stok habis pakai (Daftar Stok (Habis Pakai)).
      */
-    public function index(Request $request): Response
+    public function index(Request $request, ?Barang $barang = null): Response
     {
+        if (!$barang && $request->filled('barang_id')) {
+            $barang = Barang::find($request->query('barang_id'));
+        }
+
         $categories = Category::where('is_consumable', true)->orderBy('code')->get();
         $subcategories = Subcategory::whereHas('category', function ($query) {
             $query->where('is_consumable', true);
@@ -139,6 +143,7 @@ class ConsumableLotController extends Controller
             'floors' => $floors,
             'rooms' => $rooms,
             'projects' => $projects,
+            'selectedBarangCode' => $barang?->number ?? null,
         ]);
     }
 }

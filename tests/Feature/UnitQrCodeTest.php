@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Inventory\Unit;
 use App\Models\Inventory\Lot;
+use App\Models\HrdEmployee;
 use App\Models\AdmUser as User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -11,6 +12,12 @@ use Tests\TestCase;
 class UnitQrCodeTest extends TestCase
 {
     use RefreshDatabase;
+
+    private function createAdminUser(): User
+    {
+        HrdEmployee::factory()->create(['employee_id' => '255578']);
+        return User::factory()->create(['employee_id' => '255578']);
+    }
 
     private function createUnit()
     {
@@ -47,7 +54,7 @@ class UnitQrCodeTest extends TestCase
 
     public function test_admin_can_access_qr_code(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createAdminUser();
         $unit = $this->createUnit();
 
         $response = $this->actingAs($user)->get(route('smart.inventory.units.qr-code', $unit));
@@ -68,7 +75,7 @@ class UnitQrCodeTest extends TestCase
 
     public function test_admin_can_access_scan_page(): void
     {
-        $user = User::factory()->create();
+        $user = $this->createAdminUser();
         $unit = $this->createUnit();
 
         $response = $this->actingAs($user)->get(route('smart.scan', $unit));
