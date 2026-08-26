@@ -890,7 +890,7 @@ const flashSuccess = computed(() => (page.props as any).flash?.success);
 const flashError = computed(() => (page.props as any).flash?.error);
 
 watch(flashSuccess, (newVal) => {
-  if (newVal) {
+  if (newVal && (page.props as any).flash?.success) {
     toast.success(newVal);
     if ((page.props as any).flash) {
       (page.props as any).flash.success = null;
