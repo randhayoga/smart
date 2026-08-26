@@ -92,6 +92,9 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
             Route::resource('lots', \App\Http\Controllers\Smart\Admin\ManajemenStok\LotController::class)->only(['store', 'update', 'destroy', 'show']);
             Route::post('units/bulk-update', [\App\Http\Controllers\Smart\Admin\ManajemenStok\BulkUnitController::class, 'update'])->name('units.bulk-update');
             Route::post('units/bulk', [\App\Http\Controllers\Smart\Admin\ManajemenStok\BulkUnitController::class, 'store'])->name('units.bulk-store');
+            Route::post('units/{unit}/borrow', [\App\Http\Controllers\Smart\Admin\ManajemenStok\UnitBorrowController::class, 'borrow'])->name('units.borrow');
+            Route::post('units/{unit}/finish-borrow', [\App\Http\Controllers\Smart\Admin\ManajemenStok\UnitBorrowController::class, 'finish'])->name('units.finish-borrow');
+            Route::get('users', [\App\Http\Controllers\Smart\Admin\ManajemenStok\UnitBorrowController::class, 'users'])->name('users');
             Route::resource('units', \App\Http\Controllers\Smart\Admin\ManajemenStok\UnitController::class)->only(['store', 'update', 'destroy']);
             Route::get('units/{unit}/qr-code', [\App\Http\Controllers\Smart\Admin\ManajemenStok\UnitQrCodeController::class, 'show'])->name('units.qr-code');
             Route::resource('unit-status-approvals', \App\Http\Controllers\Smart\MultiRoles\UnitStatusApproval\AdminUnitStatusApprovalController::class)->only(['store']);

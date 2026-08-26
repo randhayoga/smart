@@ -98,6 +98,9 @@ class UnitController extends Controller
                 'barang_subcategory' => $barang->subcategory->name ?? '-',
                 'barang_uom' => $barang->uom->name ?? '-',
 
+                // Active borrowing info
+                'active_borrowing' => $unit->active_borrowing,
+
                 // Audit trails (lifecycles)
                 'lifecycles' => $unit->lifecycles->map(function ($log) {
                     return [
@@ -118,6 +121,10 @@ class UnitController extends Controller
         $organizers = Organizer::orderBy('name')->get();
         $vendors = Vendor::orderBy('name')->get();
         $projects = TbProject::orderBy('project_name')->get();
+        $users = \App\Models\AdmUser::select('id', 'name', 'employee_id')->orderBy('name')->get()->map(fn($u) => [
+            'id' => $u->id,
+            'name' => "{$u->name} ({$u->employee_id})",
+        ]);
 
         return Inertia::render('Smart/Admin/ManajemenStok/DaftarAset', [
             'user' => $request->user(),
@@ -128,6 +135,7 @@ class UnitController extends Controller
             'organizers' => $organizers,
             'vendors' => $vendors,
             'projects' => $projects,
+            'users' => $users,
         ]);
     }
     /**
@@ -363,7 +371,15 @@ class UnitController extends Controller
         $proposedCondition = $request->input('condition');
         $needApproval = in_array($proposedCondition, $arrNeedApproval);
 
-        if ($isRestricted) {
+        if ($currentStatusLower === 'dipinjam') {
+            if ($request->filled('status') && strtolower(trim($request->input('status'))) !== 'dipinjam') {
+                return redirect()->back()->withErrors(['status' => 'Status untuk aset yang sedang Dipinjam hanya dapat diubah melalui Tab Peminjaman.']);
+            }
+            if (in_array($proposedCondition, $arrInactiveConditions)) {
+                return redirect()->back()->withErrors(['condition' => 'Kondisi Lelang/Hibah, Rusak Total, atau Hilang tidak dapat dipilih saat aset berstatus Dipinjam.']);
+            }
+            $request->merge(['status' => 'Dipinjam']);
+        } else if ($isRestricted) {
             if ($request->filled('status') && strtolower(trim($request->input('status'))) !== $currentStatusLower) {
                 return redirect()->back()->withErrors(['status' => 'Status untuk aset yang Tidak Aktif atau Pending tidak dapat diubah.']);
             }

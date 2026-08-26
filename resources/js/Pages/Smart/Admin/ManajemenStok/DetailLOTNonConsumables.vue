@@ -69,6 +69,7 @@ interface Props {
   floors: { id: number; name: string; location_id: number; }[];
   rooms: { id: number; name: string; floor_id: number; }[];
   projects: { id: number; no_project: string; project_name: string; client_id: string; }[];
+  users?: { id: number; name: string; }[];
 }
 
 const props = defineProps<Props>();
@@ -258,6 +259,7 @@ onUnmounted(() => {
         :rooms="props.rooms"
         :organizers="props.organizers"
         :vendors="props.vendors"
+        :users="props.users"
         :hide-barang-columns="true"
         :lot="props.lot"
         :barang="{ category: props.lot.barang_category }"

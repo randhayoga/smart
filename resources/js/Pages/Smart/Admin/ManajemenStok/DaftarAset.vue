@@ -52,6 +52,7 @@ interface Props {
   rooms: { id: number; name: string; floor_id: number; }[];
   organizers: { id: number; name: string; }[];
   vendors: { id: number; name: string; }[];
+  users?: { id: number; name: string; }[];
 }
 
 const props = defineProps<Props>();
@@ -66,6 +67,7 @@ const props = defineProps<Props>();
       :rooms="props.rooms"
       :organizers="props.organizers"
       :vendors="props.vendors"
+      :users="props.users"
     />
   </AppLayout>
 </template>

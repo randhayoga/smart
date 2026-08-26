@@ -311,6 +311,9 @@ class LotController extends Controller
                 'barang_subcategory' => $barang->subcategory->name ?? '-',
                 'barang_uom' => $barang->uom->name ?? '-',
 
+                // Active borrowing info
+                'active_borrowing' => $unit->active_borrowing,
+
                 // Audit trails (lifecycles)
                 'lifecycles' => $unit->lifecycles->map(function ($log) {
                     return [
@@ -333,6 +336,10 @@ class LotController extends Controller
         $floors = Floor::with('location')->orderBy('name')->get();
         $rooms = Room::with('floor.location')->orderBy('name')->get();
         $projects = TbProject::orderBy('project_name')->get();
+        $users = \App\Models\AdmUser::select('id', 'name', 'employee_id')->orderBy('name')->get()->map(fn($u) => [
+            'id' => $u->id,
+            'name' => "{$u->name} ({$u->employee_id})",
+        ]);
 
         return Inertia::render('Smart/Admin/ManajemenStok/DetailLOTNonConsumables', [
             'lot' => [
@@ -382,6 +389,7 @@ class LotController extends Controller
             'floors' => $floors,
             'rooms' => $rooms,
             'projects' => $projects,
+            'users' => $users,
         ]);
     }
 }
