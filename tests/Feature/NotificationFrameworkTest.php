@@ -174,7 +174,8 @@ class NotificationFrameworkTest extends TestCase
         $this->assertStringContainsString('Peringatan Stok Minimum:', $notif->data['title']);
         $this->assertStringContainsString($barang->name, $notif->data['title']);
         $this->assertEquals('warning', $notif->data['type']);
-        $this->assertEquals('/smart/inventory/stok-habis-pakai/' . $barang->number, $notif->data['url']);
+        $cleanNumber = preg_replace('/[^a-zA-Z0-9]/', '', (string)$barang->number);
+        $this->assertEquals('/smart/inventory/stok-habis-pakai/' . $cleanNumber, $notif->data['url']);
         $this->assertEquals($barang->id, $notif->data['extra']['barang_id']);
         $this->assertEquals(5, $notif->data['extra']['current_stock']);
         $this->assertEquals(10, $notif->data['extra']['min_stock_threshold']);
