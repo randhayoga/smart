@@ -36,6 +36,10 @@ const isVehicle = computed(() => props.barang?.category === 'Kendaraan');
 const arrNeedApproval = ['Rusak Total', 'Hilang'];
 const arrInactiveConditions = ['Rusak Total', 'Hilang', 'Lelang/Hibah'];
 
+const isBorrowedUnit = computed(() => {
+  return (props.items || []).some(item => String(item?.status).trim().toLowerCase() === 'dipinjam');
+});
+
 const isRestrictedStatus = (status: string | null | undefined) => {
   if (!status) return false;
   const s = String(status).trim().toLowerCase();
@@ -51,7 +55,7 @@ const isKondisiDisabled = computed(() => {
 });
 
 const isStatusDisabled = computed(() => {
-  if (hasRestrictedUnit.value) return true;
+  if (hasRestrictedUnit.value || isBorrowedUnit.value) return true;
   return arrInactiveConditions.includes(form.condition);
 });
 
@@ -515,7 +519,6 @@ const handleSubmit = () => {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
                           <DropdownMenuItem @select="form.status = 'Tersedia'">Tersedia</DropdownMenuItem>
-                          <DropdownMenuItem @select="form.status = 'Dipinjam'">Dipinjam</DropdownMenuItem>
                           <DropdownMenuItem @select="form.status = 'Standby'">Standby</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -546,9 +549,11 @@ const handleSubmit = () => {
                           <DropdownMenuItem @select="form.condition = 'Bagus'">Bagus</DropdownMenuItem>
                           <DropdownMenuItem @select="form.condition = 'Rusak'">Rusak</DropdownMenuItem>
                           <DropdownMenuItem @select="form.condition = 'QC Passed'">QC Passed</DropdownMenuItem>
-                          <DropdownMenuItem @select="form.condition = 'Lelang/Hibah'">Lelang/Hibah</DropdownMenuItem>
-                          <DropdownMenuItem @select="form.condition = 'Rusak Total'">Rusak Total</DropdownMenuItem>
-                          <DropdownMenuItem @select="form.condition = 'Hilang'">Hilang</DropdownMenuItem>
+                          <template v-if="!isBorrowedUnit">
+                            <DropdownMenuItem @select="form.condition = 'Lelang/Hibah'">Lelang/Hibah</DropdownMenuItem>
+                            <DropdownMenuItem @select="form.condition = 'Rusak Total'">Rusak Total</DropdownMenuItem>
+                            <DropdownMenuItem @select="form.condition = 'Hilang'">Hilang</DropdownMenuItem>
+                          </template>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </FieldContent>

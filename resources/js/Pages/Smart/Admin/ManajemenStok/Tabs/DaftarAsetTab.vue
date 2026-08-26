@@ -81,6 +81,7 @@ interface Props {
   rooms: { id: number; name: string; floor_id: number; }[];
   organizers?: { id: number; name: string; }[];
   vendors?: { id: number; name: string; }[];
+  users?: { id: number; name: string; }[];
   hideBarangColumns?: boolean;
   hideStatusFilter?: boolean;
   customPrintHandler?: (items: any[]) => void;
@@ -989,6 +990,7 @@ const totalAsetTerpilihCount = computed(() => {
     v-model:open="isViewAssetModalOpen"
     :asset="selectedAssetForView"
     :lot="props.lot"
+    :users="props.users"
     @edit="openEditAssetModal"
   />
 </template>

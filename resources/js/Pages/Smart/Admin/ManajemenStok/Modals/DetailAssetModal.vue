@@ -6,12 +6,14 @@ import { X, FileText, Upload } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import Tabs from '@/Components/Tabs.vue';
+import FormulirPeminjamanAset from '@/Pages/Smart/Admin/ManajemenStok/Tabs/FormulirPeminjamanAset.vue';
 import JejakAuditTab from '@/Pages/Smart/MultiRoles/Tabs/JejakAuditTab.vue';
 
 interface Props {
   open: boolean;
   asset: any;
   lot?: any;
+  users?: { id: number; name: string }[];
 }
 
 const props = defineProps<Props>();
@@ -193,7 +195,7 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
           >
             <!-- Modal Header -->
             <div class="flex items-center justify-between pt-2 px-4 border-b border-border">
-              <Tabs v-model="detailActiveTab" :tabs="['Detail Aset', 'Jejak Audit']" />
+              <Tabs v-model="detailActiveTab" :tabs="['Detail Aset', 'Peminjaman', 'Jejak Audit']" />
               <button @click="emit('update:open', false)" class="p-2 hover:bg-muted rounded-full transition-colors">
                 <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
               </button>
@@ -201,6 +203,7 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
 
             <!-- Modal Body -->
             <div class="p-6 overflow-y-auto max-h-[70vh] space-y-4">
+              <!-- ── TAB 1: DETAIL ASET ── -->
               <div v-if="detailActiveTab === 'Detail Aset'" class="space-y-6">
                 <div class="flex flex-col md:flex-row gap-6">
                   <!-- Image Column -->
@@ -278,21 +281,16 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                     </div>
                   </div>
                 </div>
-
-                <!-- DEBUG: Preview Label Aset
-                <div v-if="asset" class="mt-6 pt-6 border-t border-border flex flex-col items-center gap-2">
-                  <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Preview Label Aset</span>
-                  <div class="border border-border rounded-lg p-1 bg-white shadow-sm overflow-hidden max-w-full">
-                    <img 
-                      :src="`/smart/inventory/units/${asset.id}/qr-code`" 
-                      alt="Preview Label Aset"
-                      class="h-28 object-contain rounded"
-                    />
-                  </div>
-                </div> -->
               </div>
 
-              <!-- ── TAB 2: JEJAK AUDIT ── -->
+              <!-- ── TAB 2: PEMINJAMAN ── -->
+              <FormulirPeminjamanAset 
+                v-if="detailActiveTab === 'Peminjaman'" 
+                :asset="props.asset" 
+                :users="props.users" 
+              />
+
+              <!-- ── TAB 3: JEJAK AUDIT ── -->
               <JejakAuditTab 
                 v-if="detailActiveTab === 'Jejak Audit'"
                 :lifecycles="asset ? (asset.lifecycles || []) : []" 
@@ -301,86 +299,88 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
 
             <!-- Modal Footer -->
             <div class="py-3 px-4 border-t border-border flex items-center justify-end gap-3 bg-muted/10">
-              <Button 
-                v-if="asset"
-                as="a"
-                :href="`/smart/inventory/units/${asset.id}/qr-code`" 
-                download 
-                target="_blank"
-                variant="warning"
-                size="lg"
-                class="inline-flex items-center gap-2"
-              >
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-                Unduh QR Code
-              </Button>
+              <template v-if="detailActiveTab === 'Detail Aset'">
+                <Button 
+                  v-if="asset"
+                  as="a"
+                  :href="`/smart/inventory/units/${asset.id}/qr-code`" 
+                  download 
+                  target="_blank"
+                  variant="warning"
+                  size="lg"
+                  class="inline-flex items-center gap-2"
+                >
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  Unduh QR Code
+                </Button>
 
-              <Button 
-                v-if="asset && asset.memo_url"
-                @click="openMemoFile(asset.memo_url)"
-                variant="warning"
-                size="lg"
-                class="inline-flex items-center gap-2"
-              >
-                <FileText class="w-4 h-4" />
-                Buka Memo / Berita Acara
-              </Button>
+                <Button 
+                  v-if="asset && asset.memo_url"
+                  @click="openMemoFile(asset.memo_url)"
+                  variant="warning"
+                  size="lg"
+                  class="inline-flex items-center gap-2"
+                >
+                  <FileText class="w-4 h-4" />
+                  Buka Memo / Berita Acara
+                </Button>
 
-              <Button 
-                v-if="asset && asset.lost_doc_url && (asset.proposed_status === 'Hilang' || asset.condition === 'Hilang')"
-                @click="openMemoFile(asset.lost_doc_url)"
-                variant="warning"
-                size="lg"
-                class="inline-flex items-center gap-2"
-              >
-                <FileText class="w-4 h-4" />
-                Surat Keterangan Kehilangan
-              </Button>
+                <Button 
+                  v-if="asset && asset.lost_doc_url && (asset.proposed_status === 'Hilang' || asset.condition === 'Hilang')"
+                  @click="openMemoFile(asset.lost_doc_url)"
+                  variant="warning"
+                  size="lg"
+                  class="inline-flex items-center gap-2"
+                >
+                  <FileText class="w-4 h-4" />
+                  Surat Keterangan Kehilangan
+                </Button>
 
-              <!-- Hidden BoD/BoC File Input -->
-              <input 
-                ref="fileInputRef"
-                type="file"
-                class="hidden"
-                accept=".pdf,.jpg,.jpeg,.png"
-                @change="handleBodBocUpload"
-              />
+                <!-- Hidden BoD/BoC File Input -->
+                <input 
+                  ref="fileInputRef"
+                  type="file"
+                  class="hidden"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  @change="handleBodBocUpload"
+                />
 
-              <Button 
-                v-if="asset && asset.bod_boc_approval_url"
-                @click="openMemoFile(asset.bod_boc_approval_url)"
-                variant="warning"
-                size="lg"
-                class="inline-flex items-center gap-2"
-              >
-                <FileText class="w-4 h-4" />
-                Buka Form Persetujuan BoD/BoC
-              </Button>
+                <Button 
+                  v-if="asset && asset.bod_boc_approval_url"
+                  @click="openMemoFile(asset.bod_boc_approval_url)"
+                  variant="warning"
+                  size="lg"
+                  class="inline-flex items-center gap-2"
+                >
+                  <FileText class="w-4 h-4" />
+                  Buka Form Persetujuan BoD/BoC
+                </Button>
 
-              <Button 
-                v-else-if="asset && asset.memo_url"
-                @click="triggerBodBocUpload"
-                :disabled="isUploading"
-                variant="warning"
-                size="lg"
-                class="inline-flex items-center gap-2"
-              >
-                <Upload class="w-4 h-4" />
-                {{ isUploading ? 'Mengunggah...' : 'Unggah Form Persetujuan BoD/BoC' }}
-              </Button>
+                <Button 
+                  v-else-if="asset && asset.memo_url"
+                  @click="triggerBodBocUpload"
+                  :disabled="isUploading"
+                  variant="warning"
+                  size="lg"
+                  class="inline-flex items-center gap-2"
+                >
+                  <Upload class="w-4 h-4" />
+                  {{ isUploading ? 'Mengunggah...' : 'Unggah Form Persetujuan BoD/BoC' }}
+                </Button>
 
-              <Button 
-                @click="
-                  emit('update:open', false);
-                  emit('edit', props.asset);
-                "
-                variant="primary"
-                size="lg"
-              >
-                Edit Detail Aset
-              </Button>
+                <Button 
+                  @click="
+                    emit('update:open', false);
+                    emit('edit', props.asset);
+                  "
+                  variant="primary"
+                  size="lg"
+                >
+                  Edit Detail Aset
+                </Button>
+              </template>
 
               <Button 
                 @click="emit('update:open', false)"

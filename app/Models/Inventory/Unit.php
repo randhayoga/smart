@@ -238,6 +238,35 @@ class Unit extends Model
         return $this->hasMany(UnitLifecycle::class);
     }
 
+    public function getActiveBorrowingAttribute(): ?array
+    {
+        if ($this->status !== 'Dipinjam') {
+            return null;
+        }
+
+        $assignment = \App\Models\Request\RequestUnitAssignment::with(['requestItem.request.user'])
+            ->where('unit_id', $this->id)
+            ->whereNull('completed_at')
+            ->latest('id')
+            ->first();
+
+        if (!$assignment || !$assignment->requestItem || !$assignment->requestItem->request) {
+            return null;
+        }
+
+        $req = $assignment->requestItem->request;
+
+        return [
+            'assignment_id' => $assignment->id,
+            'request_id' => $req->id,
+            'request_number' => $req->request_number,
+            'user_id' => $req->user_id,
+            'user_name' => $req->user?->name ?? '-',
+            'start_date' => $assignment->requestItem->start_date ? $assignment->requestItem->start_date->format('Y-m-d') : ($req->created_at ? $req->created_at->format('Y-m-d') : null),
+            'note' => $req->reasoning ?? '',
+        ];
+    }
+
     public function getNumberAttribute(?string $value): ?string
     {
         return $value !== null ? trim($value) : null;

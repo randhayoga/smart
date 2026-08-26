@@ -405,7 +405,6 @@ const handleSubmit = () => {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
                           <DropdownMenuItem @select="form.status = 'Tersedia'">Tersedia</DropdownMenuItem>
-                          <DropdownMenuItem @select="form.status = 'Dipinjam'">Dipinjam</DropdownMenuItem>
                           <DropdownMenuItem @select="form.status = 'Standby'">Standby</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
