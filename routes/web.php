@@ -163,6 +163,17 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
 
 
 
+// Error Page Preview Routes (for testing and design inspection in local/debug environments)
+if (app()->environment('local', 'testing') || config('app.debug', false)) {
+    Route::get('/errors/{code}', function ($code) {
+        $validCodes = ['401', '403', '404', '419', '429', '500', '503'];
+        if (in_array((string) $code, $validCodes, true)) {
+            return response()->view("errors.{$code}", ['exception' => null], (int) $code);
+        }
+        abort(404);
+    })->name('errors.preview');
+}
+
 require __DIR__.'/auth.php';
 
 // Fallback - redirect unknown routes to root (which handles role-based redirection)
