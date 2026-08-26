@@ -93,11 +93,15 @@ const syncFromPropsOrUrl = () => {
     searchQuery.value = searchParam;
   }
 
+  const normalizeCode = (val: any) => String(val ?? '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+
   // 1. If props.selectedBarangCode is provided from server
   if (props.selectedBarangCode) {
+    const targetNorm = normalizeCode(props.selectedBarangCode);
     const found = props.barangs.find(b => 
-      String(b.code) === String(props.selectedBarangCode) || 
-      String(b.id) === String(props.selectedBarangCode)
+      String(b.id) === String(props.selectedBarangCode) || 
+      normalizeCode(b.code) === targetNorm ||
+      normalizeCode(b.number) === targetNorm
     );
     if (found) {
       selectedBarang.value = found;
@@ -105,13 +109,15 @@ const syncFromPropsOrUrl = () => {
     }
   }
 
-  // 2. Check path segment from page.url (e.g. /smart/inventory/stok-habis-pakai/BRG-001)
+  // 2. Check path segment from page.url (e.g. /smart/inventory/stok-habis-pakai/BRGHP001)
   const pathMatch = url.pathname.match(/\/smart\/inventory\/stok-habis-pakai\/([^/?#]+)/);
   if (pathMatch && pathMatch[1]) {
     const codeParam = decodeURIComponent(pathMatch[1]);
+    const targetNorm = normalizeCode(codeParam);
     const found = props.barangs.find(b => 
-      String(b.code) === codeParam || 
-      String(b.id) === codeParam
+      String(b.id) === codeParam || 
+      normalizeCode(b.code) === targetNorm ||
+      normalizeCode(b.number) === targetNorm
     );
     if (found) {
       selectedBarang.value = found;
@@ -122,9 +128,11 @@ const syncFromPropsOrUrl = () => {
   // 3. Fallback to query params (?barang_id=... or ?code=...)
   const barangIdParam = url.searchParams.get('barang_id') || url.searchParams.get('code');
   if (barangIdParam) {
+    const targetNorm = normalizeCode(barangIdParam);
     const found = props.barangs.find(b => 
       String(b.id) === String(barangIdParam) || 
-      String(b.code) === String(barangIdParam)
+      normalizeCode(b.code) === targetNorm ||
+      normalizeCode(b.number) === targetNorm
     );
     if (found) {
       selectedBarang.value = found;
@@ -415,7 +423,9 @@ const columns: ColumnDef<any>[] = [
           size: 'icon-sm',
           title: 'Lihat Detail',
           onClick: () => {
-            const identifier = row.original.code || row.original.number || row.original.id;
+            const rawCode = row.original.code || row.original.number || '';
+            const cleanCode = String(rawCode).replace(/[^a-zA-Z0-9]/g, '');
+            const identifier = cleanCode || row.original.id;
             router.get(`/smart/inventory/stok-habis-pakai/${identifier}`);
           },
         }, () => [

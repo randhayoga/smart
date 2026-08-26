@@ -129,12 +129,13 @@ class NotificationService
             $title = "Peringatan Stok Minimum: {$fullName}";
             $message = "Stok barang {$barang->number} saat ini {$currentStock} {$uomName}, telah mencapai atau di bawah batas minimum ({$barang->min_stock_threshold} {$uomName}).";
 
+            $barangRouteKey = preg_replace('/[^a-zA-Z0-9]/', '', (string)$barang->number);
             $this->sendToRole(
                 'admin',
                 $title,
                 $message,
                 'warning',
-                "/smart/inventory/stok-habis-pakai/{$barang->number}",
+                "/smart/inventory/stok-habis-pakai/{$barangRouteKey}",
                 [
                     'barang_id' => $barang->id,
                     'current_stock' => $currentStock,

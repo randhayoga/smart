@@ -195,21 +195,26 @@ const processScannedData = (rawText: string) => {
   const cleanText = rawText.trim();
   if (!cleanText) return;
 
-  // 1. If scanned text is a full URL containing /scan/... or /smart/scan/...
+  // Extract code from URL if scanned text is a full URL containing /scan/... or /smart/scan/...
+  let extractedCode = cleanText;
   const urlMatch = cleanText.match(/(?:\/smart)?\/scan\/([^\/?#]+)/);
   if (urlMatch && urlMatch[1]) {
-    const code = decodeURIComponent(urlMatch[1]);
-    router.visit(`/smart/scan/${encodeURIComponent(code)}`);
+    extractedCode = decodeURIComponent(urlMatch[1]);
+  } else if (cleanText.startsWith('http://') || cleanText.startsWith('https://')) {
+    // If it's another URL format that doesn't match /smart/scan, show unrecognized error
+    scanError.value = `Format QR Code tidak dikenali sebagai QR Aset SMART (${cleanText.substring(0, 35)}...)`;
     return;
   }
 
-  // 2. Direct unit code payload (e.g. 00001-ELK-IT-26) - scanner appends to /smart/scan/
-  if (!cleanText.startsWith('http://') && !cleanText.startsWith('https://')) {
-    router.visit(`/smart/scan/${encodeURIComponent(cleanText)}`);
+  // Omit all dashes, spaces, and non-alphanumeric characters
+  const alphanumericCode = extractedCode.replace(/[^a-zA-Z0-9]/g, '');
+
+  if (alphanumericCode.length > 0) {
+    router.visit(`/smart/scan/${alphanumericCode}`);
     return;
   }
 
-  // Fallback: If text doesn't match expected SMART QR format
+  // Fallback: If text doesn't contain valid alphanumeric characters
   scanError.value = `Format QR Code tidak dikenali sebagai QR Aset SMART (${cleanText.substring(0, 35)}...)`;
 };
 

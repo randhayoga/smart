@@ -260,22 +260,66 @@ class Unit extends Model
     /**
      * Get the route key for implicit route model binding.
      */
-    public function getRouteKeyName(): string
+     public function getRouteKeyName(): string
+     {
+         return 'number';
+     }
+
+    /**
+     * Get the route key value for generating URLs (alphanumeric only).
+     */
+    public function getRouteKey(): mixed
     {
-        return 'number';
+        $number = $this->getAttribute($this->getRouteKeyName());
+        if ($number !== null) {
+            $clean = preg_replace('/[^a-zA-Z0-9]/', '', (string)$number);
+            if ($clean !== '') {
+                return $clean;
+            }
+        }
+        return $this->getKey();
     }
 
     /**
-     * Retrieve the model for a bound value, supporting both code (number) and numeric ID.
+     * Retrieve the model for a bound value, supporting alphanumeric code, raw code (number), and numeric ID.
      */
     public function resolveRouteBinding($value, $field = null)
     {
         $field = $field ?? $this->getRouteKeyName();
 
-        return $this->where($field, $value)
-            ->when(is_numeric($value), function ($query) use ($value) {
-                $query->orWhere('id', $value);
-            })
-            ->first();
+        // 1. Direct exact match
+        $model = $this->where($field, $value)->first();
+        if ($model) {
+            return $model;
+        }
+
+        // 2. Numeric ID match
+        if (is_numeric($value)) {
+            $model = $this->where('id', $value)->first();
+            if ($model) {
+                return $model;
+            }
+        }
+
+        // 3. Alphanumeric normalized match
+        $cleanValue = preg_replace('/[^a-zA-Z0-9]/', '', (string)$value);
+        if (!empty($cleanValue)) {
+            $model = $this->whereRaw(
+                "LOWER(REPLACE(REPLACE(REPLACE(REPLACE({$field}, '-', ''), ' ', ''), '_', ''), '/', '')) = ?",
+                [strtolower($cleanValue)]
+            )->first();
+
+            if ($model) {
+                return $model;
+            }
+
+            // Fallback in-memory check
+            return $this->all()->first(function ($item) use ($field, $cleanValue) {
+                $itemClean = preg_replace('/[^a-zA-Z0-9]/', '', (string)($item->{$field} ?? ''));
+                return strcasecmp($itemClean, $cleanValue) === 0;
+            });
+        }
+
+        return null;
     }
 }

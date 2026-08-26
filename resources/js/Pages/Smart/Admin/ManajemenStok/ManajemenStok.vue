@@ -311,7 +311,10 @@ const getExportData = () => {
 };
 
 const handleViewDetail = (item: any) => {
-  router.get(`/smart/inventory/${item.code}`);
+  const rawCode = item.code || item.number || '';
+  const cleanCode = String(rawCode).replace(/[^a-zA-Z0-9]/g, '');
+  const identifier = cleanCode || item.id;
+  router.get(`/smart/inventory/${identifier}`);
 };
 
 // Export & Print Logic
