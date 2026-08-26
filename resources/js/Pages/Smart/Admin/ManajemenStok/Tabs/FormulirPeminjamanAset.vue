@@ -80,7 +80,6 @@ const handleSaveBorrow = () => {
       onSuccess: () => {
         isBorrowSubmitting.value = false;
         errors.value = {};
-        toast.success('Data peminjaman berhasil disimpan.');
       },
       onError: (serverErrors: any) => {
         isBorrowSubmitting.value = false;
@@ -108,7 +107,6 @@ const handleFinishBorrow = () => {
       onSuccess: () => {
         isFinishSubmitting.value = false;
         errors.value = {};
-        toast.success('Peminjaman selesai. Status aset kembali Tersedia.');
         borrowUserId.value = null;
         borrowStartDate.value = new Date().toISOString().split('T')[0];
         borrowNote.value = '';
