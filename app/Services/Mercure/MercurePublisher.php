@@ -128,6 +128,6 @@ class MercurePublisher
      */
     public function getUserTopic(int|string $userId): string
     {
-        return rtrim(config('app.url', 'https://localhost'), '/') . "/notifications/users/{$userId}";
+        return rtrim(config('app.url', 'http://localhost'), '/') . "/notifications/users/{$userId}";
     }
 }
