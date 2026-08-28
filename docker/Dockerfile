@@ -6,7 +6,6 @@ WORKDIR /var/www/smart
 # Install any dependencies needed by your PHP application
 # You can add additional packages as required
 RUN apt-get update && apt-get install -y \
-    libpq-dev \
     libxml2-dev \
     libmcrypt-dev \
     gnupg \
@@ -35,8 +34,7 @@ RUN curl -sSL -O https://packages.microsoft.com/config/debian/$(grep VERSION_ID 
     && apt-get install -y libgssapi-krb5-2 \
     && rm -rf /var/lib/apt/lists/*
 
-RUN docker-php-ext-install pdo_pgsql \
-    && pecl install sqlsrv-5.13.0 \
+RUN pecl install sqlsrv-5.13.0 \
     && pecl install pdo_sqlsrv-5.13.0 \
     && docker-php-ext-enable sqlsrv pdo_sqlsrv
 

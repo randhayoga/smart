@@ -16,7 +16,10 @@ services:
         env_file:
             - .env
         depends_on:
-            - db
+            db:
+                condition: service_healthy
+            db-init:
+                condition: service_completed_successfully
         networks:
             - app-network
 
@@ -34,13 +37,29 @@ services:
             MSSQL_PID: Developer
         healthcheck:
             test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U SA -P '$MSSQL_SA_PASSWORD' -C -Q 'SELECT 1'"]
-            interval: 30s
-            timeout: 10s
-            retries: 5
-            start_period: 60s
+            interval: 10s
+            timeout: 5s
+            retries: 10
+            start_period: 15s
         networks:
             - app-network
 
+    db-init:
+        image: "mcr.microsoft.com/mssql/server:2022-latest"
+        container_name: db-init
+        depends_on:
+            db:
+                condition: service_healthy
+        volumes:
+            - ./docker/init-db.sh:/usr/local/bin/init-db.sh:ro
+        entrypoint: ["/bin/bash", "/usr/local/bin/init-db.sh"]
+        env_file:
+            - .env
+        restart: "no"
+        networks:
+            - app-network
+
+    # TESTING
     # cloudflared:
     #     image: cloudflare/cloudflared:latest
     #     container_name: cloudflare_tunnel
