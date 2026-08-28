@@ -12,7 +12,7 @@ return [
     |
     */
 
-    'url' => env('MERCURE_URL', 'https://localhost/.well-known/mercure'),
+    'url' => env('MERCURE_URL', 'http://localhost/.well-known/mercure'),
 
     /*
     |--------------------------------------------------------------------------
@@ -24,7 +24,7 @@ return [
     |
     */
 
-    'public_url' => env('MERCURE_PUBLIC_URL', 'https://localhost/.well-known/mercure'),
+    'public_url' => env('MERCURE_PUBLIC_URL', 'http://localhost/.well-known/mercure'),
 
     /*
     |--------------------------------------------------------------------------

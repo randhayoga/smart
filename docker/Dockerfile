@@ -53,7 +53,7 @@ COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # Expose the port on which Laravel and Vite will run
-EXPOSE 8000
+EXPOSE 80 5173
 
 # Use entrypoint to install deps before starting Octane
 ENTRYPOINT ["entrypoint.sh"]

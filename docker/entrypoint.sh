@@ -15,4 +15,4 @@ echo "Running database migrations..."
 php artisan migrate --force
 
 echo "Starting Laravel Octane with FrankenPHP..."
-exec php artisan octane:start --server=frankenphp --host=localhost --workers=auto --max-requests=auto --port=443 --admin-port=2019 --https --caddyfile=Caddyfile
+exec php artisan octane:start --server=frankenphp --host=0.0.0.0 --workers=auto --max-requests=auto --port=80 --admin-port=2019 --caddyfile=Caddyfile

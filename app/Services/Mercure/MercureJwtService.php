@@ -47,7 +47,7 @@ class MercureJwtService
         int|string $userId,
         ?int $lifetimeSeconds = null
     ): string {
-        $topic = rtrim(config('app.url', 'https://localhost'), '/') . "/notifications/users/{$userId}";
+        $topic = rtrim(config('app.url', 'http://localhost'), '/') . "/notifications/users/{$userId}";
 
         return $this->generateSubscriberToken([$topic], [], $lifetimeSeconds);
     }
@@ -98,7 +98,7 @@ class MercureJwtService
         $expiresAt = $now->modify("+{$lifetimeSeconds} seconds");
 
         $builder = $jwtConfig->builder()
-            ->issuedBy(config('app.url', 'https://localhost'))
+            ->issuedBy(config('app.url', 'http://localhost'))
             ->issuedAt($now)
             ->canOnlyBeUsedAfter($now)
             ->expiresAt($expiresAt)
