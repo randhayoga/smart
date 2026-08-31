@@ -12,6 +12,7 @@ import { Field, FieldLabel, FieldContent, FieldError } from '@/Components/ui/fie
 import StatusBadge from '@/Components/StatusBadge.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage } from '@/Components/ui/breadcrumb';
+import { compressImageIfNeeded } from '@/utils/imageCompressor';
 
 interface Props {
   asset: any;
@@ -224,15 +225,34 @@ const formatDateWithDashes = (dateStr: string | null) => {
   return dateStr.replace(/\//g, '-');
 };
 
-const handleFileUpload = (e: any) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
-  if (!allowedTypes.includes(file.type)) { toast.error('Format file salah! Hanya diperbolehkan file .jpg, .jpeg, atau .png'); return; }
-  if (file.size > 1024 * 1024) { toast.error('Ukuran foto maksimal 1MB'); return; }
-  form.image_url = file;
-  form.image_url_name = file.name;
-  form.use_lot_image = false;
+const handleFileUpload = async (e: any) => {
+  const target = e.target as HTMLInputElement;
+  const rawFile = target.files?.[0];
+  if (!rawFile) return;
+
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+  if (!allowedTypes.includes(rawFile.type) && !rawFile.type.startsWith('image/')) {
+    toast.error('Format file salah! Hanya diperbolehkan file .jpg, .jpeg, atau .png');
+    target.value = '';
+    return;
+  }
+
+  try {
+    const file = await compressImageIfNeeded(rawFile);
+    if (file.size > 1024 * 1024) {
+      toast.error('Ukuran foto maksimal 1MB');
+      target.value = '';
+      return;
+    }
+    form.image_url = file;
+    form.image_url_name = file.name;
+    form.use_lot_image = false;
+  } catch (err) {
+    console.error('Gagal memproses gambar:', err);
+    toast.error('Gagal memproses gambar');
+  } finally {
+    target.value = '';
+  }
 };
 
 const triggerFileInput = () => {

@@ -10,6 +10,7 @@ import {
 import Combobox from '@/Components/Combobox.vue';
 import { Checkbox } from '@/Components/ui/checkbox';
 import { Field, FieldLabel, FieldContent, FieldError } from '@/Components/ui/field';
+import { compressImageIfNeeded } from '@/utils/imageCompressor';
 
 interface Props {
   open: boolean;
@@ -178,15 +179,34 @@ watch(() => props.open, (val) => {
 
 const closeModal = () => { emit('update:open', false); };
 
-const handleFileUpload = (e: any) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
-  if (!allowedTypes.includes(file.type)) { alert('Format file salah! Hanya diperbolehkan file .jpg, .jpeg, atau .png'); return; }
-  if (file.size > 1024 * 1024) { alert('Gagal! Ukuran foto maksimal 1MB'); return; }
-  form.image_url = file;
-  form.image_url_name = file.name;
-  form.use_lot_image = false;
+const handleFileUpload = async (e: any) => {
+  const target = e.target as HTMLInputElement;
+  const rawFile = target.files?.[0];
+  if (!rawFile) return;
+
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+  if (!allowedTypes.includes(rawFile.type) && !rawFile.type.startsWith('image/')) {
+    toast.error('Format file salah! Hanya diperbolehkan file .jpg, .jpeg, atau .png');
+    target.value = '';
+    return;
+  }
+
+  try {
+    const file = await compressImageIfNeeded(rawFile);
+    if (file.size > 1024 * 1024) {
+      toast.error('Gagal! Ukuran foto maksimal 1MB');
+      target.value = '';
+      return;
+    }
+    form.image_url = file;
+    form.image_url_name = file.name;
+    form.use_lot_image = false;
+  } catch (err) {
+    console.error('Gagal memproses gambar:', err);
+    toast.error('Gagal memproses gambar');
+  } finally {
+    target.value = '';
+  }
 };
 
 const triggerFileInput = () => {
