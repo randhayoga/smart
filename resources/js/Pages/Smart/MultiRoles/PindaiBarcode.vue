@@ -10,14 +10,12 @@ import {
   Camera,
   CameraOff,
   Upload,
-  QrCode,
   AlertCircle,
   AlertTriangle,
   CheckCircle2,
   RefreshCw,
   Zap,
   ZapOff,
-  ShieldCheck,
   Image as ImageIcon
 } from 'lucide-vue-next';
 
@@ -28,9 +26,7 @@ const scanError = ref<string | null>(null);
 const scanSuccessMsg = ref<string | null>(null);
 const fileScanning = ref(false);
 
-// Camera management
-const cameras = ref<{ id: string; label: string }[]>([]);
-const selectedCameraId = ref<string>('');
+// Flashlight state
 const isTorchOn = ref(false);
 const hasTorch = ref(false);
 
@@ -50,7 +46,6 @@ const handleVisibilityChange = async () => {
 onMounted(async () => {
   document.addEventListener('visibilitychange', handleVisibilityChange);
   await nextTick();
-  await initCameraList();
   await startScanner();
 });
 
@@ -59,24 +54,7 @@ onUnmounted(async () => {
   await stopScanner();
 });
 
-// Initialize Camera Devices List
-const initCameraList = async () => {
-  try {
-    const devices = await Html5Qrcode.getCameras();
-    if (devices && devices.length > 0) {
-      cameras.value = devices.map(d => ({
-        id: d.id,
-        label: d.label || `Kamera ${d.id.substring(0, 5)}...`
-      }));
-      // Default to last camera (usually back/environment camera on mobile)
-      selectedCameraId.value = devices[devices.length - 1].id;
-    }
-  } catch (err: any) {
-    console.warn('Gagal membaca daftar kamera:', err);
-  }
-};
-
-// Start Live Camera QR Scanner
+// Start Live Camera QR Scanner with autofocus enabled
 const startScanner = async () => {
   scanError.value = null;
   scanSuccessMsg.value = null;
@@ -95,22 +73,23 @@ const startScanner = async () => {
       html5QrCodeScanner = null;
     }
 
-    html5QrCodeScanner = new Html5Qrcode('qr-reader-container');
-
-    const cameraConfig = selectedCameraId.value 
-      ? selectedCameraId.value 
-      : { facingMode: 'environment' };
+    html5QrCodeScanner = new Html5Qrcode('qr-reader-container', {
+      experimentalFeatures: {
+        useBarCodeDetectorIfSupported: true,
+      },
+      verbose: false,
+    });
 
     await html5QrCodeScanner.start(
-      cameraConfig,
+      { facingMode: 'environment' },
       {
-        fps: 15,
-        qrbox: (viewfinderWidth, viewfinderHeight) => {
-          const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-          const qrboxSize = Math.floor(minEdge * 0.75);
-          return { width: Math.max(qrboxSize, 200), height: Math.max(qrboxSize, 200) };
+        fps: 20,
+        videoConstraints: {
+          facingMode: { ideal: 'environment' },
+          width: { min: 640, ideal: 1920, max: 3840 },
+          height: { min: 480, ideal: 1080, max: 2160 },
+          advanced: [{ focusMode: 'continuous' } as any],
         },
-        aspectRatio: 1.0,
       },
       onScanSuccess,
       onScanError
@@ -119,18 +98,56 @@ const startScanner = async () => {
     isScanning.value = true;
     isInitializing.value = false;
 
-    // Check torch / flashlight support
+    // Check torch / flashlight support and configure auto focus mode
     try {
-      const capabilities = html5QrCodeScanner.getRunningTrackCapabilities();
-      hasTorch.value = !!(capabilities as any).torch;
-    } catch {
-      hasTorch.value = false;
+      const capabilities = html5QrCodeScanner.getRunningTrackCapabilities() as any;
+      hasTorch.value = !!capabilities?.torch;
+
+      // Ensure continuous auto focus is applied if supported by the camera track
+      if (capabilities?.focusMode) {
+        const mode = capabilities.focusMode.includes('continuous')
+          ? 'continuous'
+          : capabilities.focusMode.includes('auto')
+            ? 'auto'
+            : undefined;
+
+        if (mode) {
+          await html5QrCodeScanner.applyVideoConstraints({
+            advanced: [{ focusMode: mode } as any],
+          });
+        }
+      }
+    } catch (capErr) {
+      console.warn('Track capabilities check warning:', capErr);
     }
   } catch (err: any) {
     isScanning.value = false;
     isInitializing.value = false;
     scanError.value = 'Izin kamera ditolak atau kamera tidak ditemukan. Silakan izinkan akses kamera pada browser atau gunakan opsi Pindai dari Galeri di bawah.';
     console.error('Camera Scanner error:', err);
+  }
+};
+
+// Trigger tap-to-focus on camera viewfinder
+const triggerAutoFocus = async () => {
+  if (!html5QrCodeScanner || !isScanning.value) return;
+  try {
+    const capabilities = html5QrCodeScanner.getRunningTrackCapabilities() as any;
+    if (capabilities?.focusMode) {
+      const mode = capabilities.focusMode.includes('continuous')
+        ? 'continuous'
+        : capabilities.focusMode.includes('auto')
+          ? 'auto'
+          : undefined;
+
+      if (mode) {
+        await html5QrCodeScanner.applyVideoConstraints({
+          advanced: [{ focusMode: mode } as any],
+        });
+      }
+    }
+  } catch (err) {
+    console.warn('Tap focus trigger warning:', err);
   }
 };
 
@@ -163,13 +180,6 @@ const toggleTorch = async () => {
     console.warn('Torch failed:', err);
     isTorchOn.value = false;
   }
-};
-
-// Switch Selected Camera
-const onCameraChange = async (event: Event) => {
-  const target = event.target as HTMLSelectElement;
-  selectedCameraId.value = target.value;
-  await startScanner();
 };
 
 // QR Code Detection Success Handler
@@ -317,7 +327,7 @@ const handleFileUpload = async (event: Event) => {
                       v-if="hasTorch && isScanning"
                       @click="toggleTorch"
                       :class="[
-                        'px-2 py-1 rounded border text-xs font-medium transition-colors flex items-center gap-1',
+                        'px-2 py-1 rounded border text-xs font-medium transition-colors flex items-center gap-1 cursor-pointer',
                         isTorchOn 
                           ? 'bg-amber-500/20 text-amber-500 border-amber-500/40' 
                           : 'bg-background hover:bg-muted text-muted-foreground border-border'
@@ -327,40 +337,17 @@ const handleFileUpload = async (event: Event) => {
                       <ZapOff v-else class="w-3.5 h-3.5" />
                       <span class="text-[11px]">Flash</span>
                     </button>
-
-                    <select
-                      v-if="cameras.length > 1"
-                      :value="selectedCameraId"
-                      @change="onCameraChange"
-                      class="text-xs border border-border rounded bg-background px-2 py-1 text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                    >
-                      <option v-for="cam in cameras" :key="cam.id" :value="cam.id">
-                        {{ cam.label }}
-                      </option>
-                    </select>
                   </div>
                 </div>
 
-                <!-- Viewfinder Box -->
-                <div class="relative w-full aspect-square bg-slate-950 rounded-lg overflow-hidden border border-slate-800 flex items-center justify-center shadow-inner">
-                  
-                  <div id="qr-reader-container" class="w-full h-full object-cover"></div>
+                <!-- Viewfinder Box (Simple, Clean, Full View with Tap-to-Focus) -->
+                <div 
+                  @click="triggerAutoFocus"
+                  class="relative w-full aspect-square bg-slate-950 rounded-xl overflow-hidden border border-border flex items-center justify-center shadow-inner cursor-pointer"
+                  title="Ketuk layar kamera untuk fokus ulang"
+                >
+                  <div id="qr-reader-container" class="w-full h-full"></div>
                   <div id="file-scanner-temp" class="hidden"></div>
-
-                  <!-- Corner Target Framing -->
-                  <div v-if="isScanning" class="pointer-events-none absolute inset-0 p-6 flex flex-col justify-between">
-                    <div class="flex justify-between">
-                      <div class="w-7 h-7 border-t-4 border-l-4 border-primary rounded-tl"></div>
-                      <div class="w-7 h-7 border-t-4 border-r-4 border-primary rounded-tr"></div>
-                    </div>
-
-                    <div class="w-full h-0.5 bg-gradient-to-r from-transparent via-primary to-transparent shadow-[0_0_12px_#3b82f6] animate-pulse"></div>
-
-                    <div class="flex justify-between">
-                      <div class="w-7 h-7 border-b-4 border-l-4 border-primary rounded-bl"></div>
-                      <div class="w-7 h-7 border-b-4 border-r-4 border-primary rounded-br"></div>
-                    </div>
-                  </div>
 
                   <!-- Initializing Spinner -->
                   <div v-if="isInitializing && !scanError" class="absolute inset-0 bg-slate-950/90 flex flex-col items-center justify-center p-4 text-center z-10">
@@ -373,7 +360,7 @@ const handleFileUpload = async (event: Event) => {
                   <div v-if="!isScanning && !isInitializing" class="absolute inset-0 bg-slate-950/95 flex flex-col items-center justify-center p-6 text-center z-10">
                     <CameraOff class="w-10 h-10 text-slate-500 mb-2" />
                     <p class="text-sm font-medium text-slate-300 mb-4">Kamera Nonaktif</p>
-                    <Button @click="startScanner" variant="default" size="sm" class="gap-2">
+                    <Button @click.stop="startScanner" variant="default" size="sm" class="gap-2">
                       <RefreshCw class="w-4 h-4" />
                       Coba Aktifkan Kamera Kembali
                     </Button>
@@ -440,3 +427,21 @@ const handleFileUpload = async (event: Event) => {
     </div>
   </AppLayout>
 </template>
+
+<style scoped>
+:deep(#qr-reader-container) {
+  width: 100% !important;
+  height: 100% !important;
+  border: none !important;
+  padding: 0 !important;
+  position: relative;
+  overflow: hidden;
+}
+
+:deep(#qr-reader-container video) {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  border-radius: 0.75rem;
+}
+</style>
