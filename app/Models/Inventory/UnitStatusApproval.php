@@ -9,6 +9,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 use App\Models\Inventory\UnitLifecycle;
 
+/**
+ * Unit Status Approval model representing workflow approval requests for asset condition / disposal changes.
+ */
 class UnitStatusApproval extends Model
 {
     use HasFactory;
@@ -61,16 +64,25 @@ class UnitStatusApproval extends Model
         'decided_at' => 'datetime',
     ];
 
+    /**
+     * The unit undergoing status/condition approval.
+     */
     public function unit(): BelongsTo
     {
         return $this->belongsTo(Unit::class);
     }
 
+    /**
+     * The user who requested the status/condition change.
+     */
     public function requester(): BelongsTo
     {
         return $this->belongsTo(AdmUser::class, 'requester_id');
     }
 
+    /**
+     * The user who approved or rejected the status/condition change.
+     */
     public function approver(): BelongsTo
     {
         return $this->belongsTo(AdmUser::class, 'approver_id');

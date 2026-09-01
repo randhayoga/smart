@@ -7,6 +7,9 @@ use App\Models\Inventory\Unit;
 use App\Models\Inventory\UnitStatusApproval;
 use Illuminate\Http\Request;
 
+/**
+ * Admin Unit Status Approval Controller handling submissions for asset condition changes, repairs, and disposals.
+ */
 class AdminUnitStatusApprovalController extends Controller
 {
     /**

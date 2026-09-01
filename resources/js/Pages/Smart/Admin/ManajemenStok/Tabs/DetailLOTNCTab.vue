@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Detail LOT Non-Consumable Tab component rendering non-consumable lot overview and its associated individual asset units.
+ */
 import { ref, onMounted, onUnmounted } from 'vue';
 import { Plus } from 'lucide-vue-next';
 import { Button } from "@/Components/ui/button";

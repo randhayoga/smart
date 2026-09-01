@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Secondary Button component styled with neutral borders and subtle hover states.
+ */
 withDefaults(
     defineProps<{
         type?: 'button' | 'submit' | 'reset';

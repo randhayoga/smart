@@ -7,6 +7,9 @@ use App\Models\Master\Room;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
+/**
+ * Room Controller managing specific room and storage zone definitions per floor.
+ */
 class RoomController extends Controller
 {
     /**

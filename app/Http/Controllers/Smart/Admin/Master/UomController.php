@@ -8,6 +8,9 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * UOM Controller managing unit of measure definitions (e.g., PCS, UNIT, ROLL).
+ */
 class UomController extends Controller
 {
     /**

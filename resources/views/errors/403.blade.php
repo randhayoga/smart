@@ -1,3 +1,6 @@
+{{--
+    403 Forbidden / Access Denied error page template.
+--}}
 @extends('errors.layout')
 
 @section('title', 'Akses Ditolak')

@@ -11,6 +11,9 @@ use App\Models\Request\RequestUnitAssignment;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
+/**
+ * Handover Controller managing pickup/delivery schedules and asset serial assignments for confirmed requests.
+ */
 class HandoverController extends Controller
 {
     /**

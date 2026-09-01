@@ -6,6 +6,9 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Role Middleware enforcing role-based authorization and permission cascades across application routes.
+ */
 class RoleMiddleware
 {
     /**

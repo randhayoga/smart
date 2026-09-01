@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Jejak Audit Tab component rendering filtered asset and request lifecycle history logs.
+ */
 import { ref, computed, h } from 'vue';
 import { ArrowUpDown, ChevronDown } from 'lucide-vue-next';
 import { Button } from "@/Components/ui/button";

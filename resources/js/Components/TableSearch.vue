@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Table Search Input component with search icon and two-way binding.
+ */
 import { Search } from 'lucide-vue-next';
 
 defineProps<{

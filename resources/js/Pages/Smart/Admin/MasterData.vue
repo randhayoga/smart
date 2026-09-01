@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Master Data Management Page component managing categories, subcategories, UOMs, brands, organizers, vendors, locations, floors, and rooms.
+ */
 import { ref, computed, watch, h, onMounted, onUnmounted } from 'vue';
 import { useForm, usePage } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';

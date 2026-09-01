@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Horizontal Pill Tabs component for section navigation and filtering.
+ */
 import { Button } from '@/Components/ui/button';
 
 defineProps<{

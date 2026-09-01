@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Table action button styled for viewing item details.
+ */
 import { Eye } from 'lucide-vue-next';
 
 defineProps<{

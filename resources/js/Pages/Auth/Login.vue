@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Authentication Login Page component for user credentials validation.
+ */
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { Loader2, ArrowRight } from 'lucide-vue-next';
 import ApplicationLogo from '@/Components/ApplicationLogo.vue';

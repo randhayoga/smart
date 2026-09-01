@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Master Location model representing physical sites, branches, or buildings.
+ */
 class Location extends Model
 {
     use HasFactory;
@@ -16,6 +19,9 @@ class Location extends Model
         'name',
     ];
 
+    /**
+     * Floors contained within this location.
+     */
     public function floors(): HasMany
     {
         return $this->hasMany(Floor::class);

@@ -1,3 +1,6 @@
+{{--
+    401 Unauthorized error page template.
+--}}
 @extends('errors.layout')
 
 @section('title', 'Autentikasi Diperlukan')

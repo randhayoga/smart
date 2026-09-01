@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Product Card component displaying item categories in the user browsing catalog with an Add-to-Cart trigger.
+ */
 import { Button } from "@/Components/ui/button";
 
 interface Props {

@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Inventory\UnitLifecycle;
 use Inertia\Inertia;
 
+/**
+ * Audit Controller aggregating all unit asset lifecycle events into a comprehensive audit trail.
+ */
 class AuditController extends Controller
 {
     /**

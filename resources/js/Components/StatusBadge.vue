@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Status Badge component mapping entity lifecycle statuses and conditions to visual pill styles.
+ */
 import { computed } from 'vue';
 import { cn } from '@/lib/utils';
 

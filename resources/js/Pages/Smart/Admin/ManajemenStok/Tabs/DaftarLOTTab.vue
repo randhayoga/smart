@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Daftar LOT Tab component rendering batch/procurement lot tables, quantity metrics, and batch actions.
+ */
 import { ref, watch, onMounted, onUnmounted, computed, h } from 'vue';
 import { router, usePage } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';

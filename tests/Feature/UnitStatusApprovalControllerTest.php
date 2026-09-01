@@ -13,6 +13,11 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
+/**
+ * Unit Status Approval Controller Feature Tests
+ *
+ * Verifies submission of asset condition change/deactivation requests, duplicate prevention, and automated multi-action lifecycle splitting.
+ */
 class UnitStatusApprovalControllerTest extends TestCase
 {
     use RefreshDatabase;

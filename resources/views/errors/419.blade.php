@@ -1,3 +1,6 @@
+{{--
+    419 Page Expired / CSRF token mismatch error page template.
+--}}
 @extends('errors.layout')
 
 @section('title', 'Sesi Telah Kedaluwarsa')

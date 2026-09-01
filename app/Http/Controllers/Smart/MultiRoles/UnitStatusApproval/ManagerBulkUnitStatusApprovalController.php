@@ -7,6 +7,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Inventory\UnitStatusApproval;
 use Illuminate\Http\Request;
 
+/**
+ * Manager Bulk Unit Status Approval Controller processing batch decisions on asset condition change requests.
+ */
 class ManagerBulkUnitStatusApprovalController extends Controller
 {
     /**

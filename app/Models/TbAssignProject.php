@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Project Assignment model linking employees to specific projects and RBS roles.
+ */
 class TbAssignProject extends Model
 {
     use HasFactory;

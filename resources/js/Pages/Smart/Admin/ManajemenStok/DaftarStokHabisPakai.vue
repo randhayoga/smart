@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Admin Consumable Stock Inventory Page component displaying item balances, batch LOTs, and reorder levels.
+ */
 import AppLayout from '@/Layouts/AppLayout.vue';
 import DaftarStokHabisPakaiTab from './Tabs/DaftarStokHabisPakaiTab.vue';
 

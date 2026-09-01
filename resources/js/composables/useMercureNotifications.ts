@@ -1,3 +1,6 @@
+/**
+ * Composable managing real-time Mercure SSE notification streaming and automatic reconnection.
+ */
 import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { usePage } from '@inertiajs/vue3';
 import axios from 'axios';

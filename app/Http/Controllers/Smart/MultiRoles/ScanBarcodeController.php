@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use Inertia\Inertia;
 use Inertia\Response;
 
+/**
+ * Scan Barcode Controller providing interactive barcode and QR code scanning UI.
+ */
 class ScanBarcodeController extends Controller
 {
     /**

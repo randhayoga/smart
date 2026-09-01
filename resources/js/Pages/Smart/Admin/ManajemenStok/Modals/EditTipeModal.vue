@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Edit Tipe Modal component for updating item definitions, UOM, brand, specifications, and default images.
+ */
 import { ref, watch, computed } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';

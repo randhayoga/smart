@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Responsive Navigation Link component for mobile drawer navigation.
+ */
 import { computed } from 'vue';
 import { Link } from '@inertiajs/vue3';
 

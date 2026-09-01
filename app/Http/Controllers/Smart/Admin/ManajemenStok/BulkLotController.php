@@ -9,6 +9,9 @@ use App\Models\Inventory\Unit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * Bulk Lot Controller managing batch updates and batch deletions of inventory lots.
+ */
 class BulkLotController extends Controller
 {
     /**

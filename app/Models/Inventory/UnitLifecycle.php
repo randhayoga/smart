@@ -7,6 +7,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Unit Lifecycle model tracking historical movements, condition transitions, and status changes of units.
+ */
 class UnitLifecycle extends Model
 {
     use HasFactory;
@@ -38,31 +41,49 @@ class UnitLifecycle extends Model
         'new_state' => 'array',
     ];
 
+    /**
+     * The unit associated with this lifecycle entry.
+     */
     public function unit(): BelongsTo
     {
         return $this->belongsTo(Unit::class);
     }
 
+    /**
+     * The location during this lifecycle period.
+     */
     public function location(): BelongsTo
     {
         return $this->belongsTo(\App\Models\Master\Location::class);
     }
 
+    /**
+     * The floor during this lifecycle period.
+     */
     public function floor(): BelongsTo
     {
         return $this->belongsTo(\App\Models\Master\Floor::class);
     }
 
+    /**
+     * The room during this lifecycle period.
+     */
     public function room(): BelongsTo
     {
         return $this->belongsTo(\App\Models\Master\Room::class);
     }
 
+    /**
+     * The actor/user who triggered this lifecycle change.
+     */
     public function actor(): BelongsTo
     {
         return $this->belongsTo(AdmUser::class, 'actor_id');
     }
 
+    /**
+     * Accessor to get a human-readable formatted duration string (Indonesian).
+     */
     public function getFormattedDurationAttribute(): string
     {
         if (!$this->start_date || !$this->end_date) {

@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Guest Layout component for unauthenticated views such as login.
+ */
 import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 import { Link } from '@inertiajs/vue3';
 </script>

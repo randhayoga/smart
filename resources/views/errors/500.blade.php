@@ -1,3 +1,6 @@
+{{--
+    500 Internal Server Error page template.
+--}}
 @extends('errors.layout')
 
 @section('title', 'Terjadi Kesalahan Server')

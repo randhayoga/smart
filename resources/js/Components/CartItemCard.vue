@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Cart Item Card component displaying a basket item with quantity stepper, selection checkbox, and removal action.
+ */
 import { Button } from '@/Components/ui/button';
 import { Trash2 } from 'lucide-vue-next';
 import Checkbox from '@/Components/ui/checkbox/Checkbox.vue';

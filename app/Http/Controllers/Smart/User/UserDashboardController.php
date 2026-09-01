@@ -8,6 +8,9 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
+/**
+ * User Dashboard Controller rendering home overview and redirecting admins.
+ */
 class UserDashboardController extends Controller
 {
     /**

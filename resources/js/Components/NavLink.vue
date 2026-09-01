@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Navigation Link component for top-level header navigation.
+ */
 import { computed } from 'vue';
 import { Link } from '@inertiajs/vue3';
 

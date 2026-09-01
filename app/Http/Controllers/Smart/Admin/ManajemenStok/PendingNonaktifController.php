@@ -14,6 +14,9 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
+/**
+ * Pending Nonaktif Controller listing asset units pending disposal/deactivation approvals.
+ */
 class PendingNonaktifController extends Controller
 {
     /**

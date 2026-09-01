@@ -12,6 +12,11 @@ use App\Models\AdmUser;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
+/**
+ * Dashboard Controller Feature Tests
+ *
+ * Verifies admin inventory metric calculations (consumable/non-consumable stats) and authorization guards.
+ */
 class DashboardControllerTest extends TestCase
 {
     use RefreshDatabase;

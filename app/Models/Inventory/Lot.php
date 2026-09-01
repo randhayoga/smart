@@ -15,6 +15,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Lot (Inventory Batch) model representing received batches, procurement info, and stock counts.
+ */
 class Lot extends Model
 {
     use HasFactory;
@@ -48,41 +51,65 @@ class Lot extends Model
         'current_quantity' => 'integer',
     ];
 
+    /**
+     * The catalog item associated with this lot.
+     */
     public function barang(): BelongsTo
     {
         return $this->belongsTo(Barang::class);
     }
 
+    /**
+     * The organizer / PIC responsible for this lot.
+     */
     public function organizer(): BelongsTo
     {
         return $this->belongsTo(Organizer::class);
     }
 
+    /**
+     * The vendor / supplier from whom this lot was purchased.
+     */
     public function vendor(): BelongsTo
     {
         return $this->belongsTo(Vendor::class);
     }
 
+    /**
+     * The storage location for this lot.
+     */
     public function location(): BelongsTo
     {
         return $this->belongsTo(Location::class);
     }
 
+    /**
+     * The specific floor of the storage location.
+     */
     public function floor(): BelongsTo
     {
         return $this->belongsTo(Floor::class);
     }
 
+    /**
+     * The specific room within the storage floor.
+     */
     public function room(): BelongsTo
     {
         return $this->belongsTo(Room::class);
     }
 
+    /**
+     * The project associated with this lot procurement, if any.
+     */
     public function project(): BelongsTo
     {
         return $this->belongsTo(TbProject::class);
     }
 
+    /**
+     * Serialized asset units created from this lot.
+     */
     public function units(): HasMany
     {
         return $this->hasMany(Unit::class);
@@ -97,6 +124,9 @@ class Lot extends Model
         return $this->hasMany(InventoryLog::class);
     }
 
+    /**
+     * Accessor to ensure number attribute is properly trimmed.
+     */
     public function getNumberAttribute(?string $value): ?string
     {
         return $value !== null ? trim($value) : null;

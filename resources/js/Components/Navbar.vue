@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Top Navbar component rendering the application header, mobile menu toggler, real-time notification popover, and user profile menu.
+ */
 import { ref, computed, watch } from 'vue';
 import { Link, usePage, router } from '@inertiajs/vue3';
 import { Menu, X, Search, Bell, Info, CheckCircle2, AlertTriangle, XCircle, Trash2, Building2, LogOut, EllipsisVertical, Mail, SquareArrowOutUpRight } from 'lucide-vue-next';

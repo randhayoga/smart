@@ -1,9 +1,9 @@
 /**
  * Utility to export tabular data to a CSV file.
  *
- * @param headers Array of header titles
- * @param rows Array of row data arrays
- * @param filename Base filename without extension or with .csv
+ * @param headers - Array of header titles
+ * @param rows - Array of row data arrays
+ * @param filename - Base filename without extension or with .csv
  */
 export function exportCSV(
   headers: string[],

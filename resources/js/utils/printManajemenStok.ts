@@ -50,6 +50,12 @@ function escapeHtml(str: string): string {
     .replace(/'/g, '&#039;');
 }
 
+/**
+ * Print utility rendering the inventory and stock management report in A4 landscape format.
+ *
+ * @param items - List of printable asset items
+ * @param filterInfo - Applied location, floor, room, and year filters
+ */
 export function printManajemenStok(
   items: PrintableAssetItem[],
   filterInfo: PrintFilterInfo = {}

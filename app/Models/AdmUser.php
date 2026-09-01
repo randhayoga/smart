@@ -16,6 +16,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
+/**
+ * Application User model representing user authentication and role management.
+ */
 class AdmUser extends Authenticatable
 {
     use HasFactory, Notifiable;

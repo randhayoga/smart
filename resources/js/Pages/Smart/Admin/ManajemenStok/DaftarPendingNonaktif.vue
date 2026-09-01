@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Admin Pending Deactivation List Page component tracking assets awaiting approval (BoD/BoC and DM stages).
+ */
 import { ref, computed } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem } from '@/Components/ui/breadcrumb';

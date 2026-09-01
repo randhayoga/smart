@@ -13,6 +13,11 @@ use App\Models\AdmUser as User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
+/**
+ * Master Data Extended Feature Tests
+ *
+ * Verifies validation patterns, hierarchical integrity, and CRUD handlers for Floors, Rooms, Subcategories, Brands, and Vendors.
+ */
 class MasterDataTest extends TestCase
 {
     use RefreshDatabase;

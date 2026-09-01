@@ -1,12 +1,14 @@
 #!/bin/sh
 set -e
 
+# Container startup entrypoint: manages dependencies, file permissions, database migrations, and starts Octane
+
 echo "Installing Composer dependencies..."
 composer install --no-interaction --optimize-autoloader
 
 echo "Installing npm dependencies..."
 npm install
-# npm run build #testing/production only
+# npm run build # Uncomment for testing/production asset build
 
 echo "Fixing storage and cache permissions..."
 chmod -R 775 storage bootstrap/cache || true

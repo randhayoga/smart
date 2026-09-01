@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Native Dialog Modal wrapper component with backdrop transitions and keyboard shortcuts.
+ */
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 
 const props = withDefaults(

@@ -15,6 +15,9 @@ use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
+/**
+ * Manager Approval Controller handling workflow approval and rejection of borrowing/asset requests.
+ */
 class ApprovalController extends Controller
 {
     /**

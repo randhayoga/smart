@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Application Logo component rendering the brand SVG asset.
+ */
 import logoUrl from '@/../images/logo.svg';
 </script>
 

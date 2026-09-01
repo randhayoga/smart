@@ -7,8 +7,16 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
+/**
+ * Mercure Publisher Service publishing real-time Server-Sent Events (SSE) to the Mercure Hub.
+ */
 class MercurePublisher
 {
+    /**
+     * Create a new MercurePublisher instance.
+     *
+     * @param MercureJwtService $jwtService
+     */
     public function __construct(
         protected MercureJwtService $jwtService
     ) {}

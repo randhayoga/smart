@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Manager Request Card component displaying loan/supply requests with approval timelines and collapsible items.
+ */
 import { ref } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import { ChevronDown, ChevronUp } from 'lucide-vue-next';
@@ -75,7 +78,7 @@ const getStatusClasses = (status: string) => {
 <template>
   <div class="bg-card border border-border rounded-[14px] p-5 hover:border-primary/30 transition-all shadow-sm relative overflow-hidden">
     
-    <!-- Badge Status & Tanggal Pembuatan -->
+    <!-- Status Badge & Creation Date -->
     <div class="flex items-center justify-between mb-4">
       <div class="flex items-center gap-2">
         <span 
@@ -91,7 +94,7 @@ const getStatusClasses = (status: string) => {
     </div>
 
     <div class="flex flex-col md:flex-row gap-5 items-start">
-      <!-- Gambar Thumbnail Grid (2x2) atau Single -->
+      <!-- Thumbnail Image Grid (2x2) or Single -->
       <div class="shrink-0">
         <!-- Grid 2x2 if multi items -->
         <div 
@@ -130,19 +133,19 @@ const getStatusClasses = (status: string) => {
         </div>
       </div>
 
-      <!-- Deskripsi/Info Permintaan -->
+      <!-- Request Details & Description -->
       <div class="flex-grow space-y-1 min-w-0">
-        <!-- Nama Peminta -->
+        <!-- Requester Name -->
         <h3 class="text-base font-bold text-foreground">
           {{ request.requester }}
         </h3>
         
-        <!-- Nomor Permintaan/Peminjaman -->
+        <!-- Request Number -->
         <h2 class="text-base font-bold text-foreground truncate mt-0.5">
           {{ request.number }}
         </h2>
         
-        <!-- Pemanfaatan -->
+        <!-- Utilization -->
         <p class="text-sm text-foreground pt-1">
           <span class="text-muted-foreground">Pemanfaatan:</span> 
           <span class="font-medium">
@@ -150,7 +153,7 @@ const getStatusClasses = (status: string) => {
           </span>
         </p>
 
-        <!-- Durasi (Hanya untuk Peminjaman) -->
+        <!-- Duration (Loans only) -->
         <p v-if="request.type === 'peminjaman' && request.durationStart" class="text-sm text-foreground">
           <span class="text-muted-foreground">Durasi:</span>
           <span class="font-medium">
@@ -158,7 +161,7 @@ const getStatusClasses = (status: string) => {
           </span>
         </p>
 
-        <!-- Barang Collapsible Toggle -->
+        <!-- Collapsible Items Toggle -->
         <div class="pt-1">
           <button
             @click="toggleExpanded"
@@ -192,7 +195,7 @@ const getStatusClasses = (status: string) => {
     <!-- Divider Line -->
     <div class="border-t border-border mt-5 mb-4"></div>
 
-    <!-- Tombol Aksi di Kaki Card -->
+    <!-- Card Footer Action Buttons -->
     <div class="flex items-center justify-end gap-4">
       <Link
         :href="detailRoute"
@@ -201,7 +204,7 @@ const getStatusClasses = (status: string) => {
         Lihat Detail
       </Link>
 
-      <!-- Tampilkan Batalkan Permintaan hanya jika status Menunggu approval dan user adalah manager -->
+      <!-- Show Cancel Request button only if pending approval and user is manager -->
       <button
         v-if="request.status === 'Menunggu approval' && ($page.props.auth.user?.role === 'manager' || $page.props.auth.user?.role === 'ifs_manager')"
         class="h-9 px-5 rounded-lg text-xs font-bold bg-[#D9534F] hover:bg-[#C9302C] text-white shadow-sm flex items-center justify-center transition-colors cursor-pointer"

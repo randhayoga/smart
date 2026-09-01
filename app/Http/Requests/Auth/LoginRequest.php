@@ -10,6 +10,9 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use App\Models\AdmUser;
 
+/**
+ * Login Request validating user credentials, enforcing rate limiting, and handling authentication.
+ */
 class LoginRequest extends FormRequest
 {
     /**

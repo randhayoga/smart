@@ -6,6 +6,11 @@ use App\Models\AdmUser as User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
+/**
+ * Authentication Feature Tests
+ *
+ * Verifies user login page rendering, valid credential login, invalid attempt rejections, and logout workflows.
+ */
 class AuthenticationTest extends TestCase
 {
     use RefreshDatabase;

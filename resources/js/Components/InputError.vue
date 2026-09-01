@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Form Input Error message component displaying validation failures.
+ */
 defineProps<{
     message?: string;
 }>();

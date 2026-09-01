@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Basic Text Input component with auto-focus support and exposed focus method.
+ */
 import { onMounted, ref } from 'vue';
 
 const model = defineModel<string>({ required: true });

@@ -8,6 +8,9 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Vendor Controller managing supplier directories and contact person information.
+ */
 class VendorController extends Controller
 {
     /**

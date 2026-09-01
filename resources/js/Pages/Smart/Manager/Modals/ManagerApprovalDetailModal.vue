@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Manager Approval Detail Modal component displaying pending/decided asset deactivation details and audit trail logs.
+ */
 import { ref, watch } from 'vue';
 import { X, FileText, ThumbsUp, Ban } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';

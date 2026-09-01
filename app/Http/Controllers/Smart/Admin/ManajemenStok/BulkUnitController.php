@@ -14,6 +14,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Bulk Unit Controller managing automated multi-unit asset code generation, mass creation, and batch status updates.
+ */
 class BulkUnitController extends Controller
 {
     /**

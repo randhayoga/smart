@@ -16,6 +16,9 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Unit Borrow Controller handling direct admin loan registrations, loan extensions, and loan completions.
+ */
 class UnitBorrowController extends Controller
 {
     /**

@@ -19,6 +19,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
+/**
+ * Lot Controller managing inventory lot batches, procurement tracking, project burden allocation, and lot detail views.
+ */
 class LotController extends Controller
 {
     /**

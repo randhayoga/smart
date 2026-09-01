@@ -1,3 +1,6 @@
+{{--
+    503 Service Unavailable / Maintenance mode error page template.
+--}}
 @extends('errors.layout')
 
 @section('title', 'Sistem Sedang Dalam Pemeliharaan')

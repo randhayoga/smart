@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Create Tipe Modal component for registering new inventory item definitions, classifications, and stock notification thresholds.
+ */
 import { ref, watch, computed } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import { X, ChevronDown, Loader2 } from 'lucide-vue-next';

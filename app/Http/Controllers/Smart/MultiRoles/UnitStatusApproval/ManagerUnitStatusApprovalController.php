@@ -9,6 +9,9 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
+/**
+ * Manager Unit Status Approval Controller displaying pending and historical asset status change reviews.
+ */
 class ManagerUnitStatusApprovalController extends Controller
 {
     /**

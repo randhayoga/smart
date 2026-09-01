@@ -8,6 +8,9 @@ use App\Models\Inventory\Unit;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
+/**
+ * Borrow Cart Controller managing shopping basket operations for loanable asset items.
+ */
 class BorrowCartController extends Controller
 {
     /**

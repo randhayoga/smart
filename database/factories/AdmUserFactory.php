@@ -12,8 +12,16 @@ use Illuminate\Support\Facades\Hash;
  */
 class AdmUserFactory extends Factory
 {
+    /**
+     * The name of the factory's corresponding model.
+     *
+     * @var class-string<\Illuminate\Database\Eloquent\Model>
+     */
     protected $model = AdmUser::class;
 
+    /**
+     * The current password being used by the factory.
+     */
     protected static ?string $password;
 
     /**

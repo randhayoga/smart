@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Typography Heading component with configurable semantic tags and visual styling variants.
+ */
 import { computed } from 'vue';
 
 interface Props {

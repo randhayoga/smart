@@ -16,6 +16,9 @@ use Intervention\Image\Typography\FontFactory;
 use Symfony\Component\HttpFoundation\Response;
 
 
+/**
+ * Unit QR Code Controller generating branded high-resolution QR code labels for physical assets.
+ */
 class UnitQrCodeController extends Controller
 {
     /**

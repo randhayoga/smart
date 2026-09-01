@@ -10,6 +10,9 @@ use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * Barang Controller managing item type catalog CRUD operations, image storage, and low-stock alert triggers.
+ */
 class BarangController extends Controller
 {
     /**

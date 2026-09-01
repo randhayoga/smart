@@ -34,6 +34,11 @@ function escapeHtml(str: string): string {
     .replace(/'/g, '&#039;');
 }
 
+/**
+ * Print utility rendering the asset disposal approval form in A4 landscape format.
+ *
+ * @param items - List of printable asset items
+ */
 export function printFormulirPersetujuanPenghapusan(
   items: PrintableAssetItem[]
 ): void {

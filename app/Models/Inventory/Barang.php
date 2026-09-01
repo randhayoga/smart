@@ -10,6 +10,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Barang (Inventory Item Type) model representing catalog item definitions.
+ */
 class Barang extends Model
 {
     use HasFactory;
@@ -36,21 +39,33 @@ class Barang extends Model
         'min_stock_threshold' => 'integer',
     ];
 
+    /**
+     * The subcategory classification for this item.
+     */
     public function subcategory(): BelongsTo
     {
         return $this->belongsTo(Subcategory::class);
     }
 
+    /**
+     * The brand manufacturer of this item.
+     */
     public function brand(): BelongsTo
     {
         return $this->belongsTo(Brand::class);
     }
 
+    /**
+     * The unit of measure (UOM) for this item.
+     */
     public function uom(): BelongsTo
     {
         return $this->belongsTo(Uom::class);
     }
 
+    /**
+     * Inventory batches (lots) received for this item.
+     */
     public function lots(): HasMany
     {
         return $this->hasMany(Lot::class);
@@ -65,6 +80,9 @@ class Barang extends Model
         return $this->hasMany(InventoryLog::class);
     }
 
+    /**
+     * Accessor to ensure number attribute is properly trimmed.
+     */
     public function getNumberAttribute(?string $value): ?string
     {
         return $value !== null ? trim($value) : null;

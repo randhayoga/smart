@@ -9,6 +9,9 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Subcategory Controller managing item subcategories with code formatting validation.
+ */
 class SubcategoryController extends Controller
 {
     /**

@@ -9,6 +9,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Master Room model representing specific rooms or storage spaces on a floor.
+ */
 class Room extends Model
 {
     use HasFactory;
@@ -22,6 +25,9 @@ class Room extends Model
         'floor_id' => 'integer',
     ];
 
+    /**
+     * Floor on which this room is located.
+     */
     public function floor(): BelongsTo
     {
         return $this->belongsTo(Floor::class);
