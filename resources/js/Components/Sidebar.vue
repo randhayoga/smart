@@ -70,33 +70,40 @@ const navigation = computed<NavSection[]>(() => {
     sections = [
       menuUtama,
       approvalStatus,
-      // approvalPermintaan, // Hidden
+      approvalPermintaan,
       ...restOfAdmin
     ].filter((section): section is NavSection => !!section);
   } else if (isAdmin.value) {
     // Admin:
     // - Menu Utama
     // - Inventory
+    // - Permintaan
     // - Audit
-    sections = mainNavigation.filter(section => section.title !== 'Permintaan');
+    sections = mainNavigation;
   } else if (isManager.value) {
     // Manager:
     // - Menu Utama
-    // - Approval Permintaan (Hidden)
+    // - Approval Permintaan
+    // - Permintaan
     const menuUtama = userNavigation.find(section => section.title === 'MENU UTAMA');
     const approvalPermintaan = userNavigation.find(section => section.title === 'APPROVAL PEMINJAMAN');
+    const permintaan = userNavigation.find(section => section.title === 'Permintaan');
     
     sections = [
       menuUtama,
-      // approvalPermintaan, // Hidden
+      approvalPermintaan,
+      permintaan,
     ].filter((section): section is NavSection => !!section);
   } else {
     // User:
     // - Menu Utama
+    // - Permintaan
     const menuUtama = userNavigation.find(section => section.title === 'MENU UTAMA');
+    const permintaan = userNavigation.find(section => section.title === 'Permintaan');
     
     sections = [
-      menuUtama
+      menuUtama,
+      permintaan,
     ].filter((section): section is NavSection => !!section);
   }
 
