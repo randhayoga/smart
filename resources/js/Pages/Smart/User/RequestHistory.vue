@@ -1,26 +1,29 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
+import { router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import { Button } from '@/Components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/Components/ui/select';
-import {
-  Breadcrumb,
-  BreadcrumbList,
-  BreadcrumbItem,
-} from '@/Components/ui/breadcrumb';
-import { 
-  Search, 
-  Calendar, 
-  AlertTriangle, 
-  X
-} from 'lucide-vue-next';
+import TableSearch from '@/Components/TableSearch.vue';
 import RequestHistoryCard from '@/Components/RequestHistoryCard.vue';
+import { Button } from '@/Components/ui/button';
+import { ScrollArea } from "@/Components/ui/scroll-area";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/Components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from "@/Components/ui/dialog";
+import { 
+  ChevronDown, 
+  AlertTriangle, 
+  X,
+  Calendar
+} from 'lucide-vue-next';
 
 // ─────────────────────────────────────────────
 // Types
@@ -29,11 +32,13 @@ interface RequestItem {
   id: number;
   subcategory: string;
   brand: string;
+  name?: string;
   spec: string;
   quantity: number;
   stockQuantity?: number;
   imageUrl?: string;
   category: string;
+  uom?: string;
 }
 
 interface RequestHistory {
@@ -60,8 +65,6 @@ interface RequestHistory {
   handover_note?: string | null;
 }
 
-import { router } from '@inertiajs/vue3';
-
 interface Props {
   user?: any;
   requests?: RequestHistory[];
@@ -81,10 +84,19 @@ watch(() => props.requests, (newVal) => {
 // State Filters & Search
 // ─────────────────────────────────────────────
 const searchQuery = ref('');
-const filterType = ref('semua');       // 'semua' | 'permintaan' | 'peminjaman'
-const filterCategory = ref('semua');   // 'semua' | 'Elektronik' | 'Alat Tulis'
-const filterStatus = ref('semua');     // 'semua' | 'Menunggu approval' | etc.
-const filterTimeRange = ref('semua');   // 'semua' | 'hari-ini' | '7-hari' | '30-hari'
+const filterType = ref('Semua tipe');            // 'Semua tipe' | 'Hanya Permintaan' | 'Hanya Peminjaman'
+const filterCategory = ref('Semua kategori');    // 'Semua kategori' | ...
+const filterStatus = ref('Semua status');        // 'Semua status' | 'Menunggu approval' | etc.
+const filterTimeRange = ref('Semua rentang');    // 'Semua rentang' | 'Hari ini' | '7 hari terakhir' | '30 hari terakhir'
+
+/** Reset all search and filter states */
+const clearFilter = () => {
+  searchQuery.value = '';
+  filterType.value = 'Semua tipe';
+  filterCategory.value = 'Semua kategori';
+  filterStatus.value = 'Semua status';
+  filterTimeRange.value = 'Semua rentang';
+};
 
 // Category Options (Unique categories from data)
 const categoryOptions = computed(() => {
@@ -97,6 +109,26 @@ const categoryOptions = computed(() => {
   return Array.from(cats);
 });
 
+// Status Options
+const statusOptions = [
+  'Menunggu approval',
+  'Disetujui',
+  'Serah Terima',
+  'Dipinjam',
+  'Selesai',
+  'Ditolak',
+  'Dibatalkan',
+  'Pending'
+];
+
+// Time Range Options
+const timeRangeOptions = [
+  { label: 'Semua rentang', value: 'Semua rentang' },
+  { label: 'Hari ini', value: 'Hari ini' },
+  { label: '7 hari terakhir', value: '7 hari terakhir' },
+  { label: '30 hari terakhir', value: '30 hari terakhir' },
+];
+
 // ─────────────────────────────────────────────
 // Filtered Data
 // ─────────────────────────────────────────────
@@ -104,6 +136,7 @@ const filteredRequests = computed(() => {
   return requests.value.filter(req => {
     // 1. Search Query Match
     const matchesSearch = 
+      !searchQuery.value.trim() ||
       req.number.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
       req.items.some(item => 
         item.brand.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
@@ -112,31 +145,36 @@ const filteredRequests = computed(() => {
       );
 
     // 2. Type Match
-    const matchesType = filterType.value === 'semua' || req.type === filterType.value;
+    let matchesType = true;
+    if (filterType.value === 'Hanya Permintaan') {
+      matchesType = req.type === 'permintaan';
+    } else if (filterType.value === 'Hanya Peminjaman') {
+      matchesType = req.type === 'peminjaman';
+    }
 
     // 3. Category Match
-    const matchesCategory = filterCategory.value === 'semua' || 
+    const matchesCategory = filterCategory.value === 'Semua kategori' || 
       req.items.some(item => item.category === filterCategory.value);
 
     // 4. Status Match
-    const matchesStatus = filterStatus.value === 'semua' || req.status === filterStatus.value;
+    const matchesStatus = filterStatus.value === 'Semua status' || req.status === filterStatus.value;
 
     // 5. Time Range Match
     let matchesTime = true;
-    if (filterTimeRange.value !== 'semua') {
+    if (filterTimeRange.value !== 'Semua rentang') {
       const reqDate = new Date(req.created_at);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      if (filterTimeRange.value === 'hari-ini') {
+      if (filterTimeRange.value === 'Hari ini') {
         const reqDateStr = req.created_at;
         const todayStr = today.toISOString().split('T')[0];
         matchesTime = reqDateStr === todayStr;
-      } else if (filterTimeRange.value === '7-hari') {
+      } else if (filterTimeRange.value === '7 hari terakhir') {
         const diffTime = Math.abs(today.getTime() - reqDate.getTime());
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         matchesTime = diffDays <= 7;
-      } else if (filterTimeRange.value === '30-hari') {
+      } else if (filterTimeRange.value === '30 hari terakhir') {
         const diffTime = Math.abs(today.getTime() - reqDate.getTime());
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         matchesTime = diffDays <= 30;
@@ -153,6 +191,7 @@ const filteredRequests = computed(() => {
 const isCancelModalOpen = ref(false);
 const activeRequestToCancel = ref<RequestHistory | null>(null);
 const cancelNote = ref('');
+const isSubmitting = ref(false);
 
 const openCancelModal = (req: RequestHistory) => {
   activeRequestToCancel.value = req;
@@ -160,6 +199,7 @@ const openCancelModal = (req: RequestHistory) => {
 };
 
 const closeCancelModal = () => {
+  if (isSubmitting.value) return;
   isCancelModalOpen.value = false;
   setTimeout(() => {
     activeRequestToCancel.value = null;
@@ -168,13 +208,19 @@ const closeCancelModal = () => {
 };
 
 const handleConfirmCancel = () => {
-  if (!activeRequestToCancel.value) return;
+  if (!activeRequestToCancel.value || isSubmitting.value) return;
 
   router.post(route('smart.history.cancel', activeRequestToCancel.value.id), {
     note: cancelNote.value
   }, {
+    onBefore: () => {
+      isSubmitting.value = true;
+    },
     onSuccess: () => {
       closeCancelModal();
+    },
+    onFinish: () => {
+      isSubmitting.value = false;
     }
   });
 };
@@ -182,221 +228,196 @@ const handleConfirmCancel = () => {
 
 <template>
   <AppLayout title="Riwayat Permintaan">
+    <div class="space-y-6">
+      <div>
+        <h1 class="text-lg font-bold text-gray-900 leading-none mb-5">Riwayat permintaan dan peminjaman</h1>
+        
+        <!-- Filter & Search Section -->
+        <div class="space-y-4 mb-5">
+          <!-- Search Row (Top) -->
+          <div class="space-y-1.5 w-lg">
+            <label class="text-xs text-muted-foreground font-medium block ml-0.5">Pencarian</label>
+            <TableSearch 
+              v-model="searchQuery" 
+              placeholder="Cari barang atau no. permintaan..." 
+              bg-class="bg-white"
+            />
+          </div>
 
-    <!-- ── Breadcrumb ─────────────────────────────── -->
-    <Breadcrumb>
-      <BreadcrumbList class="pb-3">
-        <BreadcrumbItem>
-          <span class="text-muted-foreground">Riwayat Permintaan</span>
-        </BreadcrumbItem>
-      </BreadcrumbList>
-    </Breadcrumb>
+          <!-- Filter Row (Below) -->
+          <div class="space-y-1.5 w-full">
+            <label class="text-xs text-muted-foreground font-medium block ml-0.5">Filter & Urutkan</label>
+            <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                <!-- Filter Tipe -->
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" :class="['w-full sm:w-[11.25rem] md:w-[12rem] justify-between rounded-[0.875rem] font-normal bg-white', filterType === 'Semua tipe' ? 'text-muted-foreground' : 'text-foreground']">
+                      <span class="truncate">{{ filterType }}</span>
+                      <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent class="w-[12rem] rounded-[0.875rem]" align="start" :side-offset="4">
+                    <DropdownMenuItem @select="filterType = 'Semua tipe'">Semua tipe</DropdownMenuItem>
+                    <DropdownMenuItem @select="filterType = 'Hanya Permintaan'">Hanya Permintaan</DropdownMenuItem>
+                    <DropdownMenuItem @select="filterType = 'Hanya Peminjaman'">Hanya Peminjaman</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
-    <!-- ── Judul Halaman ──────────────────────────── -->
-    <div class="mb-4">
-      <h1 class="text-2xl font-bold text-foreground">Riwayat permintaan dan peminjaman</h1>
-    </div>
+                <!-- Filter Kategori -->
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" :class="['w-full sm:w-[11.25rem] md:w-[12rem] justify-between rounded-[0.875rem] font-normal bg-white', filterCategory === 'Semua kategori' ? 'text-muted-foreground' : 'text-foreground']">
+                      <span class="truncate">{{ filterCategory }}</span>
+                      <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent class="w-[12rem] rounded-[0.875rem]" align="start" :side-offset="4">
+                    <DropdownMenuItem @select="filterCategory = 'Semua kategori'">Semua kategori</DropdownMenuItem>
+                    <DropdownMenuItem 
+                      v-for="cat in categoryOptions" 
+                      :key="cat" 
+                      @select="filterCategory = cat"
+                    >
+                      {{ cat }}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
-    <!-- ── Input Pencarian (Rounded Capsule dengan Icon Search) ── -->
-    <div class="relative w-full max-w-xl mb-6">
-      <input
-        v-model="searchQuery"
-        type="text"
-        placeholder="Cari nama barang yang Anda minta atau pinjam..."
-        class="w-full h-11 pl-4 pr-12 text-sm border border-input rounded-full bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm"
-      />
-      <div class="absolute right-1 top-1 h-9 w-9 bg-primary/10 rounded-full flex items-center justify-center text-primary">
-        <Search class="w-4 h-4" />
-      </div>
-    </div>
+                <!-- Filter Status -->
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" :class="['w-full sm:w-[11.25rem] md:w-[12rem] justify-between rounded-[0.875rem] font-normal bg-white', filterStatus === 'Semua status' ? 'text-muted-foreground' : 'text-foreground']">
+                      <span class="truncate">{{ filterStatus }}</span>
+                      <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent class="w-[12rem] rounded-[0.875rem]" align="start" :side-offset="4">
+                    <DropdownMenuItem @select="filterStatus = 'Semua status'">Semua status</DropdownMenuItem>
+                    <DropdownMenuItem 
+                      v-for="status in statusOptions" 
+                      :key="status" 
+                      @select="filterStatus = status"
+                    >
+                      {{ status }}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
-    <!-- ── Filter Controls ────────────────────────── -->
-    <div class="space-y-2 mb-6">
-      <span class="text-xs font-semibold text-muted-foreground uppercase tracking-wider block">Filter</span>
-      
-      <div class="flex flex-wrap gap-3 items-center">
-        <!-- Filter Tipe (Permintaan / Peminjaman) -->
-        <div class="w-full sm:w-[220px]">
-          <Select v-model="filterType">
-            <SelectTrigger class="w-full rounded-[14px] h-10 text-sm">
-              <SelectValue placeholder="Tipe Permintaan" />
-            </SelectTrigger>
-            <SelectContent class="rounded-[14px]">
-              <SelectItem value="semua">Permintaan &amp; Peminjaman</SelectItem>
-              <SelectItem value="permintaan">Hanya Permintaan (Habis Pakai)</SelectItem>
-              <SelectItem value="peminjaman">Hanya Peminjaman (Aset)</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+                <!-- Filter Rentang Waktu -->
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" :class="['w-full sm:w-[11.25rem] md:w-[12rem] justify-between rounded-[0.875rem] font-normal bg-white', filterTimeRange === 'Semua rentang' ? 'text-muted-foreground' : 'text-foreground']">
+                      <div class="flex items-center gap-1.5 truncate">
+                        <Calendar class="w-3.5 h-3.5 opacity-50 shrink-0" />
+                        <span class="truncate">{{ filterTimeRange }}</span>
+                      </div>
+                      <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent class="w-[12rem] rounded-[0.875rem]" align="start" :side-offset="4">
+                    <DropdownMenuItem 
+                      v-for="opt in timeRangeOptions" 
+                      :key="opt.value" 
+                      @select="filterTimeRange = opt.value"
+                    >
+                      {{ opt.label }}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
-        <!-- Filter Kategori -->
-        <div class="w-full sm:w-[180px]">
-          <Select v-model="filterCategory">
-            <SelectTrigger class="w-full rounded-[14px] h-10 text-sm">
-              <SelectValue placeholder="Kategori: Semua" />
-            </SelectTrigger>
-            <SelectContent class="rounded-[14px]">
-              <SelectItem value="semua">Kategori: Semua</SelectItem>
-              <SelectItem 
-                v-for="cat in categoryOptions" 
-                :key="cat" 
-                :value="cat"
-              >
-                Kategori: {{ cat }}
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <!-- Filter Status -->
-        <div class="w-full sm:w-[180px]">
-          <Select v-model="filterStatus">
-            <SelectTrigger class="w-full rounded-[14px] h-10 text-sm">
-              <SelectValue placeholder="Status: Semua" />
-            </SelectTrigger>
-            <SelectContent class="rounded-[14px]">
-              <SelectItem value="semua">Status: Semua</SelectItem>
-              <SelectItem value="Menunggu approval">Menunggu approval</SelectItem>
-              <SelectItem value="Disetujui">Disetujui</SelectItem>
-              <SelectItem value="Serah Terima">Serah Terima</SelectItem>
-              <SelectItem value="Dipinjam">Dipinjam</SelectItem>
-              <SelectItem value="Selesai">Selesai</SelectItem>
-              <SelectItem value="Ditolak">Ditolak</SelectItem>
-              <SelectItem value="Dibatalkan">Dibatalkan</SelectItem>
-              <SelectItem value="Pending">Pending</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <!-- Filter Rentang Waktu -->
-        <div class="w-full sm:w-[220px]">
-          <Select v-model="filterTimeRange">
-            <SelectTrigger class="w-full rounded-[14px] h-10 text-sm flex items-center gap-2">
-              <Calendar class="w-4 h-4 text-muted-foreground shrink-0" />
-              <SelectValue placeholder="Semua Rentang Waktu" />
-            </SelectTrigger>
-            <SelectContent class="rounded-[14px]">
-              <SelectItem value="semua">Semua Rentang Waktu</SelectItem>
-              <SelectItem value="hari-ini">Hari Ini</SelectItem>
-              <SelectItem value="7-hari">7 Hari Terakhir</SelectItem>
-              <SelectItem value="30-hari">30 Hari Terakhir</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-    </div>
-
-    <!-- ── Hasil Pencarian Title ──────────────────── -->
-    <div class="mb-4">
-      <span class="text-sm font-semibold text-foreground">Hasil Pencarian dan Filter:</span>
-    </div>
-
-    <!-- ── Daftar Request Cards ───────────────────── -->
-    <div class="space-y-4">
-      <!-- Empty State -->
-      <div 
-        v-if="filteredRequests.length === 0" 
-        class="bg-card border border-border rounded-[14px] p-12 text-center"
-      >
-        <AlertTriangle class="w-10 h-10 text-muted-foreground/60 mx-auto mb-3" />
-        <p class="text-sm text-muted-foreground font-medium">Tidak ada riwayat permintaan yang cocok dengan filter atau kata kunci pencarian.</p>
-      </div>
-
-      <!-- Request Card -->
-      <RequestHistoryCard
-        v-for="req in filteredRequests"
-        :key="req.id"
-        :request="req"
-        @cancel="openCancelModal"
-      />
-    </div>
-
-    <!-- ============================================================
-         Modal Pembatalan Permintaan (Teleport & Backdrop)
-         ============================================================ -->
-    <Teleport to="body">
-      <Transition
-        enter-active-class="ease-out duration-300"
-        enter-from-class="opacity-0"
-        enter-to-class="opacity-100"
-        leave-active-class="ease-in duration-200"
-        leave-from-class="opacity-100"
-        leave-to-class="opacity-0"
-      >
-        <div 
-          v-if="isCancelModalOpen" 
-          class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-200"
-        >
-          <div 
-            class="bg-card text-foreground rounded-[14px] shadow-2xl w-full max-w-[800px] flex flex-col overflow-hidden border border-border"
-            @click.stop
-          >
-            <!-- Header -->
-            <div class="flex items-center justify-between p-5 border-b border-border bg-card shrink-0">
-              <h3 class="text-base md:text-lg font-extrabold text-foreground">Pembatalan Permintaan/Peminjaman</h3>
-              <button @click="closeCancelModal" class="p-1.5 hover:bg-muted rounded-full transition-colors">
-                <X class="w-5 h-5 text-muted-foreground" />
-              </button>
-            </div>
-            
-            <!-- Body -->
-            <div class="overflow-y-auto max-h-[85vh]">
-              <!-- Bagian Atas: Konfirmasi & Metadata Detail + Button Aksi (Side-by-side) -->
-              <div class="p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                <div class="space-y-1.5 text-sm text-foreground flex-grow">
-                  <p class="font-bold text-[#D9534F] text-base md:text-lg">
-                    Apakah Anda yakin untuk membatalkan permintaan/peminjaman ini?
-                  </p>
-                  <p class="font-extrabold text-lg text-foreground">
-                    {{ activeRequestToCancel?.number }}
-                  </p>
-                  <p class="text-foreground">
-                    <span class="text-muted-foreground">Pemanfaatan:</span> 
-                    <span class="font-medium">
-                      {{ activeRequestToCancel?.pemanfaatan === 'corporate' ? 'Corporate' : 'Project' }} ({{ activeRequestToCancel?.pemanfaatanDetail }})
-                    </span>
-                  </p>
-                  <p v-if="activeRequestToCancel?.type === 'peminjaman' && activeRequestToCancel?.durationStart" class="text-foreground">
-                    <span class="text-muted-foreground">Durasi:</span>
-                    <span class="font-medium">
-                      {{ activeRequestToCancel?.durationStart }} s.d. {{ activeRequestToCancel?.durationEnd }} ({{ activeRequestToCancel?.durationDays }} hari, {{ activeRequestToCancel?.durationHours || 0 }} jam)
-                    </span>
-                  </p>
-                </div>
-
-                <!-- Tombol Aksi di Sebelah Kanan Info -->
-                <div class="flex items-center gap-2.5 shrink-0 self-end md:self-center">
-                  <Button 
-                    variant="outline"
-                    @click="closeCancelModal"
-                    class="rounded-full h-10 px-6 font-bold text-sm border-input hover:bg-muted transition-colors"
-                  >
-                    Tidak
-                  </Button>
-                  <Button 
-                    @click="handleConfirmCancel"
-                    class="rounded-full h-10 px-6 font-bold text-sm bg-[#D9534F] hover:bg-[#C9302C] text-white shadow-sm transition-colors"
-                  >
-                    Iya
-                  </Button>
-                </div>
+                <!-- Clear Filter Button -->
+                <Button variant="destructive" @click="clearFilter" class="hover:opacity-70 rounded-[0.875rem] px-0 sm:px-5 font-semibold text-white w-9 h-9 sm:w-auto sm:h-auto flex items-center justify-center shrink-0">
+                  <X class="w-4 h-4 sm:hidden" />
+                  <span class="hidden sm:inline">Hapus filter</span>
+                </Button>
               </div>
+            </div> 
+        </div>
 
-              <!-- Divider line -->
-              <div class="border-t border-border/80 mx-6"></div>
+        <p class="text-xs text-muted-foreground font-medium mb-3">Hasil Pencarian dan Filter:</p>
 
-              <!-- Bagian Bawah: Daftar Barang -->
-              <div class="p-6 space-y-4">
-                <h4 class="text-xs font-bold text-muted-foreground uppercase tracking-wider">Daftar barang:</h4>
-                
-                <div class="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+        <!-- Grid / ScrollArea -->
+        <ScrollArea class="border border-border rounded-[0.875rem] bg-card h-[calc(100vh-25rem)] sm:h-[calc(100vh-21.5rem)]">
+          <div class="p-2.5 sm:p-5">
+            <!-- Empty State -->
+            <div 
+              v-if="filteredRequests.length === 0" 
+              class="p-12 text-center"
+            >
+              <AlertTriangle class="w-10 h-10 text-muted-foreground/60 mx-auto mb-3" />
+              <p class="text-sm text-muted-foreground font-medium">Riwayat permintaan kosong atau tidak ada riwayat permintaan yang cocok dengan filter atau kata kunci pencarian.</p>
+            </div>
+
+            <!-- Request Cards -->
+            <div v-else class="space-y-4">
+              <RequestHistoryCard
+                v-for="req in filteredRequests"
+                :key="req.id"
+                :request="req"
+                @cancel="openCancelModal"
+              />
+            </div>
+          </div>
+        </ScrollArea>
+      </div>
+    </div>
+
+    <!-- Modal Pembatalan Permintaan -->
+    <Dialog :open="isCancelModalOpen" @update:open="val => { if (!isSubmitting) isCancelModalOpen = val }">
+      <DialogContent class="sm:max-w-[50rem] rounded-[0.875rem] bg-card shadow-2xl p-0 gap-0 border border-border overflow-hidden" :show-close-button="false">
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between pt-3 pb-2 px-4 sm:px-6 border-b border-border">
+          <div>
+            <DialogTitle class="text-lg font-bold text-foreground">Pembatalan Permintaan/Peminjaman</DialogTitle>
+            <DialogDescription class="sr-only">
+              Konfirmasi untuk membatalkan permintaan atau peminjaman barang.
+            </DialogDescription>
+          </div>
+          <button :disabled="isSubmitting" @click="closeCancelModal" class="p-2 hover:bg-muted rounded-full transition-colors disabled:opacity-50">
+            <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
+          </button>
+        </div>
+        
+        <div v-if="activeRequestToCancel">
+          <!-- Modal Body -->
+          <div class="px-4 sm:px-6 py-4 overflow-y-auto max-h-[70vh] space-y-5">
+            <!-- Alert & Detail Summary -->
+            <div class="p-4 rounded-[0.875rem] bg-destructive/5 border border-destructive/20 space-y-2">
+              <p class="font-bold text-destructive text-sm sm:text-base">
+                Apakah Anda yakin untuk membatalkan permintaan/peminjaman ini?
+              </p>
+              <div class="space-y-1 text-sm text-foreground">
+                <p class="font-extrabold text-base text-foreground">
+                  {{ activeRequestToCancel.number }}
+                </p>
+                <p class="text-foreground">
+                  <span class="text-muted-foreground">Pemanfaatan:</span> 
+                  <span class="font-medium">
+                    {{ activeRequestToCancel.pemanfaatan === 'corporate' ? 'Corporate' : 'Project' }} ({{ activeRequestToCancel.pemanfaatanDetail }})
+                  </span>
+                </p>
+                <p v-if="activeRequestToCancel.type === 'peminjaman' && activeRequestToCancel.durationStart" class="text-foreground">
+                  <span class="text-muted-foreground">Durasi:</span>
+                  <span class="font-medium">
+                    {{ activeRequestToCancel.durationStart }} s.d. {{ activeRequestToCancel.durationEnd }} ({{ activeRequestToCancel.durationDays }} hari, {{ activeRequestToCancel.durationHours || 0 }} jam)
+                  </span>
+                </p>
+              </div>
+            </div>
+
+            <!-- Item List -->
+            <div class="space-y-2">
+              <h4 class="text-xs font-bold text-muted-foreground uppercase tracking-wider">Daftar barang:</h4>
+              
+              <ScrollArea class="max-h-[14rem] border border-border rounded-[0.875rem] bg-background">
+                <div class="p-3 space-y-2.5">
                   <div 
-                    v-for="item in activeRequestToCancel?.items" 
+                    v-for="item in activeRequestToCancel.items" 
                     :key="item.id"
-                    class="flex gap-4 p-4 border border-border/70 hover:border-primary/20 transition-all rounded-[14px] items-center bg-muted/10"
+                    class="flex gap-3.5 p-3 border border-border rounded-[0.875rem] items-center bg-card"
                   >
                     <!-- Thumbnail Barang -->
-                    <div class="w-14 h-14 rounded-[10px] bg-muted border border-border overflow-hidden shrink-0 flex items-center justify-center">
+                    <div class="w-12 h-12 rounded-[0.625rem] bg-muted border border-border overflow-hidden shrink-0 flex items-center justify-center">
                       <img 
                         v-if="item.imageUrl" 
                         :src="item.imageUrl.startsWith('http') || item.imageUrl.startsWith('/') ? item.imageUrl : '/media/' + item.imageUrl" 
@@ -410,34 +431,45 @@ const handleConfirmCancel = () => {
                     <!-- Deskripsi Detail Barang -->
                     <div class="min-w-0 flex-grow space-y-0.5">
                       <h5 class="text-sm font-bold text-foreground truncate">
-                        {{ item.brand }} {{ item.spec }}
+                        {{ item.brand !== '-' ? item.brand : '' }} {{ item.name && item.name !== 'Tidak Spesifik' ? item.name : '' }} {{ item.spec }}
                       </h5>
                       <p class="text-xs text-muted-foreground">
                         Kategori: {{ item.category }} ({{ item.subcategory }})
                       </p>
-                      
-                      <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs font-semibold pt-0.5">
-                        <span class="text-primary">
-                          Jumlah diminta: {{ item.quantity }} satuan
-                        </span>
-                      </div>
+                      <p class="text-xs font-semibold text-primary">
+                        Jumlah diminta: {{ item.quantity }} {{ item.uom || 'satuan' }}
+                      </p>
                     </div>
                   </div>
                 </div>
-              </div>
+              </ScrollArea>
             </div>
+          </div>
 
+          <!-- Modal Footer -->
+          <div class="py-4 px-4 sm:px-6 border-t border-border flex items-center justify-end gap-3">
+            <Button 
+              @click="closeCancelModal"
+              variant="white"
+              size="lg"
+              :disabled="isSubmitting"
+            >
+              Tidak
+            </Button>
+            <Button 
+              @click="handleConfirmCancel"
+              variant="destructive"
+              size="lg"
+              :disabled="isSubmitting"
+              class="flex items-center gap-2"
+            >
+              <span v-if="isSubmitting">Memproses...</span>
+              <span v-else>Iya, Batalkan</span>
+            </Button>
           </div>
         </div>
-      </Transition>
-    </Teleport>
-
+      </DialogContent>
+    </Dialog>
   </AppLayout>
 </template>
 
-<style scoped>
-.animate-in {
-  animation-duration: 200ms;
-  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
-}
-</style>

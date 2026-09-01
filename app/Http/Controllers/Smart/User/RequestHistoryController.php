@@ -88,6 +88,9 @@ class RequestHistoryController extends Controller
             $imageUrl = $item->barang?->image_url
                 ? '/media/' . $item->barang->image_url
                 : (($firstBarang = $item->subcategory?->barangs?->first()) && $firstBarang->image_url ? '/media/' . $firstBarang->image_url : null);
+            $uomName = $item->barang?->uom?->name 
+                ?? $item->subcategory?->barangs?->first()?->uom?->name 
+                ?? 'satuan';
 
             return [
                 'id' => $item->id,
@@ -102,6 +105,7 @@ class RequestHistoryController extends Controller
                 'category' => $catName,
                 'is_consumable' => $isConsumable,
                 'imageUrl' => $imageUrl,
+                'uom' => $uomName,
                 'assets' => $assets,
                 'status' => $item->status,
             ];
@@ -127,14 +131,23 @@ class RequestHistoryController extends Controller
             ];
         })->toArray();
 
+        $pemanfaatanDetail = '-';
+        if ($req->utilization === 'corporate') {
+            $pemanfaatanDetail = $req->department?->org_name ?? $req->department?->name ?? '-';
+        } else {
+            if ($req->project) {
+                $pemanfaatanDetail = $req->project->no_project 
+                    ? "[{$req->project->no_project}] {$req->project->project_name}" 
+                    : ($req->project->project_name ?? '-');
+            }
+        }
+
         return [
             'id' => $req->id,
             'number' => $req->request_number,
             'type' => $type,
             'pemanfaatan' => $req->utilization,
-            'pemanfaatanDetail' => $req->utilization === 'corporate' 
-                ? ($req->department->name ?? '-') 
-                : ($req->project->name ?? '-'),
+            'pemanfaatanDetail' => $pemanfaatanDetail,
             'durationStart' => $req->start_date ? $req->start_date->format('d-m-Y H:i') : null,
             'durationEnd' => $req->end_date ? $req->end_date->format('d-m-Y H:i') : null,
             'durationDays' => $durationDays,
@@ -166,8 +179,9 @@ class RequestHistoryController extends Controller
             'approver',
             'items.barang.subcategory.category',
             'items.barang.brand',
+            'items.barang.uom',
             'items.subcategory.category',
-            'items.subcategory.barangs',
+            'items.subcategory.barangs.uom',
             'project',
             'department',
             'approval.approver',
@@ -195,8 +209,9 @@ class RequestHistoryController extends Controller
             'approver',
             'items.barang.subcategory.category',
             'items.barang.brand',
+            'items.barang.uom',
             'items.subcategory.category',
-            'items.subcategory.barangs',
+            'items.subcategory.barangs.uom',
             'project',
             'department',
             'approval.approver',
