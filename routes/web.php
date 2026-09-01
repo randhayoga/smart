@@ -55,6 +55,12 @@ Route::middleware(['auth'])->group(function () {
         ->name('media.show');
 });
 
+// External Signed Manager Approval Routes (Zero-login, HMAC-protected)
+Route::prefix('smart')->name('smart.external-approval.')->middleware(['signed'])->group(function () {
+    Route::get('/external-approval/{request}', [\App\Http\Controllers\Smart\Manager\ExternalApprovalController::class, 'show'])->name('show');
+    Route::post('/external-approval/{request}', [\App\Http\Controllers\Smart\Manager\ExternalApprovalController::class, 'action'])->name('action');
+});
+
 // Smart routes - protected
 Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () {
     // Notification routes (for all authenticated users)

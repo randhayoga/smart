@@ -24,7 +24,7 @@ class DashboardControllerTest extends TestCase
     public function test_admin_dashboard_returns_stats()
     {
         // 1. Setup Admin User
-        $adminEmployee = \App\Models\HrdEmployee::factory()->create(['employee_id' => '255578']);
+        $adminEmployee = \App\Models\HrdEmployee::factory()->create(['employee_id' => '252525']);
         $adminUser = AdmUser::factory()->create(['employee_id' => $adminEmployee->employee_id]);
 
         // 2. Setup Consumable Data

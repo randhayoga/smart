@@ -40,6 +40,8 @@ interface CartItem {
 interface Option {
   value: string;
   label: string;
+  no_project?: string;
+  project_name?: string;
 }
 
 interface Props {
@@ -72,7 +74,7 @@ const departemenOptions = computed(() => props.departments);
 const projectOptions = computed(() => {
   return props.projects.map(p => ({
     id: p.value,
-    name: p.label,
+    name: p.no_project && p.project_name ? `[${p.no_project}] ${p.project_name}` : p.label,
   }));
 });
 
@@ -216,7 +218,6 @@ const handleGoToHistory = () => {
     <div class="mb-2 flex flex-row items-center justify-between sm:flex-col sm:items-start">
       <div class="min-w-0">
         <h1 class="text-lg font-bold text-gray-900 mt-2 leading-none">{{ pageTitle }}</h1>
-        <p class="text-sm text-muted-foreground mt-2 hidden sm:block">Periksa kembali daftar barang dan lengkapi detail sebelum mengajukan.</p>
       </div>
     </div>
 
@@ -414,8 +415,8 @@ const handleGoToHistory = () => {
               <Combobox
                 v-model="project"
                 :options="projectOptions"
-                placeholder="Pilih Project"
-                default-label="Pilih Project"
+                placeholder="Pilih project"
+                default-label="Pilih project"
                 search-placeholder="Cari nama project..."
                 empty-text="Project tidak ditemukan."
                 width-class="w-full h-10 px-3 rounded-[0.875rem] text-sm"

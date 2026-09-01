@@ -10,7 +10,9 @@ use App\Models\Inventory\Unit;
 use App\Models\Request\Request as SmartRequest;
 use App\Models\Request\RequestItem;
 use App\Models\Request\RequestStatusLog;
+use App\Models\TbAssignProject;
 use App\Models\TbProject;
+use App\Services\NotificationService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -76,10 +78,16 @@ class BorrowCartConfirmationController extends Controller
             'label' => $d->org_name
         ]);
 
-        $projects = TbProject::orderBy('project_name')->get()->map(fn($p) => [
-            'value' => (string) $p->id,
-            'label' => $p->project_name
-        ]);
+        $userEmployeeId = $request->user()->employee_id;
+        $projects = TbProject::whereHas('assignProjects', function ($query) use ($userEmployeeId) {
+            $query->where('npk', $userEmployeeId);
+        })
+            ->orderBy('project_name')
+            ->get(['id', 'no_project', 'project_name'])
+            ->map(fn($p) => [
+                'value' => (string) $p->id,
+                'label' => "[{$p->no_project}] {$p->project_name}"
+            ]);
 
         // Default dates from query params or fallback
         $startDate = $request->query('start_date', '');
@@ -126,33 +134,47 @@ class BorrowCartConfirmationController extends Controller
         }
         $requestNumber = $monthYear . '-' . str_pad($seq, 4, '0', STR_PAD_LEFT);
 
-        // Determine approver: cari user yang employee_id-nya ada di hrd_orgcharts (mereka adalah manager)
-        $currentUser = $request->user();
-        $approverId = null;
+        // Determine approver (manager):
+        // If corporate, then the selected Departemen Manager is the target (the employee_id in HRD_ORGCHART)
+        // Else project, then the newest (most recent) employee_id with id_rbs = P2211 is the target
+        $managerUser = null;
 
-        // Cari orgchart berdasarkan department_id dari request (jika corporate)
-        if (!empty($validated['departemen'])) {
+        if ($validated['pemanfaatan'] === 'corporate' && !empty($validated['departemen'])) {
             $orgchart = HrdOrgchart::find((int)$validated['departemen']);
-            if ($orgchart) {
+            if ($orgchart && $orgchart->employee_id) {
                 $managerUser = AdmUser::where('employee_id', $orgchart->employee_id)->first();
-                $approverId = $managerUser?->id;
+            }
+        } elseif ($validated['pemanfaatan'] === 'project' && !empty($validated['project'])) {
+            $project = TbProject::find((int)$validated['project']);
+            if ($project) {
+                $assignment = TbAssignProject::where('no_project', $project->no_project)
+                    ->where('id_rbs', 'P2211')
+                    ->orderByDesc('start_date')
+                    ->orderByDesc('id')
+                    ->first();
+
+                if ($assignment && $assignment->npk) {
+                    $managerUser = AdmUser::where('employee_id', $assignment->npk)->first();
+                }
             }
         }
 
-        // Fallback: ambil manager pertama yang ada di hrd_orgcharts
-        if (!$approverId) {
+        // Fallback: ambil manager pertama yang ada di hrd_orgcharts jika tidak ditemukan
+        if (!$managerUser) {
             $managerEmployeeId = HrdOrgchart::whereNotNull('employee_id')
                 ->where('org_code', '!=', 'IFS')
                 ->value('employee_id');
             if ($managerEmployeeId) {
-                $approverId = AdmUser::where('employee_id', $managerEmployeeId)->value('id');
+                $managerUser = AdmUser::where('employee_id', $managerEmployeeId)->first();
             }
         }
 
         // Fallback terakhir: gunakan user pertama yang ada
-        if (!$approverId) {
-            $approverId = AdmUser::first()?->id;
+        if (!$managerUser) {
+            $managerUser = AdmUser::first();
         }
+
+        $approverId = $managerUser?->id;
 
         // Create Request
         $smartRequest = SmartRequest::create([
@@ -191,6 +213,11 @@ class BorrowCartConfirmationController extends Controller
             'changed_by' => $request->user()->id,
             'note' => 'Permintaan peminjaman diajukan',
         ]);
+
+        // Send real-time notification to relevant manager
+        if ($managerUser) {
+            app(NotificationService::class)->notifyManagerNewRequest($smartRequest, $managerUser, 'Peminjaman');
+        }
 
         return redirect()->route('smart.user.dashboard')->with('success', 'Permintaan peminjaman berhasil dikirim.');
     }

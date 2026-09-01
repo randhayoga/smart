@@ -142,7 +142,7 @@ class NotificationFrameworkTest extends TestCase
 
     public function test_consumable_low_stock_notification_sent_to_admins_when_stock_at_or_below_threshold(): void
     {
-        $employee = HrdEmployee::factory()->create(['employee_id' => '255578']);
+        $employee = HrdEmployee::factory()->create(['employee_id' => '252525']);
         /** @var AdmUser $admin */
         $admin = AdmUser::factory()->create([
             'employee_id' => $employee->employee_id,
@@ -188,7 +188,7 @@ class NotificationFrameworkTest extends TestCase
 
     public function test_consumable_low_stock_notification_not_sent_when_stock_above_threshold(): void
     {
-        $employee = HrdEmployee::factory()->create(['employee_id' => '255578']);
+        $employee = HrdEmployee::factory()->create(['employee_id' => '252525']);
         /** @var AdmUser $admin */
         $admin = AdmUser::factory()->create([
             'employee_id' => $employee->employee_id,
@@ -215,7 +215,7 @@ class NotificationFrameworkTest extends TestCase
 
     public function test_check_all_consumable_low_stock(): void
     {
-        $employee = HrdEmployee::factory()->create(['employee_id' => '255578']);
+        $employee = HrdEmployee::factory()->create(['employee_id' => '252525']);
         /** @var AdmUser $admin */
         $admin = AdmUser::factory()->create([
             'employee_id' => $employee->employee_id,
@@ -245,7 +245,7 @@ class NotificationFrameworkTest extends TestCase
 
     public function test_manually_updating_current_quantity_triggers_low_stock_notification(): void
     {
-        $employee = HrdEmployee::factory()->create(['employee_id' => '255578']);
+        $employee = HrdEmployee::factory()->create(['employee_id' => '252525']);
         /** @var AdmUser $admin */
         $admin = AdmUser::factory()->create([
             'employee_id' => $employee->employee_id,
@@ -312,7 +312,7 @@ class NotificationFrameworkTest extends TestCase
         $unit = Unit::factory()->create(['lot_id' => $lot->id, 'number' => 'AST-DEL-001', 'status' => 'Pending:BoD/BoC']);
 
         /** @var AdmUser $admin */
-        $adminEmployee = HrdEmployee::factory()->create(['employee_id' => '255578']);
+        $adminEmployee = HrdEmployee::factory()->create(['employee_id' => '252525']);
         $admin = AdmUser::factory()->create(['employee_id' => $adminEmployee->employee_id]);
 
         $file = UploadedFile::fake()->create('bod_approval.pdf', 100, 'application/pdf');
@@ -339,7 +339,7 @@ class NotificationFrameworkTest extends TestCase
     public function test_notify_admin_when_dm_ifs_approves_asset_status(): void
     {
         /** @var AdmUser $admin */
-        $adminEmployee = HrdEmployee::factory()->create(['employee_id' => '255578']);
+        $adminEmployee = HrdEmployee::factory()->create(['employee_id' => '252525']);
         $admin = AdmUser::factory()->create(['employee_id' => $adminEmployee->employee_id]);
 
         /** @var AdmUser $ifsManager */
@@ -389,7 +389,7 @@ class NotificationFrameworkTest extends TestCase
     public function test_notify_admin_when_dm_ifs_rejects_asset_status(): void
     {
         /** @var AdmUser $admin */
-        $adminEmployee = HrdEmployee::factory()->create(['employee_id' => '255578']);
+        $adminEmployee = HrdEmployee::factory()->create(['employee_id' => '252525']);
         $admin = AdmUser::factory()->create(['employee_id' => $adminEmployee->employee_id]);
 
         /** @var AdmUser $ifsManager */

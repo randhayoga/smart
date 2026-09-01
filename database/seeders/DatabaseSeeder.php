@@ -16,6 +16,8 @@ class DatabaseSeeder extends Seeder
             MasterSeeder::class,
             UserSeeder::class,
             TbProjectSeeder::class,
+            TbRbsSeeder::class,
+            TbAssignProjectSeeder::class,
             BarangSeeder::class,
             LotSeeder::class,
             UnitSeeder::class,

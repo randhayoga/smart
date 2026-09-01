@@ -10,6 +10,8 @@ use App\Models\Request\Request;
 use App\Models\Request\RequestAdminConfirmation;
 use App\Models\Request\RequestApproval;
 use App\Models\Request\RequestStatusLog;
+use App\Models\TbAssignProject;
+use App\Models\HrdOrgchart;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -62,7 +64,7 @@ class AdmUser extends Authenticatable
      */
     public function getRoleAttribute(): string
     {
-        $admins = ['255578'];
+        $admins = ['252525'];
         if (in_array($this->employee_id, $admins) || (app()->runningUnitTests() && !config('app.disable_test_admin_bypass'))) {
             return 'admin';
         }
@@ -74,6 +76,23 @@ class AdmUser extends Authenticatable
 
         if (HrdOrgchart::where('employee_id', $this->employee_id)->exists()) {
             return 'manager';
+        }
+
+        // Check if user is the newest Project Manager (P2211) for any project
+        $userProjects = TbAssignProject::where('npk', $this->employee_id)
+            ->where('id_rbs', 'P2211')
+            ->pluck('no_project');
+
+        foreach ($userProjects as $noProject) {
+            $latestPmNpk = TbAssignProject::where('no_project', $noProject)
+                ->where('id_rbs', 'P2211')
+                ->orderByDesc('start_date')
+                ->orderByDesc('id')
+                ->value('npk');
+
+            if ($latestPmNpk === $this->employee_id) {
+                return 'manager';
+            }
         }
 
         return 'user';
@@ -96,12 +115,45 @@ class AdmUser extends Authenticatable
     public static function getUsersByRole(string|array $roles)
     {
         $roles = (array) $roles;
-        $adminIds = ['255578'];
-        $ifsEmployeeId = HrdOrgchart::where('org_code', 'IFS')->value('employee_id');
-        $managerEmployeeIds = HrdOrgchart::whereNotNull('employee_id')->pluck('employee_id')->filter()->toArray();
+        $adminIds = ['252525'];
 
         $targetEmployeeIds = collect();
         $includeAllRegularUsers = false;
+
+        $ifsEmployeeId = null;
+        $getIfsEmployeeId = function () use (&$ifsEmployeeId) {
+            if ($ifsEmployeeId === null) {
+                $ifsEmployeeId = HrdOrgchart::where('org_code', 'IFS')->value('employee_id') ?? '';
+            }
+            return $ifsEmployeeId ?: null;
+        };
+
+        $managerEmployeeIds = null;
+        $getManagerEmployeeIds = function () use (&$managerEmployeeIds) {
+            if ($managerEmployeeIds === null) {
+                // Dept managers from HRD_ORGCHART (except IFS)
+                $deptManagerIds = HrdOrgchart::whereNotNull('employee_id')
+                    ->where(function ($q) {
+                        $q->where('org_code', '!=', 'IFS')->orWhereNull('org_code');
+                    })
+                    ->pluck('employee_id')
+                    ->filter()
+                    ->toArray();
+
+                // Project managers with id_rbs = P2211 (only newest for each project's no_project)
+                $projectManagerIds = TbAssignProject::where('id_rbs', 'P2211')
+                    ->orderByDesc('start_date')
+                    ->orderByDesc('id')
+                    ->get(['no_project', 'npk'])
+                    ->unique('no_project')
+                    ->pluck('npk')
+                    ->filter()
+                    ->toArray();
+
+                $managerEmployeeIds = array_values(array_unique(array_merge($deptManagerIds, $projectManagerIds)));
+            }
+            return $managerEmployeeIds;
+        };
 
         foreach ($roles as $role) {
             switch ($role) {
@@ -109,12 +161,12 @@ class AdmUser extends Authenticatable
                     $targetEmployeeIds = $targetEmployeeIds->merge($adminIds);
                     break;
                 case 'ifs_manager':
-                    if ($ifsEmployeeId) {
-                        $targetEmployeeIds->push($ifsEmployeeId);
+                    if ($id = $getIfsEmployeeId()) {
+                        $targetEmployeeIds->push($id);
                     }
                     break;
                 case 'manager':
-                    $targetEmployeeIds = $targetEmployeeIds->merge($managerEmployeeIds);
+                    $targetEmployeeIds = $targetEmployeeIds->merge($getManagerEmployeeIds());
                     break;
                 case 'user':
                     $includeAllRegularUsers = true;
@@ -123,7 +175,11 @@ class AdmUser extends Authenticatable
         }
 
         if ($includeAllRegularUsers) {
-            $excludeIds = array_unique(array_merge($adminIds, $managerEmployeeIds));
+            $excludeIds = array_unique(array_merge(
+                $adminIds,
+                ($ifsId = $getIfsEmployeeId()) ? [$ifsId] : [],
+                $getManagerEmployeeIds()
+            ));
             return static::whereNotIn('employee_id', $excludeIds)->get();
         }
 

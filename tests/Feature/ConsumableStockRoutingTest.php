@@ -23,8 +23,8 @@ class ConsumableStockRoutingTest extends TestCase
 
     private function createAdminUser(): AdmUser
     {
-        HrdEmployee::factory()->create(['employee_id' => '255578']);
-        return AdmUser::factory()->create(['employee_id' => '255578']);
+        HrdEmployee::factory()->create(['employee_id' => '252525']);
+        return AdmUser::factory()->create(['employee_id' => '252525']);
     }
 
     public function test_can_access_stok_habis_pakai_root(): void

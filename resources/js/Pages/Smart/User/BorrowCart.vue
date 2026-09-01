@@ -309,7 +309,7 @@ const getItemDisplayName = (item: CartItem) => {
             <div class="space-y-3">
               <!-- Message if empty -->
               <div v-if="filteredItems.length === 0" class="text-center py-10">
-                <p class="text-muted-foreground text-sm">Keranjang kosong atau tidak ada barang yang sesuai filter.</p>
+                <p class="text-muted-foreground text-sm">Keranjang kosong.</p>
               </div>
 
               <!-- Item Card -->
