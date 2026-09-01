@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * User Request History Card component rendering request summary, item thumbnails, status badges, and handover/return action links.
+ */
 import { ref } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import { Button } from '@/Components/ui/button';
@@ -88,7 +91,7 @@ const getStatusClasses = (status: string) => {
 <template>
   <div class="bg-card border border-border rounded-[14px] p-5 hover:border-primary/30 transition-all shadow-sm relative overflow-hidden">
     
-    <!-- Badge Status & Tanggal Pembuatan -->
+    <!-- Status Badge & Creation Date -->
     <div class="flex items-center justify-between mb-4">
       <div class="flex items-center gap-2">
         <span 
@@ -97,7 +100,7 @@ const getStatusClasses = (status: string) => {
         >
           {{ request.status === 'Disetujui' ? 'Di-approve' : (request.status === 'Dipinjam' ? 'Sedang dipinjam' : request.status) }}
         </span>
-        <!-- Tenggat Pengembalian -->
+        <!-- Return Deadline -->
         <span 
           v-if="request.status === 'Dipinjam' && request.durationEnd" 
           class="text-xs font-bold px-3 py-1 rounded-[14px] border border-[#EF4444] text-[#EF4444] bg-[#EF4444]/5"
@@ -111,9 +114,9 @@ const getStatusClasses = (status: string) => {
     </div>
 
     <div class="flex flex-col md:flex-row gap-5 items-start">
-      <!-- Gambar Thumbnail Grid (2x2) atau Single -->
+      <!-- Thumbnail Image Grid (2x2) or Single -->
       <div class="shrink-0">
-        <!-- Jika item lebih dari 1, tampilkan grid 2x2 -->
+        <!-- Grid 2x2 if multi items -->
         <div 
           v-if="request.items.length > 1" 
           class="grid grid-cols-2 gap-1 w-20 h-20 rounded-[14px] overflow-hidden bg-muted border border-border p-1"
@@ -134,7 +137,7 @@ const getStatusClasses = (status: string) => {
           </div>
         </div>
         
-        <!-- Jika hanya 1 item -->
+        <!-- Single Item -->
         <div 
           v-else 
           class="w-20 h-20 rounded-[14px] bg-muted border border-border overflow-hidden flex items-center justify-center"
@@ -150,13 +153,13 @@ const getStatusClasses = (status: string) => {
         </div>
       </div>
 
-      <!-- Deskripsi/Info Permintaan -->
+      <!-- Request Details & Description -->
       <div class="flex-grow space-y-1 min-w-0">
         <h2 class="text-base font-bold text-foreground truncate">
           {{ request.number }}
         </h2>
         
-        <!-- Pemanfaatan -->
+        <!-- Utilization -->
         <p class="text-sm text-foreground">
           <span class="text-muted-foreground">Pemanfaatan:</span> 
           <span class="font-medium">
@@ -164,7 +167,7 @@ const getStatusClasses = (status: string) => {
           </span>
         </p>
 
-        <!-- Durasi (Hanya untuk Peminjaman/Aset) -->
+        <!-- Duration (Loans only) -->
         <p v-if="request.type === 'peminjaman' && request.durationStart" class="text-sm text-foreground">
           <span class="text-muted-foreground">Durasi:</span>
           <span class="font-medium">
@@ -177,7 +180,7 @@ const getStatusClasses = (status: string) => {
           </span>
         </p>
 
-        <!-- Barang Collapsible Toggle -->
+        <!-- Collapsible Items Toggle -->
         <div class="pt-1">
           <button
             @click="toggleExpanded"
@@ -208,7 +211,7 @@ const getStatusClasses = (status: string) => {
       </div>
     </div>
 
-    <!-- Tombol Aksi di Kaki Card -->
+    <!-- Card Footer Action Buttons -->
     <div class="flex items-center justify-end gap-4 mt-4 pt-1">
       <Link
         :href="route('smart.history.show', request.id)"
@@ -217,7 +220,7 @@ const getStatusClasses = (status: string) => {
         Lihat Detail
       </Link>
 
-      <!-- Tampilkan Batalkan Permintaan hanya jika status Menunggu approval -->
+      <!-- Show Cancel Request button only if pending approval -->
       <Button
         v-if="request.status === 'Menunggu approval'"
         variant="destructive"
@@ -228,7 +231,7 @@ const getStatusClasses = (status: string) => {
         Batalkan Permintaan
       </Button>
 
-      <!-- Tampilkan Atur Serah Terima jika status Serah Terima (confirm) atau Partial (partial) -->
+      <!-- Show Handover setup button if confirmed or partial -->
       <Link
         v-if="request.raw_status === 'confirm' || request.raw_status === 'partial'"
         :href="route('smart.history.show', request.id)"
@@ -237,7 +240,7 @@ const getStatusClasses = (status: string) => {
         Atur Serah Terima
       </Link>
 
-      <!-- Tampilkan Atur Pengembalian jika status Dipinjam (borrow) -->
+      <!-- Show Return setup button if borrowed -->
       <Link
         v-if="request.raw_status === 'borrow'"
         :href="route('smart.history.show', request.id)"

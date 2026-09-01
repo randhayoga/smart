@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Role Breakdown Structure (RBS) model representing project role definitions.
+ */
 class TbRbs extends Model
 {
     use HasFactory;

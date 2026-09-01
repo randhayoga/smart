@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Sudah Approve Status page component displaying historical manager decisions on asset disposal and status changes.
+ */
 import { ref, computed, watch, h, onMounted, onUnmounted } from 'vue';
 import { Head } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';

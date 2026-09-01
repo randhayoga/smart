@@ -12,6 +12,11 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
+/**
+ * Consumable Stock Routing Feature Tests
+ *
+ * Verifies routing and Inertia props for consumable catalog listings with optional item filters.
+ */
 class ConsumableStockRoutingTest extends TestCase
 {
     use RefreshDatabase;

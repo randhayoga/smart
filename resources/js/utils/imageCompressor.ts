@@ -1,5 +1,5 @@
 /**
- * Options for image compression
+ * Options for browser-side image compression.
  */
 export interface CompressImageOptions {
   maxWidth?: number;
@@ -9,8 +9,11 @@ export interface CompressImageOptions {
 }
 
 /**
- * Automatically compress and resize image files (especially high-res photos taken from smartphone cameras)
- * using the HTML5 Canvas API in the browser.
+ * Automatically compress and resize image files using the browser HTML5 Canvas API.
+ *
+ * @param file - Source image file
+ * @param options - Compression and dimension options
+ * @returns Compressed File object
  */
 export const compressImageIfNeeded = async (
   file: File,

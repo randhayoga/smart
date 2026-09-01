@@ -18,6 +18,11 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
+/**
+ * Notification Framework Feature Tests
+ *
+ * Verifies real-time notifications, low stock threshold alerts, manager status approval triggers, and user/role dispatching.
+ */
 class NotificationFrameworkTest extends TestCase
 {
     use RefreshDatabase;

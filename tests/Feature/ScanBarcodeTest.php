@@ -6,6 +6,11 @@ use App\Models\AdmUser as User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
+/**
+ * Scan Barcode Feature Tests
+ *
+ * Verifies guest redirection and authenticated access for the mobile/desktop QR barcode scanning interface.
+ */
 class ScanBarcodeTest extends TestCase
 {
     use RefreshDatabase;

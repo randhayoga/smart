@@ -11,10 +11,20 @@ use App\Notifications\AppNotification;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
+/**
+ * Notification Service handling application alerts, role-targeted broadcasts, low-stock alerts, and approval notices.
+ */
 class NotificationService
 {
     /**
      * Send a notification to a specific user.
+     *
+     * @param AdmUser $user
+     * @param string $title
+     * @param string $message
+     * @param string $type
+     * @param string|null $url
+     * @param array<string, mixed> $extra
      */
     public function sendToUser(
         AdmUser $user,
@@ -48,6 +58,13 @@ class NotificationService
     /**
      * Send a notification to all users holding a specific dynamic role.
      * Roles: 'admin' | 'ifs_manager' | 'manager' | 'user'
+     *
+     * @param string $role
+     * @param string $title
+     * @param string $message
+     * @param string $type
+     * @param string|null $url
+     * @param array<string, mixed> $extra
      */
     public function sendToRole(
         string $role,

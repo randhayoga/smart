@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Detail Barang Tab component displaying item specification overview, aggregate stock metrics, and embedded lot table.
+ */
 import { computed } from 'vue';
 import DaftarLOTTab from './DaftarLOTTab.vue';
 

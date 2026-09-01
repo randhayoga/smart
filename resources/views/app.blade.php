@@ -1,3 +1,6 @@
+{{--
+    Root HTML/Blade template for the Inertia.js Single Page Application.
+--}}
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>

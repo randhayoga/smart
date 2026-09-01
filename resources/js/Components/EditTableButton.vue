@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Table action button styled for row editing.
+ */
 import { Pencil } from 'lucide-vue-next';
 
 defineProps<{

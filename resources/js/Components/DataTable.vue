@@ -1,4 +1,7 @@
 <script setup lang="ts" generic="TData, TValue">
+/**
+ * Generic TanStack Table wrapper component providing sorting, pagination, global filtering, and row selection.
+ */
 import type { 
   ColumnDef, 
   ColumnFiltersState, 

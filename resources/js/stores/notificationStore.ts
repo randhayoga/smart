@@ -1,3 +1,6 @@
+/**
+ * Reactive Notification Store managing unread counts, notifications list, and database sync.
+ */
 import { ref, computed } from 'vue';
 import axios from 'axios';
 

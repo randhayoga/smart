@@ -1,8 +1,17 @@
+# ==============================================================================
+# Caddyfile - FrankenPHP & Caddy Web Server Configuration for Laravel Octane
+#
+# Configures the FrankenPHP worker mode, Mercure SSE hub injection,
+# request logging with authorization token redaction, and PHP routing.
+# ==============================================================================
+
 {
 	{$CADDY_GLOBAL_OPTIONS}
 
+	# Administrative API endpoint
 	admin {$CADDY_SERVER_ADMIN_HOST:localhost}:{$CADDY_SERVER_ADMIN_PORT:2019}
 
+	# FrankenPHP worker runtime definition
 	frankenphp {
 		worker {
 			file "{$APP_PUBLIC_PATH}/frankenphp-worker.php"

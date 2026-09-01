@@ -7,10 +7,19 @@ use App\Models\Inventory\UnitStatusApproval;
 use App\Models\Inventory\UnitLifecycle;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Process Unit Status Approval Action handling manager decisions on asset deactivation/disposal.
+ */
 class ProcessUnitStatusApproval
 {
     /**
-     * Execute the status approval process.
+     * Execute the status approval process, updating unit state, lifecycle, and sending notifications.
+     *
+     * @param  \App\Models\Inventory\UnitStatusApproval  $approval
+     * @param  string  $decision  'approved' or 'rejected'
+     * @param  string|null  $note
+     * @param  int  $approverId
+     * @return void
      */
     public function execute(UnitStatusApproval $approval, string $decision, ?string $note, int $approverId): void
     {

@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Admin Item Detail Page component displaying item specifications, associated batch LOTs, and registered asset units.
+ */
 import { ref, watch, onMounted, onUnmounted, computed } from 'vue';
 import { router, usePage } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';

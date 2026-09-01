@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Pindai Barcode page component enabling real-time camera scanning, flashlight toggling, and file upload barcode decoding.
+ */
 import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';

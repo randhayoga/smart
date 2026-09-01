@@ -7,6 +7,9 @@ use App\Models\Master\Floor;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
+/**
+ * Floor Controller managing building floor definitions per site location.
+ */
 class FloorController extends Controller
 {
     /**

@@ -8,6 +8,9 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
+/**
+ * Admin Dashboard Controller computing inventory summaries, stock counts, and organizer statistics.
+ */
 class DashboardController extends Controller
 {
     /**

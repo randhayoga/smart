@@ -20,6 +20,11 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
+/**
+ * Bulk Inventory Actions Feature Tests
+ *
+ * Verifies batch creation, batch updating, and batch deletion across Barang, Lot, and Unit entities.
+ */
 class BulkInventoryActionsTest extends TestCase
 {
     use RefreshDatabase;

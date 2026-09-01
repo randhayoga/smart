@@ -8,6 +8,9 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Location Controller managing physical branches, offices, and site location records.
+ */
 class LocationController extends Controller
 {
     /**

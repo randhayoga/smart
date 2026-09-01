@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Table action button styled for row deletion.
+ */
 import { Trash2 } from 'lucide-vue-next';
 
 defineProps<{

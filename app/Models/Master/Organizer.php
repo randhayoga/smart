@@ -7,6 +7,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Master Organizer model representing inventory organizers/custodians.
+ */
 class Organizer extends Model
 {
     use HasFactory;

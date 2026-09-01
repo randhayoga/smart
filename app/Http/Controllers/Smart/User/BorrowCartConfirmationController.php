@@ -15,6 +15,9 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
+/**
+ * Borrow Cart Confirmation Controller finalizing asset borrowing requests and routing them to managers.
+ */
 class BorrowCartConfirmationController extends Controller
 {
     /**

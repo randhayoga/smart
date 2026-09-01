@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Consumable LOT Detail Modal component presenting stock balance, PO number, receiving date, and unit cost.
+ */
 import { ref, watch, onMounted, onUnmounted } from 'vue';
 import axios from 'axios';
 import { X } from 'lucide-vue-next';

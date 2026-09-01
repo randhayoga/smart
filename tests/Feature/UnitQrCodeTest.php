@@ -9,6 +9,11 @@ use App\Models\AdmUser as User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
+/**
+ * Unit QR Code Feature Tests
+ *
+ * Verifies on-the-fly PNG QR code streaming and scan view access guards for asset units.
+ */
 class UnitQrCodeTest extends TestCase
 {
     use RefreshDatabase;

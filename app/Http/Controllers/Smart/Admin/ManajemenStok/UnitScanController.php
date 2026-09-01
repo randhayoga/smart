@@ -11,6 +11,9 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
+/**
+ * Unit Scan Controller providing mobile-optimized asset lookup and detail verification for scanned QR codes.
+ */
 class UnitScanController extends Controller
 {
     /**

@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Non-Consumable LOT Detail Page component presenting lot acquisition details, location mappings, and individual asset units.
+ */
 import { ref, watch, onMounted, onUnmounted, computed } from 'vue';
 import { router, usePage } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';

@@ -9,6 +9,11 @@ use App\Models\Master\Subcategory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
+/**
+ * Browse Controller Feature Tests
+ *
+ * Verifies catalog browsing, cart operations for consumable/non-consumable items, and checkout confirmation into requests.
+ */
 class BrowseControllerTest extends TestCase
 {
     use RefreshDatabase;

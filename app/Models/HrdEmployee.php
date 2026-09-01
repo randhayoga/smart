@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
+/**
+ * HRD Employee model representing personnel records and organizational membership.
+ */
 class HrdEmployee extends Model
 {
     use HasFactory;
@@ -53,6 +56,9 @@ class HrdEmployee extends Model
         return $this->hasMany(HrdOrgchart::class, 'employee_id', 'employee_id');
     }
 
+    /**
+     * Accessor to ensure employee_id is properly trimmed.
+     */
     public function getEmployeeIdAttribute($value)
     {
         return $value !== null ? trim($value) : null;

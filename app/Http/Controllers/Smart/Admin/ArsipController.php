@@ -10,6 +10,9 @@ use App\Models\Request\RequestUnitAssignment;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
+/**
+ * Archive Controller providing searchable history and full lifecycle logs of fulfilled, rejected, and cancelled requests.
+ */
 class ArsipController extends Controller
 {
     /**

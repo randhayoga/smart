@@ -19,6 +19,9 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
+/**
+ * Consumable Lot Controller rendering dedicated consumable stock catalog and batch quantity management.
+ */
 class ConsumableLotController extends Controller
 {
     /**

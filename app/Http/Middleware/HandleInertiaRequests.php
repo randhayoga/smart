@@ -5,6 +5,9 @@ namespace App\Http\Middleware;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
+/**
+ * Handle Inertia Requests Middleware sharing global authentication, notifications, real-time Mercure tokens, and flash messages.
+ */
 class HandleInertiaRequests extends Middleware
 {
     /**

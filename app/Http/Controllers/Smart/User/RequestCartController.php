@@ -8,6 +8,9 @@ use App\Models\Inventory\Unit;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
+/**
+ * Request Cart Controller managing shopping basket operations for consumable inventory items.
+ */
 class RequestCartController extends Controller
 {
     /**

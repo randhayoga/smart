@@ -12,6 +12,9 @@ use App\Models\Request\RequestUnitAssignment;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
+/**
+ * Return Controller managing return scheduling, overdue tracking, and warehouse check-in for returned assets.
+ */
 class ReturnController extends Controller
 {
     /**

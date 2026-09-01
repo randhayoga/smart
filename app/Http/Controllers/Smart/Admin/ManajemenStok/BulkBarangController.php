@@ -9,6 +9,9 @@ use App\Models\Inventory\Unit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * Bulk Barang Controller managing batch updates and deletions for item types.
+ */
 class BulkBarangController extends Controller
 {
     /**

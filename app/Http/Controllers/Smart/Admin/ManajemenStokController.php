@@ -20,6 +20,9 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
+/**
+ * Stock Management Controller providing full catalog overview and single item deep-dive views.
+ */
 class ManajemenStokController extends Controller
 {
     /**

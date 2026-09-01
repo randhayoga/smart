@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Admin Audit Trail Page component for monitoring asset lifecycle transitions, actor logs, and duration analytics.
+ */
 import { ref, computed, h } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { ArrowUpDown, ChevronDown } from 'lucide-vue-next';

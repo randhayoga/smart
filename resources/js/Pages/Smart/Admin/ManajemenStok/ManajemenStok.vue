@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Admin Inventory Management Page component for high-level stock overview, category filtering, and item CRUD operations.
+ */
 import { ref, watch, h, onMounted, onUnmounted, computed } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { router, usePage } from '@inertiajs/vue3';

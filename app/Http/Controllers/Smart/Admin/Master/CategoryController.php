@@ -9,6 +9,9 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
+/**
+ * Category Controller managing main inventory category classifications (consumable vs non-consumable).
+ */
 class CategoryController extends Controller
 {
     /**

@@ -1,3 +1,6 @@
+/**
+ * Application Navigation Configuration defining sidebar menu sections and routes for admin and user roles.
+ */
 import {
     LayoutDashboard,
     Package,

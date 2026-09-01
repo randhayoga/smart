@@ -17,6 +17,11 @@ use App\Models\Inventory\Unit;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
+/**
+ * Master Data Model Unit Tests
+ *
+ * Verifies relationships across master data hierarchies (Category/Subcategory, Location/Floor/Room, Brand/UOM, Organizer/Vendor).
+ */
 class MasterModelTest extends TestCase
 {
     use RefreshDatabase;

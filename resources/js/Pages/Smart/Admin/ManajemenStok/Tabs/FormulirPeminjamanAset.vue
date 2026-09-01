@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Formulir Peminjaman Aset tab component allowing administrators to assign, update, and complete asset loans.
+ */
 import { ref, watch } from 'vue';
 import { router } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';

@@ -8,6 +8,9 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Brand Controller managing CRUD operations for equipment brands and manufacturers.
+ */
 class BrandController extends Controller
 {
     /**

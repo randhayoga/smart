@@ -21,6 +21,9 @@ use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
+/**
+ * Unit Controller managing individual physical asset units, status lifecycles, condition transitions, and disposal requests.
+ */
 class UnitController extends Controller
 {
     /**

@@ -13,6 +13,11 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
+/**
+ * Alphanumeric Code Routing Feature Tests
+ *
+ * Verifies slugification and alphanumeric resolution across item detail, consumable stock, and barcode scan endpoints.
+ */
 class AlphanumericCodeRoutingTest extends TestCase
 {
     use RefreshDatabase;

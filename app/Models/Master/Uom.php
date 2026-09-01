@@ -7,6 +7,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Master UOM (Unit of Measure) model representing units of measurement (e.g. PCS, UNIT, BOX).
+ */
 class Uom extends Model
 {
     use HasFactory;

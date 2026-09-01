@@ -5,6 +5,11 @@ namespace Tests\Feature;
 use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
+/**
+ * Error Pages Feature Tests
+ *
+ * Verifies custom HTTP status error views (401, 403, 404, 419, 429, 500, 503) and layout styling.
+ */
 class ErrorPagesTest extends TestCase
 {
     public function test_503_error_view_renders_correctly(): void

@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Admin Asset Inventory List Page component displaying asset units, serial numbers, locations, and condition filters.
+ */
 import AppLayout from '@/Layouts/AppLayout.vue';
 import DaftarAsetTab from './Tabs/DaftarAsetTab.vue';
 

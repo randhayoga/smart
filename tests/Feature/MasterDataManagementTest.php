@@ -15,6 +15,11 @@ use App\Models\AdmUser as User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
+/**
+ * Master Data Management Feature Tests
+ *
+ * Verifies CRUD endpoints and foreign key constraint validations for Categories, Locations, Organizers, and UOMs.
+ */
 class MasterDataManagementTest extends TestCase
 {
     use RefreshDatabase;

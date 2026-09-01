@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Asset Item Card component displaying item details, stock availability, and collapsible allocated asset serial numbers.
+ */
 import { ref, computed } from 'vue';
 import { ChevronDown, ChevronUp } from 'lucide-vue-next';
 
@@ -44,7 +47,7 @@ const activeAssets = computed(() => {
     ]"
   >
     <div class="flex items-start gap-4">
-      <!-- Thumbnail Barang -->
+      <!-- Item Thumbnail -->
       <div class="w-16 h-16 rounded-[12px] bg-muted border border-border overflow-hidden shrink-0 flex items-center justify-center mt-0.5">
         <img 
           v-if="imageUrl" 

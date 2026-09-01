@@ -6,6 +6,11 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use App\Models\Inventory\UnitLifecycle;
 
+/**
+ * Manager Asset Status Approval Resource transforming asset deactivation and disposal requests with lifecycle trails.
+ *
+ * @mixin \App\Models\Inventory\UnitStatusApproval
+ */
 class ManagerAssetStatusApprovalResource extends JsonResource
 {
     /**

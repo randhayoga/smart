@@ -17,6 +17,9 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
+/**
+ * Admin Inbox Controller managing incoming borrowing and supply requests, stock availability checks, and allocation workflows.
+ */
 class InboxController extends Controller
 {
     /**

@@ -17,6 +17,9 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
+/**
+ * Request History Controller managing request tracking, status timelines, handover scheduling, and receipt confirmations for users.
+ */
 class RequestHistoryController extends Controller
 {
     /**

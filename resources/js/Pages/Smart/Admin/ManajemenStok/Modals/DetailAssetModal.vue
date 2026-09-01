@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Detail Asset Modal component displaying asset unit specifications, loan assignments, QR code generation, and audit trail tabs.
+ */
 import { computed, ref, watch } from 'vue';
 import { router } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';

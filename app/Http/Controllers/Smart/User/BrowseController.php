@@ -12,6 +12,9 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
+/**
+ * Browse Controller rendering the searchable item catalog and category filters for employees.
+ */
 class BrowseController extends Controller
 {
     /**

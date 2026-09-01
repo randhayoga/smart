@@ -6,6 +6,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Media Controller handling secure retrieval of stored local and public files.
+ */
 class MediaController extends Controller
 {
     /**

@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Approval Detail page component displaying request breakdown, approval timeline stepper, and decision modal.
+ */
 import { ref, computed } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';

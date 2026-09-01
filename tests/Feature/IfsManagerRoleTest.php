@@ -8,6 +8,11 @@ use App\Models\HrdEmployee;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
+/**
+ * IFS Manager Role Feature Tests
+ *
+ * Verifies dynamic role computation (user, manager, ifs_manager) and role-based middleware authorization.
+ */
 class IfsManagerRoleTest extends TestCase
 {
     use RefreshDatabase;

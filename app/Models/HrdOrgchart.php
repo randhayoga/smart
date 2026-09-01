@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * HRD Orgchart model representing organizational structure and department hierarchy.
+ */
 class HrdOrgchart extends Model
 {
     use HasFactory;

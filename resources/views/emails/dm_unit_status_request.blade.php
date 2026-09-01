@@ -1,3 +1,6 @@
+{{--
+    Email notification template sent to Department Manager for asset disposal/deactivation approval requests.
+--}}
 <!DOCTYPE html>
 <html lang="id">
 <head>

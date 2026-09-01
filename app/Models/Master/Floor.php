@@ -9,6 +9,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Master Floor model representing building floor levels within a location.
+ */
 class Floor extends Model
 {
     use HasFactory;
@@ -22,11 +25,17 @@ class Floor extends Model
         'location_id' => 'integer',
     ];
 
+    /**
+     * Location to which this floor belongs.
+     */
     public function location(): BelongsTo
     {
         return $this->belongsTo(Location::class);
     }
 
+    /**
+     * Rooms situated on this floor.
+     */
     public function rooms(): HasMany
     {
         return $this->hasMany(Room::class);

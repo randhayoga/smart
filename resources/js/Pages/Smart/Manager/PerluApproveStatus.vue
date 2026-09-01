@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Perlu Approve Status page component managing pending asset disposal/deactivation requests awaiting manager approval.
+ */
 import { ref, computed, watch, h, onMounted, onUnmounted } from 'vue';
 import { Head, router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';

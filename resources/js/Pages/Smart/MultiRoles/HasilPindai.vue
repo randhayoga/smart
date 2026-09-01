@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Hasil Pindai page component displaying barcode scan details and mobile-friendly inline asset editing.
+ */
 import { ref, computed, watch } from 'vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';

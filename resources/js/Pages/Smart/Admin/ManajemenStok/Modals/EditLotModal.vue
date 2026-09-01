@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Edit LOT Modal component supporting single LOT updates and bulk updates for locations, vendors, and receipt parameters.
+ */
 import { ref, watch, computed } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';

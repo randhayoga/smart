@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Edit Asset Modal component supporting single asset updates and bulk edits with status/condition validation rules.
+ */
 import { ref, watch, computed, nextTick } from 'vue';
 import { useForm, router } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';

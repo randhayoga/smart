@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Export Button Group component providing Print, Excel, PDF, and CSV download triggers.
+ */
 import { Printer, FileDown } from 'lucide-vue-next';
 
 defineEmits<{

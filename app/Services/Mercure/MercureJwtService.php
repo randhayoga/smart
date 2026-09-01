@@ -7,6 +7,9 @@ use Lcobucci\JWT\Configuration;
 use Lcobucci\JWT\Signer\Hmac\Sha256;
 use Lcobucci\JWT\Signer\Key\InMemory;
 
+/**
+ * Mercure JWT Service generating and signing RFC 7519 compliant JSON Web Tokens for Mercure Hub authorization.
+ */
 class MercureJwtService
 {
     /**

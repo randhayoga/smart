@@ -18,11 +18,17 @@ class Project extends Model
 
     protected $guarded = [];
 
+    /**
+     * The manager of the project (deprecated).
+     */
     public function manager(): BelongsTo
     {
         return $this->belongsTo(User::class, 'manager_id');
     }
 
+    /**
+     * Users assigned to the project (deprecated).
+     */
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class);

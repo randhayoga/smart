@@ -9,6 +9,9 @@ use App\Models\Request\RequestUnitAssignment;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
+/**
+ * Borrowed Controller tracking active asset loans, due dates, loan durations, and current placements.
+ */
 class BorrowedController extends Controller
 {
     /**

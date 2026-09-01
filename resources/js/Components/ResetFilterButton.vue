@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Reset Filter Button component providing a single-click action to reset table or search filters.
+ */
 import { X } from 'lucide-vue-next';
 
 defineProps<{

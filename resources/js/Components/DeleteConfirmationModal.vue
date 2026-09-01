@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Delete Confirmation Modal component supporting single and bulk deletion reviews as well as approval confirmations.
+ */
 import { computed, onMounted, onUnmounted } from 'vue';
 import { X, AlertTriangle, Loader2 } from 'lucide-vue-next';
 import { Button } from "@/Components/ui/button";

@@ -12,6 +12,11 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
+/**
+ * Barang Controller Feature Tests
+ *
+ * Verifies single and bulk operations on item definitions (Barang), deletion constraints with LOTs, and authenticated media access.
+ */
 class BarangControllerTest extends TestCase
 {
     use RefreshDatabase;

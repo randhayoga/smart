@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Daftar Aset Tab component providing asset inventory data table, multi-column filters, export, and batch operations.
+ */
 import { ref, watch, onMounted, onUnmounted, computed, h } from 'vue';
 import { router, usePage } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';

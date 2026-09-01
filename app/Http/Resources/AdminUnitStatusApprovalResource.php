@@ -5,6 +5,11 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * Admin Unit Status Approval Resource formatting asset condition proposals and review decisions.
+ *
+ * @mixin \App\Models\Inventory\UnitStatusApproval
+ */
 class AdminUnitStatusApprovalResource extends JsonResource
 {
     /**

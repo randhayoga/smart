@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Application Sidebar component providing role-aware navigation menus, badges, and responsive mobile drawer.
+ */
 import { computed } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
 import { ChevronRight, LogOut } from 'lucide-vue-next';

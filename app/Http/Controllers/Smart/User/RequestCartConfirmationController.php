@@ -14,6 +14,9 @@ use App\Models\TbProject;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
+/**
+ * Request Cart Confirmation Controller finalizing consumable supply requests and routing them to managers.
+ */
 class RequestCartConfirmationController extends Controller
 {
     /**

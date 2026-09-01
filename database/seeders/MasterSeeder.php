@@ -20,7 +20,6 @@ class MasterSeeder extends Seeder
      */
     public function run(): void
     {
-        // 1. Categories
         $categories = [
             'ATK' => [
                 'name' => 'Alat Tulis Kantor',
@@ -43,7 +42,6 @@ class MasterSeeder extends Seeder
                 'is_consumable' => false,
             ],
         ];
-
         $categoryModels = [];
         foreach ($categories as $code => $data) {
             $categoryModels[$code] = Category::create([
@@ -53,7 +51,6 @@ class MasterSeeder extends Seeder
             ]);
         }
 
-        // 2. Subcategories
         $subcategories = [
             [
                 'code' => 'ATK-HVS4',
@@ -92,7 +89,6 @@ class MasterSeeder extends Seeder
                 'category_code' => 'KEN',
             ],
         ];
-
         foreach ($subcategories as $sub) {
             Subcategory::create([
                 'code' => $sub['code'],
@@ -102,13 +98,11 @@ class MasterSeeder extends Seeder
             ]);
         }
 
-        // 3. Uoms
         $uoms = ['Unit', 'Rim', 'Buah'];
         foreach ($uoms as $uomName) {
             Uom::create(['name' => $uomName]);
         }
 
-        // 4. Brands
         $brands = [
             'HP',
             'Lenovo',
@@ -129,13 +123,11 @@ class MasterSeeder extends Seeder
             ]);
         }
 
-        // 5. Organizers
         $organizers = ['CFS', 'ICT', 'HSE'];
         foreach ($organizers as $orgName) {
             Organizer::create(['name' => $orgName]);
         }
 
-        // 6. Vendors (using 5 believable Indonesian PT names)
         $vendors = [
             'PT Surya Abadi Mandiri',
             'PT Jaya Sentosa Sejahtera',
@@ -158,14 +150,12 @@ class MasterSeeder extends Seeder
             ]);
         }
 
-        // 7. Locations
         $locations = ['Graha RE 1', 'Site A'];
         $locationModels = [];
         foreach ($locations as $locName) {
             $locationModels[$locName] = Location::create(['name' => $locName]);
         }
 
-        // 8. Floors
         $floors = [
             [
                 'name' => 'Lantai Mezzanine',
@@ -184,7 +174,6 @@ class MasterSeeder extends Seeder
             ]);
         }
 
-        // 9. Rooms
         $rooms = [
             [
                 'name' => 'Ruang IFS Departemen',

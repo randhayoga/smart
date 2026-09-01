@@ -13,6 +13,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * Unit (Serialized Asset Unit) model representing individual physical items and tracking their state/location lifecycle.
+ */
 class Unit extends Model
 {
     use HasFactory;
@@ -203,41 +206,65 @@ class Unit extends Model
         'price' => 'decimal:2',
     ];
 
+    /**
+     * The inventory lot from which this unit originated.
+     */
     public function lot(): BelongsTo
     {
         return $this->belongsTo(Lot::class);
     }
 
+    /**
+     * Current building/site location of this unit.
+     */
     public function location(): BelongsTo
     {
         return $this->belongsTo(Location::class);
     }
 
+    /**
+     * Current floor of this unit.
+     */
     public function floor(): BelongsTo
     {
         return $this->belongsTo(Floor::class);
     }
 
+    /**
+     * Current room of this unit.
+     */
     public function room(): BelongsTo
     {
         return $this->belongsTo(Room::class);
     }
 
+    /**
+     * Inventory logs recording events for this unit.
+     */
     public function inventoryLogs(): HasMany
     {
         return $this->hasMany(InventoryLog::class);
     }
 
+    /**
+     * Status and condition change approval requests for this unit.
+     */
     public function statusApprovals(): HasMany
     {
         return $this->hasMany(UnitStatusApproval::class);
     }
 
+    /**
+     * Complete lifecycle history records for this unit.
+     */
     public function lifecycles(): HasMany
     {
         return $this->hasMany(UnitLifecycle::class);
     }
 
+    /**
+     * Accessor to get active borrowing details if unit is currently loaned.
+     */
     public function getActiveBorrowingAttribute(): ?array
     {
         if ($this->status !== 'Dipinjam') {
@@ -267,11 +294,17 @@ class Unit extends Model
         ];
     }
 
+    /**
+     * Accessor to ensure number attribute is properly trimmed.
+     */
     public function getNumberAttribute(?string $value): ?string
     {
         return $value !== null ? trim($value) : null;
     }
 
+    /**
+     * Accessor to determine if this unit is a vehicle based on item category.
+     */
     public function getIsVehicleAttribute(): bool
     {
         $this->loadMissing('lot.barang.subcategory.category');

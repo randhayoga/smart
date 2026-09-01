@@ -1,3 +1,6 @@
+{{--
+    Minimal fallback error template extending errors.layout.
+--}}
 @extends('errors.layout')
 
 @section('title', $__env->yieldContent('title', 'Terjadi Kendala'))

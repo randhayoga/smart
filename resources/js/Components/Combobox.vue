@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Searchable Combobox component built with Popover and Command primitives.
+ */
 import { ref, computed } from 'vue';
 import { Check, ChevronsUpDown } from 'lucide-vue-next';
 import { Button } from "@/Components/ui/button";

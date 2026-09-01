@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Delete Error Modal component alerting users when a deletion request fails (e.g. active dependencies/foreign keys).
+ */
 import { onMounted, onUnmounted } from 'vue';
 import { X, AlertTriangle } from 'lucide-vue-next';
 import { Button } from "@/Components/ui/button";

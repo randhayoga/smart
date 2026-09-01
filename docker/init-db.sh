@@ -1,6 +1,10 @@
 #!/bin/bash
 set -e
 
+# MSSQL Database Initialization Script
+# Waits for SQL Server to become ready, ensures the database exists,
+# and creates/configures a non-SA application login with db_owner role if specified.
+
 DB_NAME="${DB_SMART_DATABASE:-SMART}"
 
 echo "==> Waiting for SQL Server to be ready..."

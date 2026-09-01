@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Create LOT Modal component for registering new procurement batches, PO references, vendor information, and initial quantities.
+ */
 import { ref, watch, computed } from 'vue';
 import { router, useForm } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';

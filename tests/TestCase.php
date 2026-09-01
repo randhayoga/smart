@@ -4,6 +4,11 @@ namespace Tests;
 
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 
+/**
+ * Base Test Case
+ *
+ * Provides shared test environment initialization, disabling Vite bundling, CSRF checks, and setting test configurations.
+ */
 abstract class TestCase extends BaseTestCase
 {
     protected function setUp(): void

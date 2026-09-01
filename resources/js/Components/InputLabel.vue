@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Form Input Label component for form field headers.
+ */
 defineProps<{
     value?: string;
 }>();

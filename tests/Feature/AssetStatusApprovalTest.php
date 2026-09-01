@@ -12,6 +12,11 @@ use App\Models\HrdOrgchart;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
+/**
+ * Asset Status Approval Feature Tests
+ *
+ * Verifies role-based access control and batch approve/reject actions for asset condition/deactivation requests.
+ */
 class AssetStatusApprovalTest extends TestCase
 {
     use RefreshDatabase;

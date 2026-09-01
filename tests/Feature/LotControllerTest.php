@@ -15,6 +15,11 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
+/**
+ * Lot Controller Feature Tests
+ *
+ * Verifies single and bulk operations on LOT batches, parent image inheritance, unit quantity limits, and deletion constraints.
+ */
 class LotControllerTest extends TestCase
 {
     use RefreshDatabase;

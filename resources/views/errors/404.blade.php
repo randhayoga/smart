@@ -1,3 +1,6 @@
+{{--
+    404 Not Found error page template.
+--}}
 @extends('errors.layout')
 
 @section('title', 'Halaman Tidak Ditemukan')

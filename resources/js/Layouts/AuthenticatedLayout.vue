@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Authenticated Layout component with traditional horizontal navigation header.
+ */
 import { ref } from 'vue';
 import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 

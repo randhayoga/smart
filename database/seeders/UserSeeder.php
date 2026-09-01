@@ -15,14 +15,12 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create one HRD_ORGCHART
         $org = HrdOrgchart::create([
             'org_name' => 'Integrated Facility Services Department',
             'org_code' => 'IFS',
             'employee_id' => null,
         ]);
 
-        // Create 255578 (Radifa)
         HrdEmployee::create([
             'orgchart_id' => $org->id,
             'employee_id' => '255578',
@@ -33,10 +31,9 @@ class UserSeeder extends Seeder
         AdmUser::create([
             'employee_id' => '255578',
             'name' => 'Radifa',
-            'password_hash' => Hash::make('password'),
+            'password_hash' => Hash::make('IfScFS?25#*'),
         ]);
 
-        // Create 123456 (Arya Gepa)
         HrdEmployee::create([
             'orgchart_id' => $org->id,
             'employee_id' => '123456',
@@ -47,10 +44,9 @@ class UserSeeder extends Seeder
         AdmUser::create([
             'employee_id' => '123456',
             'name' => 'Arya Gepa',
-            'password_hash' => Hash::make('password'),
+            'password_hash' => Hash::make('IfSIcT?25*#!'),
         ]);
 
-        // Create 654321 (Sonny Handini)
         HrdEmployee::create([
             'orgchart_id' => $org->id,
             'employee_id' => '654321',
@@ -61,7 +57,7 @@ class UserSeeder extends Seeder
         AdmUser::create([
             'employee_id' => '654321',
             'name' => 'Sonny Handini',
-            'password_hash' => Hash::make('password'),
+            'password_hash' => Hash::make('IfSerVicEs?25#!*'),
         ]);
 
         // Set the manager in HRD_ORGCHART

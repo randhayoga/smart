@@ -20,6 +20,12 @@ use App\Models\AdmUser as User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
+/**
+ * Inventory Model Unit Tests
+ *
+ * Verifies Eloquent relationships, lifecycle logging triggers, status approval links,
+ * and custom route key resolution for Barang and Lot models.
+ */
 class InventoryModelTest extends TestCase
 {
     use RefreshDatabase;

@@ -16,6 +16,9 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
+/**
+ * Master Data Controller rendering centralized master data configuration (categories, brands, locations, vendors).
+ */
 class MasterController extends Controller
 {
     /**

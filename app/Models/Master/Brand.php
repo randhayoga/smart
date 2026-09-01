@@ -7,6 +7,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Master Brand model representing equipment and asset manufacturers/brands.
+ */
 class Brand extends Model
 {
     use HasFactory;

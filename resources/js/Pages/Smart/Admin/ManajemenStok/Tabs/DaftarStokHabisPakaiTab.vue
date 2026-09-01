@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Daftar Stok Habis Pakai Tab component managing consumable inventory catalog, low stock notifications, and nested lot views.
+ */
 import { ref, watch, onMounted, onUnmounted, computed, h } from 'vue';
 import { router, usePage } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';

@@ -12,6 +12,11 @@ use App\Models\Request\RequestStatusLog;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
+/**
+ * Request Approval Feature Tests
+ *
+ * Verifies manager role access restrictions, single and bulk approve/reject workflows, and status audit logging for requisition/loan requests.
+ */
 class RequestApprovalTest extends TestCase
 {
     use RefreshDatabase;

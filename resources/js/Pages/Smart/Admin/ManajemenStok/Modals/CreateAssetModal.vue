@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Create Asset Modal component for registering new asset units (single or bulk batch creation) with photo compression.
+ */
 import { ref, watch, computed, nextTick } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';

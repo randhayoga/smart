@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/**
+ * Main Application Layout wrapping Navbar, Sidebar, Toaster notifications, and background gradients.
+ */
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { Head } from '@inertiajs/vue3';
 import Navbar from '@/Components/Navbar.vue';

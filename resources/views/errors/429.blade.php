@@ -1,3 +1,6 @@
+{{--
+    429 Too Many Requests / Rate limit exceeded error page template.
+--}}
 @extends('errors.layout')
 
 @section('title', 'Terlalu Banyak Permintaan')
