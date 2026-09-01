@@ -1,4 +1,9 @@
 <script setup lang="ts">
+/**
+ * Product Browse Page
+ * Allows users to search, filter by category, sort, and add items/variants
+ * to their borrow or consumable request carts with custom quantities.
+ */
 import { ref, computed, h } from 'vue';
 import { router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
@@ -29,6 +34,7 @@ import {
   NumberFieldInput,
 } from "@/Components/ui/number-field";
 
+// --- Data Types ---
 interface Category {
   id: number;
   name: string;
@@ -72,28 +78,32 @@ const props = withDefaults(defineProps<Props>(), {
   categories: () => []
 });
 
+// --- Search & Filter State ---
 const searchQuery = ref('');
 const selectedCategory = ref('Semua kategori');
 const selectedSort = ref('Urutkan: A-Z');
 
-
+/** Reset all search, category, and sort filters */
 const clearFilter = () => {
   searchQuery.value = '';
   selectedCategory.value = 'Semua kategori';
   selectedSort.value = 'Urutkan: A-Z';
 };
 
+// --- Modal & Cart State ---
 const isModalOpen = ref(false);
 const selectedProduct = ref<Item | null>(null);
 const quantity = ref(1);
 const selectedBarangId = ref<number | null>(null);
 const isSubmitting = ref(false);
 
+/** Currently selected variant within the modal */
 const selectedVariant = computed(() => {
   if (!selectedProduct.value || !selectedBarangId.value) return null;
   return selectedProduct.value.barangs?.find(b => b.id === selectedBarangId.value) || null;
 });
 
+/** Resolved unit of measurement for display */
 const selectedUom = computed(() => {
   if (!selectedProduct.value) return 'satuan';
   const selectedBarang = selectedProduct.value.barangs?.find(b => b.id === selectedBarangId.value);
@@ -103,6 +113,9 @@ const selectedUom = computed(() => {
   return selectedProduct.value.uom || 'satuan';
 });
 
+/**
+ * Open the add-to-cart modal for a chosen product
+ */
 const openAddToCartModal = (product: Item) => {
   selectedProduct.value = product;
   quantity.value = 1;
@@ -111,6 +124,9 @@ const openAddToCartModal = (product: Item) => {
   isSubmitting.value = false;
 };
 
+/**
+ * Formats variant display name combining brand, name, and specification
+ */
 const getBarangDisplayName = (barang: BarangVariant) => {
   const parts = [];
   if (barang.brand && barang.brand !== '-') {
@@ -128,6 +144,9 @@ const getBarangDisplayName = (barang: BarangVariant) => {
   return parts.join(' ');
 };
 
+/**
+ * Submit selected item and quantity to either consumable or borrow cart
+ */
 const handleConfirmAddToCart = () => {
   if (!selectedProduct.value || isSubmitting.value) return;
 
@@ -173,6 +192,7 @@ const handleConfirmAddToCart = () => {
   });
 };
 
+/** Filter and sort items according to search query, category, and sort order */
 const filteredAndSortedItems = computed(() => {
   let list = props.items.filter(item => item.barang_id !== null && item.barang_id !== undefined);
 
