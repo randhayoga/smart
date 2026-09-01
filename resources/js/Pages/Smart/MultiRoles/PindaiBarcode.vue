@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
-import { Html5Qrcode } from 'html5-qrcode';
+import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink } from '@/Components/ui/breadcrumb';
 import { Button } from '@/Components/ui/button';
@@ -30,6 +30,10 @@ const fileScanning = ref(false);
 const isTorchOn = ref(false);
 const hasTorch = ref(false);
 
+// Tap-to-focus ring state
+const tapFocusPoint = ref<{ x: number; y: number } | null>(null);
+let tapFocusTimeout: ReturnType<typeof setTimeout> | null = null;
+
 let html5QrCodeScanner: Html5Qrcode | null = null;
 const fileInputRef = ref<HTMLInputElement | null>(null);
 
@@ -51,14 +55,17 @@ onMounted(async () => {
 
 onUnmounted(async () => {
   document.removeEventListener('visibilitychange', handleVisibilityChange);
+  if (tapFocusTimeout) clearTimeout(tapFocusTimeout);
   await stopScanner();
 });
 
-// Start Live Camera QR Scanner with autofocus enabled
+// Start Live Camera QR Scanner with optimized constraints
 const startScanner = async () => {
   scanError.value = null;
   scanSuccessMsg.value = null;
   isInitializing.value = true;
+  hasTorch.value = false;
+  isTorchOn.value = false;
 
   try {
     if (html5QrCodeScanner) {
@@ -74,6 +81,12 @@ const startScanner = async () => {
     }
 
     html5QrCodeScanner = new Html5Qrcode('qr-reader-container', {
+      formatsToSupport: [
+        Html5QrcodeSupportedFormats.QR_CODE,
+        Html5QrcodeSupportedFormats.CODE_128,
+        Html5QrcodeSupportedFormats.CODE_39,
+        Html5QrcodeSupportedFormats.EAN_13,
+      ],
       experimentalFeatures: {
         useBarCodeDetectorIfSupported: true,
       },
@@ -83,11 +96,19 @@ const startScanner = async () => {
     await html5QrCodeScanner.start(
       { facingMode: 'environment' },
       {
-        fps: 20,
+        fps: 10,
+        qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
+          const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+          const size = Math.max(200, Math.floor(minEdge * 0.75));
+          return {
+            width: Math.min(size, viewfinderWidth - 20),
+            height: Math.min(size, viewfinderHeight - 20),
+          };
+        },
         videoConstraints: {
           facingMode: { ideal: 'environment' },
-          width: { min: 640, ideal: 1920, max: 3840 },
-          height: { min: 480, ideal: 1080, max: 2160 },
+          width: { min: 640, ideal: 1280, max: 1920 },
+          height: { min: 480, ideal: 720, max: 1080 },
           advanced: [{ focusMode: 'continuous' } as any],
         },
       },
@@ -98,12 +119,12 @@ const startScanner = async () => {
     isScanning.value = true;
     isInitializing.value = false;
 
-    // Check torch / flashlight support and configure auto focus mode
+    // Check torch and autofocus capabilities
     try {
       const capabilities = html5QrCodeScanner.getRunningTrackCapabilities() as any;
       hasTorch.value = !!capabilities?.torch;
 
-      // Ensure continuous auto focus is applied if supported by the camera track
+      // Ensure continuous autofocus is applied if supported
       if (capabilities?.focusMode) {
         const mode = capabilities.focusMode.includes('continuous')
           ? 'continuous'
@@ -129,8 +150,23 @@ const startScanner = async () => {
 };
 
 // Trigger tap-to-focus on camera viewfinder
-const triggerAutoFocus = async () => {
+const triggerAutoFocus = async (event?: MouseEvent) => {
   if (!html5QrCodeScanner || !isScanning.value) return;
+
+  // Show visual focus ring indicator at tapped position
+  if (event) {
+    const target = event.currentTarget as HTMLElement;
+    const rect = target.getBoundingClientRect();
+    tapFocusPoint.value = {
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top,
+    };
+    if (tapFocusTimeout) clearTimeout(tapFocusTimeout);
+    tapFocusTimeout = setTimeout(() => {
+      tapFocusPoint.value = null;
+    }, 1200);
+  }
+
   try {
     const capabilities = html5QrCodeScanner.getRunningTrackCapabilities() as any;
     if (capabilities?.focusMode) {
@@ -151,6 +187,20 @@ const triggerAutoFocus = async () => {
   }
 };
 
+// Toggle Torch
+const toggleTorch = async () => {
+  if (!html5QrCodeScanner || !isScanning.value || !hasTorch.value) return;
+  try {
+    isTorchOn.value = !isTorchOn.value;
+    await html5QrCodeScanner.applyVideoConstraints({
+      advanced: [{ torch: isTorchOn.value } as any]
+    });
+  } catch (err) {
+    console.warn('Torch failed:', err);
+    isTorchOn.value = false;
+  }
+};
+
 // Stop Camera Stream
 const stopScanner = async () => {
   if (html5QrCodeScanner) {
@@ -166,25 +216,19 @@ const stopScanner = async () => {
   }
   isScanning.value = false;
   isTorchOn.value = false;
-};
-
-// Toggle Torch
-const toggleTorch = async () => {
-  if (!html5QrCodeScanner || !isScanning.value || !hasTorch.value) return;
-  try {
-    isTorchOn.value = !isTorchOn.value;
-    await html5QrCodeScanner.applyVideoConstraints({
-      advanced: [{ torch: isTorchOn.value } as any]
-    });
-  } catch (err) {
-    console.warn('Torch failed:', err);
-    isTorchOn.value = false;
-  }
+  tapFocusPoint.value = null;
 };
 
 // QR Code Detection Success Handler
 const onScanSuccess = async (decodedText: string) => {
   if (!decodedText) return;
+
+  // Haptic feedback
+  if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+    try {
+      navigator.vibrate(100);
+    } catch (_) {}
+  }
 
   // Immediately stop camera for privacy and resource release
   await stopScanner();
@@ -250,7 +294,18 @@ const handleFileUpload = async (event: Event) => {
     await stopScanner();
 
     // Create temporary scanner instance for single file scan in-memory
-    fileScanner = new Html5Qrcode('file-scanner-temp');
+    fileScanner = new Html5Qrcode('file-scanner-temp', {
+      formatsToSupport: [
+        Html5QrcodeSupportedFormats.QR_CODE,
+        Html5QrcodeSupportedFormats.CODE_128,
+        Html5QrcodeSupportedFormats.CODE_39,
+        Html5QrcodeSupportedFormats.EAN_13,
+      ],
+      experimentalFeatures: {
+        useBarCodeDetectorIfSupported: true,
+      },
+      verbose: false,
+    });
     const result = await fileScanner.scanFile(file, false);
 
     fileScanning.value = false;
@@ -323,6 +378,7 @@ const handleFileUpload = async (event: Event) => {
                   </span>
 
                   <div class="flex items-center gap-2">
+                    <!-- Torch / Flashlight Button -->
                     <button
                       v-if="hasTorch && isScanning"
                       @click="toggleTorch"
@@ -332,6 +388,7 @@ const handleFileUpload = async (event: Event) => {
                           ? 'bg-amber-500/20 text-amber-500 border-amber-500/40' 
                           : 'bg-background hover:bg-muted text-muted-foreground border-border'
                       ]"
+                      title="Nyalakan/Matikan Flashlight"
                     >
                       <Zap v-if="!isTorchOn" class="w-3.5 h-3.5" />
                       <ZapOff v-else class="w-3.5 h-3.5" />
@@ -340,14 +397,21 @@ const handleFileUpload = async (event: Event) => {
                   </div>
                 </div>
 
-                <!-- Viewfinder Box (Simple, Clean, Full View with Tap-to-Focus) -->
+                <!-- Viewfinder Box (Responsive container with Tap-to-Focus) -->
                 <div 
                   @click="triggerAutoFocus"
-                  class="relative w-full aspect-square bg-slate-950 rounded-xl overflow-hidden border border-border flex items-center justify-center shadow-inner cursor-pointer"
+                  class="relative w-full bg-slate-950 rounded-xl overflow-hidden border border-border flex items-center justify-center shadow-inner cursor-pointer min-h-[300px]"
                   title="Ketuk layar kamera untuk fokus ulang"
                 >
-                  <div id="qr-reader-container" class="w-full h-full"></div>
+                  <div id="qr-reader-container" class="w-full"></div>
                   <div id="file-scanner-temp" class="hidden"></div>
+
+                  <!-- Tap to Focus Ring Indicator -->
+                  <div 
+                    v-if="tapFocusPoint"
+                    class="absolute pointer-events-none w-12 h-12 -ml-6 -mt-6 border-2 border-primary rounded-full animate-ping z-20"
+                    :style="{ left: `${tapFocusPoint.x}px`, top: `${tapFocusPoint.y}px` }"
+                  ></div>
 
                   <!-- Initializing Spinner -->
                   <div v-if="isInitializing && !scanError" class="absolute inset-0 bg-slate-950/90 flex flex-col items-center justify-center p-4 text-center z-10">
@@ -431,17 +495,22 @@ const handleFileUpload = async (event: Event) => {
 <style scoped>
 :deep(#qr-reader-container) {
   width: 100% !important;
-  height: 100% !important;
   border: none !important;
   padding: 0 !important;
   position: relative;
   overflow: hidden;
+  border-radius: 0.75rem;
 }
 
 :deep(#qr-reader-container video) {
   width: 100% !important;
-  height: 100% !important;
-  object-fit: cover !important;
+  height: auto !important;
+  max-height: 100% !important;
+  display: block !important;
+  border-radius: 0.75rem;
+}
+
+:deep(#qr-shaded-region) {
   border-radius: 0.75rem;
 }
 </style>
