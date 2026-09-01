@@ -27,7 +27,13 @@ class RequestCartConfirmationController extends Controller
         $idsStr = $request->query('ids', '');
         $ids = array_filter(explode(',', $idsStr));
 
-        $selectedItems = ConsumableBasket::with(['barang.subcategory.category', 'barang.brand', 'subcategory.category'])
+        $selectedItems = ConsumableBasket::with([
+            'barang.subcategory.category',
+            'barang.brand',
+            'barang.uom',
+            'subcategory.category',
+            'subcategory.barangs.uom',
+        ])
             ->where('user_id', $request->user()->id)
             ->whereIn('id', $ids)
             ->get()
@@ -53,8 +59,11 @@ class RequestCartConfirmationController extends Controller
                         ? ($item->barang->subcategory->name ?? '-') 
                         : ($item->subcategory->name ?? '-'),
                     'stock' => $stock,
-                    'quantity' => $item->quantity,
-                    'imageUrl' => $item->barang?->image_url ? '/media/' . $item->barang->image_url : null,
+                    'quantity' => (int) $item->quantity,
+                    'uom' => $item->barang?->uom?->name ?? ($item->subcategory?->barangs?->first()?->uom?->name ?? 'satuan'),
+                    'imageUrl' => $item->barang_id
+                        ? ($item->barang?->image_url ? '/media/' . $item->barang->image_url : null)
+                        : (($firstBarang = $item->subcategory?->barangs?->first()) && $firstBarang->image_url ? '/media/' . $firstBarang->image_url : null),
                 ];
             });
 
