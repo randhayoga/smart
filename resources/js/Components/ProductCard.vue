@@ -28,15 +28,15 @@ const emit = defineEmits<{
     ]"
   >
     <!-- Image Placeholder or Actual Image -->
-    <div class="aspect-square bg-muted rounded-[0.875rem] overflow-hidden flex items-center justify-center shrink-0 relative w-full">
+    <div class="aspect-square bg-muted overflow-hidden flex items-center justify-center shrink-0 relative w-full">
       <img v-if="imageUrl" :src="imageUrl" alt="Product Image" class="w-full h-full object-cover relative z-10" />
       <img v-else src="https://placehold.co/400x400?text=Barang" class="w-full h-full object-cover opacity-50" />
     </div>
     
     <!-- Content -->
-    <div class="flex flex-col flex-grow p-4">
-      <p class="font-bold text-foreground">{{ subcategoryName }}</p>
-      <p class="text-sm text-muted-foreground">{{ categoryName }}</p>
+    <div class="flex flex-col flex-grow p-3.5 sm:p-4">
+      <p class="font-bold text-foreground text-sm sm:text-base leading-snug line-clamp-2" :title="subcategoryName">{{ subcategoryName }}</p>
+      <p class="text-xs sm:text-sm text-muted-foreground line-clamp-1 mt-0.5" :title="categoryName">{{ categoryName }}</p>
  
       <!-- Spacer to push button to bottom -->
       <div class="flex-grow pt-3"></div>
@@ -44,7 +44,7 @@ const emit = defineEmits<{
       <Button 
         @click="emit('add-to-cart')"
         :disabled="disabled"
-        class="w-full mt-auto bg-gradient-primary shadow-button hover:opacity-90 text-white rounded-[0.75rem] h-[2.375rem] text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed px-2"
+        class="w-full mt-auto bg-gradient-primary shadow-button hover:opacity-90 text-white rounded-[0.75rem] h-9 sm:h-[2.25rem] text-xs sm:text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed px-3"
       >
         <template v-if="disabled">
           Tidak Tersedia

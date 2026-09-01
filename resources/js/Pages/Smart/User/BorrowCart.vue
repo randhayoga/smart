@@ -41,6 +41,7 @@ interface CartItem {
   selected: boolean;
   isPreorder?: boolean; // Pre-order allowed but current stock is 0
   imageUrl?: string;
+  uom?: string;
 }
 
 // --- Helper: Get client local date & time ---
@@ -179,8 +180,8 @@ const getItemDisplayName = (item: CartItem) => {
     <!-- Page Title -->
     <div class="mb-2 flex flex-row items-center justify-between sm:flex-col sm:items-start">
       <div class="min-w-0">
-        <h1 class="text-xl font-bold text-gray-900 leading-none">Keranjang Peminjaman</h1>
-        <p class="text-muted-foreground mt-2 hidden sm:block">Pilih tanggal peminjaman lalu pilih barang-barang yang ingin dimasukkan dalam peminjaman.</p>
+        <h1 class="text-lg font-bold text-gray-900 leading-none">Keranjang Peminjaman</h1>
+        <p class="text-sm text-muted-foreground mt-2 hidden sm:block">Pilih tanggal peminjaman lalu pilih barang-barang yang ingin dimasukkan dalam peminjaman.</p>
       </div>
 
       <!-- Pilih Semua Checkbox -->
@@ -196,7 +197,7 @@ const getItemDisplayName = (item: CartItem) => {
         ]"
       >
         <Checkbox 
-          id="select-all"
+          id="select-all" 
           :model-value="isAllSelected"
           @update:model-value="(val) => isAllSelected = !!val"
           :disabled="!isDateSelected || cartItems.length === 0"
@@ -220,7 +221,7 @@ const getItemDisplayName = (item: CartItem) => {
 
         <!-- === Borrow Date Block (Must be selected first) === -->
         <div class="bg-card border border-border rounded-[0.875rem] p-5">
-          <h2 class="text-base text-foreground mb-1">Tanggal Peminjaman</h2>
+          <h2 class="text-base font-bold text-foreground mb-3">Tanggal Peminjaman</h2>
 
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 items-start">
             <!-- Start Date -->
@@ -291,7 +292,7 @@ const getItemDisplayName = (item: CartItem) => {
         </div>
 
         <ScrollArea class="border border-border rounded-[0.875rem] bg-card h-[calc(100vh-26.23rem)] sm:h-[calc(100vh-27rem)]">
-          <div class="p-3 sm:p-6">
+          <div class="p-3 sm:p-5">
             <div class="space-y-3">
               <!-- Message if empty -->
               <div v-if="filteredItems.length === 0" class="text-center py-10">
@@ -316,7 +317,7 @@ const getItemDisplayName = (item: CartItem) => {
       <!-- ============================================================ -->
       <!-- Right Column: Borrow Summary (sticky)                        -->
       <!-- ============================================================ -->
-      <div class="hidden lg:block lg:w-80 xl:w-96 flex-shrink-0">
+      <div class="hidden lg:block lg:w-96 xl:w-[28rem] 2xl:w-[30rem] flex-shrink-0">
         <div class="bg-card border border-border rounded-[0.875rem] p-5 sticky top-24">
           <h2 class="text-lg font-bold text-foreground mb-4">Ringkasan Peminjaman</h2>
 
@@ -334,7 +335,7 @@ const getItemDisplayName = (item: CartItem) => {
                 {{ getItemDisplayName(item) }}
               </span>
               <span class="text-base text-muted-foreground flex-shrink-0 whitespace-nowrap">
-                {{ item.quantity }} satuan
+                {{ item.quantity }} {{ item.uom || 'satuan' }}
               </span>
             </div>
           </div>
