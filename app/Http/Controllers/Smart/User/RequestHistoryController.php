@@ -25,7 +25,7 @@ class RequestHistoryController extends Controller
     /**
      * Memetakan data permintaan ke format array response.
      */
-    private function mapRequest($req)
+    private function mapRequest(SmartRequest $req): array
     {
         $statusMap = [
             'wait' => 'Menunggu approval',
@@ -240,7 +240,7 @@ class RequestHistoryController extends Controller
     /**
      * Membatalkan permintaan peminjaman atau barang habis pakai.
      */
-    public function cancel(Request $request, $id)
+    public function cancel(Request $request, int|string $id)
     {
         $req = SmartRequest::where('user_id', $request->user()->id)->findOrFail($id);
         
@@ -261,7 +261,7 @@ class RequestHistoryController extends Controller
     /**
      * Mengatur jadwal serah terima barang.
      */
-    public function handover(Request $request, $id)
+    public function handover(Request $request, int|string $id)
     {
         $validated = $request->validate([
             'method' => 'required|string',
@@ -271,28 +271,30 @@ class RequestHistoryController extends Controller
         ]);
 
         $req = SmartRequest::where('user_id', $request->user()->id)->findOrFail($id);
-        
-        $oldStatus = $req->status;
-        $req->update(['status' => 'confirm']); // transition to confirm/serah terima
 
         RequestHandover::updateOrCreate(
             ['request_id' => $req->id],
             [
-                'method' => $validated['method'] === 'Ambil sendiri' ? 'pickup' : 'delivery',
-                'scheduled_date' => Carbon::parse($validated['scheduled_date']),
+                'method' => $validated['method'],
+                'scheduled_date' => $validated['scheduled_date'],
                 'location' => $validated['location'],
-                'is_auto_set' => false,
                 'note' => $validated['note'] ?? null,
+                'created_by' => $request->user()->id,
             ]
         );
 
-        RequestStatusLog::create([
-            'request_id' => $req->id,
-            'status_from' => $oldStatus,
-            'status_to' => 'confirm',
-            'changed_by' => $request->user()->id,
-            'note' => 'Serah terima diatur oleh pengguna.',
-        ]);
+        $oldStatus = $req->status;
+        if ($oldStatus === 'confirm' || $oldStatus === 'partial') {
+            $req->update(['status' => 'handover']);
+
+            RequestStatusLog::create([
+                'request_id' => $req->id,
+                'status_from' => $oldStatus,
+                'status_to' => 'handover',
+                'changed_by' => $request->user()->id,
+                'note' => 'Jadwal serah terima diatur oleh pengguna.',
+            ]);
+        }
 
         return redirect()->back()->with('success', 'Jadwal serah terima berhasil disimpan.');
     }
@@ -300,8 +302,9 @@ class RequestHistoryController extends Controller
     /**
      * Mengonfirmasi bahwa barang telah diterima oleh pengguna.
      */
-    public function receive(Request $request, $id)
+    public function receive(Request $request, int|string $id)
     {
+        /** @var SmartRequest $req */
         $req = SmartRequest::with(['items.barang.subcategory.category'])
             ->where('user_id', $request->user()->id)->findOrFail($id);
         
@@ -362,7 +365,7 @@ class RequestHistoryController extends Controller
     /**
      * Mengatur jadwal pengembalian aset yang dipinjam.
      */
-    public function returnAsset(Request $request, $id)
+    public function returnAsset(Request $request, int|string $id)
     {
         $validated = $request->validate([
             'method' => 'required|string',
