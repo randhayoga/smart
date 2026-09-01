@@ -1,22 +1,27 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+/**
+ * Request Cart Page (Consumable Supplies)
+ * Manages consumable supply items in the user's shopping basket.
+ * Allows users to select items and proceed to the request confirmation page.
+ */
+import { ref, computed, watch } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { Button } from '@/Components/ui/button';
 import { ScrollArea } from "@/Components/ui/scroll-area";
-import { watch } from 'vue';
 import CartItemCard from '@/Components/CartItemCard.vue';
 import Checkbox from '@/Components/ui/checkbox/Checkbox.vue';
 
+// --- Data Types & Props ---
 interface Props {
   user?: any;
   cartItems?: CartItem[];
 }
+
 const props = withDefaults(defineProps<Props>(), {
   cartItems: () => []
 });
 
-// --- Data Types ---
 interface CartItem {
   id: number;
   barang_id: number | null;
@@ -27,13 +32,14 @@ interface CartItem {
   category_name: string;
   subcategory_name: string;
   code: string;
-  stock: number; // Total available stock
-  quantity: number; // Quantity requested by the user
+  stock: number;    // Total available stock
+  quantity: number; // Requested quantity
   selected: boolean;
   imageUrl?: string;
   uom?: string;
 }
 
+// --- Cart Items State ---
 const cartItems = ref<CartItem[]>(props.cartItems.map(item => ({ ...item, selected: false })));
 
 watch(() => props.cartItems, (newVal) => {
@@ -44,13 +50,12 @@ watch(() => props.cartItems, (newVal) => {
   }));
 }, { deep: true });
 
-const filteredItems = computed(() => {
-  return cartItems.value;
-});
+const filteredItems = computed(() => cartItems.value);
 
-// --- Computed: Selected items (for summary & validation) ---
+/** Items currently selected for the request */
 const selectedItems = computed(() => cartItems.value.filter(item => item.selected));
 
+/** Two-way computed property for "Select All" checkbox */
 const isAllSelected = computed({
   get() {
     if (cartItems.value.length === 0) return false;
@@ -63,17 +68,19 @@ const isAllSelected = computed({
   }
 });
 
-// "Proceed to Confirmation" button is only active if at least 1 item is selected
+/** Validation to enable the "Proceed to Confirmation" action */
 const canProceed = computed(() => selectedItems.value.length > 0);
 
-// --- Actions: Remove item from cart ---
+// --- Cart Actions ---
+
+/** Remove an item from the consumable basket */
 const removeItem = (id: number) => {
   router.delete(route('smart.asset-cart.destroy', id), {
     preserveScroll: true,
   });
 };
 
-// --- Actions: Update quantity ---
+/** Update requested quantity for a specific basket item */
 const updateQty = (item: CartItem, value: number) => {
   router.put(route('smart.asset-cart.update', item.id), {
     quantity: value
@@ -82,12 +89,13 @@ const updateQty = (item: CartItem, value: number) => {
   });
 };
 
-// --- Actions: Proceed to confirmation page ---
+/** Navigate to confirmation page with selected item IDs */
 const handleProceed = () => {
   const ids = selectedItems.value.map(i => i.id).join(',');
   router.get(route('smart.asset-cart.confirmation'), { ids });
 };
 
+/** Formats item display name combining brand, name, and specification */
 const getItemDisplayName = (item: CartItem) => {
   if (!item.barang_id) {
     return item.subcategory_name;

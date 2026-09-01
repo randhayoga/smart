@@ -1,4 +1,9 @@
 <script setup lang="ts">
+/**
+ * Borrow Cart Page
+ * Manages loanable asset items in the user's shopping basket.
+ * Requires selecting a start date/time before picking items to proceed to confirmation.
+ */
 import { ref, computed, watch } from 'vue';
 import { router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
@@ -8,6 +13,7 @@ import { ScrollArea } from "@/Components/ui/scroll-area";
 import CartItemCard from '@/Components/CartItemCard.vue';
 import Checkbox from '@/Components/ui/checkbox/Checkbox.vue';
 
+// --- Data Types & Props ---
 interface Props {
   user?: any;
   cartItems?: CartItem[];
@@ -25,7 +31,6 @@ const props = withDefaults(defineProps<Props>(), {
   defaultEndTime: '',
 });
 
-// --- Data Types ---
 interface CartItem {
   id: number;
   barang_id: number | null;
@@ -36,15 +41,17 @@ interface CartItem {
   category_name: string;
   subcategory_name: string;
   code: string;
-  stock: number;       // Total available stock
-  quantity: number;    // Requested quantity
+  stock: number;        // Total available stock
+  quantity: number;     // Requested quantity
   selected: boolean;
   isPreorder?: boolean; // Pre-order allowed but current stock is 0
   imageUrl?: string;
   uom?: string;
 }
 
-// --- Helper: Get client local date & time ---
+// --- Date & Time Helper Functions ---
+
+/** Get client local date in YYYY-MM-DD format */
 const getClientDefaultDate = () => {
   const now = new Date();
   const yyyy = now.getFullYear();
@@ -53,6 +60,7 @@ const getClientDefaultDate = () => {
   return `${yyyy}-${mm}-${dd}`;
 };
 
+/** Get client local time in HH:MM format */
 const getClientDefaultTime = () => {
   const now = new Date();
   const hh = String(now.getHours()).padStart(2, '0');
@@ -60,6 +68,7 @@ const getClientDefaultTime = () => {
   return `${hh}:${min}`;
 };
 
+/** Open native date/time picker on input click */
 const handlePickerClick = (e: Event) => {
   const target = e.target as HTMLInputElement;
   if (target && typeof target.showPicker === 'function') {
@@ -67,13 +76,14 @@ const handlePickerClick = (e: Event) => {
   }
 };
 
-// --- Borrow Date State ---
-// MUST be filled first - all other actions are disabled until the start date is filled
+// --- Borrow Schedule State ---
+// Start date is required before selecting items
 const startDate = ref(getClientDefaultDate());
 const startTime = ref(getClientDefaultTime());
 const endDate   = ref('');
 const endTime   = ref('');
 
+// --- Cart Items State ---
 const cartItems = ref<CartItem[]>(props.cartItems.map(item => ({ ...item, selected: false })));
 
 watch(() => props.cartItems, (newVal) => {
@@ -84,8 +94,10 @@ watch(() => props.cartItems, (newVal) => {
   }));
 }, { deep: true });
 
+/** Whether a valid start date has been provided */
 const isDateSelected = computed(() => startDate.value && startDate.value.trim() !== '');
 
+/** Two-way computed property for "Select All" checkbox */
 const isAllSelected = computed({
   get() {
     if (cartItems.value.length === 0) return false;
@@ -99,7 +111,7 @@ const isAllSelected = computed({
   }
 });
 
-// If start date changes → reset all selections (since availability can change)
+// Reset item selections and quantities when schedule changes
 watch(startDate, () => {
   cartItems.value.forEach(item => {
     item.selected = false;
@@ -119,24 +131,24 @@ watch(endDate, (newVal) => {
   }
 });
 
-const filteredItems = computed(() => {
-  return cartItems.value;
-});
+const filteredItems = computed(() => cartItems.value);
 
-// --- Computed: Selected items for summary ---
+/** Items currently selected for borrowing */
 const selectedItems = computed(() => cartItems.value.filter(item => item.selected));
 
-// "Proceed to Confirmation" button is active if start date is filled AND at least 1 item is selected
+/** Validation to enable the "Proceed to Confirmation" action */
 const canProceed = computed(() => isDateSelected.value && selectedItems.value.length > 0);
 
-// --- Actions: Remove item from cart ---
+// --- Cart Actions ---
+
+/** Remove an item from the borrow basket */
 const removeItem = (id: number) => {
   router.delete(route('smart.borrow-cart.destroy', id), {
     preserveScroll: true,
   });
 };
 
-// --- Actions: Update quantity ---
+/** Update requested quantity for a specific basket item */
 const updateQty = (item: CartItem, value: number) => {
   router.put(route('smart.borrow-cart.update', item.id), {
     quantity: value
@@ -145,7 +157,7 @@ const updateQty = (item: CartItem, value: number) => {
   });
 };
 
-// --- Actions: Proceed to confirmation ---
+/** Navigate to confirmation page with selected item IDs and schedule */
 const handleProceed = () => {
   const ids = selectedItems.value.map(i => i.id).join(',');
   router.get(route('smart.borrow-cart.confirmation'), {
@@ -157,6 +169,7 @@ const handleProceed = () => {
   });
 };
 
+/** Formats item display name combining brand, name, and specification */
 const getItemDisplayName = (item: CartItem) => {
   if (!item.barang_id) {
     return item.subcategory_name;
