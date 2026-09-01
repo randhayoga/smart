@@ -48,10 +48,16 @@ class ApprovalController extends Controller
         }
 
         $items = $req->items->map(function ($item) {
-            // Count stock quantity of units in status 'tersedia'
-            $stockQuantity = Unit::whereHas('lot', function ($q) use ($item) {
-                $q->where('barang_id', $item->barang_id);
-            })->where('status', 'tersedia')->count();
+            $barangId = $item->barang_id;
+            if ($barangId) {
+                $stockQuantity = Unit::whereHas('lot', function ($q) use ($barangId) {
+                    $q->where('barang_id', $barangId);
+                })->where('status', 'tersedia')->count();
+            } else {
+                $stockQuantity = Unit::whereHas('lot.barang', function ($q) use ($item) {
+                    $q->where('subcategory_id', $item->subcategory_id);
+                })->where('status', 'tersedia')->count();
+            }
 
             // Get assigned assets (serial numbers)
             $assets = RequestUnitAssignment::where('request_item_id', $item->id)
@@ -62,19 +68,26 @@ class ApprovalController extends Controller
                 ->values()
                 ->toArray();
 
+            $subcatName = $item->barang?->subcategory?->name ?? $item->subcategory?->name ?? '-';
+            $catName = $item->barang?->subcategory?->category?->name ?? $item->subcategory?->category?->name ?? '-';
+            $isConsumable = (bool) ($item->barang?->subcategory?->category?->is_consumable ?? $item->subcategory?->category?->is_consumable ?? false);
+            $imageUrl = $item->barang?->image_url
+                ? '/media/' . $item->barang->image_url
+                : (($firstBarang = $item->subcategory?->barangs?->first()) && $firstBarang->image_url ? '/media/' . $firstBarang->image_url : null);
+
             return [
                 'id' => $item->id,
                 'barang_id' => $item->barang_id,
-                'subcategory' => $item->barang->subcategory->name ?? '-',
-                'brand' => $item->barang->brand->name ?? '-',
-                'name' => $item->barang->name ?? '',
-                'spec' => $item->barang->specification ?? '',
+                'subcategory' => $subcatName,
+                'brand' => $item->barang?->brand?->name ?? '-',
+                'name' => $item->barang?->name ?? '',
+                'spec' => $item->barang?->specification ?? '',
                 'quantity' => $item->quantity_requested,
                 'stockQuantity' => $stockQuantity,
-                'category' => $item->barang->subcategory->category->name ?? '-',
-                'imageUrl' => $item->barang->image_url ? '/media/' . $item->barang->image_url : null,
+                'category' => $catName,
+                'imageUrl' => $imageUrl,
                 'assets' => $assets,
-                'is_consumable' => (bool) ($item->barang->subcategory->category->is_consumable ?? false),
+                'is_consumable' => $isConsumable,
             ];
         });
 
@@ -111,19 +124,20 @@ class ApprovalController extends Controller
             'durationHours' => $durationHours,
             'status' => $statusMap[$req->status] ?? $req->status,
             'raw_status' => $req->status,
-            'created_at' => $req->created_at ? $req->created_at->format('d-m-Y H:i') : '-',
+            'createdAt' => $req->created_at ? $req->created_at->format('d-m-Y H:i') : '-',
             'items' => $items,
-            'approver' => $req->approver?->name,
+            'lifecycles' => $lifecycles,
+            'approver_name' => $req->approver?->name,
             'approval_by' => $req->approval?->approver?->name,
             'approval_at' => $req->approval?->decided_at?->format('d-m-Y H:i'),
             'confirmation_by' => $req->adminConfirmation?->admin?->name,
             'confirmation_at' => $req->adminConfirmation?->decided_at?->format('d-m-Y H:i'),
-            'lifecycles' => $lifecycles,
+            'reasoning' => $req->reasoning,
         ];
     }
 
     /**
-     * Menampilkan daftar permintaan yang perlu approval manager.
+     * Menampilkan daftar permintaan yang perlu diapprove oleh manager.
      */
     public function index(Request $request): Response
     {
@@ -131,7 +145,7 @@ class ApprovalController extends Controller
             abort(403, 'Akses ditolak. Hanya Manager yang dapat mengakses halaman ini.');
         }
 
-        $requests = SmartRequest::with(['user', 'approver', 'approval.approver', 'adminConfirmation.admin', 'items.barang.subcategory.category', 'items.barang.brand', 'project', 'department', 'statusLogs.changer'])
+        $requests = SmartRequest::with(['user', 'approver', 'approval.approver', 'adminConfirmation.admin', 'items.barang.subcategory.category', 'items.barang.brand', 'items.subcategory.category', 'items.subcategory.barangs', 'project', 'department', 'statusLogs.changer'])
             ->where('approver_id', $request->user()->id)
             ->where('status', 'wait')
             ->orderBy('id', 'desc')
@@ -153,7 +167,7 @@ class ApprovalController extends Controller
             abort(403, 'Akses ditolak. Hanya Manager yang dapat mengakses halaman ini.');
         }
 
-        $requests = SmartRequest::with(['user', 'approver', 'approval.approver', 'adminConfirmation.admin', 'items.barang.subcategory.category', 'items.barang.brand', 'project', 'department', 'statusLogs.changer'])
+        $requests = SmartRequest::with(['user', 'approver', 'approval.approver', 'adminConfirmation.admin', 'items.barang.subcategory.category', 'items.barang.brand', 'items.subcategory.category', 'items.subcategory.barangs', 'project', 'department', 'statusLogs.changer'])
             ->where('approver_id', $request->user()->id)
             ->where('status', '!=', 'wait')
             ->orderBy('id', 'desc')
@@ -175,7 +189,7 @@ class ApprovalController extends Controller
             abort(403, 'Akses ditolak. Hanya Manager yang dapat mengakses halaman ini.');
         }
 
-        $req = SmartRequest::with(['user', 'approver', 'approval.approver', 'adminConfirmation.admin', 'items.barang.subcategory.category', 'items.barang.brand', 'project', 'department'])
+        $req = SmartRequest::with(['user', 'approver', 'approval.approver', 'adminConfirmation.admin', 'items.barang.subcategory.category', 'items.barang.brand', 'items.subcategory.category', 'items.subcategory.barangs', 'project', 'department'])
             ->where('approver_id', $request->user()->id)
             ->findOrFail($id);
 

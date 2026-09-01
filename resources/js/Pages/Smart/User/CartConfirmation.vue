@@ -276,14 +276,6 @@ const handleGoToHistory = () => {
               <!-- Message if empty -->
               <div v-if="props.selectedItems.length === 0" class="text-center py-10">
                 <p class="text-muted-foreground text-sm">Tidak ada barang yang dipilih.</p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  class="mt-3 rounded-[0.875rem]"
-                  @click="handleBack"
-                >
-                  Kembali ke Keranjang
-                </Button>
               </div>
 
               <!-- Item Card in Confirmation -->
@@ -528,17 +520,10 @@ const handleGoToHistory = () => {
             </div>
 
             <!-- Tombol aksi -->
-            <div class="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full pt-2">
-              <Button
-                variant="outline"
-                class="flex-1 rounded-[0.875rem] h-10 text-sm font-semibold"
-                @click="handleBack"
-              >
-                Kembali ke Keranjang
-              </Button>
+            <div class="w-full pt-2">
               <Button
                 variant="primary"
-                class="flex-1 rounded-[0.875rem] h-10 text-sm font-semibold"
+                class="w-full rounded-[0.875rem] h-10 text-sm font-semibold"
                 @click="handleGoToHistory"
               >
                 Ke Dashboard

@@ -103,7 +103,19 @@ class InboxController extends Controller
             abort(403, 'Akses ditolak. Hanya Admin yang dapat mengakses halaman ini.');
         }
 
-        $req = SmartRequest::with(['user', 'approver', 'approval.approver', 'adminConfirmation.admin', 'items.barang.subcategory.category', 'items.barang.brand', 'project', 'department', 'statusLogs.changer'])
+        $req = SmartRequest::with([
+            'user',
+            'approver',
+            'approval.approver',
+            'adminConfirmation.admin',
+            'items.barang.subcategory.category',
+            'items.barang.brand',
+            'items.subcategory.category',
+            'items.subcategory.barangs',
+            'project',
+            'department',
+            'statusLogs.changer'
+        ])
             ->findOrFail($id);
 
         $durationDays = 0;
@@ -121,18 +133,24 @@ class InboxController extends Controller
         $items = $req->items->map(function ($item) use (&$hasInsufficientStock) {
             $barangId = $item->barang_id;
 
-            // Cek apakah barang ini punya Unit (non-konsumable/aset)
-            // Konsumable (habis pakai) tidak punya Unit record, hanya Lot.current_quantity
-            $hasAnyUnit = Unit::whereHas('lot', fn($q) => $q->where('barang_id', $barangId))->exists();
-
-            if ($hasAnyUnit) {
-                // Non-konsumable: cek jumlah Unit status 'Tersedia'
-                $availableStock = Unit::whereHas('lot', fn($q) => $q->where('barang_id', $barangId))
-                    ->where('status', 'Tersedia')
-                    ->count();
+            if ($barangId) {
+                $hasAnyUnit = Unit::whereHas('lot', fn($q) => $q->where('barang_id', $barangId))->exists();
+                if ($hasAnyUnit) {
+                    $availableStock = Unit::whereHas('lot', fn($q) => $q->where('barang_id', $barangId))
+                        ->where('status', 'Tersedia')
+                        ->count();
+                } else {
+                    $availableStock = Lot::where('barang_id', $barangId)->sum('current_quantity');
+                }
             } else {
-                // Konsumable: cek total current_quantity di semua Lot
-                $availableStock = Lot::where('barang_id', $barangId)->sum('current_quantity');
+                $hasAnyUnit = Unit::whereHas('lot.barang', fn($q) => $q->where('subcategory_id', $item->subcategory_id))->exists();
+                if ($hasAnyUnit) {
+                    $availableStock = Unit::whereHas('lot.barang', fn($q) => $q->where('subcategory_id', $item->subcategory_id))
+                        ->where('status', 'Tersedia')
+                        ->count();
+                } else {
+                    $availableStock = Lot::whereHas('barang', fn($q) => $q->where('subcategory_id', $item->subcategory_id))->sum('current_quantity');
+                }
             }
 
             if ($availableStock < $item->quantity_requested) {
@@ -148,16 +166,24 @@ class InboxController extends Controller
                 ->values()
                 ->toArray();
 
+            $subcatName = $item->barang?->subcategory?->name ?? $item->subcategory?->name ?? '-';
+            $catName = $item->barang?->subcategory?->category?->name ?? $item->subcategory?->category?->name ?? '-';
+            $isConsumable = (bool) ($item->barang?->subcategory?->category?->is_consumable ?? $item->subcategory?->category?->is_consumable ?? false);
+            $imageUrl = $item->barang?->image_url
+                ? '/media/' . $item->barang->image_url
+                : (($firstBarang = $item->subcategory?->barangs?->first()) && $firstBarang->image_url ? '/media/' . $firstBarang->image_url : null);
+            $brandSpec = trim(($item->barang?->brand?->name ?? '') . ' ' . ($item->barang?->specification ?? ''));
+
             return [
                 'id' => $item->id,
-                'brand' => ($item->barang->brand->name ?? '-') . ' ' . ($item->barang->specification ?? ''),
-                'name' => $item->barang->name ?? '-',
-                'category' => $item->barang->subcategory->category->name ?? '-',
-                'subcategory' => $item->barang->subcategory->name ?? '-',
+                'brand' => $brandSpec ?: '-',
+                'name' => $item->barang?->name ?? 'Tidak Spesifik',
+                'category' => $catName,
+                'subcategory' => $subcatName,
                 'quantity' => $item->quantity_requested,
                 'assets' => $assets,
-                'imageUrl' => $item->barang->image_url ?? null,
-                'is_consumable' => (bool) ($item->barang->subcategory->category->is_consumable ?? false),
+                'imageUrl' => $imageUrl,
+                'is_consumable' => $isConsumable,
                 'stock' => $availableStock,
                 'status' => $item->status,
             ];

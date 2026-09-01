@@ -52,16 +52,25 @@ class RequestHistoryController extends Controller
         }
 
         $items = $req->items->map(function ($item) {
-            // Count stock quantity of units in status 'tersedia' for non-consumable, or sum current_quantity for consumable
             $barangId = $item->barang_id;
-            $hasAnyUnit = Unit::whereHas('lot', fn($q) => $q->where('barang_id', $barangId))->exists();
-
-            if ($hasAnyUnit) {
-                $stockQuantity = Unit::whereHas('lot', fn($q) => $q->where('barang_id', $barangId))
-                    ->where('status', 'tersedia')
-                    ->count();
+            if ($barangId) {
+                $hasAnyUnit = Unit::whereHas('lot', fn($q) => $q->where('barang_id', $barangId))->exists();
+                if ($hasAnyUnit) {
+                    $stockQuantity = Unit::whereHas('lot', fn($q) => $q->where('barang_id', $barangId))
+                        ->where('status', 'tersedia')
+                        ->count();
+                } else {
+                    $stockQuantity = Lot::where('barang_id', $barangId)->sum('current_quantity');
+                }
             } else {
-                $stockQuantity = Lot::where('barang_id', $barangId)->sum('current_quantity');
+                $hasAnyUnit = Unit::whereHas('lot.barang', fn($q) => $q->where('subcategory_id', $item->subcategory_id))->exists();
+                if ($hasAnyUnit) {
+                    $stockQuantity = Unit::whereHas('lot.barang', fn($q) => $q->where('subcategory_id', $item->subcategory_id))
+                        ->where('status', 'tersedia')
+                        ->count();
+                } else {
+                    $stockQuantity = Lot::whereHas('barang', fn($q) => $q->where('subcategory_id', $item->subcategory_id))->sum('current_quantity');
+                }
             }
 
             // Get assigned assets (serial numbers)
@@ -73,19 +82,26 @@ class RequestHistoryController extends Controller
                 ->values()
                 ->toArray();
 
+            $subcatName = $item->barang?->subcategory?->name ?? $item->subcategory?->name ?? '-';
+            $catName = $item->barang?->subcategory?->category?->name ?? $item->subcategory?->category?->name ?? '-';
+            $isConsumable = (bool) ($item->barang?->subcategory?->category?->is_consumable ?? $item->subcategory?->category?->is_consumable ?? false);
+            $imageUrl = $item->barang?->image_url
+                ? '/media/' . $item->barang->image_url
+                : (($firstBarang = $item->subcategory?->barangs?->first()) && $firstBarang->image_url ? '/media/' . $firstBarang->image_url : null);
+
             return [
                 'id' => $item->id,
                 'barang_id' => $item->barang_id,
-                'subcategory' => $item->barang->subcategory->name ?? '-',
-                'brand' => $item->barang->brand->name ?? '-',
-                'name' => $item->barang->name ?? '-',
-                'spec' => $item->barang->specification ?? '',
+                'subcategory' => $subcatName,
+                'brand' => $item->barang?->brand?->name ?? '-',
+                'name' => $item->barang?->name ?? 'Tidak Spesifik',
+                'spec' => $item->barang?->specification ?? '',
                 'quantity' => $item->quantity_requested,
                 'stockQuantity' => $stockQuantity,
                 'stock' => $stockQuantity,
-                'category' => $item->barang->subcategory->category->name ?? '-',
-                'is_consumable' => (bool) ($item->barang->subcategory->category->is_consumable ?? false),
-                'imageUrl' => $item->barang->image_url ? '/media/' . $item->barang->image_url : null,
+                'category' => $catName,
+                'is_consumable' => $isConsumable,
+                'imageUrl' => $imageUrl,
                 'assets' => $assets,
                 'status' => $item->status,
             ];
@@ -150,6 +166,8 @@ class RequestHistoryController extends Controller
             'approver',
             'items.barang.subcategory.category',
             'items.barang.brand',
+            'items.subcategory.category',
+            'items.subcategory.barangs',
             'project',
             'department',
             'approval.approver',
@@ -177,6 +195,8 @@ class RequestHistoryController extends Controller
             'approver',
             'items.barang.subcategory.category',
             'items.barang.brand',
+            'items.subcategory.category',
+            'items.subcategory.barangs',
             'project',
             'department',
             'approval.approver',

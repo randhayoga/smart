@@ -23,8 +23,8 @@ return new class extends Migration {
         Schema::create('request_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('request_id')->constrained('requests')->cascadeOnDelete();
-            $table->foreignId('subcategory_id')->constrained('subcategories');
-            $table->foreignId('barang_id')->constrained('barangs');
+            $table->foreignId('subcategory_id')->nullable()->constrained('subcategories');
+            $table->foreignId('barang_id')->nullable()->constrained('barangs');
             $table->integer('quantity_requested');
             $table->dateTime('start_date')->nullable()->comment('nullable; assets only');
             $table->dateTime('end_date')->nullable()->comment('nullable; assets only');
