@@ -47,14 +47,14 @@ const emit = defineEmits<{
 
 <template>
   <div
-    class="bg-card border rounded-[0.875rem] p-3 sm:p-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 transition-all duration-300 shadow-card"
+    class="bg-card border rounded-[0.875rem] p-3 sm:p-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 transition-all duration-300 shadow-card"
     :class="[
       selected ? 'border-primary/50 bg-primary/5' : 'border-border',
       disabled ? 'opacity-60' : 'hover:shadow-card-hover hover:-translate-y-0.5'
     ]"
   >
     <!-- Top/Main Content Area for Checkbox, Image & Info -->
-    <div class="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+    <div class="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
       <!-- Selection Checkbox -->
       <Checkbox 
         :model-value="selected"
@@ -78,7 +78,7 @@ const emit = defineEmits<{
           <p class="text-[10px] sm:text-xs text-muted-foreground italic hidden sm:block">*foto hanya ilustrasi</p>
         </template>
         <template v-else>
-          <span v-if="item.brand && item.brand !== '-'" class="text-sm sm:text-lg font-bold text-foreground leading-snug truncate">
+          <span v-if="item.brand && item.brand !== '-'" class="text-sm sm:text-base font-bold text-foreground leading-snug truncate">
             {{ item.brand }}
           </span>
           <h3 class="text-sm sm:text-lg font-bold text-foreground leading-snug truncate">

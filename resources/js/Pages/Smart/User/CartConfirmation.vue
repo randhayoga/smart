@@ -179,7 +179,7 @@ const handleGoToHistory = () => {
 
     <!-- ── Judul Halaman ──────────────────────────── -->
     <div class="mb-6">
-      <h1 class="text-2xl font-bold text-foreground">Konfirmasi Permintaan</h1>
+      <h1 class="text-xl font-bold text-gray-900 leading-none">Konfirmasi</h1>
     </div>
 
     <!-- ── Layout Dua Kolom ───────────────────────── -->
@@ -190,7 +190,7 @@ const handleGoToHistory = () => {
            ============================================================ -->
       <div class="flex-1 min-w-0">
         <div class="bg-card border border-border rounded-[14px] p-5">
-          <h2 class="text-sm font-bold text-foreground mb-4">Daftar barang:</h2>
+          <h2 class="text-base font-bold text-foreground mb-3">Daftar barang:</h2>
 
           <!-- Daftar item ─ scroll jika panjang -->
           <div class="space-y-3 max-h-[70vh] overflow-y-auto pr-1">
@@ -238,7 +238,7 @@ const handleGoToHistory = () => {
            ============================================================ -->
       <div class="w-full lg:w-80 xl:w-96 flex-shrink-0">
         <div class="bg-card border border-border rounded-[14px] p-5 sticky top-24">
-          <h2 class="text-sm font-bold text-foreground mb-5">Detail permintaan:</h2>
+          <h2 class="text-base font-bold text-foreground mb-5">Detail permintaan:</h2>
 
           <div class="space-y-4">
 

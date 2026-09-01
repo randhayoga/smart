@@ -204,7 +204,7 @@ const filteredAndSortedItems = computed(() => {
   <AppLayout title="Pilih Barang">
     <div class="space-y-6">
       <div>
-        <h1 class="text-xl font-bold text-gray-900 leading-none mb-6">Pilih barang</h1>
+        <h1 class="text-lg font-bold text-gray-900 leading-none mb-5">Pilih barang</h1>
         
         <!-- Filter & Search Section -->
         <div class="space-y-3 mb-5">
@@ -214,7 +214,7 @@ const filteredAndSortedItems = computed(() => {
               <label class="text-xs text-muted-foreground font-medium block ml-0.5">Pencarian</label>
               <TableSearch 
                 v-model="searchQuery" 
-                placeholder="Cari subkategori..." 
+                placeholder="Cari barang..." 
                 bg-class="bg-white"
               />
             </div>
@@ -269,8 +269,8 @@ const filteredAndSortedItems = computed(() => {
         <p class="text-xs text-muted-foreground font-medium mb-3">Hasil Pencarian dan Filter:</p>
         <!-- Grid -->
         <ScrollArea class="border border-border rounded-[0.875rem] bg-card h-[calc(100vh-20rem)] sm:h-[calc(100vh-16.875rem)]">
-          <div class="p-2 sm:p-6">
-            <div class="grid grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(12.5rem,1fr))] gap-3 sm:gap-6">
+          <div class="p-2.5 sm:p-5">
+            <div class="grid grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(10.5rem,1fr))] gap-3 sm:gap-4.5">
               <ProductCard 
                 v-for="item in filteredAndSortedItems" 
                 :key="item.id" 

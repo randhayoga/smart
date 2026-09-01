@@ -31,6 +31,7 @@ interface CartItem {
   quantity: number; // Quantity requested by the user
   selected: boolean;
   imageUrl?: string;
+  uom?: string;
 }
 
 const cartItems = ref<CartItem[]>(props.cartItems.map(item => ({ ...item, selected: false })));
@@ -112,8 +113,8 @@ const getItemDisplayName = (item: CartItem) => {
     <!-- Page Title -->
     <div class="mb-2 flex flex-row items-center justify-between sm:flex-col sm:items-start">
       <div class="min-w-0">
-        <h1 class="text-xl font-bold text-gray-900 leading-none">Keranjang Habis Pakai</h1>
-        <p class="text-muted-foreground mt-2 hidden sm:block">Pilih barang-barang yang ingin dimasukkan dalam permintaan.</p>
+        <h1 class="text-lg font-bold text-gray-900 leading-none">Keranjang Habis Pakai</h1>
+        <p class="text-sm text-muted-foreground mt-2 hidden sm:block">Pilih barang-barang yang ingin dimasukkan dalam permintaan.</p>
       </div>
 
       <!-- Pilih Semua Checkbox -->
@@ -144,7 +145,7 @@ const getItemDisplayName = (item: CartItem) => {
       <!-- ============================================================ -->
       <div class="flex-1 min-w-0">
         <ScrollArea class="border border-border rounded-[0.875rem] bg-card h-[calc(100vh-14rem)] lg:h-[calc(100vh-14.5rem)]">
-          <div class="p-3 sm:p-6">
+          <div class="p-3 sm:p-5">
             <div class="space-y-3">
               <!-- If cart is empty -->
               <div v-if="filteredItems.length === 0" class="text-center py-10">
@@ -168,7 +169,7 @@ const getItemDisplayName = (item: CartItem) => {
       <!-- ============================================================ -->
       <!-- Right Column: Borrow Summary                                 -->
       <!-- ============================================================ -->
-      <div class="hidden lg:block lg:w-80 xl:w-96 flex-shrink-0">
+      <div class="hidden lg:block lg:w-96 xl:w-[28rem] 2xl:w-[30rem] flex-shrink-0">
         <div class="bg-card border border-border rounded-[0.875rem] p-5 sticky top-24">
           <h2 class="text-lg font-bold text-foreground mb-4">Ringkasan Peminjaman</h2>
 
@@ -186,7 +187,7 @@ const getItemDisplayName = (item: CartItem) => {
                 {{ getItemDisplayName(item) }}
               </span>
               <span class="text-base text-muted-foreground flex-shrink-0 whitespace-nowrap">
-                {{ item.quantity }} satuan
+                {{ item.quantity }} {{ item.uom || 'satuan' }}
               </span>
             </div>
           </div>

@@ -78,7 +78,7 @@ class BorrowCartConfirmationController extends Controller
         $endDate = $request->query('end_date', '');
         $endTime = $request->query('end_time', '');
 
-        return Inertia::render('Smart/User/AssetCartConfirmation', [
+        return Inertia::render('Smart/User/CartConfirmation', [
             'selectedItems' => $selectedItems,
             'departments' => $departments,
             'projects' => $projects,

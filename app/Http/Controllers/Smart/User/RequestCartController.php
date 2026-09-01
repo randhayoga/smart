@@ -21,8 +21,9 @@ class RequestCartController extends Controller
         $cartItems = ConsumableBasket::with([
             'barang.subcategory.category',
             'barang.brand',
+            'barang.uom',
             'subcategory.category',
-            'subcategory.barangs',
+            'subcategory.barangs.uom',
         ])
             ->where('user_id', $request->user()->id)
             ->get()
@@ -57,6 +58,7 @@ class RequestCartController extends Controller
                     'stock' => $stock,
                     'quantity' => $item->quantity,
                     'selected' => false,
+                    'uom' => $item->barang?->uom?->name ?? ($item->subcategory?->barangs?->first()?->uom?->name ?? 'satuan'),
                     'imageUrl' => $item->barang_id
                         ? ($item->barang?->image_url ? '/media/' . $item->barang->image_url : null)
                         : (($firstBarang = $item->subcategory?->barangs?->first()) && $firstBarang->image_url ? '/media/' . $firstBarang->image_url : null),

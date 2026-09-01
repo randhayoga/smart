@@ -68,7 +68,7 @@ class RequestCartConfirmationController extends Controller
             'label' => $p->project_name
         ]);
 
-        return Inertia::render('Smart/User/AssetCartConfirmation', [
+        return Inertia::render('Smart/User/CartConfirmation', [
             'selectedItems' => $selectedItems,
             'departments' => $departments,
             'projects' => $projects,
