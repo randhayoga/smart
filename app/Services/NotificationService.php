@@ -3,10 +3,12 @@
 namespace App\Services;
 
 use App\Mail\DMUnitStatusRequest;
+use App\Mail\ManagerRequestApprovalMail;
 use App\Models\AdmUser;
 use App\Models\Inventory\Barang;
 use App\Models\Inventory\Unit;
 use App\Models\Inventory\UnitStatusApproval;
+use App\Models\Request\Request as SmartRequest;
 use App\Notifications\AppNotification;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -276,5 +278,48 @@ class NotificationService
                 'decision' => $decision,
             ]
         );
+    }
+
+    /**
+     * Send a real-time notification to the relevant manager when a user submits a new request or borrowing.
+     *
+     * @param SmartRequest $request
+     * @param AdmUser $manager
+     * @param string $type 'Permintaan' | 'Peminjaman'
+     */
+    public function notifyManagerNewRequest(SmartRequest $request, AdmUser $manager, string $type = 'Permintaan'): void
+    {
+        $request->loadMissing(['user', 'department', 'project']);
+
+        $requesterName = $request->user?->name ?? 'Pengguna';
+        $targetName = $request->utilization === 'corporate'
+            ? ($request->department?->org_name ?? 'Departemen')
+            : ($request->project ? "[{$request->project->no_project}] {$request->project->project_name}" : 'Proyek');
+
+        $title = "{$type} Baru: {$request->request_number}";
+        $message = "{$requesterName} telah mengajukan " . strtolower($type) . " baru untuk {$targetName}.";
+
+        $this->sendToUser(
+            $manager,
+            $title,
+            $message,
+            'info',
+            "/smart/approve/{$request->id}",
+            [
+                'request_id' => $request->id,
+                'request_number' => $request->request_number,
+                'type' => $type,
+                'utilization' => $request->utilization,
+            ]
+        );
+
+        // Dispatch email notification with signed 1-click approval URL
+        if (!empty($manager->email)) {
+            try {
+                Mail::to($manager->email)->send(new ManagerRequestApprovalMail($request, $manager, $type));
+            } catch (\Throwable $e) {
+                Log::error("Failed to send approval email for request {$request->id} to {$manager->email}: " . $e->getMessage());
+            }
+        }
     }
 }

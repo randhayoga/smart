@@ -65,7 +65,7 @@ return new class extends Migration {
             $table->string('no_project');
             $table->string('id_rbs');
             $table->dateTime('start_date');
-            $table->dateTime('end_date');
+            $table->dateTime('end_date')->nullable();
             $table->timestamps();
 
             $table->foreign('npk')->references('employee_id')->on('adm_users')->cascadeOnDelete();

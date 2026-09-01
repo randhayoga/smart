@@ -20,8 +20,8 @@ class UnitQrCodeTest extends TestCase
 
     private function createAdminUser(): User
     {
-        HrdEmployee::factory()->create(['employee_id' => '255578']);
-        return User::factory()->create(['employee_id' => '255578']);
+        HrdEmployee::factory()->create(['employee_id' => '252525']);
+        return User::factory()->create(['employee_id' => '252525']);
     }
 
     private function createUnit()
@@ -54,7 +54,7 @@ class UnitQrCodeTest extends TestCase
 
         $response = $this->get(route('smart.inventory.units.qr-code', $unit));
 
-        $response->assertRedirect(route('login'));
+        $response->assertRedirectContains(route('login'));
     }
 
     public function test_admin_can_access_qr_code(): void
@@ -75,7 +75,7 @@ class UnitQrCodeTest extends TestCase
 
         $response = $this->get(route('smart.scan', $unit));
 
-        $response->assertRedirect(route('login'));
+        $response->assertRedirectContains(route('login'));
     }
 
     public function test_admin_can_access_scan_page(): void

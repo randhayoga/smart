@@ -23,44 +23,57 @@ class UserSeeder extends Seeder
 
         HrdEmployee::create([
             'orgchart_id' => $org->id,
-            'employee_id' => '255578',
-            'employee_name' => 'Radifa',
+            'employee_id' => '252525',
+            'employee_name' => 'Mas Mas Aset',
             'email' => 'admin@example.com',
             'active' => true,
         ]);
         AdmUser::create([
-            'employee_id' => '255578',
-            'name' => 'Radifa',
+            'employee_id' => '252525',
+            'name' => 'Mas Mas Aset',
             'password_hash' => Hash::make('IfScFS?25#*'),
         ]);
 
         HrdEmployee::create([
             'orgchart_id' => $org->id,
-            'employee_id' => '123456',
-            'employee_name' => 'Arya Gepa',
-            'email' => 'user@example.com',
+            'employee_id' => '121212',
+            'employee_name' => 'Karyawan Teladan',
+            'email' => 'temp_yyjwa590wtf@flybymail.com',
             'active' => true,
         ]);
         AdmUser::create([
-            'employee_id' => '123456',
-            'name' => 'Arya Gepa',
+            'employee_id' => '121212',
+            'name' => 'Karyawan Teladan',
             'password_hash' => Hash::make('IfSIcT?25*#!'),
         ]);
 
         HrdEmployee::create([
             'orgchart_id' => $org->id,
-            'employee_id' => '654321',
-            'employee_name' => 'Sonny Handini',
-            'email' => 'sejoxor506@kolsea.com',
+            'employee_id' => '010101',
+            'employee_name' => 'Dep Manajer',
+            'email' => 'fabope7639@robustq.com',
             'active' => true,
         ]);
         AdmUser::create([
-            'employee_id' => '654321',
-            'name' => 'Sonny Handini',
+            'employee_id' => '010101',
+            'name' => 'Dep Manajer',
             'password_hash' => Hash::make('IfSerVicEs?25#!*'),
         ]);
 
+        HrdEmployee::create([
+            'orgchart_id' => $org->id,
+            'employee_id' => '090909',
+            'employee_name' => 'Proyek Manajer',
+            'email' => 'temp_9ig6njhfsz8@flybymail.com',
+            'active' => true,
+        ]);
+        AdmUser::create([
+            'employee_id' => '090909',
+            'name' => 'Proyek Manajer',
+            'password_hash' => Hash::make('IfSPM?25#!*'),
+        ]);
+
         // Set the manager in HRD_ORGCHART
-        $org->update(['employee_id' => '654321']);
+        $org->update(['employee_id' => '010101']);
     }
 }

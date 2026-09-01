@@ -220,25 +220,29 @@ class ApprovalController extends Controller
 
         $oldStatus = $req->status;
         $decision = $validated['action'];
+        $note = $validated['note'];
+        $approverId = $request->user()->id;
 
-        RequestApproval::create([
-            'request_id' => $req->id,
-            'approver_id' => $request->user()->id,
-            'decision' => $decision,
-            'note' => $validated['note'] ?? ($decision === 'approve' ? 'Approved by Manager' : 'Rejected by Manager'),
-            'decided_at' => now(),
-        ]);
+        DB::transaction(function () use ($req, $oldStatus, $decision, $note, $approverId) {
+            RequestApproval::create([
+                'request_id' => $req->id,
+                'approver_id' => $approverId,
+                'decision' => $decision,
+                'note' => $note ?? ($decision === 'approve' ? 'Approved by Manager' : 'Rejected by Manager'),
+                'decided_at' => now(),
+            ]);
 
-        $newStatus = $decision === 'approve' ? 'approve' : 'reject';
-        $req->update(['status' => $newStatus]);
+            $newStatus = $decision === 'approve' ? 'approve' : 'reject';
+            $req->update(['status' => $newStatus]);
 
-        RequestStatusLog::create([
-            'request_id' => $req->id,
-            'status_from' => $oldStatus,
-            'status_to' => $newStatus,
-            'changed_by' => $request->user()->id,
-            'note' => $decision === 'approve' ? 'Permintaan disetujui oleh Manager.' : 'Permintaan ditolak oleh Manager.',
-        ]);
+            RequestStatusLog::create([
+                'request_id' => $req->id,
+                'status_from' => $oldStatus,
+                'status_to' => $newStatus,
+                'changed_by' => $approverId,
+                'note' => $decision === 'approve' ? 'Permintaan disetujui oleh Manager.' : 'Permintaan ditolak oleh Manager.',
+            ]);
+        });
 
         $message = $decision === 'approve' 
             ? 'Permintaan berhasil disetujui.' 

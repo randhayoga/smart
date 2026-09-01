@@ -80,7 +80,7 @@ const resetErrors = () => {
 const projectOptions = computed(() => {
   return (props.projects || []).map(p => ({
     id: p.id,
-    name: `${p.no_project} - ${p.project_name}`
+    name: `[${p.no_project}] ${p.project_name}`
   }));
 });
 

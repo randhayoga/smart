@@ -12,6 +12,6 @@ class TbProjectSeeder extends Seeder
      */
     public function run(): void
     {
-        TbProject::factory()->count(5)->create();
+        TbProject::factory()->count(2)->create();
     }
 }

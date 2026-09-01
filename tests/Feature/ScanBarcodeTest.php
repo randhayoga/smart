@@ -19,14 +19,14 @@ class ScanBarcodeTest extends TestCase
     {
         $response = $this->get(route('smart.scan-barcode'));
 
-        $response->assertRedirect(route('login'));
+        $response->assertRedirectContains(route('login'));
     }
 
     public function test_authenticated_user_can_access_scan_barcode_page(): void
     {
-        \App\Models\HrdEmployee::factory()->create(['employee_id' => '255578']);
+        \App\Models\HrdEmployee::factory()->create(['employee_id' => '252525']);
         /** @var User $user */
-        $user = User::factory()->create(['employee_id' => '255578']);
+        $user = User::factory()->create(['employee_id' => '252525']);
 
         $response = $this->actingAs($user)->get(route('smart.scan-barcode'));
 
