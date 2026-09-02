@@ -22,6 +22,7 @@ use App\Http\Controllers\Smart\User\BorrowCartController;
 use App\Http\Controllers\Smart\User\RequestCartConfirmationController;
 use App\Http\Controllers\Smart\User\BorrowCartConfirmationController;
 use App\Http\Controllers\Smart\User\RequestHistoryController;
+use App\Http\Controllers\Smart\User\RequestCancellationController;
 use App\Http\Controllers\Smart\Admin\AuditController;
 use App\Http\Controllers\Smart\Admin\Master\CategoryController;
 use App\Http\Controllers\Smart\Admin\Master\SubcategoryController;
@@ -73,8 +74,6 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
         Route::delete('/clear', [\App\Http\Controllers\Smart\NotificationController::class, 'clearRead'])->name('clear');
         Route::delete('/{id}', [\App\Http\Controllers\Smart\NotificationController::class, 'destroy'])->name('destroy');
     });
-
-    Route::post('/placement/update', [RequestHistoryController::class, 'updatePlacement'])->name('placement.update');
 
     // Admin only routes
     Route::middleware(['role:admin'])->group(function () {
@@ -170,10 +169,7 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
         Route::post('/borrow-cart/confirmation', [BorrowCartConfirmationController::class, 'store'])->name('borrow-cart.confirmation.store');
         Route::get('/history', [RequestHistoryController::class, 'index'])->name('history');
         Route::get('/history/{id}', [RequestHistoryController::class, 'show'])->name('history.show');
-        Route::post('/history/{id}/cancel', [RequestHistoryController::class, 'cancel'])->name('history.cancel');
-        Route::post('/history/{id}/handover', [RequestHistoryController::class, 'handover'])->name('history.handover');
-        Route::post('/history/{id}/receive', [RequestHistoryController::class, 'receive'])->name('history.receive');
-        Route::post('/history/{id}/return', [RequestHistoryController::class, 'returnAsset'])->name('history.return');
+        Route::post('/history/{id}/cancel', [RequestCancellationController::class, 'store'])->name('history.cancel');
     });
 });
 

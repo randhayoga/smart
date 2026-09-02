@@ -188,7 +188,7 @@ const getStatusClasses = (status: string) => {
         <!-- 2x2 Grid (up to 4 items) -->
         <div 
           v-if="request.items.length > 1" 
-          class="grid grid-cols-2 gap-1 w-16 h-16 sm:w-20 sm:h-20 rounded-[0.875rem] overflow-hidden bg-muted border border-border p-1"
+          class="grid grid-cols-2 gap-1 w-16 h-16 sm:w-24 sm:h-24 rounded-[0.875rem] overflow-hidden bg-muted border border-border p-1"
         >
           <div 
             v-for="item in request.items.slice(0, 4)" 
@@ -209,7 +209,7 @@ const getStatusClasses = (status: string) => {
         <!-- Single Item Thumbnail -->
         <div 
           v-else 
-          class="w-16 h-16 sm:w-20 sm:h-20 rounded-[0.875rem] bg-muted border border-border overflow-hidden flex items-center justify-center relative"
+          class="w-16 h-16 sm:w-24 sm:h-24 rounded-[0.875rem] bg-muted border border-border overflow-hidden flex items-center justify-center relative"
         >
           <img 
             v-if="request.items[0]?.imageUrl" 
@@ -317,7 +317,7 @@ const getStatusClasses = (status: string) => {
         @click="emit('cancel', request)"
       >
         <Trash2 class="w-3.5 h-3.5" />
-        Batalkan Permintaan
+        Batalkan {{ request.type === 'peminjaman' ? 'Peminjaman' : 'Permintaan' }}
       </Button>
 
       <!-- Handover Setup CTA (Visible when confirmed or partial) -->

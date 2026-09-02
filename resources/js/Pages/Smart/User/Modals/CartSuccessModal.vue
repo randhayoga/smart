@@ -21,7 +21,7 @@ const props = withDefaults(defineProps<Props>(), {
   isBorrow: false,
   title: '',
   description: '',
-  buttonText: 'Ke Riwayat Permintaan',
+  buttonText: 'Ke Riwayat',
 });
 
 const emit = defineEmits<{
@@ -38,7 +38,8 @@ const modalTitle = computed(() => {
 const modalDescription = computed(() => {
   if (props.description) return props.description;
   const label = props.isBorrow ? 'Peminjaman' : 'Permintaan';
-  return `${label} Anda telah berhasil dikirimkan dan sedang menunggu approval. Anda akan mendapat notifikasi ketika permintaan diproses.`;
+  const labelLower = props.isBorrow ? 'peminjaman' : 'permintaan';
+  return `${label} Anda telah berhasil dikirimkan dan sedang menunggu approval. Anda akan mendapat notifikasi ketika ${labelLower} diproses.`;
 });
 
 const handleConfirm = () => {

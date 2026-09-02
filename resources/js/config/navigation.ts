@@ -206,7 +206,7 @@ export const userNavigation: NavSection[] = [
                 icon: ShoppingCart,
             },
             {
-                title: 'Riwayat Permintaan',
+                title: 'Riwayat',
                 href: '/smart/history',
                 icon: ListCheck,
             },

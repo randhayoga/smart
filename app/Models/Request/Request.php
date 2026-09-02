@@ -49,12 +49,12 @@ class Request extends Model
 
     public function items(): HasMany
     {
-        return $this->hasMany(RequestItem::class);
+        return $this->hasMany(RequestItem::class, 'request_id');
     }
 
     public function statusLogs(): HasMany
     {
-        return $this->hasMany(RequestStatusLog::class);
+        return $this->hasMany(RequestStatusLog::class, 'request_id');
     }
 
     public function approval(): HasOne
@@ -62,9 +62,19 @@ class Request extends Model
         return $this->hasOne(RequestApproval::class, 'request_id')->latestOfMany();
     }
 
+    public function approvals(): HasMany
+    {
+        return $this->hasMany(RequestApproval::class, 'request_id');
+    }
+
     public function adminConfirmation(): HasOne
     {
         return $this->hasOne(RequestAdminConfirmation::class, 'request_id')->latestOfMany();
+    }
+
+    public function adminConfirmations(): HasMany
+    {
+        return $this->hasMany(RequestAdminConfirmation::class, 'request_id');
     }
 
     public function handover(): HasOne
@@ -72,9 +82,19 @@ class Request extends Model
         return $this->hasOne(RequestHandover::class, 'request_id');
     }
 
+    public function handovers(): HasMany
+    {
+        return $this->hasMany(RequestHandover::class, 'request_id');
+    }
+
     public function return(): HasOne
     {
         return $this->hasOne(RequestReturn::class, 'request_id');
+    }
+
+    public function returns(): HasMany
+    {
+        return $this->hasMany(RequestReturn::class, 'request_id');
     }
 
     /**

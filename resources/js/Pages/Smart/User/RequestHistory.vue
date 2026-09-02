@@ -194,7 +194,7 @@ const openCancelModal = (req: RequestHistory) => {
 </script>
 
 <template>
-  <AppLayout title="Riwayat Permintaan">
+  <AppLayout title="Riwayat">
     <div class="space-y-6">
       <div>
         <h1 class="text-lg font-bold text-gray-900 leading-none mb-5">Riwayat permintaan dan peminjaman</h1>

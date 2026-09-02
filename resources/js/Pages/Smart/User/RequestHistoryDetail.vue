@@ -110,6 +110,10 @@ const request = computed((): RequestHistory => {
   return requestState.value;
 });
 
+const isPeminjaman = computed(() => request.value?.type === 'peminjaman');
+const typeLabel = computed(() => isPeminjaman.value ? 'peminjaman' : 'permintaan');
+const typeLabelTitle = computed(() => isPeminjaman.value ? 'Peminjaman' : 'Permintaan');
+
 // ─────────────────────────────────────────────
 // Cancellation Modal State
 // ─────────────────────────────────────────────
@@ -463,9 +467,9 @@ const timelineSteps = computed((): TimelineStep[] => {
   if (!r) return [];
   const steps: TimelineStep[] = [];
 
-  // Step 1: Permintaan dibuat
+  // Step 1: Dibuat
   steps.push({
-    title: 'Permintaan dibuat',
+    title: `${typeLabelTitle.value} dibuat`,
     time: r.created_at ? `${formatDate(r.created_at)} 08:30` : '',
     status: 'done'
   });
@@ -483,10 +487,10 @@ const timelineSteps = computed((): TimelineStep[] => {
       if (log.status_to === 'approve') {
         const approverName = log.user || r.approval_by || r.approver_name || '-';
         title = 'Di-approve';
-        description = `Permintaan disetujui Manager: <span class="font-bold text-foreground">${approverName}</span>`;
+        description = `${typeLabelTitle.value} disetujui Manager: <span class="font-bold text-foreground">${approverName}</span>`;
       } else if (log.status_to === 'partial') {
         title = 'Disetujui sebagian (Partial)';
-        description = description || 'Permintaan disetujui sebagian oleh Admin.';
+        description = description || `${typeLabelTitle.value} disetujui sebagian oleh Admin.`;
       } else if (log.status_to === 'confirm') {
         if (log.status_from === 'partial') {
           title = 'Alokasi Barang Tambahan Dikonfirmasi';
@@ -497,7 +501,7 @@ const timelineSteps = computed((): TimelineStep[] => {
             title = 'Dikonfirmasi';
           }
         }
-        description = description || 'Permintaan dikonfirmasi oleh Admin.';
+        description = description || `${typeLabelTitle.value} dikonfirmasi oleh Admin.`;
       } else if (log.status_to === 'borrow') {
         title = 'Serah Terima Selesai & Dipinjam';
         description = description || 'Aset telah diserahkan dan dipinjam.';
@@ -516,11 +520,11 @@ const timelineSteps = computed((): TimelineStep[] => {
         const approverName = log.user || r.approval_by || r.approver_name || '-';
         title = 'Ditolak';
         status = 'rejected';
-        description = `Permintaan ditolak Manager: <span class="font-bold text-foreground">${approverName}</span>`;
+        description = `${typeLabelTitle.value} ditolak Manager: <span class="font-bold text-foreground">${approverName}</span>`;
       } else if (log.status_to === 'cancel') {
         title = 'Dibatalkan';
         status = 'rejected';
-        description = description || 'Permintaan dibatalkan.';
+        description = description || `${typeLabelTitle.value} dibatalkan.`;
       } else if (log.status_to === 'pending') {
         if (log.status_from === 'confirm') {
           title = 'Serah Terima Sebagian Diterima';
@@ -529,7 +533,7 @@ const timelineSteps = computed((): TimelineStep[] => {
           title = 'Pending';
           status = 'pending';
         }
-        description = description || (log.status_from === 'confirm' ? 'Barang telah diterima oleh pengguna.' : 'Permintaan ditunda (pending) oleh Admin.');
+        description = description || (log.status_from === 'confirm' ? 'Barang telah diterima oleh pengguna.' : `${typeLabelTitle.value} ditunda (pending) oleh Admin.`);
       }
 
       if (title) {
@@ -558,7 +562,7 @@ const timelineSteps = computed((): TimelineStep[] => {
       steps.push({
         title: 'Menunggu konfirmasi Admin',
         status: 'active',
-        description: `Permintaan disetujui Manager: <span class="font-bold text-foreground">${approverName}</span>. Menunggu alokasi aset dan konfirmasi Admin.`
+        description: `${typeLabelTitle.value} disetujui Manager: <span class="font-bold text-foreground">${approverName}</span>. Menunggu alokasi aset dan konfirmasi Admin.`
       });
     } else if (r.raw_status === 'pending') {
       steps.push({
@@ -609,14 +613,14 @@ const activeStepIndex = computed(() => {
 <template>
   <Head :title="'Detail ' + request.number" />
 
-  <AppLayout title="Detail Permintaan">
+  <AppLayout :title="'Detail ' + typeLabelTitle">
     <!-- ── Breadcrumb & Tombol Kembali (In Line) ── -->
     <div class="flex items-center justify-between gap-4 mb-6">
       <Breadcrumb>
         <BreadcrumbList class="text-xs md:text-sm">
           <BreadcrumbItem>
             <Link :href="route('smart.history')" class="text-muted-foreground hover:text-foreground transition-colors">
-              Riwayat Permintaan
+              Riwayat 
             </Link>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
@@ -635,7 +639,7 @@ const activeStepIndex = computed(() => {
           @click="isCancelModalOpen = true"
         >
           <Trash2 class="w-3.5 h-3.5" />
-          Batalkan Permintaan
+          Batalkan {{ typeLabelTitle }}
         </Button>
 
         <Link :href="route('smart.history')">
@@ -722,7 +726,7 @@ const activeStepIndex = computed(() => {
             </p>
 
             <p class="text-xs text-muted-foreground pt-1">
-              <span>Permintaan dibuat pada:</span>
+              <span>{{ typeLabelTitle }} dibuat pada:</span>
               <span class="font-medium text-foreground/80 ml-1">{{ formatDate(request.created_at) }}</span>
             </p>
           </div>
@@ -779,12 +783,12 @@ const activeStepIndex = computed(() => {
 
       </div>
 
-      <!-- Kolom Kanan (Timeline / Tahapan Permintaan) -->
+      <!-- Kolom Kanan (Timeline / Tahapan) -->
       <div class="space-y-6">
         
         <div class="bg-card border border-border rounded-[0.875rem] p-5 sm:p-6 relative">
           <!-- Header without border/count matching Daftar Barang style -->
-          <p class="text-xs text-muted-foreground font-medium mb-4">Tahapan Permintaan:</p>
+          <p class="text-xs text-muted-foreground font-medium mb-4">Tahapan {{ typeLabelTitle }}:</p>
 
           <!-- shadcn-vue Vertical Stepper -->
           <Stepper
@@ -856,11 +860,9 @@ const activeStepIndex = computed(() => {
                     {{ step.title }}
                   </StepperTitle>
 
-                  <!-- Time and actor metadata -->
-                  <div v-if="step.time || step.user" class="text-[11px] text-muted-foreground flex items-center gap-1.5 mt-0.5">
-                    <span v-if="step.time">{{ step.time }}</span>
-                    <span v-if="step.time && step.user">•</span>
-                    <span v-if="step.user">oleh {{ step.user }}</span>
+                  <!-- Time metadata -->
+                  <div v-if="step.time" class="text-[11px] text-muted-foreground mt-0.5">
+                    <span>{{ step.time }}</span>
                   </div>
                 </div>
 
