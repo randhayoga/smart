@@ -9,7 +9,7 @@
  * - 1:1 square aspect ratio image container with fallback placeholder.
  * - Line-clamped typography for titles and parent categories to maintain uniform grid heights.
  * - Tooltip attributes on labels for accessibility and long-string inspection.
- * - Gradient call-to-action button to trigger addition into the active request/loan cart.
+ * - Gradient call-to-action button to trigger addition into the active request/borrow cart.
  * - Graceful disabled state when items are unavailable ("Tidak Tersedia").
  *
  * @emits add-to-cart - Fired when the user clicks the "Tambah" (Add) button.

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * Manager Request Card component displaying loan/supply requests with approval timelines and collapsible items.
+ * Manager Request Card component displaying borrow/supply requests with approval timelines and collapsible items.
  */
 import { ref } from 'vue';
 import { Link } from '@inertiajs/vue3';

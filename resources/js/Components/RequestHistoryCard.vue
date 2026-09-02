@@ -2,7 +2,7 @@
 /**
  * RequestHistoryCard.vue
  *
- * Card component representing an asset loan or consumable supply request within the
+ * Card component representing an asset borrow or consumable supply request within the
  * user's request history dashboard (`RequestHistory.vue`).
  *
  * Key features:
@@ -10,13 +10,13 @@
  * - Prominent return deadline badge for currently borrowed assets.
  * - Dynamic composite thumbnail: renders a 2x2 image grid if multiple items are requested,
  *   or a single item thumbnail with uppercase code fallbacks.
- * - Summary metadata showing request number, corporate/project utilization purpose, and loan duration.
+ * - Summary metadata showing request number, corporate/project utilization purpose, and borrow duration.
  * - Collapsible drawer listing all requested items, brands, specifications, and quantities.
  * - Context-aware action buttons:
  *   - "Lihat Detail" navigation link.
  *   - "Batalkan Permintaan" (Cancel) button visible only while status is pending approval.
  *   - "Atur Serah Terima" (Handover setup) button when request is confirmed/partial.
- *   - "Atur Pengembalian" (Return setup) button when assets are currently on loan.
+ *   - "Atur Pengembalian" (Return setup) button when assets are currently on borrow.
  *
  * @emits cancel - Emitted when the user initiates cancellation of a pending request.
  */
@@ -31,7 +31,7 @@ import { formatDate } from '@/lib/utils';
 // ─────────────────────────────────────────────
 
 /**
- * Line item belonging to a user request or loan.
+ * Line item belonging to a user request or borrow.
  */
 interface RequestItem {
   /** Unique item identifier. */
@@ -70,13 +70,13 @@ interface RequestHistory {
   pemanfaatan: 'corporate' | 'project';
   /** Additional utilization details or project title. */
   pemanfaatanDetail: string;
-  /** Starting date/timestamp for loan period (formatted string). */
+  /** Starting date/timestamp for borrow period (formatted string). */
   durationStart?: string;
-  /** Ending deadline date/timestamp for loan period (formatted string). */
+  /** Ending deadline date/timestamp for borrow period (formatted string). */
   durationEnd?: string;
-  /** Total calculated loan duration in days. */
+  /** Total calculated borrow duration in days. */
   durationDays?: number;
-  /** Additional calculated loan duration hours. */
+  /** Additional calculated borrow duration hours. */
   durationHours?: number;
   /** Localized human-readable status text displayed in badge. */
   status: 'Menunggu approval' | 'Disetujui' | 'Ditolak' | 'Serah Terima' | 'Dipinjam' | 'Selesai' | 'Dibatalkan' | 'Pending' | 'Partial';
@@ -84,6 +84,7 @@ interface RequestHistory {
   raw_status: 'wait' | 'approve' | 'confirm' | 'handover' | 'borrow' | 'return' | 'success' | 'reject' | 'cancel' | 'pending' | 'partial';
   /** ISO timestamp representing when the request was created. */
   created_at: string;
+  approver_name?: string | null;
   /** List of line items included in this request. */
   items: RequestItem[];
 }
@@ -228,6 +229,14 @@ const getStatusClasses = (status: string) => {
           <span class="font-normal text-muted-foreground">Nomor: </span>{{ request.number }}
         </h2>
         
+        <!-- PIC Approval -->
+        <p class="text-xs sm:text-sm text-foreground leading-normal">
+          <span class="text-muted-foreground">PIC Approval:</span> 
+          <span class="font-semibold ml-1">
+            {{ request.approver_name || '-' }}
+          </span>
+        </p>
+
         <!-- Utilization Purpose Scope -->
         <p class="text-xs sm:text-sm text-foreground leading-normal">
           <span class="text-muted-foreground">Pemanfaatan:</span> 
@@ -236,7 +245,7 @@ const getStatusClasses = (status: string) => {
           </span>
         </p>
 
-        <!-- Loan Duration (Visible only for loan requests) -->
+        <!-- Borrow Duration (Visible only for borrow requests) -->
         <p v-if="request.type === 'peminjaman' && request.durationStart" class="text-xs sm:text-sm text-foreground leading-normal">
           <span class="text-muted-foreground">Durasi:</span>
           <span class="font-medium ml-1">
