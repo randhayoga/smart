@@ -15,7 +15,7 @@ use Tests\TestCase;
 /**
  * Request Approval Feature Tests
  *
- * Verifies manager role access restrictions, single and bulk approve/reject workflows, and status audit logging for requisition/loan requests.
+ * Verifies manager role access restrictions, single and bulk approve/reject workflows, and status audit logging for requisition/borrow requests.
  */
 class RequestApprovalTest extends TestCase
 {

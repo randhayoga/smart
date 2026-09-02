@@ -42,6 +42,7 @@ interface RequestHistory {
   status: string;
   raw_status: string;
   created_at: string;
+  approver_name?: string | null;
   items: RequestItem[];
 }
 
@@ -120,6 +121,13 @@ const handleConfirmCancel = () => {
             <div class="space-y-1 text-sm text-foreground">
               <p class="text-base font-bold text-foreground">
                 <span class="font-normal text-muted-foreground">Nomor: </span>{{ request.number }}
+              </p>
+
+              <p class="text-sm text-foreground">
+                <span class="text-muted-foreground">PIC Approval:</span> 
+                <span class="font-semibold ml-1">
+                  {{ request.approver_name || '-' }}
+                </span>
               </p>
               
               <p class="text-sm text-foreground">

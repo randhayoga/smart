@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * Sudah Diproses page component showing archived requisition and loan requests that have been processed by the manager.
+ * Sudah Diproses page component showing archived requisition and borrow requests that have been processed by the manager.
  */
 import { ref, computed, watch, h } from 'vue';
 import { Head } from '@inertiajs/vue3';

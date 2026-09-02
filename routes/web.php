@@ -4,7 +4,7 @@
  * Application Web Routes
  *
  * Registers all HTTP routes for the SMART application, including role-based dashboard redirection,
- * private media serving, real-time notification endpoints, inventory management CRUD, requisition/loan carts,
+ * private media serving, real-time notification endpoints, inventory management CRUD, requisition/borrow carts,
  * manager approval workflows, barcode scanner routes, and local environment error page previews.
  */
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * Perlu Approval page component listing pending loan/requisition requests for manager review and bulk decision processing.
+ * Perlu Approval page component listing pending borrow/requisition requests for manager review and bulk decision processing.
  */
 import { ref, computed, watch, h } from 'vue';
 import { Head, router } from '@inertiajs/vue3';

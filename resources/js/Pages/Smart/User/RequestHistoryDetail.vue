@@ -481,8 +481,9 @@ const timelineSteps = computed((): TimelineStep[] => {
       let description = log.note || '';
 
       if (log.status_to === 'approve') {
+        const approverName = log.user || r.approval_by || r.approver_name || '-';
         title = 'Di-approve';
-        description = description || 'Permintaan disetujui oleh Manager.';
+        description = `Permintaan disetujui Manager: <span class="font-bold text-foreground">${approverName}</span>`;
       } else if (log.status_to === 'partial') {
         title = 'Disetujui sebagian (Partial)';
         description = description || 'Permintaan disetujui sebagian oleh Admin.';
@@ -512,9 +513,10 @@ const timelineSteps = computed((): TimelineStep[] => {
           description = description || 'Barang habis pakai telah diserahkan & proses selesai.';
         }
       } else if (log.status_to === 'reject') {
+        const approverName = log.user || r.approval_by || r.approver_name || '-';
         title = 'Ditolak';
         status = 'rejected';
-        description = description || 'Permintaan ditolak.';
+        description = `Permintaan ditolak Manager: <span class="font-bold text-foreground">${approverName}</span>`;
       } else if (log.status_to === 'cancel') {
         title = 'Dibatalkan';
         status = 'rejected';
@@ -549,13 +551,14 @@ const timelineSteps = computed((): TimelineStep[] => {
       steps.push({
         title: 'Menunggu approval',
         status: 'active',
-        description: 'Menunggu approval dari Manager.'
+        description: `Menunggu approval dari Manager: <span class="font-bold text-foreground">${r.approver_name || '-'}</span>`
       });
     } else if (r.raw_status === 'approve') {
+      const approverName = r.approval_by || r.approver_name || '-';
       steps.push({
         title: 'Menunggu konfirmasi Admin',
         status: 'active',
-        description: 'Permintaan disetujui Manager. Menunggu alokasi aset dan konfirmasi Admin.'
+        description: `Permintaan disetujui Manager: <span class="font-bold text-foreground">${approverName}</span>. Menunggu alokasi aset dan konfirmasi Admin.`
       });
     } else if (r.raw_status === 'pending') {
       steps.push({
@@ -691,6 +694,13 @@ const activeStepIndex = computed(() => {
             <h2 class="text-base font-bold text-foreground">
               <span class="font-normal text-muted-foreground">Nomor: </span>{{ request.number }}
             </h2>
+
+            <p class="text-sm text-foreground">
+              <span class="text-muted-foreground">PIC Approval:</span> 
+              <span class="font-semibold ml-1">
+                {{ request.approver_name || '-' }}
+              </span>
+            </p>
             
             <p class="text-sm text-foreground">
               <span class="text-muted-foreground">Pemanfaatan:</span> 
@@ -726,8 +736,8 @@ const activeStepIndex = computed(() => {
             class="border border-border rounded-[0.875rem] bg-card"
             :class="[
               (request.raw_status === 'confirm' || request.raw_status === 'partial')
-                ? 'h-[calc(100vh-33.5rem)] sm:h-[calc(100vh-30.5rem)] lg:h-[calc(100vh-29rem)]'
-                : 'h-[calc(100vh-29rem)] sm:h-[calc(100vh-25.5rem)] lg:h-[calc(100vh-23rem)]'
+                ? 'h-[calc(100vh-35rem)] sm:h-[calc(100vh-32rem)] lg:h-[calc(100vh-30.5rem)]'
+                : 'h-[calc(100vh-30.5rem)] sm:h-[calc(100vh-27rem)] lg:h-[calc(100vh-24.5rem)]'
             ]"
           >
             <div class="p-2.5 sm:p-5">
@@ -859,7 +869,7 @@ const activeStepIndex = computed(() => {
                   v-if="step.description && step.description !== 'scheduled-details' && step.description !== 'show-return-action'"
                   class="text-xs text-muted-foreground mt-1 leading-relaxed"
                 >
-                  {{ step.description }}
+                  <span v-html="step.description"></span>
                 </StepperDescription>
 
                 <!-- Scheduled Handover Details -->
@@ -938,6 +948,10 @@ const activeStepIndex = computed(() => {
         <div class="px-4 sm:px-6 py-4 overflow-y-auto max-h-[70vh] space-y-4">
           <div class="p-3.5 rounded-[0.875rem] bg-muted/40 border border-border space-y-1 text-sm">
             <h4 class="font-bold text-foreground"><span class="font-normal text-muted-foreground">Nomor: </span>{{ request.number }}</h4>
+            <p class="text-foreground">
+              <span class="text-muted-foreground">PIC Approval:</span> 
+              <span class="font-semibold ml-1">{{ request.approver_name || '-' }}</span>
+            </p>
             <p class="text-foreground">
               <span class="text-muted-foreground">Pemanfaatan:</span> 
               <span class="font-semibold ml-1">{{ request.pemanfaatan === 'corporate' ? 'Corporate' : 'Project' }} ({{ request.pemanfaatanDetail }})</span>
@@ -1055,6 +1069,10 @@ const activeStepIndex = computed(() => {
         <div class="px-4 sm:px-6 py-4 overflow-y-auto max-h-[70vh] space-y-4">
           <div class="p-3.5 rounded-[0.875rem] bg-muted/40 border border-border space-y-1 text-sm">
             <h4 class="font-bold text-foreground"><span class="font-normal text-muted-foreground">Nomor: </span>{{ request.number }}</h4>
+            <p class="text-foreground">
+              <span class="text-muted-foreground">PIC Approval:</span> 
+              <span class="font-semibold ml-1">{{ request.approver_name || '-' }}</span>
+            </p>
             <p class="text-foreground">
               <span class="text-muted-foreground">Pemanfaatan:</span> 
               <span class="font-semibold ml-1">{{ request.pemanfaatan === 'corporate' ? 'Corporate' : 'Project' }} ({{ request.pemanfaatanDetail }})</span>
