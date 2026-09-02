@@ -161,23 +161,25 @@ const filteredRequests = computed(() => {
 
     // 5. Time Range Match
     let matchesTime = true;
-    if (filterTimeRange.value !== 'Semua rentang') {
-      const reqDate = new Date(req.created_at);
+    if (filterTimeRange.value !== 'Semua rentang' && req.created_at && req.created_at !== '-') {
+      const datePart = req.created_at.split(' ')[0];
+      const parts = datePart.split('-').map(Number);
+      const reqDate = parts[0] > 1000
+        ? new Date(parts[0], parts[1] - 1, parts[2])
+        : new Date(parts[2], parts[1] - 1, parts[0]);
+      
       const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      const todayDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+      const diffTime = todayDate.getTime() - reqDate.getTime();
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
       if (filterTimeRange.value === 'Hari ini') {
-        const reqDateStr = req.created_at;
-        const todayStr = today.toISOString().split('T')[0];
-        matchesTime = reqDateStr === todayStr;
+        matchesTime = diffDays === 0;
       } else if (filterTimeRange.value === '7 hari terakhir') {
-        const diffTime = Math.abs(today.getTime() - reqDate.getTime());
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        matchesTime = diffDays <= 7;
+        matchesTime = diffDays >= 0 && diffDays <= 7;
       } else if (filterTimeRange.value === '30 hari terakhir') {
-        const diffTime = Math.abs(today.getTime() - reqDate.getTime());
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        matchesTime = diffDays <= 30;
+        matchesTime = diffDays >= 0 && diffDays <= 30;
       }
     }
 

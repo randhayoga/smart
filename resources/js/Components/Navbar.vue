@@ -9,6 +9,7 @@ import { Button } from '@/Components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/Components/ui/avatar';
 import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 import { Badge } from '@/Components/ui/badge';
+import { formatDateTime } from '@/lib/utils';
 
 // Dropdown and ScrollArea components
 import { 
@@ -89,12 +90,7 @@ const formatTime = (isoString: string) => {
   if (diffMins < 60) return `${diffMins} mnt lalu`;
   if (diffHours < 24) return `${diffHours} jam lalu`;
 
-  return date.toLocaleDateString('id-ID', {
-    day: 'numeric',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  return formatDateTime(date);
 };
 </script>
 

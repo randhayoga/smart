@@ -7,6 +7,7 @@ import { Head, useForm } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 import { ChevronLeft, ChevronDown, Loader2, Save, Info, FileText, Camera } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
+import { formatDate } from '@/lib/utils';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/Components/ui/dropdown-menu';
@@ -217,15 +218,6 @@ const formatLocation = (loc: string | null, floor: string | null, room: string |
   if (floor) parts.push(floor);
   if (room) parts.push(room);
   return parts.join(' - ');
-};
-
-const formatDateWithDashes = (dateStr: string | null) => {
-  if (!dateStr || dateStr === '-') return '-';
-  if (dateStr.includes('-') && dateStr.indexOf('-') === 4) {
-    const [y, m, d] = dateStr.split('-');
-    return `${d}-${m}-${y}`;
-  }
-  return dateStr.replace(/\//g, '-');
 };
 
 const handleFileUpload = async (e: any) => {
@@ -584,7 +576,7 @@ const handleSubmit = () => {
               </div>
               <div class="flex justify-between items-start">
                 <span class="text-muted-foreground font-medium">Tgl Registrasi</span>
-                <span class="text-foreground font-semibold">{{ formatDateWithDashes(props.asset.lot_date_of_receipt) }}</span>
+                <span class="text-foreground font-semibold">{{ formatDate(props.asset.lot_date_of_receipt) }}</span>
               </div>
               <div class="flex justify-between items-start">
                 <span class="text-muted-foreground font-medium">Umur</span>

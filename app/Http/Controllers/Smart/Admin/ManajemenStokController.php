@@ -51,7 +51,7 @@ class ManajemenStokController extends Controller
                     'brand' => $barang->brand->name ?? '-',
                     'name' => $barang->name,
                     'specification' => $barang->specification,
-                    'lastUpdate' => $barang->updated_at ? $barang->updated_at->format('d/m/Y H:i') : '-',
+                    'lastUpdate' => $barang->updated_at ? $barang->updated_at->format('d-m-Y H:i') : '-',
                     'amount' => $amount,
                     'image_url' => $barang->image_url,
                     'uom' => $barang->uom->name ?? '-',
@@ -97,7 +97,7 @@ class ManajemenStokController extends Controller
             'brand' => $barang->brand->name ?? '-',
             'name' => $barang->name,
             'specification' => $barang->specification,
-            'lastUpdate' => $barang->updated_at ? $barang->updated_at->format('d/m/Y H:i') : '-',
+            'lastUpdate' => $barang->updated_at ? $barang->updated_at->format('d-m-Y H:i') : '-',
             'amount' => $amount,
             'image_url' => $barang->image_url,
             'uom' => $barang->uom->name ?? '-',
@@ -143,7 +143,7 @@ class ManajemenStokController extends Controller
                     'project_id' => $lot->project_id,
                     'project_name' => $lot->project ? $lot->project->project_name : null,
                     'project_no' => $lot->project ? $lot->project->no_project : null,
-                    'updated_at' => $lot->updated_at ? $lot->updated_at->format('d/m/Y H:i') : '-',
+                    'updated_at' => $lot->updated_at ? $lot->updated_at->format('d-m-Y H:i') : '-',
                 ];
             });
 
@@ -192,7 +192,7 @@ class ManajemenStokController extends Controller
                     'price' => $unit->price,
                     'image_url' => $unit->image_url,
                     'vehicle_registration' => $unit->vehicle_registration,
-                    'updated_at' => $unit->updated_at ? $unit->updated_at->format('d/m/Y H:i') : '-',
+                    'updated_at' => $unit->updated_at ? $unit->updated_at->format('d-m-Y H:i') : '-',
                     
                     // Location info
                     'location' => $unit->location->name ?? '-',

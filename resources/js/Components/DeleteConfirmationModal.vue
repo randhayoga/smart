@@ -5,6 +5,7 @@
 import { computed, onMounted, onUnmounted } from 'vue';
 import { X, AlertTriangle, Loader2 } from 'lucide-vue-next';
 import { Button } from "@/Components/ui/button";
+import { formatDate } from '@/lib/utils';
 
 interface Props {
   isOpen: boolean;
@@ -52,15 +53,6 @@ const formatRupiah = (val: number | string | null | undefined) => {
   if (isNaN(num)) return '-';
   const formatted = Math.floor(num).toLocaleString('id-ID');
   return `Rp${formatted}`;
-};
-
-const formatDateWithDashes = (dateStr: string) => {
-  if (!dateStr || dateStr === '-') return '-';
-  if (dateStr.includes('-') && dateStr.indexOf('-') === 4) {
-    const [y, m, d] = dateStr.split('-');
-    return `${d}-${m}-${y}`;
-  }
-  return dateStr.replace(/\//g, '-');
 };
 
 const getAge = (item: any) => {
@@ -172,7 +164,7 @@ const displayFields = computed(() => {
       
       fields.push({ label: 'Nomor PO', value: data.unit_details.po_number || '-' });
       if (data.unit_details.date_of_receipt) {
-        fields.push({ label: 'Tanggal registrasi', value: data.unit_details.date_of_receipt });
+        fields.push({ label: 'Tanggal registrasi', value: formatDate(data.unit_details.date_of_receipt) });
         fields.push({ label: 'Umur', value: getAge(data.unit_details) });
       }
       if (data.unit_details.price !== undefined && data.unit_details.price !== null) {
@@ -221,7 +213,7 @@ const displayFields = computed(() => {
     
     if (data.po_number) fields.push({ label: 'Nomor PO', value: data.po_number });
     if (data.date_of_receipt) {
-      fields.push({ label: 'Tanggal registrasi', value: formatDateWithDashes(data.date_of_receipt) });
+      fields.push({ label: 'Tanggal registrasi', value: formatDate(data.date_of_receipt) });
       fields.push({ label: 'Umur', value: getAge(data) });
     }
     

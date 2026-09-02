@@ -31,8 +31,8 @@ class AdminUnitStatusApprovalResource extends JsonResource
             'note' => $this->note,
             'requester_name' => $this->requester->name ?? '-',
             'approver_name' => $this->approver->name ?? '-',
-            'requested_at' => $this->requested_at ? $this->requested_at->format('d/m/Y H:i') : '-',
-            'decided_at' => $this->decided_at ? $this->decided_at->format('d/m/Y H:i') : '-',
+            'requested_at' => $this->requested_at ? $this->requested_at->format('d-m-Y H:i') : '-',
+            'decided_at' => $this->decided_at ? $this->decided_at->format('d-m-Y H:i') : '-',
         ];
     }
 }

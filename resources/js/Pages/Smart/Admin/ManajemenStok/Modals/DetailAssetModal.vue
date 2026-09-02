@@ -7,6 +7,7 @@ import { router } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 import { X, FileText, Upload } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
+import { formatDate } from '@/lib/utils';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import Tabs from '@/Components/Tabs.vue';
 import FormulirPeminjamanAset from '@/Pages/Smart/Admin/ManajemenStok/Tabs/FormulirPeminjamanAset.vue';
@@ -63,15 +64,6 @@ const formatLocation = (loc: string | null, floor: string | null, room: string |
   if (floor) parts.push(floor);
   if (room) parts.push(room);
   return parts.join(' - ');
-};
-
-const formatDateWithDashes = (dateStr: string | null) => {
-  if (!dateStr || dateStr === '-') return '-';
-  if (dateStr.includes('-') && dateStr.indexOf('-') === 4) {
-    const [y, m, d] = dateStr.split('-');
-    return `${d}-${m}-${y}`;
-  }
-  return dateStr.replace(/\//g, '-');
 };
 
 const getConditionLabel = (cond: string) => {
@@ -245,7 +237,7 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                     <div class="md:col-span-4">
                       <p class="font-bold text-foreground"><span class="text-foreground">Kode LOT:</span> {{ finalLotNumber }}</p>
                       <p class="text-foreground">Organizer: {{ finalLotOrganizer }}</p>
-                      <p class="text-foreground">Tanggal registrasi: {{ formatDateWithDashes(finalLotDateOfReceipt) }}</p>
+                      <p class="text-foreground">Tanggal registrasi: {{ formatDate(finalLotDateOfReceipt) }}</p>
                       <p class="text-foreground">Umur: {{ finalLotAge !== null && finalLotAge !== undefined ? `${finalLotAge} tahun` : '-' }}</p>
                       <p class="text-foreground">Vendor: {{ finalLotVendor }}</p>
                       <p class="text-foreground">Nomor PO: {{ finalLotPoNumber }}</p>

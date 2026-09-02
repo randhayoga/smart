@@ -6,6 +6,7 @@ import { ref } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import { Button } from '@/Components/ui/button';
 import { ChevronDown, ChevronUp, Trash2, Calendar } from 'lucide-vue-next';
+import { formatDate } from '@/lib/utils';
 
 // ─────────────────────────────────────────────
 // Types
@@ -54,13 +55,6 @@ const isExpanded = ref(false);
 
 const toggleExpanded = () => {
   isExpanded.value = !isExpanded.value;
-};
-
-// Formatting Helper
-const formatDate = (dateStr: string) => {
-  const parts = dateStr.split(/[-/]/);
-  if (parts.length !== 3) return dateStr;
-  return `${parts[2]}/${parts[1]}/${parts[0]}`; // DD/MM/YYYY
 };
 
 // ─────────────────────────────────────────────
@@ -192,7 +186,7 @@ const getStatusClasses = (status: string) => {
             @click="toggleExpanded"
             class="text-xs font-semibold text-primary hover:underline flex items-center gap-1 transition-all cursor-pointer"
           >
-            <span>{{ isExpanded ? 'Sembunyikan Barang' : 'Lihat Barang' }} ({{ request.items.length }})</span>
+            <span>{{ isExpanded ? 'Sembunyikan barang' : 'Lihat barang' }} ({{ request.items.length }})</span>
             <ChevronUp v-if="isExpanded" class="w-3.5 h-3.5" />
             <ChevronDown v-else class="w-3.5 h-3.5" />
           </button>
@@ -202,7 +196,7 @@ const getStatusClasses = (status: string) => {
             v-if="isExpanded" 
             class="mt-2.5 bg-muted/40 border border-border p-3 rounded-[0.875rem] space-y-1 text-xs animate-in fade-in slide-in-from-top-1 duration-200"
           >
-            <p class="font-semibold text-foreground">Daftar Barang:</p>
+            <p class="font-semibold text-foreground">Daftar barang:</p>
             <ul class="space-y-0.5 pl-0.5">
               <li 
                 v-for="item in request.items" 
@@ -210,9 +204,15 @@ const getStatusClasses = (status: string) => {
                 class="text-muted-foreground font-medium flex items-center gap-1.5"
               >
                 <span class="w-1.5 h-1.5 rounded-full bg-primary/60 shrink-0"></span>
-                <span class="text-foreground font-semibold">{{ item.subcategory }}:</span> 
-                <span>{{ item.brand !== '-' ? item.brand : '' }} {{ item.name && item.name !== 'Tidak Spesifik' ? item.name : '' }} {{ item.spec }}</span>
-                <span class="text-foreground font-medium shrink-0">({{ item.quantity }} {{ item.uom || 'satuan' }})</span>
+                <template v-if="(item.brand && item.brand !== '-') || (item.name && item.name !== 'Tidak Spesifik') || item.spec">
+                  <span class="text-foreground font-semibold">{{ item.subcategory }}:</span>
+                  <span>{{ item.brand !== '-' ? item.brand : '' }} {{ item.name && item.name !== 'Tidak Spesifik' ? item.name : '' }} {{ item.spec }}</span>
+                  <span class="text-foreground font-medium shrink-0">({{ item.quantity }} {{ item.uom || 'satuan' }})</span>
+                </template>
+                <template v-else>
+                  <span class="text-foreground font-semibold">{{ item.subcategory }}</span>
+                  <span class="text-foreground font-medium shrink-0">({{ item.quantity }} {{ item.uom || 'satuan' }})</span>
+                </template>
               </li>
             </ul>
           </div>

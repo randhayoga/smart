@@ -7,6 +7,7 @@ import { router, usePage } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { Button } from "@/Components/ui/button";
+import { formatDate } from '@/lib/utils';
 import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem, BreadcrumbSeparator } from '@/Components/ui/breadcrumb';
 import Tabs from '@/Components/Tabs.vue';
 import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal.vue';
@@ -130,15 +131,6 @@ const formatLocation = (loc: string | null, floor: string | null, room: string |
   return parts.join(' - ');
 };
 
-const formatDateWithDashes = (dateStr: string) => {
-  if (!dateStr || dateStr === '-') return '-';
-  if (dateStr.includes('-') && dateStr.indexOf('-') === 4) {
-    const [y, m, d] = dateStr.split('-');
-    return `${d}-${m}-${y}`;
-  }
-  return dateStr.replace(/\//g, '-');
-};
-
 // Deletion Modals Logic
 const isDeleteModalOpen = ref(false);
 const deleteMode = ref<'lot'>('lot');
@@ -150,7 +142,7 @@ const deleteFields = computed(() => {
     return [
       { label: 'Kode LOT', value: props.lot.number },
       { label: 'Lokasi', value: formatLocation(props.lot.location, props.lot.floor, props.lot.room) },
-      { label: 'Tanggal registrasi', value: formatDateWithDashes(props.lot.date_of_receipt) },
+      { label: 'Tanggal registrasi', value: formatDate(props.lot.date_of_receipt) },
       { label: 'Harga default', value: formatRupiah(props.lot.unitPrice) },
       { label: 'Pembebanan', value: props.lot.burden || '-' },
     ];
