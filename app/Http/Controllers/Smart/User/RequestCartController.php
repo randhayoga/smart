@@ -4,9 +4,10 @@ namespace App\Http\Controllers\Smart\User;
 
 use App\Http\Controllers\Controller;
 use App\Models\Cart\ConsumableBasket;
-use App\Models\Inventory\Unit;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Inertia\Response;
 
 /**
  * Request Cart Controller managing shopping basket operations for consumable inventory items.
@@ -14,9 +15,9 @@ use Inertia\Inertia;
 class RequestCartController extends Controller
 {
     /**
-     * Menampilkan halaman Keranjang Habis Pakai.
+     * Display the consumable items shopping cart (Keranjang Habis Pakai).
      */
-    public function index(Request $request)
+    public function index(Request $request): Response
     {
         $cartItems = ConsumableBasket::with([
             'barang.subcategory.category',
@@ -28,17 +29,6 @@ class RequestCartController extends Controller
             ->where('user_id', $request->user()->id)
             ->get()
             ->map(function ($item) {
-                // Calculate stock of units with status 'tersedia'
-                if ($item->barang_id) {
-                    $stock = Unit::whereHas('lot', function ($q) use ($item) {
-                        $q->where('barang_id', $item->barang_id);
-                    })->where('status', 'tersedia')->count();
-                } else {
-                    $stock = Unit::whereHas('lot.barang', function ($q) use ($item) {
-                        $q->where('subcategory_id', $item->subcategory_id);
-                    })->where('status', 'tersedia')->count();
-                }
-
                 return [
                     'id' => $item->id,
                     'barang_id' => $item->barang_id,
@@ -55,7 +45,7 @@ class RequestCartController extends Controller
                         ? ($item->barang->subcategory->name ?? '-') 
                         : ($item->subcategory->name ?? '-'),
                     'code' => $item->barang?->number ?? '-',
-                    'stock' => $stock,
+                    'stock' => 0, // Stock calculation deprecated; requests can be placed regardless of stock
                     'quantity' => $item->quantity,
                     'selected' => false,
                     'uom' => $item->barang?->uom?->name ?? ($item->subcategory?->barangs?->first()?->uom?->name ?? 'satuan'),
@@ -71,13 +61,13 @@ class RequestCartController extends Controller
     }
 
     /**
-     * Menambahkan barang ke dalam keranjang habis pakai.
+     * Add an item to the consumable cart.
      */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'subcategory_id' => 'nullable|exists:subcategories,id',
-            'barang_id' => 'nullable|exists:barangs,id',
+            'subcategory_id' => 'required_without:barang_id|nullable|exists:subcategories,id',
+            'barang_id' => 'required_without:subcategory_id|nullable|exists:barangs,id',
             'quantity' => 'required|integer|min:1|max:999999',
         ]);
 
@@ -104,12 +94,12 @@ class RequestCartController extends Controller
     }
 
     /**
-     * Memperbarui kuantitas item keranjang habis pakai.
+     * Update item quantity in the consumable cart.
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, int $id): RedirectResponse
     {
         $validated = $request->validate([
-            'quantity' => 'required|integer|min:1',
+            'quantity' => 'required|integer|min:1|max:999999',
         ]);
 
         $item = ConsumableBasket::where('user_id', $request->user()->id)
@@ -121,9 +111,9 @@ class RequestCartController extends Controller
     }
 
     /**
-     * Menghapus item dari keranjang habis pakai.
+     * Remove an item from the consumable cart.
      */
-    public function destroy(Request $request, $id)
+    public function destroy(Request $request, int $id): RedirectResponse
     {
         $item = ConsumableBasket::where('user_id', $request->user()->id)
             ->findOrFail($id);

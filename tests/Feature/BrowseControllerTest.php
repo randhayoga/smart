@@ -186,7 +186,10 @@ class BrowseControllerTest extends TestCase
             'quantity' => 5,
         ]);
 
-        $orgchart = \App\Models\HrdOrgchart::factory()->create();
+        $manager = User::factory()->create();
+        $orgchart = \App\Models\HrdOrgchart::factory()->create([
+            'employee_id' => $manager->employee_id,
+        ]);
 
         $response = $this->actingAs($user)->post(route('smart.asset-cart.confirmation.store'), [
             'items' => [
@@ -241,7 +244,10 @@ class BrowseControllerTest extends TestCase
             'end_date' => now()->addDays(3),
         ]);
 
-        $orgchart = \App\Models\HrdOrgchart::factory()->create();
+        $manager = User::factory()->create();
+        $orgchart = \App\Models\HrdOrgchart::factory()->create([
+            'employee_id' => $manager->employee_id,
+        ]);
 
         $response = $this->actingAs($user)->post(route('smart.borrow-cart.confirmation.store'), [
             'items' => [
@@ -409,6 +415,20 @@ class BrowseControllerTest extends TestCase
             'npk' => $newPM->employee_id,
             'no_project' => $project->no_project,
             'id_rbs' => $rbs->id,
+            'start_date' => '2026-01-01 00:00:00',
+        ]);
+
+        \App\Models\TbRbs::create([
+            'id' => 'P0',
+            'name' => 'Anggota',
+            'showing_name' => 'Anggota',
+        ]);
+
+        // Alice (requester) assignment to project
+        \App\Models\TbAssignProject::create([
+            'npk' => $user->employee_id,
+            'no_project' => $project->no_project,
+            'id_rbs' => 'P0',
             'start_date' => '2026-01-01 00:00:00',
         ]);
 

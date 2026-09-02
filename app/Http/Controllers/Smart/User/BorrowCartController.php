@@ -4,9 +4,10 @@ namespace App\Http\Controllers\Smart\User;
 
 use App\Http\Controllers\Controller;
 use App\Models\Cart\AssetBasket;
-use App\Models\Inventory\Unit;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Inertia\Response;
 
 /**
  * Borrow Cart Controller managing shopping basket operations for loanable asset items.
@@ -14,9 +15,9 @@ use Inertia\Inertia;
 class BorrowCartController extends Controller
 {
     /**
-     * Menampilkan halaman Keranjang Peminjaman.
+     * Display the asset borrow cart (Keranjang Peminjaman).
      */
-    public function index(Request $request)
+    public function index(Request $request): Response
     {
         $cartItems = AssetBasket::with([
             'barang.subcategory.category',
@@ -28,17 +29,6 @@ class BorrowCartController extends Controller
             ->where('user_id', $request->user()->id)
             ->get()
             ->map(function ($item) {
-                // Calculate stock of units with status 'tersedia'
-                if ($item->barang_id) {
-                    $stock = Unit::whereHas('lot', function ($q) use ($item) {
-                        $q->where('barang_id', $item->barang_id);
-                    })->where('status', 'tersedia')->count();
-                } else {
-                    $stock = Unit::whereHas('lot.barang', function ($q) use ($item) {
-                        $q->where('subcategory_id', $item->subcategory_id);
-                    })->where('status', 'tersedia')->count();
-                }
-
                 return [
                     'id' => $item->id,
                     'barang_id' => $item->barang_id,
@@ -55,7 +45,7 @@ class BorrowCartController extends Controller
                         ? ($item->barang->subcategory->name ?? '-') 
                         : ($item->subcategory->name ?? '-'),
                     'code' => $item->barang?->number ?? '-',
-                    'stock' => $stock,
+                    'stock' => 0, // Stock calculation deprecated; loans can be placed regardless of stock
                     'quantity' => $item->quantity,
                     'selected' => false,
                     'isPreorder' => false,
@@ -83,13 +73,13 @@ class BorrowCartController extends Controller
     }
 
     /**
-     * Menambahkan barang ke dalam keranjang peminjaman.
+     * Add an item to the borrow cart.
      */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'subcategory_id' => 'nullable|exists:subcategories,id',
-            'barang_id' => 'nullable|exists:barangs,id',
+            'subcategory_id' => 'required_without:barang_id|nullable|exists:subcategories,id',
+            'barang_id' => 'required_without:subcategory_id|nullable|exists:barangs,id',
             'quantity' => 'required|integer|min:1|max:999999',
         ]);
 
@@ -111,7 +101,7 @@ class BorrowCartController extends Controller
         }
         $basketItem->quantity = ($basketItem->quantity ?? 0) + $validated['quantity'];
 
-        // Assets need default start and end dates if not set, or we set them to tomorrow and the day after
+        // Assets need default start and end dates if not set
         if (!$basketItem->start_date) {
             $basketItem->start_date = now()->addDay();
         }
@@ -125,14 +115,17 @@ class BorrowCartController extends Controller
     }
 
     /**
-     * Memperbarui kuantitas atau tanggal pada item keranjang peminjaman.
+     * Update item quantity or borrowing dates in the borrow cart.
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, int $id): RedirectResponse
     {
         $validated = $request->validate([
-            'quantity' => 'sometimes|integer|min:1',
-            'start_date' => 'sometimes|nullable|date',
-            'end_date' => 'sometimes|nullable|date',
+            'quantity' => 'sometimes|integer|min:1|max:999999',
+            'start_date' => 'sometimes|nullable|date|after_or_equal:today',
+            'end_date' => 'sometimes|nullable|date|after_or_equal:start_date',
+        ], [
+            'start_date.after_or_equal' => 'Tanggal mulai peminjaman tidak boleh di masa lalu.',
+            'end_date.after_or_equal' => 'Tanggal selesai peminjaman harus sama dengan atau setelah tanggal mulai peminjaman.',
         ]);
 
         $item = AssetBasket::where('user_id', $request->user()->id)
@@ -144,9 +137,9 @@ class BorrowCartController extends Controller
     }
 
     /**
-     * Menghapus item dari keranjang peminjaman.
+     * Remove an item from the borrow cart.
      */
-    public function destroy(Request $request, $id)
+    public function destroy(Request $request, int $id): RedirectResponse
     {
         $item = AssetBasket::where('user_id', $request->user()->id)
             ->findOrFail($id);

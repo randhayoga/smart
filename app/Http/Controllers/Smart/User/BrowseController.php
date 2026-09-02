@@ -3,9 +3,6 @@
 namespace App\Http\Controllers\Smart\User;
 
 use App\Http\Controllers\Controller;
-use App\Models\Cart\AssetBasket;
-use App\Models\Cart\ConsumableBasket;
-use App\Models\Inventory\Barang;
 use App\Models\Master\Category;
 use App\Models\Master\Subcategory;
 use Illuminate\Http\Request;
@@ -22,7 +19,7 @@ class BrowseController extends Controller
      */
     public function index(Request $request): Response
     {
-        $categories = Category::orderBy('name')->get();
+        $categories = Category::orderBy('name')->get(['id', 'name', 'is_consumable']);
         
         $items = Subcategory::with(['category', 'barangs.brand', 'barangs.uom'])
             ->get()
@@ -41,7 +38,7 @@ class BrowseController extends Controller
                     'brand' => $firstBarang && $firstBarang->brand ? $firstBarang->brand->name : '-',
                     'name' => $subcategory->name,
                     'spec' => $firstBarang ? $firstBarang->specification : '-',
-                    'stock' => 0,
+                    'stock' => 0, // Stock calculation deprecated; items can be requested regardless of stock
                     'imageUrl' => $firstBarang && $firstBarang->image_url ? '/media/' . $firstBarang->image_url : null,
                     'uom' => $firstBarang && $firstBarang->uom ? $firstBarang->uom->name : 'satuan',
                     'barangs' => $subcategory->barangs->map(function ($barang) {
@@ -64,5 +61,4 @@ class BrowseController extends Controller
             'categories' => $categories,
         ]);
     }
-
 }

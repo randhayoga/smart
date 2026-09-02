@@ -15,6 +15,7 @@
  * @emits add-to-cart - Fired when the user clicks the "Tambah" (Add) button.
  */
 import { Button } from "@/Components/ui/button";
+import { formatImageUrl } from "@/lib/utils";
 
 /**
  * Component Props Interface
@@ -49,8 +50,7 @@ const emit = defineEmits<{
   >
     <!-- Product Thumbnail Banner (1:1 Aspect Ratio) -->
     <div class="aspect-square bg-muted overflow-hidden flex items-center justify-center shrink-0 relative w-full">
-      <img v-if="imageUrl" :src="imageUrl" alt="Product Image" class="w-full h-full object-cover relative z-10" />
-      <img v-else src="https://placehold.co/400x400?text=Barang" alt="Placeholder" class="w-full h-full object-cover opacity-50" />
+      <img :src="formatImageUrl(imageUrl)" alt="Product Image" class="w-full h-full object-cover relative z-10" />
     </div>
     
     <!-- Card Body & Action Trigger -->
