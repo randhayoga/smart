@@ -38,7 +38,7 @@ class UserSeeder extends Seeder
             'orgchart_id' => $org->id,
             'employee_id' => '121212',
             'employee_name' => 'Karyawan Teladan',
-            'email' => 'temp_yyjwa590wtf@flybymail.com',
+            'email' => 'user@example.com',
             'active' => true,
         ]);
         AdmUser::create([
@@ -51,7 +51,7 @@ class UserSeeder extends Seeder
             'orgchart_id' => $org->id,
             'employee_id' => '010101',
             'employee_name' => 'Dep Manajer',
-            'email' => 'fabope7639@robustq.com',
+            'email' => 'manager@example.com',
             'active' => true,
         ]);
         AdmUser::create([
@@ -64,7 +64,7 @@ class UserSeeder extends Seeder
             'orgchart_id' => $org->id,
             'employee_id' => '090909',
             'employee_name' => 'Proyek Manajer',
-            'email' => 'temp_9ig6njhfsz8@flybymail.com',
+            'email' => 'fabope7639@robustq.com',
             'active' => true,
         ]);
         AdmUser::create([

@@ -1,13 +1,32 @@
 <script setup lang="ts">
 /**
- * Product Card component displaying item categories in the user browsing catalog with an Add-to-Cart trigger.
+ * ProductCard.vue
+ *
+ * Catalog card component displaying an item category or subcategory in the user
+ * browsing view (`Browse.vue`).
+ *
+ * Key features:
+ * - 1:1 square aspect ratio image container with fallback placeholder.
+ * - Line-clamped typography for titles and parent categories to maintain uniform grid heights.
+ * - Tooltip attributes on labels for accessibility and long-string inspection.
+ * - Gradient call-to-action button to trigger addition into the active request/loan cart.
+ * - Graceful disabled state when items are unavailable ("Tidak Tersedia").
+ *
+ * @emits add-to-cart - Fired when the user clicks the "Tambah" (Add) button.
  */
 import { Button } from "@/Components/ui/button";
 
+/**
+ * Component Props Interface
+ */
 interface Props {
+  /** Name of the item subcategory (e.g., "Laptop", "Kursi Kerja"). */
   subcategoryName: string;
+  /** Name of the parent category (e.g., "Teknologi Informasi", "Furnitur"). */
   categoryName: string;
+  /** Optional URL or media path to the subcategory preview image. */
   imageUrl?: string;
+  /** When true, disables the card interaction and changes button state to unavailable. */
   disabled?: boolean;
 }
 
@@ -16,6 +35,7 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const emit = defineEmits<{
+  /** Emitted when the add button is clicked to insert this item into the user's cart. */
   (e: 'add-to-cart'): void;
 }>();
 </script>
@@ -27,20 +47,22 @@ const emit = defineEmits<{
       disabled ? 'opacity-60 border-border' : 'border-border hover:shadow-card-hover hover:-translate-y-0.5'
     ]"
   >
-    <!-- Image Placeholder or Actual Image -->
+    <!-- Product Thumbnail Banner (1:1 Aspect Ratio) -->
     <div class="aspect-square bg-muted overflow-hidden flex items-center justify-center shrink-0 relative w-full">
       <img v-if="imageUrl" :src="imageUrl" alt="Product Image" class="w-full h-full object-cover relative z-10" />
-      <img v-else src="https://placehold.co/400x400?text=Barang" class="w-full h-full object-cover opacity-50" />
+      <img v-else src="https://placehold.co/400x400?text=Barang" alt="Placeholder" class="w-full h-full object-cover opacity-50" />
     </div>
     
-    <!-- Content -->
+    <!-- Card Body & Action Trigger -->
     <div class="flex flex-col flex-grow p-3.5 sm:p-4">
+      <!-- Subcategory & Category Titles -->
       <p class="font-bold text-foreground text-sm sm:text-base leading-snug line-clamp-2" :title="subcategoryName">{{ subcategoryName }}</p>
       <p class="text-xs sm:text-sm text-muted-foreground line-clamp-1 mt-0.5" :title="categoryName">{{ categoryName }}</p>
  
-      <!-- Spacer to push button to bottom -->
+      <!-- Flex Spacer to push action button to bottom -->
       <div class="flex-grow pt-3"></div>
       
+      <!-- Add-to-Cart / Availability Button -->
       <Button 
         @click="emit('add-to-cart')"
         :disabled="disabled"

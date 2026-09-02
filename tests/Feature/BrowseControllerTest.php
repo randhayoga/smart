@@ -197,7 +197,8 @@ class BrowseControllerTest extends TestCase
             'alasan' => 'Testing consumable request',
         ]);
 
-        $response->assertRedirect(route('smart.user.dashboard'));
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
 
         // Check basket is deleted
         $this->assertDatabaseMissing('consumable_baskets', [
@@ -253,7 +254,8 @@ class BrowseControllerTest extends TestCase
             'end_date' => now()->addDays(3)->format('Y-m-d H:i:s'),
         ]);
 
-        $response->assertRedirect(route('smart.user.dashboard'));
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
 
         // Check basket is deleted
         $this->assertDatabaseMissing('asset_baskets', [
@@ -362,7 +364,8 @@ class BrowseControllerTest extends TestCase
             'alasan' => 'Permintaan barang departemen',
         ]);
 
-        $response->assertRedirect(route('smart.user.dashboard'));
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
 
         $request = \App\Models\Request\Request::where('user_id', $user->id)->first();
         $this->assertNotNull($request);
@@ -431,7 +434,8 @@ class BrowseControllerTest extends TestCase
             'end_date' => now()->addDays(2)->format('Y-m-d H:i:s'),
         ]);
 
-        $response->assertRedirect(route('smart.user.dashboard'));
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
 
         $request = \App\Models\Request\Request::where('user_id', $user->id)->first();
         $this->assertNotNull($request);

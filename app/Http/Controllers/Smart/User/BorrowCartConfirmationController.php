@@ -219,6 +219,6 @@ class BorrowCartConfirmationController extends Controller
             app(NotificationService::class)->notifyManagerNewRequest($smartRequest, $managerUser, 'Peminjaman');
         }
 
-        return redirect()->route('smart.user.dashboard')->with('success', 'Permintaan peminjaman berhasil dikirim.');
+        return redirect()->back()->with('success', 'Permintaan peminjaman berhasil dikirim.');
     }
 }

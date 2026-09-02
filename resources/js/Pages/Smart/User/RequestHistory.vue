@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
-import { router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import TableSearch from '@/Components/TableSearch.vue';
 import RequestHistoryCard from '@/Components/RequestHistoryCard.vue';
+import RequestCancelModal from '@/Pages/Smart/User/Modals/RequestCancelModal.vue';
 import { Button } from '@/Components/ui/button';
 import { ScrollArea } from "@/Components/ui/scroll-area";
 import {
@@ -12,12 +12,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/Components/ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogDescription,
-} from "@/Components/ui/dialog";
 import { 
   ChevronDown, 
   AlertTriangle, 
@@ -192,39 +186,10 @@ const filteredRequests = computed(() => {
 // ─────────────────────────────────────────────
 const isCancelModalOpen = ref(false);
 const activeRequestToCancel = ref<RequestHistory | null>(null);
-const cancelNote = ref('');
-const isSubmitting = ref(false);
 
 const openCancelModal = (req: RequestHistory) => {
   activeRequestToCancel.value = req;
   isCancelModalOpen.value = true;
-};
-
-const closeCancelModal = () => {
-  if (isSubmitting.value) return;
-  isCancelModalOpen.value = false;
-  setTimeout(() => {
-    activeRequestToCancel.value = null;
-    cancelNote.value = '';
-  }, 200);
-};
-
-const handleConfirmCancel = () => {
-  if (!activeRequestToCancel.value || isSubmitting.value) return;
-
-  router.post(route('smart.history.cancel', activeRequestToCancel.value.id), {
-    note: cancelNote.value
-  }, {
-    onBefore: () => {
-      isSubmitting.value = true;
-    },
-    onSuccess: () => {
-      closeCancelModal();
-    },
-    onFinish: () => {
-      isSubmitting.value = false;
-    }
-  });
 };
 </script>
 
@@ -364,114 +329,12 @@ const handleConfirmCancel = () => {
       </div>
     </div>
 
-    <!-- Modal Pembatalan Permintaan -->
-    <Dialog :open="isCancelModalOpen" @update:open="val => { if (!isSubmitting) isCancelModalOpen = val }">
-      <DialogContent class="sm:max-w-[50rem] rounded-[0.875rem] bg-card shadow-2xl p-0 gap-0 border border-border overflow-hidden" :show-close-button="false">
-        <!-- Modal Header -->
-        <div class="flex items-center justify-between pt-3 pb-2 px-4 sm:px-6 border-b border-border">
-          <div>
-            <DialogTitle class="text-lg font-bold text-foreground">Pembatalan Permintaan/Peminjaman</DialogTitle>
-            <DialogDescription class="sr-only">
-              Konfirmasi untuk membatalkan permintaan atau peminjaman barang.
-            </DialogDescription>
-          </div>
-          <button :disabled="isSubmitting" @click="closeCancelModal" class="p-2 hover:bg-muted rounded-full transition-colors disabled:opacity-50">
-            <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
-          </button>
-        </div>
-        
-        <div v-if="activeRequestToCancel">
-          <!-- Modal Body -->
-          <div class="px-4 sm:px-6 py-4 overflow-y-auto max-h-[70vh] space-y-5">
-            <!-- Alert & Detail Summary -->
-            <div class="p-4 rounded-[0.875rem] bg-destructive/5 border border-destructive/20 space-y-2">
-              <p class="font-bold text-destructive text-sm sm:text-base">
-                Apakah Anda yakin untuk membatalkan permintaan/peminjaman ini?
-              </p>
-              <div class="space-y-1 text-sm text-foreground">
-                <p class="font-extrabold text-base text-foreground">
-                  {{ activeRequestToCancel.number }}
-                </p>
-                <p class="text-foreground">
-                  <span class="text-muted-foreground">Pemanfaatan:</span> 
-                  <span class="font-medium">
-                    {{ activeRequestToCancel.pemanfaatan === 'corporate' ? 'Corporate' : 'Project' }} ({{ activeRequestToCancel.pemanfaatanDetail }})
-                  </span>
-                </p>
-                <p v-if="activeRequestToCancel.type === 'peminjaman' && activeRequestToCancel.durationStart" class="text-foreground">
-                  <span class="text-muted-foreground">Durasi:</span>
-                  <span class="font-medium">
-                    {{ activeRequestToCancel.durationStart }} s.d. {{ activeRequestToCancel.durationEnd }} ({{ activeRequestToCancel.durationDays }} hari, {{ activeRequestToCancel.durationHours || 0 }} jam)
-                  </span>
-                </p>
-              </div>
-            </div>
-
-            <!-- Item List -->
-            <div class="space-y-2">
-              <h4 class="text-xs font-bold text-muted-foreground uppercase tracking-wider">Daftar barang:</h4>
-              
-              <ScrollArea class="max-h-[14rem] border border-border rounded-[0.875rem] bg-background">
-                <div class="p-3 space-y-2.5">
-                  <div 
-                    v-for="item in activeRequestToCancel.items" 
-                    :key="item.id"
-                    class="flex gap-3.5 p-3 border border-border rounded-[0.875rem] items-center bg-card"
-                  >
-                    <!-- Thumbnail Barang -->
-                    <div class="w-12 h-12 rounded-[0.625rem] bg-muted border border-border overflow-hidden shrink-0 flex items-center justify-center">
-                      <img 
-                        v-if="item.imageUrl" 
-                        :src="item.imageUrl.startsWith('http') || item.imageUrl.startsWith('/') ? item.imageUrl : '/media/' + item.imageUrl" 
-                        class="w-full h-full object-cover" 
-                      />
-                      <div v-else class="text-xs font-black text-muted-foreground/50 select-none">
-                        {{ item.subcategory.substring(0, 3).toUpperCase() }}
-                      </div>
-                    </div>
-
-                    <!-- Deskripsi Detail Barang -->
-                    <div class="min-w-0 flex-grow space-y-0.5">
-                      <h5 class="text-sm font-bold text-foreground truncate">
-                        {{ item.brand !== '-' ? item.brand : '' }} {{ item.name && item.name !== 'Tidak Spesifik' ? item.name : '' }} {{ item.spec }}
-                      </h5>
-                      <p class="text-xs text-muted-foreground">
-                        Kategori: {{ item.category }} ({{ item.subcategory }})
-                      </p>
-                      <p class="text-xs font-semibold text-primary">
-                        Jumlah diminta: {{ item.quantity }} {{ item.uom || 'satuan' }}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </ScrollArea>
-            </div>
-          </div>
-
-          <!-- Modal Footer -->
-          <div class="py-4 px-4 sm:px-6 border-t border-border flex items-center justify-end gap-3">
-            <Button 
-              @click="closeCancelModal"
-              variant="white"
-              size="lg"
-              :disabled="isSubmitting"
-            >
-              Tidak
-            </Button>
-            <Button 
-              @click="handleConfirmCancel"
-              variant="destructive"
-              size="lg"
-              :disabled="isSubmitting"
-              class="flex items-center gap-2"
-            >
-              <span v-if="isSubmitting">Memproses...</span>
-              <span v-else>Iya, Batalkan</span>
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+    <!-- Modal Pembatalan Permintaan Component -->
+    <RequestCancelModal
+      v-model:open="isCancelModalOpen"
+      :request="activeRequestToCancel"
+      @close="activeRequestToCancel = null"
+    />
   </AppLayout>
 </template>
 

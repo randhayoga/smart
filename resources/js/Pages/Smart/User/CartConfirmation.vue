@@ -19,7 +19,8 @@ import {
   BreadcrumbSeparator,
 } from '@/Components/ui/breadcrumb';
 import Combobox from '@/Components/Combobox.vue';
-import { CheckCircle2, Calendar, Clock, ChevronDown, Check } from 'lucide-vue-next';
+import CartSuccessModal from './Modals/CartSuccessModal.vue';
+import { Calendar, Clock, ChevronDown, Check } from 'lucide-vue-next';
 
 // ─────────────────────────────────────────────
 // Props (diisi dari Inertia)
@@ -183,9 +184,9 @@ const handleBack = () => {
   }
 };
 
-/** Setelah sukses → pergi ke dashboard atau riwayat permintaan */
+/** Setelah sukses → pergi ke riwayat permintaan */
 const handleGoToHistory = () => {
-  router.visit(route('smart.user.dashboard'));
+  router.visit(route('smart.history'));
 };
 </script>
 
@@ -484,49 +485,10 @@ const handleGoToHistory = () => {
     <!-- ============================================================ -->
     <!-- Modal Sukses                                                 -->
     <!-- ============================================================ -->
-    <Teleport to="body">
-      <Transition
-        enter-active-class="ease-out duration-300"
-        enter-from-class="opacity-0"
-        enter-to-class="opacity-100"
-        leave-active-class="ease-in duration-200"
-        leave-from-class="opacity-100"
-        leave-to-class="opacity-0"
-      >
-        <div
-          v-if="isSubmitted"
-          class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4"
-        >
-          <div
-            class="bg-card text-foreground rounded-[0.875rem] border border-border shadow-2xl w-full max-w-md p-6 sm:p-8 flex flex-col items-center text-center gap-4"
-            @click.stop
-          >
-            <!-- Ikon sukses -->
-            <div class="w-16 h-16 rounded-full bg-green-100 dark:bg-green-950/50 flex items-center justify-center">
-              <CheckCircle2 class="w-9 h-9 text-green-600 dark:text-green-400" />
-            </div>
-
-            <div class="space-y-1">
-              <h3 class="text-lg sm:text-xl font-bold text-foreground">{{ isBorrow ? 'Peminjaman' : 'Permintaan' }} Terkirim!</h3>
-              <p class="text-sm text-muted-foreground">
-                {{ isBorrow ? 'Peminjaman' : 'Permintaan' }} Anda telah berhasil dikirimkan dan sedang menunggu approval.
-                Anda akan mendapat notifikasi ketika permintaan diproses.
-              </p>
-            </div>
-
-            <!-- Tombol aksi -->
-            <div class="w-full pt-2">
-              <Button
-                variant="primary"
-                class="w-full rounded-[0.875rem] h-10 text-sm font-semibold"
-                @click="handleGoToHistory"
-              >
-                Ke Dashboard
-              </Button>
-            </div>
-          </div>
-        </div>
-      </Transition>
-    </Teleport>
+    <CartSuccessModal
+      v-model:open="isSubmitted"
+      :is-borrow="isBorrow"
+      @confirm="handleGoToHistory"
+    />
   </AppLayout>
 </template>

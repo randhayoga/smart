@@ -201,6 +201,6 @@ class RequestCartConfirmationController extends Controller
             app(NotificationService::class)->notifyManagerNewRequest($smartRequest, $managerUser, 'Permintaan');
         }
 
-        return redirect()->route('smart.user.dashboard')->with('success', 'Permintaan berhasil dikirim dan sedang menunggu approval.');
+        return redirect()->back()->with('success', 'Permintaan berhasil dikirim dan sedang menunggu approval.');
     }
 }
