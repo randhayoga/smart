@@ -11,6 +11,7 @@ import { Button } from '@/Components/ui/button';
 import { ScrollArea } from "@/Components/ui/scroll-area";
 import CartItemCard from '@/Components/CartItemCard.vue';
 import Checkbox from '@/Components/ui/checkbox/Checkbox.vue';
+import { formatItemDisplayName } from '@/lib/utils';
 
 // --- Data Types & Props ---
 interface Props {
@@ -32,7 +33,7 @@ interface CartItem {
   category_name: string;
   subcategory_name: string;
   code: string;
-  stock: number;    // Total available stock
+  stock: number;    // Stock calculation deprecated; requests can be placed regardless of stock
   quantity: number; // Requested quantity
   selected: boolean;
   imageUrl?: string;
@@ -48,7 +49,7 @@ watch(() => props.cartItems, (newVal) => {
     ...item,
     selected: selectedMap.get(item.id) || false
   }));
-}, { deep: true });
+});
 
 const filteredItems = computed(() => cartItems.value);
 
@@ -82,8 +83,9 @@ const removeItem = (id: number) => {
 
 /** Update requested quantity for a specific basket item */
 const updateQty = (item: CartItem, value: number) => {
+  const clamped = Math.max(1, Math.min(999999, Math.floor(value || 1)));
   router.put(route('smart.asset-cart.update', item.id), {
-    quantity: value
+    quantity: clamped
   }, {
     preserveScroll: true,
   });
@@ -93,24 +95,6 @@ const updateQty = (item: CartItem, value: number) => {
 const handleProceed = () => {
   const ids = selectedItems.value.map(i => i.id).join(',');
   router.get(route('smart.asset-cart.confirmation'), { ids });
-};
-
-/** Formats item display name combining brand, name, and specification */
-const getItemDisplayName = (item: CartItem) => {
-  if (!item.barang_id) {
-    return item.subcategory_name;
-  }
-  const parts = [];
-  if (item.brand && item.brand !== '-') {
-    parts.push(item.brand);
-  }
-  if (item.name && item.name !== 'Tidak Spesifik') {
-    parts.push(item.name);
-  }
-  if (item.spec && item.spec !== '-') {
-    parts.push(item.spec);
-  }
-  return parts.join(' ') || 'Barang';
 };
 </script>
 
@@ -175,11 +159,11 @@ const getItemDisplayName = (item: CartItem) => {
       </div>
 
       <!-- ============================================================ -->
-      <!-- Right Column: Borrow Summary                                 -->
+      <!-- Right Column: Request Summary                                -->
       <!-- ============================================================ -->
       <div class="hidden lg:block lg:w-96 xl:w-[28rem] 2xl:w-[30rem] flex-shrink-0">
         <div class="bg-card border border-border rounded-[0.875rem] p-5 sticky top-24">
-          <h2 class="text-lg font-bold text-foreground mb-4">Ringkasan Peminjaman</h2>
+          <h2 class="text-lg font-bold text-foreground mb-4">Ringkasan Permintaan</h2>
 
           <!-- List of selected items -->
           <div class="space-y-3 mb-6">
@@ -192,7 +176,7 @@ const getItemDisplayName = (item: CartItem) => {
               class="flex items-center justify-between gap-2"
             >
               <span class="text-base text-foreground font-medium truncate flex-1">
-                {{ getItemDisplayName(item) }}
+                {{ formatItemDisplayName(item) }}
               </span>
               <span class="text-base text-muted-foreground flex-shrink-0 whitespace-nowrap">
                 {{ item.quantity }} {{ item.uom || 'satuan' }}

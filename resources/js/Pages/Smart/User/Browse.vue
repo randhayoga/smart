@@ -33,6 +33,7 @@ import {
   NumberFieldIncrement,
   NumberFieldInput,
 } from "@/Components/ui/number-field";
+import { formatItemDisplayName, formatImageUrl } from '@/lib/utils';
 
 // --- Data Types ---
 interface Category {
@@ -61,7 +62,7 @@ interface Item {
   is_consumable: boolean;
   brand: string;
   spec: string;
-  stock: number;
+  stock: number; // Stock calculation deprecated; items can be requested regardless of current stock
   imageUrl?: string;
   barangs?: BarangVariant[];
   uom?: string;
@@ -128,20 +129,7 @@ const openAddToCartModal = (product: Item) => {
  * Formats variant display name combining brand, name, and specification
  */
 const getBarangDisplayName = (barang: BarangVariant) => {
-  const parts = [];
-  if (barang.brand && barang.brand !== '-') {
-    parts.push(barang.brand);
-  }
-  if (barang.name) {
-    parts.push(barang.name);
-  }
-  if (barang.specification && barang.specification !== '-') {
-    parts.push(barang.specification);
-  }
-  if (parts.length === 0) {
-    return barang.number || 'Varian Tanpa Nama';
-  }
-  return parts.join(' ');
+  return formatItemDisplayName(barang);
 };
 
 /**
@@ -165,7 +153,7 @@ const handleConfirmAddToCart = () => {
       isModalOpen.value = false;
       
       const cartName = isConsumable ? 'keranjang habis pakai' : 'keranjang pinjam';
-      const cartUrl = isConsumable ? '/smart/asset-cart' : '/smart/borrow-cart';
+      const cartUrl = isConsumable ? route('smart.asset-cart') : route('smart.borrow-cart');
 
       toast.success(
         h('span', [
@@ -184,7 +172,9 @@ const handleConfirmAddToCart = () => {
       );
     },
     onError: (errors) => {
-      toast.error(Object.values(errors)[0] as string);
+      const firstError = Object.values(errors)[0];
+      const msg = Array.isArray(firstError) ? firstError[0] : (firstError || 'Gagal menambahkan barang ke keranjang.');
+      toast.error(String(msg));
     },
     onFinish: () => {
       isSubmitting.value = false;
@@ -332,9 +322,11 @@ const filteredAndSortedItems = computed(() => {
                 <!-- Image -->
                 <div class="w-32 h-32 sm:w-40 sm:h-40 shrink-0 bg-muted rounded-[0.875rem] overflow-hidden flex items-center justify-center border border-border relative">
                   <div class="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-white/40"></div>
-                  <img v-if="selectedVariant && selectedVariant.imageUrl" :src="selectedVariant.imageUrl.startsWith('http') || selectedVariant.imageUrl.startsWith('/') ? selectedVariant.imageUrl : '/media/' + selectedVariant.imageUrl" alt="Product" class="w-full h-full object-cover relative z-10" />
-                  <img v-else-if="selectedProduct.imageUrl" :src="selectedProduct.imageUrl.startsWith('http') || selectedProduct.imageUrl.startsWith('/') ? selectedProduct.imageUrl : '/media/' + selectedProduct.imageUrl" alt="Product" class="w-full h-full object-cover relative z-10" />
-                  <img v-else src="https://placehold.co/400x400?text=Barang" alt="Product" class="w-full h-full object-cover opacity-50" />
+                  <img 
+                    :src="formatImageUrl(selectedVariant?.imageUrl || selectedProduct.imageUrl)" 
+                    :alt="formatItemDisplayName(selectedVariant || selectedProduct)" 
+                    class="w-full h-full object-cover relative z-10" 
+                  />
                 </div>
                 <!-- Info -->
                 <div class="flex flex-col justify-center text-center sm:text-left">

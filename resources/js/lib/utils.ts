@@ -81,3 +81,55 @@ export function formatDateTime(val: string | Date | null | undefined, includeSec
 
   return `${day}-${month}-${year} ${hours}:${minutes}`;
 }
+
+/**
+ * Formats a consistent display name for inventory items or line items in carts and catalogs.
+ */
+export function formatItemDisplayName(item: {
+  barang_id?: number | null;
+  name?: string | null;
+  subcategory_name?: string | null;
+  subcategory?: string | null;
+  brand?: string | null;
+  spec?: string | null;
+  specification?: string | null;
+  number?: string | null;
+}): string {
+  // If explicitly null, this is an unspecific subcategory request (used in cart/confirmation)
+  if (item.barang_id === null) {
+    return item.subcategory_name || item.subcategory || item.name || 'Barang';
+  }
+
+  const parts: string[] = [];
+  if (item.brand && item.brand !== '-') {
+    parts.push(item.brand);
+  }
+
+  const itemName = item.name && item.name !== 'Tidak Spesifik' ? item.name : '';
+  if (itemName) {
+    parts.push(itemName);
+  }
+
+  const spec = item.spec || item.specification;
+  if (spec && spec !== '-') {
+    parts.push(spec);
+  }
+
+  if (parts.length === 0) {
+    return item.number || item.subcategory_name || item.subcategory || item.name || 'Barang';
+  }
+
+  return parts.join(' ');
+}
+
+/**
+ * Returns a normalized, safe image URL with fallback to placeholder.
+ */
+export function formatImageUrl(url?: string | null): string {
+  if (!url) return 'https://placehold.co/400x400?text=Barang';
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/')) {
+    return url;
+  }
+  return `/media/${url}`;
+}
+

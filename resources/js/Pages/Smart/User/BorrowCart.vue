@@ -12,6 +12,7 @@ import { Button } from '@/Components/ui/button';
 import { ScrollArea } from "@/Components/ui/scroll-area";
 import CartItemCard from '@/Components/CartItemCard.vue';
 import Checkbox from '@/Components/ui/checkbox/Checkbox.vue';
+import { formatItemDisplayName } from '@/lib/utils';
 
 // --- Data Types & Props ---
 interface Props {
@@ -41,10 +42,9 @@ interface CartItem {
   category_name: string;
   subcategory_name: string;
   code: string;
-  stock: number;        // Total available stock
+  stock: number;        // Stock calculation deprecated; loans can be requested regardless of stock
   quantity: number;     // Requested quantity
   selected: boolean;
-  isPreorder?: boolean; // Pre-order allowed but current stock is 0
   imageUrl?: string;
   uom?: string;
 }
@@ -92,7 +92,7 @@ watch(() => props.cartItems, (newVal) => {
     ...item,
     selected: selectedMap.get(item.id) || false
   }));
-}, { deep: true });
+});
 
 /** Whether a valid start date has been provided */
 const isDateSelected = computed(() => startDate.value && startDate.value.trim() !== '');
@@ -111,18 +111,12 @@ const isAllSelected = computed({
   }
 });
 
-// Reset item selections and quantities when schedule changes
-watch(startDate, () => {
-  cartItems.value.forEach(item => {
-    item.selected = false;
-    item.quantity = 1;
-  });
-});
-watch(startTime, () => {
-  cartItems.value.forEach(item => {
-    item.selected = false;
-    item.quantity = 1;
-  });
+// If start date becomes later than end date, reset end date
+watch(startDate, (newStart) => {
+  if (endDate.value && endDate.value < newStart) {
+    endDate.value = '';
+    endTime.value = '';
+  }
 });
 
 watch(endDate, (newVal) => {
@@ -150,8 +144,9 @@ const removeItem = (id: number) => {
 
 /** Update requested quantity for a specific basket item */
 const updateQty = (item: CartItem, value: number) => {
+  const clamped = Math.max(1, Math.min(999999, Math.floor(value || 1)));
   router.put(route('smart.borrow-cart.update', item.id), {
-    quantity: value
+    quantity: clamped
   }, {
     preserveScroll: true,
   });
@@ -167,24 +162,6 @@ const handleProceed = () => {
     end_date: endDate.value,
     end_time: endTime.value,
   });
-};
-
-/** Formats item display name combining brand, name, and specification */
-const getItemDisplayName = (item: CartItem) => {
-  if (!item.barang_id) {
-    return item.subcategory_name;
-  }
-  const parts = [];
-  if (item.brand && item.brand !== '-') {
-    parts.push(item.brand);
-  }
-  if (item.name && item.name !== 'Tidak Spesifik') {
-    parts.push(item.name);
-  }
-  if (item.spec && item.spec !== '-') {
-    parts.push(item.spec);
-  }
-  return parts.join(' ') || 'Barang';
 };
 </script>
 
@@ -246,6 +223,7 @@ const getItemDisplayName = (item: CartItem) => {
               <Input
                 v-model="startDate"
                 type="date"
+                :min="getClientDefaultDate()"
                 class="h-10 rounded-[0.875rem] text-sm w-full cursor-pointer"
                 @click="handlePickerClick"
                 @keydown.prevent
@@ -276,6 +254,7 @@ const getItemDisplayName = (item: CartItem) => {
               <Input
                 v-model="endDate"
                 type="date"
+                :min="startDate || getClientDefaultDate()"
                 class="h-10 rounded-[0.875rem] text-sm w-full cursor-pointer"
                 :disabled="!startDate"
                 @click="handlePickerClick"
@@ -345,7 +324,7 @@ const getItemDisplayName = (item: CartItem) => {
               class="flex items-center justify-between gap-2"
             >
               <span class="text-base text-foreground font-medium truncate flex-1">
-                {{ getItemDisplayName(item) }}
+                {{ formatItemDisplayName(item) }}
               </span>
               <span class="text-base text-muted-foreground flex-shrink-0 whitespace-nowrap">
                 {{ item.quantity }} {{ item.uom || 'satuan' }}

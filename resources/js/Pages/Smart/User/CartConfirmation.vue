@@ -4,7 +4,7 @@ import { Head, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { Button } from '@/Components/ui/button';
 import { ScrollArea } from "@/Components/ui/scroll-area";
-import { formatDate } from '@/lib/utils';
+import { formatDate, formatItemDisplayName, formatImageUrl } from '@/lib/utils';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,6 +20,7 @@ import {
 } from '@/Components/ui/breadcrumb';
 import Combobox from '@/Components/Combobox.vue';
 import CartSuccessModal from './Modals/CartSuccessModal.vue';
+import CartErrorModal from './Modals/CartErrorModal.vue';
 import { Calendar, Clock, ChevronDown, Check } from 'lucide-vue-next';
 
 // ─────────────────────────────────────────────
@@ -122,10 +123,12 @@ const isFormValid = computed(() => {
 });
 
 // ─────────────────────────────────────────────
-// State sukses (modal / overlay setelah submit)
+// State modal feedback (sukses / error)
 // ─────────────────────────────────────────────
-const isSubmitted  = ref(false);
-const isSubmitting = ref(false);
+const isSubmitted      = ref(false);
+const isSubmitting     = ref(false);
+const isErrorModalOpen = ref(false);
+const errorMessage     = ref('');
 
 const isBorrow = computed(() => !!props.defaultStartDate);
 
@@ -169,8 +172,12 @@ const handleConfirm = () => {
       isSubmitting.value = false;
       isSubmitted.value  = true;
     },
-    onError: () => {
+    onError: (errors) => {
       isSubmitting.value = false;
+      const firstError = Object.values(errors)[0];
+      const message = Array.isArray(firstError) ? firstError[0] : (firstError || 'Terjadi kesalahan saat memproses konfirmasi.');
+      errorMessage.value = String(message);
+      isErrorModalOpen.value = true;
     }
   });
 };
@@ -285,16 +292,9 @@ const handleGoToHistory = () => {
                   <div class="w-16 h-16 sm:w-20 sm:h-20 shrink-0 bg-muted rounded-[0.875rem] overflow-hidden flex items-center justify-center border border-border relative">
                     <div class="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-white/40"></div>
                     <img 
-                      v-if="item.imageUrl" 
-                      :src="item.imageUrl.startsWith('http') || item.imageUrl.startsWith('/') ? item.imageUrl : '/media/' + item.imageUrl" 
-                      :alt="item.name || item.subcategory" 
+                      :src="formatImageUrl(item.imageUrl)" 
+                      :alt="formatItemDisplayName(item)" 
                       class="w-full h-full object-cover relative z-10" 
-                    />
-                    <img 
-                      v-else 
-                      src="https://placehold.co/400x400?text=Barang" 
-                      :alt="item.name || item.subcategory" 
-                      class="w-full h-full object-cover opacity-50" 
                     />
                   </div>
 
@@ -483,12 +483,17 @@ const handleGoToHistory = () => {
     </div>
 
     <!-- ============================================================ -->
-    <!-- Modal Sukses                                                 -->
+    <!-- Modal Sukses & Error                                         -->
     <!-- ============================================================ -->
     <CartSuccessModal
       v-model:open="isSubmitted"
       :is-borrow="isBorrow"
       @confirm="handleGoToHistory"
+    />
+
+    <CartErrorModal
+      v-model:open="isErrorModalOpen"
+      :description="errorMessage"
     />
   </AppLayout>
 </template>

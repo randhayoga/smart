@@ -30,6 +30,7 @@ import {
   NumberFieldIncrement,
   NumberFieldInput,
 } from "@/Components/ui/number-field";
+import { formatItemDisplayName, formatImageUrl } from '@/lib/utils';
 
 /**
  * Representation of an item within the user's shopping/borrow cart.
@@ -53,7 +54,7 @@ interface CartItem {
   subcategory_name: string;
   /** Stock Keeping Unit (SKU) or inventory tracking code. */
   code: string;
-  /** Total currently available inventory stock. */
+  /** Stock calculation deprecated; items can be requested regardless of current stock. */
   stock: number;
   /** Quantity of this item added to the cart. */
   quantity: number;
@@ -108,8 +109,7 @@ const emit = defineEmits<{
       <!-- Product Thumbnail Preview -->
       <div class="w-16 h-16 sm:w-24 sm:h-24 shrink-0 bg-muted rounded-[0.875rem] overflow-hidden flex items-center justify-center border border-border relative">
         <div class="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-white/40"></div>
-        <img v-if="item.imageUrl" :src="item.imageUrl.startsWith('http') || item.imageUrl.startsWith('/') ? item.imageUrl : '/media/' + item.imageUrl" alt="Product" class="w-full h-full object-cover relative z-10" />
-        <img v-else src="https://placehold.co/400x400?text=Barang" alt="Product" class="w-full h-full object-cover opacity-50" />
+        <img :src="formatImageUrl(item.imageUrl)" :alt="formatItemDisplayName(item)" class="w-full h-full object-cover relative z-10" />
       </div>
 
       <!-- Product Information -->
