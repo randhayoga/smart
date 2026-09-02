@@ -7,6 +7,7 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import AssetItemCard from '@/Components/AssetItemCard.vue';
 import { Button } from '@/Components/ui/button';
+import { formatDate } from '@/lib/utils';
 import { 
   CheckCircle2,
   Clock,
@@ -85,13 +86,6 @@ const handleActionSubmit = () => {
       errorMessage.value = Object.values(errs).join(', ');
     }
   });
-};
-
-const formatDate = (dateStr: string) => {
-  if (!dateStr) return '';
-  const parts = dateStr.split('-');
-  if (parts.length !== 3) return dateStr;
-  return `${parts[2]}/${parts[1]}/${parts[0]}`; // DD/MM/YYYY
 };
 
 const timeline = computed(() => {

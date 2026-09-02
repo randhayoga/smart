@@ -5,6 +5,7 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { Plus } from 'lucide-vue-next';
 import { Button } from "@/Components/ui/button";
+import { formatDate } from '@/lib/utils';
 import CreateAssetModal from '../Modals/CreateAssetModal.vue';
 import DaftarAsetTab from './DaftarAsetTab.vue';
 
@@ -97,15 +98,6 @@ const formatLocation = (loc: string | null, floor: string | null, room: string |
   return parts.join(' - ');
 };
 
-const formatDateWithDashes = (dateStr: string) => {
-  if (!dateStr || dateStr === '-') return '-';
-  if (dateStr.includes('-') && dateStr.indexOf('-') === 4) {
-    const [y, m, d] = dateStr.split('-');
-    return `${d}-${m}-${y}`;
-  }
-  return dateStr.replace(/\//g, '-');
-};
-
 const closeOnEscape = (e: KeyboardEvent) => {
   if (e.key === 'Escape') {
     if (isCreateAssetModalOpen.value) {
@@ -151,7 +143,7 @@ onUnmounted(() => {
             <p class="text-foreground">Jumlah stok diawal: {{ props.units.length }}</p>
             <p class="text-foreground">Lokasi <span class="italic">default</span>: {{ formatLocation(props.lot.location, props.lot.floor, props.lot.room) }}</p>
             <p class="text-foreground">Nomor PO: {{ props.lot.po_number }}</p>
-            <p class="text-foreground">Tanggal registrasi: {{ formatDateWithDashes(props.lot.date_of_receipt) }}</p>
+            <p class="text-foreground">Tanggal registrasi: {{ formatDate(props.lot.date_of_receipt) }}</p>
             <p class="text-foreground">Umur: {{ props.lot.age !== undefined && props.lot.age !== null ? `${props.lot.age} tahun` : '-' }}</p>
             <p class="text-foreground">Harga satuan <span class="italic">default</span>: {{ formatRupiah(props.lot.unitPrice) }}</p>
             <p class="text-foreground">Pembebanan: {{ props.lot.burden || '-' }}</p>

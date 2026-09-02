@@ -60,7 +60,7 @@ class PendingNonaktifController extends Controller
                 'price' => $unit->price,
                 'image_url' => $unit->image_url,
                 'vehicle_registration' => $unit->vehicle_registration,
-                'updated_at' => $unit->updated_at ? $unit->updated_at->format('d/m/Y H:i') : '-',
+                'updated_at' => $unit->updated_at ? $unit->updated_at->format('d-m-Y H:i') : '-',
                 
                 // Location info
                 'location' => $unit->location->name ?? '-',

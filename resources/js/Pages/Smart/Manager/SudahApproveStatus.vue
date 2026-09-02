@@ -14,6 +14,7 @@ import {
 } from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
 import { Button } from "@/Components/ui/button";
+import { formatDate } from '@/lib/utils';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -173,11 +174,6 @@ const formatLocation = (loc: string | null | undefined, floor: string | null, ro
   if (floor && floor !== '-') parts.push(floor);
   if (room && room !== '-') parts.push(room);
   return parts.join(', ') || '-';
-};
-
-const formatDateWithDashes = (dateStr: string | null | undefined) => {
-  if (!dateStr || dateStr === '-') return '-';
-  return dateStr.replace(/\//g, '-');
 };
 
 // ─────────────────────────────────────────────

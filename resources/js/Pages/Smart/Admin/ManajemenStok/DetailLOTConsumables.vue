@@ -6,6 +6,7 @@ import { ref, watch, onMounted, onUnmounted } from 'vue';
 import axios from 'axios';
 import { X } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
+import { formatDate } from '@/lib/utils';
 
 interface Props {
   isOpen: boolean;
@@ -54,15 +55,6 @@ const formatRupiah = (val: number | string | null | undefined) => {
   // Format to RpXXX.XXX (dot as thousands separator, no decimal)
   const formatted = Math.floor(num).toLocaleString('id-ID');
   return `Rp${formatted}`;
-};
-
-const formatDateWithDashes = (dateStr: string) => {
-  if (!dateStr || dateStr === '-') return '-';
-  if (dateStr.includes('-') && dateStr.indexOf('-') === 4) {
-    const [y, m, d] = dateStr.split('-');
-    return `${d}-${m}-${y}`;
-  }
-  return dateStr.replace(/\//g, '-');
 };
 
 const formatLocation = (lot: any) => {
@@ -177,7 +169,7 @@ onUnmounted(() => {
                     <p class="font-bold text-foreground"><span class="text-foreground">Ambang batas notifikasi stok:</span> {{ lotDetails.barang_min_stock_threshold !== null && lotDetails.barang_min_stock_threshold !== undefined ? `${lotDetails.barang_min_stock_threshold} ${lotDetails.barang_uom || ''}`.trim() : '-' }}</p>
                     <p class="text-foreground">Lokasi: {{ formatLocation(lotDetails) }}</p>
                     <p class="text-foreground">Nomor PO: {{ lotDetails.po_number }}</p>
-                    <p class="text-foreground">Tanggal registrasi: {{ formatDateWithDashes(lotDetails.date_of_receipt) }}</p>
+                    <p class="text-foreground">Tanggal registrasi: {{ formatDate(lotDetails.date_of_receipt) }}</p>
                     <p class="text-foreground">Umur: {{ lotDetails.age !== undefined && lotDetails.age !== null ? `${lotDetails.age} tahun` : '-' }}</p>
                     <p class="text-foreground">Harga satuan: {{ formatRupiah(lotDetails.unitPrice) }}</p>
                     <p class="text-foreground">Pembebanan: {{ lotDetails.burden || '-' }}</p>

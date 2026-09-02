@@ -5,6 +5,7 @@
 import { ref } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import { ChevronDown, ChevronUp } from 'lucide-vue-next';
+import { formatDate } from '@/lib/utils';
 
 interface RequestItem {
   id: number;
@@ -46,12 +47,6 @@ const isExpanded = ref(false);
 
 const toggleExpanded = () => {
   isExpanded.value = !isExpanded.value;
-};
-
-const formatDate = (dateStr: string) => {
-  const parts = dateStr.split(/[-/]/);
-  if (parts.length !== 3) return dateStr;
-  return `${parts[2]}/${parts[1]}/${parts[0]}`; // DD/MM/YYYY
 };
 
 const getStatusClasses = (status: string) => {

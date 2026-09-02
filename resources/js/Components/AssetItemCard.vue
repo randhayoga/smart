@@ -2,7 +2,7 @@
 /**
  * Asset Item Card component displaying item details, stock availability, and collapsible allocated asset serial numbers.
  */
-import { ref, computed } from 'vue';
+import { ref, computed, useSlots, Comment, Fragment, type VNode } from 'vue';
 import { ChevronDown, ChevronUp } from 'lucide-vue-next';
 
 interface Props {
@@ -18,6 +18,7 @@ interface Props {
   status?: string;
   isAdmin?: boolean;
   isConsumable?: boolean;
+  uom?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -28,9 +29,28 @@ const props = withDefaults(defineProps<Props>(), {
   status: undefined,
   isAdmin: false,
   isConsumable: false,
+  uom: 'satuan',
 });
 
+const slots = useSlots();
 const showAssets = ref(true);
+
+const hasRenderableContent = (nodes: VNode[] | undefined): boolean => {
+  if (!nodes || nodes.length === 0) return false;
+  return nodes.some(node => {
+    if (!node) return false;
+    if (node.type === Comment) return false;
+    if (node.type === Fragment && Array.isArray(node.children)) {
+      return hasRenderableContent(node.children as VNode[]);
+    }
+    return true;
+  });
+};
+
+const hasFooter = computed(() => {
+  if (!slots.footer) return false;
+  return hasRenderableContent(slots.footer());
+});
 
 const activeAssets = computed(() => {
   return props.assets ? props.assets.filter(asset => asset && String(asset).trim() !== '') : [];
@@ -39,12 +59,7 @@ const activeAssets = computed(() => {
 
 <template>
   <div 
-    class="p-4 border transition-all rounded-[14px] space-y-3"
-    :class="[
-      (stock !== null && stock < Number(quantity) && status !== 'fulfilled')
-        ? 'bg-zinc-100/50 dark:bg-zinc-900/50 border-red-500/25 opacity-75 shadow-sm'
-        : 'bg-card border-border/70 hover:border-primary/20 hover:bg-muted/5'
-    ]"
+    class="p-4 border transition-all rounded-[14px] space-y-3 bg-card border-border/70 hover:border-primary/20 hover:bg-muted/5"
   >
     <div class="flex items-start gap-4">
       <!-- Item Thumbnail -->
@@ -62,27 +77,28 @@ const activeAssets = computed(() => {
       <div class="min-w-0 flex-grow space-y-1">
         <div class="flex items-center gap-2 flex-wrap mb-0.5">
           <h4 class="text-sm md:text-base font-bold text-foreground truncate">{{ brand }}</h4>
-           <span 
+          <span 
             v-if="status === 'fulfilled'" 
             class="inline-flex items-center rounded-full bg-green-500/10 px-2 py-0.5 text-[10px] font-bold text-green-600 ring-1 ring-inset ring-green-500/20"
           >
             {{ isConsumable ? 'Sudah Disediakan' : 'Sudah Dialokasikan' }}
           </span>
-          <span 
-            v-else-if="status === 'pending' && !isAdmin && (stock !== null && stock < Number(quantity))" 
-            class="inline-flex items-center rounded-full bg-red-500/10 px-2 py-0.5 text-[10px] font-bold text-red-600 ring-1 ring-inset ring-red-500/20"
-          >
-            Stok Habis
-          </span>
         </div>
-        <p class="text-xs text-muted-foreground">Kategori: {{ category }} ({{ subcategory }})</p>
+        <p class="text-xs text-muted-foreground">
+          <template v-if="brand !== subcategory && !brand.toLowerCase().includes(subcategory.toLowerCase())">
+            Kategori: {{ category }} ({{ subcategory }})
+          </template>
+          <template v-else>
+            Kategori: {{ category }}
+          </template>
+        </p>
         <div v-if="stock !== null && isAdmin" class="text-xs font-semibold text-foreground">
           Stok tersedia: 
           <span :class="stock >= Number(quantity) ? 'text-green-600' : 'text-red-500'">
-            {{ stock }} satuan
+            {{ stock }} {{ uom }}
           </span>
         </div>
-        <p class="text-xs text-foreground font-semibold">{{ quantityLabel }}: {{ quantity }} satuan</p>
+        <p class="text-xs text-foreground font-semibold">{{ quantityLabel }}: {{ quantity }} {{ uom }}</p>
         
         <div v-if="activeAssets.length > 0" class="pt-1.5">
           <button 
@@ -111,7 +127,7 @@ const activeAssets = computed(() => {
       </div>
     </div>
     
-    <div v-if="$slots.footer" class="flex justify-end pt-2 border-t border-border/50">
+    <div v-if="hasFooter" class="flex justify-end pt-2 border-t border-border/50">
       <slot name="footer" />
     </div>
   </div>

@@ -4,6 +4,7 @@ import { Head, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { Button } from '@/Components/ui/button';
 import { ScrollArea } from "@/Components/ui/scroll-area";
+import { formatDate } from '@/lib/utils';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -133,14 +134,7 @@ const totalQuantity = computed(() => {
   return props.selectedItems.reduce((acc, item) => acc + (Number(item.quantity) || 0), 0);
 });
 
-const formatDisplayDate = (dateStr: string) => {
-  if (!dateStr) return '-';
-  const parts = dateStr.split('-');
-  if (parts.length === 3) {
-    return `${parts[2]}/${parts[1]}/${parts[0]}`;
-  }
-  return dateStr;
-};
+const formatDisplayDate = formatDate;
 
 // ─────────────────────────────────────────────
 // Aksi: Konfirmasi dan Minta Approval

@@ -52,27 +52,6 @@ class RequestHistoryController extends Controller
         }
 
         $items = $req->items->map(function ($item) {
-            $barangId = $item->barang_id;
-            if ($barangId) {
-                $hasAnyUnit = Unit::whereHas('lot', fn($q) => $q->where('barang_id', $barangId))->exists();
-                if ($hasAnyUnit) {
-                    $stockQuantity = Unit::whereHas('lot', fn($q) => $q->where('barang_id', $barangId))
-                        ->where('status', 'tersedia')
-                        ->count();
-                } else {
-                    $stockQuantity = Lot::where('barang_id', $barangId)->sum('current_quantity');
-                }
-            } else {
-                $hasAnyUnit = Unit::whereHas('lot.barang', fn($q) => $q->where('subcategory_id', $item->subcategory_id))->exists();
-                if ($hasAnyUnit) {
-                    $stockQuantity = Unit::whereHas('lot.barang', fn($q) => $q->where('subcategory_id', $item->subcategory_id))
-                        ->where('status', 'tersedia')
-                        ->count();
-                } else {
-                    $stockQuantity = Lot::whereHas('barang', fn($q) => $q->where('subcategory_id', $item->subcategory_id))->sum('current_quantity');
-                }
-            }
-
             // Get assigned assets (serial numbers)
             $assets = RequestUnitAssignment::where('request_item_id', $item->id)
                 ->with('unit')
@@ -100,8 +79,6 @@ class RequestHistoryController extends Controller
                 'name' => $item->barang?->name ?? 'Tidak Spesifik',
                 'spec' => $item->barang?->specification ?? '',
                 'quantity' => $item->quantity_requested,
-                'stockQuantity' => $stockQuantity,
-                'stock' => $stockQuantity,
                 'category' => $catName,
                 'is_consumable' => $isConsumable,
                 'imageUrl' => $imageUrl,
@@ -154,7 +131,7 @@ class RequestHistoryController extends Controller
             'durationHours' => $durationHours,
             'status' => $statusMap[$req->status] ?? $req->status,
             'raw_status' => $req->status,
-            'created_at' => $req->created_at ? $req->created_at->format('Y-m-d') : '-',
+            'created_at' => $req->created_at ? $req->created_at->format('d-m-Y H:i') : '-',
             'items' => $items,
             'approver_name' => $req->approver?->name,
             'approval_by' => $req->approval?->approver?->name,

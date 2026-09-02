@@ -55,7 +55,7 @@ class ConsumableLotController extends Controller
                     'brand' => $barang->brand->name ?? '-',
                     'name' => $barang->name,
                     'specification' => $barang->specification,
-                    'lastUpdate' => $barang->updated_at ? $barang->updated_at->format('d/m/Y H:i') : '-',
+                    'lastUpdate' => $barang->updated_at ? $barang->updated_at->format('d-m-Y H:i') : '-',
                     'amount' => $amount,
                     'image_url' => $barang->image_url,
                     'uom' => $barang->uom->name ?? '-',
@@ -111,7 +111,7 @@ class ConsumableLotController extends Controller
                 'project_id' => $lot->project_id,
                 'project_name' => $lot->project ? $lot->project->project_name : null,
                 'project_no' => $lot->project ? $lot->project->no_project : null,
-                'updated_at' => $lot->updated_at ? $lot->updated_at->format('d/m/Y H:i') : '-',
+                'updated_at' => $lot->updated_at ? $lot->updated_at->format('d-m-Y H:i') : '-',
                 
                 // Parent barang info
                 'barang_code' => $lot->barang->number ?? '-',

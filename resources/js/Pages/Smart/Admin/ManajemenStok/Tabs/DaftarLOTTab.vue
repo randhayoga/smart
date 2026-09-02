@@ -23,6 +23,7 @@ import {
 import TableSearch from '@/Components/TableSearch.vue';
 import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
+import { formatDate } from '@/lib/utils';
 import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal.vue';
 import DeleteErrorModal from '@/Components/DeleteErrorModal.vue';
 import DetailLOTConsumables from '../DetailLOTConsumables.vue';
@@ -119,15 +120,6 @@ const handleEditSuccess = () => {
   }
 };
 
-const formatDateWithSlashes = (dateStr: string | null) => {
-  if (!dateStr || dateStr === '-') return '-';
-  if (dateStr.includes('-') && dateStr.indexOf('-') === 4) {
-    const [y, m, d] = dateStr.split('-');
-    return `${d}/${m}/${y}`;
-  }
-  return dateStr.replace(/-/g, '/');
-};
-
 const formatLocation = (loc: string | null, floor: string | null, room: string | null) => {
   let parts: string[] = [];
   if (loc) parts.push(loc);
@@ -216,7 +208,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
         'Tanggal Registrasi',
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ]),
-      cell: ({ row }) => h('div', { class: 'pl-0 text-muted-foreground' }, formatDateWithSlashes(row.original.date_of_receipt)),
+      cell: ({ row }) => h('div', { class: 'pl-0 text-muted-foreground' }, formatDate(row.original.date_of_receipt)),
       sortingFn: (rowA, rowB) => {
         const valA = String(rowA.original.date_of_receipt || '');
         const valB = String(rowB.original.date_of_receipt || '');
@@ -386,7 +378,7 @@ const getExportPayload = () => {
   const rows = data.map((item: any) => [
     item.number,
     item.po_number,
-    formatDateWithSlashes(item.date_of_receipt),
+    formatDate(item.date_of_receipt),
     item.organizer,
     props.barang.is_consumable ? (item.current_quantity ?? 0) : item.assetCount
   ]);
@@ -440,15 +432,6 @@ const deleteFields = computed(() => {
       return parts.join(', ') || '-';
     };
     
-    const formatDateWithDashes = (dateStr: string) => {
-      if (!dateStr || dateStr === '-') return '-';
-      if (dateStr.includes('-') && dateStr.indexOf('-') === 4) {
-        const [y, m, d] = dateStr.split('-');
-        return `${d}-${m}-${y}`;
-      }
-      return dateStr.replace(/\//g, '-');
-    };
-    
     const formatRupiah = (val: number | string | null | undefined) => {
       if (val === null || val === undefined || val === '') return '-';
       const num = typeof val === 'string' ? parseFloat(val) : val;
@@ -472,7 +455,7 @@ const deleteFields = computed(() => {
       { label: 'Jumlah stok diawal', value: initialStock },
       { label: 'Lokasi', value: formatLocation(data.location, data.floor, data.room) },
       { label: 'Nomor PO', value: data.po_number },
-      { label: 'Tanggal registrasi', value: formatDateWithDashes(data.date_of_receipt) },
+      { label: 'Tanggal registrasi', value: formatDate(data.date_of_receipt) },
       { label: 'Umur', value: data.age !== undefined && data.age !== null ? `${data.age} tahun` : '-' },
       { label: 'Harga satuan', value: formatRupiah(data.unitPrice) },
       { label: 'Organizer', value: data.organizer },

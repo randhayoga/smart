@@ -5,6 +5,7 @@
 import { ref, watch } from 'vue';
 import { X, FileText, ThumbsUp, Ban } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
+import { formatDate } from '@/lib/utils';
 import Tabs from '@/Components/Tabs.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import JejakAuditTab from '@/Pages/Smart/MultiRoles/Tabs/JejakAuditTab.vue';
@@ -60,11 +61,6 @@ const formatLocation = (loc: string | null | undefined, floor: string | null, ro
   if (floor && floor !== '-') parts.push(floor);
   if (room && room !== '-') parts.push(room);
   return parts.join(', ') || '-';
-};
-
-const formatDateWithDashes = (dateStr: string | null | undefined) => {
-  if (!dateStr || dateStr === '-') return '-';
-  return dateStr.replace(/\//g, '-');
 };
 
 const openMemoFile = (path?: string | null) => {
@@ -152,7 +148,7 @@ const getConditionClass = (cond?: string | null) => {
                   <div class="md:col-span-4">
                     <p class="font-bold text-foreground"><span class="text-foreground">Kode LOT:</span> {{ approval.unit_details.lot_code }}</p>
                     <p class="text-foreground">Organizer: {{ approval.unit_details.organizer }}</p>
-                    <p class="text-foreground">Tanggal registrasi: {{ formatDateWithDashes(approval.unit_details.date_of_receipt) }}</p>
+                    <p class="text-foreground">Tanggal registrasi: {{ formatDate(approval.unit_details.date_of_receipt) }}</p>
                     <p class="text-foreground">Umur: {{ approval.unit_details.age !== undefined && approval.unit_details.age !== null ? `${approval.unit_details.age} tahun` : '-' }}</p>
                     <p class="text-foreground">Vendor: {{ approval.unit_details.vendor }}</p>
                     <p class="text-foreground">Nomor PO: {{ approval.unit_details.po_number }}</p>

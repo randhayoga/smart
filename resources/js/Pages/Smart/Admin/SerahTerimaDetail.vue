@@ -594,7 +594,7 @@ const openFirstItemPlacementModal = () => {
     <div class="mb-6 p-4 rounded-xl border border-indigo-200 bg-indigo-50/30 flex items-center gap-3 text-indigo-700">
       <Info class="w-5 h-5 shrink-0" />
       <p class="text-sm font-medium">
-        Pengingat bahwa aset akan diambil pada <span class="font-bold">{{ handover?.time || 'DD/MM/YYYY jam HH:MM' }}</span>
+        Pengingat bahwa aset akan diambil pada <span class="font-bold">{{ handover?.time || 'DD-MM-YYYY jam HH:mm' }}</span>
       </p>
     </div>
 
