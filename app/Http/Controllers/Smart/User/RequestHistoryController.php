@@ -3,27 +3,81 @@
 namespace App\Http\Controllers\Smart\User;
 
 use App\Http\Controllers\Controller;
-use App\Models\Inventory\Barang;
-use App\Models\Inventory\Lot;
-use App\Models\Inventory\Unit;
 use App\Models\Request\Request as SmartRequest;
-use App\Models\Request\RequestHandover;
-use App\Models\Request\RequestItem;
-use App\Models\Request\RequestReturn;
-use App\Models\Request\RequestStatusLog;
 use App\Models\Request\RequestUnitAssignment;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * Request History Controller managing request tracking, status timelines, handover scheduling, and receipt confirmations for users.
+ * Request History Controller managing user request browsing and detail inspection.
  */
 class RequestHistoryController extends Controller
 {
     /**
-     * Memetakan data permintaan ke format array response.
+     * Menampilkan halaman riwayat permintaan dan peminjaman pengguna.
+     */
+    public function index(Request $request): Response
+    {
+        $requests = SmartRequest::with([
+            'approver',
+            'items.barang.subcategory.category',
+            'items.barang.brand',
+            'items.barang.uom',
+            'items.subcategory.category',
+            'items.subcategory.barangs.uom',
+            'items.unitAssignments.unit',
+            'project',
+            'department',
+            'approval.approver',
+            'adminConfirmation.admin',
+            'handover',
+            'statusLogs.changer',
+        ])
+            ->where('user_id', $request->user()->id)
+            ->orderBy('id', 'desc')
+            ->get()
+            ->map(fn($r) => $this->mapRequest($r));
+
+        return Inertia::render('Smart/User/RequestHistory', [
+            'user' => $request->user(),
+            'requests' => $requests,
+        ]);
+    }
+
+    /**
+     * Menampilkan halaman detail dari permintaan tertentu.
+     */
+    public function show(Request $request, string $id): Response
+    {
+        $req = SmartRequest::with([
+            'approver',
+            'items.barang.subcategory.category',
+            'items.barang.brand',
+            'items.barang.uom',
+            'items.subcategory.category',
+            'items.subcategory.barangs.uom',
+            'items.unitAssignments.unit',
+            'project',
+            'department',
+            'approval.approver',
+            'adminConfirmation.admin',
+            'handover',
+            'statusLogs.changer',
+        ])
+            ->where('user_id', $request->user()->id)
+            ->findOrFail($id);
+
+        return Inertia::render('Smart/User/RequestHistoryDetail', [
+            'user' => $request->user(),
+            'requestId' => $req->id,
+            'request' => $this->mapRequest($req),
+            'placements' => [],
+        ]);
+    }
+
+    /**
+     * Memetakan data permintaan ke format array response yang diharapkan frontend.
      */
     private function mapRequest(SmartRequest $req): array
     {
@@ -52,14 +106,16 @@ class RequestHistoryController extends Controller
         }
 
         $items = $req->items->map(function ($item) {
-            // Get assigned assets (serial numbers)
-            $assets = RequestUnitAssignment::where('request_item_id', $item->id)
-                ->with('unit')
-                ->get()
-                ->pluck('unit.number')
-                ->filter()
-                ->values()
-                ->toArray();
+            // Get assigned assets (serial numbers) via relation or query
+            $assets = $item->relationLoaded('unitAssignments')
+                ? $item->unitAssignments->pluck('unit.number')->filter()->values()->toArray()
+                : RequestUnitAssignment::where('request_item_id', $item->id)
+                    ->with('unit')
+                    ->get()
+                    ->pluck('unit.number')
+                    ->filter()
+                    ->values()
+                    ->toArray();
 
             $subcatName = $item->barang?->subcategory?->name ?? $item->subcategory?->name ?? '-';
             $catName = $item->barang?->subcategory?->category?->name ?? $item->subcategory?->category?->name ?? '-';
@@ -145,254 +201,5 @@ class RequestHistoryController extends Controller
             'handover_note' => $req->handover?->note,
             'logs' => $logs,
         ];
-    }
-
-    /**
-     * Menampilkan halaman riwayat permintaan dan peminjaman pengguna.
-     */
-    public function index(Request $request): Response
-    {
-        $requests = SmartRequest::with([
-            'approver',
-            'items.barang.subcategory.category',
-            'items.barang.brand',
-            'items.barang.uom',
-            'items.subcategory.category',
-            'items.subcategory.barangs.uom',
-            'project',
-            'department',
-            'approval.approver',
-            'adminConfirmation.admin',
-            'handover',
-            'statusLogs.changer'
-        ])
-            ->where('user_id', $request->user()->id)
-            ->orderBy('id', 'desc')
-            ->get()
-            ->map(fn($r) => $this->mapRequest($r));
-
-        return Inertia::render('Smart/User/RequestHistory', [
-            'user' => $request->user(),
-            'requests' => $requests,
-        ]);
-    }
-
-    /**
-     * Menampilkan halaman detail dari permintaan tertentu.
-     */
-    public function show(Request $request, string $id): Response
-    {
-        $req = SmartRequest::with([
-            'approver',
-            'items.barang.subcategory.category',
-            'items.barang.brand',
-            'items.barang.uom',
-            'items.subcategory.category',
-            'items.subcategory.barangs.uom',
-            'project',
-            'department',
-            'approval.approver',
-            'adminConfirmation.admin',
-            'handover',
-            'statusLogs.changer'
-        ])
-            ->where('user_id', $request->user()->id)
-            ->findOrFail($id);
-
-        $placements = RequestUnitAssignment::whereIn('request_item_id', $req->items->pluck('id'))
-            ->with('unit')
-            ->get()
-            ->filter(fn($asn) => $asn->unit && $asn->placement)
-            ->mapWithKeys(fn($asn) => [$asn->unit->number => $asn->placement])
-            ->toArray();
-
-        return Inertia::render('Smart/User/RequestHistoryDetail', [
-            'user' => $request->user(),
-            'requestId' => $req->id,
-            'request' => $this->mapRequest($req),
-            'placements' => $placements,
-        ]);
-    }
-
-    /**
-     * Membatalkan permintaan peminjaman atau barang habis pakai.
-     */
-    public function cancel(Request $request, int|string $id)
-    {
-        $req = SmartRequest::where('user_id', $request->user()->id)->findOrFail($id);
-        
-        $oldStatus = $req->status;
-        $req->update(['status' => 'cancel']);
-
-        RequestStatusLog::create([
-            'request_id' => $req->id,
-            'status_from' => $oldStatus,
-            'status_to' => 'cancel',
-            'changed_by' => $request->user()->id,
-            'note' => 'Permintaan dibatalkan oleh pengguna.',
-        ]);
-
-        return redirect()->back()->with('success', 'Permintaan berhasil dibatalkan.');
-    }
-
-    /**
-     * Mengatur jadwal serah terima barang.
-     */
-    public function handover(Request $request, int|string $id)
-    {
-        $validated = $request->validate([
-            'method' => 'required|string',
-            'scheduled_date' => 'required|date',
-            'location' => 'required|string',
-            'note' => 'nullable|string',
-        ]);
-
-        $req = SmartRequest::where('user_id', $request->user()->id)->findOrFail($id);
-
-        RequestHandover::updateOrCreate(
-            ['request_id' => $req->id],
-            [
-                'method' => $validated['method'],
-                'scheduled_date' => $validated['scheduled_date'],
-                'location' => $validated['location'],
-                'note' => $validated['note'] ?? null,
-                'created_by' => $request->user()->id,
-            ]
-        );
-
-        $oldStatus = $req->status;
-        if ($oldStatus === 'confirm' || $oldStatus === 'partial') {
-            $req->update(['status' => 'handover']);
-
-            RequestStatusLog::create([
-                'request_id' => $req->id,
-                'status_from' => $oldStatus,
-                'status_to' => 'handover',
-                'changed_by' => $request->user()->id,
-                'note' => 'Jadwal serah terima diatur oleh pengguna.',
-            ]);
-        }
-
-        return redirect()->back()->with('success', 'Jadwal serah terima berhasil disimpan.');
-    }
-
-    /**
-     * Mengonfirmasi bahwa barang telah diterima oleh pengguna.
-     */
-    public function receive(Request $request, int|string $id)
-    {
-        /** @var SmartRequest $req */
-        $req = SmartRequest::with(['items.barang.subcategory.category'])
-            ->where('user_id', $request->user()->id)->findOrFail($id);
-        
-        $oldStatus = $req->status;
-        $isBorrow = (bool) $req->start_date;
-
-        // Check if there are still any pending items that haven't been fulfilled
-        $hasPendingItems = $req->items->contains(fn($item) => $item->status === 'pending');
-
-        // Barang consumable TIDAK masuk daftar peminjaman — langsung ke arsip (success)
-        $allConsumable = $req->items->every(function ($item) {
-            return (bool) ($item->barang->subcategory->category->is_consumable ?? false);
-        });
-
-        if ($hasPendingItems) {
-            $newStatus = 'pending';
-            // Delete the completed handover to prepare for the next schedule
-            RequestHandover::where('request_id', $req->id)->delete();
-        } else {
-            $newStatus = ($isBorrow && !$allConsumable) ? 'borrow' : 'success';
-            // Set handover user_confirmed_at
-            $handover = RequestHandover::where('request_id', $req->id)->first();
-            if ($handover) {
-                $handover->update(['user_confirmed_at' => now()]);
-            }
-        }
-
-        $req->update(['status' => $newStatus]);
-
-        // Tandai status unit sesuai jenis permintaan
-        $requestItems = RequestItem::where('request_id', $req->id)->get();
-        foreach ($requestItems as $reqItem) {
-            $assignments = RequestUnitAssignment::where('request_item_id', $reqItem->id)->get();
-            foreach ($assignments as $asn) {
-                if ($asn->unit) {
-                    $status = 'dipakai';
-                    if ($isBorrow && !$allConsumable && !$asn->unit->is_vehicle) {
-                        $status = 'dipinjam';
-                    }
-                    $asn->unit->update([
-                        'status' => $status,
-                    ]);
-                }
-            }
-        }
-
-        RequestStatusLog::create([
-            'request_id' => $req->id,
-            'status_from' => $oldStatus,
-            'status_to' => $newStatus,
-            'changed_by' => $request->user()->id,
-            'note' => 'Barang telah diterima oleh pengguna.',
-        ]);
-
-        return redirect()->back()->with('success', 'Barang berhasil dikonfirmasi telah diterima.');
-    }
-
-    /**
-     * Mengatur jadwal pengembalian aset yang dipinjam.
-     */
-    public function returnAsset(Request $request, int|string $id)
-    {
-        $validated = $request->validate([
-            'method' => 'required|string',
-            'scheduled_date' => 'required|date',
-            'location' => 'required|string',
-            'note' => 'nullable|string',
-        ]);
-
-        $req = SmartRequest::where('user_id', $request->user()->id)->findOrFail($id);
-        
-        $oldStatus = $req->status;
-        $req->update(['status' => 'return']); // transition to return phase
-
-        RequestReturn::create([
-            'request_id' => $req->id,
-            'method' => $validated['method'] === 'Kembalikan sendiri' ? 'self' : 'delivery',
-            'scheduled_date' => Carbon::parse($validated['scheduled_date']),
-            'location' => $validated['location'],
-            'is_auto_set' => false,
-            'note' => $validated['note'] ?? null,
-        ]);
-
-        RequestStatusLog::create([
-            'request_id' => $req->id,
-            'status_from' => $oldStatus,
-            'status_to' => 'return',
-            'changed_by' => $request->user()->id,
-            'note' => 'Pengembalian diatur oleh pengguna.',
-        ]);
-
-        return redirect()->back()->with('success', 'Jadwal pengembalian berhasil diajukan.');
-    }
-
-    /**
-     * Memperbarui lokasi penempatan aset (baik oleh user maupun admin).
-     */
-    public function updatePlacement(Request $request)
-    {
-        $validated = $request->validate([
-            'placements' => 'required|array',
-        ]);
-
-        foreach ($validated['placements'] as $assetNumber => $location) {
-            $unit = Unit::where('number', $assetNumber)->first();
-            if ($unit) {
-                RequestUnitAssignment::where('unit_id', $unit->id)
-                    ->update(['placement' => $location]);
-            }
-        }
-
-        return redirect()->back()->with('success', 'Penempatan aset berhasil disimpan.');
     }
 }

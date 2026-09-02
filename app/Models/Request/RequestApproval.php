@@ -24,7 +24,7 @@ class RequestApproval extends Model
 
     public function request(): BelongsTo
     {
-        return $this->belongsTo(Request::class);
+        return $this->belongsTo(Request::class, 'request_id');
     }
 
     public function approver(): BelongsTo
