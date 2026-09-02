@@ -5,6 +5,7 @@ import { toast } from 'vue-sonner';
 import { addNotification } from '@/stores/notificationStore';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import AssetItemCard from '@/Components/AssetItemCard.vue';
+import RequestCancelModal from '@/Pages/Smart/User/Modals/RequestCancelModal.vue';
 import { Button } from '@/Components/ui/button';
 import { ScrollArea } from "@/Components/ui/scroll-area";
 import { formatDate } from '@/lib/utils';
@@ -43,7 +44,8 @@ import {
   Clock, 
   X, 
   AlertCircle,
-  ArrowUpDown
+  ArrowUpDown,
+  Trash2
 } from 'lucide-vue-next';
 
 // ─────────────────────────────────────────────
@@ -107,6 +109,11 @@ watch(() => props.request, (newVal) => {
 const request = computed((): RequestHistory => {
   return requestState.value;
 });
+
+// ─────────────────────────────────────────────
+// Cancellation Modal State
+// ─────────────────────────────────────────────
+const isCancelModalOpen = ref(false);
 
 // ─────────────────────────────────────────────
 // Handover (Serah Terima) Modal & State
@@ -616,12 +623,25 @@ const activeStepIndex = computed(() => {
         </BreadcrumbList>
       </Breadcrumb>
 
-      <Link :href="route('smart.history')">
-        <Button variant="white" class="flex items-center gap-1.5 h-8 px-3 text-xs font-semibold">
-          <ArrowLeft class="w-3.5 h-3.5" />
-          Kembali ke Riwayat
+      <div class="flex items-center gap-2.5">
+        <Button 
+          v-if="request.status === 'Menunggu approval'" 
+          variant="destructive" 
+          size="lg"
+          class="font-semibold text-xs flex items-center gap-1.5 h-8 px-3"
+          @click="isCancelModalOpen = true"
+        >
+          <Trash2 class="w-3.5 h-3.5" />
+          Batalkan Permintaan
         </Button>
-      </Link>
+
+        <Link :href="route('smart.history')">
+          <Button variant="white" class="flex items-center gap-1.5 h-8 px-3 text-xs font-semibold">
+            <ArrowLeft class="w-3.5 h-3.5" />
+            Kembali ke Riwayat
+          </Button>
+        </Link>
+      </div>
     </div>
 
     <!-- ── Alert Banner: Tindakan Diperlukan atau Pengingat Serah Terima ── -->
@@ -666,7 +686,7 @@ const activeStepIndex = computed(() => {
       <div class="lg:col-span-2 space-y-6">
         
         <!-- Card Detail Info -->
-        <div class="bg-card border border-border rounded-[0.875rem] p-5 shadow-card space-y-1.5">
+        <div class="bg-card border border-border rounded-[0.875rem] p-5 space-y-1.5">
           <div class="text-base space-y-1">
             <h2 class="text-base font-bold text-foreground">
               <span class="font-normal text-muted-foreground">Nomor: </span>{{ request.number }}
@@ -752,7 +772,7 @@ const activeStepIndex = computed(() => {
       <!-- Kolom Kanan (Timeline / Tahapan Permintaan) -->
       <div class="space-y-6">
         
-        <div class="bg-card border border-border rounded-[0.875rem] p-5 sm:p-6 shadow-card relative">
+        <div class="bg-card border border-border rounded-[0.875rem] p-5 sm:p-6 relative">
           <!-- Header without border/count matching Daftar Barang style -->
           <p class="text-xs text-muted-foreground font-medium mb-4">Tahapan Permintaan:</p>
 
@@ -1137,7 +1157,7 @@ const activeStepIndex = computed(() => {
                 {{ activeItemForPlacement.category }} ({{ activeItemForPlacement.subcategory }})
               </p>
               <p class="text-xs text-foreground font-semibold">
-                Jumlah dipinjam: {{ activeItemForPlacement.quantity }} {{ activeItemForPlacement.uom || 'satuan' }}
+                Jumlah: {{ activeItemForPlacement.quantity }} {{ activeItemForPlacement.uom || 'satuan' }}
               </p>
             </div>
           </div>
@@ -1250,6 +1270,12 @@ const activeStepIndex = computed(() => {
         </div>
       </DialogContent>
     </Dialog>
+
+    <!-- Modal Pembatalan Permintaan -->
+    <RequestCancelModal
+      v-model:open="isCancelModalOpen"
+      :request="request"
+    />
   </AppLayout>
 </template>
 

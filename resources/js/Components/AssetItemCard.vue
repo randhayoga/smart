@@ -1,28 +1,59 @@
 <script setup lang="ts">
 /**
- * Asset Item Card component displaying item details, stock availability, and collapsible allocated asset serial numbers.
+ * AssetItemCard.vue
+ *
+ * Reusable card component for presenting requested/allocated asset or supply items
+ * across various detail views (e.g., Admin Inbox/Archive/Returns/Handover, Manager Approval,
+ * and User Request History).
+ *
+ * Key features:
+ * - Thumbnail image with automatic path normalization or 3-letter abbreviation fallback.
+ * - Brand, category, and subcategory display with duplicate label reduction.
+ * - Status indicator for fulfilled items (customized for consumable vs. non-consumable).
+ * - Real-time warehouse stock level badge (visible to admin users).
+ * - Quantity display with customizable label and unit of measurement (UOM).
+ * - Collapsible list of allocated asset serial codes with placement location tags.
+ * - Dynamic `#footer` slot support with empty-VNode detection to prevent empty border rendering.
+ *
+ * @slot footer - Optional action or button bar rendered at the bottom of the card.
  */
 import { ref, computed, useSlots, Comment, Fragment, type VNode } from 'vue';
 import { ChevronDown, ChevronUp } from 'lucide-vue-next';
 
+/**
+ * Component Props Interface
+ */
 interface Props {
+  /** Brand or product title (e.g., "Lenovo ThinkPad", "Baterai AA"). */
   brand: string;
+  /** Primary category name (e.g., "IT Equipment", "Office Supplies"). */
   category: string;
+  /** Subcategory name (e.g., "Laptop", "Battery"). */
   subcategory: string;
+  /** Quantity requested or allocated. */
   quantity: string | number;
+  /** Array of asset serial numbers or identification codes allocated to this item. */
   assets: string[];
+  /** Display label for the quantity row. Defaults to 'Jumlah'. */
   quantityLabel?: string;
+  /** URL or relative storage path for the product image thumbnail. */
   imageUrl?: string | null;
+  /** Key-value mapping of asset codes to their physical location/room (e.g. { 'AST-001': 'Ruang IT' }). */
   placements?: Record<string, string>;
+  /** Current warehouse stock quantity. Null if stock tracking is unavailable. */
   stock?: number | null;
+  /** Fulfillment status string (e.g., 'fulfilled'). */
   status?: string;
+  /** Flag to determine if the viewer has admin privileges to view stock availability. */
   isAdmin?: boolean;
+  /** Indicates whether the item is consumable supply rather than fixed asset. */
   isConsumable?: boolean;
+  /** Unit of measurement label (e.g., 'unit', 'satuan', 'pcs'). Defaults to 'satuan'. */
   uom?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  quantityLabel: 'Jumlah dipinjam',
+  quantityLabel: 'Jumlah',
   imageUrl: null,
   placements: () => ({}),
   stock: null,
@@ -33,8 +64,17 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const slots = useSlots();
+
+/** Controls the visibility of the allocated asset serial numbers drawer. */
 const showAssets = ref(true);
 
+/**
+ * Recursively inspects VNodes to verify if slot content contains actual renderable elements
+ * rather than empty fragments, whitespace, or comments.
+ *
+ * @param nodes - Array of VNodes returned by a Vue slot function.
+ * @returns True if at least one visible element or text node is present; otherwise false.
+ */
 const hasRenderableContent = (nodes: VNode[] | undefined): boolean => {
   if (!nodes || nodes.length === 0) return false;
   return nodes.some(node => {
@@ -47,11 +87,18 @@ const hasRenderableContent = (nodes: VNode[] | undefined): boolean => {
   });
 };
 
+/**
+ * Determines whether the footer slot contains visible content to avoid rendering
+ * an empty divider border at the bottom of the card.
+ */
 const hasFooter = computed(() => {
   if (!slots.footer) return false;
   return hasRenderableContent(slots.footer());
 });
 
+/**
+ * Sanitizes and filters the assets array to return only non-empty strings.
+ */
 const activeAssets = computed(() => {
   return props.assets ? props.assets.filter(asset => asset && String(asset).trim() !== '') : [];
 });
@@ -62,7 +109,7 @@ const activeAssets = computed(() => {
     class="p-4 border transition-all rounded-[14px] space-y-3 bg-card border-border/70 hover:border-primary/20 hover:bg-muted/5"
   >
     <div class="flex items-start gap-4">
-      <!-- Item Thumbnail -->
+      <!-- Item Thumbnail / Fallback Abbreviation -->
       <div class="w-16 h-16 rounded-[12px] bg-muted border border-border overflow-hidden shrink-0 flex items-center justify-center mt-0.5">
         <img 
           v-if="imageUrl" 
@@ -74,7 +121,9 @@ const activeAssets = computed(() => {
         </div>
       </div>
       
+      <!-- Item Details and Status -->
       <div class="min-w-0 flex-grow space-y-1">
+        <!-- Brand & Fulfillment Badge -->
         <div class="flex items-center gap-2 flex-wrap mb-0.5">
           <h4 class="text-sm md:text-base font-bold text-foreground truncate">{{ brand }}</h4>
           <span 
@@ -84,6 +133,8 @@ const activeAssets = computed(() => {
             {{ isConsumable ? 'Sudah Disediakan' : 'Sudah Dialokasikan' }}
           </span>
         </div>
+
+        <!-- Category / Subcategory Hierarchy -->
         <p class="text-xs text-muted-foreground">
           <template v-if="brand !== subcategory && !brand.toLowerCase().includes(subcategory.toLowerCase())">
             Kategori: {{ category }} ({{ subcategory }})
@@ -92,14 +143,19 @@ const activeAssets = computed(() => {
             Kategori: {{ category }}
           </template>
         </p>
+
+        <!-- Warehouse Stock Indicator (Admin only) -->
         <div v-if="stock !== null && isAdmin" class="text-xs font-semibold text-foreground">
           Stok tersedia: 
           <span :class="stock >= Number(quantity) ? 'text-green-600' : 'text-red-500'">
             {{ stock }} {{ uom }}
           </span>
         </div>
+
+        <!-- Quantity & Unit of Measurement -->
         <p class="text-xs text-foreground font-semibold">{{ quantityLabel }}: {{ quantity }} {{ uom }}</p>
         
+        <!-- Collapsible Allocated Asset Serial Numbers -->
         <div v-if="activeAssets.length > 0" class="pt-1.5">
           <button 
             @click="showAssets = !showAssets"
@@ -127,6 +183,7 @@ const activeAssets = computed(() => {
       </div>
     </div>
     
+    <!-- Card Action Footer Slot -->
     <div v-if="hasFooter" class="flex justify-end pt-2 border-t border-border/50">
       <slot name="footer" />
     </div>

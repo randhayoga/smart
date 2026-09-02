@@ -47,6 +47,11 @@ interface Props {
 
 const props = defineProps<Props>();
 
+const isPeminjaman = computed(() => props.handover?.type === 'peminjaman' || Boolean(props.handover?.durationStart));
+const typeLabel = computed(() => isPeminjaman.value ? 'Peminjaman' : 'Permintaan');
+const typeLabelLower = computed(() => isPeminjaman.value ? 'peminjaman' : 'permintaan');
+const actionLabel = computed(() => isPeminjaman.value ? 'dipinjam' : 'diminta');
+
 // If items is passed from props, use it, otherwise fallback to the mock/default
 const items = computed(() => props.items || [
   {
@@ -102,7 +107,7 @@ const timeline = computed((): TimelineStep[] => {
   
   // Step 1: Initial creation
   steps.push({
-    status: 'Permintaan dibuat',
+    status: `${typeLabel.value} dibuat`,
     time: hData.createdAt,
     completed: true,
   });
