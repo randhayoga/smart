@@ -145,6 +145,7 @@ const columns: ColumnDef<any>[] = [
   {
     accessorKey: 'brand',
     size: 225,
+    enableGlobalFilter: false,
     header: ({ column }) => {
       return h(Button, {
         variant: 'ghost',
@@ -163,6 +164,7 @@ const columns: ColumnDef<any>[] = [
   },
   {
     accessorKey: 'category',
+    enableGlobalFilter: false,
     header: ({ column }) => {
       return h(Button, {
         variant: 'ghost',
@@ -181,6 +183,7 @@ const columns: ColumnDef<any>[] = [
   },
   {
     accessorKey: 'subcategory',
+    enableGlobalFilter: false,
     header: ({ column }) => {
       return h(Button, {
         variant: 'ghost',
@@ -200,6 +203,7 @@ const columns: ColumnDef<any>[] = [
   {
     accessorKey: 'amount',
     size: 95,
+    enableGlobalFilter: false,
     header: ({ column }) => {
       return h(Button, {
         variant: 'ghost',
@@ -215,6 +219,7 @@ const columns: ColumnDef<any>[] = [
   {
     accessorKey: 'lastUpdate',
     size: 181,
+    enableGlobalFilter: false,
     header: ({ column }) => {
       return h(Button, {
         variant: 'ghost',
@@ -247,6 +252,7 @@ const columns: ColumnDef<any>[] = [
   {
     id: 'actions',
     size: 84,
+    enableGlobalFilter: false,
     header: () => h('div', { class: 'no-print' }, 'Aksi'),
     cell: ({ row }) => {
       return h('div', { class: 'flex items-center justify-end gap-2 no-print' }, [
@@ -559,7 +565,7 @@ onUnmounted(() => {
                     id="search-barang"
                     name="search"
                     v-model="searchQuery"
-                    placeholder="Cari Tipe..." 
+                    placeholder="Cari nama atau spesifikasi..." 
                   />
                 </div>
 

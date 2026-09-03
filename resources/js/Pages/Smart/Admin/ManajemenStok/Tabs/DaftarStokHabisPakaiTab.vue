@@ -661,7 +661,7 @@ const closeOnEscape = (e: KeyboardEvent) => {
                     id="search-stok-habis-pakai"
                     name="search"
                     v-model="searchQuery"
-                    placeholder="Cari Tipe..." 
+                    placeholder="Cari nama atau spesifikasi..." 
                   />
                 </div>
 

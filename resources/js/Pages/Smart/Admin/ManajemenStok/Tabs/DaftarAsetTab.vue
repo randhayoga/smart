@@ -719,7 +719,7 @@ const totalAsetTerpilihCount = computed(() => {
                   id="search-aset"
                   name="search"
                   v-model="searchQuery"
-                  placeholder="Cari Kode Aset, Nama..." 
+                  placeholder="Cari Kode Aset atau nama..." 
                 />
               </div>
 
