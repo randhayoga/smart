@@ -42,6 +42,7 @@ interface RequestItem {
 
 interface RequestHistory {
   id: number;
+  uuid?: string;
   number: string;
   type: 'permintaan' | 'peminjaman';
   pemanfaatan: 'corporate' | 'project';

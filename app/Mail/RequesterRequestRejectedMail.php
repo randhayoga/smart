@@ -84,7 +84,7 @@ class RequesterRequestRejectedMail extends Mailable
             ];
         })->toArray();
 
-        $this->detailUrl = url('/smart/history/' . $request->id);
+        $this->detailUrl = url('/smart/history/' . ($request->uuid ?? $request->id));
     }
 
     /**

@@ -48,9 +48,13 @@ class RequestHistoryController extends Controller
     /**
      * Menampilkan halaman detail dari permintaan tertentu.
      */
-    public function show(Request $request, string $id): Response
+    public function show(Request $httpRequest, SmartRequest $request): Response
     {
-        $req = SmartRequest::with([
+        if ((int) $request->user_id !== (int) $httpRequest->user()->id) {
+            abort(404);
+        }
+
+        $request->loadMissing([
             'approver',
             'items.barang.subcategory.category',
             'items.barang.brand',
@@ -64,14 +68,12 @@ class RequestHistoryController extends Controller
             'adminConfirmation.admin',
             'handover',
             'statusLogs.changer',
-        ])
-            ->where('user_id', $request->user()->id)
-            ->findOrFail($id);
+        ]);
 
         return Inertia::render('Smart/User/RequestHistoryDetail', [
-            'user' => $request->user(),
-            'requestId' => $req->id,
-            'request' => $this->mapRequest($req),
+            'user' => $httpRequest->user(),
+            'requestId' => $request->uuid,
+            'request' => $this->mapRequest($request),
             'placements' => [],
         ]);
     }
@@ -177,6 +179,7 @@ class RequestHistoryController extends Controller
 
         return [
             'id' => $req->id,
+            'uuid' => $req->uuid,
             'number' => $req->request_number,
             'type' => $type,
             'pemanfaatan' => $req->utilization,
@@ -190,6 +193,13 @@ class RequestHistoryController extends Controller
             'created_at' => $req->created_at ? $req->created_at->format('d-m-Y H:i') : '-',
             'items' => $items,
             'approver_name' => $req->approver?->name,
+            'approval' => $req->approval ? [
+                'id' => $req->approval->id,
+                'note' => $req->approval->note,
+                'decision' => $req->approval->decision,
+                'decided_at' => $req->approval->decided_at?->format('d-m-Y H:i'),
+                'approver_name' => $req->approval->approver?->name,
+            ] : null,
             'approval_by' => $req->approval?->approver?->name,
             'approval_at' => $req->approval?->decided_at?->format('d-m-Y H:i'),
             'confirmation_by' => $req->adminConfirmation?->admin?->name,

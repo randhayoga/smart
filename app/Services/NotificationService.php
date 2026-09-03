@@ -342,14 +342,17 @@ class NotificationService
         $title = "{$type} {$request->request_number} Disetujui";
         $message = "{$manager->name} menyetujui {$type} Anda dan sekarang sedang diproses oleh Tim Aset.";
 
+        $targetRouteKey = $request->uuid ?? $request->id;
+
         $this->sendToUser(
             $requester,
             $title,
             $message,
             'success',
-            "/smart/history/{$request->id}",
+            "/smart/history/{$targetRouteKey}",
             [
                 'request_id' => $request->id,
+                'request_uuid' => $request->uuid,
                 'request_number' => $request->request_number,
                 'type' => $type,
                 'decision' => 'approve',
@@ -376,14 +379,17 @@ class NotificationService
         $title = "{$type} {$request->request_number} Ditolak";
         $message = "{$manager->name} menolak {$type} Anda, alasan penolakan dapat dilihat pada detail {$type}.";
 
+        $targetRouteKey = $request->uuid ?? $request->id;
+
         $this->sendToUser(
             $requester,
             $title,
             $message,
             'error',
-            "/smart/history/{$request->id}",
+            "/smart/history/{$targetRouteKey}",
             [
                 'request_id' => $request->id,
+                'request_uuid' => $request->uuid,
                 'request_number' => $request->request_number,
                 'type' => $type,
                 'decision' => 'reject',

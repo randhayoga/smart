@@ -170,8 +170,8 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
         Route::get('/borrow-cart/confirmation', [BorrowCartConfirmationController::class, 'index'])->name('borrow-cart.confirmation');
         Route::post('/borrow-cart/confirmation', [BorrowCartConfirmationController::class, 'store'])->name('borrow-cart.confirmation.store');
         Route::get('/history', [RequestHistoryController::class, 'index'])->name('history');
-        Route::get('/history/{id}', [RequestHistoryController::class, 'show'])->name('history.show');
-        Route::post('/history/{id}/cancel', [RequestCancellationController::class, 'store'])->name('history.cancel');
+        Route::get('/history/{request:uuid}', [RequestHistoryController::class, 'show'])->name('history.show');
+        Route::post('/history/{request:uuid}/cancel', [RequestCancellationController::class, 'store'])->name('history.cancel');
     });
 });
 

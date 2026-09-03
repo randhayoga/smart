@@ -72,6 +72,7 @@ interface RequestItem {
 
 interface RequestHistory {
   id: number;
+  uuid?: string;
   number: string;
   type: 'permintaan' | 'peminjaman';
   pemanfaatan: 'corporate' | 'project';
@@ -84,6 +85,13 @@ interface RequestHistory {
   raw_status: RawRequestStatus | string;
   created_at: string; // format YYYY-MM-DD
   items: RequestItem[];
+  approval?: {
+    id?: number;
+    note?: string | null;
+    decision?: string | null;
+    decided_at?: string | null;
+    approver_name?: string | null;
+  } | null;
   approval_by?: string | null;
   approval_at?: string | null;
   confirmation_by?: string | null;
@@ -491,7 +499,7 @@ const timelineSteps = computed((): TimelineStep[] => {
       if (log.status_to === 'approve') {
         const approverName = log.user || r.approval_by || r.approver_name || '-';
         title = 'Di-approve';
-        description = `${typeLabelTitle.value} disetujui Manager: <span class="font-bold text-foreground">${approverName}</span>`;
+        description = `${typeLabelTitle.value} disetujui Manager: <span class="font-bold text-foreground">${approverName}</span>${r.approval?.note ? `<br>Catatan: ${r.approval.note}` : ''}`;
       } else if (log.status_to === 'partial') {
         title = 'Disetujui sebagian (Partial)';
         description = description || `${typeLabelTitle.value} disetujui sebagian oleh Admin.`;
@@ -524,7 +532,7 @@ const timelineSteps = computed((): TimelineStep[] => {
         const approverName = log.user || r.approval_by || r.approver_name || '-';
         title = 'Ditolak';
         status = 'rejected';
-        description = `${typeLabelTitle.value} ditolak Manager: <span class="font-bold text-foreground">${approverName}</span>`;
+        description = `${typeLabelTitle.value} ditolak Manager: <span class="font-bold text-foreground">${approverName}</span>${r.approval?.note ? `<br>Alasan: ${r.approval.note}` : ''}`;
       } else if (log.status_to === 'cancel') {
         title = 'Dibatalkan';
         status = 'rejected';

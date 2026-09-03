@@ -190,7 +190,7 @@ class ManagerRequestEmailApprovalTest extends TestCase
         $this->assertEquals("{$req->type_name} {$req->request_number} Disetujui", $notification->data['title']);
         $this->assertEquals("{$manager->name} menyetujui {$req->type_name} Anda dan sekarang sedang diproses oleh Tim Aset.", $notification->data['message']);
         $this->assertEquals('success', $notification->data['type']);
-        $this->assertEquals("/smart/history/{$req->id}", $notification->data['url']);
+        $this->assertEquals("/smart/history/{$req->uuid}", $notification->data['url']);
 
         Mail::assertNothingSent();
     }
@@ -234,7 +234,7 @@ class ManagerRequestEmailApprovalTest extends TestCase
         $this->assertEquals("{$req->type_name} {$req->request_number} Ditolak", $notification->data['title']);
         $this->assertEquals("{$manager->name} menolak {$req->type_name} Anda, alasan penolakan dapat dilihat pada detail {$req->type_name}.", $notification->data['message']);
         $this->assertEquals('error', $notification->data['type']);
-        $this->assertEquals("/smart/history/{$req->id}", $notification->data['url']);
+        $this->assertEquals("/smart/history/{$req->uuid}", $notification->data['url']);
 
         // Requester receives rejection email
         Mail::assertSent(RequesterRequestRejectedMail::class, function ($mail) use ($requester, $req, $manager, $rejectionNote) {

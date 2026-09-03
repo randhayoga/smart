@@ -69,6 +69,8 @@ interface RequestItem {
 interface RequestHistory {
   /** Request database record ID. */
   id: number;
+  /** Public unique identifier for routing. */
+  uuid?: string;
   /** Formatted tracking reference number (e.g., 'REQ-2026-001'). */
   number: string;
   /** Transaction type: 'permintaan' (supplies) or 'peminjaman' (asset loans). */
@@ -274,7 +276,7 @@ const toggleExpanded = () => {
     <div class="flex items-center justify-end gap-2.5 mt-3 pt-2 border-t border-border/60">
       <!-- Detail View Link -->
       <Link
-        :href="route('smart.history.show', request.id)"
+        :href="route('smart.history.show', request.uuid || request.id)"
         class="text-xs sm:text-sm font-semibold text-primary hover:underline transition-colors mr-1"
       >
         Lihat Detail
@@ -295,7 +297,7 @@ const toggleExpanded = () => {
       <!-- Handover Setup CTA (Visible when confirmed or partial) -->
       <Link
         v-if="request.raw_status === 'confirm' || request.raw_status === 'partial'"
-        :href="route('smart.history.show', request.id)"
+        :href="route('smart.history.show', request.uuid || request.id)"
       >
         <Button
           variant="primary"
@@ -309,7 +311,7 @@ const toggleExpanded = () => {
       <!-- Return Setup CTA (Visible when currently borrowed) -->
       <Link
         v-if="request.raw_status === 'borrow'"
-        :href="route('smart.history.show', request.id)"
+        :href="route('smart.history.show', request.uuid || request.id)"
       >
         <Button
           variant="primary"
