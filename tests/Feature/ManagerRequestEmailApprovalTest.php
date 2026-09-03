@@ -103,7 +103,7 @@ class ManagerRequestEmailApprovalTest extends TestCase
         Mail::assertSent(ManagerRequestApprovalMail::class, function ($mail) use ($manager, $req) {
             $this->assertEquals($manager->email, $mail->to[0]['address']);
             $this->assertEquals("[SMART] Permohonan Persetujuan: Peminjaman Baru [{$req->request_number}]", $mail->envelope()->subject);
-            $this->assertEquals(url('/smart/approve'), $mail->loginUrl);
+            $this->assertEquals(url('/smart/approve') . '?search=' . urlencode($req->request_number), $mail->loginUrl);
 
             // Ensure rendering blade view succeeds with borrow period
             $rendered = $mail->render();

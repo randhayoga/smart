@@ -91,8 +91,8 @@ class ManagerRequestApprovalMail extends Mailable
             ['request' => $request->id]
         );
 
-        // Standard login URL fallback
-        $this->loginUrl = url('/smart/approve');
+        // Standard login URL fallback with search filter for the request number
+        $this->loginUrl = url('/smart/approve') . '?search=' . urlencode($request->request_number);
     }
 
     /**
