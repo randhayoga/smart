@@ -25,7 +25,7 @@ class ArsipController extends Controller
             ->orderBy('id', 'desc')
             ->get()
             ->map(function ($req) {
-                $type = $req->start_date ? 'Peminjaman' : 'Permintaan';
+                $type = $req->type_name;
                 
                 $statusStr = 'Sukses';
                 if ($req->status === 'reject') {
@@ -159,7 +159,7 @@ class ArsipController extends Controller
             'durationDays' => $durationDays,
             'durationHours' => $durationHours,
             'status' => $req->status,
-            'type' => $req->start_date ? 'peminjaman' : 'permintaan',
+            'type' => $req->type_key,
             'items' => $items,
             'logs' => $logs,
         ];

@@ -9,22 +9,21 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\URL;
 
 /**
- * Mailable notification sent to Department Manager or Project Manager for request approval.
+ * Mailable notification sent to the requester when their request is rejected by the manager.
  */
-class ManagerRequestApprovalMail extends Mailable
+class RequesterRequestRejectedMail extends Mailable
 {
     use Queueable, SerializesModels;
 
     public SmartRequest $smartRequest;
     public AdmUser $manager;
     public string $type;
-    public string $actionUrl;
-    public string $loginUrl;
-    public string $recipientName;
+    public string $reason;
+    public string $detailUrl;
     public string $requesterName;
+    public string $managerName;
     public string $destinationName;
     public bool $isBorrow;
     public ?string $borrowPeriod;
@@ -35,9 +34,9 @@ class ManagerRequestApprovalMail extends Mailable
      *
      * @param SmartRequest $request
      * @param AdmUser $manager
-     * @param string $type 'Peminjaman' | 'Permintaan'
+     * @param string|null $reason
      */
-    public function __construct(SmartRequest $request, AdmUser $manager, string $type = 'Permintaan')
+    public function __construct(SmartRequest $request, AdmUser $manager, ?string $reason = null)
     {
         $this->smartRequest = $request->loadMissing([
             'user',
@@ -52,10 +51,11 @@ class ManagerRequestApprovalMail extends Mailable
 
         $this->manager = $manager;
         $this->type = $request->type_name;
-        $this->recipientName = $manager->name;
         $this->requesterName = $request->user?->name ?? 'Pengguna';
+        $this->managerName = $manager->name ?? 'Manager';
         $this->destinationName = $request->destination_name;
         $this->isBorrow = $request->isBorrow();
+        $this->reason = !empty($reason) ? $reason : 'Tidak ada alasan spesifik yang dicantumkan.';
 
         $this->borrowPeriod = null;
         if ($this->isBorrow) {
@@ -84,15 +84,7 @@ class ManagerRequestApprovalMail extends Mailable
             ];
         })->toArray();
 
-        // 48-hour temporary HMAC-signed URL for zero-login secure approval
-        $this->actionUrl = URL::temporarySignedRoute(
-            'smart.external-approval.show',
-            now()->addHours(48),
-            ['request' => $request->id]
-        );
-
-        // Standard login URL fallback
-        $this->loginUrl = url('/smart/approve');
+        $this->detailUrl = url('/smart/history/' . $request->id);
     }
 
     /**
@@ -101,7 +93,7 @@ class ManagerRequestApprovalMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "[SMART] Permohonan Persetujuan: {$this->type} Baru [{$this->smartRequest->request_number}]",
+            subject: "[SMART] {$this->type} Ditolak [{$this->smartRequest->request_number}]",
         );
     }
 
@@ -111,18 +103,19 @@ class ManagerRequestApprovalMail extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.manager_request_approval',
+            view: 'emails.requester_request_rejected',
             with: [
                 'request' => $this->smartRequest,
-                'recipientName' => $this->recipientName,
-                'requesterName' => $this->requesterName,
-                'destinationName' => $this->destinationName,
+                'manager' => $this->manager,
                 'type' => $this->type,
+                'reason' => $this->reason,
+                'requesterName' => $this->requesterName,
+                'managerName' => $this->managerName,
+                'destinationName' => $this->destinationName,
                 'isBorrow' => $this->isBorrow,
                 'borrowPeriod' => $this->borrowPeriod,
                 'items' => $this->formattedItems,
-                'actionUrl' => $this->actionUrl,
-                'loginUrl' => $this->loginUrl,
+                'detailUrl' => $this->detailUrl,
             ],
         );
     }

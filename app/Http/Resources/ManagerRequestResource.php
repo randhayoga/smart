@@ -21,7 +21,7 @@ class ManagerRequestResource extends JsonResource
     {
         $statusMap = [
             'wait' => 'Menunggu approval',
-            'approve' => 'Disetujui',
+            'approve' => 'Di-approve',
             'confirm' => 'Serah Terima',
             'handover' => 'Serah Terima',
             'borrow' => 'Dipinjam',
@@ -33,7 +33,7 @@ class ManagerRequestResource extends JsonResource
             'partial' => 'Partial',
         ];
 
-        $type = $this->start_date ? 'peminjaman' : 'permintaan';
+        $type = $this->type_key;
 
         $durationDays = 0;
         $durationHours = 0;

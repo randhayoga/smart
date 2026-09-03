@@ -25,6 +25,13 @@ import { Link } from '@inertiajs/vue3';
 import { Button } from '@/Components/ui/button';
 import { ChevronDown, ChevronUp, Trash2, Calendar } from 'lucide-vue-next';
 import { formatDate } from '@/lib/utils';
+import { 
+  getRequestStatusLabel, 
+  getRequestStatusPillClass,
+  type RequestStatus, 
+  type RawRequestStatus 
+} from '@/lib/requestStatus';
+
 
 // ─────────────────────────────────────────────
 // Types
@@ -79,9 +86,9 @@ interface RequestHistory {
   /** Additional calculated borrow duration hours. */
   durationHours?: number;
   /** Localized human-readable status text displayed in badge. */
-  status: 'Menunggu approval' | 'Disetujui' | 'Ditolak' | 'Serah Terima' | 'Dipinjam' | 'Selesai' | 'Dibatalkan' | 'Pending' | 'Partial';
+  status: RequestStatus | string;
   /** Internal workflow state slug used for routing and conditional logic. */
-  raw_status: 'wait' | 'approve' | 'confirm' | 'handover' | 'borrow' | 'return' | 'success' | 'reject' | 'cancel' | 'pending' | 'partial';
+  raw_status: RawRequestStatus | string;
   /** ISO timestamp representing when the request was created. */
   created_at: string;
   approver_name?: string | null;
@@ -115,40 +122,6 @@ const isExpanded = ref(false);
 const toggleExpanded = () => {
   isExpanded.value = !isExpanded.value;
 };
-
-// ─────────────────────────────────────────────
-// Status Styling Helper
-// ─────────────────────────────────────────────
-
-/**
- * Returns Tailwind CSS background and foreground color classes matching the given request status.
- *
- * @param status - Localized status string from the request record.
- * @returns Tailwind CSS utility class string for badge styling.
- */
-const getStatusClasses = (status: string) => {
-  switch (status) {
-    case 'Menunggu approval':
-      return 'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300';
-    case 'Disetujui':
-      return 'bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300';
-    case 'Selesai':
-      return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300';
-    case 'Serah Terima':
-      return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-300';
-    case 'Dipinjam':
-      return 'bg-rose-100 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300';
-    case 'Ditolak':
-    case 'Dibatalkan':
-      return 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300';
-    case 'Pending':
-      return 'bg-purple-100 text-purple-800 dark:bg-purple-950/40 dark:text-purple-300';
-    case 'Partial':
-      return 'bg-cyan-100 text-cyan-800 dark:bg-cyan-950/40 dark:text-cyan-300';
-    default:
-      return 'bg-muted text-muted-foreground';
-  }
-};
 </script>
 
 <template>
@@ -159,10 +132,9 @@ const getStatusClasses = (status: string) => {
       <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
         <!-- Main Request Status Pill -->
         <span 
-          class="text-xs font-semibold px-2.5 py-0.5 rounded-full inline-flex items-center"
-          :class="getStatusClasses(request.status)"
+          :class="getRequestStatusPillClass(request.status)"
         >
-          {{ request.status === 'Disetujui' ? 'Di-approve' : (request.status === 'Dipinjam' ? 'Sedang dipinjam' : request.status) }}
+          {{ getRequestStatusLabel(request.status) }}
         </span>
 
         <!-- Return Deadline Badge (Displayed only for active loans with scheduled end date) -->

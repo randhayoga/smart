@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Mail\DMUnitStatusRequest;
 use App\Mail\ManagerRequestApprovalMail;
+use App\Mail\RequesterRequestRejectedMail;
 use App\Models\AdmUser;
 use App\Models\Inventory\Barang;
 use App\Models\Inventory\Unit;
@@ -319,6 +320,83 @@ class NotificationService
                 Mail::to($manager->email)->send(new ManagerRequestApprovalMail($request, $manager, $type));
             } catch (\Throwable $e) {
                 Log::error("Failed to send approval email for request {$request->id} to {$manager->email}: " . $e->getMessage());
+            }
+        }
+    }
+
+    /**
+     * Send in-app notification to the requester when their request is approved by the manager.
+     *
+     * @param SmartRequest $request
+     * @param AdmUser $manager
+     */
+    public function notifyRequesterRequestApproved(SmartRequest $request, AdmUser $manager): void
+    {
+        $request->loadMissing(['user', 'items']);
+        $requester = $request->user;
+        if (!$requester) {
+            return;
+        }
+
+        $type = $request->type_name;
+        $title = "{$type} {$request->request_number} Disetujui";
+        $message = "{$manager->name} menyetujui {$type} Anda dan sekarang sedang diproses oleh Tim Aset.";
+
+        $this->sendToUser(
+            $requester,
+            $title,
+            $message,
+            'success',
+            "/smart/history/{$request->id}",
+            [
+                'request_id' => $request->id,
+                'request_number' => $request->request_number,
+                'type' => $type,
+                'decision' => 'approve',
+            ]
+        );
+    }
+
+    /**
+     * Send in-app notification and email to the requester when their request is rejected by the manager.
+     *
+     * @param SmartRequest $request
+     * @param AdmUser $manager
+     * @param string|null $reason
+     */
+    public function notifyRequesterRequestRejected(SmartRequest $request, AdmUser $manager, ?string $reason = null): void
+    {
+        $request->loadMissing(['user', 'department', 'project', 'items']);
+        $requester = $request->user;
+        if (!$requester) {
+            return;
+        }
+
+        $type = $request->type_name;
+        $title = "{$type} {$request->request_number} Ditolak";
+        $message = "{$manager->name} menolak {$type} Anda, alasan penolakan dapat dilihat pada detail {$type}.";
+
+        $this->sendToUser(
+            $requester,
+            $title,
+            $message,
+            'error',
+            "/smart/history/{$request->id}",
+            [
+                'request_id' => $request->id,
+                'request_number' => $request->request_number,
+                'type' => $type,
+                'decision' => 'reject',
+                'reason' => $reason,
+            ]
+        );
+
+        // Dispatch email notification to requester
+        if (!empty($requester->email) && filter_var($requester->email, FILTER_VALIDATE_EMAIL)) {
+            try {
+                Mail::to($requester->email)->send(new RequesterRequestRejectedMail($request, $manager, $reason));
+            } catch (\Throwable $e) {
+                Log::error("Failed to send rejection email for request {$request->id} to {$requester->email}: " . $e->getMessage());
             }
         }
     }

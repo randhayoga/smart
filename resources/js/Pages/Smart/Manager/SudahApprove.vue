@@ -19,6 +19,7 @@ import {
 import TableSearch from '@/Components/TableSearch.vue';
 import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
+import { getRequestStatusPillClass, getRequestStatusLabel } from '@/lib/requestStatus';
 
 interface RequestHistory {
   id: number;
@@ -55,29 +56,6 @@ const typeFilter = ref('Semua tipe');
 const decisionFilter = ref('Semua keputusan');
 const rowsPerPage = ref('Semua baris');
 
-const getStatusBadgeClass = (rawStatus: string) => {
-  switch (rawStatus) {
-    case 'approve':
-      return 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20';
-    case 'confirm':
-    case 'handover':
-      return 'bg-blue-500/10 text-blue-600 border border-blue-500/20';
-    case 'borrow':
-    case 'return':
-      return 'bg-indigo-500/10 text-indigo-600 border border-indigo-500/20';
-    case 'success':
-      return 'bg-green-500/10 text-green-600 border border-green-500/20';
-    case 'reject':
-      return 'bg-destructive/10 text-destructive border border-destructive/20';
-    case 'cancel':
-      return 'bg-muted text-muted-foreground border border-border';
-    case 'partial':
-      return 'bg-amber-500/10 text-amber-600 border border-amber-500/20';
-    default:
-      return 'bg-muted text-foreground border border-border';
-  }
-};
-
 // Filtered data
 const filteredRequests = computed(() => {
   let list = [...requests.value];
@@ -89,7 +67,7 @@ const filteredRequests = computed(() => {
 
   if (decisionFilter.value !== 'Semua keputusan') {
     list = list.filter(req => {
-      if (decisionFilter.value === 'Disetujui') {
+      if (decisionFilter.value === 'Di-approve') {
         return req.raw_status !== 'reject';
       } else if (decisionFilter.value === 'Ditolak') {
         return req.raw_status === 'reject';
@@ -190,11 +168,11 @@ const columns: ColumnDef<RequestHistory>[] = [
     cell: ({ row }) => {
       const item = row.original;
       const isApproved = item.raw_status !== 'reject';
+      const decisionText = isApproved ? 'Di-approve' : 'Ditolak';
       return h('div', { class: 'text-left' }, [
         h('span', { 
-          class: 'inline-flex items-center px-2 py-0.5 rounded-md font-semibold ' + 
-            (isApproved ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700')
-        }, isApproved ? 'Disetujui' : 'Ditolak')
+          class: getRequestStatusPillClass(decisionText)
+        }, decisionText)
       ]);
     }
   },
@@ -232,10 +210,11 @@ const columns: ColumnDef<RequestHistory>[] = [
     },
     cell: ({ row }) => {
       const item = row.original;
+      const statusLabel = getRequestStatusLabel(item.status || item.raw_status);
       return h('div', { class: 'text-left' }, [
         h('span', { 
-          class: 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ' + getStatusBadgeClass(item.raw_status) 
-        }, item.status)
+          class: getRequestStatusPillClass(statusLabel) 
+        }, statusLabel)
       ]);
     }
   }
@@ -287,7 +266,7 @@ const columns: ColumnDef<RequestHistory>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
             <DropdownMenuItem @select="decisionFilter = 'Semua keputusan'">Semua keputusan</DropdownMenuItem>
-            <DropdownMenuItem @select="decisionFilter = 'Disetujui'">Disetujui</DropdownMenuItem>
+            <DropdownMenuItem @select="decisionFilter = 'Di-approve'">Di-approve</DropdownMenuItem>
             <DropdownMenuItem @select="decisionFilter = 'Ditolak'">Ditolak</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

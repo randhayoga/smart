@@ -6,6 +6,11 @@ import { ref } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import { ChevronDown, ChevronUp } from 'lucide-vue-next';
 import { formatDate } from '@/lib/utils';
+import { 
+  getRequestStatusLabel, 
+  getRequestStatusBadgeClass, 
+  REQUEST_STATUS_PILL_BASE 
+} from '@/lib/requestStatus';
 
 interface RequestItem {
   id: number;
@@ -48,26 +53,6 @@ const isExpanded = ref(false);
 const toggleExpanded = () => {
   isExpanded.value = !isExpanded.value;
 };
-
-const getStatusClasses = (status: string) => {
-  switch (status) {
-    case 'Menunggu approval':
-      return 'bg-orange-500 text-white border-transparent';
-    case 'Disetujui':
-      return 'bg-blue-500 text-white border-transparent';
-    case 'Selesai':
-      return 'bg-emerald-600 text-white border-transparent';
-    case 'Serah Terima':
-      return 'bg-indigo-500 text-white border-transparent';
-    case 'Dipinjam':
-      return 'bg-red-500 text-white border-transparent';
-    case 'Ditolak':
-    case 'Dibatalkan':
-      return 'bg-zinc-500 text-white border-transparent';
-    default:
-      return 'bg-muted text-muted-foreground border-border';
-  }
-};
 </script>
 
 <template>
@@ -77,10 +62,12 @@ const getStatusClasses = (status: string) => {
     <div class="flex items-center justify-between mb-4">
       <div class="flex items-center gap-2">
         <span 
-          class="text-xs font-bold px-3 py-1 rounded-[14px] border"
-          :class="getStatusClasses(request.status)"
+          :class="[
+            REQUEST_STATUS_PILL_BASE,
+            getRequestStatusBadgeClass(request.status)
+          ]"
         >
-          {{ request.status }}
+          {{ getRequestStatusLabel(request.status) }}
         </span>
       </div>
       <span class="text-xs text-muted-foreground font-medium">

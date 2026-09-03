@@ -23,6 +23,8 @@ import TableSearch from '@/Components/TableSearch.vue';
 import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
 import ApprovalModal from '@/Pages/Smart/Manager/Modals/ApprovalModal.vue';
+import { getRequestStatusPillClass, getRequestStatusLabel } from '@/lib/requestStatus';
+
 
 interface RequestItem {
   id: number;
@@ -240,9 +242,12 @@ const columns: ColumnDef<RequestHistory>[] = [
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
-    cell: ({ row }) => h('div', { class: 'text-foreground font-medium' }, [
-      h('span', { class: 'inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-semibold bg-amber-100 text-amber-800' }, row.getValue('status'))
-    ]),
+    cell: ({ row }) => {
+      const statusLabel = getRequestStatusLabel(row.getValue('status'));
+      return h('div', { class: 'text-left' }, [
+        h('span', { class: getRequestStatusPillClass(statusLabel) }, statusLabel)
+      ]);
+    },
   },
   {
     id: 'actions',
