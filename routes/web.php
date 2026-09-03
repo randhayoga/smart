@@ -23,6 +23,10 @@ use App\Http\Controllers\Smart\User\RequestCartConfirmationController;
 use App\Http\Controllers\Smart\User\BorrowCartConfirmationController;
 use App\Http\Controllers\Smart\User\RequestHistoryController;
 use App\Http\Controllers\Smart\User\RequestCancellationController;
+use App\Http\Controllers\Smart\Manager\ManagerRequestController;
+use App\Http\Controllers\Smart\Manager\ManagerApprovedRequestController;
+use App\Http\Controllers\Smart\Manager\ManagerBulkRequestApprovalController;
+use App\Http\Controllers\Smart\Manager\ExternalApprovalController;
 use App\Http\Controllers\Smart\Admin\AuditController;
 use App\Http\Controllers\Smart\Admin\Master\CategoryController;
 use App\Http\Controllers\Smart\Admin\Master\SubcategoryController;
@@ -58,8 +62,8 @@ Route::middleware(['auth'])->group(function () {
 
 // External Signed Manager Approval Routes (Zero-login, HMAC-protected)
 Route::prefix('smart')->name('smart.external-approval.')->middleware(['signed'])->group(function () {
-    Route::get('/external-approval/{request}', [\App\Http\Controllers\Smart\Manager\ExternalApprovalController::class, 'show'])->name('show');
-    Route::post('/external-approval/{request}', [\App\Http\Controllers\Smart\Manager\ExternalApprovalController::class, 'action'])->name('action');
+    Route::get('/external-approval/{request}', [ExternalApprovalController::class, 'show'])->name('show');
+    Route::post('/external-approval/{request}', [ExternalApprovalController::class, 'store'])->name('action');
 });
 
 // Smart routes - protected
@@ -138,11 +142,9 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
 
     // Manager only routes
     Route::middleware(['role:manager'])->group(function () {
-        Route::get('/approve', [App\Http\Controllers\Smart\Manager\ApprovalController::class, 'index'])->name('approve');
-        Route::get('/approve/{id}', [App\Http\Controllers\Smart\Manager\ApprovalController::class, 'show'])->name('approve.show');
-        Route::post('/approve/{id}/action', [App\Http\Controllers\Smart\Manager\ApprovalController::class, 'action'])->name('approve.action');
-        Route::post('/approve/action', [App\Http\Controllers\Smart\Manager\ApprovalController::class, 'bulkAction'])->name('approve.bulk-action');
-        Route::get('/approved', [App\Http\Controllers\Smart\Manager\ApprovalController::class, 'approvedList'])->name('approved');
+        Route::get('/approve', [ManagerRequestController::class, 'index'])->name('approve');
+        Route::post('/approve/action', [ManagerBulkRequestApprovalController::class, 'store'])->name('approve.bulk-action');
+        Route::get('/approved', [ManagerApprovedRequestController::class, 'index'])->name('approved');
 
         // Asset Status Approval Routes
         Route::get('/approve-status', [\App\Http\Controllers\Smart\MultiRoles\UnitStatusApproval\ManagerUnitStatusApprovalController::class, 'index'])->name('approve-status');

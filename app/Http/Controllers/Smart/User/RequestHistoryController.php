@@ -170,7 +170,7 @@ class RequestHistoryController extends Controller
         } else {
             if ($req->project) {
                 $pemanfaatanDetail = $req->project->no_project 
-                    ? "[{$req->project->no_project}] {$req->project->project_name}" 
+                    ? "{$req->project->no_project} ({$req->project->project_name})" 
                     : ($req->project->project_name ?? '-');
             }
         }

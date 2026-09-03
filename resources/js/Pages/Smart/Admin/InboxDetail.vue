@@ -372,7 +372,7 @@ const handleAturSerahTerima = () => {
               <p>
                 <span class="text-muted-foreground">Pemanfaatan:</span> 
                 <span class="font-semibold">
-                  {{ request.pemanfaatan === 'corporate' ? 'Corporate' : 'Project' }} ({{ request.pemanfaatanDetail }})
+                  {{ request.pemanfaatan === 'corporate' ? `Corporate (${request.pemanfaatanDetail})` : `Project ${request.pemanfaatanDetail}` }}
                 </span>
               </p>
               <p v-if="request.type === 'peminjaman' && request.durationStart">
@@ -626,7 +626,7 @@ const handleAturSerahTerima = () => {
                 <p class="text-sm text-muted-foreground">
                   Pemanfaatan: 
                   <span class="text-foreground font-medium">
-                    {{ request.pemanfaatan === 'corporate' ? 'Corporate' : 'Project' }} ({{ request.pemanfaatanDetail }})
+                    {{ request.pemanfaatan === 'corporate' ? `Corporate (${request.pemanfaatanDetail})` : `Project ${request.pemanfaatanDetail}` }}
                   </span>
                 </p>
                 <p v-if="request.type === 'peminjaman' && request.durationStart" class="text-sm text-muted-foreground">

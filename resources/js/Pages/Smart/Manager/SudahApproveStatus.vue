@@ -26,7 +26,7 @@ import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
 
 import Combobox from '@/Components/Combobox.vue';
-import ManagerApprovalDetailModal from './Modals/ManagerApprovalDetailModal.vue';
+import ApprovalStatusModal from './Modals/ApprovalStatusModal.vue';
 
 interface AuditTrail {
   waktu: string;
@@ -254,20 +254,6 @@ const columns: ColumnDef<ApprovalItem>[] = [
     cell: ({ row }) => h('div', { class: 'text-foreground truncate', title: row.getValue('nama') }, row.getValue('nama')),
   },
   {
-    accessorKey: 'specification',
-    header: ({ column }) => {
-      return h(Button, {
-        variant: 'ghost',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
-      }, () => [
-        'Spesifikasi',
-        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-      ])
-    },
-    cell: ({ row }) => h('div', { class: 'text-foreground truncate max-w-xs', title: row.getValue('specification') }, row.getValue('specification')),
-  },
-  {
     accessorKey: 'status_label',
     header: ({ column }) => {
       return h(Button, {
@@ -481,11 +467,10 @@ onUnmounted(() => {
       />
     </div>
     <!-- Detail Asset Modal -->
-    <ManagerApprovalDetailModal
+    <ApprovalStatusModal
       v-model:open="isDetailPopupOpen"
       :approval="activeApproval"
       mode="decided"
     />
-
   </AppLayout>
 </template>

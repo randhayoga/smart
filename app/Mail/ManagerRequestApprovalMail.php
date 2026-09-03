@@ -27,7 +27,7 @@ class ManagerRequestApprovalMail extends Mailable
     public string $requesterName;
     public string $destinationName;
     public bool $isBorrow;
-    public ?string $loanPeriod;
+    public ?string $borrowPeriod;
     public array $formattedItems;
 
     /**
@@ -56,23 +56,23 @@ class ManagerRequestApprovalMail extends Mailable
         $this->requesterName = $request->user?->name ?? 'Pengguna';
 
         if ($request->utilization === 'corporate') {
-            $deptName = $request->department?->org_name ?? 'Departemen';
-            $this->destinationName = "Departemen {$deptName}";
+            $deptName = $request->department?->org_name ?? $request->department?->name ?? 'Departemen';
+            $this->destinationName = "Corporate ({$deptName})";
         } else {
             $projNo = $request->project?->no_project;
-            $projName = $request->project?->project_name ?? 'Proyek';
-            $this->destinationName = $projNo ? "Proyek [{$projNo}] {$projName}" : "Proyek {$projName}";
+            $projName = $request->project?->project_name ?? 'Project';
+            $this->destinationName = $projNo ? "Project {$projNo} ({$projName})" : "Project ({$projName})";
         }
 
         $this->isBorrow = $type === 'Peminjaman' || $request->items->contains(fn($i) => $i->start_date !== null);
 
-        $this->loanPeriod = null;
+        $this->borrowPeriod = null;
         if ($this->isBorrow) {
             $firstItem = $request->items->first();
             if ($firstItem && $firstItem->start_date) {
                 $start = $firstItem->start_date->format('d-m-Y H:i');
                 $end = $firstItem->end_date ? $firstItem->end_date->format('d-m-Y H:i') : 'Selesai';
-                $this->loanPeriod = "{$start} s/d {$end}";
+                $this->borrowPeriod = "{$start} s.d. {$end}";
             }
         }
 
@@ -101,7 +101,7 @@ class ManagerRequestApprovalMail extends Mailable
         );
 
         // Standard login URL fallback
-        $this->loginUrl = url('/smart/approve/' . $request->id);
+        $this->loginUrl = url('/smart/approve');
     }
 
     /**
@@ -128,7 +128,7 @@ class ManagerRequestApprovalMail extends Mailable
                 'destinationName' => $this->destinationName,
                 'type' => $this->type,
                 'isBorrow' => $this->isBorrow,
-                'loanPeriod' => $this->loanPeriod,
+                'borrowPeriod' => $this->borrowPeriod,
                 'items' => $this->formattedItems,
                 'actionUrl' => $this->actionUrl,
                 'loginUrl' => $this->loginUrl,

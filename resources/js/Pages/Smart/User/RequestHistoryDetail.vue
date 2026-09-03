@@ -709,7 +709,7 @@ const activeStepIndex = computed(() => {
             <p class="text-sm text-foreground">
               <span class="text-muted-foreground">Pemanfaatan:</span> 
               <span class="font-semibold ml-1">
-                {{ request.pemanfaatan === 'corporate' ? 'Corporate' : 'Project' }} ({{ request.pemanfaatanDetail }})
+                {{ request.pemanfaatan === 'corporate' ? `Corporate (${request.pemanfaatanDetail})` : `Project ${request.pemanfaatanDetail}` }}
               </span>
             </p>
 
@@ -956,7 +956,7 @@ const activeStepIndex = computed(() => {
             </p>
             <p class="text-foreground">
               <span class="text-muted-foreground">Pemanfaatan:</span> 
-              <span class="font-semibold ml-1">{{ request.pemanfaatan === 'corporate' ? 'Corporate' : 'Project' }} ({{ request.pemanfaatanDetail }})</span>
+              <span class="font-semibold ml-1">{{ request.pemanfaatan === 'corporate' ? `Corporate (${request.pemanfaatanDetail})` : `Project ${request.pemanfaatanDetail}` }}</span>
             </p>
             <p v-if="request.type === 'peminjaman' && request.durationStart" class="text-foreground">
               <span class="text-muted-foreground">Durasi:</span>
@@ -1077,7 +1077,7 @@ const activeStepIndex = computed(() => {
             </p>
             <p class="text-foreground">
               <span class="text-muted-foreground">Pemanfaatan:</span> 
-              <span class="font-semibold ml-1">{{ request.pemanfaatan === 'corporate' ? 'Corporate' : 'Project' }} ({{ request.pemanfaatanDetail }})</span>
+              <span class="font-semibold ml-1">{{ request.pemanfaatan === 'corporate' ? `Corporate (${request.pemanfaatanDetail})` : `Project ${request.pemanfaatanDetail}` }}</span>
             </p>
             <p v-if="request.type === 'peminjaman' && request.durationStart" class="text-foreground">
               <span class="text-muted-foreground">Durasi:</span>

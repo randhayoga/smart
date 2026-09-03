@@ -106,8 +106,8 @@ class RequestCartConfirmationController extends Controller
             'pemanfaatan.required' => 'Pemanfaatan wajib dipilih.',
             'departemen.required_if' => 'Departemen wajib dipilih untuk pemanfaatan corporate.',
             'departemen.exists' => 'Departemen yang dipilih tidak valid.',
-            'project.required_if' => 'Proyek wajib dipilih untuk pemanfaatan project.',
-            'project.exists' => 'Proyek yang dipilih tidak valid.',
+            'project.required_if' => 'Project wajib dipilih untuk pemanfaatan project.',
+            'project.exists' => 'Project yang dipilih tidak valid.',
             'alasan.required' => 'Alasan permintaan wajib diisi.',
             'alasan.max' => 'Alasan permintaan maksimal 2000 karakter.',
         ]);

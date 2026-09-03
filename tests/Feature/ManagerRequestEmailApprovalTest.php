@@ -102,7 +102,11 @@ class ManagerRequestEmailApprovalTest extends TestCase
         Mail::assertSent(ManagerRequestApprovalMail::class, function ($mail) use ($manager, $req) {
             $this->assertEquals($manager->email, $mail->to[0]['address']);
             $this->assertEquals("[SMART] Permohonan Persetujuan: Peminjaman Baru [{$req->request_number}]", $mail->envelope()->subject);
-            $this->assertEquals(url('/smart/approve/' . $req->id), $mail->loginUrl);
+            $this->assertEquals(url('/smart/approve'), $mail->loginUrl);
+
+            // Ensure rendering blade view succeeds with borrow period
+            $rendered = $mail->render();
+            $this->assertNotEmpty($rendered);
 
             // Verify actionUrl is a valid HMAC-signed route
             $requestForUrl = \Illuminate\Http\Request::create($mail->actionUrl);
@@ -305,9 +309,13 @@ class ManagerRequestEmailApprovalTest extends TestCase
         ]);
 
         $mail = new ManagerRequestApprovalMail($req, $manager, 'Permintaan');
-        $this->assertEquals("Proyek [PRJ-888] Project Tower Alpha", $mail->destinationName);
+        $this->assertEquals("Project PRJ-888 (Project Tower Alpha)", $mail->destinationName);
         $this->assertEquals("Roll", $mail->formattedItems[0]['uom']);
         $this->assertEquals("[SMART] Permohonan Persetujuan: Permintaan Baru [REQ-0000099]", $mail->envelope()->subject);
+
+        $renderedHtml = $mail->render();
+        $this->assertStringContainsString('Project PRJ-888 (Project Tower Alpha)', $renderedHtml);
+        $this->assertStringContainsString('Roll', $renderedHtml);
 
         $signedUrl = URL::temporarySignedRoute(
             'smart.external-approval.show',
@@ -319,7 +327,7 @@ class ManagerRequestEmailApprovalTest extends TestCase
         $response->assertStatus(200);
         $response->assertInertia(fn ($page) => $page
             ->component('Smart/Manager/ExternalApproval')
-            ->where('request.destination', 'Proyek [PRJ-888] Project Tower Alpha')
+            ->where('request.destination', 'Project PRJ-888 (Project Tower Alpha)')
             ->where('request.items.0.uom', 'Roll')
         );
     }

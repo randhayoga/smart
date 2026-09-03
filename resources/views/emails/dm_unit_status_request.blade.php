@@ -237,7 +237,7 @@
                 <!-- CTA Button -->
                 <div class="btn-container">
                     <a href="{{ $actionUrl }}" class="btn-primary" target="_blank">
-                        Tinjau & Berikan Keputusan &#129125;
+                        Tinjau & Berikan Keputusan
                     </a>
                 </div>
 

@@ -75,7 +75,7 @@ export function printManajemenStok(
     subtitle2Html = `<div class="subtitle">${escapeHtml(combined)}</div>`;
   }
 
-  const subtitle3Html = `<div class="subtitle">Periode Januari ${currentYear} s/d Desember ${currentYear}</div>`;
+  const subtitle3Html = `<div class="subtitle">Periode Januari ${currentYear} s.d. Desember ${currentYear}</div>`;
 
   const rowsHtml = items.map((item, index) => {
     const no = index + 1;

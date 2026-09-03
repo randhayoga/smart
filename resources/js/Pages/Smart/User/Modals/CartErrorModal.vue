@@ -54,7 +54,7 @@ const translateErrorMessage = (msg: string): string => {
     return 'Departemen wajib dipilih untuk pemanfaatan corporate.';
   }
   if (/the project field is required/i.test(trimmed)) {
-    return 'Proyek wajib dipilih untuk pemanfaatan project.';
+    return 'Project wajib dipilih untuk pemanfaatan project.';
   }
   if (/the items field is required/i.test(trimmed)) {
     return 'Barang yang dipilih wajib ada.';

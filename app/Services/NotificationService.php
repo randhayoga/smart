@@ -293,8 +293,8 @@ class NotificationService
 
         $requesterName = $request->user?->name ?? 'Pengguna';
         $targetName = $request->utilization === 'corporate'
-            ? ($request->department?->org_name ?? 'Departemen')
-            : ($request->project ? "[{$request->project->no_project}] {$request->project->project_name}" : 'Proyek');
+            ? ($request->department?->org_name ? "Corporate ({$request->department->org_name})" : 'Corporate')
+            : ($request->project ? ($request->project->no_project ? "Project {$request->project->no_project} ({$request->project->project_name})" : "Project ({$request->project->project_name})") : 'Project');
 
         $title = "{$type} Baru: {$request->request_number}";
         $message = "{$requesterName} telah mengajukan " . strtolower($type) . " baru untuk {$targetName}.";
@@ -304,7 +304,7 @@ class NotificationService
             $title,
             $message,
             'info',
-            "/smart/approve/{$request->id}",
+            '/smart/approve',
             [
                 'request_id' => $request->id,
                 'request_number' => $request->request_number,

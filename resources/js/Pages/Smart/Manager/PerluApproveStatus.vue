@@ -28,7 +28,7 @@ import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
 
 import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal.vue';
-import ManagerApprovalDetailModal from './Modals/ManagerApprovalDetailModal.vue';
+import ApprovalStatusModal from './Modals/ApprovalStatusModal.vue';
 
 interface AuditTrail {
   waktu: string;
@@ -795,7 +795,7 @@ onUnmounted(() => {
     </div>
 
     <!-- Detail Asset Modal -->
-    <ManagerApprovalDetailModal
+    <ApprovalStatusModal
       v-model:open="isDetailPopupOpen"
       :approval="activeApproval"
       mode="pending"
