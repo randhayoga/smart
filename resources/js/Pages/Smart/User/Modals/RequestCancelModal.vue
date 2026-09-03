@@ -31,6 +31,7 @@ interface RequestItem {
 
 interface RequestHistory {
   id: number;
+  uuid?: string;
   number: string;
   type: 'permintaan' | 'peminjaman';
   pemanfaatan: 'corporate' | 'project';
@@ -77,7 +78,8 @@ const handleClose = () => {
 const handleConfirmCancel = () => {
   if (!props.request || isSubmitting.value) return;
 
-  router.post(route('smart.history.cancel', props.request.id), {
+  const targetIdentifier = props.request.uuid || props.request.id;
+  router.post(route('smart.history.cancel', targetIdentifier), {
     note: cancelNote.value
   }, {
     onBefore: () => {

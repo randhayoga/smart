@@ -17,29 +17,31 @@ class RequestCancellationController extends Controller
     /**
      * Membatalkan permintaan yang masih berstatus menunggu approval (wait).
      */
-    public function store(Request $request, int|string $id): RedirectResponse
+    public function store(Request $httpRequest, SmartRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
+        if ((int) $request->user_id !== (int) $httpRequest->user()->id) {
+            abort(404);
+        }
+
+        $validated = $httpRequest->validate([
             'note' => 'nullable|string|max:500',
         ]);
 
-        $req = SmartRequest::where('user_id', $request->user()->id)->findOrFail($id);
-
-        if ($req->status !== 'wait') {
+        if ($request->status !== 'wait') {
             return redirect()->back()->with('error', 'Hanya permintaan yang berstatus menunggu persetujuan yang dapat dibatalkan.');
         }
 
-        $userName = $request->user()->name;
+        $userName = $httpRequest->user()->name;
 
-        DB::transaction(function () use ($req, $request, $validated, $userName) {
-            $oldStatus = $req->status;
-            $req->update(['status' => 'cancel']);
+        DB::transaction(function () use ($request, $httpRequest, $validated, $userName) {
+            $oldStatus = $request->status;
+            $request->update(['status' => 'cancel']);
 
             RequestStatusLog::create([
-                'request_id' => $req->id,
+                'request_id' => $request->id,
                 'status_from' => $oldStatus,
                 'status_to' => 'cancel',
-                'changed_by' => $request->user()->id,
+                'changed_by' => $httpRequest->user()->id,
                 'note' => !empty($validated['note']) ? $validated['note'] : "Permintaan dibatalkan oleh {$userName}.",
             ]);
         });

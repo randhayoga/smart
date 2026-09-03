@@ -122,7 +122,7 @@ class RequestApprovalTest extends TestCase
         $this->assertEquals('Peminjaman REQ-0000001 Disetujui', $notification->data['title']);
         $this->assertEquals("{$manager->name} menyetujui Peminjaman Anda dan sekarang sedang diproses oleh Tim Aset.", $notification->data['message']);
         $this->assertEquals('success', $notification->data['type']);
-        $this->assertEquals("/smart/history/{$req->id}", $notification->data['url']);
+        $this->assertEquals("/smart/history/{$req->uuid}", $notification->data['url']);
 
         // No rejection email should be dispatched
         Mail::assertNothingSent();
@@ -190,7 +190,7 @@ class RequestApprovalTest extends TestCase
         $this->assertEquals('Peminjaman REQ-0000002 Ditolak', $notification->data['title']);
         $this->assertEquals("{$manager->name} menolak Peminjaman Anda, alasan penolakan dapat dilihat pada detail Peminjaman.", $notification->data['message']);
         $this->assertEquals('error', $notification->data['type']);
-        $this->assertEquals("/smart/history/{$req->id}", $notification->data['url']);
+        $this->assertEquals("/smart/history/{$req->uuid}", $notification->data['url']);
 
         // Verify email sent
         Mail::assertSent(RequesterRequestRejectedMail::class, function ($mail) use ($requester, $req, $manager, $rejectionNote) {
@@ -204,7 +204,7 @@ class RequestApprovalTest extends TestCase
             $this->assertStringContainsString("Peminjaman Anda dengan nomor", $rendered);
             $this->assertStringContainsString("<strong style=\"color: #dc2626;\">ditolak</strong> oleh <strong>{$manager->name}</strong>", $rendered);
             $this->assertStringContainsString("Lihat Detail Peminjaman", $rendered);
-            $this->assertStringContainsString(url('/smart/history/' . $req->id), $rendered);
+            $this->assertStringContainsString(url('/smart/history/' . $req->uuid), $rendered);
 
             return true;
         });

@@ -5,16 +5,21 @@ namespace App\Models\Request;
 use App\Models\AdmUser;
 use App\Models\HrdOrgchart;
 use App\Models\TbProject;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Str;
 
 class Request extends Model
 {
+    use HasUuids;
+
     protected $table = 'requests';
 
     protected $fillable = [
+        'uuid',
         'request_number',
         'user_id',
         'approver_id',
@@ -24,6 +29,38 @@ class Request extends Model
         'reasoning',
         'status',
     ];
+
+    /**
+     * Generate a UUIDv7 for the model.
+     */
+    public function newUniqueId(): string
+    {
+        return (string) Str::uuid7();
+    }
+
+    /**
+     * Specify the column that receives the generated UUID.
+     */
+    public function uniqueIds(): array
+    {
+        return ['uuid'];
+    }
+
+    /**
+     * Get the route key for implicit route model binding.
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'uuid';
+    }
+
+    /**
+     * Normalize UUID attribute to lowercase.
+     */
+    public function getUuidAttribute($value): ?string
+    {
+        return $value ? strtolower((string) $value) : null;
+    }
 
     protected $casts = [];
 
