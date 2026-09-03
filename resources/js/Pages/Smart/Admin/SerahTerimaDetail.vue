@@ -629,7 +629,7 @@ const openFirstItemPlacementModal = () => {
               </p>
               <p>
                 <span class="text-muted-foreground">Pemanfaatan:</span> 
-                <span class="font-semibold">{{ handover?.pemanfaatan === 'corporate' ? 'Corporate' : 'Project' }} ({{ handover?.pemanfaatanDetail }})</span>
+                <span class="font-semibold">{{ handover?.pemanfaatan === 'corporate' ? `Corporate (${handover?.pemanfaatanDetail})` : `Project ${handover?.pemanfaatanDetail}` }}</span>
               </p>
               <p v-if="handover?.durationStart">
                 <span class="text-muted-foreground">Durasi:</span>
@@ -902,7 +902,7 @@ const openFirstItemPlacementModal = () => {
                 <p>Dibuat oleh: {{ handover?.requester }}</p>
                 <p>PIC Approval: {{ handover?.approval_by || handover?.approver || 'Manager' }}</p>
                 <p>Waktu dibuat: {{ handover?.createdAt }}</p>
-                <p>Pemanfaatan: {{ handover?.pemanfaatan === 'corporate' ? 'Corporate' : 'Project' }} ({{ handover?.pemanfaatanDetail }})</p>
+                <p>Pemanfaatan: {{ handover?.pemanfaatan === 'corporate' ? `Corporate (${handover?.pemanfaatanDetail})` : `Project ${handover?.pemanfaatanDetail}` }}</p>
                 <p v-if="handover?.durationStart">Durasi: {{ handover?.durationStart }} s.d. {{ handover?.durationEnd }} ({{ handover?.durationDays }} hari, {{ handover?.durationHours }} jam)</p>
               </div>
 

@@ -220,7 +220,7 @@ const handleSubmit = () => {
     if (!form.organizer_id) { errors.value.organizer_id = 'Organizer belum dipilih'; isValid = false; }
     if (!form.vendor_id) { errors.value.vendor_id = 'Vendor belum dipilih'; isValid = false; }
     if (!form.burden) { errors.value.burden = 'Pembebanan belum dipilih'; isValid = false; }
-    if (form.burden === 'Project' && !form.project_id) { errors.value.project_id = 'Proyek belum dipilih'; isValid = false; }
+    if (form.burden === 'Project' && !form.project_id) { errors.value.project_id = 'Project belum dipilih'; isValid = false; }
     if (!form.location_id) { errors.value.location_id = 'Lokasi belum dipilih'; isValid = false; }
     if (!form.po_number) { errors.value.po_number = 'Nomor PO belum diisi'; isValid = false; }
     if (!form.date_of_receipt) { errors.value.date_of_receipt = 'Tanggal Registrasi belum diisi'; isValid = false; }
@@ -286,7 +286,7 @@ const handleSubmit = () => {
     // Bulk edit
     let isValid = true;
     if (form.burden === 'Project' && !form.project_id) {
-      errors.value.project_id = 'Proyek belum dipilih';
+      errors.value.project_id = 'Project belum dipilih';
       isValid = false;
     }
     if (!isValid) return;
@@ -432,9 +432,9 @@ const handleSubmit = () => {
                   </Field>
 
                   <Field v-if="form.burden === 'Project'" :data-invalid="!!errors.project_id || undefined">
-                    <FieldLabel><span>Proyek<span class="text-rose-500">*</span></span></FieldLabel>
+                    <FieldLabel><span>Project<span class="text-rose-500">*</span></span></FieldLabel>
                     <FieldContent>
-                      <Combobox v-model="form.project_id" :options="projectOptions" search-placeholder="Cari proyek..." default-label="Pilih proyek" width-class="w-full h-10 px-4" :error="!!errors.project_id" />
+                      <Combobox v-model="form.project_id" :options="projectOptions" search-placeholder="Cari project..." default-label="Pilih project" width-class="w-full h-10 px-4" :error="!!errors.project_id" />
                     </FieldContent>
                     <FieldError v-if="errors.project_id">{{ errors.project_id }}</FieldError>
                   </Field>

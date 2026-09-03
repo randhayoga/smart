@@ -189,7 +189,7 @@ const timeline = computed((): TimelineStep[] => {
               <p>
                 <span class="text-muted-foreground">Pemanfaatan:</span> 
                 <span class="font-semibold">
-                  {{ request.pemanfaatan === 'corporate' ? 'Corporate' : 'Project' }} ({{ request.pemanfaatanDetail }})
+                  {{ request.pemanfaatan === 'corporate' ? `Corporate (${request.pemanfaatanDetail})` : `Project ${request.pemanfaatanDetail}` }}
                 </span>
               </p>
               <p v-if="request.durationStart">

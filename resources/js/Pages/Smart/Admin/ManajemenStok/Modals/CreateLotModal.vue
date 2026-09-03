@@ -219,7 +219,7 @@ const handleSubmit = () => {
   if (!lotForm.po_number) { errors.value.po_number = 'Nomor PO belum diisi'; isValid = false; }
   if (!lotForm.date_of_receipt) { errors.value.date_of_receipt = 'Tanggal Registrasi belum diisi'; isValid = false; }
   if (lotForm.burden === 'Project' && !lotForm.project_id) {
-    errors.value.project_id = 'Proyek belum dipilih';
+    errors.value.project_id = 'Project belum dipilih';
     isValid = false;
   }
   if (!lotForm.image_url && !lotForm.image_url_name) {
@@ -385,9 +385,9 @@ const handleSubmit = () => {
                   </Field>
 
                   <Field v-if="lotForm.burden === 'Project'" :data-invalid="!!errors.project_id || undefined">
-                    <FieldLabel><span>Proyek<span class="text-rose-500">*</span></span></FieldLabel>
+                    <FieldLabel><span>Project<span class="text-rose-500">*</span></span></FieldLabel>
                     <FieldContent>
-                      <Combobox v-model="lotForm.project_id" :options="projectOptions" search-placeholder="Cari proyek..." default-label="Pilih proyek" width-class="w-full h-10 px-4" :error="!!errors.project_id" />
+                      <Combobox v-model="lotForm.project_id" :options="projectOptions" search-placeholder="Cari project..." default-label="Pilih project" width-class="w-full h-10 px-4" :error="!!errors.project_id" />
                     </FieldContent>
                     <FieldError v-if="errors.project_id">{{ errors.project_id }}</FieldError>
                   </Field>

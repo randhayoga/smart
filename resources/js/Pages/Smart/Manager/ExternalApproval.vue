@@ -6,24 +6,30 @@ import { ref, computed } from 'vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 import { Button } from '@/Components/ui/button';
+import { ScrollArea } from "@/Components/ui/scroll-area";
+import AssetItemCard from '@/Components/AssetItemCard.vue';
 import { 
   CheckCircle2, 
   XCircle, 
-  Clock, 
-  Check, 
-  X, 
   Loader2, 
-  ShieldCheck,
-  AlertTriangle
+  ShieldCheck
 } from 'lucide-vue-next';
 
 interface RequestItem {
   id: number;
-  name: string;
-  spec?: string;
-  category: string;
+  barang_id?: number;
+  subcategory: string;
+  brand: string;
+  name?: string;
+  spec: string;
   quantity: number;
-  uom: string;
+  stockQuantity?: number;
+  imageUrl?: string;
+  category: string;
+  assets?: string[];
+  is_consumable?: boolean;
+  uom?: string;
+  status?: string;
 }
 
 interface ApprovalDetail {
@@ -40,7 +46,7 @@ interface ExternalRequest {
   requester: string;
   utilization: 'corporate' | 'project';
   destination: string;
-  loanPeriod?: string | null;
+  borrowPeriod?: string | null;
   reasoning: string;
   status: 'wait' | 'approve' | 'reject' | 'confirm' | 'handover' | 'success' | string;
   rawStatus: string;
@@ -53,8 +59,6 @@ const props = defineProps<{
   request: ExternalRequest;
 }>();
 
-const isActionModalOpen = ref(false);
-const pendingAction = ref<'approve' | 'reject'>('approve');
 const actionNote = ref('');
 
 const form = useForm({
@@ -64,69 +68,46 @@ const form = useForm({
 
 const isPending = computed(() => props.request.rawStatus === 'wait');
 
-const openConfirmModal = (action: 'approve' | 'reject') => {
-  pendingAction.value = action;
-  isActionModalOpen.value = true;
-};
-
-const closeConfirmModal = () => {
-  isActionModalOpen.value = false;
-};
-
-const submitDecision = () => {
-  form.action = pendingAction.value;
+const submitDecision = (action: 'approve' | 'reject') => {
+  form.action = action;
   form.note = actionNote.value;
 
   form.post(window.location.href, {
     preserveScroll: true,
-    onSuccess: () => {
-      closeConfirmModal();
-    },
   });
 };
 
-const statusBadge = computed(() => {
-  switch (props.request.rawStatus) {
-    case 'wait':
-      return {
-        label: 'Menunggu Approval',
-        class: 'bg-amber-50 text-amber-700 border-amber-200',
-        icon: Clock,
-      };
-    case 'approve':
-      return {
-        label: 'Disetujui',
-        class: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-        icon: CheckCircle2,
-      };
-    case 'reject':
-      return {
-        label: 'Ditolak',
-        class: 'bg-rose-50 text-rose-700 border-rose-200',
-        icon: XCircle,
-      };
-    default:
-      return {
-        label: props.request.status || 'Diproses',
-        class: 'bg-slate-50 border-slate-200',
-        icon: Clock,
-      };
+const getRequestFields = (req: ExternalRequest) => {
+  const fields: { label: string; value: string }[] = [
+    { label: 'Nomor', value: req.number },
+    { label: 'Pemohon', value: req.requester || '-' },
+    { label: 'Pemanfaatan', value: req.destination || '-' },
+  ];
+
+  if (req.type?.toLowerCase() === 'peminjaman' && req.borrowPeriod) {
+    fields.push({ label: 'Durasi', value: req.borrowPeriod });
   }
-});
+
+  if (req.reasoning) {
+    fields.push({ label: 'Alasan', value: req.reasoning });
+  }
+
+  return fields;
+};
 </script>
 
 <template>
   <Head :title="`Persetujuan ${request.type} #${request.number} - SMART`" />
 
   <div class="min-h-screen bg-slate-50 flex flex-col items-center py-8 px-4 sm:px-6 lg:px-8">
-    <div class="w-full max-w-2xl bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+    <div class="bg-card w-full max-w-2xl rounded-[14px] shadow-2xl overflow-hidden flex flex-col border border-border">
       <!-- Gradient Accent Header -->
       <div class="h-1.5 w-full bg-gradient-to-r from-primary to-indigo-600"></div>
 
       <!-- App Header Bar -->
-      <div class="px-6 py-3 border-b border-slate-100 flex items-center justify-between flex-wrap gap-4">
-        <div class="flex items-center gap-3">
-          <ApplicationLogo class="h-9 w-9 shrink-0 object-contain" />
+      <div class="flex items-center p-1 justify-between border-b border-border">
+        <div class="flex items-center gap-3 py-2 px-5">
+          <ApplicationLogo class="h-9 w-9 rounded-lg shrink-0 object-contain" />
           <div>
             <h2 class="text-base font-bold text-primary leading-tight">
               SMART
@@ -136,30 +117,68 @@ const statusBadge = computed(() => {
             </p>
           </div>
         </div>
-
-        <div :class="['inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border', statusBadge.class]">
-          <component :is="statusBadge.icon" class="h-3.5 w-3.5 shrink-0" />
-          <span>{{ statusBadge.label }}</span>
-        </div>
       </div>
 
-      <!-- Content Area -->
-      <div class="px-8 py-5 space-y-6">
-        <!-- Title & Subtitle -->
-        <div>
-          <h1 class="text-xl font-bold">
-            Persetujuan {{ request.type }}
-          </h1>
-          <p class="text-sm text-muted-foreground mt-1">
-            Tinjau rincian permohonan di bawah ini sebelum memberikan persetujuan atau penolakan.
-          </p>
+      <!-- Modal Body (same structure as line 160-246 of ApprovalModal) -->
+      <div class="p-6 flex flex-col items-center text-center space-y-4 flex-grow overflow-y-auto">
+        <!-- Requests Container -->
+        <div class="w-full space-y-6">
+          <!-- Single Request Selection Layout -->
+          <div class="space-y-4 w-full">
+            <!-- Single Item Info Details (matching DeleteConfirmationModal / ApprovalModal) -->
+            <div class="p-3 rounded-[14px] bg-muted/40 border border-border text-left space-y-2.5 w-full">
+              <div 
+                v-for="field in getRequestFields(request)" 
+                :key="field.label" 
+                class="grid grid-cols-12 gap-2 text-sm border-b border-border/50 last:border-0 pb-2 last:pb-0"
+              >
+                <span class="col-span-4 text-muted-foreground font-medium">{{ field.label }}</span>
+                <span class="col-span-8 text-foreground font-semibold text-right break-words">
+                  {{ field.value }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Card Daftar Barang -->
+            <div class="text-left w-full space-y-2">
+              <p class="text-xs text-muted-foreground font-medium">Daftar Barang:</p>
+              
+              <ScrollArea class="max-h-[14rem] sm:max-h-[16rem] h-fit border border-border rounded-[0.875rem] bg-card [&>div]:max-h-[14rem] sm:[&>div]:max-h-[16rem]">
+                <div class="p-3 sm:p-4 space-y-3">
+                  <AssetItemCard 
+                    v-for="item in request.items" 
+                    :key="item.id" 
+                    :brand="item.brand && item.brand !== '-' ? (item.name && item.name !== 'Tidak Spesifik' ? `${item.brand} ${item.name} ${item.spec || ''}` : `${item.brand} ${item.spec || ''}`) : (item.subcategory || item.name || 'Barang')"
+                    :category="item.category"
+                    :subcategory="item.subcategory"
+                    :quantity="item.quantity"
+                    :uom="item.uom || 'satuan'"
+                    :assets="item.assets || []"
+                    :imageUrl="item.imageUrl"
+                    :status="item.status"
+                    :is-consumable="item.is_consumable"
+                  />
+                </div>
+              </ScrollArea>
+            </div>
+          </div>
         </div>
 
-        <!-- Resolved Decision Banner (when not in 'wait' status) -->
+        <!-- Input Catatan/Alasan (when pending) -->
+        <div v-if="isPending" class="space-y-1.5 text-left w-full pt-1">
+          <label class="text-xs text-muted-foreground font-medium block">Catatan / Alasan (Opsional)</label>
+          <textarea
+            v-model="actionNote"
+            placeholder="Masukkan catatan persetujuan atau alasan penolakan..."
+            class="w-full h-16 text-sm border border-input rounded-[14px] bg-background text-foreground p-3 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary shadow-sm resize-none"
+          ></textarea>
+        </div>
+
+        <!-- Resolved Decision Banner (when not pending) -->
         <div 
-          v-if="!isPending"
+          v-else
           :class="[
-            'p-4 rounded-xl border flex items-start gap-3.5',
+            'p-4 rounded-xl border flex items-start gap-3.5 w-full text-left',
             request.rawStatus === 'approve' 
               ? 'bg-emerald-50/80 border-emerald-200 text-emerald-900' 
               : 'bg-rose-50/80 border-rose-200 text-rose-900'
@@ -180,184 +199,43 @@ const statusBadge = computed(() => {
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- Request Details Grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-4 sm:p-5 rounded-xl border border-slate-200/70 text-sm">
-          <div>
-            <span class="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-0.5">Nomor Pengajuan</span>
-            <span class="font-mono font-bold text-primary">{{ request.number }}</span>
-          </div>
-
-          <div>
-            <span class="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-0.5">Pemohon</span>
-            <span class="font-semibold">{{ request.requester }}</span>
-          </div>
-
-          <div>
-            <span class="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-0.5">Pemanfaatan</span>
-            <span class="font-semibold">{{ request.destination }}</span>
-          </div>
-
-          <div v-if="request.loanPeriod">
-            <span class="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-0.5">Periode Pinjam</span>
-            <span class="font-semibold">{{ request.loanPeriod }}</span>
-          </div>
-
-          <div class="sm:col-span-2">
-            <span class="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-0.5">Alasan Pengajuan</span>
-            <span class="italic">"{{ request.reasoning }}"</span>
-          </div>
-        </div>
-
-        <!-- Items Table -->
-        <div>
-          <h3 class="text-sm font-bold mb-2.5">
-            Daftar Barang yang Diajukan
-          </h3>
-          <div class="border border-slate-200 rounded-xl overflow-hidden shadow-xs">
-            <table class="w-full text-left text-sm">
-              <thead class="bg-slate-50 text-muted-foreground text-xs font-semibold border-b border-slate-200">
-                <tr>
-                  <th class="py-2.5 px-3.5 text-center w-12">No</th>
-                  <th class="py-2.5 px-3.5">Nama Barang</th>
-                  <th class="py-2.5 px-3.5 hidden sm:table-cell">Kategori</th>
-                  <th class="py-2.5 px-3.5 text-center w-24">Jumlah</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-slate-100">
-                <tr v-for="(item, idx) in request.items" :key="item.id" class="hover:bg-slate-50/50">
-                  <td class="py-3 px-3.5 text-center text-muted-foreground text-xs">{{ idx + 1 }}</td>
-                  <td class="py-3 px-3.5">
-                    <div class="font-semibold">{{ item.name }}</div>
-                    <div v-if="item.spec" class="text-xs text-muted-foreground mt-0.5">
-                      {{ item.spec }}
-                    </div>
-                  </td>
-                  <td class="py-3 px-3.5 hidden sm:table-cell">
-                    {{ item.category }}
-                  </td>
-                  <td class="py-3 px-3.5 text-center font-bold text-primary whitespace-nowrap">
-                    {{ item.quantity }} {{ item.uom }}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Action Panel (Visible only when status === 'wait') -->
-        <div v-if="isPending" class="space-y-4 pt-2 border-t border-slate-100">
-          <div>
-            <h3 class="text-sm font-bold mb-2.5">
-              Catatan Keputusan <span class="font-normal text-muted-foreground text-xs">(Opsional untuk persetujuan, disarankan jika menolak)</span>
-            </h3>
-            <textarea
-              id="note"
-              v-model="actionNote"
-              rows="3"
-              placeholder="Tuliskan catatan atau alasan di sini..."
-              class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none"
-            ></textarea>
-          </div>
-
-          <div class="flex flex-col-reverse sm:flex-row items-center justify-end gap-3 pt-2">
-            <Button
-              type="button"
-              variant="destructive"
-              size="lg"
-              class="w-full sm:w-auto"
-              :disabled="form.processing"
-              @click="openConfirmModal('reject')"
-            >
-              <X class="h-4 w-4 mr-2" />
-              Tolak Permohonan
-            </Button>
-
-            <Button
-              type="button"
-              variant="primary"
-              size="lg"
-              class="w-full sm:w-auto"
-              :disabled="form.processing"
-              @click="openConfirmModal('approve')"
-            >
-              <Loader2 v-if="form.processing" class="h-4 w-4 animate-spin mr-2" />
-              <Check v-else class="h-4 w-4 mr-2" />
-              Setujui Permohonan
-            </Button>
-          </div>
-        </div>
-
-        <div v-else class="pt-4 text-center">
-          <p class="text-xs text-muted-foreground">
-            Tindakan untuk permohonan ini telah selesai. Anda dapat menutup halaman ini.
-          </p>
+      <!-- Modal Footer (direct decision confirmation buttons) -->
+      <div v-if="isPending" class="py-3 px-4 bg-muted/30 border-t border-border shrink-0">
+        <div class="flex items-center justify-end gap-3">
+          <Button 
+            @click="submitDecision('reject')"
+            variant="destructive"
+            :disabled="form.processing"
+            class="px-5 active:scale-[0.98] relative"
+          >
+            <Loader2 v-if="form.processing && form.action === 'reject'" class="h-4 w-4 animate-spin mr-1.5" />
+            Tolak
+          </Button>
+          <Button 
+            @click="submitDecision('approve')"
+            variant="success"
+            :disabled="form.processing"
+            class="px-5 active:scale-[0.98] relative"
+          >
+            <Loader2 v-if="form.processing && form.action === 'approve'" class="h-4 w-4 animate-spin mr-1.5" />
+            Setujui
+          </Button>
         </div>
       </div>
 
-      <!-- Footer Security Note -->
-      <div class="py-4 px-6 bg-slate-50 border-t border-slate-100 text-center text-xs text-muted-foreground flex items-center justify-center gap-1.5">
-        <ShieldCheck class="h-4 w-4 text-primary shrink-0" />
-        <span>Akses terverifikasi dengan Kode Autentikasi &bull; Sesi tanpa Log in</span>
+      <div v-else class="py-3 px-4 bg-muted/30 border-t border-border text-center">
+        <p class="text-xs text-muted-foreground">
+          Tindakan untuk permohonan ini telah selesai. Anda dapat menutup halaman ini.
+        </p>
       </div>
     </div>
 
-    <!-- Confirmation Modal -->
-    <div 
-      v-if="isActionModalOpen" 
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs transition-opacity"
-    >
-      <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 space-y-4 animate-in fade-in zoom-in-95 duration-150">
-        <div class="flex items-center gap-3">
-          <div 
-            :class="[
-              'h-10 w-10 rounded-xl flex items-center justify-center shrink-0',
-              pendingAction === 'approve' ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'
-            ]"
-          >
-            <AlertTriangle class="h-5 w-5" />
-          </div>
-          <div>
-            <h3 class="text-base font-bold">
-              Konfirmasi {{ pendingAction === 'approve' ? 'Persetujuan' : 'Penolakan' }}
-            </h3>
-            <p class="text-xs text-muted-foreground">
-              Permohonan #{{ request.number }}
-            </p>
-          </div>
-        </div>
-
-        <p class="text-sm">
-          Apakah Anda yakin ingin <strong :class="pendingAction === 'approve' ? 'text-emerald-600' : 'text-amber-600'">{{ pendingAction === 'approve' ? 'menyetujui' : 'menolak' }}</strong> permohonan ini? Tindakan ini akan dicatat ke riwayat status.
-        </p>
-
-        <div v-if="actionNote" class="p-3 bg-slate-50 rounded-lg text-xs italic">
-          Catatan: "{{ actionNote }}"
-        </div>
-
-        <div class="flex items-center justify-end gap-3 pt-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            :disabled="form.processing"
-            @click="closeConfirmModal"
-          >
-            Batal
-          </Button>
-
-          <Button
-            type="button"
-            :variant="pendingAction === 'approve' ? 'primary' : 'warning'"
-            size="sm"
-            :disabled="form.processing"
-            @click="submitDecision"
-          >
-            <Loader2 v-if="form.processing" class="h-4 w-4 animate-spin mr-1.5" />
-            <span>Ya, {{ pendingAction === 'approve' ? 'Setujui' : 'Tolak' }}</span>
-          </Button>
-        </div>
-      </div>
+    <!-- Security Footer (placed outside of and below the card) -->
+    <div class="mt-4 text-center text-xs text-muted-foreground flex items-center justify-center gap-1.5">
+      <ShieldCheck class="h-4 w-4 text-primary shrink-0" />
+      <span>Akses terverifikasi dengan Kode Autentikasi &bull; Sesi tanpa Log in</span>
     </div>
   </div>
 </template>

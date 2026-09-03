@@ -241,7 +241,7 @@ const getStatusClasses = (status: string) => {
         <p class="text-xs sm:text-sm text-foreground leading-normal">
           <span class="text-muted-foreground">Pemanfaatan:</span> 
           <span class="font-semibold ml-1">
-            {{ request.pemanfaatan === 'corporate' ? 'Corporate' : 'Project' }} ({{ request.pemanfaatanDetail }})
+            {{ request.pemanfaatan === 'corporate' ? `Corporate (${request.pemanfaatanDetail})` : `Project ${request.pemanfaatanDetail}` }}
           </span>
         </p>
 

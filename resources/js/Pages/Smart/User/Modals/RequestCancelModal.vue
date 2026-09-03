@@ -133,7 +133,7 @@ const handleConfirmCancel = () => {
               <p class="text-sm text-foreground">
                 <span class="text-muted-foreground">Pemanfaatan:</span> 
                 <span class="font-semibold ml-1">
-                  {{ request.pemanfaatan === 'corporate' ? 'Corporate' : 'Project' }} ({{ request.pemanfaatanDetail }})
+                  {{ request.pemanfaatan === 'corporate' ? `Corporate (${request.pemanfaatanDetail})` : `Project ${request.pemanfaatanDetail}` }}
                 </span>
               </p>
 

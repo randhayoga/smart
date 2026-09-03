@@ -109,6 +109,7 @@
             font-weight: 600;
         }
         .info-code {
+            font-size: 14px;
             font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
             font-weight: 700;
             color: #4f46e5;
@@ -213,11 +214,11 @@
                 <div class="info-box">
                     <table class="info-table">
                         <tr>
-                            <td class="info-label">Nomor Pengajuan</td>
+                            <td class="info-label">Nomor</td>
                             <td class="info-value info-code">{{ $request->request_number }}</td>
                         </tr>
                         <tr>
-                            <td class="info-label">Tipe Pengajuan</td>
+                            <td class="info-label">Tipe</td>
                             <td class="info-value">{{ $type }}</td>
                         </tr>
                         <tr>
@@ -228,10 +229,10 @@
                             <td class="info-label">Pemanfaatan</td>
                             <td class="info-value">{{ $destinationName }}</td>
                         </tr>
-                        @if($isBorrow && $loanPeriod)
+                        @if($isBorrow && $borrowPeriod)
                         <tr>
                             <td class="info-label">Periode Pinjam</td>
-                            <td class="info-value">{{ $loanPeriod }}</td>
+                            <td class="info-value">{{ $borrowPeriod }}</td>
                         </tr>
                         @endif
                         <tr>
@@ -243,7 +244,7 @@
 
                 <!-- Items Table -->
                 <div style="margin-bottom: 24px;">
-                    <div style="font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 8px;">Daftar Barang yang Diajukan:</div>
+                    <div style="font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 8px;">Daftar barang:</div>
                     <table class="items-table">
                         <thead>
                             <tr>
@@ -264,7 +265,7 @@
                                     @endif
                                 </td>
                                 <td style="color: #475569;">{{ $item['category'] }}</td>
-                                <td style="text-align: center; font-weight: 700; color: #4f46e5;">{{ $item['quantity'] }} {{ $item['uom'] ?? '' }}</td>
+                                <td style="text-align: center; font-weight: 700;">{{ $item['quantity'] }} {{ $item['uom'] ?? '' }}</td>
                             </tr>
                             @endforeach
                         </tbody>
@@ -274,7 +275,7 @@
                 <!-- Action Button -->
                 <div class="btn-container">
                     <a href="{{ $actionUrl }}" class="btn-primary" target="_blank">
-                        Tinjau & Berikan Keputusan &#129125;
+                        Tinjau & Berikan Keputusan
                     </a>
                 </div>
                 <div class="security-note">

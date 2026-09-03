@@ -166,14 +166,14 @@ class RequestSubmissionService
         if ($utilization === 'project') {
             if (empty($data['project'])) {
                 throw ValidationException::withMessages([
-                    'project' => 'Proyek wajib dipilih untuk pemanfaatan project.',
+                    'project' => 'Project wajib dipilih untuk pemanfaatan project.',
                 ]);
             }
 
             $project = TbProject::find((int) $data['project']);
             if (!$project) {
                 throw ValidationException::withMessages([
-                    'project' => 'Proyek yang dipilih tidak valid.',
+                    'project' => 'Project yang dipilih tidak valid.',
                 ]);
             }
 
@@ -184,7 +184,7 @@ class RequestSubmissionService
 
             if (!$isAssigned) {
                 throw ValidationException::withMessages([
-                    'project' => 'Anda tidak terdaftar sebagai anggota pada proyek ini.',
+                    'project' => 'Anda tidak terdaftar sebagai anggota pada project ini.',
                 ]);
             }
 
@@ -202,7 +202,7 @@ class RequestSubmissionService
 
             if (!$managerUser) {
                 throw ValidationException::withMessages([
-                    'project' => 'Project Manager (P2211) untuk proyek ini tidak ditemukan. Silakan hubungi administrator.',
+                    'project' => 'Project Manager (P2211) untuk project ini tidak ditemukan. Silakan hubungi administrator.',
                 ]);
             }
 

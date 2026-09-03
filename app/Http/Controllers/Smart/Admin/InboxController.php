@@ -223,8 +223,8 @@ class InboxController extends Controller
             'createdAt' => $req->created_at ? $req->created_at->format('d-m-Y H:i') : '-',
             'pemanfaatan' => $req->utilization,
             'pemanfaatanDetail' => $req->utilization === 'corporate' 
-                ? ($req->department->name ?? '-') 
-                : ($req->project->name ?? '-'),
+                ? ($req->department?->org_name ?? $req->department?->name ?? '-') 
+                : ($req->project ? ($req->project->no_project ? "{$req->project->no_project} ({$req->project->project_name})" : ($req->project->project_name ?? '-')) : '-'),
             'durationStart' => $firstItem?->start_date ? $firstItem->start_date->format('d-m-Y H:i') : null,
             'durationEnd' => $firstItem?->end_date ? $firstItem->end_date->format('d-m-Y H:i') : null,
             'durationDays' => $durationDays,
