@@ -239,6 +239,7 @@ const columns: ColumnDef<ApprovalItem>[] = [
   },
   {
     accessorKey: 'category',
+    enableGlobalFilter: false,
     header: ({ column }) => {
       return h(Button, {
         variant: 'ghost',
@@ -253,6 +254,7 @@ const columns: ColumnDef<ApprovalItem>[] = [
   },
   {
     accessorKey: 'subcategory',
+    enableGlobalFilter: false,
     header: ({ column }) => {
       return h(Button, {
         variant: 'ghost',
@@ -267,6 +269,7 @@ const columns: ColumnDef<ApprovalItem>[] = [
   },
   {
     accessorKey: 'brand',
+    enableGlobalFilter: false,
     header: ({ column }) => {
       return h(Button, {
         variant: 'ghost',
@@ -295,6 +298,7 @@ const columns: ColumnDef<ApprovalItem>[] = [
   },
   {
     accessorKey: 'specification',
+    enableGlobalFilter: false,
     header: ({ column }) => {
       return h(Button, {
         variant: 'ghost',
@@ -309,6 +313,7 @@ const columns: ColumnDef<ApprovalItem>[] = [
   },
   {
     accessorKey: 'status_label',
+    enableGlobalFilter: false,
     header: ({ column }) => {
       return h(Button, {
         variant: 'ghost',
@@ -324,6 +329,7 @@ const columns: ColumnDef<ApprovalItem>[] = [
   {
     id: 'actions',
     size: 100,
+    enableGlobalFilter: false,
     header: () => h('div', { class: 'text-right font-semibold text-foreground' }, 'Aksi'),
     cell: ({ row }) => {
       const item = row.original;
@@ -707,7 +713,7 @@ onUnmounted(() => {
           <label class="text-xs text-muted-foreground font-medium block ml-0.5">Filter</label>
           <TableSearch 
             v-model="searchQuery"
-            placeholder="Cari Aset..." 
+            placeholder="Cari Kode Aset atau nama..." 
             bg-class="bg-white"
           />
         </div>

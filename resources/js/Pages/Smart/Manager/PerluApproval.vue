@@ -169,6 +169,7 @@ const columns: ColumnDef<RequestHistory>[] = [
   },
   {
     accessorKey: 'type',
+    enableGlobalFilter: false,
     header: ({ column }) => {
       return h(Button, {
         variant: 'ghost',
@@ -197,6 +198,7 @@ const columns: ColumnDef<RequestHistory>[] = [
   },
   {
     accessorKey: 'pemanfaatan',
+    enableGlobalFilter: false,
     header: ({ column }) => {
       return h(Button, {
         variant: 'ghost',
@@ -218,6 +220,7 @@ const columns: ColumnDef<RequestHistory>[] = [
   },
   {
     accessorKey: 'created_at',
+    enableGlobalFilter: false,
     header: ({ column }) => {
       return h(Button, {
         variant: 'ghost',
@@ -232,6 +235,7 @@ const columns: ColumnDef<RequestHistory>[] = [
   },
   {
     accessorKey: 'status',
+    enableGlobalFilter: false,
     header: ({ column }) => {
       return h(Button, {
         variant: 'ghost',
@@ -252,6 +256,7 @@ const columns: ColumnDef<RequestHistory>[] = [
   {
     id: 'actions',
     size: 100,
+    enableGlobalFilter: false,
     header: () => h('div', { class: 'text-right font-semibold text-foreground' }, 'Aksi'),
     cell: ({ row }) => {
       const item = row.original;
@@ -400,7 +405,7 @@ onUnmounted(() => {
           <label class="text-xs text-muted-foreground font-medium block ml-0.5">Filter</label>
           <TableSearch 
             v-model="searchQuery"
-            placeholder="Cari Permintaan..." 
+            placeholder="Cari Nomor atau Nama Pemohon..." 
             bg-class="bg-white"
           />
         </div>

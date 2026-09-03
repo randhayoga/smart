@@ -116,11 +116,7 @@ const filteredLifecycles = computed(() => {
     const q = auditSearch.value.toLowerCase();
     logs = logs.filter(l => 
       (l.kode_aset && l.kode_aset.toLowerCase().includes(q)) ||
-      (l.nama_aset && l.nama_aset.toLowerCase().includes(q)) ||
-      (l.aktor && l.aktor.toLowerCase().includes(q)) || 
-      (l.catatan && l.catatan.toLowerCase().includes(q)) || 
-      (l.status && l.status.toLowerCase().includes(q)) ||
-      (l.action_type && l.action_type.toLowerCase().includes(q))
+      (l.nama_aset && l.nama_aset.toLowerCase().includes(q))
     );
   }
 
@@ -325,7 +321,7 @@ const auditColumns: ColumnDef<AuditTrail>[] = [
                 <label class="text-xs text-muted-foreground font-medium block ml-0.5">Filter</label>
                 <TableSearch 
                   v-model="auditSearch"
-                  placeholder="Cari Kode Aset, Nama..." 
+                  placeholder="Cari Kode Aset atau nama..." 
                 />
               </div>
 
@@ -412,7 +408,6 @@ const auditColumns: ColumnDef<AuditTrail>[] = [
               cell-class="py-2.5"
               :columns="auditColumns" 
               :data="filteredLifecycles" 
-              :filter-value="auditSearch"
               :page-size="computedAuditPageSize"
               :show-selection-count="true"
               :default-sorting="[{ id: 'waktu', desc: true }]"
