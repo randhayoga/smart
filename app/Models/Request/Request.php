@@ -98,11 +98,58 @@ class Request extends Model
     }
 
     /**
+     * Determine if this request is a borrowing request (Peminjaman).
+     */
+    public function isBorrow(): bool
+    {
+        if ($this->relationLoaded('items')) {
+            return $this->items->contains(fn($item) => $item->start_date !== null);
+        }
+
+        return $this->items()->whereNotNull('start_date')->exists();
+    }
+
+    /**
+     * Capitalized request type name ('Peminjaman' or 'Permintaan').
+     */
+    public function getTypeNameAttribute(): string
+    {
+        return $this->isBorrow() ? 'Peminjaman' : 'Permintaan';
+    }
+
+    /**
+     * Lowercase request type identifier ('peminjaman' or 'permintaan').
+     */
+    public function getTypeKeyAttribute(): string
+    {
+        return $this->isBorrow() ? 'peminjaman' : 'permintaan';
+    }
+
+    /**
+     * Formatted destination / utilization string (Corporate or Project).
+     */
+    public function getDestinationNameAttribute(): string
+    {
+        if ($this->utilization === 'corporate') {
+            $deptName = $this->department?->org_name ?? $this->department?->name ?? 'Departemen';
+            return "Corporate ({$deptName})";
+        }
+
+        $projNo = $this->project?->no_project;
+        $projName = $this->project?->project_name ?? 'Project';
+        return $projNo ? "Project {$projNo} ({$projName})" : "Project ({$projName})";
+    }
+
+    /**
      * Accessor for start_date from the first request item.
      */
     public function getStartDateAttribute()
     {
-        return $this->items->first()?->start_date;
+        if ($this->relationLoaded('items')) {
+            return $this->items->first()?->start_date;
+        }
+
+        return $this->items()->whereNotNull('start_date')->value('start_date');
     }
 
     /**
@@ -110,7 +157,11 @@ class Request extends Model
      */
     public function getEndDateAttribute()
     {
-        return $this->items->first()?->end_date;
+        if ($this->relationLoaded('items')) {
+            return $this->items->first()?->end_date;
+        }
+
+        return $this->items()->whereNotNull('end_date')->value('end_date');
     }
 }
 

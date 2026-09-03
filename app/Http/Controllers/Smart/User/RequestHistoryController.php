@@ -83,7 +83,7 @@ class RequestHistoryController extends Controller
     {
         $statusMap = [
             'wait' => 'Menunggu approval',
-            'approve' => 'Disetujui',
+            'approve' => 'Di-approve',
             'confirm' => 'Serah Terima',
             'handover' => 'Serah Terima',
             'borrow' => 'Dipinjam',
@@ -95,7 +95,7 @@ class RequestHistoryController extends Controller
             'partial' => 'Partial',
         ];
 
-        $type = $req->start_date ? 'peminjaman' : 'permintaan';
+        $type = $req->type_key;
         
         $durationDays = 0;
         $durationHours = 0;

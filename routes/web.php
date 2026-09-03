@@ -25,7 +25,7 @@ use App\Http\Controllers\Smart\User\RequestHistoryController;
 use App\Http\Controllers\Smart\User\RequestCancellationController;
 use App\Http\Controllers\Smart\Manager\ManagerRequestController;
 use App\Http\Controllers\Smart\Manager\ManagerApprovedRequestController;
-use App\Http\Controllers\Smart\Manager\ManagerBulkRequestApprovalController;
+use App\Http\Controllers\Smart\Manager\ManagerRequestApprovalController;
 use App\Http\Controllers\Smart\Manager\ExternalApprovalController;
 use App\Http\Controllers\Smart\Admin\AuditController;
 use App\Http\Controllers\Smart\Admin\Master\CategoryController;
@@ -143,7 +143,7 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
     // Manager only routes
     Route::middleware(['role:manager'])->group(function () {
         Route::get('/approve', [ManagerRequestController::class, 'index'])->name('approve');
-        Route::post('/approve/action', [ManagerBulkRequestApprovalController::class, 'store'])->name('approve.bulk-action');
+        Route::post('/approve/action', [ManagerRequestApprovalController::class, 'store'])->name('approve.bulk-action');
         Route::get('/approved', [ManagerApprovedRequestController::class, 'index'])->name('approved');
 
         // Asset Status Approval Routes

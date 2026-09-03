@@ -115,7 +115,7 @@ class HandoverController extends Controller
             'location' => $ho ? $ho->location : '-',
             'note' => $ho ? $ho->note : '',
             'status' => $req->status,
-            'type' => $req->start_date ? 'peminjaman' : 'permintaan',
+            'type' => $req->type_key,
             'pemanfaatan' => $req->utilization,
             'pemanfaatanDetail' => $req->utilization === 'corporate' 
                 ? ($req->department?->org_name ?? $req->department?->name ?? '-') 

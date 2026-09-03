@@ -9,12 +9,12 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 /**
- * Manager Bulk Request Approval Controller processing batch decisions on requests.
+ * Manager Request Approval Controller processing approval and rejection decisions on requests.
  */
-class ManagerBulkRequestApprovalController extends Controller
+class ManagerRequestApprovalController extends Controller
 {
     /**
-     * Memproses persetujuan (approve) atau penolakan (reject) secara massal oleh manager.
+     * Memproses persetujuan (approve) atau penolakan (reject) permohonan oleh manager.
      */
     public function store(Request $request, ProcessRequestApproval $processApproval): RedirectResponse
     {
@@ -44,9 +44,10 @@ class ManagerBulkRequestApprovalController extends Controller
             );
         }
 
-        $message = $decision === 'approve' 
-            ? 'Beberapa permintaan berhasil disetujui.' 
-            : 'Beberapa permintaan berhasil ditolak.';
+        $isMultiple = count($ids) > 1;
+        $message = $decision === 'approve'
+            ? ($isMultiple ? 'Beberapa permintaan berhasil disetujui.' : 'Permintaan berhasil disetujui.')
+            : ($isMultiple ? 'Beberapa permintaan berhasil ditolak.' : 'Permintaan berhasil ditolak.');
 
         return redirect()->back()->with('success', $message);
     }

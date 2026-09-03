@@ -51,17 +51,21 @@ import {
 // ─────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────
+import { type RequestStatus, type RawRequestStatus } from '@/lib/requestStatus';
+
 interface RequestItem {
   id: number;
+  barang_id?: number;
   subcategory: string;
   brand: string;
   name?: string;
   spec: string;
   quantity: number;
+  stockQuantity?: number;
   imageUrl?: string;
   category: string;
-  uom?: string;
   is_consumable?: boolean;
+  uom?: string;
   assets?: string[];
   status?: string;
 }
@@ -76,8 +80,8 @@ interface RequestHistory {
   durationEnd?: string;
   durationDays?: number;
   durationHours?: number;
-  status: 'Menunggu approval' | 'Disetujui' | 'Ditolak' | 'Serah Terima' | 'Dipinjam' | 'Selesai' | 'Dibatalkan' | 'Pending' | 'Partial';
-  raw_status: 'wait' | 'approve' | 'confirm' | 'handover' | 'borrow' | 'return' | 'success' | 'reject' | 'cancel' | 'pending' | 'partial';
+  status: RequestStatus | string;
+  raw_status: RawRequestStatus | string;
   created_at: string; // format YYYY-MM-DD
   items: RequestItem[];
   approval_by?: string | null;
@@ -562,7 +566,7 @@ const timelineSteps = computed((): TimelineStep[] => {
       steps.push({
         title: 'Menunggu konfirmasi Admin',
         status: 'active',
-        description: `${typeLabelTitle.value} disetujui Manager: <span class="font-bold text-foreground">${approverName}</span>. Menunggu alokasi aset dan konfirmasi Admin.`
+        description: `Menunggu alokasi aset dan konfirmasi Admin.`
       });
     } else if (r.raw_status === 'pending') {
       steps.push({
@@ -842,7 +846,7 @@ const activeStepIndex = computed(() => {
 
               <!-- Stepper Content -->
               <div class="flex-1 min-w-0 pt-0.5">
-                <div class="flex flex-col">
+                <div class="flex flex-col gap-0.5">
                   <StepperTitle
                     class="text-sm transition-colors"
                     :class="[
@@ -861,18 +865,18 @@ const activeStepIndex = computed(() => {
                   </StepperTitle>
 
                   <!-- Time metadata -->
-                  <div v-if="step.time" class="text-[11px] text-muted-foreground mt-0.5">
+                  <div v-if="step.time" class="text-[11px] text-muted-foreground">
                     <span>{{ step.time }}</span>
                   </div>
-                </div>
 
-                <!-- Description -->
-                <StepperDescription
-                  v-if="step.description && step.description !== 'scheduled-details' && step.description !== 'show-return-action'"
-                  class="text-xs text-muted-foreground mt-1 leading-relaxed"
-                >
-                  <span v-html="step.description"></span>
-                </StepperDescription>
+                  <!-- Description -->
+                  <StepperDescription
+                    v-if="step.description && step.description !== 'scheduled-details' && step.description !== 'show-return-action'"
+                    class="text-xs text-muted-foreground leading-relaxed"
+                  >
+                    <span v-html="step.description"></span>
+                  </StepperDescription>
+                </div>
 
                 <!-- Scheduled Handover Details -->
                 <div 

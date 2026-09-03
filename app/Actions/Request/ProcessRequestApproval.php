@@ -6,6 +6,7 @@ use App\Models\AdmUser;
 use App\Models\Request\Request as SmartRequest;
 use App\Models\Request\RequestApproval;
 use App\Models\Request\RequestStatusLog;
+use App\Services\NotificationService;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -13,6 +14,9 @@ use Illuminate\Support\Facades\DB;
  */
 class ProcessRequestApproval
 {
+    public function __construct(
+        protected NotificationService $notificationService
+    ) {}
     /**
      * Execute the approval or rejection process for a given request.
      *
@@ -66,5 +70,24 @@ class ProcessRequestApproval
                 'note' => !empty($note) ? $note : $defaultLogNote,
             ]);
         });
+
+        if ($approverUser) {
+            $req->loadMissing([
+                'user',
+                'department',
+                'project',
+                'items.barang.brand',
+                'items.barang.subcategory.category',
+                'items.barang.uom',
+                'items.subcategory.category',
+                'items.subcategory.barangs.uom',
+            ]);
+
+            if ($decision === 'approve') {
+                $this->notificationService->notifyRequesterRequestApproved($req, $approverUser);
+            } else {
+                $this->notificationService->notifyRequesterRequestRejected($req, $approverUser, $note);
+            }
+        }
     }
 }

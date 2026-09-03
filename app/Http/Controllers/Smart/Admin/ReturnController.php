@@ -171,7 +171,7 @@ class ReturnController extends Controller
             'durationDays' => $durationDays,
             'durationHours' => $durationHours,
             'status' => $req->status,
-            'type' => $req->start_date ? 'peminjaman' : 'permintaan',
+            'type' => $req->type_key,
             'items' => $items,
             'returnTime' => $returnTimeStr,
             'location' => $returnLocationStr,

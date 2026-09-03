@@ -18,6 +18,11 @@ import {
   X,
   Calendar
 } from 'lucide-vue-next';
+import { 
+  type RequestStatus, 
+  type RawRequestStatus, 
+  getRequestStatusLabel 
+} from '@/lib/requestStatus';
 
 // ─────────────────────────────────────────────
 // Types
@@ -45,8 +50,8 @@ interface RequestHistory {
   durationEnd?: string;
   durationDays?: number;
   durationHours?: number;
-  status: 'Menunggu approval' | 'Disetujui' | 'Ditolak' | 'Serah Terima' | 'Dipinjam' | 'Selesai' | 'Dibatalkan' | 'Pending' | 'Partial';
-  raw_status: 'wait' | 'approve' | 'confirm' | 'handover' | 'borrow' | 'return' | 'success' | 'reject' | 'cancel' | 'pending' | 'partial';
+  status: RequestStatus | string;
+  raw_status: RawRequestStatus | string;
   created_at: string; // format YYYY-MM-DD
   items: RequestItem[];
   approval_by?: string | null;
@@ -79,7 +84,6 @@ watch(() => props.requests, (newVal) => {
 // ─────────────────────────────────────────────
 const searchQuery = ref('');
 const filterType = ref('Semua tipe');            // 'Semua tipe' | 'Hanya Permintaan' | 'Hanya Peminjaman'
-const filterCategory = ref('Semua kategori');    // 'Semua kategori' | ...
 const filterStatus = ref('Semua status');        // 'Semua status' | 'Menunggu approval' | etc.
 const filterTimeRange = ref('Semua rentang');    // 'Semua rentang' | 'Hari ini' | '7 hari terakhir' | '30 hari terakhir'
 
@@ -87,26 +91,14 @@ const filterTimeRange = ref('Semua rentang');    // 'Semua rentang' | 'Hari ini'
 const clearFilter = () => {
   searchQuery.value = '';
   filterType.value = 'Semua tipe';
-  filterCategory.value = 'Semua kategori';
   filterStatus.value = 'Semua status';
   filterTimeRange.value = 'Semua rentang';
 };
 
-// Category Options (Unique categories from data)
-const categoryOptions = computed(() => {
-  const cats = new Set<string>();
-  requests.value.forEach(req => {
-    req.items.forEach(item => {
-      if (item.category) cats.add(item.category);
-    });
-  });
-  return Array.from(cats);
-});
-
 // Status Options
 const statusOptions = [
   'Menunggu approval',
-  'Disetujui',
+  'Di-approve',
   'Serah Terima',
   'Dipinjam',
   'Selesai',
@@ -146,14 +138,10 @@ const filteredRequests = computed(() => {
       matchesType = req.type === 'peminjaman';
     }
 
-    // 3. Category Match
-    const matchesCategory = filterCategory.value === 'Semua kategori' || 
-      req.items.some(item => item.category === filterCategory.value);
+    // 3. Status Match
+    const matchesStatus = filterStatus.value === 'Semua status' || getRequestStatusLabel(req.status) === filterStatus.value;
 
-    // 4. Status Match
-    const matchesStatus = filterStatus.value === 'Semua status' || req.status === filterStatus.value;
-
-    // 5. Time Range Match
+    // 4. Time Range Match
     let matchesTime = true;
     if (filterTimeRange.value !== 'Semua rentang' && req.created_at && req.created_at !== '-') {
       const datePart = req.created_at.split(' ')[0];
@@ -177,7 +165,7 @@ const filteredRequests = computed(() => {
       }
     }
 
-    return matchesSearch && matchesType && matchesCategory && matchesStatus && matchesTime;
+    return matchesSearch && matchesType && matchesStatus && matchesTime;
   });
 });
 
@@ -199,112 +187,88 @@ const openCancelModal = (req: RequestHistory) => {
       <div>
         <h1 class="text-lg font-bold text-gray-900 leading-none mb-5">Riwayat permintaan dan peminjaman</h1>
         
-        <!-- Filter & Search Section -->
-        <div class="space-y-4 mb-5">
-          <!-- Search Row (Top) -->
-          <div class="space-y-1.5 w-lg">
-            <label class="text-xs text-muted-foreground font-medium block ml-0.5">Pencarian</label>
-            <TableSearch 
-              v-model="searchQuery" 
-              placeholder="Cari barang atau no. permintaan..." 
-              bg-class="bg-white"
-            />
-          </div>
+        <!-- Filter & Search Section (Single Responsive Row) -->
+        <div class="space-y-1.5 mb-5">
+          <label class="text-xs text-muted-foreground font-medium block ml-0.5">Pencarian & Filter</label>
+          <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+            <!-- Search Input -->
+            <div class="flex-1 min-w-[240px] max-w-sm">
+              <TableSearch 
+                v-model="searchQuery" 
+                placeholder="Cari barang atau no. permintaan..." 
+                bg-class="bg-white"
+              />
+            </div>
 
-          <!-- Filter Row (Below) -->
-          <div class="space-y-1.5 w-full">
-            <label class="text-xs text-muted-foreground font-medium block ml-0.5">Filter & Urutkan</label>
-            <div class="flex flex-wrap items-center gap-2 sm:gap-3">
-                <!-- Filter Tipe -->
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" :class="['w-full sm:w-[11.25rem] md:w-[12rem] justify-between rounded-[0.875rem] font-normal bg-white', filterType === 'Semua tipe' ? 'text-muted-foreground' : 'text-foreground']">
-                      <span class="truncate">{{ filterType }}</span>
-                      <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent class="w-[12rem] rounded-[0.875rem]" align="start" :side-offset="4">
-                    <DropdownMenuItem @select="filterType = 'Semua tipe'">Semua tipe</DropdownMenuItem>
-                    <DropdownMenuItem @select="filterType = 'Hanya Permintaan'">Hanya Permintaan</DropdownMenuItem>
-                    <DropdownMenuItem @select="filterType = 'Hanya Peminjaman'">Hanya Peminjaman</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-                <!-- Filter Kategori -->
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" :class="['w-full sm:w-[11.25rem] md:w-[12rem] justify-between rounded-[0.875rem] font-normal bg-white', filterCategory === 'Semua kategori' ? 'text-muted-foreground' : 'text-foreground']">
-                      <span class="truncate">{{ filterCategory }}</span>
-                      <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent class="w-[12rem] rounded-[0.875rem]" align="start" :side-offset="4">
-                    <DropdownMenuItem @select="filterCategory = 'Semua kategori'">Semua kategori</DropdownMenuItem>
-                    <DropdownMenuItem 
-                      v-for="cat in categoryOptions" 
-                      :key="cat" 
-                      @select="filterCategory = cat"
-                    >
-                      {{ cat }}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-                <!-- Filter Status -->
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" :class="['w-full sm:w-[11.25rem] md:w-[12rem] justify-between rounded-[0.875rem] font-normal bg-white', filterStatus === 'Semua status' ? 'text-muted-foreground' : 'text-foreground']">
-                      <span class="truncate">{{ filterStatus }}</span>
-                      <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent class="w-[12rem] rounded-[0.875rem]" align="start" :side-offset="4">
-                    <DropdownMenuItem @select="filterStatus = 'Semua status'">Semua status</DropdownMenuItem>
-                    <DropdownMenuItem 
-                      v-for="status in statusOptions" 
-                      :key="status" 
-                      @select="filterStatus = status"
-                    >
-                      {{ status }}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-                <!-- Filter Rentang Waktu -->
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" :class="['w-full sm:w-[11.25rem] md:w-[12rem] justify-between rounded-[0.875rem] font-normal bg-white', filterTimeRange === 'Semua rentang' ? 'text-muted-foreground' : 'text-foreground']">
-                      <div class="flex items-center gap-1.5 truncate">
-                        <Calendar class="w-3.5 h-3.5 opacity-50 shrink-0" />
-                        <span class="truncate">{{ filterTimeRange }}</span>
-                      </div>
-                      <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent class="w-[12rem] rounded-[0.875rem]" align="start" :side-offset="4">
-                    <DropdownMenuItem 
-                      v-for="opt in timeRangeOptions" 
-                      :key="opt.value" 
-                      @select="filterTimeRange = opt.value"
-                    >
-                      {{ opt.label }}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-                <!-- Clear Filter Button -->
-                <Button variant="destructive" @click="clearFilter" class="hover:opacity-70 rounded-[0.875rem] px-0 sm:px-5 font-semibold text-white w-9 h-9 sm:w-auto sm:h-auto flex items-center justify-center shrink-0">
-                  <X class="w-4 h-4 sm:hidden" />
-                  <span class="hidden sm:inline">Hapus filter</span>
+            <!-- Filter Tipe -->
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" :class="['w-full sm:w-[11.25rem] md:w-[12rem] justify-between rounded-[0.875rem] font-normal bg-white', filterType === 'Semua tipe' ? 'text-muted-foreground' : 'text-foreground']">
+                  <span class="truncate">{{ filterType }}</span>
+                  <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                 </Button>
-              </div>
-            </div> 
+              </DropdownMenuTrigger>
+              <DropdownMenuContent class="w-[12rem] rounded-[0.875rem]" align="start" :side-offset="4">
+                <DropdownMenuItem @select="filterType = 'Semua tipe'">Semua tipe</DropdownMenuItem>
+                <DropdownMenuItem @select="filterType = 'Hanya Permintaan'">Hanya Permintaan</DropdownMenuItem>
+                <DropdownMenuItem @select="filterType = 'Hanya Peminjaman'">Hanya Peminjaman</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <!-- Filter Status -->
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" :class="['w-full sm:w-[11.25rem] md:w-[12rem] justify-between rounded-[0.875rem] font-normal bg-white', filterStatus === 'Semua status' ? 'text-muted-foreground' : 'text-foreground']">
+                  <span class="truncate">{{ filterStatus }}</span>
+                  <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent class="w-[12rem] rounded-[0.875rem]" align="start" :side-offset="4">
+                <DropdownMenuItem @select="filterStatus = 'Semua status'">Semua status</DropdownMenuItem>
+                <DropdownMenuItem 
+                  v-for="status in statusOptions" 
+                  :key="status" 
+                  @select="filterStatus = status"
+                >
+                  {{ status }}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <!-- Filter Rentang Waktu -->
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" :class="['w-full sm:w-[11.25rem] md:w-[12rem] justify-between rounded-[0.875rem] font-normal bg-white', filterTimeRange === 'Semua rentang' ? 'text-muted-foreground' : 'text-foreground']">
+                  <div class="flex items-center gap-1.5 truncate">
+                    <Calendar class="w-3.5 h-3.5 opacity-50 shrink-0" />
+                    <span class="truncate">{{ filterTimeRange }}</span>
+                  </div>
+                  <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent class="w-[12rem] rounded-[0.875rem]" align="start" :side-offset="4">
+                <DropdownMenuItem 
+                  v-for="opt in timeRangeOptions" 
+                  :key="opt.value" 
+                  @select="filterTimeRange = opt.value"
+                >
+                  {{ opt.label }}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <!-- Clear Filter Button -->
+            <Button variant="destructive" @click="clearFilter" class="hover:opacity-70 rounded-[0.875rem] px-0 sm:px-5 font-semibold text-white w-9 h-9 sm:w-auto sm:h-auto flex items-center justify-center shrink-0">
+              <X class="w-4 h-4 sm:hidden" />
+              <span class="hidden sm:inline">Hapus filter</span>
+            </Button>
+          </div>
         </div>
 
         <p class="text-xs text-muted-foreground font-medium mb-3">Hasil Pencarian dan Filter:</p>
 
         <!-- Grid / ScrollArea -->
-        <ScrollArea class="border border-border rounded-[0.875rem] bg-card h-[calc(100vh-25rem)] sm:h-[calc(100vh-21.5rem)]">
+        <ScrollArea class="border border-border rounded-[0.875rem] bg-card h-[calc(100vh-21rem)] sm:h-[calc(100vh-18rem)]">
           <div class="p-2.5 sm:p-5">
             <!-- Empty State -->
             <div 

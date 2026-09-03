@@ -37,9 +37,7 @@ class InboxController extends Controller
             ->get()
             ->map(function ($req) {
                 $amount = $req->items->sum('quantity_requested');
-                // Barang dengan start_date di request_items = peminjaman (non-konsumable)
-                $hasLoanItem = $req->items->contains(fn($i) => $i->start_date !== null);
-                $type = $hasLoanItem ? 'Pinjam' : 'Habis Pakai';
+                $type = $req->isBorrow() ? 'Pinjam' : 'Habis Pakai';
                 return [
                     'id' => $req->id,
                     'number' => $req->request_number,
@@ -73,9 +71,7 @@ class InboxController extends Controller
             ->get()
             ->map(function ($req) {
                 $amount = $req->items->sum('quantity_requested');
-                // Barang dengan start_date di request_items = peminjaman (non-konsumable)
-                $hasLoanItem = $req->items->contains(fn($i) => $i->start_date !== null);
-                $type = $hasLoanItem ? 'Pinjam' : 'Habis Pakai';
+                $type = $req->isBorrow() ? 'Pinjam' : 'Habis Pakai';
                 return [
                     'id' => $req->id,
                     'number' => $req->request_number,
@@ -230,7 +226,7 @@ class InboxController extends Controller
             'durationDays' => $durationDays,
             'durationHours' => $durationHours,
             'status' => $req->status,
-            'type' => ($firstItem?->start_date !== null) ? 'peminjaman' : 'permintaan',
+            'type' => $req->type_key,
             'items' => $items,
             'approvedAt' => $approvedAt,
             'has_insufficient_stock' => $hasInsufficientStock,
