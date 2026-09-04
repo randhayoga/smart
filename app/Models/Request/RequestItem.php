@@ -42,8 +42,8 @@ class RequestItem extends Model
         return $this->belongsTo(Barang::class);
     }
 
-    public function unitAssignments(): HasMany
+    public function fulfillments(): HasMany
     {
-        return $this->hasMany(RequestUnitAssignment::class);
+        return $this->hasMany(RequestFulfillment::class, 'request_item_id');
     }
 }

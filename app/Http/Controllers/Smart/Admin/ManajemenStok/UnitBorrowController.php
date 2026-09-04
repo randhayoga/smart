@@ -9,7 +9,7 @@ use App\Models\Inventory\UnitLifecycle;
 use App\Models\Request\Request as SmartRequest;
 use App\Models\Request\RequestItem;
 use App\Models\Request\RequestStatusLog;
-use App\Models\Request\RequestUnitAssignment;
+use App\Models\Request\RequestFulfillment;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -60,7 +60,7 @@ class UnitBorrowController extends Controller
             $startDate = Carbon::parse($validated['start_date']);
 
             // Cek apakah sudah ada assignment peminjaman aktif untuk unit ini
-            $activeAssignment = RequestUnitAssignment::with('requestItem.request')
+            $activeAssignment = RequestFulfillment::with('requestItem.request')
                 ->where('unit_id', $unit->id)
                 ->whereNull('completed_at')
                 ->latest('id')
@@ -126,8 +126,8 @@ class UnitBorrowController extends Controller
                     'status' => 'fulfilled',
                 ]);
 
-                // Buat RequestUnitAssignment (request_fulfillments)
-                RequestUnitAssignment::create([
+                // Buat RequestFulfillment (request_fulfillments)
+                RequestFulfillment::create([
                     'request_item_id' => $requestItem->id,
                     'unit_id' => $unit->id,
                     'quantity_fulfilled' => 1,
@@ -158,7 +158,7 @@ class UnitBorrowController extends Controller
     public function finish(Request $request, Unit $unit): RedirectResponse
     {
         DB::transaction(function () use ($unit, $request) {
-            $activeAssignment = RequestUnitAssignment::with(['requestItem.request.user'])
+            $activeAssignment = RequestFulfillment::with(['requestItem.request.user'])
                 ->where('unit_id', $unit->id)
                 ->whereNull('completed_at')
                 ->latest('id')

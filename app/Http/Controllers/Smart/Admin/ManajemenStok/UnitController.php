@@ -13,7 +13,7 @@ use App\Models\Master\Location;
 use App\Models\Master\Organizer;
 use App\Models\Master\Room;
 use App\Models\Master\Vendor;
-use App\Models\Request\RequestUnitAssignment;
+use App\Models\Request\RequestFulfillment;
 use App\Models\TbProject;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -521,7 +521,7 @@ class UnitController extends Controller
      */
     public function destroy(Unit $unit)
     {
-        if (RequestUnitAssignment::where('unit_id', $unit->id)->exists()) {
+        if (RequestFulfillment::where('unit_id', $unit->id)->exists()) {
             return redirect()->back()->with('error', 'Aset tidak dapat dihapus karena sudah memiliki riwayat peminjaman/permintaan.');
         }
 

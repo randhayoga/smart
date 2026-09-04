@@ -5,8 +5,7 @@ namespace App\Http\Controllers\Smart\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Inventory\Unit;
 use App\Models\Request\Request as SmartRequest;
-use App\Models\Request\RequestItem;
-use App\Models\Request\RequestUnitAssignment;
+use App\Models\Request\RequestFulfillment;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -86,7 +85,7 @@ class ArsipController extends Controller
         }
 
         $items = $req->items->map(function ($item) {
-            $assets = RequestUnitAssignment::where('request_item_id', $item->id)
+            $assets = RequestFulfillment::where('request_item_id', $item->id)
                 ->with('unit')
                 ->get()
                 ->pluck('unit.number')
@@ -164,7 +163,7 @@ class ArsipController extends Controller
             'logs' => $logs,
         ];
 
-        $placements = RequestUnitAssignment::whereIn('request_item_id', $req->items->pluck('id'))
+        $placements = RequestFulfillment::whereIn('request_item_id', $req->items->pluck('id'))
             ->with('unit')
             ->get()
             ->filter(fn($asn) => $asn->unit && $asn->placement)

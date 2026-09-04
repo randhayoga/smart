@@ -4,6 +4,7 @@ namespace App\Models\Request;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class RequestHandover extends Model
 {
@@ -32,5 +33,10 @@ class RequestHandover extends Model
     public function request(): BelongsTo
     {
         return $this->belongsTo(Request::class);
+    }
+
+    public function fulfillments(): HasMany
+    {
+        return $this->hasMany(RequestFulfillment::class, 'handover_id');
     }
 }

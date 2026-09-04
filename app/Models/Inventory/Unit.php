@@ -263,6 +263,14 @@ class Unit extends Model
     }
 
     /**
+     * Fulfillments associated with this unit.
+     */
+    public function fulfillments(): HasMany
+    {
+        return $this->hasMany(\App\Models\Request\RequestFulfillment::class, 'unit_id');
+    }
+
+    /**
      * Accessor to get active borrowing details if unit is currently loaned.
      */
     public function getActiveBorrowingAttribute(): ?array
@@ -271,7 +279,7 @@ class Unit extends Model
             return null;
         }
 
-        $assignment = \App\Models\Request\RequestUnitAssignment::with(['requestItem.request.user'])
+        $assignment = \App\Models\Request\RequestFulfillment::with(['requestItem.request.user'])
             ->where('unit_id', $this->id)
             ->whereNull('completed_at')
             ->latest('id')

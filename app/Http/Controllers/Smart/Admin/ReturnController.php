@@ -8,7 +8,7 @@ use App\Models\Request\Request as SmartRequest;
 use App\Models\Request\RequestItem;
 use App\Models\Request\RequestReturn;
 use App\Models\Request\RequestStatusLog;
-use App\Models\Request\RequestUnitAssignment;
+use App\Models\Request\RequestFulfillment;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -95,7 +95,7 @@ class ReturnController extends Controller
         }
 
         $items = $req->items->map(function ($item) {
-            $assets = RequestUnitAssignment::where('request_item_id', $item->id)
+            $assets = RequestFulfillment::where('request_item_id', $item->id)
                 ->with('unit')
                 ->get()
                 ->pluck('unit.number')
@@ -179,7 +179,7 @@ class ReturnController extends Controller
             'logs' => $logs,
         ];
 
-        $placements = RequestUnitAssignment::whereIn('request_item_id', $req->items->pluck('id'))
+        $placements = RequestFulfillment::whereIn('request_item_id', $req->items->pluck('id'))
             ->with('unit')
             ->get()
             ->filter(fn($asn) => $asn->unit && $asn->placement)
@@ -209,7 +209,7 @@ class ReturnController extends Controller
         // Return units status back to 'tersedia'
         $requestItems = RequestItem::where('request_id', $req->id)->get();
         foreach ($requestItems as $reqItem) {
-            $assignments = RequestUnitAssignment::where('request_item_id', $reqItem->id)->get();
+            $assignments = RequestFulfillment::where('request_item_id', $reqItem->id)->get();
             foreach ($assignments as $asn) {
                 $asn->unit->update([
                     'status' => 'Tersedia',
