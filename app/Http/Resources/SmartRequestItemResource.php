@@ -80,8 +80,8 @@ class SmartRequestItemResource extends JsonResource
         }
 
         // Assigned assets / serial numbers
-        if ($this->relationLoaded('unitAssignments')) {
-            $data['assets'] = $this->unitAssignments->pluck('unit.number')->filter()->values()->toArray();
+        if ($this->relationLoaded('fulfillments')) {
+            $data['assets'] = $this->fulfillments->pluck('unit.number')->filter()->values()->toArray();
         }
 
         return $data;

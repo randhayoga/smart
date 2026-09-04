@@ -24,7 +24,7 @@ class RequestHistoryController extends Controller
         'items.barang.uom',
         'items.subcategory.category',
         'items.subcategory.barangs.uom',
-        'items.unitAssignments.unit',
+        'items.fulfillments.unit',
         'project',
         'department',
         'approval.approver',

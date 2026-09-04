@@ -18,7 +18,7 @@ class SmartRequestResource extends JsonResource
     protected const STATUS_MAP = [
         'wait' => 'Menunggu approval',
         'approve' => 'Di-approve',
-        'confirm' => 'Serah Terima',
+        'confirm' => 'Dikonfirmasi Admin',
         'handover' => 'Serah Terima',
         'borrow' => 'Dipinjam',
         'return' => 'Dipinjam',

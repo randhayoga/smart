@@ -72,7 +72,6 @@ const isSubmitting = ref(false);
 
 /** Closes the modal and resets the optional cancellation note */
 const handleClose = () => {
-  if (isSubmitting.value) return;
   emit('update:open', false);
   emit('close');
   setTimeout(() => {
@@ -85,6 +84,8 @@ const handleConfirmCancel = () => {
   if (!props.request || isSubmitting.value) return;
 
   const targetIdentifier = props.request.uuid || props.request.id;
+  handleClose();
+
   router.post(route('smart.history.cancel', targetIdentifier), {
     note: cancelNote.value
   }, {
@@ -92,7 +93,6 @@ const handleConfirmCancel = () => {
       isSubmitting.value = true;
     },
     onSuccess: () => {
-      handleClose();
       emit('success');
     },
     onFinish: () => {
@@ -103,7 +103,7 @@ const handleConfirmCancel = () => {
 </script>
 
 <template>
-  <Dialog :open="open" @update:open="val => { if (!isSubmitting) emit('update:open', val) }">
+  <Dialog :open="open" @update:open="val => emit('update:open', val)">
     <DialogContent class="sm:max-w-[50rem] rounded-[0.875rem] bg-card shadow-2xl p-0 gap-0 border border-border overflow-hidden" :show-close-button="false">
       <!-- Modal Header -->
       <div class="flex items-center justify-between pt-3 pb-2 px-4 sm:px-6 border-b border-border">
