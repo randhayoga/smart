@@ -125,6 +125,14 @@ class Lot extends Model
     }
 
     /**
+     * Fulfillments associated with this consumable lot.
+     */
+    public function fulfillments(): HasMany
+    {
+        return $this->hasMany(\App\Models\Request\RequestFulfillment::class, 'lot_id');
+    }
+
+    /**
      * Accessor to ensure number attribute is properly trimmed.
      */
     public function getNumberAttribute(?string $value): ?string
