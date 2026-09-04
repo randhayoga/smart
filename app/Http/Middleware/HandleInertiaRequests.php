@@ -43,6 +43,9 @@ class HandleInertiaRequests extends Middleware
                 'pendingAssetStatusCount' => $request->user() && in_array($request->user()->role, ['manager', 'ifs_manager'])
                     ? \App\Models\Inventory\UnitStatusApproval::where('decision', 'pending')->whereHas('unit', fn($q) => $q->where('status', 'Pending:DM'))->count()
                     : 0,
+                'pendingAdminApprovedCount' => $request->user() && ($request->user()->is_admin ?? false)
+                    ? \App\Models\Request\Request::where('status', 'approve')->count()
+                    : 0,
                 'notifications' => function () use ($request) {
                     if (! $request->user()) {
                         return [];

@@ -116,6 +116,8 @@ class RequestApprovalTest extends TestCase
             'changed_by' => $manager->id,
         ]);
 
+        $admin = AdmUser::factory()->create(['employee_id' => '252525']);
+
         // Verify in-app notification sent to requester
         $notification = $requester->notifications()->first();
         $this->assertNotNull($notification);
@@ -123,6 +125,14 @@ class RequestApprovalTest extends TestCase
         $this->assertEquals("{$manager->name} menyetujui Peminjaman Anda dan sekarang sedang diproses oleh Tim Aset.", $notification->data['message']);
         $this->assertEquals('success', $notification->data['type']);
         $this->assertEquals("/smart/history/{$req->uuid}", $notification->data['url']);
+
+        // Verify in-app notification sent to admin
+        $adminNotification = $admin->notifications()->first();
+        $this->assertNotNull($adminNotification);
+        $this->assertEquals('Peminjaman: REQ-0000001 Di-approve', $adminNotification->data['title']);
+        $this->assertEquals('Review jenis dan jumlah barang yang diminta pada halaman Inbox', $adminNotification->data['message']);
+        $this->assertEquals('info', $adminNotification->data['type']);
+        $this->assertEquals('/smart/inbox', $adminNotification->data['url']);
 
         // No rejection email should be dispatched
         Mail::assertNothingSent();

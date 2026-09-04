@@ -1189,7 +1189,7 @@ const activeStepIndex = computed(() => {
                 {{ activeItemForPlacement.category }} ({{ activeItemForPlacement.subcategory }})
               </p>
               <p class="text-xs text-foreground font-semibold">
-                Jumlah: {{ activeItemForPlacement.quantity }} {{ activeItemForPlacement.uom || 'satuan' }}
+                Jumlah diminta: {{ activeItemForPlacement.quantity }} {{ activeItemForPlacement.uom || 'satuan' }}
               </p>
             </div>
           </div>

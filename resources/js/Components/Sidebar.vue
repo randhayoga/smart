@@ -110,6 +110,7 @@ const navigation = computed<NavSection[]>(() => {
   // Get dynamic counts from shared Inertia page props
   const pendingRequestCount = (page.props.auth as any)?.pendingRequestCount ?? 0;
   const pendingAssetStatusCount = (page.props.auth as any)?.pendingAssetStatusCount ?? 0;
+  const pendingAdminApprovedCount = (page.props.auth as any)?.pendingAdminApprovedCount ?? 0;
 
   // Map the navigation items to inject badges dynamically
   return sections.map(section => ({
@@ -121,6 +122,8 @@ const navigation = computed<NavSection[]>(() => {
         badge = pendingRequestCount > 0 ? pendingRequestCount : undefined;
       } else if (item.href === '/smart/approve-status') {
         badge = pendingAssetStatusCount > 0 ? pendingAssetStatusCount : undefined;
+      } else if (item.href === '/smart/inbox') {
+        badge = pendingAdminApprovedCount > 0 ? pendingAdminApprovedCount : undefined;
       }
       
       return {

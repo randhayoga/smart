@@ -192,6 +192,15 @@ class ManagerRequestEmailApprovalTest extends TestCase
         $this->assertEquals('success', $notification->data['type']);
         $this->assertEquals("/smart/history/{$req->uuid}", $notification->data['url']);
 
+        // Admin receives in-app notification
+        $admin = AdmUser::factory()->create(['employee_id' => '252525']);
+        $adminNotification = $admin->notifications()->first();
+        $this->assertNotNull($adminNotification);
+        $this->assertEquals("{$req->type_name}: {$req->request_number} Di-approve", $adminNotification->data['title']);
+        $this->assertEquals('Review jenis dan jumlah barang yang diminta pada halaman Inbox', $adminNotification->data['message']);
+        $this->assertEquals('info', $adminNotification->data['type']);
+        $this->assertEquals('/smart/inbox', $adminNotification->data['url']);
+
         Mail::assertNothingSent();
     }
 

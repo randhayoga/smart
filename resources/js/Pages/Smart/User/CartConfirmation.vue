@@ -321,7 +321,7 @@ const handleGoToHistory = () => {
 
                 <!-- Quantity badge -->
                 <div class="shrink-0 text-right">
-                  <span class="text-[11px] sm:text-xs text-muted-foreground block mb-0.5">Jumlah:</span>
+                  <span class="text-[11px] sm:text-xs text-muted-foreground block mb-0.5">Jumlah diminta:</span>
                   <div class="text-xs sm:text-sm font-bold text-foreground bg-muted/60 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-[0.625rem] border border-border whitespace-nowrap">
                     {{ item.quantity }} {{ item.uom || 'satuan' }}
                   </div>

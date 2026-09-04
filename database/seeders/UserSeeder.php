@@ -64,7 +64,7 @@ class UserSeeder extends Seeder
             'orgchart_id' => $org->id,
             'employee_id' => '090909',
             'employee_name' => 'Proyek Manajer',
-            'email' => 'jaferid895@slotbeer.com',
+            'email' => 'valow62716@slotbeer.com',
             'active' => true,
         ]);
         AdmUser::create([
