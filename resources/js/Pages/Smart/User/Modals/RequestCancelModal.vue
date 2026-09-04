@@ -1,4 +1,8 @@
 <script setup lang="ts">
+/**
+ * Request Cancel Modal Component
+ * Confirmation dialog enabling users to cancel an active request or loan before approval.
+ */
 import { ref, computed } from 'vue';
 import { router } from '@inertiajs/vue3';
 import { Button } from '@/Components/ui/button';
@@ -66,6 +70,7 @@ const emit = defineEmits<{
 const cancelNote = ref('');
 const isSubmitting = ref(false);
 
+/** Closes the modal and resets the optional cancellation note */
 const handleClose = () => {
   if (isSubmitting.value) return;
   emit('update:open', false);
@@ -75,6 +80,7 @@ const handleClose = () => {
   }, 200);
 };
 
+/** Submits the cancellation request to the backend */
 const handleConfirmCancel = () => {
   if (!props.request || isSubmitting.value) return;
 

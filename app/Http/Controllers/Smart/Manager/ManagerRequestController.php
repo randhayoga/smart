@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Smart\Manager;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\ManagerRequestResource;
+use App\Http\Resources\SmartRequestResource;
 use App\Models\Request\Request as SmartRequest;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -29,7 +29,7 @@ class ManagerRequestController extends Controller
     ];
 
     /**
-     * Menampilkan daftar permintaan yang perlu diapprove oleh manager.
+     * Display a list of requests awaiting manager approval.
      */
     public function index(Request $request): Response
     {
@@ -41,7 +41,7 @@ class ManagerRequestController extends Controller
 
         return Inertia::render('Smart/Manager/PerluApproval', [
             'user' => $request->user(),
-            'requests' => ManagerRequestResource::collection($requests)->resolve(),
+            'requests' => SmartRequestResource::collection($requests)->resolve(),
         ]);
     }
 }

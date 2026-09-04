@@ -1,6 +1,8 @@
 <script setup lang="ts">
 /**
- * Perlu Approval page component listing pending borrow/requisition requests for manager review and bulk decision processing.
+ * Perlu Approval Page (Manager)
+ * Lists pending borrow and supply requests awaiting manager review.
+ * Supports bulk and single approval/rejection workflows, table search, and utilization filters.
  */
 import { ref, computed, watch, onMounted, onUnmounted, h } from 'vue';
 import { Head, router, usePage } from '@inertiajs/vue3';
@@ -25,7 +27,7 @@ import DataTable from '@/Components/DataTable.vue';
 import ApprovalModal from '@/Pages/Smart/Manager/Modals/ApprovalModal.vue';
 import { getRequestStatusPillClass, getRequestStatusLabel } from '@/lib/requestStatus';
 
-
+// --- Data Types & Props ---
 interface RequestItem {
   id: number;
   barang_id?: number;
@@ -77,9 +79,7 @@ watch(() => props.requests, (newVal) => {
   requests.value = [...newVal];
 }, { deep: true });
 
-// ─────────────────────────────────────────────
-// States & Filters
-// ─────────────────────────────────────────────
+// --- Filter & Search State ---
 const searchQuery = ref('');
 const typeFilter = ref('Semua tipe');
 const utilizationFilter = ref('Semua pemanfaatan');

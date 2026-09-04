@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Smart\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\AdminApprovedRequestResource;
+use App\Http\Resources\SmartRequestResource;
 use App\Models\Request\Request as SmartRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -32,7 +32,7 @@ class AdminApprovedRequestController extends Controller
     ];
 
     /**
-     * Menampilkan daftar permintaan yang berstatus 'approve' (Di-approve).
+     * Display a list of requests with 'approve' status awaiting admin review.
      */
     public function index(Request $request): Response
     {
@@ -43,12 +43,12 @@ class AdminApprovedRequestController extends Controller
 
         return Inertia::render('Smart/Admin/Inbox', [
             'user' => $request->user(),
-            'requests' => AdminApprovedRequestResource::collection($requests)->resolve(),
+            'requests' => SmartRequestResource::collection($requests)->resolve(),
         ]);
     }
 
     /**
-     * Menampilkan detail spesifik permintaan berstatus 'approve' (untuk modal detail/approval).
+     * Display specific approved request details (for detail/approval modal).
      */
     public function show(Request $request, string $id): JsonResponse|Response
     {
@@ -63,7 +63,7 @@ class AdminApprovedRequestController extends Controller
             })
             ->firstOrFail();
 
-        $resourceData = (new AdminApprovedRequestResource($req))->toArray($request);
+        $resourceData = (new SmartRequestResource($req))->toArray($request);
 
         if ($request->wantsJson()) {
             return response()->json([

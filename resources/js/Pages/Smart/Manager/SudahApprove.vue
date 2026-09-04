@@ -1,6 +1,7 @@
 <script setup lang="ts">
 /**
- * Sudah Diproses page component showing archived requisition and borrow requests that have been processed by the manager.
+ * Sudah Diproses Page (Manager)
+ * Displays historical records of requisition and borrow requests that have already been reviewed/decided by the manager.
  */
 import { ref, computed, watch, h } from 'vue';
 import { Head } from '@inertiajs/vue3';
@@ -21,6 +22,7 @@ import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
 import { getRequestStatusPillClass, getRequestStatusLabel } from '@/lib/requestStatus';
 
+// --- Data Types & Props ---
 interface RequestHistory {
   id: number;
   number: string;
@@ -48,9 +50,7 @@ watch(() => props.requests, (newVal) => {
   requests.value = [...newVal];
 }, { deep: true });
 
-// ─────────────────────────────────────────────
-// States & Filters
-// ─────────────────────────────────────────────
+// --- Filter & Search State ---
 const searchQuery = ref('');
 const typeFilter = ref('Semua tipe');
 const decisionFilter = ref('Semua keputusan');

@@ -1,4 +1,9 @@
 <script setup lang="ts">
+/**
+ * Request History Detail Page
+ * Displays full details, multi-step lifecycle stepper, item list,
+ * handover scheduling, return scheduling, and asset placement tracking for a request/loan.
+ */
 import { ref, computed, watch } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
@@ -47,12 +52,9 @@ import {
   ArrowUpDown,
   Trash2
 } from 'lucide-vue-next';
-
-// ─────────────────────────────────────────────
-// Types
-// ─────────────────────────────────────────────
 import { type RequestStatus, type RawRequestStatus } from '@/lib/requestStatus';
 
+// --- Data Types & Props ---
 interface RequestItem {
   id: number;
   barang_id?: number;
@@ -126,14 +128,10 @@ const isPeminjaman = computed(() => request.value?.type === 'peminjaman');
 const typeLabel = computed(() => isPeminjaman.value ? 'peminjaman' : 'permintaan');
 const typeLabelTitle = computed(() => isPeminjaman.value ? 'Peminjaman' : 'Permintaan');
 
-// ─────────────────────────────────────────────
-// Cancellation Modal State
-// ─────────────────────────────────────────────
+// --- Cancellation Modal State ---
 const isCancelModalOpen = ref(false);
 
-// ─────────────────────────────────────────────
-// Handover (Serah Terima) Modal & State
-// ─────────────────────────────────────────────
+// --- Handover (Serah Terima) Modal & State ---
 const isHandoverModalOpen = ref(false);
 const handoverMethod = ref('Pilih');
 const handoverDate = ref('');
@@ -143,7 +141,7 @@ const handoverLocation = ref('Ruang GA / IT Support');
 const handoverNotes = ref('');
 const errorMessage = ref('');
 
-// Parser durationDate e.g. "22/05/2026 09:00" -> Date object
+/** Parses date string format e.g. "22/05/2026 09:00" to Date object */
 const parseDurationDate = (dateStr: string) => {
   const parts = dateStr.trim().split(' ');
   if (parts.length < 2) return null;
@@ -160,7 +158,7 @@ const parseDurationDate = (dateStr: string) => {
   return new Date(year, month, day, hours, minutes);
 };
 
-// Check if request is automatically scheduled
+/** Checks whether the request is automatically scheduled (e.g. 1 day prior to start date) */
 const isAutoScheduled = computed(() => {
   const r = request.value;
   if (!r || r.type !== 'peminjaman' || !r.durationStart) return false;
@@ -214,8 +212,9 @@ const onInputChange = () => {
   errorMessage.value = '';
 };
 
+/** Submit handover scheduling settings */
 const handleSaveHandover = () => {
-  // 1. Validasi Wajib Diisi
+  // Validate required fields
   if (!handoverMethod.value || handoverMethod.value === 'Pilih') {
     errorMessage.value = 'Metode penyerahan wajib dipilih.';
     return;
@@ -249,7 +248,7 @@ const handleSaveHandover = () => {
   });
 };
 
-// Return Modal State
+// --- Return Modal & State ---
 const isReturnModalOpen = ref(false);
 const returnMethod = ref('Pilih');
 const returnDate = ref('');
@@ -275,6 +274,7 @@ const onReturnInputChange = () => {
   returnErrorMessage.value = '';
 };
 
+/** Submit return scheduling details */
 const handleSaveReturn = () => {
   if (!returnMethod.value || returnMethod.value === 'Pilih') {
     returnErrorMessage.value = 'Metode pengembalian wajib dipilih.';
@@ -309,6 +309,7 @@ const handleSaveReturn = () => {
   });
 };
 
+// --- Item Received Confirmation State ---
 const isConfirmReceivedModalOpen = ref(false);
 
 const handleConfirmReceived = () => {
@@ -319,6 +320,7 @@ const closeConfirmReceivedModal = () => {
   isConfirmReceivedModalOpen.value = false;
 };
 
+/** Mark assets as received by user */
 const confirmReceivedAction = () => {
   router.post(route('smart.history.receive', props.requestId), {}, {
     onSuccess: () => {
@@ -328,7 +330,7 @@ const confirmReceivedAction = () => {
   });
 };
 
-// Asset placement state
+// --- Asset Placement State & Modal ---
 const assetPlacements = ref<Record<string, string>>({
   ...(props.placements || {})
 });
@@ -339,7 +341,6 @@ watch(() => props.placements, (newPlacements) => {
   }
 }, { deep: true });
 
-// Placement Modal State
 const isAssetPlacementModalOpen = ref(false);
 const selectedItemForPlacement = ref<RequestItem | null>(null);
 const returnPlacementType = ref<'seragam' | 'beragam'>('seragam');
@@ -354,6 +355,7 @@ const activeItemForPlacement = computed(() => {
   return selectedItemForPlacement.value || request.value.items[0];
 });
 
+/** Open placement modal for item asset tags */
 const openAssetPlacementModal = (item: RequestItem) => {
   selectedItemForPlacement.value = item;
   searchQuery.value = '';
@@ -408,6 +410,7 @@ const paginatedAssets = computed(() => {
   return list.slice(start, start + limit);
 });
 
+/** Action to handle return initiation or concluding consumable requests */
 const handleReturnAction = () => {
   if (!requestState.value) return;
 
@@ -419,6 +422,7 @@ const handleReturnAction = () => {
   }
 };
 
+/** Save asset placement locations */
 const confirmAssetPlacement = () => {
   const item = activeItemForPlacement.value;
   if (!item || !item.assets) return;
@@ -464,9 +468,7 @@ const confirmAssetPlacement = () => {
   });
 };
 
-// ─────────────────────────────────────────────
-// Timeline / Steps Logic
-// ─────────────────────────────────────────────
+// --- Timeline & Lifecycle Stepper Logic ---
 interface TimelineStep {
   title: string;
   time?: string;
@@ -479,7 +481,7 @@ const timelineSteps = computed((): TimelineStep[] => {
   if (!r) return [];
   const steps: TimelineStep[] = [];
 
-  // Step 1: Dibuat
+  // Step 1: Created
   steps.push({
     title: `${typeLabelTitle.value} dibuat`,
     time: r.created_at ? `${formatDate(r.created_at)} 08:30` : '',

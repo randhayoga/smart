@@ -1,6 +1,7 @@
 <script setup lang="ts">
 /**
- * External Signed Approval Page component for zero-login manager decision workflow.
+ * External Signed Approval Page
+ * Allows designated managers to approve or reject requests via authenticated/signed URL tokens without logging in.
  */
 import { ref, computed } from 'vue';
 import { Head, useForm } from '@inertiajs/vue3';
@@ -15,6 +16,7 @@ import {
   ShieldCheck
 } from 'lucide-vue-next';
 
+// --- Data Types & Props ---
 interface RequestItem {
   id: number;
   barang_id?: number;
@@ -59,6 +61,7 @@ const props = defineProps<{
   request: ExternalRequest;
 }>();
 
+// --- Form & Decision State ---
 const actionNote = ref('');
 
 const form = useForm({
@@ -66,8 +69,10 @@ const form = useForm({
   note: '',
 });
 
+/** Whether the request is currently awaiting manager decision */
 const isPending = computed(() => props.request.rawStatus === 'wait');
 
+/** Submit manager approval or rejection decision */
 const submitDecision = (action: 'approve' | 'reject') => {
   form.action = action;
   form.note = actionNote.value;
@@ -77,6 +82,7 @@ const submitDecision = (action: 'approve' | 'reject') => {
   });
 };
 
+/** Formats request detail fields for display */
 const getRequestFields = (req: ExternalRequest) => {
   const fields: { label: string; value: string }[] = [
     { label: 'Nomor', value: req.number },

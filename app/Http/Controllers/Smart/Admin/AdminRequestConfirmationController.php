@@ -14,7 +14,7 @@ use Illuminate\Http\Request;
 class AdminRequestConfirmationController extends Controller
 {
     /**
-     * Memproses konfirmasi (confirm) atau penolakan (reject) permohonan oleh Admin.
+     * Process admin confirmation (confirm) or rejection (reject) decisions for requests.
      */
     public function store(Request $request, ProcessAdminConfirmation $processConfirmation): RedirectResponse
     {

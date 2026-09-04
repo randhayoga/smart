@@ -1,4 +1,8 @@
 <script setup lang="ts">
+/**
+ * Cart Success Modal Component
+ * Confirmation dialog displayed when a request or borrow submission succeeds.
+ */
 import { computed } from 'vue';
 import { Button } from '@/Components/ui/button';
 import {
@@ -53,7 +57,7 @@ const handleConfirm = () => {
       class="w-full max-w-md rounded-[0.875rem] border border-border bg-card p-6 sm:p-8 shadow-2xl flex flex-col items-center text-center gap-4"
       :show-close-button="false"
     >
-      <!-- Ikon sukses -->
+      <!-- Success Icon -->
       <div class="w-16 h-16 rounded-full bg-green-100 dark:bg-green-950/50 flex items-center justify-center">
         <CheckCircle2 class="w-9 h-9 text-green-600 dark:text-green-400" />
       </div>
@@ -67,7 +71,7 @@ const handleConfirm = () => {
         </DialogDescription>
       </div>
 
-      <!-- Tombol aksi -->
+      <!-- Action Button -->
       <div class="w-full pt-2">
         <Button
           variant="primary"

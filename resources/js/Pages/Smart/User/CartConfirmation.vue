@@ -1,4 +1,9 @@
 <script setup lang="ts">
+/**
+ * Cart Confirmation Page
+ * Handles final review and submission of borrow or consumable item requests.
+ * Gathers utilization context (corporate vs project), department/project selection, and reason.
+ */
 import { ref, computed, watch } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
@@ -23,9 +28,7 @@ import CartSuccessModal from './Modals/CartSuccessModal.vue';
 import CartErrorModal from './Modals/CartErrorModal.vue';
 import { Calendar, Clock, ChevronDown, Check } from 'lucide-vue-next';
 
-// ─────────────────────────────────────────────
-// Props (diisi dari Inertia)
-// ─────────────────────────────────────────────
+// --- Data Types & Props ---
 interface CartItem {
   id: number;
   barang_id?: number | null;
@@ -68,6 +71,7 @@ const props = withDefaults(defineProps<Props>(), {
   defaultEndTime: '',
 });
 
+// --- Utilization Options & Computed Labels ---
 const pemanfaatanOptions = [
   { value: 'corporate', label: 'Corporate' },
   { value: 'project',   label: 'Project' },
@@ -92,19 +96,17 @@ const selectedDepartemenLabel = computed(() => {
   return found ? found.label : 'Pilih Departemen';
 });
 
-// ─────────────────────────────────────────────
-// State Form
-// ─────────────────────────────────────────────
+// --- Form State ---
 const pemanfaatan = ref('corporate');
 const departemen  = ref('');
 const project     = ref('');
 const alasan      = ref('');
 
-/** Project / Departemen kondisional */
+/** Conditional flags for required utilization target */
 const isCorporateRequired = computed(() => pemanfaatan.value === 'corporate');
 const isProjectRequired   = computed(() => pemanfaatan.value === 'project');
 
-// Reset selection when changing type
+// Reset target selection when toggling utilization type
 watch(pemanfaatan, (newVal) => {
   if (newVal === 'corporate') {
     project.value = '';
@@ -113,7 +115,7 @@ watch(pemanfaatan, (newVal) => {
   }
 });
 
-/** Validasi: semua field wajib terisi */
+/** Form validation: validates required fields according to utilization type */
 const isFormValid = computed(() => {
   if (!pemanfaatan.value) return false;
   if (isCorporateRequired.value && !departemen.value) return false;
@@ -122,27 +124,29 @@ const isFormValid = computed(() => {
   return true;
 });
 
-// ─────────────────────────────────────────────
-// State modal feedback (sukses / error)
-// ─────────────────────────────────────────────
+// --- Modal & Feedback State ---
 const isSubmitted      = ref(false);
 const isSubmitting     = ref(false);
 const isErrorModalOpen = ref(false);
 const errorMessage     = ref('');
 
+/** Flag indicating whether this confirmation is for borrowing or consumable asset request */
 const isBorrow = computed(() => !!props.defaultStartDate);
 
 const pageTitle = computed(() => isBorrow.value ? 'Konfirmasi Peminjaman' : 'Konfirmasi Permintaan');
 
+/** Total cumulative quantity of all selected items */
 const totalQuantity = computed(() => {
   return props.selectedItems.reduce((acc, item) => acc + (Number(item.quantity) || 0), 0);
 });
 
 const formatDisplayDate = formatDate;
 
-// ─────────────────────────────────────────────
-// Aksi: Konfirmasi dan Minta Approval
-// ─────────────────────────────────────────────
+// --- Submission & Navigation Handlers ---
+
+/**
+ * Submits the confirmed request/loan to the backend for approval
+ */
 const handleConfirm = () => {
   if (!isFormValid.value || isSubmitting.value) return;
 
@@ -182,7 +186,7 @@ const handleConfirm = () => {
   });
 };
 
-/** Kembali ke keranjang */
+/** Navigate back to the respective shopping cart */
 const handleBack = () => {
   if (isBorrow.value) {
     router.visit(route('smart.borrow-cart'));
@@ -191,7 +195,7 @@ const handleBack = () => {
   }
 };
 
-/** Setelah sukses → pergi ke riwayat permintaan */
+/** Navigate to request history page after successful submission */
 const handleGoToHistory = () => {
   router.visit(route('smart.history'));
 };

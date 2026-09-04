@@ -26,7 +26,7 @@ use Inertia\Response;
 class ManajemenStokController extends Controller
 {
     /**
-     * Menampilkan halaman manajemen stok barang (Inventory).
+     * Display the stock inventory overview page.
      */
     public function index(Request $request): Response
     {
@@ -78,7 +78,7 @@ class ManajemenStokController extends Controller
     }
 
     /**
-     * Menampilkan halaman detail item inventaris.
+     * Display detailed item information, parent lots, and units.
      */
     public function show(Request $request, Barang $barang): Response
     {

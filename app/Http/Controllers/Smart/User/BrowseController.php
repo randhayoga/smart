@@ -15,7 +15,7 @@ use Inertia\Response;
 class BrowseController extends Controller
 {
     /**
-     * Menampilkan halaman pencarian/katalog barang (Browse).
+     * Display the item catalog search page (Browse).
      */
     public function index(Request $request): Response
     {

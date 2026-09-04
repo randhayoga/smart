@@ -1,7 +1,8 @@
 <script setup lang="ts">
 /**
- * Admin Request Confirmation & Rejection Modal component displaying request summary, item breakdown,
- * stock availability info, notes input, and confirm/reject action triggers.
+ * Admin Request Confirmation & Rejection Modal
+ * Displays request summary details, item breakdown with stock availability,
+ * optional approval/rejection notes, and submission action handlers.
  */
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { X, Loader2, ThumbsUp, Ban } from 'lucide-vue-next';
@@ -10,6 +11,7 @@ import { ScrollArea } from "@/Components/ui/scroll-area";
 import AssetItemCard from '@/Components/AssetItemCard.vue';
 import { REQUEST_STATUS_PILL_BASE } from '@/lib/requestStatus';
 
+// --- Data Types & Props ---
 interface RequestItem {
   id: number;
   barang_id?: number;
@@ -63,6 +65,7 @@ const emit = defineEmits<{
   (e: 'action', payload: { action: 'confirm' | 'reject'; note: string }): void;
 }>();
 
+// --- Form & Action State ---
 const note = ref('');
 const pendingAction = ref<'confirm' | 'reject' | null>(null);
 
@@ -73,6 +76,7 @@ watch(() => props.isOpen, (newVal) => {
   }
 });
 
+/** Trigger approval or rejection action with current note */
 const handleAction = (action: 'confirm' | 'reject') => {
   pendingAction.value = action;
   emit('action', { action, note: note.value });
@@ -85,6 +89,7 @@ interface InfoField {
   isSufficient?: boolean;
 }
 
+/** Formats request summary fields for modal display */
 const getRequestFields = (req: RequestData): InfoField[] => {
   const fields: InfoField[] = [
     { label: 'Nomor', value: req.number },

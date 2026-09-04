@@ -1,4 +1,9 @@
 <script setup lang="ts">
+/**
+ * Cart Error Modal Component
+ * Displays submission error messages when requesting or borrowing items,
+ * mapping common backend error strings to localized Indonesian messages.
+ */
 import { computed } from 'vue';
 import { Button } from '@/Components/ui/button';
 import {

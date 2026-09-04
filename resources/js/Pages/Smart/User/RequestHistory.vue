@@ -1,4 +1,9 @@
 <script setup lang="ts">
+/**
+ * Request History Page
+ * Displays a searchable, filterable list of previous requests and loans.
+ * Provides quick filters by status, type (loan vs request), and time range.
+ */
 import { ref, computed, watch } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import TableSearch from '@/Components/TableSearch.vue';
@@ -24,9 +29,7 @@ import {
   getRequestStatusLabel 
 } from '@/lib/requestStatus';
 
-// ─────────────────────────────────────────────
-// Types
-// ─────────────────────────────────────────────
+// --- Data Types & Props ---
 interface RequestItem {
   id: number;
   subcategory: string;
@@ -80,9 +83,7 @@ watch(() => props.requests, (newVal) => {
   requests.value = [...newVal];
 }, { deep: true });
 
-// ─────────────────────────────────────────────
-// State Filters & Search
-// ─────────────────────────────────────────────
+// --- Filters & Search State ---
 const searchQuery = ref('');
 const filterType = ref('Semua tipe');            // 'Semua tipe' | 'Hanya Permintaan' | 'Hanya Peminjaman'
 const filterStatus = ref('Semua status');        // 'Semua status' | 'Menunggu approval' | etc.
@@ -116,9 +117,7 @@ const timeRangeOptions = [
   { label: '30 hari terakhir', value: '30 hari terakhir' },
 ];
 
-// ─────────────────────────────────────────────
-// Filtered Data
-// ─────────────────────────────────────────────
+// --- Filtered Data ---
 const filteredRequests = computed(() => {
   return requests.value.filter(req => {
     // 1. Search Query Match
@@ -170,12 +169,11 @@ const filteredRequests = computed(() => {
   });
 });
 
-// ─────────────────────────────────────────────
-// Modal Pembatalan State
-// ─────────────────────────────────────────────
+// --- Cancellation Modal State ---
 const isCancelModalOpen = ref(false);
 const activeRequestToCancel = ref<RequestHistory | null>(null);
 
+/** Open the cancellation modal for a given request */
 const openCancelModal = (req: RequestHistory) => {
   activeRequestToCancel.value = req;
   isCancelModalOpen.value = true;
