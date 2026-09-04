@@ -160,6 +160,10 @@ class ManagerRequestEmailApprovalTest extends TestCase
         $admin = $this->createAdmin();
         $req = $this->createSmartRequestRecord($requester, $manager);
 
+        // Send initial in-app notification to manager as happens on submission
+        app(NotificationService::class)->notifyManagerNewRequest($req, $manager, 'Permintaan');
+        $this->assertEquals(1, $manager->notifications()->count());
+
         $signedUrl = URL::temporarySignedRoute(
             'smart.external-approval.action',
             now()->addHours(48),
@@ -176,6 +180,9 @@ class ManagerRequestEmailApprovalTest extends TestCase
 
         $req->refresh();
         $this->assertEquals('approve', $req->status);
+
+        // Manager's pending request in-app notification must be automatically removed
+        $this->assertEquals(0, $manager->notifications()->count());
 
         $this->assertDatabaseHas('request_approvals', [
             'request_id' => $req->id,
@@ -207,7 +214,9 @@ class ManagerRequestEmailApprovalTest extends TestCase
         $this->assertEquals('info', $adminNotification->data['type']);
         $this->assertEquals('/smart/inbox', $adminNotification->data['url']);
 
-        Mail::assertNothingSent();
+        // Only initial ManagerRequestApprovalMail was sent, no mail on approval
+        Mail::assertSent(ManagerRequestApprovalMail::class, 1);
+        Mail::assertNotSent(RequesterRequestRejectedMail::class);
     }
 
     public function test_manager_can_reject_via_external_post_action(): void
@@ -217,6 +226,10 @@ class ManagerRequestEmailApprovalTest extends TestCase
         $manager = $this->createManager();
         $requester = $this->createRequester();
         $req = $this->createSmartRequestRecord($requester, $manager);
+
+        // Send initial in-app notification to manager as happens on submission
+        app(NotificationService::class)->notifyManagerNewRequest($req, $manager, 'Peminjaman');
+        $this->assertEquals(1, $manager->notifications()->count());
 
         $signedUrl = URL::temporarySignedRoute(
             'smart.external-approval.action',
@@ -235,6 +248,9 @@ class ManagerRequestEmailApprovalTest extends TestCase
 
         $req->refresh();
         $this->assertEquals('reject', $req->status);
+
+        // Manager's pending request in-app notification must be automatically removed
+        $this->assertEquals(0, $manager->notifications()->count());
 
         $this->assertDatabaseHas('request_approvals', [
             'request_id' => $req->id,

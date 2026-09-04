@@ -325,6 +325,27 @@ class NotificationService
     }
 
     /**
+     * Delete pending request notification(s) sent to a manager once the request is approved or rejected.
+     *
+     * @param SmartRequest $request
+     * @param AdmUser|int $manager
+     */
+    public function deleteManagerRequestNotification(SmartRequest $request, AdmUser|int $manager): void
+    {
+        $managerUser = $manager instanceof AdmUser ? $manager : AdmUser::find($manager);
+        if (!$managerUser) {
+            return;
+        }
+
+        $managerUser->notifications()
+            ->where(function ($query) use ($request) {
+                $query->where('data->extra->request_id', $request->id)
+                    ->orWhere('data', 'like', '%"request_id":' . $request->id . '%');
+            })
+            ->delete();
+    }
+
+    /**
      * Send in-app notification to all Admins when a request is approved by the manager.
      *
      * @param SmartRequest $request

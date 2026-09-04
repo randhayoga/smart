@@ -91,6 +91,9 @@ class ProcessRequestApproval
                 'items.subcategory.barangs.uom',
             ]);
 
+            // Clean up the manager's pending request in-app notification so it is not left outdated
+            $this->notificationService->deleteManagerRequestNotification($req, $approverUser);
+
             if ($decision === 'approve') {
                 $this->notificationService->notifyRequesterRequestApproved($req, $approverUser);
                 $this->notificationService->notifyAdminRequestApproved($req, $approverUser);
