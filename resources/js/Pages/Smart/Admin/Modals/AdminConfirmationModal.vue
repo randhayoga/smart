@@ -10,48 +10,13 @@ import { Button } from "@/Components/ui/button";
 import { ScrollArea } from "@/Components/ui/scroll-area";
 import AssetItemCard from '@/Components/AssetItemCard.vue';
 import { REQUEST_STATUS_PILL_BASE } from '@/lib/requestStatus';
+import type { SmartRequestData, RequestModalInfoField } from '@/types/request';
+import { formatRequestModalFields } from '@/types/request';
 
 // --- Data Types & Props ---
-interface RequestItem {
-  id: number;
-  barang_id?: number;
-  subcategory: string;
-  brand: string;
-  name?: string;
-  spec: string;
-  quantity: number;
-  stockQuantity?: number;
-  stock?: number;
-  imageUrl?: string;
-  category: string;
-  assets?: string[];
-  is_consumable?: boolean;
-  uom?: string;
-  status?: string;
-}
-
-interface RequestData {
-  id: number;
-  number: string;
-  type: 'permintaan' | 'peminjaman' | string;
-  requester?: string;
-  pemanfaatan?: string;
-  pemanfaatanDetail?: string;
-  durationStart?: string;
-  durationEnd?: string;
-  durationDays?: number;
-  durationHours?: number;
-  status?: string;
-  raw_status?: string;
-  created_at?: string;
-  createdAt?: string;
-  is_stock_sufficient?: boolean;
-  items: RequestItem[];
-}
-
 interface Props {
   isOpen: boolean;
-  requests: RequestData[];
+  requests: SmartRequestData[];
   processing?: boolean;
 }
 
@@ -82,27 +47,9 @@ const handleAction = (action: 'confirm' | 'reject') => {
   emit('action', { action, note: note.value });
 };
 
-interface InfoField {
-  label: string;
-  value: string;
-  isBadge?: boolean;
-  isSufficient?: boolean;
-}
-
 /** Formats request summary fields for modal display */
-const getRequestFields = (req: RequestData): InfoField[] => {
-  const fields: InfoField[] = [
-    { label: 'Nomor', value: req.number },
-    { label: 'Pemohon', value: req.requester || '-' },
-    { label: 'Pemanfaatan', value: req.pemanfaatan === 'corporate' ? `Corporate (${req.pemanfaatanDetail || '-'})` : `Project ${req.pemanfaatanDetail || '-'}` },
-  ];
-
-  if (req.type === 'peminjaman' && req.durationStart) {
-    const durStr = req.durationEnd 
-      ? `${req.durationStart} s.d. ${req.durationEnd} (${req.durationDays || 0} hari, ${req.durationHours || 0} jam)`
-      : `${req.durationStart} s.d. - (Tanpa Tenggat Waktu)`;
-    fields.push({ label: 'Durasi', value: durStr });
-  }
+const getRequestFields = (req: SmartRequestData): RequestModalInfoField[] => {
+  const fields = formatRequestModalFields(req);
 
   const isSufficient = Boolean(req.is_stock_sufficient);
   fields.push({

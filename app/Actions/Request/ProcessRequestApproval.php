@@ -34,16 +34,17 @@ class ProcessRequestApproval
         AdmUser|int $approver,
         string $source = 'in_app'
     ): void {
-        if ($req->status !== 'wait') {
-            return;
-        }
-
         $approverUser = $approver instanceof AdmUser ? $approver : AdmUser::find($approver);
         $approverId = $approverUser?->id ?? (int) $approver;
         $approverName = $approverUser?->name ?? ($req->approver?->name ?? 'Manager');
 
-        DB::transaction(function () use ($req, $decision, $note, $approverId, $approverName, $source) {
-            $oldStatus = $req->status;
+        $executed = DB::transaction(function () use ($req, $decision, $note, $approverId, $approverName, $source) {
+            $lockedRequest = SmartRequest::where('id', $req->id)->lockForUpdate()->first();
+            if (!$lockedRequest || $lockedRequest->status !== 'wait') {
+                return false;
+            }
+
+            $oldStatus = $lockedRequest->status;
             $actionWord = $decision === 'approve' ? 'Disetujui' : 'Ditolak';
             $actionWordLower = $decision === 'approve' ? 'disetujui' : 'ditolak';
             $suffix = $source === 'email' ? ' via Email' : '';
@@ -52,7 +53,7 @@ class ProcessRequestApproval
             $defaultLogNote = "Permintaan {$actionWordLower} oleh Manager: {$approverName}{$suffix}.";
 
             RequestApproval::create([
-                'request_id' => $req->id,
+                'request_id' => $lockedRequest->id,
                 'approver_id' => $approverId,
                 'decision' => $decision,
                 'note' => !empty($note) ? $note : $defaultApprovalNote,
@@ -60,18 +61,25 @@ class ProcessRequestApproval
             ]);
 
             $newStatus = $decision === 'approve' ? 'approve' : 'reject';
-            $req->update(['status' => $newStatus]);
+            $lockedRequest->update(['status' => $newStatus]);
+            $req->status = $newStatus;
+
+            if ($decision === 'reject') {
+                $lockedRequest->items()->update(['status' => 'rejected']);
+            }
 
             RequestStatusLog::create([
-                'request_id' => $req->id,
+                'request_id' => $lockedRequest->id,
                 'status_from' => $oldStatus,
                 'status_to' => $newStatus,
                 'changed_by' => $approverId,
                 'note' => !empty($note) ? $note : $defaultLogNote,
             ]);
+
+            return true;
         });
 
-        if ($approverUser) {
+        if ($executed && $approverUser) {
             $req->loadMissing([
                 'user',
                 'department',

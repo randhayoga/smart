@@ -19,6 +19,7 @@ class RequestItem extends Model
         'quantity_requested',
         'start_date',
         'end_date',
+        'status',
     ];
 
     protected $casts = [

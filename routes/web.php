@@ -160,14 +160,14 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
         Route::post('/asset-cart', [RequestCartController::class, 'store'])->name('asset-cart.store');
         Route::put('/asset-cart/{id}', [RequestCartController::class, 'update'])->name('asset-cart.update');
         Route::delete('/asset-cart/{id}', [RequestCartController::class, 'destroy'])->name('asset-cart.destroy');
-        Route::get('/asset-cart/confirmation', [RequestCartConfirmationController::class, 'index'])->name('asset-cart.confirmation');
+        Route::get('/asset-cart/confirmation', [RequestCartConfirmationController::class, 'create'])->name('asset-cart.confirmation');
         Route::post('/asset-cart/confirmation', [RequestCartConfirmationController::class, 'store'])->name('asset-cart.confirmation.store');
 
         Route::get('/borrow-cart', [BorrowCartController::class, 'index'])->name('borrow-cart');
         Route::post('/borrow-cart', [BorrowCartController::class, 'store'])->name('borrow-cart.store');
         Route::put('/borrow-cart/{id}', [BorrowCartController::class, 'update'])->name('borrow-cart.update');
         Route::delete('/borrow-cart/{id}', [BorrowCartController::class, 'destroy'])->name('borrow-cart.destroy');
-        Route::get('/borrow-cart/confirmation', [BorrowCartConfirmationController::class, 'index'])->name('borrow-cart.confirmation');
+        Route::get('/borrow-cart/confirmation', [BorrowCartConfirmationController::class, 'create'])->name('borrow-cart.confirmation');
         Route::post('/borrow-cart/confirmation', [BorrowCartConfirmationController::class, 'store'])->name('borrow-cart.confirmation.store');
         Route::get('/history', [RequestHistoryController::class, 'index'])->name('history');
         Route::get('/history/{request:uuid}', [RequestHistoryController::class, 'show'])->name('history.show');

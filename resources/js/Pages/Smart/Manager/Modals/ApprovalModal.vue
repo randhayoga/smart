@@ -8,47 +8,14 @@ import { X, Loader2 } from 'lucide-vue-next';
 import { Button } from "@/Components/ui/button";
 import { ScrollArea } from "@/Components/ui/scroll-area";
 import AssetItemCard from '@/Components/AssetItemCard.vue';
+import type { SmartRequestData } from '@/types/request';
+import { formatRequestModalFields } from '@/types/request';
 
 // --- Data Types & Props ---
-interface RequestItem {
-  id: number;
-  barang_id?: number;
-  subcategory: string;
-  brand: string;
-  name?: string;
-  spec: string;
-  quantity: number;
-  stockQuantity?: number;
-  imageUrl?: string;
-  category: string;
-  assets?: string[];
-  is_consumable?: boolean;
-  uom?: string;
-  status?: string;
-}
-
-interface RequestData {
-  id: number;
-  number: string;
-  type: 'permintaan' | 'peminjaman' | string;
-  requester?: string;
-  pemanfaatan?: string;
-  pemanfaatanDetail?: string;
-  durationStart?: string;
-  durationEnd?: string;
-  durationDays?: number;
-  durationHours?: number;
-  status?: string;
-  raw_status?: string;
-  created_at?: string;
-  createdAt?: string;
-  items: RequestItem[];
-}
-
 interface Props {
   isOpen: boolean;
   actionType: 'approve' | 'reject' | 'approved' | 'rejected' | string;
-  requests: RequestData[];
+  requests: SmartRequestData[];
   processing?: boolean;
 }
 
@@ -85,21 +52,8 @@ const handleConfirm = () => {
 };
 
 /** Formats request summary fields for display in modal */
-const getRequestFields = (req: RequestData) => {
-  const fields: { label: string; value: string }[] = [
-    { label: 'Nomor', value: req.number },
-    { label: 'Pemohon', value: req.requester || '-' },
-    { label: 'Pemanfaatan', value: req.pemanfaatan === 'corporate' ? `Corporate (${req.pemanfaatanDetail || '-'})` : `Project ${req.pemanfaatanDetail || '-'}` },
-  ];
-
-  if (req.type === 'peminjaman' && req.durationStart) {
-    const durStr = req.durationEnd 
-      ? `${req.durationStart} s.d. ${req.durationEnd} (${req.durationDays || 0} hari, ${req.durationHours || 0} jam)`
-      : `${req.durationStart} s.d. - (Tanpa Tenggat Waktu)`;
-    fields.push({ label: 'Durasi', value: durStr });
-  }
-
-  return fields;
+const getRequestFields = (req: SmartRequestData) => {
+  return formatRequestModalFields(req);
 };
 
 const multipleRequestsLabel = computed(() => {

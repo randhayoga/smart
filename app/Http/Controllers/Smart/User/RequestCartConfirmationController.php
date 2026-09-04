@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Smart\User;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Smart\SubmitConsumableCartRequest;
 use App\Models\Cart\ConsumableBasket;
 use App\Models\HrdOrgchart;
 use App\Models\TbProject;
@@ -91,28 +92,9 @@ class RequestCartConfirmationController extends Controller
     /**
      * Process confirmation of consumable supply request.
      */
-    public function store(Request $request, RequestSubmissionService $submissionService): RedirectResponse
+    public function store(SubmitConsumableCartRequest $request, RequestSubmissionService $submissionService): RedirectResponse
     {
-        $validated = $request->validate([
-            'items'        => 'required|array|min:1',
-            'items.*.id'   => 'required|integer',
-            'pemanfaatan'  => 'required|string|in:corporate,project',
-            'departemen'   => 'required_if:pemanfaatan,corporate|nullable|exists:hrd_orgcharts,id',
-            'project'      => 'required_if:pemanfaatan,project|nullable|exists:tb_projects,id',
-            'alasan'       => 'required|string|max:2000',
-        ], [
-            'items.required' => 'Barang yang dipilih wajib ada.',
-            'items.min' => 'Pilih minimal satu barang.',
-            'pemanfaatan.required' => 'Pemanfaatan wajib dipilih.',
-            'departemen.required_if' => 'Departemen wajib dipilih untuk pemanfaatan corporate.',
-            'departemen.exists' => 'Departemen yang dipilih tidak valid.',
-            'project.required_if' => 'Project wajib dipilih untuk pemanfaatan project.',
-            'project.exists' => 'Project yang dipilih tidak valid.',
-            'alasan.required' => 'Alasan permintaan wajib diisi.',
-            'alasan.max' => 'Alasan permintaan maksimal 2000 karakter.',
-        ]);
-
-        $submissionService->submit($request->user(), $validated, 'consumable');
+        $submissionService->submit($request->user(), $request->validated(), 'consumable');
 
         return redirect()->back()->with('success', 'Permintaan berhasil dikirim dan sedang menunggu approval.');
     }

@@ -36,6 +36,7 @@ class RequestCancellationController extends Controller
         DB::transaction(function () use ($request, $httpRequest, $validated, $userName) {
             $oldStatus = $request->status;
             $request->update(['status' => 'cancel']);
+            $request->items()->update(['status' => 'cancelled']);
 
             RequestStatusLog::create([
                 'request_id' => $request->id,

@@ -19,6 +19,7 @@ class ManagerApprovedRequestController extends Controller
      */
     protected array $relations = [
         'user',
+        'items',
         'approval.approver',
         'project',
         'department',

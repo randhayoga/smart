@@ -228,6 +228,12 @@ const handleSaveHandover = () => {
     return;
   }
 
+  if (!route().has('smart.history.handover')) {
+    toast.info('Fitur serah terima akan tersedia pada tahap berikutnya.');
+    closeHandoverModal();
+    return;
+  }
+
   router.post(route('smart.history.handover', props.requestId), {
     method: handoverMethod.value,
     scheduled_date: `${handoverDate.value} ${handoverTimeOnly.value}`,
@@ -289,6 +295,12 @@ const handleSaveReturn = () => {
     return;
   }
 
+  if (!route().has('smart.history.return')) {
+    toast.info('Fitur pengembalian akan tersedia pada tahap berikutnya.');
+    closeReturnModal();
+    return;
+  }
+
   router.post(route('smart.history.return', props.requestId), {
     method: returnMethod.value,
     scheduled_date: `${returnDate.value} ${returnTimeOnly.value}`,
@@ -322,6 +334,12 @@ const closeConfirmReceivedModal = () => {
 
 /** Mark assets as received by user */
 const confirmReceivedAction = () => {
+  if (!route().has('smart.history.receive')) {
+    toast.info('Fitur konfirmasi penerimaan akan tersedia pada tahap berikutnya.');
+    closeConfirmReceivedModal();
+    return;
+  }
+
   router.post(route('smart.history.receive', props.requestId), {}, {
     onSuccess: () => {
       toast.success('Aset berhasil dikonfirmasi telah diterima!');
@@ -446,6 +464,12 @@ const confirmAssetPlacement = () => {
     item.assets.forEach(asset => {
       tempPlacements[asset] = beragamPlacementLocations.value[asset];
     });
+  }
+
+  if (!route().has('smart.placement.update')) {
+    toast.info('Fitur penempatan aset akan tersedia pada tahap berikutnya.');
+    isAssetPlacementModalOpen.value = false;
+    return;
   }
 
   router.post(route('smart.placement.update'), {

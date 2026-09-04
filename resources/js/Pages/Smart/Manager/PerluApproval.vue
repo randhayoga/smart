@@ -26,54 +26,17 @@ import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
 import ApprovalModal from '@/Pages/Smart/Manager/Modals/ApprovalModal.vue';
 import { getRequestStatusPillClass, getRequestStatusLabel } from '@/lib/requestStatus';
+import type { SmartRequestData } from '@/types/request';
 
 // --- Data Types & Props ---
-interface RequestItem {
-  id: number;
-  barang_id?: number;
-  subcategory: string;
-  brand: string;
-  name?: string;
-  spec: string;
-  quantity: number;
-  stockQuantity?: number;
-  imageUrl?: string;
-  category: string;
-  uom?: string;
-}
-
-interface RequestHistory {
-  id: number;
-  number: string;
-  type: 'permintaan' | 'peminjaman';
-  requester: string;
-  pemanfaatan: 'corporate' | 'project';
-  pemanfaatanDetail: string;
-  durationStart?: string;
-  durationEnd?: string;
-  durationDays?: number;
-  durationHours?: number;
-  status: string;
-  raw_status: string;
-  created_at: string;
-  items: RequestItem[];
-  lifecycles: Array<{
-    waktu: string;
-    status: string;
-    aktor: string;
-    durasi: string | number;
-    catatan: string;
-  }>;
-}
-
 interface Props {
   user: any;
-  requests: RequestHistory[];
+  requests: SmartRequestData[];
 }
 
 const props = defineProps<Props>();
 
-const requests = ref<RequestHistory[]>([...props.requests]);
+const requests = ref<SmartRequestData[]>([...props.requests]);
 
 watch(() => props.requests, (newVal) => {
   requests.value = [...newVal];
@@ -128,7 +91,7 @@ watch([typeFilter, utilizationFilter], () => {
   }
 });
 
-const columns: ColumnDef<RequestHistory>[] = [
+const columns: ColumnDef<SmartRequestData>[] = [
   {
     id: 'select',
     size: 40,
@@ -292,10 +255,10 @@ const isConfirmModalOpen = ref(false);
 const confirmActionType = ref<'approve' | 'reject'>('approve');
 const confirmNote = ref('');
 const isBulkAction = ref(false);
-const selectedSingleRequest = ref<RequestHistory | null>(null);
+const selectedSingleRequest = ref<SmartRequestData | null>(null);
 const processing = ref(false);
 
-const openConfirmModal = (type: 'approve' | 'reject', bulk: boolean, singleReq?: RequestHistory) => {
+const openConfirmModal = (type: 'approve' | 'reject', bulk: boolean, singleReq?: SmartRequestData) => {
   confirmActionType.value = type;
   isBulkAction.value = bulk;
   selectedSingleRequest.value = singleReq || null;

@@ -45,13 +45,13 @@ export function getRequestStatusLabel(rawOrStatus: string | null | undefined): s
   if (s === 'wait' || s === 'menunggu approval' || s === 'menunggu persetujuan') {
     return 'Menunggu approval';
   }
-  if (s === 'approve' || s === 'approved' || s === 'disetujui' || s === 'di-approve' || s === 'diapprove') {
+  if (s === 'approve' || s === 'approved' || s === 'disetujui' || s === 'di-approve' || s === 'diapprove' || s === 'di-approve manager') {
     return 'Di-approve';
   }
   if (s === 'reject' || s === 'rejected' || s === 'ditolak') {
     return 'Ditolak';
   }
-  if (s === 'confirm' || s === 'handover' || s === 'serah terima') {
+  if (s === 'confirm' || s === 'handover' || s === 'serah terima' || s === 'dikonfirmasi' || s === 'dikonfirmasi admin') {
     return 'Serah Terima';
   }
   if (s === 'borrow' || s === 'return' || s === 'dipinjam' || s === 'sedang dipinjam') {
