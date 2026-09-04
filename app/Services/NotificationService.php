@@ -325,6 +325,36 @@ class NotificationService
     }
 
     /**
+     * Send in-app notification to all Admins when a request is approved by the manager.
+     *
+     * @param SmartRequest $request
+     * @param AdmUser $manager
+     */
+    public function notifyAdminRequestApproved(SmartRequest $request, AdmUser $manager): void
+    {
+        $request->loadMissing(['user', 'items']);
+        $type = $request->type_name;
+        $title = "{$type}: {$request->request_number} Di-approve";
+        $message = "Review jenis dan jumlah barang yang diminta pada halaman Inbox";
+
+        $this->sendToRole(
+            'admin',
+            $title,
+            $message,
+            'info',
+            '/smart/inbox',
+            [
+                'request_id' => $request->id,
+                'request_uuid' => $request->uuid,
+                'request_number' => $request->request_number,
+                'type' => $type,
+                'manager_id' => $manager->id,
+                'manager_name' => $manager->name,
+            ]
+        );
+    }
+
+    /**
      * Send in-app notification to the requester when their request is approved by the manager.
      *
      * @param SmartRequest $request

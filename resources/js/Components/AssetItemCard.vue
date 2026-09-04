@@ -53,7 +53,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  quantityLabel: 'Jumlah',
+  quantityLabel: 'Jumlah diminta',
   imageUrl: null,
   placements: () => ({}),
   stock: null,

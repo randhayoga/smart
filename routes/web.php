@@ -11,7 +11,8 @@
 use App\Http\Controllers\Smart\Admin\DashboardController;
 use App\Http\Controllers\Smart\Admin\ManajemenStokController;
 use App\Http\Controllers\Smart\Admin\MasterController;
-use App\Http\Controllers\Smart\Admin\InboxController;
+use App\Http\Controllers\Smart\Admin\AdminApprovedRequestController;
+use App\Http\Controllers\Smart\Admin\AdminRequestConfirmationController;
 use App\Http\Controllers\Smart\Admin\HandoverController;
 use App\Http\Controllers\Smart\Admin\BorrowedController;
 use App\Http\Controllers\Smart\Admin\ReturnController;
@@ -123,10 +124,9 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
 
         Route::get('/inventory/{barang}', [ManajemenStokController::class, 'show'])->name('inventory.show');
 
-        Route::get('/inbox', [InboxController::class, 'index'])->name('inbox');
-        Route::get('/inbox/{id}', [InboxController::class, 'show'])->name('inbox.show');
-        Route::post('/inbox/{id}/action', [InboxController::class, 'action'])->name('inbox.action');
-        Route::get('/partial', [InboxController::class, 'partial'])->name('partial');
+        Route::get('/inbox', [AdminApprovedRequestController::class, 'index'])->name('inbox');
+        Route::get('/inbox/{id}', [AdminApprovedRequestController::class, 'show'])->name('inbox.show');
+        Route::post('/inbox/confirmation', [AdminRequestConfirmationController::class, 'store'])->name('inbox.confirmation');
         Route::get('/handover', [HandoverController::class, 'index'])->name('handover');
         Route::get('/handover/{id}', [HandoverController::class, 'show'])->name('handover.show');
         Route::post('/handover/{id}/allocate', [HandoverController::class, 'allocate'])->name('handover.allocate');

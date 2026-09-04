@@ -171,11 +171,13 @@ erDiagram
         int unit_id FK ""  
         int requester_id FK "ADM_USER's id"  
         int approver_id FK "nullable | ADM_USER's id"  
-        varchar proposed_status  ""  
-        varchar previous_status  ""  
+        varchar proposed_condition  ""  
+        varchar previous_condition  ""  
+        varchar previous_status  "nullable"  
         varchar memo_url  ""  
-        varchar lost_doc_url "nullable"
-        varchar decision  "default to pending"  
+        varchar lost_doc_url  "nullable"  
+        varchar bod_boc_approval_url  "nullable"  
+        varchar decision  "default to pending | pending, approved, rejected"  
         text note  "nullable"  
         datetime requested_at  ""  
         datetime decided_at  "nullable"  
@@ -185,6 +187,7 @@ erDiagram
         int id PK ""  
         int barang_id FK "nullable"  
         int lot_id FK "nullable"  
+        int unit_id FK "nullable"  
         int user_id FK "ADM_USER's id"  
         varchar action_type  "stock_in, stock_out, adjustment, relocation"  
         int quantity_change  "default to 0"  
@@ -198,12 +201,18 @@ erDiagram
     UNIT_LIFECYCLE {
         int id PK ""  
         int unit_id FK ""  
-        varchar status  "available | repair | lost | broken | inactive"  
+        varchar action_type  "registrasi, perubahan_status, perubahan_kondisi, pemindahan, peminjaman, pengembalian, pemeliharaan"  
+        varchar status  ""  
+        varchar condition  ""  
+        int location_id FK ""  
+        int floor_id FK "nullable"  
+        int room_id FK "nullable"  
         datetime start_date  ""  
         datetime end_date  "nullable"  
-        int requester_id FK "ADM_USER's id"  
-        int approver_id FK "nullable | ADM_USER's id"  
+        int actor_id FK "nullable | ADM_USER's id"  
         text note  "nullable"  
+        json previous_state  "nullable"  
+        json new_state  "nullable"  
     }
 
     CONSUMABLE_BASKET {
@@ -226,6 +235,7 @@ erDiagram
 
     REQUEST {
         int id PK ""  
+        uuid uuid UK ""  
         char_11 request_number UK ""  
         int user_id FK "ADM_USER's id"  
         int approver_id FK "ADM_USER's id"  
@@ -239,8 +249,8 @@ erDiagram
     REQUEST_ITEM {
         int id PK ""  
         int request_id FK ""  
-        int subcategory_id FK ""  
-        int barang_id FK ""  
+        int subcategory_id FK "nullable"  
+        int barang_id FK "nullable"  
         int quantity_requested  ""  
         datetime start_date  "nullable | assets only"  
         datetime end_date  "nullable | assets only"  
@@ -257,6 +267,7 @@ erDiagram
         int quantity_fulfilled  "defaults to 1 for assets"  
         datetime assigned_at  ""  
         datetime completed_at  "nullable"  
+        varchar placement  "nullable"  
     }
 
     REQUEST_APPROVAL {
@@ -272,7 +283,7 @@ erDiagram
         int id PK ""  
         int request_id FK ""  
         int admin_id FK "ADM_USER's id"  
-        varchar action  "confirm | reject | pending"  
+        varchar action  "confirm | reject"  
         text note  "nullable"  
         datetime decided_at  ""  
     }
@@ -390,9 +401,12 @@ erDiagram
     ADM_USER||--o{REQUEST_STATUS_LOG:"actored"
     BARANG||--o{INVENTORY_LOG:"logged"
     LOT||--o{INVENTORY_LOG:"logged"
+    UNIT||--o{INVENTORY_LOG:"logged"
     UNIT||--o{UNIT_LIFECYCLE:"tracks lifecycle of"
-    ADM_USER||--o{UNIT_LIFECYCLE:"requests lifecycle"
-    ADM_USER||--o{UNIT_LIFECYCLE:"approves lifecycle"
+    LOCATION||--o{UNIT_LIFECYCLE:"location during lifecycle"
+    FLOOR||--o{UNIT_LIFECYCLE:"floor during lifecycle"
+    ROOM||--o{UNIT_LIFECYCLE:"room during lifecycle"
+    ADM_USER||--o{UNIT_LIFECYCLE:"actor"
     UNIT||--o{UNIT_STATUS_APPROVAL:"has pending changes"
     ADM_USER||--o{UNIT_STATUS_APPROVAL:"requests status change"
     ADM_USER||--o{UNIT_STATUS_APPROVAL:"decides status change"

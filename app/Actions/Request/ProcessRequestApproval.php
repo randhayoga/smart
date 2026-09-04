@@ -85,6 +85,7 @@ class ProcessRequestApproval
 
             if ($decision === 'approve') {
                 $this->notificationService->notifyRequesterRequestApproved($req, $approverUser);
+                $this->notificationService->notifyAdminRequestApproved($req, $approverUser);
             } else {
                 $this->notificationService->notifyRequesterRequestRejected($req, $approverUser, $note);
             }

@@ -29,6 +29,7 @@ export const buttonVariants = cva(
         "more-round-warning": "bg-amber-500 hover:opacity-70 text-white rounded-[14px] shadow-sm",
         warning: "bg-amber-500 hover:opacity-70 text-white rounded-lg shadow-sm",
         success: "bg-[#66BB6A] hover:opacity-70 text-white shadow-sm rounded-[14px]",
+        view: "bg-cyan-500 hover:opacity-70 text-white shadow-sm rounded-[14px]",
       },
       size: {
         "default": "h-9 px-4 py-2",
