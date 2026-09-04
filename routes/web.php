@@ -13,6 +13,11 @@ use App\Http\Controllers\Smart\Admin\ManajemenStokController;
 use App\Http\Controllers\Smart\Admin\MasterController;
 use App\Http\Controllers\Smart\Admin\AdminApprovedRequestController;
 use App\Http\Controllers\Smart\Admin\AdminRequestConfirmationController;
+use App\Http\Controllers\Smart\Admin\AdminConfirmedRequestController;
+use App\Http\Controllers\Smart\Admin\AdminPartialRequestController;
+use App\Http\Controllers\Smart\Admin\AdminRequestFulfillmentController;
+use App\Http\Controllers\Smart\Admin\RequestItemUnitAssignmentController;
+use App\Http\Controllers\Smart\Admin\RequestFulfillmentConfirmationController;
 use App\Http\Controllers\Smart\Admin\HandoverController;
 use App\Http\Controllers\Smart\Admin\BorrowedController;
 use App\Http\Controllers\Smart\Admin\ReturnController;
@@ -127,6 +132,17 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
         Route::get('/inbox', [AdminApprovedRequestController::class, 'index'])->name('inbox');
         Route::get('/inbox/{id}', [AdminApprovedRequestController::class, 'show'])->name('inbox.show');
         Route::post('/inbox/confirmation', [AdminRequestConfirmationController::class, 'store'])->name('inbox.confirmation');
+
+        // Request Fulfillment (Unit Assignment & Lot Allocation)
+        Route::prefix('fulfillment')->name('fulfillment.')->group(function () {
+            Route::get('/', [AdminConfirmedRequestController::class, 'index'])->name('index');
+            Route::get('/{id}', [AdminRequestFulfillmentController::class, 'show'])->name('show');
+            Route::post('/items/{item}/assign', [RequestItemUnitAssignmentController::class, 'store'])->name('items.assign');
+            Route::post('/{id}/confirm', [RequestFulfillmentConfirmationController::class, 'store'])->name('confirm');
+        });
+
+        // Partially Fulfilled Requests Page
+        Route::get('/partial', [AdminPartialRequestController::class, 'index'])->name('partial.index');
         Route::get('/handover', [HandoverController::class, 'index'])->name('handover');
         Route::get('/handover/{id}', [HandoverController::class, 'show'])->name('handover.show');
         Route::post('/handover/{id}/allocate', [HandoverController::class, 'allocate'])->name('handover.allocate');
