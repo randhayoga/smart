@@ -1,6 +1,8 @@
 <script setup lang="ts">
 /**
- * Manager Approval Detail Modal component displaying pending/decided asset deactivation details and audit trail logs.
+ * Manager Approval Status Modal Component
+ * Displays full asset specification, registration history, location, and comprehensive audit trail
+ * for assets pending disposal or already decided.
  */
 import { ref, watch } from 'vue';
 import { X, FileText, ThumbsUp, Ban } from 'lucide-vue-next';
@@ -10,6 +12,7 @@ import Tabs from '@/Components/Tabs.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import JejakAuditTab from '@/Pages/Smart/MultiRoles/Tabs/JejakAuditTab.vue';
 
+// --- Props & Emits ---
 interface Props {
   open: boolean;
   approval: any;
@@ -23,6 +26,7 @@ const emit = defineEmits<{
   (e: 'reject'): void;
 }>();
 
+// --- Tab & Helper State ---
 const detailActiveTab = ref('Detail Aset');
 
 watch(() => props.open, (newVal) => {
@@ -31,6 +35,7 @@ watch(() => props.open, (newVal) => {
   }
 });
 
+/** Determines whether the given asset belongs to vehicle category */
 const isVehicle = (item: any) => {
   if (!item) return false;
   const category = (item.category || '').toLowerCase();

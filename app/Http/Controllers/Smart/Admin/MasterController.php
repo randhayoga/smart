@@ -22,7 +22,7 @@ use Inertia\Response;
 class MasterController extends Controller
 {
     /**
-     * Menampilkan halaman manajemen data master.
+     * Display the centralized master data management page.
      */
     public function index(Request $request): Response
     {

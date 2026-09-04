@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\DB;
 class RequestCancellationController extends Controller
 {
     /**
-     * Membatalkan permintaan yang masih berstatus menunggu approval (wait).
+     * Cancel a request that is still pending approval (status: wait).
      */
     public function store(Request $httpRequest, SmartRequest $request): RedirectResponse
     {

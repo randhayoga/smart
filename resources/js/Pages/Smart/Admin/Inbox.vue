@@ -1,6 +1,8 @@
 <script setup lang="ts">
 /**
- * Admin Inbox page component listing approved requests awaiting Admin confirmation or rejection.
+ * Admin Inbox Page
+ * Lists user-submitted requests that have been approved by managers and await final Admin confirmation or rejection.
+ * Supports individual review, bulk confirmation/rejection, search, and categorization filters.
  */
 import { ref, computed, watch, onMounted, onUnmounted, h } from 'vue';
 import { Head, router, usePage } from '@inertiajs/vue3';
@@ -24,6 +26,7 @@ import DataTable from '@/Components/DataTable.vue';
 import AdminConfirmationModal from '@/Pages/Smart/Admin/Modals/AdminConfirmationModal.vue';
 import { REQUEST_STATUS_PILL_BASE } from '@/lib/requestStatus';
 
+// --- Data Types & Props ---
 interface RequestItem {
   id: number;
   barang_id?: number;
@@ -70,9 +73,7 @@ watch(() => props.requests, (newVal) => {
   requests.value = [...newVal];
 }, { deep: true });
 
-// ─────────────────────────────────────────────
-// States & Filters
-// ─────────────────────────────────────────────
+// --- Filter & Search State ---
 const searchQuery = ref('');
 const typeFilter = ref('Semua tipe');
 const utilizationFilter = ref('Semua pemanfaatan');

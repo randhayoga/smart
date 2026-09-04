@@ -14,7 +14,7 @@ use Illuminate\Http\Request;
 class ManagerRequestApprovalController extends Controller
 {
     /**
-     * Memproses persetujuan (approve) atau penolakan (reject) permohonan oleh manager.
+     * Process manager approval (approve) or rejection (reject) decisions for requests.
      */
     public function store(Request $request, ProcessRequestApproval $processApproval): RedirectResponse
     {

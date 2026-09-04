@@ -1,6 +1,7 @@
 <script setup lang="ts">
 /**
- * Sudah Approve Status page component displaying historical manager decisions on asset disposal and status changes.
+ * Sudah Approve Status Page (Manager)
+ * Displays historical records of manager decisions regarding asset disposal, deactivation, and condition changes.
  */
 import { ref, computed, watch, h, onMounted, onUnmounted } from 'vue';
 import { Head } from '@inertiajs/vue3';
@@ -28,6 +29,7 @@ import DataTable from '@/Components/DataTable.vue';
 import Combobox from '@/Components/Combobox.vue';
 import ApprovalStatusModal from './Modals/ApprovalStatusModal.vue';
 
+// --- Data Types & Props ---
 interface AuditTrail {
   waktu: string;
   status: string;
@@ -93,9 +95,7 @@ interface Props {
 
 const props = defineProps<Props>();
 
-// ─────────────────────────────────────────────
-// States & Filters
-// ─────────────────────────────────────────────
+// --- Filter & Search State ---
 const searchQuery = ref('');
 const subcategoryFilter = ref('');
 const decisionFilter = ref('Semua keputusan');

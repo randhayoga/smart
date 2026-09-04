@@ -1,6 +1,8 @@
 <script setup lang="ts">
 /**
- * Perlu Approve Status page component managing pending asset disposal/deactivation requests awaiting manager approval.
+ * Perlu Approve Status Page (Manager)
+ * Manages pending asset disposal, deactivation, and status-change requests awaiting manager decision.
+ * Includes single and bulk approval/rejection, supporting documentation viewer, and audit trail inspection.
  */
 import { ref, computed, watch, h, onMounted, onUnmounted } from 'vue';
 import { Head, router, usePage } from '@inertiajs/vue3';
@@ -30,6 +32,7 @@ import DataTable from '@/Components/DataTable.vue';
 import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal.vue';
 import ApprovalStatusModal from './Modals/ApprovalStatusModal.vue';
 
+// --- Data Types & Helpers ---
 interface AuditTrail {
   waktu: string;
   status: string;
@@ -39,6 +42,7 @@ interface AuditTrail {
   catatan: string;
 }
 
+/** Formats duration string into readable days, months, and years */
 const formatDurasi = (val: string | number) => {
   if (val === null || val === undefined || val === '-' || val === '') return '-';
 
@@ -132,9 +136,7 @@ interface Props {
 
 const props = defineProps<Props>();
 
-// ─────────────────────────────────────────────
-// States & Filters
-// ─────────────────────────────────────────────
+// --- Filter & Search State ---
 const searchQuery = ref('');
 const categoryFilter = ref('Semua kategori');
 const kondisiFilter = ref('Semua kondisi');

@@ -14,7 +14,7 @@ use Inertia\Response;
 class UserDashboardController extends Controller
 {
     /**
-     * Menampilkan halaman dashboard pengguna.
+     * Display the user dashboard overview page.
      */
     public function index(Request $request): Response|RedirectResponse
     {

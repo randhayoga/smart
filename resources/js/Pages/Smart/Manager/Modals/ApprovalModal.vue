@@ -1,6 +1,7 @@
 <script setup lang="ts">
 /**
- * Bulk & Single Approval Modal component displaying request summary, item breakdown, and decision notes.
+ * Manager Approval Modal Component
+ * Handles single or bulk review, item breakdown inspection, and approval/rejection confirmation with optional notes.
  */
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { X, Loader2 } from 'lucide-vue-next';
@@ -8,6 +9,7 @@ import { Button } from "@/Components/ui/button";
 import { ScrollArea } from "@/Components/ui/scroll-area";
 import AssetItemCard from '@/Components/AssetItemCard.vue';
 
+// --- Data Types & Props ---
 interface RequestItem {
   id: number;
   barang_id?: number;
@@ -61,6 +63,7 @@ const emit = defineEmits<{
   (e: 'confirm', note: string): void;
 }>();
 
+// --- State & Form Handlers ---
 const note = ref('');
 
 watch(() => props.isOpen, (newVal) => {
@@ -81,6 +84,7 @@ const handleConfirm = () => {
   emit('confirm', note.value);
 };
 
+/** Formats request summary fields for display in modal */
 const getRequestFields = (req: RequestData) => {
   const fields: { label: string; value: string }[] = [
     { label: 'Nomor', value: req.number },
