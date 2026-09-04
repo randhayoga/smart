@@ -21,30 +21,17 @@ import TableSearch from '@/Components/TableSearch.vue';
 import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
 import { getRequestStatusPillClass, getRequestStatusLabel } from '@/lib/requestStatus';
+import type { SmartRequestData } from '@/types/request';
 
 // --- Data Types & Props ---
-interface RequestHistory {
-  id: number;
-  number: string;
-  type: 'permintaan' | 'peminjaman';
-  requester: string;
-  pemanfaatan: 'corporate' | 'project';
-  pemanfaatanDetail: string;
-  status: string;
-  raw_status: string;
-  created_at: string;
-  approval_by: string | null;
-  approval_at: string | null;
-}
-
 interface Props {
   user: any;
-  requests: RequestHistory[];
+  requests: SmartRequestData[];
 }
 
 const props = defineProps<Props>();
 
-const requests = ref<RequestHistory[]>([...props.requests]);
+const requests = ref<SmartRequestData[]>([...props.requests]);
 
 watch(() => props.requests, (newVal) => {
   requests.value = [...newVal];
@@ -89,7 +76,7 @@ const computedPageSize = computed(() => {
   return parseInt(rowsPerPage.value, 10);
 });
 
-const columns: ColumnDef<RequestHistory>[] = [
+const columns: ColumnDef<SmartRequestData>[] = [
   {
     accessorKey: 'number',
     header: ({ column }) => {

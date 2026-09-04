@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Smart\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\SmartRequestItemResource;
 use App\Http\Resources\SmartRequestResource;
 use App\Models\Request\Request as SmartRequest;
+use App\Services\InventoryStockService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -34,23 +36,31 @@ class AdminApprovedRequestController extends Controller
     /**
      * Display a list of requests with 'approve' status awaiting admin review.
      */
-    public function index(Request $request): Response
+    public function index(Request $request, InventoryStockService $stockService): Response
     {
         $requests = SmartRequest::with($this->relations)
             ->where('status', 'approve')
             ->orderBy('id', 'desc')
             ->get();
 
+        $allItems = $requests->pluck('items')->flatten();
+        $stockMap = $stockService->getBatchAvailableStock($allItems);
+        SmartRequestItemResource::setBatchStockMap($stockMap);
+
+        $resolvedRequests = SmartRequestResource::collection($requests)->resolve();
+
+        SmartRequestItemResource::setBatchStockMap(null);
+
         return Inertia::render('Smart/Admin/Inbox', [
             'user' => $request->user(),
-            'requests' => SmartRequestResource::collection($requests)->resolve(),
+            'requests' => $resolvedRequests,
         ]);
     }
 
     /**
      * Display specific approved request details (for detail/approval modal).
      */
-    public function show(Request $request, string $id): JsonResponse|Response
+    public function show(Request $request, string $id, InventoryStockService $stockService): JsonResponse|Response
     {
         $req = SmartRequest::with($this->relations)
             ->where('status', 'approve')
@@ -63,7 +73,12 @@ class AdminApprovedRequestController extends Controller
             })
             ->firstOrFail();
 
+        $stockMap = $stockService->getBatchAvailableStock($req->items);
+        SmartRequestItemResource::setBatchStockMap($stockMap);
+
         $resourceData = (new SmartRequestResource($req))->toArray($request);
+
+        SmartRequestItemResource::setBatchStockMap(null);
 
         if ($request->wantsJson()) {
             return response()->json([

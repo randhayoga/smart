@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Smart\User;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Smart\SubmitBorrowCartRequest;
 use App\Models\Cart\AssetBasket;
 use App\Models\HrdOrgchart;
 use App\Models\TbProject;
@@ -101,35 +102,9 @@ class BorrowCartConfirmationController extends Controller
     /**
      * Process confirmation of asset borrowing request.
      */
-    public function store(Request $request, RequestSubmissionService $submissionService): RedirectResponse
+    public function store(SubmitBorrowCartRequest $request, RequestSubmissionService $submissionService): RedirectResponse
     {
-        $validated = $request->validate([
-            'items'        => 'required|array|min:1',
-            'items.*.id'   => 'required|integer',
-            'pemanfaatan'  => 'required|string|in:corporate,project',
-            'departemen'   => 'required_if:pemanfaatan,corporate|nullable|exists:hrd_orgcharts,id',
-            'project'      => 'required_if:pemanfaatan,project|nullable|exists:tb_projects,id',
-            'alasan'       => 'required|string|max:2000',
-            'start_date'   => 'required|date|after_or_equal:today',
-            'end_date'     => 'nullable|date|after_or_equal:start_date',
-        ], [
-            'start_date.required' => 'Tanggal mulai peminjaman wajib diisi.',
-            'start_date.date' => 'Format tanggal mulai peminjaman tidak valid.',
-            'start_date.after_or_equal' => 'Tanggal mulai peminjaman tidak boleh di masa lalu.',
-            'end_date.date' => 'Format tanggal selesai peminjaman tidak valid.',
-            'end_date.after_or_equal' => 'Tanggal selesai peminjaman harus sama dengan atau setelah tanggal mulai peminjaman.',
-            'items.required' => 'Barang yang dipilih wajib ada.',
-            'items.min' => 'Pilih minimal satu barang.',
-            'pemanfaatan.required' => 'Pemanfaatan wajib dipilih.',
-            'departemen.required_if' => 'Departemen wajib dipilih untuk pemanfaatan corporate.',
-            'departemen.exists' => 'Departemen yang dipilih tidak valid.',
-            'project.required_if' => 'Project wajib dipilih untuk pemanfaatan project.',
-            'project.exists' => 'Project yang dipilih tidak valid.',
-            'alasan.required' => 'Alasan peminjaman wajib diisi.',
-            'alasan.max' => 'Alasan peminjaman maksimal 2000 karakter.',
-        ]);
-
-        $submissionService->submit($request->user(), $validated, 'borrow');
+        $submissionService->submit($request->user(), $request->validated(), 'borrow');
 
         return redirect()->back()->with('success', 'Permintaan peminjaman berhasil dikirim.');
     }

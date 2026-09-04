@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Smart\Manager;
 
 use App\Actions\Request\ProcessRequestApproval;
 use App\Http\Controllers\Controller;
-use App\Http\Resources\ExternalApprovalResource;
+use App\Http\Resources\SmartRequestResource;
 use App\Models\Request\Request as SmartRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -39,7 +39,7 @@ class ExternalApprovalController extends Controller
         $smartRequest = SmartRequest::with($this->relations)->findOrFail($id);
 
         return Inertia::render('Smart/Manager/ExternalApproval', [
-            'request' => ExternalApprovalResource::make($smartRequest)->resolve(),
+            'request' => (new SmartRequestResource($smartRequest))->resolve(),
         ]);
     }
 
@@ -55,15 +55,17 @@ class ExternalApprovalController extends Controller
 
         $smartRequest = SmartRequest::findOrFail($id);
 
-        if ($smartRequest->status === 'wait') {
-            $processApproval->execute(
-                $smartRequest,
-                $validated['action'],
-                $validated['note'] ?? null,
-                $smartRequest->approver_id,
-                'email'
-            );
+        if ($smartRequest->status !== 'wait') {
+            return redirect()->to($request->fullUrl())->with('warning', 'Permohonan ini telah diproses sebelumnya.');
         }
+
+        $processApproval->execute(
+            $smartRequest,
+            $validated['action'],
+            $validated['note'] ?? null,
+            $smartRequest->approver_id,
+            'email'
+        );
 
         $message = $validated['action'] === 'approve'
             ? 'Permohonan berhasil disetujui.'

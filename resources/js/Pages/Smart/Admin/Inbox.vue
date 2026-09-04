@@ -25,49 +25,17 @@ import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
 import AdminConfirmationModal from '@/Pages/Smart/Admin/Modals/AdminConfirmationModal.vue';
 import { REQUEST_STATUS_PILL_BASE } from '@/lib/requestStatus';
+import type { SmartRequestData } from '@/types/request';
 
 // --- Data Types & Props ---
-interface RequestItem {
-  id: number;
-  barang_id?: number;
-  subcategory: string;
-  brand: string;
-  name?: string;
-  spec: string;
-  quantity: number;
-  stockQuantity?: number;
-  stock?: number;
-  imageUrl?: string;
-  category: string;
-  uom?: string;
-}
-
-interface RequestHistory {
-  id: number;
-  number: string;
-  type: 'permintaan' | 'peminjaman';
-  requester: string;
-  pemanfaatan: 'corporate' | 'project';
-  pemanfaatanDetail: string;
-  durationStart?: string;
-  durationEnd?: string;
-  durationDays?: number;
-  durationHours?: number;
-  status: string;
-  raw_status: string;
-  created_at: string;
-  is_stock_sufficient: boolean;
-  items: RequestItem[];
-}
-
 interface Props {
   user: any;
-  requests: RequestHistory[];
+  requests: SmartRequestData[];
 }
 
 const props = defineProps<Props>();
 
-const requests = ref<RequestHistory[]>([...props.requests]);
+const requests = ref<SmartRequestData[]>([...props.requests]);
 
 watch(() => props.requests, (newVal) => {
   requests.value = [...newVal];
@@ -122,7 +90,7 @@ watch([typeFilter, utilizationFilter], () => {
   }
 });
 
-const columns: ColumnDef<RequestHistory>[] = [
+const columns: ColumnDef<SmartRequestData>[] = [
   {
     id: 'select',
     size: 40,
@@ -280,10 +248,10 @@ const columns: ColumnDef<RequestHistory>[] = [
 // ─────────────────────────────────────────────
 const isDetailModalOpen = ref(false);
 const isBulkModalOpen = ref(false);
-const selectedSingleRequest = ref<RequestHistory | null>(null);
+const selectedSingleRequest = ref<SmartRequestData | null>(null);
 const processing = ref(false);
 
-const openDetailModal = (item: RequestHistory) => {
+const openDetailModal = (item: SmartRequestData) => {
   selectedSingleRequest.value = item;
   isDetailModalOpen.value = true;
 };

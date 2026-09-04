@@ -56,6 +56,12 @@ class ManagerRequestEmailApprovalTest extends TestCase
         return AdmUser::factory()->create();
     }
 
+    private function createAdmin(): AdmUser
+    {
+        $employee = HrdEmployee::factory()->create(['employee_id' => '252525']);
+        return AdmUser::factory()->create(['employee_id' => $employee->employee_id]);
+    }
+
     private function createSmartRequestRecord(AdmUser $requester, AdmUser $manager): SmartRequest
     {
         $cat = Category::factory()->create(['is_consumable' => false]);
@@ -151,6 +157,7 @@ class ManagerRequestEmailApprovalTest extends TestCase
 
         $manager = $this->createManager();
         $requester = $this->createRequester();
+        $admin = $this->createAdmin();
         $req = $this->createSmartRequestRecord($requester, $manager);
 
         $signedUrl = URL::temporarySignedRoute(
@@ -193,7 +200,6 @@ class ManagerRequestEmailApprovalTest extends TestCase
         $this->assertEquals("/smart/history/{$req->uuid}", $notification->data['url']);
 
         // Admin receives in-app notification
-        $admin = AdmUser::factory()->create(['employee_id' => '252525']);
         $adminNotification = $admin->notifications()->first();
         $this->assertNotNull($adminNotification);
         $this->assertEquals("{$req->type_name}: {$req->request_number} Di-approve", $adminNotification->data['title']);

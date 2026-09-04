@@ -33,17 +33,17 @@ class ProcessAdminConfirmation
         ?string $note,
         AdmUser|int $admin
     ): void {
-        // Only requests with status 'approve' (Di-approve) can be processed by Admin
-        if ($req->status !== 'approve') {
-            return;
-        }
-
         $adminUser = $admin instanceof AdmUser ? $admin : AdmUser::find($admin);
         $adminId = $adminUser?->id ?? (int) $admin;
         $adminName = $adminUser?->name ?? 'Admin';
 
-        DB::transaction(function () use ($req, $action, $note, $adminId, $adminName) {
-            $oldStatus = $req->status;
+        $executed = DB::transaction(function () use ($req, $action, $note, $adminId, $adminName) {
+            $lockedRequest = SmartRequest::where('id', $req->id)->lockForUpdate()->first();
+            if (!$lockedRequest || $lockedRequest->status !== 'approve') {
+                return false;
+            }
+
+            $oldStatus = $lockedRequest->status;
             $actionWord = $action === 'confirm' ? 'Dikonfirmasi' : 'Ditolak';
             $actionWordLower = $action === 'confirm' ? 'dikonfirmasi' : 'ditolak';
 
@@ -51,7 +51,7 @@ class ProcessAdminConfirmation
             $defaultLogNote = "Permintaan {$actionWordLower} oleh Admin: {$adminName}.";
 
             RequestAdminConfirmation::create([
-                'request_id' => $req->id,
+                'request_id' => $lockedRequest->id,
                 'admin_id' => $adminId,
                 'action' => $action,
                 'note' => !empty($note) ? $note : $defaultConfirmationNote,
@@ -59,18 +59,25 @@ class ProcessAdminConfirmation
             ]);
 
             $newStatus = $action === 'confirm' ? 'confirm' : 'reject';
-            $req->update(['status' => $newStatus]);
+            $lockedRequest->update(['status' => $newStatus]);
+            $req->status = $newStatus;
+
+            if ($action === 'reject') {
+                $lockedRequest->items()->update(['status' => 'rejected']);
+            }
 
             RequestStatusLog::create([
-                'request_id' => $req->id,
+                'request_id' => $lockedRequest->id,
                 'status_from' => $oldStatus,
                 'status_to' => $newStatus,
                 'changed_by' => $adminId,
                 'note' => !empty($note) ? $note : $defaultLogNote,
             ]);
+
+            return true;
         });
 
-        if ($adminUser) {
+        if ($executed && $adminUser) {
             $req->loadMissing([
                 'user',
                 'department',

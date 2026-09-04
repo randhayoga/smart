@@ -55,6 +55,12 @@ class RequestApprovalTest extends TestCase
         return AdmUser::factory()->create();
     }
 
+    private function createAdmin(): AdmUser
+    {
+        $employee = HrdEmployee::factory()->create(['employee_id' => '252525']);
+        return AdmUser::factory()->create(['employee_id' => $employee->employee_id]);
+    }
+
     public function test_only_manager_can_access_request_approval_pages(): void
     {
         $user = $this->createRequester();
@@ -94,6 +100,8 @@ class RequestApprovalTest extends TestCase
             'end_date' => now()->addDays(3),
         ]);
 
+        $admin = $this->createAdmin();
+
         $response = $this->actingAs($manager)->post(route('smart.approve.bulk-action'), [
             'ids' => [$req->id],
             'action' => 'approve',
@@ -115,8 +123,6 @@ class RequestApprovalTest extends TestCase
             'status_to' => 'approve',
             'changed_by' => $manager->id,
         ]);
-
-        $admin = AdmUser::factory()->create(['employee_id' => '252525']);
 
         // Verify in-app notification sent to requester
         $notification = $requester->notifications()->first();
@@ -187,6 +193,10 @@ class RequestApprovalTest extends TestCase
         $response->assertStatus(302);
         $req->refresh();
         $this->assertEquals('reject', $req->status);
+        $this->assertDatabaseHas('request_items', [
+            'request_id' => $req->id,
+            'status' => 'rejected',
+        ]);
         $this->assertDatabaseHas('request_approvals', [
             'request_id' => $req->id,
             'approver_id' => $manager->id,
@@ -286,5 +296,95 @@ class RequestApprovalTest extends TestCase
 
         // 2 rejection emails sent for the 2 requests
         Mail::assertSent(RequesterRequestRejectedMail::class, 2);
+    }
+
+    public function test_user_can_cancel_request_and_updates_items_status(): void
+    {
+        $requester = $this->createRequester();
+        $manager = $this->createManager();
+
+        $req = SmartRequest::create([
+            'request_number' => 'REQ-0000005',
+            'user_id' => $requester->id,
+            'approver_id' => $manager->id,
+            'utilization' => 'corporate',
+            'org_id' => $requester->hrdEmployee->orgchart_id,
+            'reasoning' => 'Cancellation test',
+            'status' => 'wait',
+        ]);
+
+        $item = RequestItem::create([
+            'request_id' => $req->id,
+            'quantity_requested' => 1,
+            'status' => 'pending',
+        ]);
+
+        $response = $this->actingAs($requester)->post(route('smart.history.cancel', $req), [
+            'note' => 'User cancelled this request',
+        ]);
+
+        $response->assertStatus(302);
+        $req->refresh();
+        $this->assertEquals('cancel', $req->status);
+
+        $this->assertDatabaseHas('request_items', [
+            'id' => $item->id,
+            'request_id' => $req->id,
+            'status' => 'cancelled',
+        ]);
+
+        $this->assertDatabaseHas('request_status_logs', [
+            'request_id' => $req->id,
+            'status_from' => 'wait',
+            'status_to' => 'cancel',
+            'changed_by' => $requester->id,
+        ]);
+    }
+
+    public function test_admin_can_reject_request_and_updates_items_status(): void
+    {
+        Mail::fake();
+
+        $admin = $this->createAdmin();
+        $manager = $this->createManager();
+        $requester = $this->createRequester();
+
+        $req = SmartRequest::create([
+            'request_number' => 'REQ-0000006',
+            'user_id' => $requester->id,
+            'approver_id' => $manager->id,
+            'utilization' => 'corporate',
+            'org_id' => $requester->hrdEmployee->orgchart_id,
+            'reasoning' => 'Admin reject test',
+            'status' => 'approve',
+        ]);
+
+        $item = RequestItem::create([
+            'request_id' => $req->id,
+            'quantity_requested' => 1,
+            'status' => 'pending',
+        ]);
+
+        $response = $this->actingAs($admin)->post(route('smart.inbox.confirmation'), [
+            'ids' => [$req->id],
+            'action' => 'reject',
+            'note' => 'Rejected by Admin due to zero stock',
+        ]);
+
+        $response->assertStatus(302);
+        $req->refresh();
+        $this->assertEquals('reject', $req->status);
+
+        $this->assertDatabaseHas('request_items', [
+            'id' => $item->id,
+            'request_id' => $req->id,
+            'status' => 'rejected',
+        ]);
+
+        $this->assertDatabaseHas('request_admin_confirmations', [
+            'request_id' => $req->id,
+            'admin_id' => $admin->id,
+            'action' => 'reject',
+        ]);
     }
 }

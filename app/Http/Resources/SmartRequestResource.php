@@ -17,16 +17,16 @@ class SmartRequestResource extends JsonResource
      */
     protected const STATUS_MAP = [
         'wait' => 'Menunggu approval',
-        'approve' => 'Di-approve Manager',
-        'confirm' => 'Dikonfirmasi Admin',
+        'approve' => 'Di-approve',
+        'confirm' => 'Serah Terima',
         'handover' => 'Serah Terima',
         'borrow' => 'Dipinjam',
-        'return' => 'Dikembalikan',
+        'return' => 'Dipinjam',
         'success' => 'Selesai',
         'reject' => 'Ditolak',
         'cancel' => 'Dibatalkan',
         'pending' => 'Pending',
-        'partial' => 'Parsial',
+        'partial' => 'Partial',
     ];
 
     /**
@@ -36,10 +36,17 @@ class SmartRequestResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $startDate = $this->start_date instanceof \Carbon\CarbonInterface 
+            ? $this->start_date 
+            : ($this->start_date ? \Carbon\Carbon::parse($this->start_date) : null);
+        $endDate = $this->end_date instanceof \Carbon\CarbonInterface 
+            ? $this->end_date 
+            : ($this->end_date ? \Carbon\Carbon::parse($this->end_date) : null);
+
         $durationDays = 0;
         $durationHours = 0;
-        if ($this->start_date && $this->end_date) {
-            $diff = $this->start_date->diff($this->end_date);
+        if ($startDate && $endDate) {
+            $diff = $startDate->diff($endDate);
             $durationDays = $diff->days;
             $durationHours = $diff->h;
         }
@@ -57,6 +64,13 @@ class SmartRequestResource extends JsonResource
 
         $createdAtFormatted = $this->created_at ? $this->created_at->format('d-m-Y H:i') : '-';
 
+        $borrowPeriod = null;
+        if ($startDate) {
+            $borrowPeriod = $endDate 
+                ? "{$startDate->format('d-m-Y H:i')} s.d. {$endDate->format('d-m-Y H:i')}"
+                : "{$startDate->format('d-m-Y H:i')} s.d. - (Tanpa Tenggat Waktu)";
+        }
+
         $data = [
             'id' => $this->id,
             'uuid' => $this->uuid,
@@ -64,12 +78,16 @@ class SmartRequestResource extends JsonResource
             'type' => $this->type_key,
             'pemanfaatan' => $this->utilization,
             'pemanfaatanDetail' => $pemanfaatanDetail,
-            'durationStart' => $this->start_date ? $this->start_date->format('d-m-Y H:i') : null,
-            'durationEnd' => $this->end_date ? $this->end_date->format('d-m-Y H:i') : null,
+            'destination' => $this->destination_name,
+            'reasoning' => $this->reasoning,
+            'durationStart' => $startDate ? $startDate->format('d-m-Y H:i') : null,
+            'durationEnd' => $endDate ? $endDate->format('d-m-Y H:i') : null,
             'durationDays' => $durationDays,
             'durationHours' => $durationHours,
+            'borrowPeriod' => $borrowPeriod,
             'status' => self::STATUS_MAP[$this->status] ?? $this->status,
             'raw_status' => $this->status,
+            'rawStatus' => $this->status,
             'created_at' => $createdAtFormatted,
             'createdAt' => $createdAtFormatted,
         ];
@@ -133,7 +151,8 @@ class SmartRequestResource extends JsonResource
             $itemsResource = SmartRequestItemResource::collection($this->items)->resolve();
             $data['items'] = $itemsResource;
 
-            if ($request->routeIs('smart.admin.*') || $request->has('with_stock')) {
+            $isAdminContext = ($request->user()?->isAdmin && ($request->routeIs('smart.inbox*') || $request->routeIs('smart.admin.*')));
+            if ($isAdminContext || $request->attributes->get('with_stock')) {
                 $allStockSufficient = true;
                 foreach ($itemsResource as $item) {
                     if (isset($item['stockQuantity']) && $item['stockQuantity'] < $item['quantity']) {
