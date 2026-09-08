@@ -111,6 +111,7 @@ const navigation = computed<NavSection[]>(() => {
   const pendingRequestCount = (page.props.auth as any)?.pendingRequestCount ?? 0;
   const pendingAssetStatusCount = (page.props.auth as any)?.pendingAssetStatusCount ?? 0;
   const pendingAdminApprovedCount = (page.props.auth as any)?.pendingAdminApprovedCount ?? 0;
+  const activeRequestsCount = (page.props.auth as any)?.activeRequestsCount ?? pendingAdminApprovedCount;
 
   // Map the navigation items to inject badges dynamically
   return sections.map(section => ({
@@ -122,8 +123,8 @@ const navigation = computed<NavSection[]>(() => {
         badge = pendingRequestCount > 0 ? pendingRequestCount : undefined;
       } else if (item.href === '/smart/approve-status') {
         badge = pendingAssetStatusCount > 0 ? pendingAssetStatusCount : undefined;
-      } else if (item.href === '/smart/inbox') {
-        badge = pendingAdminApprovedCount > 0 ? pendingAdminApprovedCount : undefined;
+      } else if (item.href === '/smart/requests' || item.href === '/smart/inbox') {
+        badge = activeRequestsCount > 0 ? activeRequestsCount : undefined;
       }
       
       return {

@@ -46,6 +46,9 @@ class HandleInertiaRequests extends Middleware
                 'pendingAdminApprovedCount' => $request->user() && ($request->user()->is_admin ?? false)
                     ? \App\Models\Request\Request::where('status', 'approve')->count()
                     : 0,
+                'activeRequestsCount' => $request->user() && ($request->user()->is_admin ?? false)
+                    ? \App\Models\Request\Request::whereIn('status', ['approve', 'confirm', 'partial', 'handover', 'return'])->count()
+                    : 0,
                 'notifications' => function () use ($request) {
                     if (! $request->user()) {
                         return [];

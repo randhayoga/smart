@@ -319,7 +319,7 @@ const handleAturSerahTerima = () => {
     <Breadcrumb>
       <BreadcrumbList class="pb-3 text-xs md:text-sm">
         <BreadcrumbItem>
-          <BreadcrumbLink href="/smart/inbox">Inbox</BreadcrumbLink>
+          <BreadcrumbLink :href="route('smart.requests.index', { tab: 'Inbox' })">Inbox</BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>

@@ -49,7 +49,6 @@ import {
   Clock, 
   X, 
   AlertCircle,
-  ArrowUpDown,
   Trash2
 } from 'lucide-vue-next';
 import { type RequestStatus, type RawRequestStatus } from '@/lib/requestStatus';
@@ -348,86 +347,6 @@ const confirmReceivedAction = () => {
   });
 };
 
-// --- Asset Placement State & Modal ---
-const assetPlacements = ref<Record<string, string>>({
-  ...(props.placements || {})
-});
-
-watch(() => props.placements, (newPlacements) => {
-  if (newPlacements) {
-    assetPlacements.value = { ...assetPlacements.value, ...newPlacements };
-  }
-}, { deep: true });
-
-const isAssetPlacementModalOpen = ref(false);
-const selectedItemForPlacement = ref<RequestItem | null>(null);
-const returnPlacementType = ref<'seragam' | 'beragam'>('seragam');
-const singlePlacementLocation = ref('');
-const beragamPlacementLocations = ref<Record<string, string>>({});
-const searchQuery = ref('');
-const itemsPerPage = ref<string | number>('Semua baris');
-const currentPage = ref(1);
-const sortAsc = ref(true);
-
-const activeItemForPlacement = computed(() => {
-  return selectedItemForPlacement.value || request.value.items[0];
-});
-
-/** Open placement modal for item asset tags */
-const openAssetPlacementModal = (item: RequestItem) => {
-  selectedItemForPlacement.value = item;
-  searchQuery.value = '';
-  currentPage.value = 1;
-  
-  if (item && item.assets && item.assets.length > 0) {
-    item.assets.forEach(asset => {
-      beragamPlacementLocations.value = { ...beragamPlacementLocations.value };
-      beragamPlacementLocations.value[asset] = assetPlacements.value[asset] || '';
-    });
-
-    const firstLoc = assetPlacements.value[item.assets[0]] || '';
-    const allSame = firstLoc && item.assets.every(asset => assetPlacements.value[asset] === firstLoc);
-    if (allSame) {
-      returnPlacementType.value = 'seragam';
-      singlePlacementLocation.value = firstLoc;
-    } else {
-      returnPlacementType.value = 'beragam';
-      singlePlacementLocation.value = '';
-    }
-  } else {
-    returnPlacementType.value = 'seragam';
-    singlePlacementLocation.value = '';
-  }
-  isAssetPlacementModalOpen.value = true;
-};
-
-const filteredAssets = computed(() => {
-  const item = activeItemForPlacement.value;
-  if (!item || !item.assets) return [];
-  
-  let list = item.assets.filter(asset => 
-    asset.toLowerCase().includes(searchQuery.value.toLowerCase())
-  );
-
-  const sortedList = [...list];
-  if (sortAsc.value) {
-    sortedList.sort();
-  } else {
-    sortedList.sort().reverse();
-  }
-
-  return sortedList;
-});
-
-const paginatedAssets = computed(() => {
-  const list = filteredAssets.value;
-  if (itemsPerPage.value === 'Semua baris') return list;
-  
-  const limit = Number(itemsPerPage.value);
-  const start = (currentPage.value - 1) * limit;
-  return list.slice(start, start + limit);
-});
-
 /** Action to handle return initiation or concluding consumable requests */
 const handleReturnAction = () => {
   if (!requestState.value) return;
@@ -438,58 +357,6 @@ const handleReturnAction = () => {
     requestState.value.status = 'Selesai';
     toast.success('Permintaan barang habis pakai selesai!');
   }
-};
-
-/** Save asset placement locations */
-const confirmAssetPlacement = () => {
-  const item = activeItemForPlacement.value;
-  if (!item || !item.assets) return;
-
-  const tempPlacements = { ...assetPlacements.value };
-
-  if (returnPlacementType.value === 'seragam') {
-    if (!singlePlacementLocation.value) {
-      toast.warning('Tolong pilih lokasi penempatan aset.');
-      return;
-    }
-    item.assets.forEach(asset => {
-      tempPlacements[asset] = singlePlacementLocation.value;
-    });
-  } else {
-    const unselected = item.assets.some(asset => !beragamPlacementLocations.value[asset]);
-    if (unselected) {
-      toast.warning('Tolong pilih lokasi penempatan untuk semua aset.');
-      return;
-    }
-    item.assets.forEach(asset => {
-      tempPlacements[asset] = beragamPlacementLocations.value[asset];
-    });
-  }
-
-  if (!route().has('smart.placement.update')) {
-    toast.info('Fitur penempatan aset akan tersedia pada tahap berikutnya.');
-    isAssetPlacementModalOpen.value = false;
-    return;
-  }
-
-  router.post(route('smart.placement.update'), {
-    placements: tempPlacements
-  }, {
-    onSuccess: () => {
-      assetPlacements.value = tempPlacements;
-      isAssetPlacementModalOpen.value = false;
-      toast.success('Penempatan aset berhasil disimpan!');
-      const itemName = item.brand ? `${item.brand} ${item.spec || ''}` : 'Aset';
-      addNotification(
-        'Penempatan Aset',
-        `Penempatan aset untuk "${itemName}" berhasil disimpan.`,
-        'success'
-      );
-    },
-    onError: () => {
-      toast.error('Gagal menyimpan penempatan aset.');
-    }
-  });
 };
 
 // --- Timeline & Lifecycle Stepper Logic ---
@@ -527,9 +394,15 @@ const timelineSteps = computed((): TimelineStep[] => {
         title = 'Di-approve';
         description = `${typeLabelTitle.value} disetujui Manager: <span class="font-bold text-foreground">${approverName}</span>${r.approval?.note ? `<br>Catatan: ${r.approval.note}` : ''}`;
       } else if (log.status_to === 'partial') {
+        const adminName = log.user || r.confirmation_by || 'Admin';
         title = 'Disetujui sebagian (Partial)';
-        description = description || `${typeLabelTitle.value} disetujui sebagian oleh Admin.`;
+        if (log.note) {
+          description = log.note.replace(/Admin:\s*([^.<]+)/, 'Admin: <span class="font-bold text-foreground">$1</span>');
+        } else {
+          description = `${typeLabelTitle.value} disetujui sebagian oleh Admin: <span class="font-bold text-foreground">${adminName}</span>.`;
+        }
       } else if (log.status_to === 'confirm') {
+        const adminName = log.user || r.confirmation_by || 'Admin';
         if (log.status_from === 'partial') {
           title = 'Alokasi Barang Tambahan Dikonfirmasi';
         } else {
@@ -539,7 +412,11 @@ const timelineSteps = computed((): TimelineStep[] => {
             title = 'Dikonfirmasi';
           }
         }
-        description = description || `${typeLabelTitle.value} dikonfirmasi oleh Admin.`;
+        if (log.note) {
+          description = log.note.replace(/Admin:\s*([^.<]+)/, 'Admin: <span class="font-bold text-foreground">$1</span>');
+        } else {
+          description = `${typeLabelTitle.value} dikonfirmasi oleh Admin: <span class="font-bold text-foreground">${adminName}</span>.`;
+        }
       } else if (log.status_to === 'borrow') {
         title = 'Serah Terima Selesai & Dipinjam';
         description = description || 'Aset telah diserahkan dan dipinjam.';
@@ -615,6 +492,12 @@ const timelineSteps = computed((): TimelineStep[] => {
         description: 'Serah Terima perlu diatur!'
       });
     } else if (r.raw_status === 'confirm') {
+      steps.push({
+        title: 'Menunggu Alokasi',
+        status: 'active',
+        description: `${typeLabelTitle.value} sedang diproses oleh Admin Aset.`
+      });
+    } else if (r.raw_status === 'handover') {
       const isScheduled = !!r.handover_time || isAutoScheduled.value;
       steps.push({
         title: 'Serah Terima',
@@ -691,7 +574,7 @@ const activeStepIndex = computed(() => {
 
     <!-- ── Alert Banner: Tindakan Diperlukan atau Pengingat Serah Terima ── -->
     <div 
-      v-if="request.raw_status === 'confirm' || request.raw_status === 'partial'" 
+      v-if="request.raw_status === 'handover' || request.raw_status === 'partial'" 
       class="mb-6 p-4 border border-indigo-200 dark:border-indigo-900/50 bg-indigo-50/50 dark:bg-indigo-950/20 rounded-[0.875rem] flex flex-col sm:flex-row justify-between items-center gap-4 animate-in fade-in slide-in-from-top-1 duration-300"
     >
       <div class="flex items-center gap-2.5 text-indigo-700 dark:text-indigo-300">
@@ -777,7 +660,7 @@ const activeStepIndex = computed(() => {
           <ScrollArea 
             class="border border-border rounded-[0.875rem] bg-card"
             :class="[
-              (request.raw_status === 'confirm' || request.raw_status === 'partial')
+              (request.raw_status === 'handover' || request.raw_status === 'partial')
                 ? 'h-[calc(100vh-35rem)] sm:h-[calc(100vh-32rem)] lg:h-[calc(100vh-30.5rem)]'
                 : 'h-[calc(100vh-30.5rem)] sm:h-[calc(100vh-27rem)] lg:h-[calc(100vh-24.5rem)]'
             ]"
@@ -792,28 +675,10 @@ const activeStepIndex = computed(() => {
                   :subcategory="item.subcategory"
                   :quantity="item.quantity"
                   :uom="item.uom || 'satuan'"
-                  :assets="item.assets || []"
-                  :imageUrl="item.imageUrl"
-                  :placements="assetPlacements"
+                  :image-url="item.imageUrl"
                   :status="item.status"
                   :is-consumable="item.is_consumable"
-                >
-                  <template 
-                    #footer 
-                    v-if="['confirm', 'partial', 'borrow'].includes(request.raw_status) && !item.is_consumable && item.assets && item.assets.length > 0"
-                  >
-                    <div class="flex gap-2.5">
-                      <Button 
-                        @click="openAssetPlacementModal(item)"
-                        variant="white"
-                        size="sm"
-                        class="font-semibold text-xs"
-                      >
-                        Catat Penempatan Aset
-                      </Button>
-                    </div>
-                  </template>
-                </AssetItemCard>
+                />
               </div>
             </div>
           </ScrollArea>
@@ -1179,155 +1044,7 @@ const activeStepIndex = computed(() => {
       </DialogContent>
     </Dialog>
 
-    <!-- ── Modal Penempatan Aset (Dialog) ── -->
-    <Dialog :open="isAssetPlacementModalOpen && !!activeItemForPlacement" @update:open="val => isAssetPlacementModalOpen = val">
-      <DialogContent class="sm:max-w-[46rem] rounded-[0.875rem] bg-card p-0 gap-0 border border-border overflow-hidden" :show-close-button="false">
-        <div class="flex items-center justify-between pt-3 pb-2 px-4 sm:px-6 border-b border-border">
-          <div>
-            <DialogTitle class="text-lg font-bold text-foreground">Pilih Penempatan Aset</DialogTitle>
-            <DialogDescription class="text-xs text-muted-foreground mt-0.5">
-              Pilih lokasi penempatan untuk aset yang diserahterimakan
-            </DialogDescription>
-          </div>
-          <button @click="isAssetPlacementModalOpen = false" class="p-2 hover:bg-muted rounded-full transition-colors">
-            <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
-          </button>
-        </div>
 
-        <div v-if="activeItemForPlacement" class="px-4 sm:px-6 py-4 overflow-y-auto max-h-[70vh] space-y-4">
-          <!-- Item Card Detail -->
-          <div class="p-3 rounded-[0.875rem] bg-muted/40 border border-border flex gap-3.5 items-center">
-            <div class="w-14 h-14 rounded-[0.625rem] bg-muted border border-border overflow-hidden shrink-0 flex items-center justify-center">
-              <img 
-                v-if="activeItemForPlacement.imageUrl" 
-                :src="activeItemForPlacement.imageUrl.startsWith('http') || activeItemForPlacement.imageUrl.startsWith('/') ? activeItemForPlacement.imageUrl : '/media/' + activeItemForPlacement.imageUrl" 
-                class="w-full h-full object-cover" 
-              />
-              <div v-else class="text-xs font-black text-muted-foreground/50 select-none">
-                {{ activeItemForPlacement.subcategory.substring(0, 3).toUpperCase() }}
-              </div>
-            </div>
-            <div class="min-w-0 flex-grow space-y-0.5">
-              <h4 class="text-sm font-bold text-foreground truncate">
-                {{ activeItemForPlacement.brand !== '-' ? `${activeItemForPlacement.brand} ${activeItemForPlacement.spec}` : activeItemForPlacement.subcategory }}
-              </h4>
-              <p class="text-xs text-muted-foreground">
-                {{ activeItemForPlacement.category }} ({{ activeItemForPlacement.subcategory }})
-              </p>
-              <p class="text-xs text-foreground font-semibold">
-                Jumlah diminta: {{ activeItemForPlacement.quantity }} {{ activeItemForPlacement.uom || 'satuan' }}
-              </p>
-            </div>
-          </div>
-
-          <!-- Placement Type Switch -->
-          <div class="flex gap-2">
-            <Button 
-              type="button"
-              size="sm"
-              :variant="returnPlacementType === 'seragam' ? 'primary-border' : 'white'"
-              @click="returnPlacementType = 'seragam'"
-              class="font-semibold text-xs"
-            >
-              Seragam
-            </Button>
-            <Button 
-              type="button"
-              size="sm"
-              :variant="returnPlacementType === 'beragam' ? 'primary-border' : 'white'"
-              @click="returnPlacementType = 'beragam'"
-              class="font-semibold text-xs"
-            >
-              Beragam
-            </Button>
-          </div>
-
-          <!-- Seragam View -->
-          <div v-if="returnPlacementType === 'seragam'" class="space-y-1.5 py-2">
-            <label class="text-xs font-semibold text-foreground block">
-              Lokasi penempatan aset:
-            </label>
-            <Select v-model="singlePlacementLocation">
-              <SelectTrigger class="w-full rounded-[0.875rem] h-10 text-sm">
-                <SelectValue placeholder="Pilih tempat" />
-              </SelectTrigger>
-              <SelectContent class="rounded-[0.875rem]">
-                <SelectItem value="Mega Mendung">Mega Mendung</SelectItem>
-                <SelectItem value="Tiga Negeri">Tiga Negeri</SelectItem>
-                <SelectItem value="Gudang GA">Gudang GA</SelectItem>
-                <SelectItem value="Ruang IT">Ruang IT</SelectItem>
-                <SelectItem value="Ruang IFS">Ruang IFS</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <!-- Beragam View -->
-          <div v-else class="space-y-3">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <input 
-                type="text" 
-                v-model="searchQuery" 
-                placeholder="Cari Kode Aset..." 
-                class="h-9 w-full sm:max-w-xs px-3.5 rounded-[0.875rem] border border-input bg-background text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors text-foreground"
-              />
-            </div>
-
-            <!-- Table -->
-            <div class="border border-border rounded-[0.875rem] overflow-hidden bg-card">
-              <table class="min-w-full divide-y divide-border">
-                <thead class="bg-muted/30">
-                  <tr>
-                    <th 
-                      scope="col" 
-                      @click="sortAsc = !sortAsc"
-                      class="px-4 py-2.5 text-left text-xs font-bold text-foreground cursor-pointer hover:bg-muted/50 select-none w-1/2 transition-colors"
-                    >
-                      <div class="flex items-center gap-1.5">
-                        <span>Kode Aset</span>
-                        <ArrowUpDown class="w-3 h-3 opacity-60 text-muted-foreground" />
-                      </div>
-                    </th>
-                    <th scope="col" class="px-4 py-2.5 text-left text-xs font-bold text-foreground w-1/2">
-                      Penempatan Aset
-                    </th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-border">
-                  <tr v-for="asset in paginatedAssets" :key="asset" class="hover:bg-muted/10 transition-colors">
-                    <td class="px-4 py-2.5 whitespace-nowrap text-xs font-mono font-medium text-foreground">
-                      {{ asset }}
-                    </td>
-                    <td class="px-4 py-2 whitespace-nowrap text-xs text-foreground">
-                      <Select v-model="beragamPlacementLocations[asset]">
-                        <SelectTrigger class="w-full rounded-[0.875rem] h-8 text-xs">
-                          <SelectValue placeholder="Pilih tempat" />
-                        </SelectTrigger>
-                        <SelectContent class="rounded-[0.875rem]">
-                          <SelectItem value="Mega Mendung">Mega Mendung</SelectItem>
-                          <SelectItem value="Tiga Negeri">Tiga Negeri</SelectItem>
-                          <SelectItem value="Gudang GA">Gudang GA</SelectItem>
-                          <SelectItem value="Ruang IT">Ruang IT</SelectItem>
-                          <SelectItem value="Ruang IFS">Ruang IFS</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <div class="py-4 px-4 sm:px-6 border-t border-border flex items-center justify-end gap-3">
-          <Button variant="white" size="lg" @click="isAssetPlacementModalOpen = false">
-            Batal
-          </Button>
-          <Button variant="primary" size="lg" @click="confirmAssetPlacement">
-            Konfirmasi Penempatan Aset
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
 
     <!-- Modal Pembatalan Permintaan -->
     <RequestCancelModal

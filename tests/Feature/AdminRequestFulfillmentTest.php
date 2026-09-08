@@ -504,4 +504,47 @@ class AdminRequestFulfillmentTest extends TestCase
 
         $response->assertStatus(422);
     }
+
+    public function test_active_requests_count_shared_to_inertia_badge_excluding_borrowed(): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createRequester();
+        $manager = $this->createManager();
+
+        // Active requests that MUST be counted in badge (approve, confirm, partial, handover, return)
+        $includedStatuses = ['approve', 'confirm', 'partial', 'handover', 'return'];
+        foreach ($includedStatuses as $idx => $status) {
+            SmartRequest::create([
+                'request_number' => '0926-INC-' . $idx,
+                'user_id' => $user->id,
+                'approver_id' => $manager->id,
+                'utilization' => 'corporate',
+                'reasoning' => 'Included status ' . $status,
+                'status' => $status,
+            ]);
+        }
+
+        // Requests that MUST NOT be counted (borrow is explicitly excluded, plus wait and archived statuses)
+        $excludedStatuses = ['borrow', 'wait', 'success', 'reject', 'cancel'];
+        foreach ($excludedStatuses as $idx => $status) {
+            SmartRequest::create([
+                'request_number' => '0926-EXC-' . $idx,
+                'user_id' => $user->id,
+                'approver_id' => $manager->id,
+                'utilization' => 'corporate',
+                'reasoning' => 'Excluded status ' . $status,
+                'status' => $status,
+            ]);
+        }
+
+        $response = $this->actingAs($admin)->get(route('smart.requests.index'));
+        $response->assertStatus(200);
+
+        // Verify that Inertia shared auth.activeRequestsCount equals count of included requests (5)
+        $response->assertInertia(fn ($page) => 
+            $page->has('auth.activeRequestsCount')
+                ->where('auth.activeRequestsCount', 5)
+                ->where('auth.pendingAdminApprovedCount', 1)
+        );
+    }
 }

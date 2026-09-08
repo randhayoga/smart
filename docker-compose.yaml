@@ -8,6 +8,7 @@ services:
         image: smart-app:frankenphp
         volumes:
             - .:/var/www/smart
+            - ./docker/entrypoint.sh:/usr/local/bin/entrypoint.sh
             - ./docker/docker-php-size.ini:/usr/local/etc/php/conf.d/docker-php-size.ini
         ports:
             - "80:80"

@@ -1,7 +1,5 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { router } from '@inertiajs/vue3';
-import { toast } from 'vue-sonner';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { 
   ChevronDown, 
@@ -35,7 +33,6 @@ interface RequestDetail {
   approver: string;
   approval_by?: string;
   confirmation_by?: string;
-  return_confirmed_by?: string;
   createdAt: string;
   pemanfaatan: 'corporate' | 'project';
   pemanfaatanDetail: string;
@@ -46,14 +43,12 @@ interface RequestDetail {
   status: string;
   type: 'permintaan' | 'peminjaman';
   items: RequestItem[];
-  returnTime: string;
-  location: string;
-  method: string;
+  dueDate: string;
   logs?: any[];
 }
 
 interface Props {
-  returnId: string | number;
+  borrowedId: string | number;
   request: RequestDetail;
   placements?: Record<string, string>;
 }
@@ -70,8 +65,6 @@ interface TimelineStep {
   active?: boolean;
   user?: string;
   note?: string;
-  method?: string;
-  location?: string;
   info?: string;
 }
 
@@ -152,12 +145,10 @@ const timeline = computed((): TimelineStep[] => {
   // Step 3: Active step if not final
   const isFinalStatus = ['success', 'reject', 'cancel'].includes(r.status);
   if (!isFinalStatus) {
-    if (r.status === 'return') {
+    if (r.status === 'borrow') {
       steps.push({ 
-        status: 'Pengembalian aset', 
-        method: r.method,
-        location: r.location,
-        time: r.returnTime, 
+        status: 'Aset sedang dipinjam', 
+        info: `Tenggat pada ${r.dueDate}`, 
         active: true,
       });
     }
@@ -188,23 +179,15 @@ const assetPlacements = ref<Record<string, string>>({
   ...loadPlacements(),
   ...(props.placements || {})
 });
-
-const handleConfirmReturn = () => {
-  router.post(route('smart.returns.confirm', props.returnId), {}, {
-    onSuccess: () => {
-      toast.success('Pengembalian aset berhasil dikonfirmasi!');
-    }
-  });
-};
 </script>
 
 <template>
-  <AppLayout title="Detail Pengembalian">
+  <AppLayout title="Detail Peminjaman">
     <!-- Breadcrumb -->
     <Breadcrumb>
       <BreadcrumbList class="pb-3">
         <BreadcrumbItem>
-          <BreadcrumbLink href="/smart/returns">Pengembalian</BreadcrumbLink>
+          <BreadcrumbLink :href="route('smart.requests.index', { tab: 'Lacak Peminjaman' })">Lacak Peminjaman</BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
@@ -213,22 +196,8 @@ const handleConfirmReturn = () => {
       </BreadcrumbList>
     </Breadcrumb>
 
-    <div class="mb-6">
-      <h1 class="text-xl font-bold text-foreground">Detail Permintaan {{ request.number }}</h1>
-      <p class="text-sm text-muted-foreground">Permintaan dibuat pada {{ request.createdAt }}</p>
-    </div>
-
-    <!-- Info Banner -->
-    <div class="mb-6 p-1.5 pl-6 rounded-xl border border-indigo-200 bg-indigo-50/30 flex items-center justify-between gap-3 text-indigo-700">
-      <p class="text-sm font-semibold">
-        Tolong kembalikan semua aset pada <span class="font-bold">{{ request.returnTime }} di {{ request.location }}</span>
-      </p>
-      <button 
-        @click="handleConfirmReturn"
-        class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold px-6 py-2 rounded-lg transition-all"
-      >
-        Konfirmasi Pengembalian
-      </button>
+    <div class="mb-4">
+      <h1 class="text-xl font-bold text-foreground">Detail Peminjaman</h1>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -244,24 +213,21 @@ const handleConfirmReturn = () => {
             
             <div class="space-y-1.5 text-sm text-foreground">
               <p>
-                <span class="text-muted-foreground">Dibuat oleh:</span> 
+                <span class="text-muted-foreground">Peminjam:</span> 
                 <span class="font-semibold">{{ request.requester }}</span>
               </p>
               <p>
-                <span class="text-muted-foreground">PIC Approval:</span> 
-                <span class="font-semibold">{{ request.approval_by || request.approver }}</span>
-              </p>
-              <p>
-                <span class="text-muted-foreground">Waktu dibuat:</span> 
-                <span class="font-semibold">{{ request.createdAt }}</span>
-              </p>
-              <p>
                 <span class="text-muted-foreground">Pemanfaatan:</span> 
-                <span class="font-semibold">{{ request.pemanfaatan === 'corporate' ? `Corporate (${request.pemanfaatanDetail})` : `Project ${request.pemanfaatanDetail}` }}</span>
+                <span class="font-semibold">
+                  {{ request.pemanfaatan === 'corporate' ? `Corporate (${request.pemanfaatanDetail})` : `Project ${request.pemanfaatanDetail}` }}
+                </span>
               </p>
+
               <p v-if="request.durationStart">
                 <span class="text-muted-foreground">Durasi:</span>
-                <span class="font-semibold">{{ request.durationStart }} s.d. {{ request.durationEnd }} ({{ request.durationDays }} hari, {{ request.durationHours }} jam)</span>
+                <span class="font-semibold">
+                  {{ request.durationStart }} s.d. {{ request.durationEnd }} ({{ request.durationDays }} hari, {{ request.durationHours }} jam)
+                </span>
               </p>
             </div>
           </div>
@@ -316,13 +282,13 @@ const handleConfirmReturn = () => {
                   <Check class="w-4 h-4 text-green-500 stroke-[3.5]" />
                 </div>
                 
-                <!-- Status Active / Current (Pulsing Indigo Alert/Exclamation) -->
+                <!-- Status Active / Current (Pulsing Blue Clock) -->
                 <div 
                   v-else-if="step.active" 
-                  class="w-7 h-7 rounded-full border-2 border-[#6366F1] flex items-center justify-center bg-card relative"
+                  class="w-7 h-7 rounded-full border-2 border-blue-500 flex items-center justify-center bg-card relative"
                 >
-                  <span class="absolute inline-flex h-full w-full rounded-full bg-[#6366F1]/20 opacity-40 animate-ping"></span>
-                  <span class="text-sm font-extrabold text-[#6366F1]">!</span>
+                  <span class="absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-30 animate-ping"></span>
+                  <Clock class="w-4 h-4 text-blue-500" />
                 </div>
 
                 <!-- Status Pending/Next (Grey Dot) -->
@@ -342,7 +308,7 @@ const handleConfirmReturn = () => {
                     :class="{
                       'text-green-600': step.completed,
                       'text-red-600': step.rejected,
-                      'text-[#6366F1]': step.active && !step.completed,
+                      'text-blue-600': step.active && !step.completed,
                       'text-muted-foreground': !step.completed && !step.active && !step.rejected
                     }"
                   >
@@ -357,21 +323,9 @@ const handleConfirmReturn = () => {
                   <p v-if="step.note" class="text-xs text-muted-foreground leading-relaxed pt-0.5">
                     {{ step.note }}
                   </p>
-                  
-                  <div v-if="step.active" class="space-y-0.5 mt-2 text-xs text-indigo-600">
-                    <p class="font-semibold">Metode: {{ step.method }}</p>
-                    <p class="font-semibold">Tempat: {{ step.location }}</p>
-                    <p class="font-semibold">Waktu: {{ step.time }}</p>
-                    
-                    <div class="pt-3">
-                      <button 
-                        @click="handleConfirmReturn"
-                        class="bg-[#6366F1] hover:bg-[#5558EB] text-white text-xs font-bold px-4 py-2 rounded-lg transition-all shadow-sm"
-                      >
-                        Konfirmasi Pengembalian
-                      </button>
-                    </div>
-                  </div>
+                  <p v-if="step.info" class="text-xs text-indigo-600 font-medium mt-0.5">
+                    {{ step.info }}
+                  </p>
                 </div>
               </div>
             </div>

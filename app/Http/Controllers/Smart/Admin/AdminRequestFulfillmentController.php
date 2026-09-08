@@ -20,7 +20,7 @@ class AdminRequestFulfillmentController extends Controller
      * Eager-loaded relationships required for fulfillment inspection.
      */
     protected array $relations = [
-        'user.hrdEmployee',
+        'user.hrdEmployee.orgchart',
         'approver',
         'approval.approver',
         'adminConfirmation.admin',
@@ -72,7 +72,7 @@ class AdminRequestFulfillmentController extends Controller
             ]);
         }
 
-        return Inertia::render('Smart/Admin/Fulfillment/Show', [
+        return Inertia::render('Smart/Admin/Requests/ActiveRequests/Details/FulfillmentShow', [
             'user' => $request->user(),
             'request' => $resourceData,
         ]);

@@ -287,7 +287,10 @@ class SmartFulfillmentResource extends JsonResource
             // Requester details (shown above PIC Approval)
             'requester' => $this->user?->name ?? '-',
             'requester_email' => $this->user?->email,
-            'requester_department' => $this->department?->org_name ?? $this->department?->name ?? '-',
+            'requester_department' => $this->department?->org_name 
+                ?? $this->department?->name 
+                ?? $this->user?->org_name 
+                ?? '-',
 
             // PIC Approval details
             'approver_name' => $this->approver?->name ?? '-',

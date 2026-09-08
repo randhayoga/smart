@@ -1,12 +1,10 @@
 <script setup lang="ts">
 /**
- * Admin Inbox Page
- * Lists user-submitted requests that have been approved by managers and await final Admin confirmation or rejection.
- * Supports individual review, bulk confirmation/rejection, search, and categorization filters.
+ * Inbox Tab Component for Permintaan Aktif
+ * Lists user-submitted requests awaiting admin confirmation or rejection.
  */
 import { ref, computed, watch, onMounted, onUnmounted, h } from 'vue';
-import { Head, router, usePage } from '@inertiajs/vue3';
-import AppLayout from '@/Layouts/AppLayout.vue';
+import { router, usePage } from '@inertiajs/vue3';
 import {
   ArrowUpDown,
   ChevronDown,
@@ -27,9 +25,7 @@ import AdminConfirmationModal from '@/Pages/Smart/Admin/Modals/AdminConfirmation
 import { REQUEST_STATUS_PILL_BASE } from '@/lib/requestStatus';
 import type { SmartRequestData } from '@/types/request';
 
-// --- Data Types & Props ---
 interface Props {
-  user: any;
   requests: SmartRequestData[];
 }
 
@@ -243,9 +239,7 @@ const columns: ColumnDef<SmartRequestData>[] = [
   }
 ];
 
-// ─────────────────────────────────────────────
-// Confirmation Modal States
-// ─────────────────────────────────────────────
+// --- Confirmation Modal States ---
 const isDetailModalOpen = ref(false);
 const isBulkModalOpen = ref(false);
 const selectedSingleRequest = ref<SmartRequestData | null>(null);
@@ -356,17 +350,9 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <Head title="Inbox Admin" />
-
-  <AppLayout title="Inbox Admin">
-    <!-- ── Title Halaman ── -->
-    <div class="mb-6">
-      <h1 class="text-xl font-bold text-gray-900 leading-none">Inbox: Permintaan Masuk</h1>
-    </div>
-
-    <!-- ── Filter & Search Section ── -->
+  <div>
+    <!-- Filters & Bulk Actions -->
     <div class="space-y-4 mb-6">
-      <!-- Filters Row -->
       <div class="flex flex-wrap items-end gap-4">
         <div class="space-y-1.5 flex-1 min-w-[300px] max-w-sm">
           <label class="text-xs text-muted-foreground font-medium block ml-0.5">Filter</label>
@@ -406,7 +392,7 @@ onUnmounted(() => {
         </DropdownMenu>
       </div>
 
-      <!-- ── Bulk Actions & Rows per Page ── -->
+      <!-- Bulk Actions & Rows per Page -->
       <div class="space-y-2 flex-1 min-w-0 pt-2">
         <label class="text-xs text-muted-foreground font-medium block ml-0.5">Aksi Terpilih</label>
         <div class="flex flex-wrap items-center gap-2">
@@ -439,7 +425,7 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- ── Table Display ── -->
+    <!-- Table Display -->
     <div class="pb-4">
       <DataTable 
         ref="dataTableRef"
@@ -450,9 +436,7 @@ onUnmounted(() => {
       />
     </div>
 
-    <!-- ============================================================
-         Single Detail & Confirmation Modal
-         ============================================================ -->
+    <!-- Single Detail & Confirmation Modal -->
     <AdminConfirmationModal
       :is-open="isDetailModalOpen"
       :requests="singleRequestList"
@@ -461,9 +445,7 @@ onUnmounted(() => {
       @action="(payload) => handleModalAction(payload, false)"
     />
 
-    <!-- ============================================================
-         Bulk Confirmation Modal
-         ============================================================ -->
+    <!-- Bulk Confirmation Modal -->
     <AdminConfirmationModal
       :is-open="isBulkModalOpen"
       :requests="bulkRequestsList"
@@ -471,5 +453,5 @@ onUnmounted(() => {
       @close="closeBulkModal"
       @action="(payload) => handleModalAction(payload, true)"
     />
-  </AppLayout>
+  </div>
 </template>

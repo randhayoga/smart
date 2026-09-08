@@ -47,11 +47,12 @@ class HandoverController extends Controller
                 ];
             });
 
-        return Inertia::render('Smart/Admin/SerahTerima', [
+        return Inertia::render('Smart/Admin/Requests/ActiveRequests/PermintaanAktif', [
             'user' => [
                 'name' => auth()->user()->name,
                 'email' => auth()->user()->email,
             ],
+            'activeTab' => 'Serah Terima',
             'handovers' => $handovers,
         ]);
     }
@@ -215,7 +216,7 @@ class HandoverController extends Controller
             ->mapWithKeys(fn($asn) => [$asn->unit->number => $asn->placement])
             ->toArray();
 
-        return Inertia::render('Smart/Admin/SerahTerimaDetail', [
+        return Inertia::render('Smart/Admin/Requests/ActiveRequests/Details/SerahTerimaDetail', [
             'handover' => $handoverData,
             'items' => $items,
             'placements' => $placements,

@@ -75,6 +75,17 @@ class AdminPartialRequestController extends Controller
                 }
             }
 
+            $pemanfaatanDetail = '-';
+            if ($req->utilization === 'corporate') {
+                $pemanfaatanDetail = $req->department?->org_name ?? $req->department?->name ?? '-';
+            } else {
+                if ($req->project) {
+                    $pemanfaatanDetail = $req->project->no_project 
+                        ? "{$req->project->no_project} ({$req->project->project_name})" 
+                        : ($req->project->project_name ?? '-');
+                }
+            }
+
             return [
                 'id' => $req->id,
                 'uuid' => $req->uuid,
@@ -85,6 +96,7 @@ class AdminPartialRequestController extends Controller
                 'typeLabel' => $req->type_name,
                 'destination' => $req->destination_name,
                 'pemanfaatan' => $req->utilization,
+                'pemanfaatanDetail' => $pemanfaatanDetail,
                 'total_items' => $req->items->count(),
                 'total_requested' => $totalRequested,
                 'total_fulfilled' => $totalFulfilled,
@@ -92,6 +104,7 @@ class AdminPartialRequestController extends Controller
                 'status' => 'Partial',
                 'raw_status' => $req->status,
                 'createdAt' => $req->created_at ? $req->created_at->format('d-m-Y H:i') : '-',
+                'created_at' => $req->created_at ? $req->created_at->format('d-m-Y H:i') : '-',
                 'durationStart' => $req->start_date ? $req->start_date->format('d-m-Y H:i') : null,
                 'durationEnd' => $req->end_date ? $req->end_date->format('d-m-Y H:i') : null,
             ];
@@ -101,9 +114,10 @@ class AdminPartialRequestController extends Controller
             return response()->json(['requests' => $requests]);
         }
 
-        return Inertia::render('Smart/Admin/Fulfillment/PartialList', [
+        return Inertia::render('Smart/Admin/Requests/ActiveRequests/PermintaanAktif', [
             'user' => $request->user(),
-            'requests' => $requests,
+            'activeTab' => 'Parsial',
+            'partialRequests' => $requests,
             'filters' => $request->only(['search', 'type']),
         ]);
     }

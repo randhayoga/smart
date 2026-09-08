@@ -294,9 +294,9 @@ const toggleExpanded = () => {
         Batalkan {{ request.type === 'peminjaman' ? 'Peminjaman' : 'Permintaan' }}
       </Button>
 
-      <!-- Handover Setup CTA (Visible when confirmed or partial) -->
+      <!-- Handover Setup CTA (Visible when handover or partial) -->
       <Link
-        v-if="request.raw_status === 'confirm' || request.raw_status === 'partial'"
+        v-if="request.raw_status === 'handover' || request.raw_status === 'partial'"
         :href="route('smart.history.show', request.uuid || request.id)"
       >
         <Button

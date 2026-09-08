@@ -7,6 +7,7 @@ export type RequestStatus =
   | 'Menunggu approval' 
   | 'Di-approve' 
   | 'Ditolak' 
+  | 'Dikonfirmasi Admin'
   | 'Serah Terima' 
   | 'Dipinjam' 
   | 'Selesai' 
@@ -51,7 +52,10 @@ export function getRequestStatusLabel(rawOrStatus: string | null | undefined): s
   if (s === 'reject' || s === 'rejected' || s === 'ditolak') {
     return 'Ditolak';
   }
-  if (s === 'confirm' || s === 'handover' || s === 'serah terima' || s === 'dikonfirmasi' || s === 'dikonfirmasi admin') {
+  if (s === 'confirm' || s === 'dikonfirmasi' || s === 'dikonfirmasi admin') {
+    return 'Dikonfirmasi Admin';
+  }
+  if (s === 'handover' || s === 'serah terima') {
     return 'Serah Terima';
   }
   if (s === 'borrow' || s === 'return' || s === 'dipinjam' || s === 'sedang dipinjam') {
@@ -89,6 +93,8 @@ export function getRequestStatusBadgeClass(status: string | null | undefined): s
       return 'bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300';
     case 'Ditolak':
       return 'bg-destructive/10 text-destructive dark:bg-destructive/20 border border-destructive/20';
+    case 'Dikonfirmasi Admin':
+      return 'bg-teal-100 text-teal-800 dark:bg-teal-950/40 dark:text-teal-300';
     case 'Selesai':
       return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300';
     case 'Serah Terima':

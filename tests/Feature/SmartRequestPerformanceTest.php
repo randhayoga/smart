@@ -89,6 +89,50 @@ class SmartRequestPerformanceTest extends TestCase
         $this->assertLessThan(32, count($queries), 'Admin inbox query count exceeded batching threshold.');
     }
 
+    public function test_admin_active_requests_inbox_calculates_stock_correctly(): void
+    {
+        $admin = $this->createAdmin();
+        $requester = AdmUser::factory()->create();
+
+        $cat = Category::factory()->create(['is_consumable' => false]);
+        $sub = Subcategory::factory()->create(['category_id' => $cat->id]);
+        $brand = Brand::factory()->create();
+        $uom = Uom::factory()->create();
+
+        $req = SmartRequest::create([
+            'request_number' => "REQ-S01",
+            'user_id' => $requester->id,
+            'approver_id' => $admin->id,
+            'utilization' => 'corporate',
+            'reasoning' => 'Stock verification test',
+            'status' => 'approve',
+        ]);
+
+        $barang = Barang::factory()->create([
+            'subcategory_id' => $sub->id,
+            'brand_id' => $brand->id,
+            'uom_id' => $uom->id,
+        ]);
+        $lot = Lot::factory()->create(['barang_id' => $barang->id]);
+        Unit::factory()->count(5)->create(['lot_id' => $lot->id, 'status' => 'Tersedia']);
+
+        RequestItem::create([
+            'request_id' => $req->id,
+            'barang_id' => $barang->id,
+            'subcategory_id' => $sub->id,
+            'quantity_requested' => 2,
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('smart.requests.index', ['tab' => 'Inbox']));
+        $response->assertStatus(200);
+        $response->assertInertia(fn($page) =>
+            $page->component('Smart/Admin/Requests/ActiveRequests/PermintaanAktif')
+                ->has('inboxRequests', 1)
+                ->where('inboxRequests.0.items.0.stock', 5)
+                ->where('inboxRequests.0.items.0.stockQuantity', 5)
+        );
+    }
+
     public function test_manager_approved_requests_loads_cleanly_with_dates(): void
     {
         $manager = $this->createManager();

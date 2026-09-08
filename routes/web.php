@@ -13,6 +13,7 @@ use App\Http\Controllers\Smart\Admin\ManajemenStokController;
 use App\Http\Controllers\Smart\Admin\MasterController;
 use App\Http\Controllers\Smart\Admin\AdminApprovedRequestController;
 use App\Http\Controllers\Smart\Admin\AdminRequestConfirmationController;
+use App\Http\Controllers\Smart\Admin\AdminActiveRequestController;
 use App\Http\Controllers\Smart\Admin\AdminConfirmedRequestController;
 use App\Http\Controllers\Smart\Admin\AdminPartialRequestController;
 use App\Http\Controllers\Smart\Admin\AdminRequestFulfillmentController;
@@ -129,28 +130,72 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
 
         Route::get('/inventory/{barang}', [ManajemenStokController::class, 'show'])->name('inventory.show');
 
-        Route::get('/inbox', [AdminApprovedRequestController::class, 'index'])->name('inbox');
+        // Permintaan Aktif (Unified Active Requests Management)
+        Route::get('/requests', [AdminActiveRequestController::class, 'index'])->name('requests.index');
+        Route::get('/permintaan-aktif', fn() => redirect()->route('smart.requests.index'))->name('permintaan-aktif');
+
+        Route::get('/inbox', function (\Illuminate\Http\Request $request, \App\Services\InventoryStockService $stockService) {
+            if ($request->wantsJson()) {
+                return app(AdminApprovedRequestController::class)->index($request, $stockService);
+            }
+            $request->merge(['tab' => 'Inbox']);
+            return app(AdminActiveRequestController::class)->index($request, $stockService);
+        })->name('inbox');
         Route::get('/inbox/{id}', [AdminApprovedRequestController::class, 'show'])->name('inbox.show');
         Route::post('/inbox/confirmation', [AdminRequestConfirmationController::class, 'store'])->name('inbox.confirmation');
 
         // Request Fulfillment (Unit Assignment & Lot Allocation)
         Route::prefix('fulfillment')->name('fulfillment.')->group(function () {
-            Route::get('/', [AdminConfirmedRequestController::class, 'index'])->name('index');
+            Route::get('/', function (\Illuminate\Http\Request $request, \App\Services\InventoryStockService $stockService) {
+                if ($request->wantsJson()) {
+                    return app(AdminConfirmedRequestController::class)->index($request);
+                }
+                $request->merge(['tab' => 'Perlu Alokasi']);
+                return app(AdminActiveRequestController::class)->index($request, $stockService);
+            })->name('index');
             Route::get('/{id}', [AdminRequestFulfillmentController::class, 'show'])->name('show');
             Route::post('/items/{item}/assign', [RequestItemUnitAssignmentController::class, 'store'])->name('items.assign');
             Route::post('/{id}/confirm', [RequestFulfillmentConfirmationController::class, 'store'])->name('confirm');
         });
 
         // Partially Fulfilled Requests Page
-        Route::get('/partial', [AdminPartialRequestController::class, 'index'])->name('partial.index');
-        Route::get('/handover', [HandoverController::class, 'index'])->name('handover');
+        Route::get('/partial', function (\Illuminate\Http\Request $request, \App\Services\InventoryStockService $stockService) {
+            if ($request->wantsJson()) {
+                return app(AdminPartialRequestController::class)->index($request);
+            }
+            $request->merge(['tab' => 'Parsial']);
+            return app(AdminActiveRequestController::class)->index($request, $stockService);
+        })->name('partial.index');
+
+        Route::get('/handover', function (\Illuminate\Http\Request $request, \App\Services\InventoryStockService $stockService) {
+            if ($request->wantsJson()) {
+                return app(HandoverController::class)->index();
+            }
+            $request->merge(['tab' => 'Serah Terima']);
+            return app(AdminActiveRequestController::class)->index($request, $stockService);
+        })->name('handover');
         Route::get('/handover/{id}', [HandoverController::class, 'show'])->name('handover.show');
         Route::post('/handover/{id}/allocate', [HandoverController::class, 'allocate'])->name('handover.allocate');
-        Route::get('/borrowed', [BorrowedController::class, 'index'])->name('borrowed');
+
+        Route::get('/borrowed', function (\Illuminate\Http\Request $request, \App\Services\InventoryStockService $stockService) {
+            if ($request->wantsJson()) {
+                return app(BorrowedController::class)->index();
+            }
+            $request->merge(['tab' => 'Lacak Peminjaman']);
+            return app(AdminActiveRequestController::class)->index($request, $stockService);
+        })->name('borrowed');
         Route::get('/borrowed/{id}', [BorrowedController::class, 'show'])->name('borrowed.show');
-        Route::get('/returns', [ReturnController::class, 'index'])->name('returns');
+
+        Route::get('/returns', function (\Illuminate\Http\Request $request, \App\Services\InventoryStockService $stockService) {
+            if ($request->wantsJson()) {
+                return app(ReturnController::class)->index();
+            }
+            $request->merge(['tab' => 'Pengembalian']);
+            return app(AdminActiveRequestController::class)->index($request, $stockService);
+        })->name('returns');
         Route::get('/returns/{id}', [ReturnController::class, 'show'])->name('returns.show');
         Route::post('/returns/{id}/confirm', [ReturnController::class, 'confirm'])->name('returns.confirm');
+
         Route::get('/arsip', [\App\Http\Controllers\Smart\Admin\ArsipController::class, 'index'])->name('arsip');
         Route::get('/arsip/{id}', [\App\Http\Controllers\Smart\Admin\ArsipController::class, 'show'])->name('arsip.show');
         Route::get('/audit', [AuditController::class, 'index'])->name('audit');

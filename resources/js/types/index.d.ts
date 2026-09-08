@@ -17,6 +17,7 @@ export type PageProps<
         pendingRequestCount?: number;
         pendingAssetStatusCount?: number;
         pendingAdminApprovedCount?: number;
+        activeRequestsCount?: number;
         notifications?: any[];
         unreadNotificationCount?: number;
         mercure?: {

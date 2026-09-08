@@ -60,7 +60,11 @@ class SmartRequestItemResource extends JsonResource
             'status' => $this->status,
         ];
 
-        $isAdminContext = ($request->user()?->isAdmin && ($request->routeIs('smart.inbox*') || $request->routeIs('smart.admin.*')));
+        $isAdminContext = ($request->user()?->isAdmin && (
+            $request->routeIs('smart.inbox*') || 
+            $request->routeIs('smart.requests.*') || 
+            $request->routeIs('smart.admin.*')
+        ));
 
         // Stock quantity calculation for warehouse inspection (Admin context only, secured against query tampering)
         if ($isAdminContext || $request->attributes->get('with_stock')) {

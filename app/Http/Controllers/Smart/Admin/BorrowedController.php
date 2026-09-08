@@ -52,11 +52,12 @@ class BorrowedController extends Controller
                 ];
             });
 
-        return Inertia::render('Smart/Admin/Borrowed', [
+        return Inertia::render('Smart/Admin/Requests/ActiveRequests/PermintaanAktif', [
             'user' => [
                 'name' => auth()->user()->name,
                 'email' => auth()->user()->email,
             ],
+            'activeTab' => 'Lacak Peminjaman',
             'borrowedList' => $borrowedList,
         ]);
     }
@@ -178,7 +179,7 @@ class BorrowedController extends Controller
             ->mapWithKeys(fn($asn) => [$asn->unit->number => $asn->placement])
             ->toArray();
 
-        return Inertia::render('Smart/Admin/BorrowedDetail', [
+        return Inertia::render('Smart/Admin/Requests/ActiveRequests/Details/BorrowedDetail', [
             'borrowedId' => $req->id,
             'request' => $borrowedData,
             'placements' => $placements,

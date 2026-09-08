@@ -47,7 +47,7 @@ class ArsipController extends Controller
                 ];
             });
 
-        return Inertia::render('Smart/Admin/Arsip', [
+        return Inertia::render('Smart/Admin/Requests/Archive/Arsip', [
             'user' => [
                 'name' => auth()->user()->name,
                 'email' => auth()->user()->email,
@@ -170,7 +170,7 @@ class ArsipController extends Controller
             ->mapWithKeys(fn($asn) => [$asn->unit->number => $asn->placement])
             ->toArray();
 
-        return Inertia::render('Smart/Admin/ArsipDetail', [
+        return Inertia::render('Smart/Admin/Requests/Archive/ArsipDetail', [
             'requestId' => $req->id,
             'request' => $mappedRequest,
             'placements' => $placements,

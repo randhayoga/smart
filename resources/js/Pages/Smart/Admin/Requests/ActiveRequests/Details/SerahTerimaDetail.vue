@@ -566,7 +566,7 @@ const openFirstItemPlacementModal = () => {
     <Breadcrumb>
       <BreadcrumbList class="pb-3">
         <BreadcrumbItem>
-          <BreadcrumbLink href="/smart/handover">Serah Terima</BreadcrumbLink>
+          <BreadcrumbLink :href="route('smart.requests.index', { tab: 'Serah Terima' })">Serah Terima</BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>

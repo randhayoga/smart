@@ -23,7 +23,8 @@ import {
     ScrollText,
     Scroll,
     FileX,
-    QrCode
+    QrCode,
+    NotebookPen
 } from 'lucide-vue-next';
 
 export interface NavItem {
@@ -89,29 +90,10 @@ export const mainNavigation: NavSection[] = [
         title: 'Permintaan',
         items: [
             {
-                title: 'Inbox',
-                href: '/smart/inbox',
+                title: 'Permintaan Aktif',
+                href: '/smart/requests',
                 icon: LayoutList,
-            },
-            {
-                title: 'Partial',
-                href: '/smart/partial',
-                icon: RotateCw,
-            },
-            {
-                title: 'Serah Terima',
-                href: '/smart/handover',
-                icon: Handshake,
-            },
-            {
-                title: 'Lacak Peminjaman',
-                href: '/smart/borrowed',
-                icon: Telescope,
-            },
-            {
-                title: 'Pengembalian',
-                href: '/smart/returns',
-                icon: RefreshCcw,
+                badge: undefined,
             },
             {
                 title: 'Arsip',
