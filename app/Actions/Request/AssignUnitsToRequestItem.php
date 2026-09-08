@@ -67,7 +67,7 @@ class AssignUnitsToRequestItem
 
             if (!empty($newUnitIds)) {
                 // Validate unit existence and suitability
-                $units = Unit::with('lot')->whereIn('id', $newUnitIds)->get();
+                $units = Unit::with('lot.barang')->whereIn('id', $newUnitIds)->get();
 
                 if ($units->count() !== count($newUnitIds)) {
                     throw ValidationException::withMessages([
@@ -86,12 +86,13 @@ class AssignUnitsToRequestItem
                     // Check that unit belongs to the item's catalog
                     $lotBarangId = $unit->lot?->barang_id;
                     $itemBarangId = $item->barang_id;
-                    $itemSubcatId = $item->subcategory_id;
+                    $itemSubcatId = $item->subcategory_id ?? $item->barang?->subcategory_id;
+                    $lotSubcatId = $unit->lot?->barang?->subcategory_id;
 
                     $matches = false;
                     if ($itemBarangId && (int)$lotBarangId === (int)$itemBarangId) {
                         $matches = true;
-                    } elseif ($itemSubcatId && $unit->lot?->barang?->subcategory_id === $itemSubcatId) {
+                    } elseif ($itemSubcatId && (int)$lotSubcatId === (int)$itemSubcatId) {
                         $matches = true;
                     }
 

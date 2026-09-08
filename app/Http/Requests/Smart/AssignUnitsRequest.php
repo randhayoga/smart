@@ -14,7 +14,7 @@ class AssignUnitsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'unit_ids' => 'required|array',
+            'unit_ids' => 'present|array',
             'unit_ids.*' => 'integer|exists:units,id',
         ];
     }
@@ -22,7 +22,7 @@ class AssignUnitsRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'unit_ids.required' => 'Pilih setidaknya satu unit aset.',
+            'unit_ids.present' => 'Data alokasi unit harus disertakan.',
             'unit_ids.array' => 'Format data alokasi unit tidak valid.',
             'unit_ids.*.exists' => 'Salah satu unit aset yang dipilih tidak terdaftar di sistem.',
         ];

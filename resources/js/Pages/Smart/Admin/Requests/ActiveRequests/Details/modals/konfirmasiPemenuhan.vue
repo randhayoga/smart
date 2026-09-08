@@ -4,7 +4,7 @@
  * Allows admin to review full/partial allocation readiness and submit confirmation,
  * advancing request to Handover (100%) or Partial status.
  */
-import { ref, watch } from 'vue';
+import { ref, watch, onMounted, onUnmounted } from 'vue';
 import { router } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 import { Button } from '@/Components/ui/button';
@@ -34,6 +34,20 @@ watch(() => props.open, (isOpen) => {
 const closeModal = () => {
   emit('update:open', false);
 };
+
+const closeOnEscape = (e: KeyboardEvent) => {
+  if (e.key === 'Escape' && props.open) {
+    closeModal();
+  }
+};
+
+onMounted(() => {
+  document.addEventListener('keydown', closeOnEscape);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', closeOnEscape);
+});
 
 const submitConfirmation = () => {
   const summary = props.request?.fulfillment_summary;

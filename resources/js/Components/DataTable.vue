@@ -28,6 +28,7 @@ import {
 } from '@/Components/ui/table'
 import { Button } from '@/Components/ui/button'
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
+import { cn } from '@/lib/utils'
 
 const props = withDefaults(defineProps<{
   columns: ColumnDef<TData, TValue>[]
@@ -39,10 +40,20 @@ const props = withDefaults(defineProps<{
   defaultSorting?: SortingState
   cellClass?: string
   rowClass?: string | ((row: TData) => string)
+  /**
+   * Optional container class for scrollable tables (e.g. `table-container-class="max-h-[400px]"`).
+   * When set:
+   * 1. Enables scrolling via inner Table container (relative w-full overflow-auto + tableContainerClass).
+   * 2. Automatically makes TableHeader sticky (`sticky top-0 z-10`) with solid `bg-muted/90` background.
+   * 3. Outer card maintains `overflow-hidden` so all 4 rounded corners (`rounded-xl`) & borders stay intact.
+   * Note: Do NOT use `backdrop-blur-*` on header cells, as Blink/Chromium compositing bleeds over ancestor border-radius.
+   */
+  tableContainerClass?: string
 }>(), {
   pageSize: 10,
   showSelectionCount: true,
-  defaultSorting: () => []
+  defaultSorting: () => [],
+  tableContainerClass: ''
 })
 
 const getRowClass = (row: any) => {
@@ -113,14 +124,19 @@ watch(() => props.filterValue, (val) => {
 </script>
 
 <template>
+  <!-- Outer card frame always preserves rounded-xl, border, and overflow-hidden -->
   <div class="rounded-xl border border-border shadow-sm overflow-hidden bg-card">
-    <Table>
-      <TableHeader class="bg-muted/50">
+    <!-- Inner Table handles horizontal & vertical scrolling when tableContainerClass (e.g. max-h-[400px]) is passed -->
+    <Table :container-class="tableContainerClass">
+      <TableHeader :class="['bg-muted/50', tableContainerClass ? 'sticky top-0 z-10' : '']">
         <TableRow v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id" class="hover:bg-transparent">
           <TableHead 
             v-for="header in headerGroup.headers" 
             :key="header.id" 
-            class="font-semibold text-foreground text-left"
+            :class="[
+              'font-semibold text-foreground text-left',
+              tableContainerClass ? 'bg-muted/90 border-b border-border' : ''
+            ]"
             :style="{ width: header.getSize() !== 150 ? `${header.getSize()}px` : undefined }"
           >
             <FlexRender
@@ -141,7 +157,7 @@ watch(() => props.filterValue, (val) => {
           >
             <TableCell 
               v-for="cell in row.getVisibleCells()" 
-              :key="cell.id"
+              :key="cell.id" 
               :class="['text-left', props.cellClass]"
               :style="{ width: cell.column.getSize() !== 150 ? `${cell.column.getSize()}px` : undefined }"
             >

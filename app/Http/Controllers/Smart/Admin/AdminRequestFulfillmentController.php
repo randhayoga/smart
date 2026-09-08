@@ -58,9 +58,6 @@ class AdminRequestFulfillmentController extends Controller
         ->whereIn('status', ['confirm', 'partial'])
         ->firstOrFail();
 
-        // Run FIFO auto-fulfillment for items needing initial assignment
-        $fulfillmentService->autoFulfillRequest($req);
-
         // Reload fresh relations with fulfillments
         $req->load($this->relations);
 
