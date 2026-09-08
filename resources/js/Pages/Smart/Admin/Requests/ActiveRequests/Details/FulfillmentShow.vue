@@ -12,7 +12,6 @@ import { toast } from 'vue-sonner';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { Button } from '@/Components/ui/button';
 import { ScrollArea } from "@/Components/ui/scroll-area";
-import TableSearch from '@/Components/TableSearch.vue';
 import {
   Stepper,
   StepperItem,
@@ -28,24 +27,17 @@ import {
   BreadcrumbItem,
   BreadcrumbSeparator,
 } from '@/Components/ui/breadcrumb';
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/Components/ui/dialog";
 import AssetItemCard from '@/Components/AssetItemCard.vue';
 import { 
   Check,
   Clock, 
   X, 
   AlertCircle,
-  Package,
-  CheckCircle2,
-  AlertTriangle
+  Package
 } from 'lucide-vue-next';
 import { REQUEST_STATUS_PILL_BASE, getRequestStatusBadgeClass, getRequestStatusLabel } from '@/lib/requestStatus';
+import PilihAlokasiAset from './modals/pilihAlokasiAset.vue';
+import KonfirmasiPemenuhan from './modals/konfirmasiPemenuhan.vue';
 
 // --- Types ---
 interface AllocationSlot {
@@ -180,137 +172,21 @@ const typeLabelTitle = computed(() => isPeminjaman.value ? 'Peminjaman' : 'Permi
 
 
 // ─────────────────────────────────────────────
-// Asset Allocation Modal State
+// Modals State
 // ─────────────────────────────────────────────
 const isAssetModalOpen = ref(false);
 const activeItemForAllocation = ref<FulfillmentItem | null>(null);
-const tempSelectedUnitIds = ref<number[]>([]);
-const unitSearchQuery = ref('');
-const isSavingAllocation = ref(false);
 
 const openAllocationModal = (item: FulfillmentItem) => {
   activeItemForAllocation.value = item;
-  unitSearchQuery.value = '';
-  
-  // Pre-fill selected units with current allocations
-  const currentAssigned = (item.allocation_slots || [])
-    .filter(slot => slot.unit_id !== null)
-    .map(slot => slot.unit_id as number);
-
-  tempSelectedUnitIds.value = [...currentAssigned];
   isAssetModalOpen.value = true;
 };
 
-const closeAllocationModal = () => {
-  isAssetModalOpen.value = false;
-  activeItemForAllocation.value = null;
-  tempSelectedUnitIds.value = [];
-};
-
-const filteredAvailableUnits = computed(() => {
-  const item = activeItemForAllocation.value;
-  if (!item || !item.available_units) return [];
-
-  const q = unitSearchQuery.value.trim().toLowerCase();
-  if (!q) return item.available_units;
-
-  return item.available_units.filter(u => 
-    (u.asset_code && u.asset_code.toLowerCase().includes(q)) ||
-    (u.lot_code && u.lot_code.toLowerCase().includes(q)) ||
-    (u.status && u.status.toLowerCase().includes(q)) ||
-    (u.condition && u.condition.toLowerCase().includes(q)) ||
-    (u.storage_location && u.storage_location.toLowerCase().includes(q))
-  );
-});
-
-const isUnitSelected = (unitId: number): boolean => {
-  return tempSelectedUnitIds.value.includes(unitId);
-};
-
-const toggleUnitSelection = (unit: AvailableUnit) => {
-  if (unit.is_locked) return; // Locked units cannot be toggled
-
-  const idx = tempSelectedUnitIds.value.indexOf(unit.id);
-  if (idx !== -1) {
-    // Deselect
-    tempSelectedUnitIds.value.splice(idx, 1);
-  } else {
-    // Select if under max quantity
-    const max = activeItemForAllocation.value?.quantity_requested || 1;
-    if (tempSelectedUnitIds.value.length >= max) {
-      toast.warning(`Maksimal ${max} unit aset untuk barang ini.`);
-      return;
-    }
-    tempSelectedUnitIds.value.push(unit.id);
-  }
-};
-
-const saveAllocation = () => {
-  const item = activeItemForAllocation.value;
-  if (!item) return;
-
-  isSavingAllocation.value = true;
-  router.post(route('smart.fulfillment.items.assign', item.id), {
-    unit_ids: tempSelectedUnitIds.value
-  }, {
-    preserveScroll: true,
-    onSuccess: () => {
-      isSavingAllocation.value = false;
-      closeAllocationModal();
-      toast.success('Alokasi unit aset berhasil diperbarui.');
-    },
-    onError: (errs) => {
-      isSavingAllocation.value = false;
-      toast.error(Object.values(errs).join(', '));
-    }
-  });
-};
-
-// ─────────────────────────────────────────────
-// Confirmation Modal State (Full / Partial)
-// ─────────────────────────────────────────────
 const isConfirmModalOpen = ref(false);
-const confirmationNote = ref('');
-const isSubmittingConfirmation = ref(false);
-
 const openConfirmationModal = () => {
-  confirmationNote.value = '';
   isConfirmModalOpen.value = true;
 };
 
-const closeConfirmationModal = () => {
-  isConfirmModalOpen.value = false;
-};
-
-const submitConfirmation = () => {
-  const summary = request.value.fulfillment_summary;
-  const isFull = summary.can_confirm_full;
-  const allowPartial = !isFull && summary.can_confirm_partial;
-
-  if (!isFull && !allowPartial) {
-    toast.error('Belum ada barang yang dialokasikan. Alokasikan setidaknya satu barang.');
-    return;
-  }
-
-  isSubmittingConfirmation.value = true;
-  router.post(route('smart.fulfillment.confirm', request.value.uuid), {
-    allow_partial: allowPartial,
-    note: confirmationNote.value,
-  }, {
-    onSuccess: () => {
-      isSubmittingConfirmation.value = false;
-      closeConfirmationModal();
-      toast.success(isFull 
-        ? 'Alokasi penuh berhasil dikonfirmasi! Permintaan beralih ke tahap Serah Terima.'
-        : 'Alokasi parsial berhasil dikonfirmasi! Permintaan beralih ke Parsial.'
-      );
-    },
-    onError: (errs) => {
-      isSubmittingConfirmation.value = false;
-      toast.error(Object.values(errs).join(', '));
-    }
-  });
-};
 
 // ─────────────────────────────────────────────
 // Timeline Stepper Setup
@@ -627,205 +503,17 @@ const activeStepIndex = computed(() => {
 
     </div>
 
-    <!-- ============================================================
-         MODAL: Pilih Alokasi Aset (Unit Datatable)
-         ============================================================ -->
-    <Dialog :open="isAssetModalOpen" @update:open="val => isAssetModalOpen = val">
-      <DialogContent class="sm:max-w-[50rem] rounded-[0.875rem] bg-card p-0 gap-0 border border-border overflow-hidden" :show-close-button="false">
-        <div class="flex items-center justify-between pt-4 pb-3 px-6 border-b border-border">
-          <div>
-            <DialogTitle class="text-base font-bold text-foreground">
-              Pilih Alokasi Aset
-            </DialogTitle>
-            <DialogDescription class="text-xs text-muted-foreground mt-0.5">
-              {{ activeItemForAllocation?.brand }} {{ activeItemForAllocation?.name }} - Pilih maksimal {{ activeItemForAllocation?.quantity_requested }} unit aset.
-            </DialogDescription>
-          </div>
-          <button @click="closeAllocationModal" class="p-2 hover:bg-muted rounded-full transition-colors">
-            <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
-          </button>
-        </div>
+    <!-- Modal: Pilih Alokasi Aset -->
+    <PilihAlokasiAset
+      v-model:open="isAssetModalOpen"
+      :item="activeItemForAllocation"
+    />
 
-        <div class="px-6 py-4 space-y-4 max-h-[70vh] overflow-y-auto">
-          <!-- Selection Counter & Search Filter -->
-          <div class="flex items-center justify-between gap-4 flex-wrap">
-            <div class="text-xs font-semibold">
-              Terpilih: 
-              <span :class="tempSelectedUnitIds.length === (activeItemForAllocation?.quantity_requested || 0) ? 'text-emerald-600 font-bold' : 'text-primary font-bold'">
-                {{ tempSelectedUnitIds.length }} / {{ activeItemForAllocation?.quantity_requested }} unit
-              </span>
-            </div>
-
-            <div class="w-full sm:w-72">
-              <TableSearch 
-                v-model="unitSearchQuery" 
-                placeholder="Cari kode aset, LOT, lokasi..." 
-                bg-class="bg-background"
-              />
-            </div>
-          </div>
-
-          <!-- Unit Datatable -->
-          <div class="border border-border rounded-lg overflow-hidden">
-            <div class="overflow-x-auto">
-              <table class="w-full text-xs text-left">
-                <thead class="bg-muted/50 text-foreground font-semibold border-b border-border">
-                  <tr>
-                    <th class="p-2.5 w-10 text-center">Pilih</th>
-                    <th class="p-2.5">Kode Aset</th>
-                    <th class="p-2.5">Kode LOT</th>
-                    <th class="p-2.5">Status</th>
-                    <th class="p-2.5">Kondisi</th>
-                    <th class="p-2.5">Lokasi Penyimpanan</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-border/60">
-                  <tr 
-                    v-for="unit in filteredAvailableUnits" 
-                    :key="unit.id"
-                    class="hover:bg-muted/30 transition-colors cursor-pointer"
-                    :class="isUnitSelected(unit.id) ? 'bg-primary/5' : ''"
-                    @click="toggleUnitSelection(unit)"
-                  >
-                    <td class="p-2.5 text-center" @click.stop>
-                      <input 
-                        type="checkbox" 
-                        :checked="isUnitSelected(unit.id)"
-                        :disabled="unit.is_locked"
-                        @change="toggleUnitSelection(unit)"
-                        class="rounded border-input text-primary focus:ring-primary/20 w-4 h-4 cursor-pointer disabled:opacity-50"
-                      />
-                    </td>
-                    <td class="p-2.5 font-mono font-bold text-foreground">
-                      {{ unit.asset_code }}
-                    </td>
-                    <td class="p-2.5 font-mono text-muted-foreground">
-                      {{ unit.lot_code }}
-                    </td>
-                    <td class="p-2.5">
-                      <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">
-                        {{ unit.status }}
-                      </span>
-                    </td>
-                    <td class="p-2.5 text-foreground">
-                      {{ unit.condition }}
-                    </td>
-                    <td class="p-2.5 text-muted-foreground">
-                      {{ unit.storage_location }}
-                    </td>
-                  </tr>
-
-                  <tr v-if="filteredAvailableUnits.length === 0">
-                    <td colspan="6" class="p-6 text-center text-muted-foreground">
-                      Tidak ada unit aset yang tersedia atau cocok dengan pencarian.
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <DialogFooter class="p-4 px-6 border-t border-border bg-muted/10 flex justify-end gap-2">
-          <Button variant="outline" size="sm" @click="closeAllocationModal" class="h-8">
-            Batal
-          </Button>
-          <Button 
-            variant="primary" 
-            size="sm" 
-            :disabled="isSavingAllocation"
-            @click="saveAllocation" 
-            class="h-8 bg-[#4F46E5] hover:bg-[#4338CA] text-white font-semibold"
-          >
-            {{ isSavingAllocation ? 'Menyimpan...' : 'Simpan Alokasi' }}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-
-    <!-- ============================================================
-         MODAL: Konfirmasi Alokasi Pemenuhan
-         ============================================================ -->
-    <Dialog :open="isConfirmModalOpen" @update:open="val => isConfirmModalOpen = val">
-      <DialogContent class="sm:max-w-[32rem] rounded-[0.875rem] bg-card p-0 gap-0 border border-border overflow-hidden" :show-close-button="false">
-        <div class="flex items-center justify-between pt-4 pb-3 px-6 border-b border-border">
-          <DialogTitle class="text-base font-bold text-foreground">
-            Konfirmasi Alokasi Permintaan
-          </DialogTitle>
-          <button @click="closeConfirmationModal" class="p-2 hover:bg-muted rounded-full transition-colors">
-            <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
-          </button>
-        </div>
-
-        <div class="px-6 py-4 space-y-4 text-xs">
-          <!-- Status Alert -->
-          <div 
-            v-if="request.fulfillment_summary.can_confirm_full"
-            class="p-3 rounded-lg border border-emerald-200 bg-emerald-50 dark:bg-emerald-950/20 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 flex items-start gap-2.5"
-          >
-            <CheckCircle2 class="w-4 h-4 shrink-0 mt-0.5" />
-            <div>
-              <p class="font-bold">Pemenuhan Lengkap (100%)</p>
-              <p class="mt-0.5 text-xs opacity-90 leading-relaxed">
-                Seluruh {{ request.fulfillment_summary.total_quantity_requested }} barang telah teralokasi. Konfirmasi ini akan melanjutkan status permintaan ke <strong>Serah Terima</strong>.
-              </p>
-            </div>
-          </div>
-
-          <div 
-            v-else-if="request.fulfillment_summary.can_confirm_partial"
-            class="p-3 rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800 text-amber-800 dark:text-amber-300 flex items-start gap-2.5"
-          >
-            <AlertTriangle class="w-4 h-4 shrink-0 mt-0.5" />
-            <div>
-              <p class="font-bold">Pemenuhan Sebagian (Parsial)</p>
-              <p class="mt-0.5 text-xs opacity-90 leading-relaxed">
-                Teralokasi {{ request.fulfillment_summary.total_quantity_assigned }} dari {{ request.fulfillment_summary.total_quantity_requested }} barang. Konfirmasi ini akan mengubah status permintaan menjadi <strong>Partial</strong> sehingga pemohon dapat menerima barang yang siap terlebih dahulu.
-              </p>
-            </div>
-          </div>
-
-          <div 
-            v-else
-            class="p-3 rounded-lg border border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-800 text-red-800 dark:text-red-300 flex items-start gap-2.5"
-          >
-            <AlertCircle class="w-4 h-4 shrink-0 mt-0.5" />
-            <div>
-              <p class="font-bold">Belum Ada Barang Teralokasi</p>
-              <p class="mt-0.5 text-xs opacity-90 leading-relaxed">
-                Anda belum mengalokasikan barang apa pun. Silakan alokasikan unit aset terlebih dahulu sebelum konfirmasi.
-              </p>
-            </div>
-          </div>
-
-          <!-- Catatan Optional -->
-          <div class="space-y-1.5 pt-1">
-            <label class="text-xs font-semibold text-foreground">Catatan Admin (Opsional):</label>
-            <textarea 
-              v-model="confirmationNote" 
-              rows="3" 
-              placeholder="Tuliskan catatan terkait alokasi ini jika diperlukan..."
-              class="w-full text-xs rounded-lg border border-input bg-background p-2.5 focus:ring-1 focus:ring-primary focus:outline-none"
-            ></textarea>
-          </div>
-        </div>
-
-        <DialogFooter class="p-4 px-6 border-t border-border bg-muted/10 flex justify-end gap-2">
-          <Button variant="outline" size="sm" @click="closeConfirmationModal" class="h-8">
-            Batal
-          </Button>
-          <Button 
-            variant="primary" 
-            size="sm" 
-            :disabled="isSubmittingConfirmation || (!request.fulfillment_summary.can_confirm_full && !request.fulfillment_summary.can_confirm_partial)"
-            @click="submitConfirmation" 
-            class="h-8 bg-[#4F46E5] hover:bg-[#4338CA] text-white font-semibold"
-          >
-            {{ isSubmittingConfirmation ? 'Memproses...' : (request.fulfillment_summary.can_confirm_full ? 'Konfirmasi Alokasi Penuh' : 'Konfirmasi Parsial') }}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <!-- Modal: Konfirmasi Alokasi Pemenuhan -->
+    <KonfirmasiPemenuhan
+      v-model:open="isConfirmModalOpen"
+      :request="request"
+    />
 
   </AppLayout>
 </template>
