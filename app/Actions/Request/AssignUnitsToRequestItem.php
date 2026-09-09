@@ -40,6 +40,7 @@ class AssignUnitsToRequestItem
             $lockedFulfillments = RequestFulfillment::where('request_item_id', $item->id)
                 ->where(function ($q) {
                     $q->whereNotNull('handover_id')
+                      ->orWhereNotNull('confirmed_at')
                       ->orWhereNotNull('completed_at')
                       ->orWhereHas('unit', fn($uq) => $uq->where('status', 'Dipinjam'));
                 })
@@ -102,16 +103,20 @@ class AssignUnitsToRequestItem
                         ]);
                     }
 
-                    // Check that unit is not assigned to another active request
+                    // Check that unit is not locked by another confirmed active request
                     $isAssignedElsewhere = RequestFulfillment::where('unit_id', $unit->id)
                         ->where('request_item_id', '!=', $item->id)
-                        ->whereNull('completed_at')
+                        ->where(function ($q) {
+                            $q->whereNotNull('confirmed_at')
+                              ->orWhereNotNull('completed_at')
+                              ->orWhereNotNull('handover_id');
+                        })
                         ->lockForUpdate()
                         ->exists();
 
                     if ($isAssignedElsewhere) {
                         throw ValidationException::withMessages([
-                            'unit_ids' => ["Unit {$unit->number} telah dialokasikan pada permintaan lain."],
+                            'unit_ids' => ["Unit {$unit->number} telah dikonfirmasi pada permintaan lain."],
                         ]);
                     }
                 }

@@ -64,7 +64,6 @@ class RequestHistoryController extends Controller
             'user' => $httpRequest->user(),
             'requestId' => $request->uuid,
             'request' => (new SmartRequestResource($request))->resolve(),
-            'placements' => [],
         ]);
     }
 }

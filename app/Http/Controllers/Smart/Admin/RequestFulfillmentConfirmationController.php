@@ -29,7 +29,11 @@ class RequestFulfillmentConfirmationController extends Controller
                 $query->where('uuid', $id)->orWhere('request_number', $id);
             }
         })
-        ->whereIn('status', ['confirm', 'partial'])
+        ->where(function ($query) {
+            $query->whereIn('status', ['confirm', 'partial'])
+                  ->orWhere('status', 'like', '%partial%')
+                  ->orWhere('status', 'like', '%menunggu_serah_terima%');
+        })
         ->firstOrFail();
 
         $allowPartial = $request->boolean('allow_partial', false);

@@ -173,6 +173,21 @@ const isActive = (href: string): boolean => {
     return true;
   }
 
+  // Active requests unified section (/smart/requests) matches its child workflow routes
+  if (target.pathname === '/smart/requests') {
+    const activeRequestPrefixes = [
+      '/smart/fulfillment',
+      '/smart/inbox',
+      '/smart/partial',
+      '/smart/handover',
+      '/smart/borrowed',
+      '/smart/returns',
+    ];
+    if (activeRequestPrefixes.some(prefix => current.pathname === prefix || current.pathname.startsWith(prefix + '/'))) {
+      return true;
+    }
+  }
+
   // Check nested child paths (e.g. /smart/inbox/123 -> /smart/inbox)
   return current.pathname.startsWith(target.pathname + '/');
 };

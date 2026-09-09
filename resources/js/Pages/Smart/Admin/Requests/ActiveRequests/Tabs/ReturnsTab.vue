@@ -20,6 +20,7 @@ import {
 import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
 import ViewTableButton from '@/Components/ViewTableButton.vue';
+import ResetFilterButton from '@/Components/ResetFilterButton.vue';
 
 interface Props {
   returnsList: any[];
@@ -32,6 +33,19 @@ const dummyReturns = computed(() => props.returnsList);
 const searchQuery = ref('');
 const timeFilter = ref('');
 const rowsPerPage = ref('Semua baris');
+
+const hasActiveFilters = computed(() => {
+  return !!(
+    searchQuery.value ||
+    timeFilter.value
+  );
+});
+
+const clearFilters = () => {
+  searchQuery.value = '';
+  timeFilter.value = '';
+};
+
 const dataTableRef = ref<any>(null);
 
 const handleViewDetail = (item: any) => {
@@ -180,6 +194,20 @@ onMounted(() => {
             <DropdownMenuItem @select="timeFilter = 'Bulan ini'">Bulan ini</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+
+        <Transition
+          enter-active-class="transition ease-out duration-200"
+          enter-from-class="transform scale-95 opacity-0"
+          enter-to-class="transform scale-100 opacity-100"
+          leave-active-class="transition ease-in duration-150"
+          leave-from-class="transform scale-100 opacity-100"
+          leave-to-class="transform scale-95 opacity-0"
+        >
+          <ResetFilterButton 
+            v-if="hasActiveFilters"
+            @click="clearFilters"
+          />
+        </Transition>
 
         <div class="flex items-center gap-3 text-sm text-muted-foreground ml-auto">
           <span>Baris per halaman</span>

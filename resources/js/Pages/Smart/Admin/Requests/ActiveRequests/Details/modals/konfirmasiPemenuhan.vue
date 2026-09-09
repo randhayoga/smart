@@ -125,7 +125,7 @@ const submitConfirmation = () => {
                 <div>
                   <p class="font-bold text-sm">Pemenuhan Lengkap (100%)</p>
                   <p class="mt-1 text-sm opacity-90 leading-relaxed">
-                    Seluruh {{ request.fulfillment_summary.total_quantity_requested }} barang telah teralokasi. Konfirmasi ini akan melanjutkan status permintaan ke <strong>Serah Terima</strong>.
+                    Seluruh {{ request.fulfillment_summary.total_quantity_requested }} barang telah teralokasi. Konfirmasi ini akan melanjutkan status permintaan ke <strong>Menunggu Serah Terima</strong>.
                   </p>
                 </div>
               </div>
@@ -138,7 +138,7 @@ const submitConfirmation = () => {
                 <div>
                   <p class="font-bold text-sm">Pemenuhan Sebagian (Parsial)</p>
                   <p class="mt-1 text-sm opacity-90 leading-relaxed">
-                    Teralokasi {{ request.fulfillment_summary.total_quantity_assigned }} dari {{ request.fulfillment_summary.total_quantity_requested }} barang. Konfirmasi ini akan mengubah status permintaan menjadi <strong>Serah Terima: Parsial</strong> sehingga pemohon dapat menerima barang yang siap terlebih dahulu.
+                    Teralokasi {{ request.fulfillment_summary.total_quantity_assigned }} dari {{ request.fulfillment_summary.total_quantity_requested }} barang. Konfirmasi ini akan mengubah status permintaan menjadi <strong>Menunggu Serah Terima</strong> dan <strong>Parsial</strong> sehingga pemohon dapat menerima barang yang siap terlebih dahulu.
                   </p>
                 </div>
               </div>

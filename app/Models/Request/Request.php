@@ -200,5 +200,39 @@ class Request extends Model
 
         return $this->items()->whereNotNull('end_date')->value('end_date');
     }
+
+    /**
+     * Scope to find requests matching a status (supports comma-delimited multi-status).
+     */
+    public function scopeWhereHasStatus($query, string $status)
+    {
+        return $query->where(function ($q) use ($status) {
+            $q->where('status', $status)
+              ->orWhere('status', 'like', "{$status},%")
+              ->orWhere('status', 'like', "%,{$status}")
+              ->orWhere('status', 'like', "%,{$status},%");
+        });
+    }
+
+    /**
+     * Check if the request contains a specific status.
+     */
+    public function hasStatus(string $status): bool
+    {
+        return in_array(trim($status), $this->statuses, true);
+    }
+
+    /**
+     * Accessor for statuses array.
+     *
+     * @return string[]
+     */
+    public function getStatusesAttribute(): array
+    {
+        if (!$this->status) {
+            return [];
+        }
+        return array_values(array_filter(array_map('trim', explode(',', $this->status))));
+    }
 }
 

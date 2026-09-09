@@ -20,6 +20,7 @@ class SmartFulfillmentResource extends JsonResource
         'wait' => 'Menunggu approval',
         'approve' => 'Di-approve',
         'confirm' => 'Dikonfirmasi Admin',
+        'menunggu_serah_terima' => 'Menunggu Serah Terima',
         'handover' => 'Serah Terima',
         'borrow' => 'Dipinjam',
         'return' => 'Dipinjam',
@@ -27,7 +28,7 @@ class SmartFulfillmentResource extends JsonResource
         'reject' => 'Ditolak',
         'cancel' => 'Dibatalkan',
         'pending' => 'Pending',
-        'partial' => 'Partial',
+        'partial' => 'Parsial',
     ];
 
     public function toArray(Request $request): array
@@ -136,7 +137,45 @@ class SmartFulfillmentResource extends JsonResource
                     $allAssigned = false;
                 }
 
+                $existingLotMap = $item->fulfillments
+                    ->whereNotNull('lot_id')
+                    ->whereNull('unit_id')
+                    ->pluck('quantity_fulfilled', 'lot_id')
+                    ->toArray();
+
+                $availableLots = $fulfillmentService->getAvailableLotsQuery($item)
+                    ->get()
+                    ->map(function ($l) use ($existingLotMap) {
+                        $loc = $l->location?->name ?? '-';
+                        $floor = $l->floor?->name ? ", {$l->floor->name}" : '';
+                        $room = $l->room?->name ? ", {$l->room->name}" : '';
+
+                        $brand = $l->barang?->brand?->name ?? '';
+                        $name = $l->barang?->name ?? '';
+                        $spec = $l->barang?->specification ?? '';
+                        $variantParts = array_filter([$brand, $name, $spec], fn($v) => !empty($v) && $v !== '-');
+                        $variant = !empty($variantParts) ? implode(' ', $variantParts) : ($l->barang?->name ?? '-');
+
+                        $assignedQty = (int) ($existingLotMap[$l->id] ?? 0);
+                        $totalAvailable = (int) $l->current_quantity;
+
+                        return [
+                            'id' => $l->id,
+                            'lot_code' => $l->number ?? '-',
+                            'brand' => $brand,
+                            'name' => $name,
+                            'spec' => $spec,
+                            'variant' => $variant,
+                            'storage_location' => $loc . $floor . $room,
+                            'current_quantity' => $totalAvailable,
+                            'allocated_quantity' => $assignedQty,
+                            'uom' => $l->barang?->uom?->name ?? 'satuan',
+                            'date_of_receipt' => $l->date_of_receipt ? $l->date_of_receipt->format('d-m-Y') : '-',
+                        ];
+                    })->values()->toArray();
+
                 $itemData['lot_fulfillments'] = $lotFulfillments;
+                $itemData['available_lots'] = $availableLots;
                 $itemData['consumable_summary'] = [
                     'quantity_requested' => $requested,
                     'quantity_fulfilled' => $sumFulfilled,
@@ -175,6 +214,8 @@ class SmartFulfillmentResource extends JsonResource
                             || ($unit && strtolower((string)$unit->status) === 'dipinjam')
                             || in_array($this->status, ['borrow', 'success']);
 
+                        $isConfirmed = ($f->confirmed_at !== null) || $isBorrowed;
+
                         if ($isBorrowed) {
                             $state = 'borrowed';
                             $color = 'green';
@@ -183,10 +224,18 @@ class SmartFulfillmentResource extends JsonResource
                             if ($unitId) {
                                 $lockedUnitIds[] = $unitId;
                             }
+                        } elseif ($isConfirmed) {
+                            $state = 'assigned';
+                            $color = 'purple';
+                            $label = 'Dikonfirmasi (Menunggu Serah Terima)';
+                            $isLocked = true;
+                            if ($unitId) {
+                                $lockedUnitIds[] = $unitId;
+                            }
                         } else {
                             $state = 'assigned';
                             $color = 'purple';
-                            $label = 'Dialokasikan (Menunggu Serah Terima)';
+                            $label = 'Dialokasikan (Belum Dikonfirmasi)';
                             $isLocked = false;
                         }
 
@@ -215,22 +264,40 @@ class SmartFulfillmentResource extends JsonResource
                 }
 
                 // Available units for the "Pilih Alokasi Aset" modal datatable
-                $availableUnits = $fulfillmentService->getAvailableUnitsQuery($item, true)
-                    ->get()
-                    ->map(function ($u) use ($assignedUnitIds, $lockedUnitIds) {
+                $availableUnitModels = $fulfillmentService->getAvailableUnitsQuery($item, true)->get();
+                $stagedElsewhereUnitIds = RequestFulfillment::whereIn('unit_id', $availableUnitModels->pluck('id'))
+                    ->where('request_item_id', '!=', $item->id)
+                    ->whereNull('confirmed_at')
+                    ->whereNull('completed_at')
+                    ->pluck('unit_id')
+                    ->all();
+
+                $availableUnits = $availableUnitModels
+                    ->map(function ($u) use ($assignedUnitIds, $lockedUnitIds, $stagedElsewhereUnitIds) {
                         $loc = $u->location?->name ?? '-';
                         $floor = $u->floor?->name ? ", {$u->floor->name}" : '';
                         $room = $u->room?->name ? ", {$u->room->name}" : '';
+
+                        $brand = $u->lot?->barang?->brand?->name ?? '';
+                        $name = $u->lot?->barang?->name ?? '';
+                        $spec = $u->lot?->barang?->specification ?? '';
+                        $variantParts = array_filter([$brand, $name, $spec], fn($v) => !empty($v) && $v !== '-');
+                        $variant = !empty($variantParts) ? implode(' ', $variantParts) : ($u->lot?->barang?->name ?? '-');
 
                         return [
                             'id' => $u->id,
                             'asset_code' => $u->number,
                             'lot_code' => $u->lot?->number ?? '-',
+                            'brand' => $brand,
+                            'name' => $name,
+                            'spec' => $spec,
+                            'variant' => $variant,
                             'status' => $u->status,
                             'condition' => $u->condition ?? 'Baik',
                             'storage_location' => $loc . $floor . $room,
                             'is_currently_assigned' => in_array($u->id, $assignedUnitIds),
                             'is_locked' => in_array($u->id, $lockedUnitIds),
+                            'is_staged_elsewhere' => in_array($u->id, $stagedElsewhereUnitIds),
                         ];
                     })->values()->toArray();
 
@@ -280,7 +347,30 @@ class SmartFulfillmentResource extends JsonResource
             'durationDays' => $durationDays,
             'durationHours' => $durationHours,
             'borrowPeriod' => $borrowPeriod,
-            'status' => self::STATUS_MAP[$this->status] ?? $this->status,
+            'status' => !empty($this->status) 
+                ? implode(', ', array_map(fn($s) => self::STATUS_MAP[trim($s)] ?? trim($s), explode(',', $this->status)))
+                : '-',
+            'statuses' => !empty($this->status)
+                ? array_values(array_map(fn($s) => self::STATUS_MAP[trim($s)] ?? trim($s), explode(',', $this->status)))
+                : [],
+            'status_badges' => !empty($this->status)
+                ? array_values(array_map(function ($raw) {
+                    $label = self::STATUS_MAP[trim($raw)] ?? trim($raw);
+                    $class = match ($label) {
+                        'Menunggu Serah Terima', 'Serah Terima' => 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-300',
+                        'Parsial', 'Partial' => 'bg-cyan-100 text-cyan-800 dark:bg-cyan-950/40 dark:text-cyan-300',
+                        'Dikonfirmasi Admin' => 'bg-teal-100 text-teal-800 dark:bg-teal-950/40 dark:text-teal-300',
+                        'Di-approve' => 'bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300',
+                        'Menunggu approval' => 'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300',
+                        'Selesai' => 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300',
+                        'Dipinjam' => 'bg-rose-100 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300',
+                        'Ditolak' => 'bg-destructive/10 text-destructive dark:bg-destructive/20 border border-destructive/20',
+                        'Dibatalkan' => 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300',
+                        default => 'bg-muted text-muted-foreground border-border',
+                    };
+                    return ['label' => $label, 'class' => $class];
+                }, explode(',', $this->status)))
+                : [],
             'raw_status' => $this->status,
             'created_at' => $this->created_at ? $this->created_at->format('d-m-Y H:i') : '-',
             

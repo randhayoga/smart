@@ -182,7 +182,9 @@ class AdminRequestFulfillmentTest extends TestCase
             'quantity_requested' => 2,
         ]);
 
-        // Viewing show page triggers auto-fulfillment
+        // Explicitly trigger FIFO auto-fulfillment service
+        app(\App\Services\RequestFulfillmentService::class)->autoFulfillRequest($req);
+
         $response = $this->actingAs($admin)
             ->getJson(route('smart.fulfillment.show', $req->uuid))
             ->assertStatus(200);
@@ -269,7 +271,9 @@ class AdminRequestFulfillmentTest extends TestCase
             'quantity_requested' => 15,
         ]);
 
-        // Viewing show page auto-fulfills 10 from old lot and 5 from new lot
+        // Explicitly trigger FIFO auto-fulfillment service
+        app(\App\Services\RequestFulfillmentService::class)->autoFulfillRequest($req);
+
         $response = $this->actingAs($admin)
             ->getJson(route('smart.fulfillment.show', $req->uuid))
             ->assertStatus(200);
@@ -400,13 +404,14 @@ class AdminRequestFulfillmentTest extends TestCase
         $this->assertEquals('full', $response->json('status'));
 
         $req->refresh();
-        $this->assertEquals('confirm', $req->status);
+        $this->assertEquals('menunggu_serah_terima', $req->status);
 
         $this->assertDatabaseHas('request_status_logs', [
             'request_id' => $req->id,
             'status_from' => 'partial',
-            'status_to' => 'confirm',
+            'status_to' => 'menunggu_serah_terima',
             'changed_by' => $admin->id,
+            'note' => 'Admin telah mengalokasikan barang secara penuh',
         ]);
     }
 
@@ -456,7 +461,7 @@ class AdminRequestFulfillmentTest extends TestCase
 
         $failResponse->assertStatus(422);
 
-        // 2. With allow_partial = true -> transitions to 'partial'
+        // 2. With allow_partial = true -> transitions to 'menunggu_serah_terima,partial'
         $successResponse = $this->actingAs($admin)
             ->postJson(route('smart.fulfillment.confirm', $req->uuid), [
                 'allow_partial' => true,
@@ -466,14 +471,169 @@ class AdminRequestFulfillmentTest extends TestCase
         $this->assertEquals('partial', $successResponse->json('status'));
 
         $req->refresh();
-        $this->assertEquals('partial', $req->status);
+        $this->assertEquals('menunggu_serah_terima,partial', $req->status);
+        $this->assertTrue($req->hasStatus('menunggu_serah_terima'));
+        $this->assertTrue($req->hasStatus('partial'));
 
         $this->assertDatabaseHas('request_status_logs', [
             'request_id' => $req->id,
             'status_from' => 'confirm',
-            'status_to' => 'partial',
+            'status_to' => 'menunggu_serah_terima,partial',
             'changed_by' => $admin->id,
+            'note' => 'Admin telah mengalokasikan barang secara parsial',
         ]);
+    }
+
+    public function test_subsequent_full_allocation_of_partial_request_removes_partial_status(): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createRequester();
+        $manager = $this->createManager();
+
+        $cat = Category::factory()->create(['is_consumable' => false]);
+        $sub = Subcategory::factory()->create(['category_id' => $cat->id]);
+        $barang = Barang::factory()->create(['subcategory_id' => $sub->id]);
+        $lot = Lot::factory()->create(['barang_id' => $barang->id]);
+
+        $unit1 = Unit::factory()->create(['lot_id' => $lot->id, 'status' => 'Tersedia', 'number' => 'AST-SUB-01']);
+        $unit2 = Unit::factory()->create(['lot_id' => $lot->id, 'status' => 'Tersedia', 'number' => 'AST-SUB-02']);
+
+        $req = SmartRequest::create([
+            'request_number' => '0926-SUB1',
+            'user_id' => $user->id,
+            'approver_id' => $manager->id,
+            'utilization' => 'corporate',
+            'reasoning' => 'Test subsequent fulfillment',
+            'status' => 'menunggu_serah_terima,partial',
+        ]);
+
+        $item = RequestItem::create([
+            'request_id' => $req->id,
+            'barang_id' => $barang->id,
+            'subcategory_id' => $sub->id,
+            'quantity_requested' => 2,
+        ]);
+
+        // 1st unit already confirmed
+        RequestFulfillment::create([
+            'request_item_id' => $item->id,
+            'unit_id' => $unit1->id,
+            'lot_id' => $lot->id,
+            'quantity_fulfilled' => 1,
+            'assigned_at' => now(),
+            'confirmed_at' => now(),
+        ]);
+
+        // Assign 2nd unit (now 2/2 fulfilled)
+        $this->actingAs($admin)->postJson(route('smart.fulfillment.items.assign', $item->id), [
+            'unit_ids' => [$unit1->id, $unit2->id],
+        ])->assertStatus(200);
+
+        // Confirm full fulfillment
+        $response = $this->actingAs($admin)
+            ->postJson(route('smart.fulfillment.confirm', $req->uuid), [
+                'allow_partial' => false,
+            ]);
+
+        $response->assertStatus(200);
+        $this->assertEquals('full', $response->json('status'));
+
+        $req->refresh();
+        $this->assertEquals('menunggu_serah_terima', $req->status);
+        $this->assertTrue($req->hasStatus('menunggu_serah_terima'));
+        $this->assertFalse($req->hasStatus('partial'));
+
+        $this->assertDatabaseHas('request_status_logs', [
+            'request_id' => $req->id,
+            'status_from' => 'menunggu_serah_terima,partial',
+            'status_to' => 'menunggu_serah_terima',
+            'changed_by' => $admin->id,
+            'note' => 'Admin telah mengalokasikan barang secara penuh',
+        ]);
+    }
+
+    public function test_tab_visibility_for_new_partial_and_full_requests(): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createRequester();
+        $manager = $this->createManager();
+
+        $cat = Category::factory()->create(['is_consumable' => false]);
+        $sub = Subcategory::factory()->create(['category_id' => $cat->id]);
+        $barang = Barang::factory()->create(['subcategory_id' => $sub->id]);
+        $lot = Lot::factory()->create(['barang_id' => $barang->id]);
+        $unit = Unit::factory()->create(['lot_id' => $lot->id, 'status' => 'Tersedia']);
+
+        // 1. Newly confirmed request (0 confirmed units) -> Perlu Alokasi ONLY
+        $newlyConfirmed = SmartRequest::create([
+            'request_number' => '0926-TNEW',
+            'user_id' => $user->id,
+            'approver_id' => $manager->id,
+            'utilization' => 'corporate',
+            'reasoning' => 'Test new',
+            'status' => 'confirm',
+        ]);
+        RequestItem::create([
+            'request_id' => $newlyConfirmed->id,
+            'barang_id' => $barang->id,
+            'subcategory_id' => $sub->id,
+            'quantity_requested' => 1,
+        ]);
+
+        // 2. Partial request -> Parsial AND Serah Terima tabs, NOT Perlu Alokasi
+        $partialReq = SmartRequest::create([
+            'request_number' => '0926-TPRT',
+            'user_id' => $user->id,
+            'approver_id' => $manager->id,
+            'utilization' => 'corporate',
+            'reasoning' => 'Test part',
+            'status' => 'menunggu_serah_terima,partial',
+        ]);
+        $partItem = RequestItem::create([
+            'request_id' => $partialReq->id,
+            'barang_id' => $barang->id,
+            'subcategory_id' => $sub->id,
+            'quantity_requested' => 2,
+        ]);
+        RequestFulfillment::create([
+            'request_item_id' => $partItem->id,
+            'unit_id' => $unit->id,
+            'lot_id' => $lot->id,
+            'quantity_fulfilled' => 1,
+            'assigned_at' => now(),
+            'confirmed_at' => now(),
+        ]);
+
+        // 3. Fully fulfilled request -> Serah Terima tab ONLY
+        $fullReq = SmartRequest::create([
+            'request_number' => '0926-TFUL',
+            'user_id' => $user->id,
+            'approver_id' => $manager->id,
+            'utilization' => 'corporate',
+            'reasoning' => 'Test full',
+            'status' => 'menunggu_serah_terima',
+        ]);
+
+        $controller = app(\App\Http\Controllers\Smart\Admin\AdminActiveRequestController::class);
+
+        $confirmedList = collect($controller->getConfirmedRequests());
+        $partialList = collect($controller->getPartialRequests());
+        $handoverList = collect($controller->getHandovers());
+
+        // Perlu Alokasi tab assertions
+        $this->assertTrue($confirmedList->contains('number', '0926-TNEW'));
+        $this->assertFalse($confirmedList->contains('number', '0926-TPRT'));
+        $this->assertFalse($confirmedList->contains('number', '0926-TFUL'));
+
+        // Parsial tab assertions
+        $this->assertTrue($partialList->contains('number', '0926-TPRT'));
+        $this->assertFalse($partialList->contains('number', '0926-TNEW'));
+        $this->assertFalse($partialList->contains('number', '0926-TFUL'));
+
+        // Serah Terima tab assertions
+        $this->assertTrue($handoverList->contains('number', '0926-TPRT'));
+        $this->assertTrue($handoverList->contains('number', '0926-TFUL'));
+        $this->assertFalse($handoverList->contains('number', '0926-TNEW'));
     }
 
     public function test_zero_allocation_fails_partial_confirmation(): void
@@ -547,4 +707,470 @@ class AdminRequestFulfillmentTest extends TestCase
                 ->where('auth.pendingAdminApprovedCount', 1)
         );
     }
+
+    public function test_manual_lot_assignment_for_consumables(): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createRequester();
+        $manager = $this->createManager();
+
+        $cat = Category::factory()->create(['is_consumable' => true]);
+        $sub = Subcategory::factory()->create(['category_id' => $cat->id]);
+        $barang = Barang::factory()->create(['subcategory_id' => $sub->id]);
+        $lot1 = Lot::factory()->create(['barang_id' => $barang->id, 'current_quantity' => 20]);
+        $lot2 = Lot::factory()->create(['barang_id' => $barang->id, 'current_quantity' => 15]);
+
+        $req = SmartRequest::create([
+            'request_number' => '0926-LOT-01',
+            'user_id' => $user->id,
+            'approver_id' => $manager->id,
+            'utilization' => 'corporate',
+            'reasoning' => 'Consumable test',
+            'status' => 'confirm',
+        ]);
+
+        $item = RequestItem::create([
+            'request_id' => $req->id,
+            'barang_id' => $barang->id,
+            'subcategory_id' => $sub->id,
+            'quantity_requested' => 10,
+        ]);
+
+        // Assign 4 from lot1 and 6 from lot2
+        $response = $this->actingAs($admin)
+            ->postJson(route('smart.fulfillment.items.assign-lots', $item->id), [
+                'lot_allocations' => [
+                    ['lot_id' => $lot1->id, 'quantity' => 4],
+                    ['lot_id' => $lot2->id, 'quantity' => 6],
+                ],
+            ]);
+
+        $response->assertStatus(200);
+
+        $this->assertDatabaseHas('request_fulfillments', [
+            'request_item_id' => $item->id,
+            'lot_id' => $lot1->id,
+            'unit_id' => null,
+            'quantity_fulfilled' => 4,
+        ]);
+
+        $this->assertDatabaseHas('request_fulfillments', [
+            'request_item_id' => $item->id,
+            'lot_id' => $lot2->id,
+            'unit_id' => null,
+            'quantity_fulfilled' => 6,
+        ]);
+    }
+
+    public function test_manual_lot_assignment_cannot_exceed_available_or_requested_stock(): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createRequester();
+        $manager = $this->createManager();
+
+        $cat = Category::factory()->create(['is_consumable' => true]);
+        $sub = Subcategory::factory()->create(['category_id' => $cat->id]);
+        $barang = Barang::factory()->create(['subcategory_id' => $sub->id]);
+        $lot = Lot::factory()->create(['barang_id' => $barang->id, 'current_quantity' => 5]);
+
+        $req = SmartRequest::create([
+            'request_number' => '0926-LOT-02',
+            'user_id' => $user->id,
+            'approver_id' => $manager->id,
+            'utilization' => 'corporate',
+            'reasoning' => 'Consumable limit test',
+            'status' => 'confirm',
+        ]);
+
+        $item = RequestItem::create([
+            'request_id' => $req->id,
+            'barang_id' => $barang->id,
+            'subcategory_id' => $sub->id,
+            'quantity_requested' => 10,
+        ]);
+
+        // Exceeds lot available stock (lot only has 5, request asks 8) -> 422
+        $res1 = $this->actingAs($admin)
+            ->postJson(route('smart.fulfillment.items.assign-lots', $item->id), [
+                'lot_allocations' => [
+                    ['lot_id' => $lot->id, 'quantity' => 8],
+                ],
+            ]);
+        $res1->assertStatus(422);
+
+        // Exceeds item requested quantity (item requested 10, sum is 12) -> 422
+        $lot2 = Lot::factory()->create(['barang_id' => $barang->id, 'current_quantity' => 20]);
+        $res2 = $this->actingAs($admin)
+            ->postJson(route('smart.fulfillment.items.assign-lots', $item->id), [
+                'lot_allocations' => [
+                    ['lot_id' => $lot->id, 'quantity' => 5],
+                    ['lot_id' => $lot2->id, 'quantity' => 7],
+                ],
+            ]);
+        $res2->assertStatus(422);
+    }
+
+    public function test_resource_includes_variant_and_available_lots_for_modal(): void
+    {
+        $admin = $this->createAdmin();
+        $user = $this->createRequester();
+        $manager = $this->createManager();
+
+        // 1. Non-consumable non-specific item with brand
+        $catNonConsumable = Category::factory()->create(['is_consumable' => false]);
+        $subNonConsumable = Subcategory::factory()->create(['category_id' => $catNonConsumable->id, 'name' => 'Laptop']);
+        $brand = Brand::factory()->create(['name' => 'Lenovo']);
+        $barangAsset = Barang::factory()->create([
+            'subcategory_id' => $subNonConsumable->id,
+            'brand_id' => $brand->id,
+            'name' => 'ThinkPad T14',
+            'specification' => 'Core i7 16GB',
+        ]);
+        $lotAsset = Lot::factory()->create(['barang_id' => $barangAsset->id]);
+        $unit = Unit::factory()->create(['lot_id' => $lotAsset->id, 'status' => 'Tersedia', 'number' => 'AST-VAR-01']);
+
+        // 2. Consumable item
+        $catConsumable = Category::factory()->create(['is_consumable' => true]);
+        $subConsumable = Subcategory::factory()->create(['category_id' => $catConsumable->id, 'name' => 'Kertas']);
+        $barangConsumable = Barang::factory()->create([
+            'subcategory_id' => $subConsumable->id,
+            'name' => 'HVS A4 80gr',
+        ]);
+        $lotConsumable = Lot::factory()->create([
+            'barang_id' => $barangConsumable->id,
+            'number' => 'LOT-HVS-01',
+            'current_quantity' => 50,
+        ]);
+
+        $req = SmartRequest::create([
+            'request_number' => '0926-RES-01',
+            'user_id' => $user->id,
+            'approver_id' => $manager->id,
+            'utilization' => 'corporate',
+            'reasoning' => 'Resource test',
+            'status' => 'confirm',
+        ]);
+
+        // Item 1: Non-specific asset (no barang_id)
+        $item1 = RequestItem::create([
+            'request_id' => $req->id,
+            'subcategory_id' => $subNonConsumable->id,
+            'quantity_requested' => 1,
+        ]);
+
+        // Item 2: Consumable (with barang_id)
+        $item2 = RequestItem::create([
+            'request_id' => $req->id,
+            'barang_id' => $barangConsumable->id,
+            'subcategory_id' => $subConsumable->id,
+            'quantity_requested' => 5,
+        ]);
+
+        $response = $this->actingAs($admin)->getJson(route('smart.fulfillment.show', $req->uuid));
+        $response->assertStatus(200);
+
+        $items = $response->json('request.items');
+        $this->assertCount(2, $items);
+
+        // Check Item 1 available_units has variant
+        $units = $items[0]['available_units'];
+        $this->assertNotEmpty($units);
+        $this->assertStringContainsString('Lenovo', $units[0]['variant']);
+        $this->assertStringContainsString('ThinkPad T14', $units[0]['variant']);
+
+        // Check Item 2 available_lots
+        $lots = $items[1]['available_lots'];
+        $this->assertNotEmpty($lots);
+        $this->assertEquals('LOT-HVS-01', $lots[0]['lot_code']);
+        $this->assertEquals(50, $lots[0]['current_quantity']);
+    }
+
+    public function test_unit_can_be_staged_on_multiple_unconfirmed_requests_concurrently(): void
+    {
+        $admin = $this->createAdmin();
+        $user1 = $this->createRequester();
+        $user2 = AdmUser::factory()->create(['name' => 'VIP Requester']);
+        $manager = $this->createManager();
+
+        $cat = Category::factory()->create(['is_consumable' => false]);
+        $sub = Subcategory::factory()->create(['category_id' => $cat->id]);
+        $barang = Barang::factory()->create(['subcategory_id' => $sub->id]);
+        $lot = Lot::factory()->create(['barang_id' => $barang->id]);
+        $unit = Unit::factory()->create(['lot_id' => $lot->id, 'status' => 'Tersedia', 'number' => 'AST-SHARED-01']);
+
+        $req1 = SmartRequest::create([
+            'request_number' => '0926-ST01',
+            'user_id' => $user1->id,
+            'approver_id' => $manager->id,
+            'utilization' => 'corporate',
+            'reasoning' => 'Test staging 1',
+            'status' => 'confirm',
+        ]);
+        $item1 = RequestItem::create([
+            'request_id' => $req1->id,
+            'barang_id' => $barang->id,
+            'subcategory_id' => $sub->id,
+            'quantity_requested' => 1,
+        ]);
+
+        $req2 = SmartRequest::create([
+            'request_number' => '0926-ST02',
+            'user_id' => $user2->id,
+            'approver_id' => $manager->id,
+            'utilization' => 'corporate',
+            'reasoning' => 'Test staging 2',
+            'status' => 'confirm',
+        ]);
+        $item2 = RequestItem::create([
+            'request_id' => $req2->id,
+            'barang_id' => $barang->id,
+            'subcategory_id' => $sub->id,
+            'quantity_requested' => 1,
+        ]);
+
+        // 1. Assign unit to Request 1
+        $res1 = $this->actingAs($admin)->postJson(route('smart.fulfillment.items.assign', $item1->id), [
+            'unit_ids' => [$unit->id],
+        ]);
+        $res1->assertStatus(200);
+
+        $this->assertDatabaseHas('request_fulfillments', [
+            'request_item_id' => $item1->id,
+            'unit_id' => $unit->id,
+            'confirmed_at' => null,
+        ]);
+
+        // 2. Request 2 can also see and assign Unit (staged concurrently)
+        $res2 = $this->actingAs($admin)->postJson(route('smart.fulfillment.items.assign', $item2->id), [
+            'unit_ids' => [$unit->id],
+        ]);
+        $res2->assertStatus(200);
+
+        $this->assertDatabaseHas('request_fulfillments', [
+            'request_item_id' => $item2->id,
+            'unit_id' => $unit->id,
+            'confirmed_at' => null,
+        ]);
+    }
+
+    public function test_confirming_request_locks_unit_and_evicts_it_from_competing_unconfirmed_requests(): void
+    {
+        $admin = $this->createAdmin();
+        $user1 = $this->createRequester();
+        $user2 = AdmUser::factory()->create(['name' => 'VIP Requester']);
+        $manager = $this->createManager();
+
+        $cat = Category::factory()->create(['is_consumable' => false]);
+        $sub = Subcategory::factory()->create(['category_id' => $cat->id]);
+        $barang = Barang::factory()->create(['subcategory_id' => $sub->id]);
+        $lot = Lot::factory()->create(['barang_id' => $barang->id]);
+        $unit = Unit::factory()->create(['lot_id' => $lot->id, 'status' => 'Tersedia', 'number' => 'AST-EVICT-01']);
+
+        $req1 = SmartRequest::create([
+            'request_number' => '0926-EV01',
+            'user_id' => $user1->id,
+            'approver_id' => $manager->id,
+            'utilization' => 'corporate',
+            'reasoning' => 'Test evict 1',
+            'status' => 'confirm',
+        ]);
+        $item1 = RequestItem::create([
+            'request_id' => $req1->id,
+            'barang_id' => $barang->id,
+            'subcategory_id' => $sub->id,
+            'quantity_requested' => 1,
+        ]);
+
+        $req2 = SmartRequest::create([
+            'request_number' => '0926-EV02',
+            'user_id' => $user2->id,
+            'approver_id' => $manager->id,
+            'utilization' => 'corporate',
+            'reasoning' => 'Test evict 2',
+            'status' => 'confirm',
+        ]);
+        $item2 = RequestItem::create([
+            'request_id' => $req2->id,
+            'barang_id' => $barang->id,
+            'subcategory_id' => $sub->id,
+            'quantity_requested' => 1,
+        ]);
+
+        // Both stage the same unit
+        $this->actingAs($admin)->postJson(route('smart.fulfillment.items.assign', $item1->id), [
+            'unit_ids' => [$unit->id],
+        ])->assertStatus(200);
+
+        $this->actingAs($admin)->postJson(route('smart.fulfillment.items.assign', $item2->id), [
+            'unit_ids' => [$unit->id],
+        ])->assertStatus(200);
+
+        // Confirm Request 2 (the priority request)
+        $confirmRes = $this->actingAs($admin)->postJson(route('smart.fulfillment.confirm', $req2->uuid), [
+            'allow_partial' => false,
+        ]);
+        $confirmRes->assertStatus(200);
+
+        // Request 2 now has confirmed_at set
+        $rf2 = RequestFulfillment::where('request_item_id', $item2->id)->where('unit_id', $unit->id)->first();
+        $this->assertNotNull($rf2);
+        $this->assertNotNull($rf2->confirmed_at);
+
+        // Request 1's duplicate fulfillment must be completely evicted (deleted)
+        $this->assertDatabaseMissing('request_fulfillments', [
+            'request_item_id' => $item1->id,
+            'unit_id' => $unit->id,
+        ]);
+
+        // Attempting to assign Unit to Request 1 now fails with 422 because it's locked by Request 2
+        $reassignRes = $this->actingAs($admin)->postJson(route('smart.fulfillment.items.assign', $item1->id), [
+            'unit_ids' => [$unit->id],
+        ]);
+        $reassignRes->assertStatus(422);
+    }
+
+    public function test_confirming_consumable_lot_deducts_stock_and_evicts_depleted_unconfirmed_requests(): void
+    {
+        $admin = $this->createAdmin();
+        $user1 = $this->createRequester();
+        $user2 = AdmUser::factory()->create(['name' => 'VIP Requester']);
+        $manager = $this->createManager();
+
+        $cat = Category::factory()->create(['is_consumable' => true]);
+        $sub = Subcategory::factory()->create(['category_id' => $cat->id]);
+        $barang = Barang::factory()->create(['subcategory_id' => $sub->id]);
+        $lot = Lot::factory()->create(['barang_id' => $barang->id, 'current_quantity' => 10]);
+
+        $req1 = SmartRequest::create([
+            'request_number' => '0926-LE01',
+            'user_id' => $user1->id,
+            'approver_id' => $manager->id,
+            'utilization' => 'corporate',
+            'reasoning' => 'Test lot evict 1',
+            'status' => 'confirm',
+        ]);
+        $item1 = RequestItem::create([
+            'request_id' => $req1->id,
+            'barang_id' => $barang->id,
+            'subcategory_id' => $sub->id,
+            'quantity_requested' => 10,
+        ]);
+
+        $req2 = SmartRequest::create([
+            'request_number' => '0926-LE02',
+            'user_id' => $user2->id,
+            'approver_id' => $manager->id,
+            'utilization' => 'corporate',
+            'reasoning' => 'Test lot evict 2',
+            'status' => 'confirm',
+        ]);
+        $item2 = RequestItem::create([
+            'request_id' => $req2->id,
+            'barang_id' => $barang->id,
+            'subcategory_id' => $sub->id,
+            'quantity_requested' => 10,
+        ]);
+
+        // Both stage all 10 items from lot
+        $this->actingAs($admin)->postJson(route('smart.fulfillment.items.assign-lots', $item1->id), [
+            'lot_allocations' => [
+                ['lot_id' => $lot->id, 'quantity' => 10],
+            ],
+        ])->assertStatus(200);
+
+        $this->actingAs($admin)->postJson(route('smart.fulfillment.items.assign-lots', $item2->id), [
+            'lot_allocations' => [
+                ['lot_id' => $lot->id, 'quantity' => 10],
+            ],
+        ])->assertStatus(200);
+
+        // Confirm Request 2 (consumes all 10 stock)
+        $this->actingAs($admin)->postJson(route('smart.fulfillment.confirm', $req2->uuid), [
+            'allow_partial' => false,
+        ])->assertStatus(200);
+
+        // Stock must now be 0
+        $lot->refresh();
+        $this->assertEquals(0, $lot->current_quantity);
+
+        // Request 1 fulfillment must be deleted because stock dropped to 0
+        $this->assertDatabaseMissing('request_fulfillments', [
+            'request_item_id' => $item1->id,
+            'lot_id' => $lot->id,
+        ]);
+    }
+
+    public function test_confirming_consumable_lot_clamps_partially_depleted_unconfirmed_requests(): void
+    {
+        $admin = $this->createAdmin();
+        $user1 = $this->createRequester();
+        $user2 = AdmUser::factory()->create(['name' => 'VIP Requester']);
+        $manager = $this->createManager();
+
+        $cat = Category::factory()->create(['is_consumable' => true]);
+        $sub = Subcategory::factory()->create(['category_id' => $cat->id]);
+        $barang = Barang::factory()->create(['subcategory_id' => $sub->id]);
+        $lot = Lot::factory()->create(['barang_id' => $barang->id, 'current_quantity' => 10]);
+
+        $req1 = SmartRequest::create([
+            'request_number' => '0926-LC01',
+            'user_id' => $user1->id,
+            'approver_id' => $manager->id,
+            'utilization' => 'corporate',
+            'reasoning' => 'Test lot clamp 1',
+            'status' => 'confirm',
+        ]);
+        $item1 = RequestItem::create([
+            'request_id' => $req1->id,
+            'barang_id' => $barang->id,
+            'subcategory_id' => $sub->id,
+            'quantity_requested' => 10,
+        ]);
+
+        $req2 = SmartRequest::create([
+            'request_number' => '0926-LC02',
+            'user_id' => $user2->id,
+            'approver_id' => $manager->id,
+            'utilization' => 'corporate',
+            'reasoning' => 'Test lot clamp 2',
+            'status' => 'confirm',
+        ]);
+        $item2 = RequestItem::create([
+            'request_id' => $req2->id,
+            'barang_id' => $barang->id,
+            'subcategory_id' => $sub->id,
+            'quantity_requested' => 10,
+        ]);
+
+        // Request 1 stages 8 items, Request 2 stages 6 items
+        $this->actingAs($admin)->postJson(route('smart.fulfillment.items.assign-lots', $item1->id), [
+            'lot_allocations' => [
+                ['lot_id' => $lot->id, 'quantity' => 8],
+            ],
+        ])->assertStatus(200);
+
+        $this->actingAs($admin)->postJson(route('smart.fulfillment.items.assign-lots', $item2->id), [
+            'lot_allocations' => [
+                ['lot_id' => $lot->id, 'quantity' => 6],
+            ],
+        ])->assertStatus(200);
+
+        // Confirm Request 2 with 6 items
+        $this->actingAs($admin)->postJson(route('smart.fulfillment.confirm', $req2->uuid), [
+            'allow_partial' => true,
+        ])->assertStatus(200);
+
+        // Stock dropped to 4 (10 - 6)
+        $lot->refresh();
+        $this->assertEquals(4, $lot->current_quantity);
+
+        // Request 1 had 8 staged, but only 4 remain -> clamped to 4!
+        $this->assertDatabaseHas('request_fulfillments', [
+            'request_item_id' => $item1->id,
+            'lot_id' => $lot->id,
+            'quantity_fulfilled' => 4,
+            'confirmed_at' => null,
+        ]);
+    }
 }
+

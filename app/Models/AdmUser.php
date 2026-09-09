@@ -65,7 +65,7 @@ class AdmUser extends Authenticatable
     public function getRoleAttribute(): string
     {
         $admins = ['252525'];
-        if (in_array($this->employee_id, $admins) || (app()->runningUnitTests() && !config('app.disable_test_admin_bypass'))) {
+        if (in_array($this->employee_id, $admins) || ((app()->runningUnitTests() || app()->environment('testing')) && !config('app.disable_test_admin_bypass'))) {
             return 'admin';
         }
 

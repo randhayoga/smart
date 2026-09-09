@@ -55,7 +55,6 @@ interface Props {
   requestId: string | number;
   request: RequestDetail;
   user?: any;
-  placements?: Record<string, string>;
 }
 
 const props = defineProps<Props>();
@@ -398,7 +397,6 @@ const handleAturSerahTerima = () => {
             :quantity="item.quantity"
             :assets="item.assets"
             :imageUrl="item.imageUrl"
-            :placements="placements"
             :stock="item.stock"
             :status="item.status"
             :is-admin="true"

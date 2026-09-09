@@ -35,7 +35,7 @@ import {
   AlertCircle,
   Package
 } from 'lucide-vue-next';
-import { REQUEST_STATUS_PILL_BASE, getRequestStatusBadgeClass, getRequestStatusLabel } from '@/lib/requestStatus';
+import { REQUEST_STATUS_PILL_BASE, getRequestStatusBadgeClass, getRequestStatusLabel, getRequestStatusBadges } from '@/lib/requestStatus';
 import PilihAlokasiAset from './modals/pilihAlokasiAset.vue';
 import KonfirmasiPemenuhan from './modals/konfirmasiPemenuhan.vue';
 
@@ -226,17 +226,17 @@ const timelineSteps = computed((): TimelineStep[] => {
         const approverName = log.user || r.approval_by || r.approver_name || '-';
         title = 'Di-approve';
         description = `${typeLabelTitle.value} disetujui Manager: <span class="font-bold text-foreground">${approverName}</span>${r.approval?.note ? `<br>Catatan: ${r.approval.note}` : ''}`;
-      } else if (log.status_to === 'partial') {
+      } else if (log.status_to === 'partial' || log.status_to?.includes('partial')) {
         const adminName = log.user || r.confirmation_by || 'Admin';
-        title = 'Disetujui sebagian (Partial)';
+        title = 'Disetujui Sebagian (Parsial)';
         if (log.note) {
           description = log.note.replace(/Admin:\s*([^.<]+)/, 'Admin: <span class="font-bold text-foreground">$1</span>');
         } else {
           description = `${typeLabelTitle.value} disetujui sebagian oleh Admin: <span class="font-bold text-foreground">${adminName}</span>.`;
         }
-      } else if (log.status_to === 'confirm') {
+      } else if (log.status_to === 'menunggu_serah_terima' || log.status_to === 'confirm') {
         const adminName = log.user || r.confirmation_by || 'Admin';
-        title = log.status_from === 'partial' ? 'Alokasi Tambahan Dikonfirmasi' : 'Dikonfirmasi Admin';
+        title = log.status_from?.includes('partial') ? 'Alokasi Penuh Dikonfirmasi' : 'Dikonfirmasi Admin';
         if (log.note) {
           description = log.note.replace(/Admin:\s*([^.<]+)/, 'Admin: <span class="font-bold text-foreground">$1</span>');
         } else {
@@ -264,16 +264,23 @@ const timelineSteps = computed((): TimelineStep[] => {
   }
 
   // Step 3: Active step in Admin Fulfillment
-  if (r.raw_status === 'confirm' || r.raw_status === 'partial') {
+  if (r.raw_status === 'confirm') {
     steps.push({
       title: 'Konfirmasi Alokasi',
       status: 'active',
       description: `Konfirmasi alokasi untuk memenuhi ${typeLabel.value} ini.`,
       actionType: 'confirm-allocation'
     });
-  } else if (r.raw_status === 'handover') {
+  } else if (r.raw_status?.includes('partial')) {
     steps.push({
-      title: 'Serah Terima',
+      title: 'Alokasi Sisa Unit (Parsial)',
+      status: 'active',
+      description: `Alokasikan sisa barang atau konfirmasi pemenuhan lanjutan.`,
+      actionType: 'confirm-allocation'
+    });
+  } else if (r.raw_status?.includes('menunggu_serah_terima') || r.raw_status === 'handover') {
+    steps.push({
+      title: 'Menunggu Serah Terima',
       status: 'active',
       description: 'Menunggu serah terima barang kepada pemohon.'
     });
@@ -321,9 +328,15 @@ const activeStepIndex = computed(() => {
               <h2 class="text-base font-bold text-foreground">
                 <span class="font-normal text-muted-foreground">Nomor: </span>{{ request.number }}
               </h2>
-              <span :class="[REQUEST_STATUS_PILL_BASE, getRequestStatusBadgeClass(request.raw_status)]">
-                {{ getRequestStatusLabel(request.raw_status) }}
-              </span>
+              <div class="flex flex-wrap items-center gap-1.5">
+                <span 
+                  v-for="badge in getRequestStatusBadges(request.raw_status)" 
+                  :key="badge.label" 
+                  :class="badge.pillClass"
+                >
+                  {{ badge.label }}
+                </span>
+              </div>
             </div>
 
             <!-- Nama Pemohon (Di atas PIC Approval sesuai requirement) -->
@@ -395,7 +408,7 @@ const activeStepIndex = computed(() => {
                 :allocation-slots="item.allocation_slots"
                 :lot-fulfillments="item.lot_fulfillments"
                 :consumable-summary="item.consumable_summary"
-                :show-allocation-action="!item.is_consumable"
+                :show-allocation-action="true"
                 @select-allocation="openAllocationModal(item)"
               />
             </div>

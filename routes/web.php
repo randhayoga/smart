@@ -18,6 +18,7 @@ use App\Http\Controllers\Smart\Admin\AdminConfirmedRequestController;
 use App\Http\Controllers\Smart\Admin\AdminPartialRequestController;
 use App\Http\Controllers\Smart\Admin\AdminRequestFulfillmentController;
 use App\Http\Controllers\Smart\Admin\RequestItemUnitAssignmentController;
+use App\Http\Controllers\Smart\Admin\RequestItemLotAssignmentController;
 use App\Http\Controllers\Smart\Admin\RequestFulfillmentConfirmationController;
 use App\Http\Controllers\Smart\Admin\HandoverController;
 use App\Http\Controllers\Smart\Admin\BorrowedController;
@@ -155,6 +156,7 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
             })->name('index');
             Route::get('/{id}', [AdminRequestFulfillmentController::class, 'show'])->name('show');
             Route::post('/items/{item}/assign', [RequestItemUnitAssignmentController::class, 'store'])->name('items.assign');
+            Route::post('/items/{item}/assign-lots', [RequestItemLotAssignmentController::class, 'store'])->name('items.assign-lots');
             Route::post('/{id}/confirm', [RequestFulfillmentConfirmationController::class, 'store'])->name('confirm');
         });
 

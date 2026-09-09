@@ -73,8 +73,6 @@ export interface Props {
 
   /** Simple array of asset serial numbers or identification codes (legacy / fallback). */
   assets?: string[];
-  /** Key-value mapping of asset codes to their physical location/room (legacy / fallback). */
-  placements?: Record<string, string>;
 
   /** Non-consumable allocation slots for interactive fulfillment view. */
   allocationSlots?: AllocationSlot[];
@@ -107,7 +105,6 @@ const props = withDefaults(defineProps<Props>(), {
   isAdmin: false,
   isConsumable: false,
   assets: () => [],
-  placements: () => ({}),
   allocationSlots: undefined,
   showAllocationAction: false,
   allocationActionLabel: 'Pilih Alokasi Aset',
@@ -248,7 +245,7 @@ const activeAssets = computed(() => {
             <ul class="space-y-1">
               <li v-for="(asset, idx) in activeAssets" :key="idx" class="text-xs text-foreground font-semibold flex items-center gap-1.5">
                 <span class="w-1 h-1 rounded-full bg-foreground shrink-0"></span>
-                <span>{{ asset }} <span v-if="placements && placements[asset]" class="text-muted-foreground font-normal">({{ placements[asset] }})</span></span>
+                <span>{{ asset }}</span>
               </li>
             </ul>
           </div>
@@ -329,23 +326,38 @@ const activeAssets = computed(() => {
          ═══════════════════════════════════════════════ -->
     <div v-else-if="isConsumable && (lotFulfillments !== undefined || consumableSummary !== undefined)" class="pt-2 border-t border-border/60 space-y-2">
       <div class="flex items-center justify-between flex-wrap gap-2">
-        <button 
-          type="button"
-          @click="showConsumableAllocation = !showConsumableAllocation"
-          class="text-xs font-bold text-[#6366F1] hover:text-[#5558EB] flex items-center gap-1.5 transition-colors focus:outline-none"
-        >
-          <span>{{ showConsumableAllocation ? 'Sembunyikan Alokasi Stok' : 'Lihat Alokasi Stok' }}</span>
-          <ChevronUp v-if="showConsumableAllocation" class="w-3.5 h-3.5" />
-          <ChevronDown v-else class="w-3.5 h-3.5" />
-        </button>
+        <!-- Left Side: Summary Badge & Accordion Toggle -->
+        <div class="flex flex-col items-start gap-1">
+          <span 
+            v-if="consumableSummary"
+            class="px-2 py-0.5 rounded text-[11px] font-semibold"
+            :class="consumableSummary.is_fully_fulfilled ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300'"
+          >
+            {{ consumableSummary.quantity_fulfilled || 0 }} / {{ quantity }} {{ uom }}
+          </span>
 
-        <span 
-          v-if="consumableSummary"
-          class="px-2 py-0.5 rounded text-[11px] font-semibold"
-          :class="consumableSummary.is_fully_fulfilled ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300'"
+          <button 
+            type="button"
+            @click="showConsumableAllocation = !showConsumableAllocation"
+            class="text-xs font-bold text-[#6366F1] hover:text-[#5558EB] flex items-center gap-1.5 transition-colors focus:outline-none"
+          >
+            <span>{{ showConsumableAllocation ? 'Sembunyikan Alokasi Stok' : 'Lihat Alokasi Stok' }}</span>
+            <ChevronUp v-if="showConsumableAllocation" class="w-3.5 h-3.5" />
+            <ChevronDown v-else class="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        <!-- Action Button: Pilih Alokasi -->
+        <Button 
+          v-if="showAllocationAction"
+          type="button"
+          @click="$emit('selectAllocation')"
+          variant="primary"
+          size="sm"
+          class="text-xs font-semibold h-8 px-3.5 bg-[#4F46E5] hover:bg-[#4338CA] text-white"
         >
-          {{ consumableSummary.quantity_fulfilled || 0 }} / {{ quantity }} {{ uom }}
-        </span>
+          Pilih Alokasi
+        </Button>
       </div>
 
       <!-- Collapsible Lot Fulfillments Breakdown -->

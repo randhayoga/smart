@@ -163,17 +163,9 @@ class ArsipController extends Controller
             'logs' => $logs,
         ];
 
-        $placements = RequestFulfillment::whereIn('request_item_id', $req->items->pluck('id'))
-            ->with('unit')
-            ->get()
-            ->filter(fn($asn) => $asn->unit && $asn->placement)
-            ->mapWithKeys(fn($asn) => [$asn->unit->number => $asn->placement])
-            ->toArray();
-
         return Inertia::render('Smart/Admin/Requests/Archive/ArsipDetail', [
             'requestId' => $req->id,
             'request' => $mappedRequest,
-            'placements' => $placements,
             'user' => [
                 'name' => auth()->user()->name,
                 'email' => auth()->user()->email,

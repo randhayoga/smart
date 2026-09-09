@@ -108,6 +108,7 @@ class AdminActiveRequestController extends Controller
     {
         return SmartRequest::with($this->fulfillmentRelations)
             ->where('status', 'confirm')
+            ->whereDoesntHave('items.fulfillments', fn($q) => $q->whereNotNull('confirmed_at'))
             ->orderBy('id', 'desc')
             ->get()
             ->map(fn(SmartRequest $req) => $this->mapFulfillmentListItem($req))
@@ -121,7 +122,10 @@ class AdminActiveRequestController extends Controller
     public function getPartialRequests(): array
     {
         return SmartRequest::with($this->fulfillmentRelations)
-            ->where('status', 'partial')
+            ->where(function ($q) {
+                $q->where('status', 'partial')
+                  ->orWhere('status', 'like', '%partial%');
+            })
             ->orderBy('id', 'desc')
             ->get()
             ->map(fn(SmartRequest $req) => $this->mapFulfillmentListItem($req))
@@ -135,7 +139,10 @@ class AdminActiveRequestController extends Controller
     public function getHandovers(): array
     {
         return SmartRequest::with(['user', 'handover'])
-            ->whereIn('status', ['confirm', 'handover'])
+            ->where(function ($q) {
+                $q->where('status', 'like', '%menunggu_serah_terima%')
+                  ->orWhere('status', 'handover');
+            })
             ->orderBy('id', 'desc')
             ->get()
             ->map(function ($req) {
@@ -282,6 +289,46 @@ class AdminActiveRequestController extends Controller
             }
         }
 
+        $statuses = $req->statuses;
+        $statusLabels = array_map(function ($s) {
+            return match ($s) {
+                'menunggu_serah_terima' => 'Menunggu Serah Terima',
+                'partial' => 'Parsial',
+                'confirm' => 'Dikonfirmasi Admin',
+                'wait' => 'Menunggu approval',
+                'approve' => 'Di-approve',
+                'handover' => 'Serah Terima',
+                'borrow' => 'Dipinjam',
+                'return' => 'Dipinjam',
+                'success' => 'Selesai',
+                'reject' => 'Ditolak',
+                'cancel' => 'Dibatalkan',
+                'pending' => 'Pending',
+                default => $s,
+            };
+        }, $statuses);
+
+        $statusBadges = array_map(function ($label) {
+            $class = match ($label) {
+                'Menunggu Serah Terima', 'Serah Terima' => 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-300',
+                'Parsial', 'Partial' => 'bg-cyan-100 text-cyan-800 dark:bg-cyan-950/40 dark:text-cyan-300',
+                'Dikonfirmasi Admin' => 'bg-teal-100 text-teal-800 dark:bg-teal-950/40 dark:text-teal-300',
+                'Di-approve' => 'bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300',
+                'Menunggu approval' => 'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300',
+                'Selesai' => 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300',
+                'Dipinjam' => 'bg-rose-100 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300',
+                'Ditolak' => 'bg-destructive/10 text-destructive dark:bg-destructive/20 border border-destructive/20',
+                'Dibatalkan' => 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300',
+                default => 'bg-muted text-muted-foreground border-border',
+            };
+            return [
+                'label' => $label,
+                'class' => $class,
+            ];
+        }, $statusLabels);
+
+        $displayStatus = !empty($statusLabels) ? implode(', ', $statusLabels) : ($req->status === 'partial' ? 'Parsial' : 'Dikonfirmasi Admin');
+
         return [
             'id' => $req->id,
             'uuid' => $req->uuid,
@@ -297,7 +344,9 @@ class AdminActiveRequestController extends Controller
             'total_requested' => $totalRequested,
             'total_fulfilled' => $totalFulfilled,
             'is_fully_fulfilled' => $totalRequested > 0 && $totalFulfilled >= $totalRequested,
-            'status' => $req->status === 'partial' ? 'Partial' : 'Dikonfirmasi Admin',
+            'status' => $displayStatus,
+            'statuses' => $statusLabels,
+            'status_badges' => $statusBadges,
             'raw_status' => $req->status,
             'createdAt' => $req->created_at ? $req->created_at->format('d-m-Y H:i') : '-',
             'created_at' => $req->created_at ? $req->created_at->format('d-m-Y H:i') : '-',

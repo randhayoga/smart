@@ -38,9 +38,13 @@ class RequestFulfillmentService
             }
         });
 
-        // Ensure unit is not assigned to another active request fulfillment
+        // Ensure unit is not locked by a confirmed fulfillment or already handed over
         $query->whereDoesntHave('fulfillments', function ($fq) use ($item, $includeCurrentItemAssignments) {
-            $fq->whereNull('completed_at');
+            $fq->where(function ($q) {
+                $q->whereNotNull('confirmed_at')
+                  ->orWhereNotNull('completed_at')
+                  ->orWhereNotNull('handover_id');
+            });
             if ($includeCurrentItemAssignments) {
                 $fq->where('request_item_id', '!=', $item->id);
             }
@@ -54,6 +58,30 @@ class RequestFulfillmentService
             ->orderBy('units.id', 'asc');
 
         return $query;
+    }
+
+    /**
+     * Query available LOTs for a given consumable request item.
+     *
+     * @param RequestItem $item
+     * @return Builder
+     */
+    public function getAvailableLotsQuery(RequestItem $item): Builder
+    {
+        $query = Lot::query()
+            ->with(['barang.brand', 'barang.uom', 'location', 'floor', 'room'])
+            ->where(function ($q) use ($item) {
+                $q->where('current_quantity', '>', 0)
+                  ->orWhereHas('fulfillments', fn($fq) => $fq->where('request_item_id', $item->id));
+            });
+
+        if ($item->barang_id) {
+            $query->where('barang_id', $item->barang_id);
+        } else {
+            $query->whereHas('barang', fn($bq) => $bq->where('subcategory_id', $item->subcategory_id));
+        }
+
+        return $query->orderBy('date_of_receipt', 'asc')->orderBy('id', 'asc');
     }
 
     /**
@@ -93,9 +121,13 @@ class RequestFulfillmentService
         $createdCount = 0;
         DB::transaction(function () use ($units, $item, &$createdCount) {
             foreach ($units as $unit) {
-                // Ensure no race condition assignment
+                // Ensure unit is not locked by a confirmed fulfillment
                 $alreadyTaken = RequestFulfillment::where('unit_id', $unit->id)
-                    ->whereNull('completed_at')
+                    ->where(function ($q) {
+                        $q->whereNotNull('confirmed_at')
+                          ->orWhereNotNull('completed_at')
+                          ->orWhereNotNull('handover_id');
+                    })
                     ->lockForUpdate()
                     ->exists();
 

@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/Components/ui/dropdown-menu";
 import TableSearch from '@/Components/TableSearch.vue';
+import ResetFilterButton from '@/Components/ResetFilterButton.vue';
 import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
 import AdminConfirmationModal from '@/Pages/Smart/Admin/Modals/AdminConfirmationModal.vue';
@@ -42,6 +43,20 @@ const searchQuery = ref('');
 const typeFilter = ref('Semua tipe');
 const utilizationFilter = ref('Semua pemanfaatan');
 const rowsPerPage = ref('Semua baris');
+
+const hasActiveFilters = computed(() => {
+  return !!(
+    searchQuery.value ||
+    (typeFilter.value && typeFilter.value !== 'Semua tipe') ||
+    (utilizationFilter.value && utilizationFilter.value !== 'Semua pemanfaatan')
+  );
+});
+
+const clearFilters = () => {
+  searchQuery.value = '';
+  typeFilter.value = 'Semua tipe';
+  utilizationFilter.value = 'Semua pemanfaatan';
+};
 
 const dataTableRef = ref<any>(null);
 
@@ -390,6 +405,20 @@ onUnmounted(() => {
             <DropdownMenuItem @select="utilizationFilter = 'Project'">Project</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+
+        <Transition
+          enter-active-class="transition ease-out duration-200"
+          enter-from-class="transform scale-95 opacity-0"
+          enter-to-class="transform scale-100 opacity-100"
+          leave-active-class="transition ease-in duration-150"
+          leave-from-class="transform scale-100 opacity-100"
+          leave-to-class="transform scale-95 opacity-0"
+        >
+          <ResetFilterButton 
+            v-if="hasActiveFilters"
+            @click="clearFilters"
+          />
+        </Transition>
       </div>
 
       <!-- Bulk Actions & Rows per Page -->

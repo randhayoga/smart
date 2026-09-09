@@ -8,18 +8,21 @@ export type RequestStatus =
   | 'Di-approve' 
   | 'Ditolak' 
   | 'Dikonfirmasi Admin'
+  | 'Menunggu Serah Terima'
   | 'Serah Terima' 
   | 'Dipinjam' 
   | 'Selesai' 
   | 'Dibatalkan' 
   | 'Pending' 
-  | 'Partial';
+  | 'Partial'
+  | 'Parsial';
 
 export type RawRequestStatus = 
   | 'wait' 
   | 'approve' 
   | 'reject' 
   | 'confirm' 
+  | 'menunggu_serah_terima'
   | 'handover' 
   | 'borrow' 
   | 'return' 
@@ -55,6 +58,9 @@ export function getRequestStatusLabel(rawOrStatus: string | null | undefined): s
   if (s === 'confirm' || s === 'dikonfirmasi' || s === 'dikonfirmasi admin') {
     return 'Dikonfirmasi Admin';
   }
+  if (s === 'menunggu_serah_terima' || s === 'menunggu serah terima') {
+    return 'Menunggu Serah Terima';
+  }
   if (s === 'handover' || s === 'serah terima') {
     return 'Serah Terima';
   }
@@ -70,8 +76,8 @@ export function getRequestStatusLabel(rawOrStatus: string | null | undefined): s
   if (s === 'pending') {
     return 'Pending';
   }
-  if (s === 'partial' || s === 'disetujui sebagian (partial)') {
-    return 'Partial';
+  if (s === 'partial' || s === 'parsial' || s === 'disetujui sebagian (partial)') {
+    return 'Parsial';
   }
 
   return rawOrStatus;
@@ -97,6 +103,7 @@ export function getRequestStatusBadgeClass(status: string | null | undefined): s
       return 'bg-teal-100 text-teal-800 dark:bg-teal-950/40 dark:text-teal-300';
     case 'Selesai':
       return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300';
+    case 'Menunggu Serah Terima':
     case 'Serah Terima':
       return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-300';
     case 'Dipinjam':
@@ -105,6 +112,7 @@ export function getRequestStatusBadgeClass(status: string | null | undefined): s
       return 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300';
     case 'Pending':
       return 'bg-purple-100 text-purple-800 dark:bg-purple-950/40 dark:text-purple-300';
+    case 'Parsial':
     case 'Partial':
       return 'bg-cyan-100 text-cyan-800 dark:bg-cyan-950/40 dark:text-cyan-300';
     default:
@@ -120,4 +128,36 @@ export function getRequestStatusBadgeClass(status: string | null | undefined): s
  */
 export function getRequestStatusPillClass(status: string | null | undefined): string {
   return `${REQUEST_STATUS_PILL_BASE} ${getRequestStatusBadgeClass(status)}`;
+}
+
+/**
+ * Splits a comma-separated status string into individual status tokens.
+ */
+export function parseRequestStatuses(rawStatus: string | null | undefined): string[] {
+  if (!rawStatus) return [];
+  return rawStatus.split(',').map(s => s.trim()).filter(Boolean);
+}
+
+/**
+ * Returns an array of badge metadata for multi-status strings.
+ */
+export function getRequestStatusBadges(rawStatus: string | null | undefined): { label: string; class: string; pillClass: string }[] {
+  const parts = parseRequestStatuses(rawStatus);
+  if (parts.length === 0) {
+    const label = getRequestStatusLabel(rawStatus);
+    return [{
+      label,
+      class: getRequestStatusBadgeClass(label),
+      pillClass: getRequestStatusPillClass(label),
+    }];
+  }
+
+  return parts.map(part => {
+    const label = getRequestStatusLabel(part);
+    return {
+      label,
+      class: getRequestStatusBadgeClass(label),
+      pillClass: getRequestStatusPillClass(label),
+    };
+  });
 }

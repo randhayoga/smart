@@ -47,7 +47,11 @@ class HandleInertiaRequests extends Middleware
                     ? \App\Models\Request\Request::where('status', 'approve')->count()
                     : 0,
                 'activeRequestsCount' => $request->user() && ($request->user()->is_admin ?? false)
-                    ? \App\Models\Request\Request::whereIn('status', ['approve', 'confirm', 'partial', 'handover', 'return'])->count()
+                    ? \App\Models\Request\Request::where(function ($q) {
+                        $q->whereIn('status', ['approve', 'confirm', 'partial', 'handover', 'return'])
+                          ->orWhere('status', 'like', '%menunggu_serah_terima%')
+                          ->orWhere('status', 'like', '%partial%');
+                    })->count()
                     : 0,
                 'notifications' => function () use ($request) {
                     if (! $request->user()) {

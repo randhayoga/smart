@@ -71,12 +71,10 @@ class RequestFulfillmentTest extends TestCase
             'quantity_fulfilled' => 1,
             'assigned_at' => now(),
             'completed_at' => null,
-            'placement' => 'Lt. 2 IT Room',
         ]);
 
         $this->assertDatabaseHas('request_fulfillments', [
             'id' => $fulfillment->id,
-            'placement' => 'Lt. 2 IT Room',
             'unit_id' => $unit->id,
             'lot_id' => $lot->id,
             'handover_id' => $handover->id,

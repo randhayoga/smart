@@ -209,17 +209,9 @@ class HandoverController extends Controller
             ];
         });
 
-        $placements = RequestFulfillment::whereIn('request_item_id', $req->items->pluck('id'))
-            ->with('unit')
-            ->get()
-            ->filter(fn($asn) => $asn->unit && $asn->placement)
-            ->mapWithKeys(fn($asn) => [$asn->unit->number => $asn->placement])
-            ->toArray();
-
         return Inertia::render('Smart/Admin/Requests/ActiveRequests/Details/SerahTerimaDetail', [
             'handover' => $handoverData,
             'items' => $items,
-            'placements' => $placements,
             'user' => [
                 'name' => auth()->user()->name,
                 'email' => auth()->user()->email,

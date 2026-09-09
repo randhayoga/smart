@@ -110,7 +110,6 @@ const props = defineProps<{
   requestId: string | number;
   user?: any;
   request: RequestHistory;
-  placements?: Record<string, string>;
 }>();
 
 const requestState = ref<RequestHistory>(props.request);

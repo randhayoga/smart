@@ -318,7 +318,7 @@ class LotControllerTest extends TestCase
         $lotWithoutUnits = Lot::factory()->create();
         $lotWithUnits = Lot::factory()->create();
         \App\Models\Inventory\Unit::create([
-            'number' => $lotWithUnits->number . '-U01',
+            'number' => substr($lotWithUnits->number, 0, 20) . '-U01',
             'lot_id' => $lotWithUnits->id,
             'location_id' => $lotWithUnits->location_id ?? 1,
             'status' => 'Tersedia',
@@ -353,7 +353,7 @@ class LotControllerTest extends TestCase
         $units = [];
         for ($i = 0; $i < 3; $i++) {
             $units[] = \App\Models\Inventory\Unit::create([
-                'number' => $lot->number . '-U0' . ($i + 1),
+                'number' => substr($lot->number, 0, 20) . '-U0' . ($i + 1),
                 'lot_id' => $lot->id,
                 'location_id' => $lot->location_id ?? 1,
                 'status' => 'Tersedia',

@@ -19,13 +19,14 @@ class RequestFulfillment extends Model
         'return_id',
         'quantity_fulfilled',
         'assigned_at',
+        'confirmed_at',
         'completed_at',
-        'placement',
     ];
 
     protected $casts = [
         'quantity_fulfilled' => 'integer',
         'assigned_at' => 'datetime',
+        'confirmed_at' => 'datetime',
         'completed_at' => 'datetime',
     ];
 

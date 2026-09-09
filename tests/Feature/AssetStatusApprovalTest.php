@@ -47,7 +47,7 @@ class AssetStatusApprovalTest extends TestCase
     {
         $lot = Lot::factory()->create();
         return Unit::create([
-            'number' => $lot->number . '-U01',
+            'number' => substr($lot->number, 0, 20) . '-U01',
             'lot_id' => $lot->id,
             'location_id' => $lot->location_id,
             'status' => 'Tersedia',

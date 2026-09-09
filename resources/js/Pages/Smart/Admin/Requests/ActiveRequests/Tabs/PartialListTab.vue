@@ -18,9 +18,10 @@ import {
   DropdownMenuTrigger,
 } from "@/Components/ui/dropdown-menu";
 import TableSearch from '@/Components/TableSearch.vue';
+import ResetFilterButton from '@/Components/ResetFilterButton.vue';
 import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
-import { REQUEST_STATUS_PILL_BASE, getRequestStatusBadgeClass, getRequestStatusLabel } from '@/lib/requestStatus';
+import { REQUEST_STATUS_PILL_BASE, getRequestStatusBadgeClass, getRequestStatusLabel, getRequestStatusBadges } from '@/lib/requestStatus';
 
 interface SmartRequestListItem {
   id: number;
@@ -62,6 +63,20 @@ const searchQuery = ref('');
 const typeFilter = ref('Semua tipe');
 const utilizationFilter = ref('Semua pemanfaatan');
 const rowsPerPage = ref('Semua baris');
+
+const hasActiveFilters = computed(() => {
+  return !!(
+    searchQuery.value ||
+    (typeFilter.value && typeFilter.value !== 'Semua tipe') ||
+    (utilizationFilter.value && utilizationFilter.value !== 'Semua pemanfaatan')
+  );
+});
+
+const clearFilters = () => {
+  searchQuery.value = '';
+  typeFilter.value = 'Semua tipe';
+  utilizationFilter.value = 'Semua pemanfaatan';
+};
 
 const dataTableRef = ref<any>(null);
 
@@ -177,11 +192,10 @@ const columns: ColumnDef<SmartRequestListItem>[] = [
     },
     cell: ({ row }) => {
       const item = row.original;
-      const badgeClass = getRequestStatusBadgeClass(item.raw_status || item.status);
-      const label = getRequestStatusLabel(item.raw_status || item.status);
-      return h('div', { class: 'text-left' }, [
-        h('span', { class: `${REQUEST_STATUS_PILL_BASE} ${badgeClass}` }, label)
-      ]);
+      const badges = getRequestStatusBadges(item.raw_status || item.status);
+      return h('div', { class: 'flex flex-wrap items-center gap-1.5 text-left' }, 
+        badges.map(b => h('span', { class: b.pillClass }, b.label))
+      );
     }
   },
   {
@@ -288,6 +302,20 @@ watch(() => page.url, (newUrl) => {
             <DropdownMenuItem @select="utilizationFilter = 'Project'">Project</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+
+        <Transition
+          enter-active-class="transition ease-out duration-200"
+          enter-from-class="transform scale-95 opacity-0"
+          enter-to-class="transform scale-100 opacity-100"
+          leave-active-class="transition ease-in duration-150"
+          leave-from-class="transform scale-100 opacity-100"
+          leave-to-class="transform scale-95 opacity-0"
+        >
+          <ResetFilterButton 
+            v-if="hasActiveFilters"
+            @click="clearFilters"
+          />
+        </Transition>
 
         <div class="flex items-center gap-3 text-sm text-muted-foreground ml-auto">
           <span>Baris per halaman</span>
