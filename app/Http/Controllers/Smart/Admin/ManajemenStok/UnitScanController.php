@@ -4,9 +4,7 @@ namespace App\Http\Controllers\Smart\Admin\ManajemenStok;
 
 use App\Http\Controllers\Controller;
 use App\Models\Inventory\Unit;
-use App\Models\Master\Floor;
 use App\Models\Master\Location;
-use App\Models\Master\Room;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -22,7 +20,7 @@ class UnitScanController extends Controller
     public function show(Unit $unit): Response
     {
         $unit->load([
-            'location', 'floor', 'room', 'statusApprovals',
+            'location.parent', 'statusApprovals',
             'lot.barang.subcategory.category', 'lot.barang.brand',
             'lot.organizer', 'lot.vendor'
         ]);
@@ -56,12 +54,8 @@ class UnitScanController extends Controller
             'updated_at' => $unit->updated_at ? $unit->updated_at->format('d-m-Y H:i') : '-',
             
             // Location info
-            'location' => $unit->location->name ?? '-',
+            'location' => $unit->location ? $unit->location->full_name : '-',
             'location_id' => $unit->location_id,
-            'floor' => $unit->floor->name ?? null,
-            'floor_id' => $unit->floor_id,
-            'room' => $unit->room->name ?? null,
-            'room_id' => $unit->room_id,
 
             // Parent lot info
             'lot_id' => $unit->lot_id,
@@ -89,15 +83,11 @@ class UnitScanController extends Controller
             'barang_uom' => $barang->uom->name ?? '-',
         ];
 
-        $locations = Location::orderBy('name')->get();
-        $floors = Floor::with('location')->orderBy('name')->get();
-        $rooms = Room::with('floor.location')->orderBy('name')->get();
+        $locations = Location::with('parent')->active()->orderBy('name')->get();
 
         return Inertia::render('Smart/MultiRoles/HasilPindai', [
             'asset' => $mappedUnit,
             'locations' => $locations,
-            'floors' => $floors,
-            'rooms' => $rooms,
             'lot' => $unit->lot,
             'barang' => $barang,
         ]);

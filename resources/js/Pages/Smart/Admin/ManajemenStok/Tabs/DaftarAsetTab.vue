@@ -23,6 +23,7 @@ import {
 import TableSearch from '@/Components/TableSearch.vue';
 import type { ColumnDef } from '@tanstack/vue-table';
 import Combobox from '@/Components/Combobox.vue';
+import LocationCombobox from '@/Components/LocationCombobox.vue';
 import DataTable from '@/Components/DataTable.vue';
 import ExportButtonGroup from '@/Components/ExportButtonGroup.vue';
 import ResetFilterButton from '@/Components/ResetFilterButton.vue';
@@ -79,9 +80,9 @@ interface Props {
     barang_subcategory?: string;
     barang_uom?: string;
   }[];
-  locations: { id: number; name: string; }[];
-  floors: { id: number; name: string; location_id: number; }[];
-  rooms: { id: number; name: string; floor_id: number; }[];
+  locations: any[];
+  floors?: any[];
+  rooms?: any[];
   organizers?: { id: number; name: string; }[];
   vendors?: { id: number; name: string; }[];
   users?: { id: number; name: string; }[];
@@ -110,8 +111,6 @@ const categoryFilter = ref('');
 const subcategoryFilter = ref('');
 const brandFilter = ref('');
 const locationFilter = ref('');
-const floorFilter = ref('');
-const roomFilter = ref('');
 const organizerFilter = ref('');
 const vendorFilter = ref('');
 const showAdvancedFilters = ref(false);
@@ -238,22 +237,12 @@ const handlePrint = () => {
     return;
   }
 
-  const filteredRuangan = roomFilter.value
-    ? (props.rooms?.find(r => String(r.id) === String(roomFilter.value))?.name || roomFilter.value)
-    : null;
-
   const filteredLokasi = locationFilter.value
-    ? (props.locations?.find(l => String(l.id) === String(locationFilter.value))?.name || locationFilter.value)
-    : null;
-
-  const filteredLantai = floorFilter.value
-    ? (props.floors?.find(f => String(f.id) === String(floorFilter.value))?.name || floorFilter.value)
+    ? (props.locations?.find((l: any) => String(l.id) === String(locationFilter.value))?.name || locationFilter.value)
     : null;
 
   printManajemenStok(data, {
-    ruangan: filteredRuangan,
     lokasi: filteredLokasi,
-    lantai: filteredLantai,
   });
 };
 
@@ -326,15 +315,9 @@ const filteredUnits = computed(() => {
   }
 
   if (locationFilter.value) {
-    list = list.filter(u => String(u.location_id) === String(locationFilter.value));
-  }
-
-  if (floorFilter.value) {
-    list = list.filter(u => String(u.floor_id) === String(floorFilter.value));
-  }
-
-  if (roomFilter.value) {
-    list = list.filter(u => String(u.room_id) === String(roomFilter.value));
+    const locId = Number(locationFilter.value);
+    const targetIds = [locId, ...getDescendantIds(locId)];
+    list = list.filter(u => targetIds.includes(Number(u.location_id)));
   }
 
   if (organizerFilter.value) {
@@ -348,6 +331,20 @@ const filteredUnits = computed(() => {
   return list;
 });
 
+const getDescendantIds = (parentId: number): number[] => {
+  const result: number[] = [];
+  const findChildren = (pid: number) => {
+    (props.locations || []).forEach((loc: any) => {
+      if (Number(loc.parent_id) === pid) {
+        result.push(loc.id);
+        findChildren(loc.id);
+      }
+    });
+  };
+  findChildren(parentId);
+  return result;
+};
+
 const hasActiveFilters = computed(() => {
   return !!(
     statusFilter.value || 
@@ -357,8 +354,6 @@ const hasActiveFilters = computed(() => {
     subcategoryFilter.value ||
     brandFilter.value ||
     locationFilter.value ||
-    floorFilter.value ||
-    roomFilter.value ||
     organizerFilter.value ||
     vendorFilter.value
   );
@@ -372,8 +367,6 @@ const clearFilters = () => {
   subcategoryFilter.value = '';
   brandFilter.value = '';
   locationFilter.value = '';
-  floorFilter.value = '';
-  roomFilter.value = '';
   organizerFilter.value = '';
   vendorFilter.value = '';
 };
@@ -397,30 +390,9 @@ const availableBrands = computed<string[]>(() => {
   return [...new Set(brands)].sort();
 });
 
-const filteredFloors = computed(() => {
-  if (!locationFilter.value) return props.floors;
-  return props.floors.filter(f => String(f.location_id) === String(locationFilter.value));
-});
-
-const filteredRooms = computed(() => {
-  if (!floorFilter.value) return props.rooms;
-  return props.rooms.filter(r => String(r.floor_id) === String(floorFilter.value));
-});
-
 // Watch category to reset subcategory
 watch(categoryFilter, () => {
   subcategoryFilter.value = '';
-});
-
-// Watch location to reset floor/room
-watch(locationFilter, () => {
-  floorFilter.value = '';
-  roomFilter.value = '';
-});
-
-// Watch floor to reset room
-watch(floorFilter, () => {
-  roomFilter.value = '';
 });
 
 // Dynamic values for dropdown filters
@@ -670,12 +642,13 @@ watch(() => page.url, (newUrl) => {
   }
 });
 
-const formatLocation = (loc: string | null, floor: string | null, room: string | null) => {
+const formatLocation = (loc: string | null, floor?: string | null, room?: string | null) => {
+  if (loc && (!floor && !room)) return loc;
   let parts: string[] = [];
   if (loc) parts.push(loc);
   if (floor) parts.push(floor);
   if (room) parts.push(room);
-  return parts.join(' - ');
+  return parts.length > 0 ? parts.join(' - ') : '-';
 };
 
 const closeOnEscape = (e: KeyboardEvent) => {
@@ -853,41 +826,14 @@ const totalAsetTerpilihCount = computed(() => {
                 />
               </div>
 
-              <!-- Location Filter (Step 1) -->
-              <div class="space-y-1.5 w-[200px]">
+              <!-- Location Filter -->
+              <div class="space-y-1.5 w-[250px]">
                 <label class="text-xs text-muted-foreground font-medium block ml-0.5">Lokasi</label>
-                <Combobox
+                <LocationCombobox
                   v-model="locationFilter"
-                  :options="props.locations"
-                  search-placeholder="Cari lokasi..."
-                  default-label="Semua lokasi"
-                  width-class="w-full bg-background"
-                />
-              </div>
-
-              <!-- Floor Filter (Step 2) -->
-              <div class="space-y-1.5 w-[200px]">
-                <label class="text-xs text-muted-foreground font-medium block ml-0.5">Lantai</label>
-                <Combobox
-                  v-model="floorFilter"
-                  :options="filteredFloors"
-                  search-placeholder="Cari lantai..."
-                  default-label="Semua lantai"
-                  width-class="w-full bg-background"
-                  :disabled="!locationFilter"
-                />
-              </div>
-
-              <!-- Room Filter (Step 3) -->
-              <div class="space-y-1.5 w-3xs">
-                <label class="text-xs text-muted-foreground font-medium block ml-0.5">Ruangan</label>
-                <Combobox
-                  v-model="roomFilter"
-                  :options="filteredRooms"
-                  search-placeholder="Cari ruangan..."
-                  default-label="Semua ruangan"
-                  width-class="w-full bg-background"
-                  :disabled="!floorFilter"
+                  :locations="props.locations"
+                  placeholder="Semua lokasi"
+                  :clearable="true"
                 />
               </div>
 
@@ -976,8 +922,6 @@ const totalAsetTerpilihCount = computed(() => {
     :lot="activeLotForEdit"
     :barang="activeBarangForEdit"
     :locations="props.locations"
-    :floors="props.floors"
-    :rooms="props.rooms"
     @success="handleAssetSuccess"
   />
 

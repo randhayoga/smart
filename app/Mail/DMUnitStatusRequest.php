@@ -60,9 +60,7 @@ class DMUnitStatusRequest extends Mailable
         $this->unit = $unit->loadMissing([
             'lot.barang.brand',
             'lot.barang.subcategory.category',
-            'location',
-            'floor',
-            'room',
+            'location.parent',
         ]);
 
         $this->approval = $approval ?? UnitStatusApproval::where('unit_id', $unit->id)
@@ -78,12 +76,7 @@ class DMUnitStatusRequest extends Mailable
         $assetName = $this->unit->lot?->barang?->name ?? '';
         $this->brandAndName = trim("{$brand} {$assetName}") ?: $this->unit->number;
 
-        $locParts = array_filter([
-            $this->unit->location?->name,
-            $this->unit->floor?->name,
-            $this->unit->room?->name,
-        ]);
-        $this->locationText = !empty($locParts) ? implode(' - ', $locParts) : '-';
+        $this->locationText = $this->unit->location?->full_name ?? '-';
 
         $this->recipientName = $recipientName;
         $this->actionUrl = url('/smart/approve-status?search=' . urlencode($this->unit->number));

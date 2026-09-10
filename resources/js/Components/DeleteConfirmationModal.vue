@@ -250,9 +250,14 @@ const displayFields = computed(() => {
   
   if (data.parent) {
     let parentLabel = 'Kategori Induk';
-    if (name === 'Lantai') parentLabel = 'Lokasi';
-    if (name === 'Ruangan') parentLabel = 'Lantai';
-    fields.push({ label: parentLabel, value: data.parent });
+    if (name === 'Lokasi') parentLabel = 'Lokasi Induk';
+
+    let parentValue = data.parent;
+    if (typeof data.parent === 'object' && data.parent !== null) {
+      parentValue = data.parent.full_name || data.parent.name || '-';
+    }
+
+    fields.push({ label: parentLabel, value: parentValue });
   }
 
   return fields;

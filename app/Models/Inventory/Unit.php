@@ -2,9 +2,7 @@
 
 namespace App\Models\Inventory;
 
-use App\Models\Master\Floor;
 use App\Models\Master\Location;
-use App\Models\Master\Room;
 use App\Models\Inventory\UnitLifecycle;
 use App\Models\Inventory\UnitStatusApproval;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -31,8 +29,6 @@ class Unit extends Model
                     'status' => $unit->status,
                     'condition' => $unit->condition,
                     'location_id' => $unit->location_id,
-                    'floor_id' => $unit->floor_id,
-                    'room_id' => $unit->room_id,
                     'start_date' => now(),
                     'end_date' => null,
                     'actor_id' => Auth::id(),
@@ -44,7 +40,7 @@ class Unit extends Model
         // 2. Log when a Unit is updated
         static::updating(function (Unit $unit) {
             $dirty = $unit->getDirty();
-            $tracked = ['status', 'condition', 'location_id', 'floor_id', 'room_id'];
+            $tracked = ['status', 'condition', 'location_id'];
             $changed = array_intersect(array_keys($dirty), $tracked);
 
             if (!empty($changed)) {
@@ -98,46 +94,20 @@ class Unit extends Model
                     ];
                 }
 
-                // 3. Location / Floor / Room Change (Pemindahan)
-                if ($unit->isDirty('location_id') || $unit->isDirty('floor_id') || $unit->isDirty('room_id')) {
-                    $oldLoc = Location::find($unit->getOriginal('location_id'))->name ?? '-';
-                    $oldFloor = $unit->getOriginal('floor_id') ? (Floor::find($unit->getOriginal('floor_id'))->name ?? '') : '';
-                    $oldRoom = $unit->getOriginal('room_id') ? (Room::find($unit->getOriginal('room_id'))->name ?? '') : '';
-
-                    $oldPath = $oldLoc;
-                    if ($oldFloor) {
-                        $oldPath .= ", {$oldFloor}";
-                    }
-                    if ($oldRoom) {
-                        $oldPath .= ", {$oldRoom}";
-                    }
-
-                    $newLoc = Location::find($unit->location_id)->name ?? '-';
-                    $newFloor = $unit->floor_id ? (Floor::find($unit->floor_id)->name ?? '') : '';
-                    $newRoom = $unit->room_id ? (Room::find($unit->room_id)->name ?? '') : '';
-
-                    $newPath = $newLoc;
-                    if ($newFloor) {
-                        $newPath .= ", {$newFloor}";
-                    }
-                    if ($newRoom) {
-                        $newPath .= ", {$newRoom}";
-                    }
-
-                    $note = "Lokasi dipindahkan dari '{$oldPath}' ke '{$newPath}.'";
+                // 3. Location Change (Pemindahan)
+                if ($unit->isDirty('location_id')) {
+                    $oldLoc = Location::find($unit->getOriginal('location_id'))?->full_name ?? '-';
+                    $newLoc = Location::find($unit->location_id)?->full_name ?? '-';
+                    $note = "Lokasi dipindahkan dari '{$oldLoc}' ke '{$newLoc}.'";
 
                     $actions[] = [
                         'action_type' => 'Pemindahan',
                         'note' => $note,
                         'previous_state' => [
                             'location_id' => $unit->getOriginal('location_id'),
-                            'floor_id' => $unit->getOriginal('floor_id'),
-                            'room_id' => $unit->getOriginal('room_id'),
                         ],
                         'new_state' => [
                             'location_id' => $unit->location_id,
-                            'floor_id' => $unit->floor_id,
-                            'room_id' => $unit->room_id,
                         ],
                         'approval' => null,
                     ];
@@ -165,8 +135,6 @@ class Unit extends Model
                             'status' => $unit->status,
                             'condition' => $unit->condition,
                             'location_id' => $unit->location_id,
-                            'floor_id' => $unit->floor_id,
-                            'room_id' => $unit->room_id,
                             'start_date' => now(),
                             'end_date' => $isLast ? null : now(),
                             'actor_id' => $actorId,
@@ -187,14 +155,12 @@ class Unit extends Model
         });
     }
 
-    protected $with = ['lot', 'location', 'floor', 'room'];
+    protected $with = ['lot', 'location'];
 
     protected $fillable = [
         'number',
         'lot_id',
         'location_id',
-        'floor_id',
-        'room_id',
         'status',
         'condition',
         'price',
@@ -220,22 +186,6 @@ class Unit extends Model
     public function location(): BelongsTo
     {
         return $this->belongsTo(Location::class);
-    }
-
-    /**
-     * Current floor of this unit.
-     */
-    public function floor(): BelongsTo
-    {
-        return $this->belongsTo(Floor::class);
-    }
-
-    /**
-     * Current room of this unit.
-     */
-    public function room(): BelongsTo
-    {
-        return $this->belongsTo(Room::class);
     }
 
     /**

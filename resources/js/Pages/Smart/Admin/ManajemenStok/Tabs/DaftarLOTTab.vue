@@ -78,9 +78,9 @@ interface Props {
   }[];
   organizers: { id: number; name: string; }[];
   vendors: { id: number; name: string; }[];
-  locations: { id: number; name: string; }[];
-  floors: { id: number; name: string; location_id: number; }[];
-  rooms: { id: number; name: string; floor_id: number; }[];
+  locations: any[];
+  floors?: any[];
+  rooms?: any[];
   projects: { id: number; no_project: string; project_name: string; client_id: string; }[];
 }
 
@@ -89,6 +89,7 @@ const props = defineProps<Props>();
 const searchQuery = ref('');
 const timeFilter = ref('');
 const organizerFilter = ref('');
+const vendorFilter = ref('');
 const rowsPerPage = ref('Semua baris');
 const dataTableRef = ref<any>(null);
 
@@ -120,12 +121,13 @@ const handleEditSuccess = () => {
   }
 };
 
-const formatLocation = (loc: string | null, floor: string | null, room: string | null) => {
+const formatLocation = (loc: string | null, floor?: string | null, room?: string | null) => {
+  if (loc && (!floor && !room)) return loc;
   let parts: string[] = [];
   if (loc) parts.push(loc);
   if (floor) parts.push(floor);
   if (room) parts.push(room);
-  return parts.join(' - ');
+  return parts.length > 0 ? parts.join(' - ') : '-';
 };
 
 const formatRupiah = (val: number | string | null | undefined) => {
@@ -281,7 +283,12 @@ const columns = computed<ColumnDef<any>[]>(() => {
               variant: 'table-view',
               size: 'icon-sm',
               title: 'Lihat Detail',
-              onClick: () => router.get(`/smart/inventory/lots/${row.original.number || row.original.id}`)
+              onClick: () => {
+                const lotParam = row.original.number 
+                  ? String(row.original.number).replace(/[^a-zA-Z0-9]/g, '') 
+                  : row.original.id;
+                router.get(`/smart/inventory/lots/${lotParam}`);
+              }
             }, () => [
               h(Eye),
               h('span', { class: 'sr-only' }, 'Lihat Detail')
@@ -659,8 +666,6 @@ const closeOnEscape = (e: KeyboardEvent) => {
     :organizers="props.organizers"
     :vendors="props.vendors"
     :locations="props.locations"
-    :floors="props.floors"
-    :rooms="props.rooms"
     :projects="props.projects"
   />
 
@@ -672,8 +677,6 @@ const closeOnEscape = (e: KeyboardEvent) => {
     :organizers="props.organizers"
     :vendors="props.vendors"
     :locations="props.locations"
-    :floors="props.floors"
-    :rooms="props.rooms"
     :projects="props.projects"
     @success="handleEditSuccess"
   />

@@ -34,13 +34,9 @@ class AdminRequestFulfillmentController extends Controller
         'items.subcategory.category',
         'items.subcategory.barangs.uom',
         'items.fulfillments.unit.lot.barang.brand',
-        'items.fulfillments.unit.location',
-        'items.fulfillments.unit.floor',
-        'items.fulfillments.unit.room',
+        'items.fulfillments.unit.location.parent',
         'items.fulfillments.lot.barang.brand',
-        'items.fulfillments.lot.location',
-        'items.fulfillments.lot.floor',
-        'items.fulfillments.lot.room',
+        'items.fulfillments.lot.location.parent',
     ];
 
     /**

@@ -8,8 +8,6 @@ use App\Models\Inventory\Lot;
 use App\Models\Inventory\Unit;
 use App\Models\Inventory\UnitStatusApproval;
 use App\Models\Inventory\UnitLifecycle;
-use App\Models\Master\Floor;
-use App\Models\Master\Room;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
@@ -28,8 +26,6 @@ class BulkUnitController extends Controller
             'number' => 'required|string|max:255',
             'lot_id' => 'required|exists:lots,id',
             'location_id' => 'required|exists:locations,id',
-            'floor_id' => 'nullable|exists:floors,id',
-            'room_id' => 'nullable|exists:rooms,id',
             'status' => 'required|string|max:255',
             'condition' => 'required|string|max:255',
             'price' => 'nullable|numeric|min:0|max:999999999.99',
@@ -145,8 +141,6 @@ class BulkUnitController extends Controller
                 'number' => $num,
                 'lot_id' => $validated['lot_id'],
                 'location_id' => $validated['location_id'],
-                'floor_id' => $validated['floor_id'] ?? null,
-                'room_id' => $validated['room_id'] ?? null,
                 'status' => $validated['status'],
                 'condition' => $validated['condition'],
                 'price' => $validated['price'],
@@ -192,8 +186,6 @@ class BulkUnitController extends Controller
             'status.in' => 'Status yang dipilih tidak valid.',
             'condition.in' => 'Kondisi yang dipilih tidak valid.',
             'location_id.exists' => 'Lokasi tidak ditemukan.',
-            'floor_id.exists' => 'Lantai tidak ditemukan.',
-            'room_id.exists' => 'Ruangan tidak ditemukan.',
             'price.numeric' => 'Harga Satuan harus berupa angka.',
             'price.min' => 'Harga Satuan minimal 0.',
             'price.max' => 'Harga Satuan terlalu besar.',
@@ -208,8 +200,6 @@ class BulkUnitController extends Controller
             'status' => ['nullable', 'string', 'in:Tersedia,Dipinjam,Standby,Tidak Aktif,Pending,Pending:BoD/BoC'],
             'condition' => ['nullable', 'string', 'in:Bagus,Rusak,QC Passed,Lelang/Hibah,Rusak Total,Hilang'],
             'location_id' => 'nullable|exists:locations,id',
-            'floor_id' => 'nullable|exists:floors,id',
-            'room_id' => 'nullable|exists:rooms,id',
             'price' => 'nullable|numeric|min:0|max:999999999.99',
             'use_lot_image' => 'nullable',
             'image_url' => 'nullable|image|mimes:jpeg,jpg,png|max:1024',
@@ -258,8 +248,6 @@ class BulkUnitController extends Controller
                         'status' => 'Pending:DM',
                         'condition' => $unit->condition,
                         'location_id' => $unit->location_id,
-                        'floor_id' => $unit->floor_id,
-                        'room_id' => $unit->room_id,
                         'start_date' => now(),
                         'end_date' => null,
                         'actor_id' => $request->user()->id,
@@ -269,20 +257,6 @@ class BulkUnitController extends Controller
             });
 
             return redirect()->back()->with('success', count($units) . ' aset terpilih berhasil disetujui BoD/BoC dan status diubah menjadi Pending:DM.');
-        }
-
-        if ($request->filled('floor_id') && $request->filled('location_id')) {
-            $floor = Floor::find($request->input('floor_id'));
-            if (!$floor || (int)$floor->location_id !== (int)$request->input('location_id')) {
-                return redirect()->back()->withErrors(['floor_id' => 'Lantai tidak sesuai dengan lokasi yang dipilih.']);
-            }
-        }
-
-        if ($request->filled('room_id') && $request->filled('floor_id')) {
-            $room = Room::find($request->input('room_id'));
-            if (!$room || (int)$room->floor_id !== (int)$request->input('floor_id')) {
-                return redirect()->back()->withErrors(['room_id' => 'Ruangan tidak sesuai dengan lantai yang dipilih.']);
-            }
         }
 
         $arrInactiveConditions = ['Rusak Total', 'Hilang', 'Lelang/Hibah'];
@@ -338,18 +312,9 @@ class BulkUnitController extends Controller
             $updateData['condition'] = $request->input('condition');
         }
 
-        // 2. Location, Floor, Room
+        // 2. Location
         if ($request->filled('location_id')) {
             $updateData['location_id'] = $request->input('location_id');
-            $updateData['floor_id'] = $request->input('floor_id');
-            $updateData['room_id'] = $request->input('room_id');
-        } else {
-            if ($request->has('floor_id')) {
-                $updateData['floor_id'] = $request->input('floor_id');
-            }
-            if ($request->has('room_id')) {
-                $updateData['room_id'] = $request->input('room_id');
-            }
         }
 
         // 3. Price

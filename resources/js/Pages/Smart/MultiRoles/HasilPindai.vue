@@ -12,6 +12,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/Components/ui/dropdown-menu';
 import Combobox from '@/Components/Combobox.vue';
+import LocationCombobox from '@/Components/LocationCombobox.vue';
 import { Field, FieldLabel, FieldContent, FieldError } from '@/Components/ui/field';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
@@ -20,9 +21,9 @@ import { compressImageIfNeeded } from '@/utils/imageCompressor';
 
 interface Props {
   asset: any;
-  locations: { id: number; name: string; }[];
-  floors: { id: number; name: string; location_id: number; }[];
-  rooms: { id: number; name: string; floor_id: number; }[];
+  locations: any[];
+  floors?: any[];
+  rooms?: any[];
   lot: any;
   barang: any;
 }
@@ -80,8 +81,6 @@ const form = useForm({
   number: props.asset?.number || '',
   lot_id: props.lot?.id || props.asset?.lot_id || '',
   location_id: props.asset?.location_id || '',
-  floor_id: props.asset?.floor_id || null,
-  room_id: props.asset?.room_id || null,
   status: props.asset?.status || '',
   condition: props.asset?.condition || '',
   price: props.asset?.price || '',
@@ -101,8 +100,6 @@ watch(() => props.asset, (newAsset) => {
   if (!newAsset) return;
   form.number = newAsset.number || '';
   form.location_id = newAsset.location_id || '';
-  form.floor_id = newAsset.floor_id || null;
-  form.room_id = newAsset.room_id || null;
   form.status = newAsset.status || '';
   form.condition = newAsset.condition || '';
   if (arrInactiveConditions.includes(form.condition)) {
@@ -156,31 +153,6 @@ watch(() => form.memo_file, v => { if (v && errors.value.memo_file) errors.value
 watch(() => form.lost_doc_file, v => { if (v && errors.value.lost_doc_file) errors.value.lost_doc_file = ''; });
 watch(() => form.bod_boc_approval_file, v => { if (v && errors.value.bod_boc_approval_file) errors.value.bod_boc_approval_file = ''; });
 
-const filteredFloors = computed(() => {
-  if (!form.location_id) return [];
-  const locId = Number(form.location_id);
-  return props.floors.filter(f => Number(f.location_id) === locId);
-});
-
-const filteredRooms = computed(() => {
-  if (!form.floor_id) return [];
-  const flId = Number(form.floor_id);
-  return props.rooms.filter(r => Number(r.floor_id) === flId);
-});
-
-watch(() => form.location_id, (newVal) => {
-  if (newVal) {
-    const valid = filteredFloors.value.some(f => Number(f.id) === Number(form.floor_id));
-    if (!valid) { form.floor_id = null; form.room_id = null; }
-  } else { form.floor_id = null; form.room_id = null; }
-});
-
-watch(() => form.floor_id, (newVal) => {
-  if (newVal) {
-    const valid = filteredRooms.value.some(r => Number(r.id) === Number(form.room_id));
-    if (!valid) form.room_id = null;
-  } else { form.room_id = null; }
-});
 
 watch(() => form.condition, (newVal, oldVal) => {
   if (arrInactiveConditions.includes(newVal)) {
@@ -212,12 +184,13 @@ const formatRupiah = (val: number | string | null | undefined) => {
   return `Rp${formatted}`;
 };
 
-const formatLocation = (loc: string | null, floor: string | null, room: string | null) => {
+const formatLocation = (loc: string | null, floor?: string | null, room?: string | null) => {
+  if (loc && (!floor && !room)) return loc;
   let parts: string[] = [];
   if (loc) parts.push(loc);
   if (floor) parts.push(floor);
   if (room) parts.push(room);
-  return parts.join(' - ');
+  return parts.length > 0 ? parts.join(' - ') : '-';
 };
 
 const handleFileUpload = async (e: any) => {
@@ -411,8 +384,6 @@ const handleSubmit = () => {
       number: data.number,
       lot_id: props.lot?.id || props.asset?.lot_id,
       location_id: data.location_id,
-      floor_id: data.floor_id,
-      room_id: data.room_id,
       status: data.status,
       condition: data.condition,
       price: data.price !== '' && data.price !== null ? parseCurrencyToNumber(data.price) : null,
@@ -650,47 +621,15 @@ const handleSubmit = () => {
                   <span>Lokasi<span class="text-rose-500">*</span></span>
                 </FieldLabel>
                 <FieldContent>
-                  <Combobox 
+                  <LocationCombobox 
                     v-model="form.location_id" 
-                    :options="locations" 
-                    search-placeholder="Cari lokasi..." 
-                    default-label="Pilih lokasi" 
-                    width-class="w-full h-10 px-4" 
+                    :locations="locations" 
+                    placeholder="Pilih lokasi"
+                    :error="!!errors.location_id"
+                    :active-only="true"
                   />
                 </FieldContent>
                 <FieldError v-if="errors.location_id">{{ errors.location_id }}</FieldError>
-              </Field>
-
-              <Field :data-disabled="!form.location_id || undefined">
-                <FieldLabel>
-                  <span>Lantai</span>
-                </FieldLabel>
-                <FieldContent>
-                  <Combobox 
-                    v-model="form.floor_id" 
-                    :options="filteredFloors" 
-                    search-placeholder="Cari lantai..." 
-                    default-label="Pilih lantai (opsional)" 
-                    width-class="w-full h-10 px-4" 
-                    :disabled="!form.location_id" 
-                  />
-                </FieldContent>
-              </Field>
-
-              <Field :data-disabled="!form.floor_id || undefined">
-                <FieldLabel>
-                  <span>Ruangan</span>
-                </FieldLabel>
-                <FieldContent>
-                  <Combobox 
-                    v-model="form.room_id" 
-                    :options="filteredRooms" 
-                    search-placeholder="Cari ruangan..." 
-                    default-label="Pilih ruangan (opsional)" 
-                    width-class="w-full h-10 px-4" 
-                    :disabled="!form.floor_id" 
-                  />
-                </FieldContent>
               </Field>
 
               <Field :data-invalid="!!errors.status || undefined" :data-disabled="isStatusDisabled || undefined">

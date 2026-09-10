@@ -29,9 +29,7 @@ class ManagerUnitStatusApprovalController extends Controller
             'unit.lot.barang.uom',
             'unit.lot.organizer',
             'unit.lot.vendor',
-            'unit.location',
-            'unit.floor',
-            'unit.room',
+            'unit.location.parent',
             'requester',
             'approver'
         ]);

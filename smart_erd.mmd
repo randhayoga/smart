@@ -59,18 +59,8 @@ erDiagram
     LOCATION {
         int id PK ""  
         varchar name  ""  
-    }
-
-    FLOOR {
-        int id PK ""  
-        varchar name  ""  
-        int location_id FK ""  
-    }
-
-    ROOM {
-        int id PK ""  
-        varchar name  ""  
-        int floor_id FK ""  
+        int parent_id FK "nullable | self-referential indirection"  
+        boolean is_active  "default to true"  
     }
 
     HRD_EMPLOYEE {
@@ -110,7 +100,7 @@ erDiagram
         varchar no_project FK "TB_PROJECT's no_project"  
         varchar id_rbs FK "TB_RBS's id"  
         datetime start_date  ""  
-        datetime end_date  ""  
+        datetime end_date  "nullable"  
     }
 
     TB_RBS {
@@ -140,8 +130,6 @@ erDiagram
         int organizer_id FK ""  
         int vendor_id FK ""  
         int location_id FK "default location"  
-        int floor_id FK "nullable | default floor"  
-        int room_id FK "nullable | default room"  
         int initial_quantity  ""  
         int current_quantity  "nullable | for consumables"  
         varchar po_number  ""  
@@ -157,8 +145,6 @@ erDiagram
         char_25 number UK ""  
         int lot_id FK ""  
         int location_id FK "current location"  
-        int floor_id FK "nullable"  
-        int room_id FK "nullable"  
         varchar status  ""  
         varchar condition  ""  
         numeric price  "nullable"  
@@ -205,8 +191,6 @@ erDiagram
         varchar status  ""  
         varchar condition  ""  
         int location_id FK ""  
-        int floor_id FK "nullable"  
-        int room_id FK "nullable"  
         datetime start_date  ""  
         datetime end_date  "nullable"  
         int actor_id FK "nullable | ADM_USER's id"  
@@ -266,6 +250,7 @@ erDiagram
         int return_id FK "nullable | links to return schedule"  
         int quantity_fulfilled  "defaults to 1 for assets"  
         datetime assigned_at  ""  
+        datetime confirmed_at  "nullable"  
         datetime completed_at  "nullable"  
         varchar placement  "nullable"  
     }
@@ -361,12 +346,9 @@ erDiagram
     ORGANIZER||--o{LOT:"managed by"
     VENDOR||--o{LOT:"supplied by"
     LOCATION||--o{LOT:"default location"
-    FLOOR||--o{LOT:"default floor"
-    ROOM||--o{LOT:"default room"
+    LOCATION||--o{LOCATION:"parent to child"
     LOT||--o{UNIT:"contains"
     LOCATION||--o{UNIT:"currently at"
-    FLOOR||--o{UNIT:"current floor"
-    ROOM||--o{UNIT:"current room"
     HRD_EMPLOYEE||--||ADM_USER:"credentials"
     HRD_ORGCHART||--o{HRD_EMPLOYEE:"employs"
     HRD_EMPLOYEE||--o{HRD_ORGCHART:"manages"
@@ -404,15 +386,11 @@ erDiagram
     UNIT||--o{INVENTORY_LOG:"logged"
     UNIT||--o{UNIT_LIFECYCLE:"tracks lifecycle of"
     LOCATION||--o{UNIT_LIFECYCLE:"location during lifecycle"
-    FLOOR||--o{UNIT_LIFECYCLE:"floor during lifecycle"
-    ROOM||--o{UNIT_LIFECYCLE:"room during lifecycle"
     ADM_USER||--o{UNIT_LIFECYCLE:"actor"
     UNIT||--o{UNIT_STATUS_APPROVAL:"has pending changes"
     ADM_USER||--o{UNIT_STATUS_APPROVAL:"requests status change"
     ADM_USER||--o{UNIT_STATUS_APPROVAL:"decides status change"
     ADM_USER||--o{INVENTORY_LOG:"actored"
     ADM_USER||--o{NOTIFICATION:"notified"
-    LOCATION||--o{FLOOR:"in floor"
-    FLOOR||--o{ROOM:"in room"
     TB_PROJECT||--o{LOT:"associated with project"
     ADM_USER||--o|SESSION:"session owner"

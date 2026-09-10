@@ -8,10 +8,8 @@ use App\Models\Inventory\Lot;
 use App\Models\Inventory\Unit;
 use App\Models\Inventory\UnitStatusApproval;
 use App\Models\Inventory\UnitLifecycle;
-use App\Models\Master\Floor;
 use App\Models\Master\Location;
 use App\Models\Master\Organizer;
-use App\Models\Master\Room;
 use App\Models\Master\Vendor;
 use App\Models\Request\RequestFulfillment;
 use App\Models\TbProject;
@@ -32,7 +30,7 @@ class UnitController extends Controller
     public function index(Request $request): Response
     {
         $units = Unit::with([
-            'location', 'floor', 'room', 'statusApprovals',
+            'location.parent', 'statusApprovals',
             'lot.barang.subcategory.category', 'lot.barang.brand',
             'lot.organizer', 'lot.vendor', 'lifecycles.actor'
         ])
@@ -70,12 +68,8 @@ class UnitController extends Controller
                 'updated_at' => $unit->updated_at ? $unit->updated_at->format('d-m-Y H:i') : '-',
                 
                 // Location info
-                'location' => $unit->location->name ?? '-',
+                'location' => $unit->location?->full_name ?? '-',
                 'location_id' => $unit->location_id,
-                'floor' => $unit->floor->name ?? null,
-                'floor_id' => $unit->floor_id,
-                'room' => $unit->room->name ?? null,
-                'room_id' => $unit->room_id,
 
                 // Parent lot info
                 'lot_id' => $unit->lot_id,
@@ -118,9 +112,7 @@ class UnitController extends Controller
             ];
         });
 
-        $locations = Location::orderBy('name')->get();
-        $floors = Floor::with('location')->orderBy('name')->get();
-        $rooms = Room::with('floor.location')->orderBy('name')->get();
+        $locations = Location::with('parent')->orderBy('name')->get();
         $organizers = Organizer::orderBy('name')->get();
         $vendors = Vendor::orderBy('name')->get();
         $projects = TbProject::orderBy('project_name')->get();
@@ -133,8 +125,6 @@ class UnitController extends Controller
             'user' => $request->user(),
             'units' => $units,
             'locations' => $locations,
-            'floors' => $floors,
-            'rooms' => $rooms,
             'organizers' => $organizers,
             'vendors' => $vendors,
             'projects' => $projects,
@@ -172,8 +162,6 @@ class UnitController extends Controller
             'number' => 'required|string|max:25|unique:units,number',
             'lot_id' => 'required|exists:lots,id',
             'location_id' => 'required|exists:locations,id',
-            'floor_id' => 'nullable|exists:floors,id',
-            'room_id' => 'nullable|exists:rooms,id',
             'status' => 'required|string|max:255',
             'condition' => 'required|string|max:255',
             'price' => 'nullable|numeric|min:0|max:999999999.99',
@@ -306,8 +294,6 @@ class UnitController extends Controller
                     'status' => 'Pending:DM',
                     'condition' => $unit->condition,
                     'location_id' => $unit->location_id,
-                    'floor_id' => $unit->floor_id,
-                    'room_id' => $unit->room_id,
                     'start_date' => now(),
                     'end_date' => null,
                     'actor_id' => $request->user()->id,
@@ -328,28 +314,12 @@ class UnitController extends Controller
             'number' => 'required|string|max:25|unique:units,number,' . $unit->id,
             'lot_id' => 'required|exists:lots,id',
             'location_id' => 'required|exists:locations,id',
-            'floor_id' => 'nullable|exists:floors,id',
-            'room_id' => 'nullable|exists:rooms,id',
             'status' => ['required', 'string', 'in:Tersedia,Dipinjam,Standby,Tidak Aktif,Pending,Pending:BoD/BoC'],
             'condition' => ['required', 'string', 'in:Bagus,Rusak,QC Passed,Lelang/Hibah,Rusak Total,Hilang'],
             'price' => 'nullable|numeric|min:0|max:999999999.99',
             'image_url' => 'nullable|image|mimes:jpeg,jpg,png|max:1024',
             'use_lot_image' => 'nullable',
         ];
-
-        if ($request->filled('floor_id')) {
-            $floor = Floor::find($request->input('floor_id'));
-            if (!$floor || (int)$floor->location_id !== (int)$request->input('location_id')) {
-                return redirect()->back()->withErrors(['floor_id' => 'Lantai tidak sesuai dengan lokasi yang dipilih.']);
-            }
-        }
-
-        if ($request->filled('room_id')) {
-            $room = Room::find($request->input('room_id'));
-            if (!$room || (int)$room->floor_id !== (int)$request->input('floor_id')) {
-                return redirect()->back()->withErrors(['room_id' => 'Ruangan tidak sesuai dengan lantai yang dipilih.']);
-            }
-        }
 
         $lot = Lot::with('barang.subcategory.category')->findOrFail($request->input('lot_id'));
         $isVehicle = false;
@@ -419,8 +389,6 @@ class UnitController extends Controller
             'lot_id.exists' => 'LOT tidak ditemukan.',
             'location_id.required' => 'Lokasi belum dipilih.',
             'location_id.exists' => 'Lokasi tidak ditemukan.',
-            'floor_id.exists' => 'Lantai tidak ditemukan.',
-            'room_id.exists' => 'Ruangan tidak ditemukan.',
             'status.required' => 'Status belum dipilih.',
             'status.in' => 'Status yang dipilih tidak valid.',
             'condition.required' => 'Kondisi belum dipilih.',

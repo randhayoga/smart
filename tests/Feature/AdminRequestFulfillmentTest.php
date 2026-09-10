@@ -9,9 +9,7 @@ use App\Models\Inventory\Barang;
 use App\Models\Inventory\Lot;
 use App\Models\Inventory\Unit;
 use App\Models\Master\Category;
-use App\Models\Master\Floor;
 use App\Models\Master\Location;
-use App\Models\Master\Room;
 use App\Models\Master\Subcategory;
 use App\Models\Master\Brand;
 use App\Models\Request\Request as SmartRequest;
@@ -232,8 +230,6 @@ class AdminRequestFulfillmentTest extends TestCase
         ]);
 
         $loc = Location::factory()->create(['name' => 'Gudang Utama']);
-        $floor = Floor::factory()->create(['location_id' => $loc->id, 'name' => 'Lantai 1']);
-        $room = Room::factory()->create(['floor_id' => $floor->id, 'name' => 'Ruang ATK']);
 
         $oldLot = Lot::factory()->create([
             'barang_id' => $barang->id,
@@ -241,8 +237,6 @@ class AdminRequestFulfillmentTest extends TestCase
             'current_quantity' => 10,
             'date_of_receipt' => now()->subDays(30),
             'location_id' => $loc->id,
-            'floor_id' => $floor->id,
-            'room_id' => $room->id,
         ]);
 
         $newLot = Lot::factory()->create([
@@ -251,8 +245,6 @@ class AdminRequestFulfillmentTest extends TestCase
             'current_quantity' => 20,
             'date_of_receipt' => now()->subDays(5),
             'location_id' => $loc->id,
-            'floor_id' => $floor->id,
-            'room_id' => $room->id,
         ]);
 
         $req = SmartRequest::create([

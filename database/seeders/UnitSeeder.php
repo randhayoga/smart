@@ -105,8 +105,6 @@ class UnitSeeder extends Seeder
                 [
                     'lot_id' => $data['lot_id'],
                     'location_id' => $lot->location_id,
-                    'floor_id' => $lot->floor_id,
-                    'room_id' => $lot->room_id,
                     'status' => $data['status'],
                     'condition' => $data['condition'],
                     'price' => $lot->unit_price,

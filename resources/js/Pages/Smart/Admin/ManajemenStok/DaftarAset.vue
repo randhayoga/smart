@@ -50,9 +50,7 @@ interface Props {
     barang_subcategory: string;
     barang_uom: string;
   }[];
-  locations: { id: number; name: string; }[];
-  floors: { id: number; name: string; location_id: number; }[];
-  rooms: { id: number; name: string; floor_id: number; }[];
+  locations: any[];
   organizers: { id: number; name: string; }[];
   vendors: { id: number; name: string; }[];
   users?: { id: number; name: string; }[];
@@ -66,8 +64,6 @@ const props = defineProps<Props>();
     <DaftarAsetTab
       :units="props.units"
       :locations="props.locations"
-      :floors="props.floors"
-      :rooms="props.rooms"
       :organizers="props.organizers"
       :vendors="props.vendors"
       :users="props.users"

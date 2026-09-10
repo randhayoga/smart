@@ -11,6 +11,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/Components/ui/dropdown-menu';
 import Combobox from '@/Components/Combobox.vue';
+import LocationCombobox from '@/Components/LocationCombobox.vue';
 import { Checkbox } from '@/Components/ui/checkbox';
 import { Field, FieldLabel, FieldContent, FieldError } from '@/Components/ui/field';
 import { compressImageIfNeeded } from '@/utils/imageCompressor';
@@ -20,9 +21,9 @@ interface Props {
   lot: any;
   units: any[];
   barang: any;
-  locations: { id: number; name: string; }[];
-  floors: { id: number; name: string; location_id: number; }[];
-  rooms: { id: number; name: string; floor_id: number; }[];
+  locations: any[];
+  floors?: any[];
+  rooms?: any[];
 }
 
 const props = defineProps<Props>();
@@ -44,8 +45,6 @@ const form = useForm({
   number: '',
   lot_id: props.lot?.id,
   location_id: '' as string | number,
-  floor_id: null as string | number | null,
-  room_id: null as string | number | null,
   status: '',
   condition: '',
   price: '' as string | number,
@@ -95,26 +94,6 @@ watch(() => form.vehicle_registration, v => { if (v && errors.value.vehicle_regi
 watch(() => form.bulk_quantity, v => { if (v !== '' && errors.value.bulk_quantity) errors.value.bulk_quantity = ''; });
 watch(() => form.memo_file, v => { if (v && errors.value.memo_file) errors.value.memo_file = ''; });
 watch(() => form.lost_doc_file, v => { if (v && errors.value.lost_doc_file) errors.value.lost_doc_file = ''; });
-
-const filteredFloors = computed(() => {
-  if (!form.location_id) return [];
-  return props.floors.filter(f => Number(f.location_id) === Number(form.location_id));
-});
-
-const filteredRooms = computed(() => {
-  if (!form.floor_id) return [];
-  return props.rooms.filter(r => Number(r.floor_id) === Number(form.floor_id));
-});
-
-watch(() => form.location_id, (newVal) => {
-  const valid = filteredFloors.value.some(f => Number(f.id) === Number(form.floor_id));
-  if (!valid) { form.floor_id = null; form.room_id = null; }
-});
-
-watch(() => form.floor_id, (newVal) => {
-  const valid = filteredRooms.value.some(r => Number(r.id) === Number(form.room_id));
-  if (!valid) form.room_id = null;
-});
 
 watch(() => form.condition, (newVal, oldVal) => {
   if (arrInactiveConditions.includes(newVal)) {
@@ -329,8 +308,6 @@ const handleSubmit = () => {
       number: data.number,
       lot_id: data.lot_id,
       location_id: data.location_id,
-      floor_id: data.floor_id,
-      room_id: data.room_id,
       status: data.status,
       condition: data.condition,
       price: data.price !== '' && data.price !== null ? parseCurrencyToNumber(data.price) : null,
@@ -349,34 +326,50 @@ const handleSubmit = () => {
 
   const url = form.is_bulk ? '/smart/inventory/units/bulk' : '/smart/inventory/units';
   form.post(url, {
-    onSuccess: () => { closeModal(); emit('success'); },
+    forceFormData: true,
+    preserveScroll: true,
+    onSuccess: () => {
+      closeModal();
+      emit('success');
+    },
+    onError: (errs) => {
+      console.error('Validation errors:', errs);
+      toast.error('Gagal membuat aset! Periksa kembali input Anda.');
+    },
   });
 };
 </script>
 
 <template>
   <Teleport to="body">
-    <Transition enter-active-class="ease-out duration-200" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="ease-in duration-150" leave-from-class="opacity-100" leave-to-class="opacity-0">
+    <Transition
+      enter-active-class="ease-out duration-300"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="ease-in duration-200"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
       <div v-if="open" @click="closeModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
         <Transition enter-active-class="ease-out duration-200" enter-from-class="opacity-0 scale-95" enter-to-class="opacity-100 scale-100" leave-active-class="ease-in duration-150" leave-from-class="opacity-100 scale-100" leave-to-class="opacity-0 scale-95">
-          <div v-if="open" class="bg-card w-full max-w-[1000px] rounded-[14px] shadow-2xl overflow-hidden flex flex-col" @click.stop>
+          <div v-if="open" class="bg-card w-full max-w-[1000px] rounded-[14px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]" @click.stop>
             <!-- Header -->
-            <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
-              <h3 class="text-lg font-bold text-foreground">
-                Pembuatan Aset Baru
-              </h3>
-              <button @click="closeModal" class="p-2 hover:bg-muted rounded-full transition-colors">
-                <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
+            <div class="flex items-center justify-between pt-3 pb-2 px-6 border-b border-border">
+              <h3 class="text-lg font-bold text-foreground">Pembuatan Aset Baru</h3>
+              <button @click="closeModal" class="p-2 hover:bg-muted rounded-full transition-colors cursor-pointer">
+                <X class="w-5 h-5 text-muted-foreground" />
               </button>
             </div>
 
             <!-- Body -->
             <div class="p-6 overflow-y-auto max-h-[70vh]">
               <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
-                <!-- Left Column -->
+                <!-- Left Column: Form Fields -->
                 <div class="space-y-6">
                   <Field>
-                    <FieldLabel>Kode Aset</FieldLabel>
+                    <FieldLabel>
+                      <span>Nomor Aset</span>
+                    </FieldLabel>
                     <FieldContent>
                       <input type="text" :value="form.number" disabled class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10" />
                     </FieldContent>
@@ -387,27 +380,15 @@ const handleSubmit = () => {
                       <span>Lokasi<span class="text-rose-500">*</span></span>
                     </FieldLabel>
                     <FieldContent>
-                      <Combobox v-model="form.location_id" :options="locations" search-placeholder="Cari lokasi..." default-label="Pilih lokasi" width-class="w-full h-10 px-4" :error="!!errors.location_id" />
+                      <LocationCombobox
+                        v-model="form.location_id"
+                        :locations="locations"
+                        placeholder="Pilih lokasi"
+                        :error="!!errors.location_id"
+                        :active-only="true"
+                      />
                     </FieldContent>
                     <FieldError v-if="errors.location_id">{{ errors.location_id }}</FieldError>
-                  </Field>
-
-                  <Field :data-disabled="!form.location_id || undefined">
-                    <FieldLabel>
-                      <span>Lantai</span>
-                    </FieldLabel>
-                    <FieldContent>
-                      <Combobox v-model="form.floor_id" :options="filteredFloors" search-placeholder="Cari lantai..." default-label="Pilih lantai (opsional)" width-class="w-full h-10 px-4" :disabled="!form.location_id" />
-                    </FieldContent>
-                  </Field>
-
-                  <Field :data-disabled="!form.floor_id || undefined">
-                    <FieldLabel>
-                      <span>Ruangan</span>
-                    </FieldLabel>
-                    <FieldContent>
-                      <Combobox v-model="form.room_id" :options="filteredRooms" search-placeholder="Cari ruangan..." default-label="Pilih ruangan (opsional)" width-class="w-full h-10 px-4" :disabled="!form.floor_id" />
-                    </FieldContent>
                   </Field>
 
                   <Field :data-invalid="!!errors.status || undefined" :data-disabled="isStatusDisabled || undefined">

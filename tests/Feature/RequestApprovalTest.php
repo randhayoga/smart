@@ -220,9 +220,9 @@ class RequestApprovalTest extends TestCase
 
             $rendered = $mail->render();
             $this->assertStringContainsString($rejectionNote, $rendered);
-            $this->assertStringContainsString("Yth. {$requester->name}", $rendered);
+            $this->assertStringContainsString("Yth. " . e($requester->name), $rendered);
             $this->assertStringContainsString("Peminjaman Anda dengan nomor", $rendered);
-            $this->assertStringContainsString("<strong style=\"color: #dc2626;\">ditolak</strong> oleh <strong>{$manager->name}</strong>", $rendered);
+            $this->assertStringContainsString("<strong style=\"color: #dc2626;\">ditolak</strong> oleh <strong>" . e($manager->name) . "</strong>", $rendered);
             $this->assertStringContainsString("Lihat Detail Peminjaman", $rendered);
             $this->assertStringContainsString(url('/smart/history/' . $req->uuid), $rendered);
 

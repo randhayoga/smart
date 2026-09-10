@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Models\Master\Category;
 use App\Models\Master\Subcategory;
 use App\Models\Master\Location;
-use App\Models\Master\Floor;
 use App\Models\Master\Organizer;
 use App\Models\Master\Uom;
 use App\Models\Master\Vendor;
@@ -123,17 +122,71 @@ class MasterDataManagementTest extends TestCase
         $this->assertDatabaseMissing('locations', ['id' => $location->id]);
     }
 
-    public function test_cannot_destroy_location_if_has_floors(): void
+    public function test_cannot_destroy_location_if_has_children(): void
     {
         $user = User::factory()->create();
         $location = Location::factory()->create();
-        Floor::factory()->create(['location_id' => $location->id]);
+        Location::factory()->create(['parent_id' => $location->id]);
 
         $response = $this->actingAs($user)->delete(route('smart.master.locations.destroy', $location));
 
         $response->assertRedirect();
-        $response->assertSessionHas('error', 'Lokasi tidak dapat dihapus karena masih memiliki lantai.');
+        $response->assertSessionHas('error', 'Lokasi tidak dapat dihapus karena masih memiliki sub-lokasi.');
         $this->assertDatabaseHas('locations', ['id' => $location->id]);
+    }
+
+    public function test_can_store_child_location(): void
+    {
+        $user = User::factory()->create();
+        $parent = Location::factory()->create(['name' => 'Graha RE 1']);
+
+        $response = $this->actingAs($user)->post(route('smart.master.locations.store'), [
+            'name' => 'Lantai Mezzanine',
+            'parent_id' => $parent->id,
+            'is_active' => true,
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('locations', [
+            'name' => 'Lantai Mezzanine',
+            'parent_id' => $parent->id,
+            'is_active' => 1,
+        ]);
+    }
+
+    public function test_cannot_set_location_parent_to_self_or_descendant(): void
+    {
+        $user = User::factory()->create();
+        $parent = Location::factory()->create(['name' => 'Gedung A']);
+        $child = Location::factory()->create(['name' => 'Lantai 1', 'parent_id' => $parent->id]);
+
+        // Self parent
+        $response = $this->actingAs($user)->put(route('smart.master.locations.update', $parent), [
+            'name' => 'Gedung A',
+            'parent_id' => $parent->id,
+        ]);
+        $response->assertSessionHasErrors('parent_id');
+
+        // Descendant parent
+        $response = $this->actingAs($user)->put(route('smart.master.locations.update', $parent), [
+            'name' => 'Gedung A',
+            'parent_id' => $child->id,
+        ]);
+        $response->assertSessionHasErrors('parent_id');
+    }
+
+    public function test_can_toggle_location_active_status(): void
+    {
+        $user = User::factory()->create();
+        $location = Location::factory()->create(['is_active' => true]);
+
+        $response = $this->actingAs($user)->patch(route('smart.master.locations.toggle-active', $location));
+        $response->assertRedirect();
+
+        $this->assertDatabaseHas('locations', [
+            'id' => $location->id,
+            'is_active' => 0,
+        ]);
     }
 
     public function test_can_store_organizer(): void

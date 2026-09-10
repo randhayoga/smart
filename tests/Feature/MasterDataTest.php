@@ -2,9 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Models\Master\Floor;
 use App\Models\Master\Location;
-use App\Models\Master\Room;
 use App\Models\Master\Category;
 use App\Models\Master\Subcategory;
 use App\Models\Master\Brand;
@@ -16,123 +14,135 @@ use Tests\TestCase;
 /**
  * Master Data Extended Feature Tests
  *
- * Verifies validation patterns, hierarchical integrity, and CRUD handlers for Floors, Rooms, Subcategories, Brands, and Vendors.
+ * Verifies validation patterns, hierarchical integrity, and CRUD handlers for Locations, Subcategories, Brands, and Vendors.
  */
 class MasterDataTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_can_store_floor(): void
+    public function test_can_store_root_location(): void
     {
         $user = User::factory()->create();
-        $location = Location::factory()->create();
 
-        $response = $this->actingAs($user)->post(route('smart.master.floors.store'), [
-            'location_id' => $location->id,
-            'name' => 'Lantai 1',
+        $response = $this->actingAs($user)->post(route('smart.master.locations.store'), [
+            'name' => 'Graha RE 1',
+            'parent_id' => null,
+            'is_active' => true,
         ]);
 
         $response->assertRedirect();
-        $this->assertDatabaseHas('floors', [
-            'location_id' => $location->id,
-            'name' => 'Lantai 1',
+        $this->assertDatabaseHas('locations', [
+            'name' => 'Graha RE 1',
+            'parent_id' => null,
+            'is_active' => 1,
         ]);
     }
 
-    public function test_can_update_floor(): void
+    public function test_can_store_nested_location(): void
     {
         $user = User::factory()->create();
-        $floor = Floor::factory()->create();
-        $newLocation = Location::factory()->create();
+        $parent = Location::factory()->create(['name' => 'Graha RE 1']);
 
-        $response = $this->actingAs($user)->put(route('smart.master.floors.update', $floor), [
-            'location_id' => $newLocation->id,
-            'name' => 'Lantai Baru',
+        $response = $this->actingAs($user)->post(route('smart.master.locations.store'), [
+            'name' => 'Lantai Mezzanine',
+            'parent_id' => $parent->id,
+            'is_active' => true,
         ]);
 
         $response->assertRedirect();
-        $this->assertDatabaseHas('floors', [
-            'id' => $floor->id,
-            'location_id' => $newLocation->id,
-            'name' => 'Lantai Baru',
+        $this->assertDatabaseHas('locations', [
+            'name' => 'Lantai Mezzanine',
+            'parent_id' => $parent->id,
+            'is_active' => 1,
         ]);
     }
 
-    public function test_can_destroy_floor(): void
+    public function test_can_update_location_parent_and_name(): void
     {
         $user = User::factory()->create();
-        $floor = Floor::factory()->create();
+        $parent1 = Location::factory()->create(['name' => 'Graha RE 1']);
+        $parent2 = Location::factory()->create(['name' => 'Graha RE 2']);
+        $child = Location::factory()->create(['name' => 'Lantai 1', 'parent_id' => $parent1->id]);
 
-        $response = $this->actingAs($user)->delete(route('smart.master.floors.destroy', $floor));
+        $response = $this->actingAs($user)->put(route('smart.master.locations.update', $child), [
+            'name' => 'Lantai Satu',
+            'parent_id' => $parent2->id,
+            'is_active' => false,
+        ]);
 
         $response->assertRedirect();
-        $this->assertDatabaseMissing('floors', [
-            'id' => $floor->id,
+        $this->assertDatabaseHas('locations', [
+            'id' => $child->id,
+            'name' => 'Lantai Satu',
+            'parent_id' => $parent2->id,
+            'is_active' => 0,
         ]);
     }
 
-    public function test_cannot_destroy_floor_if_it_has_rooms(): void
+    public function test_cannot_set_location_parent_to_self(): void
     {
         $user = User::factory()->create();
-        $floor = Floor::factory()->create();
-        Room::factory()->create(['floor_id' => $floor->id]);
+        $location = Location::factory()->create(['name' => 'Building A']);
 
-        $response = $this->actingAs($user)->delete(route('smart.master.floors.destroy', $floor));
-
-        $response->assertRedirect();
-        $response->assertSessionHas('error', 'Lantai tidak dapat dihapus karena masih memiliki ruangan.');
-        $this->assertDatabaseHas('floors', [
-            'id' => $floor->id,
+        $response = $this->actingAs($user)->put(route('smart.master.locations.update', $location), [
+            'name' => 'Building A Updated',
+            'parent_id' => $location->id,
         ]);
+
+        $response->assertSessionHasErrors('parent_id');
     }
 
-    public function test_can_store_room(): void
+    public function test_cannot_set_location_parent_to_descendant(): void
     {
         $user = User::factory()->create();
-        $floor = Floor::factory()->create();
+        $parent = Location::factory()->create(['name' => 'Root']);
+        $child = Location::factory()->create(['name' => 'Child', 'parent_id' => $parent->id]);
+        $grandchild = Location::factory()->create(['name' => 'Grandchild', 'parent_id' => $child->id]);
 
-        $response = $this->actingAs($user)->post(route('smart.master.rooms.store'), [
-            'floor_id' => $floor->id,
-            'name' => 'Ruang Server',
+        $response = $this->actingAs($user)->put(route('smart.master.locations.update', $parent), [
+            'name' => 'Root Updated',
+            'parent_id' => $grandchild->id,
         ]);
 
-        $response->assertRedirect();
-        $this->assertDatabaseHas('rooms', [
-            'floor_id' => $floor->id,
-            'name' => 'Ruang Server',
-        ]);
+        $response->assertSessionHasErrors('parent_id');
     }
 
-    public function test_can_update_room(): void
+    public function test_cannot_destroy_location_with_children(): void
     {
         $user = User::factory()->create();
-        $room = Room::factory()->create();
-        $newFloor = Floor::factory()->create();
+        $parent = Location::factory()->create(['name' => 'Parent']);
+        Location::factory()->create(['parent_id' => $parent->id]);
 
-        $response = $this->actingAs($user)->put(route('smart.master.rooms.update', $room), [
-            'floor_id' => $newFloor->id,
-            'name' => 'Ruang Meeting',
-        ]);
+        $response = $this->actingAs($user)->delete(route('smart.master.locations.destroy', $parent));
 
         $response->assertRedirect();
-        $this->assertDatabaseHas('rooms', [
-            'id' => $room->id,
-            'floor_id' => $newFloor->id,
-            'name' => 'Ruang Meeting',
-        ]);
+        $response->assertSessionHas('error', 'Lokasi tidak dapat dihapus karena masih memiliki sub-lokasi.');
+        $this->assertDatabaseHas('locations', ['id' => $parent->id]);
     }
 
-    public function test_can_destroy_room(): void
+    public function test_can_destroy_leaf_location(): void
     {
         $user = User::factory()->create();
-        $room = Room::factory()->create();
+        $location = Location::factory()->create(['name' => 'Leaf']);
 
-        $response = $this->actingAs($user)->delete(route('smart.master.rooms.destroy', $room));
+        $response = $this->actingAs($user)->delete(route('smart.master.locations.destroy', $location));
 
         $response->assertRedirect();
-        $this->assertDatabaseMissing('rooms', [
-            'id' => $room->id,
-        ]);
+        $this->assertDatabaseMissing('locations', ['id' => $location->id]);
+    }
+
+    public function test_toggle_location_active(): void
+    {
+        $user = User::factory()->create();
+        $location = Location::factory()->create(['is_active' => true]);
+
+        $response = $this->actingAs($user)->patch(route('smart.master.locations.toggle-active', $location));
+        $response->assertRedirect();
+        $this->assertDatabaseHas('locations', ['id' => $location->id, 'is_active' => 0]);
+
+        $response = $this->actingAs($user)->patch(route('smart.master.locations.toggle-active', $location));
+        $response->assertRedirect();
+        $this->assertDatabaseHas('locations', ['id' => $location->id, 'is_active' => 1]);
     }
 
     public function test_can_store_subcategory_with_valid_format(): void

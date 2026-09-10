@@ -7,8 +7,6 @@ use App\Models\Inventory\Barang;
 use App\Models\Master\Organizer;
 use App\Models\Master\Vendor;
 use App\Models\Master\Location;
-use App\Models\Master\Floor;
-use App\Models\Master\Room;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -49,8 +47,6 @@ class LotFactory extends Factory
             'organizer_id' => $organizer->id,
             'vendor_id' => $vendor->id,
             'location_id' => $location->id,
-            'floor_id' => null,
-            'room_id' => null,
             'initial_quantity' => 0,
             'current_quantity' => 0,
             'po_number' => $this->faker->bothify('PO-##'),

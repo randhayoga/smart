@@ -139,4 +139,40 @@ class AlphanumericCodeRoutingTest extends TestCase
         $responseLower = $this->actingAs($user)->get('/smart/scan/00001furkkcfsptre26');
         $responseLower->assertStatus(200);
     }
+
+    public function test_lot_get_route_key_is_alphanumeric_only(): void
+    {
+        $lot = Lot::factory()->create([
+            'number' => 'LOT-2026-ATK-KER-0001',
+        ]);
+
+        $this->assertEquals('LOT2026ATKKER0001', $lot->getRouteKey());
+        $this->assertStringEndsWith('/smart/inventory/lots/LOT2026ATKKER0001', route('smart.inventory.lots.show', $lot));
+    }
+
+    public function test_can_access_lot_detail_using_alphanumeric_code(): void
+    {
+        $user = $this->createAdminUser();
+        $lot = Lot::factory()->create([
+            'number' => 'LOT-2026-ATK-KER-0001',
+        ]);
+
+        // 1. Using alphanumeric code
+        $response = $this->actingAs($user)->get('/smart/inventory/lots/LOT2026ATKKER0001');
+        $response->assertStatus(200);
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('Smart/Admin/ManajemenStok/DetailLOTNonConsumables')
+            ->where('lot.id', $lot->id)
+            ->where('lot.number', 'LOT-2026-ATK-KER-0001')
+        );
+
+        // 2. Using original code with dashes
+        $responseDash = $this->actingAs($user)->get('/smart/inventory/lots/LOT-2026-ATK-KER-0001');
+        $responseDash->assertStatus(200);
+
+        // 3. Using lowercase alphanumeric code
+        $responseLower = $this->actingAs($user)->get('/smart/inventory/lots/lot2026atkker0001');
+        $responseLower->assertStatus(200);
+    }
 }
+

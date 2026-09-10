@@ -2,10 +2,8 @@
 
 namespace App\Models\Inventory;
 
-use App\Models\Master\Floor;
 use App\Models\Master\Location;
 use App\Models\Master\Organizer;
-use App\Models\Master\Room;
 use App\Models\Master\Vendor;
 use App\Models\TbProject;
 use Carbon\Carbon;
@@ -32,8 +30,6 @@ class Lot extends Model
         'organizer_id',
         'vendor_id',
         'location_id',
-        'floor_id',
-        'room_id',
         'initial_quantity',
         'current_quantity',
         'po_number',
@@ -81,22 +77,6 @@ class Lot extends Model
     public function location(): BelongsTo
     {
         return $this->belongsTo(Location::class);
-    }
-
-    /**
-     * The specific floor of the storage location.
-     */
-    public function floor(): BelongsTo
-    {
-        return $this->belongsTo(Floor::class);
-    }
-
-    /**
-     * The specific room within the storage floor.
-     */
-    public function room(): BelongsTo
-    {
-        return $this->belongsTo(Room::class);
     }
 
     /**

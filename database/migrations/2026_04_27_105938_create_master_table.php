@@ -54,35 +54,23 @@ return new class extends Migration {
             $table->timestamps();
         });
 
-        // Grouping simple reference tables
-        $references = ['organizers', 'locations'];
-        foreach ($references as $ref) {
-            Schema::create($ref, function (Blueprint $table) {
-                $table->id();
-                $table->string('name');
-                $table->timestamps();
-            });
-        }
-
-        Schema::create('floors', function (Blueprint $table) {
+        Schema::create('organizers', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->foreignId('location_id')->constrained('locations')->cascadeOnDelete();
             $table->timestamps();
         });
 
-        Schema::create('rooms', function (Blueprint $table) {
+        Schema::create('locations', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->foreignId('floor_id')->constrained('floors')->cascadeOnDelete();
+            $table->foreignId('parent_id')->nullable()->constrained('locations')->noActionOnDelete();
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('rooms');
-        Schema::dropIfExists('floors');
         Schema::dropIfExists('locations');
         Schema::dropIfExists('vendors');
         Schema::dropIfExists('organizers');

@@ -26,6 +26,8 @@ class LocationFactory extends Factory
     {
         return [
             'name' => fake()->city() . ' ' . fake()->unique()->randomNumber(5, false),
+            'parent_id' => null,
+            'is_active' => true,
         ];
     }
 }

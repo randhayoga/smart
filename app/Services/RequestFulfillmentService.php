@@ -26,7 +26,7 @@ class RequestFulfillmentService
     public function getAvailableUnitsQuery(RequestItem $item, bool $includeCurrentItemAssignments = false): Builder
     {
         $query = Unit::query()
-            ->with(['lot.barang.brand', 'location', 'floor', 'room'])
+            ->with(['lot.barang.brand', 'location.parent'])
             ->whereRaw("LOWER(units.status) = 'tersedia'");
 
         // Filter by item barang or subcategory
@@ -69,7 +69,7 @@ class RequestFulfillmentService
     public function getAvailableLotsQuery(RequestItem $item): Builder
     {
         $query = Lot::query()
-            ->with(['barang.brand', 'barang.uom', 'location', 'floor', 'room'])
+            ->with(['barang.brand', 'barang.uom', 'location.parent'])
             ->where(function ($q) use ($item) {
                 $q->where('current_quantity', '>', 0)
                   ->orWhereHas('fulfillments', fn($fq) => $fq->where('request_item_id', $item->id));
@@ -180,7 +180,7 @@ class RequestFulfillmentService
         }
 
         $lotQuery = Lot::query()
-            ->with(['barang.brand', 'location', 'floor', 'room'])
+            ->with(['barang.brand', 'location.parent'])
             ->where('current_quantity', '>', 0);
 
         if ($item->barang_id) {

@@ -25,8 +25,6 @@ class BulkLotController extends Controller
             'organizer_id' => 'nullable|exists:organizers,id',
             'vendor_id' => 'nullable|exists:vendors,id',
             'location_id' => 'nullable|exists:locations,id',
-            'floor_id' => 'nullable|exists:floors,id',
-            'room_id' => 'nullable|exists:rooms,id',
             'unit_price' => 'nullable|numeric|min:0|max:999999999.99',
             'image_url' => 'nullable|image|max:1024',
             'use_parent_image' => 'nullable',
@@ -48,12 +46,6 @@ class BulkLotController extends Controller
             }
             if ($request->filled('location_id')) {
                 $lotData['location_id'] = $request->input('location_id');
-            }
-            if ($request->has('floor_id')) {
-                $lotData['floor_id'] = $request->input('floor_id');
-            }
-            if ($request->has('room_id')) {
-                $lotData['room_id'] = $request->input('room_id');
             }
             if ($request->has('unit_price')) {
                 $lotData['unit_price'] = $request->input('unit_price');

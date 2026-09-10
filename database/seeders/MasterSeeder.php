@@ -4,10 +4,8 @@ namespace Database\Seeders;
 
 use App\Models\Master\Brand;
 use App\Models\Master\Category;
-use App\Models\Master\Floor;
 use App\Models\Master\Location;
 use App\Models\Master\Organizer;
-use App\Models\Master\Room;
 use App\Models\Master\Subcategory;
 use App\Models\Master\Uom;
 use App\Models\Master\Vendor;
@@ -150,45 +148,46 @@ class MasterSeeder extends Seeder
             ]);
         }
 
-        $locations = ['Graha RE 1', 'Site A'];
-        $locationModels = [];
-        foreach ($locations as $locName) {
-            $locationModels[$locName] = Location::create(['name' => $locName]);
-        }
+        // 1: Graha RE 1 (Root)
+        $graha = Location::create([
+            'name' => 'Graha RE 1',
+            'parent_id' => null,
+            'is_active' => true,
+        ]);
 
-        $floors = [
-            [
-                'name' => 'Lantai Mezzanine',
-                'location_key' => 'Graha RE 1',
-            ],
-            [
-                'name' => 'Lantai 4',
-                'location_key' => 'Graha RE 1',
-            ],
-        ];
-        $floorModels = [];
-        foreach ($floors as $fl) {
-            $floorModels[$fl['name']] = Floor::create([
-                'name' => $fl['name'],
-                'location_id' => $locationModels[$fl['location_key']]->id,
-            ]);
-        }
+        // 2: Lantai Mezzanine (Child of Graha RE 1)
+        $mezzanine = Location::create([
+            'name' => 'Lantai Mezzanine',
+            'parent_id' => $graha->id,
+            'is_active' => true,
+        ]);
 
-        $rooms = [
-            [
-                'name' => 'Ruang IFS Departemen',
-                'floor_key' => 'Lantai Mezzanine',
-            ],
-            [
-                'name' => 'Ruang Mega Mendung',
-                'floor_key' => 'Lantai 4',
-            ],
-        ];
-        foreach ($rooms as $rm) {
-            Room::create([
-                'name' => $rm['name'],
-                'floor_id' => $floorModels[$rm['floor_key']]->id,
-            ]);
-        }
+        // 3: Ruang IFS Departemen (Child of Lantai Mezzanine)
+        $ruangIfs = Location::create([
+            'name' => 'Ruang IFS Departemen',
+            'parent_id' => $mezzanine->id,
+            'is_active' => true,
+        ]);
+
+        // 4: Lantai 4 (Child of Graha RE 1)
+        $lantai4 = Location::create([
+            'name' => 'Lantai 4',
+            'parent_id' => $graha->id,
+            'is_active' => true,
+        ]);
+
+        // 5: Ruang Mega Mendung (Child of Lantai 4)
+        $ruangMega = Location::create([
+            'name' => 'Ruang Mega Mendung',
+            'parent_id' => $lantai4->id,
+            'is_active' => true,
+        ]);
+
+        // 6: Site A (Root)
+        Location::create([
+            'name' => 'Site A',
+            'parent_id' => null,
+            'is_active' => true,
+        ]);
     }
 }

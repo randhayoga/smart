@@ -10,8 +10,6 @@ use App\Models\Master\Category;
 use App\Models\Master\Subcategory;
 use App\Models\Master\Uom;
 use App\Models\Master\Location;
-use App\Models\Master\Floor;
-use App\Models\Master\Room;
 use App\Models\Master\Organizer;
 use App\Models\Master\Vendor;
 use App\Models\AdmUser as User;

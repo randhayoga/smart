@@ -63,9 +63,9 @@ interface Props {
     vehicle_registration: string | null;
     updated_at: string;
   }[];
-  locations: { id: number; name: string; }[];
-  floors: { id: number; name: string; location_id: number; }[];
-  rooms: { id: number; name: string; floor_id: number; }[];
+  locations: any[];
+  floors?: any[];
+  rooms?: any[];
   organizers?: { id: number; name: string; }[];
   vendors?: { id: number; name: string; }[];
 }
@@ -160,8 +160,6 @@ onUnmounted(() => {
     <DaftarAsetTab
       :units="props.units"
       :locations="props.locations"
-      :floors="props.floors"
-      :rooms="props.rooms"
       :organizers="props.organizers"
       :vendors="props.vendors"
       :hide-barang-columns="true"
@@ -184,8 +182,6 @@ onUnmounted(() => {
     :units="props.units"
     :barang="{ category: props.lot.barang_category, subcategory_code: props.lot.barang_subcategory_code }"
     :locations="props.locations"
-    :floors="props.floors"
-    :rooms="props.rooms"
     @success="handleAssetSuccess"
   />
 </template>

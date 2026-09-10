@@ -11,9 +11,7 @@ import { printFormulirPersetujuanPenghapusan } from '@/utils/printFormulirPerset
 
 interface Props {
   units: any[];
-  locations: { id: number; name: string; }[];
-  floors: { id: number; name: string; location_id: number; }[];
-  rooms: { id: number; name: string; floor_id: number; }[];
+  locations: any[];
   organizers?: { id: number; name: string; }[];
   vendors?: { id: number; name: string; }[];
 }
@@ -59,8 +57,6 @@ const handleCustomPrint = (items: any[]) => {
         :key="activeTab"
         :units="filteredUnits"
         :locations="props.locations"
-        :floors="props.floors"
-        :rooms="props.rooms"
         :organizers="props.organizers"
         :vendors="props.vendors"
         :hide-status-filter="true"

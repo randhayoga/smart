@@ -86,9 +86,7 @@ class ManagerAssetStatusApprovalResource extends JsonResource
                 'price' => $unit->price ? number_format($unit->price, 0, ',', '.') : '-',
                 'image_url' => $unit->image_url ? '/media/' . $unit->image_url : ($lot->image_url ? '/media/' . $lot->image_url : null),
                 'vehicle_registration' => $unit->vehicle_registration ?? '-',
-                'location' => $unit->location->name ?? '-',
-                'floor' => $unit->floor->name ?? null,
-                'room' => $unit->room->name ?? null,
+                'location' => $unit->location ? $unit->location->full_name : '-',
 
                 'lot_code' => $lot->number ?? '-',
                 'organizer' => $lot->organizer->name ?? '-',

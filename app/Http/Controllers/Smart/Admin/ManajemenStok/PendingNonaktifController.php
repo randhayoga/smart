@@ -4,10 +4,8 @@ namespace App\Http\Controllers\Smart\Admin\ManajemenStok;
 
 use App\Http\Controllers\Controller;
 use App\Models\Inventory\Unit;
-use App\Models\Master\Floor;
 use App\Models\Master\Location;
 use App\Models\Master\Organizer;
-use App\Models\Master\Room;
 use App\Models\Master\Vendor;
 use App\Models\TbProject;
 use Illuminate\Http\Request;
@@ -25,7 +23,7 @@ class PendingNonaktifController extends Controller
     public function index(Request $request): Response
     {
         $units = Unit::with([
-            'location', 'floor', 'room', 'statusApprovals',
+            'location.parent', 'statusApprovals',
             'lot.barang.subcategory.category', 'lot.barang.brand',
             'lot.organizer', 'lot.vendor', 'lifecycles.actor'
         ])
@@ -63,12 +61,8 @@ class PendingNonaktifController extends Controller
                 'updated_at' => $unit->updated_at ? $unit->updated_at->format('d-m-Y H:i') : '-',
                 
                 // Location info
-                'location' => $unit->location->name ?? '-',
+                'location' => $unit->location ? $unit->location->full_name : '-',
                 'location_id' => $unit->location_id,
-                'floor' => $unit->floor->name ?? null,
-                'floor_id' => $unit->floor_id,
-                'room' => $unit->room->name ?? null,
-                'room_id' => $unit->room_id,
 
                 // Parent lot info
                 'lot_id' => $unit->lot_id,
@@ -108,9 +102,7 @@ class PendingNonaktifController extends Controller
             ];
         });
 
-        $locations = Location::orderBy('name')->get();
-        $floors = Floor::with('location')->orderBy('name')->get();
-        $rooms = Room::with('floor.location')->orderBy('name')->get();
+        $locations = Location::with('parent')->active()->orderBy('name')->get();
         $organizers = Organizer::orderBy('name')->get();
         $vendors = Vendor::orderBy('name')->get();
         $projects = TbProject::orderBy('project_name')->get();
@@ -119,8 +111,6 @@ class PendingNonaktifController extends Controller
             'user' => $request->user(),
             'units' => $units,
             'locations' => $locations,
-            'floors' => $floors,
-            'rooms' => $rooms,
             'organizers' => $organizers,
             'vendors' => $vendors,
             'projects' => $projects,

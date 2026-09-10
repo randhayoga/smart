@@ -11,6 +11,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/Components/ui/dropdown-menu';
 import Combobox from '@/Components/Combobox.vue';
+import LocationCombobox from '@/Components/LocationCombobox.vue';
 import { Field, FieldLabel, FieldContent, FieldError } from '@/Components/ui/field';
 import { RadioGroup, RadioGroupItem } from '@/Components/ui/radio-group';
 
@@ -24,9 +25,7 @@ interface Props {
   parentImageUrl: string | null;
   organizers: { id: number; name: string; }[];
   vendors: { id: number; name: string; }[];
-  locations: { id: number; name: string; }[];
-  floors: { id: number; name: string; location_id: number; }[];
-  rooms: { id: number; name: string; floor_id: number; }[];
+  locations: any[];
   projects: { id: number; no_project: string; project_name: string; client_id: string; }[];
 }
 
@@ -45,8 +44,6 @@ const form = useForm({
   organizer_id: '' as string | number,
   vendor_id: '' as string | number,
   location_id: '' as string | number,
-  floor_id: null as string | number | null,
-  room_id: null as string | number | null,
   po_number: '',
   date_of_receipt: '',
   unit_price: '' as string | number,
@@ -96,30 +93,6 @@ watch(() => form.burden, v => {
   }
 });
 
-const filteredFloors = computed(() => {
-  if (!form.location_id) return [];
-  return props.floors.filter(f => Number(f.location_id) === Number(form.location_id));
-});
-
-const filteredRooms = computed(() => {
-  if (!form.floor_id) return [];
-  return props.rooms.filter(r => Number(r.floor_id) === Number(form.floor_id));
-});
-
-watch(() => form.location_id, (newVal) => {
-  if (newVal) {
-    const valid = filteredFloors.value.some(f => Number(f.id) === Number(form.floor_id));
-    if (!valid) { form.floor_id = null; form.room_id = null; }
-  } else { form.floor_id = null; form.room_id = null; }
-});
-
-watch(() => form.floor_id, (newVal) => {
-  if (newVal) {
-    const valid = filteredRooms.value.some(r => Number(r.id) === Number(form.room_id));
-    if (!valid) form.room_id = null;
-  } else { form.room_id = null; }
-});
-
 // Init form when modal opens
 watch(() => props.open, (val) => {
   if (!val) return;
@@ -138,8 +111,6 @@ watch(() => props.open, (val) => {
     form.organizer_id = item.organizer_id || '';
     form.vendor_id = item.vendor_id || '';
     form.location_id = item.location_id || '';
-    form.floor_id = item.floor_id || null;
-    form.room_id = item.room_id || null;
     form.po_number = item.po_number || '';
     
     let receiptDate = item.date_of_receipt || '';
@@ -160,8 +131,6 @@ watch(() => props.open, (val) => {
     form.organizer_id = '';
     form.vendor_id = '';
     form.location_id = '';
-    form.floor_id = null;
-    form.room_id = null;
     form.po_number = '';
     form.date_of_receipt = '';
     form.unit_price = '';
@@ -257,8 +226,6 @@ const handleSubmit = () => {
         organizer_id: data.organizer_id,
         vendor_id: data.vendor_id,
         location_id: data.location_id,
-        floor_id: data.floor_id,
-        room_id: data.room_id,
         po_number: data.po_number,
         date_of_receipt: data.date_of_receipt,
         unit_price: data.unit_price,
@@ -292,8 +259,8 @@ const handleSubmit = () => {
     if (!isValid) return;
 
     const hasField = !!(
-      form.organizer_id || form.vendor_id || form.location_id || form.floor_id ||
-      form.room_id || form.po_number || form.date_of_receipt || form.unit_price ||
+      form.organizer_id || form.vendor_id || form.location_id ||
+      form.po_number || form.date_of_receipt || form.unit_price ||
       form.image_url || form.use_parent_image || (form.burden && form.burden !== 'Tidak berubah')
     );
     if (!hasField) {
@@ -306,8 +273,6 @@ const handleSubmit = () => {
       if (data.organizer_id) fd.organizer_id = data.organizer_id;
       if (data.vendor_id) fd.vendor_id = data.vendor_id;
       if (data.location_id) fd.location_id = data.location_id;
-      if (data.floor_id) fd.floor_id = data.floor_id;
-      if (data.room_id) fd.room_id = data.room_id;
       if (data.po_number) fd.po_number = data.po_number;
       if (data.date_of_receipt) fd.date_of_receipt = data.date_of_receipt;
       if (data.unit_price) fd.unit_price = data.unit_price;
@@ -408,37 +373,6 @@ const handleSubmit = () => {
                     <FieldError v-if="isSingle && errors.vendor_id">{{ errors.vendor_id }}</FieldError>
                   </Field>
 
-                  <Field :data-invalid="(isSingle && !!errors.burden) || undefined">
-                    <FieldLabel>
-                      <span>Pembebanan<span v-if="isSingle" class="text-rose-500">*</span></span>
-                    </FieldLabel>
-                    <FieldContent>
-                      <RadioGroup v-model="form.burden" class="flex items-center gap-6 h-10">
-                        <div v-if="!isSingle" class="flex items-center space-x-2">
-                          <RadioGroupItem id="edit-burden-none" value="Tidak berubah" />
-                          <label for="edit-burden-none" class="text-sm font-medium text-foreground cursor-pointer select-none">Tidak berubah</label>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                          <RadioGroupItem id="edit-burden-corporate" value="Corporate" />
-                          <label for="edit-burden-corporate" class="text-sm font-medium text-foreground cursor-pointer select-none">Corporate</label>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                          <RadioGroupItem id="edit-burden-project" value="Project" />
-                          <label for="edit-burden-project" class="text-sm font-medium text-foreground cursor-pointer select-none">Project</label>
-                        </div>
-                      </RadioGroup>
-                    </FieldContent>
-                    <FieldError v-if="isSingle && errors.burden">{{ errors.burden }}</FieldError>
-                  </Field>
-
-                  <Field v-if="form.burden === 'Project'" :data-invalid="!!errors.project_id || undefined">
-                    <FieldLabel><span>Project<span class="text-rose-500">*</span></span></FieldLabel>
-                    <FieldContent>
-                      <Combobox v-model="form.project_id" :options="projectOptions" search-placeholder="Cari project..." default-label="Pilih project" width-class="w-full h-10 px-4" :error="!!errors.project_id" />
-                    </FieldContent>
-                    <FieldError v-if="errors.project_id">{{ errors.project_id }}</FieldError>
-                  </Field>
-
                 </div>
 
                 <!-- Right Column -->
@@ -448,27 +382,16 @@ const handleSubmit = () => {
                       <span>Lokasi<span v-if="!isConsumable" class="italic"> default</span><span v-if="isSingle" class="text-rose-500">*</span></span>
                     </FieldLabel>
                     <FieldContent>
-                      <Combobox v-model="form.location_id" :options="locations" search-placeholder="Cari lokasi..." :default-label="isSingle ? 'Pilih lokasi' : 'Tidak berubah'" width-class="w-full h-10 px-4" />
+                      <LocationCombobox
+                        v-model="form.location_id"
+                        :locations="locations"
+                        :placeholder="isSingle ? 'Pilih lokasi' : 'Tidak berubah'"
+                        :error="isSingle && !!errors.location_id"
+                        :active-only="true"
+                        :clearable="!isSingle"
+                      />
                     </FieldContent>
                     <FieldError v-if="isSingle && errors.location_id">{{ errors.location_id }}</FieldError>
-                  </Field>
-
-                  <Field :data-disabled="!form.location_id || undefined">
-                    <FieldLabel>
-                      <span>Lantai<span v-if="!isConsumable" class="italic"> default</span></span>
-                    </FieldLabel>
-                    <FieldContent>
-                      <Combobox v-model="form.floor_id" :options="filteredFloors" search-placeholder="Cari lantai..." :default-label="isSingle ? 'Pilih lantai (opsional)' : 'Tidak berubah'" width-class="w-full h-10 px-4" :disabled="!form.location_id" />
-                    </FieldContent>
-                  </Field>
-
-                  <Field :data-disabled="!form.floor_id || undefined">
-                    <FieldLabel>
-                      <span>Ruangan<span v-if="!isConsumable" class="italic"> default</span></span>
-                    </FieldLabel>
-                    <FieldContent>
-                      <Combobox v-model="form.room_id" :options="filteredRooms" search-placeholder="Cari ruangan..." :default-label="isSingle ? 'Pilih ruangan (opsional)' : 'Tidak berubah'" width-class="w-full h-10 px-4" :disabled="!form.floor_id" />
-                    </FieldContent>
                   </Field>
 
                   <Field>
@@ -523,6 +446,37 @@ const handleSubmit = () => {
                       <p class="text-[10px] text-muted-foreground ml-1 mt-1">Maksimal ukuran 1 MB (.jpg, .jpeg, .png)</p>
                     </FieldContent>
                     <FieldError v-if="isSingle && errors.image_url">{{ errors.image_url }}</FieldError>
+                  </Field>
+
+                  <Field :data-invalid="(isSingle && !!errors.burden) || undefined">
+                    <FieldLabel>
+                      <span>Pembebanan<span v-if="isSingle" class="text-rose-500">*</span></span>
+                    </FieldLabel>
+                    <FieldContent>
+                      <RadioGroup v-model="form.burden" class="flex items-center gap-6 h-10">
+                        <div v-if="!isSingle" class="flex items-center space-x-2">
+                          <RadioGroupItem id="edit-burden-none" value="Tidak berubah" />
+                          <label for="edit-burden-none" class="text-sm font-medium text-foreground cursor-pointer select-none">Tidak berubah</label>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                          <RadioGroupItem id="edit-burden-corporate" value="Corporate" />
+                          <label for="edit-burden-corporate" class="text-sm font-medium text-foreground cursor-pointer select-none">Corporate</label>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                          <RadioGroupItem id="edit-burden-project" value="Project" />
+                          <label for="edit-burden-project" class="text-sm font-medium text-foreground cursor-pointer select-none">Project</label>
+                        </div>
+                      </RadioGroup>
+                    </FieldContent>
+                    <FieldError v-if="isSingle && errors.burden">{{ errors.burden }}</FieldError>
+                  </Field>
+
+                  <Field v-if="form.burden === 'Project'" :data-invalid="!!errors.project_id || undefined">
+                    <FieldLabel><span>Project<span class="text-rose-500">*</span></span></FieldLabel>
+                    <FieldContent>
+                      <Combobox v-model="form.project_id" :options="projectOptions" search-placeholder="Cari project..." default-label="Pilih project" width-class="w-full h-10 px-4" :error="!!errors.project_id" />
+                    </FieldContent>
+                    <FieldError v-if="errors.project_id">{{ errors.project_id }}</FieldError>
                   </Field>
                 </div>
               </div>

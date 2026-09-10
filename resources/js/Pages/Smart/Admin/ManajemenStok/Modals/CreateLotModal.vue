@@ -11,6 +11,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/Components/ui/dropdown-menu';
 import Combobox from '@/Components/Combobox.vue';
+import LocationCombobox from '@/Components/LocationCombobox.vue';
 import { Checkbox } from '@/Components/ui/checkbox';
 import { Field, FieldLabel, FieldContent, FieldError } from '@/Components/ui/field';
 import { RadioGroup, RadioGroupItem } from '@/Components/ui/radio-group';
@@ -25,9 +26,7 @@ interface Props {
   lots: any[];
   organizers: { id: number; name: string; }[];
   vendors: { id: number; name: string; }[];
-  locations: { id: number; name: string; }[];
-  floors: { id: number; name: string; location_id: number; }[];
-  rooms: { id: number; name: string; floor_id: number; }[];
+  locations: any[];
   projects: { id: number; no_project: string; project_name: string; client_id: string; }[];
 }
 
@@ -44,8 +43,6 @@ const lotForm = useForm({
   organizer_id: '' as string | number,
   vendor_id: '' as string | number,
   location_id: '' as string | number,
-  floor_id: null as string | number | null,
-  room_id: null as string | number | null,
   initial_quantity: '' as string | number,
   current_quantity: '' as string | number,
   auto_create_assets: false,
@@ -98,6 +95,7 @@ watch(() => lotForm.date_of_receipt, v => {
 watch(() => lotForm.image_url, v => { if (v && errors.value.image_url) errors.value.image_url = ''; });
 watch(() => lotForm.image_url_name, v => { if (v && errors.value.image_url) errors.value.image_url = ''; });
 watch(() => lotForm.initial_quantity, v => { if ((v !== '' && v !== null) && errors.value.initial_quantity) errors.value.initial_quantity = ''; });
+watch(() => lotForm.auto_create_assets_count, v => { if ((v !== '' && v !== null) && errors.value.auto_create_assets_count) errors.value.auto_create_assets_count = ''; });
 watch(() => lotForm.project_id, v => { if (v && errors.value.project_id) errors.value.project_id = ''; });
 watch(() => lotForm.burden, v => {
   if (v !== 'Project') {
@@ -129,30 +127,6 @@ const generateLotCode = () => {
   }
   lotForm.number = `LOT-${String(nextNum).padStart(4, '0')}-${yy}-${tipeCode}`;
 };
-
-const filteredFloors = computed(() => {
-  if (!lotForm.location_id) return [];
-  return props.floors.filter(f => Number(f.location_id) === Number(lotForm.location_id));
-});
-
-const filteredRooms = computed(() => {
-  if (!lotForm.floor_id) return [];
-  return props.rooms.filter(r => Number(r.floor_id) === Number(lotForm.floor_id));
-});
-
-watch(() => lotForm.location_id, (newVal) => {
-  if (newVal) {
-    const valid = filteredFloors.value.some(f => Number(f.id) === Number(lotForm.floor_id));
-    if (!valid) { lotForm.floor_id = null; lotForm.room_id = null; }
-  } else { lotForm.floor_id = null; lotForm.room_id = null; }
-});
-
-watch(() => lotForm.floor_id, (newVal) => {
-  if (newVal) {
-    const valid = filteredRooms.value.some(r => Number(r.id) === Number(lotForm.room_id));
-    if (!valid) lotForm.room_id = null;
-  } else { lotForm.room_id = null; }
-});
 
 const handleFileUpload = (e: any) => {
   const file = e.target.files[0];
@@ -195,7 +169,6 @@ watch(() => props.open, (val) => {
   lotForm._method = 'POST';
   generateLotCode();
   lotForm.organizer_id = ''; lotForm.vendor_id = ''; lotForm.location_id = '';
-  lotForm.floor_id = null; lotForm.room_id = null;
   lotForm.initial_quantity = ''; lotForm.current_quantity = '';
   lotForm.auto_create_assets = false; lotForm.auto_create_assets_count = '';
   lotForm.po_number = ''; lotForm.date_of_receipt = '';
@@ -248,7 +221,7 @@ const handleSubmit = () => {
     const formData: any = {
       _method: data._method, number: data.number, barang_id: data.barang_id,
       organizer_id: data.organizer_id, vendor_id: data.vendor_id,
-      location_id: data.location_id, floor_id: data.floor_id, room_id: data.room_id,
+      location_id: data.location_id,
       po_number: data.po_number, date_of_receipt: data.date_of_receipt,
       unit_price: data.unit_price,
       burden: data.burden,
@@ -277,7 +250,7 @@ const handleSubmit = () => {
         if (newLot) {
           router.post('/smart/inventory/units/bulk', {
             number: `${newLot.number}-U01`, lot_id: newLot.id,
-            location_id: newLot.location_id, floor_id: newLot.floor_id, room_id: newLot.room_id,
+            location_id: newLot.location_id,
             status: 'Tersedia', condition: 'Bagus', price: Number(newLot.unit_price || newLot.unitPrice),
             use_lot_image: true, bulk_quantity: autoCreateCount
           }, {
@@ -367,30 +340,6 @@ const handleSubmit = () => {
                     </FieldContent>
                     <FieldError v-if="errors.vendor_id">{{ errors.vendor_id }}</FieldError>
                   </Field>
-
-                  <Field>
-                    <FieldLabel><span>Pembebanan<span class="text-rose-500">*</span></span></FieldLabel>
-                    <FieldContent>
-                      <RadioGroup v-model="lotForm.burden" class="flex items-center gap-6 h-10">
-                        <div class="flex items-center space-x-2">
-                          <RadioGroupItem id="create-burden-corporate" value="Corporate" />
-                          <label for="create-burden-corporate" class="text-sm font-medium text-foreground cursor-pointer select-none">Corporate</label>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                          <RadioGroupItem id="create-burden-project" value="Project" />
-                          <label for="create-burden-project" class="text-sm font-medium text-foreground cursor-pointer select-none">Project</label>
-                        </div>
-                      </RadioGroup>
-                    </FieldContent>
-                  </Field>
-
-                  <Field v-if="lotForm.burden === 'Project'" :data-invalid="!!errors.project_id || undefined">
-                    <FieldLabel><span>Project<span class="text-rose-500">*</span></span></FieldLabel>
-                    <FieldContent>
-                      <Combobox v-model="lotForm.project_id" :options="projectOptions" search-placeholder="Cari project..." default-label="Pilih project" width-class="w-full h-10 px-4" :error="!!errors.project_id" />
-                    </FieldContent>
-                    <FieldError v-if="errors.project_id">{{ errors.project_id }}</FieldError>
-                  </Field>
                 </div>
 
                 <!-- Right Column -->
@@ -400,27 +349,15 @@ const handleSubmit = () => {
                       <span>Lokasi<span v-if="!barang.is_consumable" class="italic"> default</span><span class="text-rose-500">*</span></span>
                     </FieldLabel>
                     <FieldContent>
-                      <Combobox v-model="lotForm.location_id" :options="locations" search-placeholder="Cari lokasi..." default-label="Pilih lokasi" width-class="w-full h-10 px-4" :error="!!errors.location_id" />
+                      <LocationCombobox
+                        v-model="lotForm.location_id"
+                        :locations="locations"
+                        placeholder="Pilih lokasi"
+                        :error="!!errors.location_id"
+                        :active-only="true"
+                      />
                     </FieldContent>
                     <FieldError v-if="errors.location_id">{{ errors.location_id }}</FieldError>
-                  </Field>
-
-                  <Field :data-disabled="!lotForm.location_id || undefined">
-                    <FieldLabel>
-                      <span>Lantai<span v-if="!barang.is_consumable" class="italic"> default</span></span>
-                    </FieldLabel>
-                    <FieldContent>
-                      <Combobox v-model="lotForm.floor_id" :options="filteredFloors" search-placeholder="Cari lantai..." default-label="Pilih lantai (opsional)" width-class="w-full h-10 px-4" :disabled="!lotForm.location_id" />
-                    </FieldContent>
-                  </Field>
-
-                  <Field :data-disabled="!lotForm.floor_id || undefined">
-                    <FieldLabel>
-                      <span>Ruangan<span v-if="!barang.is_consumable" class="italic"> default</span></span>
-                    </FieldLabel>
-                    <FieldContent>
-                      <Combobox v-model="lotForm.room_id" :options="filteredRooms" search-placeholder="Cari ruangan..." default-label="Pilih ruangan (opsional)" width-class="w-full h-10 px-4" :disabled="!lotForm.floor_id" />
-                    </FieldContent>
                   </Field>
 
                   <Field>
@@ -483,6 +420,30 @@ const handleSubmit = () => {
                       <p class="text-[10px] text-muted-foreground ml-1 mt-1">Maksimal ukuran 1 MB (.jpg, .jpeg, .png)</p>
                     </FieldContent>
                     <FieldError v-if="errors.image_url">{{ errors.image_url }}</FieldError>
+                  </Field>
+
+                  <Field>
+                    <FieldLabel><span>Pembebanan<span class="text-rose-500">*</span></span></FieldLabel>
+                    <FieldContent>
+                      <RadioGroup v-model="lotForm.burden" class="flex items-center gap-6 h-10">
+                        <div class="flex items-center space-x-2">
+                          <RadioGroupItem id="create-burden-corporate" value="Corporate" />
+                          <label for="create-burden-corporate" class="text-sm font-medium text-foreground cursor-pointer select-none">Corporate</label>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                          <RadioGroupItem id="create-burden-project" value="Project" />
+                          <label for="create-burden-project" class="text-sm font-medium text-foreground cursor-pointer select-none">Project</label>
+                        </div>
+                      </RadioGroup>
+                    </FieldContent>
+                  </Field>
+
+                  <Field v-if="lotForm.burden === 'Project'" :data-invalid="!!errors.project_id || undefined">
+                    <FieldLabel><span>Project<span class="text-rose-500">*</span></span></FieldLabel>
+                    <FieldContent>
+                      <Combobox v-model="lotForm.project_id" :options="projectOptions" search-placeholder="Cari project..." default-label="Pilih project" width-class="w-full h-10 px-4" :error="!!errors.project_id" />
+                    </FieldContent>
+                    <FieldError v-if="errors.project_id">{{ errors.project_id }}</FieldError>
                   </Field>
                 </div>
               </div>

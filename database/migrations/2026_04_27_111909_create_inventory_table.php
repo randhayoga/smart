@@ -28,8 +28,6 @@ return new class extends Migration {
             $table->foreignId('organizer_id')->constrained('organizers')->cascadeOnDelete();
             $table->foreignId('vendor_id')->constrained('vendors')->cascadeOnDelete();
             $table->foreignId('location_id')->constrained('locations')->comment('default location');
-            $table->foreignId('floor_id')->nullable()->constrained('floors')->comment('nullable | default location');
-            $table->foreignId('room_id')->nullable()->constrained('rooms')->comment('nullable | default location');
             $table->integer('initial_quantity');
             $table->integer('current_quantity')->nullable()->comment('for consumables');
             $table->string('po_number');
@@ -46,8 +44,6 @@ return new class extends Migration {
             $table->string('number', 25)->unique();
             $table->foreignId('lot_id')->constrained('lots')->cascadeOnDelete();
             $table->foreignId('location_id')->constrained('locations')->comment('current location');
-            $table->foreignId('floor_id')->nullable()->constrained('floors');
-            $table->foreignId('room_id')->nullable()->constrained('rooms');
             $table->string('status');
             $table->string('condition');
             $table->decimal('price', 15, 2)->nullable();
@@ -96,8 +92,6 @@ return new class extends Migration {
             $table->string('status');
             $table->string('condition');
             $table->foreignId('location_id')->constrained('locations')->noActionOnDelete();
-            $table->foreignId('floor_id')->nullable()->constrained('floors')->noActionOnDelete();
-            $table->foreignId('room_id')->nullable()->constrained('rooms')->noActionOnDelete();
             $table->dateTime('start_date');
             $table->dateTime('end_date')->nullable();
             $table->foreignId('actor_id')->nullable()->constrained('adm_users')->noActionOnDelete()->comment("Siapa yang melakukan aksi");

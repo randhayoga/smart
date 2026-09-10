@@ -11,6 +11,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/Components/ui/dropdown-menu';
 import Combobox from '@/Components/Combobox.vue';
+import LocationCombobox from '@/Components/LocationCombobox.vue';
 import { Field, FieldLabel, FieldContent, FieldError } from '@/Components/ui/field';
 import { compressImageIfNeeded } from '@/utils/imageCompressor';
 
@@ -22,9 +23,9 @@ interface Props {
   lot: any;
   /** Parent Barang object to check category */
   barang: any;
-  locations: { id: number; name: string; }[];
-  floors: { id: number; name: string; location_id: number; }[];
-  rooms: { id: number; name: string; floor_id: number; }[];
+  locations: any[];
+  floors?: any[];
+  rooms?: any[];
 }
 
 const props = defineProps<Props>();
@@ -78,8 +79,6 @@ const form = useForm({
   ids: [] as number[],
   number: '',
   location_id: '' as string | number,
-  floor_id: null as string | number | null,
-  room_id: null as string | number | null,
   status: '',
   condition: '',
   price: '' as string | number,
@@ -130,30 +129,6 @@ watch(() => form.memo_file, v => { if (v && errors.value.memo_file) errors.value
 watch(() => form.lost_doc_file, v => { if (v && errors.value.lost_doc_file) errors.value.lost_doc_file = ''; });
 watch(() => form.bod_boc_approval_file, v => { if (v && errors.value.bod_boc_approval_file) errors.value.bod_boc_approval_file = ''; });
 
-const filteredFloors = computed(() => {
-  if (!form.location_id) return [];
-  return props.floors.filter(f => Number(f.location_id) === Number(form.location_id));
-});
-
-const filteredRooms = computed(() => {
-  if (!form.floor_id) return [];
-  return props.rooms.filter(r => Number(r.floor_id) === Number(form.floor_id));
-});
-
-watch(() => form.location_id, (newVal) => {
-  if (newVal) {
-    const valid = filteredFloors.value.some(f => Number(f.id) === Number(form.floor_id));
-    if (!valid) { form.floor_id = null; form.room_id = null; }
-  } else { form.floor_id = null; form.room_id = null; }
-});
-
-watch(() => form.floor_id, (newVal) => {
-  if (newVal) {
-    const valid = filteredRooms.value.some(r => Number(r.id) === Number(form.room_id));
-    if (!valid) form.room_id = null;
-  } else { form.room_id = null; }
-});
-
 watch(() => form.condition, (newVal, oldVal) => {
   if (arrInactiveConditions.includes(newVal)) {
     form.status = 'Pending:BoD/BoC';
@@ -196,8 +171,6 @@ watch(() => props.open, (val) => {
     const item = selectedItem.value;
     form.number = item.number || '';
     form.location_id = item.location_id || '';
-    form.floor_id = item.floor_id || null;
-    form.room_id = item.room_id || null;
     form.status = item.status || '';
     form.condition = item.condition || '';
     if (arrInactiveConditions.includes(form.condition)) {
@@ -211,9 +184,9 @@ watch(() => props.open, (val) => {
     form.bod_boc_approval_file_name = item.bod_boc_approval_file_name || (item.bod_boc_approval_url ? item.bod_boc_approval_url.split('/').pop() || '' : '');
   } else {
     form.number = '';
-    form.location_id = '';
-    form.floor_id = null;
-    form.room_id = null;
+    const firstLoc = props.items[0]?.location_id;
+    const sameLoc = props.items.every(i => i.location_id === firstLoc);
+    form.location_id = sameLoc ? (firstLoc || '') : '';
     form.status = '';
     form.condition = '';
     form.price = '';
@@ -403,8 +376,6 @@ const handleSubmit = () => {
           number: data.number,
           lot_id: props.lot.id,
           location_id: data.location_id,
-          floor_id: data.floor_id,
-          room_id: data.room_id,
           status: data.status,
           condition: data.condition,
           price: data.price !== '' && data.price !== null ? parseCurrencyToNumber(data.price) : null,
@@ -424,7 +395,7 @@ const handleSubmit = () => {
       const hasField = !!(
         (form.status && !isStatusDisabled.value) ||
         (form.condition && !isKondisiDisabled.value) ||
-        form.location_id || form.floor_id || form.room_id || form.price ||
+        form.location_id || form.price ||
         form.image_url || form.use_lot_image || form.memo_file || form.lost_doc_file || form.bod_boc_approval_file
       );
       if (!hasField) {
@@ -447,11 +418,6 @@ const handleSubmit = () => {
       
       if (form.location_id) {
         payload.location_id = form.location_id;
-        payload.floor_id = form.floor_id || null;
-        payload.room_id = form.room_id || null;
-      } else {
-        if (form.floor_id) payload.floor_id = form.floor_id;
-        if (form.room_id) payload.room_id = form.room_id;
       }
       
       if (form.price) payload.price = parseCurrencyToNumber(form.price).toString();
@@ -501,27 +467,16 @@ const handleSubmit = () => {
                       <span>Lokasi<span v-if="isSingle" class="text-rose-500">*</span></span>
                     </FieldLabel>
                     <FieldContent>
-                      <Combobox v-model="form.location_id" :options="locations" search-placeholder="Cari lokasi..." :default-label="isSingle ? 'Pilih lokasi' : 'Tidak berubah'" width-class="w-full h-10 px-4" />
+                      <LocationCombobox
+                        v-model="form.location_id"
+                        :locations="locations"
+                        :placeholder="isSingle ? 'Pilih lokasi' : 'Tidak berubah'"
+                        :error="isSingle && !!errors.location_id"
+                        :active-only="true"
+                        :clearable="!isSingle"
+                      />
                     </FieldContent>
                     <FieldError v-if="isSingle && errors.location_id">{{ errors.location_id }}</FieldError>
-                  </Field>
-
-                  <Field :data-disabled="!form.location_id || undefined">
-                    <FieldLabel>
-                      <span>Lantai</span>
-                    </FieldLabel>
-                    <FieldContent>
-                      <Combobox v-model="form.floor_id" :options="filteredFloors" search-placeholder="Cari lantai..." :default-label="isSingle ? 'Pilih lantai (opsional)' : 'Tidak berubah'" width-class="w-full h-10 px-4" :disabled="!form.location_id" />
-                    </FieldContent>
-                  </Field>
-
-                  <Field :data-disabled="!form.floor_id || undefined">
-                    <FieldLabel>
-                      <span>Ruangan</span>
-                    </FieldLabel>
-                    <FieldContent>
-                      <Combobox v-model="form.room_id" :options="filteredRooms" search-placeholder="Cari ruangan..." :default-label="isSingle ? 'Pilih ruangan (opsional)' : 'Tidak berubah'" width-class="w-full h-10 px-4" :disabled="!form.floor_id" />
-                    </FieldContent>
                   </Field>
 
                   <Field :data-invalid="(isSingle && !!errors.status) || undefined" :data-disabled="isStatusDisabled || undefined">

@@ -43,8 +43,6 @@ use App\Http\Controllers\Smart\Admin\Master\BrandController;
 use App\Http\Controllers\Smart\Admin\Master\OrganizerController;
 use App\Http\Controllers\Smart\Admin\Master\VendorController;
 use App\Http\Controllers\Smart\Admin\Master\LocationController;
-use App\Http\Controllers\Smart\Admin\Master\FloorController;
-use App\Http\Controllers\Smart\Admin\Master\RoomController;
 use Illuminate\Support\Facades\Route;
 
 // Root redirect - go to dashboard based on role
@@ -102,9 +100,8 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
             Route::resource('brands',        BrandController::class)->only(['store', 'update', 'destroy']);
             Route::resource('organizers',    OrganizerController::class)->only(['store', 'update', 'destroy']);
             Route::resource('vendors',       VendorController::class)->only(['store', 'update', 'destroy']);
+            Route::patch('locations/{location}/toggle-active', [LocationController::class, 'toggleActive'])->name('locations.toggle-active');
             Route::resource('locations',     LocationController::class)->only(['store', 'update', 'destroy']);
-            Route::resource('floors',        FloorController::class)->only(['store', 'update', 'destroy']);
-            Route::resource('rooms',         RoomController::class)->only(['store', 'update', 'destroy']);
         });
 
         Route::prefix('inventory')->name('inventory.')->group(function () {

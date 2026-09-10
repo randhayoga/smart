@@ -114,9 +114,7 @@ class SmartFulfillmentResource extends JsonResource
                     ->whereNotNull('lot_id')
                     ->whereNull('unit_id')
                     ->map(function ($f) {
-                        $loc = $f->lot?->location?->name ?? '-';
-                        $floor = $f->lot?->floor?->name ? ", {$f->lot->floor->name}" : '';
-                        $room = $f->lot?->room?->name ? ", {$f->lot->room->name}" : '';
+                        $loc = $f->lot?->location?->full_name ?? '-';
 
                         return [
                             'fulfillment_id' => $f->id,
@@ -126,7 +124,7 @@ class SmartFulfillmentResource extends JsonResource
                             'item_name' => $f->lot?->barang?->name ?? '-',
                             'specification' => $f->lot?->barang?->specification ?? '',
                             'quantity_fulfilled' => (int) $f->quantity_fulfilled,
-                            'storage_location' => $loc . $floor . $room,
+                            'storage_location' => $loc,
                             'date_of_receipt' => $f->lot?->date_of_receipt ? $f->lot->date_of_receipt->format('d-m-Y') : '-',
                         ];
                     })->values()->toArray();
@@ -146,9 +144,7 @@ class SmartFulfillmentResource extends JsonResource
                 $availableLots = $fulfillmentService->getAvailableLotsQuery($item)
                     ->get()
                     ->map(function ($l) use ($existingLotMap) {
-                        $loc = $l->location?->name ?? '-';
-                        $floor = $l->floor?->name ? ", {$l->floor->name}" : '';
-                        $room = $l->room?->name ? ", {$l->room->name}" : '';
+                        $loc = $l->location?->full_name ?? '-';
 
                         $brand = $l->barang?->brand?->name ?? '';
                         $name = $l->barang?->name ?? '';
@@ -166,7 +162,7 @@ class SmartFulfillmentResource extends JsonResource
                             'name' => $name,
                             'spec' => $spec,
                             'variant' => $variant,
-                            'storage_location' => $loc . $floor . $room,
+                            'storage_location' => $loc,
                             'current_quantity' => $totalAvailable,
                             'allocated_quantity' => $assignedQty,
                             'uom' => $l->barang?->uom?->name ?? 'satuan',
@@ -274,9 +270,7 @@ class SmartFulfillmentResource extends JsonResource
 
                 $availableUnits = $availableUnitModels
                     ->map(function ($u) use ($assignedUnitIds, $lockedUnitIds, $stagedElsewhereUnitIds) {
-                        $loc = $u->location?->name ?? '-';
-                        $floor = $u->floor?->name ? ", {$u->floor->name}" : '';
-                        $room = $u->room?->name ? ", {$u->room->name}" : '';
+                        $loc = $u->location?->full_name ?? '-';
 
                         $brand = $u->lot?->barang?->brand?->name ?? '';
                         $name = $u->lot?->barang?->name ?? '';
@@ -294,7 +288,7 @@ class SmartFulfillmentResource extends JsonResource
                             'variant' => $variant,
                             'status' => $u->status,
                             'condition' => $u->condition ?? 'Baik',
-                            'storage_location' => $loc . $floor . $room,
+                            'storage_location' => $loc,
                             'is_currently_assigned' => in_array($u->id, $assignedUnitIds),
                             'is_locked' => in_array($u->id, $lockedUnitIds),
                             'is_staged_elsewhere' => in_array($u->id, $stagedElsewhereUnitIds),

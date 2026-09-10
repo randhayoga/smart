@@ -3,17 +3,18 @@
  * Master Data Management Page component managing categories, subcategories, UOMs, brands, organizers, vendors, locations, floors, and rooms.
  */
 import { ref, computed, watch, h, onMounted, onUnmounted } from 'vue';
-import { useForm, usePage } from '@inertiajs/vue3';
+import { useForm, usePage, router } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { 
   ChevronDown, 
+  ChevronRight,
   ArrowUpDown, 
   Plus, 
-  X,
-  Trash2,
-  Pencil,
-  Loader2
+  X, 
+  Trash2, 
+  Pencil, 
+  Loader2 
 } from 'lucide-vue-next';
 
 import { Button } from "@/Components/ui/button";
@@ -26,6 +27,8 @@ import {
 import { RadioGroup, RadioGroupItem } from '@/Components/ui/radio-group';
 import { Label } from '@/Components/ui/label';
 import { Field, FieldLabel, FieldContent, FieldError } from '@/Components/ui/field';
+import Switch from "@/Components/ui/switch/Switch.vue";
+import LocationCombobox from "@/Components/LocationCombobox.vue";
 import Heading from '@/Components/Heading.vue';
 import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem } from '@/Components/ui/breadcrumb';
 
@@ -54,8 +57,15 @@ interface VendorItem  {
   cp_email_2?: string;
   cp_phone_2?: string;
 }
-interface Floor       { id: number; name: string; location_id: number; location: SimpleItem; }
-interface Room        { id: number; name: string; floor_id: number; floor: Floor; }
+interface LocationItem {
+  id: number;
+  name: string;
+  parent_id: number | null;
+  is_active: boolean;
+  parent?: { id: number; name: string } | null;
+  children_count?: number;
+  full_name?: string;
+}
 
 interface Props {
   user: { name: string; email: string; };
@@ -65,9 +75,7 @@ interface Props {
   brands:        SimpleItem[];
   organizers:    SimpleItem[];
   vendors:       VendorItem[];
-  locations:     SimpleItem[];
-  floors:        Floor[];
-  rooms:         Room[];
+  locations:     LocationItem[];
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -78,26 +86,17 @@ const props = withDefaults(defineProps<Props>(), {
   organizers:    () => [],
   vendors:       () => [],
   locations:     () => [],
-  floors:        () => [],
-  rooms:         () => [],
 });
 
 const tabs = [
-  'Kategori', 'Subkategori', 'Satuan', 'Merek', 'Organizer', 'Vendor', 'Lokasi', 'Lantai', 'Ruangan'
+  'Kategori', 'Subkategori', 'Satuan', 'Merek', 'Organizer', 'Vendor', 'Lokasi'
 ];
 
 const activeTab = ref('Kategori');
 
 const searchQuery = ref('');
 const parentFilter = ref('');
-const locationFilter = ref('');
-const floorFilter = ref('');
 const rowsPerPage = ref('Semua baris');
-
-const filteredFloorsForFilter = computed(() => {
-  if (!locationFilter.value) return props.floors;
-  return props.floors.filter(f => f.location_id.toString() === locationFilter.value);
-});
 
 // Map subcategories to include a `parent` string for display/filter
 const subcategoryRows = computed(() =>
@@ -108,25 +107,121 @@ const subcategoryRows = computed(() =>
   }))
 );
 
-// Map floors to include parent location name for display/filter
-const floorRows = computed(() =>
-  props.floors.map(f => ({
-    ...f,
-    parent:     f.location?.name ?? '',
-    parentCode: f.location_id?.toString() ?? '',
-  }))
-);
+const collapsedLocationIds = ref<Set<number>>(new Set());
 
-// Map rooms to include parent floor name for display/filter
-const roomRows = computed(() =>
-  props.rooms.map(r => ({
-    ...r,
-    floorName:    r.floor?.name ?? '',
-    locationName: r.floor?.location?.name ?? '',
-    parent:       r.floor ? `${r.floor.location?.name ?? ''} - ${r.floor.name}` : '',
-    parentCode:   r.floor_id?.toString() ?? '',
-  }))
-);
+function toggleLocationExpand(id: number, e?: Event) {
+  if (e) e.stopPropagation();
+  const next = new Set(collapsedLocationIds.value);
+  if (next.has(id)) {
+    next.delete(id);
+  } else {
+    next.add(id);
+  }
+  collapsedLocationIds.value = next;
+}
+
+watch(searchQuery, (newVal, oldVal) => {
+  if (newVal !== oldVal) {
+    collapsedLocationIds.value = new Set();
+  }
+});
+
+function getDescendantIds(locId: number): number[] {
+  const result: number[] = [];
+  const directChildren = props.locations.filter(l => l.parent_id === locId);
+  directChildren.forEach(child => {
+    result.push(child.id);
+    result.push(...getDescendantIds(child.id));
+  });
+  return result;
+}
+
+interface LocationRow extends LocationItem {
+  depth: number;
+  hasChildren: boolean;
+  isCollapsed: boolean;
+  childrenList: LocationRow[];
+}
+
+const locationRows = computed<LocationRow[]>(() => {
+  const childrenMap = new Map<number | 'root', LocationItem[]>();
+  props.locations.forEach(loc => {
+    const pid = loc.parent_id ?? 'root';
+    if (!childrenMap.has(pid)) {
+      childrenMap.set(pid, []);
+    }
+    childrenMap.get(pid)!.push(loc);
+  });
+
+  const roots = childrenMap.get('root') || [];
+
+  function buildTree(items: LocationItem[], depth: number): LocationRow[] {
+    return items.map(item => {
+      const childItems = childrenMap.get(item.id) || [];
+      const childrenNodes = buildTree(childItems, depth + 1);
+      return {
+        ...item,
+        depth,
+        hasChildren: childrenNodes.length > 0,
+        isCollapsed: collapsedLocationIds.value.has(item.id),
+        childrenList: childrenNodes,
+      };
+    });
+  }
+
+  return buildTree(roots, 0);
+});
+
+const flattenedLocationDisplay = computed<LocationRow[]>(() => {
+  const q = searchQuery.value.trim().toLowerCase();
+  const matchedIds = new Set<number>();
+
+  if (q) {
+    function addAllDescendants(node: LocationRow) {
+      matchedIds.add(node.id);
+      node.childrenList.forEach(c => addAllDescendants(c));
+    }
+
+    function checkMatch(node: LocationRow): boolean {
+      const selfMatch = node.name.toLowerCase().includes(q) || (node.full_name ?? '').toLowerCase().includes(q);
+      let childMatch = false;
+      node.childrenList.forEach(c => {
+        if (checkMatch(c)) childMatch = true;
+      });
+
+      if (selfMatch) {
+        addAllDescendants(node);
+        return true;
+      }
+
+      if (childMatch) {
+        matchedIds.add(node.id);
+        return true;
+      }
+
+      return false;
+    }
+    locationRows.value.forEach(r => checkMatch(r));
+  }
+
+  const result: LocationRow[] = [];
+  function traverse(nodes: LocationRow[]) {
+    nodes.forEach(node => {
+      if (q && !matchedIds.has(node.id)) return;
+      const isCollapsed = collapsedLocationIds.value.has(node.id);
+      result.push({
+        ...node,
+        isCollapsed,
+      });
+      if (node.hasChildren && !isCollapsed) {
+        traverse(node.childrenList);
+      }
+    });
+  }
+
+  traverse(locationRows.value);
+  return result;
+});
 
 const displayData = computed(() => {
   if (activeTab.value === 'Kategori')    return props.categories;
@@ -135,9 +230,7 @@ const displayData = computed(() => {
   if (activeTab.value === 'Merek')       return props.brands;
   if (activeTab.value === 'Organizer')   return props.organizers;
   if (activeTab.value === 'Vendor')      return props.vendors;
-  if (activeTab.value === 'Lokasi')      return props.locations;
-  if (activeTab.value === 'Lantai')      return floorRows.value;
-  if (activeTab.value === 'Ruangan')     return roomRows.value;
+  if (activeTab.value === 'Lokasi')      return flattenedLocationDisplay.value;
   return [];
 });
 
@@ -165,9 +258,7 @@ const vendorForm      = useForm({
   cp_email_2: '',
   cp_phone_2: '',
 });
-const locationForm    = useForm({ name: '' });
-const floorForm       = useForm({ location_id: null as number | null, name: '' });
-const roomForm        = useForm({ location_id: null as number | null, floor_id: null as number | null, name: '' });
+const locationForm    = useForm({ name: '', parent_id: null as number | null, is_active: true });
 
 // ── Edit forms ──────────────────────────────────────────────────
 const editCategoryForm    = useForm({ id: null as number | null, code: '', name: '', is_consumable: '1' });
@@ -190,9 +281,7 @@ const editVendorForm      = useForm({
   cp_email_2: '',
   cp_phone_2: '',
 });
-const editLocationForm    = useForm({ id: null as number | null, name: '' });
-const editFloorForm       = useForm({ id: null as number | null, location_id: null as number | null, name: '' });
-const editRoomForm        = useForm({ id: null as number | null, location_id: null as number | null, floor_id: null as number | null, name: '' });
+const editLocationForm    = useForm({ id: null as number | null, name: '', parent_id: null as number | null, is_active: true });
 
 // ── Error refs (decoupled from Inertia) ────────────────────────
 const createFormErrors = ref({
@@ -209,8 +298,7 @@ const createFormErrors = ref({
   cp_email_2: '',
   cp_phone_2: '',
   category_id: '',
-  location_id: '',
-  floor_id: '',
+  parent_id: '',
 });
 
 const editFormErrors = ref({
@@ -226,8 +314,7 @@ const editFormErrors = ref({
   contact_person_2: '',
   cp_email_2: '',
   cp_phone_2: '',
-  location_id: '',
-  floor_id: '',
+  parent_id: '',
 });
 
 const resetCreateFormErrors = () => {
@@ -245,8 +332,7 @@ const resetCreateFormErrors = () => {
     cp_email_2: '',
     cp_phone_2: '',
     category_id: '',
-    location_id: '',
-    floor_id: '',
+    parent_id: '',
   };
 };
 
@@ -264,8 +350,7 @@ const resetEditFormErrors = () => {
     contact_person_2: '',
     cp_email_2: '',
     cp_phone_2: '',
-    location_id: '',
-    floor_id: '',
+    parent_id: '',
   };
 };
 
@@ -275,25 +360,16 @@ watch(() => categoryForm.name,    (v) => { if (v && createFormErrors.value.name)
 watch(() => subcategoryForm.category_id, (v) => { if (v && createFormErrors.value.category_id) createFormErrors.value.category_id = ''; });
 watch(() => subcategoryForm.code, (v) => { if (v && createFormErrors.value.code) createFormErrors.value.code = ''; });
 watch(() => subcategoryForm.name, (v) => { if (v && createFormErrors.value.name) createFormErrors.value.name = ''; });
-watch(() => floorForm.location_id, (v) => { if (v && createFormErrors.value.location_id) createFormErrors.value.location_id = ''; });
-watch(() => floorForm.name,       (v) => { if (v && createFormErrors.value.name) createFormErrors.value.name = ''; });
-watch(() => roomForm.location_id, (v) => { if (v && createFormErrors.value.location_id) createFormErrors.value.location_id = ''; });
-watch(() => roomForm.floor_id,    (v) => { if (v && createFormErrors.value.floor_id) createFormErrors.value.floor_id = ''; });
-watch(() => roomForm.name,        (v) => { if (v && createFormErrors.value.name) createFormErrors.value.name = ''; });
 watch(() => uomForm.name,         (v) => { if (v && createFormErrors.value.name) createFormErrors.value.name = ''; });
 watch(() => brandForm.name,       (v) => { if (v && createFormErrors.value.name) createFormErrors.value.name = ''; });
 watch(() => organizerForm.name,   (v) => { if (v && createFormErrors.value.name) createFormErrors.value.name = ''; });
 watch(() => vendorForm.name,      (v) => { if (v && createFormErrors.value.name) createFormErrors.value.name = ''; });
 watch(() => locationForm.name,    (v) => { if (v && createFormErrors.value.name) createFormErrors.value.name = ''; });
+
 // --- Reactive error clearing (edit forms) ---
 watch(() => editCategoryForm.code,    (v) => { if (v && editFormErrors.value.code) editFormErrors.value.code = ''; });
 watch(() => editCategoryForm.name,    (v) => { if (v && editFormErrors.value.name) editFormErrors.value.name = ''; });
 watch(() => editSubcategoryForm.name, (v) => { if (v && editFormErrors.value.name) editFormErrors.value.name = ''; });
-watch(() => editFloorForm.location_id, (v) => { if (v && editFormErrors.value.location_id) editFormErrors.value.location_id = ''; });
-watch(() => editFloorForm.name,       (v) => { if (v && editFormErrors.value.name) editFormErrors.value.name = ''; });
-watch(() => editRoomForm.location_id, (v) => { if (v && editFormErrors.value.location_id) editFormErrors.value.location_id = ''; });
-watch(() => editRoomForm.floor_id,    (v) => { if (v && editFormErrors.value.floor_id) editFormErrors.value.floor_id = ''; });
-watch(() => editRoomForm.name,        (v) => { if (v && editFormErrors.value.name) editFormErrors.value.name = ''; });
 watch(() => editUomForm.name,         (v) => { if (v && editFormErrors.value.name) editFormErrors.value.name = ''; });
 watch(() => editBrandForm.name,       (v) => { if (v && editFormErrors.value.name) editFormErrors.value.name = ''; });
 watch(() => editOrganizerForm.name,   (v) => { if (v && editFormErrors.value.name) editFormErrors.value.name = ''; });
@@ -310,8 +386,6 @@ const activeEditForm = computed(() => {
     case 'Organizer':   return editOrganizerForm;
     case 'Vendor':      return editVendorForm;
     case 'Lokasi':      return editLocationForm;
-    case 'Lantai':      return editFloorForm;
-    case 'Ruangan':     return editRoomForm;
     default:            return editCategoryForm;
   }
 });
@@ -326,8 +400,6 @@ const activeCreateForm = computed(() => {
     case 'Organizer':   return organizerForm;
     case 'Vendor':      return vendorForm;
     case 'Lokasi':      return locationForm;
-    case 'Lantai':      return floorForm;
-    case 'Ruangan':     return roomForm;
     default:            return categoryForm;
   }
 });
@@ -358,12 +430,9 @@ const openEditModal = (item: any) => {
     form.code = item.code;
     form.is_consumable = item.is_consumable ? '1' : '0';
   }
-  if (activeTab.value === 'Lantai') {
-    form.location_id = item.location_id ?? null;
-  }
-  if (activeTab.value === 'Ruangan') {
-    form.location_id = item.floor?.location_id ?? null;
-    form.floor_id = item.floor_id ?? null;
+  if (activeTab.value === 'Lokasi') {
+    form.parent_id = item.parent_id ?? null;
+    form.is_active = Boolean(item.is_active);
   }
   isEditModalOpen.value = true;
 };
@@ -379,8 +448,6 @@ const closeEditModal = () => {
     editOrganizerForm.reset();
     editVendorForm.reset();
     editLocationForm.reset();
-    editFloorForm.reset();
-    editRoomForm.reset();
     resetEditFormErrors();
   }, 200);
 };
@@ -411,8 +478,8 @@ const openCreateModal = () => {
   organizerForm.reset();
   vendorForm.reset();
   locationForm.reset();
-  floorForm.reset();
-  roomForm.reset();
+  locationForm.parent_id = null;
+  locationForm.is_active = true;
   resetCreateFormErrors();
   isCreateModalOpen.value = true;
 };
@@ -426,24 +493,26 @@ const closeCreateModal = () => {
   organizerForm.reset();
   vendorForm.reset();
   locationForm.reset();
-  floorForm.reset();
-  roomForm.reset();
   resetCreateFormErrors();
 };
+
+function toggleLocationActive(item: LocationItem) {
+  router.patch(route('smart.master.locations.toggle-active', item.id), {}, {
+    preserveScroll: true,
+  });
+}
 
 // Reset filters when tab changes
 watch(activeTab, () => {
   searchQuery.value = '';
   parentFilter.value = '';
-  locationFilter.value = '';
-  floorFilter.value = '';
 });
 
 const columns = computed<ColumnDef<any>[]>(() => {
   const cols: ColumnDef<any>[] = [];
 
   // Code column (if applicable)
-  if (!['Satuan', 'Merek', 'Organizer', 'Lokasi', 'Lantai', 'Ruangan'].includes(activeTab.value)) {
+  if (!['Satuan', 'Merek', 'Organizer', 'Lokasi'].includes(activeTab.value)) {
     cols.push({
       accessorKey: 'code',
       header: ({ column }) => {
@@ -497,7 +566,48 @@ const columns = computed<ColumnDef<any>[]>(() => {
         h(ArrowUpDown, { class: 'ml-2 h-4 w-4 text-muted-foreground' }),
       ])
     },
-    cell: ({ row }) => h('div', { class: 'pl-2 text-foreground truncate' }, row.getValue('name')),
+    cell: ({ row }) => {
+      if (activeTab.value === 'Lokasi') {
+        const item = row.original as LocationRow;
+        const depth = item.depth || 0;
+        const childrenElements: any[] = [];
+
+        if (item.hasChildren) {
+          childrenElements.push(
+            h('button', {
+              type: 'button',
+              class: 'p-1 -ml-1 mr-1 text-muted-foreground hover:text-foreground rounded transition-colors inline-flex items-center justify-center cursor-pointer',
+              onClick: (e: Event) => toggleLocationExpand(item.id, e),
+            }, [
+              h(item.isCollapsed ? ChevronRight : ChevronDown, { class: 'h-4 w-4' }),
+            ])
+          );
+        } else {
+          childrenElements.push(
+            h('span', { class: 'inline-block w-6' })
+          );
+        }
+
+        childrenElements.push(
+          h('span', { class: 'font-medium text-foreground' }, item.name)
+        );
+
+        if (!item.is_active) {
+          childrenElements.push(
+            h('span', {
+              class: 'ml-2.5 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+            }, 'Nonaktif')
+          );
+        }
+
+        return h('div', {
+          class: 'flex items-center text-foreground truncate',
+          style: { paddingLeft: `${depth * 24 + 8}px` }
+        }, childrenElements);
+      }
+
+      return h('div', { class: 'pl-2 text-foreground truncate' }, row.getValue('name'));
+    },
   });
 
   // Address & Phone & Email & Contact Person columns (Vendor only)
@@ -533,11 +643,8 @@ const columns = computed<ColumnDef<any>[]>(() => {
     });
   }
 
-  // Parent column (Subkategori, Lantai)
-  if (['Subkategori', 'Lantai'].includes(activeTab.value)) {
-    let headerText = 'Kategori Induk';
-    if (activeTab.value === 'Lantai') headerText = 'Lokasi';
-
+  // Parent column (Subkategori)
+  if (activeTab.value === 'Subkategori') {
     cols.push({
       accessorKey: 'parent',
       header: ({ column }) => {
@@ -546,12 +653,11 @@ const columns = computed<ColumnDef<any>[]>(() => {
           onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
           class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
         }, () => [
-          headerText,
+          'Kategori Induk',
           h(ArrowUpDown, { class: 'ml-2 h-4 w-4 text-muted-foreground' }),
         ])
       },
       cell: ({ row }) => h('div', { class: 'text-muted-foreground truncate' }, row.getValue('parent')),
-      // Enable filtering by parentCode if we want to use the dropdown for this column
       filterFn: (row, id, value) => {
         if (!value) return true;
         return row.original.parentCode === value;
@@ -559,45 +665,22 @@ const columns = computed<ColumnDef<any>[]>(() => {
     });
   }
 
-  // Separate columns for Ruangan (Lantai & Lokasi)
-  if (activeTab.value === 'Ruangan') {
-    // Lantai
+  // Active column for Lokasi
+  if (activeTab.value === 'Lokasi') {
     cols.push({
-      accessorKey: 'floorName',
-      header: ({ column }) => {
-        return h(Button, {
-          variant: 'ghost',
-          onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-          class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
-        }, () => [
-          'Lantai',
-          h(ArrowUpDown, { class: 'ml-2 h-4 w-4 text-muted-foreground' }),
-        ])
-      },
-      cell: ({ row }) => h('div', { class: 'text-muted-foreground truncate' }, row.getValue('floorName')),
-      filterFn: (row, id, value) => {
-        if (!value) return true;
-        return row.original.floor_id?.toString() === value;
-      }
-    });
-
-    // Lokasi
-    cols.push({
-      accessorKey: 'locationName',
-      header: ({ column }) => {
-        return h(Button, {
-          variant: 'ghost',
-          onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-          class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
-        }, () => [
-          'Lokasi',
-          h(ArrowUpDown, { class: 'ml-2 h-4 w-4 text-muted-foreground' }),
-        ])
-      },
-      cell: ({ row }) => h('div', { class: 'text-muted-foreground truncate' }, row.getValue('locationName')),
-      filterFn: (row, id, value) => {
-        if (!value) return true;
-        return row.original.floor?.location_id?.toString() === value;
+      accessorKey: 'is_active',
+      size: 90,
+      header: () => h('div', { class: 'text-center font-semibold text-foreground leading-tight' }, 'Aktif'),
+      cell: ({ row }) => {
+        const item = row.original as LocationRow;
+        return h('div', { class: 'flex items-center justify-center' }, [
+          h(Switch, {
+            modelValue: Boolean(item.is_active),
+            class: 'data-[state=checked]:!bg-emerald-600 data-[state=unchecked]:!bg-slate-300 dark:data-[state=unchecked]:!bg-slate-700',
+            title: item.is_active ? 'Nonaktifkan' : 'Aktifkan',
+            'onUpdate:modelValue': () => toggleLocationActive(item),
+          })
+        ]);
       }
     });
   }
@@ -609,7 +692,10 @@ const columns = computed<ColumnDef<any>[]>(() => {
     header: () => h('div', { class: 'text-right' }, 'Aksi'),
     cell: ({ row }) => {
       const item = row.original;
-      return h('div', { class: 'flex items-center justify-end gap-2' }, [
+      const actionButtons: any[] = [];
+
+      // Edit button
+      actionButtons.push(
         h(Button, {
           variant: 'table-edit',
           size: 'icon-sm',
@@ -618,17 +704,30 @@ const columns = computed<ColumnDef<any>[]>(() => {
         }, () => [
           h(Pencil),
           h('span', { class: 'sr-only' }, 'Edit')
-        ]),
+        ])
+      );
+
+      // Delete button
+      const isDeleteDisabled = activeTab.value === 'Lokasi' && Boolean(item.hasChildren);
+      actionButtons.push(
         h(Button, {
           variant: 'table-destructive',
           size: 'icon-sm',
-          title: 'Hapus',
-          onClick: () => openDeleteModal(item),
+          title: isDeleteDisabled ? 'Lokasi yang memiliki sub-lokasi tidak dapat dihapus' : 'Hapus',
+          disabled: isDeleteDisabled,
+          class: isDeleteDisabled ? 'opacity-40 cursor-not-allowed' : '',
+          onClick: () => {
+            if (!isDeleteDisabled) {
+              openDeleteModal(item);
+            }
+          },
         }, () => [
           h(Trash2),
           h('span', { class: 'sr-only' }, 'Hapus')
         ])
-      ]);
+      );
+
+      return h('div', { class: 'flex items-center justify-end gap-2' }, actionButtons);
     },
   });
 
@@ -639,21 +738,8 @@ const dataTableRef = ref<any>(null);
 
 // Sync parentFilter with the parent column filter in DataTable
 watch(parentFilter, (val) => {
-  if (['Subkategori', 'Lantai'].includes(activeTab.value) && dataTableRef.value) {
+  if (activeTab.value === 'Subkategori' && dataTableRef.value) {
     dataTableRef.value.table.getColumn('parent')?.setFilterValue(val);
-  }
-});
-
-// Sync room filters with columns in DataTable
-watch(locationFilter, (val) => {
-  if (activeTab.value === 'Ruangan' && dataTableRef.value) {
-    dataTableRef.value.table.getColumn('locationName')?.setFilterValue(val);
-  }
-});
-
-watch(floorFilter, (val) => {
-  if (activeTab.value === 'Ruangan' && dataTableRef.value) {
-    dataTableRef.value.table.getColumn('floorName')?.setFilterValue(val);
   }
 });
 
@@ -662,7 +748,14 @@ const isDeleteModalOpen = ref(false);
 const itemToDelete = ref<any>(null);
 
 const openDeleteModal = (item: any) => {
-  itemToDelete.value = item;
+  const itemData = { ...item };
+  if (activeTab.value === 'Lokasi' && itemData.parent_id && !itemData.parent) {
+    const parentLoc = props.locations.find(l => l.id === itemData.parent_id);
+    if (parentLoc) {
+      itemData.parent = parentLoc;
+    }
+  }
+  itemToDelete.value = itemData;
   isDeleteModalOpen.value = true;
 };
 
@@ -681,8 +774,6 @@ const routeMap: Record<string, string> = {
   'Organizer':   'smart.master.organizers.destroy',
   'Vendor':      'smart.master.vendors.destroy',
   'Lokasi':      'smart.master.locations.destroy',
-  'Lantai':      'smart.master.floors.destroy',
-  'Ruangan':     'smart.master.rooms.destroy',
 };
 
 const storeRouteMap: Record<string, string> = {
@@ -693,8 +784,6 @@ const storeRouteMap: Record<string, string> = {
   'Organizer':   'smart.master.organizers.store',
   'Vendor':      'smart.master.vendors.store',
   'Lokasi':      'smart.master.locations.store',
-  'Lantai':      'smart.master.floors.store',
-  'Ruangan':     'smart.master.rooms.store',
 };
 
 const updateRouteMap: Record<string, string> = {
@@ -705,8 +794,6 @@ const updateRouteMap: Record<string, string> = {
   'Organizer':   'smart.master.organizers.update',
   'Vendor':      'smart.master.vendors.update',
   'Lokasi':      'smart.master.locations.update',
-  'Lantai':      'smart.master.floors.update',
-  'Ruangan':     'smart.master.rooms.update',
 };
 
 const handleConfirmDelete = () => {
@@ -761,28 +848,6 @@ const submitCreate = () => {
     }
     if (!form.phone_number || !form.phone_number.trim()) {
       createFormErrors.value.phone_number = 'Nomor Telepon Vendor belum diisi';
-      hasError = true;
-    }
-  } else if (activeTab.value === 'Lantai') {
-    if (!form.location_id) {
-      createFormErrors.value.location_id = 'Lokasi Induk belum dipilih';
-      hasError = true;
-    }
-    if (!form.name || !form.name.trim()) {
-      createFormErrors.value.name = 'Nama Lantai belum diisi';
-      hasError = true;
-    }
-  } else if (activeTab.value === 'Ruangan') {
-    if (!form.location_id) {
-      createFormErrors.value.location_id = 'Lokasi belum dipilih';
-      hasError = true;
-    }
-    if (!form.floor_id) {
-      createFormErrors.value.floor_id = 'Lantai belum dipilih';
-      hasError = true;
-    }
-    if (!form.name || !form.name.trim()) {
-      createFormErrors.value.name = 'Nama Ruangan belum diisi';
       hasError = true;
     }
   } else {
@@ -846,28 +911,6 @@ const submitUpdate = () => {
       editFormErrors.value.phone_number = 'Nomor Telepon Vendor belum diisi';
       hasError = true;
     }
-  } else if (activeTab.value === 'Lantai') {
-    if (!form.location_id) {
-      editFormErrors.value.location_id = 'Lokasi Induk belum dipilih';
-      hasError = true;
-    }
-    if (!form.name || !form.name.trim()) {
-      editFormErrors.value.name = 'Nama Lantai belum diisi';
-      hasError = true;
-    }
-  } else if (activeTab.value === 'Ruangan') {
-    if (!form.location_id) {
-      editFormErrors.value.location_id = 'Lokasi belum dipilih';
-      hasError = true;
-    }
-    if (!form.floor_id) {
-      editFormErrors.value.floor_id = 'Lantai belum dipilih';
-      hasError = true;
-    }
-    if (!form.name || !form.name.trim()) {
-      editFormErrors.value.name = 'Nama Ruangan belum diisi';
-      hasError = true;
-    }
   } else {
     // Satuan, Merek, Organizer, Lokasi
     if (!form.name || !form.name.trim()) {
@@ -883,6 +926,7 @@ const submitUpdate = () => {
   });
 };
 const pageSize = computed(() => {
+  if (activeTab.value === 'Lokasi') return 999999;
   if (rowsPerPage.value === 'Semua baris') return 999999;
   return parseInt(rowsPerPage.value);
 });
@@ -962,7 +1006,7 @@ onUnmounted(() => {
           
           <div class="mt-4 flex flex-col sm:flex-row sm:items-end justify-between gap-3">
             <!-- Search -->
-            <div class="flex items-end gap-3 w-full" :class="[activeTab === 'Ruangan' ? 'max-w-2xl' : 'max-w-xl']">
+            <div class="flex items-end gap-3 w-full max-w-xl">
               <div class="space-y-1.5 flex-1 max-w-xs">
                 <label class="text-xs text-muted-foreground font-medium block">Filter</label>
                 <TableSearch 
@@ -986,61 +1030,11 @@ onUnmounted(() => {
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
-              <div v-if="activeTab === 'Lantai'" class="flex-1 max-w-[200px]">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal', !parentFilter ? 'text-muted-foreground' : 'text-foreground']">
-                      {{ parentFilter ? (props.locations.find(l => l.id.toString() === parentFilter)?.name || 'Semua Lokasi') : 'Semua Lokasi' }}
-                      <ChevronDown class="w-4 h-4 opacity-50" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px]">
-                    <DropdownMenuItem @select="parentFilter = ''">Semua Lokasi</DropdownMenuItem>
-                    <DropdownMenuItem v-for="loc in props.locations" :key="loc.id" @select="parentFilter = loc.id.toString()">
-                      {{ loc.name }}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-              <template v-if="activeTab === 'Ruangan'">
-                <div class="flex-1 max-w-[200px]">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal', !locationFilter ? 'text-muted-foreground' : 'text-foreground']">
-                        {{ locationFilter ? (props.locations.find(l => l.id.toString() === locationFilter)?.name || 'Semua Lokasi') : 'Semua Lokasi' }}
-                        <ChevronDown class="w-4 h-4 opacity-50" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px]">
-                      <DropdownMenuItem @select="locationFilter = ''; floorFilter = ''">Semua Lokasi</DropdownMenuItem>
-                      <DropdownMenuItem v-for="loc in props.locations" :key="loc.id" @select="locationFilter = loc.id.toString(); floorFilter = ''">
-                        {{ loc.name }}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-                <div class="flex-1 max-w-[200px]">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal', !floorFilter ? 'text-muted-foreground' : 'text-foreground']">
-                        {{ floorFilter ? (props.floors.find(f => f.id.toString() === floorFilter)?.name || 'Semua Lantai') : 'Semua Lantai' }}
-                        <ChevronDown class="w-4 h-4 opacity-50" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px]">
-                      <DropdownMenuItem @select="floorFilter = ''">Semua Lantai</DropdownMenuItem>
-                      <DropdownMenuItem v-for="fl in filteredFloorsForFilter" :key="fl.id" @select="floorFilter = fl.id.toString()">
-                        {{ fl.name }}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </template>
             </div>
 
             <!-- Right Actions -->
             <div class="flex flex-wrap items-center justify-end gap-3 w-full sm:w-auto sm:ml-auto">
-              <div class="flex items-center gap-2 text-sm text-muted-foreground">
+              <div v-if="activeTab !== 'Lokasi'" class="flex items-center gap-2 text-sm text-muted-foreground">
                 <span class="text-right">Baris per halaman</span>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -1072,7 +1066,7 @@ onUnmounted(() => {
             ref="dataTableRef"
             :columns="columns" 
             :data="displayData" 
-            :filter-value="searchQuery"
+            :filter-value="activeTab === 'Lokasi' ? '' : searchQuery"
             :page-size="pageSize"
             :show-selection-count=false
           />
@@ -1094,7 +1088,7 @@ onUnmounted(() => {
           <div 
             :class="[
               'bg-card text-foreground rounded-[14px] shadow-2xl w-full min-h-[261px] overflow-hidden flex flex-col',
-              !['Subkategori', 'Lantai', 'Ruangan', 'Kategori', 'Vendor'].includes(activeTab) ? 'max-w-[600px]' : 'max-w-[1200px]'
+              !['Subkategori', 'Lokasi', 'Kategori', 'Vendor'].includes(activeTab) ? 'max-w-[600px]' : 'max-w-[1200px]'
             ]"
             @click.stop
           >
@@ -1142,87 +1136,40 @@ onUnmounted(() => {
                 </Field>
               </div>
 
-              <!-- Edit: Lantai -->
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6" v-else-if="activeTab === 'Lantai'">
-                <Field :data-invalid="!!editFormErrors.location_id || undefined">
-                  <FieldLabel><span>Lokasi Induk<span class="text-destructive">*</span></span></FieldLabel>
+              <!-- Edit: Lokasi -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6" v-else-if="activeTab === 'Lokasi'">
+                <Field>
+                  <FieldLabel>Lokasi Induk</FieldLabel>
                   <FieldContent>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal', !editFloorForm.location_id ? 'text-muted-foreground' : 'text-foreground', editFormErrors.location_id ? '!border-destructive focus:!ring-destructive/20 focus:!border-destructive' : '']">
-                          {{ editFloorForm.location_id ? (props.locations.find(l => l.id === editFloorForm.location_id)?.name || 'Pilih Lokasi Induk') : 'Pilih Lokasi Induk' }}
-                          <ChevronDown class="w-4 h-4 opacity-50" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
-                        <DropdownMenuItem v-for="loc in props.locations" :key="loc.id" @select="editFloorForm.location_id = loc.id">
-                          {{ loc.name }}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <LocationCombobox
+                      v-model="editLocationForm.parent_id"
+                      :locations="props.locations"
+                      :exclude-ids="editingItem ? [editingItem.id, ...getDescendantIds(editingItem.id)] : []"
+                      placeholder="Pilih Lokasi Induk (opsional)"
+                      :clearable="true"
+                    />
                   </FieldContent>
-                  <FieldError v-if="editFormErrors.location_id">{{ editFormErrors.location_id }}</FieldError>
                 </Field>
-                <Field :data-invalid="!!editFormErrors.name || undefined" :data-disabled="!editFloorForm.location_id || undefined">
-                  <FieldLabel><span>Nama Lantai<span class="text-destructive">*</span></span></FieldLabel>
+                <Field :data-invalid="!!editFormErrors.name || undefined">
+                  <FieldLabel><span>Nama Lokasi<span class="text-destructive">*</span></span></FieldLabel>
                   <FieldContent>
-                    <input type="text" v-model="editFloorForm.name" maxlength="255" placeholder="Nama lantai..." :disabled="!editFloorForm.location_id"
-                      class="w-full px-3 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    <input type="text" v-model="editLocationForm.name" maxlength="255" placeholder="Nama lokasi..."
+                      class="w-full px-3 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors"
                       :class="[editFormErrors.name ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']" />
                   </FieldContent>
                   <FieldError v-if="editFormErrors.name">{{ editFormErrors.name }}</FieldError>
                 </Field>
-              </div>
-
-              <!-- Edit: Ruangan -->
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-6" v-else-if="activeTab === 'Ruangan'">
-                <Field :data-invalid="!!editFormErrors.location_id || undefined">
-                  <FieldLabel><span>Lokasi<span class="text-destructive">*</span></span></FieldLabel>
-                  <FieldContent>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal', !editRoomForm.location_id ? 'text-muted-foreground' : 'text-foreground', editFormErrors.location_id ? '!border-destructive focus:!ring-destructive/20 focus:!border-destructive' : '']">
-                          {{ editRoomForm.location_id ? (props.locations.find(l => l.id == editRoomForm.location_id)?.name || 'Pilih Lokasi') : 'Pilih Lokasi' }}
-                          <ChevronDown class="w-4 h-4 opacity-50" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
-                        <DropdownMenuItem v-for="loc in props.locations" :key="loc.id" @select="editRoomForm.location_id = loc.id; editRoomForm.floor_id = null">
-                          {{ loc.name }}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </FieldContent>
-                  <FieldError v-if="editFormErrors.location_id">{{ editFormErrors.location_id }}</FieldError>
-                </Field>
-                <Field :data-invalid="!!editFormErrors.floor_id || undefined" :data-disabled="!editRoomForm.location_id || undefined">
-                  <FieldLabel><span>Lantai<span class="text-destructive">*</span></span></FieldLabel>
-                  <FieldContent>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger :disabled="!editRoomForm.location_id" asChild>
-                        <Button :disabled="!editRoomForm.location_id" variant="outline" :class="['w-full justify-between rounded-[14px] font-normal', !editRoomForm.floor_id ? 'text-muted-foreground' : 'text-foreground', editFormErrors.floor_id ? '!border-destructive focus:!ring-destructive/20 focus:!border-destructive' : '']">
-                          {{ editRoomForm.floor_id ? (props.floors.find(f => f.id == editRoomForm.floor_id)?.name || 'Pilih Lantai') : 'Pilih Lantai' }}
-                          <ChevronDown class="w-4 h-4 opacity-50" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
-                        <DropdownMenuItem v-for="fl in props.floors.filter(f => f.location_id == editRoomForm.location_id)" :key="fl.id" @select="editRoomForm.floor_id = fl.id">
-                          {{ fl.name }}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </FieldContent>
-                  <FieldError v-if="editFormErrors.floor_id">{{ editFormErrors.floor_id }}</FieldError>
-                </Field>
-                <Field :data-invalid="!!editFormErrors.name || undefined" :data-disabled="!editRoomForm.floor_id || undefined">
-                  <FieldLabel><span>Nama Ruangan<span class="text-destructive">*</span></span></FieldLabel>
-                  <FieldContent>
-                    <input type="text" v-model="editRoomForm.name" maxlength="255" placeholder="Nama ruangan..." :disabled="!editRoomForm.floor_id"
-                      class="w-full px-3 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      :class="[editFormErrors.name ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']" />
-                  </FieldContent>
-                  <FieldError v-if="editFormErrors.name">{{ editFormErrors.name }}</FieldError>
-                </Field>
+                <div class="md:col-span-2 flex justify-end items-center pt-2">
+                  <div class="flex items-center gap-3">
+                    <span class="text-sm font-medium text-foreground cursor-pointer select-none" @click="editLocationForm.is_active = !editLocationForm.is_active">
+                      {{ editLocationForm.is_active ? 'Lokasi Aktif' : 'Lokasi Nonaktif' }}
+                    </span>
+                    <Switch
+                      v-model="editLocationForm.is_active"
+                      class="data-[state=checked]:!bg-emerald-600 data-[state=unchecked]:!bg-slate-300 dark:data-[state=unchecked]:!bg-slate-700"
+                    />
+                  </div>
+                </div>
               </div>
 
               <!-- Edit: Kategori -->
@@ -1462,7 +1409,7 @@ onUnmounted(() => {
           <div 
             :class="[
               'bg-card text-foreground rounded-[14px] shadow-2xl w-full min-h-[261px] overflow-hidden flex flex-col',
-              !['Subkategori', 'Lantai', 'Ruangan', 'Kategori', 'Vendor'].includes(activeTab) ? 'max-w-[600px]' : 'max-w-[1200px]'
+              !['Subkategori', 'Lokasi', 'Kategori', 'Vendor'].includes(activeTab) ? 'max-w-[600px]' : 'max-w-[1200px]'
             ]"
             @click.stop
           >
@@ -1535,87 +1482,39 @@ onUnmounted(() => {
                 </Field>
               </div>
 
-              <!-- Create: Lantai -->
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6" v-else-if="activeTab === 'Lantai'">
-                <Field :data-invalid="!!createFormErrors.location_id || undefined">
-                  <FieldLabel><span>Lokasi Induk<span class="text-destructive">*</span></span></FieldLabel>
+              <!-- Create: Lokasi -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6" v-else-if="activeTab === 'Lokasi'">
+                <Field>
+                  <FieldLabel>Lokasi Induk</FieldLabel>
                   <FieldContent>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal', !floorForm.location_id ? 'text-muted-foreground' : 'text-foreground', createFormErrors.location_id ? '!border-destructive focus:!ring-destructive/20 focus:!border-destructive' : '']">
-                          {{ floorForm.location_id ? (props.locations.find(l => l.id === floorForm.location_id)?.name || 'Pilih Lokasi Induk') : 'Pilih Lokasi Induk' }}
-                          <ChevronDown class="w-4 h-4 opacity-50" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
-                        <DropdownMenuItem v-for="loc in props.locations" :key="loc.id" @select="floorForm.location_id = loc.id">
-                          {{ loc.name }}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <LocationCombobox
+                      v-model="locationForm.parent_id"
+                      :locations="props.locations"
+                      placeholder="Pilih Lokasi Induk (opsional)"
+                      :clearable="true"
+                    />
                   </FieldContent>
-                  <FieldError v-if="createFormErrors.location_id">{{ createFormErrors.location_id }}</FieldError>
                 </Field>
-                <Field :data-invalid="!!createFormErrors.name || undefined" :data-disabled="!floorForm.location_id || undefined">
-                  <FieldLabel><span>Nama Lantai<span class="text-destructive">*</span></span></FieldLabel>
+                <Field :data-invalid="!!createFormErrors.name || undefined">
+                  <FieldLabel><span>Nama Lokasi<span class="text-destructive">*</span></span></FieldLabel>
                   <FieldContent>
-                    <input type="text" v-model="floorForm.name" maxlength="255" placeholder="Nama lantai..." :disabled="!floorForm.location_id"
-                      class="w-full px-3 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    <input type="text" v-model="locationForm.name" maxlength="255" placeholder="Nama lokasi..."
+                      class="w-full px-3 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors"
                       :class="[createFormErrors.name ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']" />
                   </FieldContent>
                   <FieldError v-if="createFormErrors.name">{{ createFormErrors.name }}</FieldError>
                 </Field>
-              </div>
-
-              <!-- Create: Ruangan -->
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-6" v-else-if="activeTab === 'Ruangan'">
-                <Field :data-invalid="!!createFormErrors.location_id || undefined">
-                  <FieldLabel><span>Lokasi<span class="text-destructive">*</span></span></FieldLabel>
-                  <FieldContent>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal', !roomForm.location_id ? 'text-muted-foreground' : 'text-foreground', createFormErrors.location_id ? '!border-destructive focus:!ring-destructive/20 focus:!border-destructive' : '']">
-                          {{ roomForm.location_id ? (props.locations.find(l => l.id == roomForm.location_id)?.name || 'Pilih Lokasi') : 'Pilih Lokasi' }}
-                          <ChevronDown class="w-4 h-4 opacity-50" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
-                        <DropdownMenuItem v-for="loc in props.locations" :key="loc.id" @select="roomForm.location_id = loc.id; roomForm.floor_id = null">
-                          {{ loc.name }}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </FieldContent>
-                  <FieldError v-if="createFormErrors.location_id">{{ createFormErrors.location_id }}</FieldError>
-                </Field>
-                <Field :data-invalid="!!createFormErrors.floor_id || undefined" :data-disabled="!roomForm.location_id || undefined">
-                  <FieldLabel><span>Lantai<span class="text-destructive">*</span></span></FieldLabel>
-                  <FieldContent>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger :disabled="!roomForm.location_id" asChild>
-                        <Button :disabled="!roomForm.location_id" variant="outline" :class="['w-full justify-between rounded-[14px] font-normal', !roomForm.floor_id ? 'text-muted-foreground' : 'text-foreground', createFormErrors.floor_id ? '!border-destructive focus:!ring-destructive/20 focus:!border-destructive' : '']">
-                          {{ roomForm.floor_id ? (props.floors.find(f => f.id == roomForm.floor_id)?.name || 'Pilih Lantai') : 'Pilih Lantai' }}
-                          <ChevronDown class="w-4 h-4 opacity-50" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
-                        <DropdownMenuItem v-for="fl in props.floors.filter(f => f.location_id == roomForm.location_id)" :key="fl.id" @select="roomForm.floor_id = fl.id">
-                          {{ fl.name }}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </FieldContent>
-                  <FieldError v-if="createFormErrors.floor_id">{{ createFormErrors.floor_id }}</FieldError>
-                </Field>
-                <Field :data-invalid="!!createFormErrors.name || undefined" :data-disabled="!roomForm.floor_id || undefined">
-                  <FieldLabel><span>Nama Ruangan<span class="text-destructive">*</span></span></FieldLabel>
-                  <FieldContent>
-                    <input type="text" v-model="roomForm.name" maxlength="255" placeholder="Nama ruangan..." :disabled="!roomForm.floor_id"
-                      class="w-full px-3 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      :class="[createFormErrors.name ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']" />
-                  </FieldContent>
-                  <FieldError v-if="createFormErrors.name">{{ createFormErrors.name }}</FieldError>
-                </Field>
+                <div class="md:col-span-2 flex justify-end items-center pt-2">
+                  <div class="flex items-center gap-3">
+                    <span class="text-sm font-medium text-foreground cursor-pointer select-none" @click="locationForm.is_active = !locationForm.is_active">
+                      {{ locationForm.is_active ? 'Lokasi Aktif' : 'Lokasi Nonaktif' }}
+                    </span>
+                    <Switch
+                      v-model="locationForm.is_active"
+                      class="data-[state=checked]:!bg-emerald-600 data-[state=unchecked]:!bg-slate-300 dark:data-[state=unchecked]:!bg-slate-700"
+                    />
+                  </div>
+                </div>
               </div>
 
               <!-- Create: Kategori -->

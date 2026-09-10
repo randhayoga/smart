@@ -8,10 +8,8 @@ use App\Models\Inventory\Lot;
 use App\Models\Inventory\Unit;
 use App\Models\Master\Brand;
 use App\Models\Master\Category;
-use App\Models\Master\Floor;
 use App\Models\Master\Location;
 use App\Models\Master\Organizer;
-use App\Models\Master\Room;
 use App\Models\Master\Subcategory;
 use App\Models\Master\Uom;
 use App\Models\Master\Vendor;
@@ -109,7 +107,7 @@ class ManajemenStokController extends Controller
             'min_stock_threshold' => $barang->min_stock_threshold,
         ];
 
-        $lots = Lot::with(['organizer', 'vendor', 'location', 'floor', 'room', 'project'])
+        $lots = Lot::with(['organizer', 'vendor', 'location.parent', 'project'])
             ->withCount(['units', 'units as available_units_count' => function ($query) {
                 $query->where('status', 'Tersedia');
             }])
@@ -126,12 +124,8 @@ class ManajemenStokController extends Controller
                     'organizer_id' => $lot->organizer_id,
                     'vendor' => $lot->vendor->name ?? '-',
                     'vendor_id' => $lot->vendor_id,
-                    'location' => $lot->location->name ?? '-',
+                    'location' => $lot->location?->full_name ?? '-',
                     'location_id' => $lot->location_id,
-                    'floor' => $lot->floor->name ?? null,
-                    'floor_id' => $lot->floor_id,
-                    'room' => $lot->room->name ?? null,
-                    'room_id' => $lot->room_id,
                     'unitPrice' => $lot->unit_price,
                     'imageUrl' => $lot->image_url,
                     'assetCount' => $lot->units_count,
@@ -151,14 +145,12 @@ class ManajemenStokController extends Controller
         $uoms = Uom::orderBy('name')->get();
         $organizers = Organizer::orderBy('name')->get();
         $vendors = Vendor::orderBy('name')->get();
-        $locations = Location::orderBy('name')->get();
-        $floors = Floor::with('location')->orderBy('name')->get();
-        $rooms = Room::with('floor.location')->orderBy('name')->get();
+        $locations = Location::with('parent')->active()->orderBy('name')->get();
 
         $units = [];
         if (!$isConsumable) {
             $units = Unit::with([
-                'location', 'floor', 'room', 'statusApprovals',
+                'location.parent', 'statusApprovals',
                 'lot.barang.subcategory.category', 'lot.barang.brand', 'lot.barang.uom',
                 'lot.organizer', 'lot.vendor', 'lifecycles.actor'
             ])
@@ -195,12 +187,8 @@ class ManajemenStokController extends Controller
                     'updated_at' => $unit->updated_at ? $unit->updated_at->format('d-m-Y H:i') : '-',
                     
                     // Location info
-                    'location' => $unit->location->name ?? '-',
+                    'location' => $unit->location?->full_name ?? '-',
                     'location_id' => $unit->location_id,
-                    'floor' => $unit->floor->name ?? null,
-                    'floor_id' => $unit->floor_id,
-                    'room' => $unit->room->name ?? null,
-                    'room_id' => $unit->room_id,
 
                     // Parent lot info
                     'lot_id' => $unit->lot_id,
@@ -254,8 +242,6 @@ class ManajemenStokController extends Controller
             'organizers' => $organizers,
             'vendors' => $vendors,
             'locations' => $locations,
-            'floors' => $floors,
-            'rooms' => $rooms,
             'units' => $units,
             'projects' => $projects,
         ]);

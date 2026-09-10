@@ -33,8 +33,6 @@ class UnitStatusApproval extends Model
                 'status' => $unit->status ?? 'Pending',
                 'condition' => $approval->proposed_condition,
                 'location_id' => $unit->location_id,
-                'floor_id' => $unit->floor_id,
-                'room_id' => $unit->room_id,
                 'start_date' => now(),
                 'end_date' => null,
                 'actor_id' => $approval->requester_id,

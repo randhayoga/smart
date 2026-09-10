@@ -50,8 +50,6 @@ interface Props {
   organizers?: any[];
   vendors?: any[];
   locations?: any[];
-  floors?: any[];
-  rooms?: any[];
   projects?: any[];
   selectedBarangCode?: string | null;
 }
@@ -66,8 +64,6 @@ const props = withDefaults(defineProps<Props>(), {
   organizers: () => [],
   vendors: () => [],
   locations: () => [],
-  floors: () => [],
-  rooms: () => [],
   projects: () => [],
   selectedBarangCode: null,
 });
@@ -625,8 +621,6 @@ const closeOnEscape = (e: KeyboardEvent) => {
         :organizers="props.organizers"
         :vendors="props.vendors"
         :locations="props.locations"
-        :floors="props.floors"
-        :rooms="props.rooms"
         :projects="props.projects"
       />
 
@@ -637,8 +631,6 @@ const closeOnEscape = (e: KeyboardEvent) => {
         :organizers="props.organizers"
         :vendors="props.vendors"
         :locations="props.locations"
-        :floors="props.floors"
-        :rooms="props.rooms"
         :projects="props.projects"
       />
     </div>

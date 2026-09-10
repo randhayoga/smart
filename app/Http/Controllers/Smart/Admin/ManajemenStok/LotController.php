@@ -7,10 +7,8 @@ use App\Models\Inventory\Barang;
 use App\Models\Inventory\Lot;
 use App\Models\Inventory\Unit;
 use App\Models\Master\Brand;
-use App\Models\Master\Floor;
 use App\Models\Master\Location;
 use App\Models\Master\Organizer;
-use App\Models\Master\Room;
 use App\Models\Master\Uom;
 use App\Models\Master\Vendor;
 use App\Models\TbProject;
@@ -35,8 +33,6 @@ class LotController extends Controller
             'organizer_id' => 'required|exists:organizers,id',
             'vendor_id' => 'required|exists:vendors,id',
             'location_id' => 'required|exists:locations,id',
-            'floor_id' => 'nullable|exists:floors,id',
-            'room_id' => 'nullable|exists:rooms,id',
             'initial_quantity' => 'nullable|integer|min:0|max:2147483647',
             'current_quantity' => 'nullable|integer|min:0|max:2147483647',
             'po_number' => 'required|string|max:255',
@@ -93,8 +89,6 @@ class LotController extends Controller
             'organizer_id' => 'required|exists:organizers,id',
             'vendor_id' => 'required|exists:vendors,id',
             'location_id' => 'required|exists:locations,id',
-            'floor_id' => 'nullable|exists:floors,id',
-            'room_id' => 'nullable|exists:rooms,id',
             'initial_quantity' => 'nullable|integer|min:0|max:2147483647',
             'current_quantity' => 'nullable|integer|min:0|max:' . ($lot->initial_quantity ?? 2147483647),
             'po_number' => 'required|string|max:255',
@@ -198,9 +192,7 @@ class LotController extends Controller
             'barang.uom',
             'organizer',
             'vendor',
-            'location',
-            'floor',
-            'room',
+            'location.parent',
             'project',
         ]);
 
@@ -215,12 +207,8 @@ class LotController extends Controller
                 'organizer_id' => $lot->organizer_id,
                 'vendor' => $lot->vendor->name ?? '-',
                 'vendor_id' => $lot->vendor_id,
-                'location' => $lot->location->name ?? '-',
+                'location' => $lot->location ? $lot->location->full_name : '-',
                 'location_id' => $lot->location_id,
-                'floor' => $lot->floor->name ?? null,
-                'floor_id' => $lot->floor_id,
-                'room' => $lot->room->name ?? null,
-                'room_id' => $lot->room_id,
                 'unitPrice' => $lot->unit_price,
                 'imageUrl' => $lot->image_url,
                 'initial_quantity' => $lot->initial_quantity,
@@ -247,7 +235,7 @@ class LotController extends Controller
 
         // Ambil data unit (aset) terkait LOT ini
         $units = Unit::with([
-            'location', 'floor', 'room', 'statusApprovals',
+            'location.parent', 'statusApprovals',
             'lot.barang.subcategory.category', 'lot.barang.brand', 'lot.barang.uom',
             'lot.organizer', 'lot.vendor', 'lifecycles.actor'
         ])
@@ -282,12 +270,8 @@ class LotController extends Controller
                 'updated_at' => $unit->updated_at ? $unit->updated_at->format('d-m-Y H:i') : '-',
                 
                 // Location info
-                'location' => $unit->location->name ?? '-',
+                'location' => $unit->location ? $unit->location->full_name : '-',
                 'location_id' => $unit->location_id,
-                'floor' => $unit->floor->name ?? null,
-                'floor_id' => $unit->floor_id,
-                'room' => $unit->room->name ?? null,
-                'room_id' => $unit->room_id,
 
                 // Parent lot info
                 'lot_id' => $unit->lot_id,
@@ -335,9 +319,7 @@ class LotController extends Controller
         $uoms = Uom::orderBy('name')->get();
         $organizers = Organizer::orderBy('name')->get();
         $vendors = Vendor::orderBy('name')->get();
-        $locations = Location::orderBy('name')->get();
-        $floors = Floor::with('location')->orderBy('name')->get();
-        $rooms = Room::with('floor.location')->orderBy('name')->get();
+        $locations = Location::with('parent')->active()->orderBy('name')->get();
         $projects = TbProject::orderBy('project_name')->get();
         $users = \App\Models\AdmUser::select('id', 'name', 'employee_id')->orderBy('name')->get()->map(fn($u) => [
             'id' => $u->id,
@@ -355,12 +337,8 @@ class LotController extends Controller
                 'organizer_id' => $lot->organizer_id,
                 'vendor' => $lot->vendor->name ?? '-',
                 'vendor_id' => $lot->vendor_id,
-                'location' => $lot->location->name ?? '-',
+                'location' => $lot->location ? $lot->location->full_name : '-',
                 'location_id' => $lot->location_id,
-                'floor' => $lot->floor->name ?? null,
-                'floor_id' => $lot->floor_id,
-                'room' => $lot->room->name ?? null,
-                'room_id' => $lot->room_id,
                 'unitPrice' => $lot->unit_price,
                 'imageUrl' => $lot->image_url,
                 'initial_quantity' => $lot->initial_quantity,
@@ -389,8 +367,6 @@ class LotController extends Controller
             'organizers' => $organizers,
             'vendors' => $vendors,
             'locations' => $locations,
-            'floors' => $floors,
-            'rooms' => $rooms,
             'projects' => $projects,
             'users' => $users,
         ]);

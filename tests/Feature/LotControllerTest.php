@@ -7,8 +7,6 @@ use App\Models\Inventory\Lot;
 use App\Models\Master\Organizer;
 use App\Models\Master\Vendor;
 use App\Models\Master\Location;
-use App\Models\Master\Floor;
-use App\Models\Master\Room;
 use App\Models\AdmUser as User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -34,8 +32,6 @@ class LotControllerTest extends TestCase
         $organizer = Organizer::factory()->create();
         $vendor = Vendor::factory()->create();
         $location = Location::factory()->create();
-        $floor = Floor::factory()->create(['location_id' => $location->id]);
-        $room = Room::factory()->create(['floor_id' => $floor->id]);
 
         $file = UploadedFile::fake()->image('lot.jpg');
 
@@ -45,8 +41,6 @@ class LotControllerTest extends TestCase
             'organizer_id' => $organizer->id,
             'vendor_id' => $vendor->id,
             'location_id' => $location->id,
-            'floor_id' => $floor->id,
-            'room_id' => $room->id,
             'po_number' => 'PO-01',
             'date_of_receipt' => '2026-05-22',
             'unit_price' => 60000,
@@ -62,8 +56,6 @@ class LotControllerTest extends TestCase
             'organizer_id' => $organizer->id,
             'vendor_id' => $vendor->id,
             'location_id' => $location->id,
-            'floor_id' => $floor->id,
-            'room_id' => $room->id,
             'po_number' => 'PO-01',
             'unit_price' => 60000,
         ]);
@@ -77,8 +69,6 @@ class LotControllerTest extends TestCase
             'number' => 'LOT-2026-ATK-KER-0001-0001-U01',
             'lot_id' => $lot->id,
             'location_id' => $location->id,
-            'floor_id' => $floor->id,
-            'room_id' => $room->id,
             'status' => 'Tersedia',
             'condition' => 'Bagus',
             'price' => 60000,
@@ -347,8 +337,6 @@ class LotControllerTest extends TestCase
         $user = User::factory()->create();
         $lot = Lot::factory()->create();
         $location = Location::factory()->create();
-        $floor = Floor::factory()->create(['location_id' => $location->id]);
-        $room = Room::factory()->create(['floor_id' => $floor->id]);
         
         $units = [];
         for ($i = 0; $i < 3; $i++) {
@@ -369,8 +357,6 @@ class LotControllerTest extends TestCase
             'status' => 'Standby',
             'condition' => 'Rusak',
             'location_id' => (string) $location->id,
-            'floor_id' => (string) $floor->id,
-            'room_id' => (string) $room->id,
         ]);
 
         $response->assertSessionHasNoErrors();
@@ -382,8 +368,6 @@ class LotControllerTest extends TestCase
                 'status' => 'Standby',
                 'condition' => 'Rusak',
                 'location_id' => $location->id,
-                'floor_id' => $floor->id,
-                'room_id' => $room->id,
             ]);
         }
     }

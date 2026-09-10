@@ -7,10 +7,8 @@ use App\Models\Inventory\Barang;
 use App\Models\Inventory\Lot;
 use App\Models\Master\Brand;
 use App\Models\Master\Category;
-use App\Models\Master\Floor;
 use App\Models\Master\Location;
 use App\Models\Master\Organizer;
-use App\Models\Master\Room;
 use App\Models\Master\Subcategory;
 use App\Models\Master\Uom;
 use App\Models\Master\Vendor;
@@ -74,9 +72,7 @@ class ConsumableLotController extends Controller
             'barang.uom',
             'organizer',
             'vendor',
-            'location',
-            'floor',
-            'room',
+            'location.parent',
             'project',
         ])
         ->whereHas('barang.subcategory.category', function ($query) {
@@ -94,12 +90,8 @@ class ConsumableLotController extends Controller
                 'organizer_id' => $lot->organizer_id,
                 'vendor' => $lot->vendor->name ?? '-',
                 'vendor_id' => $lot->vendor_id,
-                'location' => $lot->location->name ?? '-',
+                'location' => $lot->location ? $lot->location->full_name : '-',
                 'location_id' => $lot->location_id,
-                'floor' => $lot->floor->name ?? null,
-                'floor_id' => $lot->floor_id,
-                'room' => $lot->room->name ?? null,
-                'room_id' => $lot->room_id,
                 'unitPrice' => $lot->unit_price,
                 'imageUrl' => $lot->image_url,
                 'assetCount' => 0,
@@ -126,9 +118,7 @@ class ConsumableLotController extends Controller
 
         $organizers = Organizer::orderBy('name')->get();
         $vendors = Vendor::orderBy('name')->get();
-        $locations = Location::orderBy('name')->get();
-        $floors = Floor::with('location')->orderBy('name')->get();
-        $rooms = Room::with('floor.location')->orderBy('name')->get();
+        $locations = Location::with('parent')->active()->orderBy('name')->get();
 
         $projects = TbProject::orderBy('project_name')->get();
 
@@ -143,8 +133,6 @@ class ConsumableLotController extends Controller
             'organizers' => $organizers,
             'vendors' => $vendors,
             'locations' => $locations,
-            'floors' => $floors,
-            'rooms' => $rooms,
             'projects' => $projects,
             'selectedBarangCode' => $barang?->number ?? null,
         ]);

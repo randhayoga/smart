@@ -24,8 +24,6 @@ class UnitLifecycle extends Model
         'status',
         'condition',
         'location_id',
-        'floor_id',
-        'room_id',
         'start_date',
         'end_date',
         'actor_id',
@@ -55,22 +53,6 @@ class UnitLifecycle extends Model
     public function location(): BelongsTo
     {
         return $this->belongsTo(\App\Models\Master\Location::class);
-    }
-
-    /**
-     * The floor during this lifecycle period.
-     */
-    public function floor(): BelongsTo
-    {
-        return $this->belongsTo(\App\Models\Master\Floor::class);
-    }
-
-    /**
-     * The room during this lifecycle period.
-     */
-    public function room(): BelongsTo
-    {
-        return $this->belongsTo(\App\Models\Master\Room::class);
     }
 
     /**

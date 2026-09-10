@@ -69,9 +69,9 @@ interface Props {
   uoms: { id: number; name: string; }[];
   organizers: { id: number; name: string; }[];
   vendors: { id: number; name: string; }[];
-  locations: { id: number; name: string; }[];
-  floors: { id: number; name: string; location_id: number; }[];
-  rooms: { id: number; name: string; floor_id: number; }[];
+  locations: any[];
+  floors?: any[];
+  rooms?: any[];
   projects: { id: number; no_project: string; project_name: string; client_id: string; }[];
   users?: { id: number; name: string; }[];
 }
@@ -240,8 +240,6 @@ onUnmounted(() => {
         :lot="props.lot"
         :units="props.units"
         :locations="props.locations"
-        :floors="props.floors"
-        :rooms="props.rooms"
         :organizers="props.organizers"
         :vendors="props.vendors"
       />
@@ -250,8 +248,6 @@ onUnmounted(() => {
         v-else-if="activeTab === 'Daftar Aset'"
         :units="props.units"
         :locations="props.locations"
-        :floors="props.floors"
-        :rooms="props.rooms"
         :organizers="props.organizers"
         :vendors="props.vendors"
         :users="props.users"
@@ -269,8 +265,6 @@ onUnmounted(() => {
       :organizers="props.organizers"
       :vendors="props.vendors"
       :locations="props.locations"
-      :floors="props.floors"
-      :rooms="props.rooms"
       :projects="props.projects"
     />
 

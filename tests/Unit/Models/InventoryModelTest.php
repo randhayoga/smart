@@ -12,8 +12,6 @@ use App\Models\Master\Category;
 use App\Models\Master\Subcategory;
 use App\Models\Master\Uom;
 use App\Models\Master\Location;
-use App\Models\Master\Floor;
-use App\Models\Master\Room;
 use App\Models\Master\Organizer;
 use App\Models\Master\Vendor;
 use App\Models\AdmUser as User;
@@ -57,16 +55,12 @@ class InventoryModelTest extends TestCase
         $organizer = Organizer::factory()->create();
         $vendor = Vendor::factory()->create();
         $location = Location::factory()->create();
-        $floor = Floor::factory()->create(['location_id' => $location->id]);
-        $room = Room::factory()->create(['floor_id' => $floor->id]);
 
         $lot = Lot::factory()->create([
             'barang_id' => $barang->id,
             'organizer_id' => $organizer->id,
             'vendor_id' => $vendor->id,
             'location_id' => $location->id,
-            'floor_id' => $floor->id,
-            'room_id' => $room->id,
         ]);
 
         $unit = Unit::create([
@@ -83,8 +77,6 @@ class InventoryModelTest extends TestCase
         $this->assertTrue($lot->organizer->is($organizer));
         $this->assertTrue($lot->vendor->is($vendor));
         $this->assertTrue($lot->location->is($location));
-        $this->assertTrue($lot->floor->is($floor));
-        $this->assertTrue($lot->room->is($room));
         $this->assertTrue($lot->units->contains($unit));
     }
 
