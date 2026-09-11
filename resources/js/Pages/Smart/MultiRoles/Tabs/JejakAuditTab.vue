@@ -16,6 +16,7 @@ import TableSearch from '@/Components/TableSearch.vue';
 import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
+import { getLocalizedAuditAction } from '@/lib/auditAction';
 
 interface AuditTrail {
   waktu: string;
@@ -30,7 +31,7 @@ const props = defineProps<{
   lifecycles: AuditTrail[];
 }>();
 
-const { t } = useI18n();
+const { t, te } = useI18n();
 
 const parseDateTime = (val: string) => {
   if (!val || val === '-') return 0;
@@ -85,6 +86,26 @@ const auditStatusFilter = ref('all');
 const auditActionFilter = ref('all');
 const auditTimeFilter = ref('all');
 const auditRowsPerPage = ref('all');
+
+const formatStatus = (st: string) => {
+  if (st === 'all' || st === 'semua') return t('approvals.allStatus');
+  const key = 'status.' + st.toLowerCase().replace(/[\s\-_:]+(.)/g, (_, c) => c.toUpperCase()).replace(/[\s\-_:]+/g, '');
+  return te(key) ? t(key) : st;
+};
+
+const formatAction = (act: string) => {
+  if (!act || act === '-') return '-';
+  if (act === 'all' || act === 'semua') return t('approvals.allAction');
+  return getLocalizedAuditAction(act, t);
+};
+
+const auditStatusFilterLabel = computed(() => {
+  return formatStatus(auditStatusFilter.value);
+});
+
+const auditActionFilterLabel = computed(() => {
+  return formatAction(auditActionFilter.value);
+});
 
 const computedAuditPageSize = computed(() => {
   if (auditRowsPerPage.value === 'all') {
@@ -199,7 +220,7 @@ const auditColumns = computed<ColumnDef<AuditTrail>[]>(() => [
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
-    cell: ({ row }) => h('div', { class: 'text-muted-foreground truncate' }, row.getValue('action_type') || '-'),
+    cell: ({ row }) => h('div', { class: 'text-muted-foreground truncate' }, formatAction(row.getValue('action_type'))),
   },
   {
     accessorKey: 'aktor',
@@ -264,14 +285,14 @@ const auditColumns = computed<ColumnDef<AuditTrail>[]>(() => [
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" :class="['w-[180px] justify-between rounded-[14px] font-normal bg-white', auditStatusFilter === 'all' ? 'text-muted-foreground' : 'text-foreground']">
-            <span class="truncate">{{ auditStatusFilter === 'all' ? t('approvals.allStatus') : auditStatusFilter }}</span>
+            <span class="truncate">{{ auditStatusFilter === 'all' ? t('approvals.allStatus') : auditStatusFilterLabel }}</span>
             <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent class="w-[180px] rounded-[14px] z-[110]" align="start" :side-offset="4">
           <DropdownMenuItem @select="auditStatusFilter = 'all'">{{ t('approvals.allStatus') }}</DropdownMenuItem>
           <DropdownMenuItem v-for="st in auditStatusOptions" :key="st" @select="auditStatusFilter = st">
-            {{ st }}
+            {{ formatStatus(st) }}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -279,14 +300,14 @@ const auditColumns = computed<ColumnDef<AuditTrail>[]>(() => [
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" :class="['w-[180px] justify-between rounded-[14px] font-normal bg-white', auditActionFilter === 'all' ? 'text-muted-foreground' : 'text-foreground']">
-            <span class="truncate">{{ auditActionFilter === 'all' ? t('approvals.allAction') : auditActionFilter }}</span>
+            <span class="truncate">{{ auditActionFilter === 'all' ? t('approvals.allAction') : auditActionFilterLabel }}</span>
             <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent class="w-[180px] rounded-[14px] z-[110]" align="start" :side-offset="4">
           <DropdownMenuItem @select="auditActionFilter = 'all'">{{ t('approvals.allAction') }}</DropdownMenuItem>
           <DropdownMenuItem v-for="act in auditActionOptions" :key="act" @select="auditActionFilter = act">
-            {{ act }}
+            {{ formatAction(act) }}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

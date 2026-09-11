@@ -481,9 +481,9 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <Head :title="t('approvals.statusPendingTitle')" />
+  <Head :title="t('approvals.statusPendingTaskbarTitle')" />
 
-  <AppLayout :title="t('approvals.statusPendingTitle')">
+  <AppLayout :title="t('approvals.statusPendingTaskbarTitle')">
     <!-- ── Title Halaman ── -->
     <div class="mb-6">
       <h1 class="text-xl font-bold text-gray-900 leading-none">{{ t('approvals.statusPendingTitle') }}</h1>

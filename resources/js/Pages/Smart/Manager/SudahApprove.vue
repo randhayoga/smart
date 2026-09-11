@@ -240,9 +240,9 @@ const columns = computed<ColumnDef<SmartRequestData>[]>(() => [
 </script>
 
 <template>
-  <Head :title="$t('nav.approved')" />
+  <Head :title="$t('nav.items.processed')" />
 
-  <AppLayout :title="$t('nav.approved')">
+  <AppLayout :title="$t('nav.items.processed')">
     <!-- ── Title Halaman ── -->
     <div class="mb-6">
       <h1 class="text-xl font-bold text-gray-900 leading-none">{{ $t('approvals.historyTitle') }}</h1>

@@ -110,7 +110,7 @@ const ictChartColors = ['#0D9488', '#0284C7', '#F59E0B', '#E11D48', '#8B5CF6', '
 </script>
 
 <template>
-  <AppLayout :title="t('nav.dashboard')">
+  <AppLayout :title="t('nav.items.dashboard')">
     <div class="space-y-3">
       <!-- Header -->
       <div class="pb-1">

@@ -18,6 +18,7 @@ import ResetFilterButton from '@/Components/ResetFilterButton.vue';
 import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
+import { getLocalizedAuditAction } from '@/lib/auditAction';
 
 const { t, te } = useI18n();
 
@@ -113,8 +114,9 @@ const formatStatus = (st: string) => {
 };
 
 const formatAction = (act: string) => {
+  if (!act || act === '-') return '-';
   if (act === 'semua') return t('admin.allActions');
-  return act;
+  return getLocalizedAuditAction(act, t);
 };
 
 const auditStatusFilterLabel = computed(() => {
@@ -292,7 +294,7 @@ const auditColumns = computed<ColumnDef<AuditTrail>[]>(() => [
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
-    cell: ({ row }) => h('div', { class: 'text-muted-foreground truncate' }, row.getValue('action_type') || '-'),
+    cell: ({ row }) => h('div', { class: 'text-muted-foreground truncate' }, formatAction(row.getValue('action_type'))),
   },
   {
     accessorKey: 'aktor',

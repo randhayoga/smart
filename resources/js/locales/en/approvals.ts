@@ -5,6 +5,7 @@ export default {
   pendingTitle: 'Approval: Requires Your Attention',
   historyTitle: 'Approval: Processed',
   statusPendingTitle: 'Status Approval: Requires Your Attention',
+  statusPendingTaskbarTitle: 'Status Approval: Pending',
   statusHistoryTitle: 'Status Approval: Processed',
   externalTitle: '{type} Approval #{number} - SMART',
   externalAppTitle: 'SMART',

@@ -376,9 +376,9 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <Head :title="$t('nav.approve')" />
+  <Head :title="$t('nav.items.needApproval')" />
 
-  <AppLayout :title="$t('nav.approve')">
+  <AppLayout :title="$t('nav.items.needApproval')">
     <!-- ── Title Halaman ── -->
     <div class="mb-6">
       <h1 class="text-xl font-bold text-gray-900 leading-none">{{ $t('approvals.pendingTitle') }}</h1>

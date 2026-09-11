@@ -59,4 +59,50 @@ describe('i18n Configuration and Dictionaries', () => {
 
     expect(idKeys).toEqual(enKeys);
   });
+
+  it('should translate navigation items correctly in both languages', () => {
+    setI18nLanguage('id');
+    expect(i18n.global.t('nav.items.dashboard')).toBe('Dashboard');
+    expect(i18n.global.t('nav.items.needApproval')).toBe('Perlu Approval');
+    expect(i18n.global.t('nav.items.processed')).toBe('Sudah Diproses');
+
+    setI18nLanguage('en');
+    expect(i18n.global.t('nav.items.dashboard')).toBe('Dashboard');
+    expect(i18n.global.t('nav.items.needApproval')).toBe('Pending Approval');
+    expect(i18n.global.t('nav.items.processed')).toBe('Processed');
+    expect(i18n.global.t('nav.items.inventoryManagement')).toBe('Item Management');
+    expect(i18n.global.t('inventory.inventoryManagement')).toBe('Item Management');
+    expect(i18n.global.t('nav.items.consumableStock')).toBe('Consumables Stock List');
+    expect(i18n.global.t('inventory.consumableStockList')).toBe('Consumables Stock List');
+    expect(i18n.global.t('nav.items.pendingInactive')).toBe('Pending Deactivation List');
+    expect(i18n.global.t('nav.sections.approvalDeletion')).toBe('DEACTIVATION APPROVAL');
+  });
+
+  it('should localize status pending taskbar title distinctly from page heading', () => {
+    setI18nLanguage('en');
+    expect(i18n.global.t('approvals.statusPendingTaskbarTitle')).toBe('Status Approval: Pending');
+    expect(i18n.global.t('approvals.statusPendingTitle')).toBe('Status Approval: Requires Your Attention');
+
+    setI18nLanguage('id');
+    expect(i18n.global.t('approvals.statusPendingTaskbarTitle')).toBe('Approval Status: Pending');
+    expect(i18n.global.t('approvals.statusPendingTitle')).toBe('Approval Status: Perlu Perhatian Anda');
+  });
+
+  it('should localize auditActionTypes properly in both languages', () => {
+    setI18nLanguage('en');
+    expect(i18n.global.t('admin.auditActionTypes.registrasi')).toBe('Registration');
+    expect(i18n.global.t('admin.auditActionTypes.perubahanStatus')).toBe('Status Change');
+    expect(i18n.global.t('admin.auditActionTypes.perubahanKondisi')).toBe('Condition Change');
+    expect(i18n.global.t('admin.auditActionTypes.pemindahan')).toBe('Relocation');
+    expect(i18n.global.t('admin.auditActionTypes.peminjaman')).toBe('Borrowing');
+    expect(i18n.global.t('admin.auditActionTypes.pengembalian')).toBe('Return');
+
+    setI18nLanguage('id');
+    expect(i18n.global.t('admin.auditActionTypes.registrasi')).toBe('Registrasi');
+    expect(i18n.global.t('admin.auditActionTypes.perubahanStatus')).toBe('Perubahan Status');
+    expect(i18n.global.t('admin.auditActionTypes.perubahanKondisi')).toBe('Perubahan Kondisi');
+    expect(i18n.global.t('admin.auditActionTypes.pemindahan')).toBe('Pemindahan');
+    expect(i18n.global.t('admin.auditActionTypes.peminjaman')).toBe('Peminjaman');
+    expect(i18n.global.t('admin.auditActionTypes.pengembalian')).toBe('Pengembalian');
+  });
 });

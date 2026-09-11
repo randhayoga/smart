@@ -5,6 +5,7 @@ export default {
   pendingTitle: 'Approval: Perlu Perhatian Anda',
   historyTitle: 'Approval: Sudah Diproses',
   statusPendingTitle: 'Approval Status: Perlu Perhatian Anda',
+  statusPendingTaskbarTitle: 'Approval Status: Pending',
   statusHistoryTitle: 'Approval Status: Sudah Diproses',
   externalTitle: 'Persetujuan {type} #{number} - SMART',
   externalAppTitle: 'SMART',

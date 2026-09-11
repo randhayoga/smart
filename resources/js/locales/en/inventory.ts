@@ -7,7 +7,7 @@ export default {
   hierarchicalManagement: 'Item Management (Hierarchical)',
   assetList: 'Asset List',
   lotList: 'LOT List',
-  consumableStockList: 'Stock List (Consumables)',
+  consumableStockList: 'Consumables Stock List',
   typeDetail: 'Type Details',
   lotDetail: 'LOT Details',
   assetDetail: 'Asset Details',
