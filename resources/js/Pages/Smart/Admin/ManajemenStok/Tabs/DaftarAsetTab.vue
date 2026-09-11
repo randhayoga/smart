@@ -801,6 +801,17 @@ const totalAsetTerpilihCount = computed(() => {
                 </DropdownMenuContent>
               </DropdownMenu>
 
+              <!-- Location Filter -->
+              <div class="w-[280px]">
+                <LocationCombobox
+                  v-model="locationFilter"
+                  :locations="props.locations"
+                  :placeholder="t('inventory.allLocations')"
+                  :clearable="true"
+                  width-class="w-full"
+                />
+              </div>
+
               <!-- Advanced Filter Toggle Button -->
               <Button 
                 v-if="props.filterVariant !== 'simple'"
@@ -871,17 +882,6 @@ const totalAsetTerpilihCount = computed(() => {
                   :search-placeholder="t('inventory.searchBrandPlaceholder')"
                   :default-label="t('inventory.allBrands')"
                   width-class="w-full bg-background"
-                />
-              </div>
-
-              <!-- Location Filter -->
-              <div class="space-y-1.5 w-[250px]">
-                <label class="text-xs text-muted-foreground font-medium block ml-0.5">{{ t('inventory.location') }}</label>
-                <LocationCombobox
-                  v-model="locationFilter"
-                  :locations="props.locations"
-                  :placeholder="t('inventory.allLocations')"
-                  :clearable="true"
                 />
               </div>
 
