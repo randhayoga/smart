@@ -3,6 +3,7 @@
  * Detail LOT Non-Consumable Tab component rendering non-consumable lot overview and its associated individual asset units.
  */
 import { ref, onMounted, onUnmounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { Plus } from 'lucide-vue-next';
 import { Button } from "@/Components/ui/button";
 import { formatDate } from '@/lib/utils';
@@ -72,6 +73,8 @@ interface Props {
 
 const props = defineProps<Props>();
 
+const { t, locale } = useI18n();
+
 const isCreateAssetModalOpen = ref(false);
 
 const openCreateAssetModal = () => {
@@ -86,7 +89,8 @@ const formatRupiah = (val: number | string | null | undefined) => {
   if (val === null || val === undefined) return '-';
   const num = typeof val === 'string' ? parseFloat(val) : val;
   if (isNaN(num)) return '-';
-  const formatted = Math.floor(num).toLocaleString('id-ID');
+  const loc = locale.value === 'en' ? 'en-US' : 'id-ID';
+  const formatted = Math.floor(num).toLocaleString(loc);
   return `Rp${formatted}`;
 };
 
@@ -119,7 +123,7 @@ onUnmounted(() => {
   <div class="space-y-4">
     <!-- Detail LOT Card -->
     <div class="px-4 py-3 bg-card rounded-xl border border-border shadow-sm overflow-hidden no-print">
-      <h2 class="text-lg font-bold text-foreground mb-4">Detail LOT</h2>
+      <h2 class="text-lg font-bold text-foreground mb-4">{{ t('inventory.lotDetail') }}</h2>
       
       <div class="flex flex-col md:flex-row gap-6">
         <div class="w-48 h-48 rounded-xl bg-muted shrink-0 flex items-center justify-center overflow-hidden border border-border">
@@ -129,28 +133,28 @@ onUnmounted(() => {
 
         <div class="flex-grow grid grid-cols-1 md:grid-cols-12 gap-4">
           <div class="md:col-span-4">
-            <p class="font-bold text-foreground"><span class="text-foreground">Kode Tipe:</span> {{ props.lot.barang_code }}</p>
-            <p class="font-bold text-foreground"><span class="text-foreground">Merek:</span> {{ props.lot.barang_brand }}</p>
-            <p class="font-bold text-foreground"><span class="text-foreground">Nama:</span> {{ props.lot.barang_nama }}</p>
-            <p class="font-bold text-foreground"><span class="text-foreground">Spesifikasi:</span> {{ props.lot.barang_specification }}</p>
-            <p class="text-foreground">Kategori: {{ props.lot.barang_category }}</p>
-            <p class="text-foreground">Subkategori: {{ props.lot.barang_subcategory }}</p>
-            <p class="text-foreground">Satuan: {{ props.lot.barang_uom }}</p>
+            <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.typeCode') }}:</span> {{ props.lot.barang_code }}</p>
+            <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.brand') }}:</span> {{ props.lot.barang_brand }}</p>
+            <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.name') }}:</span> {{ props.lot.barang_nama }}</p>
+            <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.specification') }}:</span> {{ props.lot.barang_specification }}</p>
+            <p class="text-foreground">{{ t('inventory.category') }}: {{ props.lot.barang_category }}</p>
+            <p class="text-foreground">{{ t('inventory.subcategory') }}: {{ props.lot.barang_subcategory }}</p>
+            <p class="text-foreground">{{ t('inventory.uom') }}: {{ props.lot.barang_uom }}</p>
           </div>
           <div class="md:col-span-8">
-            <p class="font-bold text-foreground"><span class="text-foreground">Kode LOT:</span> {{ props.lot.number }}</p>
-            <p class="text-foreground">Jumlah stok tersedia: {{ props.units.filter(u => u.status === 'Tersedia').length }}</p>
-            <p class="text-foreground">Jumlah stok diawal: {{ props.units.length }}</p>
-            <p class="text-foreground">Lokasi <span class="italic">default</span>: {{ formatLocation(props.lot.location, props.lot.floor, props.lot.room) }}</p>
-            <p class="text-foreground">Nomor PO: {{ props.lot.po_number }}</p>
-            <p class="text-foreground">Tanggal registrasi: {{ formatDate(props.lot.date_of_receipt) }}</p>
-            <p class="text-foreground">Umur: {{ props.lot.age !== undefined && props.lot.age !== null ? `${props.lot.age} tahun` : '-' }}</p>
-            <p class="text-foreground">Harga satuan <span class="italic">default</span>: {{ formatRupiah(props.lot.unitPrice) }}</p>
-            <p class="text-foreground">Pembebanan: {{ props.lot.burden || '-' }}</p>
-            <p v-if="props.lot.burden === 'Project'" class="text-foreground">Project: {{ props.lot.project_no ? `${props.lot.project_no} (${props.lot.project_name || '-'})` : '-' }}</p>
-            <p class="text-foreground">Organizer: {{ props.lot.organizer }}</p>
-            <p class="text-foreground">Vendor: {{ props.lot.vendor }}</p>
-            <p class="text-foreground">Pembaruan terakhir: {{ props.lot.updated_at }}</p>
+            <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.lotCode') }}:</span> {{ props.lot.number }}</p>
+            <p class="text-foreground">{{ t('inventory.availableStock') }}: {{ props.units.filter(u => u.status === 'Tersedia').length }}</p>
+            <p class="text-foreground">{{ t('inventory.initialStock') }}: {{ props.units.length }}</p>
+            <p class="text-foreground">{{ t('inventory.defaultLocation') }}: {{ formatLocation(props.lot.location, props.lot.floor, props.lot.room) }}</p>
+            <p class="text-foreground">{{ t('inventory.poNumber') }}: {{ props.lot.po_number }}</p>
+            <p class="text-foreground">{{ t('inventory.registrationDate') }}: {{ formatDate(props.lot.date_of_receipt) }}</p>
+            <p class="text-foreground">{{ t('inventory.age') }}: {{ props.lot.age !== undefined && props.lot.age !== null ? `${props.lot.age} ${t('inventory.yearUnit')}` : '-' }}</p>
+            <p class="text-foreground">{{ t('inventory.defaultUnitPrice') }}: {{ formatRupiah(props.lot.unitPrice) }}</p>
+            <p class="text-foreground">{{ t('inventory.burden') }}: {{ props.lot.burden || '-' }}</p>
+            <p v-if="props.lot.burden === 'Project'" class="text-foreground">{{ t('inventory.project') }}: {{ props.lot.project_no ? `${props.lot.project_no} (${props.lot.project_name || '-'})` : '-' }}</p>
+            <p class="text-foreground">{{ t('inventory.organizer') }}: {{ props.lot.organizer }}</p>
+            <p class="text-foreground">{{ t('inventory.vendor') }}: {{ props.lot.vendor }}</p>
+            <p class="text-foreground">{{ t('inventory.lastUpdate') }}: {{ props.lot.updated_at }}</p>
           </div>
         </div>
       </div>
@@ -170,7 +174,7 @@ onUnmounted(() => {
       <template #extra-actions>
         <Button @click="openCreateAssetModal" variant="primary" size="lg">
           <Plus class="w-4 h-4" />
-          <span>Aset Baru</span>
+          <span>{{ t('inventory.newAsset') }}</span>
         </Button>
       </template>
     </DaftarAsetTab>

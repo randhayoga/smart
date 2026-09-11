@@ -4,6 +4,7 @@
  * Lists newly confirmed requests awaiting asset allocation and admin fulfillment.
  */
 import { ref, computed, watch, onMounted, h } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { router, usePage } from '@inertiajs/vue3';
 import {
   ArrowUpDown,
@@ -51,6 +52,7 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+const { t } = useI18n();
 
 const requests = ref<SmartRequestListItem[]>([...props.requests]);
 
@@ -60,22 +62,39 @@ watch(() => props.requests, (newVal) => {
 
 // --- Filter & Search State ---
 const searchQuery = ref('');
-const typeFilter = ref('Semua tipe');
-const utilizationFilter = ref('Semua pemanfaatan');
-const rowsPerPage = ref('Semua baris');
+const typeFilter = ref('all');
+const utilizationFilter = ref('all');
+const rowsPerPage = ref('all');
+
+const typeFilterLabel = computed(() => {
+  if (typeFilter.value === 'peminjaman') return t('fulfillment.loan');
+  if (typeFilter.value === 'permintaan') return t('fulfillment.request');
+  return t('fulfillment.allTypes');
+});
+
+const utilizationFilterLabel = computed(() => {
+  if (utilizationFilter.value === 'corporate') return t('fulfillment.corporate');
+  if (utilizationFilter.value === 'project') return t('fulfillment.project');
+  return t('fulfillment.allUtilizations');
+});
+
+const rowsPerPageLabel = computed(() => {
+  if (rowsPerPage.value === 'all') return t('fulfillment.allRows');
+  return rowsPerPage.value;
+});
 
 const hasActiveFilters = computed(() => {
   return !!(
     searchQuery.value ||
-    (typeFilter.value && typeFilter.value !== 'Semua tipe') ||
-    (utilizationFilter.value && utilizationFilter.value !== 'Semua pemanfaatan')
+    (typeFilter.value && typeFilter.value !== 'all') ||
+    (utilizationFilter.value && utilizationFilter.value !== 'all')
   );
 });
 
 const clearFilters = () => {
   searchQuery.value = '';
-  typeFilter.value = 'Semua tipe';
-  utilizationFilter.value = 'Semua pemanfaatan';
+  typeFilter.value = 'all';
+  utilizationFilter.value = 'all';
 };
 
 const dataTableRef = ref<any>(null);
@@ -84,14 +103,12 @@ const dataTableRef = ref<any>(null);
 const filteredRequests = computed(() => {
   let list = [...requests.value];
 
-  if (typeFilter.value !== 'Semua tipe') {
-    const type = typeFilter.value === 'Peminjaman' ? 'peminjaman' : 'permintaan';
-    list = list.filter(req => req.type === type);
+  if (typeFilter.value !== 'all') {
+    list = list.filter(req => req.type === typeFilter.value);
   }
 
-  if (utilizationFilter.value !== 'Semua pemanfaatan') {
-    const util = utilizationFilter.value === 'Corporate' ? 'corporate' : 'project';
-    list = list.filter(req => req.pemanfaatan === util);
+  if (utilizationFilter.value !== 'all') {
+    list = list.filter(req => req.pemanfaatan === utilizationFilter.value);
   }
 
   // Pre-sort by id descending (newest first)
@@ -101,7 +118,7 @@ const filteredRequests = computed(() => {
 });
 
 const computedPageSize = computed(() => {
-  if (rowsPerPage.value === 'Semua baris') {
+  if (rowsPerPage.value === 'all') {
     return filteredRequests.value.length || 10;
   }
   return parseInt(rowsPerPage.value, 10);
@@ -111,7 +128,7 @@ const openShowPage = (item: SmartRequestListItem) => {
   router.visit(route('smart.fulfillment.show', { id: item.uuid || item.id, from: 'perlu-alokasi' }));
 };
 
-const columns: ColumnDef<SmartRequestListItem>[] = [
+const columns = computed<ColumnDef<SmartRequestListItem>[]>(() => [
   {
     accessorKey: 'number',
     header: ({ column }) => {
@@ -120,7 +137,7 @@ const columns: ColumnDef<SmartRequestListItem>[] = [
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Nomor',
+        t('fulfillment.number'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
@@ -135,11 +152,11 @@ const columns: ColumnDef<SmartRequestListItem>[] = [
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Tipe',
+        t('fulfillment.type'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
-    cell: ({ row }) => h('div', { class: 'text-foreground capitalize' }, row.original.typeLabel || row.getValue('type')),
+    cell: ({ row }) => h('div', { class: 'text-foreground capitalize' }, row.getValue('type') === 'peminjaman' ? t('fulfillment.loan') : t('fulfillment.request')),
   },
   {
     accessorKey: 'requester',
@@ -149,7 +166,7 @@ const columns: ColumnDef<SmartRequestListItem>[] = [
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Pemohon',
+        t('fulfillment.requester'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
@@ -164,7 +181,7 @@ const columns: ColumnDef<SmartRequestListItem>[] = [
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Pemanfaatan',
+        t('fulfillment.utilization'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
@@ -172,7 +189,7 @@ const columns: ColumnDef<SmartRequestListItem>[] = [
       const item = row.original;
       const isCorporate = item.pemanfaatan === 'corporate';
       return h('div', { class: 'text-foreground' }, [
-        h('span', { class: 'font-semibold' }, isCorporate ? 'Corporate ' : 'Project '),
+        h('span', { class: 'font-semibold' }, isCorporate ? `${t('fulfillment.corporate')} ` : `${t('fulfillment.project')} `),
         h('span', { class: 'font-normal text-muted-foreground' }, isCorporate ? `(${item.pemanfaatanDetail})` : item.pemanfaatanDetail)
       ]);
     }
@@ -186,7 +203,7 @@ const columns: ColumnDef<SmartRequestListItem>[] = [
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Status',
+        t('fulfillment.status'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
@@ -207,7 +224,7 @@ const columns: ColumnDef<SmartRequestListItem>[] = [
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Tanggal Dibuat',
+        t('fulfillment.createdAt'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
@@ -217,24 +234,24 @@ const columns: ColumnDef<SmartRequestListItem>[] = [
     id: 'actions',
     size: 80,
     enableGlobalFilter: false,
-    header: () => h('div', { class: 'text-right font-semibold text-foreground no-print' }, 'Aksi'),
+    header: () => h('div', { class: 'text-right font-semibold text-foreground no-print' }, t('fulfillment.actions')),
     cell: ({ row }) => {
       const item = row.original;
       return h('div', { class: 'flex items-center justify-end gap-1.5 no-print' }, [
         h(Button, {
           variant: 'table-view',
           size: 'icon-sm',
-          title: 'Lihat Detail & Pemenuhan',
+          title: t('fulfillment.viewDetailAndFulfill'),
           onClick: () => openShowPage(item)
         }, () => [
           h(Eye, { class: 'w-4 h-4' }),
-          h('span', { class: 'sr-only' }, 'Lihat Detail')
+          h('span', { class: 'sr-only' }, t('fulfillment.viewDetail'))
         ]),
       ]);
     },
     enableSorting: false,
   }
-];
+]);
 
 const page = usePage();
 
@@ -267,39 +284,39 @@ watch(() => page.url, (newUrl) => {
     <div class="space-y-4 mb-6">
       <div class="flex flex-wrap items-end gap-4">
         <div class="space-y-1.5 flex-1 min-w-[300px] max-w-sm">
-          <label class="text-xs text-muted-foreground font-medium block ml-0.5">Filter</label>
+          <label class="text-xs text-muted-foreground font-medium block ml-0.5">{{ t('fulfillment.filter') }}</label>
           <TableSearch 
             v-model="searchQuery"
-            placeholder="Cari Nomor atau Nama Pemohon..." 
+            :placeholder="t('fulfillment.searchConfirmedPlaceholder')" 
             bg-class="bg-white"
           />
         </div>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal bg-white', (!typeFilter || typeFilter === 'Semua tipe') ? 'text-muted-foreground' : 'text-foreground']">
-              <span class="truncate">{{ typeFilter || 'Semua tipe' }}</span>
+            <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal bg-white', (!typeFilter || typeFilter === 'all') ? 'text-muted-foreground' : 'text-foreground']">
+              <span class="truncate">{{ typeFilterLabel }}</span>
               <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
-            <DropdownMenuItem @select="typeFilter = 'Semua tipe'">Semua tipe</DropdownMenuItem>
-            <DropdownMenuItem @select="typeFilter = 'Peminjaman'">Peminjaman</DropdownMenuItem>
-            <DropdownMenuItem @select="typeFilter = 'Permintaan'">Permintaan</DropdownMenuItem>
+            <DropdownMenuItem @select="typeFilter = 'all'">{{ t('fulfillment.allTypes') }}</DropdownMenuItem>
+            <DropdownMenuItem @select="typeFilter = 'peminjaman'">{{ t('fulfillment.loan') }}</DropdownMenuItem>
+            <DropdownMenuItem @select="typeFilter = 'permintaan'">{{ t('fulfillment.request') }}</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal bg-white', (!utilizationFilter || utilizationFilter === 'Semua pemanfaatan') ? 'text-muted-foreground' : 'text-foreground']">
-              <span class="truncate">{{ utilizationFilter || 'Semua pemanfaatan' }}</span>
+            <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal bg-white', (!utilizationFilter || utilizationFilter === 'all') ? 'text-muted-foreground' : 'text-foreground']">
+              <span class="truncate">{{ utilizationFilterLabel }}</span>
               <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
-            <DropdownMenuItem @select="utilizationFilter = 'Semua pemanfaatan'">Semua pemanfaatan</DropdownMenuItem>
-            <DropdownMenuItem @select="utilizationFilter = 'Corporate'">Corporate</DropdownMenuItem>
-            <DropdownMenuItem @select="utilizationFilter = 'Project'">Project</DropdownMenuItem>
+            <DropdownMenuItem @select="utilizationFilter = 'all'">{{ t('fulfillment.allUtilizations') }}</DropdownMenuItem>
+            <DropdownMenuItem @select="utilizationFilter = 'corporate'">{{ t('fulfillment.corporate') }}</DropdownMenuItem>
+            <DropdownMenuItem @select="utilizationFilter = 'project'">{{ t('fulfillment.project') }}</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
@@ -318,16 +335,16 @@ watch(() => page.url, (newUrl) => {
         </Transition>
 
         <div class="flex items-center gap-3 text-sm text-muted-foreground ml-auto">
-          <span>Baris per halaman</span>
+          <span>{{ t('fulfillment.rowsPerPage') }}</span>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal bg-white', (rowsPerPage === 'Semua baris' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
-                {{ rowsPerPage }}
+              <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal bg-white', (rowsPerPage === 'all' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
+                {{ rowsPerPageLabel }}
                 <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent class="w-[140px] rounded-[14px]" align="start" :side-offset="4">
-              <DropdownMenuItem @select="rowsPerPage = 'Semua baris'">Semua baris</DropdownMenuItem>
+              <DropdownMenuItem @select="rowsPerPage = 'all'">{{ t('fulfillment.allRows') }}</DropdownMenuItem>
               <DropdownMenuItem @select="rowsPerPage = '10'">10</DropdownMenuItem>
               <DropdownMenuItem @select="rowsPerPage = '25'">25</DropdownMenuItem>
             </DropdownMenuContent>

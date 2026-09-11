@@ -2,9 +2,10 @@
 /**
  * Cart Error Modal Component
  * Displays submission error messages when requesting or borrowing items,
- * mapping common backend error strings to localized Indonesian messages.
+ * mapping common backend error strings to localized Indonesian or English messages.
  */
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { Button } from '@/Components/ui/button';
 import {
   Dialog,
@@ -32,37 +33,47 @@ const emit = defineEmits<{
   (e: 'close'): void;
 }>();
 
+const { t, locale } = useI18n();
+
 const modalTitle = computed(() => {
-  return props.title || 'Gagal Mengajukan Permintaan';
+  if (props.title && props.title !== 'Gagal Mengajukan Permintaan') {
+    return props.title;
+  }
+  return t('common.modals.errorSubmitTitle');
 });
 
 /**
- * Translates common English validation or system error messages into Indonesian.
+ * Translates common validation or system error messages according to active locale.
  */
 const translateErrorMessage = (msg: string): string => {
   if (!msg) return '';
   const trimmed = msg.trim();
+  const isEn = locale.value === 'en';
 
   if (/the end date field must be a date after or equal to start date/i.test(trimmed)) {
-    return 'Tanggal selesai peminjaman harus sama dengan atau setelah tanggal mulai peminjaman.';
+    return isEn 
+      ? 'The loan end date must be equal to or after the start date.' 
+      : 'Tanggal selesai peminjaman harus sama dengan atau setelah tanggal mulai peminjaman.';
   }
   if (/the start date field must be a date after or equal to today/i.test(trimmed)) {
-    return 'Tanggal mulai peminjaman tidak boleh di masa lalu.';
+    return isEn
+      ? 'The loan start date cannot be in the past.'
+      : 'Tanggal mulai peminjaman tidak boleh di masa lalu.';
   }
   if (/the alasan field is required/i.test(trimmed)) {
-    return 'Alasan wajib diisi.';
+    return isEn ? 'The reason is required.' : 'Alasan wajib diisi.';
   }
   if (/the pemanfaatan field is required/i.test(trimmed)) {
-    return 'Pemanfaatan wajib dipilih.';
+    return isEn ? 'The utilization type is required.' : 'Pemanfaatan wajib dipilih.';
   }
   if (/the departemen field is required/i.test(trimmed)) {
-    return 'Departemen wajib dipilih untuk pemanfaatan corporate.';
+    return isEn ? 'Department is required for corporate utilization.' : 'Departemen wajib dipilih untuk pemanfaatan corporate.';
   }
   if (/the project field is required/i.test(trimmed)) {
-    return 'Project wajib dipilih untuk pemanfaatan project.';
+    return isEn ? 'Project is required for project utilization.' : 'Project wajib dipilih untuk pemanfaatan project.';
   }
   if (/the items field is required/i.test(trimmed)) {
-    return 'Barang yang dipilih wajib ada.';
+    return isEn ? 'At least one item must be selected.' : 'Barang yang dipilih wajib ada.';
   }
 
   return msg;
@@ -70,9 +81,16 @@ const translateErrorMessage = (msg: string): string => {
 
 const modalDescription = computed(() => {
   if (!props.description) {
-    return 'Terjadi kesalahan saat memproses permintaan Anda. Silakan periksa kembali formulir atau hubungi administrator.';
+    return t('common.modals.errorSubmitDefault');
   }
   return translateErrorMessage(props.description);
+});
+
+const resolvedButtonText = computed(() => {
+  if (props.buttonText && props.buttonText !== 'Tutup') {
+    return props.buttonText;
+  }
+  return t('common.close');
 });
 
 const handleClose = () => {
@@ -105,10 +123,10 @@ const handleClose = () => {
       <div class="w-full pt-2">
         <Button
           variant="primary"
-          class="w-full rounded-[0.875rem] h-10 text-sm font-semibold"
+          class="w-full rounded-[0.875rem] h-10 text-sm font-semibold cursor-pointer"
           @click="handleClose"
         >
-          {{ buttonText }}
+          {{ resolvedButtonText }}
         </Button>
       </div>
     </DialogContent>

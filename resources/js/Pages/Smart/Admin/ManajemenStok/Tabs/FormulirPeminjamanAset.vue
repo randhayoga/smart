@@ -3,6 +3,7 @@
  * Formulir Peminjaman Aset tab component allowing administrators to assign, update, and complete asset loans.
  */
 import { ref, computed, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { router } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 import { CheckCircle } from 'lucide-vue-next';
@@ -17,6 +18,8 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+
+const { t } = useI18n();
 
 const borrowUserId = ref<number | string | null>(null);
 const borrowStartDate = ref('');
@@ -81,13 +84,13 @@ const handleSaveBorrow = () => {
   errors.value = {};
 
   if (!borrowUserId.value) {
-    errors.value.user_id = 'Peminjam wajib dipilih.';
+    errors.value.user_id = t('inventory.borrowerRequired');
   }
   if (!borrowStartDate.value) {
-    errors.value.start_date = 'Tanggal mulai pinjam wajib diisi.';
+    errors.value.start_date = t('inventory.borrowStartDateRequired');
   }
   if (Object.keys(errors.value).length > 0) {
-    toast.error('Mohon lengkapi data peminjaman yang wajib diisi.');
+    toast.error(t('inventory.borrowCompleteRequired'));
     return;
   }
 
@@ -111,7 +114,7 @@ const handleSaveBorrow = () => {
         if (serverErrors.user_id) toast.error(serverErrors.user_id);
         else if (serverErrors.start_date) toast.error(serverErrors.start_date);
         else if (serverErrors.note) toast.error(serverErrors.note);
-        else toast.error('Gagal menyimpan data peminjaman.');
+        else toast.error(t('inventory.borrowSaveFailed'));
       },
       onFinish: () => {
         isBorrowSubmitting.value = false;
@@ -137,7 +140,7 @@ const handleFinishBorrow = () => {
       },
       onError: () => {
         isFinishSubmitting.value = false;
-        toast.error('Gagal menyelesaikan peminjaman.');
+        toast.error(t('inventory.borrowFinishFailed'));
       },
       onFinish: () => {
         isFinishSubmitting.value = false;
@@ -152,12 +155,12 @@ const handleFinishBorrow = () => {
     <div class="flex items-center justify-between pb-3">
       <div>
         <h4 class="text-lg font-bold text-foreground">
-          {{ asset?.status === 'Dipinjam' ? 'Informasi Peminjaman Aktif' : 'Formulir Peminjaman Aset' }}
+          {{ asset?.status === 'Dipinjam' ? t('inventory.activeBorrowInfo') : t('inventory.assetBorrowForm') }}
         </h4>
         <p class="text-sm text-muted-foreground mt-0.5">
           {{ asset?.status === 'Dipinjam' 
-            ? 'Aset sedang dipinjam. Anda dapat memperbarui informasi atau menyelesaikan peminjaman.' 
-            : 'Pilih peminjam dan tanggal mulai untuk mencatat peminjaman aset ini.' 
+            ? t('inventory.activeBorrowSubtitle') 
+            : t('inventory.newBorrowSubtitle') 
           }}
         </p>
       </div>
@@ -168,14 +171,14 @@ const handleFinishBorrow = () => {
       <!-- Peminjam (User) -->
       <Field :data-invalid="!!errors.user_id || undefined">
         <FieldLabel>
-          <span>Peminjam<span class="text-rose-500">*</span></span>
+          <span>{{ t('inventory.borrower') }}<span class="text-rose-500">*</span></span>
         </FieldLabel>
         <FieldContent>
           <Combobox
             v-model="borrowUserId"
             :options="usersOptions"
-            search-placeholder="Cari nama atau NPK..."
-            default-label="Pilih peminjam"
+            :search-placeholder="t('inventory.searchBorrowerPlaceholder')"
+            :default-label="t('inventory.selectBorrower')"
             width-class="w-full h-10 px-4"
             :error="!!errors.user_id"
           />
@@ -186,7 +189,7 @@ const handleFinishBorrow = () => {
       <!-- Tanggal Mulai Pinjam -->
       <Field :data-invalid="!!errors.start_date || undefined">
         <FieldLabel>
-          <span>Tanggal Mulai Pinjam<span class="text-rose-500">*</span></span>
+          <span>{{ t('inventory.borrowStartDate') }}<span class="text-rose-500">*</span></span>
         </FieldLabel>
         <FieldContent>
           <input
@@ -207,13 +210,13 @@ const handleFinishBorrow = () => {
       <div class="md:col-span-2">
         <Field :data-invalid="!!errors.note || undefined">
           <FieldLabel>
-            <span>Catatan / Keperluan</span>
+            <span>{{ t('inventory.borrowNotes') }}</span>
           </FieldLabel>
           <FieldContent>
             <textarea
               v-model="borrowNote"
               rows="4"
-              placeholder="Tuliskan catatan, keperluan, atau detail peminjaman..."
+              :placeholder="t('inventory.borrowNotesPlaceholder')"
               :class="[
                 'w-full px-4 py-3 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors resize-none text-foreground placeholder:text-muted-foreground',
                 errors.note 
@@ -239,7 +242,7 @@ const handleFinishBorrow = () => {
         class="inline-flex items-center gap-2"
       >
         <CheckCircle class="w-4 h-4" />
-        {{ isFinishSubmitting ? 'Memproses...' : 'Peminjaman Selesai' }}
+        {{ isFinishSubmitting ? t('inventory.processing') : t('inventory.finishBorrow') }}
       </Button>
 
       <Button
@@ -250,7 +253,7 @@ const handleFinishBorrow = () => {
         @click="handleSaveBorrow"
         class="inline-flex items-center gap-2"
       >
-        {{ isBorrowSubmitting ? 'Menyimpan...' : (asset?.status === 'Dipinjam' ? 'Simpan Perubahan' : 'Simpan Peminjaman') }}
+        {{ isBorrowSubmitting ? t('inventory.processing') : (asset?.status === 'Dipinjam' ? t('inventory.saveChanges') : t('inventory.saveBorrow')) }}
       </Button>
     </div>
   </div>

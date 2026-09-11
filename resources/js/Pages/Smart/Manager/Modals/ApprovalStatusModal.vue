@@ -5,6 +5,7 @@
  * for assets pending disposal or already decided.
  */
 import { ref, computed, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useModalLock } from '@/composables/useModalLock';
 import { X, FileText, ThumbsUp, Ban } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
@@ -27,14 +28,29 @@ const emit = defineEmits<{
   (e: 'reject'): void;
 }>();
 
+const { t } = useI18n();
+
 useModalLock(computed(() => props.open && !!props.approval));
 
 // --- Tab & Helper State ---
-const detailActiveTab = ref('Detail Aset');
+const activeTab = ref<'detail' | 'audit'>('detail');
+
+const tabList = computed(() => [t('approvals.assetDetail'), t('approvals.auditTrail')]);
+
+const currentTabLabel = computed({
+  get: () => activeTab.value === 'detail' ? t('approvals.assetDetail') : t('approvals.auditTrail'),
+  set: (val: string) => {
+    if (val === t('approvals.auditTrail')) {
+      activeTab.value = 'audit';
+    } else {
+      activeTab.value = 'detail';
+    }
+  }
+});
 
 watch(() => props.open, (newVal) => {
   if (newVal) {
-    detailActiveTab.value = 'Detail Aset';
+    activeTab.value = 'detail';
   }
 });
 
@@ -114,8 +130,8 @@ const getConditionClass = (cond?: string | null) => {
           >
             <!-- Header -->
             <div class="flex items-center justify-between pt-2 px-4 border-b border-border">
-              <Tabs v-model="detailActiveTab" :tabs="['Detail Aset', 'Jejak Audit']" />
-              <button @click="emit('update:open', false)" class="p-2 hover:bg-muted rounded-full transition-colors">
+              <Tabs v-model="currentTabLabel" :tabs="tabList" />
+              <button @click="emit('update:open', false)" class="p-2 hover:bg-muted rounded-full transition-colors" :aria-label="$t('common.close')">
                 <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
               </button>
             </div>
@@ -124,7 +140,7 @@ const getConditionClass = (cond?: string | null) => {
             <div class="overflow-y-auto max-h-[70vh] px-6 py-3 space-y-4 overscroll-contain">
               
               <!-- ── TAB 1: DETAIL ── -->
-              <div v-if="detailActiveTab === 'Detail Aset'" class="flex flex-col md:flex-row gap-6">
+              <div v-if="activeTab === 'detail'" class="flex flex-col md:flex-row gap-6">
                 <!-- Image Column -->
                 <div class="w-48 h-48 rounded-xl bg-muted shrink-0 flex items-center justify-center overflow-hidden border border-border">
                   <img 
@@ -143,35 +159,35 @@ const getConditionClass = (cond?: string | null) => {
                 <div class="flex-grow grid grid-cols-1 md:grid-cols-12 gap-4 text-foreground">
                   <!-- Column 1: Item Info -->
                   <div class="md:col-span-3">
-                    <p class="font-bold text-foreground"><span class="text-foreground">Kode Tipe:</span> {{ approval.unit_details.barang_code }}</p>
-                    <p class="font-bold text-foreground"><span class="text-foreground">Merek:</span> {{ approval.brand }}</p>
-                    <p class="font-bold text-foreground"><span class="text-foreground">Nama:</span> {{ approval.nama }}</p>
-                    <p class="font-bold text-foreground"><span class="text-foreground">Spesifikasi:</span> {{ approval.specification }}</p>
-                    <p class="text-foreground">Kategori: {{ approval.category }}</p>
-                    <p class="text-foreground">Subkategori: {{ approval.subcategory }}</p>
-                    <p class="text-foreground">Satuan: {{ approval.unit_details.barang_unit }}</p>
+                    <p class="font-bold text-foreground"><span class="text-foreground">{{ $t('approvals.typeCode') }}</span> {{ approval.unit_details.barang_code }}</p>
+                    <p class="font-bold text-foreground"><span class="text-foreground">{{ $t('approvals.brandLabel') }}</span> {{ approval.brand }}</p>
+                    <p class="font-bold text-foreground"><span class="text-foreground">{{ $t('approvals.nameLabel') }}</span> {{ approval.nama }}</p>
+                    <p class="font-bold text-foreground"><span class="text-foreground">{{ $t('approvals.specLabel') }}</span> {{ approval.specification }}</p>
+                    <p class="text-foreground">{{ $t('approvals.categoryLabel') }} {{ approval.category }}</p>
+                    <p class="text-foreground">{{ $t('approvals.subcategoryLabel') }} {{ approval.subcategory }}</p>
+                    <p class="text-foreground">{{ $t('approvals.unitLabel') }} {{ approval.unit_details.barang_unit }}</p>
                   </div>
 
                   <!-- Column 2: LOT Info -->
                   <div class="md:col-span-4">
-                    <p class="font-bold text-foreground"><span class="text-foreground">Kode LOT:</span> {{ approval.unit_details.lot_code }}</p>
-                    <p class="text-foreground">Organizer: {{ approval.unit_details.organizer }}</p>
-                    <p class="text-foreground">Tanggal registrasi: {{ formatDate(approval.unit_details.date_of_receipt) }}</p>
-                    <p class="text-foreground">Umur: {{ approval.unit_details.age !== undefined && approval.unit_details.age !== null ? `${approval.unit_details.age} tahun` : '-' }}</p>
-                    <p class="text-foreground">Vendor: {{ approval.unit_details.vendor }}</p>
-                    <p class="text-foreground">Nomor PO: {{ approval.unit_details.po_number }}</p>
+                    <p class="font-bold text-foreground"><span class="text-foreground">{{ $t('approvals.lotCodeLabel') }}</span> {{ approval.unit_details.lot_code }}</p>
+                    <p class="text-foreground">{{ $t('approvals.organizerLabel') }} {{ approval.unit_details.organizer }}</p>
+                    <p class="text-foreground">{{ $t('approvals.regDateLabel') }} {{ formatDate(approval.unit_details.date_of_receipt) }}</p>
+                    <p class="text-foreground">{{ $t('approvals.ageLabel') }} {{ approval.unit_details.age !== undefined && approval.unit_details.age !== null ? `${approval.unit_details.age} ${$t('approvals.years')}` : '-' }}</p>
+                    <p class="text-foreground">{{ $t('approvals.vendorLabel') }} {{ approval.unit_details.vendor }}</p>
+                    <p class="text-foreground">{{ $t('approvals.poNumberLabel') }} {{ approval.unit_details.po_number }}</p>
                   </div>
 
                   <!-- Column 3: Asset Info -->
                   <div class="md:col-span-5">
-                    <p class="font-bold text-foreground"><span class="text-foreground">Kode Aset:</span> {{ approval.asset_code }}</p>
+                    <p class="font-bold text-foreground"><span class="text-foreground">{{ $t('approvals.assetCodeLabel') }}</span> {{ approval.asset_code }}</p>
                     <!-- TNKB (Nopol) -->
                     <p v-if="isVehicle(approval)" class="font-bold text-foreground">
-                      <span class="text-foreground">Nopol:</span> {{ approval.unit_details.vehicle_registration || '-' }}
+                      <span class="text-foreground">{{ $t('approvals.plateLabel') }}</span> {{ approval.unit_details.vehicle_registration || '-' }}
                     </p>
 
                     <div class="flex items-center gap-1.5 flex-wrap">
-                      <span>Kondisi diajukan:</span>
+                      <span>{{ $t('approvals.proposedConditionLabel') }}</span>
                       <span :class="getConditionClass(approval.proposed_condition || approval.proposed_status || approval.status_label)">
                         {{ approval.proposed_condition || approval.proposed_status || approval.status_label }}
                       </span>
@@ -179,20 +195,20 @@ const getConditionClass = (cond?: string | null) => {
                     
                     <!-- Decided mode fields -->
                     <p v-if="mode === 'decided'" class="text-foreground">
-                      Keputusan: 
+                      {{ $t('approvals.decisionLabel') }} 
                       <span 
                         :class="[
                           'font-semibold',
                           approval.decision === 'approved' ? 'text-emerald-600' : 'text-rose-600'
                         ]"
                       >
-                        {{ approval.decision === 'approved' ? 'Disetujui' : 'Ditolak' }}
+                        {{ approval.decision === 'approved' ? $t('approvals.approved') : $t('approvals.rejected') }}
                       </span>
                     </p>
 
                     <div class="text-foreground flex flex-col gap-1.5">
                       <div class="flex items-center gap-1.5 flex-wrap">
-                        <span>Status & kondisi sebelumnya:</span>
+                        <span>{{ $t('approvals.prevStatusConditionLabel') }}</span>
                         <StatusBadge :status="approval.previous_status" />
                         <span :class="getConditionClass(approval.previous_condition || approval.unit_details.condition)">
                           {{ approval.previous_condition || approval.unit_details.condition }}
@@ -200,7 +216,7 @@ const getConditionClass = (cond?: string | null) => {
                       </div>
 
                       <div v-if="mode === 'decided'" class="flex items-center gap-1.5 flex-wrap">
-                        <span>Status & kondisi setelah approval:</span>
+                        <span>{{ $t('approvals.postApprovalStatusConditionLabel') }}</span>
                         <template v-if="approval.decision === 'approved'">
                           <StatusBadge status="Tidak Aktif" />
                           <span :class="getConditionClass(approval.proposed_condition || approval.proposed_status)">
@@ -218,19 +234,19 @@ const getConditionClass = (cond?: string | null) => {
 
                     <!-- Decided mode fields -->
                     <p class="text-foreground mt-1.5" v-if="mode === 'decided' && approval.note">
-                      Catatan Manager: <span class="italic text-muted-foreground">"{{ approval.note }}"</span>
+                      {{ $t('approvals.managerNoteLabel') }} <span class="italic text-muted-foreground">"{{ approval.note }}"</span>
                     </p>
 
-                    <p class="text-foreground mt-1.5">Nilai: {{ formatRupiah(approval.unit_details.price) }}</p>
-                    <p class="text-foreground">Lokasi penyimpanan: {{ formatLocation(approval.unit_details.location, approval.unit_details.floor, approval.unit_details.room) }}</p>
-                    <p class="text-foreground" v-if="mode === 'pending'">Pembaruan terakhir: {{ approval.requested_at }}</p>
+                    <p class="text-foreground mt-1.5">{{ $t('approvals.priceLabel') }} {{ formatRupiah(approval.unit_details.price) }}</p>
+                    <p class="text-foreground">{{ $t('approvals.storageLocationLabel') }} {{ formatLocation(approval.unit_details.location, approval.unit_details.floor, approval.unit_details.room) }}</p>
+                    <p class="text-foreground" v-if="mode === 'pending'">{{ $t('approvals.lastUpdateLabel') }} {{ approval.requested_at }}</p>
                   </div>
                 </div>
               </div>
 
               <!-- ── TAB 2: JEJAK AUDIT ── -->
               <JejakAuditTab 
-                v-if="detailActiveTab === 'Jejak Audit'"
+                v-if="activeTab === 'audit'"
                 :lifecycles="approval.unit_details.lifecycles" 
               />
             </div>
@@ -245,7 +261,7 @@ const getConditionClass = (cond?: string | null) => {
                 class="inline-flex items-center gap-2"
               >
                 <FileText class="w-4 h-4" />
-                Buka Memo / Berita Acara
+                {{ $t('approvals.openMemo') }}
               </Button>
 
               <!-- Lost Document Button (Conditional if Hilang) -->
@@ -257,7 +273,7 @@ const getConditionClass = (cond?: string | null) => {
                 class="inline-flex items-center gap-2"
               >
                 <FileText class="w-4 h-4" />
-                Surat Keterangan Kehilangan
+                {{ $t('approvals.openLostDoc') }}
               </Button>
 
               <!-- BoD/BoC Approval Document Button (Conditional if bod_boc_approval_url exists) -->
@@ -269,7 +285,7 @@ const getConditionClass = (cond?: string | null) => {
                 class="inline-flex items-center gap-2"
               >
                 <FileText class="w-4 h-4" />
-                Formulir Persetujuan BoD/BoC
+                {{ $t('approvals.openBodDoc') }}
               </Button>
 
               <!-- Pending mode buttons -->
@@ -282,7 +298,7 @@ const getConditionClass = (cond?: string | null) => {
                   class="inline-flex items-center gap-2"
                 >
                   <ThumbsUp class="w-4 h-4" />
-                  Approve
+                  {{ $t('approvals.approve') }}
                 </Button>
 
                 <!-- Red Reject Button -->
@@ -293,7 +309,7 @@ const getConditionClass = (cond?: string | null) => {
                   class="inline-flex items-center gap-2"
                 >
                   <Ban class="w-4 h-4" />
-                  Tolak
+                  {{ $t('approvals.reject') }}
                 </Button>
               </template>
 
@@ -303,7 +319,7 @@ const getConditionClass = (cond?: string | null) => {
                 variant="white"
                 size="lg"
               >
-                Kembali
+                {{ $t('common.back') }}
               </Button>
             </div>
           </div>

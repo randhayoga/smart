@@ -2,6 +2,7 @@
 /**
  * Admin Asset Inventory List Page component displaying asset units, serial numbers, locations, and condition filters.
  */
+import { useI18n } from 'vue-i18n';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import DaftarAsetTab from './Tabs/DaftarAsetTab.vue';
 
@@ -57,10 +58,11 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+const { t } = useI18n();
 </script>
 
 <template>
-  <AppLayout title="Daftar Aset">
+  <AppLayout :title="t('inventory.assetList')">
     <DaftarAsetTab
       :units="props.units"
       :locations="props.locations"

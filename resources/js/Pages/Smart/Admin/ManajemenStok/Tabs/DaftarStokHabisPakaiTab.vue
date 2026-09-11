@@ -3,6 +3,7 @@
  * Daftar Stok Habis Pakai Tab component managing consumable inventory catalog, low stock notifications, and nested lot views.
  */
 import { ref, watch, onMounted, onUnmounted, computed, h } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { router, usePage } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 import { 
@@ -68,9 +69,14 @@ const props = withDefaults(defineProps<Props>(), {
   selectedBarangCode: null,
 });
 
+const { t } = useI18n();
+
 // Selected Barang for LOT view
 const selectedBarang = ref<any | null>(null);
-const detailTabs = ['Detail', 'Daftar LOT'];
+const detailTabs = computed(() => [
+  { id: 'Detail', label: t('inventory.typeDetail') },
+  { id: 'Daftar LOT', label: t('inventory.lotList') }
+]);
 const activeDetailTab = ref('Detail');
 
 const activeBarang = computed(() => {
@@ -168,13 +174,13 @@ const categoryFilter = ref('');
 const subcategoryFilter = ref('');
 const brandFilter = ref('');
 const stockStatusFilter = ref('');
-const rowsPerPage = ref('Semua baris');
+const rowsPerPage = ref<'all' | '10' | '25' | '50'>('all');
 const dataTableRef = ref<any>(null);
 
 const getStockStatusLabel = (val: string) => {
-  if (val === 'tipis') return 'Stok tipis';
-  if (val === 'habis') return 'Stok habis';
-  return 'Semua status stok';
+  if (val === 'tipis') return t('inventory.lowStock');
+  if (val === 'habis') return t('inventory.outOfStock');
+  return t('inventory.allStockStatuses');
 };
 
 const hasActiveFilters = computed(() => {
@@ -248,7 +254,7 @@ watch(categoryFilter, () => {
 
 watch(rowsPerPage, (val) => {
   if (dataTableRef.value && dataTableRef.value.table) {
-    if (val === 'Semua baris' || !val) {
+    if (val === 'all' || (val as any) === 'Semua baris' || !val) {
       dataTableRef.value.table.setPageSize(999999);
     } else {
       dataTableRef.value.table.setPageSize(Number(val));
@@ -257,7 +263,7 @@ watch(rowsPerPage, (val) => {
 });
 
 // Table columns for Consumable Barang
-const columns: ColumnDef<any>[] = [
+const columns = computed<ColumnDef<any>[]>(() => [
   {
     id: 'select',
     size: 40,
@@ -290,7 +296,7 @@ const columns: ColumnDef<any>[] = [
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
       class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
     }, () => [
-      'Nama',
+      t('inventory.name'),
       h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
     ]),
     cell: ({ row }) => h('div', { class: 'text-foreground truncate font-medium', title: row.getValue('name') }, row.getValue('name')),
@@ -303,7 +309,7 @@ const columns: ColumnDef<any>[] = [
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
       class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
     }, () => [
-      'Spesifikasi',
+      t('inventory.specification'),
       h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
     ]),
     cell: ({ row }) => {
@@ -322,7 +328,7 @@ const columns: ColumnDef<any>[] = [
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
       class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
     }, () => [
-      'Merek',
+      t('inventory.brand'),
       h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
     ]),
     cell: ({ row }) => h('div', { class: 'text-foreground truncate' }, row.getValue('brand')),
@@ -334,7 +340,7 @@ const columns: ColumnDef<any>[] = [
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
       class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
     }, () => [
-      'Kategori',
+      t('inventory.category'),
       h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
     ]),
     cell: ({ row }) => h('div', { class: 'text-foreground truncate' }, row.getValue('category')),
@@ -346,7 +352,7 @@ const columns: ColumnDef<any>[] = [
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
       class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
     }, () => [
-      'Subkategori',
+      t('inventory.subcategory'),
       h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
     ]),
     cell: ({ row }) => h('div', { class: 'text-foreground truncate' }, row.getValue('subcategory')),
@@ -359,7 +365,7 @@ const columns: ColumnDef<any>[] = [
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
       class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
     }, () => [
-      'Total Stok',
+      t('inventory.totalStock'),
       h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
     ]),
     cell: ({ row }) => {
@@ -389,7 +395,7 @@ const columns: ColumnDef<any>[] = [
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
       class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
     }, () => [
-      'Pembaruan Terakhir',
+      t('inventory.lastUpdate'),
       h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
     ]),
     cell: ({ row }) => h('div', { class: 'text-muted-foreground truncate' }, row.getValue('lastUpdate')),
@@ -414,13 +420,13 @@ const columns: ColumnDef<any>[] = [
   {
     id: 'actions',
     size: 84,
-    header: () => h('div', { class: 'text-center font-semibold text-foreground no-print' }, 'Aksi'),
+    header: () => h('div', { class: 'text-center font-semibold text-foreground no-print' }, t('common.actions')),
     cell: ({ row }) => {
       return h('div', { class: 'flex items-center justify-end gap-2 no-print' }, [
         h(Button, {
           variant: 'table-view',
           size: 'icon-sm',
-          title: 'Lihat Detail',
+          title: t('inventory.viewDetails'),
           onClick: () => {
             const rawCode = row.original.code || row.original.number || '';
             const cleanCode = String(rawCode).replace(/[^a-zA-Z0-9]/g, '');
@@ -429,21 +435,21 @@ const columns: ColumnDef<any>[] = [
           },
         }, () => [
           h(Eye),
-          h('span', { class: 'sr-only' }, 'Lihat Detail')
+          h('span', { class: 'sr-only' }, t('inventory.viewDetails'))
         ]),
         h(Button, {
           variant: 'table-destructive',
           size: 'icon-sm',
-          title: 'Hapus',
+          title: t('common.delete'),
           onClick: () => openDeleteModal(row.original),
         }, () => [
           h(Trash2),
-          h('span', { class: 'sr-only' }, 'Hapus')
+          h('span', { class: 'sr-only' }, t('common.delete'))
         ])
       ]);
     },
   },
-];
+]);
 
 const getRowClass = (item: any) => {
   const remainingStock = Number(item.amount ?? 0);
@@ -595,7 +601,7 @@ const closeOnEscape = (e: KeyboardEvent) => {
             :href="selectedBarang ? '/smart/inventory/stok-habis-pakai' : undefined"
             :class="selectedBarang ? 'cursor-pointer hover:text-foreground' : ''"
           >
-            Daftar Stok (Habis Pakai)
+            {{ t('inventory.consumableStockList') }}
           </BreadcrumbLink>
         </BreadcrumbItem>
         <template v-if="selectedBarang && activeBarang">
@@ -639,7 +645,7 @@ const closeOnEscape = (e: KeyboardEvent) => {
     <div v-else class="space-y-4">
       <div class="px-4 bg-card rounded-xl border border-border shadow-sm overflow-hidden">
         <div class="py-3 no-print">
-          <h2 class="text-lg font-bold text-foreground">Daftar Stok (Habis Pakai)</h2>
+          <h2 class="text-lg font-bold text-foreground">{{ t('inventory.consumableStockList') }}</h2>
 
           <!-- Filters & Actions -->
           <div class="mt-4 flex flex-col space-y-4">
@@ -648,12 +654,12 @@ const closeOnEscape = (e: KeyboardEvent) => {
               <div class="flex flex-wrap items-end gap-3 flex-1">
                 <!-- Search -->
                 <div class="space-y-1.5 flex-1 min-w-[200px] max-w-xs">
-                  <label for="search-stok-habis-pakai" class="text-xs text-muted-foreground font-medium block">Filter</label>
+                  <label for="search-stok-habis-pakai" class="text-xs text-muted-foreground font-medium block">{{ t('inventory.filter') }}</label>
                   <TableSearch 
                     id="search-stok-habis-pakai"
                     name="search"
                     v-model="searchQuery"
-                    placeholder="Cari nama atau spesifikasi..." 
+                    :placeholder="t('inventory.searchItemPlaceholder')" 
                   />
                 </div>
 
@@ -661,20 +667,20 @@ const closeOnEscape = (e: KeyboardEvent) => {
                 <Combobox
                   v-model="brandFilter"
                   :options="filteredBrands"
-                  search-placeholder="Cari merek..."
-                  default-label="Semua merek"
+                  :search-placeholder="t('inventory.searchBrandPlaceholder')"
+                  :default-label="t('inventory.allBrands')"
                 />
 
                 <!-- Kategori Dropdown -->
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal', !categoryFilter ? 'text-muted-foreground' : 'text-foreground']">
-                      <span class="truncate">{{ categoryFilter || 'Semua kategori' }}</span>
+                      <span class="truncate">{{ categoryFilter || t('inventory.allCategories') }}</span>
                       <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px]" align="start" :side-offset="4">
-                    <DropdownMenuItem @select="categoryFilter = ''">Semua kategori</DropdownMenuItem>
+                    <DropdownMenuItem @select="categoryFilter = ''">{{ t('inventory.allCategories') }}</DropdownMenuItem>
                     <DropdownMenuItem v-for="cat in filteredCategories" :key="cat.id" @select="categoryFilter = cat.name">
                       {{ cat.name }}
                     </DropdownMenuItem>
@@ -685,22 +691,22 @@ const closeOnEscape = (e: KeyboardEvent) => {
                 <Combobox
                   v-model="subcategoryFilter"
                   :options="filteredSubcategories"
-                  search-placeholder="Cari subkategori..."
-                  default-label="Semua subkategori"
+                  :search-placeholder="t('inventory.searchSubcategoryPlaceholder')"
+                  :default-label="t('inventory.allSubcategories')"
                 />
 
                 <!-- Status Stok Dropdown -->
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal', !stockStatusFilter ? 'text-muted-foreground' : 'text-foreground']">
-                      <span class="truncate">{{ stockStatusFilter ? getStockStatusLabel(stockStatusFilter) : 'Semua status stok' }}</span>
+                      <span class="truncate">{{ stockStatusFilter ? getStockStatusLabel(stockStatusFilter) : t('inventory.allStockStatuses') }}</span>
                       <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px]" align="start" :side-offset="4">
-                    <DropdownMenuItem @select="stockStatusFilter = ''">Semua status stok</DropdownMenuItem>
-                    <DropdownMenuItem @select="stockStatusFilter = 'tipis'">Stok tipis</DropdownMenuItem>
-                    <DropdownMenuItem @select="stockStatusFilter = 'habis'">Stok habis</DropdownMenuItem>
+                    <DropdownMenuItem @select="stockStatusFilter = ''">{{ t('inventory.allStockStatuses') }}</DropdownMenuItem>
+                    <DropdownMenuItem @select="stockStatusFilter = 'tipis'">{{ t('inventory.lowStock') }}</DropdownMenuItem>
+                    <DropdownMenuItem @select="stockStatusFilter = 'habis'">{{ t('inventory.outOfStock') }}</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
 
@@ -721,16 +727,16 @@ const closeOnEscape = (e: KeyboardEvent) => {
 
               <!-- Rows Per Page -->
               <div class="flex items-center gap-3 text-sm text-muted-foreground pb-0.5">
-                <span class="whitespace-nowrap text-right">Baris per halaman</span>
+                <span class="whitespace-nowrap text-right">{{ t('inventory.rowsPerPage') }}</span>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal', (rowsPerPage === 'Semua baris' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
-                      {{ rowsPerPage }}
+                    <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal', (rowsPerPage === 'all' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
+                      {{ rowsPerPage === 'all' ? t('inventory.allRows') : rowsPerPage }}
                       <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px]" align="start" :side-offset="4">
-                    <DropdownMenuItem @select="rowsPerPage = 'Semua baris'">Semua baris</DropdownMenuItem>
+                    <DropdownMenuItem @select="rowsPerPage = 'all'">{{ t('inventory.allRows') }}</DropdownMenuItem>
                     <DropdownMenuItem @select="rowsPerPage = '10'">10</DropdownMenuItem>
                     <DropdownMenuItem @select="rowsPerPage = '25'">25</DropdownMenuItem>
                     <DropdownMenuItem @select="rowsPerPage = '50'">50</DropdownMenuItem>
@@ -742,7 +748,7 @@ const closeOnEscape = (e: KeyboardEvent) => {
             <!-- Row 2: Bulk Actions & New Item -->
             <div class="flex flex-wrap items-end justify-between gap-4 pt-2">
               <div class="space-y-2 flex-1 min-w-0">
-                <label class="text-xs text-muted-foreground font-medium block ml-0.5">Aksi Terpilih</label>
+                <label class="text-xs text-muted-foreground font-medium block ml-0.5">{{ t('inventory.selectedActions') }}</label>
                 <div class="flex flex-wrap gap-2">
                   <Button 
                     @click="openBulkEditModal"
@@ -750,7 +756,7 @@ const closeOnEscape = (e: KeyboardEvent) => {
                     variant="more-round-warning"
                   >
                     <Pencil class="w-4 h-4" />
-                    <span class="hidden sm:inline">Edit Terpilih</span>
+                    <span class="hidden sm:inline">{{ t('inventory.editSelected') }}</span>
                   </Button>
                   <Button 
                     @click="openDeleteModal(dataTableRef.table.getFilteredRowModel().rows.filter((r: any) => r.getIsSelected()).map((r: any) => r.original))"
@@ -758,7 +764,7 @@ const closeOnEscape = (e: KeyboardEvent) => {
                     variant="destructive"
                   >
                     <Trash2 class="w-4 h-4" />
-                    <span class="hidden sm:inline">Hapus Terpilih</span>
+                    <span class="hidden sm:inline">{{ t('inventory.deleteSelected') }}</span>
                   </Button>
                 </div>
               </div>
@@ -769,7 +775,7 @@ const closeOnEscape = (e: KeyboardEvent) => {
                 size="lg"
               >
                 <Plus class="w-4 h-4" />
-                <span>Tipe Baru</span>               
+                <span>{{ t('inventory.newType') }}</span>               
               </Button>
             </div>
           </div>
@@ -810,7 +816,7 @@ const closeOnEscape = (e: KeyboardEvent) => {
     <DeleteConfirmationModal 
       :is-open="isDeleteModalOpen"
       :item-count="itemsToDelete.length"
-      item-name="Tipe"
+      :item-name="t('inventory.itemType')"
       :item-data="itemsToDelete.length === 1 ? itemsToDelete[0] : itemsToDelete"
       :processing="processing"
       @close="closeDeleteModal"

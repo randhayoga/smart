@@ -3,6 +3,7 @@
  * Non-Consumable LOT Detail Page component presenting lot acquisition details, location mappings, and individual asset units.
  */
 import { ref, watch, onMounted, onUnmounted, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { router, usePage } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 import AppLayout from '@/Layouts/AppLayout.vue';
@@ -78,7 +79,12 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const tabs = ['Detail', 'Daftar Aset'];
+const { t, locale } = useI18n();
+
+const tabs = computed(() => [
+  { id: 'Detail', label: t('inventory.lotDetail') },
+  { id: 'Daftar Aset', label: t('inventory.assetList') }
+]);
 const activeTab = ref('Detail');
 
 // Lot Edit Modal Setup
@@ -119,7 +125,8 @@ const formatRupiah = (val: number | string | null | undefined) => {
   if (val === null || val === undefined) return '-';
   const num = typeof val === 'string' ? parseFloat(val) : val;
   if (isNaN(num)) return '-';
-  const formatted = Math.floor(num).toLocaleString('id-ID');
+  const loc = locale.value === 'en' ? 'en-US' : 'id-ID';
+  const formatted = Math.floor(num).toLocaleString(loc);
   return `Rp${formatted}`;
 };
 
@@ -140,11 +147,11 @@ const processing = ref(false);
 const deleteFields = computed(() => {
   if (deleteMode.value === 'lot') {
     return [
-      { label: 'Kode LOT', value: props.lot.number },
-      { label: 'Lokasi', value: formatLocation(props.lot.location, props.lot.floor, props.lot.room) },
-      { label: 'Tanggal registrasi', value: formatDate(props.lot.date_of_receipt) },
-      { label: 'Harga default', value: formatRupiah(props.lot.unitPrice) },
-      { label: 'Pembebanan', value: props.lot.burden || '-' },
+      { label: t('inventory.lotCode'), value: props.lot.number },
+      { label: t('inventory.location'), value: formatLocation(props.lot.location, props.lot.floor, props.lot.room) },
+      { label: t('inventory.registrationDate'), value: formatDate(props.lot.date_of_receipt) },
+      { label: t('inventory.defaultUnitPrice'), value: formatRupiah(props.lot.unitPrice) },
+      { label: t('inventory.burden'), value: props.lot.burden || '-' },
     ];
   }
   return [];
@@ -202,12 +209,12 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <AppLayout title="Detail LOT">
+  <AppLayout :title="t('inventory.lotDetail')">
     <!-- Breadcrumb -->
     <Breadcrumb class="no-print">
       <BreadcrumbList class="pb-3">
         <BreadcrumbItem>
-          <BreadcrumbLink href="/smart/inventory">Manajemen Barang</BreadcrumbLink>
+          <BreadcrumbLink href="/smart/inventory">{{ t('inventory.inventoryManagement') }}</BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
@@ -226,10 +233,10 @@ onUnmounted(() => {
 
       <div class="flex items-center gap-3">
         <Button @click="openEditLotModal" variant="primary" size="lg">
-          Edit Detail LOT
+          {{ t('inventory.editLotDetail') }}
         </Button>
         <Button @click="openDeleteLotModal" variant="destructive" size="lg">
-          Hapus LOT
+          {{ t('inventory.deleteLot') }}
         </Button>
       </div>
     </div>
@@ -272,7 +279,7 @@ onUnmounted(() => {
     <DeleteConfirmationModal 
       :is-open="isDeleteModalOpen"
       :item-count="1"
-      :item-name="'LOT'"
+      :item-name="t('inventory.lotItem')"
       :item-data="lotToDelete"
       :fields="deleteFields"
       :processing="processing"

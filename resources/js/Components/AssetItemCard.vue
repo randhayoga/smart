@@ -199,30 +199,30 @@ const activeAssets = computed(() => {
             v-if="status === 'fulfilled'" 
             class="inline-flex items-center rounded-full bg-green-500/10 px-2 py-0.5 text-[10px] font-bold text-green-600 ring-1 ring-inset ring-green-500/20"
           >
-            {{ isConsumable ? 'Sudah Disediakan' : 'Sudah Dialokasikan' }}
+            {{ isConsumable ? $t('requests.alreadyProvided') : $t('requests.alreadyAllocated') }}
           </span>
         </div>
 
         <!-- Category / Subcategory Hierarchy -->
         <p class="text-xs text-muted-foreground">
           <template v-if="subcategory && category && displayTitle !== subcategory && !displayTitle.toLowerCase().includes(subcategory.toLowerCase())">
-            Kategori: {{ category }} ({{ subcategory }})
+            {{ $t('requests.categoryLabel') }} {{ category }} ({{ subcategory }})
           </template>
           <template v-else-if="category">
-            Kategori: {{ category }}
+            {{ $t('requests.categoryLabel') }} {{ category }}
           </template>
         </p>
 
         <!-- Warehouse Stock Indicator (Admin only) -->
         <div v-if="stock !== null && isAdmin" class="text-xs font-semibold text-foreground">
-          Stok tersedia: 
+          {{ $t('requests.availableStock') }} 
           <span :class="stock >= Number(quantity) ? 'text-green-600' : 'text-red-500'">
             {{ stock }} {{ uom }}
           </span>
         </div>
 
         <!-- Quantity & Unit of Measurement -->
-        <p class="text-xs text-foreground font-semibold">{{ quantityLabel }}: {{ quantity }} {{ uom }}</p>
+        <p class="text-xs text-foreground font-semibold">{{ quantityLabel ? quantityLabel : $t('requests.requestedQuantity') }}: {{ quantity }} {{ uom }}</p>
         
         <!-- Legacy / Simple Collapsible Allocated Asset Serial Numbers -->
         <div v-if="!allocationSlots && activeAssets.length > 0" class="pt-1.5">
@@ -231,7 +231,7 @@ const activeAssets = computed(() => {
             @click="showAssets = !showAssets"
             class="text-xs font-bold text-[#6366F1] hover:text-[#5558EB] flex items-center gap-1 transition-colors focus:outline-none"
           >
-            <span>{{ showAssets ? 'Sembunyikan Alokasi Aset' : 'Lihat Alokasi Aset' }}</span>
+            <span>{{ showAssets ? $t('requests.hideAssetAllocation') : $t('requests.viewAssetAllocation') }}</span>
             <ChevronUp v-if="showAssets" class="w-3.5 h-3.5" />
             <ChevronDown v-else class="w-3.5 h-3.5" />
           </button>
@@ -241,7 +241,7 @@ const activeAssets = computed(() => {
             v-if="showAssets" 
             class="mt-2 pl-3 py-1 space-y-1 animate-in fade-in slide-in-from-top-1 duration-200"
           >
-            <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Aset:</p>
+            <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">{{ $t('requests.assetsLabel') }}</p>
             <ul class="space-y-1">
               <li v-for="(asset, idx) in activeAssets" :key="idx" class="text-xs text-foreground font-semibold flex items-center gap-1.5">
                 <span class="w-1 h-1 rounded-full bg-foreground shrink-0"></span>
@@ -263,7 +263,7 @@ const activeAssets = computed(() => {
           @click="showAssetAllocation = !showAssetAllocation"
           class="text-xs font-bold text-[#6366F1] hover:text-[#5558EB] flex items-center gap-1.5 transition-colors focus:outline-none"
         >
-          <span>{{ showAssetAllocation ? 'Sembunyikan Alokasi Aset' : 'Lihat Alokasi Aset' }}</span>
+          <span>{{ showAssetAllocation ? $t('requests.hideAssetAllocation') : $t('requests.viewAssetAllocation') }}</span>
           <ChevronUp v-if="showAssetAllocation" class="w-3.5 h-3.5" />
           <ChevronDown v-else class="w-3.5 h-3.5" />
         </button>
@@ -277,7 +277,7 @@ const activeAssets = computed(() => {
           size="sm"
           class="text-xs font-semibold h-8 px-3.5 bg-[#4F46E5] hover:bg-[#4338CA] text-white"
         >
-          {{ allocationActionLabel }}
+          {{ allocationActionLabel || $t('requests.chooseAssetAllocation') }}
         </Button>
       </div>
 
@@ -302,7 +302,7 @@ const activeAssets = computed(() => {
             <div class="flex items-center gap-2">
               <span class="font-bold font-mono">{{ slot.slot_number }}.</span>
               <span v-if="slot.asset_number" class="font-semibold font-mono">{{ slot.asset_number }}</span>
-              <span v-else class="italic font-medium">Belum dialokasikan</span>
+              <span v-else class="italic font-medium">{{ $t('requests.notYetAllocated') }}</span>
             </div>
             <span 
               class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded"
@@ -314,7 +314,7 @@ const activeAssets = computed(() => {
                     : 'bg-red-200/60 text-red-900 dark:bg-red-900/50 dark:text-red-200'
               ]"
             >
-              {{ slot.color === 'purple' ? 'Dialokasikan' : (slot.color === 'green' ? 'Dipinjam' : 'Kosong') }}
+              {{ slot.color === 'purple' ? $t('requests.allocated') : (slot.color === 'green' ? $t('requests.borrowed') : $t('requests.emptySlot')) }}
             </span>
           </div>
         </div>
@@ -341,7 +341,7 @@ const activeAssets = computed(() => {
             @click="showConsumableAllocation = !showConsumableAllocation"
             class="text-xs font-bold text-[#6366F1] hover:text-[#5558EB] flex items-center gap-1.5 transition-colors focus:outline-none"
           >
-            <span>{{ showConsumableAllocation ? 'Sembunyikan Alokasi Stok' : 'Lihat Alokasi Stok' }}</span>
+            <span>{{ showConsumableAllocation ? $t('requests.hideStockAllocation') : $t('requests.viewStockAllocation') }}</span>
             <ChevronUp v-if="showConsumableAllocation" class="w-3.5 h-3.5" />
             <ChevronDown v-else class="w-3.5 h-3.5" />
           </button>
@@ -356,7 +356,7 @@ const activeAssets = computed(() => {
           size="sm"
           class="text-xs font-semibold h-8 px-3.5 bg-[#4F46E5] hover:bg-[#4338CA] text-white"
         >
-          Pilih Alokasi
+          {{ $t('requests.chooseAllocation') }}
         </Button>
       </div>
 
@@ -373,25 +373,25 @@ const activeAssets = computed(() => {
           >
             <div class="flex items-start justify-between gap-2">
               <div class="font-bold text-foreground text-sm font-mono">
-                <span class="text-muted-foreground font-sans text-xs font-normal">Kode LOT: </span>{{ lot.lot_number }}
+                <span class="text-muted-foreground font-sans text-xs font-normal">{{ $t('requests.lotCodeLabel') }}</span>{{ lot.lot_number }}
               </div>
               <span class="font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800 text-[11px]">
                 {{ lot.quantity_fulfilled }} {{ uom }}
               </span>
             </div>
             <div class="text-foreground">
-              <span class="text-muted-foreground">Barang Fisik: </span>
+              <span class="text-muted-foreground">{{ $t('requests.physicalItemLabel') }}</span>
               <span class="font-semibold">{{ lot.brand_name }} {{ lot.item_name }}</span>
               <span v-if="lot.specification" class="text-muted-foreground font-normal ml-1">({{ lot.specification }})</span>
             </div>
             <div class="text-xs text-muted-foreground">
-              <span>Lokasi Penyimpanan: </span>
+              <span>{{ $t('requests.storageLocationLabel') }}</span>
               <span class="font-medium text-foreground">{{ lot.storage_location }}</span>
             </div>
           </div>
         </div>
         <div v-else class="p-3 rounded-lg border border-dashed border-border bg-muted/10 text-xs text-muted-foreground text-center">
-          Stok tidak mencukupi.
+          {{ $t('requests.insufficientStock') }}
         </div>
       </div>
     </div>

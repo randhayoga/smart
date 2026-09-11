@@ -3,6 +3,7 @@
  * Edit Tipe Modal component for updating item definitions, UOM, brand, specifications, and default images.
  */
 import { ref, watch, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useModalLock } from '@/composables/useModalLock';
 import { useForm } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
@@ -26,6 +27,8 @@ const emit = defineEmits<{
   (e: 'update:open', value: boolean): void;
   (e: 'success'): void;
 }>();
+
+const { t } = useI18n();
 
 useModalLock(computed(() => props.open));
 
@@ -100,8 +103,8 @@ const handleFileUpload = (e: any) => {
   const file = e.target.files[0];
   if (!file) return;
   const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
-  if (!allowedTypes.includes(file.type)) { alert('Hanya diperbolehkan file .jpg, .jpeg, atau .png'); return; }
-  if (file.size > 1024 * 1024) { alert('Ukuran foto maksimal 1MB'); return; }
+  if (!allowedTypes.includes(file.type)) { alert(t('inventory.invalidFileFormat')); return; }
+  if (file.size > 1024 * 1024) { alert(t('inventory.fileTooLarge1Mb')); return; }
   form.photo = file;
   form.photoName = file.name;
 };
@@ -125,16 +128,16 @@ const handleSubmit = () => {
 
   if (isSingle.value) {
     let isValid = true;
-    if (!form.uom_id) { errors.value.uom_id = 'Satuan belum dipilih'; isValid = false; }
-    if (!form.brand_id) { errors.value.brand_id = 'Merek belum dipilih'; isValid = false; }
-    if (!form.name) { errors.value.name = 'Nama Tipe belum diisi'; isValid = false; }
+    if (!form.uom_id) { errors.value.uom_id = t('inventory.uomRequired'); isValid = false; }
+    if (!form.brand_id) { errors.value.brand_id = t('inventory.brandRequired'); isValid = false; }
+    if (!form.name) { errors.value.name = t('inventory.nameRequired'); isValid = false; }
     if (!isValid) return;
   } else {
     const hasAtLeastOneField = !!(
       form.uom_id || form.brand_id || form.name || form.specification || form.photo
     );
     if (!hasAtLeastOneField) {
-      toast.error('Harap isi minimal satu input untuk melakukan perubahan massal.');
+      toast.error(t('inventory.atLeastOneField'));
       return;
     }
   }
@@ -196,7 +199,7 @@ const handleSubmit = () => {
             <!-- Modal Header -->
             <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
               <h3 class="text-lg font-bold text-foreground">
-                {{ isSingle ? 'Edit Tipe' : 'Edit Tipe Terpilih' }}
+                {{ isSingle ? t('inventory.editTypeDetail') : t('inventory.editTypeSelected') }}
               </h3>
               <button @click="closeModal" class="p-2 hover:bg-muted rounded-full transition-colors">
                 <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
@@ -209,11 +212,11 @@ const handleSubmit = () => {
                 <!-- Left Column -->
                 <div class="space-y-6">
                   <Field data-disabled>
-                    <FieldLabel>Kode Tipe</FieldLabel>
+                    <FieldLabel>{{ t('inventory.typeCode') }}</FieldLabel>
                     <FieldContent>
                       <input 
                         type="text" 
-                        :value="selectedItem ? selectedItem.code : 'Tidak dapat diubah'"
+                        :value="selectedItem ? selectedItem.code : t('inventory.cannotBeChanged')"
                         disabled
                         class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
                       />
@@ -221,11 +224,11 @@ const handleSubmit = () => {
                   </Field>
 
                   <Field data-disabled>
-                    <FieldLabel>Kategori</FieldLabel>
+                    <FieldLabel>{{ t('inventory.category') }}</FieldLabel>
                     <FieldContent>
                       <input 
                         type="text" 
-                        :value="selectedItem ? selectedItem.category : 'Tidak dapat diubah'"
+                        :value="selectedItem ? selectedItem.category : t('inventory.cannotBeChanged')"
                         disabled
                         class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
                       />
@@ -233,11 +236,11 @@ const handleSubmit = () => {
                   </Field>
 
                   <Field data-disabled>
-                    <FieldLabel>Subkategori</FieldLabel>
+                    <FieldLabel>{{ t('inventory.subcategory') }}</FieldLabel>
                     <FieldContent>
                       <input 
                         type="text" 
-                        :value="selectedItem ? selectedItem.subcategory : 'Tidak dapat diubah'"
+                        :value="selectedItem ? selectedItem.subcategory : t('inventory.cannotBeChanged')"
                         disabled
                         class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
                       />
@@ -246,14 +249,14 @@ const handleSubmit = () => {
 
                    <Field :data-invalid="(isSingle && !!errors.uom_id) || undefined">
                     <FieldLabel>
-                      <span>Satuan<span v-if="isSingle" class="text-rose-500">*</span></span>
+                      <span>{{ t('inventory.uom') }}<span v-if="isSingle" class="text-rose-500">*</span></span>
                     </FieldLabel>
                     <FieldContent>
                       <Combobox
                         v-model="form.uom_id"
                         :options="uoms"
-                        search-placeholder="Cari satuan..."
-                        :default-label="isSingle ? 'Pilih satuan tipe' : 'Tidak berubah'"
+                        :search-placeholder="t('inventory.searchUomPlaceholder')"
+                        :default-label="isSingle ? t('inventory.selectUom') : t('inventory.unchanged')"
                         width-class="w-full h-10 px-4"
                         :error="isSingle && !!errors.uom_id"
                       />
@@ -266,14 +269,14 @@ const handleSubmit = () => {
                 <div class="space-y-6">
                   <Field :data-invalid="(isSingle && !!errors.brand_id) || undefined">
                     <FieldLabel>
-                      <span>Merek<span v-if="isSingle" class="text-rose-500">*</span></span>
+                      <span>{{ t('inventory.brand') }}<span v-if="isSingle" class="text-rose-500">*</span></span>
                     </FieldLabel>
                     <FieldContent>
                       <Combobox
                         v-model="form.brand_id"
                         :options="brands"
-                        search-placeholder="Cari merek..."
-                        :default-label="isSingle ? 'Pilih merek' : 'Tidak berubah'"
+                        :search-placeholder="t('inventory.searchBrandPlaceholder')"
+                        :default-label="isSingle ? t('inventory.selectBrand') : t('inventory.unchanged')"
                         width-class="w-full h-10 px-4"
                         :error="isSingle && !!errors.brand_id"
                       />
@@ -283,14 +286,14 @@ const handleSubmit = () => {
 
                   <Field :data-invalid="(isSingle && !!errors.name) || undefined">
                     <FieldLabel>
-                      <span>Nama Tipe<span v-if="isSingle" class="text-rose-500">*</span></span>
+                      <span>{{ t('inventory.typeName') }}<span v-if="isSingle" class="text-rose-500">*</span></span>
                     </FieldLabel>
                     <FieldContent>
                       <input 
                         type="text" 
                         v-model="form.name"
                         maxlength="255"
-                        :placeholder="isSingle ? 'Input nama tipe di sini...' : 'Tidak berubah'" 
+                        :placeholder="isSingle ? t('inventory.typeNamePlaceholder') : t('inventory.unchanged')" 
                         class="w-full px-4 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors h-10"
                         :class="[isSingle && errors.name ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']"
                       />
@@ -299,20 +302,20 @@ const handleSubmit = () => {
                   </Field>
 
                   <Field>
-                    <FieldLabel>Spesifikasi</FieldLabel>
+                    <FieldLabel>{{ t('inventory.specification') }}</FieldLabel>
                     <FieldContent>
                       <input 
                         type="text" 
                         v-model="form.specification"
                         maxlength="255"
-                        :placeholder="isSingle ? 'Input spesifikasinya di sini...' : 'Tidak berubah'" 
+                        :placeholder="isSingle ? t('inventory.specificationPlaceholder') : t('inventory.unchanged')" 
                         class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
                       />
                     </FieldContent>
                   </Field>
 
                   <Field>
-                    <FieldLabel>Foto <span class="italic">default</span></FieldLabel>
+                    <FieldLabel>{{ t('inventory.defaultPhoto') }}</FieldLabel>
                     <FieldContent>
                       <div class="flex flex-col gap-1 w-full">
                         <div class="flex gap-2 w-full">
@@ -325,7 +328,7 @@ const handleSubmit = () => {
                             ]"
                             @click="(form.photo || (selectedItem && selectedItem.image_url)) && viewImageInNewTab()"
                           >
-                            {{ form.photoName || (isSingle ? 'Belum ada foto yang dipilih' : 'Tidak berubah') }}
+                            {{ form.photoName || (isSingle ? t('inventory.noPhotoSelected') : t('inventory.unchanged')) }}
                           </div>
                           <input 
                             type="file" 
@@ -338,10 +341,10 @@ const handleSubmit = () => {
                             @click="triggerFileInput"
                             size="lg"
                           >
-                            Pilih File
+                            {{ t('inventory.chooseFile') }}
                           </Button>
                         </div>
-                        <p class="text-[10px] text-muted-foreground ml-1">Maksimal ukuran 1 MB (.jpg, .jpeg, .png)</p>
+                        <p class="text-[10px] text-muted-foreground ml-1">{{ t('inventory.maxFileSize1Mb') }}</p>
                       </div>
                     </FieldContent>
                   </Field>
@@ -352,7 +355,7 @@ const handleSubmit = () => {
             <!-- Modal Footer -->
             <div class="py-3 px-4 border-t border-border flex items-center justify-between">
               <p class="text-sm text-rose-500 italic font-medium">
-                {{ isSingle ? '*Wajib diisi' : '*Kosongkan input yang tidak ingin diubah' }}
+                {{ isSingle ? t('inventory.requiredMarker') : t('inventory.bulkEmptyMarker') }}
               </p>
               <div class="flex items-center gap-3">
                 <Button 
@@ -360,7 +363,7 @@ const handleSubmit = () => {
                   variant="white"
                   size="xl"
                 >
-                  Batal
+                  {{ t('common.cancel') }}
                 </Button>
                 <Button 
                   @click="handleSubmit"
@@ -371,7 +374,7 @@ const handleSubmit = () => {
                 >
                   <Loader2 v-if="form.processing" class="absolute inset-0 m-auto h-5 w-5 animate-spin" />
                   <span :class="{ 'opacity-0': form.processing }">
-                    {{ isSingle ? 'Simpan Perubahan' : 'Simpan Perubahan Massal' }}
+                    {{ isSingle ? t('inventory.saveChanges') : t('inventory.saveBulkChanges') }}
                   </span>
                 </Button>
               </div>

@@ -4,6 +4,7 @@
  */
 import { computed } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
 import { ChevronRight, LogOut } from 'lucide-vue-next';
 import { mainNavigation, userNavigation, type NavItem, type NavSection } from '@/config/navigation';
 import { ScrollArea } from '@/Components/ui/scroll-area';
@@ -16,6 +17,7 @@ import {
   SheetDescription,
 } from '@/Components/ui/sheet';
 import ApplicationLogo from '@/Components/ApplicationLogo.vue';
+import LanguageSelector from '@/Components/LanguageSelector.vue';
 
 interface Props {
   open: boolean;
@@ -28,6 +30,7 @@ const emit = defineEmits<{
 }>();
 
 const page = usePage();
+const { t, te, locale } = useI18n();
 
 // Determine if user is admin from shared props
 const isAdmin = computed(() => (page.props.auth as { user: any; isAdmin?: boolean })?.isAdmin ?? false);
@@ -207,7 +210,7 @@ const isActive = (href: string): boolean => {
             v-if="section.title" 
             class="px-3 mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
           >
-            {{ section.title }}
+            {{ section.titleKey && te(section.titleKey) ? t(section.titleKey) : section.title }}
           </h3>
           
           <!-- Nav Items -->
@@ -227,7 +230,7 @@ const isActive = (href: string): boolean => {
                 :is="item.icon" 
                 class="h-5 w-5 flex-shrink-0 transition-transform group-hover:scale-110" 
               />
-              <span class="flex-1">{{ item.title }}</span>
+              <span class="flex-1">{{ item.titleKey && te(item.titleKey) ? t(item.titleKey) : item.title }}</span>
               <Badge 
                 v-if="item.badge" 
                 :class="[
@@ -258,7 +261,7 @@ const isActive = (href: string): boolean => {
         class="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-red-600 transition-all duration-200 hover:bg-red-50 cursor-pointer"
       >
         <LogOut class="h-5 w-5" />
-        Keluar
+        {{ $t('common.userMenu.logout') }}
       </Link>
     </div>
   </aside>
@@ -288,7 +291,7 @@ const isActive = (href: string): boolean => {
               v-if="section.title" 
               class="px-3 mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
             >
-              {{ section.title }}
+              {{ section.titleKey && te(section.titleKey) ? t(section.titleKey) : section.title }}
             </h3>
             
             <!-- Nav Items -->
@@ -309,7 +312,7 @@ const isActive = (href: string): boolean => {
                   :is="item.icon" 
                   class="h-5 w-5 flex-shrink-0 transition-transform group-hover:scale-110" 
                 />
-                <span class="flex-1">{{ item.title }}</span>
+                <span class="flex-1">{{ item.titleKey && te(item.titleKey) ? t(item.titleKey) : item.title }}</span>
                 <Badge 
                   v-if="item.badge" 
                   :class="[
@@ -328,8 +331,12 @@ const isActive = (href: string): boolean => {
       </ScrollArea>
       </div>
       
-      <!-- Fixed Logout Button at Bottom -->
-      <div class="p-4 border-t border-sidebar-border flex-shrink-0 bg-sidebar">
+      <!-- Fixed Language Selector & Logout in Mobile Footer -->
+      <div class="p-4 border-t border-sidebar-border flex-shrink-0 bg-sidebar space-y-2">
+        <div class="flex items-center justify-between px-1">
+          <span class="text-xs font-medium text-muted-foreground">{{ $t('common.selectLanguage') }}</span>
+          <LanguageSelector />
+        </div>
         <Link 
           :href="route('logout')" 
           method="post" 
@@ -337,7 +344,7 @@ const isActive = (href: string): boolean => {
           class="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-red-600 transition-all duration-200 hover:bg-red-50 cursor-pointer"
         >
           <LogOut class="h-5 w-5" />
-          Log Out
+          {{ $t('common.userMenu.logout') }}
         </Link>
       </div>
     </SheetContent>

@@ -5,6 +5,7 @@
  */
 import { ref, computed } from 'vue';
 import { router } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
 import { Button } from '@/Components/ui/button';
 import { ScrollArea } from "@/Components/ui/scroll-area";
 import { formatDate } from '@/lib/utils';
@@ -58,8 +59,10 @@ interface Props {
 
 const props = defineProps<Props>();
 
+const { t } = useI18n();
+
 const isPeminjaman = computed(() => props.request?.type === 'peminjaman');
-const typeLabel = computed(() => isPeminjaman.value ? 'peminjaman' : 'permintaan');
+const typeLabel = computed(() => (isPeminjaman.value ? t('requests.loan') : t('requests.request')));
 
 const emit = defineEmits<{
   (e: 'update:open', value: boolean): void;
@@ -108,9 +111,11 @@ const handleConfirmCancel = () => {
       <!-- Modal Header -->
       <div class="flex items-center justify-between pt-3 pb-2 px-4 sm:px-6 border-b border-border">
         <div>
-          <DialogTitle class="text-lg font-bold text-foreground">Pembatalan {{ typeLabel }}</DialogTitle>
+          <DialogTitle class="text-lg font-bold text-foreground">
+            {{ $t('common.modals.cancelConfirmTitle', { type: typeLabel }) }}
+          </DialogTitle>
           <DialogDescription class="sr-only">
-            Konfirmasi untuk membatalkan {{ typeLabel}} barang.
+            {{ $t('common.modals.cancelConfirmMsg', { type: typeLabel }) }}
           </DialogDescription>
         </div>
         <button :disabled="isSubmitting" @click="handleClose" class="p-2 hover:bg-muted rounded-full transition-colors disabled:opacity-50">
@@ -124,41 +129,41 @@ const handleConfirmCancel = () => {
           <!-- Alert & Detail Summary -->
           <div class="p-4 rounded-[0.875rem] bg-destructive/5 border border-destructive/20 space-y-2">
             <p class="font-bold text-destructive text-sm sm:text-base">
-              Apakah Anda yakin untuk membatalkan {{ typeLabel}} ini?
+              {{ $t('common.modals.cancelConfirmMsg', { type: typeLabel }) }}
             </p>
             <div class="space-y-1 text-sm text-foreground">
               <p class="text-base font-bold text-foreground">
-                <span class="font-normal text-muted-foreground">Nomor: </span>{{ request.number }}
+                <span class="font-normal text-muted-foreground">{{ $t('requests.number') }}: </span>{{ request.number }}
               </p>
 
               <p class="text-sm text-foreground">
-                <span class="text-muted-foreground">PIC Approval:</span> 
+                <span class="text-muted-foreground">{{ $t('requests.approverPic') }}:</span> 
                 <span class="font-semibold ml-1">
                   {{ request.approver_name || '-' }}
                 </span>
               </p>
               
               <p class="text-sm text-foreground">
-                <span class="text-muted-foreground">Pemanfaatan:</span> 
+                <span class="text-muted-foreground">{{ $t('requests.utilization') }}:</span> 
                 <span class="font-semibold ml-1">
                   {{ request.pemanfaatan === 'corporate' ? `Corporate (${request.pemanfaatanDetail})` : `Project ${request.pemanfaatanDetail}` }}
                 </span>
               </p>
 
               <p v-if="request.type === 'peminjaman' && request.durationStart" class="text-sm text-foreground">
-                <span class="text-muted-foreground">Durasi:</span>
+                <span class="text-muted-foreground">{{ $t('requests.duration') }}:</span>
                 <span class="font-medium ml-1">
                   <template v-if="request.durationEnd">
-                    {{ request.durationStart }} s.d. {{ request.durationEnd }} ({{ request.durationDays }} hari, {{ request.durationHours || 0 }} jam)
+                    {{ request.durationStart }} - {{ request.durationEnd }} ({{ request.durationDays }} {{ $t('requests.days') }}, {{ request.durationHours || 0 }} {{ $t('requests.hours') }})
                   </template>
                   <template v-else>
-                    {{ request.durationStart }} s.d. - (Tanpa Tenggat Waktu)
+                    {{ request.durationStart }} - ({{ $t('requests.noDeadline') }})
                   </template>
                 </span>
               </p>
 
               <p class="text-xs text-muted-foreground pt-1">
-                <span>Permintaan dibuat pada:</span>
+                <span>{{ $t('requests.createdAt') }}</span>
                 <span class="font-medium text-foreground/80 ml-1">{{ formatDate(request.created_at) }}</span>
               </p>
             </div>
@@ -166,7 +171,7 @@ const handleConfirmCancel = () => {
 
           <!-- Item List -->
           <div>
-            <p class="text-xs text-muted-foreground font-medium mb-3">Daftar Barang:</p>
+            <p class="text-xs text-muted-foreground font-medium mb-3">{{ $t('requests.itemList') }}</p>
             
             <ScrollArea class="h-[16rem] sm:h-[18rem] border border-border rounded-[0.875rem] bg-card">
               <div class="p-2.5 sm:p-4">
@@ -198,7 +203,7 @@ const handleConfirmCancel = () => {
             size="lg"
             :disabled="isSubmitting"
           >
-            Tidak
+            {{ $t('common.no') }}
           </Button>
           <Button 
             @click="handleConfirmCancel"
@@ -207,8 +212,8 @@ const handleConfirmCancel = () => {
             :disabled="isSubmitting"
             class="flex items-center gap-2"
           >
-            <span v-if="isSubmitting">Memproses...</span>
-            <span v-else>Iya, Batalkan</span>
+            <span v-if="isSubmitting">{{ $t('common.loading') }}</span>
+            <span v-else>{{ $t('common.modals.yesCancel') }}</span>
           </Button>
         </div>
       </div>

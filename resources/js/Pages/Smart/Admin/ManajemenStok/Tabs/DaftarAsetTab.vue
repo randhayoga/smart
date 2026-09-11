@@ -3,6 +3,7 @@
  * Daftar Aset Tab component providing asset inventory data table, multi-column filters, export, and batch operations.
  */
 import { ref, watch, onMounted, onUnmounted, computed, h } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { router, usePage } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 import { 
@@ -114,8 +115,10 @@ const locationFilter = ref('');
 const organizerFilter = ref('');
 const vendorFilter = ref('');
 const showAdvancedFilters = ref(false);
-const rowsPerPage = ref('Semua baris');
+const rowsPerPage = ref<'all' | '10' | '25' | '50'>('all');
 const dataTableRef = ref<any>(null);
+
+const { t, te, locale } = useI18n();
 
 // View Asset Modal Setup
 const isViewAssetModalOpen = ref(false);
@@ -197,7 +200,18 @@ const getExportData = () => {
 
 const getExportPayload = () => {
   const data = getExportData();
-  const headers = ['Kode Aset', 'Nama', 'Brand', 'Kategori', 'Subkategori', 'Status', 'Kondisi', 'Nilai', 'Lokasi Penyimpanan', 'TNKB (Nopol)'];
+  const headers = [
+    t('inventory.assetCode'),
+    t('inventory.name'),
+    t('inventory.brand'),
+    t('inventory.category'),
+    t('inventory.subcategory'),
+    t('inventory.status'),
+    t('inventory.condition'),
+    t('inventory.value'),
+    t('inventory.storageLocation'),
+    t('inventory.tnkbShort')
+  ];
   const rows = data.map((item: any) => [
     item.number,
     item.barang_nama,
@@ -228,7 +242,7 @@ const handleExportExcel = () => {
 const handlePrint = () => {
   const data = getExportData();
   if (!data || data.length === 0) {
-    toast.error('Tidak ada data untuk dicetak');
+    toast.error(t('inventory.noDataToPrint'));
     return;
   }
 
@@ -403,19 +417,53 @@ const availableStatuses = computed(() => {
 });
 const availableConditions = ['Bagus', 'Rusak', 'QC Passed', 'Lelang/Hibah', 'Rusak Total', 'Hilang'];
 
+const STATUS_LABEL_MAP: Record<string, string> = {
+  'tersedia': 'status.tersedia',
+  'dipinjam': 'status.dipinjam',
+  'standby': 'status.standby',
+  'tidak aktif': 'status.tidakAktif',
+  'pending': 'status.pending',
+  'pending:dm': 'status.pendingDm',
+  'pending: dm': 'status.pendingDm',
+  'bagus': 'status.bagus',
+  'rusak': 'status.rusak',
+  'qc passed': 'status.qcPassed',
+  'lelang/hibah': 'status.lelangHibah',
+  'rusak total': 'status.rusakTotal',
+  'hilang': 'status.hilang',
+  'dihapus': 'status.dihapus',
+  'ditolak': 'status.ditolak',
+  'disetujui': 'status.disetujui',
+  'sukses': 'status.sukses',
+};
+
 const getStatusLabel = (status: string) => {
-  return status || '';
+  if (!status) return '';
+  const key = STATUS_LABEL_MAP[status.toLowerCase()];
+  return key && te(key) ? t(key) : status;
+};
+
+const CONDITION_KEY_MAP: Record<string, string> = {
+  'bagus': 'inventory.conditionGood',
+  'rusak': 'inventory.conditionDamaged',
+  'qc passed': 'inventory.conditionQcPassed',
+  'lelang/hibah': 'inventory.conditionAuctionGrant',
+  'rusak total': 'inventory.conditionTotalDamage',
+  'hilang': 'inventory.conditionLost',
 };
 
 const getConditionLabel = (cond: string) => {
-  return cond || '';
+  if (!cond) return '';
+  const key = CONDITION_KEY_MAP[cond.toLowerCase()];
+  return key && te(key) ? t(key) : cond;
 };
 
 const formatRupiah = (val: number | string | null | undefined) => {
   if (val === null || val === undefined) return '-';
   const num = typeof val === 'string' ? parseFloat(val) : val;
   if (isNaN(num)) return '-';
-  const formatted = Math.floor(num).toLocaleString('id-ID');
+  const loc = locale.value === 'en' ? 'en-US' : 'id-ID';
+  const formatted = Math.floor(num).toLocaleString(loc);
   return `Rp${formatted}`;
 };
 
@@ -449,7 +497,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Kode Aset',
+        t('inventory.assetCode'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ]),
       cell: ({ row }) => h('div', { class: 'text-muted-foreground font-mono text-sm truncate font-medium' }, row.getValue('number')),
@@ -465,7 +513,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
           onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
           class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
         }, () => [
-          'Nama',
+          t('inventory.name'),
           h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
         ]),
         cell: ({ row }) => h('div', { class: 'text-foreground truncate font-medium', title: row.getValue('barang_nama') }, row.getValue('barang_nama')),
@@ -477,7 +525,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
           onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
           class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
         }, () => [
-          'Merek',
+          t('inventory.brand'),
           h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
         ]),
         cell: ({ row }) => h('div', { class: 'text-foreground truncate' }, row.getValue('barang_brand')),
@@ -489,7 +537,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
           onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
           class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
         }, () => [
-          'Kategori',
+          t('inventory.category'),
           h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
         ]),
         cell: ({ row }) => h('div', { class: 'text-foreground truncate' }, row.getValue('barang_category')),
@@ -501,7 +549,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
           onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
           class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
         }, () => [
-          'Subkategori',
+          t('inventory.subcategory'),
           h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
         ]),
         cell: ({ row }) => h('div', { class: 'text-foreground truncate' }, row.getValue('barang_subcategory')),
@@ -517,7 +565,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Status',
+        t('inventory.status'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ]),
       cell: ({ row }) => {
@@ -537,7 +585,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Kondisi',
+        t('inventory.condition'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ]),
       cell: ({ row }) => {
@@ -547,7 +595,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
         else if (cond === 'Lelang/Hibah') textClass = 'text-purple-600 font-semibold';
         else if (cond === 'Rusak' || cond === 'Rusak Total' || cond === 'Hilang') textClass = 'text-rose-600 font-semibold';
         
-        return h('span', { class: textClass }, cond);
+        return h('span', { class: textClass }, getConditionLabel(cond));
       }
     },
     {
@@ -557,7 +605,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Lokasi',
+        t('inventory.location'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ]),
       cell: ({ row }) => {
@@ -575,7 +623,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Nilai',
+        t('inventory.value'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ]),
       cell: ({ row }) => h('div', { class: 'text-muted-foreground text-sm font-medium' }, formatRupiah(row.original.price)),
@@ -586,17 +634,17 @@ const columns = computed<ColumnDef<any>[]>(() => {
     {
       id: 'actions',
       size: 80,
-      header: () => h('div', { class: 'text-center font-semibold text-foreground no-print' }, 'Aksi'),
+      header: () => h('div', { class: 'text-center font-semibold text-foreground no-print' }, t('common.actions')),
       cell: ({ row }) => {
         return h('div', { class: 'flex items-center justify-center gap-2 no-print' }, [
           h(Button, {
             variant: 'table-view',
             size: 'icon-sm',
-            title: 'Lihat Detail',
+            title: t('inventory.viewDetails'),
             onClick: () => openViewAssetModal(row.original)
           }, () => [
             h(Eye),
-            h('span', { class: 'sr-only' }, 'Lihat Detail')
+            h('span', { class: 'sr-only' }, t('inventory.viewDetails'))
           ])
         ]);
       }
@@ -608,7 +656,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
 
 watch(rowsPerPage, (val) => {
   if (dataTableRef.value && dataTableRef.value.table) {
-    if (val === 'Semua baris' || !val) {
+    if (val === 'all' || (val as any) === 'Semua baris' || !val) {
       dataTableRef.value.table.setPageSize(999999);
     } else {
       dataTableRef.value.table.setPageSize(Number(val));
@@ -626,7 +674,7 @@ const checkSearchParam = () => {
 
 onMounted(() => {
   checkSearchParam();
-  if (dataTableRef.value && dataTableRef.value.table && rowsPerPage.value === 'Semua baris') {
+  if (dataTableRef.value && dataTableRef.value.table && (rowsPerPage.value === 'all' || (rowsPerPage.value as any) === 'Semua baris')) {
     dataTableRef.value.table.setPageSize(999999);
   }
   document.addEventListener('keydown', closeOnEscape);
@@ -678,7 +726,7 @@ const totalAsetTerpilihCount = computed(() => {
     <!-- Main Card -->
     <div class="px-4 bg-card rounded-xl border border-border shadow-sm overflow-hidden">
       <div class="py-3 no-print">
-        <h2 class="text-lg font-bold text-foreground">Daftar Aset</h2>
+        <h2 class="text-lg font-bold text-foreground">{{ t('inventory.assetList') }}</h2>
         
         <!-- Filters & Actions -->
         <div class="mt-4 flex flex-col space-y-4">
@@ -687,12 +735,12 @@ const totalAsetTerpilihCount = computed(() => {
             <div class="flex flex-wrap items-end gap-3 flex-1">
               <!-- Search -->
               <div class="space-y-1.5 flex-1 min-w-[200px] max-w-xs">
-                <label for="search-aset" class="text-xs text-muted-foreground font-medium block">Filter</label>
+                <label for="search-aset" class="text-xs text-muted-foreground font-medium block">{{ t('inventory.filter') }}</label>
                 <TableSearch 
                   id="search-aset"
                   name="search"
                   v-model="searchQuery"
-                  placeholder="Cari Kode Aset atau nama..." 
+                  :placeholder="t('inventory.searchAssetPlaceholder')" 
                 />
               </div>
 
@@ -700,12 +748,12 @@ const totalAsetTerpilihCount = computed(() => {
               <DropdownMenu v-if="props.filterVariant !== 'simple'">
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal', !categoryFilter ? 'text-muted-foreground' : 'text-foreground']">
-                    <span class="truncate">{{ categoryFilter || 'Semua kategori' }}</span>
+                    <span class="truncate">{{ categoryFilter || t('inventory.allCategories') }}</span>
                     <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent class="w-[200px] rounded-[14px] max-h-60 overflow-y-auto" align="start" :side-offset="4">
-                  <DropdownMenuItem @select="categoryFilter = ''">Semua kategori</DropdownMenuItem>
+                  <DropdownMenuItem @select="categoryFilter = ''">{{ t('inventory.allCategories') }}</DropdownMenuItem>
                   <DropdownMenuItem v-for="cat in availableCategories" :key="cat" @select="categoryFilter = cat">
                     {{ cat }}
                   </DropdownMenuItem>
@@ -717,20 +765,20 @@ const totalAsetTerpilihCount = computed(() => {
                 v-if="props.filterVariant !== 'simple'"
                 v-model="subcategoryFilter"
                 :options="availableSubcategories"
-                search-placeholder="Cari subkategori..."
-                default-label="Semua subkategori"
+                :search-placeholder="t('inventory.searchSubcategoryPlaceholder')"
+                :default-label="t('inventory.allSubcategories')"
               />
 
               <!-- Status Filter Dropdown -->
               <DropdownMenu v-if="!props.hideStatusFilter">
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal', !statusFilter ? 'text-muted-foreground' : 'text-foreground']">
-                    <span class="truncate">{{ statusFilter ? getStatusLabel(statusFilter) : 'Semua status' }}</span>
+                    <span class="truncate">{{ statusFilter ? getStatusLabel(statusFilter) : t('inventory.allStatuses') }}</span>
                     <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent class="w-[200px] rounded-[14px] max-h-60 overflow-y-auto" align="start" :side-offset="4">
-                  <DropdownMenuItem @select="statusFilter = ''">Semua status</DropdownMenuItem>
+                  <DropdownMenuItem @select="statusFilter = ''">{{ t('inventory.allStatuses') }}</DropdownMenuItem>
                   <DropdownMenuItem v-for="st in availableStatuses" :key="st" @select="statusFilter = st">
                     {{ getStatusLabel(st) }}
                   </DropdownMenuItem>
@@ -741,12 +789,12 @@ const totalAsetTerpilihCount = computed(() => {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal', !conditionFilter ? 'text-muted-foreground' : 'text-foreground']">
-                    <span class="truncate">{{ conditionFilter ? getConditionLabel(conditionFilter) : 'Semua kondisi' }}</span>
+                    <span class="truncate">{{ conditionFilter ? getConditionLabel(conditionFilter) : t('inventory.allConditions') }}</span>
                     <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent class="w-[200px] rounded-[14px] max-h-60 overflow-y-auto" align="start" :side-offset="4">
-                  <DropdownMenuItem @select="conditionFilter = ''">Semua kondisi</DropdownMenuItem>
+                  <DropdownMenuItem @select="conditionFilter = ''">{{ t('inventory.allConditions') }}</DropdownMenuItem>
                   <DropdownMenuItem v-for="cond in availableConditions" :key="cond" @select="conditionFilter = cond">
                     {{ getConditionLabel(cond) }}
                   </DropdownMenuItem>
@@ -761,7 +809,7 @@ const totalAsetTerpilihCount = computed(() => {
                 :class="['rounded-[14px] font-normal gap-2', showAdvancedFilters ? 'bg-muted border-primary/30 text-foreground' : 'text-muted-foreground']"
               >
                 <SlidersHorizontal class="w-4 h-4 opacity-70" />
-                <span>Filter Lanjutan</span>
+                <span>{{ t('inventory.advancedFilter') }}</span>
                 <ChevronDown :class="['w-4 h-4 opacity-50 shrink-0 transition-transform duration-200', showAdvancedFilters ? 'rotate-180' : '']" />
               </Button>
 
@@ -783,16 +831,16 @@ const totalAsetTerpilihCount = computed(() => {
 
             <!-- Rows Per Page -->
             <div class="flex items-center gap-3 text-sm text-muted-foreground pb-0.5">
-              <span class="whitespace-nowrap text-right">Baris per halaman</span>
+              <span class="whitespace-nowrap text-right">{{ t('inventory.rowsPerPage') }}</span>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal', (rowsPerPage === 'Semua baris' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
-                    {{ rowsPerPage }}
+                  <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal', (rowsPerPage === 'all' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
+                    {{ rowsPerPage === 'all' ? t('inventory.allRows') : rowsPerPage }}
                     <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px]" align="start" :side-offset="4">
-                  <DropdownMenuItem @select="rowsPerPage = 'Semua baris'">Semua baris</DropdownMenuItem>
+                  <DropdownMenuItem @select="rowsPerPage = 'all'">{{ t('inventory.allRows') }}</DropdownMenuItem>
                   <DropdownMenuItem @select="rowsPerPage = '10'">10</DropdownMenuItem>
                   <DropdownMenuItem @select="rowsPerPage = '25'">25</DropdownMenuItem>
                   <DropdownMenuItem @select="rowsPerPage = '50'">50</DropdownMenuItem>
@@ -816,39 +864,39 @@ const totalAsetTerpilihCount = computed(() => {
             >
               <!-- Brand Filter -->
               <div class="space-y-1.5 w-[200px]">
-                <label class="text-xs text-muted-foreground font-medium block ml-0.5">Merek</label>
+                <label class="text-xs text-muted-foreground font-medium block ml-0.5">{{ t('inventory.brand') }}</label>
                 <Combobox
                   v-model="brandFilter"
                   :options="availableBrands"
-                  search-placeholder="Cari merek..."
-                  default-label="Semua merek"
+                  :search-placeholder="t('inventory.searchBrandPlaceholder')"
+                  :default-label="t('inventory.allBrands')"
                   width-class="w-full bg-background"
                 />
               </div>
 
               <!-- Location Filter -->
               <div class="space-y-1.5 w-[250px]">
-                <label class="text-xs text-muted-foreground font-medium block ml-0.5">Lokasi</label>
+                <label class="text-xs text-muted-foreground font-medium block ml-0.5">{{ t('inventory.location') }}</label>
                 <LocationCombobox
                   v-model="locationFilter"
                   :locations="props.locations"
-                  placeholder="Semua lokasi"
+                  :placeholder="t('inventory.allLocations')"
                   :clearable="true"
                 />
               </div>
 
               <!-- Organizer Filter -->
               <div class="space-y-1.5 w-[170px]">
-                <label class="text-xs text-muted-foreground font-medium block ml-0.5">Organizer</label>
+                <label class="text-xs text-muted-foreground font-medium block ml-0.5">{{ t('inventory.organizer') }}</label>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal bg-background', !organizerFilter ? 'text-muted-foreground' : 'text-foreground']">
-                      <span class="truncate">{{ organizerFilter ? (props.organizers?.find(o => o.id.toString() === organizerFilter)?.name || 'Semua organizer') : 'Semua organizer' }}</span>
+                      <span class="truncate">{{ organizerFilter ? (props.organizers?.find(o => o.id.toString() === organizerFilter)?.name || t('inventory.allOrganizers')) : t('inventory.allOrganizers') }}</span>
                       <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] max-h-60 overflow-y-auto" align="start" :side-offset="4">
-                    <DropdownMenuItem @select="organizerFilter = ''">Semua organizer</DropdownMenuItem>
+                    <DropdownMenuItem @select="organizerFilter = ''">{{ t('inventory.allOrganizers') }}</DropdownMenuItem>
                     <DropdownMenuItem v-for="org in props.organizers" :key="org.id" @select="organizerFilter = org.id.toString()">
                       {{ org.name }}
                     </DropdownMenuItem>
@@ -858,12 +906,12 @@ const totalAsetTerpilihCount = computed(() => {
 
               <!-- Vendor Filter -->
               <div class="space-y-1.5 w-3xs">
-                <label class="text-xs text-muted-foreground font-medium block ml-0.5">Vendor</label>
+                <label class="text-xs text-muted-foreground font-medium block ml-0.5">{{ t('inventory.vendor') }}</label>
                 <Combobox
                   v-model="vendorFilter"
                   :options="props.vendors || []"
-                  search-placeholder="Cari vendor..."
-                  default-label="Semua vendor"
+                  :search-placeholder="t('inventory.searchVendorPlaceholder')"
+                  :default-label="t('inventory.allVendors')"
                   width-class="w-full bg-background"
                 />
               </div>
@@ -873,7 +921,7 @@ const totalAsetTerpilihCount = computed(() => {
           <!-- Row 2: Bulk Actions -->
           <div class="flex flex-wrap items-end justify-between gap-4 pt-2">
             <div class="space-y-2 flex-1 min-w-0">
-              <label class="text-xs text-muted-foreground font-medium block ml-0.5">Aksi Terpilih</label>
+              <label class="text-xs text-muted-foreground font-medium block ml-0.5">{{ t('inventory.selectedActions') }}</label>
               <div class="flex flex-wrap gap-2">
                 <!-- Edit Terpilih -->
                 <Button 
@@ -882,7 +930,7 @@ const totalAsetTerpilihCount = computed(() => {
                   variant="more-round-warning"
                 >
                   <Pencil class="w-4 h-4" />
-                  <span class="hidden sm:inline">Edit Terpilih</span>
+                  <span class="hidden sm:inline">{{ t('inventory.editSelected') }}</span>
                 </Button>
                 <ExportButtonGroup 
                   v-if="!hideExport"
@@ -909,7 +957,7 @@ const totalAsetTerpilihCount = computed(() => {
         />
 
         <div class="text-xs text-muted-foreground pl-1 mt-3 no-print">
-          {{ totalAsetTerpilihCount }} dari {{ filteredUnits.length }} baris dipilih
+          {{ t('inventory.rowsSelected', { selected: totalAsetTerpilihCount, total: filteredUnits.length }) }}
         </div>
       </div>
     </div>

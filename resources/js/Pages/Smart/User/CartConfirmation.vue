@@ -6,6 +6,7 @@
  */
 import { ref, computed, watch } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { Button } from '@/Components/ui/button';
 import { ScrollArea } from "@/Components/ui/scroll-area";
@@ -71,6 +72,8 @@ const props = withDefaults(defineProps<Props>(), {
   defaultEndTime: '',
 });
 
+const { t } = useI18n();
+
 // --- Utilization Options & Computed Labels ---
 const pemanfaatanOptions = [
   { value: 'corporate', label: 'Corporate' },
@@ -87,13 +90,13 @@ const projectOptions = computed(() => {
 
 const selectedPemanfaatanLabel = computed(() => {
   const found = pemanfaatanOptions.find(opt => opt.value === pemanfaatan.value);
-  return found ? found.label : 'Pilih Pemanfaatan';
+  return found ? found.label : t('requests.chooseUtilization');
 });
 
 const selectedDepartemenLabel = computed(() => {
-  if (!departemen.value) return 'Pilih Departemen';
+  if (!departemen.value) return t('requests.chooseDepartment');
   const found = props.departments.find(opt => opt.value == departemen.value);
-  return found ? found.label : 'Pilih Departemen';
+  return found ? found.label : t('requests.chooseDepartment');
 });
 
 // --- Form State ---
@@ -133,7 +136,7 @@ const errorMessage     = ref('');
 /** Flag indicating whether this confirmation is for borrowing or consumable asset request */
 const isBorrow = computed(() => !!props.defaultStartDate);
 
-const pageTitle = computed(() => isBorrow.value ? 'Konfirmasi Peminjaman' : 'Konfirmasi Permintaan');
+const pageTitle = computed(() => isBorrow.value ? t('requests.confirmBorrowTitle') : t('requests.confirmRequestTitle'));
 
 /** Total cumulative quantity of all selected items */
 const totalQuantity = computed(() => {
@@ -210,12 +213,12 @@ const handleGoToHistory = () => {
       <BreadcrumbList>
         <BreadcrumbItem>
           <BreadcrumbLink :href="isBorrow ? route('smart.borrow-cart') : route('smart.asset-cart')">
-            {{ isBorrow ? 'Keranjang Peminjaman' : 'Keranjang Habis Pakai' }}
+            {{ isBorrow ? t('requests.borrowCartTitle') : t('requests.consumableCartTitle') }}
           </BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
-          <span class="text-muted-foreground font-medium">Konfirmasi</span>
+          <span class="text-muted-foreground font-medium">{{ t('common.confirm') }}</span>
         </BreadcrumbItem>
       </BreadcrumbList>
     </Breadcrumb>
@@ -236,7 +239,7 @@ const handleGoToHistory = () => {
         <div v-if="isBorrow" class="bg-card border border-border rounded-[0.875rem] p-4 sm:p-5">
           <h2 class="text-base font-bold text-foreground flex items-center gap-2 mb-3">
             <Calendar class="w-4 h-4 text-primary" />
-            Jadwal Peminjaman
+            {{ t('requests.borrowSchedule') }}
           </h2>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -246,7 +249,7 @@ const handleGoToHistory = () => {
                 <Clock class="w-5 h-5 text-primary" />
               </div>
               <div class="min-w-0 flex-1">
-                <p class="text-xs text-muted-foreground font-medium">Mulai Peminjaman</p>
+                <p class="text-xs text-muted-foreground font-medium">{{ t('requests.borrowStart') }}</p>
                 <p class="text-sm font-bold text-foreground truncate">
                   {{ formatDisplayDate(props.defaultStartDate) }} <span class="font-normal text-muted-foreground">•</span> {{ props.defaultStartTime || '08:00' }}
                 </p>
@@ -259,13 +262,13 @@ const handleGoToHistory = () => {
                 <Clock class="w-5 h-5 text-muted-foreground" />
               </div>
               <div class="min-w-0 flex-1">
-                <p class="text-xs text-muted-foreground font-medium">Selesai Peminjaman</p>
+                <p class="text-xs text-muted-foreground font-medium">{{ t('requests.borrowEnd') }}</p>
                 <p class="text-sm font-bold text-foreground truncate">
                   <template v-if="props.defaultEndDate">
                     {{ formatDisplayDate(props.defaultEndDate) }} <span class="font-normal text-muted-foreground">•</span> {{ props.defaultEndTime || '17:00' }}
                   </template>
                   <template v-else>
-                    <span class="text-muted-foreground font-normal italic">Tidak ditentukan</span>
+                    <span class="text-muted-foreground font-normal italic">{{ t('requests.notSpecified') }}</span>
                   </template>
                 </p>
               </div>
@@ -282,7 +285,7 @@ const handleGoToHistory = () => {
             <div class="space-y-3">
               <!-- Message if empty -->
               <div v-if="props.selectedItems.length === 0" class="text-center py-10">
-                <p class="text-muted-foreground text-sm">Tidak ada barang yang dipilih.</p>
+                <p class="text-muted-foreground text-sm">{{ t('requests.noItemsSelected') }}</p>
               </div>
 
               <!-- Item Card in Confirmation -->
@@ -307,7 +310,7 @@ const handleGoToHistory = () => {
                     <template v-if="!item.barang_id">
                       <h3 class="text-sm sm:text-base font-bold text-foreground leading-snug truncate">{{ item.subcategory }}</h3>
                       <p class="text-xs sm:text-sm text-muted-foreground leading-normal truncate">{{ item.category }}</p>
-                      <p class="text-[10px] sm:text-xs text-muted-foreground italic hidden sm:block">*foto hanya ilustrasi</p>
+                      <p class="text-[10px] sm:text-xs text-muted-foreground italic hidden sm:block">{{ t('requests.photoIllustration') }}</p>
                     </template>
                     <template v-else>
                       <span v-if="item.brand && item.brand !== '-'" class="text-xs sm:text-sm font-bold text-foreground leading-snug truncate">
@@ -325,7 +328,7 @@ const handleGoToHistory = () => {
 
                 <!-- Quantity badge -->
                 <div class="shrink-0 text-right">
-                  <span class="text-[11px] sm:text-xs text-muted-foreground block mb-0.5">Jumlah diminta:</span>
+                  <span class="text-[11px] sm:text-xs text-muted-foreground block mb-0.5">{{ t('requests.requestedQty') }}</span>
                   <div class="text-xs sm:text-sm font-bold text-foreground bg-muted/60 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-[0.625rem] border border-border whitespace-nowrap">
                     {{ item.quantity }} {{ item.uom || 'satuan' }}
                   </div>
@@ -341,13 +344,13 @@ const handleGoToHistory = () => {
       <!-- ============================================================ -->
       <div class="w-full lg:w-96 xl:w-[28rem] 2xl:w-[30rem] flex-shrink-0">
         <div class="bg-card border border-border rounded-[0.875rem] p-5 sticky top-24">
-          <h2 class="text-lg font-bold text-foreground mb-4">Detail {{ isBorrow ? 'Peminjaman' : 'Permintaan' }}</h2>
+          <h2 class="text-lg font-bold text-foreground mb-4">{{ isBorrow ? t('requests.borrowDetails') : t('requests.requestDetails') }}</h2>
 
           <div class="space-y-4">
             <!-- Pemanfaatan -->
             <div class="space-y-1.5">
               <label class="text-sm font-medium text-foreground">
-                Pemanfaatan<span class="text-destructive">*</span>
+                {{ t('requests.utilization') }}<span class="text-destructive">*</span>
               </label>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -378,7 +381,7 @@ const handleGoToHistory = () => {
             <!-- Departemen (if corporate) -->
             <div v-if="isCorporateRequired" class="space-y-1.5">
               <label class="text-sm font-medium text-foreground">
-                Departemen<span class="text-destructive">*</span>
+                {{ t('requests.department') }}<span class="text-destructive">*</span>
               </label>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -409,15 +412,15 @@ const handleGoToHistory = () => {
             <!-- Project (if project) -->
             <div v-if="isProjectRequired" class="space-y-1.5">
               <label class="text-sm font-medium text-foreground">
-                Project<span class="text-destructive">*</span>
+                {{ t('requests.project') }}<span class="text-destructive">*</span>
               </label>
               <Combobox
                 v-model="project"
                 :options="projectOptions"
-                placeholder="Pilih project"
-                default-label="Pilih project"
-                search-placeholder="Cari nama project..."
-                empty-text="Project tidak ditemukan."
+                :placeholder="t('requests.chooseProject')"
+                :default-label="t('requests.chooseProject')"
+                :search-placeholder="t('requests.searchProject')"
+                :empty-text="t('requests.projectNotFound')"
                 width-class="w-full h-10 px-3 rounded-[0.875rem] text-sm"
               />
             </div>
@@ -425,28 +428,28 @@ const handleGoToHistory = () => {
             <!-- Alasan -->
             <div class="space-y-1.5">
               <label class="text-sm font-medium text-foreground">
-                Alasan {{ isBorrow ? 'peminjaman' : 'permintaan' }}<span class="text-destructive">*</span>
+                {{ t('requests.reasonFor', { type: isBorrow ? t('requests.loan').toLowerCase() : t('requests.request').toLowerCase() }) }}<span class="text-destructive">*</span>
               </label>
               <textarea
                 v-model="alasan"
                 rows="4"
-                :placeholder="`Ketik alasan ${isBorrow ? 'peminjaman' : 'permintaan'} di sini...`"
+                :placeholder="t('requests.reasonPlaceholder', { type: isBorrow ? t('requests.loan').toLowerCase() : t('requests.request').toLowerCase() })"
                 class="w-full p-3 text-sm border border-input rounded-[0.875rem] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors resize-none placeholder:text-muted-foreground"
               ></textarea>
             </div>
 
-            <p class="text-xs text-destructive italic">*Wajib diisi</p>
+            <p class="text-xs text-destructive italic">{{ t('requests.requiredField') }}</p>
 
             <hr class="border-border" />
 
             <!-- Summary counts -->
             <div class="space-y-2">
               <div class="flex items-center justify-between text-sm">
-                <span class="text-muted-foreground">Total jenis:</span>
-                <span class="font-semibold text-foreground">{{ props.selectedItems.length }} jenis</span>
+                <span class="text-muted-foreground">{{ t('requests.totalTypes') }}</span>
+                <span class="font-semibold text-foreground">{{ t('requests.typesCount', { count: props.selectedItems.length }) }}</span>
               </div>
               <div class="flex items-center justify-between text-sm">
-                <span class="text-muted-foreground">Total kuantitas:</span>
+                <span class="text-muted-foreground">{{ t('requests.totalQuantity') }}</span>
                 <span class="font-semibold text-foreground">{{ totalQuantity }}</span>
               </div>
             </div>
@@ -459,8 +462,8 @@ const handleGoToHistory = () => {
               :disabled="!isFormValid || isSubmitting"
               @click="handleConfirm"
             >
-              <span v-if="isSubmitting">Memproses...</span>
-              <span v-else>Konfirmasi dan Minta Approval</span>
+              <span v-if="isSubmitting">{{ t('common.loading') }}</span>
+              <span v-else>{{ t('requests.confirmAndRequestApproval') }}</span>
             </Button>
           </div>
         </div>
@@ -469,9 +472,9 @@ const handleGoToHistory = () => {
       <!-- Mobile Sticky Bottom Footer -->
       <div class="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border px-4 py-3 shadow-lg flex items-center justify-between pb-safe">
         <div class="flex flex-col">
-          <span class="text-xs text-muted-foreground font-medium">Total:</span>
+          <span class="text-xs text-muted-foreground font-medium">{{ t('common.total') }}:</span>
           <span class="text-sm font-bold text-foreground">
-            {{ props.selectedItems.length }} jenis ({{ totalQuantity }} item)
+            {{ t('requests.typesAndItems', { types: props.selectedItems.length, total: totalQuantity }) }}
           </span>
         </div>
         <Button
@@ -481,7 +484,7 @@ const handleGoToHistory = () => {
           :disabled="!isFormValid || isSubmitting"
           @click="handleConfirm"
         >
-          {{ isSubmitting ? 'Memproses...' : 'Konfirmasi' }}
+          {{ isSubmitting ? t('common.loading') : t('common.confirm') }}
         </Button>
       </div>
     </div>

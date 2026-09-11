@@ -5,6 +5,7 @@
  * Adheres to Cruddy by Design, KISS, and DRY principles.
  */
 import { ref, computed, onMounted, onUnmounted, h } from 'vue';
+import { useI18n } from 'vue-i18n';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { Eye, ArrowUpDown, ChevronDown } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
@@ -20,6 +21,8 @@ import DataTable from '@/Components/DataTable.vue';
 import ResetFilterButton from '@/Components/ResetFilterButton.vue';
 import type { ColumnDef } from '@tanstack/vue-table';
 import DetailKaryawan, { type EmployeeData } from './Modals/DetailKaryawan.vue';
+
+const { t } = useI18n();
 
 interface Props {
   employees: EmployeeData[];
@@ -70,8 +73,13 @@ const clearFilters = () => {
   departmentFilter.value = '';
 };
 
+const rowsPerPageLabel = computed(() => {
+  if (rowsPerPage.value === 'Semua baris' || !rowsPerPage.value) return t('admin.allRows');
+  return rowsPerPage.value;
+});
+
 // Table Columns: NPK | Nama | Departemen | Jumlah Aset | Aksi
-const columns: ColumnDef<EmployeeData>[] = [
+const columns = computed<ColumnDef<EmployeeData>[]>(() => [
   {
     accessorKey: 'employee_id',
     id: 'employee_id',
@@ -80,7 +88,7 @@ const columns: ColumnDef<EmployeeData>[] = [
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
       class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
     }, () => [
-      'NPK',
+      t('admin.employeeId'),
       h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground' }),
     ]),
     cell: ({ row }) => h('div', { class: 'font-mono text-muted-foreground font-medium text-sm select-none' }, row.getValue('employee_id') || '-')
@@ -92,7 +100,7 @@ const columns: ColumnDef<EmployeeData>[] = [
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
       class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
     }, () => [
-      'Nama',
+      t('admin.employeeName'),
       h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground' }),
     ]),
     cell: ({ row }) => h('div', { class: 'text-foreground font-medium truncate' }, row.getValue('name'))
@@ -104,7 +112,7 @@ const columns: ColumnDef<EmployeeData>[] = [
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
       class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
     }, () => [
-      'Departemen',
+      t('admin.employeeDepartment'),
       h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground' }),
     ]),
     cell: ({ row }) => h('div', { class: 'text-muted-foreground text-sm' }, row.getValue('department') || '-')
@@ -116,33 +124,33 @@ const columns: ColumnDef<EmployeeData>[] = [
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
       class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
     }, () => [
-      'Jumlah Aset',
+      t('admin.activeAssetsCount'),
       h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground' }),
     ]),
     cell: ({ row }) => {
       const count = Number(row.getValue('active_assets_count')) || 0;
-      return h('span', { class: 'text-muted-foreground text-sm' }, `${count} Aset`);
+      return h('span', { class: 'text-muted-foreground text-sm' }, t('admin.assetsCountSuffix', { count }));
     }
   },
   {
     id: 'actions',
     size: 80,
-    header: () => h('div', { class: 'text-center font-semibold text-foreground no-print' }, 'Aksi'),
+    header: () => h('div', { class: 'text-center font-semibold text-foreground no-print' }, t('common.actions')),
     cell: ({ row }) => {
       return h('div', { class: 'flex items-center justify-center gap-2 no-print' }, [
         h(Button, {
           variant: 'table-view',
           size: 'icon-sm',
-          title: 'Lihat Detail',
+          title: t('admin.viewDetail'),
           onClick: () => openDetailModal(row.original)
         }, () => [
           h(Eye, { class: 'w-4 h-4' }),
-          h('span', { class: 'sr-only' }, 'Lihat Detail')
+          h('span', { class: 'sr-only' }, t('admin.viewDetail'))
         ])
       ]);
     }
   }
-];
+]);
 
 const pageSizeNumber = computed(() => {
   if (rowsPerPage.value === 'Semua baris' || !rowsPerPage.value) {
@@ -153,12 +161,12 @@ const pageSizeNumber = computed(() => {
 </script>
 
 <template>
-  <AppLayout title="Daftar Karyawan">
+  <AppLayout :title="t('admin.employeeTitle')">
     <div class="space-y-4">
       <!-- Main Card -->
       <div class="px-4 bg-card rounded-xl border border-border shadow-sm overflow-hidden">
         <div class="py-3 no-print">
-          <h2 class="text-lg font-bold text-foreground">Daftar Karyawan</h2>
+          <h2 class="text-lg font-bold text-foreground">{{ t('admin.employeeTitle') }}</h2>
 
           <!-- Filters & Actions -->
           <div class="mt-4 flex flex-col space-y-4">
@@ -167,24 +175,24 @@ const pageSizeNumber = computed(() => {
               <div class="flex flex-wrap items-end gap-3 flex-1">
                 <!-- Search -->
                 <div class="space-y-1.5 flex-1 min-w-[220px] max-w-xs">
-                  <label for="search-karyawan" class="text-xs text-muted-foreground font-medium block">Filter</label>
+                  <label for="search-karyawan" class="text-xs text-muted-foreground font-medium block">{{ t('admin.filter') }}</label>
                   <TableSearch 
                     id="search-karyawan"
                     name="search"
                     v-model="searchQuery"
-                    placeholder="Cari NPK atau Nama Karyawan" 
+                    :placeholder="t('admin.employeeSearchPlaceholder')" 
                   />
                 </div>
 
                 <!-- Departemen Combobox Filter -->
                 <div class="space-y-1.5 w-full sm:w-[360px] md:w-[400px]">
-                  <span class="text-xs text-muted-foreground font-medium block">Departemen</span>
+                  <span class="text-xs text-muted-foreground font-medium block">{{ t('admin.employeeDepartment') }}</span>
                   <Combobox 
                     v-model="departmentFilter"
                     :options="props.departments"
-                    placeholder="Semua Departemen"
-                    default-label="Semua Departemen"
-                    search-placeholder="Cari departemen..."
+                    :placeholder="t('admin.allDepartments')"
+                    :default-label="t('admin.allDepartments')"
+                    :search-placeholder="t('admin.searchDepartment')"
                     width-class="w-full sm:w-[360px] md:w-[400px]"
                   />
                 </div>
@@ -209,16 +217,16 @@ const pageSizeNumber = computed(() => {
 
               <!-- Right: Baris per Halaman -->
               <div class="flex items-center gap-3 text-sm text-muted-foreground shrink-0 pb-1">
-                <span class="whitespace-nowrap">Baris per halaman</span>
+                <span class="whitespace-nowrap">{{ t('admin.rowsPerPage') }}</span>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal', (rowsPerPage === 'Semua baris' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
-                      {{ rowsPerPage }}
+                      {{ rowsPerPageLabel }}
                       <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent class="w-[140px] rounded-[14px]" align="end" :side-offset="4">
-                    <DropdownMenuItem @select="rowsPerPage = 'Semua baris'">Semua baris</DropdownMenuItem>
+                    <DropdownMenuItem @select="rowsPerPage = 'Semua baris'">{{ t('admin.allRows') }}</DropdownMenuItem>
                     <DropdownMenuItem @select="rowsPerPage = '10'">10</DropdownMenuItem>
                     <DropdownMenuItem @select="rowsPerPage = '25'">25</DropdownMenuItem>
                     <DropdownMenuItem @select="rowsPerPage = '50'">50</DropdownMenuItem>

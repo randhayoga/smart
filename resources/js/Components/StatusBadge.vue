@@ -1,8 +1,10 @@
 <script setup lang="ts">
 /**
  * Status Badge component mapping entity lifecycle statuses and conditions to visual pill styles.
+ * Supports reactive bilingual localization (Bahasa Indonesia & English).
  */
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { cn } from '@/lib/utils';
 
 const props = defineProps<{
@@ -10,6 +12,46 @@ const props = defineProps<{
   proposedStatus?: string | null;
   class?: string;
 }>();
+
+const { t, te } = useI18n();
+
+const STATUS_KEY_MAP: Record<string, string> = {
+  'tersedia': 'status.tersedia',
+  'dipinjam': 'status.dipinjam',
+  'standby': 'status.standby',
+  'tidak aktif': 'status.tidakAktif',
+  'pending': 'status.pending',
+  'pending:dm': 'status.pendingDm',
+  'pending: dm': 'status.pendingDm',
+  'bagus': 'status.bagus',
+  'rusak': 'status.rusak',
+  'qc passed': 'status.qcPassed',
+  'lelang/hibah': 'status.lelangHibah',
+  'rusak total': 'status.rusakTotal',
+  'hilang': 'status.hilang',
+  'dihapus': 'status.dihapus',
+  'ditolak': 'status.ditolak',
+  'rejected': 'status.ditolak',
+  'disetujui': 'status.disetujui',
+  'approved': 'status.disetujui',
+  'sukses': 'status.sukses',
+  'success': 'status.sukses',
+  'menunggu approval': 'status.menungguApproval',
+  'menunggu persetujuan': 'status.menungguApproval',
+  'di-approve': 'status.diApprove',
+  'diapprove': 'status.diApprove',
+  'dikonfirmasi admin': 'status.dikonfirmasiAdmin',
+  'dikonfirmasi': 'status.dikonfirmasiAdmin',
+  'menunggu serah terima': 'status.menungguSerahTerima',
+  'menunggu_serah_terima': 'status.menungguSerahTerima',
+  'serah terima': 'status.serahTerima',
+  'handover': 'status.serahTerima',
+  'selesai': 'status.selesai',
+  'dibatalkan': 'status.dibatalkan',
+  'cancel': 'status.dibatalkan',
+  'parsial': 'status.parsial',
+  'partial': 'status.parsial',
+};
 
 const badgeClass = computed(() => {
   const s = props.status?.trim();
@@ -31,6 +73,16 @@ const badgeClass = computed(() => {
   if (lower === 'disetujui' || lower === 'approved' || lower === 'sukses' || lower === 'success') return 'bg-emerald-100 text-emerald-800';
   return 'bg-gray-100 text-gray-800';
 });
+
+const displayStatus = computed(() => {
+  if (!props.status) return '';
+  const s = props.status.trim().toLowerCase();
+  const key = STATUS_KEY_MAP[s];
+  if (key && te(key)) {
+    return t(key);
+  }
+  return props.status;
+});
 </script>
 
 <template>
@@ -41,6 +93,6 @@ const badgeClass = computed(() => {
       props.class
     )"
   >
-    {{ props.status || '' }}
+    {{ displayStatus }}
   </span>
 </template>

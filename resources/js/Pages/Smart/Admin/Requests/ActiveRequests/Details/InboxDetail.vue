@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useModalLock } from '@/composables/useModalLock';
 import { router } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
@@ -59,6 +60,7 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+const { t } = useI18n();
 
 const items = computed(() => props.request.items);
 
@@ -108,7 +110,7 @@ const timeline = computed((): TimelineStep[] => {
   
   // Step 1: Initial creation
   steps.push({
-    status: 'Permintaan dibuat',
+    status: t('fulfillment.requestCreated'),
     user: r.requester,
     time: r.createdAt,
     completed: true,
@@ -126,41 +128,41 @@ const timeline = computed((): TimelineStep[] => {
       let isPending = false;
 
       if (log.status_to === 'approve') {
-        statusName = 'Di-approve';
+        statusName = t('fulfillment.approved');
       } else if (log.status_to === 'partial') {
-        statusName = 'Disetujui sebagian (Partial)';
+        statusName = t('fulfillment.partiallyApproved');
       } else if (log.status_to === 'confirm') {
         if (log.status_from === 'partial') {
-          statusName = 'Alokasi Barang Tambahan Dikonfirmasi';
+          statusName = t('fulfillment.additionalAllocationConfirmed');
         } else {
           if (log.note && log.note.includes('diatur oleh pengguna')) {
-            statusName = 'Jadwal Serah Terima Diatur';
+            statusName = t('fulfillment.handoverScheduleSet');
           } else {
-            statusName = 'Dikonfirmasi';
+            statusName = t('fulfillment.confirmed');
           }
         }
       } else if (log.status_to === 'borrow') {
-        statusName = 'Serah Terima Selesai & Dipinjam';
+        statusName = t('fulfillment.handoverCompletedAndBorrowed');
       } else if (log.status_to === 'return') {
-        statusName = 'Pengembalian Diajukan';
+        statusName = t('fulfillment.returnSubmitted');
       } else if (log.status_to === 'success') {
         if (log.status_from === 'return') {
-          statusName = 'Pengembalian Selesai';
+          statusName = t('fulfillment.returnCompleted');
         } else {
-          statusName = 'Serah Terima Selesai';
+          statusName = t('fulfillment.handoverCompleted');
         }
       } else if (log.status_to === 'reject') {
-        statusName = 'Ditolak';
+        statusName = t('fulfillment.rejectedTimeline');
         completed = false;
         rejected = true;
       } else if (log.status_to === 'cancel') {
-        statusName = 'Dibatalkan oleh Pengguna';
+        statusName = t('fulfillment.cancelledByUser');
         completed = true;
       } else if (log.status_to === 'pending') {
         if (log.status_from === 'confirm') {
-          statusName = 'Serah Terima Sebagian Diterima';
+          statusName = t('fulfillment.partialHandoverReceived');
         } else {
-          statusName = 'Pending';
+          statusName = t('fulfillment.pending');
         }
       }
 
@@ -183,34 +185,34 @@ const timeline = computed((): TimelineStep[] => {
   if (!isFinalStatus) {
     if (r.status === 'wait') {
       steps.push({
-        status: 'Perlu approval Manager',
+        status: t('fulfillment.needManagerApproval'),
         completed: false,
         active: true,
       });
     } else if (r.status === 'approve' || r.status === 'pending' || r.status === 'partial') {
       steps.push({
         status: r.status === 'partial' 
-          ? 'Perlu alokasi & konfirmasi sisa barang' 
-          : 'Perlu alokasi & konfirmasi Admin',
+          ? t('fulfillment.needRemainingAllocation') 
+          : t('fulfillment.needAdminAllocation'),
         completed: false,
         active: true,
         isAction: true,
       });
     } else if (r.status === 'confirm') {
       steps.push({
-        status: 'Serah Terima (Jadwal diatur)',
+        status: t('fulfillment.scheduledHandoverTimeline'),
         completed: false,
         active: true,
       });
     } else if (r.status === 'borrow') {
       steps.push({
-        status: 'Aset sedang dipinjam',
+        status: t('fulfillment.assetBorrowedTimeline'),
         completed: false,
         active: true,
       });
     } else if (r.status === 'return') {
       steps.push({
-        status: 'Pengembalian aset',
+        status: t('fulfillment.assetReturnTimeline'),
         completed: false,
         active: true,
       });
@@ -225,7 +227,7 @@ const handleApprove = () => {
     action: 'approve'
   }, {
     onSuccess: () => {
-      toast.success('Permintaan berhasil dikonfirmasi/disetujui!');
+      toast.success(t('fulfillment.confirmOrApprovedSuccess'));
     },
     onError: (errors) => {
       toast.error(Object.values(errors).join(', '));
@@ -242,7 +244,7 @@ const handlePartiallyApprove = () => {
     action: 'partially_approve'
   }, {
     onSuccess: () => {
-      toast.success('Permintaan berhasil disetujui sebagian (Partial).');
+      toast.success(t('fulfillment.partialSuccess'));
     },
     onError: (errors) => {
       toast.error(Object.values(errors).join(', '));
@@ -268,7 +270,7 @@ const submitPending = () => {
   }, {
     onSuccess: () => {
       closePendingModal();
-      toast.success('Permintaan berhasil di-pending.');
+      toast.success(t('fulfillment.pendingSuccess'));
     },
     onError: (errors) => {
       toast.error(Object.values(errors).join(', '));
@@ -298,7 +300,7 @@ const submitReject = () => {
   }, {
     onSuccess: () => {
       closeRejectModal();
-      toast.success('Permintaan berhasil ditolak.');
+      toast.success(t('fulfillment.rejectSuccess'));
     },
     onError: (errors) => {
       toast.error(Object.values(errors).join(', '));
@@ -316,13 +318,13 @@ const handleAturSerahTerima = () => {
 </script>
 
 <template>
-  <Head :title="'Detail ' + request.number" />
-  <AppLayout title="Detail Permintaan">
+  <Head :title="t('fulfillment.detailHead', { number: request.number })" />
+  <AppLayout :title="t('fulfillment.detailTitle')">
     <!-- Breadcrumb -->
     <Breadcrumb>
       <BreadcrumbList class="pb-3 text-xs md:text-sm">
         <BreadcrumbItem>
-          <BreadcrumbLink :href="route('smart.requests.index', { tab: 'Inbox' })">Inbox</BreadcrumbLink>
+          <BreadcrumbLink :href="route('smart.requests.index', { tab: 'Inbox' })">{{ t('fulfillment.inbox') }}</BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
@@ -332,19 +334,19 @@ const handleAturSerahTerima = () => {
     </Breadcrumb>
 
     <div class="mb-6">
-      <h1 class="text-xl font-bold text-foreground">Detail Permintaan</h1>
+      <h1 class="text-xl font-bold text-foreground">{{ t('fulfillment.detailTitle') }}</h1>
     </div>
 
     <!-- Info Banner -->
     <div v-if="user?.role === 'admin' || user?.role === 'ifs_manager'" class="mb-6 p-1.5 pl-6 rounded-xl border border-indigo-200 bg-white flex items-center justify-between gap-3 text-indigo-600">
       <p class="text-sm font-semibold">
-        {{ isAllConsumable ? 'Tolong konfirmasi permintaan ini' : 'Tolong pastikan bahwa alokasi aset sudah sesuai dan konfirmasi permintaan/peminjaman ini' }}
+        {{ isAllConsumable ? t('fulfillment.confirmConsumableBanner') : t('fulfillment.confirmNonConsumableBanner') }}
       </p>
       <button 
         @click="handleAturSerahTerima"
         class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold px-6 py-2 rounded-lg transition-all"
       >
-        Atur Serah Terima
+        {{ t('fulfillment.scheduleHandover') }}
       </button>
     </div>
 
@@ -353,7 +355,7 @@ const handleAturSerahTerima = () => {
       <div class="lg:col-span-2 space-y-6">
         <!-- Main Detail Card -->
         <div class="bg-card border border-border rounded-[14px] p-6 shadow-sm">
-          <h3 class="text-sm font-medium text-muted-foreground mb-3">Detail:</h3>
+          <h3 class="text-sm font-medium text-muted-foreground mb-3">{{ t('fulfillment.detailsPrefix') }}</h3>
           <div class="space-y-2">
             <h2 class="text-lg md:text-xl font-extrabold text-foreground mb-3">
               {{ request.number }}
@@ -361,27 +363,27 @@ const handleAturSerahTerima = () => {
             
             <div class="space-y-1.5 text-sm text-foreground">
               <p>
-                <span class="text-muted-foreground">Dibuat oleh:</span> 
+                <span class="text-muted-foreground">{{ t('fulfillment.createdBy') }}</span> 
                 <span class="font-semibold"> {{ request.requester }}</span>
               </p>
               <p>
-                <span class="text-muted-foreground">PIC Approval:</span> 
+                <span class="text-muted-foreground">{{ t('fulfillment.picApproval') }}</span> 
                 <span class="font-semibold"> {{ request.approval_by || request.approver }}</span>
               </p>
               <p>
-                <span class="text-muted-foreground">Waktu dibuat:</span> 
+                <span class="text-muted-foreground">{{ t('fulfillment.createdAtTime') }}</span> 
                 <span class="font-semibold"> {{ request.createdAt }}</span>
               </p>
               <p>
-                <span class="text-muted-foreground">Pemanfaatan:</span> 
+                <span class="text-muted-foreground">{{ t('fulfillment.utilization') }}:</span> 
                 <span class="font-semibold">
                   {{ request.pemanfaatan === 'corporate' ? `Corporate (${request.pemanfaatanDetail})` : `Project ${request.pemanfaatanDetail}` }}
                 </span>
               </p>
               <p v-if="request.type === 'peminjaman' && request.durationStart">
-                <span class="text-muted-foreground">Durasi:</span>
+                <span class="text-muted-foreground">{{ t('fulfillment.duration') }}</span>
                 <span class="font-semibold">
-                  {{ request.durationStart }} s.d. {{ request.durationEnd }} ({{ request.durationDays }} hari, {{ request.durationHours }} jam)
+                  {{ request.durationStart }} {{ t('fulfillment.until') }} {{ request.durationEnd }} ({{ request.durationDays }} {{ t('fulfillment.days') }}, {{ request.durationHours }} {{ t('fulfillment.hours') }})
                 </span>
               </p>
             </div>
@@ -390,7 +392,7 @@ const handleAturSerahTerima = () => {
 
         <!-- Items Card -->
         <div class="bg-card border border-border rounded-[14px] p-6 shadow-sm">
-          <h3 class="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-4">Daftar barang:</h3>
+          <h3 class="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-4">{{ t('fulfillment.itemsListPrefix') }}</h3>
           
           <AssetItemCard 
             v-for="item in items" 
@@ -412,7 +414,7 @@ const handleAturSerahTerima = () => {
                 @click="handlePilihAlokasi(item)"
                 class="px-5 py-2.5 bg-[#5BC0DE] hover:bg-[#46B8DA] text-white text-sm font-bold rounded-[14px] transition-all shadow-sm"
               >
-                Pilih Alokasi Aset
+                {{ t('fulfillment.selectAssetAllocation') }}
               </button>
             </template>
           </AssetItemCard>
@@ -422,7 +424,7 @@ const handleAturSerahTerima = () => {
       <!-- Right Column (Timeline & Actions) -->
       <div class="space-y-6">
         <div class="bg-card border border-border rounded-[14px] p-6 shadow-sm relative overflow-hidden">
-          <h3 class="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-6">Tahapan:</h3>
+          <h3 class="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-6">{{ t('fulfillment.stagesPrefix') }}</h3>
           
           <!-- Vertical Timestep Stepper -->
           <div class="relative pl-8 space-y-8 before:absolute before:left-[15px] before:top-[10px] before:bottom-[10px] before:w-[2px] before:bg-border">
@@ -482,7 +484,7 @@ const handleAturSerahTerima = () => {
                     {{ step.status }}
                   </h4>
                   <p v-if="step.user" class="text-xs font-semibold text-green-600 mt-0.5">
-                    oleh {{ step.user }}
+                    {{ t('fulfillment.byUser', { user: step.user }) }}
                   </p>
                   <p v-if="step.time" class="text-xs text-muted-foreground mt-0.5">
                     {{ step.time }}
@@ -498,27 +500,27 @@ const handleAturSerahTerima = () => {
                       @click="handlePartiallyApprove"
                       class="px-4 py-1.5 bg-[#5BC0DE] hover:bg-[#46B8DA] text-white text-sm font-bold rounded-lg transition-all shadow-sm"
                     >
-                      {{ hasPassedFirstHandover ? 'Partial' : 'Partially Approve' }}
+                      {{ hasPassedFirstHandover ? t('fulfillment.partialBtn') : t('fulfillment.partiallyApprove') }}
                     </button>
                     <button 
                       v-if="canConfirm"
                       @click="handleApprove"
                       class="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-lg transition-all shadow-sm"
                     >
-                      Konfirmasi
+                      {{ t('fulfillment.confirm') }}
                     </button>
                     <button 
                       v-if="request.has_insufficient_stock && request.status !== 'pending' && request.status !== 'partial'"
                       @click="openPendingModal"
                       class="px-4 py-1.5 bg-zinc-500 hover:bg-zinc-600 text-white text-sm font-bold rounded-lg transition-all shadow-sm"
                     >
-                      Pending
+                      {{ t('fulfillment.pendingBtn') }}
                     </button>
                     <button 
                       @click="handleReject"
                       class="px-4 py-1.5 bg-[#D9534F] hover:bg-[#C9302C] text-white text-sm font-bold rounded-lg transition-all shadow-sm"
                     >
-                      Tolak
+                      {{ t('fulfillment.reject') }}
                     </button>
                   </div>
                 </div>
@@ -548,7 +550,7 @@ const handleAturSerahTerima = () => {
           >
             <!-- Header -->
             <div class="flex items-center justify-between p-5 border-b border-border bg-card">
-              <h3 class="text-base md:text-lg font-extrabold text-foreground">Pending Permintaan</h3>
+              <h3 class="text-base md:text-lg font-extrabold text-foreground">{{ t('fulfillment.pendingModalTitle') }}</h3>
               <button @click="closePendingModal" class="p-1.5 hover:bg-muted rounded-full transition-colors">
                 <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
               </button>
@@ -557,14 +559,14 @@ const handleAturSerahTerima = () => {
             <!-- Body -->
             <div class="p-6 space-y-4">
               <p class="text-sm text-muted-foreground">
-                Kirim informasi mengenai delay/pending untuk penyediaan barang ini ke pengguna.
+                {{ t('fulfillment.pendingModalSubtitle') }}
               </p>
               
               <div class="space-y-2">
-                <label class="text-xs font-semibold text-foreground">Catatan / Alasan Penundaan:</label>
+                <label class="text-xs font-semibold text-foreground">{{ t('fulfillment.pendingReasonLabel') }}</label>
                 <textarea
                   v-model="pendingNote"
-                  placeholder="Masukkan alasan penundaan (contoh: Stok habis di gudang pusat)..."
+                  :placeholder="t('fulfillment.pendingReasonPlaceholder')"
                   rows="4"
                   class="w-full text-sm border border-input rounded-[10px] bg-background p-3 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none"
                 ></textarea>
@@ -577,13 +579,13 @@ const handleAturSerahTerima = () => {
                 @click="closePendingModal"
                 class="px-5 py-2 text-sm font-semibold border border-input hover:bg-muted rounded-lg transition-colors"
               >
-                Batal
+                {{ t('fulfillment.batal') }}
               </button>
               <button 
                 @click="submitPending"
                 class="px-5 py-2 text-sm font-bold bg-zinc-500 hover:bg-zinc-600 text-white rounded-lg transition-all shadow-sm"
               >
-                Kirim Pending
+                {{ t('fulfillment.sendPending') }}
               </button>
             </div>
           </div>
@@ -611,7 +613,7 @@ const handleAturSerahTerima = () => {
           >
             <!-- Header -->
             <div class="flex items-center justify-between p-5 border-b border-border bg-card">
-              <h3 class="text-base md:text-lg font-extrabold text-foreground">Penolakan Permintaan/Peminjaman</h3>
+              <h3 class="text-base md:text-lg font-extrabold text-foreground">{{ t('fulfillment.rejectModalTitle') }}</h3>
               <button @click="closeRejectModal" class="p-1.5 hover:bg-muted rounded-full transition-colors">
                 <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
               </button>
@@ -622,30 +624,30 @@ const handleAturSerahTerima = () => {
               <!-- Request Info -->
               <div class="space-y-1 pb-4 border-b border-border">
                 <p class="text-sm font-extrabold text-foreground">{{ request.number }}</p>
-                <p class="text-sm text-muted-foreground">Dibuat oleh: <span class="text-foreground font-medium">{{ request.requester }}</span></p>
-                <p class="text-sm text-muted-foreground">PIC Approval: <span class="text-foreground font-medium">{{ request.approval_by || request.approver }}</span></p>
-                <p class="text-sm text-muted-foreground">Waktu dibuat: <span class="text-foreground font-medium">{{ request.createdAt }}</span></p>
+                <p class="text-sm text-muted-foreground">{{ t('fulfillment.createdBy') }} <span class="text-foreground font-medium">{{ request.requester }}</span></p>
+                <p class="text-sm text-muted-foreground">{{ t('fulfillment.picApproval') }} <span class="text-foreground font-medium">{{ request.approval_by || request.approver }}</span></p>
+                <p class="text-sm text-muted-foreground">{{ t('fulfillment.createdAtTime') }} <span class="text-foreground font-medium">{{ request.createdAt }}</span></p>
                 <p class="text-sm text-muted-foreground">
-                  Pemanfaatan: 
+                  {{ t('fulfillment.utilization') }}: 
                   <span class="text-foreground font-medium">
                     {{ request.pemanfaatan === 'corporate' ? `Corporate (${request.pemanfaatanDetail})` : `Project ${request.pemanfaatanDetail}` }}
                   </span>
                 </p>
                 <p v-if="request.type === 'peminjaman' && request.durationStart" class="text-sm text-muted-foreground">
-                  Durasi: 
+                  {{ t('fulfillment.duration') }} 
                   <span class="text-foreground font-medium">
-                    {{ request.durationStart }} s.d. {{ request.durationEnd }} ({{ request.durationDays }} hari, {{ request.durationHours }} jam)
+                    {{ request.durationStart }} {{ t('fulfillment.until') }} {{ request.durationEnd }} ({{ request.durationDays }} {{ t('fulfillment.days') }}, {{ request.durationHours }} {{ t('fulfillment.hours') }})
                   </span>
                 </p>
               </div>
 
               <!-- Confirmation Question -->
               <div class="space-y-2">
-                <p class="text-sm font-bold text-red-500">Apakah Anda yakin untuk menolak permintaan/peminjaman ini?</p>
-                <label class="text-sm text-foreground">Catatan (opsional):</label>
+                <p class="text-sm font-bold text-red-500">{{ t('fulfillment.rejectConfirmQuestion') }}</p>
+                <label class="text-sm text-foreground">{{ t('fulfillment.notesOptionalLabel') }}</label>
                 <textarea
                   v-model="rejectReason"
-                  placeholder="Ketik alasan penolakan di sini..."
+                  :placeholder="t('fulfillment.rejectReasonPlaceholder')"
                   rows="4"
                   class="w-full text-sm border border-input rounded-[10px] bg-background p-3 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400 transition-all resize-y"
                 ></textarea>
@@ -658,13 +660,13 @@ const handleAturSerahTerima = () => {
                 @click="closeRejectModal"
                 class="px-5 py-2 text-sm font-semibold border border-input hover:bg-muted rounded-lg transition-colors"
               >
-                Tidak
+                {{ t('fulfillment.no') }}
               </button>
               <button 
                 @click="submitReject"
                 class="px-5 py-2 text-sm font-bold bg-[#D9534F] hover:bg-[#C9302C] text-white rounded-lg transition-all shadow-sm"
               >
-                Iya
+                {{ t('fulfillment.yes') }}
               </button>
             </div>
           </div>

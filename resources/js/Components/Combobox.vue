@@ -3,6 +3,7 @@
  * Searchable Combobox component built with Popover and Command primitives.
  */
 import { ref, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { Check, ChevronsUpDown } from 'lucide-vue-next';
 import { Button } from "@/Components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from '@/Components/ui/popover';
@@ -33,10 +34,6 @@ const props = withDefaults(defineProps<{
   disabled?: boolean;
   error?: boolean;
 }>(), {
-  placeholder: 'Pilih...',
-  searchPlaceholder: 'Cari...',
-  emptyText: 'Tidak ditemukan.',
-  defaultLabel: 'Semua',
   widthClass: 'w-[200px]',
   disabled: false,
   error: false
@@ -46,7 +43,13 @@ const emit = defineEmits<{
   (e: 'update:modelValue', value: string | number | null): void;
 }>();
 
+const { t } = useI18n();
 const open = ref(false);
+
+const effectivePlaceholder = computed(() => props.placeholder ?? `${t('common.select')}...`);
+const effectiveSearchPlaceholder = computed(() => props.searchPlaceholder ?? `${t('common.search')}...`);
+const effectiveEmptyText = computed(() => props.emptyText ?? t('common.noData'));
+const effectiveDefaultLabel = computed(() => props.defaultLabel ?? t('common.all'));
 
 // Normalize options to object format internally
 const normalizedOptions = computed(() => {
@@ -60,9 +63,9 @@ const normalizedOptions = computed(() => {
 
 // Find label for currently selected value
 const selectedLabel = computed(() => {
-  if (!props.modelValue) return props.defaultLabel;
+  if (!props.modelValue) return effectiveDefaultLabel.value;
   const found = normalizedOptions.value.find(opt => opt.id == props.modelValue);
-  return found ? found.name : props.defaultLabel;
+  return found ? found.name : effectiveDefaultLabel.value;
 });
 
 const handleSelect = (val: string | number | null) => {
@@ -92,14 +95,14 @@ const handleSelect = (val: string | number | null) => {
     </PopoverTrigger>
     <PopoverContent class="w-(--reka-popover-trigger-width) min-w-(--reka-popover-trigger-width) p-0 rounded-[14px] overflow-hidden z-[10000]" align="start">
       <Command :highlight-on-hover="true">
-        <CommandInput :placeholder="searchPlaceholder" />
-        <CommandEmpty>{{ emptyText }}</CommandEmpty>
+        <CommandInput :placeholder="effectiveSearchPlaceholder" />
+        <CommandEmpty>{{ effectiveEmptyText }}</CommandEmpty>
         <CommandList>
           <CommandGroup>
             <!-- Default Option -->
-            <CommandItem :value="`default-${defaultLabel}`" @select="handleSelect('')">
+            <CommandItem :value="`default-${effectiveDefaultLabel}`" @select="handleSelect('')">
               <Check :class="['mr-2 h-4 w-4', !modelValue ? 'opacity-100' : 'opacity-0']" />
-              {{ defaultLabel }}
+              {{ effectiveDefaultLabel }}
             </CommandItem>
             
             <!-- Dynamic Options -->

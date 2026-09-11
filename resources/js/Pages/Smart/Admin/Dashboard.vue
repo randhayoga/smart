@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Heading from '@/Components/Heading.vue';
 import Tabs from '@/Components/Tabs.vue';
@@ -30,21 +31,33 @@ interface Props {
 
 const props = defineProps<Props>();
 
+const { t, locale } = useI18n();
+
 const page = usePage();
 const isAdmin = computed(() => {
   const auth = page.props.auth as any;
   return (auth?.user?.role ?? (props.user as any)?.role) === 'admin';
 });
 
-const tabs = ['Klasik', 'WIP'];
-const activeTab = ref('Klasik');
+const activeTab = ref<'classic' | 'wip'>('classic');
+const tabList = computed(() => [t('admin.classicTab'), t('admin.wipTab')]);
+const currentTabLabel = computed({
+  get: () => activeTab.value === 'classic' ? t('admin.classicTab') : t('admin.wipTab'),
+  set: (val: string) => {
+    if (val === t('admin.wipTab')) {
+      activeTab.value = 'wip';
+    } else {
+      activeTab.value = 'classic';
+    }
+  }
+});
 
 const greeting = computed(() => {
   const hour = new Date().getHours();
-  if (hour >= 5 && hour < 11) return 'Selamat Pagi';
-  if (hour >= 11 && hour < 15) return 'Selamat Siang';
-  if (hour >= 15 && hour < 19) return 'Selamat Sore';
-  return 'Selamat Malam';
+  if (hour >= 5 && hour < 11) return t('common.greetings.morning');
+  if (hour >= 11 && hour < 15) return t('common.greetings.afternoon');
+  if (hour >= 15 && hour < 19) return t('common.greetings.evening');
+  return t('common.greetings.night');
 });
 
 const totalConsumablesQuantity = computed(() => {
@@ -97,7 +110,7 @@ const ictChartColors = ['#0D9488', '#0284C7', '#F59E0B', '#E11D48', '#8B5CF6', '
 </script>
 
 <template>
-  <AppLayout title="Dashboard">
+  <AppLayout :title="t('nav.dashboard')">
     <div class="space-y-3">
       <!-- Header -->
       <div class="pb-1">
@@ -118,10 +131,10 @@ const ictChartColors = ['#0D9488', '#0284C7', '#F59E0B', '#E11D48', '#8B5CF6', '
             </div>
             <div>
               <p class="font-semibold text-base leading-tight">
-                Pindai Barcode Aset
+                {{ $t('admin.scanBarcodeTitle') }}
               </p>
               <p class="text-xs text-white/80 mt-0.5">
-                Klik untuk membuka kamera pemindai
+                {{ $t('admin.scanBarcodeSubtitle') }}
               </p>
             </div>
           </div>
@@ -132,18 +145,18 @@ const ictChartColors = ['#0D9488', '#0284C7', '#F59E0B', '#E11D48', '#8B5CF6', '
       </div>
 
       <!-- Tabs -->
-      <Tabs v-model="activeTab" :tabs="tabs" />
+      <Tabs v-model="currentTabLabel" :tabs="tabList" />
 
       <!-- Main Card Container (Klasik) -->
-      <div v-if="activeTab === 'Klasik'" class="p-6 bg-card rounded-xl border border-border shadow-sm overflow-hidden space-y-6">
+      <div v-if="activeTab === 'classic'" class="p-6 bg-card rounded-xl border border-border shadow-sm overflow-hidden space-y-6">
         <!-- Overview Summary Metric Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
           <Card class="h-full min-w-0">
             <CardContent class="p-3.5 sm:p-4 md:p-5 flex items-center justify-between h-full gap-3 sm:gap-4">
               <div class="min-w-0 flex-1">
-                <p class="text-xs sm:text-sm font-semibold text-muted-foreground leading-tight">Total Stok Barang Habis Pakai</p>
+                <p class="text-xs sm:text-sm font-semibold text-muted-foreground leading-tight">{{ $t('admin.totalConsumablesStock') }}</p>
                 <h3 class="text-xl sm:text-2xl font-bold text-foreground mt-1 tracking-tight truncate">
-                  {{ totalConsumablesQuantity.toLocaleString('id-ID') }}
+                  {{ totalConsumablesQuantity.toLocaleString(locale === 'en' ? 'en-US' : 'id-ID') }}
                 </h3>
               </div>
               <div class="self-stretch flex items-center justify-center p-2 sm:p-2.5 bg-primary/10 rounded-lg text-primary shrink-0 min-h-[3rem] sm:min-h-[3.5rem] max-h-16 sm:max-h-20">
@@ -155,9 +168,9 @@ const ictChartColors = ['#0D9488', '#0284C7', '#F59E0B', '#E11D48', '#8B5CF6', '
           <Card class="h-full min-w-0">
             <CardContent class="p-3.5 sm:p-4 md:p-5 flex items-center justify-between h-full gap-3 sm:gap-4">
               <div class="min-w-0 flex-1">
-                <p class="text-xs sm:text-sm font-semibold text-muted-foreground leading-tight">Jumlah Aset (CFS)</p>
+                <p class="text-xs sm:text-sm font-semibold text-muted-foreground leading-tight">{{ $t('admin.totalCFSAssets') }}</p>
                 <h3 class="text-xl sm:text-2xl font-bold text-foreground mt-1 tracking-tight truncate">
-                  {{ totalCFSUnits.toLocaleString('id-ID') }}
+                  {{ totalCFSUnits.toLocaleString(locale === 'en' ? 'en-US' : 'id-ID') }}
                 </h3>
               </div>
               <div class="self-stretch flex items-center justify-center p-2 sm:p-2.5 bg-primary/10 rounded-lg text-primary shrink-0 min-h-[3rem] sm:min-h-[3.5rem] max-h-16 sm:max-h-20">
@@ -169,9 +182,9 @@ const ictChartColors = ['#0D9488', '#0284C7', '#F59E0B', '#E11D48', '#8B5CF6', '
           <Card class="h-full min-w-0 sm:col-span-2 lg:col-span-1">
             <CardContent class="p-3.5 sm:p-4 md:p-5 flex items-center justify-between h-full gap-3 sm:gap-4">
               <div class="min-w-0 flex-1">
-                <p class="text-xs sm:text-sm font-semibold text-muted-foreground leading-tight">Jumlah Aset (ICT)</p>
+                <p class="text-xs sm:text-sm font-semibold text-muted-foreground leading-tight">{{ $t('admin.totalICTAssets') }}</p>
                 <h3 class="text-xl sm:text-2xl font-bold text-foreground mt-1 tracking-tight truncate">
-                  {{ totalICTUnits.toLocaleString('id-ID') }}
+                  {{ totalICTUnits.toLocaleString(locale === 'en' ? 'en-US' : 'id-ID') }}
                 </h3>
               </div>
               <div class="self-stretch flex items-center justify-center p-2 sm:p-2.5 bg-primary/10 rounded-lg text-primary dark:text-emerald-400 shrink-0 min-h-[3rem] sm:min-h-[3.5rem] max-h-16 sm:max-h-20">
@@ -187,9 +200,9 @@ const ictChartColors = ['#0D9488', '#0284C7', '#F59E0B', '#E11D48', '#8B5CF6', '
           <Card class="flex flex-col justify-between">
             <CardHeader class="pb-2">
               <div class="flex items-center space-x-2">
-                <CardTitle class="text-lg font-semibold">Subkategori Habis Pakai</CardTitle>
+                <CardTitle class="text-lg font-semibold">{{ $t('admin.consumablesSubcategory') }}</CardTitle>
               </div>
-              <CardDescription class="text-sm">Distribusi kuantitas berdasarkan subkategori</CardDescription>
+              <CardDescription class="text-sm">{{ $t('admin.consumablesSubcategoryDesc') }}</CardDescription>
             </CardHeader>
             <CardContent class="p-5 flex-1 flex items-center justify-center">
               <DonutChart
@@ -199,11 +212,11 @@ const ictChartColors = ['#0D9488', '#0284C7', '#F59E0B', '#E11D48', '#8B5CF6', '
                 index="subcategory_name"
                 category="total_quantity"
                 :colors="consumableChartColors"
-                :value-formatter="(v) => `${v.toLocaleString('id-ID')}`"
+                :value-formatter="(v) => `${v.toLocaleString(locale === 'en' ? 'en-US' : 'id-ID')}`"
               />
               <div v-else class="py-12 text-center text-muted-foreground text-sm flex flex-col items-center gap-2">
                 <Package class="w-8 h-8 opacity-40" />
-                <span>Tidak ada data tersedia.</span>
+                <span>{{ $t('common.noData') }}</span>
               </div>
             </CardContent>
           </Card>
@@ -212,9 +225,9 @@ const ictChartColors = ['#0D9488', '#0284C7', '#F59E0B', '#E11D48', '#8B5CF6', '
           <Card class="flex flex-col justify-between">
             <CardHeader class="pb-2">
               <div class="flex items-center space-x-2">
-                <CardTitle class="text-lg font-semibold">Kategori CFS (Non-Habis Pakai)</CardTitle>
+                <CardTitle class="text-lg font-semibold">{{ $t('admin.cfsCategory') }}</CardTitle>
               </div>
-              <CardDescription class="text-sm">Distribusi total unit berdasarkan kategori CFS</CardDescription>
+              <CardDescription class="text-sm">{{ $t('admin.cfsCategoryDesc') }}</CardDescription>
             </CardHeader>
             <CardContent class="p-5 flex-1 flex items-center justify-center">
               <DonutChart
@@ -224,11 +237,11 @@ const ictChartColors = ['#0D9488', '#0284C7', '#F59E0B', '#E11D48', '#8B5CF6', '
                 index="category_name"
                 category="total_units"
                 :colors="cfsChartColors"
-                :value-formatter="(v) => `${v.toLocaleString('id-ID')}`"
+                :value-formatter="(v) => `${v.toLocaleString(locale === 'en' ? 'en-US' : 'id-ID')}`"
               />
               <div v-else class="py-12 text-center text-muted-foreground text-sm flex flex-col items-center gap-2">
                 <Box class="w-8 h-8 opacity-40" />
-                <span>Tidak ada data tersedia.</span>
+                <span>{{ $t('common.noData') }}</span>
               </div>
             </CardContent>
           </Card>
@@ -237,9 +250,9 @@ const ictChartColors = ['#0D9488', '#0284C7', '#F59E0B', '#E11D48', '#8B5CF6', '
           <Card class="flex flex-col justify-between">
             <CardHeader class="pb-2">
               <div class="flex items-center space-x-2">
-                <CardTitle class="text-lg font-semibold">Kategori ICT (Non-Habis Pakai)</CardTitle>
+                <CardTitle class="text-lg font-semibold">{{ $t('admin.ictCategory') }}</CardTitle>
               </div>
-              <CardDescription class="text-sm">Distribusi total unit berdasarkan kategori ICT</CardDescription>
+              <CardDescription class="text-sm">{{ $t('admin.ictCategoryDesc') }}</CardDescription>
             </CardHeader>
             <CardContent class="p-5 flex-1 flex items-center justify-center">
               <DonutChart
@@ -249,11 +262,11 @@ const ictChartColors = ['#0D9488', '#0284C7', '#F59E0B', '#E11D48', '#8B5CF6', '
                 index="category_name"
                 category="total_units"
                 :colors="ictChartColors"
-                :value-formatter="(v) => `${v.toLocaleString('id-ID')}`"
+                :value-formatter="(v) => `${v.toLocaleString(locale === 'en' ? 'en-US' : 'id-ID')}`"
               />
               <div v-else class="py-12 text-center text-muted-foreground text-sm flex flex-col items-center gap-2">
                 <Monitor class="w-8 h-8 opacity-40" />
-                <span>Tidak ada data tersedia.</span>
+                <span>{{ $t('common.noData') }}</span>
               </div>
             </CardContent>
           </Card>
@@ -261,9 +274,9 @@ const ictChartColors = ['#0D9488', '#0284C7', '#F59E0B', '#E11D48', '#8B5CF6', '
       </div>
 
       <!-- Main Card Container (WIP) -->
-      <div v-else-if="activeTab === 'WIP'" class="p-12 bg-card rounded-xl border border-border shadow-sm flex items-center justify-center min-h-[400px]">
+      <div v-else-if="activeTab === 'wip'" class="p-12 bg-card rounded-xl border border-border shadow-sm flex items-center justify-center min-h-[400px]">
         <p class="text-muted-foreground text-base font-medium">
-          Sedang dalam tahap pengembangan
+          {{ $t('admin.wipNotice') }}
         </p>
       </div>
     </div>

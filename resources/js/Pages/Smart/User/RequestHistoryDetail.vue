@@ -6,6 +6,7 @@
  */
 import { ref, computed, watch } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
 import { toast } from 'vue-sonner';
 import { addNotification } from '@/stores/notificationStore';
 import AppLayout from '@/Layouts/AppLayout.vue';
@@ -122,9 +123,11 @@ const request = computed((): RequestHistory => {
   return requestState.value;
 });
 
+const { t, locale } = useI18n();
+
 const isPeminjaman = computed(() => request.value?.type === 'peminjaman');
-const typeLabel = computed(() => isPeminjaman.value ? 'peminjaman' : 'permintaan');
-const typeLabelTitle = computed(() => isPeminjaman.value ? 'Peminjaman' : 'Permintaan');
+const typeLabel = computed(() => isPeminjaman.value ? t('requests.loan').toLowerCase() : t('requests.request').toLowerCase());
+const typeLabelTitle = computed(() => isPeminjaman.value ? t('requests.loan') : t('requests.request'));
 
 // --- Cancellation Modal State ---
 const isCancelModalOpen = ref(false);
@@ -172,9 +175,13 @@ const isAutoScheduled = computed(() => {
 });
 
 const effectiveHandoverMethod = computed(() => {
-  if (isAutoScheduled.value) return 'Ambil sendiri';
-  if (request.value.handover_method) return request.value.handover_method;
-  return handoverMethod.value && handoverMethod.value !== 'Pilih' ? handoverMethod.value : 'Ambil sendiri';
+  if (isAutoScheduled.value) return t('requests.pickupSelf');
+  if (request.value.handover_method) {
+    if (request.value.handover_method === 'Ambil sendiri') return t('requests.pickupSelf');
+    if (request.value.handover_method === 'Diantar ke ruangan') return t('requests.deliverToRoom');
+    return request.value.handover_method;
+  }
+  return handoverMethod.value && handoverMethod.value !== 'Pilih' ? handoverMethod.value : t('requests.pickupSelf');
 });
 
 const effectiveHandoverTime = computed(() => {
@@ -192,7 +199,7 @@ const effectiveHandoverLocation = computed(() => {
 const formattedTimeForBanner = computed(() => {
   const dt = effectiveHandoverTime.value;
   if (!dt) return '';
-  return dt.replace(' ', ' jam ');
+  return locale.value === 'en' ? dt.replace(' ', ' at ') : dt.replace(' ', ' jam ');
 });
 
 const openHandoverModal = () => {
@@ -214,20 +221,20 @@ const onInputChange = () => {
 const handleSaveHandover = () => {
   // Validate required fields
   if (!handoverMethod.value || handoverMethod.value === 'Pilih') {
-    errorMessage.value = 'Metode penyerahan wajib dipilih.';
+    errorMessage.value = t('requests.handoverMethodRequired');
     return;
   }
   if (!handoverDate.value) {
-    errorMessage.value = 'Tanggal penyerahan wajib diisi.';
+    errorMessage.value = t('requests.handoverDateRequired');
     return;
   }
   if (!handoverTimeOnly.value) {
-    errorMessage.value = 'Jam penyerahan wajib diisi.';
+    errorMessage.value = t('requests.handoverTimeRequired');
     return;
   }
 
   if (!route().has('smart.history.handover')) {
-    toast.info('Fitur serah terima akan tersedia pada tahap berikutnya.');
+    toast.info(t('requests.handoverFeatureUpcoming'));
     closeHandoverModal();
     return;
   }
@@ -243,7 +250,7 @@ const handleSaveHandover = () => {
       const formattedDate = dateParts.length === 3 ? `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}` : handoverDate.value;
       handoverTime.value = `${formattedDate} ${handoverTimeOnly.value}`;
 
-      toast.success('Serah terima berhasil diatur!');
+      toast.success(t('requests.handoverSuccess'));
       closeHandoverModal();
     },
     onError: (errs) => {
@@ -281,20 +288,20 @@ const onReturnInputChange = () => {
 /** Submit return scheduling details */
 const handleSaveReturn = () => {
   if (!returnMethod.value || returnMethod.value === 'Pilih') {
-    returnErrorMessage.value = 'Metode pengembalian wajib dipilih.';
+    returnErrorMessage.value = t('requests.returnMethodRequired');
     return;
   }
   if (!returnDate.value) {
-    returnErrorMessage.value = 'Tanggal pengembalian wajib diisi.';
+    returnErrorMessage.value = t('requests.returnDateRequired');
     return;
   }
   if (!returnTimeOnly.value) {
-    returnErrorMessage.value = 'Jam pengembalian wajib diisi.';
+    returnErrorMessage.value = t('requests.returnTimeRequired');
     return;
   }
 
   if (!route().has('smart.history.return')) {
-    toast.info('Fitur pengembalian akan tersedia pada tahap berikutnya.');
+    toast.info(t('requests.returnFeatureUpcoming'));
     closeReturnModal();
     return;
   }
@@ -310,7 +317,7 @@ const handleSaveReturn = () => {
       const formattedDate = dateParts.length === 3 ? `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}` : returnDate.value;
       returnTime.value = `${formattedDate} ${returnTimeOnly.value}`;
 
-      toast.success('Pengembalian aset berhasil diatur!');
+      toast.success(t('requests.returnSuccess'));
       closeReturnModal();
     },
     onError: (errs) => {
@@ -333,14 +340,14 @@ const closeConfirmReceivedModal = () => {
 /** Mark assets as received by user */
 const confirmReceivedAction = () => {
   if (!route().has('smart.history.receive')) {
-    toast.info('Fitur konfirmasi penerimaan akan tersedia pada tahap berikutnya.');
+    toast.info(t('requests.confirmReceivedUpcoming'));
     closeConfirmReceivedModal();
     return;
   }
 
   router.post(route('smart.history.receive', props.requestId), {}, {
     onSuccess: () => {
-      toast.success('Aset berhasil dikonfirmasi telah diterima!');
+      toast.success(t('requests.confirmReceivedSuccess'));
       closeConfirmReceivedModal();
     }
   });
@@ -354,7 +361,7 @@ const handleReturnAction = () => {
     openReturnModal();
   } else {
     requestState.value.status = 'Selesai';
-    toast.success('Permintaan barang habis pakai selesai!');
+    toast.success(t('requests.consumableRequestFinished'));
   }
 };
 
@@ -373,7 +380,7 @@ const timelineSteps = computed((): TimelineStep[] => {
 
   // Step 1: Created
   steps.push({
-    title: `${typeLabelTitle.value} dibuat`,
+    title: t('requests.timeline.created', { type: typeLabelTitle.value }),
     time: r.created_at ? `${formatDate(r.created_at)} 08:30` : '',
     status: 'done'
   });
@@ -390,64 +397,80 @@ const timelineSteps = computed((): TimelineStep[] => {
 
       if (log.status_to === 'approve') {
         const approverName = log.user || r.approval_by || r.approver_name || '-';
-        title = 'Di-approve';
-        description = `${typeLabelTitle.value} disetujui Manager: <span class="font-bold text-foreground">${approverName}</span>${r.approval?.note ? `<br>Catatan: ${r.approval.note}` : ''}`;
+        title = t('requests.timeline.approved');
+        const approvedText = t('requests.timeline.approvedByManager', {
+          type: typeLabelTitle.value,
+          name: approverName
+        }).replace(approverName, `<span class="font-bold text-foreground">${approverName}</span>`);
+        const noteText = r.approval?.note ? `<br>${t('requests.timeline.note', { note: r.approval.note })}` : '';
+        description = `${approvedText}${noteText}`;
       } else if (log.status_to === 'partial') {
         const adminName = log.user || r.confirmation_by || 'Admin';
-        title = 'Disetujui sebagian (Partial)';
+        title = t('requests.timeline.partialApproved');
         if (log.note) {
           description = log.note.replace(/Admin:\s*([^.<]+)/, 'Admin: <span class="font-bold text-foreground">$1</span>');
         } else {
-          description = `${typeLabelTitle.value} disetujui sebagian oleh Admin: <span class="font-bold text-foreground">${adminName}</span>.`;
+          description = t('requests.timeline.partialApprovedByAdmin', {
+            type: typeLabelTitle.value,
+            name: adminName
+          }).replace(adminName, `<span class="font-bold text-foreground">${adminName}</span>`);
         }
       } else if (log.status_to === 'confirm') {
         const adminName = log.user || r.confirmation_by || 'Admin';
         if (log.status_from === 'partial') {
-          title = 'Alokasi Barang Tambahan Dikonfirmasi';
+          title = t('requests.timeline.extraAllocationConfirmed');
         } else {
-          if (log.note && log.note.includes('diatur oleh pengguna')) {
-            title = 'Jadwal Serah Terima Diatur';
+          if (log.note && (log.note.includes('diatur oleh pengguna') || log.note.includes('scheduled by user'))) {
+            title = t('requests.timeline.handoverScheduled');
           } else {
-            title = 'Dikonfirmasi';
+            title = t('requests.timeline.confirmed');
           }
         }
         if (log.note) {
           description = log.note.replace(/Admin:\s*([^.<]+)/, 'Admin: <span class="font-bold text-foreground">$1</span>');
         } else {
-          description = `${typeLabelTitle.value} dikonfirmasi oleh Admin: <span class="font-bold text-foreground">${adminName}</span>.`;
+          description = t('requests.timeline.confirmedByAdmin', {
+            type: typeLabelTitle.value,
+            name: adminName
+          }).replace(adminName, `<span class="font-bold text-foreground">${adminName}</span>`);
         }
       } else if (log.status_to === 'borrow') {
-        title = 'Serah Terima Selesai & Dipinjam';
-        description = description || 'Aset telah diserahkan dan dipinjam.';
+        title = t('requests.timeline.handoverDoneBorrowed');
+        description = description || t('requests.timeline.handoverDoneBorrowedDesc');
       } else if (log.status_to === 'return') {
-        title = 'Pengembalian Diajukan';
-        description = description || 'Jadwal pengembalian telah diajukan.';
+        title = t('requests.timeline.returnRequested');
+        description = description || t('requests.timeline.returnRequestedDesc');
       } else if (log.status_to === 'success') {
         if (log.status_from === 'return') {
-          title = 'Pengembalian Selesai';
-          description = description || 'Aset dikembalikan & semua proses selesai.';
+          title = t('requests.timeline.returnDone');
+          description = description || t('requests.timeline.returnDoneDesc');
         } else {
-          title = 'Serah Terima Selesai';
-          description = description || 'Barang habis pakai telah diserahkan & proses selesai.';
+          title = t('requests.timeline.handoverDone');
+          description = description || t('requests.timeline.handoverDoneDesc');
         }
       } else if (log.status_to === 'reject') {
         const approverName = log.user || r.approval_by || r.approver_name || '-';
-        title = 'Ditolak';
+        title = t('requests.timeline.rejected');
         status = 'rejected';
-        description = `${typeLabelTitle.value} ditolak Manager: <span class="font-bold text-foreground">${approverName}</span>${r.approval?.note ? `<br>Alasan: ${r.approval.note}` : ''}`;
+        const rejectedText = t('requests.timeline.rejectedByManager', {
+          type: typeLabelTitle.value,
+          name: approverName
+        }).replace(approverName, `<span class="font-bold text-foreground">${approverName}</span>`);
+        const reasonText = r.approval?.note ? `<br>${t('requests.timeline.reason', { note: r.approval.note })}` : '';
+        description = `${rejectedText}${reasonText}`;
       } else if (log.status_to === 'cancel') {
-        title = 'Dibatalkan';
+        title = t('requests.timeline.cancelled');
         status = 'rejected';
-        description = description || `${typeLabelTitle.value} dibatalkan.`;
+        description = description || t('requests.timeline.cancelledDesc', { type: typeLabelTitle.value });
       } else if (log.status_to === 'pending') {
         if (log.status_from === 'confirm') {
-          title = 'Serah Terima Sebagian Diterima';
+          title = t('requests.timeline.partialReceived');
           status = 'done';
         } else {
-          title = 'Pending';
+          title = t('requests.timeline.pending');
           status = 'pending';
         }
-        description = description || (log.status_from === 'confirm' ? 'Barang telah diterima oleh pengguna.' : `${typeLabelTitle.value} ditunda (pending) oleh Admin.`);
+        description = description || (log.status_from === 'confirm' ? t('requests.timeline.userReceived') : t('requests.timeline.pendingByAdmin', { type: typeLabelTitle.value }));
       }
 
       if (title) {
@@ -467,53 +490,54 @@ const timelineSteps = computed((): TimelineStep[] => {
   if (!isFinalStatus) {
     if (r.raw_status === 'wait') {
       steps.push({
-        title: 'Menunggu approval',
+        title: t('requests.timeline.waitingApproval'),
         status: 'active',
-        description: `Menunggu approval dari Manager: <span class="font-bold text-foreground">${r.approver_name || '-'}</span>`
+        description: t('requests.timeline.waitingApprovalFrom', {
+          name: `<span class="font-bold text-foreground">${r.approver_name || '-'}</span>`
+        })
       });
     } else if (r.raw_status === 'approve') {
-      const approverName = r.approval_by || r.approver_name || '-';
       steps.push({
-        title: 'Menunggu konfirmasi Admin',
+        title: t('requests.timeline.waitingAdminConfirm'),
         status: 'active',
-        description: `Menunggu alokasi aset dan konfirmasi Admin.`
+        description: t('requests.timeline.waitingAdminConfirmDesc')
       });
     } else if (r.raw_status === 'pending') {
       steps.push({
-        title: 'Pending',
+        title: t('requests.timeline.pending'),
         status: 'pending',
-        description: 'Pemesanan pending/ditunda oleh Admin karena stok barang habis.'
+        description: t('requests.timeline.pendingOutOfStock')
       });
     } else if (r.raw_status === 'partial') {
       steps.push({
-        title: 'Serah Terima',
+        title: t('requests.timeline.handoverActionRequired'),
         status: 'action-required',
-        description: 'Serah Terima perlu diatur!'
+        description: t('requests.timeline.handoverActionRequiredDesc')
       });
     } else if (r.raw_status === 'confirm') {
       steps.push({
-        title: 'Menunggu Alokasi',
+        title: t('requests.timeline.waitingAllocation'),
         status: 'active',
-        description: `${typeLabelTitle.value} sedang diproses oleh Admin Aset.`
+        description: t('requests.timeline.waitingAllocationDesc', { type: typeLabelTitle.value })
       });
     } else if (r.raw_status === 'handover') {
       const isScheduled = !!r.handover_time || isAutoScheduled.value;
       steps.push({
-        title: 'Serah Terima',
+        title: t('requests.timeline.handoverActionRequired'),
         status: 'action-required',
-        description: isScheduled ? 'scheduled-details' : 'Serah Terima perlu diatur!'
+        description: isScheduled ? 'scheduled-details' : t('requests.timeline.handoverActionRequiredDesc')
       });
     } else if (r.raw_status === 'borrow') {
       steps.push({
-        title: r.type === 'peminjaman' ? 'Aset sedang Anda pinjam' : 'Aset sedang Anda gunakan',
+        title: r.type === 'peminjaman' ? t('requests.timeline.assetInBorrow') : t('requests.timeline.assetInUse'),
         status: 'action-required',
         description: 'show-return-action'
       });
     } else if (r.raw_status === 'return') {
       steps.push({
-        title: 'Dalam Proses Pengembalian',
+        title: t('requests.timeline.inReturnProcess'),
         status: 'active',
-        description: 'Jadwal pengembalian telah diajukan. Menunggu konfirmasi Admin.'
+        description: t('requests.timeline.inReturnProcessDesc')
       });
     }
   }
@@ -531,16 +555,16 @@ const activeStepIndex = computed(() => {
 </script>
 
 <template>
-  <Head :title="'Detail ' + request.number" />
+  <Head :title="t('requests.detailOf', { number: request.number })" />
 
-  <AppLayout :title="'Detail ' + typeLabelTitle">
+  <AppLayout :title="t('requests.detailType', { type: typeLabelTitle })">
     <!-- ── Breadcrumb & Tombol Kembali (In Line) ── -->
     <div class="flex items-center justify-between gap-4 mb-6">
       <Breadcrumb>
         <BreadcrumbList class="text-xs md:text-sm">
           <BreadcrumbItem>
             <Link :href="route('smart.history')" class="text-muted-foreground hover:text-foreground transition-colors">
-              Riwayat 
+              {{ $t('nav.history') }}
             </Link>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
@@ -559,13 +583,13 @@ const activeStepIndex = computed(() => {
           @click="isCancelModalOpen = true"
         >
           <Trash2 class="w-3.5 h-3.5" />
-          Batalkan {{ typeLabelTitle }}
+          {{ $t('requests.cancelType', { type: typeLabelTitle }) }}
         </Button>
 
         <Link :href="route('smart.history')">
           <Button variant="white" class="flex items-center gap-1.5 h-8 px-3 text-xs font-semibold">
             <ArrowLeft class="w-3.5 h-3.5" />
-            Kembali ke Riwayat
+            {{ $t('requests.backToHistory') }}
           </Button>
         </Link>
       </div>
@@ -579,10 +603,10 @@ const activeStepIndex = computed(() => {
       <div class="flex items-center gap-2.5 text-indigo-700 dark:text-indigo-300">
         <AlertCircle class="w-5 h-5 shrink-0" />
         <span v-if="!request.handover_time && !isAutoScheduled" class="text-sm font-semibold">
-          Tindakan diperlukan: serah terima belum diatur!
+          {{ $t('requests.actionRequiredHandover') }}
         </span>
         <span v-else class="text-sm font-semibold">
-          Pengingat bahwa Anda harus mengambil sendiri pada {{ formattedTimeForBanner }}
+          {{ $t('requests.selfPickupReminder', { time: formattedTimeForBanner }) }}
         </span>
       </div>
 
@@ -593,7 +617,7 @@ const activeStepIndex = computed(() => {
         size="sm"
         class="font-semibold text-xs h-9 px-5"
       >
-        Atur Serah Terima
+        {{ $t('requests.setupHandover') }}
       </Button>
       <Button 
         v-else
@@ -602,7 +626,7 @@ const activeStepIndex = computed(() => {
         size="sm"
         class="font-semibold text-xs h-9 px-5"
       >
-        Aset Telah Diterima
+        {{ $t('requests.assetReceived') }}
       </Button>
     </div>
 
@@ -616,37 +640,37 @@ const activeStepIndex = computed(() => {
         <div class="bg-card border border-border rounded-[0.875rem] p-5 space-y-1.5">
           <div class="text-base space-y-1">
             <h2 class="text-base font-bold text-foreground">
-              <span class="font-normal text-muted-foreground">Nomor: </span>{{ request.number }}
+              <span class="font-normal text-muted-foreground">{{ $t('requests.numberLabel') }}</span>{{ request.number }}
             </h2>
 
             <p class="text-sm text-foreground">
-              <span class="text-muted-foreground">PIC Approval:</span> 
+              <span class="text-muted-foreground">{{ $t('requests.approverPicLabel') }}</span> 
               <span class="font-semibold ml-1">
                 {{ request.approver_name || '-' }}
               </span>
             </p>
             
             <p class="text-sm text-foreground">
-              <span class="text-muted-foreground">Pemanfaatan:</span> 
+              <span class="text-muted-foreground">{{ $t('requests.utilizationLabel') }}</span> 
               <span class="font-semibold ml-1">
                 {{ request.pemanfaatan === 'corporate' ? `Corporate (${request.pemanfaatanDetail})` : `Project ${request.pemanfaatanDetail}` }}
               </span>
             </p>
 
             <p v-if="request.type === 'peminjaman' && request.durationStart" class="text-sm text-foreground">
-              <span class="text-muted-foreground">Durasi:</span>
+              <span class="text-muted-foreground">{{ $t('requests.durationLabel') }}</span>
               <span class="font-medium ml-1">
                 <template v-if="request.durationEnd">
-                  {{ request.durationStart }} s.d. {{ request.durationEnd }} ({{ request.durationDays }} hari, {{ request.durationHours || 0 }} jam)
+                  {{ request.durationStart }} {{ $t('requests.until') }} {{ request.durationEnd }} ({{ request.durationDays }} {{ $t('requests.days') }}, {{ request.durationHours || 0 }} {{ $t('requests.hours') }})
                 </template>
                 <template v-else>
-                  {{ request.durationStart }} s.d. - (Tanpa Tenggat Waktu)
+                  {{ request.durationStart }} {{ $t('requests.until') }} - ({{ $t('requests.noDeadline') }})
                 </template>
               </span>
             </p>
 
             <p class="text-xs text-muted-foreground pt-1">
-              <span>{{ typeLabelTitle }} dibuat pada:</span>
+              <span>{{ $t('requests.createdAtType', { type: typeLabelTitle }) }}</span>
               <span class="font-medium text-foreground/80 ml-1">{{ formatDate(request.created_at) }}</span>
             </p>
           </div>
@@ -654,7 +678,7 @@ const activeStepIndex = computed(() => {
 
         <!-- Card Daftar Barang -->
         <div>
-          <p class="text-xs text-muted-foreground font-medium mb-3">Daftar Barang:</p>
+          <p class="text-xs text-muted-foreground font-medium mb-3">{{ $t('requests.itemList') }}</p>
           
           <ScrollArea 
             class="border border-border rounded-[0.875rem] bg-card"
@@ -690,7 +714,7 @@ const activeStepIndex = computed(() => {
         
         <div class="bg-card border border-border rounded-[0.875rem] p-5 sm:p-6 relative">
           <!-- Header without border/count matching Daftar Barang style -->
-          <p class="text-xs text-muted-foreground font-medium mb-4">Tahapan {{ typeLabelTitle }}:</p>
+          <p class="text-xs text-muted-foreground font-medium mb-4">{{ $t('requests.stepsTitle', { type: typeLabelTitle }) }}</p>
 
           <!-- shadcn-vue Vertical Stepper -->
           <Stepper
@@ -782,15 +806,15 @@ const activeStepIndex = computed(() => {
                   class="mt-2.5 p-3 rounded-lg bg-muted/40 border border-border/80 text-xs space-y-1.5"
                 >
                   <div class="flex items-start justify-between gap-2">
-                    <span class="text-muted-foreground">Metode</span>
+                    <span class="text-muted-foreground">{{ $t('requests.method') }}</span>
                     <span class="font-medium text-foreground text-right">{{ effectiveHandoverMethod }}</span>
                   </div>
                   <div class="flex items-start justify-between gap-2">
-                    <span class="text-muted-foreground">Tempat</span>
+                    <span class="text-muted-foreground">{{ $t('requests.location') }}</span>
                     <span class="font-medium text-foreground text-right">{{ effectiveHandoverLocation }}</span>
                   </div>
                   <div class="flex items-start justify-between gap-2">
-                    <span class="text-muted-foreground">Waktu</span>
+                    <span class="text-muted-foreground">{{ $t('requests.time') }}</span>
                     <span class="font-medium text-foreground text-right">{{ effectiveHandoverTime }}</span>
                   </div>
                 </div>
@@ -804,7 +828,7 @@ const activeStepIndex = computed(() => {
                     size="sm"
                     class="font-semibold text-xs h-8 px-3.5"
                   >
-                    Atur Serah Terima
+                    {{ $t('requests.setupHandover') }}
                   </Button>
 
                   <Button 
@@ -814,7 +838,7 @@ const activeStepIndex = computed(() => {
                     size="sm"
                     class="font-semibold text-xs h-8 px-4"
                   >
-                    Aset Telah Diterima
+                    {{ $t('requests.assetReceived') }}
                   </Button>
 
                   <Button 
@@ -824,7 +848,7 @@ const activeStepIndex = computed(() => {
                     size="sm"
                     class="font-semibold text-xs h-8 px-4"
                   >
-                    {{ request.type === 'peminjaman' ? 'Atur Pengembalian' : 'Selesai' }}
+                    {{ request.type === 'peminjaman' ? $t('requests.setupReturn') : $t('requests.finished') }}
                   </Button>
                 </div>
               </div>
@@ -839,9 +863,9 @@ const activeStepIndex = computed(() => {
       <DialogContent class="sm:max-w-[42rem] rounded-[0.875rem] bg-card p-0 gap-0 border border-border overflow-hidden" :show-close-button="false">
         <div class="flex items-center justify-between pt-3 pb-2 px-4 sm:px-6 border-b border-border">
           <div>
-            <DialogTitle class="text-lg font-bold text-foreground">Serah Terima</DialogTitle>
+            <DialogTitle class="text-lg font-bold text-foreground">{{ $t('requests.handoverTitle') }}</DialogTitle>
             <DialogDescription class="sr-only">
-              Formulir pengaturan jadwal dan metode serah terima barang.
+              {{ $t('requests.handoverDesc') }}
             </DialogDescription>
           </div>
           <button @click="closeHandoverModal" class="p-2 hover:bg-muted rounded-full transition-colors">
@@ -851,18 +875,18 @@ const activeStepIndex = computed(() => {
 
         <div class="px-4 sm:px-6 py-4 overflow-y-auto max-h-[70vh] space-y-4">
           <div class="p-3.5 rounded-[0.875rem] bg-muted/40 border border-border space-y-1 text-sm">
-            <h4 class="font-bold text-foreground"><span class="font-normal text-muted-foreground">Nomor: </span>{{ request.number }}</h4>
+            <h4 class="font-bold text-foreground"><span class="font-normal text-muted-foreground">{{ $t('requests.numberLabel') }}</span>{{ request.number }}</h4>
             <p class="text-foreground">
-              <span class="text-muted-foreground">PIC Approval:</span> 
+              <span class="text-muted-foreground">{{ $t('requests.approverPicLabel') }}</span> 
               <span class="font-semibold ml-1">{{ request.approver_name || '-' }}</span>
             </p>
             <p class="text-foreground">
-              <span class="text-muted-foreground">Pemanfaatan:</span> 
+              <span class="text-muted-foreground">{{ $t('requests.utilizationLabel') }}</span> 
               <span class="font-semibold ml-1">{{ request.pemanfaatan === 'corporate' ? `Corporate (${request.pemanfaatanDetail})` : `Project ${request.pemanfaatanDetail}` }}</span>
             </p>
             <p v-if="request.type === 'peminjaman' && request.durationStart" class="text-foreground">
-              <span class="text-muted-foreground">Durasi:</span>
-              <span class="font-medium ml-1">{{ request.durationStart }} s.d. {{ request.durationEnd }} ({{ request.durationDays }} hari, {{ request.durationHours || 0 }} jam)</span>
+              <span class="text-muted-foreground">{{ $t('requests.durationLabel') }}</span>
+              <span class="font-medium ml-1">{{ request.durationStart }} {{ $t('requests.until') }} {{ request.durationEnd }} ({{ request.durationDays }} {{ $t('requests.days') }}, {{ request.durationHours || 0 }} {{ $t('requests.hours') }})</span>
             </p>
           </div>
 
@@ -870,15 +894,15 @@ const activeStepIndex = computed(() => {
             <!-- Row: Metode Penyerahan -->
             <div class="space-y-1.5">
               <label class="text-xs font-semibold text-foreground block">
-                Metode penyerahan <span class="text-destructive">*</span>
+                {{ $t('requests.handoverMethod') }} <span class="text-destructive">*</span>
               </label>
               <Select v-model="handoverMethod" @update:modelValue="onInputChange">
                 <SelectTrigger class="w-full rounded-[0.875rem] h-10 text-sm">
-                  <SelectValue placeholder="Pilih metode" />
+                  <SelectValue :placeholder="$t('requests.chooseMethod')" />
                 </SelectTrigger>
                 <SelectContent class="rounded-[0.875rem]">
-                  <SelectItem value="Ambil sendiri">Ambil sendiri</SelectItem>
-                  <SelectItem value="Diantar ke ruangan">Diantar ke ruangan</SelectItem>
+                  <SelectItem value="Ambil sendiri">{{ $t('requests.pickupSelf') }}</SelectItem>
+                  <SelectItem value="Diantar ke ruangan">{{ $t('requests.deliverToRoom') }}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -886,7 +910,7 @@ const activeStepIndex = computed(() => {
             <!-- Row: Jadwal Penyerahan -->
             <div class="space-y-1.5">
               <label class="text-xs font-semibold text-foreground block">
-                Jadwal penyerahan <span class="text-destructive">*</span>
+                {{ $t('requests.handoverSchedule') }} <span class="text-destructive">*</span>
               </label>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <input 
@@ -911,13 +935,13 @@ const activeStepIndex = computed(() => {
         </div>
 
         <div class="py-4 px-4 sm:px-6 border-t border-border flex items-center justify-between gap-3">
-          <span class="text-xs italic text-destructive font-medium">*Wajib diisi</span>
+          <span class="text-xs italic text-destructive font-medium">{{ $t('requests.requiredField') }}</span>
           <div class="flex items-center gap-3">
             <Button variant="white" size="lg" @click="closeHandoverModal">
-              Batal
+              {{ $t('common.cancel') }}
             </Button>
             <Button variant="primary" size="lg" @click="handleSaveHandover">
-              Konfirmasi Serah Terima
+              {{ $t('requests.confirmHandover') }}
             </Button>
           </div>
         </div>
@@ -929,8 +953,8 @@ const activeStepIndex = computed(() => {
       <DialogContent class="sm:max-w-md rounded-[0.875rem] bg-card p-0 gap-0 border border-border overflow-hidden" :show-close-button="false">
         <div class="flex items-center justify-between pt-3 pb-2 px-4 sm:px-6 border-b border-border">
           <div>
-            <DialogTitle class="text-base font-bold text-foreground">Konfirmasi Serah Terima</DialogTitle>
-            <DialogDescription class="sr-only">Konfirmasi penerimaan barang.</DialogDescription>
+            <DialogTitle class="text-base font-bold text-foreground">{{ $t('requests.confirmHandover') }}</DialogTitle>
+            <DialogDescription class="sr-only">{{ $t('requests.confirmReceivedDesc') }}</DialogDescription>
           </div>
           <button @click="closeConfirmReceivedModal" class="p-2 hover:bg-muted rounded-full transition-colors">
             <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
@@ -942,16 +966,16 @@ const activeStepIndex = computed(() => {
             <CheckCircle2 class="w-6 h-6" />
           </div>
           <p class="text-sm font-semibold text-foreground">
-            Saya telah menerima semua barang dengan sesuai dan dalam kondisi yang baik.
+            {{ $t('requests.confirmReceivedMsg') }}
           </p>
         </div>
 
         <div class="py-3 px-4 sm:px-6 border-t border-border flex items-center justify-end gap-3">
           <Button variant="white" size="sm" @click="closeConfirmReceivedModal">
-            Tidak
+            {{ $t('common.no') }}
           </Button>
           <Button variant="primary" size="sm" @click="confirmReceivedAction">
-            Iya, Sudah Diterima
+            {{ $t('requests.yesReceived') }}
           </Button>
         </div>
       </DialogContent>
@@ -962,8 +986,8 @@ const activeStepIndex = computed(() => {
       <DialogContent class="sm:max-w-[42rem] rounded-[0.875rem] bg-card p-0 gap-0 border border-border overflow-hidden" :show-close-button="false">
         <div class="flex items-center justify-between pt-3 pb-2 px-4 sm:px-6 border-b border-border">
           <div>
-            <DialogTitle class="text-lg font-bold text-foreground">Pengembalian</DialogTitle>
-            <DialogDescription class="sr-only">Formulir pengaturan jadwal pengembalian aset.</DialogDescription>
+            <DialogTitle class="text-lg font-bold text-foreground">{{ $t('requests.returnTitle') }}</DialogTitle>
+            <DialogDescription class="sr-only">{{ $t('requests.returnDesc') }}</DialogDescription>
           </div>
           <button @click="closeReturnModal" class="p-2 hover:bg-muted rounded-full transition-colors">
             <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
@@ -972,40 +996,40 @@ const activeStepIndex = computed(() => {
 
         <div class="px-4 sm:px-6 py-4 overflow-y-auto max-h-[70vh] space-y-4">
           <div class="p-3.5 rounded-[0.875rem] bg-muted/40 border border-border space-y-1 text-sm">
-            <h4 class="font-bold text-foreground"><span class="font-normal text-muted-foreground">Nomor: </span>{{ request.number }}</h4>
+            <h4 class="font-bold text-foreground"><span class="font-normal text-muted-foreground">{{ $t('requests.numberLabel') }}</span>{{ request.number }}</h4>
             <p class="text-foreground">
-              <span class="text-muted-foreground">PIC Approval:</span> 
+              <span class="text-muted-foreground">{{ $t('requests.approverPicLabel') }}</span> 
               <span class="font-semibold ml-1">{{ request.approver_name || '-' }}</span>
             </p>
             <p class="text-foreground">
-              <span class="text-muted-foreground">Pemanfaatan:</span> 
+              <span class="text-muted-foreground">{{ $t('requests.utilizationLabel') }}</span> 
               <span class="font-semibold ml-1">{{ request.pemanfaatan === 'corporate' ? `Corporate (${request.pemanfaatanDetail})` : `Project ${request.pemanfaatanDetail}` }}</span>
             </p>
             <p v-if="request.type === 'peminjaman' && request.durationStart" class="text-foreground">
-              <span class="text-muted-foreground">Durasi:</span>
-              <span class="font-medium ml-1">{{ request.durationStart }} s.d. {{ request.durationEnd }} ({{ request.durationDays }} hari, {{ request.durationHours || 0 }} jam)</span>
+              <span class="text-muted-foreground">{{ $t('requests.durationLabel') }}</span>
+              <span class="font-medium ml-1">{{ request.durationStart }} {{ $t('requests.until') }} {{ request.durationEnd }} ({{ request.durationDays }} {{ $t('requests.days') }}, {{ request.durationHours || 0 }} {{ $t('requests.hours') }})</span>
             </p>
           </div>
 
           <div class="space-y-4 pt-1">
             <div class="space-y-1.5">
               <label class="text-xs font-semibold text-foreground block">
-                Metode pengembalian <span class="text-destructive">*</span>
+                {{ $t('requests.returnMethod') }} <span class="text-destructive">*</span>
               </label>
               <Select v-model="returnMethod" @update:modelValue="onReturnInputChange">
                 <SelectTrigger class="w-full rounded-[0.875rem] h-10 text-sm">
-                  <SelectValue placeholder="Pilih metode" />
+                  <SelectValue :placeholder="$t('requests.chooseMethod')" />
                 </SelectTrigger>
                 <SelectContent class="rounded-[0.875rem]">
-                  <SelectItem value="Kembalikan sendiri">Kembalikan sendiri</SelectItem>
-                  <SelectItem value="Diantar ke GA / IT Support">Diantar ke GA / IT Support</SelectItem>
+                  <SelectItem value="Kembalikan sendiri">{{ $t('requests.returnSelf') }}</SelectItem>
+                  <SelectItem value="Diantar ke GA / IT Support">{{ $t('requests.deliverToGa') }}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div class="space-y-1.5">
               <label class="text-xs font-semibold text-foreground block">
-                Jadwal pengembalian <span class="text-destructive">*</span>
+                {{ $t('requests.returnSchedule') }} <span class="text-destructive">*</span>
               </label>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <input 
@@ -1030,13 +1054,13 @@ const activeStepIndex = computed(() => {
         </div>
 
         <div class="py-4 px-4 sm:px-6 border-t border-border flex items-center justify-between gap-3">
-          <span class="text-xs italic text-destructive font-medium">*Wajib diisi</span>
+          <span class="text-xs italic text-destructive font-medium">{{ $t('requests.requiredField') }}</span>
           <div class="flex items-center gap-3">
             <Button variant="white" size="lg" @click="closeReturnModal">
-              Batal
+              {{ $t('common.cancel') }}
             </Button>
             <Button variant="primary" size="lg" @click="handleSaveReturn">
-              Konfirmasi Pengembalian
+              {{ $t('requests.confirmReturn') }}
             </Button>
           </div>
         </div>

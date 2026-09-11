@@ -4,6 +4,7 @@
  * Tracks ongoing borrowed assets and links to detail page.
  */
 import { ref, computed, watch, h, onMounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { router } from '@inertiajs/vue3';
 import { 
   ChevronDown, 
@@ -27,12 +28,25 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+const { t } = useI18n();
 
 const dummyBorrowed = computed(() => props.borrowedList);
 
 const searchQuery = ref('');
 const timeFilter = ref('');
 const rowsPerPage = ref('Semua baris');
+
+const timeFilterLabel = computed(() => {
+  if (timeFilter.value === 'Hari ini') return t('fulfillment.today');
+  if (timeFilter.value === 'Minggu ini') return t('fulfillment.thisWeek');
+  if (timeFilter.value === 'Bulan ini') return t('fulfillment.thisMonth');
+  return t('fulfillment.allTimeRanges');
+});
+
+const rowsPerPageLabel = computed(() => {
+  if (rowsPerPage.value === 'Semua baris') return t('fulfillment.allRows');
+  return rowsPerPage.value;
+});
 
 const hasActiveFilters = computed(() => {
   return !!(
@@ -53,7 +67,7 @@ const handleViewDetail = (item: any) => {
   router.get(url);
 };
 
-const columns: ColumnDef<any>[] = [
+const columns = computed<ColumnDef<any>[]>(() => [
   {
     id: 'select',
     size: 50,
@@ -81,7 +95,7 @@ const columns: ColumnDef<any>[] = [
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
       class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
     }, () => [
-      'Nomor',
+      t('fulfillment.number'),
       h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
     ]),
     cell: ({ row }) => h('div', { class: 'text-muted-foreground font-mono text-sm truncate' }, row.getValue('number')),
@@ -93,7 +107,7 @@ const columns: ColumnDef<any>[] = [
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
       class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
     }, () => [
-      'Nama Peminjam',
+      t('fulfillment.borrowerName'),
       h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
     ]),
     cell: ({ row }) => h('div', { class: 'pl-0' }, row.getValue('borrower')),
@@ -105,7 +119,7 @@ const columns: ColumnDef<any>[] = [
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
       class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
     }, () => [
-      'Hari Berlalu',
+      t('fulfillment.daysPassed'),
       h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
     ]),
     cell: ({ row }) => h('div', { class: 'pl-0' }, row.getValue('daysPassed')),
@@ -117,7 +131,7 @@ const columns: ColumnDef<any>[] = [
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
       class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
     }, () => [
-      'Waktu Tenggat',
+      t('fulfillment.dueDate'),
       h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
     ]),
     cell: ({ row }) => h('div', { class: 'pl-0 text-muted-foreground' }, row.getValue('dueDate')),
@@ -129,7 +143,7 @@ const columns: ColumnDef<any>[] = [
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
       class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
     }, () => [
-      'Sisa Hari',
+      t('fulfillment.daysLeft'),
       h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
     ]),
     cell: ({ row }) => h('div', { class: 'pl-0' }, row.getValue('daysLeft')),
@@ -137,14 +151,14 @@ const columns: ColumnDef<any>[] = [
   {
     id: 'actions',
     size: 80,
-    header: () => h('div', { class: 'text-center font-semibold text-foreground no-print' }, 'Aksi'),
+    header: () => h('div', { class: 'text-center font-semibold text-foreground no-print' }, t('fulfillment.actions')),
     cell: ({ row }) => h('div', { class: 'flex items-center justify-center no-print' }, [
       h(ViewTableButton, {
         onClick: () => handleViewDetail(row.original)
       })
     ]),
   },
-];
+]);
 
 // Watchers for filters
 watch(rowsPerPage, (val) => {
@@ -174,25 +188,25 @@ onMounted(() => {
     <div class="space-y-4 mb-6">
       <div class="flex flex-wrap items-end gap-4">
         <div class="space-y-1.5 flex-1 min-w-[300px] max-w-md">
-          <label class="text-xs text-muted-foreground font-medium block ml-0.5">Filter</label>
+          <label class="text-xs text-muted-foreground font-medium block ml-0.5">{{ t('fulfillment.filter') }}</label>
           <TableSearch 
             v-model="searchQuery"
-            placeholder="Cari nomor peminjaman atau nama peminjam..." 
+            :placeholder="t('fulfillment.searchBorrowPlaceholder')" 
           />
         </div>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" :class="['w-[220px] justify-between rounded-[14px] font-normal', !timeFilter ? 'text-muted-foreground' : 'text-foreground']">
-              <span class="truncate">{{ timeFilter || 'Semua kurun waktu' }}</span>
+              <span class="truncate">{{ timeFilterLabel }}</span>
               <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px]" align="start" :side-offset="4">
-            <DropdownMenuItem @select="timeFilter = ''">Semua kurun waktu</DropdownMenuItem>
-            <DropdownMenuItem @select="timeFilter = 'Hari ini'">Hari ini</DropdownMenuItem>
-            <DropdownMenuItem @select="timeFilter = 'Minggu ini'">Minggu ini</DropdownMenuItem>
-            <DropdownMenuItem @select="timeFilter = 'Bulan ini'">Bulan ini</DropdownMenuItem>
+            <DropdownMenuItem @select="timeFilter = ''">{{ t('fulfillment.allTimeRanges') }}</DropdownMenuItem>
+            <DropdownMenuItem @select="timeFilter = 'Hari ini'">{{ t('fulfillment.today') }}</DropdownMenuItem>
+            <DropdownMenuItem @select="timeFilter = 'Minggu ini'">{{ t('fulfillment.thisWeek') }}</DropdownMenuItem>
+            <DropdownMenuItem @select="timeFilter = 'Bulan ini'">{{ t('fulfillment.thisMonth') }}</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
@@ -211,16 +225,16 @@ onMounted(() => {
         </Transition>
 
         <div class="flex items-center gap-3 text-sm text-muted-foreground ml-auto">
-          <span>Baris per halaman</span>
+          <span>{{ t('fulfillment.rowsPerPage') }}</span>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" :class="['w-[160px] justify-between rounded-[14px] font-normal', (rowsPerPage === 'Semua baris' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
-                {{ rowsPerPage }}
+                {{ rowsPerPageLabel }}
                 <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px]" align="start" :side-offset="4">
-              <DropdownMenuItem @select="rowsPerPage = 'Semua baris'">Semua baris</DropdownMenuItem>
+              <DropdownMenuItem @select="rowsPerPage = 'Semua baris'">{{ t('fulfillment.allRows') }}</DropdownMenuItem>
               <DropdownMenuItem @select="rowsPerPage = '10'">10</DropdownMenuItem>
               <DropdownMenuItem @select="rowsPerPage = '25'">25</DropdownMenuItem>
               <DropdownMenuItem @select="rowsPerPage = '50'">50</DropdownMenuItem>

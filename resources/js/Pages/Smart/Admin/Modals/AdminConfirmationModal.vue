@@ -5,6 +5,7 @@
  * optional approval/rejection notes, and submission action handlers.
  */
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useModalLock } from '@/composables/useModalLock';
 import { X, Loader2, ThumbsUp, Ban } from 'lucide-vue-next';
 import { Button } from "@/Components/ui/button";
@@ -31,6 +32,8 @@ const emit = defineEmits<{
   (e: 'action', payload: { action: 'confirm' | 'reject'; note: string }): void;
 }>();
 
+const { t } = useI18n();
+
 useModalLock(computed(() => props.isOpen));
 
 // --- Form & Action State ---
@@ -52,12 +55,12 @@ const handleAction = (action: 'confirm' | 'reject') => {
 
 /** Formats request summary fields for modal display */
 const getRequestFields = (req: SmartRequestData): RequestModalInfoField[] => {
-  const fields = formatRequestModalFields(req);
+  const fields = formatRequestModalFields(req, t);
 
   const isSufficient = Boolean(req.is_stock_sufficient);
   fields.push({
-    label: 'Kecukupan Stok',
-    value: isSufficient ? 'Cukup' : 'Tidak Cukup',
+    label: t('fulfillment.stockSufficiency'),
+    value: isSufficient ? t('fulfillment.sufficient') : t('fulfillment.insufficient'),
     isBadge: true,
     isSufficient: isSufficient,
   });
@@ -69,12 +72,12 @@ const multipleRequestsLabel = computed(() => {
   const hasPeminjaman = props.requests.some(r => r.type === 'peminjaman');
   const hasPermintaan = props.requests.some(r => r.type === 'permintaan');
   if (hasPeminjaman && hasPermintaan) {
-    return 'Daftar Permintaan / Peminjaman:';
+    return t('fulfillment.requestsAndLoansList');
   }
   if (hasPeminjaman) {
-    return 'Daftar Peminjaman:';
+    return t('fulfillment.loansList');
   }
-  return 'Daftar Permintaan:';
+  return t('fulfillment.requestsList');
 });
 
 const closeOnEscape = (e: KeyboardEvent) => {
@@ -119,7 +122,7 @@ onUnmounted(() => {
             <!-- Modal Header -->
             <div class="flex items-center p-1 justify-between border-b border-border">
               <h3 class="text-lg font-bold text-foreground p-2">
-                {{ requests.length > 1 ? 'Konfirmasi / Penolakan Terpilih' : 'Detail Permintaan & Konfirmasi' }}
+                {{ requests.length > 1 ? t('fulfillment.modalTitleBulk') : t('fulfillment.modalTitleSingle') }}
               </h3>
               <button @click="emit('close')" class="p-2 hover:bg-muted rounded-full transition-colors">
                 <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
@@ -167,7 +170,7 @@ onUnmounted(() => {
 
                   <!-- Card Daftar Barang -->
                   <div class="text-left w-full space-y-2">
-                    <p class="text-xs text-muted-foreground font-medium">Daftar Barang:</p>
+                    <p class="text-xs text-muted-foreground font-medium">{{ t('fulfillment.itemsList') }}</p>
                     
                     <ScrollArea class="max-h-[14rem] sm:max-h-[16rem] h-fit border border-border rounded-[0.875rem] bg-card [&>div]:max-h-[14rem] sm:[&>div]:max-h-[16rem]">
                       <div class="p-3 sm:p-4 space-y-3">
@@ -239,10 +242,10 @@ onUnmounted(() => {
 
               <!-- Input Catatan/Alasan -->
               <div class="space-y-1.5 text-left w-full pt-1">
-                <label class="text-xs text-muted-foreground font-medium block ml-0.5">Catatan / Alasan (Opsional)</label>
+                <label class="text-xs text-muted-foreground font-medium block ml-0.5">{{ t('fulfillment.notesOptional') }}</label>
                 <textarea
                   v-model="note"
-                  placeholder="Masukkan catatan konfirmasi atau alasan penolakan..."
+                  :placeholder="t('fulfillment.notesPlaceholder')"
                   class="w-full h-16 text-sm border border-input rounded-[14px] bg-background text-foreground p-3 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary shadow-sm resize-none"
                 ></textarea>
               </div>
@@ -256,7 +259,7 @@ onUnmounted(() => {
                   variant="white"
                   class="px-5"
                 >
-                  Batal
+                  {{ t('fulfillment.batal') }}
                 </Button>
                 <div class="flex items-center gap-2">
                   <Button 
@@ -268,7 +271,7 @@ onUnmounted(() => {
                     <Loader2 v-if="processing && pendingAction === 'reject'" class="absolute inset-0 m-auto h-5 w-5 animate-spin" />
                     <span :class="{ 'opacity-0': processing && pendingAction === 'reject' }" class="flex items-center gap-1.5">
                       <Ban class="w-4 h-4" />
-                      <span>Tolak Permintaan</span>
+                      <span>{{ t('fulfillment.rejectRequest') }}</span>
                     </span>
                   </Button>
                   <Button 
@@ -280,7 +283,7 @@ onUnmounted(() => {
                     <Loader2 v-if="processing && pendingAction === 'confirm'" class="absolute inset-0 m-auto h-5 w-5 animate-spin" />
                     <span :class="{ 'opacity-0': processing && pendingAction === 'confirm' }" class="flex items-center gap-1.5">
                       <ThumbsUp class="w-4 h-4" />
-                      <span>Konfirmasi Permintaan</span>
+                      <span>{{ t('fulfillment.confirmRequest') }}</span>
                     </span>
                   </Button>
                 </div>

@@ -5,6 +5,7 @@
  */
 import { ref, computed } from 'vue';
 import { Head, useForm } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
 import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 import { Button } from '@/Components/ui/button';
 import { ScrollArea } from "@/Components/ui/scroll-area";
@@ -61,6 +62,8 @@ const props = defineProps<{
   request: ExternalRequest;
 }>();
 
+const { t } = useI18n();
+
 // --- Form & Decision State ---
 const actionNote = ref('');
 
@@ -85,17 +88,17 @@ const submitDecision = (action: 'approve' | 'reject') => {
 /** Formats request detail fields for display */
 const getRequestFields = (req: ExternalRequest) => {
   const fields: { label: string; value: string }[] = [
-    { label: 'Nomor', value: req.number },
-    { label: 'Pemohon', value: req.requester || '-' },
-    { label: 'Pemanfaatan', value: req.destination || '-' },
+    { label: t('approvals.number'), value: req.number },
+    { label: t('approvals.requester'), value: req.requester || '-' },
+    { label: t('approvals.utilization'), value: req.destination || '-' },
   ];
 
   if (req.type?.toLowerCase() === 'peminjaman' && req.borrowPeriod) {
-    fields.push({ label: 'Durasi', value: req.borrowPeriod });
+    fields.push({ label: t('requests.duration'), value: req.borrowPeriod });
   }
 
   if (req.reasoning) {
-    fields.push({ label: 'Alasan', value: req.reasoning });
+    fields.push({ label: t('requests.reason'), value: req.reasoning });
   }
 
   return fields;
@@ -103,7 +106,7 @@ const getRequestFields = (req: ExternalRequest) => {
 </script>
 
 <template>
-  <Head :title="`Persetujuan ${request.type} #${request.number} - SMART`" />
+  <Head :title="t('approvals.externalTitle', { type: request.type, number: request.number })" />
 
   <div class="min-h-screen bg-slate-50 flex flex-col items-center py-8 px-4 sm:px-6 lg:px-8">
     <div class="bg-card w-full max-w-2xl rounded-[14px] shadow-2xl overflow-hidden flex flex-col border border-border">
@@ -116,10 +119,10 @@ const getRequestFields = (req: ExternalRequest) => {
           <ApplicationLogo class="h-9 w-9 rounded-lg shrink-0 object-contain" />
           <div>
             <h2 class="text-base font-bold text-primary leading-tight">
-              SMART
+              {{ $t('approvals.externalAppTitle') }}
             </h2>
             <p class="text-xs text-muted-foreground">
-              Sistem Manajemen Aset & Request Tracking
+              {{ $t('approvals.externalAppSubtitle') }}
             </p>
           </div>
         </div>
@@ -147,7 +150,7 @@ const getRequestFields = (req: ExternalRequest) => {
 
             <!-- Card Daftar Barang -->
             <div class="text-left w-full space-y-2">
-              <p class="text-xs text-muted-foreground font-medium">Daftar Barang:</p>
+              <p class="text-xs text-muted-foreground font-medium">{{ $t('requests.itemList') }}</p>
               
               <ScrollArea class="max-h-[14rem] sm:max-h-[16rem] h-fit border border-border rounded-[0.875rem] bg-card [&>div]:max-h-[14rem] sm:[&>div]:max-h-[16rem]">
                 <div class="p-3 sm:p-4 space-y-3">
@@ -172,10 +175,10 @@ const getRequestFields = (req: ExternalRequest) => {
 
         <!-- Input Catatan/Alasan (when pending) -->
         <div v-if="isPending" class="space-y-1.5 text-left w-full pt-1">
-          <label class="text-xs text-muted-foreground font-medium block">Catatan / Alasan (Opsional)</label>
+          <label class="text-xs text-muted-foreground font-medium block">{{ $t('approvals.notesLabel') }}</label>
           <textarea
             v-model="actionNote"
-            placeholder="Masukkan catatan persetujuan atau alasan penolakan..."
+            :placeholder="$t('approvals.notesPlaceholder')"
             class="w-full h-16 text-sm border border-input rounded-[14px] bg-background text-foreground p-3 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary shadow-sm resize-none"
           ></textarea>
         </div>
@@ -194,14 +197,18 @@ const getRequestFields = (req: ExternalRequest) => {
           <XCircle v-else class="h-5 w-5 text-rose-600 shrink-0 mt-0.5" />
           <div class="text-sm space-y-1">
             <div class="font-bold">
-              Permohonan ini telah {{ request.rawStatus === 'approve' ? 'disetujui' : 'ditolak' }}.
+              {{ request.rawStatus === 'approve' ? $t('approvals.resolvedApprove') : $t('approvals.resolvedReject') }}
             </div>
             <div class="text-xs opacity-90" v-if="request.approval?.approver_name">
-              Diputuskan oleh: <span class="font-semibold">{{ request.approval.approver_name }}</span>
-              <span v-if="request.approval.decided_at"> pada {{ request.approval.decided_at }}</span>
+              <template v-if="request.approval.decided_at">
+                {{ $t('approvals.decidedByAt', { name: request.approval.approver_name, time: request.approval.decided_at }) }}
+              </template>
+              <template v-else>
+                {{ $t('approvals.decidedByOnly', { name: request.approval.approver_name }) }}
+              </template>
             </div>
             <div class="text-xs italic opacity-90" v-if="request.approval?.note">
-              Catatan: "{{ request.approval.note }}"
+              {{ $t('approvals.auditNotes') }}: "{{ request.approval.note }}"
             </div>
           </div>
         </div>
@@ -217,7 +224,7 @@ const getRequestFields = (req: ExternalRequest) => {
             class="px-5 active:scale-[0.98] relative"
           >
             <Loader2 v-if="form.processing && form.action === 'reject'" class="h-4 w-4 animate-spin mr-1.5" />
-            Tolak
+            {{ $t('approvals.reject') }}
           </Button>
           <Button 
             @click="submitDecision('approve')"
@@ -226,14 +233,14 @@ const getRequestFields = (req: ExternalRequest) => {
             class="px-5 active:scale-[0.98] relative"
           >
             <Loader2 v-if="form.processing && form.action === 'approve'" class="h-4 w-4 animate-spin mr-1.5" />
-            Setujui
+            {{ $t('approvals.approve') }}
           </Button>
         </div>
       </div>
 
       <div v-else class="py-3 px-4 bg-muted/30 border-t border-border text-center">
         <p class="text-xs text-muted-foreground">
-          Tindakan untuk permohonan ini telah selesai. Anda dapat menutup halaman ini.
+          {{ $t('approvals.actionCompletedNotice') }}
         </p>
       </div>
     </div>
@@ -241,7 +248,7 @@ const getRequestFields = (req: ExternalRequest) => {
     <!-- Security Footer (placed outside of and below the card) -->
     <div class="mt-4 text-center text-xs text-muted-foreground flex items-center justify-center gap-1.5">
       <ShieldCheck class="h-4 w-4 text-primary shrink-0" />
-      <span>Akses terverifikasi dengan Kode Autentikasi &bull; Sesi tanpa Log in</span>
+      <span>{{ $t('approvals.securityFooter') }}</span>
     </div>
   </div>
 </template>

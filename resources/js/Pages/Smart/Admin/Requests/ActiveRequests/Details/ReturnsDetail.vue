@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue';
 import { router } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
+import { useI18n } from 'vue-i18n';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { 
   ChevronDown, 
@@ -16,6 +17,8 @@ import {
 } from 'lucide-vue-next';
 import AssetItemCard from '@/Components/AssetItemCard.vue';
 import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem, BreadcrumbSeparator } from '@/Components/ui/breadcrumb';
+
+const { t } = useI18n();
 
 interface RequestItem {
   id: number;
@@ -82,7 +85,7 @@ const timeline = computed((): TimelineStep[] => {
   
   // Step 1: Initial creation
   steps.push({
-    status: 'Permintaan dibuat',
+    status: t('fulfillment.requestCreated'),
     time: r.createdAt,
     completed: true,
   });
@@ -98,40 +101,40 @@ const timeline = computed((): TimelineStep[] => {
       let rejected = false;
 
       if (log.status_to === 'approve') {
-        statusName = 'Di-approve';
+        statusName = t('fulfillment.approved');
       } else if (log.status_to === 'partial') {
-        statusName = 'Disetujui sebagian (Partial)';
+        statusName = t('fulfillment.partiallyApproved');
       } else if (log.status_to === 'confirm') {
         if (log.status_from === 'partial') {
-          statusName = 'Alokasi Barang Tambahan Dikonfirmasi';
+          statusName = t('fulfillment.additionalAllocationConfirmed');
         } else {
           if (log.note && log.note.includes('diatur oleh pengguna')) {
-            statusName = 'Jadwal Serah Terima Diatur';
+            statusName = t('fulfillment.handoverScheduleSet');
           } else {
-            statusName = 'Dikonfirmasi';
+            statusName = t('fulfillment.confirmed');
           }
         }
       } else if (log.status_to === 'borrow') {
-        statusName = 'Serah Terima Selesai & Dipinjam';
+        statusName = t('fulfillment.handoverCompletedAndBorrowed');
       } else if (log.status_to === 'return') {
-        statusName = 'Pengembalian Diajukan';
+        statusName = t('fulfillment.returnSubmitted');
       } else if (log.status_to === 'success') {
         if (log.status_from === 'return') {
-          statusName = 'Pengembalian Selesai';
+          statusName = t('fulfillment.returnCompleted');
         } else {
-          statusName = 'Serah Terima Selesai';
+          statusName = t('fulfillment.handoverCompleted');
         }
       } else if (log.status_to === 'reject') {
-        statusName = 'Ditolak';
+        statusName = t('fulfillment.rejectedTimeline');
         completed = false;
         rejected = true;
       } else if (log.status_to === 'cancel') {
-        statusName = 'Dibatalkan oleh Pengguna';
+        statusName = t('fulfillment.cancelledByUser');
       } else if (log.status_to === 'pending') {
         if (log.status_from === 'confirm') {
-          statusName = 'Serah Terima Sebagian Diterima';
+          statusName = t('fulfillment.partialHandoverReceived');
         } else {
-          statusName = 'Pending';
+          statusName = t('fulfillment.pendingBtn');
         }
       }
 
@@ -153,7 +156,7 @@ const timeline = computed((): TimelineStep[] => {
   if (!isFinalStatus) {
     if (r.status === 'return') {
       steps.push({ 
-        status: 'Pengembalian aset', 
+        status: t('fulfillment.assetReturnTimeline'), 
         method: r.method,
         location: r.location,
         time: r.returnTime, 
@@ -168,19 +171,19 @@ const timeline = computed((): TimelineStep[] => {
 const handleConfirmReturn = () => {
   router.post(route('smart.returns.confirm', props.returnId), {}, {
     onSuccess: () => {
-      toast.success('Pengembalian aset berhasil dikonfirmasi!');
+      toast.success(t('fulfillment.returnConfirmSuccess'));
     }
   });
 };
 </script>
 
 <template>
-  <AppLayout title="Detail Pengembalian">
+  <AppLayout :title="t('fulfillment.returnDetailTitle')">
     <!-- Breadcrumb -->
     <Breadcrumb>
       <BreadcrumbList class="pb-3">
         <BreadcrumbItem>
-          <BreadcrumbLink :href="route('smart.requests.index', { tab: 'Pengembalian' })">Pengembalian</BreadcrumbLink>
+          <BreadcrumbLink :href="route('smart.requests.index', { tab: 'Pengembalian' })">{{ t('fulfillment.returns') }}</BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
@@ -190,20 +193,20 @@ const handleConfirmReturn = () => {
     </Breadcrumb>
 
     <div class="mb-6">
-      <h1 class="text-xl font-bold text-foreground">Detail Permintaan {{ request.number }}</h1>
-      <p class="text-sm text-muted-foreground">Permintaan dibuat pada {{ request.createdAt }}</p>
+      <h1 class="text-xl font-bold text-foreground">{{ t('fulfillment.detailHead', { number: request.number }) }}</h1>
+      <p class="text-sm text-muted-foreground">{{ t('fulfillment.createdOn', { date: request.createdAt }) }}</p>
     </div>
 
     <!-- Info Banner -->
     <div class="mb-6 p-1.5 pl-6 rounded-xl border border-indigo-200 bg-indigo-50/30 flex items-center justify-between gap-3 text-indigo-700">
       <p class="text-sm font-semibold">
-        Tolong kembalikan semua aset pada <span class="font-bold">{{ request.returnTime }} di {{ request.location }}</span>
+        {{ t('fulfillment.pleaseReturnAll', { time: request.returnTime, location: request.location }) }}
       </p>
       <button 
         @click="handleConfirmReturn"
         class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold px-6 py-2 rounded-lg transition-all"
       >
-        Konfirmasi Pengembalian
+        {{ t('fulfillment.confirmReturn') }}
       </button>
     </div>
 
@@ -212,7 +215,7 @@ const handleConfirmReturn = () => {
       <div class="lg:col-span-2 space-y-6">
         <!-- Main Detail Card -->
         <div class="bg-card border border-border rounded-[14px] p-6 shadow-sm">
-          <h3 class="text-sm font-medium text-muted-foreground mb-3">Detail:</h3>
+          <h3 class="text-sm font-medium text-muted-foreground mb-3">{{ t('fulfillment.detailsPrefix') }}</h3>
           <div class="space-y-2">
             <h2 class="text-lg md:text-xl font-extrabold text-foreground mb-3">
               {{ request.number }}
@@ -220,24 +223,24 @@ const handleConfirmReturn = () => {
             
             <div class="space-y-1.5 text-sm text-foreground">
               <p>
-                <span class="text-muted-foreground">Dibuat oleh:</span> 
+                <span class="text-muted-foreground">{{ t('fulfillment.createdBy') }}</span> 
                 <span class="font-semibold">{{ request.requester }}</span>
               </p>
               <p>
-                <span class="text-muted-foreground">PIC Approval:</span> 
+                <span class="text-muted-foreground">{{ t('fulfillment.picApproval') }}</span> 
                 <span class="font-semibold">{{ request.approval_by || request.approver }}</span>
               </p>
               <p>
-                <span class="text-muted-foreground">Waktu dibuat:</span> 
+                <span class="text-muted-foreground">{{ t('fulfillment.createdAtTime') }}</span> 
                 <span class="font-semibold">{{ request.createdAt }}</span>
               </p>
               <p>
-                <span class="text-muted-foreground">Pemanfaatan:</span> 
+                <span class="text-muted-foreground">{{ t('fulfillment.utilization') }}:</span> 
                 <span class="font-semibold">{{ request.pemanfaatan === 'corporate' ? `Corporate (${request.pemanfaatanDetail})` : `Project ${request.pemanfaatanDetail}` }}</span>
               </p>
               <p v-if="request.durationStart">
-                <span class="text-muted-foreground">Durasi:</span>
-                <span class="font-semibold">{{ request.durationStart }} s.d. {{ request.durationEnd }} ({{ request.durationDays }} hari, {{ request.durationHours }} jam)</span>
+                <span class="text-muted-foreground">{{ t('fulfillment.duration') }}</span>
+                <span class="font-semibold">{{ request.durationStart }} {{ t('fulfillment.until') }} {{ request.durationEnd }} ({{ request.durationDays }} {{ t('fulfillment.days') }}, {{ request.durationHours }} {{ t('fulfillment.hours') }})</span>
               </p>
             </div>
           </div>
@@ -245,7 +248,7 @@ const handleConfirmReturn = () => {
 
         <!-- Items Card -->
         <div class="bg-card border border-border rounded-[14px] p-6 shadow-sm">
-          <h3 class="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-4">Daftar barang:</h3>
+          <h3 class="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-4">{{ t('fulfillment.itemsListPrefix') }}</h3>
           
           <AssetItemCard 
             v-for="item in items" 
@@ -264,7 +267,7 @@ const handleConfirmReturn = () => {
       <!-- Right Column (Timeline) -->
       <div class="space-y-6">
         <div class="bg-card border border-border rounded-[14px] p-6 shadow-sm relative overflow-hidden">
-          <h3 class="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-6">Tahapan:</h3>
+          <h3 class="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-6">{{ t('fulfillment.stagesPrefix') }}</h3>
           
           <!-- Vertical Timestep Stepper -->
           <div class="relative pl-8 space-y-8 before:absolute before:left-[15px] before:top-[10px] before:bottom-[10px] before:w-[2px] before:bg-border">
@@ -324,7 +327,7 @@ const handleConfirmReturn = () => {
                     {{ step.status }}
                   </h4>
                   <p v-if="step.user" class="text-xs font-semibold text-green-600 mt-0.5">
-                    oleh {{ step.user }}
+                    {{ t('fulfillment.byUser', { user: step.user }) }}
                   </p>
                   <p v-if="step.time" class="text-xs text-muted-foreground mt-0.5">
                     {{ step.time }}
@@ -334,16 +337,16 @@ const handleConfirmReturn = () => {
                   </p>
                   
                   <div v-if="step.active" class="space-y-0.5 mt-2 text-xs text-indigo-600">
-                    <p class="font-semibold">Metode: {{ step.method }}</p>
-                    <p class="font-semibold">Tempat: {{ step.location }}</p>
-                    <p class="font-semibold">Waktu: {{ step.time }}</p>
+                    <p class="font-semibold">{{ t('fulfillment.method') }}: {{ step.method }}</p>
+                    <p class="font-semibold">{{ t('fulfillment.location') }}: {{ step.location }}</p>
+                    <p class="font-semibold">{{ t('fulfillment.time') }}: {{ step.time }}</p>
                     
                     <div class="pt-3">
                       <button 
                         @click="handleConfirmReturn"
                         class="bg-[#6366F1] hover:bg-[#5558EB] text-white text-xs font-bold px-4 py-2 rounded-lg transition-all shadow-sm"
                       >
-                        Konfirmasi Pengembalian
+                        {{ t('fulfillment.confirmReturn') }}
                       </button>
                     </div>
                   </div>

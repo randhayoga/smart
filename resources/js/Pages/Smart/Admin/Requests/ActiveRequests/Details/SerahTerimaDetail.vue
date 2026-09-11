@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, h, nextTick } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useModalLock } from '@/composables/useModalLock';
 import { useForm, router } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
@@ -46,10 +47,11 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+const { t } = useI18n();
 
 const isPeminjaman = computed(() => props.handover?.type === 'peminjaman' || Boolean(props.handover?.durationStart));
-const typeLabel = computed(() => isPeminjaman.value ? 'Peminjaman' : 'Permintaan');
-const typeLabelLower = computed(() => isPeminjaman.value ? 'peminjaman' : 'permintaan');
+const typeLabel = computed(() => isPeminjaman.value ? t('fulfillment.loan') : t('fulfillment.request'));
+const typeLabelLower = computed(() => isPeminjaman.value ? t('fulfillment.loan').toLowerCase() : t('fulfillment.request').toLowerCase());
 const actionLabel = computed(() => isPeminjaman.value ? 'dipinjam' : 'diminta');
 
 // If items is passed from props, use it, otherwise fallback to the mock/default
@@ -107,7 +109,7 @@ const timeline = computed((): TimelineStep[] => {
   
   // Step 1: Initial creation
   steps.push({
-    status: `${typeLabel.value} dibuat`,
+    status: t('fulfillment.createdTimeline', { type: typeLabel.value }),
     time: hData.createdAt,
     completed: true,
   });
@@ -123,40 +125,40 @@ const timeline = computed((): TimelineStep[] => {
       let rejected = false;
 
       if (log.status_to === 'approve') {
-        statusName = 'Di-approve';
+        statusName = t('fulfillment.approved');
       } else if (log.status_to === 'partial') {
-        statusName = 'Disetujui sebagian (Partial)';
+        statusName = t('fulfillment.partiallyApproved');
       } else if (log.status_to === 'confirm') {
         if (log.status_from === 'partial') {
-          statusName = 'Alokasi Barang Tambahan Dikonfirmasi';
+          statusName = t('fulfillment.additionalAllocationConfirmed');
         } else {
           if (log.note && log.note.includes('diatur oleh pengguna')) {
-            statusName = 'Jadwal Serah Terima Diatur';
+            statusName = t('fulfillment.handoverScheduleSet');
           } else {
-            statusName = 'Dikonfirmasi';
+            statusName = t('fulfillment.confirmed');
           }
         }
       } else if (log.status_to === 'borrow') {
-        statusName = 'Serah Terima Selesai & Dipinjam';
+        statusName = t('fulfillment.handoverCompletedAndBorrowed');
       } else if (log.status_to === 'return') {
-        statusName = 'Pengembalian Diajukan';
+        statusName = t('fulfillment.returnSubmitted');
       } else if (log.status_to === 'success') {
         if (log.status_from === 'return') {
-          statusName = 'Pengembalian Selesai';
+          statusName = t('fulfillment.returnCompleted');
         } else {
-          statusName = 'Serah Terima Selesai';
+          statusName = t('fulfillment.handoverCompleted');
         }
       } else if (log.status_to === 'reject') {
-        statusName = 'Ditolak';
+        statusName = t('fulfillment.rejectedTimeline');
         completed = false;
         rejected = true;
       } else if (log.status_to === 'cancel') {
-        statusName = 'Dibatalkan oleh Pengguna';
+        statusName = t('fulfillment.cancelledByUser');
       } else if (log.status_to === 'pending') {
         if (log.status_from === 'confirm') {
-          statusName = 'Serah Terima Sebagian Diterima';
+          statusName = t('fulfillment.partialHandoverReceived');
         } else {
-          statusName = 'Pending';
+          statusName = t('fulfillment.pending');
         }
       }
 
@@ -178,7 +180,7 @@ const timeline = computed((): TimelineStep[] => {
   if (!isFinalStatus) {
     if (hData.status === 'confirm' || hData.status === 'partial') {
       steps.push({
-        status: 'Serah Terima',
+        status: t('fulfillment.handover'),
         method: hData.method,
         location: hData.location,
         time: hData.time,
@@ -237,9 +239,13 @@ const dummyAssets = [
 const assetSearchQuery = ref('');
 const lotFilter = ref('');
 const assetRowsPerPage = ref('Semua baris');
+const assetRowsPerPageLabel = computed(() => {
+  if (assetRowsPerPage.value === 'Semua baris') return t('fulfillment.allRows');
+  return assetRowsPerPage.value;
+});
 const assetTableRef = ref<any>(null);
 
-const assetColumns: ColumnDef<any>[] = [
+const assetColumns = computed<ColumnDef<any>[]>(() => [
   {
     id: 'select',
     size: 50,
@@ -267,7 +273,7 @@ const assetColumns: ColumnDef<any>[] = [
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
       class: 'px-0 hover:bg-transparent font-bold text-foreground justify-start'
     }, () => [
-      'Kode Aset',
+      t('fulfillment.assetCode'),
       h(ArrowUpDown, { class: 'ml-2 h-4 w-4' }),
     ]),
     cell: ({ row }) => h('div', { class: 'font-mono' }, row.getValue('assetCode')),
@@ -279,7 +285,7 @@ const assetColumns: ColumnDef<any>[] = [
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
       class: 'px-0 hover:bg-transparent font-bold text-foreground justify-start'
     }, () => [
-      'Kode LOT',
+      t('fulfillment.lotCode'),
       h(ArrowUpDown, { class: 'ml-2 h-4 w-4' }),
     ]),
     cell: ({ row }) => h('div', { class: 'font-mono' }, row.getValue('lotCode')),
@@ -291,7 +297,7 @@ const assetColumns: ColumnDef<any>[] = [
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
       class: 'px-0 hover:bg-transparent font-bold text-foreground justify-start'
     }, () => [
-      'Status',
+      t('fulfillment.status'),
       h(ArrowUpDown, { class: 'ml-2 h-4 w-4' }),
     ]),
     cell: ({ row }) => h('div', { class: 'text-foreground' }, row.getValue('status')),
@@ -303,7 +309,7 @@ const assetColumns: ColumnDef<any>[] = [
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
       class: 'px-0 hover:bg-transparent font-bold text-foreground justify-start'
     }, () => [
-      'Kondisi',
+      t('fulfillment.condition'),
       h(ArrowUpDown, { class: 'ml-2 h-4 w-4' }),
     ]),
     cell: ({ row }) => h('div', { class: 'text-foreground' }, row.getValue('condition')),
@@ -315,12 +321,12 @@ const assetColumns: ColumnDef<any>[] = [
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
       class: 'px-0 hover:bg-transparent font-bold text-foreground justify-start'
     }, () => [
-      'Lokasi Penyimpanan',
+      t('fulfillment.storageLocation'),
       h(ArrowUpDown, { class: 'ml-2 h-4 w-4' }),
     ]),
     cell: ({ row }) => h('div', { class: 'text-foreground' }, row.getValue('location')),
   },
-];
+]);
 
 const handleConfirmAllocation = () => {
   const item = activeItemToAllocate.value;
@@ -334,7 +340,7 @@ const handleConfirmAllocation = () => {
     .filter(Boolean);
 
   if (selectedAssetNumbers.length !== Number(item.quantity)) {
-    toast.warning(`Jumlah aset terpilih (${selectedAssetNumbers.length}) harus sama dengan jumlah yang diminta (${item.quantity}).`);
+    toast.warning(t('fulfillment.selectedAssetCountMismatch', { selected: selectedAssetNumbers.length, requested: item.quantity }));
     return;
   }
 
@@ -345,11 +351,11 @@ const handleConfirmAllocation = () => {
     onSuccess: () => {
       closeAllocModal();
       item.assets = selectedAssetNumbers;
-      toast.success('Alokasi Aset berhasil disimpan!');
+      toast.success(t('fulfillment.allocationSavedAsset'));
       const itemName = (item.brand ? `${item.brand} ${item.spec || ''}` : '') || item.name || 'Aset';
       addNotification(
-        'Alokasi Aset',
-        `Alokasi aset untuk "${itemName}" berhasil disimpan.`,
+        t('fulfillment.selectAssetTitle'),
+        t('fulfillment.allocationSaveSuccessNotification', { name: itemName }),
         'success'
       );
     },
@@ -378,10 +384,10 @@ const isAnyModalOpen = computed(() => isAllocModalOpen.value || isCancelModalOpe
 useModalLock(isAnyModalOpen);
 
 const confirmCancel = () => {
-  toast.info('Permintaan dibatalkan');
+  toast.info(t('fulfillment.requestCancelled'));
   addNotification(
-    'Permintaan Dibatalkan',
-    `Permintaan dibatalkan dengan catatan: ${cancelNote.value}`,
+    t('fulfillment.cancelModalTitle'),
+    t('fulfillment.cancelWithNote', { note: cancelNote.value }),
     'info'
   );
   closeCancelModal();
@@ -389,12 +395,12 @@ const confirmCancel = () => {
 </script>
 
 <template>
-  <AppLayout title="Detail Permintaan">
+  <AppLayout :title="t('fulfillment.detailTitle')">
     <!-- Breadcrumb -->
     <Breadcrumb>
       <BreadcrumbList class="pb-3">
         <BreadcrumbItem>
-          <BreadcrumbLink :href="route('smart.requests.index', { tab: 'Serah Terima' })">Serah Terima</BreadcrumbLink>
+          <BreadcrumbLink :href="route('smart.requests.index', { tab: 'Serah Terima' })">{{ t('fulfillment.handover') }}</BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
@@ -404,14 +410,14 @@ const confirmCancel = () => {
     </Breadcrumb>
 
     <div class="mb-4">
-      <h1 class="text-xl font-bold text-foreground">Detail Permintaan</h1>
+      <h1 class="text-xl font-bold text-foreground">{{ t('fulfillment.detailTitle') }}</h1>
     </div>
 
     <!-- Alert / Info Banner -->
     <div class="mb-6 p-4 rounded-xl border border-indigo-200 bg-indigo-50/30 flex items-center gap-3 text-indigo-700">
       <Info class="w-5 h-5 shrink-0" />
       <p class="text-sm font-medium">
-        Pengingat bahwa aset akan diambil pada <span class="font-bold">{{ handover?.time || 'DD-MM-YYYY jam HH:mm' }}</span>
+        {{ t('fulfillment.remindAssetPickup', { time: handover?.time || 'DD-MM-YYYY jam HH:mm' }) }}
       </p>
     </div>
 
@@ -420,7 +426,7 @@ const confirmCancel = () => {
       <div class="lg:col-span-2 space-y-6">
         <!-- Main Detail Card -->
         <div class="bg-card border border-border rounded-[14px] p-6 shadow-sm">
-          <h3 class="text-sm font-medium text-muted-foreground mb-3">Detail:</h3>
+          <h3 class="text-sm font-medium text-muted-foreground mb-3">{{ t('fulfillment.detailsPrefix') }}</h3>
           <div class="space-y-2">
             <h2 class="text-lg md:text-xl font-extrabold text-foreground mb-3">
               {{ handover?.number || '#Nomor_Permintaan' }}
@@ -428,24 +434,24 @@ const confirmCancel = () => {
             
             <div class="space-y-1.5 text-sm text-foreground">
               <p>
-                <span class="text-muted-foreground">Dibuat oleh:</span> 
+                <span class="text-muted-foreground">{{ t('fulfillment.createdBy') }}</span> 
                 <span class="font-semibold">{{ handover?.requester }}</span>
               </p>
               <p>
-                <span class="text-muted-foreground">PIC Approval:</span> 
+                <span class="text-muted-foreground">{{ t('fulfillment.picApproval') }}</span> 
                 <span class="font-semibold">{{ handover?.approval_by || handover?.approver || 'Manager' }}</span>
               </p>
               <p>
-                <span class="text-muted-foreground">Waktu dibuat:</span> 
+                <span class="text-muted-foreground">{{ t('fulfillment.createdAtTime') }}</span> 
                 <span class="font-semibold">{{ handover?.createdAt }}</span>
               </p>
               <p>
-                <span class="text-muted-foreground">Pemanfaatan:</span> 
+                <span class="text-muted-foreground">{{ t('fulfillment.utilization') }}:</span> 
                 <span class="font-semibold">{{ handover?.pemanfaatan === 'corporate' ? `Corporate (${handover?.pemanfaatanDetail})` : `Project ${handover?.pemanfaatanDetail}` }}</span>
               </p>
               <p v-if="handover?.durationStart">
-                <span class="text-muted-foreground">Durasi:</span>
-                <span class="font-semibold">{{ handover?.durationStart }} s.d. {{ handover?.durationEnd }} ({{ handover?.durationDays }} hari, {{ handover?.durationHours }} jam)</span>
+                <span class="text-muted-foreground">{{ t('fulfillment.duration') }}</span>
+                <span class="font-semibold">{{ handover?.durationStart }} {{ t('fulfillment.until') }} {{ handover?.durationEnd }} ({{ handover?.durationDays }} {{ t('fulfillment.days') }}, {{ handover?.durationHours }} {{ t('fulfillment.hours') }})</span>
               </p>
             </div>
           </div>
@@ -453,7 +459,7 @@ const confirmCancel = () => {
 
         <!-- Items Card -->
         <div class="bg-card border border-border rounded-[14px] p-6 shadow-sm">
-          <h3 class="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-4">Daftar barang:</h3>
+          <h3 class="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-4">{{ t('fulfillment.itemsListPrefix') }}</h3>
           
           <AssetItemCard 
             v-for="item in items" 
@@ -476,7 +482,7 @@ const confirmCancel = () => {
                   @click="openAllocModal(item)"
                   class="px-5 py-2.5 bg-[#5BC0DE] hover:bg-[#46B8DA] text-white text-sm font-bold rounded-[14px] transition-all shadow-sm cursor-pointer"
                 >
-                  Pilih Alokasi Aset
+                  {{ t('fulfillment.selectAssetAllocation') }}
                 </button>
               </div>
             </template>
@@ -487,7 +493,7 @@ const confirmCancel = () => {
       <!-- Right Column (Timeline) -->
       <div class="space-y-6">
         <div class="bg-card border border-border rounded-[14px] p-6 shadow-sm relative overflow-hidden">
-          <h3 class="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-6">Tahapan:</h3>
+          <h3 class="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-6">{{ t('fulfillment.stagesPrefix') }}</h3>
           
           <!-- Vertical Timestep Stepper -->
           <div class="relative pl-8 space-y-8 before:absolute before:left-[15px] before:top-[10px] before:bottom-[10px] before:w-[2px] before:bg-border">
@@ -547,7 +553,7 @@ const confirmCancel = () => {
                     {{ step.status }}
                   </h4>
                   <p v-if="step.user" class="text-xs font-semibold text-green-600 mt-0.5">
-                    oleh {{ step.user }}
+                    {{ t('fulfillment.byUser', { user: step.user }) }}
                   </p>
                   <p v-if="step.time && !step.active" class="text-xs text-muted-foreground mt-0.5">
                     {{ step.time }}
@@ -557,9 +563,9 @@ const confirmCancel = () => {
                   </p>
                   
                   <div v-if="step.active" class="mt-2 space-y-1 text-xs text-muted-foreground">
-                    <p><span class="font-semibold text-foreground/80">Metode:</span> {{ step.method }}</p>
-                    <p><span class="font-semibold text-foreground/80">Tempat:</span> {{ step.location }}</p>
-                    <p><span class="font-semibold text-foreground/80">Waktu:</span> {{ step.time }}</p>
+                    <p><span class="font-semibold text-foreground/80">{{ t('fulfillment.method') }}:</span> {{ step.method }}</p>
+                    <p><span class="font-semibold text-foreground/80">{{ t('fulfillment.location') }}:</span> {{ step.location }}</p>
+                    <p><span class="font-semibold text-foreground/80">{{ t('fulfillment.time') }}:</span> {{ step.time }}</p>
                   </div>
                 </div>
               </div>
@@ -568,7 +574,7 @@ const confirmCancel = () => {
 
           <div class="mt-8">
             <button @click="openCancelModal" class="w-full py-2.5 bg-[#D9534F] hover:bg-[#C9302C] text-white font-bold rounded-[14px] transition-all shadow-sm active:scale-[0.98]">
-              Batalkan
+              {{ t('fulfillment.cancel') }}
             </button>
           </div>
         </div>
@@ -593,8 +599,8 @@ const confirmCancel = () => {
             <!-- Modal Header -->
             <div class="flex items-start justify-between p-6 border-b border-border bg-card z-10 shrink-0">
               <div>
-                <h3 class="text-xl font-bold mb-1">Pemilihan Alokasi Aset</h3>
-                <p class="text-sm text-muted-foreground">Pilih {{ activeItemToAllocate?.quantity || 0 }} aset dari tabel di bawah:</p>
+                <h3 class="text-xl font-bold mb-1">{{ t('fulfillment.selectAssetTitle') }}</h3>
+                <p class="text-sm text-muted-foreground">{{ t('fulfillment.pickAssetsFromTable', { quantity: activeItemToAllocate?.quantity || 0 }) }}</p>
               </div>
               <button @click="closeAllocModal" class="p-1 hover:bg-muted rounded-full transition-colors">
                 <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
@@ -607,22 +613,22 @@ const confirmCancel = () => {
               <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-4">
                 <div class="flex items-end gap-3 w-full max-w-xl">
                   <div class="space-y-1.5 flex-1 max-w-xs">
-                    <label class="text-xs text-muted-foreground font-medium block">Filter</label>
+                    <label class="text-xs text-muted-foreground font-medium block">{{ t('fulfillment.filter') }}</label>
                     <TableSearch 
                       v-model="assetSearchQuery"
-                      placeholder="Cari Kode Aset..." 
+                      :placeholder="t('fulfillment.searchSpecificAsset')" 
                     />
                   </div>
                   <div class="flex-1 max-w-[200px]">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal', !lotFilter ? 'text-muted-foreground' : 'text-foreground']">
-                          {{ lotFilter || 'Semua LOT' }}
+                          {{ lotFilter || t('fulfillment.allLots') }}
                           <ChevronDown class="w-4 h-4 opacity-50" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent class="rounded-[14px]" style="width: var(--radix-dropdown-menu-trigger-width); min-width: var(--radix-dropdown-menu-trigger-width);">
-                        <DropdownMenuItem @select="lotFilter = ''">Semua LOT</DropdownMenuItem>
+                        <DropdownMenuItem @select="lotFilter = ''">{{ t('fulfillment.allLots') }}</DropdownMenuItem>
                         <DropdownMenuItem @select="lotFilter = 'LOT-1'">LOT-1</DropdownMenuItem>
                         <DropdownMenuItem @select="lotFilter = 'LOT-2'">LOT-2</DropdownMenuItem>
                       </DropdownMenuContent>
@@ -631,16 +637,16 @@ const confirmCancel = () => {
                 </div>
 
                 <div class="flex items-center gap-2 text-sm text-muted-foreground">
-                  <span>Baris per halaman</span>
+                  <span>{{ t('fulfillment.rowsPerPage') }}</span>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal', (assetRowsPerPage === 'Semua baris' || !assetRowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
-                        {{ assetRowsPerPage }}
+                        {{ assetRowsPerPageLabel }}
                         <ChevronDown class="w-4 h-4 opacity-50" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent class="rounded-[14px]" style="width: var(--radix-dropdown-menu-trigger-width); min-width: var(--radix-dropdown-menu-trigger-width);">
-                      <DropdownMenuItem @select="assetRowsPerPage = 'Semua baris'">Semua baris</DropdownMenuItem>
+                      <DropdownMenuItem @select="assetRowsPerPage = 'Semua baris'">{{ t('fulfillment.allRows') }}</DropdownMenuItem>
                       <DropdownMenuItem @select="assetRowsPerPage = '10'">10</DropdownMenuItem>
                       <DropdownMenuItem @select="assetRowsPerPage = '25'">25</DropdownMenuItem>
                       <DropdownMenuItem @select="assetRowsPerPage = '50'">50</DropdownMenuItem>
@@ -662,13 +668,13 @@ const confirmCancel = () => {
             <!-- Modal Footer -->
             <div class="flex items-center justify-between p-6 border-t border-border bg-card shrink-0">
               <span class="text-sm font-semibold text-foreground">
-                {{ Object.keys(assetTableRef?.table?.getState()?.rowSelection || {}).length }} aset terpilih dari {{ activeItemToAllocate?.quantity || 0 }} yang diminta
+                {{ t('fulfillment.assetsSelectedOfRequested', { selected: Object.keys(assetTableRef?.table?.getState()?.rowSelection || {}).length, requested: activeItemToAllocate?.quantity || 0 }) }}
               </span>
               <button 
                 @click="handleConfirmAllocation"
                 class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-[14px] transition-all shadow-sm"
               >
-                Konfirmasi Alokasi Aset
+                {{ t('fulfillment.confirmAssetAllocation') }}
               </button>
             </div>
           </div>
@@ -693,7 +699,7 @@ const confirmCancel = () => {
           >
             <!-- Modal Header -->
             <div class="flex items-center justify-between p-6 border-b border-border bg-card shrink-0">
-              <h3 class="text-xl font-bold">Pembatalan Permintaan/Peminjaman</h3>
+              <h3 class="text-xl font-bold">{{ t('fulfillment.cancelModalTitle') }}</h3>
               <button @click="closeCancelModal" class="p-1 hover:bg-muted rounded-full transition-colors">
                 <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
               </button>
@@ -703,22 +709,22 @@ const confirmCancel = () => {
             <div class="p-6 overflow-y-auto flex-grow bg-card space-y-4 overscroll-contain">
               <div class="space-y-1 text-sm text-foreground">
                 <p class="font-bold mb-2">{{ handover?.number || '#Nomor_Permintaan/#Nomor_Peminjaman' }}</p>
-                <p>Dibuat oleh: {{ handover?.requester }}</p>
-                <p>PIC Approval: {{ handover?.approval_by || handover?.approver || 'Manager' }}</p>
-                <p>Waktu dibuat: {{ handover?.createdAt }}</p>
-                <p>Pemanfaatan: {{ handover?.pemanfaatan === 'corporate' ? `Corporate (${handover?.pemanfaatanDetail})` : `Project ${handover?.pemanfaatanDetail}` }}</p>
-                <p v-if="handover?.durationStart">Durasi: {{ handover?.durationStart }} s.d. {{ handover?.durationEnd }} ({{ handover?.durationDays }} hari, {{ handover?.durationHours }} jam)</p>
+                <p>{{ t('fulfillment.createdBy') }} {{ handover?.requester }}</p>
+                <p>{{ t('fulfillment.picApproval') }} {{ handover?.approval_by || handover?.approver || 'Manager' }}</p>
+                <p>{{ t('fulfillment.createdAtTime') }} {{ handover?.createdAt }}</p>
+                <p>{{ t('fulfillment.utilization') }}: {{ handover?.pemanfaatan === 'corporate' ? `Corporate (${handover?.pemanfaatanDetail})` : `Project ${handover?.pemanfaatanDetail}` }}</p>
+                <p v-if="handover?.durationStart">{{ t('fulfillment.duration') }} {{ handover?.durationStart }} {{ t('fulfillment.until') }} {{ handover?.durationEnd }} ({{ handover?.durationDays }} {{ t('fulfillment.days') }}, {{ handover?.durationHours }} {{ t('fulfillment.hours') }})</p>
               </div>
 
               <div class="border-t border-border pt-4">
-                <p class="font-bold text-[#D9534F] mb-4">Apakah Anda yakin untuk membatalkan permintaan/peminjaman ini?</p>
+                <p class="font-bold text-[#D9534F] mb-4">{{ t('fulfillment.cancelConfirmQuestion') }}</p>
                 
                 <div class="space-y-2">
-                  <label class="text-sm font-medium text-foreground">Catatan (opsional):</label>
+                  <label class="text-sm font-medium text-foreground">{{ t('fulfillment.notesOptionalLabel') }}</label>
                   <textarea 
                     v-model="cancelNote"
                     rows="4" 
-                    placeholder="Ketik alasan pembatalan di sini..." 
+                    :placeholder="t('fulfillment.cancelReasonPlaceholder')" 
                     class="w-full p-3 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors resize-none"
                   ></textarea>
                 </div>
@@ -731,13 +737,13 @@ const confirmCancel = () => {
                 @click="closeCancelModal"
                 class="px-6 py-2.5 bg-background border border-input hover:bg-muted text-foreground text-sm font-bold rounded-[14px] transition-all shadow-sm"
               >
-                Tidak
+                {{ t('fulfillment.no') }}
               </button>
               <button 
                 @click="confirmCancel"
                 class="px-6 py-2.5 bg-[#D9534F] hover:bg-[#C9302C] text-white text-sm font-bold rounded-[14px] transition-all shadow-sm"
               >
-                Iya
+                {{ t('fulfillment.yes') }}
               </button>
             </div>
           </div>

@@ -3,6 +3,7 @@
  * Create Asset Modal component for registering new asset units (single or bulk batch creation) with photo compression.
  */
 import { ref, watch, computed, nextTick } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useModalLock } from '@/composables/useModalLock';
 import { useForm } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
@@ -33,11 +34,40 @@ const emit = defineEmits<{
   (e: 'success'): void;
 }>();
 
+const { t } = useI18n();
+
 useModalLock(computed(() => props.open));
 
 const isVehicle = computed(() => props.barang?.category === 'Kendaraan');
 const arrNeedApproval = ['Rusak Total', 'Hilang'];
 const arrInactiveConditions = ['Rusak Total', 'Hilang', 'Lelang/Hibah'];
+
+const getStatusLabel = (s: string) => {
+  if (!s) return t('inventory.selectStatus');
+  const map: Record<string, string> = {
+    'Tersedia': t('status.tersedia'),
+    'Dipinjam': t('status.dipinjam'),
+    'Standby': t('status.standby'),
+    'Pending': t('status.pending'),
+    'Pending:BoD/BoC': t('status.pending'),
+    'Scrapped': t('status.scrapped'),
+    'Lost': t('status.lost'),
+  };
+  return map[s] || s;
+};
+
+const getConditionLabel = (c: string) => {
+  if (!c) return t('inventory.selectCondition');
+  const map: Record<string, string> = {
+    'Bagus': t('inventory.conditionGood'),
+    'Rusak': t('inventory.conditionDamaged'),
+    'QC Passed': t('inventory.conditionQcPassed'),
+    'Lelang/Hibah': t('inventory.conditionAuctionGrant'),
+    'Rusak Total': t('inventory.conditionTotalDamage'),
+    'Hilang': t('inventory.conditionLost'),
+  };
+  return map[c] || c;
+};
 
 const isStatusDisabled = computed(() => {
   return arrInactiveConditions.includes(form.condition);
@@ -171,7 +201,7 @@ const handleFileUpload = async (e: any) => {
 
   const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
   if (!allowedTypes.includes(rawFile.type) && !rawFile.type.startsWith('image/')) {
-    toast.error('Format file salah! Hanya diperbolehkan file .jpg, .jpeg, atau .png');
+    toast.error(t('inventory.invalidFileFormat'));
     target.value = '';
     return;
   }
@@ -179,7 +209,7 @@ const handleFileUpload = async (e: any) => {
   try {
     const file = await compressImageIfNeeded(rawFile);
     if (file.size > 1024 * 1024) {
-      toast.error('Gagal! Ukuran foto maksimal 1MB');
+      toast.error(t('inventory.fileTooLarge1Mb'));
       target.value = '';
       return;
     }
@@ -188,7 +218,7 @@ const handleFileUpload = async (e: any) => {
     form.use_lot_image = false;
   } catch (err) {
     console.error('Gagal memproses gambar:', err);
-    toast.error('Gagal memproses gambar');
+    toast.error(t('inventory.failedProcessImage'));
   } finally {
     target.value = '';
   }
@@ -213,7 +243,7 @@ const handleSamakanPhoto = () => {
     form.image_url = null;
     form.image_url_name = props.lot.imageUrl.split('/').pop() || '';
   } else {
-    toast.error('LOT tidak memiliki foto.');
+    toast.error(t('inventory.lotNoPhoto'));
   }
 };
 
@@ -221,8 +251,8 @@ const handleMemoUpload = (e: any) => {
   const file = e.target.files[0];
   if (!file) return;
   const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
-  if (!allowedTypes.includes(file.type)) { toast.error('Format file salah! Hanya diperbolehkan file .pdf, .jpg, .jpeg, atau .png'); return; }
-  if (file.size > 2 * 1024 * 1024) { toast.error('Gagal! Ukuran dokumen maksimal 2MB'); return; }
+  if (!allowedTypes.includes(file.type)) { toast.error(t('inventory.invalidDocFormat')); return; }
+  if (file.size > 2 * 1024 * 1024) { toast.error(t('inventory.fileTooLarge2Mb')); return; }
   form.memo_file = file;
   form.memo_file_name = file.name;
 };
@@ -242,8 +272,8 @@ const handleLostDocUpload = (e: any) => {
   const file = e.target.files[0];
   if (!file) return;
   const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
-  if (!allowedTypes.includes(file.type)) { toast.error('Format file salah! Hanya diperbolehkan file .pdf, .jpg, .jpeg, atau .png'); return; }
-  if (file.size > 2 * 1024 * 1024) { toast.error('Gagal! Ukuran dokumen maksimal 2MB'); return; }
+  if (!allowedTypes.includes(file.type)) { toast.error(t('inventory.invalidDocFormat')); return; }
+  if (file.size > 2 * 1024 * 1024) { toast.error(t('inventory.fileTooLarge2Mb')); return; }
   form.lost_doc_file = file;
   form.lost_doc_file_name = file.name;
 };
@@ -265,7 +295,7 @@ const handleSamakanPrice = () => {
   } else if (props.lot?.unit_price) {
     form.price = props.lot.unit_price;
   } else {
-    toast.error('LOT tidak memiliki harga default.');
+    toast.error(t('inventory.lotNoDefaultPrice'));
   }
 };
 
@@ -295,14 +325,14 @@ const handleSubmit = () => {
   resetErrors();
 
   let isValid = true;
-  if (!form.location_id) { errors.value.location_id = 'Lokasi belum dipilih'; isValid = false; }
-  if (!form.status) { errors.value.status = 'Status belum dipilih'; isValid = false; }
-  if (!form.condition) { errors.value.condition = 'Kondisi belum dipilih'; isValid = false; }
-  if (!form.image_url && !form.image_url_name) { errors.value.image_url = 'Foto belum dipilih'; isValid = false; }
-  if (isVehicle.value && !form.vehicle_registration) { errors.value.vehicle_registration = 'TNKB (Nomor Polisi) belum diisi'; isValid = false; }
-  if (arrNeedApproval.includes(form.status) && !form.memo_file_name) { errors.value.memo_file = 'Berita Acara / Memo belum dipilih'; isValid = false; }
-  if (form.status === 'Hilang' && !form.lost_doc_file_name) { errors.value.lost_doc_file = 'Surat Keterangan Kehilangan belum dipilih'; isValid = false; }
-  if (form.is_bulk && (form.bulk_quantity === '' || form.bulk_quantity === null)) { errors.value.bulk_quantity = 'Jumlah aset belum diisi'; isValid = false; }
+  if (!form.location_id) { errors.value.location_id = t('inventory.locationRequired'); isValid = false; }
+  if (!form.status) { errors.value.status = t('inventory.statusRequired'); isValid = false; }
+  if (!form.condition) { errors.value.condition = t('inventory.conditionRequired'); isValid = false; }
+  if (!form.image_url && !form.image_url_name) { errors.value.image_url = t('inventory.assetPhotoRequired'); isValid = false; }
+  if (isVehicle.value && !form.vehicle_registration) { errors.value.vehicle_registration = t('inventory.nopolRequired'); isValid = false; }
+  if (arrNeedApproval.includes(form.status) && !form.memo_file_name) { errors.value.memo_file = t('inventory.memoRequired'); isValid = false; }
+  if (form.status === 'Hilang' && !form.lost_doc_file_name) { errors.value.lost_doc_file = t('inventory.lostDocRequired'); isValid = false; }
+  if (form.is_bulk && (form.bulk_quantity === '' || form.bulk_quantity === null)) { errors.value.bulk_quantity = t('inventory.assetCountRequired'); isValid = false; }
   if (!isValid) return;
 
   form.transform((data) => {
@@ -337,7 +367,7 @@ const handleSubmit = () => {
     },
     onError: (errs) => {
       console.error('Validation errors:', errs);
-      toast.error('Gagal membuat aset! Periksa kembali input Anda.');
+      toast.error(t('inventory.createAssetFailed'));
     },
   });
 };
@@ -358,7 +388,7 @@ const handleSubmit = () => {
           <div v-if="open" class="bg-card w-full max-w-[1000px] rounded-[14px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]" @click.stop>
             <!-- Header -->
             <div class="flex items-center justify-between pt-3 pb-2 px-6 border-b border-border">
-              <h3 class="text-lg font-bold text-foreground">Pembuatan Aset Baru</h3>
+              <h3 class="text-lg font-bold text-foreground">{{ t('inventory.createNewAsset') }}</h3>
               <button @click="closeModal" class="p-2 hover:bg-muted rounded-full transition-colors cursor-pointer">
                 <X class="w-5 h-5 text-muted-foreground" />
               </button>
@@ -371,7 +401,7 @@ const handleSubmit = () => {
                 <div class="space-y-6">
                   <Field>
                     <FieldLabel>
-                      <span>Nomor Aset</span>
+                      <span>{{ t('inventory.assetCode') }}</span>
                     </FieldLabel>
                     <FieldContent>
                       <input type="text" :value="form.number" disabled class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10" />
@@ -380,13 +410,13 @@ const handleSubmit = () => {
 
                   <Field :data-invalid="!!errors.location_id || undefined">
                     <FieldLabel>
-                      <span>Lokasi<span class="text-rose-500">*</span></span>
+                      <span>{{ t('inventory.location') }}<span class="text-rose-500">*</span></span>
                     </FieldLabel>
                     <FieldContent>
                       <LocationCombobox
                         v-model="form.location_id"
                         :locations="locations"
-                        placeholder="Pilih lokasi"
+                        :placeholder="t('inventory.selectLocation')"
                         :error="!!errors.location_id"
                         :active-only="true"
                       />
@@ -396,23 +426,23 @@ const handleSubmit = () => {
 
                   <Field :data-invalid="!!errors.status || undefined" :data-disabled="isStatusDisabled || undefined">
                     <FieldLabel>
-                      <span>Status<span class="text-rose-500">*</span></span>
+                      <span>{{ t('inventory.status') }}<span class="text-rose-500">*</span></span>
                     </FieldLabel>
                     <FieldContent>
                       <div v-if="isStatusDisabled" class="w-full flex items-center justify-between px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10 select-none">
-                        <span>{{ form.status || 'Pilih status' }}</span>
+                        <span>{{ getStatusLabel(form.status) }}</span>
                         <ChevronDown class="w-4 h-4 opacity-50" />
                       </div>
                       <DropdownMenu v-else>
                         <DropdownMenuTrigger asChild>
                           <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !form.status ? 'text-muted-foreground' : 'text-foreground', errors.status ? 'border-destructive' : '']">
-                            {{ form.status || 'Pilih status' }}
+                            {{ getStatusLabel(form.status) }}
                             <ChevronDown class="w-4 h-4 opacity-50" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
-                          <DropdownMenuItem @select="form.status = 'Tersedia'">Tersedia</DropdownMenuItem>
-                          <DropdownMenuItem @select="form.status = 'Standby'">Standby</DropdownMenuItem>
+                          <DropdownMenuItem @select="form.status = 'Tersedia'">{{ t('status.tersedia') }}</DropdownMenuItem>
+                          <DropdownMenuItem @select="form.status = 'Standby'">{{ t('status.standby') }}</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </FieldContent>
@@ -425,13 +455,13 @@ const handleSubmit = () => {
                       <div class="flex items-center gap-2 w-full pt-2">
                         <Checkbox id="auto-create-checkbox" v-model="form.is_bulk" />
                         <label for="auto-create-checkbox" class="cursor-pointer select-none text-sm font-medium text-foreground">
-                          Buat
+                          {{ t('inventory.autoCreateLabelPrefix') }}
                         </label>
                         <input type="number" v-model="form.bulk_quantity" placeholder="..." min="1" :disabled="!form.is_bulk"
                           class="w-16 px-2 py-1 text-sm border rounded-[10px] bg-background focus:outline-none focus:ring-2 transition-colors h-8 disabled:opacity-50 disabled:cursor-not-allowed mx-1"
                           :class="[errors.bulk_quantity ? 'border-destructive' : 'border-input']"
                         />
-                        <span class="text-sm font-medium text-foreground">aset secara otomatis dengan nilai default.</span>
+                        <span class="text-sm font-medium text-foreground">{{ t('inventory.autoCreateLabelSuffix') }}</span>
                       </div>
                     </FieldContent>
                     <FieldError v-if="errors.bulk_quantity" class="pl-6">{{ errors.bulk_quantity }}</FieldError>
@@ -442,23 +472,23 @@ const handleSubmit = () => {
                 <div class="space-y-6">
                   <Field :data-invalid="!!errors.condition || undefined">
                     <FieldLabel>
-                      <span>Kondisi<span class="text-rose-500">*</span></span>
+                      <span>{{ t('inventory.condition') }}<span class="text-rose-500">*</span></span>
                     </FieldLabel>
                     <FieldContent>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !form.condition ? 'text-muted-foreground' : 'text-foreground', errors.condition ? 'border-destructive' : '']">
-                            {{ form.condition || 'Pilih kondisi' }}
+                            {{ getConditionLabel(form.condition) }}
                             <ChevronDown class="w-4 h-4 opacity-50" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
-                          <DropdownMenuItem @select="form.condition = 'Bagus'">Bagus</DropdownMenuItem>
-                          <DropdownMenuItem @select="form.condition = 'Rusak'">Rusak</DropdownMenuItem>
-                          <DropdownMenuItem @select="form.condition = 'QC Passed'">QC Passed</DropdownMenuItem>
-                          <DropdownMenuItem @select="form.condition = 'Lelang/Hibah'">Lelang/Hibah</DropdownMenuItem>
-                          <DropdownMenuItem @select="form.condition = 'Rusak Total'">Rusak Total</DropdownMenuItem>
-                          <DropdownMenuItem @select="form.condition = 'Hilang'">Hilang</DropdownMenuItem>
+                          <DropdownMenuItem @select="form.condition = 'Bagus'">{{ t('inventory.conditionGood') }}</DropdownMenuItem>
+                          <DropdownMenuItem @select="form.condition = 'Rusak'">{{ t('inventory.conditionDamaged') }}</DropdownMenuItem>
+                          <DropdownMenuItem @select="form.condition = 'QC Passed'">{{ t('inventory.conditionQcPassed') }}</DropdownMenuItem>
+                          <DropdownMenuItem @select="form.condition = 'Lelang/Hibah'">{{ t('inventory.conditionAuctionGrant') }}</DropdownMenuItem>
+                          <DropdownMenuItem @select="form.condition = 'Rusak Total'">{{ t('inventory.conditionTotalDamage') }}</DropdownMenuItem>
+                          <DropdownMenuItem @select="form.condition = 'Hilang'">{{ t('inventory.conditionLost') }}</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </FieldContent>
@@ -467,22 +497,22 @@ const handleSubmit = () => {
 
                   <Field>
                     <FieldLabel>
-                      <span>Harga Satuan</span>
+                      <span>{{ t('inventory.unitPrice') }}</span>
                     </FieldLabel>
                     <FieldContent>
                       <div class="flex gap-2 w-full">
                         <div class="flex flex-grow rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors h-10 overflow-hidden">
                           <span class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-r border-input select-none font-medium">Rp</span>
-                          <input type="number" v-model="form.price" placeholder="Contoh: 60000" min="0" class="flex-1 min-w-0 px-4 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 transition-colors h-full" />
+                          <input type="number" v-model="form.price" :placeholder="t('inventory.unitPricePlaceholder')" min="0" class="flex-1 min-w-0 px-4 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 transition-colors h-full" />
                         </div>
-                        <Button type="button" @click="handleSamakanPrice" variant="warning" size="lg">Samakan</Button>
+                        <Button type="button" @click="handleSamakanPrice" variant="warning" size="lg">{{ t('inventory.sameAsParent') }}</Button>
                       </div>
                     </FieldContent>
                   </Field>
 
                   <Field :data-invalid="!!errors.image_url || undefined">
                     <FieldLabel>
-                      <span>Foto<span class="text-rose-500">*</span></span>
+                      <span>{{ t('inventory.photo') }}<span class="text-rose-500">*</span></span>
                     </FieldLabel>
                     <FieldContent>
                       <div class="flex gap-2">
@@ -490,22 +520,22 @@ const handleSubmit = () => {
                           :class="[(form.image_url || form.image_url_name) ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' : 'text-muted-foreground cursor-default', errors.image_url ? 'border-destructive' : 'border-input']"
                           @click="(form.image_url || form.image_url_name) && viewImageInNewTab()"
                         >
-                          {{ form.image_url_name || 'Belum ada foto yang dipilih' }}
+                          {{ form.image_url_name || t('inventory.noPhotoSelected') }}
                         </div>
                         <input type="file" id="create-asset-photo-upload" class="hidden" accept=".jpg,.jpeg,.png" @change="handleFileUpload" />
-                        <Button type="button" @click="handleSamakanPhoto" variant="warning" size="lg">Samakan</Button>
-                        <Button type="button" @click="triggerFileInput" size="lg">Pilih File</Button>
+                        <Button type="button" @click="handleSamakanPhoto" variant="warning" size="lg">{{ t('inventory.sameAsParent') }}</Button>
+                        <Button type="button" @click="triggerFileInput" size="lg">{{ t('inventory.chooseFile') }}</Button>
                       </div>
-                      <p class="text-[10px] text-muted-foreground ml-1 mt-1">Maksimal ukuran 1 MB (.jpg, .jpeg, .png)</p>
+                      <p class="text-[10px] text-muted-foreground ml-1 mt-1">{{ t('inventory.maxFileSize1Mb') }}</p>
                     </FieldContent>
                     <FieldError v-if="errors.image_url">{{ errors.image_url }}</FieldError>
                   </Field>
 
                   <!-- TNKB (Only for Vehicles) -->
                   <Field v-if="isVehicle" :data-invalid="!!errors.vehicle_registration || undefined">
-                    <FieldLabel><span>TNKB (Nomor Polisi)<span class="text-rose-500">*</span></span></FieldLabel>
+                    <FieldLabel><span>{{ t('inventory.tnkb') }}<span class="text-rose-500">*</span></span></FieldLabel>
                     <FieldContent>
-                      <input type="text" v-model="form.vehicle_registration" placeholder="Contoh: B 1234 ABC"
+                      <input type="text" v-model="form.vehicle_registration" :placeholder="t('inventory.nopolPlaceholder')"
                         class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
                         :class="[errors.vehicle_registration ? 'border-destructive' : '']"
                       />
@@ -515,38 +545,38 @@ const handleSubmit = () => {
 
                   <!-- Document Upload (Required for approval conditions) -->
                   <Field v-if="arrNeedApproval.includes(form.condition)" :data-invalid="!!errors.memo_file || undefined">
-                    <FieldLabel><span>Berita Acara / Memo<span class="text-rose-500">*</span></span></FieldLabel>
+                    <FieldLabel><span>{{ t('inventory.memoDocument') }}<span class="text-rose-500">*</span></span></FieldLabel>
                     <FieldContent>
                       <div class="flex gap-2">
                         <div class="flex-grow min-w-0 px-4 py-2 text-sm border rounded-[14px] bg-muted/10 truncate flex items-center h-10"
                           :class="[form.memo_file_name ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' : 'text-muted-foreground cursor-default', errors.memo_file ? 'border-destructive' : 'border-input']"
                           @click="form.memo_file_name && viewMemoInNewTab()"
                         >
-                          {{ form.memo_file_name || 'Belum ada file yang dipilih' }}
+                          {{ form.memo_file_name || t('inventory.noFileSelected') }}
                         </div>
                         <input type="file" id="create-asset-memo-upload" class="hidden" accept=".pdf,.jpg,.jpeg,.png" @change="handleMemoUpload" />
-                        <Button type="button" @click="triggerMemoFileInput" size="lg">Pilih Dokumen</Button>
+                        <Button type="button" @click="triggerMemoFileInput" size="lg">{{ t('inventory.chooseDoc') }}</Button>
                       </div>
-                      <p class="text-[10px] text-muted-foreground ml-1 mt-1">Maksimal ukuran 2 MB (.pdf, .jpg, .jpeg, .png)</p>
+                      <p class="text-[10px] text-muted-foreground ml-1 mt-1">{{ t('inventory.maxFileSize2Mb') }}</p>
                     </FieldContent>
                     <FieldError v-if="errors.memo_file">{{ errors.memo_file }}</FieldError>
                   </Field>
 
                   <!-- Lost Document Upload (Required only if condition is Hilang) -->
                   <Field v-if="form.condition === 'Hilang'" :data-invalid="!!errors.lost_doc_file || undefined">
-                    <FieldLabel><span>Surat Keterangan Kehilangan<span class="text-rose-500">*</span></span></FieldLabel>
+                    <FieldLabel><span>{{ t('inventory.lostDocument') }}<span class="text-rose-500">*</span></span></FieldLabel>
                     <FieldContent>
                       <div class="flex gap-2">
                         <div class="flex-grow min-w-0 px-4 py-2 text-sm border rounded-[14px] bg-muted/10 truncate flex items-center h-10"
                           :class="[form.lost_doc_file_name ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' : 'text-muted-foreground cursor-default', errors.lost_doc_file ? 'border-destructive' : 'border-input']"
                           @click="form.lost_doc_file_name && viewLostDocInNewTab()"
                         >
-                          {{ form.lost_doc_file_name || 'Belum ada file yang dipilih' }}
+                          {{ form.lost_doc_file_name || t('inventory.noFileSelected') }}
                         </div>
                         <input type="file" id="create-asset-lost-doc-upload" class="hidden" accept=".pdf,.jpg,.jpeg,.png" @change="handleLostDocUpload" />
-                        <Button type="button" @click="triggerLostDocFileInput" size="lg">Pilih Dokumen</Button>
+                        <Button type="button" @click="triggerLostDocFileInput" size="lg">{{ t('inventory.chooseDoc') }}</Button>
                       </div>
-                      <p class="text-[10px] text-muted-foreground ml-1 mt-1">Maksimal ukuran 2 MB (.pdf, .jpg, .jpeg, .png)</p>
+                      <p class="text-[10px] text-muted-foreground ml-1 mt-1">{{ t('inventory.maxFileSize2Mb') }}</p>
                     </FieldContent>
                     <FieldError v-if="errors.lost_doc_file">{{ errors.lost_doc_file }}</FieldError>
                   </Field>
@@ -556,12 +586,12 @@ const handleSubmit = () => {
 
             <!-- Footer -->
             <div class="py-3 px-4 border-t border-border flex items-center justify-between">
-              <p class="text-sm text-rose-500 italic font-medium">*Wajib diisi</p>
+              <p class="text-sm text-rose-500 italic font-medium">{{ t('inventory.requiredMarker') }}</p>
               <div class="flex items-center gap-3">
-                <Button @click="closeModal" variant="white" size="xl">Batal</Button>
+                <Button @click="closeModal" variant="white" size="xl">{{ t('common.cancel') }}</Button>
                 <Button @click="handleSubmit" :disabled="form.processing" variant="primary" size="xl" class="relative">
                   <Loader2 v-if="form.processing" class="absolute inset-0 m-auto h-5 w-5 animate-spin" />
-                  <span :class="{ 'opacity-0': form.processing }">Buat Aset</span>
+                  <span :class="{ 'opacity-0': form.processing }">{{ t('inventory.createAssetBtn') }}</span>
                 </Button>
               </div>
             </div>

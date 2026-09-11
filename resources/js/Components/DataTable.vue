@@ -168,7 +168,7 @@ watch(() => props.filterValue, (val) => {
         <template v-else>
           <TableRow>
             <TableCell :colspan="columns.length" class="h-24 text-center text-muted-foreground">
-              Tidak ada data.
+              {{ $t('common.noData') }}
             </TableCell>
           </TableRow>
         </template>
@@ -179,8 +179,7 @@ watch(() => props.filterValue, (val) => {
   <!-- Pagination UI -->
   <div v-if="table.getPageCount() > 1" class="flex items-center justify-end space-x-2 pt-4 px-2">
     <div v-if="showSelectionCount" class="flex-1 text-sm text-muted-foreground">
-      {{ table.getFilteredSelectedRowModel().rows.length }} of
-      {{ table.getFilteredRowModel().rows.length }} row(s) selected.
+      {{ $t('common.pagination.rowsSelected', { selected: table.getFilteredSelectedRowModel().rows.length, total: table.getFilteredRowModel().rows.length }) }}
     </div>
     <div class="flex items-center space-x-2">
       <Button
@@ -190,7 +189,7 @@ watch(() => props.filterValue, (val) => {
         class="rounded-[14px]"
       >
         <ChevronLeft class="w-4 h-4 mr-1" />
-        Sebelumnya
+        {{ $t('common.pagination.previous') }}
       </Button>
       <Button
         variant="outline"
@@ -198,7 +197,7 @@ watch(() => props.filterValue, (val) => {
         @click="table.nextPage()"
         class="rounded-[14px]"
       >
-        Selanjutnya
+        {{ $t('common.pagination.next') }}
         <ChevronRight class="w-4 h-4 ml-1" />
       </Button>
     </div>

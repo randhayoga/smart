@@ -3,6 +3,7 @@
  * Daftar LOT Tab component rendering batch/procurement lot tables, quantity metrics, and batch actions.
  */
 import { ref, watch, onMounted, onUnmounted, computed, h } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { router, usePage } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 import { 
@@ -86,11 +87,13 @@ interface Props {
 
 const props = defineProps<Props>();
 
+const { t, locale } = useI18n();
+
 const searchQuery = ref('');
 const timeFilter = ref('');
 const organizerFilter = ref('');
 const vendorFilter = ref('');
-const rowsPerPage = ref('Semua baris');
+const rowsPerPage = ref<'all' | '10' | '25' | '50'>('all');
 const dataTableRef = ref<any>(null);
 
 // Lot Modal Setup
@@ -134,7 +137,8 @@ const formatRupiah = (val: number | string | null | undefined) => {
   if (val === null || val === undefined) return '-';
   const num = typeof val === 'string' ? parseFloat(val) : val;
   if (isNaN(num)) return '-';
-  const formatted = Math.floor(num).toLocaleString('id-ID');
+  const loc = locale.value === 'en' ? 'en-US' : 'id-ID';
+  const formatted = Math.floor(num).toLocaleString(loc);
   return `Rp${formatted}`;
 };
 
@@ -167,7 +171,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Kode LOT',
+        t('inventory.lotCode'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ]),
       cell: ({ row }) => h('div', { class: 'text-muted-foreground font-mono truncate font-medium' }, row.original.number),
@@ -179,7 +183,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Jml. Stok',
+        t('inventory.stockCount'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ]),
       cell: ({ row }) => h('div', { class: 'pl-0 text-muted-foreground' }, 
@@ -195,7 +199,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Nomor PO',
+        t('inventory.poNumber'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ]),
       cell: ({ row }) => h('div', { class: 'pl-0 font-medium' }, row.original.po_number),
@@ -207,7 +211,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Tanggal Registrasi',
+        t('inventory.registrationDate'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ]),
       cell: ({ row }) => h('div', { class: 'pl-0 text-muted-foreground' }, formatDate(row.original.date_of_receipt)),
@@ -224,7 +228,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Harga Satuan',
+        t('inventory.unitPrice'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ]),
       cell: ({ row }) => h('div', { class: 'pl-0 text-muted-foreground' }, formatRupiah(row.original.unitPrice)),
@@ -239,7 +243,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Organizer',
+        t('inventory.organizer'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ]),
       cell: ({ row }) => h('div', { class: 'pl-0' }, row.original.organizer),
@@ -254,7 +258,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Lokasi',
+        t('inventory.location'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ]),
       cell: ({ row }) => h('div', { class: 'pl-0 text-muted-foreground text-sm' }, formatLocation(row.original.location, row.original.floor, row.original.room)),
@@ -262,7 +266,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
     {
       id: 'actions',
       size: 100,
-      header: () => h('div', { class: 'text-center font-semibold text-foreground no-print' }, 'Aksi'),
+      header: () => h('div', { class: 'text-center font-semibold text-foreground no-print' }, t('common.actions')),
       cell: ({ row }) => {
         const buttons = [];
         if (props.barang.is_consumable) {
@@ -270,11 +274,11 @@ const columns = computed<ColumnDef<any>[]>(() => {
             h(Button, {
               variant: 'table-view',
               size: 'icon-sm',
-              title: 'Lihat Detail',
+              title: t('inventory.viewDetails'),
               onClick: () => openDetailLOTConsumables(row.original)
             }, () => [
               h(Eye),
-              h('span', { class: 'sr-only' }, 'Lihat Detail')
+              h('span', { class: 'sr-only' }, t('inventory.viewDetails'))
             ])
           );
         } else {
@@ -282,7 +286,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
             h(Button, {
               variant: 'table-view',
               size: 'icon-sm',
-              title: 'Lihat Detail',
+              title: t('inventory.viewDetails'),
               onClick: () => {
                 const lotParam = row.original.number 
                   ? String(row.original.number).replace(/[^a-zA-Z0-9]/g, '') 
@@ -291,7 +295,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
               }
             }, () => [
               h(Eye),
-              h('span', { class: 'sr-only' }, 'Lihat Detail')
+              h('span', { class: 'sr-only' }, t('inventory.viewDetails'))
             ])
           );
         }
@@ -299,11 +303,11 @@ const columns = computed<ColumnDef<any>[]>(() => {
           h(Button, {
             variant: 'table-destructive',
             size: 'icon-sm',
-            title: 'Hapus',
+            title: t('common.delete'),
             onClick: () => openDeleteLotModal(row.original),
           }, () => [
             h(Trash2),
-            h('span', { class: 'sr-only' }, 'Hapus')
+            h('span', { class: 'sr-only' }, t('common.delete'))
           ])
         );
         return h('div', { class: 'flex items-center justify-center gap-2 no-print' }, buttons);
@@ -316,7 +320,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
 
 watch(rowsPerPage, (val) => {
   if (dataTableRef.value && dataTableRef.value.table) {
-    if (val === 'Semua baris' || !val) {
+    if (val === 'all' || (val as any) === 'Semua baris' || !val) {
       dataTableRef.value.table.setPageSize(999999);
     } else {
       dataTableRef.value.table.setPageSize(Number(val));
@@ -325,7 +329,7 @@ watch(rowsPerPage, (val) => {
 });
 
 onMounted(() => {
-  if (dataTableRef.value && dataTableRef.value.table && rowsPerPage.value === 'Semua baris') {
+  if (dataTableRef.value && dataTableRef.value.table && (rowsPerPage.value === 'all' || (rowsPerPage.value as any) === 'Semua baris')) {
     dataTableRef.value.table.setPageSize(999999);
   }
   document.addEventListener('keydown', closeOnEscape);
@@ -357,9 +361,9 @@ const filteredLots = computed(() => {
       const entryDateObj = new Date(lot.date_of_receipt);
       if (isNaN(entryDateObj.getTime())) return false;
       
-      if (timeFilter.value === 'Hari ini') {
+      if (timeFilter.value === 'Hari ini' || timeFilter.value === 'today') {
         return entryDateObj.toDateString() === today.toDateString();
-      } else if (timeFilter.value === 'Bulan ini') {
+      } else if (timeFilter.value === 'Bulan ini' || timeFilter.value === 'thisMonth') {
         return entryDateObj.getMonth() === today.getMonth() && entryDateObj.getFullYear() === today.getFullYear();
       }
       return true;
@@ -381,7 +385,13 @@ const getExportData = () => {
 
 const getExportPayload = () => {
   const data = getExportData();
-  const headers = ['Kode LOT', 'Nomor PO', 'Tanggal Registrasi', 'Organizer', 'Jml. Stok'];
+  const headers = [
+    t('inventory.lotCode'),
+    t('inventory.poNumber'),
+    t('inventory.registrationDate'),
+    t('inventory.organizer'),
+    t('inventory.stockCount')
+  ];
   const rows = data.map((item: any) => [
     item.number,
     item.po_number,
@@ -438,37 +448,29 @@ const deleteFields = computed(() => {
       if (room && room !== '-') parts.push(room);
       return parts.join(', ') || '-';
     };
-    
-    const formatRupiah = (val: number | string | null | undefined) => {
-      if (val === null || val === undefined || val === '') return '-';
-      const num = typeof val === 'string' ? parseFloat(val) : val;
-      if (isNaN(num)) return '-';
-      const formatted = Math.floor(num).toLocaleString('id-ID');
-      return `Rp${formatted}`;
-    };
 
     const isConsumable = props.barang.is_consumable;
     const availableStock = isConsumable ? (data.current_quantity ?? 0) : (data.availableAssetCount ?? 0);
     const initialStock = isConsumable ? (data.initial_quantity ?? 0) : (data.assetCount ?? 0);
 
     const fields = [
-      { label: 'Kode LOT', value: data.number },
-      { label: 'Kategori', value: props.barang.category },
-      { label: 'Subkategori', value: props.barang.subcategory },
-      { label: 'Merek', value: props.barang.brand },
-      { label: 'Nama', value: props.barang.name },
-      { label: 'Spesifikasi', value: props.barang.specification || '-' },
-      { label: 'Jumlah stok tersedia', value: availableStock },
-      { label: 'Jumlah stok diawal', value: initialStock },
-      { label: 'Lokasi', value: formatLocation(data.location, data.floor, data.room) },
-      { label: 'Nomor PO', value: data.po_number },
-      { label: 'Tanggal registrasi', value: formatDate(data.date_of_receipt) },
-      { label: 'Umur', value: data.age !== undefined && data.age !== null ? `${data.age} tahun` : '-' },
-      { label: 'Harga satuan', value: formatRupiah(data.unitPrice) },
-      { label: 'Organizer', value: data.organizer },
-      { label: 'Vendor', value: data.vendor },
-      { label: 'Pembebanan', value: data.burden || '-' },
-      { label: 'Pembaruan Terakhir', value: data.updated_at || '-' }
+      { label: t('inventory.lotCode'), value: data.number },
+      { label: t('inventory.category'), value: props.barang.category },
+      { label: t('inventory.subcategory'), value: props.barang.subcategory },
+      { label: t('inventory.brand'), value: props.barang.brand },
+      { label: t('inventory.name'), value: props.barang.name },
+      { label: t('inventory.specification'), value: props.barang.specification || '-' },
+      { label: t('inventory.availableStock'), value: availableStock },
+      { label: t('inventory.initialStock'), value: initialStock },
+      { label: t('inventory.location'), value: formatLocation(data.location, data.floor, data.room) },
+      { label: t('inventory.poNumber'), value: data.po_number },
+      { label: t('inventory.registrationDate'), value: formatDate(data.date_of_receipt) },
+      { label: t('inventory.age'), value: data.age !== undefined && data.age !== null ? `${data.age} ${t('inventory.yearUnit')}` : '-' },
+      { label: t('inventory.unitPrice'), value: formatRupiah(data.unitPrice) },
+      { label: t('inventory.organizer'), value: data.organizer },
+      { label: t('inventory.vendor'), value: data.vendor },
+      { label: t('inventory.burden'), value: data.burden || '-' },
+      { label: t('inventory.lastUpdate'), value: data.updated_at || '-' }
     ];
     
     return fields;
@@ -557,41 +559,41 @@ const closeOnEscape = (e: KeyboardEvent) => {
   <!-- Daftar LOT Card -->
   <div class="bg-card rounded-xl border border-border px-4 py-3 shadow-sm overflow-hidden">
     <div class="no-print">
-      <h2 class="text-lg font-bold text-foreground mb-4">Daftar LOT</h2>
+      <h2 class="text-lg font-bold text-foreground mb-4">{{ t('inventory.lotList') }}</h2>
 
       <!-- Filters Row -->
       <div class="mb-4 flex flex-wrap items-end gap-4">
         <div class="space-y-1.5 flex-1 min-w-[300px] max-w-sm">
-          <label class="text-xs text-muted-foreground font-medium block ml-0.5">Filter</label>
+          <label class="text-xs text-muted-foreground font-medium block ml-0.5">{{ t('inventory.filter') }}</label>
           <TableSearch 
             v-model="searchQuery"
-            placeholder="Cari Kode LOT atau nomor PO..." 
+            :placeholder="t('inventory.searchLotPlaceholder')" 
           />
         </div>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal', !timeFilter ? 'text-muted-foreground' : 'text-foreground']">
-              <span class="truncate">{{ timeFilter || 'Semua kurun waktu' }}</span>
+              <span class="truncate">{{ timeFilter === 'today' ? t('inventory.today') : (timeFilter === 'thisMonth' ? t('inventory.thisMonth') : t('inventory.allTimeRanges')) }}</span>
               <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
-            <DropdownMenuItem @select="timeFilter = ''">Semua kurun waktu</DropdownMenuItem>
-            <DropdownMenuItem @select="timeFilter = 'Hari ini'">Hari ini</DropdownMenuItem>
-            <DropdownMenuItem @select="timeFilter = 'Bulan ini'">Bulan ini</DropdownMenuItem>
+            <DropdownMenuItem @select="timeFilter = ''">{{ t('inventory.allTimeRanges') }}</DropdownMenuItem>
+            <DropdownMenuItem @select="timeFilter = 'today'">{{ t('inventory.today') }}</DropdownMenuItem>
+            <DropdownMenuItem @select="timeFilter = 'thisMonth'">{{ t('inventory.thisMonth') }}</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal', !organizerFilter ? 'text-muted-foreground' : 'text-foreground']">
-              <span class="truncate">{{ organizerFilter || 'Semua organizer' }}</span>
+              <span class="truncate">{{ organizerFilter || t('inventory.allOrganizers') }}</span>
               <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
-            <DropdownMenuItem @select="organizerFilter = ''">Semua organizer</DropdownMenuItem>
+            <DropdownMenuItem @select="organizerFilter = ''">{{ t('inventory.allOrganizers') }}</DropdownMenuItem>
             <DropdownMenuItem v-for="org in uniqueOrganizers" :key="org" @select="organizerFilter = org">
               {{ org }}
             </DropdownMenuItem>
@@ -599,18 +601,19 @@ const closeOnEscape = (e: KeyboardEvent) => {
         </DropdownMenu>
 
         <div class="flex items-center gap-3 text-sm text-muted-foreground ml-auto">
-          <span>Baris per halaman</span>
+          <span>{{ t('inventory.rowsPerPage') }}</span>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal', (rowsPerPage === 'Semua baris' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
-                {{ rowsPerPage }}
+              <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal', (rowsPerPage === 'all' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
+                {{ rowsPerPage === 'all' ? t('inventory.allRows') : rowsPerPage }}
                 <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent class="w-[140px] rounded-[14px]" align="start" :side-offset="4">
-              <DropdownMenuItem @select="rowsPerPage = 'Semua baris'">Semua baris</DropdownMenuItem>
+              <DropdownMenuItem @select="rowsPerPage = 'all'">{{ t('inventory.allRows') }}</DropdownMenuItem>
               <DropdownMenuItem @select="rowsPerPage = '10'">10</DropdownMenuItem>
               <DropdownMenuItem @select="rowsPerPage = '25'">25</DropdownMenuItem>
+              <DropdownMenuItem @select="rowsPerPage = '50'">50</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -619,7 +622,7 @@ const closeOnEscape = (e: KeyboardEvent) => {
       <!-- Actions Row -->
       <div class="mb-4 flex flex-wrap items-end justify-between gap-4 pt-2">
         <div class="space-y-2 flex-1 min-w-0">
-          <label class="text-xs text-muted-foreground font-medium block ml-0.5">Aksi Terpilih</label>
+          <label class="text-xs text-muted-foreground font-medium block ml-0.5">{{ t('inventory.selectedActions') }}</label>
           <div class="flex flex-wrap gap-2">
             <Button 
               @click="handleEditTerpilih"
@@ -627,7 +630,7 @@ const closeOnEscape = (e: KeyboardEvent) => {
               variant="more-round-warning"
             >
               <Pencil class="w-4 h-4" />
-              <span class="hidden sm:inline">Edit Terpilih</span>
+              <span class="hidden sm:inline">{{ t('inventory.editSelected') }}</span>
             </Button>
             <Button 
               @click="openDeleteLotModal(dataTableRef.table.getFilteredRowModel().rows.filter((r: any) => r.getIsSelected()).map((r: any) => r.original))"
@@ -635,14 +638,14 @@ const closeOnEscape = (e: KeyboardEvent) => {
               variant="destructive"
             >
               <Trash2 class="w-4 h-4" />
-              <span class="hidden sm:inline">Hapus Terpilih</span>
+              <span class="hidden sm:inline">{{ t('inventory.deleteSelected') }}</span>
             </Button>
           </div>
         </div>
         
         <Button @click="openCreateLotModal" variant="primary" size="lg">
           <Plus class="w-4 h-4" />
-          <span>LOT Baru</span>
+          <span>{{ t('inventory.newLot') }}</span>
         </Button>
       </div>
     </div>
@@ -684,7 +687,7 @@ const closeOnEscape = (e: KeyboardEvent) => {
   <DeleteConfirmationModal 
     :is-open="isDeleteModalOpen"
     :item-count="itemsToDelete.length"
-    :item-name="'LOT'"
+    :item-name="t('inventory.lotItem')"
     :item-data="itemsToDelete.length === 1 ? itemsToDelete[0] : itemsToDelete"
     :fields="deleteFields"
     :max-width-class="itemsToDelete.length === 1 ? 'max-w-2xl' : undefined"

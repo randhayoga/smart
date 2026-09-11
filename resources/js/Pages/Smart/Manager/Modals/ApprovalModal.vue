@@ -4,6 +4,7 @@
  * Handles single or bulk review, item breakdown inspection, and approval/rejection confirmation with optional notes.
  */
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useModalLock } from '@/composables/useModalLock';
 import { X, Loader2 } from 'lucide-vue-next';
 import { Button } from "@/Components/ui/button";
@@ -31,6 +32,8 @@ const emit = defineEmits<{
   (e: 'confirm', note: string): void;
 }>();
 
+const { t } = useI18n();
+
 useModalLock(computed(() => props.isOpen));
 
 // --- State & Form Handlers ---
@@ -47,7 +50,7 @@ const isApprove = computed(() => {
 });
 
 const modalTitle = computed(() => {
-  return isApprove.value ? 'Konfirmasi Approval' : 'Konfirmasi Penolakan';
+  return isApprove.value ? t('approvals.confirmApprovalTitle') : t('approvals.confirmRejectTitle');
 });
 
 const handleConfirm = () => {
@@ -56,19 +59,19 @@ const handleConfirm = () => {
 
 /** Formats request summary fields for display in modal */
 const getRequestFields = (req: SmartRequestData) => {
-  return formatRequestModalFields(req);
+  return formatRequestModalFields(req, t);
 };
 
 const multipleRequestsLabel = computed(() => {
   const hasPeminjaman = props.requests.some(r => r.type === 'peminjaman');
   const hasPermintaan = props.requests.some(r => r.type === 'permintaan');
   if (hasPeminjaman && hasPermintaan) {
-    return 'Daftar Permintaan / Peminjaman:';
+    return t('approvals.multipleRequestsAndLoans');
   }
   if (hasPeminjaman) {
-    return 'Daftar Peminjaman:';
+    return t('approvals.multipleLoans');
   }
-  return 'Daftar Permintaan:';
+  return t('approvals.multipleRequests');
 });
 
 const closeOnEscape = (e: KeyboardEvent) => {
@@ -143,7 +146,7 @@ onUnmounted(() => {
 
                   <!-- Card Daftar Barang -->
                   <div class="text-left w-full space-y-2">
-                    <p class="text-xs text-muted-foreground font-medium">Daftar Barang:</p>
+                    <p class="text-xs text-muted-foreground font-medium">{{ $t('requests.itemList') }}</p>
                     
                     <ScrollArea class="max-h-[14rem] sm:max-h-[16rem] h-fit border border-border rounded-[0.875rem] bg-card [&>div]:max-h-[14rem] sm:[&>div]:max-h-[16rem]">
                       <div class="p-3 sm:p-4 space-y-3">
@@ -197,10 +200,10 @@ onUnmounted(() => {
 
               <!-- Input Catatan/Alasan -->
               <div class="space-y-1.5 text-left w-full pt-1">
-                <label class="text-xs text-muted-foreground font-medium block">Catatan / Alasan (Opsional)</label>
+                <label class="text-xs text-muted-foreground font-medium block">{{ $t('approvals.notesLabel') }}</label>
                 <textarea
                   v-model="note"
-                  placeholder="Masukkan catatan persetujuan atau alasan penolakan..."
+                  :placeholder="$t('approvals.notesPlaceholder')"
                   class="w-full h-16 text-sm border border-input rounded-[14px] bg-background text-foreground p-3 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary shadow-sm resize-none"
                 ></textarea>
               </div>
@@ -214,7 +217,7 @@ onUnmounted(() => {
                   variant="white"
                   class="px-5"
                 >
-                  Batal
+                  {{ $t('common.cancel') }}
                 </Button>
                 <Button 
                   @click="handleConfirm"
@@ -224,7 +227,7 @@ onUnmounted(() => {
                 >
                   <Loader2 v-if="processing" class="absolute inset-0 m-auto h-5 w-5 animate-spin" />
                   <span :class="{ 'opacity-0': processing }">
-                    {{ isApprove ? 'Konfirmasi Approval' : 'Konfirmasi Penolakan' }}
+                    {{ isApprove ? $t('approvals.confirmApprovalTitle') : $t('approvals.confirmRejectTitle') }}
                   </span>
                 </Button>
               </div>

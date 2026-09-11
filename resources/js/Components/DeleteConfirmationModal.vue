@@ -3,6 +3,7 @@
  * Delete Confirmation Modal component supporting single and bulk deletion reviews as well as approval confirmations.
  */
 import { computed, onMounted, onUnmounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useModalLock } from '@/composables/useModalLock';
 import { X, AlertTriangle, Loader2 } from 'lucide-vue-next';
 import { Button } from "@/Components/ui/button";
@@ -44,6 +45,8 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits(['close', 'confirm']);
 
+const { t } = useI18n();
+
 useModalLock(computed(() => props.isOpen));
 
 const handleConfirm = () => {
@@ -83,17 +86,21 @@ const formatLocation = (lot: any) => {
 
 const modalTitle = computed(() => {
   if (props.itemName === 'Perubahan Status Aset') {
-    return props.actionType === 'approved' ? 'Konfirmasi Approval' : 'Konfirmasi Penolakan';
+    return props.actionType === 'approved' ? t('common.modals.approvalConfirmTitle') : t('common.modals.rejectConfirmTitle');
   }
-  return props.title;
+  return props.title !== 'Konfirmasi Penghapusan' ? props.title : t('common.modals.deleteConfirmTitle');
 });
 
 const modalMessage = computed(() => {
   if (props.itemName === 'Perubahan Status Aset') {
-    const actionWord = props.actionType === 'approved' ? 'meng-approve' : 'menolak';
-    return `Apakah Anda yakin untuk ${actionWord} ${props.itemCount} perubahan aset yang Anda pilih?`;
+    return props.actionType === 'approved'
+      ? t('common.modals.approvalConfirmMsg', { count: props.itemCount })
+      : t('common.modals.rejectConfirmMsg', { count: props.itemCount });
   }
-  return props.message || `Apakah Anda yakin untuk menghapus ${props.itemCount} ${props.itemName} yang Anda pilih?`;
+  if (props.message) return props.message;
+  return props.itemCount === 1
+    ? t('common.modals.deleteConfirmSingle', { name: props.itemName })
+    : t('common.modals.deleteConfirmMultiple', { count: props.itemCount, name: props.itemName });
 });
 
 const modalMessageClass = computed(() => {
@@ -105,9 +112,9 @@ const modalMessageClass = computed(() => {
 
 const modalConfirmButtonText = computed(() => {
   if (props.itemName === 'Perubahan Status Aset') {
-    return props.actionType === 'approved' ? 'Konfirmasi Approval' : 'Konfirmasi Penolakan';
+    return props.actionType === 'approved' ? t('common.modals.approvalConfirmTitle') : t('common.modals.rejectConfirmTitle');
   }
-  return props.confirmButtonText;
+  return props.confirmButtonText !== 'Konfirmasi Penghapusan' ? props.confirmButtonText : t('common.modals.deleteConfirmTitle');
 });
 
 const confirmButtonVariant = computed(() => {
@@ -394,7 +401,7 @@ onUnmounted(() => {
                   variant="white"
                   class="px-5"
                 >
-                  Batal
+                  {{ $t('common.cancel') }}
                 </Button>
                 <Button 
                   @click="handleConfirm"

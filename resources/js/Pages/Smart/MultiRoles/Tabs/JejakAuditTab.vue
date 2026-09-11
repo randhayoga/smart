@@ -3,6 +3,7 @@
  * Jejak Audit Tab component rendering filtered asset and request lifecycle history logs.
  */
 import { ref, computed, h } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { ArrowUpDown, ChevronDown } from 'lucide-vue-next';
 import { Button } from "@/Components/ui/button";
 import {
@@ -15,6 +16,21 @@ import TableSearch from '@/Components/TableSearch.vue';
 import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
+
+interface AuditTrail {
+  waktu: string;
+  status: string;
+  action_type: string;
+  aktor: string;
+  durasi: string | number;
+  catatan: string;
+}
+
+const props = defineProps<{
+  lifecycles: AuditTrail[];
+}>();
+
+const { t } = useI18n();
 
 const parseDateTime = (val: string) => {
   if (!val || val === '-') return 0;
@@ -34,11 +50,11 @@ const formatDurasi = (val: string | number) => {
     totalDays = Math.floor(val);
   } else if (typeof val === 'string') {
     const trimmed = val.trim();
-    if (trimmed.endsWith('jam')) {
-      const hours = parseFloat(trimmed.replace('jam', '').trim());
+    if (trimmed.endsWith('jam') || trimmed.endsWith('hours') || trimmed.endsWith('hour')) {
+      const hours = parseFloat(trimmed.replace(/(jam|hours|hour)/, '').trim());
       if (isNaN(hours)) return val;
       totalDays = Math.floor(hours / 24);
-    } else if (trimmed.includes('hari') || trimmed.includes('bulan') || trimmed.includes('tahun')) {
+    } else if (trimmed.includes('hari') || trimmed.includes('bulan') || trimmed.includes('tahun') || trimmed.includes('day') || trimmed.includes('month') || trimmed.includes('year')) {
       return trimmed;
     } else {
       const parsed = parseFloat(trimmed);
@@ -48,7 +64,7 @@ const formatDurasi = (val: string | number) => {
   }
 
   if (totalDays < 30) {
-    return `${totalDays} hari`;
+    return `${totalDays} ${t('approvals.days')}`;
   }
 
   const years = Math.floor(totalDays / 365);
@@ -57,34 +73,21 @@ const formatDurasi = (val: string | number) => {
   const days = remDaysAfterYears % 30;
 
   const parts: string[] = [];
-  if (years > 0) parts.push(`${years} tahun`);
-  if (months > 0) parts.push(`${months} bulan`);
-  if (days > 0 || parts.length === 0) parts.push(`${days} hari`);
+  if (years > 0) parts.push(`${years} ${t('approvals.years')}`);
+  if (months > 0) parts.push(`${months} ${t('approvals.months')}`);
+  if (days > 0 || parts.length === 0) parts.push(`${days} ${t('approvals.days')}`);
 
   return parts.join(' ');
 };
 
-interface AuditTrail {
-  waktu: string;
-  status: string;
-  action_type: string;
-  aktor: string;
-  durasi: string | number;
-  catatan: string;
-}
-
-const props = defineProps<{
-  lifecycles: AuditTrail[];
-}>();
-
 const auditSearch = ref('');
-const auditStatusFilter = ref('semua');
-const auditActionFilter = ref('semua');
-const auditTimeFilter = ref('semua');
-const auditRowsPerPage = ref('Semua baris');
+const auditStatusFilter = ref('all');
+const auditActionFilter = ref('all');
+const auditTimeFilter = ref('all');
+const auditRowsPerPage = ref('all');
 
 const computedAuditPageSize = computed(() => {
-  if (auditRowsPerPage.value === 'Semua baris') {
+  if (auditRowsPerPage.value === 'all') {
     return filteredLifecycles.value.length || 10;
   }
   return parseInt(auditRowsPerPage.value, 10);
@@ -100,15 +103,15 @@ const filteredLifecycles = computed(() => {
     );
   }
 
-  if (auditStatusFilter.value !== 'semua') {
+  if (auditStatusFilter.value !== 'all') {
     logs = logs.filter(l => l.status === auditStatusFilter.value);
   }
 
-  if (auditActionFilter.value !== 'semua') {
+  if (auditActionFilter.value !== 'all') {
     logs = logs.filter(l => l.action_type === auditActionFilter.value);
   }
 
-  if (auditTimeFilter.value !== 'semua') {
+  if (auditTimeFilter.value !== 'all') {
     const now = new Date();
     logs = logs.filter(l => {
       const logTime = parseDateTime(l.waktu);
@@ -116,8 +119,8 @@ const filteredLifecycles = computed(() => {
       const diffTime = Math.abs(now.getTime() - logTime);
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       
-      if (auditTimeFilter.value === '7-hari') return diffDays <= 7;
-      if (auditTimeFilter.value === '30-hari') return diffDays <= 30;
+      if (auditTimeFilter.value === '7-days') return diffDays <= 7;
+      if (auditTimeFilter.value === '30-days') return diffDays <= 30;
       return true;
     });
   }
@@ -141,7 +144,7 @@ const auditActionOptions = computed(() => {
   return Array.from(actions);
 });
 
-const auditColumns: ColumnDef<AuditTrail>[] = [
+const auditColumns = computed<ColumnDef<AuditTrail>[]>(() => [
   {
     accessorKey: 'waktu',
     size: 160,
@@ -151,7 +154,7 @@ const auditColumns: ColumnDef<AuditTrail>[] = [
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Waktu',
+        t('approvals.auditTime'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
@@ -171,7 +174,7 @@ const auditColumns: ColumnDef<AuditTrail>[] = [
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Status',
+        t('approvals.auditStatus'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
@@ -192,7 +195,7 @@ const auditColumns: ColumnDef<AuditTrail>[] = [
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Aksi',
+        t('approvals.auditAction'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
@@ -207,7 +210,7 @@ const auditColumns: ColumnDef<AuditTrail>[] = [
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Aktor',
+        t('approvals.auditActor'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
@@ -222,7 +225,7 @@ const auditColumns: ColumnDef<AuditTrail>[] = [
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-center w-full'
       }, () => [
-        'Durasi',
+        t('approvals.auditDuration'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
@@ -230,7 +233,7 @@ const auditColumns: ColumnDef<AuditTrail>[] = [
   },
   {
     accessorKey: 'catatan',
-    header: () => h('div', { class: 'font-semibold text-foreground justify-start' }, 'Catatan'),
+    header: () => h('div', { class: 'font-semibold text-foreground justify-start' }, t('approvals.auditNotes')),
     cell: ({ row }) => {
       const note = String(row.getValue('catatan') || '');
       if (note.includes(' | ')) {
@@ -242,7 +245,7 @@ const auditColumns: ColumnDef<AuditTrail>[] = [
       return h('div', { class: 'text-muted-foreground whitespace-normal text-left min-w-[200px]' }, note);
     },
   }
-];
+]);
 </script>
 
 <template>
@@ -250,23 +253,23 @@ const auditColumns: ColumnDef<AuditTrail>[] = [
     <!-- Internal Search & Local Filters -->
     <div class="flex flex-wrap items-end gap-4">
       <div class="space-y-1.5 flex-1 min-w-[200px] max-w-xs">
-        <label class="text-xs text-muted-foreground font-medium block ml-0.5">Filter</label>
+        <label class="text-xs text-muted-foreground font-medium block ml-0.5">{{ $t('common.filter') }}</label>
         <TableSearch 
           v-model="auditSearch"
-          placeholder="Cari Nama Aktor..." 
+          :placeholder="t('approvals.auditSearchPlaceholder')" 
           bg-class="bg-white"
         />
       </div>
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" :class="['w-[180px] justify-between rounded-[14px] font-normal bg-white', (auditStatusFilter === 'semua') ? 'text-muted-foreground' : 'text-foreground']">
-            <span class="truncate">{{ auditStatusFilter === 'semua' ? 'Semua Status' : auditStatusFilter }}</span>
+          <Button variant="outline" :class="['w-[180px] justify-between rounded-[14px] font-normal bg-white', auditStatusFilter === 'all' ? 'text-muted-foreground' : 'text-foreground']">
+            <span class="truncate">{{ auditStatusFilter === 'all' ? t('approvals.allStatus') : auditStatusFilter }}</span>
             <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent class="w-[180px] rounded-[14px] z-[110]" align="start" :side-offset="4">
-          <DropdownMenuItem @select="auditStatusFilter = 'semua'">Semua Status</DropdownMenuItem>
+          <DropdownMenuItem @select="auditStatusFilter = 'all'">{{ t('approvals.allStatus') }}</DropdownMenuItem>
           <DropdownMenuItem v-for="st in auditStatusOptions" :key="st" @select="auditStatusFilter = st">
             {{ st }}
           </DropdownMenuItem>
@@ -275,13 +278,13 @@ const auditColumns: ColumnDef<AuditTrail>[] = [
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" :class="['w-[180px] justify-between rounded-[14px] font-normal bg-white', (auditActionFilter === 'semua') ? 'text-muted-foreground' : 'text-foreground']">
-            <span class="truncate">{{ auditActionFilter === 'semua' ? 'Semua Aksi' : auditActionFilter }}</span>
+          <Button variant="outline" :class="['w-[180px] justify-between rounded-[14px] font-normal bg-white', auditActionFilter === 'all' ? 'text-muted-foreground' : 'text-foreground']">
+            <span class="truncate">{{ auditActionFilter === 'all' ? t('approvals.allAction') : auditActionFilter }}</span>
             <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent class="w-[180px] rounded-[14px] z-[110]" align="start" :side-offset="4">
-          <DropdownMenuItem @select="auditActionFilter = 'semua'">Semua Aksi</DropdownMenuItem>
+          <DropdownMenuItem @select="auditActionFilter = 'all'">{{ t('approvals.allAction') }}</DropdownMenuItem>
           <DropdownMenuItem v-for="act in auditActionOptions" :key="act" @select="auditActionFilter = act">
             {{ act }}
           </DropdownMenuItem>
@@ -290,35 +293,35 @@ const auditColumns: ColumnDef<AuditTrail>[] = [
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" :class="['w-[240px] justify-between rounded-[14px] font-normal bg-white', (auditTimeFilter === 'semua') ? 'text-muted-foreground' : 'text-foreground']">
+          <Button variant="outline" :class="['w-[240px] justify-between rounded-[14px] font-normal bg-white', auditTimeFilter === 'all' ? 'text-muted-foreground' : 'text-foreground']">
             <span class="truncate">
               {{ 
-                auditTimeFilter === 'semua' ? 'Semua kurun waktu' : 
-                auditTimeFilter === '7-hari' ? '7 hari terakhir' : 
-                '30 hari terakhir' 
+                auditTimeFilter === 'all' ? t('approvals.allTime') : 
+                auditTimeFilter === '7-days' ? t('approvals.last7Days') : 
+                t('approvals.last30Days') 
               }}
             </span>
             <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent class="w-[180px] rounded-[14px] z-[110]" align="start" :side-offset="4">
-          <DropdownMenuItem @select="auditTimeFilter = 'semua'">Semua Kurun Waktu</DropdownMenuItem>
-          <DropdownMenuItem @select="auditTimeFilter = '7-hari'">7 hari terakhir</DropdownMenuItem>
-          <DropdownMenuItem @select="auditTimeFilter = '30-hari'">30 hari terakhir</DropdownMenuItem>
+          <DropdownMenuItem @select="auditTimeFilter = 'all'">{{ t('approvals.allTime') }}</DropdownMenuItem>
+          <DropdownMenuItem @select="auditTimeFilter = '7-days'">{{ t('approvals.last7Days') }}</DropdownMenuItem>
+          <DropdownMenuItem @select="auditTimeFilter = '30-days'">{{ t('approvals.last30Days') }}</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
       <div class="flex items-center gap-3 text-sm text-muted-foreground ml-auto">
-        <span>Baris per halaman</span>
+        <span>{{ $t('approvals.rowsPerPage') }}</span>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal bg-white', (auditRowsPerPage === 'Semua baris' || !auditRowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
-              {{ auditRowsPerPage }}
+            <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal bg-white', auditRowsPerPage === 'all' ? 'text-muted-foreground' : 'text-foreground']">
+              {{ auditRowsPerPage === 'all' ? $t('approvals.allRows') : auditRowsPerPage }}
               <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent class="w-[140px] rounded-[14px] z-[110]" align="start" :side-offset="4">
-            <DropdownMenuItem @select="auditRowsPerPage = 'Semua baris'">Semua baris</DropdownMenuItem>
+            <DropdownMenuItem @select="auditRowsPerPage = 'all'">{{ $t('approvals.allRows') }}</DropdownMenuItem>
             <DropdownMenuItem @select="auditRowsPerPage = '10'">10</DropdownMenuItem>
             <DropdownMenuItem @select="auditRowsPerPage = '25'">25</DropdownMenuItem>
           </DropdownMenuContent>

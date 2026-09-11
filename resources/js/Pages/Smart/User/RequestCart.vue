@@ -99,14 +99,14 @@ const handleProceed = () => {
 </script>
 
 <template>
-  <Head title="Keranjang Habis Pakai" />
+  <Head :title="$t('requests.consumableCartTitle')" />
 
-  <AppLayout title="Keranjang Habis Pakai">
+  <AppLayout :title="$t('requests.consumableCartTitle')">
     <!-- Page Title -->
     <div class="mb-2 flex flex-row items-center justify-between sm:flex-col sm:items-start">
       <div class="min-w-0">
-        <h1 class="text-lg font-bold text-gray-900 leading-none">Keranjang Habis Pakai</h1>
-        <p class="text-sm text-muted-foreground mt-2 hidden sm:block">Pilih barang-barang yang ingin dimasukkan dalam permintaan.</p>
+        <h1 class="text-lg font-bold text-gray-900 leading-none">{{ $t('requests.consumableCartTitle') }}</h1>
+        <p class="text-sm text-muted-foreground mt-2 hidden sm:block">{{ $t('requests.consumableCartSubtitle') }}</p>
       </div>
 
       <!-- Pilih Semua Checkbox -->
@@ -126,7 +126,7 @@ const handleProceed = () => {
           class="text-sm font-medium text-foreground select-none"
           :class="cartItems.length === 0 ? 'cursor-not-allowed text-muted-foreground' : 'cursor-pointer'"
         >
-          Pilih Semua
+          {{ $t('requests.selectAll') }}
         </label>
       </div>
     </div>
@@ -141,7 +141,7 @@ const handleProceed = () => {
             <div class="space-y-3">
               <!-- If cart is empty -->
               <div v-if="filteredItems.length === 0" class="text-center py-10">
-                <p class="text-muted-foreground text-sm">Keranjang kosong.</p>
+                <p class="text-muted-foreground text-sm">{{ $t('requests.cartEmpty') }}</p>
               </div>
 
               <!-- Item Card -->
@@ -163,12 +163,12 @@ const handleProceed = () => {
       <!-- ============================================================ -->
       <div class="hidden lg:block lg:w-96 xl:w-[28rem] 2xl:w-[30rem] flex-shrink-0">
         <div class="bg-card border border-border rounded-[0.875rem] p-5 sticky top-24">
-          <h2 class="text-lg font-bold text-foreground mb-4">Ringkasan Permintaan</h2>
+          <h2 class="text-lg font-bold text-foreground mb-4">{{ $t('requests.requestSummary') }}</h2>
 
           <!-- List of selected items -->
           <div class="space-y-3 mb-6">
             <div v-if="selectedItems.length === 0" class="text-sm text-muted-foreground italic">
-              Belum ada barang yang dipilih.
+              {{ $t('requests.noItemsSelected') }}
             </div>
             <div
               v-for="item in selectedItems"
@@ -195,7 +195,7 @@ const handleProceed = () => {
             :disabled="!canProceed"
             @click="handleProceed"
           >
-            Lanjut ke Konfirmasi
+            {{ $t('requests.proceedToConfirmation') }}
           </Button>
         </div>
       </div>
@@ -203,9 +203,9 @@ const handleProceed = () => {
       <!-- Mobile Sticky Bottom Footer -->
       <div class="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border px-4 py-3 shadow-lg flex items-center justify-between pb-safe">
         <div class="flex flex-col">
-          <span class="text-xs text-muted-foreground font-medium">Total:</span>
+          <span class="text-xs text-muted-foreground font-medium">{{ $t('common.total') }}:</span>
           <span class="text-sm font-bold text-foreground">
-            {{ selectedItems.length }} jenis barang
+            {{ $t('requests.itemCount', { count: selectedItems.length }) }}
           </span>
         </div>
         <Button
@@ -215,7 +215,7 @@ const handleProceed = () => {
           :disabled="!canProceed"
           @click="handleProceed"
         >
-          Konfirmasi
+          {{ $t('common.confirm') }}
         </Button>
       </div>
     </div>

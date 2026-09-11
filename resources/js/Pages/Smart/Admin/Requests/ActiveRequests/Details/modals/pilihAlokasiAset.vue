@@ -8,6 +8,7 @@
  * 4. Non-Specific Consumable (Habis Pakai Non-Spesifik): Allocate stock per LOT via numeric input, showing Kode LOT, Varian, Lokasi, Stok Tersedia, Stok Dialokasikan + Varian combobox filter.
  */
 import { ref, computed, watch, onMounted, onUnmounted, h } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useModalLock } from '@/composables/useModalLock';
 import { router } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
@@ -96,6 +97,8 @@ const emit = defineEmits<{
   (e: 'success'): void;
 }>();
 
+const { t } = useI18n();
+
 useModalLock(computed(() => props.open));
 
 // --- Mode Detection ---
@@ -109,6 +112,11 @@ const unitSearchQuery = ref('');
 const selectedVariantFilter = ref<string | number | null>('');
 const isSavingAllocation = ref(false);
 const rowsPerPage = ref('10');
+
+const rowsPerPageLabel = computed(() => {
+  if (rowsPerPage.value === 'Semua baris') return t('fulfillment.allRows');
+  return rowsPerPage.value;
+});
 
 const hasActiveFilters = computed(() => {
   return !!(
@@ -131,7 +139,7 @@ const pageSizeNumber = computed(() => {
 
 // Modal Title based on consumable vs non-consumable
 const modalTitle = computed(() => {
-  return isConsumable.value ? 'Pilih Alokasi Stok' : 'Pilih Alokasi Aset';
+  return isConsumable.value ? t('fulfillment.selectStockTitle') : t('fulfillment.selectAssetTitle');
 });
 
 // Reset and initialize state upon opening modal
@@ -337,7 +345,7 @@ const handleAutoAllocate = () => {
 
     tempAllocatedLots.value = newAlloc;
     const total = Object.values(newAlloc).reduce((a, b) => a + b, 0);
-    toast.success(`Berhasil mengalokasikan ${total} ${item.uom || 'satuan'} secara otomatis.`);
+    toast.success(t('fulfillment.autoAllocateSuccessStock', { count: total, uom: item.uom || t('fulfillment.stockUnit') }));
   } else {
     if (!item.available_units) return;
     const remaining = max - tempSelectedUnitIds.value.length;
@@ -348,7 +356,7 @@ const handleAutoAllocate = () => {
       tempSelectedUnitIds.value.push(u.id);
     });
 
-    toast.success(`Berhasil mengalokasikan ${candidateUnits.length} unit aset secara otomatis.`);
+    toast.success(t('fulfillment.autoAllocateSuccessAsset', { count: candidateUnits.length }));
   }
 };
 
@@ -356,14 +364,14 @@ const handleAutoAllocate = () => {
 const handleClearSelection = () => {
   if (isConsumable.value) {
     tempAllocatedLots.value = {};
-    toast.info('Pilihan alokasi stok telah dihapus.');
+    toast.info(t('fulfillment.clearStockInfo'));
   } else {
     const lockedIds = (props.item?.available_units || [])
       .filter(u => u.is_locked)
       .map(u => u.id);
 
     tempSelectedUnitIds.value = tempSelectedUnitIds.value.filter(id => lockedIds.includes(id));
-    toast.info('Pilihan unit yang belum diserahterimakan telah dihapus.');
+    toast.info(t('fulfillment.clearAssetInfo'));
   }
 };
 
@@ -394,7 +402,7 @@ const handleLotQuantityChange = (lotId: number, rawVal: string, maxAvailable: nu
     num = 0;
   } else if (num > maxAvailable) {
     num = maxAvailable;
-    toast.warning(`Jumlah alokasi untuk LOT ini dibatasi maksimal stok tersedia (${maxAvailable}).`);
+    toast.warning(t('fulfillment.lotMaxLimitWarning', { max: maxAvailable }));
   }
   tempAllocatedLots.value[lotId] = num;
 };
@@ -416,7 +424,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
       {
         id: 'select',
         size: 50,
-        header: () => h('div', { class: 'text-center flex items-center justify-center font-semibold text-foreground text-sm' }, 'Pilih'),
+        header: () => h('div', { class: 'text-center flex items-center justify-center font-semibold text-foreground text-sm' }, t('fulfillment.select')),
         cell: ({ row }) => {
           const lot = row.original as AvailableLot;
           const isAllocated = (tempAllocatedLots.value[lot.id] || 0) > 0;
@@ -451,7 +459,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
           onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
           class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
         }, () => [
-          'Kode LOT',
+          t('fulfillment.lotCode'),
           h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground' }),
         ]),
         cell: ({ row }) => h('div', { 
@@ -469,7 +477,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
           onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
           class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
         }, () => [
-          'Varian',
+          t('fulfillment.variant'),
           h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground' }),
         ]),
         cell: ({ row }) => h('div', { 
@@ -487,7 +495,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
           onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
           class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
         }, () => [
-          'Lokasi Penyimpanan',
+          t('fulfillment.storageLocation'),
           h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground' }),
         ]),
         cell: ({ row }) => h('div', { 
@@ -501,19 +509,19 @@ const columns = computed<ColumnDef<any>[]>(() => {
           onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
           class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
         }, () => [
-          'Stok Tersedia',
+          t('fulfillment.availableStock'),
           h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground' }),
         ]),
         cell: ({ row }) => {
           const lot = row.original as AvailableLot;
           return h('div', { class: 'font-medium text-foreground text-sm select-none whitespace-nowrap' }, 
-            `${lot.current_quantity} ${lot.uom || props.item?.uom || 'satuan'}`
+            `${lot.current_quantity} ${lot.uom || props.item?.uom || t('fulfillment.stockUnit')}`
           );
         }
       },
       {
         id: 'stock_allocated',
-        header: () => h('div', { class: 'font-semibold text-foreground text-sm whitespace-nowrap' }, 'Stok Dialokasikan'),
+        header: () => h('div', { class: 'font-semibold text-foreground text-sm whitespace-nowrap' }, t('fulfillment.allocatedStock')),
         cell: ({ row }) => {
           const lot = row.original as AvailableLot;
           const currentVal = tempAllocatedLots.value[lot.id] || 0;
@@ -535,7 +543,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
               },
               class: 'w-24 h-8 px-2 py-1 text-center font-mono text-sm border rounded-[10px] focus:ring-1 focus:ring-primary focus:border-primary border-input bg-background text-foreground'
             }),
-            h('span', { class: 'text-xs text-muted-foreground whitespace-nowrap' }, lot.uom || props.item?.uom || 'satuan')
+            h('span', { class: 'text-xs text-muted-foreground whitespace-nowrap' }, lot.uom || props.item?.uom || t('fulfillment.stockUnit'))
           ]);
         }
       }
@@ -549,7 +557,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
     {
       id: 'select',
       size: 50,
-      header: () => h('div', { class: 'text-center flex items-center justify-center font-semibold text-foreground text-sm' }, 'Pilih'),
+      header: () => h('div', { class: 'text-center flex items-center justify-center font-semibold text-foreground text-sm' }, t('fulfillment.select')),
       cell: ({ row }) => {
         const unit = row.original as AvailableUnit;
         return h('div', { 
@@ -573,7 +581,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Kode Aset',
+        t('fulfillment.assetCode'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground' }),
       ]),
       cell: ({ row }) => h('div', { 
@@ -592,7 +600,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Kode LOT',
+        t('fulfillment.lotCode'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground' }),
       ]),
       cell: ({ row }) => h('div', { 
@@ -609,7 +617,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Varian',
+        t('fulfillment.variant'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground' }),
       ]),
       cell: ({ row }) => h('div', { 
@@ -628,7 +636,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Status',
+        t('fulfillment.status'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground' }),
       ]),
       cell: ({ row }) => {
@@ -643,7 +651,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
           }),
           u.is_staged_elsewhere ? h('span', {
             class: `${REQUEST_STATUS_PILL_BASE} bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300 whitespace-nowrap`
-          }, 'Diatur') : null
+          }, t('fulfillment.stagedElsewhere')) : null
         ]);
       }
     },
@@ -654,7 +662,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Kondisi',
+        t('fulfillment.condition'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground' }),
       ]),
       cell: ({ row }) => {
@@ -678,7 +686,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Lokasi Penyimpanan',
+        t('fulfillment.storageLocation'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground' }),
       ]),
       cell: ({ row }) => h('div', { 
@@ -714,7 +722,7 @@ const saveAllocation = () => {
         isSavingAllocation.value = false;
         closeModal();
         emit('success');
-        toast.success('Alokasi stok LOT berhasil disimpan.');
+        toast.success(t('fulfillment.allocationSavedStock'));
       },
       onError: (errs) => {
         isSavingAllocation.value = false;
@@ -730,7 +738,7 @@ const saveAllocation = () => {
         isSavingAllocation.value = false;
         closeModal();
         emit('success');
-        toast.success('Alokasi unit aset berhasil diperbarui.');
+        toast.success(t('fulfillment.allocationSavedAsset'));
       },
       onError: (errs) => {
         isSavingAllocation.value = false;
@@ -794,9 +802,9 @@ const saveAllocation = () => {
                     <Combobox
                       v-model="selectedVariantFilter"
                       :options="variantOptions"
-                      placeholder="Semua Varian"
-                      default-label="Semua Varian"
-                      search-placeholder="Cari varian..."
+                      :placeholder="t('fulfillment.allVariants')"
+                      :default-label="t('fulfillment.allVariants')"
+                      :search-placeholder="t('fulfillment.searchVariant')"
                       width-class="w-full sm:w-[320px] lg:w-[380px]"
                     />
                   </div>
@@ -825,7 +833,7 @@ const saveAllocation = () => {
                     class="h-9 px-4 inline-flex items-center gap-1.5 font-semibold text-white shadow-sm rounded-[14px]"
                   >
                     <Sparkles class="w-4 h-4" />
-                    <span>Alokasi Otomatis</span>
+                    <span>{{ t('fulfillment.autoAllocate') }}</span>
                   </Button>
 
                   <!-- Hapus Pilihan -->
@@ -838,22 +846,22 @@ const saveAllocation = () => {
                     class="h-9 px-4 inline-flex items-center gap-1.5 rounded-[14px]"
                   >
                     <RotateCcw class="w-4 h-4" />
-                    <span>Hapus Pilihan</span>
+                    <span>{{ t('fulfillment.clearSelection') }}</span>
                   </Button>
                 </div>
 
                 <!-- Right: Baris per Halaman (Dropdown matching DaftarAsetTab) -->
                 <div class="flex items-center gap-3 text-sm text-muted-foreground shrink-0">
-                  <span class="whitespace-nowrap">Baris per halaman</span>
+                  <span class="whitespace-nowrap">{{ t('fulfillment.rowsPerPage') }}</span>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal', (rowsPerPage === 'Semua baris' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
-                        {{ rowsPerPage }}
+                        {{ rowsPerPageLabel }}
                         <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent class="z-[110] w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px]" align="start" :side-offset="4">
-                      <DropdownMenuItem @select="rowsPerPage = 'Semua baris'">Semua baris</DropdownMenuItem>
+                      <DropdownMenuItem @select="rowsPerPage = 'Semua baris'">{{ t('fulfillment.allRows') }}</DropdownMenuItem>
                       <DropdownMenuItem @select="rowsPerPage = '10'">10</DropdownMenuItem>
                       <DropdownMenuItem @select="rowsPerPage = '25'">25</DropdownMenuItem>
                       <DropdownMenuItem @select="rowsPerPage = '50'">50</DropdownMenuItem>
@@ -884,33 +892,33 @@ const saveAllocation = () => {
               <div class="flex flex-col justify-center gap-1 pt-1">
                 <p class="text-xs text-muted-foreground">
                   <template v-if="isConsumable">
-                    {{ displayItemTitle }} - Alokasikan maksimal {{ item?.quantity_requested }} {{ item?.uom || 'satuan' }}.
+                    {{ t('fulfillment.allocateMaxStock', { title: displayItemTitle, max: item?.quantity_requested, uom: item?.uom || t('fulfillment.stockUnit') }) }}
                   </template>
                   <template v-else>
-                    {{ displayItemTitle }} - Pilih maksimal {{ item?.quantity_requested }} unit aset.
+                    {{ t('fulfillment.selectMaxUnits', { title: displayItemTitle, max: item?.quantity_requested }) }}
                   </template>
                 </p>
                 <div class="text-xs font-semibold">
                   <template v-if="isConsumable">
-                    Total dialokasikan: 
+                    {{ t('fulfillment.totalAllocatedStock') }} 
                     <span :class="[
                       totalConsumableAllocated === (item?.quantity_requested || 0) ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'
                     ]">
-                      {{ totalConsumableAllocated }} / {{ item?.quantity_requested }} {{ item?.uom || 'satuan' }}
+                      {{ totalConsumableAllocated }} / {{ item?.quantity_requested }} {{ item?.uom || t('fulfillment.stockUnit') }}
                     </span>
                     <span v-if="isOverLimit" class="text-rose-600 font-normal ml-2">
-                      (Jumlah melebihi permintaan, kurangi alokasi sebelum menyimpan)
+                      {{ t('fulfillment.overStockLimitWarning') }}
                     </span>
                   </template>
                   <template v-else>
-                    Terpilih: 
+                    {{ t('fulfillment.totalSelectedUnits') }} 
                     <span :class="[
                       tempSelectedUnitIds.length === (item?.quantity_requested || 0) ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'
                     ]">
-                      {{ tempSelectedUnitIds.length }} / {{ item?.quantity_requested }} unit
+                      {{ tempSelectedUnitIds.length }} / {{ item?.quantity_requested }} {{ t('fulfillment.unitWord') }}
                     </span>
                     <span v-if="isOverLimit" class="text-rose-600 font-normal ml-2">
-                      (Jumlah melebihi permintaan, kurangi pilihan sebelum menyimpan)
+                      {{ t('fulfillment.overUnitLimitWarning') }}
                     </span>
                   </template>
                 </div>
@@ -924,7 +932,7 @@ const saveAllocation = () => {
                 size="lg" 
                 @click="closeModal"
               >
-                Batal
+                {{ t('fulfillment.batal') }}
               </Button>
               <Button 
                 variant="primary" 
@@ -935,7 +943,7 @@ const saveAllocation = () => {
               >
                 <Loader2 v-if="isSavingAllocation" class="absolute inset-0 m-auto h-5 w-5 animate-spin" />
                 <span :class="{ 'opacity-0': isSavingAllocation }">
-                  Simpan Alokasi
+                  {{ t('fulfillment.saveAllocation') }}
                 </span>
               </Button>
             </div>

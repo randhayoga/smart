@@ -4,7 +4,8 @@
  * Combines Inbox, Perlu Alokasi, Parsial, Serah Terima, Lacak Peminjaman, and Pengembalian
  * following the Master Data design pattern with horizontal pill tabs and card enclosure.
  */
-import { ref, watch, onMounted } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { Head, router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Heading from '@/Components/Heading.vue';
@@ -42,7 +43,18 @@ const props = withDefaults(defineProps<Props>(), {
   returnsList: () => [],
 });
 
-const tabs = [
+const { t } = useI18n();
+
+const computedTabs = computed(() => [
+  { id: 'Inbox', label: t('fulfillment.inbox') },
+  { id: 'Perlu Alokasi', label: t('fulfillment.needsAllocation') },
+  { id: 'Parsial', label: t('fulfillment.partial') },
+  { id: 'Serah Terima', label: t('fulfillment.handover') },
+  { id: 'Lacak Peminjaman', label: t('fulfillment.trackBorrowing') },
+  { id: 'Pengembalian', label: t('fulfillment.returns') }
+]);
+
+const tabIds = [
   'Inbox',
   'Perlu Alokasi',
   'Parsial',
@@ -54,11 +66,16 @@ const tabs = [
 // Mapping helper to resolve tabs from URL query case-insensitively
 const resolveTab = (tabName?: string | null): string => {
   if (!tabName) return 'Inbox';
-  const found = tabs.find(t => t.toLowerCase() === tabName.toLowerCase() || t.toLowerCase().replace(/\s+/g, '-') === tabName.toLowerCase());
+  const found = tabIds.find(t => t.toLowerCase() === tabName.toLowerCase() || t.toLowerCase().replace(/\s+/g, '-') === tabName.toLowerCase());
   return found || 'Inbox';
 };
 
 const activeTab = ref(resolveTab(props.activeTab));
+
+const activeTabLabel = computed(() => {
+  const current = computedTabs.value.find(tab => tab.id === activeTab.value);
+  return current ? current.label : activeTab.value;
+});
 
 // Sync tab state with browser URL query
 const page = usePage();
@@ -103,26 +120,26 @@ watch(activeTab, (newTab) => {
 </script>
 
 <template>
-  <Head title="Permintaan Aktif" />
+  <Head :title="t('fulfillment.title')" />
 
-  <AppLayout title="Permintaan Aktif">
+  <AppLayout :title="t('fulfillment.title')">
     <!-- Breadcrumb: Permintaan Aktif > -->
     <Breadcrumb>
       <BreadcrumbList class="pb-3">
         <BreadcrumbItem>
-          <BreadcrumbLink :href="route('smart.requests.index')">Permintaan Aktif</BreadcrumbLink>
+          <BreadcrumbLink :href="route('smart.requests.index')">{{ t('fulfillment.title') }}</BreadcrumbLink>
         </BreadcrumbItem>
       </BreadcrumbList>
     </Breadcrumb>
 
     <div class="space-y-1">
       <!-- Tabs -->
-      <Tabs v-model="activeTab" :tabs="tabs" />
+      <Tabs v-model="activeTab" :tabs="computedTabs" />
 
       <!-- Main Card Enclosure (matching MasterData.vue) -->
       <div class="px-4 bg-card rounded-xl border border-border shadow-sm overflow-hidden">
         <div class="py-3">
-          <Heading as="h2">Daftar {{ activeTab }}</Heading>
+          <Heading as="h2">{{ t('fulfillment.listPrefix', { tab: activeTabLabel }) }}</Heading>
 
           <div class="mt-4">
             <!-- Inbox Tab -->

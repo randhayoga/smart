@@ -2,6 +2,7 @@
 /**
  * Admin Consumable Stock Inventory Page component displaying item balances, batch LOTs, and reorder levels.
  */
+import { useI18n } from 'vue-i18n';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import DaftarStokHabisPakaiTab from './Tabs/DaftarStokHabisPakaiTab.vue';
 
@@ -32,10 +33,12 @@ const props = withDefaults(defineProps<Props>(), {
   projects: () => [],
   selectedBarangCode: null,
 });
+
+const { t } = useI18n();
 </script>
 
 <template>
-  <AppLayout title="Daftar Stok (Habis Pakai)">
+  <AppLayout :title="t('inventory.consumableStockList')">
     <DaftarStokHabisPakaiTab
       :barangs="props.barangs"
       :categories="props.categories"

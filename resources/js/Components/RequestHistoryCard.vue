@@ -27,6 +27,7 @@ import { ChevronDown, ChevronUp, Trash2, Calendar } from 'lucide-vue-next';
 import { formatDate } from '@/lib/utils';
 import { 
   getRequestStatusLabel, 
+  getLocalizedRequestStatusLabel,
   getRequestStatusPillClass,
   type RequestStatus, 
   type RawRequestStatus 
@@ -136,7 +137,7 @@ const toggleExpanded = () => {
         <span 
           :class="getRequestStatusPillClass(request.status)"
         >
-          {{ getRequestStatusLabel(request.status) }}
+          {{ getLocalizedRequestStatusLabel(request.status) }}
         </span>
 
         <!-- Return Deadline Badge (Displayed only for active loans with scheduled end date) -->
@@ -145,13 +146,13 @@ const toggleExpanded = () => {
           class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200/80 dark:bg-rose-950/30 dark:text-rose-300 dark:border-rose-800 inline-flex items-center gap-1"
         >
           <Calendar class="w-3 h-3" />
-          <span>Tenggat: {{ request.durationEnd }}</span>
+          <span>{{ $t('requests.deadline', { date: request.durationEnd }) }}</span>
         </span>
       </div>
 
       <!-- Creation Timestamp -->
       <span class="text-xs text-muted-foreground font-medium shrink-0">
-        Dibuat: {{ formatDate(request.created_at) }}
+        {{ $t('requests.createdDate', { date: formatDate(request.created_at) }) }}
       </span>
     </div>
 
@@ -200,12 +201,12 @@ const toggleExpanded = () => {
       <div class="flex-grow space-y-1 min-w-0">
         <!-- Request Number -->
         <h2 class="text-sm sm:text-base font-bold text-foreground truncate leading-snug">
-          <span class="font-normal text-muted-foreground">Nomor: </span>{{ request.number }}
+          <span class="font-normal text-muted-foreground">{{ $t('requests.numberLabel') }}</span>{{ request.number }}
         </h2>
         
         <!-- PIC Approval -->
         <p class="text-xs sm:text-sm text-foreground leading-normal">
-          <span class="text-muted-foreground">PIC Approval:</span> 
+          <span class="text-muted-foreground">{{ $t('requests.approverPicLabel') }}</span> 
           <span class="font-semibold ml-1">
             {{ request.approver_name || '-' }}
           </span>
@@ -213,7 +214,7 @@ const toggleExpanded = () => {
 
         <!-- Utilization Purpose Scope -->
         <p class="text-xs sm:text-sm text-foreground leading-normal">
-          <span class="text-muted-foreground">Pemanfaatan:</span> 
+          <span class="text-muted-foreground">{{ $t('requests.utilizationLabel') }}</span> 
           <span class="font-semibold ml-1">
             {{ request.pemanfaatan === 'corporate' ? `Corporate (${request.pemanfaatanDetail})` : `Project ${request.pemanfaatanDetail}` }}
           </span>
@@ -221,13 +222,13 @@ const toggleExpanded = () => {
 
         <!-- Borrow Duration (Visible only for borrow requests) -->
         <p v-if="request.type === 'peminjaman' && request.durationStart" class="text-xs sm:text-sm text-foreground leading-normal">
-          <span class="text-muted-foreground">Durasi:</span>
+          <span class="text-muted-foreground">{{ $t('requests.durationLabel') }}</span>
           <span class="font-medium ml-1">
             <template v-if="request.durationEnd">
-              {{ request.durationStart }} s.d. {{ request.durationEnd }} ({{ request.durationDays }} hari, {{ request.durationHours }} jam)
+              {{ request.durationStart }} {{ $t('requests.until') }} {{ request.durationEnd }} ({{ request.durationDays }} {{ $t('requests.days') }}, {{ request.durationHours }} {{ $t('requests.hours') }})
             </template>
             <template v-else>
-              {{ request.durationStart }} s.d. - (Tanpa Tenggat Waktu)
+              {{ request.durationStart }} {{ $t('requests.until') }} - ({{ $t('requests.noDeadline') }})
             </template>
           </span>
         </p>
@@ -238,7 +239,7 @@ const toggleExpanded = () => {
             @click="toggleExpanded"
             class="text-xs font-semibold text-primary hover:underline flex items-center gap-1 transition-all cursor-pointer"
           >
-            <span>{{ isExpanded ? 'Sembunyikan barang' : 'Lihat barang' }} ({{ request.items.length }})</span>
+            <span>{{ isExpanded ? $t('requests.hideItems') : $t('requests.viewItems') }} ({{ request.items.length }})</span>
             <ChevronUp v-if="isExpanded" class="w-3.5 h-3.5" />
             <ChevronDown v-else class="w-3.5 h-3.5" />
           </button>
@@ -248,7 +249,7 @@ const toggleExpanded = () => {
             v-if="isExpanded" 
             class="mt-2.5 bg-muted/40 border border-border p-3 rounded-[0.875rem] space-y-1 text-xs animate-in fade-in slide-in-from-top-1 duration-200"
           >
-            <p class="font-semibold text-foreground">Daftar barang:</p>
+            <p class="font-semibold text-foreground">{{ $t('requests.itemList') }}</p>
             <ul class="space-y-0.5 pl-0.5">
               <li 
                 v-for="item in request.items" 
@@ -279,7 +280,7 @@ const toggleExpanded = () => {
         :href="route('smart.history.show', request.uuid || request.id)"
         class="text-xs sm:text-sm font-semibold text-primary hover:underline transition-colors mr-1"
       >
-        Lihat Detail
+        {{ $t('requests.viewDetail') }}
       </Link>
 
       <!-- Cancel Request Button (Visible only while awaiting approval) -->
@@ -291,7 +292,7 @@ const toggleExpanded = () => {
         @click="emit('cancel', request)"
       >
         <Trash2 class="w-3.5 h-3.5" />
-        Batalkan {{ request.type === 'peminjaman' ? 'Peminjaman' : 'Permintaan' }}
+        {{ $t('requests.cancelType', { type: request.type === 'peminjaman' ? $t('requests.loan') : $t('requests.request') }) }}
       </Button>
 
       <!-- Handover Setup CTA (Visible when handover or partial) -->
@@ -304,7 +305,7 @@ const toggleExpanded = () => {
           size="sm"
           class="font-semibold text-xs h-8 px-3.5"
         >
-          Atur Serah Terima
+          {{ $t('requests.setupHandover') }}
         </Button>
       </Link>
 
@@ -318,7 +319,7 @@ const toggleExpanded = () => {
           size="sm"
           class="font-semibold text-xs h-8 px-3.5"
         >
-          Atur Pengembalian
+          {{ $t('requests.setupReturn') }}
         </Button>
       </Link>
     </div>

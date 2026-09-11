@@ -5,9 +5,9 @@
  */
 import { ref, computed, watch, h, onMounted, onUnmounted } from 'vue';
 import { Head } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import {
-  X,
   FileText,
   ArrowUpDown,
   ChevronDown,
@@ -15,7 +15,6 @@ import {
 } from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
 import { Button } from "@/Components/ui/button";
-import { formatDate } from '@/lib/utils';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -95,11 +94,13 @@ interface Props {
 
 const props = defineProps<Props>();
 
+const { t } = useI18n();
+
 // --- Filter & Search State ---
 const searchQuery = ref('');
 const subcategoryFilter = ref('');
-const decisionFilter = ref('Semua keputusan');
-const rowsPerPage = ref('Semua baris');
+const decisionFilter = ref('all');
+const rowsPerPage = ref('all');
 
 // Filter options
 const subcategoryOptions = computed(() => {
@@ -118,9 +119,8 @@ const filteredApprovals = computed(() => {
     list = list.filter(app => app.subcategory === subcategoryFilter.value);
   }
 
-  if (decisionFilter.value !== 'Semua keputusan') {
-    const dec = decisionFilter.value === 'Disetujui' ? 'approved' : 'rejected';
-    list = list.filter(app => app.decision === dec);
+  if (decisionFilter.value !== 'all') {
+    list = list.filter(app => app.decision === decisionFilter.value);
   }
 
   // default sort by decided_at desc (fall back to id desc)
@@ -135,45 +135,19 @@ const filteredApprovals = computed(() => {
 });
 
 const computedPageSize = computed(() => {
-  if (rowsPerPage.value === 'Semua baris') {
+  if (rowsPerPage.value === 'all') {
     return filteredApprovals.value.length || 10;
   }
   return parseInt(rowsPerPage.value, 10);
 });
 
-
-
 // Memo document opener
 const openMemoFile = (path?: string | null) => {
   if (!path) {
-    toast.error('File berita acara / memo tidak ditemukan.');
+    toast.error(t('approvals.memoFileNotFound'));
     return;
   }
   window.open('/media/' + path, '_blank');
-};
-
-// Formats & Helpers
-const formatRupiah = (val: number | string | null | undefined) => {
-  if (val === null || val === undefined || val === '') return '-';
-  let num: number;
-  if (typeof val === 'string') {
-    const cleanStr = val.replace(/[^0-9,-]/g, '');
-    if (!cleanStr) return '-';
-    num = parseFloat(cleanStr.replace(/,/g, '.'));
-  } else {
-    num = val;
-  }
-  if (isNaN(num)) return '-';
-  const formatted = Math.floor(num).toLocaleString('id-ID');
-  return `Rp${formatted}`;
-};
-
-const formatLocation = (loc: string | null | undefined, floor: string | null, room: string | null) => {
-  const parts = [];
-  if (loc && loc !== '-') parts.push(loc);
-  if (floor && floor !== '-') parts.push(floor);
-  if (room && room !== '-') parts.push(room);
-  return parts.join(', ') || '-';
 };
 
 // ─────────────────────────────────────────────
@@ -181,11 +155,9 @@ const formatLocation = (loc: string | null | undefined, floor: string | null, ro
 // ─────────────────────────────────────────────
 const isDetailPopupOpen = ref(false);
 const activeApproval = ref<ApprovalItem | null>(null);
-const detailActiveTab = ref('Detail Aset');
 
 const openDetailPopup = (approval: ApprovalItem) => {
   activeApproval.value = approval;
-  detailActiveTab.value = 'Detail Aset';
   isDetailPopupOpen.value = true;
 };
 
@@ -196,7 +168,7 @@ const closeDetailPopup = () => {
   }, 200);
 };
 
-const columns: ColumnDef<ApprovalItem>[] = [
+const columns = computed<ColumnDef<ApprovalItem>[]>(() => [
   {
     accessorKey: 'asset_code',
     header: ({ column }) => {
@@ -205,7 +177,7 @@ const columns: ColumnDef<ApprovalItem>[] = [
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Kode Aset',
+        t('approvals.assetCode'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
@@ -220,7 +192,7 @@ const columns: ColumnDef<ApprovalItem>[] = [
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Subkategori',
+        t('approvals.subcategory'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
@@ -235,7 +207,7 @@ const columns: ColumnDef<ApprovalItem>[] = [
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Merek',
+        t('approvals.brand'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
@@ -249,7 +221,7 @@ const columns: ColumnDef<ApprovalItem>[] = [
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Nama',
+        t('approvals.name'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
@@ -264,7 +236,7 @@ const columns: ColumnDef<ApprovalItem>[] = [
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Kondisi Diajukan',
+        t('approvals.proposedCondition'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
@@ -279,7 +251,7 @@ const columns: ColumnDef<ApprovalItem>[] = [
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Keputusan',
+        t('approvals.decision'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
@@ -287,7 +259,7 @@ const columns: ColumnDef<ApprovalItem>[] = [
       h('span', { 
         class: 'inline-flex items-center px-2 py-0.5 rounded-md font-semibold ' + 
           (row.getValue('decision') === 'approved' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700')
-      }, row.getValue('decision') === 'approved' ? 'Disetujui' : 'Ditolak')
+      }, row.getValue('decision') === 'approved' ? t('approvals.approved') : t('approvals.rejected'))
     ]),
   },
   {
@@ -299,7 +271,7 @@ const columns: ColumnDef<ApprovalItem>[] = [
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Diproses Oleh',
+        t('approvals.processedBy'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
@@ -315,18 +287,18 @@ const columns: ColumnDef<ApprovalItem>[] = [
     id: 'actions',
     size: 100,
     enableGlobalFilter: false,
-    header: () => h('div', { class: 'text-right font-semibold text-foreground' }, 'Aksi'),
+    header: () => h('div', { class: 'text-right font-semibold text-foreground' }, t('approvals.actions')),
     cell: ({ row }) => {
       const item = row.original;
       const buttons = [
         h(Button, {
           variant: 'table-warning',
           size: 'icon-sm',
-          title: 'Buka Berita Acara / Memo',
+          title: t('approvals.openMemo'),
           onClick: () => openMemoFile(item.memo_url)
         }, () => [
           h(FileText),
-          h('span', { class: 'sr-only' }, 'Buka Berita Acara / Memo')
+          h('span', { class: 'sr-only' }, t('approvals.openMemo'))
         ])
       ];
       if (item.proposed_condition === 'Hilang' || item.proposed_status === 'Hilang') {
@@ -334,11 +306,11 @@ const columns: ColumnDef<ApprovalItem>[] = [
           h(Button, {
             variant: 'table-warning',
             size: 'icon-sm',
-            title: 'Buka Surat Keterangan Kehilangan',
+            title: t('approvals.openLostDoc'),
             onClick: () => openMemoFile(item.lost_doc_url)
           }, () => [
             h(FileText),
-            h('span', { class: 'sr-only' }, 'Buka Surat Keterangan Kehilangan')
+            h('span', { class: 'sr-only' }, t('approvals.openLostDoc'))
           ])
         );
       }
@@ -347,11 +319,11 @@ const columns: ColumnDef<ApprovalItem>[] = [
           h(Button, {
             variant: 'table-warning',
             size: 'icon-sm',
-            title: 'Buka Formulir Persetujuan BoD/BoC',
+            title: t('approvals.openBodDoc'),
             onClick: () => openMemoFile(item.bod_boc_approval_url)
           }, () => [
             h(FileText),
-            h('span', { class: 'sr-only' }, 'Buka Formulir Persetujuan BoD/BoC')
+            h('span', { class: 'sr-only' }, t('approvals.openBodDoc'))
           ])
         );
       }
@@ -359,27 +331,18 @@ const columns: ColumnDef<ApprovalItem>[] = [
         h(Button, {
           variant: 'table-view',
           size: 'icon-sm',
-          title: 'Detail Aset',
+          title: t('approvals.assetDetail'),
           onClick: () => openDetailPopup(item)
         }, () => [
           h(Eye),
-          h('span', { class: 'sr-only' }, 'Detail Aset')
+          h('span', { class: 'sr-only' }, t('approvals.assetDetail'))
         ])
       );
       return h('div', { class: 'flex items-center justify-end gap-2' }, buttons);
     },
     enableSorting: false,
   }
-];
-
-const isVehicle = (item: ApprovalItem | null) => {
-  if (!item) return false;
-  const category = (item.category || '').toLowerCase();
-  const subcategory = (item.subcategory || '').toLowerCase();
-  return category.includes('kendaraan') || subcategory.includes('kendaraan') ||
-         category.includes('mobil') || subcategory.includes('mobil') ||
-         category.includes('motor') || subcategory.includes('motor');
-};
+]);
 
 const closeOnEscape = (e: KeyboardEvent) => {
   if (e.key === 'Escape') {
@@ -399,12 +362,12 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <Head title="Approval Penghapusan" />
+  <Head :title="t('approvals.statusHistoryTitle')" />
 
-  <AppLayout title="Approval Penghapusan">
+  <AppLayout :title="t('approvals.statusHistoryTitle')">
     <!-- ── Title Halaman ── -->
     <div class="mb-6">
-      <h1 class="text-xl font-bold text-gray-900 leading-none">Approval Penghapusan: Sudah Diproses</h1>
+      <h1 class="text-xl font-bold text-gray-900 leading-none">{{ t('approvals.statusHistoryTitle') }}</h1>
     </div>
 
     <!-- ── Filter & Search Section ── -->
@@ -412,10 +375,10 @@ onUnmounted(() => {
       <!-- Filters Row -->
       <div class="flex flex-wrap items-end gap-4">
         <div class="space-y-1.5 flex-1 min-w-[300px] max-w-sm">
-          <label class="text-xs text-muted-foreground font-medium block ml-0.5">Filter</label>
+          <label class="text-xs text-muted-foreground font-medium block ml-0.5">{{ $t('common.filter') }}</label>
           <TableSearch 
             v-model="searchQuery"
-            placeholder="Cari Kode Aset atau nama..." 
+            :placeholder="t('approvals.searchAssetPlaceholder')" 
             bg-class="bg-white"
           />
         </div>
@@ -424,36 +387,38 @@ onUnmounted(() => {
         <Combobox
           v-model="subcategoryFilter"
           :options="subcategoryOptions"
-          search-placeholder="Cari subkategori..."
-          default-label="Semua subkategori"
+          :search-placeholder="t('approvals.searchSubcategory')"
+          :default-label="t('approvals.allSubcategories')"
           width-class="w-[200px] bg-white"
         />
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal bg-white', (!decisionFilter || decisionFilter === 'Semua keputusan') ? 'text-muted-foreground' : 'text-foreground']">
-              <span class="truncate">{{ decisionFilter || 'Semua keputusan' }}</span>
+            <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal bg-white', decisionFilter === 'all' ? 'text-muted-foreground' : 'text-foreground']">
+              <span class="truncate">
+                {{ decisionFilter === 'all' ? t('approvals.allDecisions') : (decisionFilter === 'approved' ? t('approvals.approved') : t('approvals.rejected')) }}
+              </span>
               <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
-            <DropdownMenuItem @select="decisionFilter = 'Semua keputusan'">Semua keputusan</DropdownMenuItem>
-            <DropdownMenuItem @select="decisionFilter = 'Disetujui'">Disetujui</DropdownMenuItem>
-            <DropdownMenuItem @select="decisionFilter = 'Ditolak'">Ditolak</DropdownMenuItem>
+            <DropdownMenuItem @select="decisionFilter = 'all'">{{ t('approvals.allDecisions') }}</DropdownMenuItem>
+            <DropdownMenuItem @select="decisionFilter = 'approved'">{{ t('approvals.approved') }}</DropdownMenuItem>
+            <DropdownMenuItem @select="decisionFilter = 'rejected'">{{ t('approvals.rejected') }}</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
         <div class="flex items-center gap-3 text-sm text-muted-foreground ml-auto">
-          <span>Baris per halaman</span>
+          <span>{{ $t('approvals.rowsPerPage') }}</span>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal bg-white', (rowsPerPage === 'Semua baris' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
-                {{ rowsPerPage }}
+              <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal bg-white', rowsPerPage === 'all' ? 'text-muted-foreground' : 'text-foreground']">
+                {{ rowsPerPage === 'all' ? $t('approvals.allRows') : rowsPerPage }}
                 <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent class="w-[140px] rounded-[14px]" align="start" :side-offset="4">
-              <DropdownMenuItem @select="rowsPerPage = 'Semua baris'">Semua baris</DropdownMenuItem>
+              <DropdownMenuItem @select="rowsPerPage = 'all'">{{ $t('approvals.allRows') }}</DropdownMenuItem>
               <DropdownMenuItem @select="rowsPerPage = '10'">10</DropdownMenuItem>
               <DropdownMenuItem @select="rowsPerPage = '25'">25</DropdownMenuItem>
             </DropdownMenuContent>

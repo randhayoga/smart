@@ -2,10 +2,15 @@
 /**
  * Authentication Login Page component for user credentials validation.
  */
+import { ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { Loader2, ArrowRight } from 'lucide-vue-next';
 import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 import { Button } from '@/Components/ui/button';
+import LanguageSelector from '@/Components/LanguageSelector.vue';
+
+const { t } = useI18n();
 
 defineProps<{
   status?: string;
@@ -36,9 +41,14 @@ const submit = () => {
 </script>
 
 <template>
-  <Head title="Log in" />
+  <Head :title="t('auth.login.title')" />
   
   <div class="min-h-screen flex items-center justify-center bg-background p-4 relative overflow-hidden">
+    <!-- Language Selector in Top Right -->
+    <div class="absolute top-4 right-4 z-20">
+      <LanguageSelector />
+    </div>
+
     <!-- Background decorative elements -->
     <div class="fixed inset-0 overflow-hidden pointer-events-none">
       <div class="blob-primary w-[600px] h-[600px] -top-64 -left-64 opacity-30"></div>
@@ -57,10 +67,10 @@ const submit = () => {
         </div>
         
         <h3 class="text-2xl font-bold tracking-tight">
-          Selamat Datang di <span class="text-gradient-primary">SMART</span>
+          {{ t('auth.login.welcomePrefix') }} <span class="text-gradient-primary">SMART</span>
         </h3>
         <p class="text-sm text-muted-foreground mt-2">
-          Stock Management and Request Tracking
+          {{ t('auth.login.subtitle') }}
         </p>
       </div>
       
@@ -74,17 +84,17 @@ const submit = () => {
           <!-- Username / NPK -->
           <div class="space-y-2">
             <label for="username" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                NPK
+              {{ t('auth.login.npk') }}
             </label>
             <input
               id="username"
               type="text"
               v-model="form.username"
-              placeholder="Ketik NPK Anda"
+              :placeholder="t('auth.login.npkPlaceholder')"
               required
               autofocus
               autocomplete="username"
-              class="flex h-11 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ..."
+              class="flex h-11 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary disabled:cursor-not-allowed disabled:opacity-50 transition-all"
               :class="{ 'border-destructive focus-visible:ring-destructive/20': form.errors.username }"
             />
           </div>
@@ -92,7 +102,9 @@ const submit = () => {
           <!-- Password -->
           <div class="space-y-2">
             <div class="flex items-center justify-between">
-              <label for="password" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Kata Sandi</label>
+              <label for="password" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                {{ t('auth.login.password') }}
+              </label>
             </div>
             <input
               id="password"
@@ -124,7 +136,7 @@ const submit = () => {
           >
             <Loader2 v-if="form.processing" class="mr-2 h-5 w-5 animate-spin" />
             <template v-else>
-              <span>Masuk</span>
+              <span>{{ t('auth.login.submit') }}</span>
               <ArrowRight class="h-5 w-5 shrink-0" />
             </template>
           </Button>

@@ -20,7 +20,7 @@ defineEmits<{
       class="flex items-center gap-2 px-4 py-2 bg-[#9B897B] hover:opacity-70 text-white text-sm font-medium rounded-[14px] transition-colors shadow-sm cursor-pointer"
     >
       <Printer class="w-4 h-4" />
-      <span>Print</span>
+      <span>{{ $t('common.print') }}</span>
     </button>
     <button 
       @click="$emit('export-excel')"

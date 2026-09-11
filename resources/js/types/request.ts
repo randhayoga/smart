@@ -85,22 +85,39 @@ export interface RequestModalInfoField {
 }
 
 /** Formats request summary fields for approval and confirmation modal inspection */
-export function formatRequestModalFields(req: SmartRequestData): RequestModalInfoField[] {
+export function formatRequestModalFields(req: SmartRequestData, t?: (key: string, values?: any) => string): RequestModalInfoField[] {
+  const numLabel = t ? t('approvals.number') : 'Nomor';
+  const reqLabel = t ? t('approvals.requester') : 'Pemohon';
+  const utilLabel = t ? t('approvals.utilization') : 'Pemanfaatan';
+  const durLabel = t ? t('requests.duration') : 'Durasi';
+  const reasonLabel = t ? t('requests.reason') : 'Alasan';
+  const corporateLabel = t ? t('requests.corporate') : 'Corporate';
+  const projectLabel = t ? t('requests.project') : 'Project';
+  const untilLabel = t ? t('requests.until') : 's.d.';
+  const daysLabel = t ? t('requests.days') : 'hari';
+  const hoursLabel = t ? t('requests.hours') : 'jam';
+  const noDeadlineLabel = t ? t('requests.noDeadline') : 'Tanpa Tenggat Waktu';
+
   const fields: RequestModalInfoField[] = [
-    { label: 'Nomor', value: req.number },
-    { label: 'Pemohon', value: req.requester || '-' },
-    { label: 'Pemanfaatan', value: req.pemanfaatan === 'corporate' ? `Corporate (${req.pemanfaatanDetail || '-'})` : `Project ${req.pemanfaatanDetail || '-'}` },
+    { label: numLabel, value: req.number },
+    { label: reqLabel, value: req.requester || '-' },
+    { 
+      label: utilLabel, 
+      value: req.pemanfaatan === 'corporate' 
+        ? `${corporateLabel} (${req.pemanfaatanDetail || '-'})` 
+        : `${projectLabel} ${req.pemanfaatanDetail || '-'}` 
+    },
   ];
 
   if (req.type === 'peminjaman' && req.durationStart) {
     const durStr = req.durationEnd 
-      ? `${req.durationStart} s.d. ${req.durationEnd} (${req.durationDays || 0} hari, ${req.durationHours || 0} jam)`
-      : `${req.durationStart} s.d. - (Tanpa Tenggat Waktu)`;
-    fields.push({ label: 'Durasi', value: durStr });
+      ? `${req.durationStart} ${untilLabel} ${req.durationEnd} (${req.durationDays || 0} ${daysLabel}, ${req.durationHours || 0} ${hoursLabel})`
+      : `${req.durationStart} ${untilLabel} - (${noDeadlineLabel})`;
+    fields.push({ label: durLabel, value: durStr });
   }
 
   if (req.reasoning) {
-    fields.push({ label: 'Alasan', value: req.reasoning });
+    fields.push({ label: reasonLabel, value: req.reasoning });
   }
 
   return fields;

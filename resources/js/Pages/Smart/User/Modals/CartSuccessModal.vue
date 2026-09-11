@@ -4,6 +4,7 @@
  * Confirmation dialog displayed when a request or borrow submission succeeds.
  */
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { Button } from '@/Components/ui/button';
 import {
   Dialog,
@@ -34,16 +35,23 @@ const emit = defineEmits<{
   (e: 'close'): void;
 }>();
 
+const { t } = useI18n();
+
 const modalTitle = computed(() => {
   if (props.title) return props.title;
-  return `${props.isBorrow ? 'Peminjaman' : 'Permintaan'} Terkirim!`;
+  return props.isBorrow ? t('common.modals.borrowSentTitle') : t('common.modals.requestSentTitle');
 });
 
 const modalDescription = computed(() => {
   if (props.description) return props.description;
-  const label = props.isBorrow ? 'Peminjaman' : 'Permintaan';
-  const labelLower = props.isBorrow ? 'peminjaman' : 'permintaan';
-  return `${label} Anda telah berhasil dikirimkan dan sedang menunggu approval. Anda akan mendapat notifikasi ketika ${labelLower} diproses.`;
+  return props.isBorrow ? t('common.modals.borrowSuccessDesc') : t('common.modals.requestSuccessDesc');
+});
+
+const resolvedButtonText = computed(() => {
+  if (props.buttonText && props.buttonText !== 'Ke Riwayat') {
+    return props.buttonText;
+  }
+  return t('common.modals.toHistory');
 });
 
 const handleConfirm = () => {
@@ -75,10 +83,10 @@ const handleConfirm = () => {
       <div class="w-full pt-2">
         <Button
           variant="primary"
-          class="w-full rounded-[0.875rem] h-10 text-sm font-semibold"
+          class="w-full rounded-[0.875rem] h-10 text-sm font-semibold cursor-pointer"
           @click="handleConfirm"
         >
-          {{ buttonText }}
+          {{ resolvedButtonText }}
         </Button>
       </div>
     </DialogContent>

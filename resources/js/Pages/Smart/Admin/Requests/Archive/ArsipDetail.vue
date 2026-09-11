@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import AssetItemCard from '@/Components/AssetItemCard.vue';
 import { 
@@ -9,6 +10,8 @@ import {
   X
 } from 'lucide-vue-next';
 import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem, BreadcrumbSeparator } from '@/Components/ui/breadcrumb';
+
+const { t } = useI18n();
 
 interface RequestItem {
   id: number;
@@ -71,7 +74,7 @@ const timeline = computed((): TimelineStep[] => {
   
   // Step 1: Initial creation
   steps.push({
-    status: 'Permintaan dibuat',
+    status: t('fulfillment.requestCreated'),
     time: r.createdAt,
     completed: true,
   });
@@ -87,40 +90,40 @@ const timeline = computed((): TimelineStep[] => {
       let rejected = false;
 
       if (log.status_to === 'approve') {
-        statusName = 'Di-approve';
+        statusName = t('fulfillment.approved');
       } else if (log.status_to === 'partial') {
-        statusName = 'Disetujui sebagian (Partial)';
+        statusName = t('fulfillment.partiallyApproved');
       } else if (log.status_to === 'confirm') {
         if (log.status_from === 'partial') {
-          statusName = 'Alokasi Barang Tambahan Dikonfirmasi';
+          statusName = t('fulfillment.additionalAllocationConfirmed');
         } else {
           if (log.note && log.note.includes('diatur oleh pengguna')) {
-            statusName = 'Jadwal Serah Terima Diatur';
+            statusName = t('fulfillment.handoverScheduleSet');
           } else {
-            statusName = 'Dikonfirmasi';
+            statusName = t('fulfillment.confirmed');
           }
         }
       } else if (log.status_to === 'borrow') {
-        statusName = 'Serah Terima Selesai & Dipinjam';
+        statusName = t('fulfillment.handoverCompletedAndBorrowed');
       } else if (log.status_to === 'return') {
-        statusName = 'Pengembalian Diajukan';
+        statusName = t('fulfillment.returnSubmitted');
       } else if (log.status_to === 'success') {
         if (log.status_from === 'return') {
-          statusName = 'Pengembalian Selesai';
+          statusName = t('fulfillment.returnCompleted');
         } else {
-          statusName = 'Serah Terima Selesai';
+          statusName = t('fulfillment.handoverCompleted');
         }
       } else if (log.status_to === 'reject') {
-        statusName = 'Ditolak';
+        statusName = t('fulfillment.rejectedTimeline');
         completed = false;
         rejected = true;
       } else if (log.status_to === 'cancel') {
-        statusName = 'Dibatalkan oleh Pengguna';
+        statusName = t('fulfillment.cancelledByUser');
       } else if (log.status_to === 'pending') {
         if (log.status_from === 'confirm') {
-          statusName = 'Serah Terima Sebagian Diterima';
+          statusName = t('fulfillment.partialHandoverReceived');
         } else {
-          statusName = 'Pending';
+          statusName = t('fulfillment.pendingBtn');
         }
       }
 
@@ -142,12 +145,12 @@ const timeline = computed((): TimelineStep[] => {
 </script>
 
 <template>
-  <AppLayout title="Detail Arsip">
+  <AppLayout :title="t('fulfillment.archiveDetailTitle')">
     <!-- Breadcrumb -->
     <Breadcrumb>
       <BreadcrumbList class="pb-3">
         <BreadcrumbItem>
-          <BreadcrumbLink href="/smart/arsip">Arsip</BreadcrumbLink>
+          <BreadcrumbLink href="/smart/arsip">{{ t('fulfillment.archive') }}</BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
@@ -157,8 +160,8 @@ const timeline = computed((): TimelineStep[] => {
     </Breadcrumb>
 
     <div class="mb-6">
-      <h1 class="text-xl font-bold text-foreground">Detail Permintaan {{ request.number }}</h1>
-      <p class="text-sm text-muted-foreground">Permintaan dibuat pada {{ request.createdAt }}</p>
+      <h1 class="text-xl font-bold text-foreground">{{ t('fulfillment.detailHead', { number: request.number }) }}</h1>
+      <p class="text-sm text-muted-foreground">{{ t('fulfillment.createdOn', { date: request.createdAt }) }}</p>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -166,7 +169,7 @@ const timeline = computed((): TimelineStep[] => {
       <div class="lg:col-span-2 space-y-6">
         <!-- Main Detail Card -->
         <div class="bg-card border border-border rounded-[14px] p-6 shadow-sm">
-          <h3 class="text-sm font-medium text-muted-foreground mb-3">Detail:</h3>
+          <h3 class="text-sm font-medium text-muted-foreground mb-3">{{ t('fulfillment.detailsPrefix') }}</h3>
           <div class="space-y-2">
             <h2 class="text-lg md:text-xl font-extrabold text-foreground mb-3">
               {{ request.number }}
@@ -174,27 +177,27 @@ const timeline = computed((): TimelineStep[] => {
             
             <div class="space-y-1.5 text-sm text-foreground">
               <p>
-                <span class="text-muted-foreground">Dibuat oleh:</span> 
+                <span class="text-muted-foreground">{{ t('fulfillment.createdBy') }}</span> 
                 <span class="font-semibold"> {{ request.requester }}</span>
               </p>
               <p>
-                <span class="text-muted-foreground">PIC Approval:</span> 
+                <span class="text-muted-foreground">{{ t('fulfillment.picApproval') }}</span> 
                 <span class="font-semibold"> {{ request.approval_by || request.approver }}</span>
               </p>
               <p>
-                <span class="text-muted-foreground">Waktu dibuat:</span> 
+                <span class="text-muted-foreground">{{ t('fulfillment.createdAtTime') }}</span> 
                 <span class="font-semibold"> {{ request.createdAt }}</span>
               </p>
               <p>
-                <span class="text-muted-foreground">Pemanfaatan:</span> 
+                <span class="text-muted-foreground">{{ t('fulfillment.utilization') }}:</span> 
                 <span class="font-semibold">
                   {{ request.pemanfaatan === 'corporate' ? `Corporate (${request.pemanfaatanDetail})` : `Project ${request.pemanfaatanDetail}` }}
                 </span>
               </p>
               <p v-if="request.durationStart">
-                <span class="text-muted-foreground">Durasi:</span>
+                <span class="text-muted-foreground">{{ t('fulfillment.duration') }}</span>
                 <span class="font-semibold">
-                  {{ request.durationStart }} s.d. {{ request.durationEnd }} ({{ request.durationDays }} hari, {{ request.durationHours }} jam)
+                  {{ request.durationStart }} {{ t('fulfillment.until') }} {{ request.durationEnd }} ({{ request.durationDays }} {{ t('fulfillment.days') }}, {{ request.durationHours }} {{ t('fulfillment.hours') }})
                 </span>
               </p>
             </div>
@@ -203,7 +206,7 @@ const timeline = computed((): TimelineStep[] => {
 
         <!-- Items Card -->
         <div class="bg-card border border-border rounded-[14px] p-6 shadow-sm">
-          <h3 class="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-4">Daftar barang:</h3>
+          <h3 class="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-4">{{ t('fulfillment.itemsListPrefix') }}</h3>
           
           <AssetItemCard 
             v-for="item in items" 
@@ -222,7 +225,7 @@ const timeline = computed((): TimelineStep[] => {
       <!-- Right Column (Timeline) -->
       <div class="space-y-6">
         <div class="bg-card border border-border rounded-[14px] p-6 shadow-sm relative overflow-hidden">
-          <h3 class="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-6">Tahapan:</h3>
+          <h3 class="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-6">{{ t('fulfillment.stagesPrefix') }}</h3>
           
           <!-- Vertical Timestep Stepper -->
           <div class="relative pl-8 space-y-8 before:absolute before:left-[15px] before:top-[10px] before:bottom-[10px] before:w-[2px] before:bg-border">
@@ -268,7 +271,7 @@ const timeline = computed((): TimelineStep[] => {
                       'text-green-600': !step.rejected
                     }"
                   >
-                    oleh {{ step.user }}
+                    {{ t('fulfillment.byUser', { user: step.user }) }}
                   </p>
                   <p v-if="step.time" class="text-xs text-muted-foreground mt-0.5">
                     {{ step.time }}

@@ -5,6 +5,7 @@
  * advancing request to Handover (100%) or Partial status.
  */
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useModalLock } from '@/composables/useModalLock';
 import { router } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
@@ -22,6 +23,8 @@ const emit = defineEmits<{
   (e: 'update:open', val: boolean): void;
   (e: 'success'): void;
 }>();
+
+const { t } = useI18n();
 
 useModalLock(computed(() => props.open));
 
@@ -60,7 +63,7 @@ const submitConfirmation = () => {
   const allowPartial = !isFull && summary.can_confirm_partial;
 
   if (!isFull && !allowPartial) {
-    toast.error('Belum ada barang yang dialokasikan. Alokasikan setidaknya satu barang.');
+    toast.error(t('fulfillment.noAllocationError'));
     return;
   }
 
@@ -73,7 +76,7 @@ const submitConfirmation = () => {
       isSubmittingConfirmation.value = false;
       closeModal();
       emit('success');
-      toast.success(isFull ? 'Konfirmasi pemenuhan berhasil diselesaikan.' : 'Konfirmasi parsial berhasil diselesaikan.');
+      toast.success(isFull ? t('fulfillment.fullFulfillSuccess') : t('fulfillment.partialFulfillSuccess'));
     },
     onError: (errs) => {
       isSubmittingConfirmation.value = false;
@@ -110,7 +113,7 @@ const submitConfirmation = () => {
             <!-- Modal Header -->
             <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
               <h3 class="text-lg font-bold text-foreground">
-                Konfirmasi Alokasi Permintaan
+                {{ t('fulfillment.confirmModalTitle') }}
               </h3>
               <button @click="closeModal" class="p-2 hover:bg-muted rounded-full transition-colors">
                 <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
@@ -126,9 +129,9 @@ const submitConfirmation = () => {
               >
                 <CheckCircle2 class="w-5 h-5 shrink-0 mt-0.5" />
                 <div>
-                  <p class="font-bold text-sm">Pemenuhan Lengkap (100%)</p>
+                  <p class="font-bold text-sm">{{ t('fulfillment.fullFulfillmentTitle') }}</p>
                   <p class="mt-1 text-sm opacity-90 leading-relaxed">
-                    Seluruh {{ request.fulfillment_summary.total_quantity_requested }} barang telah teralokasi. Konfirmasi ini akan melanjutkan status permintaan ke <strong>Menunggu Serah Terima</strong>.
+                    {{ t('fulfillment.fullFulfillmentDesc', { count: request.fulfillment_summary.total_quantity_requested }) }}
                   </p>
                 </div>
               </div>
@@ -139,9 +142,9 @@ const submitConfirmation = () => {
               >
                 <AlertTriangle class="w-5 h-5 shrink-0 mt-0.5" />
                 <div>
-                  <p class="font-bold text-sm">Pemenuhan Sebagian (Parsial)</p>
+                  <p class="font-bold text-sm">{{ t('fulfillment.partialFulfillmentTitle') }}</p>
                   <p class="mt-1 text-sm opacity-90 leading-relaxed">
-                    Teralokasi {{ request.fulfillment_summary.total_quantity_assigned }} dari {{ request.fulfillment_summary.total_quantity_requested }} barang. Konfirmasi ini akan mengubah status permintaan menjadi <strong>Menunggu Serah Terima</strong> dan <strong>Parsial</strong> sehingga pemohon dapat menerima barang yang siap terlebih dahulu.
+                    {{ t('fulfillment.partialFulfillmentDesc', { assigned: request.fulfillment_summary.total_quantity_assigned, requested: request.fulfillment_summary.total_quantity_requested }) }}
                   </p>
                 </div>
               </div>
@@ -152,9 +155,9 @@ const submitConfirmation = () => {
               >
                 <AlertCircle class="w-5 h-5 shrink-0 mt-0.5" />
                 <div>
-                  <p class="font-bold text-sm">Belum Ada Barang Teralokasi</p>
+                  <p class="font-bold text-sm">{{ t('fulfillment.noItemsAllocatedTitle') }}</p>
                   <p class="mt-1 text-sm opacity-90 leading-relaxed">
-                    Anda belum mengalokasikan barang apa pun. Silakan alokasikan unit aset terlebih dahulu sebelum konfirmasi.
+                    {{ t('fulfillment.noItemsAllocatedDesc') }}
                   </p>
                 </div>
               </div>
@@ -162,13 +165,13 @@ const submitConfirmation = () => {
               <!-- Catatan Optional -->
               <Field>
                 <FieldLabel>
-                  <span>Catatan Admin (Opsional)</span>
+                  <span>{{ t('fulfillment.adminNotesOptional') }}</span>
                 </FieldLabel>
                 <FieldContent>
                   <textarea 
                     v-model="confirmationNote" 
                     rows="4" 
-                    placeholder="Tuliskan catatan, keperluan, atau detail alokasi ini jika diperlukan..."
+                    :placeholder="t('fulfillment.adminNotesPlaceholder')"
                     class="w-full px-4 py-3 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors resize-none text-foreground placeholder:text-muted-foreground"
                   ></textarea>
                 </FieldContent>
@@ -182,7 +185,7 @@ const submitConfirmation = () => {
                 variant="white" 
                 size="lg"
               >
-                Batal
+                {{ t('fulfillment.batal') }}
               </Button>
               <Button 
                 variant="primary" 
@@ -193,7 +196,7 @@ const submitConfirmation = () => {
               >
                 <Loader2 v-if="isSubmittingConfirmation" class="absolute inset-0 m-auto h-5 w-5 animate-spin" />
                 <span :class="{ 'opacity-0': isSubmittingConfirmation }">
-                  {{ request?.fulfillment_summary?.can_confirm_full ? 'Konfirmasi Alokasi Penuh' : 'Konfirmasi Parsial' }}
+                  {{ request?.fulfillment_summary?.can_confirm_full ? t('fulfillment.confirmFullButton') : t('fulfillment.confirmPartialButton') }}
                 </span>
               </Button>
             </div>

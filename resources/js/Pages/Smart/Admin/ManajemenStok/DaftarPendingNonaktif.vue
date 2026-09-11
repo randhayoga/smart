@@ -3,6 +3,7 @@
  * Admin Pending Deactivation List Page component tracking assets awaiting approval (BoD/BoC and DM stages).
  */
 import { ref, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem } from '@/Components/ui/breadcrumb';
 import Tabs from '@/Components/Tabs.vue';
@@ -17,8 +18,12 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+const { t } = useI18n();
 
-const tabs = ['Pending:BoD/BoC', 'Pending:DM'];
+const computedTabs = computed(() => [
+  { id: 'Pending:BoD/BoC', label: 'Pending:BoD/BoC' },
+  { id: 'Pending:DM', label: 'Pending:DM' }
+]);
 const activeTab = ref('Pending:BoD/BoC');
 
 const filteredUnits = computed(() => {
@@ -39,18 +44,18 @@ const handleCustomPrint = (items: any[]) => {
 </script>
 
 <template>
-  <AppLayout title="Daftar Pending Nonaktif">
+  <AppLayout :title="t('fulfillment.pendingDeactivation')">
     <Breadcrumb>
       <BreadcrumbList class="pb-3">
         <BreadcrumbItem>
-          <BreadcrumbLink href="/smart/inventory/pending-nonaktif">Daftar Pending Nonaktif</BreadcrumbLink>
+          <BreadcrumbLink href="/smart/inventory/pending-nonaktif">{{ t('fulfillment.pendingDeactivation') }}</BreadcrumbLink>
         </BreadcrumbItem>
       </BreadcrumbList>
     </Breadcrumb>
 
     <div class="space-y-1">
       <!-- Tabs header matching Master Data -->
-      <Tabs v-model="activeTab" :tabs="tabs" />
+      <Tabs v-model="activeTab" :tabs="computedTabs" />
 
       <!-- Content Tab (Table view matching Daftar Aset) -->
       <DaftarAsetTab

@@ -3,6 +3,7 @@
  * Admin Inventory Management Page component for high-level stock overview, category filtering, and item CRUD operations.
  */
 import { ref, watch, h, onMounted, onUnmounted, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { router, usePage } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
@@ -57,6 +58,8 @@ const props = withDefaults(defineProps<Props>(), {
   barangs:       () => [],
 });
 
+const { t } = useI18n();
+
 import CreateTipeModal from './Modals/CreateTipeModal.vue';
 import EditTipeModal from './Modals/EditTipeModal.vue';
 
@@ -65,7 +68,7 @@ const categoryFilter = ref('');
 const subcategoryFilter = ref('');
 const brandFilter = ref('');
 const typeFilter = ref('');
-const rowsPerPage = ref('Semua baris');
+const rowsPerPage = ref<'all' | '10' | '25' | '50'>('all');
 
 const hasActiveFilters = computed(() => {
   return !!(categoryFilter.value || subcategoryFilter.value || brandFilter.value || typeFilter.value || searchQuery.value);
@@ -81,7 +84,7 @@ const clearFilters = () => {
 
 const dataTableRef = ref<any>(null);
 
-const columns: ColumnDef<any>[] = [
+const columns = computed<ColumnDef<any>[]>(() => [
   {
     id: 'select',
     size: 40,
@@ -115,7 +118,7 @@ const columns: ColumnDef<any>[] = [
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Nama',
+        t('inventory.name'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
@@ -130,7 +133,7 @@ const columns: ColumnDef<any>[] = [
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Spesifikasi',
+        t('inventory.specification'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
@@ -152,7 +155,7 @@ const columns: ColumnDef<any>[] = [
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Merek',
+        t('inventory.brand'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
@@ -171,7 +174,7 @@ const columns: ColumnDef<any>[] = [
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Kategori',
+        t('inventory.category'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
@@ -190,7 +193,7 @@ const columns: ColumnDef<any>[] = [
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Subkategori',
+        t('inventory.subcategory'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
@@ -210,7 +213,7 @@ const columns: ColumnDef<any>[] = [
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Total',
+        t('inventory.total'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
@@ -226,7 +229,7 @@ const columns: ColumnDef<any>[] = [
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Pembaruan Terakhir',
+        t('inventory.lastUpdate'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
@@ -253,31 +256,31 @@ const columns: ColumnDef<any>[] = [
     id: 'actions',
     size: 84,
     enableGlobalFilter: false,
-    header: () => h('div', { class: 'no-print' }, 'Aksi'),
+    header: () => h('div', { class: 'no-print' }, t('common.actions')),
     cell: ({ row }) => {
       return h('div', { class: 'flex items-center justify-end gap-2 no-print' }, [
         h(Button, {
           variant: 'table-view',
           size: 'icon-sm',
-          title: 'Lihat Detail',
+          title: t('inventory.viewDetails'),
           onClick: () => handleViewDetail(row.original),
         }, () => [
           h(Eye),
-          h('span', { class: 'sr-only' }, 'Lihat Detail')
+          h('span', { class: 'sr-only' }, t('inventory.viewDetails'))
         ]),
         h(Button, {
           variant: 'table-destructive',
           size: 'icon-sm',
-          title: 'Hapus',
+          title: t('inventory.delete'),
           onClick: () => openDeleteModal(row.original),
         }, () => [
           h(Trash2),
-          h('span', { class: 'sr-only' }, 'Hapus')
+          h('span', { class: 'sr-only' }, t('inventory.delete'))
         ])
       ]);
     },
   },
-];
+]);
 
 // Watchers for custom filters
 watch(categoryFilter, (val) => {
@@ -300,7 +303,7 @@ watch(brandFilter, (val) => {
 
 watch(rowsPerPage, (val) => {
   if (dataTableRef.value) {
-    if (val === 'Semua baris') {
+    if (val === 'all') {
       dataTableRef.value.table.setPageSize(999999);
     } else {
       dataTableRef.value.table.setPageSize(Number(val));
@@ -309,7 +312,7 @@ watch(rowsPerPage, (val) => {
 }, { immediate: true });
 
 onMounted(() => {
-  if (dataTableRef.value && rowsPerPage.value === 'Semua baris') {
+  if (dataTableRef.value && rowsPerPage.value === 'all') {
     dataTableRef.value.table.setPageSize(999999);
   }
 });
@@ -330,7 +333,16 @@ const handleViewDetail = (item: any) => {
 
 const getExportPayload = () => {
   const data = getExportData();
-  const headers = ['Kode', 'Kategori', 'Subkategori', 'Merek', 'Nama', 'Spesifikasi', 'Pembaruan Terakhir', 'Total'];
+  const headers = [
+    t('inventory.code'),
+    t('inventory.category'),
+    t('inventory.subcategory'),
+    t('inventory.brand'),
+    t('inventory.name'),
+    t('inventory.specification'),
+    t('inventory.lastUpdate'),
+    t('inventory.total')
+  ];
   const rows = data.map((item: any) => [
     item.code,
     item.category,
@@ -538,11 +550,11 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <AppLayout title="Manajemen Barang">
+  <AppLayout :title="t('inventory.inventoryManagement')">
     <Breadcrumb>
       <BreadcrumbList class="pb-3">
         <BreadcrumbItem>
-          <BreadcrumbLink href="/smart/inventory">Manajemen Barang</BreadcrumbLink>
+          <BreadcrumbLink href="/smart/inventory">{{ t('inventory.inventoryManagement') }}</BreadcrumbLink>
         </BreadcrumbItem>
       </BreadcrumbList>
     </Breadcrumb>
@@ -551,7 +563,7 @@ onUnmounted(() => {
       <!-- Main Card -->
       <div class="px-4 bg-card rounded-xl border border-border shadow-sm overflow-hidden">
         <div class="py-3 no-print">
-          <h2 class="text-lg font-bold text-foreground">Manajemen Barang (Hierarkis)</h2>
+          <h2 class="text-lg font-bold text-foreground">{{ t('inventory.hierarchicalManagement') }}</h2>
           
           <!-- Filters & Actions -->
           <div class="mt-4 flex flex-col space-y-4">
@@ -560,12 +572,12 @@ onUnmounted(() => {
               <div class="flex flex-wrap items-end gap-3 flex-1">
                 <!-- Search -->
                 <div class="space-y-1.5 flex-1 min-w-[200px] max-w-xs">
-                  <label for="search-barang" class="text-xs text-muted-foreground font-medium block">Filter</label>
+                  <label for="search-barang" class="text-xs text-muted-foreground font-medium block">{{ t('inventory.filter') }}</label>
                   <TableSearch 
                     id="search-barang"
                     name="search"
                     v-model="searchQuery"
-                    placeholder="Cari nama atau spesifikasi..." 
+                    :placeholder="t('inventory.searchItemPlaceholder')" 
                   />
                 </div>
 
@@ -573,22 +585,22 @@ onUnmounted(() => {
                 <Combobox
                   v-model="brandFilter"
                   :options="mainFilteredBrands"
-                  search-placeholder="Cari merek..."
-                  default-label="Semua merek"
+                  :search-placeholder="t('inventory.searchBrandPlaceholder')"
+                  :default-label="t('inventory.allBrands')"
                 />
 
                 <!-- Type Dropdown (regular) -->
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal', !typeFilter ? 'text-muted-foreground' : 'text-foreground']">
-                      <span class="truncate">{{ typeFilter || 'Semua jenis' }}</span>
+                      <span class="truncate">{{ typeFilter ? (typeFilter === 'Habis pakai' ? t('inventory.consumable') : t('inventory.asset')) : t('inventory.allTypes') }}</span>
                       <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px]" align="start" :side-offset="4">
-                    <DropdownMenuItem @select="typeFilter = ''">Semua jenis</DropdownMenuItem>
-                    <DropdownMenuItem @select="typeFilter = 'Habis pakai'">Habis pakai</DropdownMenuItem>
-                    <DropdownMenuItem @select="typeFilter = 'Aset'">Aset</DropdownMenuItem>
+                    <DropdownMenuItem @select="typeFilter = ''">{{ t('inventory.allTypes') }}</DropdownMenuItem>
+                    <DropdownMenuItem @select="typeFilter = 'Habis pakai'">{{ t('inventory.consumable') }}</DropdownMenuItem>
+                    <DropdownMenuItem @select="typeFilter = 'Aset'">{{ t('inventory.asset') }}</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
 
@@ -596,12 +608,12 @@ onUnmounted(() => {
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal', !categoryFilter ? 'text-muted-foreground' : 'text-foreground']">
-                      <span class="truncate">{{ categoryFilter || 'Semua kategori' }}</span>
+                      <span class="truncate">{{ categoryFilter || t('inventory.allCategories') }}</span>
                       <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px]" align="start" :side-offset="4">
-                    <DropdownMenuItem @select="categoryFilter = ''">Semua kategori</DropdownMenuItem>
+                    <DropdownMenuItem @select="categoryFilter = ''">{{ t('inventory.allCategories') }}</DropdownMenuItem>
                     <DropdownMenuItem v-for="cat in filteredCategories" :key="cat.id" @select="categoryFilter = cat.name">
                       {{ cat.name }}
                     </DropdownMenuItem>
@@ -612,8 +624,8 @@ onUnmounted(() => {
                 <Combobox
                   v-model="subcategoryFilter"
                   :options="mainFilteredSubcategories"
-                  search-placeholder="Cari subkategori..."
-                  default-label="Semua subkategori"
+                  :search-placeholder="t('inventory.searchSubcategoryPlaceholder')"
+                  :default-label="t('inventory.allSubcategories')"
                 /> 
 
                 <Transition
@@ -633,16 +645,16 @@ onUnmounted(() => {
 
               <!-- Rows Per Page -->
               <div class="flex items-center gap-3 text-sm text-muted-foreground pb-0.5">
-                <span class="whitespace-nowrap text-right">Baris per halaman</span>
+                <span class="whitespace-nowrap text-right">{{ t('inventory.rowsPerPage') }}</span>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal', (rowsPerPage === 'Semua baris' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
-                      {{ rowsPerPage }}
+                    <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal', rowsPerPage === 'all' ? 'text-muted-foreground' : 'text-foreground']">
+                      {{ rowsPerPage === 'all' ? t('inventory.allRows') : rowsPerPage }}
                       <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px]" align="start" :side-offset="4">
-                    <DropdownMenuItem @select="rowsPerPage = 'Semua baris'">Semua baris</DropdownMenuItem>
+                    <DropdownMenuItem @select="rowsPerPage = 'all'">{{ t('inventory.allRows') }}</DropdownMenuItem>
                     <DropdownMenuItem @select="rowsPerPage = '10'">10</DropdownMenuItem>
                     <DropdownMenuItem @select="rowsPerPage = '25'">25</DropdownMenuItem>
                     <DropdownMenuItem @select="rowsPerPage = '50'">50</DropdownMenuItem>
@@ -654,7 +666,7 @@ onUnmounted(() => {
             <!-- Row 2: Bulk Actions & New Item -->
             <div class="flex flex-wrap items-end justify-between gap-4 pt-2">
               <div class="space-y-2 flex-1 min-w-0">
-                <label class="text-xs text-muted-foreground font-medium block ml-0.5">Aksi Terpilih</label>
+                <label class="text-xs text-muted-foreground font-medium block ml-0.5">{{ t('inventory.selectedActions') }}</label>
                 <div class="flex flex-wrap gap-2">
                   <Button 
                     @click="openBulkEditModal"
@@ -662,7 +674,7 @@ onUnmounted(() => {
                     variant="more-round-warning"
                   >
                     <Pencil class="w-4 h-4" />
-                    <span class="hidden sm:inline">Edit Terpilih</span>
+                    <span class="hidden sm:inline">{{ t('inventory.editSelected') }}</span>
                   </Button>
                   <Button 
                     @click="openDeleteModal(dataTableRef.table.getFilteredRowModel().rows.filter((r: any) => r.getIsSelected()).map((r: any) => r.original))"
@@ -670,7 +682,7 @@ onUnmounted(() => {
                     variant="destructive"
                   >
                     <Trash2 class="w-4 h-4" />
-                    <span class="hidden sm:inline">Hapus Terpilih</span>
+                    <span class="hidden sm:inline">{{ t('inventory.deleteSelected') }}</span>
                   </Button>
                 </div>
               </div>
@@ -681,7 +693,7 @@ onUnmounted(() => {
                 size="lg"
               >
                 <Plus class="w-4 h-4" />
-                <span>Tipe Baru</span>               
+                <span>{{ t('inventory.newType') }}</span>               
               </Button>
             </div>
           </div>
@@ -721,7 +733,7 @@ onUnmounted(() => {
     <DeleteConfirmationModal 
       :is-open="isDeleteModalOpen"
       :item-count="itemsToDelete.length"
-      item-name="Tipe"
+      :item-name="t('inventory.itemType')"
       :item-data="itemsToDelete.length === 1 ? itemsToDelete[0] : itemsToDelete"
       :processing="processing"
       @close="closeDeleteModal"

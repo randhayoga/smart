@@ -5,6 +5,7 @@
  * Adheres to Cruddy by Design, KISS, and DRY principles.
  */
 import { ref, computed, watch, onMounted, onUnmounted, h } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useModalLock } from '@/composables/useModalLock';
 import { toast } from 'vue-sonner';
 import axios from 'axios';
@@ -23,6 +24,8 @@ import Tabs from '@/Components/Tabs.vue';
 import DetailAssetModal from '@/Pages/Smart/Admin/ManajemenStok/Modals/DetailAssetModal.vue';
 import type { ColumnDef } from '@tanstack/vue-table';
 import { X, ArrowUpDown, Loader2, ChevronDown, Eye } from 'lucide-vue-next';
+
+const { t } = useI18n();
 
 export interface EmployeeData {
   id: number;
@@ -72,7 +75,7 @@ const openViewAssetModal = (rowOriginal: any) => {
 };
 
 // --- Active Tab State ---
-const activeTab = ref('Peminjaman Aktif');
+const activeTab = ref<'active' | 'history'>('active');
 const isLoading = ref(false);
 const activeLoans = ref<LoanItem[]>([]);
 const historicalLoans = ref<LoanItem[]>([]);
@@ -93,19 +96,19 @@ const historyRowsPerPage = ref('10');
 
 // Dynamic tab labels with counters
 const tabLabels = computed(() => [
-  `Peminjaman Aktif (${activeLoans.value.length})`,
-  `Peminjaman Historis (${historicalLoans.value.length})`,
+  `${t('admin.activeLoansTab')} (${activeLoans.value.length})`,
+  `${t('admin.historicalLoansTab')} (${historicalLoans.value.length})`,
 ]);
 
 const currentTabName = computed({
   get() {
-    return activeTab.value.startsWith('Peminjaman Aktif') ? tabLabels.value[0] : tabLabels.value[1];
+    return activeTab.value === 'active' ? tabLabels.value[0] : tabLabels.value[1];
   },
   set(val: string) {
-    if (val.startsWith('Peminjaman Aktif')) {
-      activeTab.value = 'Peminjaman Aktif';
+    if (val === tabLabels.value[0]) {
+      activeTab.value = 'active';
     } else {
-      activeTab.value = 'Peminjaman Historis';
+      activeTab.value = 'history';
     }
   }
 });
@@ -241,7 +244,7 @@ const fetchEmployeeLoans = async () => {
     historicalLoans.value = response.data.history || [];
   } catch (err: any) {
     console.error('Failed to fetch employee loans:', err);
-    toast.error('Gagal memuat data peminjaman karyawan.');
+    toast.error(t('admin.loadLoansFailed'));
     activeLoans.value = [];
     historicalLoans.value = [];
   } finally {
@@ -251,7 +254,7 @@ const fetchEmployeeLoans = async () => {
 
 watch(() => props.open, (isOpen) => {
   if (isOpen && props.employee) {
-    activeTab.value = 'Peminjaman Aktif';
+    activeTab.value = 'active';
     clearActiveFilters();
     clearHistoryFilters();
     activeRowsPerPage.value = '10';
@@ -299,9 +302,23 @@ const historyPageSizeNumber = computed(() => {
   return parseInt(historyRowsPerPage.value, 10) || 10;
 });
 
+const activeRowsPerPageLabel = computed(() => {
+  if (activeRowsPerPage.value === 'Semua baris' || !activeRowsPerPage.value) {
+    return t('admin.allRows');
+  }
+  return activeRowsPerPage.value;
+});
+
+const historyRowsPerPageLabel = computed(() => {
+  if (historyRowsPerPage.value === 'Semua baris' || !historyRowsPerPage.value) {
+    return t('admin.allRows');
+  }
+  return historyRowsPerPage.value;
+});
+
 // --- Table Columns: Peminjaman Aktif ---
 // Kode Aset | Nama | Merek | Kondisi | Lokasi | Waktu Mulai | Waktu Tenggat
-const activeColumns: ColumnDef<LoanItem>[] = [
+const activeColumns = computed<ColumnDef<LoanItem>[]>(() => [
   {
     accessorKey: 'unit_number',
     header: ({ column }) => h(Button, {
@@ -309,7 +326,7 @@ const activeColumns: ColumnDef<LoanItem>[] = [
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
       class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
     }, () => [
-      'Kode Aset',
+      t('admin.assetCode'),
       h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground' }),
     ]),
     cell: ({ row }) => h('div', { class: 'font-mono text-muted-foreground font-medium text-sm select-none' }, row.getValue('unit_number'))
@@ -321,7 +338,7 @@ const activeColumns: ColumnDef<LoanItem>[] = [
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
       class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
     }, () => [
-      'Nama',
+      t('inventory.name'),
       h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground' }),
     ]),
     cell: ({ row }) => h('div', { class: 'font-medium text-foreground text-sm' }, row.getValue('barang_nama'))
@@ -333,7 +350,7 @@ const activeColumns: ColumnDef<LoanItem>[] = [
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
       class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
     }, () => [
-      'Merek',
+      t('admin.brand'),
       h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground' }),
     ]),
     cell: ({ row }) => h('div', { class: 'text-foreground text-sm' }, row.getValue('brand') || '-')
@@ -345,7 +362,7 @@ const activeColumns: ColumnDef<LoanItem>[] = [
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
       class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
     }, () => [
-      'Kondisi',
+      t('admin.condition'),
       h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground' }),
     ]),
     cell: ({ row }) => renderConditionBadge(row.getValue('condition') as string)
@@ -357,7 +374,7 @@ const activeColumns: ColumnDef<LoanItem>[] = [
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
       class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
     }, () => [
-      'Lokasi',
+      t('admin.location'),
       h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground' }),
     ]),
     cell: ({ row }) => h('div', { class: 'text-muted-foreground text-sm' }, row.getValue('location') || '-')
@@ -370,7 +387,7 @@ const activeColumns: ColumnDef<LoanItem>[] = [
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
       class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
     }, () => [
-      'Waktu Mulai',
+      t('admin.startTime'),
       h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground' }),
     ]),
     cell: ({ row }) => h('div', { class: 'text-foreground text-sm whitespace-nowrap' }, row.original.start_date || '-')
@@ -383,7 +400,7 @@ const activeColumns: ColumnDef<LoanItem>[] = [
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
       class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
     }, () => [
-      'Waktu Tenggat',
+      t('admin.dueDate'),
       h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground' }),
     ]),
     cell: ({ row }) => h('div', { class: 'text-muted-foreground text-sm whitespace-nowrap' }, row.original.due_date || '-')
@@ -391,26 +408,26 @@ const activeColumns: ColumnDef<LoanItem>[] = [
   {
     id: 'actions',
     size: 80,
-    header: () => h('div', { class: 'text-center font-semibold text-foreground no-print' }, 'Aksi'),
+    header: () => h('div', { class: 'text-center font-semibold text-foreground no-print' }, t('common.actions')),
     cell: ({ row }) => {
       return h('div', { class: 'flex items-center justify-center gap-2 no-print' }, [
         h(Button, {
           variant: 'table-view',
           size: 'icon-sm',
-          title: 'Lihat Detail',
+          title: t('admin.viewDetail'),
           onClick: () => openViewAssetModal(row.original)
         }, () => [
           h(Eye),
-          h('span', { class: 'sr-only' }, 'Lihat Detail')
+          h('span', { class: 'sr-only' }, t('admin.viewDetail'))
         ])
       ]);
     }
   },
-];
+]);
 
 // --- Table Columns: Peminjaman Historis ---
 // Kode Aset | Nama | Merek | Kondisi | Lokasi | Waktu Mulai | Waktu Selesai | Aksi
-const historyColumns: ColumnDef<LoanItem>[] = [
+const historyColumns = computed<ColumnDef<LoanItem>[]>(() => [
   {
     accessorKey: 'unit_number',
     header: ({ column }) => h(Button, {
@@ -418,7 +435,7 @@ const historyColumns: ColumnDef<LoanItem>[] = [
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
       class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
     }, () => [
-      'Kode Aset',
+      t('admin.assetCode'),
       h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground' }),
     ]),
     cell: ({ row }) => h('div', { class: 'font-mono text-muted-foreground font-medium text-sm select-none' }, row.getValue('unit_number'))
@@ -430,7 +447,7 @@ const historyColumns: ColumnDef<LoanItem>[] = [
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
       class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
     }, () => [
-      'Nama',
+      t('inventory.name'),
       h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground' }),
     ]),
     cell: ({ row }) => h('div', { class: 'font-medium text-foreground text-sm' }, row.getValue('barang_nama'))
@@ -442,7 +459,7 @@ const historyColumns: ColumnDef<LoanItem>[] = [
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
       class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
     }, () => [
-      'Merek',
+      t('admin.brand'),
       h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground' }),
     ]),
     cell: ({ row }) => h('div', { class: 'text-foreground text-sm' }, row.getValue('brand') || '-')
@@ -454,7 +471,7 @@ const historyColumns: ColumnDef<LoanItem>[] = [
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
       class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
     }, () => [
-      'Kondisi',
+      t('admin.condition'),
       h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground' }),
     ]),
     cell: ({ row }) => renderConditionBadge(row.getValue('condition') as string)
@@ -466,7 +483,7 @@ const historyColumns: ColumnDef<LoanItem>[] = [
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
       class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
     }, () => [
-      'Lokasi',
+      t('admin.location'),
       h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground' }),
     ]),
     cell: ({ row }) => h('div', { class: 'text-muted-foreground text-sm' }, row.getValue('location') || '-')
@@ -479,7 +496,7 @@ const historyColumns: ColumnDef<LoanItem>[] = [
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
       class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
     }, () => [
-      'Waktu Mulai',
+      t('admin.startTime'),
       h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground' }),
     ]),
     cell: ({ row }) => h('div', { class: 'text-foreground text-sm whitespace-nowrap' }, row.original.start_date || '-')
@@ -492,7 +509,7 @@ const historyColumns: ColumnDef<LoanItem>[] = [
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
       class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
     }, () => [
-      'Waktu Selesai',
+      t('admin.endTime'),
       h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground' }),
     ]),
     cell: ({ row }) => h('div', { class: 'text-muted-foreground text-sm whitespace-nowrap' }, row.original.return_date || '-')
@@ -500,22 +517,22 @@ const historyColumns: ColumnDef<LoanItem>[] = [
   {
     id: 'actions',
     size: 80,
-    header: () => h('div', { class: 'text-center font-semibold text-foreground no-print' }, 'Aksi'),
+    header: () => h('div', { class: 'text-center font-semibold text-foreground no-print' }, t('common.actions')),
     cell: ({ row }) => {
       return h('div', { class: 'flex items-center justify-center gap-2 no-print' }, [
         h(Button, {
           variant: 'table-view',
           size: 'icon-sm',
-          title: 'Lihat Detail',
+          title: t('admin.viewDetail'),
           onClick: () => openViewAssetModal(row.original)
         }, () => [
           h(Eye),
-          h('span', { class: 'sr-only' }, 'Lihat Detail')
+          h('span', { class: 'sr-only' }, t('admin.viewDetail'))
         ])
       ]);
     }
   },
-];
+]);
 </script>
 
 <template>
@@ -545,7 +562,7 @@ const historyColumns: ColumnDef<LoanItem>[] = [
             <!-- Modal Header -->
             <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
               <h3 class="text-lg font-bold text-foreground">
-                Detail Karyawan
+                {{ t('admin.employeeDetail') }}
               </h3>
               <button @click="closeModal" class="p-2 hover:bg-muted rounded-full transition-colors">
                 <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
@@ -557,9 +574,9 @@ const historyColumns: ColumnDef<LoanItem>[] = [
               <!-- Static Employee Info Section -->
               <div class="bg-muted/30 rounded-xl p-4 border border-border/60">
                 <div class="space-y-1 text-sm">
-                  <p class="font-bold text-foreground"><span class="text-foreground">Nama:</span> {{ props.employee?.name || '-' }}</p>
-                  <p class="font-bold text-foreground"><span class="text-foreground">NPK:</span> {{ props.employee?.employee_id || '-' }}</p>
-                  <p class="text-foreground">Departemen: {{ props.employee?.department || '-' }}</p>
+                  <p class="font-bold text-foreground"><span class="text-foreground">{{ t('admin.employeeName') }}:</span> {{ props.employee?.name || '-' }}</p>
+                  <p class="font-bold text-foreground"><span class="text-foreground">{{ t('admin.employeeId') }}:</span> {{ props.employee?.employee_id || '-' }}</p>
+                  <p class="text-foreground">{{ t('admin.employeeDepartment') }}: {{ props.employee?.department || '-' }}</p>
                 </div>
               </div>
 
@@ -575,11 +592,11 @@ const historyColumns: ColumnDef<LoanItem>[] = [
               <!-- Loading State -->
               <div v-if="isLoading" class="py-16 flex flex-col items-center justify-center gap-3">
                 <Loader2 class="w-8 h-8 animate-spin text-primary" />
-                <span class="text-sm text-muted-foreground">Memuat data peminjaman...</span>
+                <span class="text-sm text-muted-foreground">{{ t('admin.loadingLoans') }}</span>
               </div>
 
               <!-- Tab 1: Peminjaman Aktif -->
-              <div v-else-if="activeTab.startsWith('Peminjaman Aktif')" class="space-y-4">
+              <div v-else-if="activeTab === 'active'" class="space-y-4">
                 <!-- Toolbar: Search + Filters & Rows per page -->
                 <div v-if="activeLoans.length > 0" class="flex items-center justify-between gap-4 flex-wrap">
                   <div class="flex items-center gap-3 flex-wrap flex-grow">
@@ -587,7 +604,7 @@ const historyColumns: ColumnDef<LoanItem>[] = [
                     <div class="w-full sm:w-72">
                       <TableSearch 
                         v-model="activeSearchQuery" 
-                        placeholder="Cari Kode Aset atau Nama Aset" 
+                        :placeholder="t('admin.searchAssetLoanPlaceholder')" 
                         bg-class="bg-background"
                       />
                     </div>
@@ -597,9 +614,9 @@ const historyColumns: ColumnDef<LoanItem>[] = [
                       <Combobox
                         v-model="activeBrandFilter"
                         :options="availableActiveBrands"
-                        placeholder="Semua Merek"
-                        default-label="Semua Merek"
-                        search-placeholder="Cari merek..."
+                        :placeholder="t('admin.allBrands')"
+                        :default-label="t('admin.allBrands')"
+                        :search-placeholder="t('admin.searchBrandPlaceholder')"
                         width-class="w-full sm:w-48"
                       />
                     </div>
@@ -608,12 +625,12 @@ const historyColumns: ColumnDef<LoanItem>[] = [
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="outline" :class="['w-[160px] justify-between rounded-[14px] font-normal', !activeConditionFilter ? 'text-muted-foreground' : 'text-foreground']">
-                          <span class="truncate">{{ activeConditionFilter || 'Semua kondisi' }}</span>
+                          <span class="truncate">{{ activeConditionFilter || t('admin.allConditions') }}</span>
                           <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent class="w-[160px] rounded-[14px] max-h-60 overflow-y-auto" align="start" :side-offset="4">
-                        <DropdownMenuItem @select="activeConditionFilter = ''">Semua kondisi</DropdownMenuItem>
+                        <DropdownMenuItem @select="activeConditionFilter = ''">{{ t('admin.allConditions') }}</DropdownMenuItem>
                         <DropdownMenuItem v-for="cond in conditionOptions" :key="cond" @select="activeConditionFilter = cond">
                           {{ cond }}
                         </DropdownMenuItem>
@@ -625,9 +642,9 @@ const historyColumns: ColumnDef<LoanItem>[] = [
                       <Combobox
                         v-model="activeLocationFilter"
                         :options="availableActiveLocations"
-                        placeholder="Semua Lokasi"
-                        default-label="Semua Lokasi"
-                        search-placeholder="Cari lokasi..."
+                        :placeholder="t('admin.allLocations')"
+                        :default-label="t('admin.allLocations')"
+                        :search-placeholder="t('admin.searchLocationPlaceholder')"
                         width-class="w-full sm:w-56"
                       />
                     </div>
@@ -650,16 +667,16 @@ const historyColumns: ColumnDef<LoanItem>[] = [
 
                   <!-- Right: Baris per Halaman -->
                   <div class="flex items-center gap-2 text-sm text-muted-foreground shrink-0">
-                    <span class="whitespace-nowrap">Baris per halaman</span>
+                    <span class="whitespace-nowrap">{{ t('admin.rowsPerPage') }}</span>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="outline" :class="['w-[130px] justify-between rounded-[14px] font-normal', (activeRowsPerPage === 'Semua baris' || !activeRowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
-                          {{ activeRowsPerPage }}
+                          {{ activeRowsPerPageLabel }}
                           <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent class="w-[130px] rounded-[14px]" align="end" :side-offset="4">
-                        <DropdownMenuItem @select="activeRowsPerPage = 'Semua baris'">Semua baris</DropdownMenuItem>
+                        <DropdownMenuItem @select="activeRowsPerPage = 'Semua baris'">{{ t('admin.allRows') }}</DropdownMenuItem>
                         <DropdownMenuItem @select="activeRowsPerPage = '10'">10</DropdownMenuItem>
                         <DropdownMenuItem @select="activeRowsPerPage = '25'">25</DropdownMenuItem>
                         <DropdownMenuItem @select="activeRowsPerPage = '50'">50</DropdownMenuItem>
@@ -690,7 +707,7 @@ const historyColumns: ColumnDef<LoanItem>[] = [
                     <div class="w-full sm:w-72">
                       <TableSearch 
                         v-model="historySearchQuery" 
-                        placeholder="Cari Kode Aset atau Nama Aset" 
+                        :placeholder="t('admin.searchAssetLoanPlaceholder')" 
                         bg-class="bg-background"
                       />
                     </div>
@@ -700,9 +717,9 @@ const historyColumns: ColumnDef<LoanItem>[] = [
                       <Combobox
                         v-model="historyBrandFilter"
                         :options="availableHistoryBrands"
-                        placeholder="Semua Merek"
-                        default-label="Semua Merek"
-                        search-placeholder="Cari merek..."
+                        :placeholder="t('admin.allBrands')"
+                        :default-label="t('admin.allBrands')"
+                        :search-placeholder="t('admin.searchBrandPlaceholder')"
                         width-class="w-full sm:w-48"
                       />
                     </div>
@@ -711,12 +728,12 @@ const historyColumns: ColumnDef<LoanItem>[] = [
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="outline" :class="['w-[160px] justify-between rounded-[14px] font-normal', !historyConditionFilter ? 'text-muted-foreground' : 'text-foreground']">
-                          <span class="truncate">{{ historyConditionFilter || 'Semua kondisi' }}</span>
+                          <span class="truncate">{{ historyConditionFilter || t('admin.allConditions') }}</span>
                           <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent class="w-[160px] rounded-[14px] max-h-60 overflow-y-auto" align="start" :side-offset="4">
-                        <DropdownMenuItem @select="historyConditionFilter = ''">Semua kondisi</DropdownMenuItem>
+                        <DropdownMenuItem @select="historyConditionFilter = ''">{{ t('admin.allConditions') }}</DropdownMenuItem>
                         <DropdownMenuItem v-for="cond in conditionOptions" :key="cond" @select="historyConditionFilter = cond">
                           {{ cond }}
                         </DropdownMenuItem>
@@ -728,9 +745,9 @@ const historyColumns: ColumnDef<LoanItem>[] = [
                       <Combobox
                         v-model="historyLocationFilter"
                         :options="availableHistoryLocations"
-                        placeholder="Semua Lokasi"
-                        default-label="Semua Lokasi"
-                        search-placeholder="Cari lokasi..."
+                        :placeholder="t('admin.allLocations')"
+                        :default-label="t('admin.allLocations')"
+                        :search-placeholder="t('admin.searchLocationPlaceholder')"
                         width-class="w-full sm:w-56"
                       />
                     </div>
@@ -753,16 +770,16 @@ const historyColumns: ColumnDef<LoanItem>[] = [
 
                   <!-- Right: Baris per Halaman -->
                   <div class="flex items-center gap-2 text-sm text-muted-foreground shrink-0">
-                    <span class="whitespace-nowrap">Baris per halaman</span>
+                    <span class="whitespace-nowrap">{{ t('admin.rowsPerPage') }}</span>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="outline" :class="['w-[130px] justify-between rounded-[14px] font-normal', (historyRowsPerPage === 'Semua baris' || !historyRowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
-                          {{ historyRowsPerPage }}
+                          {{ historyRowsPerPageLabel }}
                           <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent class="w-[130px] rounded-[14px]" align="end" :side-offset="4">
-                        <DropdownMenuItem @select="historyRowsPerPage = 'Semua baris'">Semua baris</DropdownMenuItem>
+                        <DropdownMenuItem @select="historyRowsPerPage = 'Semua baris'">{{ t('admin.allRows') }}</DropdownMenuItem>
                         <DropdownMenuItem @select="historyRowsPerPage = '10'">10</DropdownMenuItem>
                         <DropdownMenuItem @select="historyRowsPerPage = '25'">25</DropdownMenuItem>
                         <DropdownMenuItem @select="historyRowsPerPage = '50'">50</DropdownMenuItem>
@@ -788,7 +805,7 @@ const historyColumns: ColumnDef<LoanItem>[] = [
             <!-- Modal Footer -->
             <div class="flex items-center justify-end gap-2 py-3 px-6 border-t border-border bg-muted/20">
               <Button variant="outline" @click="closeModal" class="rounded-[14px]">
-                Tutup
+                {{ t('common.close') }}
               </Button>
             </div>
           </div>

@@ -7,6 +7,7 @@
  * and fulfillment confirmation stepper workflow.
  */
 import { ref, computed, reactive } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 import AppLayout from '@/Layouts/AppLayout.vue';
@@ -155,6 +156,7 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+const { t } = useI18n();
 
 const page = usePage();
 
@@ -162,13 +164,13 @@ const page = usePage();
 const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
 const fromQuery = urlParams.get('from');
 const isFromPartial = computed(() => fromQuery === 'parsial' || props.request.raw_status === 'partial');
-const parentLabel = 'Permintaan Aktif';
+const parentLabel = computed(() => t('fulfillment.title'));
 const parentRoute = computed(() => route('smart.requests.index', { tab: isFromPartial.value ? 'Parsial' : 'Perlu Alokasi' }));
 
 const request = computed(() => props.request);
 const isPeminjaman = computed(() => request.value.type === 'peminjaman');
-const typeLabel = computed(() => isPeminjaman.value ? 'peminjaman' : 'permintaan');
-const typeLabelTitle = computed(() => isPeminjaman.value ? 'Peminjaman' : 'Permintaan');
+const typeLabel = computed(() => isPeminjaman.value ? t('fulfillment.loan').toLowerCase() : t('fulfillment.request').toLowerCase());
+const typeLabelTitle = computed(() => isPeminjaman.value ? t('fulfillment.loan') : t('fulfillment.request'));
 
 
 // ─────────────────────────────────────────────
@@ -207,7 +209,7 @@ const timelineSteps = computed((): TimelineStep[] => {
 
   // Step 1: Created
   steps.push({
-    title: `${typeLabelTitle.value} dibuat`,
+    title: t('fulfillment.createdTimeline', { type: typeLabelTitle.value }),
     time: r.created_at,
     status: 'done'
   });
@@ -224,31 +226,31 @@ const timelineSteps = computed((): TimelineStep[] => {
 
       if (log.status_to === 'approve') {
         const approverName = log.user || r.approval_by || r.approver_name || '-';
-        title = 'Di-approve';
-        description = `${typeLabelTitle.value} disetujui Manager: <span class="font-bold text-foreground">${approverName}</span>${r.approval?.note ? `<br>Catatan: ${r.approval.note}` : ''}`;
+        title = t('fulfillment.approved');
+        description = `${t('fulfillment.approvedByManager', { type: typeLabelTitle.value, user: `<span class="font-bold text-foreground">${approverName}</span>` })}${r.approval?.note ? `<br>Catatan: ${r.approval.note}` : ''}`;
       } else if (log.status_to === 'partial' || log.status_to?.includes('partial')) {
         const adminName = log.user || r.confirmation_by || 'Admin';
-        title = 'Disetujui Sebagian (Parsial)';
+        title = t('fulfillment.partiallyApproved');
         if (log.note) {
           description = log.note.replace(/Admin:\s*([^.<]+)/, 'Admin: <span class="font-bold text-foreground">$1</span>');
         } else {
-          description = `${typeLabelTitle.value} disetujui sebagian oleh Admin: <span class="font-bold text-foreground">${adminName}</span>.`;
+          description = t('fulfillment.partiallyApprovedByAdmin', { type: typeLabelTitle.value, user: `<span class="font-bold text-foreground">${adminName}</span>` });
         }
       } else if (log.status_to === 'menunggu_serah_terima' || log.status_to === 'confirm') {
         const adminName = log.user || r.confirmation_by || 'Admin';
-        title = log.status_from?.includes('partial') ? 'Alokasi Penuh Dikonfirmasi' : 'Dikonfirmasi Admin';
+        title = log.status_from?.includes('partial') ? t('fulfillment.fullAllocationConfirmed') : t('fulfillment.confirmed');
         if (log.note) {
           description = log.note.replace(/Admin:\s*([^.<]+)/, 'Admin: <span class="font-bold text-foreground">$1</span>');
         } else {
-          description = `${typeLabelTitle.value} dikonfirmasi oleh Admin: <span class="font-bold text-foreground">${adminName}</span>.`;
+          description = t('fulfillment.confirmedByAdmin', { type: typeLabelTitle.value, user: `<span class="font-bold text-foreground">${adminName}</span>` });
         }
       } else if (log.status_to === 'borrow') {
-        title = 'Serah Terima Selesai & Dipinjam';
-        description = description || 'Aset telah diserahkan dan dipinjam.';
+        title = t('fulfillment.handoverCompletedAndBorrowed');
+        description = description || t('fulfillment.assetDeliveredAndBorrowed');
       } else if (log.status_to === 'reject') {
-        title = 'Ditolak';
+        title = t('fulfillment.rejectedTimeline');
         status = 'rejected';
-        description = `${typeLabelTitle.value} ditolak.`;
+        description = t('fulfillment.rejectedDesc', { type: typeLabelTitle.value });
       }
 
       if (title) {
@@ -266,23 +268,23 @@ const timelineSteps = computed((): TimelineStep[] => {
   // Step 3: Active step in Admin Fulfillment
   if (r.raw_status === 'confirm') {
     steps.push({
-      title: 'Konfirmasi Alokasi',
+      title: t('fulfillment.confirmAllocation'),
       status: 'active',
-      description: `Konfirmasi alokasi untuk memenuhi ${typeLabel.value} ini.`,
+      description: t('fulfillment.confirmAllocationDesc', { type: typeLabel.value }),
       actionType: 'confirm-allocation'
     });
   } else if (r.raw_status?.includes('partial')) {
     steps.push({
-      title: 'Alokasi Sisa Unit (Parsial)',
+      title: t('fulfillment.allocateRemaining'),
       status: 'active',
-      description: `Alokasikan sisa barang atau konfirmasi pemenuhan lanjutan.`,
+      description: t('fulfillment.allocateRemainingDesc'),
       actionType: 'confirm-allocation'
     });
   } else if (r.raw_status?.includes('menunggu_serah_terima') || r.raw_status === 'handover') {
     steps.push({
-      title: 'Menunggu Serah Terima',
+      title: t('fulfillment.waitingHandover'),
       status: 'active',
-      description: 'Menunggu serah terima barang kepada pemohon.'
+      description: t('fulfillment.waitingHandoverDesc')
     });
   }
 
@@ -297,9 +299,9 @@ const activeStepIndex = computed(() => {
 </script>
 
 <template>
-  <Head :title="'Alokasi ' + request.number" />
+  <Head :title="t('fulfillment.allocationHead', { number: request.number })" />
 
-  <AppLayout :title="'Alokasi ' + typeLabelTitle">
+  <AppLayout :title="t('fulfillment.allocationTitle', { type: typeLabelTitle })">
     <!-- ── Breadcrumb ── -->
     <Breadcrumb>
       <BreadcrumbList class="pb-3 text-xs md:text-sm">
@@ -326,7 +328,7 @@ const activeStepIndex = computed(() => {
           <div class="space-y-1">
             <div class="flex items-center justify-between flex-wrap gap-2">
               <h2 class="text-base font-bold text-foreground">
-                <span class="font-normal text-muted-foreground">Nomor: </span>{{ request.number }}
+                <span class="font-normal text-muted-foreground">{{ t('fulfillment.number') }}: </span>{{ request.number }}
               </h2>
               <div class="flex flex-wrap items-center gap-1.5">
                 <span 
@@ -341,7 +343,7 @@ const activeStepIndex = computed(() => {
 
             <!-- Nama Pemohon (Di atas PIC Approval sesuai requirement) -->
             <p class="text-sm text-foreground">
-              <span class="text-muted-foreground">Nama pemohon:</span> 
+              <span class="text-muted-foreground">{{ t('fulfillment.requester') }}:</span> 
               <span class="font-semibold ml-1 text-foreground">
                 {{ request.requester || '-' }}
               </span>
@@ -351,33 +353,33 @@ const activeStepIndex = computed(() => {
             </p>
 
             <p class="text-sm text-foreground">
-              <span class="text-muted-foreground">PIC Approval:</span> 
+              <span class="text-muted-foreground">{{ t('fulfillment.picApproval') }}</span> 
               <span class="font-semibold ml-1">
                 {{ request.approver_name || '-' }}
               </span>
             </p>
             
             <p class="text-sm text-foreground">
-              <span class="text-muted-foreground">Pemanfaatan:</span> 
+              <span class="text-muted-foreground">{{ t('fulfillment.utilization') }}:</span> 
               <span class="font-semibold ml-1">
                 {{ request.pemanfaatan === 'corporate' ? `Corporate (${request.pemanfaatanDetail})` : `Project ${request.pemanfaatanDetail}` }}
               </span>
             </p>
 
             <p v-if="isPeminjaman && request.durationStart" class="text-sm text-foreground">
-              <span class="text-muted-foreground">Durasi:</span>
+              <span class="text-muted-foreground">{{ t('fulfillment.duration') }}</span>
               <span class="font-medium ml-1">
                 <template v-if="request.durationEnd">
-                  {{ request.durationStart }} s.d. {{ request.durationEnd }} ({{ request.durationDays }} hari, {{ request.durationHours || 0 }} jam)
+                  {{ request.durationStart }} {{ t('fulfillment.until') }} {{ request.durationEnd }} ({{ request.durationDays }} {{ t('fulfillment.days') }}, {{ request.durationHours || 0 }} {{ t('fulfillment.hours') }})
                 </template>
                 <template v-else>
-                  {{ request.durationStart }} s.d. - (Tanpa Tenggat Waktu)
+                  {{ request.durationStart }} {{ t('fulfillment.until') }} - ({{ t('fulfillment.noDeadline') }})
                 </template>
               </span>
             </p>
 
             <p class="text-xs text-muted-foreground pt-1">
-              <span>{{ typeLabelTitle }} dibuat pada:</span>
+              <span>{{ t('fulfillment.typeCreatedAt', { type: typeLabelTitle }) }}</span>
               <span class="font-medium text-foreground/80 ml-1">{{ request.created_at }}</span>
             </p>
           </div>
@@ -386,10 +388,10 @@ const activeStepIndex = computed(() => {
         <!-- Card Daftar Barang -->
         <div>
           <div class="flex items-center justify-between mb-3">
-            <p class="text-xs text-muted-foreground font-medium">Daftar Barang & Alokasi:</p>
+            <p class="text-xs text-muted-foreground font-medium">{{ t('fulfillment.itemsAndAllocationPrefix') }}</p>
             <div class="text-xs font-semibold text-muted-foreground">
-              Total Diminta: <span class="text-foreground font-bold">{{ request.fulfillment_summary.total_quantity_requested }}</span> | 
-              Teralokasi: <span :class="request.fulfillment_summary.is_all_assigned ? 'text-emerald-600 font-bold' : 'text-amber-600 font-bold'">{{ request.fulfillment_summary.total_quantity_assigned }}</span>
+              {{ t('fulfillment.totalRequested') }} <span class="text-foreground font-bold">{{ request.fulfillment_summary.total_quantity_requested }}</span> | 
+              {{ t('fulfillment.totalAllocated') }} <span :class="request.fulfillment_summary.is_all_assigned ? 'text-emerald-600 font-bold' : 'text-amber-600 font-bold'">{{ request.fulfillment_summary.total_quantity_assigned }}</span>
             </div>
           </div>
           
@@ -420,7 +422,7 @@ const activeStepIndex = computed(() => {
       <!-- Kolom Kanan (Tahapan & Stepper Workflow) -->
       <div class="space-y-6">
         <div class="bg-card border border-border rounded-[0.875rem] p-5 sm:p-6 relative">
-          <p class="text-xs text-muted-foreground font-medium mb-4">Tahapan {{ typeLabelTitle }}:</p>
+          <p class="text-xs text-muted-foreground font-medium mb-4">{{ t('fulfillment.stagesFor', { type: typeLabelTitle }) }}</p>
 
           <Stepper
             orientation="vertical"
@@ -505,7 +507,7 @@ const activeStepIndex = computed(() => {
                     size="sm"
                     class="font-semibold text-xs h-8 px-4 bg-[#4F46E5] hover:bg-[#4338CA] text-white"
                   >
-                    Konfirmasi Alokasi
+                    {{ t('fulfillment.confirmAllocation') }}
                   </Button>
                 </div>
               </div>

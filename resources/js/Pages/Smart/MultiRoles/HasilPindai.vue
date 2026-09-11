@@ -3,6 +3,7 @@
  * Hasil Pindai page component displaying barcode scan details and mobile-friendly inline asset editing.
  */
 import { ref, computed, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { Head, useForm } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 import { ChevronLeft, ChevronDown, Loader2, Save, Info, FileText, Camera } from 'lucide-vue-next';
@@ -29,6 +30,8 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+
+const { t } = useI18n();
 
 const activeTab = ref<'detail' | 'edit'>('detail');
 
@@ -200,7 +203,7 @@ const handleFileUpload = async (e: any) => {
 
   const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
   if (!allowedTypes.includes(rawFile.type) && !rawFile.type.startsWith('image/')) {
-    toast.error('Format file salah! Hanya diperbolehkan file .jpg, .jpeg, atau .png');
+    toast.error(t('scanner.invalidImageFormat'));
     target.value = '';
     return;
   }
@@ -208,7 +211,7 @@ const handleFileUpload = async (e: any) => {
   try {
     const file = await compressImageIfNeeded(rawFile);
     if (file.size > 1024 * 1024) {
-      toast.error('Ukuran foto maksimal 1MB');
+      toast.error(t('scanner.photoMaxSize1MB'));
       target.value = '';
       return;
     }
@@ -217,7 +220,7 @@ const handleFileUpload = async (e: any) => {
     form.use_lot_image = false;
   } catch (err) {
     console.error('Gagal memproses gambar:', err);
-    toast.error('Gagal memproses gambar');
+    toast.error(t('scanner.processImageFailed'));
   } finally {
     target.value = '';
   }
@@ -250,7 +253,7 @@ const handleSamakanPhoto = () => {
     form.image_url = null;
     form.image_url_name = lotImg.split('/').pop() || '';
   } else {
-    toast.error('LOT tidak memiliki foto.');
+    toast.error(t('scanner.lotNoPhoto'));
   }
 };
 
@@ -259,8 +262,8 @@ const handleMemoUpload = (e: any) => {
   const file = e.target.files[0];
   if (!file) return;
   const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
-  if (!allowedTypes.includes(file.type)) { toast.error('Format file salah! Hanya diperbolehkan file .pdf, .jpg, .jpeg, atau .png'); return; }
-  if (file.size > 2 * 1024 * 1024) { toast.error('Gagal! Ukuran dokumen maksimal 2MB'); return; }
+  if (!allowedTypes.includes(file.type)) { toast.error(t('scanner.invalidDocFormat')); return; }
+  if (file.size > 2 * 1024 * 1024) { toast.error(t('scanner.docMaxSize2MB')); return; }
   form.memo_file = file;
   form.memo_file_name = file.name;
 };
@@ -285,8 +288,8 @@ const handleLostDocUpload = (e: any) => {
   const file = e.target.files[0];
   if (!file) return;
   const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
-  if (!allowedTypes.includes(file.type)) { toast.error('Format file salah! Hanya diperbolehkan file .pdf, .jpg, .jpeg, atau .png'); return; }
-  if (file.size > 2 * 1024 * 1024) { toast.error('Gagal! Ukuran dokumen maksimal 2MB'); return; }
+  if (!allowedTypes.includes(file.type)) { toast.error(t('scanner.invalidDocFormat')); return; }
+  if (file.size > 2 * 1024 * 1024) { toast.error(t('scanner.docMaxSize2MB')); return; }
   form.lost_doc_file = file;
   form.lost_doc_file_name = file.name;
 };
@@ -310,8 +313,8 @@ const handleBodBocDocUpload = (e: any) => {
   const file = e.target.files[0];
   if (!file) return;
   const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
-  if (!allowedTypes.includes(file.type)) { toast.error('Format file salah! Hanya diperbolehkan file .pdf, .jpg, .jpeg, atau .png'); return; }
-  if (file.size > 2 * 1024 * 1024) { toast.error('Gagal! Ukuran dokumen maksimal 2MB'); return; }
+  if (!allowedTypes.includes(file.type)) { toast.error(t('scanner.invalidDocFormat')); return; }
+  if (file.size > 2 * 1024 * 1024) { toast.error(t('scanner.docMaxSize2MB')); return; }
   form.bod_boc_approval_file = file;
   form.bod_boc_approval_file_name = file.name;
 };
@@ -335,7 +338,7 @@ const handleSamakanPrice = () => {
   if (unitPrice !== undefined && unitPrice !== null && unitPrice !== '') {
     form.price = unitPrice;
   } else {
-    toast.error('LOT tidak memiliki harga default.');
+    toast.error(t('scanner.lotNoDefaultPrice'));
   }
 };
 
@@ -365,16 +368,16 @@ const handleSubmit = () => {
   resetErrors();
 
   let isValid = true;
-  if (!form.location_id) { errors.value.location_id = 'Lokasi belum dipilih'; isValid = false; }
-  if (!form.status) { errors.value.status = 'Status belum dipilih'; isValid = false; }
-  if (!form.condition) { errors.value.condition = 'Kondisi belum dipilih'; isValid = false; }
-  if (!form.image_url && !form.image_url_name) { errors.value.image_url = 'Foto belum dipilih'; isValid = false; }
-  if (isVehicle.value && !form.vehicle_registration) { errors.value.vehicle_registration = 'TNKB (Nomor Polisi) belum diisi'; isValid = false; }
-  if (arrNeedApproval.includes(form.condition) && !isDocumentDisabled.value && !form.memo_file_name) { errors.value.memo_file = 'Berita Acara / Memo belum dipilih'; isValid = false; }
-  if (form.condition === 'Hilang' && !isDocumentDisabled.value && !form.lost_doc_file_name) { errors.value.lost_doc_file = 'Surat Keterangan Kehilangan belum dipilih'; isValid = false; }
+  if (!form.location_id) { errors.value.location_id = t('scanner.locationRequired'); isValid = false; }
+  if (!form.status) { errors.value.status = t('scanner.statusRequired'); isValid = false; }
+  if (!form.condition) { errors.value.condition = t('scanner.conditionRequired'); isValid = false; }
+  if (!form.image_url && !form.image_url_name) { errors.value.image_url = t('scanner.photoRequired'); isValid = false; }
+  if (isVehicle.value && !form.vehicle_registration) { errors.value.vehicle_registration = t('scanner.tnkbRequired'); isValid = false; }
+  if (arrNeedApproval.includes(form.condition) && !isDocumentDisabled.value && !form.memo_file_name) { errors.value.memo_file = t('scanner.memoRequired'); isValid = false; }
+  if (form.condition === 'Hilang' && !isDocumentDisabled.value && !form.lost_doc_file_name) { errors.value.lost_doc_file = t('scanner.lostDocRequired'); isValid = false; }
 
   if (!isValid) {
-    toast.error('Harap lengkapi semua input yang wajib diisi.');
+    toast.error(t('scanner.fillRequiredFields'));
     return;
   }
 
@@ -397,7 +400,7 @@ const handleSubmit = () => {
     return fd;
   }).post(`/smart/inventory/units/${props.asset.id}`, {
     onSuccess: () => {
-      toast.success('Aset berhasil diperbarui.');
+      toast.success(t('scanner.assetUpdatedSuccess'));
       activeTab.value = 'detail';
     },
     onError: (err) => {
@@ -409,19 +412,19 @@ const handleSubmit = () => {
       if (err.memo_file) errors.value.memo_file = err.memo_file;
       if (err.lost_doc_file) errors.value.lost_doc_file = err.lost_doc_file;
       if (err.bod_boc_approval_file) errors.value.bod_boc_approval_file = err.bod_boc_approval_file;
-      toast.error('Terjadi kesalahan saat memperbarui aset.');
+      toast.error(t('scanner.assetUpdateError'));
     }
   });
 };
 </script>
 
 <template>
-  <AppLayout :title="`Hasil Pindai - ${props.asset.number}`">
+  <AppLayout :title="`${t('scanner.scanResult')} - ${props.asset.number}`">
     <div class="max-w-md mx-auto space-y-4">
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbLink href="/smart/scan">Pindai Barcode</BreadcrumbLink>
+            <BreadcrumbLink href="/smart/scan">{{ t('scanner.breadcrumb') }}</BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
@@ -438,14 +441,14 @@ const handleSubmit = () => {
             class="flex-1 py-1.5 rounded-lg text-center text-sm font-bold transition-all duration-200"
             :class="activeTab === 'detail' ? 'bg-card text-primary shadow-sm border border-primary' : 'text-muted-foreground hover:text-foreground'"
           >
-            Detail Aset
+            {{ t('scanner.assetDetail') }}
           </button>
           <button 
             @click="activeTab = 'edit'"
             class="flex-1 py-1.5 rounded-lg text-center text-sm font-bold transition-all duration-200"
             :class="activeTab === 'edit' ? 'bg-card text-primary shadow-sm border border-primary' : 'text-muted-foreground hover:text-foreground'"
           >
-            Ubah Aset
+            {{ t('scanner.editAsset') }}
           </button>
         </div>
 
@@ -466,7 +469,7 @@ const handleSubmit = () => {
               />
               <div v-else class="w-full h-full flex flex-col items-center justify-center bg-muted/60 text-muted-foreground">
                 <Camera class="w-12 h-12 opacity-40 mb-1" />
-                <span class="text-xs font-medium opacity-60">Tidak Ada Foto</span>
+                <span class="text-xs font-medium opacity-60">{{ t('scanner.noPhoto') }}</span>
               </div>
             </div>
             <div class="mt-4 text-center">
@@ -482,15 +485,15 @@ const handleSubmit = () => {
           <div class="bg-card rounded-2xl border border-border overflow-hidden shadow-sm">
             <div class="px-4 py-3 border-b border-border bg-muted/20 flex items-center gap-2">
               <Info class="w-4 h-4 text-primary" />
-              <h3 class="text-xs font-bold text-foreground uppercase tracking-wider">Status & Lokasi</h3>
+              <h3 class="text-xs font-bold text-foreground uppercase tracking-wider">{{ t('scanner.statusAndLocation') }}</h3>
             </div>
             <div class="p-4 space-y-3.5 text-sm">
               <div class="flex justify-between items-start">
-                <span class="text-muted-foreground font-medium">Status</span>
+                <span class="text-muted-foreground font-medium">{{ t('scanner.status') }}</span>
                 <StatusBadge :status="props.asset.status" :proposed-status="props.asset.proposed_status" />
               </div>
               <div class="flex justify-between items-start">
-                <span class="text-muted-foreground font-medium">Kondisi</span>
+                <span class="text-muted-foreground font-medium">{{ t('scanner.condition') }}</span>
                 <span 
                   :class="[
                     'font-semibold',
@@ -503,21 +506,21 @@ const handleSubmit = () => {
                 </span>
               </div>
               <div class="flex justify-between items-start">
-                <span class="text-muted-foreground font-medium">Lokasi</span>
+                <span class="text-muted-foreground font-medium">{{ t('scanner.location') }}</span>
                 <span class="text-foreground font-semibold text-right max-w-[200px]">
                   {{ formatLocation(props.asset.location, props.asset.floor, props.asset.room) }}
                 </span>
               </div>
               <div v-if="isVehicle" class="flex justify-between items-start">
-                <span class="text-muted-foreground font-medium">Nopol</span>
+                <span class="text-muted-foreground font-medium">{{ t('scanner.licensePlate') }}</span>
                 <span class="text-foreground font-semibold">{{ props.asset.vehicle_registration || '-' }}</span>
               </div>
               <div class="flex justify-between items-start">
-                <span class="text-muted-foreground font-medium">Nilai Aset</span>
+                <span class="text-muted-foreground font-medium">{{ t('scanner.assetValue') }}</span>
                 <span class="text-foreground font-semibold">{{ formatRupiah(props.asset.price) }}</span>
               </div>
               <div class="flex justify-between items-start">
-                <span class="text-muted-foreground font-medium">Pembaruan</span>
+                <span class="text-muted-foreground font-medium">{{ t('scanner.lastUpdated') }}</span>
                 <span class="text-foreground font-semibold">{{ props.asset.updated_at }}</span>
               </div>
             </div>
@@ -526,35 +529,35 @@ const handleSubmit = () => {
           <div class="bg-card rounded-2xl border border-border overflow-hidden shadow-sm">
             <div class="px-4 py-3 border-b border-border bg-muted/20 flex items-center gap-2">
               <FileText class="w-4 h-4 text-primary" />
-              <h3 class="text-xs font-bold text-foreground uppercase tracking-wider">Detail Tipe & LOT</h3>
+              <h3 class="text-xs font-bold text-foreground uppercase tracking-wider">{{ t('scanner.typeAndLotDetail') }}</h3>
             </div>
             <div class="p-4 space-y-3.5 text-sm">
               <div class="flex justify-between items-start">
-                <span class="text-muted-foreground font-medium">Spesifikasi</span>
+                <span class="text-muted-foreground font-medium">{{ t('scanner.specification') }}</span>
                 <span class="text-foreground font-semibold text-right max-w-[200px]">{{ props.asset.barang_specification }}</span>
               </div>
               <div class="flex justify-between items-start">
-                <span class="text-muted-foreground font-medium">Kode LOT</span>
+                <span class="text-muted-foreground font-medium">{{ t('scanner.lotCode') }}</span>
                 <span class="text-foreground font-semibold">{{ props.asset.lot_number }}</span>
               </div>
               <div class="flex justify-between items-start">
-                <span class="text-muted-foreground font-medium">Organizer</span>
+                <span class="text-muted-foreground font-medium">{{ t('scanner.organizer') }}</span>
                 <span class="text-foreground font-semibold text-right">{{ props.asset.lot_organizer }}</span>
               </div>
               <div class="flex justify-between items-start">
-                <span class="text-muted-foreground font-medium">Vendor</span>
+                <span class="text-muted-foreground font-medium">{{ t('scanner.vendor') }}</span>
                 <span class="text-foreground font-semibold text-right max-w-[200px]">{{ props.asset.lot_vendor }}</span>
               </div>
               <div class="flex justify-between items-start">
-                <span class="text-muted-foreground font-medium">Tgl Registrasi</span>
+                <span class="text-muted-foreground font-medium">{{ t('scanner.registrationDate') }}</span>
                 <span class="text-foreground font-semibold">{{ formatDate(props.asset.lot_date_of_receipt) }}</span>
               </div>
               <div class="flex justify-between items-start">
-                <span class="text-muted-foreground font-medium">Umur</span>
-                <span class="text-foreground font-semibold">{{ props.asset.lot_age !== null ? `${props.asset.lot_age} tahun` : '-' }}</span>
+                <span class="text-muted-foreground font-medium">{{ t('scanner.age') }}</span>
+                <span class="text-foreground font-semibold">{{ props.asset.lot_age !== null ? t('scanner.yearsOld', { years: props.asset.lot_age }) : '-' }}</span>
               </div>
               <div class="flex justify-between items-start">
-                <span class="text-muted-foreground font-medium">No. PO</span>
+                <span class="text-muted-foreground font-medium">{{ t('scanner.poNumber') }}</span>
                 <span class="text-foreground font-semibold">{{ props.asset.lot_po_number }}</span>
               </div>
             </div>
@@ -567,7 +570,7 @@ const handleSubmit = () => {
             size="lg" 
             class="w-full h-12 rounded-xl flex items-center justify-center gap-2 text-sm font-bold shadow-md"
           >
-            Ubah Lokasi & Detail Aset
+            {{ t('scanner.editLocationAndDetail') }}
           </Button>
         </div>
 
@@ -576,7 +579,7 @@ const handleSubmit = () => {
           <div class="bg-card rounded-2xl p-5 border border-border shadow-sm space-y-5">
             <div class="space-y-4">
               <Field>
-                <FieldLabel>Kode Aset</FieldLabel>
+                <FieldLabel>{{ t('scanner.assetCode') }}</FieldLabel>
                 <FieldContent>
                   <input 
                     type="text" 
@@ -589,17 +592,17 @@ const handleSubmit = () => {
 
               <Field :data-invalid="!!errors.condition || undefined" :data-disabled="isKondisiDisabled || undefined">
                 <FieldLabel>
-                  <span>Kondisi<span class="text-rose-500">*</span></span>
+                  <span>{{ t('scanner.condition') }}<span class="text-rose-500">*</span></span>
                 </FieldLabel>
                 <FieldContent>
                   <div v-if="isKondisiDisabled" class="w-full flex items-center justify-between px-4 py-2 text-sm border border-input rounded-xl bg-muted/30 text-muted-foreground cursor-not-allowed h-10 select-none">
-                    <span>{{ form.condition || 'Pilih kondisi' }}</span>
+                    <span>{{ form.condition || t('scanner.selectCondition') }}</span>
                     <ChevronDown class="w-4 h-4 opacity-50" />
                   </div>
                   <DropdownMenu v-else>
                     <DropdownMenuTrigger asChild>
                       <Button variant="outline" :class="['w-full justify-between rounded-xl font-normal h-10 px-4', !form.condition ? 'text-muted-foreground' : 'text-foreground']">
-                        {{ form.condition || 'Pilih kondisi' }}
+                        {{ form.condition || t('scanner.selectCondition') }}
                         <ChevronDown class="w-4 h-4 opacity-50" />
                       </Button>
                     </DropdownMenuTrigger>
@@ -618,13 +621,13 @@ const handleSubmit = () => {
 
               <Field :data-invalid="!!errors.location_id || undefined">
                 <FieldLabel>
-                  <span>Lokasi<span class="text-rose-500">*</span></span>
+                  <span>{{ t('scanner.location') }}<span class="text-rose-500">*</span></span>
                 </FieldLabel>
                 <FieldContent>
                   <LocationCombobox 
                     v-model="form.location_id" 
                     :locations="locations" 
-                    placeholder="Pilih lokasi"
+                    :placeholder="t('scanner.selectLocation')"
                     :error="!!errors.location_id"
                     :active-only="true"
                   />
@@ -634,17 +637,17 @@ const handleSubmit = () => {
 
               <Field :data-invalid="!!errors.status || undefined" :data-disabled="isStatusDisabled || undefined">
                 <FieldLabel>
-                  <span>Status<span class="text-rose-500">*</span></span>
+                  <span>{{ t('scanner.status') }}<span class="text-rose-500">*</span></span>
                 </FieldLabel>
                 <FieldContent>
                   <div v-if="isStatusDisabled" class="w-full flex items-center justify-between px-4 py-2 text-sm border border-input rounded-xl bg-muted/30 text-muted-foreground cursor-not-allowed h-10 select-none">
-                    <span>{{ form.status || 'Pilih status' }}</span>
+                    <span>{{ form.status || t('scanner.selectStatus') }}</span>
                     <ChevronDown class="w-4 h-4 opacity-50" />
                   </div>
                   <DropdownMenu v-else>
                     <DropdownMenuTrigger asChild>
                       <Button variant="outline" :class="['w-full justify-between rounded-xl font-normal h-10 px-4', !form.status ? 'text-muted-foreground' : 'text-foreground']">
-                        {{ form.status || 'Pilih status' }}
+                        {{ form.status || t('scanner.selectStatus') }}
                         <ChevronDown class="w-4 h-4 opacity-50" />
                       </Button>
                     </DropdownMenuTrigger>
@@ -660,7 +663,7 @@ const handleSubmit = () => {
    
               <Field>
                 <FieldLabel>
-                  <span>Harga Satuan</span>
+                  <span>{{ t('scanner.unitPrice') }}</span>
                 </FieldLabel>
                 <FieldContent>
                   <div class="flex gap-2 w-full">
@@ -669,19 +672,19 @@ const handleSubmit = () => {
                       <input 
                         type="number" 
                         v-model="form.price" 
-                        placeholder="Contoh: 60000" 
+                        :placeholder="t('scanner.unitPricePlaceholder')" 
                         min="0" 
                         class="flex-1 min-w-0 px-4 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 transition-colors h-full" 
                       />
                     </div>
-                    <Button type="button" @click="handleSamakanPrice" variant="warning" size="lg" class="rounded-xl h-10">Samakan</Button>
+                    <Button type="button" @click="handleSamakanPrice" variant="warning" size="lg" class="rounded-xl h-10">{{ t('scanner.equalize') }}</Button>
                   </div>
                 </FieldContent>
               </Field>
 
               <Field :data-invalid="!!errors.image_url || undefined">
                 <FieldLabel>
-                  <span>Foto<span class="text-rose-500">*</span></span>
+                  <span>{{ t('scanner.photo') }}<span class="text-rose-500">*</span></span>
                 </FieldLabel>
                 <FieldContent>
                   <div class="flex gap-2 flex-col xs:flex-row">
@@ -690,31 +693,31 @@ const handleSubmit = () => {
                       :class="[(form.image_url || form.image_url_name) ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' : 'text-muted-foreground cursor-default', errors.image_url ? 'border-destructive' : 'border-input']"
                       @click="(form.image_url || form.image_url_name) && viewImageInNewTab()"
                     >
-                      {{ form.image_url_name || 'Belum ada foto yang dipilih' }}
+                      {{ form.image_url_name || t('scanner.noPhotoSelected') }}
                     </div>
                     <div class="flex gap-2 shrink-0">
                       <input ref="cameraInput" type="file" id="edit-asset-camera-upload" class="hidden" accept="image/*" capture="environment" @change="handleFileUpload" />
                       <input ref="photoInput" type="file" id="edit-asset-photo-upload" class="hidden" accept=".jpg,.jpeg,.png" @change="handleFileUpload" />
-                      <Button type="button" @click="handleSamakanPhoto" variant="warning" size="lg" class="rounded-xl h-10 flex-1 xs:flex-none">Samakan</Button>
-                      <Button type="button" @click="triggerFileInput" size="lg" class="rounded-xl h-10 flex-1 xs:flex-none">Unggah</Button>
-                      <Button type="button" @click="triggerCameraInput" variant="success" size="lg" class="rounded-xl h-10 px-3 bg-emerald-600 hover:bg-emerald-700 text-white shrink-0" title="Ambil Foto">
+                      <Button type="button" @click="handleSamakanPhoto" variant="warning" size="lg" class="rounded-xl h-10 flex-1 xs:flex-none">{{ t('scanner.equalize') }}</Button>
+                      <Button type="button" @click="triggerFileInput" size="lg" class="rounded-xl h-10 flex-1 xs:flex-none">{{ t('scanner.upload') }}</Button>
+                      <Button type="button" @click="triggerCameraInput" variant="success" size="lg" class="rounded-xl h-10 px-3 bg-emerald-600 hover:bg-emerald-700 text-white shrink-0" :title="t('scanner.takePhoto')">
                         <Camera class="w-5 h-5" />
                       </Button>
                     </div>
                   </div>
-                  <p class="text-[10px] text-muted-foreground ml-1 mt-1">Maksimal ukuran 1 MB (.jpg, .jpeg, .png)</p>
+                  <p class="text-[10px] text-muted-foreground ml-1 mt-1">{{ t('scanner.maxPhotoSize') }}</p>
                 </FieldContent>
                 <FieldError v-if="errors.image_url">{{ errors.image_url }}</FieldError>
               </Field>
 
               <!-- TNKB (Only for Vehicles) -->
               <Field v-if="isVehicle" :data-invalid="!!errors.vehicle_registration || undefined">
-                <FieldLabel><span>TNKB (Nomor Polisi)<span class="text-rose-500">*</span></span></FieldLabel>
+                <FieldLabel><span>{{ t('scanner.tnkb') }}<span class="text-rose-500">*</span></span></FieldLabel>
                 <FieldContent>
                   <input 
                     type="text" 
                     v-model="form.vehicle_registration" 
-                    placeholder="Contoh: B 1234 ABC"
+                    :placeholder="t('scanner.tnkbPlaceholder')"
                     class="w-full px-4 py-2 text-sm border border-input rounded-xl bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
                   />
                 </FieldContent>
@@ -723,7 +726,7 @@ const handleSubmit = () => {
 
               <!-- Document Upload (Required for approval conditions) -->
               <Field v-if="arrNeedApproval.includes(form.condition)" :data-invalid="!!errors.memo_file || undefined" :data-disabled="isDocumentDisabled || undefined">
-                <FieldLabel><span>Berita Acara / Memo<span v-if="!isDocumentDisabled" class="text-rose-500">*</span></span></FieldLabel>
+                <FieldLabel><span>{{ t('scanner.memoOrMinutes') }}<span v-if="!isDocumentDisabled" class="text-rose-500">*</span></span></FieldLabel>
                 <FieldContent>
                   <div class="flex gap-2 flex-col xs:flex-row">
                     <div 
@@ -735,21 +738,21 @@ const handleSubmit = () => {
                       ]"
                       @click="form.memo_file_name && viewMemoInNewTab()"
                     >
-                      {{ form.memo_file_name || 'Belum ada file yang dipilih' }}
+                      {{ form.memo_file_name || t('scanner.noFileSelected') }}
                     </div>
                     <div class="flex gap-2 shrink-0">
                       <input ref="memoFileInput" type="file" id="edit-asset-memo-upload" class="hidden" accept=".pdf,.jpg,.jpeg,.png" @change="handleMemoUpload" :disabled="isDocumentDisabled" />
-                      <Button type="button" @click="triggerMemoFileInput" size="lg" class="rounded-xl h-10 w-full xs:w-auto" :disabled="isDocumentDisabled">Pilih Dokumen</Button>
+                      <Button type="button" @click="triggerMemoFileInput" size="lg" class="rounded-xl h-10 w-full xs:w-auto" :disabled="isDocumentDisabled">{{ t('scanner.chooseDocument') }}</Button>
                     </div>
                   </div>
-                  <p class="text-[10px] text-muted-foreground ml-1 mt-1">Maksimal ukuran 2 MB (.pdf, .jpg, .jpeg, .png)</p>
+                  <p class="text-[10px] text-muted-foreground ml-1 mt-1">{{ t('scanner.maxFileSize') }}</p>
                 </FieldContent>
                 <FieldError v-if="errors.memo_file">{{ errors.memo_file }}</FieldError>
               </Field>
 
               <!-- Lost Document Upload (Required only if condition is Hilang) -->
               <Field v-if="form.condition === 'Hilang'" :data-invalid="!!errors.lost_doc_file || undefined" :data-disabled="isDocumentDisabled || undefined">
-                <FieldLabel><span>Surat Keterangan Kehilangan<span v-if="!isDocumentDisabled" class="text-rose-500">*</span></span></FieldLabel>
+                <FieldLabel><span>{{ t('scanner.lostDocument') }}<span v-if="!isDocumentDisabled" class="text-rose-500">*</span></span></FieldLabel>
                 <FieldContent>
                   <div class="flex gap-2 flex-col xs:flex-row">
                     <div 
@@ -761,21 +764,21 @@ const handleSubmit = () => {
                       ]"
                       @click="form.lost_doc_file_name && viewLostDocInNewTab()"
                     >
-                      {{ form.lost_doc_file_name || 'Belum ada file yang dipilih' }}
+                      {{ form.lost_doc_file_name || t('scanner.noFileSelected') }}
                     </div>
                     <div class="flex gap-2 shrink-0">
                       <input ref="lostDocFileInput" type="file" id="edit-asset-lost-doc-upload" class="hidden" accept=".pdf,.jpg,.jpeg,.png" @change="handleLostDocUpload" :disabled="isDocumentDisabled" />
-                      <Button type="button" @click="triggerLostDocFileInput" size="lg" class="rounded-xl h-10 w-full xs:w-auto" :disabled="isDocumentDisabled">Pilih Dokumen</Button>
+                      <Button type="button" @click="triggerLostDocFileInput" size="lg" class="rounded-xl h-10 w-full xs:w-auto" :disabled="isDocumentDisabled">{{ t('scanner.chooseDocument') }}</Button>
                     </div>
                   </div>
-                  <p class="text-[10px] text-muted-foreground ml-1 mt-1">Maksimal ukuran 2 MB (.pdf, .jpg, .jpeg, .png)</p>
+                  <p class="text-[10px] text-muted-foreground ml-1 mt-1">{{ t('scanner.maxFileSize') }}</p>
                 </FieldContent>
                 <FieldError v-if="errors.lost_doc_file">{{ errors.lost_doc_file }}</FieldError>
               </Field>
 
               <!-- Formulir Approval BoD/BoC (Only visible when existing status is Pending:BoD/BoC) -->
               <Field v-if="isBodBocFieldVisible" :data-invalid="!!errors.bod_boc_approval_file || undefined">
-                <FieldLabel><span>Formulir Approval BoD/BoC</span></FieldLabel>
+                <FieldLabel><span>{{ t('scanner.bodBocApprovalForm') }}</span></FieldLabel>
                 <FieldContent>
                   <div class="flex gap-2 flex-col xs:flex-row">
                     <div 
@@ -786,14 +789,14 @@ const handleSubmit = () => {
                       ]"
                       @click="form.bod_boc_approval_file_name && viewBodBocDocInNewTab()"
                     >
-                      {{ form.bod_boc_approval_file_name || 'Belum ada file yang dipilih' }}
+                      {{ form.bod_boc_approval_file_name || t('scanner.noFileSelected') }}
                     </div>
                     <div class="flex gap-2 shrink-0">
                       <input ref="bodBocFileInput" type="file" id="edit-asset-bod-boc-doc-upload" class="hidden" accept=".pdf,.jpg,.jpeg,.png" @change="handleBodBocDocUpload" />
-                      <Button type="button" @click="triggerBodBocDocFileInput" size="lg" class="rounded-xl h-10 w-full xs:w-auto">Pilih Dokumen</Button>
+                      <Button type="button" @click="triggerBodBocDocFileInput" size="lg" class="rounded-xl h-10 w-full xs:w-auto">{{ t('scanner.chooseDocument') }}</Button>
                     </div>
                   </div>
-                  <p class="text-[10px] text-muted-foreground ml-1 mt-1">Maksimal ukuran 2 MB (.pdf, .jpg, .jpeg, .png)</p>
+                  <p class="text-[10px] text-muted-foreground ml-1 mt-1">{{ t('scanner.maxFileSize') }}</p>
                 </FieldContent>
                 <FieldError v-if="errors.bod_boc_approval_file">{{ errors.bod_boc_approval_file }}</FieldError>
               </Field>
@@ -806,7 +809,7 @@ const handleSubmit = () => {
                 size="lg" 
                 class="flex-1 rounded-xl h-11 text-sm font-semibold"
               >
-                Batal
+                {{ t('common.cancel') }}
               </Button>
               <Button 
                 @click="handleSubmit" 
@@ -818,7 +821,7 @@ const handleSubmit = () => {
                 <Loader2 v-if="form.processing" class="absolute inset-0 m-auto h-5 w-5 animate-spin" />
                 <span :class="{ 'opacity-0': form.processing }" class="flex items-center justify-center gap-1.5">
                   <Save class="w-4 h-4" />
-                  Simpan
+                  {{ t('common.save') }}
                 </span>
               </Button>
             </div>

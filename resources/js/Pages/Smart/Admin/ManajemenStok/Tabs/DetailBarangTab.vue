@@ -3,6 +3,7 @@
  * Detail Barang Tab component displaying item specification overview, aggregate stock metrics, and embedded lot table.
  */
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import DaftarLOTTab from './DaftarLOTTab.vue';
 
 interface Props {
@@ -58,6 +59,8 @@ interface Props {
 
 const props = defineProps<Props>();
 
+const { t } = useI18n();
+
 const totalStok = computed(() => {
   const isConsumable = props.barang.is_consumable;
   return (props.lots || []).reduce((acc, lot) => {
@@ -85,7 +88,7 @@ const stockColorClass = computed(() => {
   <div class="space-y-4">
     <!-- Detail Barang Card -->
     <div class="px-4 py-3 bg-card rounded-xl border border-border shadow-sm overflow-hidden no-print">
-      <h2 class="text-lg font-bold text-foreground mb-4">Detail Tipe</h2>
+      <h2 class="text-lg font-bold text-foreground mb-4">{{ t('inventory.typeDetail') }}</h2>
       
       <div class="flex flex-col md:flex-row gap-6">
         <div class="w-48 h-48 rounded-xl bg-muted shrink-0 flex items-center justify-center overflow-hidden border border-border">
@@ -94,17 +97,17 @@ const stockColorClass = computed(() => {
         </div>
 
         <div class="flex-grow">
-          <p class="font-bold text-foreground"><span class="text-foreground">Kode Tipe:</span> {{ props.barang.code }}</p>
-          <p class="font-bold text-foreground"><span class="text-foreground">Merek:</span> {{ props.barang.brand }}</p>
-          <p class="font-bold text-foreground"><span class="text-foreground">Nama:</span> {{ props.barang.name }}</p>
-          <p class="font-bold text-foreground"><span class="text-foreground">Spesifikasi:</span> {{ props.barang.specification || '-' }}</p>
-          <p class="text-foreground">Kategori: {{ props.barang.category }}</p>
-          <p class="text-foreground">Subkategori: {{ props.barang.subcategory }}</p>
-          <p class="text-foreground">Jumlah LOT: {{ props.lots.length }}</p>
-          <p :class="stockColorClass">Total stok: {{ totalStok }} {{ props.barang.uom }}</p>
-          <p v-if="props.barang.min_stock_threshold !== null && props.barang.min_stock_threshold !== undefined" class="text-foreground">Ambang batas notifikasi stok: {{ props.barang.min_stock_threshold }} {{ props.barang.uom }}</p>
-          <p class="text-foreground">Satuan: {{ props.barang.uom }}</p>
-          <p class="text-foreground">Pembaruan terakhir: {{ props.barang.lastUpdate }}</p>
+          <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.typeCode') }}:</span> {{ props.barang.code }}</p>
+          <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.brand') }}:</span> {{ props.barang.brand }}</p>
+          <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.name') }}:</span> {{ props.barang.name }}</p>
+          <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.specification') }}:</span> {{ props.barang.specification || '-' }}</p>
+          <p class="text-foreground">{{ t('inventory.category') }}: {{ props.barang.category }}</p>
+          <p class="text-foreground">{{ t('inventory.subcategory') }}: {{ props.barang.subcategory }}</p>
+          <p class="text-foreground">{{ t('inventory.lotCount') }}: {{ props.lots.length }}</p>
+          <p :class="stockColorClass">{{ t('inventory.totalStock') }}: {{ totalStok }} {{ props.barang.uom }}</p>
+          <p v-if="props.barang.min_stock_threshold !== null && props.barang.min_stock_threshold !== undefined" class="text-foreground">{{ t('inventory.minStockThreshold') }}: {{ props.barang.min_stock_threshold }} {{ props.barang.uom }}</p>
+          <p class="text-foreground">{{ t('inventory.uom') }}: {{ props.barang.uom }}</p>
+          <p class="text-foreground">{{ t('inventory.lastUpdate') }}: {{ props.barang.lastUpdate }}</p>
         </div>
       </div>
     </div>

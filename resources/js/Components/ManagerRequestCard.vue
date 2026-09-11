@@ -71,7 +71,7 @@ const toggleExpanded = () => {
         </span>
       </div>
       <span class="text-xs text-muted-foreground font-medium">
-        Dibuat: {{ formatDate(request.created_at) }}
+        {{ $t('requests.createdDate', { date: formatDate(request.created_at) }) }}
       </span>
     </div>
 
@@ -129,7 +129,7 @@ const toggleExpanded = () => {
         
         <!-- Utilization -->
         <p class="text-sm text-foreground pt-1">
-          <span class="text-muted-foreground">Pemanfaatan:</span> 
+          <span class="text-muted-foreground">{{ $t('requests.utilizationLabel') }}</span> 
           <span class="font-medium">
             {{ request.pemanfaatan === 'corporate' ? `Corporate (${request.pemanfaatanDetail})` : `Project ${request.pemanfaatanDetail}` }}
           </span>
@@ -137,9 +137,9 @@ const toggleExpanded = () => {
 
         <!-- Duration (Loans only) -->
         <p v-if="request.type === 'peminjaman' && request.durationStart" class="text-sm text-foreground">
-          <span class="text-muted-foreground">Durasi:</span>
+          <span class="text-muted-foreground">{{ $t('requests.durationLabel') }}</span>
           <span class="font-medium">
-            {{ request.durationStart }} s.d. {{ request.durationEnd }} ({{ request.durationDays }} hari, {{ request.durationHours }} jam)
+            {{ request.durationStart }} {{ $t('requests.until') }} {{ request.durationEnd }} ({{ request.durationDays }} {{ $t('requests.days') }}, {{ request.durationHours }} {{ $t('requests.hours') }})
           </span>
         </p>
 
@@ -149,7 +149,7 @@ const toggleExpanded = () => {
             @click="toggleExpanded"
             class="text-xs font-bold text-[#6366F1] hover:opacity-85 flex items-center gap-1 transition-all"
           >
-            <span>{{ isExpanded ? 'Sembunyikan Barang' : 'Lihat Barang' }}</span>
+            <span>{{ isExpanded ? $t('requests.hideItems') : $t('requests.viewItems') }}</span>
             <ChevronUp v-if="isExpanded" class="w-3.5 h-3.5" />
             <ChevronDown v-else class="w-3.5 h-3.5" />
           </button>
@@ -159,7 +159,7 @@ const toggleExpanded = () => {
             v-if="isExpanded" 
             class="mt-3 bg-muted/40 border border-border p-4 rounded-[14px] space-y-1.5 animate-in fade-in slide-in-from-top-1 duration-200"
           >
-            <p class="text-xs font-bold text-foreground">Barang:</p>
+            <p class="text-xs font-bold text-foreground">{{ $t('requests.itemList') }}</p>
             <ul class="space-y-1 pl-1">
               <li 
                 v-for="item in request.items" 
@@ -183,7 +183,7 @@ const toggleExpanded = () => {
         :href="detailRoute"
         class="text-xs md:text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors"
       >
-        Lihat Detail
+        {{ $t('common.viewDetails') }}
       </Link>
 
       <!-- Show Cancel Request button only if pending approval and user is manager -->
@@ -192,7 +192,7 @@ const toggleExpanded = () => {
         class="h-9 px-5 rounded-lg text-xs font-bold bg-[#D9534F] hover:bg-[#C9302C] text-white shadow-sm flex items-center justify-center transition-colors cursor-pointer"
         @click="emit('cancel', request)"
       >
-        Batalkan Permintaan
+        {{ $t('requests.cancelType', { type: $t('requests.request') }) }}
       </button>
     </div>
 

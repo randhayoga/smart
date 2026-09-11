@@ -3,6 +3,7 @@
  * Admin Audit Trail Page component for monitoring asset lifecycle transitions, actor logs, and duration analytics.
  */
 import { ref, computed, h } from 'vue';
+import { useI18n } from 'vue-i18n';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { ArrowUpDown, ChevronDown } from 'lucide-vue-next';
 import { Button } from "@/Components/ui/button";
@@ -17,6 +18,8 @@ import ResetFilterButton from '@/Components/ResetFilterButton.vue';
 import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
+
+const { t, te } = useI18n();
 
 interface AuditTrail {
   id: number;
@@ -46,27 +49,28 @@ const parseDateTime = (val: string) => {
 const formatDurasi = (val: string | number) => {
   if (val === null || val === undefined || val === '-' || val === '') return '-';
 
-  let totalDays = 0;
-
-  if (typeof val === 'number') {
-    totalDays = Math.floor(val);
-  } else if (typeof val === 'string') {
-    const trimmed = val.trim();
-    if (trimmed.endsWith('jam')) {
-      const hours = parseFloat(trimmed.replace('jam', '').trim());
-      if (isNaN(hours)) return val;
-      totalDays = Math.floor(hours / 24);
-    } else if (trimmed.includes('hari') || trimmed.includes('bulan') || trimmed.includes('tahun')) {
-      return trimmed;
-    } else {
-      const parsed = parseFloat(trimmed);
-      if (isNaN(parsed)) return val;
-      totalDays = Math.floor(parsed);
+  if (typeof val === 'string') {
+    let text = val.trim();
+    text = text.replace(/(\d+)\s*tahun/g, `$1 ${t('admin.years')}`);
+    text = text.replace(/(\d+)\s*bulan/g, `$1 ${t('admin.months')}`);
+    text = text.replace(/(\d+)\s*hari/g, `$1 ${t('admin.days')}`);
+    text = text.replace(/(\d+)\s*jam/g, `$1 ${t('admin.hours')}`);
+    if (text !== val.trim()) {
+      return text;
     }
   }
 
+  let totalDays = 0;
+  if (typeof val === 'number') {
+    totalDays = Math.floor(val);
+  } else {
+    const parsed = parseFloat(String(val));
+    if (isNaN(parsed)) return val;
+    totalDays = Math.floor(parsed);
+  }
+
   if (totalDays < 30) {
-    return `${totalDays} hari`;
+    return `${totalDays} ${t('admin.days')}`;
   }
 
   const years = Math.floor(totalDays / 365);
@@ -75,9 +79,9 @@ const formatDurasi = (val: string | number) => {
   const days = remDaysAfterYears % 30;
 
   const parts: string[] = [];
-  if (years > 0) parts.push(`${years} tahun`);
-  if (months > 0) parts.push(`${months} bulan`);
-  if (days > 0 || parts.length === 0) parts.push(`${days} hari`);
+  if (years > 0) parts.push(`${years} ${t('admin.years')}`);
+  if (months > 0) parts.push(`${months} ${t('admin.months')}`);
+  if (days > 0 || parts.length === 0) parts.push(`${days} ${t('admin.days')}`);
 
   return parts.join(' ');
 };
@@ -101,6 +105,36 @@ const resetFilters = () => {
   auditActionFilter.value = 'semua';
   auditTimeFilter.value = 'semua';
 };
+
+const formatStatus = (st: string) => {
+  if (st === 'semua') return t('admin.allStatuses');
+  const key = 'status.' + st.toLowerCase().replace(/[\s\-_:]+(.)/g, (_, c) => c.toUpperCase()).replace(/[\s\-_:]+/g, '');
+  return te(key) ? t(key) : st;
+};
+
+const formatAction = (act: string) => {
+  if (act === 'semua') return t('admin.allActions');
+  return act;
+};
+
+const auditStatusFilterLabel = computed(() => {
+  return formatStatus(auditStatusFilter.value);
+});
+
+const auditActionFilterLabel = computed(() => {
+  return formatAction(auditActionFilter.value);
+});
+
+const auditTimeFilterLabel = computed(() => {
+  if (auditTimeFilter.value === '7-hari') return t('admin.last7Days');
+  if (auditTimeFilter.value === '30-hari') return t('admin.last30Days');
+  return t('admin.allTimeRanges');
+});
+
+const auditRowsPerPageLabel = computed(() => {
+  if (auditRowsPerPage.value === 'Semua baris') return t('admin.allRows');
+  return auditRowsPerPage.value;
+});
 
 const computedAuditPageSize = computed(() => {
   if (auditRowsPerPage.value === 'Semua baris') {
@@ -162,7 +196,7 @@ const auditActionOptions = computed(() => {
   return Array.from(actions);
 });
 
-const auditColumns: ColumnDef<AuditTrail>[] = [
+const auditColumns = computed<ColumnDef<AuditTrail>[]>(() => [
   {
     id: 'select',
     size: 40,
@@ -192,7 +226,7 @@ const auditColumns: ColumnDef<AuditTrail>[] = [
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Kode Aset',
+        t('admin.assetCode'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
@@ -213,7 +247,7 @@ const auditColumns: ColumnDef<AuditTrail>[] = [
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Waktu',
+        t('admin.auditTime'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
@@ -233,7 +267,7 @@ const auditColumns: ColumnDef<AuditTrail>[] = [
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Status',
+        t('admin.auditStatus'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
@@ -254,7 +288,7 @@ const auditColumns: ColumnDef<AuditTrail>[] = [
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Aksi',
+        t('admin.auditAction'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
@@ -269,7 +303,7 @@ const auditColumns: ColumnDef<AuditTrail>[] = [
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Aktor',
+        t('admin.auditActor'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
@@ -284,7 +318,7 @@ const auditColumns: ColumnDef<AuditTrail>[] = [
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-center w-full'
       }, () => [
-        'Durasi',
+        t('admin.auditDuration'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
@@ -292,7 +326,7 @@ const auditColumns: ColumnDef<AuditTrail>[] = [
   },
   {
     accessorKey: 'catatan',
-    header: () => h('div', { class: 'font-semibold text-foreground justify-start' }, 'Catatan'),
+    header: () => h('div', { class: 'font-semibold text-foreground justify-start' }, t('admin.auditNotes')),
     cell: ({ row }) => {
       const note = String(row.getValue('catatan') || '');
       if (note.includes(' | ')) {
@@ -304,25 +338,25 @@ const auditColumns: ColumnDef<AuditTrail>[] = [
       return h('div', { class: 'text-muted-foreground whitespace-normal text-left min-w-[200px]' }, note);
     },
   }
-];
+]);
 </script>
 
 <template>
-  <AppLayout title="Jejak Audit">
+  <AppLayout :title="t('admin.auditTitle')">
     <div class="space-y-4">
       <div class="px-4 bg-card rounded-xl border border-border shadow-sm overflow-hidden">
         <div class="py-3 no-print">
-          <h2 class="text-lg font-bold text-foreground">Jejak Audit</h2>
+          <h2 class="text-lg font-bold text-foreground">{{ t('admin.auditTitle') }}</h2>
 
           <!-- Filters & Actions -->
           <div class="mt-4 flex flex-col space-y-4">
             <div class="flex flex-wrap items-end gap-3">
               <!-- Search -->
               <div class="space-y-1.5 flex-1 min-w-[200px] max-w-xs">
-                <label class="text-xs text-muted-foreground font-medium block ml-0.5">Filter</label>
+                <label class="text-xs text-muted-foreground font-medium block ml-0.5">{{ t('admin.filter') }}</label>
                 <TableSearch 
                   v-model="auditSearch"
-                  placeholder="Cari Kode Aset, Nama Aset, atau Nama Aktor..." 
+                  :placeholder="t('admin.auditSearchPlaceholder')" 
                 />
               </div>
 
@@ -330,14 +364,14 @@ const auditColumns: ColumnDef<AuditTrail>[] = [
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" :class="['w-[180px] justify-between rounded-[14px] font-normal', (auditStatusFilter === 'semua') ? 'text-muted-foreground' : 'text-foreground']">
-                    <span class="truncate">{{ auditStatusFilter === 'semua' ? 'Semua Status' : auditStatusFilter }}</span>
+                    <span class="truncate">{{ auditStatusFilterLabel }}</span>
                     <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent class="w-[180px] rounded-[14px] z-[110]" align="start" :side-offset="4">
-                  <DropdownMenuItem @select="auditStatusFilter = 'semua'">Semua Status</DropdownMenuItem>
+                  <DropdownMenuItem @select="auditStatusFilter = 'semua'">{{ t('admin.allStatuses') }}</DropdownMenuItem>
                   <DropdownMenuItem v-for="st in auditStatusOptions" :key="st" @select="auditStatusFilter = st">
-                    {{ st }}
+                    {{ formatStatus(st) }}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -346,14 +380,14 @@ const auditColumns: ColumnDef<AuditTrail>[] = [
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" :class="['w-[180px] justify-between rounded-[14px] font-normal', (auditActionFilter === 'semua') ? 'text-muted-foreground' : 'text-foreground']">
-                    <span class="truncate">{{ auditActionFilter === 'semua' ? 'Semua Aksi' : auditActionFilter }}</span>
+                    <span class="truncate">{{ auditActionFilterLabel }}</span>
                     <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent class="w-[180px] rounded-[14px] z-[110]" align="start" :side-offset="4">
-                  <DropdownMenuItem @select="auditActionFilter = 'semua'">Semua Aksi</DropdownMenuItem>
+                  <DropdownMenuItem @select="auditActionFilter = 'semua'">{{ t('admin.allActions') }}</DropdownMenuItem>
                   <DropdownMenuItem v-for="act in auditActionOptions" :key="act" @select="auditActionFilter = act">
-                    {{ act }}
+                    {{ formatAction(act) }}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -363,19 +397,15 @@ const auditColumns: ColumnDef<AuditTrail>[] = [
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" :class="['w-[220px] justify-between rounded-[14px] font-normal', (auditTimeFilter === 'semua') ? 'text-muted-foreground' : 'text-foreground']">
                     <span class="truncate">
-                      {{ 
-                        auditTimeFilter === 'semua' ? 'Semua kurun waktu' : 
-                        auditTimeFilter === '7-hari' ? '7 hari terakhir' : 
-                        '30 hari terakhir' 
-                      }}
+                      {{ auditTimeFilterLabel }}
                     </span>
                     <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent class="w-[220px] rounded-[14px] z-[110]" align="start" :side-offset="4">
-                  <DropdownMenuItem @select="auditTimeFilter = 'semua'">Semua Kurun Waktu</DropdownMenuItem>
-                  <DropdownMenuItem @select="auditTimeFilter = '7-hari'">7 hari terakhir</DropdownMenuItem>
-                  <DropdownMenuItem @select="auditTimeFilter = '30-hari'">30 hari terakhir</DropdownMenuItem>
+                  <DropdownMenuItem @select="auditTimeFilter = 'semua'">{{ t('admin.allTimeRanges') }}</DropdownMenuItem>
+                  <DropdownMenuItem @select="auditTimeFilter = '7-hari'">{{ t('admin.last7Days') }}</DropdownMenuItem>
+                  <DropdownMenuItem @select="auditTimeFilter = '30-hari'">{{ t('admin.last30Days') }}</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
 
@@ -384,16 +414,16 @@ const auditColumns: ColumnDef<AuditTrail>[] = [
 
               <!-- Rows Per Page -->
               <div class="flex items-center gap-3 text-sm text-muted-foreground ml-auto">
-                <span>Baris per halaman</span>
+                <span>{{ t('admin.rowsPerPage') }}</span>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal', (auditRowsPerPage === 'Semua baris' || !auditRowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
-                      {{ auditRowsPerPage }}
+                      {{ auditRowsPerPageLabel }}
                       <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent class="w-[140px] rounded-[14px] z-[110]" align="start" :side-offset="4">
-                    <DropdownMenuItem @select="auditRowsPerPage = 'Semua baris'">Semua baris</DropdownMenuItem>
+                    <DropdownMenuItem @select="auditRowsPerPage = 'Semua baris'">{{ t('admin.allRows') }}</DropdownMenuItem>
                     <DropdownMenuItem @select="auditRowsPerPage = '10'">10</DropdownMenuItem>
                     <DropdownMenuItem @select="auditRowsPerPage = '25'">25</DropdownMenuItem>
                     <DropdownMenuItem @select="auditRowsPerPage = '50'">50</DropdownMenuItem>

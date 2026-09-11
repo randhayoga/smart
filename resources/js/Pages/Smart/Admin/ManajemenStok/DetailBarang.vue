@@ -3,6 +3,7 @@
  * Admin Item Detail Page component displaying item specifications, associated batch LOTs, and registered asset units.
  */
 import { ref, watch, onMounted, onUnmounted, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { router, usePage } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 import AppLayout from '@/Layouts/AppLayout.vue';
@@ -74,7 +75,15 @@ const props = withDefaults(defineProps<Props>(), {
   units: () => [],
 });
 
-const tabs = computed(() => ['Detail', props.barang.is_consumable ? 'Daftar LOT' : 'Daftar Aset']);
+const { t } = useI18n();
+
+const tabs = computed(() => [
+  { id: 'Detail', label: t('inventory.typeDetail') },
+  { 
+    id: props.barang.is_consumable ? 'Daftar LOT' : 'Daftar Aset', 
+    label: props.barang.is_consumable ? t('inventory.lotList') : t('inventory.assetList') 
+  }
+]);
 const activeTab = ref('Detail');
 
 const totalStok = computed(() => {
@@ -188,12 +197,12 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <AppLayout title="Detail Tipe">
+  <AppLayout :title="t('inventory.typeDetail')">
     <!-- Breadcrumb -->
     <Breadcrumb class="no-print">
       <BreadcrumbList class="pb-3">
         <BreadcrumbItem>
-          <BreadcrumbLink href="/smart/inventory">Manajemen Barang</BreadcrumbLink>
+          <BreadcrumbLink href="/smart/inventory">{{ t('inventory.inventoryManagement') }}</BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
@@ -208,10 +217,10 @@ onUnmounted(() => {
 
       <div class="flex items-center gap-3">
         <Button @click="openEditModal" variant="primary" size="lg">
-          Edit Detail Tipe
+          {{ t('inventory.editTypeDetail') }}
         </Button>
         <Button @click="openDeleteModal" variant="destructive" size="lg">
-          Hapus Tipe
+          {{ t('inventory.deleteType') }}
         </Button>
       </div>
     </div>
@@ -255,7 +264,7 @@ onUnmounted(() => {
     <DeleteConfirmationModal 
       :is-open="isDeleteModalOpen"
       :item-count="itemsToDelete.length"
-      :item-name="'Tipe'"
+      :item-name="t('inventory.itemType')"
       :item-data="itemsToDelete.length === 1 ? itemsToDelete[0] : itemsToDelete"
       :fields="deleteFields"
       :max-width-class="itemsToDelete.length === 1 ? 'max-w-2xl' : undefined"

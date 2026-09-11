@@ -118,7 +118,7 @@ const emit = defineEmits<{
         <template v-if="!item.barang_id">
           <h3 class="text-sm sm:text-lg font-bold text-foreground leading-snug truncate">{{ item.subcategory_name }}</h3>
           <p class="text-xs sm:text-sm text-muted-foreground leading-normal truncate">{{ item.category_name }}</p>
-          <p class="text-[10px] sm:text-xs text-muted-foreground italic hidden sm:block">*foto hanya ilustrasi</p>
+          <p class="text-[10px] sm:text-xs text-muted-foreground italic hidden sm:block">{{ $t('requests.photoIllustration') }}</p>
         </template>
         <!-- Specific Inventory Item Mode (with brand, model, and specs) -->
         <template v-else>
@@ -143,7 +143,7 @@ const emit = defineEmits<{
         size="icon"
         class="text-destructive hover:bg-destructive/10 hover:text-destructive flex-shrink-0 rounded-full"
         @click="emit('remove')"
-        title="Remove from cart"
+        :title="$t('requests.removeFromCart')"
       >
         <Trash2 class="w-4 h-4" />
       </Button>
@@ -155,7 +155,7 @@ const emit = defineEmits<{
           @update:model-value="(val: number) => emit('update:quantity', val)"
           :min="1" 
           :max="999999" 
-          locale="id-ID" 
+          :locale="$i18n.locale === 'en' ? 'en-US' : 'id-ID'" 
           class="w-28 sm:w-32"
           :disabled="disabled"
         >

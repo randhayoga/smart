@@ -3,6 +3,7 @@
  * Detail Asset Modal component displaying asset unit specifications, borrow assignments, QR code generation, and audit trail tabs.
  */
 import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useModalLock } from '@/composables/useModalLock';
 import { router } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
@@ -27,11 +28,19 @@ const emit = defineEmits<{
   (e: 'edit', asset: any): void;
 }>();
 
+const { t, locale } = useI18n();
+
 useModalLock(computed(() => props.open));
 
 const detailActiveTab = ref('Detail Aset');
 const fileInputRef = ref<HTMLInputElement | null>(null);
 const isUploading = ref(false);
+
+const tabs = computed(() => [
+  { id: 'Detail Aset', label: t('inventory.assetDetail') },
+  { id: 'Peminjaman', label: t('inventory.borrowHistory') },
+  { id: 'Jejak Audit', label: t('inventory.auditTrail') },
+]);
 
 watch(() => props.open, (newVal) => {
   if (newVal) {
@@ -57,7 +66,8 @@ const formatRupiah = (val: number | string | null | undefined) => {
   if (val === null || val === undefined) return '-';
   const num = typeof val === 'string' ? parseFloat(val) : val;
   if (isNaN(num)) return '-';
-  const formatted = Math.floor(num).toLocaleString('id-ID');
+  const loc = locale.value === 'en' ? 'en-US' : 'id-ID';
+  const formatted = Math.floor(num).toLocaleString(loc);
   return `Rp${formatted}`;
 };
 
@@ -70,7 +80,16 @@ const formatLocation = (loc: string | null, floor: string | null, room: string |
 };
 
 const getConditionLabel = (cond: string) => {
-  return cond || '';
+  if (!cond) return '';
+  const map: Record<string, string> = {
+    'Bagus': t('inventory.conditionGood'),
+    'Rusak': t('inventory.conditionDamaged'),
+    'QC Passed': t('inventory.conditionQcPassed'),
+    'Lelang/Hibah': t('inventory.conditionAuctionGrant'),
+    'Rusak Total': t('inventory.conditionTotalDamage'),
+    'Hilang': t('inventory.conditionLost'),
+  };
+  return map[cond] || cond;
 };
 
 const getAge = (dateStr: string | null) => {
@@ -99,12 +118,12 @@ const handleBodBocUpload = (e: Event) => {
 
   const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
   if (!allowedTypes.includes(file.type)) {
-    toast.error('Format file salah! Hanya diperbolehkan file .pdf, .jpg, .jpeg, atau .png');
+    toast.error(t('inventory.invalidDocFormat'));
     target.value = '';
     return;
   }
   if (file.size > 2 * 1024 * 1024) {
-    toast.error('Gagal! Ukuran Formulir Approval BoD/BoC maksimal 2MB.');
+    toast.error(t('inventory.fileTooLarge2Mb'));
     target.value = '';
     return;
   }
@@ -133,7 +152,7 @@ const handleBodBocUpload = (e: Event) => {
         if (errors.bod_boc_approval_file) {
           toast.error(errors.bod_boc_approval_file);
         } else {
-          toast.error('Gagal mengunggah formulir persetujuan. Silakan coba lagi.');
+          toast.error(t('inventory.uploadBodBocFailed'));
         }
       },
       onFinish: () => {
@@ -193,7 +212,7 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
           >
             <!-- Modal Header -->
             <div class="flex items-center justify-between pt-2 px-4 border-b border-border">
-              <Tabs v-model="detailActiveTab" :tabs="['Detail Aset', 'Peminjaman', 'Jejak Audit']" />
+              <Tabs v-model="detailActiveTab" :tabs="tabs" />
               <button @click="emit('update:open', false)" class="p-2 hover:bg-muted rounded-full transition-colors">
                 <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
               </button>
@@ -227,41 +246,41 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                   <div v-if="asset" class="flex-grow grid grid-cols-1 md:grid-cols-12 gap-4 text-foreground">
                     <!-- Column 1: Item Info -->
                     <div class="md:col-span-3">
-                      <p class="font-bold text-foreground"><span class="text-foreground">Kode Tipe:</span> {{ finalBarangCode }}</p>
-                      <p class="font-bold text-foreground"><span class="text-foreground">Merek:</span> {{ finalBarangBrand }}</p>
-                      <p class="font-bold text-foreground"><span class="text-foreground">Nama:</span> {{ finalBarangNama }}</p>
-                      <p class="font-bold text-foreground"><span class="text-foreground">Spesifikasi:</span> {{ finalBarangSpecification }}</p>
-                      <p class="text-foreground">Kategori: {{ finalBarangCategory }}</p>
-                      <p class="text-foreground">Subkategori: {{ finalBarangSubcategory }}</p>
-                      <p class="text-foreground">Satuan: {{ finalBarangUom }}</p>
+                      <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.typeCode') }}:</span> {{ finalBarangCode }}</p>
+                      <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.brand') }}:</span> {{ finalBarangBrand }}</p>
+                      <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.name') }}:</span> {{ finalBarangNama }}</p>
+                      <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.specification') }}:</span> {{ finalBarangSpecification }}</p>
+                      <p class="text-foreground">{{ t('inventory.category') }}: {{ finalBarangCategory }}</p>
+                      <p class="text-foreground">{{ t('inventory.subcategory') }}: {{ finalBarangSubcategory }}</p>
+                      <p class="text-foreground">{{ t('inventory.uom') }}: {{ finalBarangUom }}</p>
                     </div>
 
                     <!-- Column 2: LOT Info -->
                     <div class="md:col-span-4">
-                      <p class="font-bold text-foreground"><span class="text-foreground">Kode LOT:</span> {{ finalLotNumber }}</p>
-                      <p class="text-foreground">Organizer: {{ finalLotOrganizer }}</p>
-                      <p class="text-foreground">Tanggal registrasi: {{ formatDate(finalLotDateOfReceipt) }}</p>
-                      <p class="text-foreground">Umur: {{ finalLotAge !== null && finalLotAge !== undefined ? `${finalLotAge} tahun` : '-' }}</p>
-                      <p class="text-foreground">Vendor: {{ finalLotVendor }}</p>
-                      <p class="text-foreground">Nomor PO: {{ finalLotPoNumber }}</p>
+                      <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.lotCode') }}:</span> {{ finalLotNumber }}</p>
+                      <p class="text-foreground">{{ t('inventory.organizer') }}: {{ finalLotOrganizer }}</p>
+                      <p class="text-foreground">{{ t('inventory.registrationDate') }}: {{ formatDate(finalLotDateOfReceipt) }}</p>
+                      <p class="text-foreground">{{ t('inventory.age') }}: {{ finalLotAge !== null && finalLotAge !== undefined ? `${finalLotAge} ${t('inventory.yearUnit')}` : '-' }}</p>
+                      <p class="text-foreground">{{ t('inventory.vendor') }}: {{ finalLotVendor }}</p>
+                      <p class="text-foreground">{{ t('inventory.poNumber') }}: {{ finalLotPoNumber }}</p>
                     </div>
 
                     <!-- Column 3: Asset Info -->
                     <div class="md:col-span-5">
-                      <p class="font-bold text-foreground"><span class="text-foreground">Kode Aset:</span> {{ asset.number }}</p>
+                      <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.assetCode') }}:</span> {{ asset.number }}</p>
                       <!-- TNKB (Nopol) -->
                       <p v-if="isVehicle" class="font-bold text-foreground">
-                        <span class="text-foreground">Nopol:</span> {{ asset.vehicle_registration || '-' }}
+                        <span class="text-foreground">{{ t('inventory.nopol') }}:</span> {{ asset.vehicle_registration || '-' }}
                       </p>
                       <p class="text-foreground">
-                        Status: 
+                        {{ t('inventory.status') }}: 
                         <StatusBadge 
                           :status="asset.status" 
                           :proposed-status="asset.proposed_status" 
                         />
                       </p>
                       <p class="text-foreground">
-                        Kondisi: 
+                        {{ t('inventory.condition') }}: 
                         <span 
                           :class="[
                             'font-semibold',
@@ -273,9 +292,9 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                           {{ getConditionLabel(asset.condition) }}
                         </span>
                       </p>
-                      <p class="text-foreground">Nilai: {{ formatRupiah(asset.price) }}</p>
-                      <p class="text-foreground">Lokasi penyimpanan: {{ formatLocation(asset.location, asset.floor, asset.room) }}</p>
-                      <p class="text-foreground">Pembaruan terakhir: {{ asset.updated_at || '-' }}</p>
+                      <p class="text-foreground">{{ t('inventory.value') }}: {{ formatRupiah(asset.price) }}</p>
+                      <p class="text-foreground">{{ t('inventory.storageLocation') }}: {{ formatLocation(asset.location, asset.floor, asset.room) }}</p>
+                      <p class="text-foreground">{{ t('inventory.lastUpdate') }}: {{ asset.updated_at || '-' }}</p>
                     </div>
                   </div>
                 </div>
@@ -311,7 +330,7 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                   <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                   </svg>
-                  Unduh QR Code
+                  {{ t('inventory.downloadQr') }}
                 </Button>
 
                 <Button 
@@ -322,7 +341,7 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                   class="inline-flex items-center gap-2"
                 >
                   <FileText class="w-4 h-4" />
-                  Buka Memo / Berita Acara
+                  {{ t('inventory.openMemo') }}
                 </Button>
 
                 <Button 
@@ -333,7 +352,7 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                   class="inline-flex items-center gap-2"
                 >
                   <FileText class="w-4 h-4" />
-                  Surat Keterangan Kehilangan
+                  {{ t('inventory.openLostDoc') }}
                 </Button>
 
                 <!-- Hidden BoD/BoC File Input -->
@@ -353,7 +372,7 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                   class="inline-flex items-center gap-2"
                 >
                   <FileText class="w-4 h-4" />
-                  Buka Form Persetujuan BoD/BoC
+                  {{ t('inventory.openBodBocDoc') }}
                 </Button>
 
                 <Button 
@@ -365,7 +384,7 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                   class="inline-flex items-center gap-2"
                 >
                   <Upload class="w-4 h-4" />
-                  {{ isUploading ? 'Mengunggah...' : 'Unggah Form Persetujuan BoD/BoC' }}
+                  {{ isUploading ? t('inventory.uploading') : t('inventory.uploadBodBocDoc') }}
                 </Button>
 
                 <Button 
@@ -376,7 +395,7 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                   variant="primary"
                   size="lg"
                 >
-                  Edit Detail Aset
+                  {{ t('inventory.editAssetDetail') }}
                 </Button>
               </template>
 
@@ -385,7 +404,7 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                 variant="white"
                 size="lg"
               >
-                Kembali
+                {{ t('common.back') }}
               </Button>
             </div>
           </div>

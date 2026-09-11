@@ -69,10 +69,10 @@ const emit = defineEmits<{
         class="w-full mt-auto bg-gradient-primary shadow-button hover:opacity-90 text-white rounded-[0.75rem] h-9 sm:h-[2.25rem] text-xs sm:text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed px-3"
       >
         <template v-if="disabled">
-          Tidak Tersedia
+          {{ $t('requests.unavailable') }}
         </template>
         <template v-else>
-          <span>Tambah</span>
+          <span>{{ $t('requests.add') }}</span>
         </template>
       </Button>
     </div>

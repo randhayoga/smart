@@ -3,6 +3,7 @@
  * Pindai Barcode page component enabling real-time camera scanning, flashlight toggling, and file upload barcode decoding.
  */
 import { ref, onMounted, onUnmounted, nextTick } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { Head, router } from '@inertiajs/vue3';
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 import AppLayout from '@/Layouts/AppLayout.vue';
@@ -21,6 +22,8 @@ import {
   ZapOff,
   Image as ImageIcon
 } from 'lucide-vue-next';
+
+const { t } = useI18n();
 
 // State variables
 const isScanning = ref(false);
@@ -147,7 +150,7 @@ const startScanner = async () => {
   } catch (err: any) {
     isScanning.value = false;
     isInitializing.value = false;
-    scanError.value = 'Izin kamera ditolak atau kamera tidak ditemukan. Silakan izinkan akses kamera pada browser atau gunakan opsi Pindai dari Galeri di bawah.';
+    scanError.value = t('scanner.cameraPermissionError');
     console.error('Camera Scanner error:', err);
   }
 };
@@ -236,7 +239,7 @@ const onScanSuccess = async (decodedText: string) => {
   // Immediately stop camera for privacy and resource release
   await stopScanner();
 
-  scanSuccessMsg.value = 'QR Code Berhasil Terdeteksi! Membuka halaman detail aset...';
+  scanSuccessMsg.value = t('scanner.scanSuccessOpening');
 
   // Process scanned payload
   processScannedData(decodedText);
@@ -259,7 +262,7 @@ const processScannedData = (rawText: string) => {
     extractedCode = decodeURIComponent(urlMatch[1]);
   } else if (cleanText.startsWith('http://') || cleanText.startsWith('https://')) {
     // If it's another URL format that doesn't match /smart/scan, show unrecognized error
-    scanError.value = `Format QR Code tidak dikenali sebagai QR Aset SMART (${cleanText.substring(0, 35)}...)`;
+    scanError.value = t('scanner.unrecognizedCode', { code: cleanText.substring(0, 35) });
     return;
   }
 
@@ -272,7 +275,7 @@ const processScannedData = (rawText: string) => {
   }
 
   // Fallback: If text doesn't contain valid alphanumeric characters
-  scanError.value = `Format QR Code tidak dikenali sebagai QR Aset SMART (${cleanText.substring(0, 35)}...)`;
+  scanError.value = t('scanner.unrecognizedCode', { code: cleanText.substring(0, 35) });
 };
 
 // Handle File Selection (Scans QR directly in client memory without saving file)
@@ -312,11 +315,11 @@ const handleFileUpload = async (event: Event) => {
     const result = await fileScanner.scanFile(file, false);
 
     fileScanning.value = false;
-    scanSuccessMsg.value = 'QR Code Gambar Terbaca!';
+    scanSuccessMsg.value = t('scanner.imageScanSuccess');
     processScannedData(result);
   } catch (err: any) {
     fileScanning.value = false;
-    scanError.value = 'Tidak dapat menemukan QR Code pada gambar yang dipilih.';
+    scanError.value = t('scanner.imageScanNotFound');
     console.error('File scan error:', err);
   } finally {
     if (fileScanner) {
@@ -332,12 +335,12 @@ const handleFileUpload = async (event: Event) => {
 </script>
 
 <template>
-  <AppLayout title="Pindai Barcode">
+  <AppLayout :title="t('scanner.title')">
     <div class="max-w-md mx-auto space-y-4">
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbLink href="/smart/scan">Pindai Barcode</BreadcrumbLink>
+            <BreadcrumbLink href="/smart/scan">{{ t('scanner.breadcrumb') }}</BreadcrumbLink>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
@@ -350,10 +353,10 @@ const handleFileUpload = async (event: Event) => {
           <div class="flex flex-col gap-2">
             <div>
               <h2 class="text-lg font-bold text-foreground flex items-center">
-                Pindai Barcode Aset
+                {{ t('scanner.pageHeader') }}
               </h2>
               <p class="text-xs text-muted-foreground mt-0.5">
-                Arahkan kamera ke stiker QR Code aset untuk melihat informasi detail dan riwayat barang.
+                {{ t('scanner.pageSubtitle') }}
               </p>
             </div>
 
@@ -361,7 +364,7 @@ const handleFileUpload = async (event: Event) => {
               <!-- Warning Badge for Desktop/Laptop screens -->
               <Badge variant="outline" class="hidden lg:flex w-fit bg-destructive/10 text-destructive border-destructive/20 px-3 py-1.5 items-center gap-1.5 font-medium text-xs">
                 <AlertTriangle class="w-4 h-4 shrink-0" />
-                Fitur ini didesain untuk digunakan pada Smartphone
+                {{ t('scanner.mobileNotice') }}
               </Badge>
             </div>
           </div>
@@ -377,7 +380,7 @@ const handleFileUpload = async (event: Event) => {
                 <div class="w-full flex items-center justify-between mb-3">
                   <span class="font-semibold text-foreground flex items-center gap-1.5">
                     <Camera class="w-5 h-5 text-primary" />
-                    Kamera Pemindai
+                    {{ t('scanner.scannerCamera') }}
                   </span>
 
                   <div class="flex items-center gap-2">
@@ -391,11 +394,11 @@ const handleFileUpload = async (event: Event) => {
                           ? 'bg-amber-500/20 text-amber-500 border-amber-500/40' 
                           : 'bg-background hover:bg-muted text-muted-foreground border-border'
                       ]"
-                      title="Nyalakan/Matikan Flashlight"
+                      :title="t('scanner.toggleFlash')"
                     >
                       <Zap v-if="!isTorchOn" class="w-3.5 h-3.5" />
                       <ZapOff v-else class="w-3.5 h-3.5" />
-                      <span class="text-[11px]">Flash</span>
+                      <span class="text-[11px]">{{ t('scanner.flash') }}</span>
                     </button>
                   </div>
                 </div>
@@ -404,7 +407,7 @@ const handleFileUpload = async (event: Event) => {
                 <div 
                   @click="triggerAutoFocus"
                   class="relative w-full bg-slate-950 rounded-xl overflow-hidden border border-border flex items-center justify-center shadow-inner cursor-pointer min-h-[300px]"
-                  title="Ketuk layar kamera untuk fokus ulang"
+                  :title="t('scanner.tapToFocusTip')"
                 >
                   <div id="qr-reader-container" class="w-full"></div>
                   <div id="file-scanner-temp" class="hidden"></div>
@@ -419,17 +422,17 @@ const handleFileUpload = async (event: Event) => {
                   <!-- Initializing Spinner -->
                   <div v-if="isInitializing && !scanError" class="absolute inset-0 bg-slate-950/90 flex flex-col items-center justify-center p-4 text-center z-10">
                     <RefreshCw class="w-8 h-8 text-primary animate-spin mb-2" />
-                    <p class="text-sm font-medium text-slate-200">Memuat Kamera Pemindai...</p>
-                    <p class="text-xs text-slate-400 mt-1">Izinkan akses kamera pada browser jika diminta.</p>
+                    <p class="text-sm font-medium text-slate-200">{{ t('scanner.loadingCamera') }}</p>
+                    <p class="text-xs text-slate-400 mt-1">{{ t('scanner.allowCameraInstruction') }}</p>
                   </div>
 
                   <!-- Inactive Camera Overlay -->
                   <div v-if="!isScanning && !isInitializing" class="absolute inset-0 bg-slate-950/95 flex flex-col items-center justify-center p-6 text-center z-10">
                     <CameraOff class="w-10 h-10 text-slate-500 mb-2" />
-                    <p class="text-sm font-medium text-slate-300 mb-4">Kamera Nonaktif</p>
+                    <p class="text-sm font-medium text-slate-300 mb-4">{{ t('scanner.cameraInactive') }}</p>
                     <Button @click.stop="startScanner" variant="default" size="sm" class="gap-2">
                       <RefreshCw class="w-4 h-4" />
-                      Coba Aktifkan Kamera Kembali
+                      {{ t('scanner.retryCamera') }}
                     </Button>
                   </div>
                 </div>
@@ -438,7 +441,7 @@ const handleFileUpload = async (event: Event) => {
                 <div v-if="scanError" class="w-full mt-3 p-3 bg-destructive/10 border border-destructive/30 rounded-lg flex items-start gap-2 text-destructive text-xs">
                   <AlertCircle class="w-4 h-4 shrink-0 mt-0.5" />
                   <div class="flex-1">
-                    <p class="font-semibold">Info Pemindaian</p>
+                    <p class="font-semibold">{{ t('scanner.scanInfoTitle') }}</p>
                     <p class="mt-0.5 opacity-90">{{ scanError }}</p>
                   </div>
                 </div>
@@ -458,10 +461,10 @@ const handleFileUpload = async (event: Event) => {
                 <div>
                   <h3 class="text-base font-bold text-foreground flex items-center gap-2">
                     <ImageIcon class="w-5 h-5 text-primary" />
-                    Pindai dari Galeri
+                    {{ t('scanner.scanFromGallery') }}
                   </h3>
                   <p class="text-xs text-muted-foreground mt-1">
-                    Pilih foto Barcode Aset yang tersimpan di perangkat Anda.
+                    {{ t('scanner.scanFromGalleryDesc') }}
                   </p>
                 </div>
 
@@ -482,7 +485,7 @@ const handleFileUpload = async (event: Event) => {
                   <Upload v-if="!fileScanning" class="w-4 h-4" />
                   <RefreshCw v-else class="w-4 h-4 animate-spin" />
                   <span class="text-xs font-medium">
-                    {{ fileScanning ? 'Membaca Gambar...' : 'Pilih Berkas Gambar' }}
+                    {{ fileScanning ? t('scanner.readingImage') : t('scanner.selectImageFile') }}
                   </span>
                 </Button>
               </div>

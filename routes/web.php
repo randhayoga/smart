@@ -43,7 +43,11 @@ use App\Http\Controllers\Smart\Admin\Master\BrandController;
 use App\Http\Controllers\Smart\Admin\Master\OrganizerController;
 use App\Http\Controllers\Smart\Admin\Master\VendorController;
 use App\Http\Controllers\Smart\Admin\Master\LocationController;
+use App\Http\Controllers\LocaleController;
 use Illuminate\Support\Facades\Route;
+
+// Locale preference switching
+Route::match(['put', 'post'], '/locale', [LocaleController::class, 'update'])->name('locale.update');
 
 // Root redirect - go to dashboard based on role
 Route::get('/', function (\Illuminate\Http\Request $request) {

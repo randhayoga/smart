@@ -2,6 +2,7 @@
  * Request Status standardization utilities and visual pill badge styling.
  * Single source of truth for request statuses across the application.
  */
+import { i18n } from '@/locales';
 
 export type RequestStatus = 
   | 'Menunggu approval' 
@@ -138,6 +139,33 @@ export function parseRequestStatuses(rawStatus: string | null | undefined): stri
   return rawStatus.split(',').map(s => s.trim()).filter(Boolean);
 }
 
+export const REQUEST_STATUS_KEY_MAP: Record<string, string> = {
+  'Menunggu approval': 'status.menungguApproval',
+  'Di-approve': 'status.diApprove',
+  'Ditolak': 'status.ditolak',
+  'Dikonfirmasi Admin': 'status.dikonfirmasiAdmin',
+  'Menunggu Serah Terima': 'status.menungguSerahTerima',
+  'Serah Terima': 'status.serahTerima',
+  'Dipinjam': 'status.dipinjam',
+  'Selesai': 'status.selesai',
+  'Dibatalkan': 'status.dibatalkan',
+  'Pending': 'status.pending',
+  'Parsial': 'status.parsial',
+  'Partial': 'status.parsial',
+};
+
+/**
+ * Returns localized display label for the request status based on active i18n locale.
+ */
+export function getLocalizedRequestStatusLabel(rawOrStatus: string | null | undefined): string {
+  const canonical = getRequestStatusLabel(rawOrStatus);
+  const key = REQUEST_STATUS_KEY_MAP[canonical];
+  if (key && (i18n.global as any).te && (i18n.global as any).te(key)) {
+    return (i18n.global as any).t(key);
+  }
+  return canonical;
+}
+
 /**
  * Returns an array of badge metadata for multi-status strings.
  */
@@ -146,7 +174,7 @@ export function getRequestStatusBadges(rawStatus: string | null | undefined): { 
   if (parts.length === 0) {
     const label = getRequestStatusLabel(rawStatus);
     return [{
-      label,
+      label: getLocalizedRequestStatusLabel(label),
       class: getRequestStatusBadgeClass(label),
       pillClass: getRequestStatusPillClass(label),
     }];
@@ -155,7 +183,7 @@ export function getRequestStatusBadges(rawStatus: string | null | undefined): { 
   return parts.map(part => {
     const label = getRequestStatusLabel(part);
     return {
-      label,
+      label: getLocalizedRequestStatusLabel(label),
       class: getRequestStatusBadgeClass(label),
       pillClass: getRequestStatusPillClass(label),
     };

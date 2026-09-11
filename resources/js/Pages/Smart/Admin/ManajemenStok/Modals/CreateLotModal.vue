@@ -3,6 +3,7 @@
  * Create LOT Modal component for registering new procurement batches, PO references, vendor information, and initial quantities.
  */
 import { ref, watch, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useModalLock } from '@/composables/useModalLock';
 import { router, useForm } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
@@ -36,6 +37,8 @@ const emit = defineEmits<{
   (e: 'update:open', value: boolean): void;
   (e: 'success'): void;
 }>();
+
+const { t } = useI18n();
 
 useModalLock(computed(() => props.open));
 
@@ -135,8 +138,8 @@ const handleFileUpload = (e: any) => {
   const file = e.target.files[0];
   if (!file) return;
   const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
-  if (!allowedTypes.includes(file.type)) { alert('Format file salah! Hanya diperbolehkan file .jpg, .jpeg, atau .png'); return; }
-  if (file.size > 1024 * 1024) { alert('Gagal! Ukuran foto maksimal 1MB'); return; }
+  if (!allowedTypes.includes(file.type)) { alert(t('inventory.invalidFileFormat')); return; }
+  if (file.size > 1024 * 1024) { alert(t('inventory.fileTooLarge1Mb')); return; }
   lotForm.image_url = file;
   lotForm.image_url_name = file.name;
   lotForm.use_parent_image = false;
@@ -161,7 +164,7 @@ const handleSamakanPhoto = () => {
     lotForm.image_url = null;
     lotForm.image_url_name = props.barang.image_url.split('/').pop() || '';
   } else {
-    toast.error('Tipe parent tidak memiliki foto.');
+    toast.error(t('inventory.parentNoPhoto'));
   }
 };
 
@@ -188,29 +191,28 @@ const closeModal = () => { emit('update:open', false); };
 const handleSubmit = () => {
   resetErrors();
   let isValid = true;
-  if (!lotForm.number) { errors.value.number = 'Kode LOT belum diisi'; isValid = false; }
-  if (!lotForm.organizer_id) { errors.value.organizer_id = 'Organizer belum dipilih'; isValid = false; }
-  if (!lotForm.vendor_id) { errors.value.vendor_id = 'Vendor belum dipilih'; isValid = false; }
-  if (!lotForm.location_id) { errors.value.location_id = 'Lokasi belum dipilih'; isValid = false; }
-  if (!lotForm.po_number) { errors.value.po_number = 'Nomor PO belum diisi'; isValid = false; }
-  if (!lotForm.date_of_receipt) { errors.value.date_of_receipt = 'Tanggal Registrasi belum diisi'; isValid = false; }
+  if (!lotForm.number) { errors.value.number = t('inventory.lotCodeRequired'); isValid = false; }
+  if (!lotForm.organizer_id) { errors.value.organizer_id = t('inventory.organizerRequired'); isValid = false; }
+  if (!lotForm.vendor_id) { errors.value.vendor_id = t('inventory.vendorRequired'); isValid = false; }
+  if (!lotForm.location_id) { errors.value.location_id = t('inventory.locationRequired'); isValid = false; }
+  if (!lotForm.po_number) { errors.value.po_number = t('inventory.poNumberRequired'); isValid = false; }
+  if (!lotForm.date_of_receipt) { errors.value.date_of_receipt = t('inventory.dateOfReceiptRequired'); isValid = false; }
   if (lotForm.burden === 'Project' && !lotForm.project_id) {
-    errors.value.project_id = 'Project belum dipilih';
+    errors.value.project_id = t('inventory.projectRequired');
     isValid = false;
   }
   if (!lotForm.image_url && !lotForm.image_url_name) {
-    const photoLabel = props.barang.is_consumable ? 'Foto' : 'Foto default';
-    errors.value.image_url = `${photoLabel} belum dipilih`;
+    errors.value.image_url = props.barang.is_consumable ? t('inventory.assetPhotoRequired') : t('inventory.photoRequired');
     isValid = false;
   }
   if (props.barang.is_consumable) {
     if (lotForm.initial_quantity === '' || lotForm.initial_quantity === null) {
-      errors.value.initial_quantity = 'Jumlah stok belum diisi'; isValid = false;
+      errors.value.initial_quantity = t('inventory.stockQtyRequired'); isValid = false;
     }
   } else {
     if (lotForm.auto_create_assets) {
       if (lotForm.auto_create_assets_count === '' || lotForm.auto_create_assets_count === null) {
-        errors.value.auto_create_assets_count = 'Jumlah aset belum diisi'; isValid = false;
+        errors.value.auto_create_assets_count = t('inventory.assetCountRequired'); isValid = false;
       }
     }
   }
@@ -258,11 +260,11 @@ const handleSubmit = () => {
             use_lot_image: true, bulk_quantity: autoCreateCount
           }, {
             onError: (errs) => {
-              toast.error(`Gagal membuat unit secara otomatis: ${Object.values(errs).join(', ')}`);
+              toast.error(t('inventory.autoAssetSuccess', { errors: Object.values(errs).join(', ') }));
             }
           });
         } else {
-          toast.error('Gagal menemukan data LOT yang baru dibuat untuk pembuatan aset otomatis.');
+          toast.error(t('inventory.autoAssetNotFound'));
         }
       }
     }
@@ -278,7 +280,7 @@ const handleSubmit = () => {
           <div v-if="open" class="bg-card w-full max-w-[1000px] rounded-[14px] shadow-2xl overflow-hidden flex flex-col" @click.stop>
             <!-- Header -->
             <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
-              <h3 class="text-lg font-bold text-foreground">Tambah LOT Baru</h3>
+              <h3 class="text-lg font-bold text-foreground">{{ t('inventory.createNewLot') }}</h3>
               <button @click="closeModal" class="p-2 hover:bg-muted rounded-full transition-colors">
                 <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
               </button>
@@ -290,16 +292,16 @@ const handleSubmit = () => {
                 <!-- Left Column -->
                 <div class="space-y-6">
                   <Field>
-                    <FieldLabel><span>Kode LOT<span class="text-rose-500">*</span></span></FieldLabel>
+                    <FieldLabel><span>{{ t('inventory.lotCode') }}<span class="text-rose-500">*</span></span></FieldLabel>
                     <FieldContent>
-                      <input type="text" v-model="lotForm.number" disabled placeholder="Kode LOT belum di-generate" class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10" />
+                      <input type="text" v-model="lotForm.number" disabled :placeholder="t('inventory.lotNotGenerated')" class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10" />
                     </FieldContent>
                   </Field>
 
                   <Field :data-invalid="!!errors.po_number || undefined">
-                    <FieldLabel><span>Nomor PO<span class="text-rose-500">*</span></span></FieldLabel>
+                    <FieldLabel><span>{{ t('inventory.poNumber') }}<span class="text-rose-500">*</span></span></FieldLabel>
                     <FieldContent>
-                      <input type="text" v-model="lotForm.po_number" placeholder="Contoh: PO-02"
+                      <input type="text" v-model="lotForm.po_number" :placeholder="t('inventory.poNumberPlaceholder')"
                         class="w-full px-4 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors h-10"
                         :class="[errors.po_number ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']"
                       />
@@ -308,7 +310,7 @@ const handleSubmit = () => {
                   </Field>
 
                   <Field :data-invalid="!!errors.date_of_receipt || undefined">
-                    <FieldLabel><span>Tanggal Registrasi<span class="text-rose-500">*</span></span></FieldLabel>
+                    <FieldLabel><span>{{ t('inventory.registrationDate') }}<span class="text-rose-500">*</span></span></FieldLabel>
                     <FieldContent>
                       <input type="date" v-model="lotForm.date_of_receipt"
                         class="w-full px-4 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors h-10"
@@ -319,12 +321,12 @@ const handleSubmit = () => {
                   </Field>
 
                   <Field :data-invalid="!!errors.organizer_id || undefined">
-                    <FieldLabel><span>Organizer<span class="text-rose-500">*</span></span></FieldLabel>
+                    <FieldLabel><span>{{ t('inventory.organizer') }}<span class="text-rose-500">*</span></span></FieldLabel>
                     <FieldContent>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !lotForm.organizer_id ? 'text-muted-foreground' : 'text-foreground', errors.organizer_id ? '!border-destructive focus:!ring-destructive/20 focus:!border-destructive' : '']">
-                            {{ organizers.find(o => o.id == lotForm.organizer_id)?.name || 'Pilih organizer' }}
+                            {{ organizers.find(o => o.id == lotForm.organizer_id)?.name || t('inventory.selectOrganizer') }}
                             <ChevronDown class="w-4 h-4 opacity-50" />
                           </Button>
                         </DropdownMenuTrigger>
@@ -337,9 +339,9 @@ const handleSubmit = () => {
                   </Field>
 
                   <Field :data-invalid="!!errors.vendor_id || undefined">
-                    <FieldLabel><span>Vendor<span class="text-rose-500">*</span></span></FieldLabel>
+                    <FieldLabel><span>{{ t('inventory.vendor') }}<span class="text-rose-500">*</span></span></FieldLabel>
                     <FieldContent>
-                      <Combobox v-model="lotForm.vendor_id" :options="vendors" search-placeholder="Cari vendor..." default-label="Pilih vendor" width-class="w-full h-10 px-4" :error="!!errors.vendor_id" />
+                      <Combobox v-model="lotForm.vendor_id" :options="vendors" :search-placeholder="t('inventory.searchVendorPlaceholder')" :default-label="t('inventory.selectVendor')" width-class="w-full h-10 px-4" :error="!!errors.vendor_id" />
                     </FieldContent>
                     <FieldError v-if="errors.vendor_id">{{ errors.vendor_id }}</FieldError>
                   </Field>
@@ -349,13 +351,13 @@ const handleSubmit = () => {
                 <div class="space-y-6">
                   <Field :data-invalid="!!errors.location_id || undefined">
                     <FieldLabel>
-                      <span>Lokasi<span v-if="!barang.is_consumable" class="italic"> default</span><span class="text-rose-500">*</span></span>
+                      <span>{{ barang.is_consumable ? t('inventory.location') : t('inventory.defaultLocation') }}<span class="text-rose-500">*</span></span>
                     </FieldLabel>
                     <FieldContent>
                       <LocationCombobox
                         v-model="lotForm.location_id"
                         :locations="locations"
-                        placeholder="Pilih lokasi"
+                        :placeholder="t('inventory.selectLocation')"
                         :error="!!errors.location_id"
                         :active-only="true"
                       />
@@ -365,21 +367,21 @@ const handleSubmit = () => {
 
                   <Field>
                     <FieldLabel>
-                      <span>Harga Satuan<span v-if="!barang.is_consumable" class="italic"> default</span></span>
+                      <span>{{ barang.is_consumable ? t('inventory.unitPrice') : t('inventory.defaultUnitPrice') }}</span>
                     </FieldLabel>
                     <FieldContent>
                       <div class="flex w-full rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors h-10 overflow-hidden">
                         <span class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-r border-input select-none font-medium">Rp</span>
-                        <input type="number" v-model="lotForm.unit_price" placeholder="Contoh: 60000" min="0" class="flex-1 min-w-0 px-4 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 transition-colors h-full" />
+                        <input type="number" v-model="lotForm.unit_price" :placeholder="t('inventory.unitPricePlaceholder')" min="0" class="flex-1 min-w-0 px-4 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 transition-colors h-full" />
                       </div>
                     </FieldContent>
                   </Field>
 
                   <!-- Consumable: Stock input -->
                   <Field v-if="barang.is_consumable" :data-invalid="!!(lotForm.errors.initial_quantity || errors.initial_quantity) || undefined">
-                    <FieldLabel><span>Jumlah stok<span class="text-rose-500">*</span></span></FieldLabel>
+                    <FieldLabel><span>{{ t('inventory.totalStock') }}<span class="text-rose-500">*</span></span></FieldLabel>
                     <FieldContent>
-                      <input type="number" v-model="lotForm.initial_quantity" placeholder="Contoh: 10" min="0"
+                      <input type="number" v-model="lotForm.initial_quantity" :placeholder="t('inventory.stockCountPlaceholder')" min="0"
                         class="w-full px-4 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors h-10"
                         :class="[(lotForm.errors.initial_quantity || errors.initial_quantity) ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']"
                         @input="lotForm.current_quantity = lotForm.initial_quantity"
@@ -393,12 +395,12 @@ const handleSubmit = () => {
                     <FieldContent>
                       <div class="flex items-center gap-2 w-full pt-2">
                         <Checkbox id="auto-create-checkbox-modal" v-model="lotForm.auto_create_assets" />
-                        <label for="auto-create-checkbox-modal" class="cursor-pointer select-none text-sm font-medium text-foreground">Buat</label>
+                        <label for="auto-create-checkbox-modal" class="cursor-pointer select-none text-sm font-medium text-foreground">{{ t('inventory.autoCreateLabelPrefix') }}</label>
                         <input type="number" v-model="lotForm.auto_create_assets_count" placeholder="..." min="1" :disabled="!lotForm.auto_create_assets"
                           class="w-16 px-2 py-1 text-sm border rounded-[10px] bg-background focus:outline-none focus:ring-2 transition-colors h-8 disabled:opacity-50 disabled:cursor-not-allowed mx-1"
                           :class="[(lotForm.errors.auto_create_assets_count || errors.auto_create_assets_count) ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']"
                         />
-                        <span class="text-sm font-medium text-foreground">aset secara otomatis dengan nilai default.</span>
+                        <span class="text-sm font-medium text-foreground">{{ t('inventory.autoCreateLabelSuffix') }}</span>
                       </div>
                     </FieldContent>
                     <FieldError v-if="lotForm.errors.auto_create_assets_count || errors.auto_create_assets_count" class="pl-6">{{ lotForm.errors.auto_create_assets_count || errors.auto_create_assets_count }}</FieldError>
@@ -406,7 +408,7 @@ const handleSubmit = () => {
 
                   <Field :data-invalid="!!errors.image_url || undefined">
                     <FieldLabel>
-                      <span>Foto<span v-if="!barang.is_consumable" class="italic"> default</span><span class="text-rose-500">*</span></span>
+                      <span>{{ barang.is_consumable ? t('inventory.photo') : t('inventory.defaultPhoto') }}<span class="text-rose-500">*</span></span>
                     </FieldLabel>
                     <FieldContent>
                       <div class="flex gap-2">
@@ -414,19 +416,19 @@ const handleSubmit = () => {
                           :class="[(lotForm.image_url || lotForm.image_url_name) ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' : 'text-muted-foreground cursor-default', errors.image_url ? 'border-destructive' : 'border-input']"
                           @click="(lotForm.image_url || lotForm.image_url_name) && viewImageInNewTab()"
                         >
-                          {{ lotForm.image_url_name || 'Belum ada foto yang dipilih' }}
+                          {{ lotForm.image_url_name || t('inventory.noPhotoSelected') }}
                         </div>
                         <input type="file" id="create-lot-photo-upload" class="hidden" accept=".jpg,.jpeg,.png" @change="handleFileUpload" />
-                        <Button type="button" @click="handleSamakanPhoto" variant="warning" size="lg">Samakan</Button>
-                        <Button type="button" @click="triggerFileInput" size="lg">Pilih File</Button>
+                        <Button type="button" @click="handleSamakanPhoto" variant="warning" size="lg">{{ t('inventory.sameAsParent') }}</Button>
+                        <Button type="button" @click="triggerFileInput" size="lg">{{ t('inventory.chooseFile') }}</Button>
                       </div>
-                      <p class="text-[10px] text-muted-foreground ml-1 mt-1">Maksimal ukuran 1 MB (.jpg, .jpeg, .png)</p>
+                      <p class="text-[10px] text-muted-foreground ml-1 mt-1">{{ t('inventory.maxFileSize1Mb') }}</p>
                     </FieldContent>
                     <FieldError v-if="errors.image_url">{{ errors.image_url }}</FieldError>
                   </Field>
 
                   <Field>
-                    <FieldLabel><span>Pembebanan<span class="text-rose-500">*</span></span></FieldLabel>
+                    <FieldLabel><span>{{ t('inventory.burden') }}<span class="text-rose-500">*</span></span></FieldLabel>
                     <FieldContent>
                       <RadioGroup v-model="lotForm.burden" class="flex items-center gap-6 h-10">
                         <div class="flex items-center space-x-2">
@@ -442,9 +444,9 @@ const handleSubmit = () => {
                   </Field>
 
                   <Field v-if="lotForm.burden === 'Project'" :data-invalid="!!errors.project_id || undefined">
-                    <FieldLabel><span>Project<span class="text-rose-500">*</span></span></FieldLabel>
+                    <FieldLabel><span>{{ t('inventory.project') }}<span class="text-rose-500">*</span></span></FieldLabel>
                     <FieldContent>
-                      <Combobox v-model="lotForm.project_id" :options="projectOptions" search-placeholder="Cari project..." default-label="Pilih project" width-class="w-full h-10 px-4" :error="!!errors.project_id" />
+                      <Combobox v-model="lotForm.project_id" :options="projectOptions" :search-placeholder="t('inventory.searchProjectPlaceholder')" :default-label="t('inventory.selectProject')" width-class="w-full h-10 px-4" :error="!!errors.project_id" />
                     </FieldContent>
                     <FieldError v-if="errors.project_id">{{ errors.project_id }}</FieldError>
                   </Field>
@@ -454,12 +456,12 @@ const handleSubmit = () => {
 
             <!-- Footer -->
             <div class="py-3 px-4 border-t border-border flex items-center justify-between">
-              <p class="text-sm text-rose-500 italic font-medium">*Wajib diisi</p>
+              <p class="text-sm text-rose-500 italic font-medium">{{ t('inventory.requiredMarker') }}</p>
               <div class="flex items-center gap-3">
-                <Button @click="closeModal" variant="white" size="xl">Batal</Button>
+                <Button @click="closeModal" variant="white" size="xl">{{ t('common.cancel') }}</Button>
                 <Button @click="handleSubmit" :disabled="lotForm.processing" variant="primary" size="xl" class="relative">
                   <Loader2 v-if="lotForm.processing" class="absolute inset-0 m-auto h-5 w-5 animate-spin" />
-                  <span :class="{ 'opacity-0': lotForm.processing }">Tambah LOT</span>
+                  <span :class="{ 'opacity-0': lotForm.processing }">{{ t('inventory.createLotBtn') }}</span>
                 </Button>
               </div>
             </div>

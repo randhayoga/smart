@@ -3,6 +3,7 @@
  * Delete Error Modal component alerting users when a deletion request fails (e.g. active dependencies/foreign keys).
  */
 import { computed, onMounted, onUnmounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useModalLock } from '@/composables/useModalLock';
 import { X, AlertTriangle } from 'lucide-vue-next';
 import { Button } from "@/Components/ui/button";
@@ -19,7 +20,13 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits(['close']);
 
+const { t } = useI18n();
+
 useModalLock(computed(() => props.isOpen));
+
+const resolvedTitle = computed(() => {
+  return props.title !== 'Gagal Menghapus Item' ? props.title : t('common.modals.deleteFailed');
+});
 
 const closeOnEscape = (e: KeyboardEvent) => {
   if (e.key === 'Escape' && props.isOpen) {
@@ -62,7 +69,7 @@ onUnmounted(() => {
           >
             <!-- Modal Header -->
             <div class="flex items-center p-1 justify-between border-b border-border">
-              <h3 class="text-lg font-bold text-foreground p-2">Pemberitahuan</h3>
+              <h3 class="text-lg font-bold text-foreground p-2">{{ $t('common.modals.notice') }}</h3>
               <button @click="emit('close')" class="p-2 hover:bg-muted rounded-full transition-colors">
                 <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
               </button>
@@ -74,7 +81,7 @@ onUnmounted(() => {
                 <AlertTriangle class="w-6 h-6" />
               </div>
               <div class="space-y-2">
-                <h4 class="text-destructive font-bold text-base">{{ title }}</h4>
+                <h4 class="text-destructive font-bold text-base">{{ resolvedTitle }}</h4>
                 <p class="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{{ errorMessage }}</p>
               </div>
             </div>
@@ -87,7 +94,7 @@ onUnmounted(() => {
                 size="xl"
                 class="px-5 w-full"
               >
-                Batal
+                {{ $t('common.close') }}
               </Button>
             </div>
           </div>

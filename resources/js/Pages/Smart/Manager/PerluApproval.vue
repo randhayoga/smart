@@ -6,6 +6,7 @@
  */
 import { ref, computed, watch, onMounted, onUnmounted, h } from 'vue';
 import { Head, router, usePage } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import {
   ThumbsUp,
@@ -25,7 +26,7 @@ import TableSearch from '@/Components/TableSearch.vue';
 import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
 import ApprovalModal from '@/Pages/Smart/Manager/Modals/ApprovalModal.vue';
-import { getRequestStatusPillClass, getRequestStatusLabel } from '@/lib/requestStatus';
+import { getRequestStatusPillClass, getRequestStatusLabel, getLocalizedRequestStatusLabel } from '@/lib/requestStatus';
 import type { SmartRequestData } from '@/types/request';
 
 // --- Data Types & Props ---
@@ -36,6 +37,8 @@ interface Props {
 
 const props = defineProps<Props>();
 
+const { t } = useI18n();
+
 const requests = ref<SmartRequestData[]>([...props.requests]);
 
 watch(() => props.requests, (newVal) => {
@@ -44,9 +47,26 @@ watch(() => props.requests, (newVal) => {
 
 // --- Filter & Search State ---
 const searchQuery = ref('');
-const typeFilter = ref('Semua tipe');
-const utilizationFilter = ref('Semua pemanfaatan');
-const rowsPerPage = ref('Semua baris');
+const typeFilter = ref('all');
+const utilizationFilter = ref('all');
+const rowsPerPage = ref('all');
+
+const typeFilterLabel = computed(() => {
+  if (typeFilter.value === 'peminjaman') return t('requests.loan');
+  if (typeFilter.value === 'permintaan') return t('requests.request');
+  return t('approvals.allTypes');
+});
+
+const utilizationFilterLabel = computed(() => {
+  if (utilizationFilter.value === 'corporate') return t('requests.corporate');
+  if (utilizationFilter.value === 'project') return t('requests.project');
+  return t('approvals.allUtilization');
+});
+
+const rowsPerPageLabel = computed(() => {
+  if (rowsPerPage.value === 'all') return t('approvals.allRows');
+  return rowsPerPage.value;
+});
 
 const dataTableRef = ref<any>(null);
 
@@ -62,14 +82,12 @@ const selectedIds = computed(() => {
 const filteredRequests = computed(() => {
   let list = [...requests.value];
 
-  if (typeFilter.value !== 'Semua tipe') {
-    const type = typeFilter.value === 'Peminjaman' ? 'peminjaman' : 'permintaan';
-    list = list.filter(req => req.type === type);
+  if (typeFilter.value !== 'all') {
+    list = list.filter(req => req.type === typeFilter.value);
   }
 
-  if (utilizationFilter.value !== 'Semua pemanfaatan') {
-    const util = utilizationFilter.value === 'Corporate' ? 'corporate' : 'project';
-    list = list.filter(req => req.pemanfaatan === util);
+  if (utilizationFilter.value !== 'all') {
+    list = list.filter(req => req.pemanfaatan === utilizationFilter.value);
   }
 
   // Pre-sort by id descending (newest first)
@@ -79,7 +97,7 @@ const filteredRequests = computed(() => {
 });
 
 const computedPageSize = computed(() => {
-  if (rowsPerPage.value === 'Semua baris') {
+  if (rowsPerPage.value === 'all') {
     return filteredRequests.value.length || 10;
   }
   return parseInt(rowsPerPage.value, 10);
@@ -91,7 +109,7 @@ watch([typeFilter, utilizationFilter], () => {
   }
 });
 
-const columns: ColumnDef<SmartRequestData>[] = [
+const columns = computed<ColumnDef<SmartRequestData>[]>(() => [
   {
     id: 'select',
     size: 40,
@@ -124,7 +142,7 @@ const columns: ColumnDef<SmartRequestData>[] = [
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Nomor',
+        t('approvals.number'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
@@ -139,11 +157,15 @@ const columns: ColumnDef<SmartRequestData>[] = [
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Tipe',
+        t('approvals.type'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
-    cell: ({ row }) => h('div', { class: 'text-foreground capitalize' }, row.getValue('type')),
+    cell: ({ row }) => {
+      const val = row.getValue('type') as string;
+      const label = val === 'peminjaman' ? t('requests.loan') : t('requests.request');
+      return h('div', { class: 'text-foreground capitalize' }, label);
+    },
   },
   {
     accessorKey: 'requester',
@@ -153,7 +175,7 @@ const columns: ColumnDef<SmartRequestData>[] = [
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Pemohon',
+        t('approvals.requester'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
@@ -168,15 +190,16 @@ const columns: ColumnDef<SmartRequestData>[] = [
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Pemanfaatan',
+        t('approvals.utilization'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
     cell: ({ row }) => {
       const item = row.original;
       const isCorporate = item.pemanfaatan === 'corporate';
+      const utilLabel = isCorporate ? `${t('requests.corporate')} ` : `${t('requests.project')} `;
       return h('div', { class: 'text-foreground' }, [
-        h('span', { class: 'font-semibold' }, isCorporate ? 'Corporate ' : 'Project '),
+        h('span', { class: 'font-semibold' }, utilLabel),
         h('span', { class: 'font-normal text-muted-foreground' }, isCorporate ? `(${item.pemanfaatanDetail})` : item.pemanfaatanDetail)
       ]);
     }
@@ -190,7 +213,7 @@ const columns: ColumnDef<SmartRequestData>[] = [
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Tanggal Dibuat',
+        t('approvals.createdAt'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
@@ -205,14 +228,15 @@ const columns: ColumnDef<SmartRequestData>[] = [
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        'Status',
+        t('approvals.status'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
     cell: ({ row }) => {
       const statusLabel = getRequestStatusLabel(row.getValue('status'));
+      const localizedLabel = getLocalizedRequestStatusLabel(row.getValue('status'));
       return h('div', { class: 'text-left' }, [
-        h('span', { class: getRequestStatusPillClass(statusLabel) }, statusLabel)
+        h('span', { class: getRequestStatusPillClass(statusLabel) }, localizedLabel)
       ]);
     },
   },
@@ -220,33 +244,33 @@ const columns: ColumnDef<SmartRequestData>[] = [
     id: 'actions',
     size: 100,
     enableGlobalFilter: false,
-    header: () => h('div', { class: 'text-right font-semibold text-foreground' }, 'Aksi'),
+    header: () => h('div', { class: 'text-right font-semibold text-foreground' }, t('approvals.actions')),
     cell: ({ row }) => {
       const item = row.original;
       return h('div', { class: 'flex items-center justify-end gap-1.5' }, [
         h(Button, {
           variant: 'success',
           size: 'icon-sm',
-          title: 'Approve',
+          title: t('approvals.approve'),
           onClick: () => openConfirmModal('approve', false, item)
         }, () => [
           h(ThumbsUp, { class: 'w-4 h-4' }),
-          h('span', { class: 'sr-only' }, 'Approve')
+          h('span', { class: 'sr-only' }, t('approvals.approve'))
         ]),
         h(Button, {
           variant: 'destructive',
           size: 'icon-sm',
-          title: 'Tolak',
+          title: t('approvals.reject'),
           onClick: () => openConfirmModal('reject', false, item)
         }, () => [
           h(Ban, { class: 'w-4 h-4' }),
-          h('span', { class: 'sr-only' }, 'Tolak')
+          h('span', { class: 'sr-only' }, t('approvals.reject'))
         ]),
       ]);
     },
     enableSorting: false,
   }
-];
+]);
 
 // ─────────────────────────────────────────────
 // Confirmation Modal States
@@ -286,7 +310,7 @@ const handleConfirmSubmit = (noteParam?: string) => {
     : (selectedSingleRequest.value ? [selectedSingleRequest.value.id] : []);
 
   if (idsToProcess.length === 0) {
-    toast.error('Tidak ada permintaan terpilih.');
+    toast.error(t('approvals.noRequestSelected'));
     return;
   }
 
@@ -305,8 +329,8 @@ const handleConfirmSubmit = (noteParam?: string) => {
         dataTableRef.value.table.resetRowSelection();
       }
       toast.success(confirmActionType.value === 'approve' 
-        ? 'Permintaan berhasil disetujui.' 
-        : 'Permintaan berhasil ditolak.'
+        ? t('approvals.approvedToast') 
+        : t('approvals.rejectedToast')
       );
     },
     onError: (errs) => {
@@ -352,12 +376,12 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <Head title="Approval" />
+  <Head :title="$t('nav.approve')" />
 
-  <AppLayout title="Approval">
+  <AppLayout :title="$t('nav.approve')">
     <!-- ── Title Halaman ── -->
     <div class="mb-6">
-      <h1 class="text-xl font-bold text-gray-900 leading-none">Approval: Perlu Perhatian Anda</h1>
+      <h1 class="text-xl font-bold text-gray-900 leading-none">{{ $t('approvals.pendingTitle') }}</h1>
     </div>
 
     <!-- ── Filter & Search Section ── -->
@@ -365,46 +389,46 @@ onUnmounted(() => {
       <!-- Filters Row -->
       <div class="flex flex-wrap items-end gap-4">
         <div class="space-y-1.5 flex-1 min-w-[300px] max-w-sm">
-          <label class="text-xs text-muted-foreground font-medium block ml-0.5">Filter</label>
+          <label class="text-xs text-muted-foreground font-medium block ml-0.5">{{ $t('common.filter') }}</label>
           <TableSearch 
             v-model="searchQuery"
-            placeholder="Cari Nomor atau Nama Pemohon..." 
+            :placeholder="$t('approvals.searchPlaceholder')" 
             bg-class="bg-white"
           />
         </div>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal bg-white', (!typeFilter || typeFilter === 'Semua tipe') ? 'text-muted-foreground' : 'text-foreground']">
-              <span class="truncate">{{ typeFilter || 'Semua tipe' }}</span>
+            <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal bg-white', (!typeFilter || typeFilter === 'all') ? 'text-muted-foreground' : 'text-foreground']">
+              <span class="truncate">{{ typeFilterLabel }}</span>
               <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
-            <DropdownMenuItem @select="typeFilter = 'Semua tipe'">Semua tipe</DropdownMenuItem>
-            <DropdownMenuItem @select="typeFilter = 'Peminjaman'">Peminjaman</DropdownMenuItem>
-            <DropdownMenuItem @select="typeFilter = 'Permintaan'">Permintaan</DropdownMenuItem>
+            <DropdownMenuItem @select="typeFilter = 'all'">{{ $t('approvals.allTypes') }}</DropdownMenuItem>
+            <DropdownMenuItem @select="typeFilter = 'peminjaman'">{{ $t('requests.loan') }}</DropdownMenuItem>
+            <DropdownMenuItem @select="typeFilter = 'permintaan'">{{ $t('requests.request') }}</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal bg-white', (!utilizationFilter || utilizationFilter === 'Semua pemanfaatan') ? 'text-muted-foreground' : 'text-foreground']">
-              <span class="truncate">{{ utilizationFilter || 'Semua pemanfaatan' }}</span>
+            <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal bg-white', (!utilizationFilter || utilizationFilter === 'all') ? 'text-muted-foreground' : 'text-foreground']">
+              <span class="truncate">{{ utilizationFilterLabel }}</span>
               <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
-            <DropdownMenuItem @select="utilizationFilter = 'Semua pemanfaatan'">Semua pemanfaatan</DropdownMenuItem>
-            <DropdownMenuItem @select="utilizationFilter = 'Corporate'">Corporate</DropdownMenuItem>
-            <DropdownMenuItem @select="utilizationFilter = 'Project'">Project</DropdownMenuItem>
+            <DropdownMenuItem @select="utilizationFilter = 'all'">{{ $t('approvals.allUtilization') }}</DropdownMenuItem>
+            <DropdownMenuItem @select="utilizationFilter = 'corporate'">{{ $t('requests.corporate') }}</DropdownMenuItem>
+            <DropdownMenuItem @select="utilizationFilter = 'project'">{{ $t('requests.project') }}</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
 
       <!-- ── Bulk Actions ── -->
       <div class="space-y-2 flex-1 min-w-0 pt-2">
-        <label class="text-xs text-muted-foreground font-medium block ml-0.5">Aksi Terpilih</label>
+        <label class="text-xs text-muted-foreground font-medium block ml-0.5">{{ $t('approvals.selectedActions') }}</label>
         <div class="flex flex-wrap items-center gap-2">
           <Button 
             :disabled="selectedIds.length < 1"
@@ -412,7 +436,7 @@ onUnmounted(() => {
             variant="success"
           >
             <ThumbsUp class="w-4 h-4" />
-            <span class="hidden sm:inline">Approve Terpilih</span>
+            <span class="hidden sm:inline">{{ $t('approvals.approveSelected') }}</span>
           </Button>
           <Button 
             :disabled="selectedIds.length < 1"
@@ -420,19 +444,19 @@ onUnmounted(() => {
             variant="destructive"
           >
             <Ban class="w-4 h-4" />
-            <span class="hidden sm:inline">Tolak Terpilih</span>
+            <span class="hidden sm:inline">{{ $t('approvals.rejectSelected') }}</span>
           </Button>
           <div class="flex items-center gap-3 text-sm text-muted-foreground ml-auto">
-            <span>Baris per halaman</span>
+            <span>{{ $t('approvals.rowsPerPage') }}</span>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal bg-white', (rowsPerPage === 'Semua baris' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
-                  {{ rowsPerPage }}
+                <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal bg-white', (rowsPerPage === 'all' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
+                  {{ rowsPerPageLabel }}
                   <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent class="w-[140px] rounded-[14px]" align="start" :side-offset="4">
-                <DropdownMenuItem @select="rowsPerPage = 'Semua baris'">Semua baris</DropdownMenuItem>
+                <DropdownMenuItem @select="rowsPerPage = 'all'">{{ $t('approvals.allRows') }}</DropdownMenuItem>
                 <DropdownMenuItem @select="rowsPerPage = '10'">10</DropdownMenuItem>
                 <DropdownMenuItem @select="rowsPerPage = '25'">25</DropdownMenuItem>
               </DropdownMenuContent>

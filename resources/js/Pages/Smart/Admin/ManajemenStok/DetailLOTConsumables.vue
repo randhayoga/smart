@@ -3,6 +3,7 @@
  * Consumable LOT Detail Modal component presenting stock balance, PO number, receiving date, and unit cost.
  */
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useModalLock } from '@/composables/useModalLock';
 import axios from 'axios';
 import { X } from 'lucide-vue-next';
@@ -22,6 +23,8 @@ const emit = defineEmits<{
   (e: 'delete', lot: any): void;
 }>();
 
+const { t, locale } = useI18n();
+
 useModalLock(computed(() => props.isOpen));
 
 const lotDetails = ref<any>(null);
@@ -36,7 +39,7 @@ const fetchLotDetails = async (id: number) => {
     lotDetails.value = response.data;
   } catch (err: any) {
     console.error(err);
-    error.value = 'Gagal memuat data detail LOT.';
+    error.value = t('inventory.loadLotDetailsFailed');
   } finally {
     isLoading.value = false;
   }
@@ -55,8 +58,8 @@ const formatRupiah = (val: number | string | null | undefined) => {
   const num = typeof val === 'string' ? parseFloat(val) : val;
   if (isNaN(num)) return '-';
   
-  // Format to RpXXX.XXX (dot as thousands separator, no decimal)
-  const formatted = Math.floor(num).toLocaleString('id-ID');
+  const loc = locale.value === 'en' ? 'en-US' : 'id-ID';
+  const formatted = Math.floor(num).toLocaleString(loc);
   return `Rp${formatted}`;
 };
 
@@ -124,7 +127,7 @@ onUnmounted(() => {
           >
             <!-- Modal Header -->
             <div class="flex items-center p-1 justify-between border-b border-border">
-              <h3 class="text-lg font-bold text-foreground p-2">Detail LOT</h3>
+              <h3 class="text-lg font-bold text-foreground p-2">{{ t('inventory.lotDetail') }}</h3>
               <button @click="emit('close')" class="p-2 hover:bg-muted rounded-full transition-colors">
                 <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
               </button>
@@ -134,13 +137,13 @@ onUnmounted(() => {
             <div class="p-6">
               <div v-if="isLoading" class="flex flex-col items-center justify-center py-12 space-y-4">
                 <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
-                <p class="text-sm text-muted-foreground">Memuat detail LOT...</p>
+                <p class="text-sm text-muted-foreground">{{ t('inventory.loadingLotDetails') }}</p>
               </div>
 
               <div v-else-if="error" class="text-center py-12">
                 <p class="text-rose-500 font-medium">{{ error }}</p>
                 <button @click="lotId && fetchLotDetails(lotId)" class="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-[14px] text-sm">
-                  Coba Lagi
+                  {{ t('inventory.tryAgain') }}
                 </button>
               </div>
 
@@ -155,31 +158,31 @@ onUnmounted(() => {
                 <div class="flex-grow grid grid-cols-1 md:grid-cols-12 gap-4">
                   <!-- Left Details Column -->
                   <div class="md:col-span-4">
-                    <p class="font-bold text-foreground"><span class="text-foreground">Kode Tipe:</span> {{ lotDetails.barang_code }}</p>
-                    <p class="font-bold text-foreground"><span class="text-foreground">Merek:</span> {{ lotDetails.barang_brand }}</p>
-                    <p class="font-bold text-foreground"><span class="text-foreground">Nama:</span> {{ lotDetails.barang_nama }}</p>
-                    <p class="font-bold text-foreground"><span class="text-foreground">Spesifikasi:</span> {{ lotDetails.barang_specification }}</p>
-                    <p class="text-foreground">Kategori: {{ lotDetails.barang_category }}</p>
-                    <p class="text-foreground">Subkategori: {{ lotDetails.barang_subcategory }}</p>
-                    <p class="text-foreground">Satuan: {{ lotDetails.barang_uom }}</p>
+                    <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.typeCode') }}:</span> {{ lotDetails.barang_code }}</p>
+                    <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.brand') }}:</span> {{ lotDetails.barang_brand }}</p>
+                    <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.name') }}:</span> {{ lotDetails.barang_nama }}</p>
+                    <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.specification') }}:</span> {{ lotDetails.barang_specification }}</p>
+                    <p class="text-foreground">{{ t('inventory.category') }}: {{ lotDetails.barang_category }}</p>
+                    <p class="text-foreground">{{ t('inventory.subcategory') }}: {{ lotDetails.barang_subcategory }}</p>
+                    <p class="text-foreground">{{ t('inventory.uom') }}: {{ lotDetails.barang_uom }}</p>
                   </div>
 
                   <!-- Right Details Column -->
                   <div class="md:col-span-8">
-                    <p class="font-bold text-foreground"><span class="text-foreground">Kode LOT:</span> {{ lotDetails.number }}</p>
-                    <p class="font-bold text-foreground"><span class="text-foreground">Jumlah stok tersedia:</span> {{ lotDetails.current_quantity ?? 0 }}</p>
-                    <p class="font-bold text-foreground"><span class="text-foreground">Jumlah stok diawal:</span> {{ lotDetails.initial_quantity ?? 0 }}</p>
-                    <p class="font-bold text-foreground"><span class="text-foreground">Ambang batas notifikasi stok:</span> {{ lotDetails.barang_min_stock_threshold !== null && lotDetails.barang_min_stock_threshold !== undefined ? `${lotDetails.barang_min_stock_threshold} ${lotDetails.barang_uom || ''}`.trim() : '-' }}</p>
-                    <p class="text-foreground">Lokasi: {{ formatLocation(lotDetails) }}</p>
-                    <p class="text-foreground">Nomor PO: {{ lotDetails.po_number }}</p>
-                    <p class="text-foreground">Tanggal registrasi: {{ formatDate(lotDetails.date_of_receipt) }}</p>
-                    <p class="text-foreground">Umur: {{ lotDetails.age !== undefined && lotDetails.age !== null ? `${lotDetails.age} tahun` : '-' }}</p>
-                    <p class="text-foreground">Harga satuan: {{ formatRupiah(lotDetails.unitPrice) }}</p>
-                    <p class="text-foreground">Pembebanan: {{ lotDetails.burden || '-' }}</p>
-                    <p v-if="lotDetails.burden === 'Project'" class="text-foreground">Project: {{ lotDetails.project_no ? `${lotDetails.project_no} (${lotDetails.project_name || '-'})` : '-' }}</p>
-                    <p class="text-foreground">Organizer: {{ lotDetails.organizer }}</p>
-                    <p class="text-foreground">Vendor: {{ lotDetails.vendor }}</p>
-                    <p class="text-foreground">Pembaruan terakhir: {{ lotDetails.updated_at }}</p>
+                    <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.lotCode') }}:</span> {{ lotDetails.number }}</p>
+                    <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.availableStock') }}:</span> {{ lotDetails.current_quantity ?? 0 }}</p>
+                    <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.initialStock') }}:</span> {{ lotDetails.initial_quantity ?? 0 }}</p>
+                    <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.minStockThreshold') }}:</span> {{ lotDetails.barang_min_stock_threshold !== null && lotDetails.barang_min_stock_threshold !== undefined ? `${lotDetails.barang_min_stock_threshold} ${lotDetails.barang_uom || ''}`.trim() : '-' }}</p>
+                    <p class="text-foreground">{{ t('inventory.location') }}: {{ formatLocation(lotDetails) }}</p>
+                    <p class="text-foreground">{{ t('inventory.poNumber') }}: {{ lotDetails.po_number }}</p>
+                    <p class="text-foreground">{{ t('inventory.registrationDate') }}: {{ formatDate(lotDetails.date_of_receipt) }}</p>
+                    <p class="text-foreground">{{ t('inventory.age') }}: {{ lotDetails.age !== undefined && lotDetails.age !== null ? `${lotDetails.age} ${t('inventory.yearUnit')}` : '-' }}</p>
+                    <p class="text-foreground">{{ t('inventory.unitPrice') }}: {{ formatRupiah(lotDetails.unitPrice) }}</p>
+                    <p class="text-foreground">{{ t('inventory.burden') }}: {{ lotDetails.burden || '-' }}</p>
+                    <p v-if="lotDetails.burden === 'Project'" class="text-foreground">{{ t('inventory.project') }}: {{ lotDetails.project_no ? `${lotDetails.project_no} (${lotDetails.project_name || '-'})` : '-' }}</p>
+                    <p class="text-foreground">{{ t('inventory.organizer') }}: {{ lotDetails.organizer }}</p>
+                    <p class="text-foreground">{{ t('inventory.vendor') }}: {{ lotDetails.vendor }}</p>
+                    <p class="text-foreground">{{ t('inventory.lastUpdate') }}: {{ lotDetails.updated_at }}</p>
                   </div>
                 </div>
               </div>
@@ -192,21 +195,21 @@ onUnmounted(() => {
                 variant="primary"
                 size="lg"
               >
-                Edit Detail LOT
+                {{ t('inventory.editLotDetail') }}
               </Button>
               <Button
                 @click="handleDelete"
                 variant="destructive"
                 size="lg"
               >
-                Hapus LOT
+                {{ t('inventory.deleteLot') }}
               </Button>
               <Button
                 @click="emit('close')"
                 variant="white"
                 size="lg"
               >
-                Kembali
+                {{ t('common.back') }}
               </Button>
             </div>
           </div>

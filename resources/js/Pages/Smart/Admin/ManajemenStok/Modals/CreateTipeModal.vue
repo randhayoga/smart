@@ -3,6 +3,7 @@
  * Create Tipe Modal component for registering new inventory item definitions, classifications, and stock notification thresholds.
  */
 import { ref, watch, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useModalLock } from '@/composables/useModalLock';
 import { useForm } from '@inertiajs/vue3';
 import { X, ChevronDown, Loader2 } from 'lucide-vue-next';
@@ -35,6 +36,8 @@ const emit = defineEmits<{
   (e: 'update:open', value: boolean): void;
   (e: 'success'): void;
 }>();
+
+const { t } = useI18n();
 
 useModalLock(computed(() => props.open));
 
@@ -123,8 +126,8 @@ const handleFileUpload = (e: any) => {
   const file = e.target.files[0];
   if (!file) return;
   const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
-  if (!allowedTypes.includes(file.type)) { alert('Hanya diperbolehkan file .jpg, .jpeg, atau .png'); return; }
-  if (file.size > 1024 * 1024) { alert('Ukuran foto maksimal 1MB'); return; }
+  if (!allowedTypes.includes(file.type)) { alert(t('inventory.invalidFileFormat')); return; }
+  if (file.size > 1024 * 1024) { alert(t('inventory.fileTooLarge1Mb')); return; }
   newItem.photo = file;
   newItem.photoName = file.name;
 };
@@ -154,18 +157,18 @@ watch(() => props.open, (val) => {
 const handleSubmit = () => {
   resetErrors();
   let isValid = true;
-  if (!newItem.code) { errors.value.code = 'Kode Tipe belum diisi'; isValid = false; }
-  if (!newItem.category_id) { errors.value.category_id = 'Kategori belum dipilih'; isValid = false; }
-  if (!newItem.subcategory_id) { errors.value.subcategory_id = 'Subkategori belum dipilih'; isValid = false; }
-  if (!newItem.uom_id) { errors.value.uom_id = 'Satuan belum dipilih'; isValid = false; }
-  if (!newItem.brand_id) { errors.value.brand_id = 'Merek belum dipilih'; isValid = false; }
-  if (!newItem.name) { errors.value.name = 'Nama Tipe belum diisi'; isValid = false; }
-  if (!newItem.photo) { errors.value.photo = 'Foto default belum dipilih'; isValid = false; }
+  if (!newItem.code) { errors.value.code = t('inventory.codeRequired'); isValid = false; }
+  if (!newItem.category_id) { errors.value.category_id = t('inventory.categoryRequired'); isValid = false; }
+  if (!newItem.subcategory_id) { errors.value.subcategory_id = t('inventory.subcategoryRequired'); isValid = false; }
+  if (!newItem.uom_id) { errors.value.uom_id = t('inventory.uomRequired'); isValid = false; }
+  if (!newItem.brand_id) { errors.value.brand_id = t('inventory.brandRequired'); isValid = false; }
+  if (!newItem.name) { errors.value.name = t('inventory.nameRequired'); isValid = false; }
+  if (!newItem.photo) { errors.value.photo = t('inventory.photoRequired'); isValid = false; }
   
   if (isConsumableSelected.value && newItem.min_stock_threshold !== null && newItem.min_stock_threshold !== '' && newItem.min_stock_threshold !== undefined) {
     const thresholdNum = Number(newItem.min_stock_threshold);
     if (isNaN(thresholdNum) || !Number.isInteger(thresholdNum) || thresholdNum < 0) {
-      errors.value.min_stock_threshold = 'Ambang batas notifikasi stok harus berupa angka bulat positif atau nol';
+      errors.value.min_stock_threshold = t('inventory.thresholdInteger');
       isValid = false;
     }
   }
@@ -216,7 +219,7 @@ const handleSubmit = () => {
           >
             <!-- Modal Header -->
             <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
-              <h3 class="text-lg font-bold text-foreground">Pembuatan Tipe Baru</h3>
+              <h3 class="text-lg font-bold text-foreground">{{ t('inventory.createNewType') }}</h3>
               <button @click="closeModal" class="p-2 hover:bg-muted rounded-full transition-colors">
                 <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
               </button>
@@ -228,7 +231,7 @@ const handleSubmit = () => {
                 <!-- Left Column -->
                 <div class="space-y-6">
                   <Field :data-invalid="!!errors.code || undefined">
-                    <FieldLabel for="newItemCode"><span>Kode Tipe<span class="text-rose-500">*</span></span></FieldLabel>
+                    <FieldLabel for="newItemCode"><span>{{ t('inventory.typeCode') }}<span class="text-rose-500">*</span></span></FieldLabel>
                     <FieldContent>
                       <div class="flex gap-2 w-full">
                         <input 
@@ -237,7 +240,7 @@ const handleSubmit = () => {
                           name="code"
                           v-model="newItem.code"
                           disabled
-                          placeholder="Kode Tipe belum di-generate" 
+                          :placeholder="t('inventory.typeNotGenerated')" 
                           class="flex-grow px-4 py-2 text-sm border rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed"
                           :class="[errors.code ? 'border-destructive' : 'border-input']"
                         />
@@ -246,7 +249,7 @@ const handleSubmit = () => {
                           :disabled="!newItem.category_id || !newItem.subcategory_id"
                           size="lg"                       
                         >
-                          Generate
+                          {{ t('inventory.generate') }}
                         </Button>
                       </div>
                     </FieldContent>
@@ -254,12 +257,12 @@ const handleSubmit = () => {
                   </Field>
 
                   <Field :data-invalid="!!errors.category_id || undefined">
-                    <FieldLabel><span>Kategori<span class="text-rose-500">*</span></span></FieldLabel>
+                    <FieldLabel><span>{{ t('inventory.category') }}<span class="text-rose-500">*</span></span></FieldLabel>
                     <FieldContent>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !newItem.category_id ? 'text-muted-foreground' : 'text-foreground', errors.category_id ? '!border-destructive focus:!ring-destructive/20 focus:!border-destructive' : '']">
-                            {{ categories.find(c => c.id === newItem.category_id)?.name || 'Pilih kategori' }}
+                            {{ categories.find(c => c.id === newItem.category_id)?.name || t('inventory.selectCategory') }}
                             <ChevronDown class="w-4 h-4 opacity-50" />
                           </Button>
                         </DropdownMenuTrigger>
@@ -274,13 +277,13 @@ const handleSubmit = () => {
                   </Field>
 
                   <Field :data-invalid="!!errors.subcategory_id || undefined" :data-disabled="!newItem.category_id || undefined">
-                    <FieldLabel><span>Subkategori<span class="text-rose-500">*</span></span></FieldLabel>
+                    <FieldLabel><span>{{ t('inventory.subcategory') }}<span class="text-rose-500">*</span></span></FieldLabel>
                     <FieldContent>
                       <Combobox
                         v-model="newItem.subcategory_id"
                         :options="filteredSubcategories"
-                        search-placeholder="Cari subkategori..."
-                        default-label="Pilih subkategori"
+                        :search-placeholder="t('inventory.searchSubcategoryPlaceholder')"
+                        :default-label="t('inventory.selectSubcategory')"
                         width-class="w-full h-10 px-4"
                         :disabled="!newItem.category_id"
                         :error="!!errors.subcategory_id"
@@ -290,13 +293,13 @@ const handleSubmit = () => {
                   </Field>
 
                   <Field :data-invalid="!!errors.uom_id || undefined">
-                    <FieldLabel><span>Satuan<span class="text-rose-500">*</span></span></FieldLabel>
+                    <FieldLabel><span>{{ t('inventory.uom') }}<span class="text-rose-500">*</span></span></FieldLabel>
                     <FieldContent>
                       <Combobox
                         v-model="newItem.uom_id"
                         :options="uoms"
-                        search-placeholder="Cari satuan..."
-                        default-label="Pilih satuan tipe"
+                        :search-placeholder="t('inventory.searchUomPlaceholder')"
+                        :default-label="t('inventory.selectUom')"
                         width-class="w-full h-10 px-4"
                         :error="!!errors.uom_id"
                       />
@@ -305,7 +308,7 @@ const handleSubmit = () => {
                   </Field>
 
                   <Field v-if="isConsumableSelected" :data-invalid="!!errors.min_stock_threshold || undefined">
-                    <FieldLabel for="newItemMinStockThreshold">Ambang batas notifikasi stok</FieldLabel>
+                    <FieldLabel for="newItemMinStockThreshold">{{ t('inventory.minStockThreshold') }}</FieldLabel>
                     <FieldContent>
                       <input 
                         type="number" 
@@ -313,7 +316,7 @@ const handleSubmit = () => {
                         name="min_stock_threshold"
                         v-model="newItem.min_stock_threshold"
                         min="0"
-                        placeholder="Input ambang batas notifikasi stok..." 
+                        :placeholder="t('inventory.stockThresholdPlaceholder')" 
                         class="w-full px-4 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors h-10"
                         :class="[errors.min_stock_threshold ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']"
                       />
@@ -325,13 +328,13 @@ const handleSubmit = () => {
                 <!-- Right Column -->
                 <div class="space-y-6">
                   <Field :data-invalid="!!errors.brand_id || undefined">
-                    <FieldLabel><span>Merek<span class="text-rose-500">*</span></span></FieldLabel>
+                    <FieldLabel><span>{{ t('inventory.brand') }}<span class="text-rose-500">*</span></span></FieldLabel>
                     <FieldContent>
                       <Combobox
                         v-model="newItem.brand_id"
                         :options="brands"
-                        search-placeholder="Cari merek..."
-                        default-label="Pilih merek"
+                        :search-placeholder="t('inventory.searchBrandPlaceholder')"
+                        :default-label="t('inventory.selectBrand')"
                         width-class="w-full h-10 px-4"
                         :error="!!errors.brand_id"
                       />
@@ -340,7 +343,7 @@ const handleSubmit = () => {
                   </Field>
 
                   <Field :data-invalid="!!errors.name || undefined">
-                    <FieldLabel for="newItemNama"><span>Nama Tipe<span class="text-rose-500">*</span></span></FieldLabel>
+                    <FieldLabel for="newItemNama"><span>{{ t('inventory.typeName') }}<span class="text-rose-500">*</span></span></FieldLabel>
                     <FieldContent>
                       <input 
                         type="text" 
@@ -348,7 +351,7 @@ const handleSubmit = () => {
                         name="name"
                         v-model="newItem.name"
                         maxlength="255"
-                        placeholder="Input nama tipe di sini..." 
+                        :placeholder="t('inventory.typeNamePlaceholder')" 
                         class="w-full px-4 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors h-10"
                         :class="[errors.name ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']"
                       />
@@ -357,7 +360,7 @@ const handleSubmit = () => {
                   </Field>
 
                   <Field>
-                    <FieldLabel for="newItemSpecification">Spesifikasi</FieldLabel>
+                    <FieldLabel for="newItemSpecification">{{ t('inventory.specification') }}</FieldLabel>
                     <FieldContent>
                       <input 
                         type="text" 
@@ -365,14 +368,14 @@ const handleSubmit = () => {
                         name="specification"
                         v-model="newItem.specification"
                         maxlength="255"
-                        placeholder="Input spesifikasinya di sini..." 
+                        :placeholder="t('inventory.specificationPlaceholder')" 
                         class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
                       />
                     </FieldContent>
                   </Field>
 
                   <Field :data-invalid="!!errors.photo || undefined">
-                    <FieldLabel for="create-tipe-photo-upload"><span>Foto <span class="italic">default</span><span class="text-rose-500">*</span></span></FieldLabel>
+                    <FieldLabel for="create-tipe-photo-upload"><span>{{ t('inventory.defaultPhoto') }}<span class="text-rose-500">*</span></span></FieldLabel>
                     <FieldContent>
                       <div class="flex flex-col gap-1 w-full">
                         <div class="flex gap-2 w-full">
@@ -380,7 +383,7 @@ const handleSubmit = () => {
                             class="flex-grow min-w-0 px-4 py-2 text-sm border rounded-[14px] bg-muted/10 text-muted-foreground truncate flex items-center h-10"
                             :class="[errors.photo ? 'border-destructive' : 'border-input']"
                           >
-                            {{ newItem.photoName || 'Belum ada foto yang dipilih' }}
+                            {{ newItem.photoName || t('inventory.noPhotoSelected') }}
                           </div>
                           <input 
                             type="file" 
@@ -394,10 +397,10 @@ const handleSubmit = () => {
                             @click="triggerFileInput"
                             size="lg"
                           >
-                            Pilih File
+                            {{ t('inventory.chooseFile') }}
                           </Button>
                         </div>
-                        <p class="text-[10px] text-muted-foreground ml-1">Maksimal ukuran 1 MB (.jpg, .jpeg, .png)</p>
+                        <p class="text-[10px] text-muted-foreground ml-1">{{ t('inventory.maxFileSize1Mb') }}</p>
                       </div>
                     </FieldContent>
                     <FieldError v-if="errors.photo">{{ errors.photo }}</FieldError>
@@ -408,14 +411,14 @@ const handleSubmit = () => {
 
             <!-- Modal Footer -->
             <div class="py-3 px-4 border-t border-border flex items-center justify-between">
-              <p class="text-sm text-rose-500 italic font-medium">*Wajib diisi</p>
+              <p class="text-sm text-rose-500 italic font-medium">{{ t('inventory.requiredMarker') }}</p>
               <div class="flex items-center gap-3">
                 <Button
                   @click="closeModal"
                   variant="white"
                   size="xl"
                 >
-                  Batal
+                  {{ t('common.cancel') }}
                 </Button>
                 <Button
                   @click="handleSubmit"
@@ -426,7 +429,7 @@ const handleSubmit = () => {
                 >
                   <Loader2 v-if="newItem.processing" class="absolute inset-0 m-auto h-5 w-5 animate-spin" />
                   <span :class="{ 'opacity-0': newItem.processing }">
-                    Buat Tipe
+                    {{ t('inventory.createTypeBtn') }}
                   </span>
                 </Button>
               </div>

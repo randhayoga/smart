@@ -4,10 +4,12 @@
  */
 import { ref, computed, watch } from 'vue';
 import { Link, usePage, router } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
 import { Menu, X, Search, Bell, Info, CheckCircle2, AlertTriangle, XCircle, Trash2, Building2, LogOut, EllipsisVertical, Mail, SquareArrowOutUpRight } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/Components/ui/avatar';
 import ApplicationLogo from '@/Components/ApplicationLogo.vue';
+import LanguageSelector from '@/Components/LanguageSelector.vue';
 import { Badge } from '@/Components/ui/badge';
 import { formatDateTime } from '@/lib/utils';
 
@@ -44,6 +46,7 @@ const emit = defineEmits<{
 }>();
 
 const page = usePage();
+const { t } = useI18n();
 const user = computed(() => page.props.auth?.user);
 
 // Watch shared notifications from Inertia props & sync to store
@@ -86,9 +89,9 @@ const formatTime = (isoString: string) => {
   const diffMins = Math.floor(diffMs / 60000);
   const diffHours = Math.floor(diffMins / 60);
 
-  if (diffMins < 1) return 'Baru saja';
-  if (diffMins < 60) return `${diffMins} mnt lalu`;
-  if (diffHours < 24) return `${diffHours} jam lalu`;
+  if (diffMins < 1) return t('common.notifications.justNow');
+  if (diffMins < 60) return t('common.notifications.minsAgo', { mins: diffMins });
+  if (diffHours < 24) return t('common.notifications.hoursAgo', { hours: diffHours });
 
   return formatDateTime(date);
 };
@@ -124,14 +127,17 @@ const formatTime = (isoString: string) => {
       </div>
       
       <!-- Right: Actions -->
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-1.5 sm:gap-2">
+        <!-- Language Selector -->
+        <LanguageSelector />
+
         <!-- Notifications -->
         <DropdownMenu>
           <DropdownMenuTrigger as-child>
             <Button variant="ghost" size="icon" class="relative">
               <Bell class="h-5 w-5" />
               <Badge 
-                v-if="unreadCount > 0"
+                v-if="unreadCount > 0" 
                 class="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-gradient-primary border-0 animate-pulse"
               >
                 {{ unreadCount }}
@@ -147,28 +153,28 @@ const formatTime = (isoString: string) => {
             <!-- Header -->
             <div class="px-3.5 sm:px-4 lg:px-5 py-2.5 sm:py-3 flex items-center justify-between gap-2 border-b border-border bg-card">
               <div class="flex items-center gap-2">
-                <h3 class="font-semibold text-sm sm:text-base text-foreground">Notifikasi</h3>
+                <h3 class="font-semibold text-sm sm:text-base text-foreground">{{ $t('common.notifications.title') }}</h3>
                 <span 
                   v-if="unreadCount > 0" 
                   class="px-2 py-0.5 text-[11px] font-semibold rounded-full bg-primary/10 text-primary border border-primary/20"
                 >
-                  {{ unreadCount }} baru
+                  {{ $t('common.notifications.newBadge', { count: unreadCount }) }}
                 </span>
               </div>
               <div class="flex items-center gap-2 sm:gap-3 text-xs">
                 <button 
-                  v-if="unreadCount > 0"
+                  v-if="unreadCount > 0" 
                   @click="markAllAsRead" 
                   class="text-xs text-primary hover:underline font-medium bg-transparent border-0 cursor-pointer p-0"
                 >
-                  Tandai semua dibaca
+                  {{ $t('common.notifications.markAllRead') }}
                 </button>
                 <button 
-                  v-if="hasReadNotifications"
+                  v-if="hasReadNotifications" 
                   @click="clearReadNotifications" 
                   class="text-xs text-muted-foreground hover:text-destructive hover:underline font-medium bg-transparent border-0 cursor-pointer p-0"
                 >
-                  Hapus terbaca
+                  {{ $t('common.notifications.clearRead') }}
                 </button>
               </div>
             </div>
@@ -177,7 +183,7 @@ const formatTime = (isoString: string) => {
             <ScrollArea class="max-h-[min(70vh,420px)] lg:max-h-[480px] overflow-y-auto">
               <div v-if="notifications.length === 0" class="py-10 px-4 flex flex-col items-center justify-center text-center text-muted-foreground gap-2">
                 <Bell class="h-8 w-8 opacity-30 stroke-1" />
-                <p class="text-sm font-medium">Tidak ada notifikasi</p>
+                <p class="text-sm font-medium">{{ $t('common.notifications.empty') }}</p>
               </div>
               <div v-else class="divide-y divide-border">
                 <div 
@@ -233,8 +239,8 @@ const formatTime = (isoString: string) => {
                       type="button"
                       @click.stop="goToNotification(item)"
                       class="h-8 w-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-muted transition-colors cursor-pointer border-0 bg-transparent"
-                      title="Buka halaman terkait"
-                      aria-label="Buka halaman terkait"
+                      :title="$t('common.viewDetails')"
+                      :aria-label="$t('common.viewDetails')"
                     >
                       <SquareArrowOutUpRight class="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                     </button>
@@ -244,7 +250,7 @@ const formatTime = (isoString: string) => {
                         <button
                           type="button"
                           class="h-8 w-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer border-0 bg-transparent"
-                          aria-label="Opsi notifikasi"
+                          :aria-label="$t('common.notifications.optionsAria')"
                         >
                           <EllipsisVertical class="h-4 w-4" />
                         </button>
@@ -256,14 +262,14 @@ const formatTime = (isoString: string) => {
                           class="cursor-pointer text-xs flex items-center gap-2 px-2.5 py-2 hover:bg-primary/10 focus:bg-primary/10 hover:text-primary focus:text-primary transition-colors rounded-md"
                         >
                           <Mail class="h-3.5 w-3.5" />
-                          <span>Tandai belum dibaca</span>
+                          <span>{{ $t('common.notifications.markUnread') }}</span>
                         </DropdownMenuItem>
                         <DropdownMenuItem 
                           @click.stop="deleteNotification(item.id)"
                           class="cursor-pointer text-xs flex items-center gap-2 px-2.5 py-2 text-destructive hover:text-destructive focus:text-destructive focus:bg-destructive/10 data-[highlighted]:text-destructive data-[highlighted]:bg-destructive/10 transition-colors rounded-md"
                         >
                           <Trash2 class="h-3.5 w-3.5 text-destructive" />
-                          <span>Hapus</span>
+                          <span>{{ $t('common.delete') }}</span>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -280,7 +286,7 @@ const formatTime = (isoString: string) => {
             <button 
               type="button" 
               class="flex items-center gap-2 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-card cursor-pointer border-0 bg-transparent p-0.5 hover:opacity-90 transition-opacity"
-              aria-label="User Menu"
+              :aria-label="$t('common.userMenu.aria')"
             >
               <Avatar class="h-8 w-8">
                 <AvatarImage :src="user?.avatar || ''" :alt="user?.name || ''" />
@@ -296,7 +302,7 @@ const formatTime = (isoString: string) => {
                 {{ user?.name || 'User' }}
               </p>
               <div class="flex items-center gap-1.5 text-xs text-muted-foreground truncate">
-                <span class="truncate">{{ user?.org_name || 'Tanpa Organisasi' }}</span>
+                <span class="truncate">{{ user?.org_name || $t('common.userMenu.noOrg') }}</span>
               </div>
             </div>
             <DropdownMenuSeparator class="my-1.5 border-t border-border" />
@@ -305,7 +311,7 @@ const formatTime = (isoString: string) => {
               class="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10 flex items-center gap-2"
             >
               <LogOut class="h-4 w-4" />
-              <span>Keluar</span>
+              <span>{{ $t('common.userMenu.logout') }}</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
