@@ -268,7 +268,7 @@
 
             <!-- Badge (spacing above: 1.5rem) -->
             <div class="error-badge-container">
-                <span class="error-badge">@yield('badge', 'Status ' . $__env->yieldContent('code', '500'))</span>
+                <span class="error-badge">@yield('badge', __('errors.default.badge', ['code' => $__env->yieldContent('code', '500')]))</span>
             </div>
 
             <!-- Content (spacing above: 1.5rem) -->
@@ -281,7 +281,7 @@
                     <path d="m12 19-7-7 7-7"/>
                     <path d="M19 12H5"/>
                 </svg>
-                <span>Kembali</span>
+                <span>{{ __('errors.back') }}</span>
             </a>
         </div>
     </div>

@@ -3,9 +3,9 @@
 --}}
 @extends('errors.layout')
 
-@section('title', 'Halaman Tidak Ditemukan')
+@section('title', __('errors.404.title'))
 @section('code', '404')
-@section('badge', '404 • Halaman Tidak Ditemukan')
+@section('badge', __('errors.404.badge'))
 
 @section('icon')
 <!-- Lucide FileQuestion -->
@@ -17,5 +17,5 @@
 @endsection
 
 @section('message')
-{{ $exception && $exception->getMessage() ? $exception->getMessage() : 'Maaf, halaman atau tautan yang Anda tuju tidak ditemukan atau tidak lagi tersedia.' }}
+{{ $exception && $exception->getMessage() ? $exception->getMessage() : __('errors.404.message') }}
 @endsection

@@ -3,9 +3,9 @@
 --}}
 @extends('errors.layout')
 
-@section('title', $__env->yieldContent('title', 'Terjadi Kendala'))
+@section('title', $__env->yieldContent('title', __('errors.default.title')))
 @section('code', $__env->yieldContent('code', 'Error'))
-@section('badge', 'Status ' . $__env->yieldContent('code', 'Error'))
+@section('badge', __('errors.default.badge', ['code' => $__env->yieldContent('code', 'Error')]))
 
 @section('icon')
 <!-- Lucide AlertCircle -->
@@ -17,5 +17,5 @@
 @endsection
 
 @section('message')
-@yield('message', 'Terjadi kendala saat memproses permintaan Anda. Silakan kembali ke dashboard.')
+@yield('message', __('errors.default.message'))
 @endsection

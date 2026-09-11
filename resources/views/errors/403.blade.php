@@ -3,9 +3,9 @@
 --}}
 @extends('errors.layout')
 
-@section('title', 'Akses Ditolak')
+@section('title', __('errors.403.title'))
 @section('code', '403')
-@section('badge', '403 • Akses Ditolak')
+@section('badge', __('errors.403.badge'))
 
 @section('icon')
 <!-- Lucide ShieldAlert -->
@@ -17,5 +17,5 @@
 @endsection
 
 @section('message')
-{{ $exception && $exception->getMessage() ? $exception->getMessage() : 'Anda tidak memiliki hak akses yang sesuai untuk membuka halaman ini.' }}
+{{ $exception && $exception->getMessage() ? $exception->getMessage() : __('errors.403.message') }}
 @endsection

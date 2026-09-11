@@ -3,9 +3,9 @@
 --}}
 @extends('errors.layout')
 
-@section('title', 'Terlalu Banyak Permintaan')
+@section('title', __('errors.429.title'))
 @section('code', '429')
-@section('badge', '429 • Terlalu Banyak Permintaan')
+@section('badge', __('errors.429.badge'))
 
 @section('icon')
 <!-- Lucide Gauge -->
@@ -16,5 +16,5 @@
 @endsection
 
 @section('message')
-{{ $exception && $exception->getMessage() ? $exception->getMessage() : 'Sistem mendeteksi terlalu banyak permintaan dari perangkat Anda dalam waktu singkat. Mohon tunggu beberapa saat.' }}
+{{ $exception && $exception->getMessage() ? $exception->getMessage() : __('errors.429.message') }}
 @endsection

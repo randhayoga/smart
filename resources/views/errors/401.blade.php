@@ -3,9 +3,9 @@
 --}}
 @extends('errors.layout')
 
-@section('title', 'Autentikasi Diperlukan')
+@section('title', __('errors.401.title'))
 @section('code', '401')
-@section('badge', '401 • Belum Terautentikasi')
+@section('badge', __('errors.401.badge'))
 
 @section('icon')
 <!-- Lucide KeyRound -->
@@ -16,5 +16,5 @@
 @endsection
 
 @section('message')
-{{ $exception && $exception->getMessage() ? $exception->getMessage() : 'Anda belum masuk ke dalam sistem. Silakan masuk terlebih dahulu untuk mengakses halaman ini.' }}
+{{ $exception && $exception->getMessage() ? $exception->getMessage() : __('errors.401.message') }}
 @endsection

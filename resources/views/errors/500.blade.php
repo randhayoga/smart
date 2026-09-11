@@ -3,9 +3,9 @@
 --}}
 @extends('errors.layout')
 
-@section('title', 'Terjadi Kesalahan Server')
+@section('title', __('errors.500.title'))
 @section('code', '500')
-@section('badge', '500 • Kesalahan Server')
+@section('badge', __('errors.500.badge'))
 
 @section('icon')
 <!-- Lucide ServerCrash -->
@@ -20,5 +20,5 @@
 @endsection
 
 @section('message')
-{{ $exception && $exception->getMessage() ? $exception->getMessage() : 'Maaf, terjadi kendala teknis internal pada sistem kami saat memproses permintaan Anda.' }}
+{{ $exception && $exception->getMessage() ? $exception->getMessage() : __('errors.500.message') }}
 @endsection

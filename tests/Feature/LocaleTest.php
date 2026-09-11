@@ -3,6 +3,9 @@
 namespace Tests\Feature;
 
 use App\Http\Controllers\LocaleController;
+use App\Models\AdmUser;
+use App\Models\HrdEmployee;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
@@ -14,6 +17,7 @@ use Tests\TestCase;
  */
 class LocaleTest extends TestCase
 {
+    use RefreshDatabase;
     public function test_user_can_update_locale_to_english()
     {
         $response = $this->from(route('login'))->post(route('locale.update'), [
@@ -69,5 +73,20 @@ class LocaleTest extends TestCase
             ->has('supportedLocales.id')
             ->has('supportedLocales.en')
         );
+    }
+
+    public function test_404_error_page_matches_selected_locale()
+    {
+        HrdEmployee::factory()->create(['employee_id' => '252525']);
+        $user = AdmUser::factory()->create(['employee_id' => '252525']);
+
+        $response = $this->actingAs($user)
+            ->withSession(['locale' => 'en'])
+            ->get('/smart/inventory/ATKHVS400011');
+
+        $response->assertStatus(404);
+        $response->assertSee(__('errors.404.title', [], 'en'));
+        $response->assertSee(__('errors.404.badge', [], 'en'));
+        $response->assertSee(__('errors.back', [], 'en'));
     }
 }

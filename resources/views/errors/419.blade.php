@@ -3,9 +3,9 @@
 --}}
 @extends('errors.layout')
 
-@section('title', 'Sesi Telah Kedaluwarsa')
+@section('title', __('errors.419.title'))
 @section('code', '419')
-@section('badge', '419 • Sesi Kedaluwarsa')
+@section('badge', __('errors.419.badge'))
 
 @section('icon')
 <!-- Lucide Clock -->
@@ -16,5 +16,5 @@
 @endsection
 
 @section('message')
-{{ $exception && $exception->getMessage() ? $exception->getMessage() : 'Sesi keamanan halaman Anda telah berakhir karena tidak ada aktivitas dalam beberapa waktu.' }}
+{{ $exception && $exception->getMessage() ? $exception->getMessage() : __('errors.419.message') }}
 @endsection

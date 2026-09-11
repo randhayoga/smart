@@ -3,9 +3,9 @@
 --}}
 @extends('errors.layout')
 
-@section('title', 'Sistem Sedang Dalam Pemeliharaan')
+@section('title', __('errors.503.title'))
 @section('code', '503')
-@section('badge', '503 • Pemeliharaan Sistem')
+@section('badge', __('errors.503.badge'))
 
 @section('icon')
 <!-- Lucide Wrench -->
@@ -15,5 +15,5 @@
 @endsection
 
 @section('message')
-{{ $exception && $exception->getMessage() ? $exception->getMessage() : 'Kami sedang melakukan pemeliharaan sistem SMART. Mohon maaf atas ketidaknyamanan ini, silakan coba beberapa saat lagi.' }}
+{{ $exception && $exception->getMessage() ? $exception->getMessage() : __('errors.503.message') }}
 @endsection
