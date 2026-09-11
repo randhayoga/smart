@@ -96,26 +96,26 @@ class ProcessFulfillmentConfirmation
 
             // Commit Phase: Lock allocations, evict duplicate staged units on other requests, and deduct LOT stock
             $itemIds = $lockedRequest->items->pluck('id')->all();
-            $newlyConfirmedFulfillments = RequestFulfillment::whereIn('request_item_id', $itemIds)
-                ->whereNull('confirmed_at')
+            $newlyAssignedFulfillments = RequestFulfillment::whereIn('request_item_id', $itemIds)
+                ->whereNull('assigned_at')
                 ->get();
 
-            if ($newlyConfirmedFulfillments->isNotEmpty()) {
+            if ($newlyAssignedFulfillments->isNotEmpty()) {
                 $now = now();
-                RequestFulfillment::whereIn('id', $newlyConfirmedFulfillments->pluck('id'))
-                    ->update(['confirmed_at' => $now]);
+                RequestFulfillment::whereIn('id', $newlyAssignedFulfillments->pluck('id'))
+                    ->update(['assigned_at' => $now]);
 
                 // 1. Evict duplicate unit assignments from competing unconfirmed requests
-                $confirmedUnitIds = $newlyConfirmedFulfillments->pluck('unit_id')->filter()->unique()->all();
-                if (!empty($confirmedUnitIds)) {
-                    RequestFulfillment::whereIn('unit_id', $confirmedUnitIds)
+                $assignedUnitIds = $newlyAssignedFulfillments->pluck('unit_id')->filter()->unique()->all();
+                if (!empty($assignedUnitIds)) {
+                    RequestFulfillment::whereIn('unit_id', $assignedUnitIds)
                         ->whereNotIn('request_item_id', $itemIds)
-                        ->whereNull('confirmed_at')
+                        ->whereNull('assigned_at')
                         ->delete();
                 }
 
                 // 2. Deduct physical stock for confirmed LOTs and evict/clamp competing unconfirmed requests
-                $lotFulfillments = $newlyConfirmedFulfillments->whereNotNull('lot_id')->whereNull('unit_id');
+                $lotFulfillments = $newlyAssignedFulfillments->whereNotNull('lot_id')->whereNull('unit_id');
                 foreach ($lotFulfillments as $lf) {
                     $lot = Lot::where('id', $lf->lot_id)->lockForUpdate()->first();
                     if (!$lot) {
@@ -129,7 +129,7 @@ class ProcessFulfillmentConfirmation
                     // Competing unconfirmed fulfillments on OTHER requests
                     $competingFulfillments = RequestFulfillment::where('lot_id', $lot->id)
                         ->whereNull('unit_id')
-                        ->whereNull('confirmed_at')
+                        ->whereNull('assigned_at')
                         ->whereNotIn('request_item_id', $itemIds)
                         ->get();
 

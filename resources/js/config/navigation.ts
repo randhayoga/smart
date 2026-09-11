@@ -24,7 +24,8 @@ import {
     Scroll,
     FileX,
     QrCode,
-    NotebookPen
+    NotebookPen,
+    Users
 } from 'lucide-vue-next';
 
 export interface NavItem {
@@ -68,6 +69,11 @@ export const mainNavigation: NavSection[] = [
                 title: 'Daftar Aset',
                 href: '/smart/inventory/assets',
                 icon: ScrollText,
+            },
+            {
+                title: 'Daftar Karyawan',
+                href: '/smart/karyawan',
+                icon: Users,
             },
             {
                 title: 'Daftar Pending Nonaktif',

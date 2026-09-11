@@ -68,7 +68,9 @@ class AssignLotsToRequestItem
             $lockedFulfillments = RequestFulfillment::where('request_item_id', $item->id)
                 ->whereNotNull('lot_id')
                 ->where(function ($q) {
-                    $q->whereNotNull('handover_id')
+                    $q->whereNotNull('assigned_at')
+                      ->orWhereNotNull('confirmed_at')
+                      ->orWhereNotNull('handover_id')
                       ->orWhereNotNull('completed_at');
                 })
                 ->get();
@@ -142,10 +144,10 @@ class AssignLotsToRequestItem
                     ->first();
 
                 if ($existing) {
-                    if (!$existing->handover_id && !$existing->completed_at) {
+                    if (!$existing->handover_id && !$existing->completed_at && !$existing->assigned_at) {
                         $existing->update([
                             'quantity_fulfilled' => $qty,
-                            'assigned_at' => now(),
+                            'assigned_at' => null,
                         ]);
                     }
                 } else {
@@ -154,7 +156,7 @@ class AssignLotsToRequestItem
                         'lot_id' => $lotId,
                         'unit_id' => null,
                         'quantity_fulfilled' => $qty,
-                        'assigned_at' => now(),
+                        'assigned_at' => null,
                     ]);
                 }
             }

@@ -41,7 +41,8 @@ class RequestFulfillmentService
         // Ensure unit is not locked by a confirmed fulfillment or already handed over
         $query->whereDoesntHave('fulfillments', function ($fq) use ($item, $includeCurrentItemAssignments) {
             $fq->where(function ($q) {
-                $q->whereNotNull('confirmed_at')
+                $q->whereNotNull('assigned_at')
+                  ->orWhereNotNull('confirmed_at')
                   ->orWhereNotNull('completed_at')
                   ->orWhereNotNull('handover_id');
             });
@@ -124,7 +125,8 @@ class RequestFulfillmentService
                 // Ensure unit is not locked by a confirmed fulfillment
                 $alreadyTaken = RequestFulfillment::where('unit_id', $unit->id)
                     ->where(function ($q) {
-                        $q->whereNotNull('confirmed_at')
+                        $q->whereNotNull('assigned_at')
+                          ->orWhereNotNull('confirmed_at')
                           ->orWhereNotNull('completed_at')
                           ->orWhereNotNull('handover_id');
                     })
@@ -140,7 +142,7 @@ class RequestFulfillmentService
                     'unit_id' => $unit->id,
                     'lot_id' => $unit->lot_id,
                     'quantity_fulfilled' => 1,
-                    'assigned_at' => now(),
+                    'assigned_at' => null,
                 ]);
 
                 $createdCount++;
@@ -224,7 +226,7 @@ class RequestFulfillmentService
                 if ($existingFulfillment) {
                     $existingFulfillment->update([
                         'quantity_fulfilled' => $existingFulfillment->quantity_fulfilled + $take,
-                        'assigned_at' => now(),
+                        'assigned_at' => null,
                     ]);
                 } else {
                     RequestFulfillment::create([
@@ -232,7 +234,7 @@ class RequestFulfillmentService
                         'unit_id' => null,
                         'lot_id' => $lot->id,
                         'quantity_fulfilled' => $take,
-                        'assigned_at' => now(),
+                        'assigned_at' => null,
                     ]);
                 }
 

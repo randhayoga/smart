@@ -108,7 +108,7 @@ class AdminActiveRequestController extends Controller
     {
         return SmartRequest::with($this->fulfillmentRelations)
             ->where('status', 'confirm')
-            ->whereDoesntHave('items.fulfillments', fn($q) => $q->whereNotNull('confirmed_at'))
+            ->whereDoesntHave('items.fulfillments', fn($q) => $q->whereNotNull('assigned_at'))
             ->orderBy('id', 'desc')
             ->get()
             ->map(fn(SmartRequest $req) => $this->mapFulfillmentListItem($req))

@@ -81,6 +81,7 @@ class UnitBorrowController extends Controller
 
                 $activeAssignment->update([
                     'assigned_at' => $startDate,
+                    'confirmed_at' => $startDate,
                 ]);
 
                 if ($unit->status !== 'Dipinjam') {
@@ -132,6 +133,7 @@ class UnitBorrowController extends Controller
                     'unit_id' => $unit->id,
                     'quantity_fulfilled' => 1,
                     'assigned_at' => $startDate,
+                    'confirmed_at' => $startDate,
                     'completed_at' => null,
                 ]);
 

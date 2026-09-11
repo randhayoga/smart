@@ -40,6 +40,7 @@ class AssignUnitsToRequestItem
             $lockedFulfillments = RequestFulfillment::where('request_item_id', $item->id)
                 ->where(function ($q) {
                     $q->whereNotNull('handover_id')
+                      ->orWhereNotNull('assigned_at')
                       ->orWhereNotNull('confirmed_at')
                       ->orWhereNotNull('completed_at')
                       ->orWhereHas('unit', fn($uq) => $uq->where('status', 'Dipinjam'));
@@ -107,7 +108,8 @@ class AssignUnitsToRequestItem
                     $isAssignedElsewhere = RequestFulfillment::where('unit_id', $unit->id)
                         ->where('request_item_id', '!=', $item->id)
                         ->where(function ($q) {
-                            $q->whereNotNull('confirmed_at')
+                            $q->whereNotNull('assigned_at')
+                              ->orWhereNotNull('confirmed_at')
                               ->orWhereNotNull('completed_at')
                               ->orWhereNotNull('handover_id');
                         })
@@ -142,7 +144,7 @@ class AssignUnitsToRequestItem
                         'unit_id' => $uid,
                         'lot_id' => $unitModel?->lot_id,
                         'quantity_fulfilled' => 1,
-                        'assigned_at' => now(),
+                        'assigned_at' => null,
                     ]);
                 }
             }

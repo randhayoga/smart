@@ -124,6 +124,10 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
             Route::get('stok-habis-pakai/{barang?}', [\App\Http\Controllers\Smart\Admin\ManajemenStok\ConsumableLotController::class, 'index'])->name('stok-habis-pakai');
         });
 
+        // Daftar Karyawan & Nested Employee Loans Resource (Cruddy by Design)
+        Route::get('/karyawan', [\App\Http\Controllers\Smart\Admin\ManajemenStok\EmployeeController::class, 'index'])->name('karyawan.index');
+        Route::get('/karyawan/{employee}/loans', [\App\Http\Controllers\Smart\Admin\ManajemenStok\EmployeeLoanController::class, 'index'])->name('karyawan.loans');
+
         Route::get('scan/{unit}', [\App\Http\Controllers\Smart\Admin\ManajemenStok\UnitScanController::class, 'show'])->name('scan');
 
         Route::get('/inventory/{barang}', [ManajemenStokController::class, 'show'])->name('inventory.show');

@@ -210,7 +210,7 @@ class SmartFulfillmentResource extends JsonResource
                             || ($unit && strtolower((string)$unit->status) === 'dipinjam')
                             || in_array($this->status, ['borrow', 'success']);
 
-                        $isConfirmed = ($f->confirmed_at !== null) || $isBorrowed;
+                        $isAssigned = ($f->assigned_at !== null) || $isBorrowed;
 
                         if ($isBorrowed) {
                             $state = 'borrowed';
@@ -220,7 +220,7 @@ class SmartFulfillmentResource extends JsonResource
                             if ($unitId) {
                                 $lockedUnitIds[] = $unitId;
                             }
-                        } elseif ($isConfirmed) {
+                        } elseif ($isAssigned) {
                             $state = 'assigned';
                             $color = 'purple';
                             $label = 'Dikonfirmasi (Menunggu Serah Terima)';
@@ -263,7 +263,7 @@ class SmartFulfillmentResource extends JsonResource
                 $availableUnitModels = $fulfillmentService->getAvailableUnitsQuery($item, true)->get();
                 $stagedElsewhereUnitIds = RequestFulfillment::whereIn('unit_id', $availableUnitModels->pluck('id'))
                     ->where('request_item_id', '!=', $item->id)
-                    ->whereNull('confirmed_at')
+                    ->whereNull('assigned_at')
                     ->whereNull('completed_at')
                     ->pluck('unit_id')
                     ->all();

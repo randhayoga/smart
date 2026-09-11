@@ -70,7 +70,7 @@ return new class extends Migration {
             $table->foreignId('handover_id')->nullable()->constrained('request_handovers')->comment('nullable | links to schedule');
             $table->foreignId('return_id')->nullable()->constrained('request_returns')->comment('nullable | links to return schedule');
             $table->integer('quantity_fulfilled')->default(1)->comment('defaults to 1 for assets');
-            $table->dateTime('assigned_at');
+            $table->dateTime('assigned_at')->nullable();
             $table->dateTime('completed_at')->nullable();
             $table->timestamps();
         });

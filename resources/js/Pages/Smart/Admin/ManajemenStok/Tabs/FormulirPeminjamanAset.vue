@@ -2,7 +2,7 @@
 /**
  * Formulir Peminjaman Aset tab component allowing administrators to assign, update, and complete asset loans.
  */
-import { ref, watch } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { router } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 import { CheckCircle } from 'lucide-vue-next';
@@ -13,7 +13,7 @@ import { Field, FieldLabel, FieldContent, FieldError } from '@/Components/ui/fie
 
 interface Props {
   asset: any;
-  users?: { id: number; name: string }[];
+  users?: { id: number; name: string; employee_id?: string }[];
 }
 
 const props = defineProps<Props>();
@@ -23,18 +23,39 @@ const borrowStartDate = ref('');
 const borrowNote = ref('');
 const isBorrowSubmitting = ref(false);
 const isFinishSubmitting = ref(false);
-const usersList = ref<{ id: number; name: string }[]>([]);
+const rawUsersList = ref<{ id: number; name: string; employee_id?: string }[]>([]);
 const errors = ref<{ user_id?: string; start_date?: string; note?: string }>({});
+
+// Format options to "<employee_id> - <employee_name>"
+const usersOptions = computed(() => {
+  return rawUsersList.value.map(user => {
+    let formattedName = user.name;
+    if (user.employee_id) {
+      formattedName = `${user.employee_id} - ${user.name}`;
+    } else {
+      // If employee_id is embedded in name like "Name (NPK)", reformat to "NPK - Name"
+      const match = user.name.match(/^(.*?)\s*\((.*?)\)$/);
+      if (match) {
+        const [, namePart, npkPart] = match;
+        formattedName = `${npkPart} - ${namePart}`;
+      }
+    }
+    return {
+      id: user.id,
+      name: formattedName,
+    };
+  });
+});
 
 const fetchUsers = async () => {
   if (props.users && props.users.length > 0) {
-    usersList.value = props.users;
+    rawUsersList.value = props.users;
     return;
   }
   try {
     const res = await fetch('/smart/inventory/users');
     if (res.ok) {
-      usersList.value = await res.json();
+      rawUsersList.value = await res.json();
     }
   } catch (err) {
     console.error('Failed to fetch users:', err);
@@ -152,7 +173,7 @@ const handleFinishBorrow = () => {
         <FieldContent>
           <Combobox
             v-model="borrowUserId"
-            :options="usersList"
+            :options="usersOptions"
             search-placeholder="Cari nama atau NPK..."
             default-label="Pilih peminjam"
             width-class="w-full h-10 px-4"
