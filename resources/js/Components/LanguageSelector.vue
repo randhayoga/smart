@@ -72,7 +72,7 @@ function selectLanguage(newLocale: 'id' | 'en') {
         v-for="lang in languages"
         :key="lang.code"
         @click="selectLanguage(lang.code)"
-        class="flex items-center justify-between px-3 py-2 text-xs rounded-lg cursor-pointer transition-colors"
+        class="flex items-center justify-between px-3 py-2 text-sm rounded-lg cursor-pointer transition-colors"
         :class="currentLocale === lang.code ? 'bg-primary/10 text-primary font-semibold' : 'text-foreground hover:bg-muted'"
       >
         <span class="flex items-center gap-2.5">
