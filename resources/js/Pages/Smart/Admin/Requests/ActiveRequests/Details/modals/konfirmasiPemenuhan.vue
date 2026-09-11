@@ -4,7 +4,8 @@
  * Allows admin to review full/partial allocation readiness and submit confirmation,
  * advancing request to Handover (100%) or Partial status.
  */
-import { ref, watch, onMounted, onUnmounted } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
+import { useModalLock } from '@/composables/useModalLock';
 import { router } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 import { Button } from '@/Components/ui/button';
@@ -21,6 +22,8 @@ const emit = defineEmits<{
   (e: 'update:open', val: boolean): void;
   (e: 'success'): void;
 }>();
+
+useModalLock(computed(() => props.open));
 
 const confirmationNote = ref('');
 const isSubmittingConfirmation = ref(false);
@@ -90,7 +93,7 @@ const submitConfirmation = () => {
       leave-from-class="opacity-100"
       leave-to-class="opacity-0"
     >
-      <div v-if="open" @click="closeModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+      <div v-if="open" @click="closeModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 overscroll-contain">
         <Transition
           enter-active-class="ease-out duration-200"
           enter-from-class="opacity-0 scale-95"
@@ -115,7 +118,7 @@ const submitConfirmation = () => {
             </div>
 
             <!-- Modal Body -->
-            <div class="p-6 overflow-y-auto max-h-[70vh] space-y-6 text-sm">
+            <div class="p-6 overflow-y-auto max-h-[70vh] space-y-6 text-sm overscroll-contain">
               <!-- Status Alert -->
               <div 
                 v-if="request?.fulfillment_summary?.can_confirm_full"

@@ -2,7 +2,8 @@
 /**
  * Delete Error Modal component alerting users when a deletion request fails (e.g. active dependencies/foreign keys).
  */
-import { onMounted, onUnmounted } from 'vue';
+import { computed, onMounted, onUnmounted } from 'vue';
+import { useModalLock } from '@/composables/useModalLock';
 import { X, AlertTriangle } from 'lucide-vue-next';
 import { Button } from "@/Components/ui/button";
 
@@ -17,6 +18,8 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const emit = defineEmits(['close']);
+
+useModalLock(computed(() => props.isOpen));
 
 const closeOnEscape = (e: KeyboardEvent) => {
   if (e.key === 'Escape' && props.isOpen) {
@@ -43,7 +46,7 @@ onUnmounted(() => {
       leave-from-class="opacity-100"
       leave-to-class="opacity-0"
     >
-      <div v-if="isOpen" @click="emit('close')" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+      <div v-if="isOpen" @click="emit('close')" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 overscroll-contain">
         <Transition
           enter-active-class="ease-out duration-200"
           enter-from-class="opacity-0 scale-95"

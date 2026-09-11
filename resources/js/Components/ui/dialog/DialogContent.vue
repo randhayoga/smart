@@ -10,7 +10,10 @@ import {
   useForwardPropsEmits,
 } from "reka-ui"
 import { cn } from "@/lib/utils"
+import { useModalLock } from "@/composables/useModalLock"
 import DialogOverlay from "./DialogOverlay.vue"
+
+useModalLock()
 
 defineOptions({
   inheritAttrs: false,

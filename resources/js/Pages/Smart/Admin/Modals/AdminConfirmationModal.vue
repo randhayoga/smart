@@ -5,6 +5,7 @@
  * optional approval/rejection notes, and submission action handlers.
  */
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
+import { useModalLock } from '@/composables/useModalLock';
 import { X, Loader2, ThumbsUp, Ban } from 'lucide-vue-next';
 import { Button } from "@/Components/ui/button";
 import { ScrollArea } from "@/Components/ui/scroll-area";
@@ -29,6 +30,8 @@ const emit = defineEmits<{
   (e: 'close'): void;
   (e: 'action', payload: { action: 'confirm' | 'reject'; note: string }): void;
 }>();
+
+useModalLock(computed(() => props.isOpen));
 
 // --- Form & Action State ---
 const note = ref('');
@@ -99,7 +102,7 @@ onUnmounted(() => {
       leave-from-class="opacity-100"
       leave-to-class="opacity-0"
     >
-      <div v-if="isOpen" @click="emit('close')" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+      <div v-if="isOpen" @click="emit('close')" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 overscroll-contain">
         <Transition
           enter-active-class="ease-out duration-200"
           enter-from-class="opacity-0 scale-95"
@@ -124,7 +127,7 @@ onUnmounted(() => {
             </div>
 
             <!-- Modal Body -->
-            <div class="p-6 flex flex-col items-center text-center space-y-2 flex-grow overflow-y-auto">
+            <div class="p-6 flex flex-col items-center text-center space-y-2 flex-grow overflow-y-auto overscroll-contain">
               <!-- Requests Container -->
               <div class="w-full space-y-6">
                 <!-- Single Request Selection Layout -->

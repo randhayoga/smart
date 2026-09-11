@@ -4,7 +4,8 @@
  * Displays full asset specification, registration history, location, and comprehensive audit trail
  * for assets pending disposal or already decided.
  */
-import { ref, watch } from 'vue';
+import { ref, computed, watch } from 'vue';
+import { useModalLock } from '@/composables/useModalLock';
 import { X, FileText, ThumbsUp, Ban } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
 import { formatDate } from '@/lib/utils';
@@ -25,6 +26,8 @@ const emit = defineEmits<{
   (e: 'approve'): void;
   (e: 'reject'): void;
 }>();
+
+useModalLock(computed(() => props.open && !!props.approval));
 
 // --- Tab & Helper State ---
 const detailActiveTab = ref('Detail Aset');
@@ -93,7 +96,7 @@ const getConditionClass = (cond?: string | null) => {
     >
       <div 
         v-if="open && approval" 
-        class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+        class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 overscroll-contain"
         @click="emit('update:open', false)"
       >
         <Transition
@@ -118,7 +121,7 @@ const getConditionClass = (cond?: string | null) => {
             </div>
 
             <!-- Body contents -->
-            <div class="overflow-y-auto max-h-[70vh] px-6 py-3 space-y-4">
+            <div class="overflow-y-auto max-h-[70vh] px-6 py-3 space-y-4 overscroll-contain">
               
               <!-- ── TAB 1: DETAIL ── -->
               <div v-if="detailActiveTab === 'Detail Aset'" class="flex flex-col md:flex-row gap-6">

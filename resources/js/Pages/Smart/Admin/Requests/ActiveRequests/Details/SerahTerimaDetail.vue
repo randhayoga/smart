@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, h, nextTick } from 'vue';
+import { useModalLock } from '@/composables/useModalLock';
 import { useForm, router } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 import { addNotification } from '@/stores/notificationStore';
@@ -373,6 +374,9 @@ const closeCancelModal = () => {
   }, 200);
 };
 
+const isAnyModalOpen = computed(() => isAllocModalOpen.value || isCancelModalOpen.value);
+useModalLock(isAnyModalOpen);
+
 const confirmCancel = () => {
   toast.info('Permintaan dibatalkan');
   addNotification(
@@ -581,7 +585,7 @@ const confirmCancel = () => {
         leave-from-class="opacity-100"
         leave-to-class="opacity-0"
       >
-        <div v-if="isAllocModalOpen" class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4">
+        <div v-if="isAllocModalOpen" class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4 overscroll-contain">
           <div 
             class="bg-card text-foreground rounded-[14px] shadow-2xl w-full max-w-[1100px] max-h-[90vh] flex flex-col overflow-hidden"
             @click.stop
@@ -598,7 +602,7 @@ const confirmCancel = () => {
             </div>
             
             <!-- Modal Body -->
-            <div class="p-6 overflow-y-auto flex-grow bg-card">
+            <div class="p-6 overflow-y-auto flex-grow bg-card overscroll-contain">
               <!-- Filters -->
               <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-4">
                 <div class="flex items-end gap-3 w-full max-w-xl">
@@ -682,7 +686,7 @@ const confirmCancel = () => {
         leave-from-class="opacity-100"
         leave-to-class="opacity-0"
       >
-        <div v-if="isCancelModalOpen" class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4">
+        <div v-if="isCancelModalOpen" class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4 overscroll-contain">
           <div 
             class="bg-card text-foreground rounded-[14px] shadow-2xl w-full max-w-[886px] min-h-[515px] flex flex-col overflow-hidden"
             @click.stop
@@ -696,7 +700,7 @@ const confirmCancel = () => {
             </div>
             
             <!-- Modal Body -->
-            <div class="p-6 overflow-y-auto flex-grow bg-card space-y-4">
+            <div class="p-6 overflow-y-auto flex-grow bg-card space-y-4 overscroll-contain">
               <div class="space-y-1 text-sm text-foreground">
                 <p class="font-bold mb-2">{{ handover?.number || '#Nomor_Permintaan/#Nomor_Peminjaman' }}</p>
                 <p>Dibuat oleh: {{ handover?.requester }}</p>

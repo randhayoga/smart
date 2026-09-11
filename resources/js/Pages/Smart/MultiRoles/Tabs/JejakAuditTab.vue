@@ -96,9 +96,7 @@ const filteredLifecycles = computed(() => {
   if (auditSearch.value.trim() !== '') {
     const q = auditSearch.value.toLowerCase();
     logs = logs.filter(l => 
-      l.aktor.toLowerCase().includes(q) || 
-      (l.catatan && l.catatan.toLowerCase().includes(q)) || 
-      l.status.toLowerCase().includes(q)
+      l.aktor && l.aktor.toLowerCase().includes(q)
     );
   }
 
@@ -255,7 +253,7 @@ const auditColumns: ColumnDef<AuditTrail>[] = [
         <label class="text-xs text-muted-foreground font-medium block ml-0.5">Filter</label>
         <TableSearch 
           v-model="auditSearch"
-          placeholder="Cari Jejak Audit..." 
+          placeholder="Cari Nama Aktor..." 
           bg-class="bg-white"
         />
       </div>

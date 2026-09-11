@@ -3,6 +3,7 @@
  * Detail Asset Modal component displaying asset unit specifications, borrow assignments, QR code generation, and audit trail tabs.
  */
 import { computed, ref, watch } from 'vue';
+import { useModalLock } from '@/composables/useModalLock';
 import { router } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 import { X, FileText, Upload } from 'lucide-vue-next';
@@ -25,6 +26,8 @@ const emit = defineEmits<{
   (e: 'update:open', value: boolean): void;
   (e: 'edit', asset: any): void;
 }>();
+
+useModalLock(computed(() => props.open));
 
 const detailActiveTab = ref('Detail Aset');
 const fileInputRef = ref<HTMLInputElement | null>(null);
@@ -174,7 +177,7 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
       leave-from-class="opacity-100"
       leave-to-class="opacity-0"
     >
-      <div v-if="open" @click="emit('update:open', false)" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+      <div v-if="open" @click="emit('update:open', false)" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 overscroll-contain">
         <Transition
           enter-active-class="ease-out duration-200"
           enter-from-class="opacity-0 scale-95"
@@ -197,7 +200,7 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
             </div>
 
             <!-- Modal Body -->
-            <div class="p-6 overflow-y-auto max-h-[70vh] space-y-4">
+            <div class="p-6 overflow-y-auto max-h-[70vh] space-y-4 overscroll-contain">
               <!-- ── TAB 1: DETAIL ASET ── -->
               <div v-if="detailActiveTab === 'Detail Aset'" class="space-y-6">
                 <div class="flex flex-col md:flex-row gap-6">

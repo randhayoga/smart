@@ -3,6 +3,7 @@
  * Native Dialog Modal wrapper component with backdrop transitions and keyboard shortcuts.
  */
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { useModalLock } from '@/composables/useModalLock';
 
 const props = withDefaults(
     defineProps<{
@@ -17,6 +18,8 @@ const props = withDefaults(
     },
 );
 
+useModalLock(computed(() => props.show));
+
 const emit = defineEmits(['close']);
 const dialog = ref();
 const showSlot = ref(props.show);
@@ -25,13 +28,10 @@ watch(
     () => props.show,
     () => {
         if (props.show) {
-            document.body.style.overflow = 'hidden';
             showSlot.value = true;
 
             dialog.value?.showModal();
         } else {
-            document.body.style.overflow = '';
-
             setTimeout(() => {
                 dialog.value?.close();
                 showSlot.value = false;
@@ -60,8 +60,6 @@ onMounted(() => document.addEventListener('keydown', closeOnEscape));
 
 onUnmounted(() => {
     document.removeEventListener('keydown', closeOnEscape);
-
-    document.body.style.overflow = '';
 });
 
 const maxWidthClass = computed(() => {

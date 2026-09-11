@@ -3,6 +3,7 @@
  * Edit Tipe Modal component for updating item definitions, UOM, brand, specifications, and default images.
  */
 import { ref, watch, computed } from 'vue';
+import { useModalLock } from '@/composables/useModalLock';
 import { useForm } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 import { X, Loader2 } from 'lucide-vue-next';
@@ -25,6 +26,8 @@ const emit = defineEmits<{
   (e: 'update:open', value: boolean): void;
   (e: 'success'): void;
 }>();
+
+useModalLock(computed(() => props.open));
 
 const isSingle = computed(() => props.items.length === 1);
 const selectedItem = computed(() => isSingle.value ? props.items[0] : null);
@@ -176,7 +179,7 @@ const handleSubmit = () => {
       leave-from-class="opacity-100"
       leave-to-class="opacity-0"
     >
-      <div v-if="open" @click="closeModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+      <div v-if="open" @click="closeModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 overscroll-contain">
         <Transition
           enter-active-class="ease-out duration-200"
           enter-from-class="opacity-0 scale-95"

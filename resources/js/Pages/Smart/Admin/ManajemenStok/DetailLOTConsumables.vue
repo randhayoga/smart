@@ -2,7 +2,8 @@
 /**
  * Consumable LOT Detail Modal component presenting stock balance, PO number, receiving date, and unit cost.
  */
-import { ref, watch, onMounted, onUnmounted } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
+import { useModalLock } from '@/composables/useModalLock';
 import axios from 'axios';
 import { X } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
@@ -20,6 +21,8 @@ const emit = defineEmits<{
   (e: 'edit', lot: any): void;
   (e: 'delete', lot: any): void;
 }>();
+
+useModalLock(computed(() => props.isOpen));
 
 const lotDetails = ref<any>(null);
 const isLoading = ref(false);
@@ -105,7 +108,7 @@ onUnmounted(() => {
       leave-from-class="opacity-100"
       leave-to-class="opacity-0"
     >
-      <div v-if="isOpen" @click="emit('close')" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+      <div v-if="isOpen" @click="emit('close')" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 overscroll-contain">
         <Transition
           enter-active-class="ease-out duration-200"
           enter-from-class="opacity-0 scale-95"

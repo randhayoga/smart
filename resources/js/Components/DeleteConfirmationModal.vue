@@ -3,6 +3,7 @@
  * Delete Confirmation Modal component supporting single and bulk deletion reviews as well as approval confirmations.
  */
 import { computed, onMounted, onUnmounted } from 'vue';
+import { useModalLock } from '@/composables/useModalLock';
 import { X, AlertTriangle, Loader2 } from 'lucide-vue-next';
 import { Button } from "@/Components/ui/button";
 import { formatDate } from '@/lib/utils';
@@ -42,6 +43,8 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const emit = defineEmits(['close', 'confirm']);
+
+useModalLock(computed(() => props.isOpen));
 
 const handleConfirm = () => {
   emit('confirm');
@@ -323,7 +326,7 @@ onUnmounted(() => {
       leave-from-class="opacity-100"
       leave-to-class="opacity-0"
     >
-      <div v-if="isOpen" @click="emit('close')" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+      <div v-if="isOpen" @click="emit('close')" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 overscroll-contain">
         <Transition
           enter-active-class="ease-out duration-200"
           enter-from-class="opacity-0 scale-95"
@@ -357,7 +360,7 @@ onUnmounted(() => {
                 </p>
 
                 <!-- Single Item Info Details -->
-                <div v-if="displayFields.length > 0 && itemCount <= 1" class="p-3 rounded-[14px] bg-muted/40 border border-border text-left space-y-2.5 w-full max-w-[90%] mx-auto max-h-[40vh] overflow-y-auto">
+                <div v-if="displayFields.length > 0 && itemCount <= 1" class="p-3 rounded-[14px] bg-muted/40 border border-border text-left space-y-2.5 w-full max-w-[90%] mx-auto max-h-[40vh] overflow-y-auto overscroll-contain">
                   <div v-for="field in displayFields" :key="field.label" class="grid grid-cols-12 gap-2 text-sm border-b border-border/50 last:border-0 pb-2 last:pb-0">
                     <span class="col-span-4 text-muted-foreground font-medium">{{ field.label }}</span>
                     <span class="col-span-8 text-foreground font-semibold text-right break-words">
@@ -367,7 +370,7 @@ onUnmounted(() => {
                 </div>
 
                 <!-- Bulk Items Info Details -->
-                <div v-else-if="itemCount > 1 && bulkItemsFields.length > 0" class="p-3 rounded-[14px] bg-muted/40 border border-border text-left w-full max-w-[90%] mx-auto max-h-[45vh] overflow-y-auto space-y-3">
+                <div v-else-if="itemCount > 1 && bulkItemsFields.length > 0" class="p-3 rounded-[14px] bg-muted/40 border border-border text-left w-full max-w-[90%] mx-auto max-h-[45vh] overflow-y-auto overscroll-contain space-y-3">
                   <div v-for="(itemFields, idx) in bulkItemsFields" :key="idx" class="p-3 rounded-[12px] bg-background border border-border space-y-2.5">
                     <div v-for="field in itemFields" :key="field.label" class="grid grid-cols-12 gap-2 text-sm border-b border-border/50 last:border-0 pb-2 last:pb-0">
                       <span class="col-span-4 text-muted-foreground font-medium">{{ field.label }}</span>

@@ -3,6 +3,7 @@
  * Master Data Management Page component managing categories, subcategories, UOMs, brands, organizers, vendors, locations, floors, and rooms.
  */
 import { ref, computed, watch, h, onMounted, onUnmounted } from 'vue';
+import { useModalLock } from '@/composables/useModalLock';
 import { useForm, usePage, router } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 import AppLayout from '@/Layouts/AppLayout.vue';
@@ -237,6 +238,9 @@ const displayData = computed(() => {
 const isEditModalOpen   = ref(false);
 const isCreateModalOpen = ref(false);
 const editingItem       = ref<any>(null);
+
+const isAnyModalOpen = computed(() => isEditModalOpen.value || isCreateModalOpen.value);
+useModalLock(isAnyModalOpen);
 
 // ── Create forms ────────────────────────────────────────────────
 const categoryForm    = useForm({ code: '', name: '', is_consumable: '1' });
@@ -1084,10 +1088,10 @@ onUnmounted(() => {
         leave-from-class="opacity-100"
         leave-to-class="opacity-0"
       >
-        <div v-if="isEditModalOpen" @click="closeEditModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4">
+        <div v-if="isEditModalOpen" @click="closeEditModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4 overscroll-contain">
           <div 
             :class="[
-              'bg-card text-foreground rounded-[14px] shadow-2xl w-full min-h-[261px] overflow-hidden flex flex-col',
+              'bg-card text-foreground rounded-[14px] shadow-2xl w-full min-h-[261px] max-h-[90vh] overflow-hidden flex flex-col',
               !['Subkategori', 'Lokasi', 'Kategori', 'Vendor'].includes(activeTab) ? 'max-w-[600px]' : 'max-w-[1200px]'
             ]"
             @click.stop
@@ -1101,7 +1105,7 @@ onUnmounted(() => {
             </div>
             
             <!-- Modal Body -->
-            <div class="p-6 flex-grow">
+            <div class="p-6 flex-grow overflow-y-auto overscroll-contain">
               <!-- Edit: Subkategori -->
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6" v-if="activeTab === 'Subkategori'">
                 <Field data-disabled="true">
@@ -1405,10 +1409,10 @@ onUnmounted(() => {
         leave-from-class="opacity-100"
         leave-to-class="opacity-0"
       >
-        <div v-if="isCreateModalOpen" @click="closeCreateModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4">
+        <div v-if="isCreateModalOpen" @click="closeCreateModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4 overscroll-contain">
           <div 
             :class="[
-              'bg-card text-foreground rounded-[14px] shadow-2xl w-full min-h-[261px] overflow-hidden flex flex-col',
+              'bg-card text-foreground rounded-[14px] shadow-2xl w-full min-h-[261px] max-h-[90vh] overflow-hidden flex flex-col',
               !['Subkategori', 'Lokasi', 'Kategori', 'Vendor'].includes(activeTab) ? 'max-w-[600px]' : 'max-w-[1200px]'
             ]"
             @click.stop
@@ -1422,7 +1426,7 @@ onUnmounted(() => {
             </div>
             
             <!-- Modal Body -->
-            <div class="p-6 flex-grow">
+            <div class="p-6 flex-grow overflow-y-auto overscroll-contain">
               <!-- Create: Subkategori -->
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6" v-if="activeTab === 'Subkategori'">
                 <Field :data-invalid="!!createFormErrors.category_id || undefined">

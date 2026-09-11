@@ -3,6 +3,7 @@
  * Create Tipe Modal component for registering new inventory item definitions, classifications, and stock notification thresholds.
  */
 import { ref, watch, computed } from 'vue';
+import { useModalLock } from '@/composables/useModalLock';
 import { useForm } from '@inertiajs/vue3';
 import { X, ChevronDown, Loader2 } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
@@ -34,6 +35,8 @@ const emit = defineEmits<{
   (e: 'update:open', value: boolean): void;
   (e: 'success'): void;
 }>();
+
+useModalLock(computed(() => props.open));
 
 const newItem = useForm({
   code: '',
@@ -197,7 +200,7 @@ const handleSubmit = () => {
       leave-from-class="opacity-100"
       leave-to-class="opacity-0"
     >
-      <div v-if="open" @click="closeModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+      <div v-if="open" @click="closeModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 overscroll-contain">
         <Transition
           enter-active-class="ease-out duration-200"
           enter-from-class="opacity-0 scale-95"

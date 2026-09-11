@@ -8,6 +8,7 @@
  * 4. Non-Specific Consumable (Habis Pakai Non-Spesifik): Allocate stock per LOT via numeric input, showing Kode LOT, Varian, Lokasi, Stok Tersedia, Stok Dialokasikan + Varian combobox filter.
  */
 import { ref, computed, watch, onMounted, onUnmounted, h } from 'vue';
+import { useModalLock } from '@/composables/useModalLock';
 import { router } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 import { Button } from '@/Components/ui/button';
@@ -94,6 +95,8 @@ const emit = defineEmits<{
   (e: 'update:open', val: boolean): void;
   (e: 'success'): void;
 }>();
+
+useModalLock(computed(() => props.open));
 
 // --- Mode Detection ---
 const isConsumable = computed(() => Boolean(props.item?.is_consumable));
@@ -748,7 +751,7 @@ const saveAllocation = () => {
       leave-from-class="opacity-100"
       leave-to-class="opacity-0"
     >
-      <div v-if="open" @click="closeModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+      <div v-if="open" @click="closeModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 overscroll-contain">
         <Transition
           enter-active-class="ease-out duration-200"
           enter-from-class="opacity-0 scale-95"
@@ -773,7 +776,7 @@ const saveAllocation = () => {
             </div>
 
             <!-- Modal Body -->
-            <div class="p-6 overflow-y-auto max-h-[70vh] space-y-4">
+            <div class="p-6 overflow-y-auto max-h-[70vh] space-y-4 overscroll-contain">
               <!-- Top Toolbar: Search + Combobox (Non-Specific) + Action Buttons (Left) & Rows Per Page (Right) -->
               <div class="flex items-center justify-between gap-4 flex-wrap">
                 <!-- Left Action Group: Search, Varian Combobox, Auto-Allocate, Clear -->

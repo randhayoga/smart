@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
+import { useModalLock } from '@/composables/useModalLock';
 import { router } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 import AppLayout from '@/Layouts/AppLayout.vue';
@@ -278,6 +279,9 @@ const submitPending = () => {
 const isRejectModalOpen = ref(false);
 const rejectReason = ref('');
 
+const isAnyModalOpen = computed(() => isPendingModalOpen.value || isRejectModalOpen.value);
+useModalLock(isAnyModalOpen);
+
 const openRejectModal = () => {
   rejectReason.value = '';
   isRejectModalOpen.value = true;
@@ -536,7 +540,7 @@ const handleAturSerahTerima = () => {
       >
         <div 
           v-if="isPendingModalOpen" 
-          class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4"
+          class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4 overscroll-contain"
         >
           <div 
             class="bg-card text-foreground rounded-[14px] shadow-2xl w-full max-w-md flex flex-col overflow-hidden border border-border"
@@ -598,7 +602,7 @@ const handleAturSerahTerima = () => {
       >
         <div 
           v-if="isRejectModalOpen" 
-          class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4"
+          class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4 overscroll-contain"
           @click.self="closeRejectModal"
         >
           <div 

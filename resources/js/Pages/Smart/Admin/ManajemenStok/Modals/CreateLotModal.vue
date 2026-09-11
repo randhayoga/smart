@@ -3,6 +3,7 @@
  * Create LOT Modal component for registering new procurement batches, PO references, vendor information, and initial quantities.
  */
 import { ref, watch, computed } from 'vue';
+import { useModalLock } from '@/composables/useModalLock';
 import { router, useForm } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 import { X, ChevronDown, Loader2 } from 'lucide-vue-next';
@@ -35,6 +36,8 @@ const emit = defineEmits<{
   (e: 'update:open', value: boolean): void;
   (e: 'success'): void;
 }>();
+
+useModalLock(computed(() => props.open));
 
 const lotForm = useForm({
   _method: 'POST',
@@ -270,7 +273,7 @@ const handleSubmit = () => {
 <template>
   <Teleport to="body">
     <Transition enter-active-class="ease-out duration-200" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="ease-in duration-150" leave-from-class="opacity-100" leave-to-class="opacity-0">
-      <div v-if="open" @click="closeModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+      <div v-if="open" @click="closeModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 overscroll-contain">
         <Transition enter-active-class="ease-out duration-200" enter-from-class="opacity-0 scale-95" enter-to-class="opacity-100 scale-100" leave-active-class="ease-in duration-150" leave-from-class="opacity-100 scale-100" leave-to-class="opacity-0 scale-95">
           <div v-if="open" class="bg-card w-full max-w-[1000px] rounded-[14px] shadow-2xl overflow-hidden flex flex-col" @click.stop>
             <!-- Header -->
@@ -282,7 +285,7 @@ const handleSubmit = () => {
             </div>
 
             <!-- Body -->
-            <div class="p-6 overflow-y-auto max-h-[90vh]">
+            <div class="p-6 overflow-y-auto max-h-[90vh] overscroll-contain">
               <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
                 <!-- Left Column -->
                 <div class="space-y-6">

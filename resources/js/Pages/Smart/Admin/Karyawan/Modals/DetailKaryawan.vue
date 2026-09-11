@@ -5,6 +5,7 @@
  * Adheres to Cruddy by Design, KISS, and DRY principles.
  */
 import { ref, computed, watch, onMounted, onUnmounted, h } from 'vue';
+import { useModalLock } from '@/composables/useModalLock';
 import { toast } from 'vue-sonner';
 import axios from 'axios';
 import { Button } from '@/Components/ui/button';
@@ -58,6 +59,8 @@ const props = defineProps<Props>();
 const emit = defineEmits<{
   (e: 'update:open', val: boolean): void;
 }>();
+
+useModalLock(computed(() => props.open));
 
 // --- View Asset Modal Setup ---
 const isViewAssetModalOpen = ref(false);
@@ -525,7 +528,7 @@ const historyColumns: ColumnDef<LoanItem>[] = [
       leave-from-class="opacity-100"
       leave-to-class="opacity-0"
     >
-      <div v-if="open" @click="closeModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+      <div v-if="open" @click="closeModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 overscroll-contain">
         <Transition
           enter-active-class="ease-out duration-200"
           enter-from-class="opacity-0 scale-95"
@@ -550,7 +553,7 @@ const historyColumns: ColumnDef<LoanItem>[] = [
             </div>
 
             <!-- Modal Body -->
-            <div class="p-6 overflow-y-auto max-h-[75vh] space-y-4">
+            <div class="p-6 overflow-y-auto max-h-[75vh] space-y-4 overscroll-contain">
               <!-- Static Employee Info Section -->
               <div class="bg-muted/30 rounded-xl p-4 border border-border/60">
                 <div class="space-y-1 text-sm">
