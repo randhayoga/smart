@@ -34,7 +34,11 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  activeTab: 'Inbox',
+  // ==========================================
+  // [PHASE 2 - DEFAULT ACTIVE TAB]
+  // activeTab: 'Inbox',
+  // ==========================================
+  activeTab: 'Lacak Peminjaman',
   inboxRequests: () => [],
   confirmedRequests: () => [],
   partialRequests: () => [],
@@ -45,6 +49,11 @@ const props = withDefaults(defineProps<Props>(), {
 
 const { t } = useI18n();
 
+// ==========================================
+// [PHASE 2 - ACTIVE REQUEST TABS]
+// Uncomment below when transitioning to Phase 2
+// ==========================================
+/*
 const computedTabs = computed(() => [
   { id: 'Inbox', label: t('fulfillment.inbox') },
   { id: 'Perlu Alokasi', label: t('fulfillment.needsAllocation') },
@@ -62,12 +71,22 @@ const tabIds = [
   'Lacak Peminjaman',
   'Pengembalian'
 ];
+*/
+// ==========================================
+
+const computedTabs = computed(() => [
+  { id: 'Lacak Peminjaman', label: t('fulfillment.trackBorrowing') }
+]);
+
+const tabIds = [
+  'Lacak Peminjaman'
+];
 
 // Mapping helper to resolve tabs from URL query case-insensitively
 const resolveTab = (tabName?: string | null): string => {
-  if (!tabName) return 'Inbox';
+  if (!tabName) return 'Lacak Peminjaman';
   const found = tabIds.find(t => t.toLowerCase() === tabName.toLowerCase() || t.toLowerCase().replace(/\s+/g, '-') === tabName.toLowerCase());
-  return found || 'Inbox';
+  return found || 'Lacak Peminjaman';
 };
 
 const activeTab = ref(resolveTab(props.activeTab));
@@ -142,41 +161,50 @@ watch(activeTab, (newTab) => {
           <Heading as="h2">{{ t('fulfillment.listPrefix', { tab: activeTabLabel }) }}</Heading>
 
           <div class="mt-4">
-            <!-- Inbox Tab -->
+            <!-- ==========================================
+                 [PHASE 2 - ACTIVE REQUEST TAB COMPONENTS]
+                 Uncomment below when transitioning to Phase 2
+                 ========================================== -->
+            <!--
             <InboxTab 
               v-if="activeTab === 'Inbox'" 
               :requests="props.inboxRequests" 
             />
 
-            <!-- Perlu Alokasi Tab -->
             <ConfirmedListTab 
               v-else-if="activeTab === 'Perlu Alokasi'" 
               :requests="props.confirmedRequests" 
             />
 
-            <!-- Parsial Tab -->
             <PartialListTab 
               v-else-if="activeTab === 'Parsial'" 
               :requests="props.partialRequests" 
             />
 
-            <!-- Serah Terima Tab -->
             <SerahTerimaTab 
               v-else-if="activeTab === 'Serah Terima'" 
               :handovers="props.handovers" 
             />
+            -->
+            <!-- ========================================== -->
 
-            <!-- Lacak Peminjaman Tab -->
+            <!-- Lacak Peminjaman Tab (Phase 1 Active Tab) -->
             <BorrowedTab 
-              v-else-if="activeTab === 'Lacak Peminjaman'" 
+              v-if="activeTab === 'Lacak Peminjaman'" 
               :borrowed-list="props.borrowedList" 
             />
 
-            <!-- Pengembalian Tab -->
+            <!-- ==========================================
+                 [PHASE 2 - RETURNS TAB]
+                 Uncomment below when transitioning to Phase 2
+                 ========================================== -->
+            <!--
             <ReturnsTab 
               v-else-if="activeTab === 'Pengembalian'" 
               :returns-list="props.returnsList" 
             />
+            -->
+            <!-- ========================================== -->
           </div>
         </div>
       </div>

@@ -56,4 +56,41 @@ class AuthenticationTest extends TestCase
         $this->assertGuest();
         $response->assertRedirect('/');
     }
+
+    public function test_regular_users_and_non_ifs_managers_cannot_login_in_phase_1(): void
+    {
+        config(['app.disable_test_admin_bypass' => true]);
+
+        $user = User::factory()->create();
+
+        $response = $this->post(route('login'), [
+            'username' => $user->username,
+            'password' => 'password',
+        ]);
+
+        $this->assertGuest();
+        $response->assertSessionHasErrors('username');
+    }
+
+    public function test_ifs_manager_can_login_in_phase_1(): void
+    {
+        config(['app.disable_test_admin_bypass' => true]);
+
+        $ifsUser = User::factory()->create();
+        $employee = \App\Models\HrdEmployee::factory()->create(['employee_id' => $ifsUser->employee_id]);
+        $orgchart = \App\Models\HrdOrgchart::create([
+            'org_name' => 'Integrated Facilities Services',
+            'org_code' => 'IFS',
+            'employee_id' => $ifsUser->employee_id,
+        ]);
+        $employee->update(['orgchart_id' => $orgchart->id]);
+
+        $response = $this->post(route('login'), [
+            'username' => $ifsUser->username,
+            'password' => 'password',
+        ]);
+
+        $this->assertAuthenticated();
+        $response->assertRedirect(route('smart.dashboard', absolute: false));
+    }
 }

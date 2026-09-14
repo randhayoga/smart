@@ -3,11 +3,12 @@
  * Main Application Layout wrapping Navbar, Sidebar, Toaster notifications, and background gradients.
  */
 import { ref, onMounted, onUnmounted, computed } from 'vue';
-import { Head } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 import Navbar from '@/Components/Navbar.vue';
 import Sidebar from '@/Components/Sidebar.vue';
 import { Toaster } from '@/Components/ui/sonner';
 import { useMercureNotifications } from '@/composables/useMercureNotifications';
+import PageSkeleton from '@/Components/skeletons/PageSkeleton.vue';
 import 'vue-sonner/style.css';
 
 interface Props {
@@ -23,6 +24,13 @@ useMercureNotifications();
 
 const sidebarOpen = ref(false);
 const isMobile = ref(false);
+
+// Global navigation skeleton loading state
+const isNavigating = ref(false);
+const targetPath = ref('');
+let navTimer: ReturnType<typeof setTimeout> | null = null;
+let removeStartListener: (() => void) | null = null;
+let removeFinishListener: (() => void) | null = null;
 
 const checkMobile = () => {
   isMobile.value = window.innerWidth < 1024;
@@ -42,10 +50,41 @@ const closeSidebar = () => {
 onMounted(() => {
   checkMobile();
   window.addEventListener('resize', checkMobile);
+
+  // Hook into Inertia visit events to display realistic page skeleton
+  removeStartListener = router.on('start', (event) => {
+    try {
+      const rawUrl = event.detail.visit?.url;
+      const urlStr = typeof rawUrl === 'string'
+        ? rawUrl
+        : (rawUrl?.pathname || rawUrl?.href || String(rawUrl || ''));
+      const urlObj = new URL(urlStr, window.location.origin);
+      targetPath.value = urlObj.pathname;
+    } catch {
+      targetPath.value = window.location.pathname;
+    }
+
+    if (navTimer) clearTimeout(navTimer);
+    navTimer = setTimeout(() => {
+      isNavigating.value = true;
+    }, 30);
+  });
+
+  removeFinishListener = router.on('finish', () => {
+    if (navTimer) {
+      clearTimeout(navTimer);
+      navTimer = null;
+    }
+    isNavigating.value = false;
+    targetPath.value = '';
+  });
 });
 
 onUnmounted(() => {
   window.removeEventListener('resize', checkMobile);
+  if (navTimer) clearTimeout(navTimer);
+  if (removeStartListener) removeStartListener();
+  if (removeFinishListener) removeFinishListener();
 });
 </script>
 
@@ -81,15 +120,37 @@ onUnmounted(() => {
       ]"
     >
       <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
-        <!-- Page header slot -->
-        <div v-if="$slots.header" class="mb-6">
-          <slot name="header" />
-        </div>
-        
-        <!-- Main content slot -->
-        <slot />
+        <Transition name="fade" mode="out-in">
+          <!-- Realistic Page Skeleton displayed while navigating between views -->
+          <div v-if="isNavigating" key="navigation-skeleton">
+            <PageSkeleton :path="targetPath" />
+          </div>
+
+          <!-- Live Page Content -->
+          <div v-else key="page-content">
+            <!-- Page header slot -->
+            <div v-if="$slots.header" class="mb-6">
+              <slot name="header" />
+            </div>
+            
+            <!-- Main content slot -->
+            <slot />
+          </div>
+        </Transition>
       </div>
     </main>
     <Toaster />
   </div>
 </template>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.15s ease-in-out;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>

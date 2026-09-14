@@ -52,7 +52,11 @@ class AdminActiveRequestController extends Controller
      */
     public function index(Request $request, InventoryStockService $stockService): JsonResponse|Response
     {
-        $activeTab = $request->input('tab', 'Inbox');
+        // ==========================================
+        // [PHASE 2 - DEFAULT ACTIVE TAB]
+        // $activeTab = $request->input('tab', 'Inbox');
+        // ==========================================
+        $activeTab = $request->input('tab', 'Lacak Peminjaman');
 
         if ($request->wantsJson()) {
             return response()->json([

@@ -14,5 +14,6 @@ export default {
     rememberMe: 'Ingat saya',
     submit: 'Masuk',
     submitting: 'Sedang memproses...',
+    unauthorizedPhase1: 'Akun Anda tidak memiliki akses ke aplikasi pada fase ini.',
   },
 };

@@ -15,6 +15,7 @@ return [
 
     'failed' => 'These credentials do not match our records.',
     'password' => 'The provided password is incorrect.',
+    'phase1_unauthorized' => 'Your account does not have access to the application in this phase.',
     'throttle' => 'Too many login attempts. Please try again in :seconds seconds.',
 
 ];

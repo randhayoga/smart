@@ -82,30 +82,26 @@ class IfsManagerRoleTest extends TestCase
         // Setup a standard user
         $standardUser = AdmUser::factory()->create();
 
-        // 1. Test Admin-only route (smart/inbox)
+        // 1. Test Admin-only route (smart.inventory / smart.dashboard)
         // Standard User -> Forbidden
-        $response = $this->actingAs($standardUser)->get(route('smart.inbox'));
+        $response = $this->actingAs($standardUser)->get(route('smart.inventory'));
         $response->assertStatus(403);
 
         // Standard Manager -> Forbidden
-        $response = $this->actingAs($managerUser)->get(route('smart.inbox'));
+        $response = $this->actingAs($managerUser)->get(route('smart.inventory'));
         $response->assertStatus(403);
 
         // IFS Manager -> Allowed (since they have admin privileges, it returns Inertia render 200)
-        $response = $this->actingAs($ifsManagerUser)->get(route('smart.inbox'));
+        $response = $this->actingAs($ifsManagerUser)->get(route('smart.inventory'));
         $response->assertStatus(200);
 
-        // 2. Test Manager-only route (smart/approve)
+        // 2. Test Manager-only route (smart.approve-status)
         // Standard User -> Forbidden
-        $response = $this->actingAs($standardUser)->get(route('smart.approve'));
+        $response = $this->actingAs($standardUser)->get(route('smart.approve-status'));
         $response->assertStatus(403);
 
-        // Standard Manager -> Allowed
-        $response = $this->actingAs($managerUser)->get(route('smart.approve'));
-        $response->assertStatus(200);
-
         // IFS Manager -> Allowed (since ifs_manager satisfies manager role in hierarchy)
-        $response = $this->actingAs($ifsManagerUser)->get(route('smart.approve'));
+        $response = $this->actingAs($ifsManagerUser)->get(route('smart.approve-status'));
         $response->assertStatus(200);
     }
 }

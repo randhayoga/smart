@@ -14,5 +14,6 @@ export default {
     rememberMe: 'Remember me',
     submit: 'Sign In',
     submitting: 'Processing...',
+    unauthorizedPhase1: 'Your account does not have access to the application in this phase.',
   },
 };

@@ -20,9 +20,15 @@ class DashboardController extends Controller
     {
         $user = $request->user();
         
-        // Redirect non-admin to user dashboard
+        // ==========================================
+        // [PHASE 2 - NON-ADMIN DASHBOARD REDIRECT]
+        // Uncomment below when transitioning to Phase 2
+        // if (!$user->is_admin) {
+        //     return redirect()->route('smart.user.dashboard');
+        // }
+        // ==========================================
         if (!$user->is_admin) {
-            return redirect()->route('smart.user.dashboard');
+            abort(403, 'Akses ditolak.');
         }
 
         // Fetch the total amount of current quantity of each consumable subcategory

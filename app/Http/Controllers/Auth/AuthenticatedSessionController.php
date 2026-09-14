@@ -56,7 +56,12 @@ class AuthenticatedSessionController extends Controller
             return redirect()->route('smart.dashboard');
         }
 
-        return redirect()->route('smart.user.dashboard');
+        // ==========================================
+        // [PHASE 2 - REGULAR USER DASHBOARD REDIRECT]
+        // Uncomment below when transitioning to Phase 2
+        // return redirect()->route('smart.user.dashboard');
+        // ==========================================
+        return redirect()->route('smart.dashboard');
     }
 
     /**

@@ -16,7 +16,7 @@ import {
   getSortedRowModel,
   useVueTable,
 } from '@tanstack/vue-table'
-import { ref, watch } from 'vue'
+import { ref, watch, computed, onMounted } from 'vue'
 
 import {
   Table,
@@ -29,6 +29,8 @@ import {
 import { Button } from '@/Components/ui/button'
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
 import { cn } from '@/lib/utils'
+import { Skeleton } from '@/Components/ui/skeleton'
+import { useTableSearch } from '@/composables/useTableSearch'
 
 const props = withDefaults(defineProps<{
   columns: ColumnDef<TData, TValue>[]
@@ -49,11 +51,26 @@ const props = withDefaults(defineProps<{
    * Note: Do NOT use `backdrop-blur-*` on header cells, as Blink/Chromium compositing bleeds over ancestor border-radius.
    */
   tableContainerClass?: string
+  /**
+   * Whether the table is in a loading state, rendering pulsing skeleton rows.
+   */
+  loading?: boolean
+  /**
+   * Number of skeleton rows to render when loading is true (default: 5).
+   */
+  skeletonRows?: number
+  /**
+   * Threshold of rows above which table searching triggers pulsing skeleton rows (default: 50).
+   */
+  skeletonThreshold?: number
 }>(), {
   pageSize: 10,
   showSelectionCount: true,
   defaultSorting: () => [],
-  tableContainerClass: ''
+  tableContainerClass: '',
+  loading: false,
+  skeletonRows: 5,
+  skeletonThreshold: 50,
 })
 
 const getRowClass = (row: any) => {
@@ -113,12 +130,70 @@ defineExpose({
   table
 })
 
+// Coordinate with TableSearch and internal filtering
+const { isTableSearching } = useTableSearch()
+const isInternalSearching = ref(false)
+let filterDebounceTimer: ReturnType<typeof setTimeout> | null = null
+
+// Determine if this is a large dataset exceeding the threshold (e.g. > 50 rows)
+const isLargeDataset = computed(() => (props.data?.length || 0) > (props.skeletonThreshold ?? 50))
+
+// Brief skeleton on initial mount of large tables so the browser renders smoothly without freeze
+const isInitialLoading = ref((props.data?.length || 0) > (props.skeletonThreshold ?? 50))
+
+onMounted(() => {
+  if (isInitialLoading.value) {
+    setTimeout(() => {
+      isInitialLoading.value = false
+    }, 250)
+  }
+})
+
+// Watch data changes if data loads asynchronously
+watch(() => props.data?.length, (newLen) => {
+  if (!isInitialLoading.value && (newLen || 0) > (props.skeletonThreshold ?? 50) && !props.filterValue) {
+    isInitialLoading.value = true
+    setTimeout(() => {
+      isInitialLoading.value = false
+    }, 200)
+  }
+})
+
+// Show skeleton when explicitly loading, on initial mount of large tables, or when actively searching
+const showSkeleton = computed(() => {
+  return props.loading || 
+         isInitialLoading.value || 
+         (isLargeDataset.value && (isTableSearching.value || isInternalSearching.value))
+})
+
 // Watch for filter changes from parent
 watch(() => props.filterValue, (val) => {
-  if (props.filterKey) {
-    table.getColumn(props.filterKey)?.setFilterValue(val)
+  // Reset pagination index when search query changes
+  if (pagination.value.pageIndex > 0) {
+    table.setPageIndex(0)
+  }
+
+  if (isLargeDataset.value) {
+    isInternalSearching.value = true
+    if (filterDebounceTimer) clearTimeout(filterDebounceTimer)
+
+    filterDebounceTimer = setTimeout(() => {
+      if (props.filterKey) {
+        table.getColumn(props.filterKey)?.setFilterValue(val)
+      } else {
+        table.setGlobalFilter(val)
+      }
+      setTimeout(() => {
+        isInternalSearching.value = false
+      }, 50)
+    }, 150)
   } else {
-    table.setGlobalFilter(val)
+    // For smaller datasets (<= 50 rows), filter immediately
+    if (props.filterKey) {
+      table.getColumn(props.filterKey)?.setFilterValue(val)
+    } else {
+      table.setGlobalFilter(val)
+    }
   }
 })
 </script>
@@ -148,7 +223,24 @@ watch(() => props.filterValue, (val) => {
         </TableRow>
       </TableHeader>
       <TableBody>
-        <template v-if="table.getRowModel().rows?.length">
+        <!-- Skeleton Loading State (Triggered on initial load or searching large datasets > 50 rows) -->
+        <template v-if="showSkeleton">
+          <TableRow
+            v-for="r in (props.skeletonRows || 5)"
+            :key="`skeleton-row-${r}`"
+            class="border-b border-border last:border-none"
+          >
+            <TableCell
+              v-for="header in (table.getHeaderGroups()[0]?.headers || [])"
+              :key="`skeleton-cell-${header.id}`"
+              :class="['text-left py-3.5', props.cellClass]"
+              :style="{ width: header.getSize() !== 150 ? `${header.getSize()}px` : undefined }"
+            >
+              <Skeleton class="h-4 w-full max-w-[160px] rounded" />
+            </TableCell>
+          </TableRow>
+        </template>
+        <template v-else-if="table.getRowModel().rows?.length">
           <TableRow
             v-for="row in table.getRowModel().rows"
             :key="row.id"

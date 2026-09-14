@@ -165,6 +165,11 @@ export const quickActions = [
 
 // Navigation for regular users (non-admin)
 export const userNavigation: NavSection[] = [
+    // ==========================================
+    // [PHASE 2 - REGULAR USER DASHBOARD]
+    // Uncomment below when transitioning to Phase 2
+    // ==========================================
+    /*
     {
         id: 'main_menu',
         title: 'MENU UTAMA',
@@ -179,6 +184,14 @@ export const userNavigation: NavSection[] = [
             },
         ],
     },
+    */
+    // ==========================================
+
+    // ==========================================
+    // [PHASE 2 - REGULAR MANAGER BORROW APPROVAL]
+    // Uncomment below when transitioning to Phase 2
+    // ==========================================
+    /*
     {
         id: 'approval_borrow',
         title: 'APPROVAL PEMINJAMAN',
@@ -200,6 +213,9 @@ export const userNavigation: NavSection[] = [
             },
         ],
     },
+    */
+    // ==========================================
+
     {
         id: 'approval_deletion',
         title: 'APPROVAL PENGHAPUSAN',
@@ -221,6 +237,12 @@ export const userNavigation: NavSection[] = [
             },
         ],
     },
+
+    // ==========================================
+    // [PHASE 2 - REGULAR USER REQUESTS & CARTS]
+    // Uncomment below when transitioning to Phase 2
+    // ==========================================
+    /*
     {
         id: 'requests',
         title: 'Permintaan',
@@ -256,4 +278,6 @@ export const userNavigation: NavSection[] = [
             },
         ],
     },
+    */
+    // ==========================================
 ];

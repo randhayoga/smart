@@ -58,7 +58,12 @@ Route::get('/', function (\Illuminate\Http\Request $request) {
     if ($user->is_admin) {
         return redirect()->route('smart.dashboard');
     }
-    return redirect()->route('smart.user.dashboard');
+    // ==========================================
+    // [PHASE 2 - REGULAR USER DASHBOARD REDIRECT]
+    // Uncomment below when transitioning to Phase 2
+    // return redirect()->route('smart.user.dashboard');
+    // ==========================================
+    return redirect()->route('smart.dashboard');
 });
 
 
@@ -70,11 +75,17 @@ Route::middleware(['auth'])->group(function () {
         ->name('media.show');
 });
 
-// External Signed Manager Approval Routes (Zero-login, HMAC-protected)
+// ==========================================
+// [PHASE 2 - EXTERNAL MANAGER APPROVAL]
+// Uncomment below when transitioning to Phase 2
+// ==========================================
+/*
 Route::prefix('smart')->name('smart.external-approval.')->middleware(['signed'])->group(function () {
     Route::get('/external-approval/{request}', [ExternalApprovalController::class, 'show'])->name('show');
     Route::post('/external-approval/{request}', [ExternalApprovalController::class, 'store'])->name('action');
 });
+*/
+// ==========================================
 
 // Smart routes - protected
 Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () {
@@ -140,6 +151,11 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
         Route::get('/requests', [AdminActiveRequestController::class, 'index'])->name('requests.index');
         Route::get('/permintaan-aktif', fn() => redirect()->route('smart.requests.index'))->name('permintaan-aktif');
 
+        // ==========================================
+        // [PHASE 2 - ACTIVE REQUEST LIFECYCLE ROUTES]
+        // Uncomment below when transitioning to Phase 2
+        // ==========================================
+        /*
         Route::get('/inbox', function (\Illuminate\Http\Request $request, \App\Services\InventoryStockService $stockService) {
             if ($request->wantsJson()) {
                 return app(AdminApprovedRequestController::class)->index($request, $stockService);
@@ -183,7 +199,10 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
         })->name('handover');
         Route::get('/handover/{id}', [HandoverController::class, 'show'])->name('handover.show');
         Route::post('/handover/{id}/allocate', [HandoverController::class, 'allocate'])->name('handover.allocate');
+        */
+        // ==========================================
 
+        // Lacak Peminjaman (Phase 1 Active Tab Routes)
         Route::get('/borrowed', function (\Illuminate\Http\Request $request, \App\Services\InventoryStockService $stockService) {
             if ($request->wantsJson()) {
                 return app(BorrowedController::class)->index();
@@ -193,6 +212,11 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
         })->name('borrowed');
         Route::get('/borrowed/{id}', [BorrowedController::class, 'show'])->name('borrowed.show');
 
+        // ==========================================
+        // [PHASE 2 - RETURNS ROUTES]
+        // Uncomment below when transitioning to Phase 2
+        // ==========================================
+        /*
         Route::get('/returns', function (\Illuminate\Http\Request $request, \App\Services\InventoryStockService $stockService) {
             if ($request->wantsJson()) {
                 return app(ReturnController::class)->index();
@@ -202,6 +226,8 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
         })->name('returns');
         Route::get('/returns/{id}', [ReturnController::class, 'show'])->name('returns.show');
         Route::post('/returns/{id}/confirm', [ReturnController::class, 'confirm'])->name('returns.confirm');
+        */
+        // ==========================================
 
         Route::get('/arsip', [\App\Http\Controllers\Smart\Admin\ArsipController::class, 'index'])->name('arsip');
         Route::get('/arsip/{id}', [\App\Http\Controllers\Smart\Admin\ArsipController::class, 'show'])->name('arsip.show');
@@ -210,16 +236,27 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
 
     // Manager only routes
     Route::middleware(['role:manager'])->group(function () {
+        // ==========================================
+        // [PHASE 2 - REGULAR MANAGER BORROW APPROVAL ROUTES]
+        // Uncomment below when transitioning to Phase 2
+        // ==========================================
+        /*
         Route::get('/approve', [ManagerRequestController::class, 'index'])->name('approve');
         Route::post('/approve/action', [ManagerRequestApprovalController::class, 'store'])->name('approve.bulk-action');
         Route::get('/approved', [ManagerApprovedRequestController::class, 'index'])->name('approved');
+        */
+        // ==========================================
 
-        // Asset Status Approval Routes
+        // Asset Status Approval Routes (Active for IFS Manager)
         Route::get('/approve-status', [\App\Http\Controllers\Smart\MultiRoles\UnitStatusApproval\ManagerUnitStatusApprovalController::class, 'index'])->name('approve-status');
         Route::post('/approve-status/bulk', [\App\Http\Controllers\Smart\MultiRoles\UnitStatusApproval\ManagerBulkUnitStatusApprovalController::class, 'store'])->name('approve-status.bulk-store');
     });
 
-    // Manager and User routes
+    // ==========================================
+    // [PHASE 2 - REGULAR USER & MANAGER WORKFLOW ROUTES]
+    // Uncomment below when transitioning to Phase 2
+    // ==========================================
+    /*
     Route::middleware(['role:manager,user'])->group(function () {
         Route::get('/user/dashboard', [UserDashboardController::class, 'index'])->name('user.dashboard');
         Route::get('/browse', [BrowseController::class, 'index'])->name('browse');
@@ -241,6 +278,8 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
         Route::get('/history/{request:uuid}', [RequestHistoryController::class, 'show'])->name('history.show');
         Route::post('/history/{request:uuid}/cancel', [RequestCancellationController::class, 'store'])->name('history.cancel');
     });
+    */
+    // ==========================================
 });
 
 

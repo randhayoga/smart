@@ -43,7 +43,12 @@ return Application::configure(basePath: dirname(__DIR__))
                 if ($user && $user->is_admin) {
                     return route('smart.dashboard');
                 }
-                return route('smart.user.dashboard');
+                // ==========================================
+                // [PHASE 2 - REGULAR USER DASHBOARD REDIRECT]
+                // Uncomment below when transitioning to Phase 2
+                // return route('smart.user.dashboard');
+                // ==========================================
+                return route('smart.dashboard');
             }
         );
 

@@ -2,7 +2,7 @@
 /**
  * Authentication Login Page component for user credentials validation.
  */
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { Loader2, ArrowRight } from 'lucide-vue-next';
@@ -25,6 +25,16 @@ const form = useForm({
   password: '',
   remember: false,
   redirect: redirectParam || '',
+});
+
+// Reactively translate unauthorized error when user switches languages on the login screen
+const usernameError = computed(() => {
+  const err = form.errors.username;
+  if (!err) return null;
+  if (err.includes('fase') || err.includes('phase')) {
+    return t('auth.login.unauthorizedPhase1');
+  }
+  return err;
 });
 
 const submit = () => {
@@ -95,7 +105,7 @@ const submit = () => {
               autofocus
               autocomplete="username"
               class="flex h-11 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary disabled:cursor-not-allowed disabled:opacity-50 transition-all"
-              :class="{ 'border-destructive focus-visible:ring-destructive/20': form.errors.username }"
+              :class="{ 'border-destructive focus-visible:ring-destructive/20': usernameError }"
             />
           </div>
           
@@ -122,8 +132,8 @@ const submit = () => {
           </div>
           
           <!-- Remember me removed - not allowed in this project -->
-          <p v-if="form.errors.username" class="text-sm text-destructive font-medium">
-            {{ form.errors.username }}
+          <p v-if="usernameError" class="text-sm text-destructive font-medium">
+            {{ usernameError }}
           </p>
           
           <!-- Submit button -->

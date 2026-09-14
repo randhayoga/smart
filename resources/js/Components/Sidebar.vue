@@ -43,12 +43,18 @@ const navigation = computed<NavSection[]>(() => {
 
   if (isIfsManager.value) {
     // Manager IFS:
-    // - Menu Utama
-    // - Approval Status
-    // - Approval Permintaan (Hidden)
-    // - Rest of Admin Menus (Filtered STOK, Audit)
+    // Phase 1 views:
+    // - Dashboard (/smart/dashboard)
+    // - Approval Status (/smart/approve-status)
+    // - History Approval Status (/smart/approve-status?history=true)
     const menuUtama = mainNavigation.find(section => section.title === 'MENU UTAMA');
     const approvalStatus = userNavigation.find(section => section.title === 'APPROVAL PENGHAPUSAN');
+    
+    // ==========================================
+    // [PHASE 2 - IFS MANAGER EXTRA MENUS]
+    // Uncomment below when transitioning to Phase 2
+    // ==========================================
+    /*
     const approvalPermintaan = userNavigation.find(section => section.title === 'APPROVAL PEMINJAMAN');
     
     const hiddenIfsStockTitles = [
@@ -69,12 +75,17 @@ const navigation = computed<NavSection[]>(() => {
         }
         return section;
       });
+    */
+    // ==========================================
     
     sections = [
       menuUtama,
       approvalStatus,
-      approvalPermintaan,
-      ...restOfAdmin
+      // ==========================================
+      // [PHASE 2 - IFS EXTRA SECTIONS]
+      // approvalPermintaan,
+      // ...restOfAdmin
+      // ==========================================
     ].filter((section): section is NavSection => !!section);
   } else if (isAdmin.value) {
     // Admin:
@@ -83,7 +94,13 @@ const navigation = computed<NavSection[]>(() => {
     // - Permintaan
     // - Audit
     sections = mainNavigation;
-  } else if (isManager.value) {
+  }
+  // ==========================================
+  // [PHASE 2 - REGULAR MANAGER & REGULAR USER NAVIGATION]
+  // Uncomment below when transitioning to Phase 2
+  // ==========================================
+  /*
+  else if (isManager.value) {
     // Manager:
     // - Menu Utama
     // - Approval Permintaan
@@ -109,6 +126,8 @@ const navigation = computed<NavSection[]>(() => {
       permintaan,
     ].filter((section): section is NavSection => !!section);
   }
+  */
+  // ==========================================
 
   // Get dynamic counts from shared Inertia page props
   const pendingRequestCount = (page.props.auth as any)?.pendingRequestCount ?? 0;
@@ -122,9 +141,13 @@ const navigation = computed<NavSection[]>(() => {
     items: section.items.map(item => {
       let badge = item.badge;
       
-      if (item.href === '/smart/approve') {
-        badge = pendingRequestCount > 0 ? pendingRequestCount : undefined;
-      } else if (item.href === '/smart/approve-status') {
+      // ==========================================
+      // [PHASE 2 - REGULAR MANAGER PENDING REQUEST BADGE]
+      // if (item.href === '/smart/approve') {
+      //   badge = pendingRequestCount > 0 ? pendingRequestCount : undefined;
+      // } else
+      // ==========================================
+      if (item.href === '/smart/approve-status') {
         badge = pendingAssetStatusCount > 0 ? pendingAssetStatusCount : undefined;
       } else if (item.href === '/smart/requests' || item.href === '/smart/inbox') {
         badge = activeRequestsCount > 0 ? activeRequestsCount : undefined;
@@ -179,12 +202,15 @@ const isActive = (href: string): boolean => {
   // Active requests unified section (/smart/requests) matches its child workflow routes
   if (target.pathname === '/smart/requests') {
     const activeRequestPrefixes = [
-      '/smart/fulfillment',
-      '/smart/inbox',
-      '/smart/partial',
-      '/smart/handover',
+      // ==========================================
+      // [PHASE 2 - ACTIVE REQUEST CHILD WORKFLOWS]
+      // '/smart/fulfillment',
+      // '/smart/inbox',
+      // '/smart/partial',
+      // '/smart/handover',
+      // '/smart/returns',
+      // ==========================================
       '/smart/borrowed',
-      '/smart/returns',
     ];
     if (activeRequestPrefixes.some(prefix => current.pathname === prefix || current.pathname.startsWith(prefix + '/'))) {
       return true;
