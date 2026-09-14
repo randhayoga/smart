@@ -15,15 +15,30 @@ class HrdEmployee extends Model
 {
     use HasFactory;
 
-    protected $table = 'hrd_employees';
+    protected $connection = 'user_hris';
+
+    protected $table = 'hrd_employee';
+
+    public $timestamps = false;
+    public $incrementing = false;
 
     protected $fillable = [
+        'id',
         'orgchart_id',
         'employee_id',
         'employee_name',
         'email',
         'active',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function ($model) {
+            if (empty($model->id)) {
+                $model->id = ((int) static::max('id')) + 1;
+            }
+        });
+    }
 
     protected $casts = [
         'active' => 'boolean',
@@ -35,7 +50,7 @@ class HrdEmployee extends Model
      */
     public function orgchart(): BelongsTo
     {
-        return $this->belongsTo(HrdOrgchart::class, 'orgchart_id');
+        return $this->belongsTo(HrdOrgchart::class, 'orgchart_id', 'id');
     }
 
     /**
@@ -44,7 +59,7 @@ class HrdEmployee extends Model
      */
     public function admUser(): HasOne
     {
-        return $this->hasOne(AdmUser::class, 'employee_id', 'employee_id');
+        return $this->hasOne(AdmUser::class, 'username', 'employee_id');
     }
 
     /**
@@ -53,7 +68,7 @@ class HrdEmployee extends Model
      */
     public function managedOrgcharts(): HasMany
     {
-        return $this->hasMany(HrdOrgchart::class, 'employee_id', 'employee_id');
+        return $this->hasMany(HrdOrgchart::class, 'employee_id', 'id');
     }
 
     /**

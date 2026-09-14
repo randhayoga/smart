@@ -76,9 +76,9 @@ class RequestCartConfirmationController extends Controller
             $query->where('npk', $userEmployeeId);
         })
             ->orderBy('project_name')
-            ->get(['id', 'no_project', 'project_name'])
+            ->get(['id_project', 'no_project', 'project_name'])
             ->map(fn($p) => [
-                'value' => (string) $p->id,
+                'value' => (string) ($p->id_project ?? $p->id),
                 'label' => "[{$p->no_project}] {$p->project_name}"
             ]);
 

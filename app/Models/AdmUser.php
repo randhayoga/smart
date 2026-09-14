@@ -25,15 +25,21 @@ class AdmUser extends Authenticatable
 {
     use HasFactory, Notifiable;
 
-    protected $table = 'adm_users';
+    protected $connection = 'new_portal';
+
+    protected $table = 'users';
 
     protected $fillable = [
-        'employee_id',
-        'password_hash',
         'name',
+        'username',
+        'employee_id',
+        'email',
+        'password',
+        'password_hash',
     ];
 
     protected $appends = [
+        'employee_id',
         'username',
         'email',
         'role',
@@ -47,6 +53,7 @@ class AdmUser extends Authenticatable
      * @var list<string>
      */
     protected $hidden = [
+        'password',
         'password_hash',
         'remember_token',
     ];
@@ -56,7 +63,7 @@ class AdmUser extends Authenticatable
      */
     public function getAuthPassword()
     {
-        return $this->password_hash;
+        return $this->password ?? $this->password_hash;
     }
 
     /**
@@ -65,21 +72,32 @@ class AdmUser extends Authenticatable
     public function getRoleAttribute(): string
     {
         $admins = ['252525'];
-        if (in_array($this->employee_id, $admins) || ((app()->runningUnitTests() || app()->environment('testing')) && !config('app.disable_test_admin_bypass'))) {
+        $empId = (string) ($this->employee_id ?? $this->username);
+        if (in_array($empId, $admins) || ((app()->runningUnitTests() || app()->environment('testing')) && !config('app.disable_test_admin_bypass'))) {
             return 'admin';
         }
 
-        $ifsOrg = HrdOrgchart::where('org_code', 'IFS')->first();
-        if ($ifsOrg && $ifsOrg->employee_id === $this->employee_id) {
-            return 'ifs_manager';
+        $ifsOrgs = HrdOrgchart::where('org_code', 'IFS')->get();
+        foreach ($ifsOrgs as $ifsOrg) {
+            $ifsManagerId = (string) $ifsOrg->employee_id;
+            $myEmp = $this->hrdEmployee;
+            if ($myEmp && ($ifsManagerId === (string) $myEmp->id || $ifsManagerId === (string) $myEmp->employee_id)) {
+                return 'ifs_manager';
+            }
         }
 
-        if (HrdOrgchart::where('employee_id', $this->employee_id)->exists()) {
-            return 'manager';
+        $myEmp = $this->hrdEmployee;
+        if ($myEmp) {
+            $isDeptManager = HrdOrgchart::where('employee_id', $myEmp->id)
+                ->orWhere('employee_id', $myEmp->employee_id)
+                ->exists();
+            if ($isDeptManager) {
+                return 'manager';
+            }
         }
 
         // Check if user is the newest Project Manager (P2211) for any project
-        $userProjects = TbAssignProject::where('npk', $this->employee_id)
+        $userProjects = TbAssignProject::where('npk', $empId)
             ->where('id_rbs', 'P2211')
             ->pluck('no_project');
 
@@ -87,10 +105,10 @@ class AdmUser extends Authenticatable
             $latestPmNpk = TbAssignProject::where('no_project', $noProject)
                 ->where('id_rbs', 'P2211')
                 ->orderByDesc('start_date')
-                ->orderByDesc('id')
+                ->orderByDesc('id_assign')
                 ->value('npk');
 
-            if ($latestPmNpk === $this->employee_id) {
+            if ($latestPmNpk === $empId) {
                 return 'manager';
             }
         }
@@ -120,30 +138,48 @@ class AdmUser extends Authenticatable
         $targetEmployeeIds = collect();
         $includeAllRegularUsers = false;
 
-        $ifsEmployeeId = null;
-        $getIfsEmployeeId = function () use (&$ifsEmployeeId) {
-            if ($ifsEmployeeId === null) {
-                $ifsEmployeeId = HrdOrgchart::where('org_code', 'IFS')->value('employee_id') ?? '';
+        $ifsEmployeeIds = null;
+        $getIfsEmployeeIds = function () use (&$ifsEmployeeIds) {
+            if ($ifsEmployeeIds === null) {
+                $ifsOrgs = HrdOrgchart::where('org_code', 'IFS')->with('manager')->get();
+                $ifsEmployeeIds = [];
+                foreach ($ifsOrgs as $org) {
+                    if ($org->manager?->employee_id) {
+                        $ifsEmployeeIds[] = $org->manager->employee_id;
+                    } elseif ($org->employee_id) {
+                        $empId = HrdEmployee::where('id', $org->employee_id)->value('employee_id') ?? (string) $org->employee_id;
+                        $ifsEmployeeIds[] = $empId;
+                    }
+                }
             }
-            return $ifsEmployeeId ?: null;
+            return $ifsEmployeeIds;
         };
 
         $managerEmployeeIds = null;
         $getManagerEmployeeIds = function () use (&$managerEmployeeIds) {
             if ($managerEmployeeIds === null) {
                 // Dept managers from HRD_ORGCHART (except IFS)
-                $deptManagerIds = HrdOrgchart::whereNotNull('employee_id')
+                $orgs = HrdOrgchart::whereNotNull('employee_id')
                     ->where(function ($q) {
                         $q->where('org_code', '!=', 'IFS')->orWhereNull('org_code');
                     })
-                    ->pluck('employee_id')
-                    ->filter()
-                    ->toArray();
+                    ->with('manager')
+                    ->get();
+
+                $deptManagerIds = [];
+                foreach ($orgs as $org) {
+                    if ($org->manager?->employee_id) {
+                        $deptManagerIds[] = $org->manager->employee_id;
+                    } elseif ($org->employee_id) {
+                        $empId = HrdEmployee::where('id', $org->employee_id)->value('employee_id') ?? (string) $org->employee_id;
+                        $deptManagerIds[] = $empId;
+                    }
+                }
 
                 // Project managers with id_rbs = P2211 (only newest for each project's no_project)
                 $projectManagerIds = TbAssignProject::where('id_rbs', 'P2211')
                     ->orderByDesc('start_date')
-                    ->orderByDesc('id')
+                    ->orderByDesc('id_assign')
                     ->get(['no_project', 'npk'])
                     ->unique('no_project')
                     ->pluck('npk')
@@ -161,9 +197,7 @@ class AdmUser extends Authenticatable
                     $targetEmployeeIds = $targetEmployeeIds->merge($adminIds);
                     break;
                 case 'ifs_manager':
-                    if ($id = $getIfsEmployeeId()) {
-                        $targetEmployeeIds->push($id);
-                    }
+                    $targetEmployeeIds = $targetEmployeeIds->merge($getIfsEmployeeIds());
                     break;
                 case 'manager':
                     $targetEmployeeIds = $targetEmployeeIds->merge($getManagerEmployeeIds());
@@ -177,10 +211,10 @@ class AdmUser extends Authenticatable
         if ($includeAllRegularUsers) {
             $excludeIds = array_unique(array_merge(
                 $adminIds,
-                ($ifsId = $getIfsEmployeeId()) ? [$ifsId] : [],
+                $getIfsEmployeeIds(),
                 $getManagerEmployeeIds()
             ));
-            return static::whereNotIn('employee_id', $excludeIds)->get();
+            return static::whereNotIn('username', $excludeIds)->get();
         }
 
         $uniqueIds = $targetEmployeeIds->filter()->unique()->values()->all();
@@ -189,7 +223,39 @@ class AdmUser extends Authenticatable
             return static::whereRaw('1 = 0')->get();
         }
 
-        return static::whereIn('employee_id', $uniqueIds)->get();
+        return static::whereIn('username', $uniqueIds)->get();
+    }
+
+    /**
+     * Create a custom Eloquent builder for AdmUser to alias employee_id to username.
+     */
+    public function newEloquentBuilder($query)
+    {
+        return new class($query) extends \Illuminate\Database\Eloquent\Builder {
+            public function where($column, $operator = null, $value = null, $boolean = 'and')
+            {
+                if (is_string($column) && in_array($column, ['employee_id', 'users.employee_id', 'adm_users.employee_id'])) {
+                    $column = 'username';
+                }
+                return parent::where($column, $operator, $value, $boolean);
+            }
+
+            public function whereIn($column, $values, $boolean = 'and', $not = false)
+            {
+                if (is_string($column) && in_array($column, ['employee_id', 'users.employee_id', 'adm_users.employee_id'])) {
+                    $column = 'username';
+                }
+                return parent::whereIn($column, $values, $boolean, $not);
+            }
+
+            public function whereNotIn($column, $values, $boolean = 'and')
+            {
+                if (is_string($column) && in_array($column, ['employee_id', 'users.employee_id', 'adm_users.employee_id'])) {
+                    $column = 'username';
+                }
+                return parent::whereNotIn($column, $values, $boolean);
+            }
+        };
     }
 
     /**
@@ -201,11 +267,11 @@ class AdmUser extends Authenticatable
     }
 
     /**
-     * Get the email address from linked HRD employee record.
+     * Get the email address from linked HRD employee record or direct attribute.
      */
     public function getEmailAttribute(): ?string
     {
-        return $this->hrdEmployee?->email;
+        return $this->attributes['email'] ?? $this->hrdEmployee?->email;
     }
 
     /**
@@ -217,35 +283,88 @@ class AdmUser extends Authenticatable
     }
 
     /**
-     * Accessor for username (mapped to employee_id).
+     * Accessor for employee_id (mapped to username).
      */
-    public function getUsernameAttribute(): string
+    public function getEmployeeIdAttribute(): ?string
     {
-        return $this->employee_id;
+        return $this->attributes['username'] ?? $this->attributes['employee_id'] ?? null;
     }
 
     /**
-     * Mutator for username (mapped to employee_id).
+     * Mutator for employee_id (mapped to username).
+     */
+    public function setEmployeeIdAttribute($value): void
+    {
+        $this->attributes['username'] = $value;
+    }
+
+    /**
+     * Accessor for username (mapped to username column).
+     */
+    public function getUsernameAttribute(): ?string
+    {
+        return $this->attributes['username'] ?? $this->attributes['employee_id'] ?? null;
+    }
+
+    /**
+     * Mutator for username.
      */
     public function setUsernameAttribute(string $value): void
     {
-        $this->attributes['employee_id'] = $value;
+        $this->attributes['username'] = $value;
     }
 
     /**
-     * Accessor for password (mapped to password_hash).
+     * Accessor for password (mapped to password column).
      */
-    public function getPasswordAttribute()
+    public function getPasswordAttribute(): ?string
     {
-        return $this->password_hash;
+        return $this->attributes['password'] ?? $this->attributes['password_hash'] ?? null;
     }
 
     /**
-     * Mutator for password (mapped to password_hash).
+     * Mutator for password.
      */
     public function setPasswordAttribute(string $value): void
     {
-        $this->attributes['password_hash'] = $value;
+        $this->attributes['password'] = $value;
+    }
+
+    /**
+     * Accessor for password_hash (mapped to password column).
+     */
+    public function getPasswordHashAttribute(): ?string
+    {
+        return $this->attributes['password'] ?? $this->attributes['password_hash'] ?? null;
+    }
+
+    /**
+     * Mutator for password_hash (mapped to password column).
+     */
+    public function setPasswordHashAttribute(string $value): void
+    {
+        $this->attributes['password'] = $value;
+    }
+
+    /**
+     * Create a new model instance for a related model.
+     * Ensures SMART application models and notifications route to the application's default connection.
+     */
+    protected function newRelatedInstance($class)
+    {
+        return tap(new $class, function ($instance) {
+            if (! $instance->getConnectionName()) {
+                if (str_starts_with(get_class($instance), 'App\\Models\\Cart\\')
+                    || str_starts_with(get_class($instance), 'App\\Models\\Inventory\\')
+                    || str_starts_with(get_class($instance), 'App\\Models\\Master\\')
+                    || str_starts_with(get_class($instance), 'App\\Models\\Request\\')
+                    || $instance instanceof \Illuminate\Notifications\DatabaseNotification) {
+                    $instance->setConnection(config('database.default', 'SMART'));
+                } else {
+                    $instance->setConnection($this->connection);
+                }
+            }
+        });
     }
 
     /**
@@ -254,7 +373,7 @@ class AdmUser extends Authenticatable
      */
     public function hrdEmployee(): BelongsTo
     {
-        return $this->belongsTo(HrdEmployee::class, 'employee_id', 'employee_id');
+        return $this->belongsTo(HrdEmployee::class, 'username', 'employee_id');
     }
 
     /**
@@ -263,7 +382,7 @@ class AdmUser extends Authenticatable
      */
     public function assignProjects(): HasMany
     {
-        return $this->hasMany(TbAssignProject::class, 'npk', 'employee_id');
+        return $this->hasMany(TbAssignProject::class, 'npk', 'username');
     }
 
     /**

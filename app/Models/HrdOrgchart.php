@@ -15,13 +15,49 @@ class HrdOrgchart extends Model
 {
     use HasFactory;
 
-    protected $table = 'hrd_orgcharts';
+    protected $connection = 'user_hris';
+
+    protected $table = 'hrd_orgchart';
+
+    public $timestamps = false;
+    public $incrementing = false;
 
     protected $fillable = [
+        'id',
         'employee_id',
         'org_code',
         'org_name',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function ($model) {
+            if (empty($model->id)) {
+                $model->id = ((int) static::max('id')) + 1;
+            }
+        });
+    }
+
+    /**
+     * Mutator to handle both integer employee id (real HRIS schema) and employee string code.
+     */
+    public function setEmployeeIdAttribute($value): void
+    {
+        if ($value !== null && is_numeric($value)) {
+            // If the value directly matches an HrdEmployee id, use it
+            if (HrdEmployee::where('id', (int) $value)->exists()) {
+                $this->attributes['employee_id'] = (int) $value;
+                return;
+            }
+            // Otherwise, check if it's an employee code (employee_id column on HrdEmployee)
+            $emp = HrdEmployee::where('employee_id', (string) $value)->first();
+            if ($emp) {
+                $this->attributes['employee_id'] = $emp->id;
+                return;
+            }
+        }
+        $this->attributes['employee_id'] = $value;
+    }
 
     /**
      * The employee (manager) of this orgchart.
@@ -29,7 +65,7 @@ class HrdOrgchart extends Model
      */
     public function manager(): BelongsTo
     {
-        return $this->belongsTo(HrdEmployee::class, 'employee_id', 'employee_id');
+        return $this->belongsTo(HrdEmployee::class, 'employee_id', 'id');
     }
 
     /**
@@ -38,7 +74,24 @@ class HrdOrgchart extends Model
      */
     public function employees(): HasMany
     {
-        return $this->hasMany(HrdEmployee::class, 'orgchart_id');
+        return $this->hasMany(HrdEmployee::class, 'orgchart_id', 'id');
+    }
+
+    /**
+     * Create a new model instance for a related model.
+     * Ensures SMART application models route to the application's default connection.
+     */
+    protected function newRelatedInstance($class)
+    {
+        return tap(new $class, function ($instance) {
+            if (! $instance->getConnectionName()) {
+                if (str_starts_with(get_class($instance), 'App\\Models\\Request\\')) {
+                    $instance->setConnection(config('database.default', 'SMART'));
+                } else {
+                    $instance->setConnection($this->connection);
+                }
+            }
+        });
     }
 
     /**
@@ -47,6 +100,6 @@ class HrdOrgchart extends Model
      */
     public function requests(): HasMany
     {
-        return $this->hasMany(Request::class, 'org_id');
+        return $this->hasMany(Request::class, 'org_id', 'id');
     }
 }

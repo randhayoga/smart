@@ -141,17 +141,10 @@ class RequestSubmissionService
             }
 
             $managerUser = null;
-            if ($orgchart->employee_id) {
-                $managerUser = AdmUser::where('employee_id', $orgchart->employee_id)->first();
-            }
-
-            if (!$managerUser) {
-                $managerEmployeeId = HrdOrgchart::whereNotNull('employee_id')
-                    ->where('org_code', '!=', 'IFS')
-                    ->value('employee_id');
-                if ($managerEmployeeId) {
-                    $managerUser = AdmUser::where('employee_id', $managerEmployeeId)->first();
-                }
+            if ($orgchart->manager) {
+                $managerUser = $orgchart->manager->admUser;
+            } elseif ($orgchart->employee_id) {
+                $managerUser = AdmUser::where('username', (string)$orgchart->employee_id)->first();
             }
 
             if (!$managerUser) {
@@ -192,12 +185,12 @@ class RequestSubmissionService
             $assignment = TbAssignProject::where('no_project', $project->no_project)
                 ->where('id_rbs', 'P2211')
                 ->orderByDesc('start_date')
-                ->orderByDesc('id')
+                ->orderByDesc('id_assign')
                 ->first();
 
             $managerUser = null;
             if ($assignment && $assignment->npk) {
-                $managerUser = AdmUser::where('employee_id', $assignment->npk)->first();
+                $managerUser = AdmUser::where('username', (string) $assignment->npk)->first();
             }
 
             if (!$managerUser) {

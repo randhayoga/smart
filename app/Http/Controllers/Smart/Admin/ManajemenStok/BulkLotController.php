@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Inventory\Barang;
 use App\Models\Inventory\Lot;
 use App\Models\Inventory\Unit;
+use App\Models\TbProject;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 /**
  * Bulk Lot Controller managing batch updates and batch deletions of inventory lots.
@@ -29,7 +31,7 @@ class BulkLotController extends Controller
             'image_url' => 'nullable|image|max:1024',
             'use_parent_image' => 'nullable',
             'burden' => 'nullable|string|in:Corporate,Project',
-            'project_id' => 'required_if:burden,Project|nullable|exists:tb_projects,id',
+            'project_id' => ['required_if:burden,Project', 'nullable', Rule::exists(TbProject::class, 'id_project')],
         ]);
 
         $lots = Lot::whereIn('id', $request->input('ids'))->get();

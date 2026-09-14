@@ -15,65 +15,82 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        $org = HrdOrgchart::create([
-            'org_name' => 'Integrated Facility Services Department',
-            'org_code' => 'IFS',
-            'employee_id' => null,
-        ]);
+        $org = HrdOrgchart::firstOrCreate(
+            ['org_code' => 'IFS'],
+            ['org_name' => 'Integrated Facility Services Department']
+        );
 
-        HrdEmployee::create([
-            'orgchart_id' => $org->id,
-            'employee_id' => '252525',
-            'employee_name' => 'Mas Mas Aset',
-            'email' => 'admin@example.com',
-            'active' => true,
-        ]);
-        AdmUser::create([
-            'employee_id' => '252525',
-            'name' => 'Mas Mas Aset',
-            'password_hash' => Hash::make('IfScFS?25#*'),
-        ]);
+        $adminEmp = HrdEmployee::updateOrCreate(
+            ['employee_id' => '252525'],
+            [
+                'orgchart_id' => $org->id,
+                'employee_name' => 'Mas Mas Aset',
+                'email' => 'admin@example.com',
+                'active' => true,
+            ]
+        );
+        AdmUser::updateOrCreate(
+            ['username' => '252525'],
+            [
+                'name' => 'Mas Mas Aset',
+                'password' => Hash::make('IfScFS?25#*'),
+            ]
+        );
 
-        HrdEmployee::create([
-            'orgchart_id' => $org->id,
-            'employee_id' => '121212',
-            'employee_name' => 'Karyawan Teladan',
-            'email' => 'user@example.com',
-            'active' => true,
-        ]);
-        AdmUser::create([
-            'employee_id' => '121212',
-            'name' => 'Karyawan Teladan',
-            'password_hash' => Hash::make('IfSIcT?25*#!'),
-        ]);
+        HrdEmployee::updateOrCreate(
+            ['employee_id' => '121212'],
+            [
+                'orgchart_id' => $org->id,
+                'employee_name' => 'Karyawan Teladan',
+                'email' => 'user@example.com',
+                'active' => true,
+            ]
+        );
+        AdmUser::updateOrCreate(
+            ['username' => '121212'],
+            [
+                'name' => 'Karyawan Teladan',
+                'password' => Hash::make('IfSIcT?25*#!'),
+            ]
+        );
 
-        HrdEmployee::create([
-            'orgchart_id' => $org->id,
-            'employee_id' => '010101',
-            'employee_name' => 'Dep Manajer',
-            'email' => 'tamiyi7651@hebase.com',
-            'active' => true,
-        ]);
-        AdmUser::create([
-            'employee_id' => '010101',
-            'name' => 'Dep Manajer',
-            'password_hash' => Hash::make('IfSerVicEs?25#!*'),
-        ]);
+        $depEmp = HrdEmployee::updateOrCreate(
+            ['employee_id' => '010101'],
+            [
+                'orgchart_id' => $org->id,
+                'employee_name' => 'Dep Manajer',
+                'email' => 'tamiyi7651@hebase.com',
+                'active' => true,
+            ]
+        );
+        AdmUser::updateOrCreate(
+            ['username' => '010101'],
+            [
+                'name' => 'Dep Manajer',
+                'password' => Hash::make('IfSerVicEs?25#!*'),
+            ]
+        );
 
-        HrdEmployee::create([
-            'orgchart_id' => $org->id,
-            'employee_id' => '090909',
-            'employee_name' => 'Proyek Manajer',
-            'email' => 'pm@example.com',
-            'active' => true,
-        ]);
-        AdmUser::create([
-            'employee_id' => '090909',
-            'name' => 'Proyek Manajer',
-            'password_hash' => Hash::make('IfSPM?25#!*'),
-        ]);
+        HrdEmployee::updateOrCreate(
+            ['employee_id' => '090909'],
+            [
+                'orgchart_id' => $org->id,
+                'employee_name' => 'Proyek Manajer',
+                'email' => 'pm@example.com',
+                'active' => true,
+            ]
+        );
+        AdmUser::updateOrCreate(
+            ['username' => '090909'],
+            [
+                'name' => 'Proyek Manajer',
+                'password' => Hash::make('IfSPM?25#!*'),
+            ]
+        );
 
-        // Set the manager in HRD_ORGCHART
-        $org->update(['employee_id' => '010101']);
+        // Set the manager in HRD_ORGCHART if not already set
+        if (!$org->employee_id) {
+            $org->update(['employee_id' => $depEmp->id]);
+        }
     }
 }

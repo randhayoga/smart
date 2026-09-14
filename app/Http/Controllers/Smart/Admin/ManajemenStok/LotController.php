@@ -15,6 +15,7 @@ use App\Models\TbProject;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 /**
@@ -43,7 +44,7 @@ class LotController extends Controller
             'auto_create_assets' => 'nullable|boolean',
             'auto_create_assets_count' => 'required_if:auto_create_assets,true|nullable|integer|min:1|max:999',
             'burden' => 'nullable|string|in:Corporate,Project',
-            'project_id' => 'required_if:burden,Project|nullable|exists:tb_projects,id',
+            'project_id' => ['required_if:burden,Project', 'nullable', Rule::exists(TbProject::class, 'id_project')],
         ], [
             'initial_quantity.integer' => 'Tidak boleh desimal.',
             'current_quantity.integer' => 'Tidak boleh desimal.',
@@ -97,7 +98,7 @@ class LotController extends Controller
             'image_url' => 'nullable|image|max:1024',
             'use_parent_image' => 'nullable',
             'burden' => 'nullable|string|in:Corporate,Project',
-            'project_id' => 'required_if:burden,Project|nullable|exists:tb_projects,id',
+            'project_id' => ['required_if:burden,Project', 'nullable', Rule::exists(TbProject::class, 'id_project')],
         ], [
             'initial_quantity.integer' => 'Tidak boleh desimal.',
             'current_quantity.integer' => 'Tidak boleh desimal.',
@@ -321,7 +322,7 @@ class LotController extends Controller
         $vendors = Vendor::orderBy('name')->get();
         $locations = Location::with('parent')->active()->orderBy('name')->get();
         $projects = TbProject::orderBy('project_name')->get();
-        $users = \App\Models\AdmUser::select('id', 'name', 'employee_id')->orderBy('name')->get()->map(fn($u) => [
+        $users = \App\Models\AdmUser::select('id', 'name', 'username')->orderBy('name')->get()->map(fn($u) => [
             'id' => $u->id,
             'name' => "{$u->name} ({$u->employee_id})",
         ]);

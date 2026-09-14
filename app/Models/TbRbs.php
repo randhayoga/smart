@@ -13,15 +13,30 @@ class TbRbs extends Model
 {
     use HasFactory;
 
+    protected $connection = 'reportal';
+
     protected $table = 'tb_rbs';
 
     protected $primaryKey = 'no_urut';
 
+    public $timestamps = false;
+    public $incrementing = false;
+
     protected $fillable = [
+        'no_urut',
         'id',
         'name',
         'showing_name',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function ($model) {
+            if (empty($model->no_urut)) {
+                $model->no_urut = ((int) static::max('no_urut')) + 1;
+            }
+        });
+    }
 
     /**
      * Assignment records for this RBS.
@@ -29,6 +44,6 @@ class TbRbs extends Model
      */
     public function assignProjects(): HasMany
     {
-        return $this->hasMany(TbAssignProject::class, 'id_rbs', 'id');
+        return $this->hasMany(TbAssignProject::class, 'ID_RBS', 'id');
     }
 }

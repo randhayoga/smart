@@ -2,7 +2,10 @@
 
 namespace App\Http\Requests\Smart;
 
+use App\Models\HrdOrgchart;
+use App\Models\TbProject;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class SubmitConsumableCartRequest extends FormRequest
 {
@@ -17,8 +20,8 @@ class SubmitConsumableCartRequest extends FormRequest
             'items'        => 'required|array|min:1',
             'items.*.id'   => 'required|integer',
             'pemanfaatan'  => 'required|string|in:corporate,project',
-            'departemen'   => 'required_if:pemanfaatan,corporate|nullable|exists:hrd_orgcharts,id',
-            'project'      => 'required_if:pemanfaatan,project|nullable|exists:tb_projects,id',
+            'departemen'   => ['required_if:pemanfaatan,corporate', 'nullable', Rule::exists(HrdOrgchart::class, 'id')],
+            'project'      => ['required_if:pemanfaatan,project', 'nullable', Rule::exists(TbProject::class, 'id_project')],
             'alasan'       => 'required|string|max:2000',
         ];
     }

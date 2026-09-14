@@ -29,6 +29,7 @@ services:
         restart: unless-stopped
         volumes:
             - sqlvolume:/var/opt/mssql
+            - ./database/bak:/var/opt/mssql/backup:ro
         ports:
             - "1433:1433"
         environment:
@@ -52,6 +53,7 @@ services:
                 condition: service_healthy
         volumes:
             - ./docker/init-db.sh:/usr/local/bin/init-db.sh:ro
+            - ./database/bak:/var/opt/mssql/backup:ro
         entrypoint: ["/bin/bash", "/usr/local/bin/init-db.sh"]
         env_file:
             - .env

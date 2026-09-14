@@ -116,7 +116,7 @@ class UnitController extends Controller
         $organizers = Organizer::orderBy('name')->get();
         $vendors = Vendor::orderBy('name')->get();
         $projects = TbProject::orderBy('project_name')->get();
-        $users = \App\Models\AdmUser::select('id', 'name', 'employee_id')->orderBy('name')->get()->map(fn($u) => [
+        $users = \App\Models\AdmUser::select('id', 'name', 'username')->orderBy('name')->get()->map(fn($u) => [
             'id' => $u->id,
             'name' => "{$u->name} ({$u->employee_id})",
         ]);

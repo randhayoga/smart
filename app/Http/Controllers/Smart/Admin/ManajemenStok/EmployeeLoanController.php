@@ -20,7 +20,7 @@ class EmployeeLoanController extends Controller
      */
     public function index(HrdEmployee $employee): JsonResponse
     {
-        $userId = $employee->admUser?->id ?? AdmUser::where('employee_id', $employee->employee_id)->value('id');
+        $userId = $employee->admUser?->id ?? AdmUser::where('username', $employee->employee_id)->value('id');
 
         if (!$userId) {
             return response()->json([

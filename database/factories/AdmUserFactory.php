@@ -31,12 +31,13 @@ class AdmUserFactory extends Factory
      */
     public function definition(): array
     {
+        $employee = HrdEmployee::factory()->create();
+
         return [
-            'employee_id' => function () {
-                return HrdEmployee::factory()->create()->employee_id;
-            },
-            'name' => fake()->name(),
-            'password_hash' => static::$password ??= Hash::make('password'),
+            'username' => $employee->employee_id,
+            'name' => $employee->employee_name,
+            'email' => $employee->email,
+            'password' => static::$password ??= Hash::make('password'),
         ];
     }
 }

@@ -8,3 +8,5 @@ Dockerfile*
 coverage/
 public/build/
 storage/logs/
+database/bak/
+*.bak

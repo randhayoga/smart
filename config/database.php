@@ -98,6 +98,19 @@ return [
             'sslmode' => env('DB_SSLMODE', 'prefer'),
         ],
 
+        'reportal' => [
+            'driver' => 'sqlsrv',
+            'host' => env('DB_HOST_REPORTAL', '127.0.0.1'),
+            'port' => env('DB_PORT_REPORTAL', '1433'),
+            'database' => env('DB_DATABASE_REPORTAL', 'RE_PORTALDB'),
+            'username' => env('DB_USERNAME_REPORTAL', 'sa'),
+            'password' => env('DB_PASSWORD_REPORTAL', env('MSSQL_SA_PASSWORD', env('DB_SMART_PASSWORD', 'secret'))),
+            'charset' => 'utf8',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'trust_server_certificate' => env('DB_REPORTAL_TRUST_SERVER_CERTIFICATE', 'true'),
+        ],
+
         'sqlsrv' => [
             'driver' => 'sqlsrv',
             'url' => env('DB_URL'),
@@ -120,12 +133,12 @@ return [
             'port' => env('DB_READY_PORT', '1433'),
             'database' => env('DB_READY_DATABASE', 'new_portal'),
             'username' => env('DB_READY_USERNAME', 'sa'),
-            'password' => env('DB_READY_PASSWORD', ''),
+            'password' => env('DB_READY_PASSWORD', env('MSSQL_SA_PASSWORD', env('DB_SMART_PASSWORD', ''))),
             'charset' => 'utf8',
             'prefix' => '',
             'prefix_indexes' => true,
             // 'encrypt' => env('DB_READY_ENCRYPT', 'yes'),
-            // 'trust_server_certificate' => env('DB_READY_TRUST_SERVER_CERTIFICATE', 'false'),
+            'trust_server_certificate' => env('DB_READY_TRUST_SERVER_CERTIFICATE', 'true'),
         ],
 
         // SMART Database Connection
@@ -143,19 +156,19 @@ return [
             'trust_server_certificate' => env('DB_SMART_TRUST_SERVER_CERTIFICATE', 'false'),
         ],
 
-        // USER_HRIS Database Connection
-        'USER_HRIS' => [
+        // user_hris Database Connection
+        'user_hris' => [
             'driver' => 'sqlsrv',
             'host' => env('DB_USER_HRIS_HOST', 'localhost'),
             'port' => env('DB_USER_HRIS_PORT', '1433'),
             'database' => env('DB_USER_HRIS_DATABASE', 'USER_HRIS'),
             'username' => env('DB_USER_HRIS_USERNAME', 'sa'),
-            'password' => env('DB_USER_HRIS_PASSWORD', ''),
+            'password' => env('DB_USER_HRIS_PASSWORD', env('MSSQL_SA_PASSWORD', env('DB_SMART_PASSWORD', ''))),
             'charset' => 'utf8',
             'prefix' => '',
             'prefix_indexes' => true,
             // 'encrypt' => env('DB_USER_HRIS_ENCRYPT', 'yes'),
-            // 'trust_server_certificate' => env('DB_USER_HRIS_TRUST_SERVER_CERTIFICATE', 'false'),
+            'trust_server_certificate' => env('DB_USER_HRIS_TRUST_SERVER_CERTIFICATE', 'true'),
         ],
 
     ],

@@ -3,6 +3,7 @@
 .env
 .env.production
 .env.dev
+.env.cloudflare
 .phpactor.json
 .phpunit.result.cache
 /.fleet
@@ -19,6 +20,7 @@
 /storage/*.key
 /storage/pail
 /vendor
+/database/bak
 Homestead.json
 Homestead.yaml
 Thumbs.db

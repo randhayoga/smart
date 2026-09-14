@@ -15,6 +15,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 /**
  * Unit Borrow Controller handling direct admin borrow registrations, borrow extensions, and borrow completions.
@@ -26,7 +27,7 @@ class UnitBorrowController extends Controller
      */
     public function users(): JsonResponse
     {
-        $users = AdmUser::select('id', 'name', 'employee_id')
+        $users = AdmUser::select('id', 'name', 'username')
             ->orderBy('name')
             ->get()
             ->map(fn($u) => [
@@ -43,7 +44,7 @@ class UnitBorrowController extends Controller
     public function borrow(Request $request, Unit $unit): RedirectResponse
     {
         $validated = $request->validate([
-            'user_id' => 'required|exists:adm_users,id',
+            'user_id' => ['required', Rule::exists(AdmUser::class, 'id')],
             'start_date' => 'required|date',
             'note' => 'nullable|string|max:2000',
         ], [
