@@ -101,7 +101,7 @@ const selectedDepartemenLabel = computed(() => {
 
 // --- Form State ---
 const pemanfaatan = ref('corporate');
-const departemen  = ref('');
+const departemen  = ref(props.departments.length === 1 ? props.departments[0].value : '');
 const project     = ref('');
 const alasan      = ref('');
 
@@ -113,6 +113,9 @@ const isProjectRequired   = computed(() => pemanfaatan.value === 'project');
 watch(pemanfaatan, (newVal) => {
   if (newVal === 'corporate') {
     project.value = '';
+    if (props.departments.length === 1) {
+      departemen.value = props.departments[0].value;
+    }
   } else if (newVal === 'project') {
     departemen.value = '';
   }

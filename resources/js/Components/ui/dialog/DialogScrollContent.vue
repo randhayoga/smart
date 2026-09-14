@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { DialogContentEmits, DialogContentProps } from "reka-ui"
-import type { HTMLAttributes } from "vue"
+import { computed, type HTMLAttributes } from "vue"
 import { reactiveOmit } from "@vueuse/core"
 import { X } from "lucide-vue-next"
 import {
@@ -8,12 +8,14 @@ import {
   DialogContent,
   DialogOverlay,
   DialogPortal,
+  injectDialogRootContext,
   useForwardPropsEmits,
 } from "reka-ui"
 import { cn } from "@/lib/utils"
 import { useModalLock } from "@/composables/useModalLock"
 
-useModalLock()
+const rootContext = injectDialogRootContext(null)
+useModalLock(computed(() => rootContext?.open.value ?? false))
 
 defineOptions({
   inheritAttrs: false,

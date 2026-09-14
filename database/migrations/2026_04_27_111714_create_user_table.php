@@ -7,6 +7,17 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
+        /*
+        |--------------------------------------------------------------------------
+        | External Database Tables (Retained for ERD reference)
+        |--------------------------------------------------------------------------
+        | The following tables reside in external Microsoft SQL Server databases:
+        | - new_portal : users (AdmUser)
+        | - USER_HRIS  : hrd_employee (HrdEmployee), hrd_orgchart (HrdOrgchart)
+        | - RE_PORTALDB: tb_project (TbProject), tb_assign_project (TbAssignProject), tb_rbs (TbRbs)
+        |
+        | They are commented out below so they are not created in the SMART database.
+
         Schema::create('hrd_employees', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('orgchart_id')->nullable(); // FK added after hrd_orgcharts created
@@ -72,6 +83,7 @@ return new class extends Migration {
             $table->foreign('no_project')->references('no_project')->on('tb_projects')->cascadeOnDelete();
             $table->foreign('id_rbs')->references('id')->on('tb_rbs')->cascadeOnDelete();
         });
+        */
 
         Schema::create('sessions', function (Blueprint $table) {
             $table->string('id')->primary();
@@ -80,13 +92,13 @@ return new class extends Migration {
             $table->text('user_agent')->nullable();
             $table->text('payload');
             $table->integer('last_activity')->index();
-       });
+        });
     }
-
 
     public function down(): void
     {
         Schema::dropIfExists('sessions');
+        /*
         Schema::dropIfExists('tb_assign_projects');
         Schema::dropIfExists('tb_rbs');
         Schema::dropIfExists('tb_projects');
@@ -96,5 +108,6 @@ return new class extends Migration {
         });
         Schema::dropIfExists('hrd_orgcharts');
         Schema::dropIfExists('hrd_employees');
+        */
     }
 };

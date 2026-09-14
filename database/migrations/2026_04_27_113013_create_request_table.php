@@ -10,11 +10,11 @@ return new class extends Migration {
         Schema::create('requests', function (Blueprint $table) {
             $table->id();
             $table->string('request_number', 11)->unique();
-            $table->foreignId('user_id')->constrained('adm_users');
-            $table->foreignId('approver_id')->constrained('adm_users');
+            $table->unsignedBigInteger('user_id')->index()->comment('Refers to new_portal:users.id');
+            $table->unsignedBigInteger('approver_id')->index()->comment('Refers to new_portal:users.id');
             $table->string('utilization')->comment('project | corporate');
-            $table->foreignId('org_id')->nullable()->constrained('hrd_orgcharts');
-            $table->foreignId('project_id')->nullable()->constrained('tb_projects');
+            $table->unsignedBigInteger('org_id')->nullable()->index()->comment('Refers to USER_HRIS:hrd_orgchart.id');
+            $table->unsignedBigInteger('project_id')->nullable()->index()->comment('Refers to RE_PORTALDB:tb_project.id_project');
             $table->text('reasoning');
             $table->string('status')->comment('overall status e.g., pending | partial | completed');
             $table->timestamps();

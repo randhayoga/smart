@@ -329,6 +329,9 @@ class BrowseControllerTest extends TestCase
             ->has('projects', 1)
             ->where('projects.0.value', (string) $projectAssigned->id)
             ->where('projects.0.label', '[PRJ-001] Assigned Project')
+            ->has('departments', 1)
+            ->where('departments.0.value', (string) $user->hrdEmployee->orgchart_id)
+            ->where('departments.0.label', $user->hrdEmployee->orgchart->org_name)
         );
 
         $borrowResponse = $this->actingAs($user)->get(route('smart.borrow-cart.confirmation'));
@@ -339,6 +342,36 @@ class BrowseControllerTest extends TestCase
             ->has('projects', 1)
             ->where('projects.0.value', (string) $projectAssigned->id)
             ->where('projects.0.label', '[PRJ-001] Assigned Project')
+            ->has('departments', 1)
+            ->where('departments.0.value', (string) $user->hrdEmployee->orgchart_id)
+            ->where('departments.0.label', $user->hrdEmployee->orgchart->org_name)
+        );
+    }
+
+    public function test_cart_confirmation_only_shows_current_user_department(): void
+    {
+        // Create additional unrelated departments
+        \App\Models\HrdOrgchart::factory()->count(3)->create();
+
+        $user = User::factory()->create();
+        $userDept = $user->hrdEmployee->orgchart;
+
+        $assetResponse = $this->actingAs($user)->get(route('smart.asset-cart.confirmation'));
+        $assetResponse->assertOk();
+        $assetResponse->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+            ->component('Smart/User/CartConfirmation')
+            ->has('departments', 1)
+            ->where('departments.0.value', (string) $userDept->id)
+            ->where('departments.0.label', $userDept->org_name)
+        );
+
+        $borrowResponse = $this->actingAs($user)->get(route('smart.borrow-cart.confirmation'));
+        $borrowResponse->assertOk();
+        $borrowResponse->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+            ->component('Smart/User/CartConfirmation')
+            ->has('departments', 1)
+            ->where('departments.0.value', (string) $userDept->id)
+            ->where('departments.0.label', $userDept->org_name)
         );
     }
 

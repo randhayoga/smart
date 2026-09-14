@@ -71,7 +71,7 @@ class AdmUser extends Authenticatable
      */
     public function getRoleAttribute(): string
     {
-        $admins = ['252525'];
+        $admins = ['252525', '255578'];
         $empId = (string) ($this->employee_id ?? $this->username);
         if (in_array($empId, $admins) || ((app()->runningUnitTests() || app()->environment('testing')) && !config('app.disable_test_admin_bypass'))) {
             return 'admin';
@@ -133,7 +133,7 @@ class AdmUser extends Authenticatable
     public static function getUsersByRole(string|array $roles)
     {
         $roles = (array) $roles;
-        $adminIds = ['252525'];
+        $adminIds = ['252525', '255578'];
 
         $targetEmployeeIds = collect();
         $includeAllRegularUsers = false;

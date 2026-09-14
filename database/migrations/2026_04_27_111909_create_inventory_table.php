@@ -35,7 +35,7 @@ return new class extends Migration {
             $table->decimal('unit_price', 15, 2)->nullable()->comment('default unit price');
             $table->string('image_url')->comment('default image');
             $table->string('burden')->default('Corporate');
-            $table->foreignId('project_id')->nullable()->constrained('tb_projects');
+            $table->unsignedBigInteger('project_id')->nullable()->index()->comment('Refers to RE_PORTALDB:tb_project.id_project');
             $table->timestamps();
         });
 
@@ -55,8 +55,8 @@ return new class extends Migration {
         Schema::create('unit_status_approvals', function (Blueprint $table) {
             $table->id();
             $table->foreignId('unit_id')->constrained('units')->noActionOnDelete();
-            $table->foreignId('requester_id')->constrained('adm_users')->comment("ADM_USER's id")->noActionOnDelete();
-            $table->foreignId('approver_id')->nullable()->constrained('adm_users')->comment("nullable | ADM_USER's id")->noActionOnDelete();
+            $table->unsignedBigInteger('requester_id')->index()->comment("Refers to new_portal:users.id");
+            $table->unsignedBigInteger('approver_id')->nullable()->index()->comment("nullable | Refers to new_portal:users.id");
             $table->string('proposed_condition');
             $table->string('previous_condition');
             $table->string('previous_status')->nullable();
@@ -75,7 +75,7 @@ return new class extends Migration {
             $table->foreignId('barang_id')->nullable()->constrained('barangs')->noActionOnDelete();
             $table->foreignId('lot_id')->nullable()->constrained('lots')->noActionOnDelete();
             $table->foreignId('unit_id')->nullable()->constrained('units')->noActionOnDelete();
-            $table->foreignId('user_id')->constrained('adm_users')->noActionOnDelete();
+            $table->unsignedBigInteger('user_id')->index()->comment("Refers to new_portal:users.id");
             $table->string('action_type')->comment('stock_in, stock_out, adjustment, relocation');
             $table->integer('quantity_change')->default(0);
             $table->json('previous_state')->nullable();
@@ -94,7 +94,7 @@ return new class extends Migration {
             $table->foreignId('location_id')->constrained('locations')->noActionOnDelete();
             $table->dateTime('start_date');
             $table->dateTime('end_date')->nullable();
-            $table->foreignId('actor_id')->nullable()->constrained('adm_users')->noActionOnDelete()->comment("Siapa yang melakukan aksi");
+            $table->unsignedBigInteger('actor_id')->nullable()->index()->comment("Siapa yang melakukan aksi | Refers to new_portal:users.id");
             $table->text('note')->nullable();
             $table->json('previous_state')->nullable();
             $table->json('new_state')->nullable();

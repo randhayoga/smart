@@ -9,7 +9,7 @@ return new class extends Migration {
     {
         Schema::create('consumable_baskets', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('adm_users')->cascadeOnDelete();
+            $table->unsignedBigInteger('user_id')->index()->comment('Refers to new_portal:users.id');
             $table->foreignId('subcategory_id')->nullable()->constrained('subcategories')->cascadeOnDelete();
             $table->foreignId('barang_id')->nullable()->constrained('barangs')->cascadeOnDelete();
             $table->integer('quantity');
@@ -18,7 +18,7 @@ return new class extends Migration {
 
         Schema::create('asset_baskets', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('adm_users')->cascadeOnDelete();
+            $table->unsignedBigInteger('user_id')->index()->comment('Refers to new_portal:users.id');
             $table->foreignId('subcategory_id')->nullable()->constrained('subcategories')->cascadeOnDelete();
             $table->foreignId('barang_id')->nullable()->constrained('barangs')->cascadeOnDelete();
             $table->integer('quantity');

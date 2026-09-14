@@ -10,7 +10,7 @@ return new class extends Migration {
         Schema::create('request_approvals', function (Blueprint $table) {
             $table->id();
             $table->foreignId('request_id')->constrained('requests')->cascadeOnDelete();
-            $table->foreignId('approver_id')->constrained('adm_users');
+            $table->unsignedBigInteger('approver_id')->index()->comment('Refers to new_portal:users.id');
             $table->string('decision')->comment('approved | rejected');
             $table->text('note')->nullable()->comment('nullable | required if rejected');
             $table->dateTime('decided_at');
@@ -20,7 +20,7 @@ return new class extends Migration {
         Schema::create('request_admin_confirmations', function (Blueprint $table) {
             $table->id();
             $table->foreignId('request_id')->constrained('requests')->cascadeOnDelete();
-            $table->foreignId('admin_id')->constrained('adm_users');
+            $table->unsignedBigInteger('admin_id')->index()->comment('Refers to new_portal:users.id');
             $table->string('action')->comment('confirm | reject');
             $table->text('note')->nullable();
             $table->dateTime('decided_at');
@@ -57,7 +57,7 @@ return new class extends Migration {
             $table->foreignId('request_id')->constrained('requests')->cascadeOnDelete();
             $table->string('status_from');
             $table->string('status_to');
-            $table->foreignId('changed_by')->nullable()->constrained('adm_users');
+            $table->unsignedBigInteger('changed_by')->nullable()->index()->comment('Refers to new_portal:users.id');
             $table->text('note')->nullable();
             $table->dateTime('created_at');
         });

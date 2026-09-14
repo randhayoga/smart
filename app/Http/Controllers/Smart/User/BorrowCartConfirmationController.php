@@ -66,21 +66,28 @@ class BorrowCartConfirmationController extends Controller
                 ];
             });
 
-        $departments = HrdOrgchart::orderBy('org_name')->get()->map(fn($d) => [
-            'value' => (string) $d->id,
-            'label' => $d->org_name
-        ]);
+        $userOrg = $request->user()?->hrdEmployee?->orgchart
+            ?? ($request->user()?->hrdEmployee?->orgchart_id ? HrdOrgchart::find($request->user()->hrdEmployee->orgchart_id) : null);
 
-        $userEmployeeId = $request->user()->employee_id;
-        $projects = TbProject::whereHas('assignProjects', function ($query) use ($userEmployeeId) {
-            $query->where('npk', $userEmployeeId);
-        })
-            ->orderBy('project_name')
-            ->get(['id_project', 'no_project', 'project_name'])
-            ->map(fn($p) => [
-                'value' => (string) ($p->id_project ?? $p->id),
-                'label' => "[{$p->no_project}] {$p->project_name}"
-            ]);
+        $departments = $userOrg ? [
+            [
+                'value' => (string) $userOrg->id,
+                'label' => $userOrg->org_name,
+            ]
+        ] : [];
+
+        $userEmployeeId = $request->user()?->employee_id ?? $request->user()?->username;
+        $projects = $userEmployeeId
+            ? TbProject::whereHas('assignProjects', function ($query) use ($userEmployeeId) {
+                $query->where('npk', $userEmployeeId);
+            })
+                ->orderBy('project_name')
+                ->get(['id_project', 'no_project', 'project_name'])
+                ->map(fn($p) => [
+                    'value' => (string) ($p->id_project ?? $p->id),
+                    'label' => "[{$p->no_project}] {$p->project_name}"
+                ])
+            : collect();
 
         // Default dates from query params or fallback
         $startDate = $request->query('start_date', '');

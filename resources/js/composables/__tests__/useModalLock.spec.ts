@@ -137,7 +137,7 @@ describe('useModalLock composable', () => {
     expect(appEl.hasAttribute('inert')).toBe(false);
   });
 
-  it('should support default active when called without arguments (e.g. inside DialogContent mount)', async () => {
+  it('should support default active when called without arguments (e.g. inside unconditional modal component)', async () => {
     const DialogComponent = defineComponent({
       setup() {
         useModalLock();
@@ -158,5 +158,82 @@ describe('useModalLock composable', () => {
     expect(getActiveModalCount()).toBe(0);
     expect(document.body.style.overflow).toBe('');
     expect(appEl.hasAttribute('inert')).toBe(false);
+  });
+
+  it('should NOT lock background when DialogContent is mounted with Dialog open=false, but lock when open=true', async () => {
+    const { Dialog, DialogContent } = await import('@/Components/ui/dialog');
+
+    const isOpen = ref(false);
+    const ParentComponent = defineComponent({
+      setup() {
+        return () =>
+          h(Dialog, { open: isOpen.value }, {
+            default: () => h(DialogContent, null, { default: () => 'Modal Body' }),
+          });
+      },
+    });
+
+    const wrapper = testMount(ParentComponent);
+    await nextTick();
+
+    // Dialog is mounted but open=false: MUST NOT be locked!
+    expect(getActiveModalCount()).toBe(0);
+    expect(document.body.style.overflow).toBe('');
+    expect(appEl.hasAttribute('inert')).toBe(false);
+
+    // Now open the dialog
+    isOpen.value = true;
+    await nextTick();
+
+    expect(getActiveModalCount()).toBe(1);
+    expect(document.body.style.overflow).toBe('hidden');
+    expect(appEl.hasAttribute('inert')).toBe(true);
+
+    // Close the dialog
+    isOpen.value = false;
+    await nextTick();
+
+    expect(getActiveModalCount()).toBe(0);
+    expect(document.body.style.overflow).toBe('');
+    expect(appEl.hasAttribute('inert')).toBe(false);
+
+    wrapper.unmount();
+  });
+
+  it('should NOT lock background when DialogScrollContent is mounted with Dialog open=false, but lock when open=true', async () => {
+    const { Dialog, DialogScrollContent } = await import('@/Components/ui/dialog');
+
+    const isOpen = ref(false);
+    const ParentComponent = defineComponent({
+      setup() {
+        return () =>
+          h(Dialog, { open: isOpen.value }, {
+            default: () => h(DialogScrollContent, null, { default: () => 'Modal Scroll Body' }),
+          });
+      },
+    });
+
+    const wrapper = testMount(ParentComponent);
+    await nextTick();
+
+    expect(getActiveModalCount()).toBe(0);
+    expect(document.body.style.overflow).toBe('');
+    expect(appEl.hasAttribute('inert')).toBe(false);
+
+    isOpen.value = true;
+    await nextTick();
+
+    expect(getActiveModalCount()).toBe(1);
+    expect(document.body.style.overflow).toBe('hidden');
+    expect(appEl.hasAttribute('inert')).toBe(true);
+
+    isOpen.value = false;
+    await nextTick();
+
+    expect(getActiveModalCount()).toBe(0);
+    expect(document.body.style.overflow).toBe('');
+    expect(appEl.hasAttribute('inert')).toBe(false);
+
+    wrapper.unmount();
   });
 });
