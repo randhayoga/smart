@@ -314,7 +314,7 @@ class AdminEmployeeControllerTest extends TestCase
 
     public function test_non_admin_cannot_fetch_employee_loans_json(): void
     {
-        $user = $this->createEmployee('Regular User', '999998');
+        $user = $this->createEmployee('Regular User', '777001');
         $employee = $this->createEmployee('Target Employee', '555001');
         $hrdEmployee = HrdEmployee::where('employee_id', $employee->employee_id)->firstOrFail();
 
