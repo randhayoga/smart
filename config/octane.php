@@ -39,8 +39,9 @@ return [
     */
 
     'caddy' => [
-        'env' => [
+        'env' => array_filter([
             'MERCURE_JWT_SECRET' => env('MERCURE_JWT_SECRET'),
-        ],
+            'CADDY_SERVER_SERVER_NAME' => env('SERVER_NAME'),
+        ]),
     ],
 ];

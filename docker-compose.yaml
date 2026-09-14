@@ -5,6 +5,7 @@ services:
         build:
             context: .
             dockerfile: docker/Dockerfile
+            target: dev
         image: smart-app:frankenphp
         volumes:
             - .:/var/www/smart

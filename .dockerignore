@@ -10,3 +10,5 @@ public/build/
 storage/logs/
 database/bak/
 *.bak
+scratch*
+graphify-out/
