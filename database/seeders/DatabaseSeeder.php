@@ -14,10 +14,6 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             MasterSeeder::class,
-            UserSeeder::class,
-            TbProjectSeeder::class,
-            TbRbsSeeder::class,
-            TbAssignProjectSeeder::class,
             BarangSeeder::class,
             LotSeeder::class,
             UnitSeeder::class,

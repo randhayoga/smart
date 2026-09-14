@@ -12,6 +12,9 @@ class TbRbsSeeder extends Seeder
      */
     public function run(): void
     {
+        $this->command?->warn('Seeding skipped: TbRbs resides in external database (RE_PORTALDB).');
+        return;
+
         TbRbs::create([
             'id' => 'P0',
             'name' => 'Anggota',

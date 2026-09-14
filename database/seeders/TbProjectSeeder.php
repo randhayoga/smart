@@ -12,6 +12,9 @@ class TbProjectSeeder extends Seeder
      */
     public function run(): void
     {
+        $this->command?->warn('Seeding skipped: TbProject resides in external database (RE_PORTALDB).');
+        return;
+
         TbProject::factory()->count(2)->create();
     }
 }

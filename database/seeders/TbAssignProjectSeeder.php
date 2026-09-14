@@ -13,6 +13,9 @@ class TbAssignProjectSeeder extends Seeder
      */
     public function run(): void
     {
+        $this->command?->warn('Seeding skipped: TbAssignProject resides in external database (RE_PORTALDB).');
+        return;
+
         $project = TbProject::first();
 
         if (! $project) {

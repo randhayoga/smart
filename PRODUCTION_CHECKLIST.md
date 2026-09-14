@@ -95,10 +95,12 @@ Run database migrations:
 docker compose -f docker-compose.prod.yaml run --rm smart-app php artisan migrate --force
 ```
 
-*(Optional - initial seed if setting up a fresh database)*:
+*(Optional - initial master data seed for SMART internal tables)*:
 ```bash
-docker compose -f docker-compose.prod.yaml run --rm smart-app php artisan db:seed --class=UserSeeder --force
+docker compose -f docker-compose.prod.yaml run --rm smart-app php artisan db:seed --class=MasterSeeder --force
 ```
+> [!NOTE]
+> External database tables (`users`, `hrd_employee`, `hrd_orgchart`, `tb_project`, `tb_assign_project`, `tb_rbs`) are managed by external applications and are protected from seeding. `DatabaseSeeder` and external seeders will never modify external databases.
 
 ### Step 4: Launch the Full Application Stack
 Start `smart-app`, `smart-queue`, and `smart-scheduler`:

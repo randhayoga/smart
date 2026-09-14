@@ -15,6 +15,9 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
+        $this->command?->warn('Seeding skipped: AdmUser, HrdEmployee, and HrdOrgchart reside in external databases (new_portal, user_hris).');
+        return;
+
         $org = HrdOrgchart::firstOrCreate(
             ['org_code' => 'IFS'],
             ['org_name' => 'Integrated Facility Services Department']
