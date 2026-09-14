@@ -55,6 +55,8 @@ class ConsumableLotController extends Controller
                     'specification' => $barang->specification,
                     'lastUpdate' => $barang->updated_at ? $barang->updated_at->format('d-m-Y H:i') : '-',
                     'amount' => $amount,
+                    'initial_stock' => (int)$barang->lots()->sum('initial_quantity'),
+                    'available_stock' => $amount,
                     'image_url' => $barang->image_url,
                     'uom' => $barang->uom->name ?? '-',
                     'subcategory_id' => $barang->subcategory_id,

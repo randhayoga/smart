@@ -259,6 +259,7 @@ onUnmounted(() => {
       :items="[props.barang]"
       :uoms="props.uoms"
       :brands="props.brands"
+      :lots="props.lots"
     />
 
     <DeleteConfirmationModal 

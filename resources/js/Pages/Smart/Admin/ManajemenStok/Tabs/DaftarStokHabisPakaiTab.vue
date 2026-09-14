@@ -486,6 +486,12 @@ const openBulkEditModal = () => {
   isBulkEditModalOpen.value = true;
 };
 
+const openEditModal = () => {
+  if (!activeBarang.value) return;
+  selectedItemsForEdit.value = [activeBarang.value];
+  isBulkEditModalOpen.value = true;
+};
+
 const handleEditSuccess = () => {
   if (dataTableRef.value) {
     dataTableRef.value.table.resetRowSelection();
@@ -497,7 +503,10 @@ const isDeleteModalOpen = ref(false);
 const itemsToDelete = ref<any[]>([]);
 const processing = ref(false);
 
-const openDeleteModal = (items: any | any[]) => {
+const openDeleteModal = (items?: any | any[]) => {
+  if (!items || items instanceof Event) {
+    items = activeBarang.value ? [activeBarang.value] : [];
+  }
   itemsToDelete.value = Array.isArray(items) ? items : [items];
   isDeleteModalOpen.value = true;
 };
@@ -615,9 +624,18 @@ const closeOnEscape = (e: KeyboardEvent) => {
 
     <!-- Detail View: DetailBarangTab / DaftarLOTTab with Tabs pills -->
     <div v-if="selectedBarang && activeBarang">
-      <!-- Tabs Switcher -->
-      <div class="mb-2 no-print">
+      <!-- Top Action Bar -->
+      <div class="flex flex-wrap items-center justify-between gap-4 mb-2 no-print">
         <Tabs v-model="activeDetailTab" :tabs="detailTabs" />
+
+        <div class="flex items-center gap-3">
+          <Button @click="openEditModal" variant="primary" size="lg">
+            {{ t('inventory.editTypeDetail') }}
+          </Button>
+          <Button @click="openDeleteModal" variant="destructive" size="lg">
+            {{ t('inventory.deleteType') }}
+          </Button>
+        </div>
       </div>
 
       <DetailBarangTab
@@ -810,6 +828,7 @@ const closeOnEscape = (e: KeyboardEvent) => {
       :items="selectedItemsForEdit"
       :uoms="props.uoms"
       :brands="props.brands"
+      :lots="props.lots"
       @success="handleEditSuccess"
     />
 

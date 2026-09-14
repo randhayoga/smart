@@ -19,6 +19,7 @@ interface Props {
   items: any[];
   uoms: SimpleItem[];
   brands: SimpleItem[];
+  lots?: any[];
 }
 
 const props = defineProps<Props>();
@@ -35,6 +36,37 @@ useModalLock(computed(() => props.open));
 const isSingle = computed(() => props.items.length === 1);
 const selectedItem = computed(() => isSingle.value ? props.items[0] : null);
 
+const isConsumable = computed(() => {
+  if (!selectedItem.value) return false;
+  return Boolean(
+    selectedItem.value.is_consumable ??
+    selectedItem.value.subcategory?.category?.is_consumable ??
+    false
+  );
+});
+
+const initialStock = computed(() => {
+  if (!isSingle.value || !selectedItem.value) return 0;
+  if (props.lots && props.lots.length > 0) {
+    const itemLots = props.lots.filter(l => String(l.barang_id) === String(selectedItem.value.id));
+    if (itemLots.length > 0) {
+      return itemLots.reduce((sum, l) => sum + Number(l.initial_quantity || 0), 0);
+    }
+  }
+  return Number(selectedItem.value.initial_stock ?? 0);
+});
+
+const currentAvailableStock = computed(() => {
+  if (!isSingle.value || !selectedItem.value) return 0;
+  if (props.lots && props.lots.length > 0) {
+    const itemLots = props.lots.filter(l => String(l.barang_id) === String(selectedItem.value.id));
+    if (itemLots.length > 0) {
+      return itemLots.reduce((sum, l) => sum + Number(l.current_quantity ?? l.availableAssetCount ?? 0), 0);
+    }
+  }
+  return Number(selectedItem.value.available_stock ?? selectedItem.value.amount ?? 0);
+});
+
 const form = useForm({
   ids: [] as number[],
   uom_id: null as number | null,
@@ -42,23 +74,26 @@ const form = useForm({
   name: '',
   specification: '',
   photo: null as File | null,
-  photoName: ''
+  photoName: '',
+  available_stock: null as number | null,
 });
 
 const errors = ref({
   uom_id: '',
   brand_id: '',
   name: '',
+  available_stock: '',
 });
 
 const resetErrors = () => {
-  errors.value = { uom_id: '', brand_id: '', name: '' };
+  errors.value = { uom_id: '', brand_id: '', name: '', available_stock: '' };
 };
 
 // Reactive error clearing
 watch(() => form.uom_id, v => { if (v && errors.value.uom_id) errors.value.uom_id = ''; });
 watch(() => form.brand_id, v => { if (v && errors.value.brand_id) errors.value.brand_id = ''; });
 watch(() => form.name, v => { if (v && errors.value.name) errors.value.name = ''; });
+watch(() => form.available_stock, v => { if (v !== '' && v !== null && errors.value.available_stock) errors.value.available_stock = ''; });
 
 // Initialize form when modal opens
 watch(() => props.open, (val) => {
@@ -75,6 +110,7 @@ watch(() => props.open, (val) => {
   form.specification = '';
   form.photo = null;
   form.photoName = '';
+  form.available_stock = null;
 
   if (isSingle.value && selectedItem.value) {
     form.uom_id = selectedItem.value.uom_id;
@@ -83,6 +119,7 @@ watch(() => props.open, (val) => {
     form.specification = selectedItem.value.specification;
     form.photo = null;
     form.photoName = selectedItem.value.image_url ? selectedItem.value.image_url.split('/').pop() : '';
+    form.available_stock = currentAvailableStock.value;
   }
 });
 
@@ -95,6 +132,7 @@ const closeModal = () => {
   form.specification = '';
   form.photo = null;
   form.photoName = '';
+  form.available_stock = null;
   form.clearErrors();
   resetErrors();
 };
@@ -131,6 +169,18 @@ const handleSubmit = () => {
     if (!form.uom_id) { errors.value.uom_id = t('inventory.uomRequired'); isValid = false; }
     if (!form.brand_id) { errors.value.brand_id = t('inventory.brandRequired'); isValid = false; }
     if (!form.name) { errors.value.name = t('inventory.nameRequired'); isValid = false; }
+
+    if (isConsumable.value && form.available_stock !== null && form.available_stock !== undefined) {
+      const parsedStock = Number(form.available_stock);
+      if (isNaN(parsedStock) || parsedStock < 0) {
+        errors.value.available_stock = t('inventory.availableStockMin0') || 'Stok tidak boleh kurang dari 0.';
+        isValid = false;
+      } else if (parsedStock > currentAvailableStock.value) {
+        errors.value.available_stock = `Stok hanya dapat dikurangi (maksimal ${currentAvailableStock.value}).`;
+        isValid = false;
+      }
+    }
+
     if (!isValid) return;
   } else {
     const hasAtLeastOneField = !!(
@@ -155,6 +205,9 @@ const handleSubmit = () => {
       formData.name = data.name;
       formData.specification = data.specification;
       if (data.photo) formData.image_url = data.photo;
+      if (isConsumable.value && data.available_stock !== null && data.available_stock !== undefined && Number(data.available_stock) !== currentAvailableStock.value) {
+        formData.available_stock = Number(data.available_stock);
+      }
     } else {
       if (data.uom_id) formData.uom_id = data.uom_id;
       if (data.brand_id) formData.brand_id = data.brand_id;
@@ -347,6 +400,37 @@ const handleSubmit = () => {
                         <p class="text-[10px] text-muted-foreground ml-1">{{ t('inventory.maxFileSize1Mb') }}</p>
                       </div>
                     </FieldContent>
+                  </Field>
+
+                  <!-- Stock input (Disabled in Edit) -->
+                  <Field data-disabled>
+                    <FieldLabel><span>{{ t('inventory.stockCount') }}</span></FieldLabel>
+                    <FieldContent>
+                      <input 
+                        type="text" 
+                        :value="isSingle && selectedItem ? initialStock : t('inventory.cannotBeChanged')" 
+                        disabled
+                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
+                      />
+                    </FieldContent>
+                  </Field>
+
+                  <!-- Available stock input (Stok tersedia) -->
+                  <Field :data-invalid="(isSingle && !!errors.available_stock) || undefined" :data-disabled="(!isSingle || !isConsumable) || undefined">
+                    <FieldLabel><span>{{ t('inventory.availableStock') }}<span v-if="isSingle && isConsumable" class="text-rose-500">*</span></span></FieldLabel>
+                    <FieldContent>
+                      <input 
+                        type="number" 
+                        v-model="form.available_stock" 
+                        :disabled="!isSingle || !isConsumable" 
+                        :placeholder="!isSingle ? t('inventory.cannotBeChangedBulk') : t('inventory.availableStockPlaceholder')" 
+                        min="0" 
+                        :max="currentAvailableStock"
+                        class="w-full px-4 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors h-10 disabled:bg-muted/30 disabled:text-muted-foreground disabled:cursor-not-allowed"
+                        :class="[isSingle && errors.available_stock ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']"
+                      />
+                    </FieldContent>
+                    <FieldError v-if="isSingle && errors.available_stock">{{ errors.available_stock }}</FieldError>
                   </Field>
                 </div>
               </div>
