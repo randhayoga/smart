@@ -1,96 +1,218 @@
 # Production Readiness Checklist & Deployment Guide
 
-This guide provides a comprehensive checklist and step-by-step instructions for deploying and maintaining the **SMART** application (Laravel 12 + Inertia Vue 3 + FrankenPHP Octane + Microsoft SQL Server 2022) in production.
+This guide provides a comprehensive checklist and step-by-step instructions for deploying and maintaining the **SMART** application (Laravel 12 + Inertia Vue 3 + FrankenPHP Octane + Microsoft SQL Server 2022) behind a **Host NGINX Reverse Proxy**.
 
 ---
 
 ## Architecture Summary
 
-- **Web Server & Worker**: FrankenPHP 1.12 with PHP 8.4 running in **Laravel Octane** worker mode.
-- **TLS / HTTPS**: **Direct TLS** via Caddy (automatic Let's Encrypt / ZeroSSL TLS certificates on ports 80 & 443 with HTTP to HTTPS redirect and HTTP/3 QUIC).
-- **Primary Database**: Microsoft SQL Server 2022 (`smart`).
-- **External Databases**: `new_portal` (users), `USER_HRIS` (employees & orgchart), `RE_PORTALDB` (projects & RBS).
-- **Background Jobs**: Dedicated `smart-queue` container processing the database queue (`php artisan queue:work`).
-- **Task Scheduler**: Dedicated `smart-scheduler` container running `php artisan schedule:work`.
-- **Real-Time Push**: Built-in Mercure SSE hub running inside FrankenPHP.
+```
+                      ┌────────────────────────────────────────────────────────┐
+                      │                      HOST SERVER                       │
+                      │                                                        │
+Client Browser ───────┼──► [Ports 80 & 443] ──► NGINX Reverse Proxy            │
+                      │                            │ (SSL Termination)         │
+                      │                            ▼ (HTTP / SSE proxy)        │
+                      │                     [Port 8000]                        │
+                      │                            │                           │
+                      │  ┌─────────────────────────┼─────────────────────────┐ │
+                      │  │ DOCKER BRIDGE NETWORK   │                         │ │
+                      │  │                         ▼                         │ │
+                      │  │            ┌─────────────────────────┐            │ │
+                      │  │            │   smart-app Container   │            │ │
+                      │  │            │   FrankenPHP (Octane)   │            │ │
+                      │  │            │   Bound: 8000:8000      │            │ │
+                      │  │            └────────────┬────────────┘            │ │
+                      │  │                         │                         │ │
+                      │  │           ┌─────────────┴─────────────┐           │ │
+                      │  │           ▼                           ▼           │ │
+                      │  │    smart-queue                 smart-scheduler    │ │
+                      │  │    (Queue Worker)              (Cron Worker)      │ │
+                      │  │           │                           │           │ │
+                      │  └───────────┼───────────────────────────┼───────────┘ │
+                      └──────────────┼───────────────────────────┼─────────────┘
+                                     │                           │
+                                     ▼                           ▼
+                      ┌────────────────────────────────────────────────────────┐
+                      │             DEDICATED DATABASE SERVER                  │
+                      │     Microsoft SQL Server 2022 (Port 1433)              │
+                      │     Databases: smart, new_portal, USER_HRIS, RE_PORTAL │
+                      └────────────────────────────────────────────────────────┘
+```
+
+- **Reverse Proxy & TLS Termination**: Host-level **NGINX** listening on ports 80 and 443 with SSL/TLS certificates (Let's Encrypt / Certbot), proxying requests to Octane on port 8000 (`http://127.0.0.1:8000` or `http://localhost:8000`).
+- **Application Server**: FrankenPHP 1.12 with PHP 8.4 in **Laravel Octane** worker mode listening on port 8000.
+- **Background Jobs**: Dedicated `smart-queue` container processing database queues (`php artisan queue:work`).
+- **Task Scheduler**: Dedicated `smart-scheduler` container running scheduled commands (`php artisan schedule:work`).
+- **Real-Time Push**: Built-in Mercure SSE hub running inside FrankenPHP, reverse proxied by NGINX at `/.well-known/mercure`.
+- **Database**: Dedicated external Microsoft SQL Server 2022 hosting `smart` (primary application data) and read-only external integrations (`new_portal`, `USER_HRIS`, `RE_PORTALDB`).
 
 ---
 
 ## Pre-Deployment Checklist
 
-### 1. DNS & Firewall Setup
+### 1. DNS & Host Firewall Setup
 - [ ] Point DNS A/AAAA records for your domain (e.g. `smart.example.com`) to the production server's public IP address.
-- [ ] Ensure firewall / security groups allow inbound traffic on:
-  - **Port 80/TCP** (HTTP - required for ACME HTTP-01 challenge and HTTP to HTTPS redirection)
+- [ ] Allow inbound public traffic on the host firewall (e.g., UFW or cloud security group):
+  - **Port 80/TCP** (HTTP - for Let's Encrypt ACME challenge and HTTP to HTTPS redirection)
   - **Port 443/TCP** (HTTPS - TLS web traffic)
-  - **Port 443/UDP** (HTTP/3 QUIC)
-- [ ] Ensure **Port 1433 is BLOCKED** from external access (database should only be accessible internally via Docker bridge network).
+- [ ] `smart-app` container maps **Port 8000:8000**. If your server has an external firewall (UFW / security groups), ensure external direct access to port 8000 is restricted so internet traffic routes through NGINX.
+- [ ] Ensure the production host can establish outbound TCP connections on **Port 1433** to the dedicated SQL Server host.
 
-### 2. Secrets & Environment Configuration
-Copy `.env.example` to `.env` on your production host and configure the following variables:
+### 2. Host NGINX Reverse Proxy Configuration
+Create an NGINX server configuration block on the host (e.g., `/etc/nginx/sites-available/smart.conf`):
+
+```nginx
+# HTTP - Redirect all traffic to HTTPS
+server {
+    listen 80;
+    listen [::]:80;
+    server_name smart.example.com;
+
+    # Allow ACME challenge for Certbot
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+# HTTPS - Reverse Proxy to Laravel Octane on Port 8000
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name smart.example.com;
+
+    # SSL Certificate Paths (managed by Certbot)
+    ssl_certificate /etc/letsencrypt/live/smart.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/smart.example.com/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+
+    # Request size limits
+    client_max_body_size 50M;
+
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Permissions-Policy "camera=(self)" always;
+
+    # Gzip Compression
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_proxied any;
+    gzip_types text/plain text/css text/xml application/javascript application/json application/xml+rss application/font-woff2;
+
+    # Cache static frontend assets compiled by Vite
+    location ~* \.(?:ico|css|js|gif|jpe?g|png|woff2?|eot|ttf|svg|webp)$ {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Port $server_port;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+    }
+
+    # Mercure Real-time SSE Hub (Long-lived streaming connection)
+    location /.well-known/mercure {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        proxy_read_timeout 24h;
+        proxy_buffering off;
+        proxy_cache off;
+        chunked_transfer_encoding off;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Main Application Proxy
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Port $server_port;
+    }
+}
+```
+
+Enable the site and verify NGINX configuration syntax:
+```bash
+sudo ln -s /etc/nginx/sites-available/smart.conf /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+Obtain SSL certificates with Certbot:
+```bash
+sudo certbot --nginx -d smart.example.com
+```
+
+### 3. Secrets & Environment Configuration
+Copy `.env.example` to `.env` on your production server and configure the variables:
 
 ```bash
 cp .env.example .env
 ```
 
-Review and set each critical value:
+Review and configure the required settings:
 - [ ] `APP_ENV=production`
 - [ ] `APP_DEBUG=false`
-- [ ] `APP_KEY`: Generate a fresh key (`docker compose -f docker-compose.prod.yaml run --rm smart-app php artisan key:generate --show` or copy from secure vault).
-- [ ] `APP_URL=https://smart.example.com` (use your actual HTTPS domain)
-- [ ] `SERVER_NAME=smart.example.com` (instructs Caddy to auto-provision TLS certificates)
-- [ ] `OCTANE_HTTPS=true`
-- [ ] `OCTANE_WORKERS=auto` (or set explicitly based on CPU cores, e.g., `4`)
+- [ ] `APP_KEY`: Generate a key or copy from your secure vault.
+- [ ] `APP_URL=https://smart.example.com` (public domain accessed by users)
+- [ ] `OCTANE_PORT=8000`
+- [ ] `OCTANE_HTTPS=false` (NGINX handles SSL and passes `X-Forwarded-Proto: https`; Laravel detects this via `trustProxies(at: '*')`)
+- [ ] `OCTANE_WORKERS=auto` (or explicit count, e.g. `4`)
 - [ ] `OCTANE_MAX_REQUESTS=1000`
-- [ ] `SESSION_SECURE_COOKIE=true` (ensures cookies are transmitted only over HTTPS)
+- [ ] `SESSION_SECURE_COOKIE=true`
 - [ ] `QUEUE_CONNECTION=database`
-- [ ] `MERCURE_URL=http://127.0.0.1:80/.well-known/mercure` (internal backend dispatch endpoint)
-- [ ] `MERCURE_PUBLIC_URL=https://smart.example.com/.well-known/mercure` (external browser SSE endpoint)
-- [ ] `MERCURE_JWT_SECRET`: Generate a cryptographically secure 64-character hex string (e.g. `openssl rand -hex 32`).
-- [ ] `MSSQL_SA_PASSWORD`: Strong password for SQL Server administrator.
-- [ ] Database credentials:
-  - `DB_SMART_HOST=db`
+- [ ] `MERCURE_URL=http://127.0.0.1:8000/.well-known/mercure` (internal backend dispatch endpoint)
+- [ ] `MERCURE_PUBLIC_URL=https://smart.example.com/.well-known/mercure` (browser SSE endpoint proxied by NGINX)
+- [ ] `MERCURE_JWT_SECRET`: Secure 64-character hex string (`openssl rand -hex 32`)
+- [ ] Dedicated Database Credentials:
+  - `DB_SMART_HOST=192.168.x.x` (IP/hostname of dedicated SQL Server)
   - `DB_SMART_PORT=1433`
   - `DB_SMART_DATABASE=smart`
-  - `DB_SMART_USERNAME=sa` (or dedicated app user)
+  - `DB_SMART_USERNAME=smart_user`
   - `DB_SMART_PASSWORD=your_secure_password`
-  - External database connections: `new_portal`, `USER_HRIS`, and `RE_PORTALDB` (point to `db` if co-located or remote server IPs if external).
-- [ ] Mail settings: `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM_ADDRESS`.
+  - External databases: `DB_READY_HOST`, `DB_USER_HRIS_HOST`, `DB_HOST_REPORTAL` (point to dedicated SQL Server)
+- [ ] Mail settings: `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM_ADDRESS`
 
 ---
 
 ## Step-by-Step Production Deployment
 
-### Step 1: Clone Repository & Prepare Environment
+### Step 1: Clone Repository & Prepare Directory
 ```bash
 git clone <repository_url> /opt/smart
 cd /opt/smart
 cp .env.example .env
-nano .env # Fill in all production secrets and configurations
+nano .env # Configure all production credentials and settings
 ```
 
 ### Step 2: Build the Production Docker Image
-The multi-stage Docker build will:
-1. Compile frontend assets using Node 24 Alpine (`npm run build`).
-2. Install optimized production PHP dependencies using Composer (`--no-dev --optimize-autoloader`).
-3. Bundle the application into the minimal runtime container with production PHP INI and non-root file permissions.
+The production multi-stage build uses `docker/Dockerfile.prod`:
+1. Compiles frontend assets in a lightweight Alpine container (`npm run build`).
+2. Installs production PHP packages with Composer (`--no-dev --classmap-authoritative`).
+3. Assembles the minimal runtime container using `install-php-extensions` without Node.js, npm, or dev compilers (~300 MB runtime image).
 
 ```bash
 docker compose -f docker-compose.prod.yaml build
 ```
 
-### Step 3: Start SQL Server First & Run Migrations
-Start the database service and verify health:
-```bash
-docker compose -f docker-compose.prod.yaml up -d db
-```
-
-Wait until `db` is healthy:
-```bash
-docker compose -f docker-compose.prod.yaml ps
-```
-
-Run database migrations:
+### Step 3: Run Database Migrations
+Verify connectivity to the dedicated SQL Server and run migrations:
 ```bash
 docker compose -f docker-compose.prod.yaml run --rm smart-app php artisan migrate --force
 ```
@@ -100,7 +222,7 @@ docker compose -f docker-compose.prod.yaml run --rm smart-app php artisan migrat
 docker compose -f docker-compose.prod.yaml run --rm smart-app php artisan db:seed --class=MasterSeeder --force
 ```
 > [!NOTE]
-> External database tables (`users`, `hrd_employee`, `hrd_orgchart`, `tb_project`, `tb_assign_project`, `tb_rbs`) are managed by external applications and are protected from seeding. `DatabaseSeeder` and external seeders will never modify external databases.
+> External database tables (`users`, `hrd_employee`, `hrd_orgchart`, `tb_project`, `tb_assign_project`, `tb_rbs`) are managed by external applications and are protected from seeding. Seeder operations will never modify external databases.
 
 ### Step 4: Launch the Full Application Stack
 Start `smart-app`, `smart-queue`, and `smart-scheduler`:
@@ -108,12 +230,12 @@ Start `smart-app`, `smart-queue`, and `smart-scheduler`:
 docker compose -f docker-compose.prod.yaml up -d
 ```
 
-Check running services:
+Check running status:
 ```bash
 docker compose -f docker-compose.prod.yaml ps
 ```
 
-Monitor container boot logs:
+Monitor application boot logs:
 ```bash
 docker compose -f docker-compose.prod.yaml logs -f smart-app
 ```
@@ -122,52 +244,55 @@ docker compose -f docker-compose.prod.yaml logs -f smart-app
 
 ## Post-Deployment Smoke Tests & Verification
 
-Verify each item after containers are running:
+### 1. Internal Container Healthcheck
+Verify that the container responds on localhost port 8000:
+```bash
+curl -I http://127.0.0.1:8000/up
+```
+Expected output: `HTTP/1.1 200 OK`.
 
-### 1. Healthcheck Endpoint
+### 2. Public NGINX Reverse Proxy Endpoint
+Test access via the public domain:
 ```bash
 curl -I https://smart.example.com/up
 ```
 Expected output: `HTTP/2 200` (or `HTTP/1.1 200 OK`).
 
-### 2. TLS & Security Headers Verification
+### 3. TLS & Security Headers Verification
 Inspect response headers from the production domain:
 ```bash
 curl -I https://smart.example.com/
 ```
-Verify that:
-- [ ] Certificate is valid (issued by Let's Encrypt / ZeroSSL).
-- [ ] `X-Content-Type-Options: nosniff` is present.
-- [ ] `X-Frame-Options: SAMEORIGIN` is present.
-- [ ] `Referrer-Policy: strict-origin-when-cross-origin` is present.
-- [ ] `Server` token is masked.
+Verify:
+- [ ] Valid SSL certificate.
+- [ ] `X-Content-Type-Options: nosniff`
+- [ ] `X-Frame-Options: SAMEORIGIN`
+- [ ] `Referrer-Policy: strict-origin-when-cross-origin`
 
-### 3. Static Assets Caching Header
+### 4. Static Asset Caching
 ```bash
 curl -I https://smart.example.com/build/assets/app-*.js
 ```
 Verify:
 - [ ] `Cache-Control: public, max-age=31536000, immutable` is returned.
 
-### 4. Background Queue Worker Verification
-Check that `smart-queue` is active and polling the database queue:
+### 5. Background Queue & Scheduler Verification
 ```bash
 docker compose -f docker-compose.prod.yaml logs smart-queue
+docker compose -f docker-compose.prod.yaml logs smart-scheduler
 ```
-Expected output shows queue worker idle or listening on `default` queue.
+Expected output: Queue worker is active and polling the `default` queue.
 
-### 5. Application Functionality Smoke Test
-- [ ] Open `https://smart.example.com` in a browser.
-- [ ] Log in with user credentials (validates `new_portal:users` and session cookies).
-- [ ] Check browser Developer Tools Console for clean Mercure SSE connection (`/.well-known/mercure`).
-- [ ] Test a request submission (validates `hrd_orgchart` manager hierarchy and database queues).
-- [ ] Test barcode/QR scanning on assets.
+### 6. Mercure SSE Connection Verification
+- [ ] Open `https://smart.example.com` in a browser and log in.
+- [ ] Open Browser DevTools -> Network -> Fetch/XHR.
+- [ ] Verify that `/.well-known/mercure` establishes a persistent HTTP 200 SSE stream without connection aborts or proxy timeouts.
 
 ---
 
-## Continuous Delivery & Future Feature Releases
+## Continuous Delivery & Zero-Downtime Releases
 
-When deploying new code or features to production, follow this zero-disruption workflow:
+When deploying new code or features to production, use this zero-disruption workflow:
 
 ### 1. Pull Latest Code
 ```bash
@@ -179,42 +304,32 @@ git pull origin main
 docker compose -f docker-compose.prod.yaml build smart-app
 ```
 
-### 3. Run Any New Migrations
+### 3. Run New Migrations
 ```bash
 docker compose -f docker-compose.prod.yaml run --rm smart-app php artisan migrate --force
 ```
 
 ### 4. Gracefully Restart Containers
-Update the running containers to use the newly built image:
+Recreate running containers to load the updated image:
 ```bash
 docker compose -f docker-compose.prod.yaml up -d --no-deps smart-app smart-queue smart-scheduler
 ```
 
-### 5. Clear Application Caches (If needed)
+### 5. Re-optimize Laravel Caches (If needed)
 ```bash
 docker compose -f docker-compose.prod.yaml exec smart-app php artisan optimize
 ```
 
 ---
 
-## Operational Maintenance & Disaster Recovery
+## Rollback Procedure
 
-### Database Backup
-Automated daily database backups can be scheduled on the host via cron:
-```bash
-# Example host cron command to backup MSSQL database:
-docker compose -f /opt/smart/docker-compose.prod.yaml exec -T db \
-  /opt/mssql-tools18/bin/sqlcmd -S localhost -U SA -P "$MSSQL_SA_PASSWORD" -C \
-  -Q "BACKUP DATABASE [smart] TO DISK = N'/var/opt/mssql/backup/smart_$(date +\%Y\%m\%d_\%H\%M\%S).bak' WITH INIT, STATS = 10"
-```
-
-### Rollback Procedure
 If a release causes unforeseen issues:
-1. Revert to previous Git commit:
+1. Revert Git commit:
    ```bash
    git checkout <previous_commit_or_tag>
    ```
-2. Rebuild and restart containers:
+2. Rebuild and recreate containers:
    ```bash
    docker compose -f docker-compose.prod.yaml build smart-app
    docker compose -f docker-compose.prod.yaml up -d --no-deps smart-app smart-queue smart-scheduler

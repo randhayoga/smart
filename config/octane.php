@@ -23,11 +23,11 @@ return [
     |
     */
 
-    'mercure' => [
+    'mercure' => env('MERCURE_JWT_SECRET') ? [
         'publisher_jwt' => env('MERCURE_JWT_SECRET'),
         'subscriber_jwt' => env('MERCURE_JWT_SECRET'),
         'subscriptions' => true,
-    ],
+    ] : false,
 
     /*
     |--------------------------------------------------------------------------
@@ -41,7 +41,6 @@ return [
     'caddy' => [
         'env' => array_filter([
             'MERCURE_JWT_SECRET' => env('MERCURE_JWT_SECRET'),
-            'CADDY_SERVER_SERVER_NAME' => env('SERVER_NAME'),
         ]),
     ],
 ];

@@ -1,0 +1,91 @@
+# ------------------------------------------------------------------------------
+# Stage 1: Base Runtime with PHP Extensions & SQL Server ODBC
+# ------------------------------------------------------------------------------
+FROM dunglas/frankenphp:1.12.1-php8.4 AS base
+
+WORKDIR /var/www/smart
+
+# Install minimal system dependencies & PHP extensions via install-php-extensions
+# install-php-extensions automatically downloads Microsoft ODBC Driver for SQL Server,
+# compiles extensions, and purges all build-time dev packages and apt caches.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gnupg2 \
+    curl \
+    ca-certificates \
+    unzip \
+    && install-php-extensions \
+    pdo_sqlsrv \
+    sqlsrv \
+    pdo_mysql \
+    mbstring \
+    exif \
+    pcntl \
+    bcmath \
+    gd \
+    gmp \
+    zip \
+    intl \
+    opcache \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# ------------------------------------------------------------------------------
+# Stage 2: Composer Builder (Installs optimized production PHP dependencies)
+# ------------------------------------------------------------------------------
+FROM composer:2 AS composer-builder
+WORKDIR /app
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --classmap-authoritative --no-scripts
+
+# ------------------------------------------------------------------------------
+# Stage 3: Node Builder (Compiles frontend assets in lightweight alpine)
+# ------------------------------------------------------------------------------
+FROM node:24-alpine AS node-builder
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY resources/ ./resources/
+COPY public/ ./public/
+COPY tsconfig.json vite.config.js tailwind.config.js components.json ./
+# Copy Ziggy assets required by frontend build from Composer stage
+COPY --from=composer-builder /app/vendor/tightenco/ziggy ./vendor/tightenco/ziggy
+RUN npm run build
+
+# ------------------------------------------------------------------------------
+# Stage 4: Production Runtime Stage
+# ------------------------------------------------------------------------------
+FROM base AS prod
+
+ENV APP_ENV=production \
+    APP_DEBUG=false \
+    OCTANE_SERVER=frankenphp
+
+# Copy unified production PHP configuration
+COPY docker/php.prod.ini /usr/local/etc/php/conf.d/php.prod.ini
+
+# Copy application source code
+COPY . /var/www/smart
+
+# Copy pre-built production vendor and frontend assets
+COPY --from=composer-builder /app/vendor /var/www/smart/vendor
+COPY --from=node-builder /app/public/build /var/www/smart/public/build
+
+# Setup production entrypoint script
+COPY docker/entrypoint.prod.sh /usr/local/bin/entrypoint.prod.sh
+RUN chmod +x /usr/local/bin/entrypoint.prod.sh
+
+# Ensure storage directories exist and have proper permissions
+RUN mkdir -p \
+    storage/framework/cache/data \
+    storage/framework/sessions \
+    storage/framework/views \
+    storage/logs \
+    storage/app/private \
+    storage/app/public \
+    bootstrap/cache \
+    && chown -R www-data:www-data storage bootstrap/cache \
+    && chmod -R 775 storage bootstrap/cache
+
+# Expose port 8000 for host NGINX reverse proxy
+EXPOSE 8000
+
+ENTRYPOINT ["entrypoint.prod.sh"]

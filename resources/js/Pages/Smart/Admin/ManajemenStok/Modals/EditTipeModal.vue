@@ -93,7 +93,7 @@ const resetErrors = () => {
 watch(() => form.uom_id, v => { if (v && errors.value.uom_id) errors.value.uom_id = ''; });
 watch(() => form.brand_id, v => { if (v && errors.value.brand_id) errors.value.brand_id = ''; });
 watch(() => form.name, v => { if (v && errors.value.name) errors.value.name = ''; });
-watch(() => form.available_stock, v => { if (v !== '' && v !== null && errors.value.available_stock) errors.value.available_stock = ''; });
+watch(() => form.available_stock, v => { if (v !== null && errors.value.available_stock) errors.value.available_stock = ''; });
 
 // Initialize form when modal opens
 watch(() => props.open, (val) => {
