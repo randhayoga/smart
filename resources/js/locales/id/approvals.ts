@@ -76,7 +76,7 @@ export default {
   openLostDoc: 'Buka Surat Keterangan Kehilangan',
   openBodDoc: 'Buka Formulir Persetujuan BoD/BoC',
   assetDetail: 'Detail Aset',
-  auditTrail: 'Jejak Audit',
+  auditTrail: 'Pergerakan Aset',
 
   // Modal & Confirmation
   confirmApprovalTitle: 'Konfirmasi Approval',

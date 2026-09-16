@@ -60,7 +60,8 @@ class LotManualRequestController extends Controller
                 utilization: $validated['utilization'],
                 orgId: $validated['utilization'] === 'corporate' ? ($validated['org_id'] ?? $user->hrdEmployee?->orgchart_id) : null,
                 projectId: $validated['utilization'] === 'project' ? $validated['project_id'] : null,
-                note: $validated['note'] ?? null
+                note: $validated['note'] ?? null,
+                requestDate: $validated['request_date'] ?? null
             );
 
             return redirect()->back()->with('success', 'Permintaan manual berhasil dicatat.');

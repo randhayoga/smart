@@ -6,6 +6,7 @@ use App\Models\AdmUser;
 use App\Models\Inventory\Barang;
 use App\Models\Inventory\InventoryLog;
 use App\Models\Inventory\Lot;
+use Carbon\Carbon;
 
 /**
  * Inventory Log Service managing centralized, clean audit trail records for Barang and LOT operations.
@@ -271,7 +272,8 @@ class InventoryLogService
         AdmUser|int $user,
         string $utilization,
         ?string $destinationName,
-        ?string $reasonNote
+        ?string $reasonNote,
+        \Carbon\CarbonInterface|\DateTimeInterface|string|null $createdAt = null
     ): InventoryLog {
         $userId = $user instanceof AdmUser ? $user->id : $user;
         $utilizationLabel = ucfirst(strtolower($utilization));
@@ -291,7 +293,7 @@ class InventoryLogService
             'previous_state' => ['current_quantity' => $prevQty],
             'new_state' => ['current_quantity' => $newQty],
             'note' => $note,
-            'created_at' => now(),
+            'created_at' => $createdAt ? Carbon::parse($createdAt) : now(),
         ]);
     }
 

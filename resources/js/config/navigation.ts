@@ -20,6 +20,7 @@ import {
     PackagePlus,
     ShoppingBasket,
     ShoppingCart,
+    ArrowLeftRight,
     FileClock,
 } from 'lucide-vue-next';
 
@@ -140,9 +141,16 @@ export const mainNavigation: NavSection[] = [
         items: [
             {
                 id: 'audit_trail',
-                title: 'Jejak Audit',
+                title: 'Pergerakan Aset',
                 titleKey: 'nav.items.auditTrail',
                 href: '/smart/audit',
+                icon: ArrowLeftRight,
+            },
+            {
+                id: 'inventory_audit',
+                title: 'Audit Manajemen Stok',
+                titleKey: 'nav.items.inventoryAudit',
+                href: '/smart/audit-stok',
                 icon: FileClock,
             },
         ],

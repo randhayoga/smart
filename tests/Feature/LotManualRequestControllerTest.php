@@ -76,6 +76,7 @@ class LotManualRequestControllerTest extends TestCase
             ->from('/smart/inventory/stok-habis-pakai')
             ->post(route('smart.inventory.lots.manual-request', $lot->id), [
                 'user_id' => $requester->id,
+                'request_date' => '2026-09-15',
                 'utilization' => 'corporate',
                 'org_id' => $orgchart->id,
                 'quantity' => 10,
@@ -109,9 +110,9 @@ class LotManualRequestControllerTest extends TestCase
         $this->assertNotNull($fulfillment);
         $this->assertEquals($lot->id, $fulfillment->lot_id);
         $this->assertEquals(10, $fulfillment->quantity_fulfilled);
-        $this->assertNotNull($fulfillment->assigned_at);
-        $this->assertNotNull($fulfillment->confirmed_at);
-        $this->assertNotNull($fulfillment->completed_at);
+        $this->assertEquals('2026-09-15', $fulfillment->assigned_at->toDateString());
+        $this->assertEquals('2026-09-15', $fulfillment->confirmed_at->toDateString());
+        $this->assertEquals('2026-09-15', $fulfillment->completed_at->toDateString());
 
         // 5. InventoryLog created with stock_out and negative quantity_change
         $this->assertDatabaseHas('inventory_logs', [
@@ -122,6 +123,9 @@ class LotManualRequestControllerTest extends TestCase
             'quantity_change' => -10,
             'note' => "Permintaan untuk Corporate {$orgchart->org_name}, dengan catatan \"{$note}\"",
         ]);
+
+        $log = \App\Models\Inventory\InventoryLog::where('lot_id', $lot->id)->latest('id')->first();
+        $this->assertEquals('2026-09-15', $log->created_at->toDateString());
 
         // 6. RequestStatusLog created
         $this->assertDatabaseHas('request_status_logs', [
@@ -142,6 +146,7 @@ class LotManualRequestControllerTest extends TestCase
 
         $response = $this->actingAs($admin)->post(route('smart.inventory.lots.manual-request', $lot->id), [
             'user_id' => $requester->id,
+            'request_date' => '2026-09-15',
             'utilization' => 'project',
             'project_id' => $project->id_project,
             'quantity' => 15,
@@ -169,6 +174,7 @@ class LotManualRequestControllerTest extends TestCase
 
         $response = $this->actingAs($admin)->post(route('smart.inventory.lots.manual-request', $lot->id), [
             'user_id' => $requester->id,
+            'request_date' => '2026-09-15',
             'utilization' => 'corporate',
             'org_id' => $orgchart->id,
             'quantity' => 15,
@@ -198,6 +204,7 @@ class LotManualRequestControllerTest extends TestCase
 
         $response = $this->actingAs($admin)->post(route('smart.inventory.lots.manual-request', $lot->id), [
             'user_id' => $requester->id,
+            'request_date' => '2026-09-15',
             'utilization' => 'corporate',
             'org_id' => $orgchart->id,
             'quantity' => 2,
@@ -220,6 +227,7 @@ class LotManualRequestControllerTest extends TestCase
 
         $response = $this->actingAs($admin)->post(route('smart.inventory.lots.manual-request', $lot->id), [
             'user_id' => $requester->id,
+            'request_date' => '2026-09-15',
             'utilization' => 'corporate',
             'org_id' => $orgchart->id,
             'quantity' => 5,
@@ -243,5 +251,25 @@ class LotManualRequestControllerTest extends TestCase
             'quantity_change' => -5,
             'note' => "Permintaan untuk Corporate {$orgchart->org_name}, dengan catatan \"-\"",
         ]);
+    }
+
+    public function test_validation_requires_valid_request_date(): void
+    {
+        $admin = $this->createAdmin();
+        $requester = $this->createRequester();
+        $orgchart = HrdOrgchart::factory()->create();
+        $barang = $this->createConsumableBarang();
+        $lot = $this->createConsumableLot($barang, 30);
+
+        $response = $this->actingAs($admin)->post(route('smart.inventory.lots.manual-request', $lot->id), [
+            'user_id' => $requester->id,
+            'request_date' => null,
+            'utilization' => 'corporate',
+            'org_id' => $orgchart->id,
+            'quantity' => 5,
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHasErrors('request_date');
     }
 }

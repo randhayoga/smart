@@ -22,6 +22,7 @@ class ConsumableManualRequestRequest extends FormRequest
     {
         return [
             'user_id' => ['required', 'integer', Rule::exists(AdmUser::class, 'id')],
+            'request_date' => ['required', 'date'],
             'utilization' => ['required', 'string', Rule::in(['corporate', 'project'])],
             'org_id' => ['required_if:utilization,corporate', 'nullable', Rule::exists(HrdOrgchart::class, 'id')],
             'project_id' => ['required_if:utilization,project', 'nullable', Rule::exists(TbProject::class, 'id_project')],
@@ -35,6 +36,8 @@ class ConsumableManualRequestRequest extends FormRequest
         return [
             'user_id.required' => 'Pemohon wajib dipilih.',
             'user_id.exists' => 'Pemohon tidak ditemukan.',
+            'request_date.required' => 'Tanggal permintaan wajib diisi.',
+            'request_date.date' => 'Format tanggal permintaan tidak valid.',
             'utilization.required' => 'Pemanfaatan wajib dipilih.',
             'utilization.in' => 'Pemanfaatan tidak valid.',
             'org_id.required_if' => 'Departemen wajib dipilih untuk pemanfaatan Corporate.',

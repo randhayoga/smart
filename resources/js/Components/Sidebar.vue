@@ -89,9 +89,16 @@ const navigation = computed<NavSection[]>(() => {
     */
     // ==========================================
     
+    const auditSectionRaw = mainNavigation.find(section => section.id === 'audit' || section.title === 'AUDIT');
+    const ifsAudit = auditSectionRaw ? {
+      ...auditSectionRaw,
+      items: auditSectionRaw.items.filter(item => item.id === 'inventory_audit'),
+    } : null;
+
     sections = [
       menuUtama,
       approvalStatus,
+      ifsAudit,
       // ==========================================
       // [PHASE 2 - IFS EXTRA SECTIONS]
       // approvalPermintaan,

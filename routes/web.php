@@ -235,6 +235,7 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
         Route::get('/arsip', [\App\Http\Controllers\Smart\Admin\ArsipController::class, 'index'])->name('arsip');
         Route::get('/arsip/{id}', [\App\Http\Controllers\Smart\Admin\ArsipController::class, 'show'])->name('arsip.show');
         Route::get('/audit', [AuditController::class, 'index'])->name('audit');
+        Route::get('/audit-stok', [\App\Http\Controllers\Smart\Admin\InventoryAuditController::class, 'index'])->name('audit-stok');
     });
 
     // Manager only routes

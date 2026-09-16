@@ -73,6 +73,7 @@ class BarangManualRequestControllerTest extends TestCase
 
         $response = $this->actingAs($admin)->post(route('smart.inventory.barangs.manual-request', $nonConsumableBarang->id), [
             'user_id' => $requester->id,
+            'request_date' => '2026-09-15',
             'utilization' => 'corporate',
             'org_id' => $orgchart->id,
             'quantity' => 5,
@@ -93,6 +94,7 @@ class BarangManualRequestControllerTest extends TestCase
 
         $response = $this->actingAs($admin)->post(route('smart.inventory.barangs.manual-request', $barang->id), [
             'user_id' => $requester->id,
+            'request_date' => '2026-09-15',
             'utilization' => 'corporate',
             'org_id' => $orgchart->id,
             'quantity' => 25,
@@ -114,6 +116,9 @@ class BarangManualRequestControllerTest extends TestCase
         $this->assertCount(1, $fulfillments);
         $this->assertEquals($lot->id, $fulfillments->first()->lot_id);
         $this->assertEquals(25, $fulfillments->first()->quantity_fulfilled);
+        $this->assertEquals('2026-09-15', $fulfillments->first()->assigned_at->toDateString());
+        $this->assertEquals('2026-09-15', $fulfillments->first()->confirmed_at->toDateString());
+        $this->assertEquals('2026-09-15', $fulfillments->first()->completed_at->toDateString());
 
         $this->assertDatabaseHas('inventory_logs', [
             'barang_id' => $barang->id,
@@ -121,6 +126,9 @@ class BarangManualRequestControllerTest extends TestCase
             'user_id' => $requester->id,
             'quantity_change' => -25,
         ]);
+
+        $log = \App\Models\Inventory\InventoryLog::where('lot_id', $lot->id)->latest('id')->first();
+        $this->assertEquals('2026-09-15', $log->created_at->toDateString());
     }
 
     public function test_can_create_non_specific_manual_request_fifo_multiple_lots(): void
@@ -136,6 +144,7 @@ class BarangManualRequestControllerTest extends TestCase
 
         $response = $this->actingAs($admin)->post(route('smart.inventory.barangs.manual-request', $barang->id), [
             'user_id' => $requester->id,
+            'request_date' => '2026-09-15',
             'utilization' => 'corporate',
             'org_id' => $orgchart->id,
             'quantity' => 35,
@@ -157,8 +166,10 @@ class BarangManualRequestControllerTest extends TestCase
         $this->assertCount(2, $fulfillments);
         $this->assertEquals($oldLot->id, $fulfillments[0]->lot_id);
         $this->assertEquals(20, $fulfillments[0]->quantity_fulfilled);
+        $this->assertEquals('2026-09-15', $fulfillments[0]->assigned_at->toDateString());
         $this->assertEquals($midLot->id, $fulfillments[1]->lot_id);
         $this->assertEquals(15, $fulfillments[1]->quantity_fulfilled);
+        $this->assertEquals('2026-09-15', $fulfillments[1]->assigned_at->toDateString());
     }
 
     public function test_cannot_create_non_specific_request_when_quantity_exceeds_total_stock(): void
@@ -173,6 +184,7 @@ class BarangManualRequestControllerTest extends TestCase
 
         $response = $this->actingAs($admin)->post(route('smart.inventory.barangs.manual-request', $barang->id), [
             'user_id' => $requester->id,
+            'request_date' => '2026-09-15',
             'utilization' => 'corporate',
             'org_id' => $orgchart->id,
             'quantity' => 30,
@@ -193,6 +205,7 @@ class BarangManualRequestControllerTest extends TestCase
 
         $response = $this->actingAs($admin)->post(route('smart.inventory.barangs.manual-request', $barang->id), [
             'user_id' => $requester->id,
+            'request_date' => '2026-09-15',
             'utilization' => 'corporate',
             'org_id' => null,
             'quantity' => 5,
@@ -212,6 +225,7 @@ class BarangManualRequestControllerTest extends TestCase
 
         $response = $this->actingAs($admin)->post(route('smart.inventory.barangs.manual-request', $barang->id), [
             'user_id' => $requester->id,
+            'request_date' => '2026-09-15',
             'utilization' => 'project',
             'project_id' => null,
             'quantity' => 5,
@@ -220,5 +234,25 @@ class BarangManualRequestControllerTest extends TestCase
 
         $response->assertRedirect();
         $response->assertSessionHasErrors('project_id');
+    }
+
+    public function test_validation_requires_valid_request_date(): void
+    {
+        $admin = $this->createAdmin();
+        $requester = $this->createRequester();
+        $orgchart = HrdOrgchart::factory()->create();
+        $barang = $this->createConsumableBarang();
+        $this->createConsumableLot($barang, 20);
+
+        $response = $this->actingAs($admin)->post(route('smart.inventory.barangs.manual-request', $barang->id), [
+            'user_id' => $requester->id,
+            'request_date' => null,
+            'utilization' => 'corporate',
+            'org_id' => $orgchart->id,
+            'quantity' => 5,
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHasErrors('request_date');
     }
 }

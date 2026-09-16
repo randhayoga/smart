@@ -28,8 +28,17 @@ const emit = defineEmits<{
 
 const { t } = useI18n();
 
+const getTodayDateString = () => {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 // Form State
 const userId = ref<number | string | null>(null);
+const requestDate = ref<string>(getTodayDateString());
 const utilization = ref<'corporate' | 'project' | null>(null);
 const orgId = ref<number | string | null>(null);
 const projectId = ref<number | string | null>(null);
@@ -195,6 +204,10 @@ const validateForm = (): boolean => {
     errors.value.user_id = t('inventory.requesterRequired');
   }
 
+  if (!requestDate.value) {
+    errors.value.request_date = t('inventory.requestDateRequired');
+  }
+
   if (!utilization.value) {
     errors.value.utilization = t('inventory.utilizationRequired');
   } else if (utilization.value === 'corporate' && !orgId.value) {
@@ -232,6 +245,7 @@ const handleSubmit = () => {
     submitUrl,
     {
       user_id: userId.value,
+      request_date: requestDate.value,
       utilization: utilization.value,
       org_id: utilization.value === 'corporate' ? orgId.value : null,
       project_id: utilization.value === 'project' ? projectId.value : null,
@@ -240,10 +254,12 @@ const handleSubmit = () => {
     },
     {
       preserveScroll: true,
-      onSuccess: () => {
+      onSuccess: (pageResult: any) => {
         isSubmitting.value = false;
         errors.value = {};
-        toast.success(t('inventory.manualRequestSuccess'));
+        if (!pageResult?.props?.flash?.success) {
+          toast.success(t('inventory.manualRequestSuccess'));
+        }
         emit('success');
       },
       onError: (serverErrors: any) => {
@@ -294,7 +310,28 @@ const handleSubmit = () => {
         <FieldError v-if="errors.user_id">{{ errors.user_id }}</FieldError>
       </Field>
 
-      <!-- Row 1, Col 2: Utilization Purpose -->
+      <!-- Row 1, Col 2: Tanggal Permintaan (Request Date) -->
+      <Field :data-invalid="!!errors.request_date || undefined">
+        <FieldLabel>
+          <span>{{ t('inventory.requestDate') }}<span class="text-rose-500">*</span></span>
+        </FieldLabel>
+        <FieldContent>
+          <input
+            type="date"
+            v-model="requestDate"
+            :disabled="isOutOfStock || isSubmitting"
+            :class="[
+              'w-full px-4 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors h-10 text-foreground',
+              errors.request_date 
+                ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' 
+                : 'border-input focus:ring-primary/20 focus:border-primary'
+            ]"
+          />
+        </FieldContent>
+        <FieldError v-if="errors.request_date">{{ errors.request_date }}</FieldError>
+      </Field>
+
+      <!-- Row 2, Col 1: Utilization Purpose -->
       <Field :data-invalid="!!errors.utilization || undefined">
         <FieldLabel>
           <span>{{ t('inventory.utilization') }}<span class="text-rose-500">*</span></span>
@@ -334,33 +371,6 @@ const handleSubmit = () => {
           </div>
         </FieldContent>
         <FieldError v-if="errors.utilization">{{ errors.utilization }}</FieldError>
-      </Field>
-
-      <!-- Row 2, Col 1: Quantity (Jumlah Permintaan) -->
-      <Field :data-invalid="!!errors.quantity || undefined">
-        <FieldLabel>
-          <span>{{ t('inventory.requestAmount') }}<span class="text-rose-500">*</span></span>
-          <span class="text-xs text-muted-foreground ml-2">
-            (Maks. {{ props.availableStock }} {{ uomLabel }})
-          </span>
-        </FieldLabel>
-        <FieldContent>
-          <input
-            type="number"
-            min="1"
-            :max="props.availableStock > 0 ? props.availableStock : 1"
-            :value="quantity"
-            @input="handleQuantityInput"
-            :disabled="isOutOfStock || isSubmitting"
-            :class="[
-              'w-full px-4 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors h-10 text-foreground',
-              errors.quantity
-                ? 'border-destructive focus:ring-destructive/20 focus:border-destructive'
-                : 'border-input focus:ring-primary/20 focus:border-primary'
-            ]"
-          />
-        </FieldContent>
-        <FieldError v-if="errors.quantity">{{ errors.quantity }}</FieldError>
       </Field>
 
       <!-- Row 2, Col 2: Dept / Project Selection -->
@@ -417,7 +427,34 @@ const handleSubmit = () => {
         </Field>
       </div>
 
-      <!-- Row 3: Note (Full width across 2 columns) -->
+      <!-- Row 3, Col 1: Quantity (Jumlah Permintaan) -->
+      <Field :data-invalid="!!errors.quantity || undefined">
+        <FieldLabel>
+          <span>{{ t('inventory.requestAmount') }}<span class="text-rose-500">*</span></span>
+          <span class="text-xs text-muted-foreground ml-2">
+            (Maks. {{ props.availableStock }} {{ uomLabel }})
+          </span>
+        </FieldLabel>
+        <FieldContent>
+          <input
+            type="number"
+            min="1"
+            :max="props.availableStock > 0 ? props.availableStock : 1"
+            :value="quantity"
+            @input="handleQuantityInput"
+            :disabled="isOutOfStock || isSubmitting"
+            :class="[
+              'w-full px-4 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors h-10 text-foreground',
+              errors.quantity
+                ? 'border-destructive focus:ring-destructive/20 focus:border-destructive'
+                : 'border-input focus:ring-primary/20 focus:border-primary'
+            ]"
+          />
+        </FieldContent>
+        <FieldError v-if="errors.quantity">{{ errors.quantity }}</FieldError>
+      </Field>
+
+      <!-- Row 4: Note (Full width across 2 columns) -->
       <div class="md:col-span-2">
         <Field :data-invalid="!!errors.note || undefined">
           <FieldLabel>

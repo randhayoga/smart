@@ -37,6 +37,12 @@ export const AUDIT_ACTION_KEY_MAP: Record<string, string> = {
   'stok keluar': 'admin.auditActionTypes.stockOut',
   'stock out': 'admin.auditActionTypes.stockOut',
   'stock_out': 'admin.auditActionTypes.stockOut',
+  'create': 'admin.auditActionTypes.create',
+  'tambah': 'admin.auditActionTypes.create',
+  'update': 'admin.auditActionTypes.update',
+  'ubah': 'admin.auditActionTypes.update',
+  'delete': 'admin.auditActionTypes.delete',
+  'hapus': 'admin.auditActionTypes.delete',
 };
 
 /**

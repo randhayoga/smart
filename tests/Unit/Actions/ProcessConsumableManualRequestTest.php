@@ -69,7 +69,8 @@ class ProcessConsumableManualRequestTest extends TestCase
             utilization: 'corporate',
             orgId: $orgchart->id,
             projectId: null,
-            note: 'Pengadaan printer ink'
+            note: 'Pengadaan printer ink',
+            requestDate: '2026-09-15'
         );
 
         $this->assertInstanceOf(SmartRequest::class, $smartReq);
@@ -89,15 +90,19 @@ class ProcessConsumableManualRequestTest extends TestCase
         $this->assertEquals(15, $item->quantity_requested);
         $this->assertEquals('fulfilled', $item->status);
         $this->assertEquals($this->barang->id, $item->barang_id);
+        $this->assertEquals('2026-09-15', $item->start_date->toDateString());
 
         // RequestFulfillment
         $fulfillment = RequestFulfillment::where('request_item_id', $item->id)->first();
         $this->assertNotNull($fulfillment);
         $this->assertEquals($lot->id, $fulfillment->lot_id);
         $this->assertEquals(15, $fulfillment->quantity_fulfilled);
-        $this->assertNotNull($fulfillment->assigned_at);
-        $this->assertNotNull($fulfillment->confirmed_at);
-        $this->assertNotNull($fulfillment->completed_at);
+        $this->assertEquals('2026-09-15', $fulfillment->assigned_at->toDateString());
+        $this->assertEquals('2026-09-15', $fulfillment->confirmed_at->toDateString());
+        $this->assertEquals('2026-09-15', $fulfillment->completed_at->toDateString());
+
+        $log = InventoryLog::where('lot_id', $lot->id)->latest('id')->first();
+        $this->assertEquals('2026-09-15', $log->created_at->toDateString());
 
         // InventoryLog
         $this->assertDatabaseHas('inventory_logs', [

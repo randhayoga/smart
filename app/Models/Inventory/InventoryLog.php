@@ -26,7 +26,8 @@ class InventoryLog extends Model
         'previous_state',
         'new_state',
         'note',
-        'document_url'
+        'document_url',
+        'created_at',
     ];
 
     protected $casts = [

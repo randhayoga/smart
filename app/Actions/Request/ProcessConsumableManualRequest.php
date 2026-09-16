@@ -12,6 +12,8 @@ use App\Models\Request\RequestItem;
 use App\Models\Request\RequestStatusLog;
 use App\Models\TbProject;
 use App\Services\InventoryLogService;
+use Carbon\Carbon;
+use Carbon\CarbonInterface;
 
 /**
  * Action to process manual stock deduction transactions for consumable items,
@@ -46,12 +48,13 @@ class ProcessConsumableManualRequest
         string $utilization,
         ?int $orgId,
         ?int $projectId,
-        ?string $note
+        ?string $note,
+        CarbonInterface|\DateTimeInterface|string|null $requestDate = null
     ): SmartRequest {
-        $now = now();
+        $dateObj = $requestDate ? Carbon::parse($requestDate) : now();
 
         // 1. Generate nomor request unik secara aman: MMYYYY-XXXX (max 11 chars)
-        $monthYear = $now->format('mY');
+        $monthYear = $dateObj->format('mY');
         $lastRequest = SmartRequest::where('request_number', 'like', $monthYear . '-%')
             ->orderBy('id', 'desc')
             ->lockForUpdate()
@@ -74,6 +77,7 @@ class ProcessConsumableManualRequest
             'project_id' => $projectId,
             'reasoning' => $note,
             'status' => 'success',
+            'created_at' => $dateObj,
         ]);
 
         // 3. Buat RequestItem terkait
@@ -82,7 +86,7 @@ class ProcessConsumableManualRequest
             'subcategory_id' => $barang->subcategory_id,
             'barang_id' => $barang->id,
             'quantity_requested' => $totalQty,
-            'start_date' => $now,
+            'start_date' => $dateObj,
             'end_date' => null,
             'status' => 'fulfilled',
         ]);
@@ -117,9 +121,9 @@ class ProcessConsumableManualRequest
                 'request_item_id' => $requestItem->id,
                 'lot_id' => $lot->id,
                 'quantity_fulfilled' => $deductQty,
-                'assigned_at' => $now,
-                'confirmed_at' => $now,
-                'completed_at' => $now,
+                'assigned_at' => $dateObj,
+                'confirmed_at' => $dateObj,
+                'completed_at' => $dateObj,
             ]);
 
             $destinationName = null;
@@ -141,7 +145,8 @@ class ProcessConsumableManualRequest
                 user: $requester,
                 utilization: $utilization,
                 destinationName: $destinationName,
-                reasonNote: $note
+                reasonNote: $note,
+                createdAt: $dateObj
             );
         }
 
@@ -152,7 +157,7 @@ class ProcessConsumableManualRequest
             'status_to' => 'success',
             'changed_by' => $admin->id,
             'note' => "Pengeluaran stok habis pakai dicatat secara manual oleh Admin untuk {$requester->name}.",
-            'created_at' => $now,
+            'created_at' => $dateObj,
         ]);
 
         return $smartRequest;

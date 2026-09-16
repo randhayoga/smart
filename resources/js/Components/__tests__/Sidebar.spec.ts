@@ -3,6 +3,8 @@ import { mount } from '@vue/test-utils';
 import Sidebar from '../Sidebar.vue';
 import { i18n } from '@/locales';
 
+import { usePage } from '@inertiajs/vue3';
+
 // Mock ziggy route helper
 (global as any).route = vi.fn((name: string) => `/${name}`);
 
@@ -91,5 +93,58 @@ describe('Sidebar.vue', () => {
 
     // Desktop aside should not be rendered
     expect(wrapper.find('aside').exists()).toBe(false);
+  });
+
+  it('renders inventory_audit in sidebar for Admin', () => {
+    const wrapper = mountSidebar({
+      open: true,
+      isMobile: false,
+      collapsed: false,
+    });
+
+    expect(wrapper.text()).toContain('Audit Manajemen Stok');
+    expect(wrapper.text()).toContain('Pergerakan Aset');
+  });
+
+  it('renders inventory_audit in sidebar for IFS Manager but NOT jejak audit', () => {
+    vi.mocked(usePage).mockReturnValueOnce({
+      url: '/smart/dashboard',
+      props: {
+        auth: {
+          user: { name: 'IFS Manager', role: 'ifs_manager' },
+          isAdmin: true,
+        },
+      },
+    } as any);
+
+    const wrapper = mountSidebar({
+      open: true,
+      isMobile: false,
+      collapsed: false,
+    });
+
+    expect(wrapper.text()).toContain('Audit Manajemen Stok');
+    expect(wrapper.text()).not.toContain('Pergerakan Aset');
+  });
+
+  it('does NOT render audit section in sidebar for regular User', () => {
+    vi.mocked(usePage).mockReturnValueOnce({
+      url: '/smart/user/dashboard',
+      props: {
+        auth: {
+          user: { name: 'Regular User', role: 'user' },
+          isAdmin: false,
+        },
+      },
+    } as any);
+
+    const wrapper = mountSidebar({
+      open: true,
+      isMobile: false,
+      collapsed: false,
+    });
+
+    expect(wrapper.text()).not.toContain('Audit Manajemen Stok');
+    expect(wrapper.text()).not.toContain('Pergerakan Aset');
   });
 });

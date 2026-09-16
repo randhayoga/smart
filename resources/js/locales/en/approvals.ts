@@ -76,7 +76,7 @@ export default {
   openLostDoc: 'Open Certificate of Loss',
   openBodDoc: 'Open BoD/BoC Approval Form',
   assetDetail: 'Asset Details',
-  auditTrail: 'Audit Trail',
+  auditTrail: 'Asset Movement',
 
   // Modal & Confirmation
   confirmApprovalTitle: 'Approval Confirmation',
