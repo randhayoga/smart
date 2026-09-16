@@ -168,7 +168,7 @@ const handleFinishBorrow = () => {
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <!-- Peminjam (User) -->
+      <!-- Borrower -->
       <Field :data-invalid="!!errors.user_id || undefined">
         <FieldLabel>
           <span>{{ t('inventory.borrower') }}<span class="text-rose-500">*</span></span>
@@ -186,7 +186,7 @@ const handleFinishBorrow = () => {
         <FieldError v-if="errors.user_id">{{ errors.user_id }}</FieldError>
       </Field>
 
-      <!-- Tanggal Mulai Pinjam -->
+      <!-- Start Date -->
       <Field :data-invalid="!!errors.start_date || undefined">
         <FieldLabel>
           <span>{{ t('inventory.borrowStartDate') }}<span class="text-rose-500">*</span></span>
@@ -206,7 +206,7 @@ const handleFinishBorrow = () => {
         <FieldError v-if="errors.start_date">{{ errors.start_date }}</FieldError>
       </Field>
 
-      <!-- Catatan / Keperluan -->
+      <!-- Note -->
       <div class="md:col-span-2">
         <Field :data-invalid="!!errors.note || undefined">
           <FieldLabel>
@@ -230,7 +230,7 @@ const handleFinishBorrow = () => {
       </div>
     </div>
 
-    <!-- Tombol Aksi di dalam Tab Peminjaman -->
+    <!-- Action buttons inside manual borrowing tab (above the modal footer) -->
     <div class="flex items-center justify-end gap-3 pt-4">
       <Button
         v-if="asset?.status === 'Dipinjam'"

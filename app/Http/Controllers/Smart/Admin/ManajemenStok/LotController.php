@@ -91,7 +91,6 @@ class LotController extends Controller
             'vendor_id' => 'required|exists:vendors,id',
             'location_id' => 'required|exists:locations,id',
             'initial_quantity' => 'nullable|integer|min:0|max:2147483647',
-            'current_quantity' => 'nullable|integer|min:0|max:' . ($lot->initial_quantity ?? 2147483647),
             'po_number' => 'required|string|max:255',
             'date_of_receipt' => 'required|date',
             'unit_price' => 'nullable|numeric|min:0|max:999999999.99',
@@ -101,9 +100,6 @@ class LotController extends Controller
             'project_id' => ['required_if:burden,Project', 'nullable', Rule::exists(TbProject::class, 'id_project')],
         ], [
             'initial_quantity.integer' => 'Tidak boleh desimal.',
-            'current_quantity.integer' => 'Tidak boleh desimal.',
-            'current_quantity.min' => 'Stok tersedia tidak boleh kurang dari 0.',
-            'current_quantity.max' => 'Stok tersedia tidak boleh melebihi stok diawal.',
         ]);
 
         if ($request->boolean('use_parent_image')) {
@@ -139,9 +135,6 @@ class LotController extends Controller
         unset($validated['use_parent_image']);
         if (!$request->has('initial_quantity')) {
             unset($validated['initial_quantity']);
-        }
-        if (!$request->has('current_quantity')) {
-            unset($validated['current_quantity']);
         }
         $validated['burden'] = $validated['burden'] ?? 'Corporate';
         $validated['project_id'] = ($validated['burden'] === 'Project') ? ($validated['project_id'] ?? null) : null;

@@ -63,7 +63,7 @@ erDiagram
         boolean is_active  "default to true"  
     }
 
-    HRD_EMPLOYEE {
+    USER_HRIS_HRD_EMPLOYEE {
         int id PK ""  
         int orgchart_id FK "nullable"  
         varchar employee_id UK ""  
@@ -72,38 +72,38 @@ erDiagram
         boolean active  "default to true"  
     }
 
-    ADM_USER {
+    ADM_USER_NEW_PORTAL_USERS {
         int id PK ""  
-        varchar employee_id FK "HRD_EMPLOYEE's employee_id"  
+        varchar employee_id FK "USER_HRIS_HRD_EMPLOYEE's employee_id"  
         varchar password_hash  ""  
         varchar name  ""  
         varchar remember_token  "nullable"  
     }
 
-    HRD_ORGCHART {
+    USER_HRIS_HRD_ORGCHART {
         int id PK ""  
-        varchar employee_id FK "nullable | HRD_EMPLOYEE's employee_id"  
+        varchar employee_id FK "nullable | USER_HRIS_HRD_EMPLOYEE's employee_id"  
         varchar org_code UK ""  
         varchar org_name UK ""  
     }
 
-    TB_PROJECT {
+    RE_PORTALDB_TB_PROJECT {
         int id PK ""  
         varchar no_project UK ""  
         varchar project_name  ""  
         varchar client_id  ""  
     }
 
-    TB_ASSIGN_PROJECT {
+    RE_PORTALDB_TB_ASSIGN_PROJECT  {
         int id PK ""  
-        varchar npk FK "ADM_USER's employee_id"  
-        varchar no_project FK "TB_PROJECT's no_project"  
-        varchar id_rbs FK "TB_RBS's id"  
+        varchar npk FK "ADM_USER_NEW_PORTAL_USERS's employee_id"  
+        varchar no_project FK "RE_PORTALDB_TB_PROJECT's no_project"  
+        varchar id_rbs FK "RE_PORTALDB_TB_RBS's id"  
         datetime start_date  ""  
         datetime end_date  "nullable"  
     }
 
-    TB_RBS {
+    RE_PORTALDB_TB_RBS {
         int no_urut PK ""  
         varchar id UK ""  
         varchar name  ""  
@@ -137,7 +137,7 @@ erDiagram
         numeric unit_price  "nullable | default unit price"  
         varchar image_url  "default image"  
         varchar burden  "default to Corporate"  
-        int project_id FK "nullable | TB_PROJECT's id"  
+        int project_id FK "nullable | RE_PORTALDB_TB_PROJECT's id"  
     }
 
     UNIT {
@@ -155,8 +155,8 @@ erDiagram
     UNIT_STATUS_APPROVAL {
         int id PK ""  
         int unit_id FK ""  
-        int requester_id FK "ADM_USER's id"  
-        int approver_id FK "nullable | ADM_USER's id"  
+        int requester_id FK "ADM_USER_NEW_PORTAL_USERS's id"  
+        int approver_id FK "nullable | ADM_USER_NEW_PORTAL_USERS's id"  
         varchar proposed_condition  ""  
         varchar previous_condition  ""  
         varchar previous_status  "nullable"  
@@ -174,7 +174,7 @@ erDiagram
         int barang_id FK "nullable"  
         int lot_id FK "nullable"  
         int unit_id FK "nullable"  
-        int user_id FK "ADM_USER's id"  
+        int user_id FK "ADM_USER_NEW_PORTAL_USERS's id"  
         varchar action_type  "stock_in, stock_out, adjustment, relocation"  
         int quantity_change  "default to 0"  
         json previous_state  "nullable"  
@@ -193,7 +193,7 @@ erDiagram
         int location_id FK ""  
         datetime start_date  ""  
         datetime end_date  "nullable"  
-        int actor_id FK "nullable | ADM_USER's id"  
+        int actor_id FK "nullable | ADM_USER_NEW_PORTAL_USERS's id"  
         text note  "nullable"  
         json previous_state  "nullable"  
         json new_state  "nullable"  
@@ -201,7 +201,7 @@ erDiagram
 
     CONSUMABLE_BASKET {
         int id PK ""  
-        int user_id FK "ADM_USER's id"  
+        int user_id FK "ADM_USER_NEW_PORTAL_USERS's id"  
         int subcategory_id FK "nullable"  
         int barang_id FK "nullable"  
         int quantity  ""  
@@ -209,7 +209,7 @@ erDiagram
 
     ASSET_BASKET {
         int id PK ""  
-        int user_id FK "ADM_USER's id"  
+        int user_id FK "ADM_USER_NEW_PORTAL_USERS's id"  
         int subcategory_id FK "nullable"  
         int barang_id FK "nullable"  
         int quantity  ""  
@@ -221,8 +221,8 @@ erDiagram
         int id PK ""  
         uuid uuid UK ""  
         char_11 request_number UK ""  
-        int user_id FK "ADM_USER's id"  
-        int approver_id FK "ADM_USER's id"  
+        int user_id FK "ADM_USER_NEW_PORTAL_USERS's id"  
+        int approver_id FK "ADM_USER_NEW_PORTAL_USERS's id"  
         varchar utilization  "project | corporate"  
         int org_id FK "nullable"  
         int project_id FK "nullable"  
@@ -249,16 +249,15 @@ erDiagram
         int handover_id FK "nullable | links to schedule"  
         int return_id FK "nullable | links to return schedule"  
         int quantity_fulfilled  "defaults to 1 for assets"  
-        datetime assigned_at  ""  
-        datetime confirmed_at  "nullable"  
-        datetime completed_at  "nullable"  
-        varchar placement  "nullable"  
+        datetime assigned_at  "nullable | manual & natural"  
+        datetime confirmed_at  "nullable | manual"  
+        datetime completed_at  "nullable | manual"
     }
 
     REQUEST_APPROVAL {
         int id PK ""  
         int request_id FK ""  
-        int approver_id FK "ADM_USER's id"  
+        int approver_id FK "ADM_USER_NEW_PORTAL_USERS's id"  
         varchar decision  "approved | rejected"  
         text note  "nullable | required if rejected"  
         datetime decided_at  ""  
@@ -267,7 +266,7 @@ erDiagram
     REQUEST_ADMIN_CONFIRMATION {
         int id PK ""  
         int request_id FK ""  
-        int admin_id FK "ADM_USER's id"  
+        int admin_id FK "ADM_USER_NEW_PORTAL_USERS's id"  
         varchar action  "confirm | reject"  
         text note  "nullable"  
         datetime decided_at  ""  
@@ -301,7 +300,7 @@ erDiagram
         int request_id FK ""  
         varchar status_from  ""  
         varchar status_to  ""  
-        int changed_by FK "nullable | ADM_USER's id"  
+        int changed_by FK "nullable | ADM_USER_NEW_PORTAL_USERS's id"  
         text note  "nullable"  
         datetime created_at  ""  
     }
@@ -310,7 +309,7 @@ erDiagram
         uuid id PK ""  
         varchar type ""  
         varchar notifiable_type ""  
-        int notifiable_id FK "ADM_USER's id"  
+        int notifiable_id FK "ADM_USER_NEW_PORTAL_USERS's id"  
         text data ""  
         datetime read_at "nullable"  
         datetime created_at ""  
@@ -349,22 +348,22 @@ erDiagram
     LOCATION||--o{LOCATION:"parent to child"
     LOT||--o{UNIT:"contains"
     LOCATION||--o{UNIT:"currently at"
-    HRD_EMPLOYEE||--||ADM_USER:"credentials"
-    HRD_ORGCHART||--o{HRD_EMPLOYEE:"employs"
-    HRD_EMPLOYEE||--o{HRD_ORGCHART:"manages"
-    ADM_USER||--o{CONSUMABLE_BASKET:"owns"
+    USER_HRIS_HRD_EMPLOYEE||--||ADM_USER_NEW_PORTAL_USERS:"credentials"
+    USER_HRIS_HRD_ORGCHART||--o{USER_HRIS_HRD_EMPLOYEE:"employs"
+    USER_HRIS_HRD_EMPLOYEE||--o{USER_HRIS_HRD_ORGCHART:"manages"
+    ADM_USER_NEW_PORTAL_USERS||--o{CONSUMABLE_BASKET:"owns"
     BARANG||--o{CONSUMABLE_BASKET:"in"
     SUBCATEGORY||--o{CONSUMABLE_BASKET:"in"
-    ADM_USER||--o{ASSET_BASKET:"owns"
+    ADM_USER_NEW_PORTAL_USERS||--o{ASSET_BASKET:"owns"
     BARANG||--o{ASSET_BASKET:"in"
     SUBCATEGORY||--o{ASSET_BASKET:"in"
-    ADM_USER||--o{TB_ASSIGN_PROJECT:"assigned to"
-    TB_PROJECT||--o{TB_ASSIGN_PROJECT:"project details"
-    TB_RBS||--o{TB_ASSIGN_PROJECT:"assigned as"
-    ADM_USER||--o{REQUEST:"submits"
-    ADM_USER||--o{REQUEST:"assigned to approve"
-    TB_PROJECT||--o{REQUEST:"allocated to project"
-    HRD_ORGCHART||--o{REQUEST:"allocated to dept"
+    ADM_USER_NEW_PORTAL_USERS||--o{RE_PORTALDB_TB_ASSIGN_PROJECT :"assigned to"
+    RE_PORTALDB_TB_PROJECT||--o{RE_PORTALDB_TB_ASSIGN_PROJECT :"project details"
+    RE_PORTALDB_TB_RBS||--o{RE_PORTALDB_TB_ASSIGN_PROJECT :"assigned as"
+    ADM_USER_NEW_PORTAL_USERS||--o{REQUEST:"submits"
+    ADM_USER_NEW_PORTAL_USERS||--o{REQUEST:"assigned to approve"
+    RE_PORTALDB_TB_PROJECT||--o{REQUEST:"allocated to project"
+    USER_HRIS_HRD_ORGCHART||--o{REQUEST:"allocated to dept"
     REQUEST||--o{REQUEST_ITEM:"contains"
     BARANG||--o{REQUEST_ITEM:"requested as"
     SUBCATEGORY||--o{REQUEST_ITEM:"requested category"
@@ -376,21 +375,21 @@ erDiagram
     REQUEST||--o{REQUEST_RETURN:"generates returns"
     REQUEST_RETURN||--o{REQUEST_FULFILLMENT:"receives"
     REQUEST||--o|REQUEST_APPROVAL:"reviewed by manager"
-    ADM_USER||--o{REQUEST_APPROVAL:"decides"
+    ADM_USER_NEW_PORTAL_USERS||--o{REQUEST_APPROVAL:"decides"
     REQUEST||--o|REQUEST_ADMIN_CONFIRMATION:"reviewed by admin"
-    ADM_USER||--o{REQUEST_ADMIN_CONFIRMATION:"acts on"
+    ADM_USER_NEW_PORTAL_USERS||--o{REQUEST_ADMIN_CONFIRMATION:"acts on"
     REQUEST||--o{REQUEST_STATUS_LOG:"transitions"
-    ADM_USER||--o{REQUEST_STATUS_LOG:"actored"
+    ADM_USER_NEW_PORTAL_USERS||--o{REQUEST_STATUS_LOG:"actored"
     BARANG||--o{INVENTORY_LOG:"logged"
     LOT||--o{INVENTORY_LOG:"logged"
     UNIT||--o{INVENTORY_LOG:"logged"
     UNIT||--o{UNIT_LIFECYCLE:"tracks lifecycle of"
     LOCATION||--o{UNIT_LIFECYCLE:"location during lifecycle"
-    ADM_USER||--o{UNIT_LIFECYCLE:"actor"
+    ADM_USER_NEW_PORTAL_USERS||--o{UNIT_LIFECYCLE:"actor"
     UNIT||--o{UNIT_STATUS_APPROVAL:"has pending changes"
-    ADM_USER||--o{UNIT_STATUS_APPROVAL:"requests status change"
-    ADM_USER||--o{UNIT_STATUS_APPROVAL:"decides status change"
-    ADM_USER||--o{INVENTORY_LOG:"actored"
-    ADM_USER||--o{NOTIFICATION:"notified"
-    TB_PROJECT||--o{LOT:"associated with project"
-    ADM_USER||--o|SESSION:"session owner"
+    ADM_USER_NEW_PORTAL_USERS||--o{UNIT_STATUS_APPROVAL:"requests status change"
+    ADM_USER_NEW_PORTAL_USERS||--o{UNIT_STATUS_APPROVAL:"decides status change"
+    ADM_USER_NEW_PORTAL_USERS||--o{INVENTORY_LOG:"actored"
+    ADM_USER_NEW_PORTAL_USERS||--o{NOTIFICATION:"notified"
+    RE_PORTALDB_TB_PROJECT||--o{LOT:"associated with project"
+    ADM_USER_NEW_PORTAL_USERS||--o|SESSION:"session owner"

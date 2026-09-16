@@ -9,10 +9,11 @@ import { toast } from 'vue-sonner';
 import { 
   ChevronDown, 
   ArrowUpDown, 
-  Plus,
-  Pencil,
-  Trash2,
-  Eye
+  Plus, 
+  Pencil, 
+  Trash2, 
+  Eye,
+  ClipboardList
 } from 'lucide-vue-next';
 import { Button } from "@/Components/ui/button";
 import {
@@ -37,6 +38,7 @@ import DeleteErrorModal from '@/Components/DeleteErrorModal.vue';
 import Combobox from '@/Components/Combobox.vue';
 import CreateTipeModal from '../Modals/CreateTipeModal.vue';
 import EditTipeModal from '../Modals/EditTipeModal.vue';
+import ManualRequestBarangModal from '../Modals/ManualRequestBarangModal.vue';
 import Tabs from '@/Components/Tabs.vue';
 import DetailBarangTab from './DetailBarangTab.vue';
 import DaftarLOTTab from './DaftarLOTTab.vue';
@@ -88,6 +90,15 @@ const lotsForActiveBarang = computed(() => {
   if (!activeBarang.value) return [];
   return props.lots.filter(lot => String(lot.barang_id) === String(activeBarang.value.id));
 });
+
+const totalStockActiveBarang = computed(() => {
+  return lotsForActiveBarang.value.reduce((acc, lot) => acc + Number(lot.current_quantity ?? 0), 0);
+});
+
+const isManualRequestModalOpen = ref(false);
+const openManualRequestModal = () => {
+  isManualRequestModalOpen.value = true;
+};
 
 const page = usePage();
 
@@ -587,7 +598,9 @@ watch(flashError, (newVal) => {
 
 const closeOnEscape = (e: KeyboardEvent) => {
   if (e.key === 'Escape') {
-    if (isCreateModalOpen.value) {
+    if (isManualRequestModalOpen.value) {
+      isManualRequestModalOpen.value = false;
+    } else if (isCreateModalOpen.value) {
       isCreateModalOpen.value = false;
     } else if (isBulkEditModalOpen.value) {
       isBulkEditModalOpen.value = false;
@@ -629,6 +642,15 @@ const closeOnEscape = (e: KeyboardEvent) => {
         <Tabs v-model="activeDetailTab" :tabs="detailTabs" />
 
         <div class="flex items-center gap-3">
+          <Button
+            @click="openManualRequestModal"
+            variant="warning"
+            size="lg"
+            class="gap-2"
+          >
+            <ClipboardList class="w-4 h-4" />
+            {{ t('inventory.manualRequest') }}
+          </Button>
           <Button @click="openEditModal" variant="primary" size="lg">
             {{ t('inventory.editTypeDetail') }}
           </Button>
@@ -830,6 +852,13 @@ const closeOnEscape = (e: KeyboardEvent) => {
       :brands="props.brands"
       :lots="props.lots"
       @success="handleEditSuccess"
+    />
+
+    <ManualRequestBarangModal
+      v-if="selectedBarang && activeBarang"
+      v-model:open="isManualRequestModalOpen"
+      :barang="activeBarang"
+      :available-stock="totalStockActiveBarang"
     />
 
     <DeleteConfirmationModal 

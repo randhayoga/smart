@@ -9,6 +9,8 @@ import axios from 'axios';
 import { X } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
 import { formatDate } from '@/lib/utils';
+import Tabs from '@/Components/Tabs.vue';
+import FormulirPermintaanBarangHabisPakai from './Tabs/FormulirPermintaanBarangHabisPakai.vue';
 
 interface Props {
   isOpen: boolean;
@@ -26,6 +28,12 @@ const emit = defineEmits<{
 const { t, locale } = useI18n();
 
 useModalLock(computed(() => props.isOpen));
+
+const detailActiveTab = ref('Detail LOT');
+const tabs = computed(() => [
+  { id: 'Detail LOT', label: t('inventory.lotDetail') },
+  { id: 'Permintaan', label: t('inventory.manualRequest') },
+]);
 
 const lotDetails = ref<any>(null);
 const isLoading = ref(false);
@@ -46,12 +54,22 @@ const fetchLotDetails = async (id: number) => {
 };
 
 watch(() => props.isOpen, (newVal) => {
-  if (newVal && props.lotId) {
-    fetchLotDetails(props.lotId);
+  if (newVal) {
+    detailActiveTab.value = 'Detail LOT';
+    if (props.lotId) {
+      fetchLotDetails(props.lotId);
+    }
   } else {
     lotDetails.value = null;
   }
 });
+
+const handleRequestSuccess = () => {
+  if (props.lotId) {
+    fetchLotDetails(props.lotId);
+  }
+  emit('close');
+};
 
 const formatRupiah = (val: number | string | null | undefined) => {
   if (val === null || val === undefined || val === '') return '-';
@@ -126,10 +144,10 @@ onUnmounted(() => {
             @click.stop
           >
             <!-- Modal Header -->
-            <div class="flex items-center p-1 justify-between border-b border-border">
-              <h3 class="text-lg font-bold text-foreground p-2">{{ t('inventory.lotDetail') }}</h3>
-              <button @click="emit('close')" class="p-2 hover:bg-muted rounded-full transition-colors">
-                <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
+            <div class="flex items-center justify-between pt-2 px-4 border-b border-border">
+              <Tabs v-model="detailActiveTab" :tabs="tabs" />
+              <button @click="emit('close')" class="p-2 hover:bg-muted rounded-full transition-colors cursor-pointer">
+                <X class="w-5 h-5 text-muted-foreground" />
               </button>
             </div>
 
@@ -147,7 +165,7 @@ onUnmounted(() => {
                 </button>
               </div>
 
-              <div v-else-if="lotDetails" class="flex flex-col md:flex-row gap-4">
+              <div v-else-if="lotDetails && detailActiveTab === 'Detail LOT'" class="flex flex-col md:flex-row gap-4">
                 <!-- Left Column: Photo -->
                 <div class="w-48 h-48 rounded-xl bg-muted shrink-0 flex items-center justify-center overflow-hidden border border-border">
                   <img v-if="lotDetails.imageUrl" :src="'/media/' + lotDetails.imageUrl" class="w-full h-full object-cover" />
@@ -186,24 +204,36 @@ onUnmounted(() => {
                   </div>
                 </div>
               </div>
+
+              <div v-else-if="lotDetails && detailActiveTab === 'Permintaan'" class="py-1">
+                <FormulirPermintaanBarangHabisPakai
+                  mode="lot"
+                  :lot="lotDetails"
+                  :available-stock="lotDetails.current_quantity ?? 0"
+                  @success="handleRequestSuccess"
+                  @cancel="emit('close')"
+                />
+              </div>
             </div>
 
             <!-- Modal Footer -->
             <div v-if="!isLoading && lotDetails" class="py-3 px-4 bg-muted/30 border-t border-border flex items-center justify-end gap-3">
-              <Button
-                @click="handleEdit"
-                variant="primary"
-                size="lg"
-              >
-                {{ t('inventory.editLotDetail') }}
-              </Button>
-              <Button
-                @click="handleDelete"
-                variant="destructive"
-                size="lg"
-              >
-                {{ t('inventory.deleteLot') }}
-              </Button>
+              <template v-if="detailActiveTab === 'Detail LOT'">
+                <Button
+                  @click="handleEdit"
+                  variant="primary"
+                  size="lg"
+                >
+                  {{ t('inventory.editLotDetail') }}
+                </Button>
+                <Button
+                  @click="handleDelete"
+                  variant="destructive"
+                  size="lg"
+                >
+                  {{ t('inventory.deleteLot') }}
+                </Button>
+              </template>
               <Button
                 @click="emit('close')"
                 variant="white"

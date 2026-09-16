@@ -59,7 +59,6 @@ const form = useForm({
   number: '',
   burden: '',
   project_id: '' as string | number,
-  current_quantity: '' as string | number | null,
 });
 
 const errors = ref({
@@ -67,11 +66,10 @@ const errors = ref({
   po_number: '', date_of_receipt: '', image_url: '',
   burden: '',
   project_id: '',
-  current_quantity: '',
 });
 
 const resetErrors = () => {
-  errors.value = { organizer_id: '', vendor_id: '', location_id: '', po_number: '', date_of_receipt: '', image_url: '', burden: '', project_id: '', current_quantity: '' };
+  errors.value = { organizer_id: '', vendor_id: '', location_id: '', po_number: '', date_of_receipt: '', image_url: '', burden: '', project_id: '' };
 };
 
 const projectOptions = computed(() => {
@@ -91,7 +89,6 @@ watch(() => form.image_url, v => { if (v && errors.value.image_url) errors.value
 watch(() => form.image_url_name, v => { if (v && errors.value.image_url) errors.value.image_url = ''; });
 watch(() => form.burden, v => { if (v && errors.value.burden) errors.value.burden = ''; });
 watch(() => form.project_id, v => { if (v && errors.value.project_id) errors.value.project_id = ''; });
-watch(() => form.current_quantity, v => { if (v !== '' && v !== null && errors.value.current_quantity) errors.value.current_quantity = ''; });
 watch(() => form.burden, v => {
   if (v !== 'Project') {
     form.project_id = '';
@@ -132,7 +129,6 @@ watch(() => props.open, (val) => {
     form.image_url_name = (item.imageUrl || item.image_url || '').split('/').pop() || '';
     form.burden = item.burden || '';
     form.project_id = item.project_id || '';
-    form.current_quantity = item.current_quantity ?? item.currentQuantity ?? 0;
   } else {
     form.organizer_id = '';
     form.vendor_id = '';
@@ -144,7 +140,6 @@ watch(() => props.open, (val) => {
     form.barang_id = '';
     form.burden = 'Tidak berubah';
     form.project_id = '';
-    form.current_quantity = '';
   }
 });
 
@@ -199,24 +194,6 @@ const handleSubmit = () => {
     if (!form.location_id) { errors.value.location_id = t('inventory.locationRequired'); isValid = false; }
     if (!form.po_number) { errors.value.po_number = t('inventory.poNumberRequired'); isValid = false; }
     if (!form.date_of_receipt) { errors.value.date_of_receipt = t('inventory.dateOfReceiptRequired'); isValid = false; }
-    if (props.isConsumable) {
-      const maxStock = Number(selectedItem.value?.initial_quantity ?? selectedItem.value?.initialQuantity ?? 0);
-      const valStr = String(form.current_quantity ?? '').trim();
-      const valNum = Number(form.current_quantity);
-      if (valStr === '' || form.current_quantity === null || isNaN(valNum)) {
-        errors.value.current_quantity = t('inventory.stockAvailableRequired');
-        isValid = false;
-      } else if (!Number.isInteger(valNum)) {
-        errors.value.current_quantity = t('inventory.stockAvailableNoDecimal');
-        isValid = false;
-      } else if (valNum < 0) {
-        errors.value.current_quantity = t('inventory.stockAvailableNegative');
-        isValid = false;
-      } else if (valNum > maxStock) {
-        errors.value.current_quantity = t('inventory.stockAvailableExceed', { max: maxStock });
-        isValid = false;
-      }
-    }
     if (!form.image_url && !form.image_url_name) {
       errors.value.image_url = props.isConsumable ? t('inventory.assetPhotoRequired') : t('inventory.photoRequired');
       isValid = false;
@@ -238,9 +215,6 @@ const handleSubmit = () => {
         burden: data.burden,
         project_id: data.burden === 'Project' ? data.project_id : null,
       };
-      if (props.isConsumable && data.current_quantity !== null && data.current_quantity !== '') {
-        fd.current_quantity = data.current_quantity;
-      }
       if (data.image_url) fd.image_url = data.image_url;
       if (data.use_parent_image) fd.use_parent_image = data.use_parent_image;
       return fd;
@@ -420,17 +394,6 @@ const handleSubmit = () => {
                         class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
                       />
                     </FieldContent>
-                  </Field>
-
-                  <!-- Consumable: Available stock input (Stok tersedia) -->
-                  <Field v-if="isConsumable" :data-invalid="(isSingle && !!errors.current_quantity) || undefined" :data-disabled="(!isSingle) || undefined">
-                    <FieldLabel><span>{{ t('inventory.availableStock') }}<span v-if="isSingle" class="text-rose-500">*</span></span></FieldLabel>
-                    <FieldContent>
-                      <input type="number" v-model="form.current_quantity" :disabled="!isSingle" :placeholder="!isSingle ? t('inventory.cannotBeChangedBulk') : t('inventory.availableStockPlaceholder')" min="0" :max="selectedItem ? (selectedItem.initial_quantity ?? selectedItem.initialQuantity ?? undefined) : undefined"
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10 disabled:bg-muted/30 disabled:text-muted-foreground disabled:cursor-not-allowed"
-                      />
-                    </FieldContent>
-                    <FieldError v-if="isSingle && errors.current_quantity">{{ errors.current_quantity }}</FieldError>
                   </Field>
 
                   <Field :data-invalid="(isSingle && !!errors.image_url) || undefined">

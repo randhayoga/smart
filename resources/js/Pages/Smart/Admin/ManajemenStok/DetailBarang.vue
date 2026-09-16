@@ -8,11 +8,13 @@ import { router, usePage } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { Button } from "@/Components/ui/button";
+import { ClipboardList } from 'lucide-vue-next';
 import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem, BreadcrumbSeparator } from '@/Components/ui/breadcrumb';
 import Tabs from '@/Components/Tabs.vue';
 import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal.vue';
 import DeleteErrorModal from '@/Components/DeleteErrorModal.vue';
 import EditTipeModal from './Modals/EditTipeModal.vue';
+import ManualRequestBarangModal from './Modals/ManualRequestBarangModal.vue';
 import DetailBarangTab from './Tabs/DetailBarangTab.vue';
 import DaftarAsetTab from './Tabs/DaftarAsetTab.vue';
 import DaftarLOTTab from './Tabs/DaftarLOTTab.vue';
@@ -99,6 +101,11 @@ const openEditModal = () => {
   isEditModalOpen.value = true;
 };
 
+const isManualRequestModalOpen = ref(false);
+const openManualRequestModal = () => {
+  isManualRequestModalOpen.value = true;
+};
+
 // Delete Modal Logic
 const isDeleteModalOpen = ref(false);
 const deleteMode = ref<'barang' | 'lot'>('barang');
@@ -177,7 +184,9 @@ const closeErrorModal = () => {
 
 const closeOnEscape = (e: KeyboardEvent) => {
   if (e.key === 'Escape') {
-    if (isEditModalOpen.value) {
+    if (isManualRequestModalOpen.value) {
+      isManualRequestModalOpen.value = false;
+    } else if (isEditModalOpen.value) {
       isEditModalOpen.value = false;
     } else if (isDeleteModalOpen.value) {
       closeDeleteModal();
@@ -216,6 +225,15 @@ onUnmounted(() => {
       <Tabs v-model="activeTab" :tabs="tabs" />
 
       <div class="flex items-center gap-3">
+        <Button
+          v-if="props.barang.is_consumable"
+          @click="openManualRequestModal"
+          variant="warning"
+          size="lg"
+        >
+          <ClipboardList class="w-4 h-4" />
+          {{ t('inventory.manualRequest') }}
+        </Button>
         <Button @click="openEditModal" variant="primary" size="lg">
           {{ t('inventory.editTypeDetail') }}
         </Button>
@@ -260,6 +278,13 @@ onUnmounted(() => {
       :uoms="props.uoms"
       :brands="props.brands"
       :lots="props.lots"
+    />
+
+    <ManualRequestBarangModal
+      v-if="props.barang.is_consumable"
+      v-model:open="isManualRequestModalOpen"
+      :barang="props.barang"
+      :available-stock="totalStok"
     />
 
     <DeleteConfirmationModal 

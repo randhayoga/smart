@@ -81,6 +81,14 @@ class Barang extends Model
     }
 
     /**
+     * Accessor indicating whether this item classification is consumable.
+     */
+    public function getIsConsumableAttribute(): bool
+    {
+        return (bool) ($this->subcategory?->category?->is_consumable ?? false);
+    }
+
+    /**
      * Accessor to ensure number attribute is properly trimmed.
      */
     public function getNumberAttribute(?string $value): ?string
