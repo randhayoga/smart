@@ -15,7 +15,7 @@ use Illuminate\Validation\Rule;
 class LocationController extends Controller
 {
     /**
-     * Menyimpan data lokasi baru ke dalam database.
+     * Store a newly created location in storage.
      */
     public function store(Request $request): RedirectResponse
     {
@@ -38,7 +38,7 @@ class LocationController extends Controller
     }
 
     /**
-     * Memperbarui data lokasi di dalam database.
+     * Update the specified location in storage.
      */
     public function update(Request $request, Location $location): RedirectResponse
     {
@@ -73,7 +73,7 @@ class LocationController extends Controller
     }
 
     /**
-     * Toggle status aktif/nonaktif lokasi.
+     * Toggle active/inactive status of the specified location.
      */
     public function toggleActive(Request $request, Location $location): RedirectResponse
     {
@@ -85,7 +85,7 @@ class LocationController extends Controller
     }
 
     /**
-     * Menghapus data lokasi dari database jika tidak sedang digunakan.
+     * Remove the specified location from storage if not currently in use.
      */
     public function destroy(Location $location): RedirectResponse
     {

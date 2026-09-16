@@ -229,11 +229,13 @@ class Unit extends Model
             return null;
         }
 
-        $assignment = \App\Models\Request\RequestFulfillment::with(['requestItem.request.user'])
-            ->where('unit_id', $this->id)
-            ->whereNull('completed_at')
-            ->latest('id')
-            ->first();
+        $assignment = $this->relationLoaded('fulfillments')
+            ? $this->fulfillments->whereNull('completed_at')->sortByDesc('id')->first()
+            : \App\Models\Request\RequestFulfillment::with(['requestItem.request.user'])
+                ->where('unit_id', $this->id)
+                ->whereNull('completed_at')
+                ->latest('id')
+                ->first();
 
         if (!$assignment || !$assignment->requestItem || !$assignment->requestItem->request) {
             return null;

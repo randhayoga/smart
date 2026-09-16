@@ -25,7 +25,7 @@ use Illuminate\Validation\Rule;
 class UnitBorrowController extends Controller
 {
     /**
-     * Mengambil daftar user untuk opsi peminjam.
+     * Retrieve user listing for borrower options.
      */
     public function users(): JsonResponse
     {
@@ -41,7 +41,7 @@ class UnitBorrowController extends Controller
     }
 
     /**
-     * Memulai atau memperbarui data peminjaman aktif untuk unit aset.
+     * Start or update active borrowing record for an asset unit.
      */
     public function borrow(Request $request, Unit $unit): RedirectResponse
     {
@@ -75,7 +75,7 @@ class UnitBorrowController extends Controller
             $orgId = $utilization === 'corporate' ? ($validated['org_id'] ?? $user->hrdEmployee?->orgchart_id) : null;
             $projectId = $utilization === 'project' ? $validated['project_id'] : null;
 
-            // Cek apakah sudah ada assignment peminjaman aktif untuk unit ini
+            // Check if an active borrowing assignment already exists for this unit
             $activeAssignment = RequestFulfillment::with('requestItem.request')
                 ->where('unit_id', $unit->id)
                 ->whereNull('completed_at')
@@ -83,7 +83,7 @@ class UnitBorrowController extends Controller
                 ->first();
 
             if ($activeAssignment && $activeAssignment->requestItem && $activeAssignment->requestItem->request) {
-                // Update data request yang sedang aktif
+                // Update currently active request data
                 $smartRequest = $activeAssignment->requestItem->request;
                 $smartRequest->update([
                     'user_id' => $user->id,
@@ -106,7 +106,7 @@ class UnitBorrowController extends Controller
                     Unit::withoutEvents(fn() => $unit->update(['status' => 'Dipinjam']));
                 }
             } else {
-                // Generate nomor request unik: MMYYYY-XXXX (max 11 chars)
+                // Generate unique request number: MMYYYY-XXXX (max 11 chars)
                 $monthYear = now()->format('mY');
                 $lastRequest = SmartRequest::where('request_number', 'like', $monthYear . '-%')
                     ->orderBy('id', 'desc')
@@ -118,7 +118,7 @@ class UnitBorrowController extends Controller
                 }
                 $requestNumber = $monthYear . '-' . str_pad($seq, 4, '0', STR_PAD_LEFT);
 
-                // Buat Request baru
+                // Create new Request
                 $smartRequest = SmartRequest::create([
                     'request_number' => $requestNumber,
                     'user_id' => $user->id,
@@ -130,7 +130,7 @@ class UnitBorrowController extends Controller
                     'status' => 'borrow',
                 ]);
 
-                // Buat RequestItem
+                // Create RequestItem
                 $unit->loadMissing('lot.barang.subcategory');
                 $barangId = $unit->lot->barang_id;
                 $subcategoryId = $unit->lot->barang->subcategory_id;
@@ -145,7 +145,7 @@ class UnitBorrowController extends Controller
                     'status' => 'fulfilled',
                 ]);
 
-                // Buat RequestFulfillment (request_fulfillments)
+                // Create RequestFulfillment (request_fulfillments)
                 RequestFulfillment::create([
                     'request_item_id' => $requestItem->id,
                     'unit_id' => $unit->id,
@@ -155,7 +155,7 @@ class UnitBorrowController extends Controller
                     'completed_at' => null,
                 ]);
 
-                // Catat log status request
+                // Record request status log
                 RequestStatusLog::create([
                     'request_id' => $smartRequest->id,
                     'status_from' => 'draft',
@@ -164,7 +164,7 @@ class UnitBorrowController extends Controller
                     'note' => "Peminjaman dicatat secara manual oleh Admin untuk {$borrowerName}.",
                 ]);
 
-                // Update status unit menjadi 'Dipinjam' tanpa event audit trail (hanya dicatat saat selesai)
+                // Update unit status to 'Dipinjam' without firing lifecycle audit trail (recorded upon completion)
                 Unit::withoutEvents(fn() => $unit->update(['status' => 'Dipinjam']));
             }
         });
@@ -173,7 +173,7 @@ class UnitBorrowController extends Controller
     }
 
     /**
-     * Menyelesaikan peminjaman aktif dan mengembalikan status unit menjadi Tersedia.
+     * Complete active borrowing and restore unit availability status.
      */
     public function finish(Request $request, Unit $unit): RedirectResponse
     {
@@ -217,12 +217,12 @@ class UnitBorrowController extends Controller
                 $startDateWithTime = $now->copy();
             }
 
-            // Tutup lifecycle aktif sebelumnya jika ada
+            // Close previously active lifecycle record if exists
             UnitLifecycle::where('unit_id', $unit->id)
                 ->whereNull('end_date')
                 ->update(['end_date' => $now]);
 
-            // 1. Catat Jejak Audit: Peminjaman
+            // 1. Record Audit Trail: Borrowing
             UnitLifecycle::create([
                 'unit_id' => $unit->id,
                 'action_type' => 'Peminjaman',
@@ -237,7 +237,7 @@ class UnitBorrowController extends Controller
                 'new_state' => ['status' => 'Dipinjam'],
             ]);
 
-            // 2. Catat Jejak Audit: Pengembalian
+            // 2. Record Audit Trail: Return
             UnitLifecycle::create([
                 'unit_id' => $unit->id,
                 'action_type' => 'Pengembalian',
@@ -252,7 +252,7 @@ class UnitBorrowController extends Controller
                 'new_state' => ['status' => 'Tersedia'],
             ]);
 
-            // Kembalikan status unit ke Tersedia tanpa memicu event status duplicate
+            // Restore unit status to 'Tersedia' without triggering duplicate status events
             Unit::withoutEvents(fn() => $unit->update(['status' => 'Tersedia']));
         });
 

@@ -14,7 +14,7 @@ use Inertia\Response;
 class DashboardController extends Controller
 {
     /**
-     * Menampilkan halaman dashboard admin.
+     * Display the admin dashboard overview page.
      */
     public function index(Request $request): Response|RedirectResponse
     {

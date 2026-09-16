@@ -15,7 +15,7 @@ use Inertia\Inertia;
 class ArsipController extends Controller
 {
     /**
-     * Menampilkan halaman daftar arsip permintaan/peminjaman barang (Arsip).
+     * Display the request/borrow archive listing page (Arsip).
      */
     public function index()
     {
@@ -57,7 +57,7 @@ class ArsipController extends Controller
     }
 
     /**
-     * Menampilkan detail informasi arsip permintaan/peminjaman barang.
+     * Display detailed archive information for a specified request.
      */
     public function show($id)
     {

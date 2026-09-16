@@ -12,7 +12,7 @@ use Inertia\Inertia;
 class AuditController extends Controller
 {
     /**
-     * Menampilkan halaman Jejak Audit utama (pooling audit semua unit).
+     * Display the primary Audit Trail overview page (aggregated audit logs for all units).
      */
     public function index()
     {

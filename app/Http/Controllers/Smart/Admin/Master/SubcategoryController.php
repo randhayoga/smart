@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\DB;
 class SubcategoryController extends Controller
 {
     /**
-     * Menyimpan data subkategori baru ke dalam database.
+     * Store a newly created subcategory in storage.
      */
     public function store(Request $request): RedirectResponse
     {
@@ -41,7 +41,7 @@ class SubcategoryController extends Controller
     }
 
     /**
-     * Memperbarui data subkategori di dalam database.
+     * Update the specified subcategory in storage.
      */
     public function update(Request $request, Subcategory $subcategory): RedirectResponse
     {
@@ -56,7 +56,7 @@ class SubcategoryController extends Controller
     }
 
     /**
-     * Menghapus data subkategori dari database jika tidak sedang digunakan.
+     * Remove the specified subcategory from storage if not currently in use.
      */
     public function destroy(Subcategory $subcategory): RedirectResponse
     {

@@ -25,7 +25,7 @@ use Inertia\Inertia;
 class LotController extends Controller
 {
     /**
-     * Menyimpan data LOT baru ke dalam database.
+     * Store a newly created LOT batch in storage.
      */
     public function store(Request $request)
     {
@@ -85,7 +85,7 @@ class LotController extends Controller
     }
 
     /**
-     * Memperbarui data LOT yang sudah ada di database.
+     * Update the specified LOT batch in storage.
      */
     public function update(Request $request, Lot $lot)
     {
@@ -159,7 +159,7 @@ class LotController extends Controller
     }
 
     /**
-     * Menghapus data LOT dari database beserta gambarnya.
+     * Remove the specified LOT batch from storage along with its stored image.
      */
     public function destroy(Request $request, Lot $lot)
     {
@@ -191,7 +191,7 @@ class LotController extends Controller
     }
 
     /**
-     * Menampilkan detail data LOT dalam format JSON atau render halaman Inertia.
+     * Display detailed LOT batch information in JSON format or render Inertia page.
      */
     public function show(Request $request, Lot $lot)
     {
@@ -242,7 +242,7 @@ class LotController extends Controller
             ]);
         }
 
-        // Ambil data unit (aset) terkait LOT ini
+        // Retrieve unit (asset) items associated with this LOT
         $units = Unit::with([
             'location.parent', 'statusApprovals',
             'lot.barang.subcategory.category', 'lot.barang.brand', 'lot.barang.uom',

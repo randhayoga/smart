@@ -18,7 +18,7 @@ use Illuminate\Validation\Rule;
 class BulkLotController extends Controller
 {
     /**
-     * Memperbarui beberapa data LOT secara massal di database.
+     * Bulk update multiple lot batches in storage.
      */
     public function update(Request $request)
     {
@@ -103,7 +103,7 @@ class BulkLotController extends Controller
     }
 
     /**
-     * Menghapus beberapa data LOT secara massal di database beserta gambarnya.
+     * Bulk remove multiple lot batches from storage along with their stored images.
      */
     public function destroy(Request $request)
     {

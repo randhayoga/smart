@@ -17,7 +17,7 @@ use Inertia\Inertia;
 class HandoverController extends Controller
 {
     /**
-     * Menampilkan halaman daftar jadwal serah terima (Handover).
+     * Display the handover schedule listing page (Handover).
      */
     public function index()
     {
@@ -58,7 +58,7 @@ class HandoverController extends Controller
     }
 
     /**
-     * Menampilkan detail informasi jadwal serah terima (Handover).
+     * Display detailed handover schedule information for a specified request.
      */
     public function show($id)
     {
@@ -220,7 +220,7 @@ class HandoverController extends Controller
     }
 
     /**
-     * Menyimpan alokasi unit aset untuk detail permintaan.
+     * Store asset unit allocations for the specified request item.
      */
     public function allocate(Request $request, $id)
     {

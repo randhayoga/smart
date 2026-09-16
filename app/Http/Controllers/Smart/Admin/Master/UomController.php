@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\DB;
 class UomController extends Controller
 {
     /**
-     * Menyimpan data satuan (UOM) baru ke dalam database.
+     * Store a newly created unit of measure (UOM) in storage.
      */
     public function store(Request $request): RedirectResponse
     {
@@ -28,7 +28,7 @@ class UomController extends Controller
     }
 
     /**
-     * Memperbarui data satuan (UOM) di dalam database.
+     * Update the specified unit of measure (UOM) in storage.
      */
     public function update(Request $request, Uom $uom): RedirectResponse
     {
@@ -42,7 +42,7 @@ class UomController extends Controller
     }
 
     /**
-     * Menghapus data satuan (UOM) dari database jika tidak sedang digunakan.
+     * Remove the specified unit of measure (UOM) from storage if not currently in use.
      */
     public function destroy(Uom $uom): RedirectResponse
     {

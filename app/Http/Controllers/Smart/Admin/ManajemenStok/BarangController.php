@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Storage;
 class BarangController extends Controller
 {
     /**
-     * Menyimpan data barang baru ke dalam database.
+     * Store a newly created barang item in storage.
      */
     public function store(Request $request)
     {
@@ -48,7 +48,7 @@ class BarangController extends Controller
     }
 
     /**
-     * Memperbarui data barang yang sudah ada di database.
+     * Update the specified barang item in storage.
      */
     public function update(Request $request, Barang $barang)
     {
@@ -92,7 +92,7 @@ class BarangController extends Controller
 
 
     /**
-     * Menghapus data barang dari database beserta gambarnya.
+     * Remove the specified barang item from storage along with its stored image.
      */
     public function destroy(Request $request, Barang $barang)
     {

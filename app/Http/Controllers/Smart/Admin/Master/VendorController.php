@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\DB;
 class VendorController extends Controller
 {
     /**
-     * Menyimpan data vendor baru ke dalam database.
+     * Store a newly created vendor in storage.
      */
     public function store(Request $request): RedirectResponse
     {
@@ -39,7 +39,7 @@ class VendorController extends Controller
     }
 
     /**
-     * Memperbarui data vendor di dalam database.
+     * Update the specified vendor in storage.
      */
     public function update(Request $request, Vendor $vendor): RedirectResponse
     {
@@ -64,7 +64,7 @@ class VendorController extends Controller
     }
 
     /**
-     * Menghapus data vendor dari database jika tidak sedang digunakan.
+     * Remove the specified vendor from storage if not currently in use.
      */
     public function destroy(Vendor $vendor): RedirectResponse
     {

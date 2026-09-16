@@ -15,7 +15,7 @@ use Inertia\Response;
 class CategoryController extends Controller
 {
     /**
-     * Menampilkan daftar kategori (tidak digunakan secara langsung karena index utama ada di MasterController).
+     * Display category listing (not accessed directly as primary view is rendered by MasterController).
      */
     public function index(): Response
     {
@@ -25,7 +25,7 @@ class CategoryController extends Controller
     }
 
     /**
-     * Menyimpan data kategori baru ke dalam database.
+     * Store a newly created category in storage.
      */
     public function store(Request $request): RedirectResponse
     {
@@ -41,7 +41,7 @@ class CategoryController extends Controller
     }
 
     /**
-     * Memperbarui data kategori di dalam database.
+     * Update the specified category in storage.
      */
     public function update(Request $request, Category $category): RedirectResponse
     {
@@ -57,7 +57,7 @@ class CategoryController extends Controller
     }
 
     /**
-     * Menghapus data kategori dari database jika tidak sedang digunakan.
+     * Remove the specified category from storage if not currently in use.
      */
     public function destroy(Category $category): RedirectResponse
     {

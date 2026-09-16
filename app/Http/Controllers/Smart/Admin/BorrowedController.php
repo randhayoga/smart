@@ -15,7 +15,7 @@ use Inertia\Inertia;
 class BorrowedController extends Controller
 {
     /**
-     * Menampilkan halaman daftar peminjaman aktif (Lacak Peminjaman).
+     * Display active borrowings tracking page (Lacak Peminjaman).
      */
     public function index()
     {
@@ -63,7 +63,7 @@ class BorrowedController extends Controller
     }
 
     /**
-     * Menampilkan detail informasi peminjaman barang aktif.
+     * Display detailed active loan information for a specified request.
      */
     public function show($id)
     {

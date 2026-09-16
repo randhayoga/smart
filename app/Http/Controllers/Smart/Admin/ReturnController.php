@@ -18,7 +18,7 @@ use Inertia\Inertia;
 class ReturnController extends Controller
 {
     /**
-     * Menampilkan halaman daftar pengembalian aset (Returns).
+     * Display the asset return listing page (Returns).
      */
     public function index()
     {
@@ -67,7 +67,7 @@ class ReturnController extends Controller
     }
 
     /**
-     * Menampilkan detail informasi pengembalian aset.
+     * Display detailed return information for a specified request.
      */
     public function show($id)
     {

@@ -25,14 +25,15 @@ use Inertia\Response;
 class UnitController extends Controller
 {
     /**
-     * Menampilkan halaman daftar aset (Daftar Aset).
+     * Display the asset inventory listing page (Daftar Aset).
      */
     public function index(Request $request): Response
     {
         $units = Unit::with([
             'location.parent', 'statusApprovals',
             'lot.barang.subcategory.category', 'lot.barang.brand',
-            'lot.organizer', 'lot.vendor', 'lifecycles.actor'
+            'lot.organizer', 'lot.vendor', 'lifecycles.actor',
+            'fulfillments' => fn($q) => $q->whereNull('completed_at')->with('requestItem.request.user')
         ])
         ->where('status', 'not like', 'Pending%')
         ->get()
@@ -44,7 +45,7 @@ class UnitController extends Controller
             $barang = $unit->lot->barang ?? null;
             return [
                 'id' => $unit->id,
-                'number' => $unit->number, // Kode Aset
+                'number' => $unit->number, // Asset code
                 'status' => $unit->status,
                 'proposed_status' => $pendingApproval 
                     ? $pendingApproval->proposed_condition 
@@ -133,7 +134,7 @@ class UnitController extends Controller
         ]);
     }
     /**
-     * Menyimpan data unit (aset) baru ke dalam database.
+     * Store a newly created asset unit in storage.
      */
     public function store(Request $request)
     {
@@ -195,9 +196,9 @@ class UnitController extends Controller
         }
 
         if ($needApproval) {
-            $rules['memo_file'] = 'required|file|max:2048';
+            $rules['memo_file'] = 'required|file|mimes:pdf,jpeg,jpg,png|max:2048';
             if ($proposedCondition === 'Hilang') {
-                $rules['lost_doc_file'] = 'required|file|max:2048';
+                $rules['lost_doc_file'] = 'required|file|mimes:pdf,jpeg,jpg,png|max:2048';
             }
         }
 
@@ -253,7 +254,7 @@ class UnitController extends Controller
     }
  
     /**
-     * Memperbarui data unit (aset) yang sudah ada di database.
+     * Update the specified asset unit in storage.
      */
     public function update(Request $request, Unit $unit)
     {
@@ -486,7 +487,7 @@ class UnitController extends Controller
     }
 
     /**
-     * Menghapus data unit (aset) dari database beserta gambarnya.
+     * Remove the specified asset unit from storage along with its stored image.
      */
     public function destroy(Unit $unit)
     {

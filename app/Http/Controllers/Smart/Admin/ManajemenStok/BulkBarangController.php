@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Storage;
 class BulkBarangController extends Controller
 {
     /**
-     * Memperbarui beberapa data barang secara massal di database.
+     * Bulk update multiple barang catalog items in storage.
      */
     public function update(Request $request)
     {
@@ -91,7 +91,7 @@ class BulkBarangController extends Controller
     }
 
     /**
-     * Menghapus beberapa data barang secara massal di database beserta gambarnya.
+     * Bulk remove multiple barang catalog items from storage along with their stored images.
      */
     public function destroy(Request $request)
     {

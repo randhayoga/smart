@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\DB;
 class OrganizerController extends Controller
 {
     /**
-     * Menyimpan data organizer baru ke dalam database.
+     * Store a newly created organizer in storage.
      */
     public function store(Request $request): RedirectResponse
     {
@@ -28,7 +28,7 @@ class OrganizerController extends Controller
     }
 
     /**
-     * Memperbarui data organizer di dalam database.
+     * Update the specified organizer in storage.
      */
     public function update(Request $request, Organizer $organizer): RedirectResponse
     {
@@ -42,7 +42,7 @@ class OrganizerController extends Controller
     }
 
     /**
-     * Menghapus data organizer dari database jika tidak sedang digunakan.
+     * Remove the specified organizer from storage if not currently in use.
      */
     public function destroy(Organizer $organizer): RedirectResponse
     {

@@ -305,7 +305,7 @@ const auditColumns = computed<ColumnDef<InventoryLogItem>[]>(() => [
           <div class="mt-4 flex flex-col space-y-4">
             <div class="flex flex-wrap items-end gap-3">
               <!-- Search -->
-              <div class="space-y-1.5 flex-1 min-w-[200px] max-w-xs">
+              <div class="space-y-1.5 flex-1 min-w-[200px] max-w-md">
                 <label class="text-xs text-muted-foreground font-medium block ml-0.5">{{ t('admin.filter') }}</label>
                 <TableSearch 
                   v-model="auditSearch"

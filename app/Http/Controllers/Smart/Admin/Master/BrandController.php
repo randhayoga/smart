@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\DB;
 class BrandController extends Controller
 {
     /**
-     * Menyimpan data merek baru ke dalam database.
+     * Store a newly created brand in storage.
      */
     public function store(Request $request): RedirectResponse
     {
@@ -29,7 +29,7 @@ class BrandController extends Controller
     }
 
     /**
-     * Memperbarui data merek di dalam database.
+     * Update the specified brand in storage.
      */
     public function update(Request $request, Brand $brand): RedirectResponse
     {
@@ -44,7 +44,7 @@ class BrandController extends Controller
     }
 
     /**
-     * Menghapus data merek dari database jika tidak sedang digunakan.
+     * Remove the specified brand from storage if not currently in use.
      */
     public function destroy(Brand $brand): RedirectResponse
     {

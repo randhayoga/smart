@@ -23,7 +23,7 @@ use Inertia\Response;
 class ConsumableLotController extends Controller
 {
     /**
-     * Menampilkan halaman daftar stok habis pakai (Daftar Stok (Habis Pakai)).
+     * Display the consumable stock listing page (Daftar Stok Habis Pakai).
      */
     public function index(Request $request, ?Barang $barang = null): Response
     {
@@ -38,13 +38,13 @@ class ConsumableLotController extends Controller
         $brands = Brand::orderBy('name')->get();
         $uoms = Uom::orderBy('name')->get();
 
-        $barangs = Barang::with(['subcategory.category', 'brand', 'uom'])
+        $barangs = Barang::with(['subcategory.category', 'brand', 'uom', 'lots'])
             ->whereHas('subcategory.category', function ($query) {
                 $query->where('is_consumable', true);
             })
             ->get()
             ->map(function ($barang) {
-                $amount = (int)$barang->lots()->sum('current_quantity');
+                $amount = (int)$barang->lots->sum('current_quantity');
                 return [
                     'id' => (int)$barang->id,
                     'code' => $barang->number,
@@ -55,7 +55,7 @@ class ConsumableLotController extends Controller
                     'specification' => $barang->specification,
                     'lastUpdate' => $barang->updated_at ? $barang->updated_at->format('d-m-Y H:i') : '-',
                     'amount' => $amount,
-                    'initial_stock' => (int)$barang->lots()->sum('initial_quantity'),
+                    'initial_stock' => (int)$barang->lots->sum('initial_quantity'),
                     'available_stock' => $amount,
                     'image_url' => $barang->image_url,
                     'uom' => $barang->uom->name ?? '-',

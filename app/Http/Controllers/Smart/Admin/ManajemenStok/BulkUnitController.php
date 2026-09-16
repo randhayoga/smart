@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\DB;
 class BulkUnitController extends Controller
 {
     /**
-     * Menyimpan data unit (aset) baru secara massal ke dalam database.
+     * Store newly created asset units in bulk in storage.
      */
     public function store(Request $request)
     {
@@ -60,9 +60,9 @@ class BulkUnitController extends Controller
         }
 
         if ($needApproval) {
-            $rules['memo_file'] = 'required|file|max:2048';
+            $rules['memo_file'] = 'required|file|mimes:pdf,jpeg,jpg,png|max:2048';
             if ($proposedCondition === 'Hilang') {
-                $rules['lost_doc_file'] = 'required|file|max:2048';
+                $rules['lost_doc_file'] = 'required|file|mimes:pdf,jpeg,jpg,png|max:2048';
             }
         }
 
@@ -177,7 +177,7 @@ class BulkUnitController extends Controller
     }
 
     /**
-     * Memperbarui beberapa unit (aset) sekaligus (bulk update).
+     * Bulk update attributes and condition/status of multiple asset units in storage.
      */
     public function update(Request $request)
     {

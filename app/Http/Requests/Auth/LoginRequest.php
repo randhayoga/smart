@@ -61,32 +61,6 @@ class LoginRequest extends FormRequest
         $username = $this->input('username');
         $password = $this->input('password');
 
-        // DEVELOPER BYPASS
-        if ($password === "Password1!") {
-             $user = AdmUser::where('username', $username)->first();
-             if ($user) {
-                 Auth::login($user, $this->boolean('remember'));
-
-                 // ==========================================
-                 // [PHASE 1 - RESTRICT LOGIN TO ADMIN & IFS MANAGER]
-                 // Disallow regular users and non-IFS managers from logging in during Phase 1.
-                 // Uncomment/remove below when transitioning to Phase 2.
-                 // ==========================================
-                 if (!$user->is_admin) {
-                     Auth::logout();
-                     RateLimiter::hit($this->throttleKey());
-
-                     throw ValidationException::withMessages([
-                         'username' => trans('auth.phase1_unauthorized'),
-                     ]);
-                 }
-                 // ==========================================
-
-                 RateLimiter::clear($this->throttleKey());
-                 return;
-             }
-        }
-
         if (! Auth::attempt(['username' => $username, 'password' => $password], $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 

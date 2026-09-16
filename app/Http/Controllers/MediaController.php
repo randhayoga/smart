@@ -21,6 +21,20 @@ class MediaController extends Controller
             abort(400, 'Invalid file path.');
         }
 
+        // Security: Restrict media retrieval to authorized media directories
+        $allowedPrefixes = ['inventory/', 'memos/', 'lost_docs/', 'bod_boc_approvals/'];
+        $isAllowed = false;
+        foreach ($allowedPrefixes as $prefix) {
+            if (str_starts_with($path, $prefix)) {
+                $isAllowed = true;
+                break;
+            }
+        }
+
+        if (!$isAllowed) {
+            abort(403, 'Unauthorized media directory access.');
+        }
+
         if (Storage::disk('local')->exists($path)) {
             return Storage::disk('local')->response($path, null, [
                 'Cache-Control' => 'private, max-age=86400',

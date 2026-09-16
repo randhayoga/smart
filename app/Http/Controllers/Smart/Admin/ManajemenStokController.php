@@ -33,13 +33,13 @@ class ManajemenStokController extends Controller
         $brands = Brand::orderBy('name')->get();
         $uoms = Uom::orderBy('name')->get();
         
-        $barangs = Barang::with(['subcategory.category', 'brand', 'uom'])
+        $barangs = Barang::with(['subcategory.category', 'brand', 'uom', 'lots.units'])
             ->get()
             ->map(function ($barang) {
                 $isConsumable = (bool)($barang->subcategory->category->is_consumable ?? false);
                 $amount = $isConsumable 
-                    ? (int)$barang->lots()->sum('current_quantity')
-                    : (int)$barang->lots()->withCount('units')->get()->sum('units_count');
+                    ? (int)$barang->lots->sum('current_quantity')
+                    : (int)$barang->lots->sum(fn($lot) => $lot->units->count());
                 
                 return [
                     'id' => $barang->id,
@@ -51,7 +51,7 @@ class ManajemenStokController extends Controller
                     'specification' => $barang->specification,
                     'lastUpdate' => $barang->updated_at ? $barang->updated_at->format('d-m-Y H:i') : '-',
                     'amount' => $amount,
-                    'initial_stock' => (int)$barang->lots()->sum('initial_quantity'),
+                    'initial_stock' => (int)$barang->lots->sum('initial_quantity'),
                     'available_stock' => $amount,
                     'image_url' => $barang->image_url,
                     'uom' => $barang->uom->name ?? '-',
@@ -82,12 +82,12 @@ class ManajemenStokController extends Controller
      */
     public function show(Request $request, Barang $barang): Response
     {
-        $barang->loadMissing(['subcategory.category', 'brand', 'uom']);
+        $barang->loadMissing(['subcategory.category', 'brand', 'uom', 'lots.units']);
 
         $isConsumable = (bool)($barang->subcategory->category->is_consumable ?? false);
         $amount = $isConsumable 
-            ? (int)$barang->lots()->sum('current_quantity')
-            : (int)$barang->lots()->withCount('units')->get()->sum('units_count');
+            ? (int)$barang->lots->sum('current_quantity')
+            : (int)$barang->lots->sum(fn($lot) => $lot->units->count());
 
         $formattedBarang = [
             'id' => $barang->id,
@@ -99,7 +99,7 @@ class ManajemenStokController extends Controller
             'specification' => $barang->specification,
             'lastUpdate' => $barang->updated_at ? $barang->updated_at->format('d-m-Y H:i') : '-',
             'amount' => $amount,
-            'initial_stock' => (int)$barang->lots()->sum('initial_quantity'),
+            'initial_stock' => (int)$barang->lots->sum('initial_quantity'),
             'available_stock' => $amount,
             'image_url' => $barang->image_url,
             'uom' => $barang->uom->name ?? '-',
