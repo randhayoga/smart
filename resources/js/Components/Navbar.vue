@@ -110,9 +110,12 @@ const formatTime = (isoString: string) => {
           variant="ghost"
           size="icon"
           class="lg:hidden"
+          data-testid="navbar-sidebar-toggle"
+          :aria-label="sidebarOpen ? $t('common.close') : 'Menu'"
           @click="emit('toggle-sidebar')"
         >
-          <Menu v-if="!sidebarOpen" class="h-5 w-5" />
+          <X v-if="sidebarOpen" class="h-5 w-5" />
+          <Menu v-else class="h-5 w-5" />
         </Button>
         
         <!-- Logo -->

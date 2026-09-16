@@ -5,10 +5,16 @@
 import { computed } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
-import { ChevronRight, LogOut } from 'lucide-vue-next';
+import { ChevronRight, LogOut, PanelLeftClose, PanelLeftOpen } from 'lucide-vue-next';
 import { mainNavigation, userNavigation, type NavItem, type NavSection } from '@/config/navigation';
 import { ScrollArea } from '@/Components/ui/scroll-area';
 import { Badge } from '@/Components/ui/badge';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/Components/ui/tooltip';
 import {
   Sheet,
   SheetContent,
@@ -22,11 +28,16 @@ import LanguageSelector from '@/Components/LanguageSelector.vue';
 interface Props {
   open: boolean;
   isMobile: boolean;
+  collapsed?: boolean;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+  collapsed: false,
+});
+
 const emit = defineEmits<{
   (e: 'close'): void;
+  (e: 'toggle-collapse'): void;
 }>();
 
 const page = usePage();
@@ -226,69 +237,173 @@ const isActive = (href: string): boolean => {
   <!-- Desktop Sidebar -->
   <aside
     v-if="!isMobile"
-    class="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 lg:top-[68px] lg:z-30 border-r border-border bg-sidebar"
+    class="hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:top-[68px] lg:z-30 border-r border-border bg-sidebar transition-[width] duration-300 ease-in-out"
+    :class="[
+      collapsed ? 'lg:w-[4.5rem]' : 'lg:w-64'
+    ]"
   >
     <ScrollArea class="flex-1 py-4">
-      <nav class="px-3 space-y-6">
-        <div v-for="(section, sectionIndex) in navigation" :key="sectionIndex">
-          <!-- Section Title -->
-          <h3 
-            v-if="section.title" 
-            class="px-3 mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-          >
-            {{ section.titleKey && te(section.titleKey) ? t(section.titleKey) : section.title }}
-          </h3>
-          
-          <!-- Nav Items -->
-          <div class="space-y-1">
-            <Link
-              v-for="(item, itemIndex) in section.items"
-              :key="itemIndex"
-              :href="item.href"
-              class="group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200"
-              :class="[
-                isActive(item.href)
-                  ? 'bg-gradient-primary text-white shadow-button'
-                  : 'text-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
-              ]"
-            >
-              <component 
-                :is="item.icon" 
-                class="h-5 w-5 flex-shrink-0 transition-transform group-hover:scale-110" 
-              />
-              <span class="flex-1">{{ item.titleKey && te(item.titleKey) ? t(item.titleKey) : item.title }}</span>
-              <Badge 
-                v-if="item.badge" 
-                :class="[
-                  'text-xs',
-                  isActive(item.href) 
-                    ? 'bg-white/90 text-primary hover:bg-white' 
-                    : 'bg-primary/10 text-primary hover:bg-primary/20'
-                ]"
+      <TooltipProvider :delay-duration="100">
+        <nav class="space-y-6" :class="[collapsed ? 'px-2' : 'px-3']">
+          <div v-for="(section, sectionIndex) in navigation" :key="sectionIndex">
+            <!-- Section Title / Divider -->
+            <div v-if="section.title">
+              <h3 
+                v-if="!collapsed"
+                class="px-3 mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground truncate"
               >
-                {{ item.badge }}
-              </Badge>
-              <ChevronRight 
-                v-if="item.children" 
-                class="h-4 w-4 opacity-50 transition-transform group-hover:translate-x-0.5" 
+                {{ section.titleKey && te(section.titleKey) ? t(section.titleKey) : section.title }}
+              </h3>
+              <div 
+                v-else-if="sectionIndex > 0" 
+                class="my-3 mx-2 border-t border-sidebar-border/70"
               />
-            </Link>
+            </div>
+            
+            <!-- Nav Items -->
+            <div class="space-y-1">
+              <div
+                v-for="(item, itemIndex) in section.items"
+                :key="itemIndex"
+              >
+                <!-- When Collapsed: Wrapped in Tooltip -->
+                <Tooltip v-if="collapsed">
+                  <TooltipTrigger as-child>
+                    <Link
+                      :href="item.href"
+                      class="group relative flex items-center justify-center rounded-lg p-2.5 text-sm font-medium transition-all duration-200"
+                      :class="[
+                        isActive(item.href)
+                          ? 'bg-gradient-primary text-white shadow-button'
+                          : 'text-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+                      ]"
+                    >
+                      <component 
+                        :is="item.icon" 
+                        class="h-5 w-5 flex-shrink-0 transition-transform group-hover:scale-110" 
+                      />
+                      <!-- Badge indicator dot for collapsed mode -->
+                      <span 
+                        v-if="item.badge" 
+                        class="absolute top-1.5 right-1.5 flex h-2 w-2"
+                      >
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                      </span>
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent side="right" :side-offset="8" class="flex items-center gap-2">
+                    <span>{{ item.titleKey && te(item.titleKey) ? t(item.titleKey) : item.title }}</span>
+                    <Badge 
+                      v-if="item.badge" 
+                      class="text-xs bg-primary/20 text-primary border-primary/30"
+                    >
+                      {{ item.badge }}
+                    </Badge>
+                  </TooltipContent>
+                </Tooltip>
+
+                <!-- When Expanded: Standard Link with Full Content -->
+                <Link
+                  v-else
+                  :href="item.href"
+                  class="group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200"
+                  :class="[
+                    isActive(item.href)
+                      ? 'bg-gradient-primary text-white shadow-button'
+                      : 'text-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+                  ]"
+                >
+                  <component 
+                    :is="item.icon" 
+                    class="h-5 w-5 flex-shrink-0 transition-transform group-hover:scale-110" 
+                  />
+                  <span class="flex-1 truncate">{{ item.titleKey && te(item.titleKey) ? t(item.titleKey) : item.title }}</span>
+                  <Badge 
+                    v-if="item.badge" 
+                    :class="[
+                      'text-xs',
+                      isActive(item.href) 
+                        ? 'bg-white/90 text-primary hover:bg-white' 
+                        : 'bg-primary/10 text-primary hover:bg-primary/20'
+                    ]"
+                  >
+                    {{ item.badge }}
+                  </Badge>
+                  <ChevronRight 
+                    v-if="item.children" 
+                    class="h-4 w-4 opacity-50 transition-transform group-hover:translate-x-0.5" 
+                  />
+                </Link>
+              </div>
+            </div>
           </div>
-        </div>
-      </nav>
+        </nav>
+      </TooltipProvider>
     </ScrollArea>
     
     <!-- Sidebar Footer -->
-    <div class="p-4 border-t border-sidebar-border">
-      <Link 
-        :href="route('logout')" 
-        method="post" 
-        as="button"
-        class="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-red-600 transition-all duration-200 hover:bg-red-50 cursor-pointer"
-      >
-        <LogOut class="h-5 w-5" />
-        {{ $t('common.userMenu.logout') }}
-      </Link>
+    <div class="p-3 border-t border-sidebar-border space-y-1">
+      <TooltipProvider :delay-duration="100">
+        <!-- Collapse / Expand Toggle Button -->
+        <Tooltip v-if="collapsed">
+          <TooltipTrigger as-child>
+            <button
+              data-testid="sidebar-collapse-toggle"
+              type="button"
+              class="flex w-full items-center justify-center rounded-lg p-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-all duration-200 cursor-pointer"
+              @click="emit('toggle-collapse')"
+              :aria-label="t('common.sidebar.expand')"
+            >
+              <PanelLeftOpen class="h-5 w-5" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="right" :side-offset="8">
+            {{ t('common.sidebar.expand') }}
+          </TooltipContent>
+        </Tooltip>
+
+        <button
+          v-else
+          data-testid="sidebar-collapse-toggle"
+          type="button"
+          class="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-all duration-200 cursor-pointer"
+          @click="emit('toggle-collapse')"
+          :aria-label="t('common.sidebar.collapse')"
+        >
+          <PanelLeftClose class="h-5 w-5 flex-shrink-0" />
+          <span class="truncate">{{ t('common.sidebar.collapse') }}</span>
+        </button>
+
+        <!-- Logout Button -->
+        <Tooltip v-if="collapsed">
+          <TooltipTrigger as-child>
+            <Link 
+              :href="route('logout')" 
+              method="post" 
+              as="button"
+              class="flex w-full items-center justify-center rounded-lg p-2.5 text-sm font-medium text-red-600 transition-all duration-200 hover:bg-red-50 dark:hover:bg-red-950/30 cursor-pointer"
+              :aria-label="$t('common.userMenu.logout')"
+            >
+              <LogOut class="h-5 w-5" />
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent side="right" :side-offset="8">
+            {{ $t('common.userMenu.logout') }}
+          </TooltipContent>
+        </Tooltip>
+
+        <Link 
+          v-else
+          :href="route('logout')" 
+          method="post" 
+          as="button"
+          class="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-red-600 transition-all duration-200 hover:bg-red-50 dark:hover:bg-red-950/30 cursor-pointer"
+        >
+          <LogOut class="h-5 w-5 flex-shrink-0" />
+          <span class="truncate">{{ $t('common.userMenu.logout') }}</span>
+        </Link>
+      </TooltipProvider>
     </div>
   </aside>
   

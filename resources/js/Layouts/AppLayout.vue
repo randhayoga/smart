@@ -8,6 +8,7 @@ import Navbar from '@/Components/Navbar.vue';
 import Sidebar from '@/Components/Sidebar.vue';
 import { Toaster } from '@/Components/ui/sonner';
 import { useMercureNotifications } from '@/composables/useMercureNotifications';
+import { useStorage } from '@vueuse/core';
 import PageSkeleton from '@/Components/skeletons/PageSkeleton.vue';
 import 'vue-sonner/style.css';
 
@@ -23,6 +24,7 @@ const props = withDefaults(defineProps<Props>(), {
 useMercureNotifications();
 
 const sidebarOpen = ref(false);
+const sidebarCollapsed = useStorage('smart_sidebar_collapsed', false);
 const isMobile = ref(false);
 
 // Global navigation skeleton loading state
@@ -109,14 +111,16 @@ onUnmounted(() => {
     <Sidebar 
       :open="sidebarOpen" 
       :is-mobile="isMobile"
+      :collapsed="sidebarCollapsed"
       @close="closeSidebar"
+      @toggle-collapse="sidebarCollapsed = !sidebarCollapsed"
     />
     
     <!-- Main content -->
     <main 
       class="transition-all duration-300 pt-[60px] sm:pt-[68px]"
       :class="[
-        !isMobile ? 'lg:ml-64' : ''
+        !isMobile ? (sidebarCollapsed ? 'lg:ml-[4.5rem]' : 'lg:ml-64') : ''
       ]"
     >
       <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">

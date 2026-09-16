@@ -40,9 +40,13 @@ export default {
     minsAgo: '{mins} mnt lalu',
     hoursAgo: '{hours} jam lalu',
   },
+  sidebar: {
+    collapse: 'Kecilkan navigasi',
+    expand: 'Luaskan navigasi',
+  },
   userMenu: {
     aria: 'Menu Pengguna',
-    noOrg: 'Tanpa Organisasi',
+    noOrg: 'Tanpa Departemen',
     logout: 'Keluar',
   },
   print: 'Cetak',

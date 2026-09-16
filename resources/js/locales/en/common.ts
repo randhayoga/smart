@@ -40,9 +40,13 @@ export default {
     minsAgo: '{mins}m ago',
     hoursAgo: '{hours}h ago',
   },
+  sidebar: {
+    collapse: 'Collapse sidebar',
+    expand: 'Expand sidebar',
+  },
   userMenu: {
     aria: 'User Menu',
-    noOrg: 'No Organization',
+    noOrg: 'No Department',
     logout: 'Sign Out',
   },
   print: 'Print',
