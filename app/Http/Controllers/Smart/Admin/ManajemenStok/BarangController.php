@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Inventory\Barang;
 use App\Models\Inventory\Lot;
 use App\Models\Inventory\Unit;
+use App\Services\InventoryLogService;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -31,13 +32,16 @@ class BarangController extends Controller
             'image_url' => 'nullable|image|max:1024',
         ]);
 
-        $imagePath = null;
+        $imagePath = 'inventory/barangs/placeholder.jpg';
         if ($request->hasFile('image_url')) {
             $imagePath = $request->file('image_url')->store('inventory', 'local');
-            $validated['image_url'] = $imagePath;
         }
+        $validated['image_url'] = $imagePath;
 
         $barang = Barang::create($validated);
+        if ($request->user()) {
+            app(InventoryLogService::class)->logBarangCreated($barang, $request->user());
+        }
         app(NotificationService::class)->checkAndNotifyLowStock($barang);
 
         return redirect()->back()->with('success', 'Tipe berhasil ditambahkan.');
@@ -74,7 +78,13 @@ class BarangController extends Controller
             unset($validated['image_url']);
         }
 
+        $original = $barang->getAttributes();
         $barang->update($validated);
+
+        if ($request->user()) {
+            app(InventoryLogService::class)->logBarangUpdated($barang, $original, $request->user());
+        }
+
         app(NotificationService::class)->checkAndNotifyLowStock($barang);
 
         return redirect()->back()->with('success', 'Tipe berhasil diperbarui.');
@@ -84,7 +94,7 @@ class BarangController extends Controller
     /**
      * Menghapus data barang dari database beserta gambarnya.
      */
-    public function destroy(Barang $barang)
+    public function destroy(Request $request, Barang $barang)
     {
         if ($barang->lots()->exists()) {
             return redirect()->back()->with('error', 'Barang tidak dapat dihapus karena masih memiliki LOT terkait.');
@@ -98,6 +108,11 @@ class BarangController extends Controller
                 Storage::disk('local')->delete($barang->image_url);
             }
         }
+
+        if ($request->user()) {
+            app(InventoryLogService::class)->prepareAndLogBarangDeleted($barang, $request->user());
+        }
+
         $barang->delete();
 
         return redirect()->route('smart.inventory')->with('success', 'Tipe berhasil dihapus.');

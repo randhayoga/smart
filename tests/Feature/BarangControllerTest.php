@@ -24,6 +24,37 @@ class BarangControllerTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_can_store_barang_and_records_inventory_log(): void
+    {
+        $user = User::factory()->create();
+        $subcategory = Subcategory::factory()->create();
+        $brand = Brand::factory()->create();
+        $uom = Uom::factory()->create();
+
+        $response = $this->actingAs($user)->post(route('smart.inventory.barangs.store'), [
+            'number' => 'BRG-STORE-1',
+            'subcategory_id' => $subcategory->id,
+            'brand_id' => $brand->id,
+            'uom_id' => $uom->id,
+            'name' => 'Spidol Papan Tulis',
+            'specification' => 'Warna Hitam',
+            'min_stock_threshold' => 10,
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success', 'Tipe berhasil ditambahkan.');
+
+        $barang = Barang::where('number', 'BRG-STORE-1')->first();
+        $this->assertNotNull($barang);
+
+        $this->assertDatabaseHas('inventory_logs', [
+            'barang_id' => $barang->id,
+            'user_id' => $user->id,
+            'action_type' => 'create',
+            'quantity_change' => 0,
+        ]);
+    }
+
     public function test_can_destroy_barang_without_lots(): void
     {
         $user = User::factory()->create();
@@ -35,6 +66,12 @@ class BarangControllerTest extends TestCase
         $response->assertSessionHas('success', 'Tipe berhasil dihapus.');
         $this->assertDatabaseMissing('barangs', [
             'id' => $barang->id,
+        ]);
+
+        $this->assertDatabaseHas('inventory_logs', [
+            'user_id' => $user->id,
+            'action_type' => 'delete',
+            'quantity_change' => 0,
         ]);
     }
 
@@ -83,6 +120,12 @@ class BarangControllerTest extends TestCase
             'name' => 'Nama New',
             'specification' => 'Spec New',
         ]);
+
+        $this->assertDatabaseHas('inventory_logs', [
+            'barang_id' => $barang->id,
+            'user_id' => $user->id,
+            'action_type' => 'update',
+        ]);
     }
 
     public function test_can_bulk_update_barangs(): void
@@ -129,6 +172,17 @@ class BarangControllerTest extends TestCase
             'uom_id' => $newUom->id,
             'name' => 'Nama New Bulk',
             'specification' => 'Spec New Bulk',
+        ]);
+
+        $this->assertDatabaseHas('inventory_logs', [
+            'barang_id' => $barang1->id,
+            'user_id' => $user->id,
+            'action_type' => 'update',
+        ]);
+        $this->assertDatabaseHas('inventory_logs', [
+            'barang_id' => $barang2->id,
+            'user_id' => $user->id,
+            'action_type' => 'update',
         ]);
 
         $barang1->refresh();
@@ -201,6 +255,8 @@ class BarangControllerTest extends TestCase
                 'id' => $id,
             ]);
         }
+
+        $this->assertEquals(3, InventoryLog::where('user_id', $user->id)->where('action_type', 'delete')->count());
     }
 
     public function test_cannot_bulk_destroy_barangs_with_any_lots(): void

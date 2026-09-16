@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Inventory\Barang;
+use App\Models\Inventory\InventoryLog;
 use App\Models\Inventory\Lot;
 use App\Models\Master\Organizer;
 use App\Models\Master\Vendor;
@@ -65,6 +66,13 @@ class LotControllerTest extends TestCase
         $this->assertNotEquals('inventory/lots/placeholder.jpg', $lot->image_url);
         Storage::disk('local')->assertExists($lot->image_url);
 
+        $this->assertDatabaseHas('inventory_logs', [
+            'lot_id' => $lot->id,
+            'barang_id' => $barang->id,
+            'user_id' => $user->id,
+            'action_type' => 'stock_in',
+        ]);
+
         $bulkResponse = $this->actingAs($user)->post(route('smart.inventory.units.bulk-store'), [
             'number' => 'LOT-2026-ATK-KER-0001-0001-U01',
             'lot_id' => $lot->id,
@@ -109,6 +117,12 @@ class LotControllerTest extends TestCase
         $lot->refresh();
         $this->assertNotNull($lot->image_url);
         Storage::disk('local')->assertExists($lot->image_url);
+
+        $this->assertDatabaseHas('inventory_logs', [
+            'lot_id' => $lot->id,
+            'user_id' => $user->id,
+            'action_type' => 'update',
+        ]);
     }
 
     public function test_can_destroy_lot(): void
@@ -124,6 +138,12 @@ class LotControllerTest extends TestCase
         $response->assertRedirect();
         $this->assertDatabaseMissing('lots', ['id' => $lot->id]);
         Storage::disk('local')->assertMissing($imagePath);
+
+        $this->assertDatabaseHas('inventory_logs', [
+            'barang_id' => $lot->barang_id,
+            'user_id' => $user->id,
+            'action_type' => 'delete',
+        ]);
     }
 
     public function test_cannot_destroy_lot_with_units(): void
@@ -279,6 +299,12 @@ class LotControllerTest extends TestCase
                 'location_id' => $newLocation->id,
                 'unit_price' => 99000,
             ]);
+
+            $this->assertDatabaseHas('inventory_logs', [
+                'lot_id' => $id,
+                'user_id' => $user->id,
+                'action_type' => 'update',
+            ]);
         }
     }
 
@@ -300,6 +326,8 @@ class LotControllerTest extends TestCase
                 'id' => $id,
             ]);
         }
+
+        $this->assertEquals(3, InventoryLog::where('user_id', $user->id)->where('action_type', 'delete')->count());
     }
 
     public function test_cannot_bulk_destroy_lots_if_any_has_units(): void

@@ -7,6 +7,7 @@ use App\Models\Inventory\Barang;
 use App\Models\Inventory\Lot;
 use App\Models\Inventory\Unit;
 use App\Models\TbProject;
+use App\Services\InventoryLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -86,7 +87,11 @@ class BulkLotController extends Controller
             }
 
             if (!empty($lotData)) {
+                $original = $lot->getAttributes();
                 $lot->update($lotData);
+                if ($request->user()) {
+                    app(InventoryLogService::class)->logLotUpdated($lot, $original, $request->user());
+                }
                 if ($lot->barang) {
                     app(\App\Services\NotificationService::class)->checkAndNotifyLowStock($lot->barang);
                 }
@@ -126,6 +131,11 @@ class BulkLotController extends Controller
                         Storage::disk('local')->delete($lot->image_url);
                     }
                 }
+
+                if ($request->user()) {
+                    app(InventoryLogService::class)->prepareAndLogLotDeleted($lot, $request->user());
+                }
+
                 $lot->delete();
                 $deletedCounter++;
             }

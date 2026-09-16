@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Inventory\Barang;
 use App\Models\Inventory\Lot;
 use App\Models\Inventory\Unit;
+use App\Services\InventoryLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -69,9 +70,18 @@ class BulkBarangController extends Controller
         }
 
         if (!empty($updateData)) {
+            $barangs = Barang::whereIn('id', $request->input('ids'))->get();
+            $originals = [];
+            foreach ($barangs as $b) {
+                $originals[$b->id] = $b->getAttributes();
+            }
+
             Barang::whereIn('id', $request->input('ids'))->update($updateData);
             $barangs = Barang::whereIn('id', $request->input('ids'))->get();
             foreach ($barangs as $b) {
+                if ($request->user()) {
+                    app(InventoryLogService::class)->logBarangUpdated($b, $originals[$b->id] ?? [], $request->user());
+                }
                 app(\App\Services\NotificationService::class)->checkAndNotifyLowStock($b);
             }
         }
@@ -109,6 +119,11 @@ class BulkBarangController extends Controller
                         Storage::disk('local')->delete($barang->image_url);
                     }
                 }
+
+                if ($request->user()) {
+                    app(InventoryLogService::class)->prepareAndLogBarangDeleted($barang, $request->user());
+                }
+
                 $barang->delete();
                 $deletedCounter++;
             }

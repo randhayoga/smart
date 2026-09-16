@@ -12,6 +12,7 @@ use App\Models\Master\Organizer;
 use App\Models\Master\Uom;
 use App\Models\Master\Vendor;
 use App\Models\TbProject;
+use App\Services\InventoryLogService;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -71,6 +72,10 @@ class LotController extends Controller
         $validated['project_id'] = ($validated['burden'] === 'Project') ? ($validated['project_id'] ?? null) : null;
 
         $lot = Lot::create($validated);
+
+        if ($request->user()) {
+            app(InventoryLogService::class)->logLotCreated($lot, $request->user());
+        }
 
         if ($lot->barang) {
             app(NotificationService::class)->checkAndNotifyLowStock($lot->barang);
@@ -139,7 +144,12 @@ class LotController extends Controller
         $validated['burden'] = $validated['burden'] ?? 'Corporate';
         $validated['project_id'] = ($validated['burden'] === 'Project') ? ($validated['project_id'] ?? null) : null;
 
+        $original = $lot->getAttributes();
         $lot->update($validated);
+
+        if ($request->user()) {
+            app(InventoryLogService::class)->logLotUpdated($lot, $original, $request->user());
+        }
 
         if ($lot->barang) {
             app(NotificationService::class)->checkAndNotifyLowStock($lot->barang);
@@ -151,7 +161,7 @@ class LotController extends Controller
     /**
      * Menghapus data LOT dari database beserta gambarnya.
      */
-    public function destroy(Lot $lot)
+    public function destroy(Request $request, Lot $lot)
     {
         if ($lot->units()->exists()) {
             return redirect()->back()->with('error', 'LOT tidak dapat dihapus karena masih memiliki unit terkait.');
@@ -165,6 +175,11 @@ class LotController extends Controller
                 Storage::disk('local')->delete($lot->image_url);
             }
         }
+
+        if ($request->user()) {
+            app(InventoryLogService::class)->prepareAndLogLotDeleted($lot, $request->user());
+        }
+
         $barang = $lot->barang;
         $lot->delete();
 
