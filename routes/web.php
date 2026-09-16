@@ -138,6 +138,7 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
             Route::get('pending-nonaktif', [\App\Http\Controllers\Smart\Admin\ManajemenStok\PendingNonaktifController::class, 'index'])->name('pending-nonaktif');
             Route::post('barangs/{barang}/manual-request', [\App\Http\Controllers\Smart\Admin\ManajemenStok\BarangManualRequestController::class, 'store'])->name('barangs.manual-request');
             Route::post('lots/{lot}/manual-request', [\App\Http\Controllers\Smart\Admin\ManajemenStok\LotManualRequestController::class, 'store'])->name('lots.manual-request');
+            Route::get('request-options', [\App\Http\Controllers\Smart\Admin\ManajemenStok\ConsumableRequestOptionController::class, 'index'])->name('request-options');
             Route::get('consumables/request-options', [\App\Http\Controllers\Smart\Admin\ManajemenStok\ConsumableRequestOptionController::class, 'index'])->name('consumables.request-options');
             Route::get('stok-habis-pakai/{barang?}', [\App\Http\Controllers\Smart\Admin\ManajemenStok\ConsumableLotController::class, 'index'])->name('stok-habis-pakai');
         });

@@ -139,10 +139,10 @@ const auditRowsPerPageLabel = computed(() => {
 });
 
 const computedAuditPageSize = computed(() => {
-  if (auditRowsPerPage.value === 'Semua baris') {
-    return filteredLifecycles.value.length || 10;
+  if (auditRowsPerPage.value === 'Semua baris' || !auditRowsPerPage.value) {
+    return 999999;
   }
-  return parseInt(auditRowsPerPage.value, 10);
+  return parseInt(auditRowsPerPage.value, 10) || 10;
 });
 
 const filteredLifecycles = computed(() => {
@@ -432,6 +432,7 @@ const auditColumns = computed<ColumnDef<AuditTrail>[]>(() => [
               :columns="auditColumns" 
               :data="filteredLifecycles" 
               :page-size="computedAuditPageSize"
+              :show-selection-count="false"
               :default-sorting="[{ id: 'waktu', desc: true }]"
             />
           </div>

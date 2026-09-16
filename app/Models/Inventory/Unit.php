@@ -247,6 +247,9 @@ class Unit extends Model
             'request_number' => $req->request_number,
             'user_id' => $req->user_id,
             'user_name' => $req->user?->name ?? '-',
+            'utilization' => $req->utilization,
+            'org_id' => $req->org_id,
+            'project_id' => $req->project_id,
             'start_date' => $assignment->requestItem->start_date ? $assignment->requestItem->start_date->format('Y-m-d') : ($req->created_at ? $req->created_at->format('Y-m-d') : null),
             'note' => $req->reasoning ?? '',
         ];

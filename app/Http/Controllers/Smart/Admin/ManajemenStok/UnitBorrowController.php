@@ -4,12 +4,14 @@ namespace App\Http\Controllers\Smart\Admin\ManajemenStok;
 
 use App\Http\Controllers\Controller;
 use App\Models\AdmUser;
+use App\Models\HrdOrgchart;
 use App\Models\Inventory\Unit;
 use App\Models\Inventory\UnitLifecycle;
 use App\Models\Request\Request as SmartRequest;
 use App\Models\Request\RequestItem;
 use App\Models\Request\RequestStatusLog;
 use App\Models\Request\RequestFulfillment;
+use App\Models\TbProject;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -46,12 +48,22 @@ class UnitBorrowController extends Controller
         $validated = $request->validate([
             'user_id' => ['required', Rule::exists(AdmUser::class, 'id')],
             'start_date' => 'required|date',
+            'utilization' => ['required', 'string', Rule::in(['corporate', 'project'])],
+            'org_id' => ['required_if:utilization,corporate', 'nullable', Rule::exists(HrdOrgchart::class, 'id')],
+            'project_id' => ['required_if:utilization,project', 'nullable', Rule::exists(TbProject::class, 'id_project')],
             'note' => 'nullable|string|max:2000',
         ], [
             'user_id.required' => 'Peminjam wajib dipilih.',
             'user_id.exists' => 'Peminjam tidak ditemukan.',
             'start_date.required' => 'Tanggal mulai pinjam wajib diisi.',
             'start_date.date' => 'Format tanggal mulai pinjam tidak valid.',
+            'utilization.required' => 'Pemanfaatan wajib dipilih.',
+            'utilization.in' => 'Pemanfaatan tidak valid.',
+            'org_id.required_if' => 'Departemen wajib dipilih untuk pemanfaatan Corporate.',
+            'org_id.exists' => 'Departemen yang dipilih tidak valid.',
+            'project_id.required_if' => 'Project wajib dipilih untuk pemanfaatan Project.',
+            'project_id.exists' => 'Project yang dipilih tidak valid.',
+            'note.max' => 'Catatan peminjaman maksimal 2000 karakter.',
         ]);
 
         DB::transaction(function () use ($unit, $validated, $request) {
@@ -59,6 +71,9 @@ class UnitBorrowController extends Controller
             $borrowerName = $user->name;
             $note = $validated['note'] ?? '-';
             $startDate = Carbon::parse($validated['start_date']);
+            $utilization = $validated['utilization'];
+            $orgId = $utilization === 'corporate' ? ($validated['org_id'] ?? $user->hrdEmployee?->orgchart_id) : null;
+            $projectId = $utilization === 'project' ? $validated['project_id'] : null;
 
             // Cek apakah sudah ada assignment peminjaman aktif untuk unit ini
             $activeAssignment = RequestFulfillment::with('requestItem.request')
@@ -72,7 +87,9 @@ class UnitBorrowController extends Controller
                 $smartRequest = $activeAssignment->requestItem->request;
                 $smartRequest->update([
                     'user_id' => $user->id,
-                    'org_id' => $user->hrdEmployee?->orgchart_id,
+                    'utilization' => $utilization,
+                    'org_id' => $orgId,
+                    'project_id' => $projectId,
                     'reasoning' => $note,
                 ]);
 
@@ -106,9 +123,9 @@ class UnitBorrowController extends Controller
                     'request_number' => $requestNumber,
                     'user_id' => $user->id,
                     'approver_id' => $request->user()->id,
-                    'utilization' => 'corporate',
-                    'org_id' => $user->hrdEmployee?->orgchart_id,
-                    'project_id' => null,
+                    'utilization' => $utilization,
+                    'org_id' => $orgId,
+                    'project_id' => $projectId,
                     'reasoning' => $note,
                     'status' => 'borrow',
                 ]);

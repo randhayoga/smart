@@ -263,14 +263,11 @@ watch(categoryFilter, () => {
   subcategoryFilter.value = '';
 });
 
-watch(rowsPerPage, (val) => {
-  if (dataTableRef.value && dataTableRef.value.table) {
-    if (val === 'all' || (val as any) === 'Semua baris' || !val) {
-      dataTableRef.value.table.setPageSize(999999);
-    } else {
-      dataTableRef.value.table.setPageSize(Number(val));
-    }
+const pageSizeNumber = computed(() => {
+  if (rowsPerPage.value === 'all' || (rowsPerPage.value as any) === 'Semua baris' || !rowsPerPage.value) {
+    return 999999;
   }
+  return parseInt(rowsPerPage.value, 10) || 10;
 });
 
 // Table columns for Consumable Barang
@@ -827,7 +824,7 @@ const closeOnEscape = (e: KeyboardEvent) => {
             ref="dataTableRef"
             :columns="columns" 
             :data="filteredBarangs" 
-            :filter-value="searchQuery"
+            :page-size="pageSizeNumber"
             :default-sorting="[{ id: 'lastUpdate', desc: true }]"
             :row-class="getRowClass"
           />

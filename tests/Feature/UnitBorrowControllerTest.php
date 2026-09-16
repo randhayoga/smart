@@ -14,6 +14,7 @@ use App\Models\Master\Location;
 use App\Models\Master\Subcategory;
 use App\Models\Request\Request as SmartRequest;
 use App\Models\Request\RequestFulfillment;
+use App\Models\TbProject;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -39,8 +40,12 @@ class UnitBorrowControllerTest extends TestCase
 
     private function createAdmin(): AdmUser
     {
-        $employee = HrdEmployee::factory()->create(['employee_id' => '252525']);
-        return AdmUser::factory()->create(['employee_id' => $employee->employee_id]);
+        $admin = AdmUser::where('username', '255578')->first();
+        if ($admin) {
+            return $admin;
+        }
+        $employee = HrdEmployee::firstOrCreate(['employee_id' => '255578']);
+        return AdmUser::factory()->create(['employee_id' => $employee->employee_id, 'username' => '255578']);
     }
 
     private function createBorrower(): AdmUser
@@ -48,7 +53,7 @@ class UnitBorrowControllerTest extends TestCase
         $borrower = AdmUser::factory()->create([
             'name' => 'Budi Santoso',
         ]);
-
+        $borrower->load('hrdEmployee');
         return $borrower;
     }
 
@@ -97,6 +102,8 @@ class UnitBorrowControllerTest extends TestCase
             ->post(route('smart.inventory.units.borrow', $unit->id), [
                 'user_id' => $borrower->id,
                 'start_date' => $startDate,
+                'utilization' => 'corporate',
+                'org_id' => $borrower->hrdEmployee->orgchart_id,
                 'note' => $note,
             ]);
 
@@ -111,6 +118,9 @@ class UnitBorrowControllerTest extends TestCase
         $smartReq = SmartRequest::where('user_id', $borrower->id)->latest('id')->first();
         $this->assertNotNull($smartReq);
         $this->assertEquals('borrow', $smartReq->status);
+        $this->assertEquals('corporate', $smartReq->utilization);
+        $this->assertEquals($borrower->hrdEmployee->orgchart_id, $smartReq->org_id);
+        $this->assertNull($smartReq->project_id);
         $this->assertEquals($admin->id, $smartReq->approver_id);
         $this->assertEquals($note, $smartReq->reasoning);
 
@@ -128,14 +138,91 @@ class UnitBorrowControllerTest extends TestCase
         $activeBorrowing = $unit->active_borrowing;
         $this->assertNotNull($activeBorrowing);
         $this->assertEquals($borrower->id, $activeBorrowing['user_id']);
+        $this->assertEquals('corporate', $activeBorrowing['utilization']);
+        $this->assertEquals($borrower->hrdEmployee->orgchart_id, $activeBorrowing['org_id']);
+        $this->assertNull($activeBorrowing['project_id']);
         $this->assertEquals($smartReq->request_number, $activeBorrowing['request_number']);
+    }
+
+    public function test_admin_can_start_manual_borrowing_for_project(): void
+    {
+        $admin = $this->createAdmin();
+        $borrower = $this->createBorrower();
+        $unit = $this->createAvailableUnit();
+        $project = TbProject::factory()->create(['no_project' => 'PRJ-SMART-01', 'project_name' => 'SMART Overhaul']);
+
+        $startDate = Carbon::today()->toDateString();
+        $note = 'Keperluan proyek overhaul.';
+
+        $response = $this->actingAs($admin)
+            ->from('/smart/inventory/assets')
+            ->post(route('smart.inventory.units.borrow', $unit->id), [
+                'user_id' => $borrower->id,
+                'start_date' => $startDate,
+                'utilization' => 'project',
+                'project_id' => $project->id_project,
+                'note' => $note,
+            ]);
+
+        $response->assertRedirect('/smart/inventory/assets');
+        $response->assertSessionHas('success');
+
+        $unit->refresh();
+        $this->assertEquals('Dipinjam', $unit->status);
+
+        $smartReq = SmartRequest::where('user_id', $borrower->id)->latest('id')->first();
+        $this->assertNotNull($smartReq);
+        $this->assertEquals('project', $smartReq->utilization);
+        $this->assertEquals($project->id_project, $smartReq->project_id);
+        $this->assertNull($smartReq->org_id);
+
+        $activeBorrowing = $unit->active_borrowing;
+        $this->assertNotNull($activeBorrowing);
+        $this->assertEquals('project', $activeBorrowing['utilization']);
+        $this->assertEquals($project->id_project, $activeBorrowing['project_id']);
+        $this->assertNull($activeBorrowing['org_id']);
+    }
+
+    public function test_borrow_validation_requires_utilization_and_targets(): void
+    {
+        $admin = $this->createAdmin();
+        $borrower = $this->createBorrower();
+        $unit = $this->createAvailableUnit();
+
+        // 1. Missing utilization
+        $response = $this->actingAs($admin)->post(route('smart.inventory.units.borrow', $unit->id), [
+            'user_id' => $borrower->id,
+            'start_date' => Carbon::today()->toDateString(),
+        ]);
+        $response->assertSessionHasErrors(['utilization']);
+
+        // 2. Corporate without org_id
+        $response = $this->actingAs($admin)->post(route('smart.inventory.units.borrow', $unit->id), [
+            'user_id' => $borrower->id,
+            'start_date' => Carbon::today()->toDateString(),
+            'utilization' => 'corporate',
+        ]);
+        $response->assertSessionHasErrors(['org_id']);
+
+        // 3. Project without project_id
+        $response = $this->actingAs($admin)->post(route('smart.inventory.units.borrow', $unit->id), [
+            'user_id' => $borrower->id,
+            'start_date' => Carbon::today()->toDateString(),
+            'utilization' => 'project',
+        ]);
+        $response->assertSessionHasErrors(['project_id']);
     }
 
     public function test_admin_can_update_active_borrowing(): void
     {
         $admin = $this->createAdmin();
         $borrower1 = $this->createBorrower();
-        $borrower2 = AdmUser::factory()->create(['name' => 'Siti Nurhaliza']);
+        $borrower2Org = HrdOrgchart::factory()->create(['org_name' => 'Finance', 'org_code' => 'FIN']);
+        $borrower2 = AdmUser::factory()->create([
+            'name' => 'Siti Nurhaliza',
+        ]);
+        $borrower2->load('hrdEmployee');
+        $borrower2->hrdEmployee->update(['orgchart_id' => $borrower2Org->id]);
         $unit = $this->createAvailableUnit();
 
         $startDate = Carbon::today()->toDateString();
@@ -144,6 +231,8 @@ class UnitBorrowControllerTest extends TestCase
         $this->actingAs($admin)->post(route('smart.inventory.units.borrow', $unit->id), [
             'user_id' => $borrower1->id,
             'start_date' => $startDate,
+            'utilization' => 'corporate',
+            'org_id' => $borrower1->hrdEmployee->orgchart_id,
             'note' => 'Initial note',
         ]);
 
@@ -154,6 +243,8 @@ class UnitBorrowControllerTest extends TestCase
         $this->actingAs($admin)->post(route('smart.inventory.units.borrow', $unit->id), [
             'user_id' => $borrower2->id,
             'start_date' => $newDate,
+            'utilization' => 'corporate',
+            'org_id' => $borrower2Org->id,
             'note' => $newNote,
         ]);
 
@@ -163,6 +254,8 @@ class UnitBorrowControllerTest extends TestCase
 
         $unit->refresh();
         $this->assertEquals($borrower2->id, $unit->active_borrowing['user_id']);
+        $this->assertEquals('corporate', $unit->active_borrowing['utilization']);
+        $this->assertEquals($borrower2Org->id, $unit->active_borrowing['org_id']);
         $this->assertEquals($newNote, $unit->active_borrowing['note']);
     }
 
@@ -178,6 +271,8 @@ class UnitBorrowControllerTest extends TestCase
         $this->actingAs($admin)->post(route('smart.inventory.units.borrow', $unit->id), [
             'user_id' => $borrower->id,
             'start_date' => $startDate,
+            'utilization' => 'corporate',
+            'org_id' => $borrower->hrdEmployee->orgchart_id,
             'note' => 'Dipinjam untuk proyek audit',
         ]);
 

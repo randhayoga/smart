@@ -119,6 +119,7 @@ class UnitController extends Controller
         $users = \App\Models\AdmUser::select('id', 'name', 'username')->orderBy('name')->get()->map(fn($u) => [
             'id' => $u->id,
             'name' => "{$u->name} ({$u->employee_id})",
+            'employee_id' => $u->employee_id,
         ]);
 
         return Inertia::render('Smart/Admin/ManajemenStok/DaftarAset', [

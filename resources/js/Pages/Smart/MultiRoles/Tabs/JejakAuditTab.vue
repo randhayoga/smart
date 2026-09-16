@@ -108,10 +108,10 @@ const auditActionFilterLabel = computed(() => {
 });
 
 const computedAuditPageSize = computed(() => {
-  if (auditRowsPerPage.value === 'all') {
-    return filteredLifecycles.value.length || 10;
+  if (auditRowsPerPage.value === 'all' || (auditRowsPerPage.value as any) === 'Semua baris' || !auditRowsPerPage.value) {
+    return 999999;
   }
-  return parseInt(auditRowsPerPage.value, 10);
+  return parseInt(auditRowsPerPage.value, 10) || 10;
 });
 
 const filteredLifecycles = computed(() => {
@@ -357,7 +357,6 @@ const auditColumns = computed<ColumnDef<AuditTrail>[]>(() => [
         cell-class="py-2.5"
         :columns="auditColumns" 
         :data="filteredLifecycles" 
-        :filter-value="auditSearch"
         :page-size="computedAuditPageSize"
         :show-selection-count="false"
         :default-sorting="[{ id: 'waktu', desc: true }]"

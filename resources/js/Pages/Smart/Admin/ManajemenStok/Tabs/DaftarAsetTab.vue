@@ -654,14 +654,11 @@ const columns = computed<ColumnDef<any>[]>(() => {
   return list;
 });
 
-watch(rowsPerPage, (val) => {
-  if (dataTableRef.value && dataTableRef.value.table) {
-    if (val === 'all' || (val as any) === 'Semua baris' || !val) {
-      dataTableRef.value.table.setPageSize(999999);
-    } else {
-      dataTableRef.value.table.setPageSize(Number(val));
-    }
+const pageSizeNumber = computed(() => {
+  if (rowsPerPage.value === 'all' || (rowsPerPage.value as any) === 'Semua baris' || !rowsPerPage.value) {
+    return 999999;
   }
+  return parseInt(rowsPerPage.value, 10) || 10;
 });
 
 const checkSearchParam = () => {
@@ -674,9 +671,6 @@ const checkSearchParam = () => {
 
 onMounted(() => {
   checkSearchParam();
-  if (dataTableRef.value && dataTableRef.value.table && (rowsPerPage.value === 'all' || (rowsPerPage.value as any) === 'Semua baris')) {
-    dataTableRef.value.table.setPageSize(999999);
-  }
   document.addEventListener('keydown', closeOnEscape);
 });
 
@@ -952,7 +946,8 @@ const totalAsetTerpilihCount = computed(() => {
           ref="dataTableRef"
           :columns="columns" 
           :data="filteredUnits" 
-          :filter-value="searchQuery"
+          :page-size="pageSizeNumber"
+          :show-selection-count="false"
           :default-sorting="[{ id: 'number', desc: false }]"
         />
 

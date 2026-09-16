@@ -318,20 +318,14 @@ const columns = computed<ColumnDef<any>[]>(() => {
   return cols;
 });
 
-watch(rowsPerPage, (val) => {
-  if (dataTableRef.value && dataTableRef.value.table) {
-    if (val === 'all' || (val as any) === 'Semua baris' || !val) {
-      dataTableRef.value.table.setPageSize(999999);
-    } else {
-      dataTableRef.value.table.setPageSize(Number(val));
-    }
+const pageSizeNumber = computed(() => {
+  if (rowsPerPage.value === 'all' || (rowsPerPage.value as any) === 'Semua baris' || !rowsPerPage.value) {
+    return 999999;
   }
+  return parseInt(rowsPerPage.value, 10) || 10;
 });
 
 onMounted(() => {
-  if (dataTableRef.value && dataTableRef.value.table && (rowsPerPage.value === 'all' || (rowsPerPage.value as any) === 'Semua baris')) {
-    dataTableRef.value.table.setPageSize(999999);
-  }
   document.addEventListener('keydown', closeOnEscape);
 });
 
@@ -656,7 +650,7 @@ const closeOnEscape = (e: KeyboardEvent) => {
         ref="dataTableRef"
         :columns="columns" 
         :data="filteredLots" 
-        :filter-value="searchQuery"
+        :page-size="pageSizeNumber"
         :default-sorting="[{ id: 'date_of_receipt', desc: true }]"
       />
     </div>
