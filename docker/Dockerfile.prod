@@ -34,7 +34,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 FROM composer:2 AS composer-builder
 WORKDIR /app
 COPY composer.json composer.lock ./
-RUN composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader --classmap-authoritative --no-scripts
+RUN composer install --no-dev --no-interaction --prefer-dist --no-autoloader --no-scripts
+COPY app/ app/
+COPY database/ database/
+RUN composer dump-autoload --optimize --classmap-authoritative --no-dev --no-scripts
 
 # ------------------------------------------------------------------------------
 # Stage 3: Node Builder (Compiles frontend assets in lightweight alpine)

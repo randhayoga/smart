@@ -22,35 +22,40 @@ services:
         networks:
             - app-network
 
-    smart-queue:
-        container_name: smart-queue
-        restart: unless-stopped
-        image: smart-app:latest
-        command: ["php", "artisan", "queue:work", "--tries=3", "--timeout=90", "--sleep=3"]
-        env_file:
-            - .env
-        volumes:
-            - smart_storage:/var/www/smart/storage/app
-        depends_on:
-            smart-app:
-                condition: service_healthy
-        networks:
-            - app-network
+    # ==========================================
+    # [PHASE 2 - BACKGROUND QUEUE WORKER & SCHEDULER]
+    # Uncomment below when transitioning to Phase 2
+    # ==========================================
+    # smart-queue:
+    #     container_name: smart-queue
+    #     restart: unless-stopped
+    #     image: smart-app:latest
+    #     command: ["php", "artisan", "queue:work", "--tries=3", "--timeout=90", "--sleep=3"]
+    #     env_file:
+    #         - .env
+    #     volumes:
+    #         - smart_storage:/var/www/smart/storage/app
+    #     depends_on:
+    #         smart-app:
+    #             condition: service_healthy
+    #     networks:
+    #         - app-network
 
-    smart-scheduler:
-        container_name: smart-scheduler
-        restart: unless-stopped
-        image: smart-app:latest
-        command: ["php", "artisan", "schedule:work"]
-        env_file:
-            - .env
-        volumes:
-            - smart_storage:/var/www/smart/storage/app
-        depends_on:
-            smart-app:
-                condition: service_healthy
-        networks:
-            - app-network
+    # smart-scheduler:
+    #     container_name: smart-scheduler
+    #     restart: unless-stopped
+    #     image: smart-app:latest
+    #     command: ["php", "artisan", "schedule:work"]
+    #     env_file:
+    #         - .env
+    #     volumes:
+    #         - smart_storage:/var/www/smart/storage/app
+    #     depends_on:
+    #         smart-app:
+    #             condition: service_healthy
+    #     networks:
+    #         - app-network
+    # ==========================================
 
 volumes:
     smart_storage:

@@ -224,6 +224,11 @@ class NotificationService
             foreach ($ifsUsers as $ifsUser) {
                 $email = $ifsUser->email;
                 if ($email && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    // ==========================================
+                    // [PHASE 2 - QUEUED EMAIL DISPATCH]
+                    // In Phase 1: ->send() runs synchronously.
+                    // In Phase 2: switch to ->queue() when smart-queue is running.
+                    // ==========================================
                     Mail::to($email)->send(new DMUnitStatusRequest($unit, null, $ifsUser->name));
                 }
             }
@@ -317,6 +322,11 @@ class NotificationService
         // Dispatch email notification with signed 1-click approval URL
         if (!empty($manager->email)) {
             try {
+                // ==========================================
+                // [PHASE 2 - QUEUED EMAIL DISPATCH]
+                // In Phase 1: ->send() runs synchronously.
+                // In Phase 2: switch to ->queue() when smart-queue is running.
+                // ==========================================
                 Mail::to($manager->email)->send(new ManagerRequestApprovalMail($request, $manager, $type));
             } catch (\Throwable $e) {
                 Log::error("Failed to send approval email for request {$request->id} to {$manager->email}: " . $e->getMessage());
@@ -451,6 +461,11 @@ class NotificationService
         // Dispatch email notification to requester
         if (!empty($requester->email) && filter_var($requester->email, FILTER_VALIDATE_EMAIL)) {
             try {
+                // ==========================================
+                // [PHASE 2 - QUEUED EMAIL DISPATCH]
+                // In Phase 1: ->send() runs synchronously.
+                // In Phase 2: switch to ->queue() when smart-queue is running.
+                // ==========================================
                 Mail::to($requester->email)->send(new RequesterRequestRejectedMail($request, $manager, $reason));
             } catch (\Throwable $e) {
                 Log::error("Failed to send rejection email for request {$request->id} to {$requester->email}: " . $e->getMessage());

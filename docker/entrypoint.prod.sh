@@ -9,10 +9,22 @@ rm -f bootstrap/cache/*.php
 chown -R www-data:www-data storage bootstrap/cache || true
 chmod -R 775 storage bootstrap/cache || true
 
+# Ensure public storage symlink exists (idempotent, skips if already present)
+if [ ! -L "public/storage" ]; then
+    echo "==> Creating public storage symlink..."
+    php artisan storage:link || true
+fi
+
 # Optimize configuration, routes, and views in production
 if [ "$APP_ENV" = "production" ]; then
     echo "==> Optimizing configuration, routes, and views..."
     php artisan optimize || true
+fi
+
+# If a custom command is provided (e.g. queue worker or scheduler), execute it
+if [ $# -gt 0 ]; then
+    echo "==> Executing custom command: $@"
+    exec "$@"
 fi
 
 PORT="${OCTANE_PORT:-8000}"
