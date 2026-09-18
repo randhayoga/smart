@@ -2,9 +2,9 @@
 
 namespace Database\Factories;
 
-use App\Models\AdmUser;
 use App\Models\HrdEmployee;
 use App\Models\HrdOrgchart;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -28,7 +28,7 @@ class HrdEmployeeFactory extends Factory
     {
         do {
             $employeeId = '88' . fake()->numerify('####');
-        } while (AdmUser::where('username', $employeeId)->exists());
+        } while (User::where('employee_id', $employeeId)->exists());
 
         return [
             'orgchart_id' => HrdOrgchart::factory(),
@@ -37,5 +37,19 @@ class HrdEmployeeFactory extends Factory
             'email' => fake()->unique()->safeEmail(),
             'active' => true,
         ];
+    }
+
+    public function create($attributes = [], ?\Illuminate\Database\Eloquent\Model $parent = null)
+    {
+        $employeeId = $attributes['employee_id'] ?? $attributes['username'] ?? null;
+        if (!empty($employeeId)) {
+            $existing = HrdEmployee::where('employee_id', (string) $employeeId)->first();
+            if ($existing) {
+                $existing->update($attributes);
+                return $existing;
+            }
+        }
+
+        return parent::create($attributes, $parent);
     }
 }

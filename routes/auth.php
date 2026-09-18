@@ -3,22 +3,25 @@
 /**
  * Authentication Web Routes
  *
- * Defines guest and authenticated session routes including login submission and logout endpoints.
+ * Automatically branches between Portal SSO (in production) and standard local authentication (in development).
  */
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Web\AuthController;
 use Illuminate\Support\Facades\Route;
 
-// Guest Authentication Routes
-Route::middleware('guest')->prefix('auth')->group(function () {
-    Route::get('login', [AuthenticatedSessionController::class, 'create'])
-        ->name('login');
+// Login routes (SSO in production, Vue form in development)
+Route::get('/login', [AuthController::class, 'login'])->name('login');
+Route::get('/auth/login', [AuthController::class, 'login']);
 
-    Route::post('login', [AuthenticatedSessionController::class, 'store']);
+// Dev local POST login (used for development form submission)
+Route::middleware('guest')->group(function () {
+    Route::post('/login', [AuthenticatedSessionController::class, 'store']);
+    Route::post('/auth/login', [AuthenticatedSessionController::class, 'store']);
 });
 
-// Authenticated Session Routes
-Route::middleware('auth')->prefix('auth')->group(function () {
-    Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
-        ->name('logout');
+// Logout routes (Portal redirect in production, root redirect in development)
+Route::middleware('auth')->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+    Route::post('/auth/logout', [AuthController::class, 'logout']);
 });

@@ -6,7 +6,7 @@ use App\Models\Inventory\Unit;
 use App\Models\Inventory\Lot;
 use App\Models\Inventory\UnitStatusApproval;
 use App\Models\Inventory\UnitLifecycle;
-use App\Models\AdmUser as User;
+use App\Models\User;
 use App\Models\HrdEmployee;
 use App\Models\HrdOrgchart;
 use Illuminate\Foundation\Testing\RefreshDatabase;

@@ -14,7 +14,7 @@ use App\Models\Master\Uom;
 use App\Models\Master\Location;
 use App\Models\Master\Organizer;
 use App\Models\Master\Vendor;
-use App\Models\AdmUser as User;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 

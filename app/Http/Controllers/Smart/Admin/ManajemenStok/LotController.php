@@ -330,10 +330,14 @@ class LotController extends Controller
         $vendors = Vendor::orderBy('name')->get();
         $locations = Location::with('parent')->active()->orderBy('name')->get();
         $projects = TbProject::orderBy('project_name')->get();
-        $users = \App\Models\AdmUser::select('id', 'name', 'username')->orderBy('name')->get()->map(fn($u) => [
-            'id' => $u->id,
-            'name' => "{$u->name} ({$u->employee_id})",
-        ]);
+        $users = \App\Models\User::select('id', 'employee_name', 'employee_id')
+            ->where('active', 1)
+            ->orderBy('employee_name')
+            ->get()
+            ->map(fn($u) => [
+                'id' => $u->id,
+                'name' => "{$u->employee_name} ({$u->employee_id})",
+            ]);
 
         return Inertia::render('Smart/Admin/ManajemenStok/DetailLOTNonConsumables', [
             'lot' => [

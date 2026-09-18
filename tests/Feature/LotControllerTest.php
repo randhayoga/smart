@@ -8,7 +8,7 @@ use App\Models\Inventory\Lot;
 use App\Models\Master\Organizer;
 use App\Models\Master\Vendor;
 use App\Models\Master\Location;
-use App\Models\AdmUser as User;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;

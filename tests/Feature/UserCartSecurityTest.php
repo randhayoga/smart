@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Models\AdmUser as User;
+use App\Models\User;
 use App\Models\Cart\AssetBasket;
 use App\Models\Cart\ConsumableBasket;
 use App\Models\HrdOrgchart;

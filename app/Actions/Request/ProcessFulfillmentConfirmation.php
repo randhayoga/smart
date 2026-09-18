@@ -2,11 +2,11 @@
 
 namespace App\Actions\Request;
 
-use App\Models\AdmUser;
 use App\Models\Inventory\Lot;
 use App\Models\Request\Request as SmartRequest;
 use App\Models\Request\RequestFulfillment;
 use App\Models\Request\RequestStatusLog;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -22,13 +22,13 @@ class ProcessFulfillmentConfirmation
      * @param SmartRequest $request
      * @param bool $allowPartial
      * @param string|null $note
-     * @param AdmUser|int $admin
+     * @param User|int $admin
      * @return array
      * @throws ValidationException
      */
     public function execute(SmartRequest $request, bool $allowPartial, ?string $note, $admin): array
     {
-        $adminId = $admin instanceof AdmUser ? $admin->id : (int) $admin;
+        $adminId = $admin instanceof User ? $admin->id : (int) $admin;
 
         return DB::transaction(function () use ($request, $allowPartial, $note, $adminId) {
             $lockedRequest = SmartRequest::where('id', $request->id)->lockForUpdate()->firstOrFail();

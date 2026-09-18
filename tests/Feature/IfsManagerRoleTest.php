@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Models\AdmUser;
+use App\Models\User;
 use App\Models\HrdOrgchart;
 use App\Models\HrdEmployee;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -33,12 +33,12 @@ class IfsManagerRoleTest extends TestCase
     public function test_dynamic_role_assignment(): void
     {
         // 1. Standard user (employee exists, but is not designated as manager of any orgchart)
-        $userObj = AdmUser::factory()->create();
+        $userObj = User::factory()->create();
         $this->assertEquals('user', $userObj->role);
         $this->assertFalse($userObj->is_admin);
 
         // 2. Standard manager (designated as manager of a non-IFS orgchart)
-        $managerUser = AdmUser::factory()->create();
+        $managerUser = User::factory()->create();
         $employee = HrdEmployee::where('employee_id', $managerUser->employee_id)->first();
         $orgchart = HrdOrgchart::find($employee->orgchart_id);
         $orgchart->update(['employee_id' => $managerUser->employee_id]);
@@ -49,7 +49,7 @@ class IfsManagerRoleTest extends TestCase
         $this->assertFalse($managerUser->is_admin);
 
         // 3. IFS Manager (designated as manager of IFS orgchart)
-        $ifsManagerUser = AdmUser::factory()->create();
+        $ifsManagerUser = User::factory()->create();
         $ifsEmployee = HrdEmployee::where('employee_id', $ifsManagerUser->employee_id)->first();
         $ifsOrgchart = HrdOrgchart::find($ifsEmployee->orgchart_id);
         $ifsOrgchart->update([
@@ -65,13 +65,13 @@ class IfsManagerRoleTest extends TestCase
     public function test_ifs_manager_role_middleware_authorization(): void
     {
         // Setup a standard manager
-        $managerUser = AdmUser::factory()->create();
+        $managerUser = User::factory()->create();
         $employee = HrdEmployee::where('employee_id', $managerUser->employee_id)->first();
         $orgchart = HrdOrgchart::find($employee->orgchart_id);
         $orgchart->update(['employee_id' => $managerUser->employee_id]);
 
         // Setup an IFS manager
-        $ifsManagerUser = AdmUser::factory()->create();
+        $ifsManagerUser = User::factory()->create();
         $ifsEmployee = HrdEmployee::where('employee_id', $ifsManagerUser->employee_id)->first();
         $ifsOrgchart = HrdOrgchart::find($ifsEmployee->orgchart_id);
         $ifsOrgchart->update([
@@ -80,7 +80,7 @@ class IfsManagerRoleTest extends TestCase
         ]);
 
         // Setup a standard user
-        $standardUser = AdmUser::factory()->create();
+        $standardUser = User::factory()->create();
 
         // 1. Test Admin-only route (smart.inventory / smart.dashboard)
         // Standard User -> Forbidden

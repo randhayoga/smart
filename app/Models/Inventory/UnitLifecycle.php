@@ -2,7 +2,7 @@
 
 namespace App\Models\Inventory;
 
-use App\Models\AdmUser;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -60,7 +60,7 @@ class UnitLifecycle extends Model
      */
     public function actor(): BelongsTo
     {
-        return $this->belongsTo(AdmUser::class, 'actor_id');
+        return $this->belongsTo(User::class, 'actor_id');
     }
 
     /**

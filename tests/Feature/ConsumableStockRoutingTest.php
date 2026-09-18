@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Models\AdmUser;
+use App\Models\User;
 use App\Models\HrdEmployee;
 use App\Models\Inventory\Barang;
 use App\Models\Inventory\Lot;
@@ -21,10 +21,10 @@ class ConsumableStockRoutingTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function createAdminUser(): AdmUser
+    private function createAdminUser(): User
     {
         HrdEmployee::factory()->create(['employee_id' => '252525']);
-        return AdmUser::factory()->create(['employee_id' => '252525']);
+        return User::factory()->create(['employee_id' => '252525']);
     }
 
     public function test_can_access_stok_habis_pakai_root(): void

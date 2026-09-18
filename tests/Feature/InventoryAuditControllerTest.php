@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Models\AdmUser;
+use App\Models\User;
 use App\Models\Inventory\Barang;
 use App\Models\Inventory\InventoryLog;
 use App\Models\Inventory\Lot;
@@ -20,9 +20,9 @@ class InventoryAuditControllerTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function createAdmin(): AdmUser
+    private function createAdmin(): User
     {
-        return AdmUser::factory()->create();
+        return User::factory()->create();
     }
 
     private function createConsumableBarang(): Barang
@@ -66,7 +66,7 @@ class InventoryAuditControllerTest extends TestCase
     {
         config(['app.disable_test_admin_bypass' => true]);
 
-        $ifsManager = AdmUser::factory()->create();
+        $ifsManager = User::factory()->create();
         $ifsEmployee = \App\Models\HrdEmployee::where('employee_id', $ifsManager->employee_id)->first();
         $ifsOrgchart = \App\Models\HrdOrgchart::find($ifsEmployee->orgchart_id);
         $ifsOrgchart->update([
@@ -90,7 +90,7 @@ class InventoryAuditControllerTest extends TestCase
     {
         config(['app.disable_test_admin_bypass' => true]);
 
-        $user = AdmUser::factory()->create();
+        $user = User::factory()->create();
         $this->assertEquals('user', $user->role);
 
         $response = $this->actingAs($user)->get(route('smart.audit-stok'));
@@ -103,7 +103,7 @@ class InventoryAuditControllerTest extends TestCase
     public function test_inventory_audit_returns_mapped_logs_with_barang_lot_and_actor_data(): void
     {
         $admin = $this->createAdmin();
-        $actor = AdmUser::factory()->create(['name' => 'John Doe']);
+        $actor = User::factory()->create(['name' => 'John Doe']);
         $barang = $this->createConsumableBarang();
         $lot = $this->createLot($barang, 50);
 
@@ -137,7 +137,7 @@ class InventoryAuditControllerTest extends TestCase
     public function test_inventory_audit_falls_back_to_previous_state_when_barang_deleted(): void
     {
         $admin = $this->createAdmin();
-        $actor = AdmUser::factory()->create(['name' => 'Jane Doe']);
+        $actor = User::factory()->create(['name' => 'Jane Doe']);
 
         $log = InventoryLog::factory()->create([
             'barang_id' => null,

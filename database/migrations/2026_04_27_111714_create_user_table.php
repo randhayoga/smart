@@ -12,8 +12,7 @@ return new class extends Migration {
         | External Database Tables (Retained for ERD reference)
         |--------------------------------------------------------------------------
         | The following tables reside in external Microsoft SQL Server databases:
-        | - new_portal : users (AdmUser)
-        | - USER_HRIS  : hrd_employee (HrdEmployee), hrd_orgchart (HrdOrgchart)
+        | - USER_HRIS  : hrd_employee (User/HrdEmployee), hrd_orgchart (HrdOrgchart)
         | - RE_PORTALDB: tb_project (TbProject), tb_assign_project (TbAssignProject), tb_rbs (TbRbs)
         |
         | They are commented out below so they are not created in the SMART database.
@@ -43,17 +42,6 @@ return new class extends Migration {
             $table->foreign('orgchart_id')->references('id')->on('hrd_orgcharts')->nullOnDelete();
         });
 
-        Schema::create('adm_users', function (Blueprint $table) {
-            $table->id();
-            $table->string('employee_id')->unique();
-            $table->string('password_hash');
-            $table->string('name');
-            $table->rememberToken();
-            $table->timestamps();
-
-            $table->foreign('employee_id')->references('employee_id')->on('hrd_employees')->cascadeOnDelete();
-        });
-
         Schema::create('tb_projects', function (Blueprint $table) {
             $table->id();
             $table->string('no_project')->unique();
@@ -79,7 +67,7 @@ return new class extends Migration {
             $table->dateTime('end_date')->nullable();
             $table->timestamps();
 
-            $table->foreign('npk')->references('employee_id')->on('adm_users')->cascadeOnDelete();
+            $table->foreign('npk')->references('employee_id')->on('hrd_employees')->cascadeOnDelete();
             $table->foreign('no_project')->references('no_project')->on('tb_projects')->cascadeOnDelete();
             $table->foreign('id_rbs')->references('id')->on('tb_rbs')->cascadeOnDelete();
         });
@@ -102,7 +90,6 @@ return new class extends Migration {
         Schema::dropIfExists('tb_assign_projects');
         Schema::dropIfExists('tb_rbs');
         Schema::dropIfExists('tb_projects');
-        Schema::dropIfExists('adm_users');
         Schema::table('hrd_employees', function (Blueprint $table) {
             $table->dropForeign(['orgchart_id']);
         });

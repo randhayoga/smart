@@ -2,9 +2,9 @@
 
 namespace App\Http\Requests\Smart;
 
-use App\Models\AdmUser;
 use App\Models\HrdOrgchart;
 use App\Models\TbProject;
+use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -21,7 +21,7 @@ class ConsumableManualRequestRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'user_id' => ['required', 'integer', Rule::exists(AdmUser::class, 'id')],
+            'user_id' => ['required', 'integer', Rule::exists(User::class, 'id')],
             'request_date' => ['required', 'date'],
             'utilization' => ['required', 'string', Rule::in(['corporate', 'project'])],
             'org_id' => ['required_if:utilization,corporate', 'nullable', Rule::exists(HrdOrgchart::class, 'id')],

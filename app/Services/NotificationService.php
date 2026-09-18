@@ -5,11 +5,11 @@ namespace App\Services;
 use App\Mail\DMUnitStatusRequest;
 use App\Mail\ManagerRequestApprovalMail;
 use App\Mail\RequesterRequestRejectedMail;
-use App\Models\AdmUser;
 use App\Models\Inventory\Barang;
 use App\Models\Inventory\Unit;
 use App\Models\Inventory\UnitStatusApproval;
 use App\Models\Request\Request as SmartRequest;
+use App\Models\User;
 use App\Notifications\AppNotification;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -22,7 +22,7 @@ class NotificationService
     /**
      * Send a notification to a specific user.
      *
-     * @param AdmUser $user
+     * @param User $user
      * @param string $title
      * @param string $message
      * @param string $type
@@ -30,7 +30,7 @@ class NotificationService
      * @param array<string, mixed> $extra
      */
     public function sendToUser(
-        AdmUser $user,
+        User $user,
         string $title,
         string $message,
         string $type = 'info',
@@ -43,7 +43,7 @@ class NotificationService
     /**
      * Send a notification to a collection or array of users.
      *
-     * @param iterable<AdmUser> $users
+     * @param iterable<User> $users
      */
     public function sendToUsers(
         iterable $users,
@@ -77,7 +77,7 @@ class NotificationService
         ?string $url = null,
         array $extra = []
     ): void {
-        $targetUsers = AdmUser::getUsersByRole($role);
+        $targetUsers = User::getUsersByRole($role);
 
         foreach ($targetUsers as $user) {
             $this->sendToUser($user, $title, $message, $type, $url, $extra);
@@ -97,7 +97,7 @@ class NotificationService
         ?string $url = null,
         array $extra = []
     ): void {
-        $targetUsers = AdmUser::getUsersByRole($roles);
+        $targetUsers = User::getUsersByRole($roles);
 
         foreach ($targetUsers as $user) {
             $this->sendToUser($user, $title, $message, $type, $url, $extra);
@@ -127,7 +127,7 @@ class NotificationService
         $currentStock = (int) $barang->lots()->sum('current_quantity');
 
         if ($currentStock <= $barang->min_stock_threshold) {
-            $targetAdmins = AdmUser::getUsersByRole('admin');
+            $targetAdmins = User::getUsersByRole('admin');
             if ($targetAdmins->isEmpty()) {
                 return false;
             }
@@ -220,7 +220,7 @@ class NotificationService
 
         // 2. Email notification to IFS Manager(s)
         try {
-            $ifsUsers = AdmUser::getUsersByRole('ifs_manager');
+            $ifsUsers = User::getUsersByRole('ifs_manager');
             foreach ($ifsUsers as $ifsUser) {
                 $email = $ifsUser->email;
                 if ($email && filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -290,10 +290,10 @@ class NotificationService
      * Send a real-time notification to the relevant manager when a user submits a new request or borrowing.
      *
      * @param SmartRequest $request
-     * @param AdmUser $manager
+     * @param User $manager
      * @param string $type 'Permintaan' | 'Peminjaman'
      */
-    public function notifyManagerNewRequest(SmartRequest $request, AdmUser $manager, string $type = 'Permintaan'): void
+    public function notifyManagerNewRequest(SmartRequest $request, User $manager, string $type = 'Permintaan'): void
     {
         $request->loadMissing(['user', 'department', 'project']);
 
@@ -338,11 +338,11 @@ class NotificationService
      * Delete pending request notification(s) sent to a manager once the request is approved or rejected.
      *
      * @param SmartRequest $request
-     * @param AdmUser|int $manager
+     * @param User|int $manager
      */
-    public function deleteManagerRequestNotification(SmartRequest $request, AdmUser|int $manager): void
+    public function deleteManagerRequestNotification(SmartRequest $request, User|int $manager): void
     {
-        $managerUser = $manager instanceof AdmUser ? $manager : AdmUser::find($manager);
+        $managerUser = $manager instanceof User ? $manager : User::find($manager);
         if (!$managerUser) {
             return;
         }
@@ -359,9 +359,9 @@ class NotificationService
      * Send in-app notification to all Admins when a request is approved by the manager.
      *
      * @param SmartRequest $request
-     * @param AdmUser $manager
+     * @param User $manager
      */
-    public function notifyAdminRequestApproved(SmartRequest $request, AdmUser $manager): void
+    public function notifyAdminRequestApproved(SmartRequest $request, User $manager): void
     {
         $request->loadMissing(['user', 'items']);
         $type = $request->type_name;
@@ -389,9 +389,9 @@ class NotificationService
      * Send in-app notification to the requester when their request is approved by the manager.
      *
      * @param SmartRequest $request
-     * @param AdmUser $manager
+     * @param User $manager
      */
-    public function notifyRequesterRequestApproved(SmartRequest $request, AdmUser $manager): void
+    public function notifyRequesterRequestApproved(SmartRequest $request, User $manager): void
     {
         $request->loadMissing(['user', 'items']);
         $requester = $request->user;
@@ -425,10 +425,10 @@ class NotificationService
      * Send in-app notification and email to the requester when their request is rejected by the manager.
      *
      * @param SmartRequest $request
-     * @param AdmUser $manager
+     * @param User $manager
      * @param string|null $reason
      */
-    public function notifyRequesterRequestRejected(SmartRequest $request, AdmUser $manager, ?string $reason = null): void
+    public function notifyRequesterRequestRejected(SmartRequest $request, User $manager, ?string $reason = null): void
     {
         $request->loadMissing(['user', 'department', 'project', 'items']);
         $requester = $request->user;

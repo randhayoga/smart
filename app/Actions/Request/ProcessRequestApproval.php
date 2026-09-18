@@ -2,10 +2,10 @@
 
 namespace App\Actions\Request;
 
-use App\Models\AdmUser;
 use App\Models\Request\Request as SmartRequest;
 use App\Models\Request\RequestApproval;
 use App\Models\Request\RequestStatusLog;
+use App\Models\User;
 use App\Services\NotificationService;
 use Illuminate\Support\Facades\DB;
 
@@ -23,7 +23,7 @@ class ProcessRequestApproval
      * @param  \App\Models\Request\Request  $req
      * @param  string  $decision  'approve' or 'reject'
      * @param  string|null  $note
-     * @param  \App\Models\AdmUser|int  $approver
+     * @param  \App\Models\User|int  $approver
      * @param  string  $source  'in_app' or 'email'
      * @return void
      */
@@ -31,10 +31,10 @@ class ProcessRequestApproval
         SmartRequest $req,
         string $decision,
         ?string $note,
-        AdmUser|int $approver,
+        User|int $approver,
         string $source = 'in_app'
     ): void {
-        $approverUser = $approver instanceof AdmUser ? $approver : AdmUser::find($approver);
+        $approverUser = $approver instanceof User ? $approver : User::find($approver);
         $approverId = $approverUser?->id ?? (int) $approver;
         $approverName = $approverUser?->name ?? ($req->approver?->name ?? 'Manager');
 

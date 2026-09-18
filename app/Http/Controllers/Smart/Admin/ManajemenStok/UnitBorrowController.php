@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Smart\Admin\ManajemenStok;
 
 use App\Http\Controllers\Controller;
-use App\Models\AdmUser;
 use App\Models\HrdOrgchart;
 use App\Models\Inventory\Unit;
 use App\Models\Inventory\UnitLifecycle;
@@ -12,6 +11,7 @@ use App\Models\Request\RequestItem;
 use App\Models\Request\RequestStatusLog;
 use App\Models\Request\RequestFulfillment;
 use App\Models\TbProject;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -29,12 +29,13 @@ class UnitBorrowController extends Controller
      */
     public function users(): JsonResponse
     {
-        $users = AdmUser::select('id', 'name', 'username')
-            ->orderBy('name')
+        $users = User::select('id', 'employee_name', 'employee_id')
+            ->where('active', 1)
+            ->orderBy('employee_name')
             ->get()
             ->map(fn($u) => [
-                'id' => $u->id,
-                'name' => "{$u->name} ({$u->employee_id})",
+                'id' => (int) $u->id,
+                'name' => "{$u->employee_name} ({$u->employee_id})",
             ]);
 
         return response()->json($users);
@@ -46,7 +47,7 @@ class UnitBorrowController extends Controller
     public function borrow(Request $request, Unit $unit): RedirectResponse
     {
         $validated = $request->validate([
-            'user_id' => ['required', Rule::exists(AdmUser::class, 'id')],
+            'user_id' => ['required', Rule::exists(User::class, 'id')],
             'start_date' => 'required|date',
             'utilization' => ['required', 'string', Rule::in(['corporate', 'project'])],
             'org_id' => ['required_if:utilization,corporate', 'nullable', Rule::exists(HrdOrgchart::class, 'id')],
@@ -67,12 +68,12 @@ class UnitBorrowController extends Controller
         ]);
 
         DB::transaction(function () use ($unit, $validated, $request) {
-            $user = AdmUser::with('hrdEmployee.orgchart')->findOrFail($validated['user_id']);
+            $user = User::with('orgchart')->findOrFail($validated['user_id']);
             $borrowerName = $user->name;
             $note = $validated['note'] ?? '-';
             $startDate = Carbon::parse($validated['start_date']);
             $utilization = $validated['utilization'];
-            $orgId = $utilization === 'corporate' ? ($validated['org_id'] ?? $user->hrdEmployee?->orgchart_id) : null;
+            $orgId = $utilization === 'corporate' ? ($validated['org_id'] ?? $user->orgchart_id) : null;
             $projectId = $utilization === 'project' ? $validated['project_id'] : null;
 
             // Check if an active borrowing assignment already exists for this unit

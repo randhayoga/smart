@@ -7,7 +7,7 @@ use App\Models\Master\Category;
 use App\Models\Master\Subcategory;
 use App\Models\Master\Brand;
 use App\Models\Master\Vendor;
-use App\Models\AdmUser as User;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 

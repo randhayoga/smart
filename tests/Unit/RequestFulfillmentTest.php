@@ -2,7 +2,7 @@
 
 namespace Tests\Unit;
 
-use App\Models\AdmUser;
+use App\Models\User;
 use App\Models\Inventory\Barang;
 use App\Models\Inventory\Lot;
 use App\Models\Inventory\Unit;
@@ -22,7 +22,7 @@ class RequestFulfillmentTest extends TestCase
 
     public function test_can_create_request_fulfillment_for_asset_and_consumable(): void
     {
-        $user = AdmUser::factory()->create();
+        $user = User::factory()->create();
         $category = Category::factory()->create(['is_consumable' => false]);
         $subcategory = Subcategory::factory()->create(['category_id' => $category->id]);
         $barang = Barang::factory()->create(['subcategory_id' => $subcategory->id]);

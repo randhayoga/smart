@@ -3,7 +3,7 @@
 namespace Tests\Unit\Actions;
 
 use App\Actions\Request\ProcessConsumableManualRequest;
-use App\Models\AdmUser;
+use App\Models\User;
 use App\Models\HrdOrgchart;
 use App\Models\Inventory\Barang;
 use App\Models\Inventory\InventoryLog;
@@ -25,8 +25,8 @@ class ProcessConsumableManualRequestTest extends TestCase
     use RefreshDatabase;
 
     private ProcessConsumableManualRequest $action;
-    private AdmUser $admin;
-    private AdmUser $requester;
+    private User $admin;
+    private User $requester;
     private Barang $barang;
 
     protected function setUp(): void
@@ -34,8 +34,8 @@ class ProcessConsumableManualRequestTest extends TestCase
         parent::setUp();
 
         $this->action = app(ProcessConsumableManualRequest::class);
-        $this->admin = AdmUser::factory()->create(['name' => 'Admin User']);
-        $this->requester = AdmUser::factory()->create(['name' => 'Requester User']);
+        $this->admin = User::factory()->create(['name' => 'Admin User']);
+        $this->requester = User::factory()->create(['name' => 'Requester User']);
 
         $category = Category::factory()->create(['is_consumable' => true]);
         $subcategory = Subcategory::factory()->create(['category_id' => $category->id]);

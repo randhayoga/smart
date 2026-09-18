@@ -2,7 +2,7 @@
 
 namespace App\Models\Request;
 
-use App\Models\AdmUser;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -27,6 +27,6 @@ class RequestStatusLog extends Model
 
     public function changer(): BelongsTo
     {
-        return $this->belongsTo(AdmUser::class, 'changed_by');
+        return $this->belongsTo(User::class, 'changed_by');
     }
 }

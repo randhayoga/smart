@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\AdmUser;
+use App\Models\User;
 use App\Models\Inventory\Barang;
 use App\Models\Inventory\InventoryLog;
 use App\Models\Inventory\Lot;
@@ -16,9 +16,9 @@ class InventoryLogService
     /**
      * Log item type (Barang) creation.
      */
-    public function logBarangCreated(Barang $barang, AdmUser|int $user, ?string $note = null): InventoryLog
+    public function logBarangCreated(Barang $barang, User|int $user, ?string $note = null): InventoryLog
     {
-        $userId = $user instanceof AdmUser ? $user->id : $user;
+        $userId = $user instanceof User ? $user->id : $user;
         $barang->loadMissing(['brand', 'uom', 'subcategory']);
 
         $newState = [
@@ -49,9 +49,9 @@ class InventoryLogService
     /**
      * Log item type (Barang) update, only if tracked attributes actually changed.
      */
-    public function logBarangUpdated(Barang $barang, array $originalAttributes, AdmUser|int $user, ?string $note = null): ?InventoryLog
+    public function logBarangUpdated(Barang $barang, array $originalAttributes, User|int $user, ?string $note = null): ?InventoryLog
     {
-        $userId = $user instanceof AdmUser ? $user->id : $user;
+        $userId = $user instanceof User ? $user->id : $user;
 
         $trackedFields = [
             'number',
@@ -98,9 +98,9 @@ class InventoryLogService
     /**
      * Prepare existing logs for safe deletion (unlinking foreign keys) and log the deletion event.
      */
-    public function prepareAndLogBarangDeleted(Barang $barang, AdmUser|int $user, ?string $note = null): InventoryLog
+    public function prepareAndLogBarangDeleted(Barang $barang, User|int $user, ?string $note = null): InventoryLog
     {
-        $userId = $user instanceof AdmUser ? $user->id : $user;
+        $userId = $user instanceof User ? $user->id : $user;
         $barang->loadMissing(['brand', 'uom', 'subcategory']);
 
         $previousState = [
@@ -133,9 +133,9 @@ class InventoryLogService
     /**
      * Log LOT creation as inbound stock (stock_in).
      */
-    public function logLotCreated(Lot $lot, AdmUser|int $user, ?string $note = null): InventoryLog
+    public function logLotCreated(Lot $lot, User|int $user, ?string $note = null): InventoryLog
     {
-        $userId = $user instanceof AdmUser ? $user->id : $user;
+        $userId = $user instanceof User ? $user->id : $user;
         $lot->loadMissing(['barang.uom', 'vendor', 'location', 'project']);
 
         $quantity = (int) ($lot->initial_quantity ?? $lot->current_quantity ?? 0);
@@ -174,9 +174,9 @@ class InventoryLogService
     /**
      * Log LOT update, only if tracked attributes actually changed.
      */
-    public function logLotUpdated(Lot $lot, array $originalAttributes, AdmUser|int $user, ?string $note = null): ?InventoryLog
+    public function logLotUpdated(Lot $lot, array $originalAttributes, User|int $user, ?string $note = null): ?InventoryLog
     {
-        $userId = $user instanceof AdmUser ? $user->id : $user;
+        $userId = $user instanceof User ? $user->id : $user;
 
         $trackedFields = [
             'organizer_id',
@@ -226,9 +226,9 @@ class InventoryLogService
     /**
      * Prepare existing LOT logs for safe deletion (unlinking foreign keys) and log the deletion event.
      */
-    public function prepareAndLogLotDeleted(Lot $lot, AdmUser|int $user, ?string $note = null): InventoryLog
+    public function prepareAndLogLotDeleted(Lot $lot, User|int $user, ?string $note = null): InventoryLog
     {
-        $userId = $user instanceof AdmUser ? $user->id : $user;
+        $userId = $user instanceof User ? $user->id : $user;
         $lot->loadMissing(['barang', 'vendor', 'location']);
 
         $previousState = [
@@ -269,13 +269,13 @@ class InventoryLogService
         int $deductQty,
         int $prevQty,
         int $newQty,
-        AdmUser|int $user,
+        User|int $user,
         string $utilization,
         ?string $destinationName,
         ?string $reasonNote,
         \Carbon\CarbonInterface|\DateTimeInterface|string|null $createdAt = null
     ): InventoryLog {
-        $userId = $user instanceof AdmUser ? $user->id : $user;
+        $userId = $user instanceof User ? $user->id : $user;
         $utilizationLabel = ucfirst(strtolower($utilization));
         $trimmedReason = trim($reasonNote ?? '');
         $catatan = !empty($trimmedReason) ? "\"{$trimmedReason}\"" : '"-"';

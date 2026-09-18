@@ -2,7 +2,6 @@
 
 namespace App\Actions\Request;
 
-use App\Models\AdmUser;
 use App\Models\HrdOrgchart;
 use App\Models\Inventory\Barang;
 use App\Models\Inventory\Lot;
@@ -11,6 +10,7 @@ use App\Models\Request\RequestFulfillment;
 use App\Models\Request\RequestItem;
 use App\Models\Request\RequestStatusLog;
 use App\Models\TbProject;
+use App\Models\User;
 use App\Services\InventoryLogService;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
@@ -28,8 +28,8 @@ class ProcessConsumableManualRequest
     /**
      * Execute manual consumable deduction transaction.
      *
-     * @param AdmUser $admin
-     * @param AdmUser $requester
+     * @param User $admin
+     * @param User $requester
      * @param Barang $barang
      * @param array<array{lot: Lot, quantity: int}> $allocations
      * @param int $totalQty
@@ -40,8 +40,8 @@ class ProcessConsumableManualRequest
      * @return SmartRequest
      */
     public function execute(
-        AdmUser $admin,
-        AdmUser $requester,
+        User $admin,
+        User $requester,
         Barang $barang,
         array $allocations,
         int $totalQty,
@@ -159,6 +159,9 @@ class ProcessConsumableManualRequest
             'note' => "Pengeluaran stok habis pakai dicatat secara manual oleh Admin untuk {$requester->name}.",
             'created_at' => $dateObj,
         ]);
+
+        // 6. Check and notify admins if stock dropped below threshold
+        app(\App\Services\NotificationService::class)->checkAndNotifyLowStock($barang);
 
         return $smartRequest;
     }

@@ -123,4 +123,10 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    'redirect' => [
+        'portal' => env('PORTAL_URL', env('RE_PORTAL_URL', 'https://portal.ptre.co.id')),
+    ],
+
+    'redirect_url' => env('APP_REDIRECT_URL', env('PORTAL_URL', env('RE_PORTAL_URL', 'https://portal.ptre.co.id'))),
+
 ];

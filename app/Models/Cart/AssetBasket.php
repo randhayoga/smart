@@ -2,7 +2,7 @@
 
 namespace App\Models\Cart;
 
-use App\Models\AdmUser;
+use App\Models\User;
 use App\Models\Inventory\Barang;
 use App\Models\Master\Subcategory;
 use Illuminate\Database\Eloquent\Model;
@@ -28,7 +28,7 @@ class AssetBasket extends Model
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(AdmUser::class);
+        return $this->belongsTo(User::class);
     }
 
     public function subcategory(): BelongsTo

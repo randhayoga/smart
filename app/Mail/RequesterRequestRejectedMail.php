@@ -2,8 +2,8 @@
 
 namespace App\Mail;
 
-use App\Models\AdmUser;
 use App\Models\Request\Request as SmartRequest;
+use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
@@ -18,7 +18,7 @@ class RequesterRequestRejectedMail extends Mailable
     use Queueable, SerializesModels;
 
     public SmartRequest $smartRequest;
-    public AdmUser $manager;
+    public User $manager;
     public string $type;
     public string $reason;
     public string $detailUrl;
@@ -33,10 +33,10 @@ class RequesterRequestRejectedMail extends Mailable
      * Create a new message instance.
      *
      * @param SmartRequest $request
-     * @param AdmUser $manager
+     * @param User $manager
      * @param string|null $reason
      */
-    public function __construct(SmartRequest $request, AdmUser $manager, ?string $reason = null)
+    public function __construct(SmartRequest $request, User $manager, ?string $reason = null)
     {
         $this->smartRequest = $request->loadMissing([
             'user',

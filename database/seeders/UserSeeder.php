@@ -3,10 +3,10 @@
 namespace Database\Seeders;
 
 use App\Models\AdmUser;
-use App\Models\HrdEmployee;
+use App\Models\User;
 use App\Models\HrdOrgchart;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 
 class UserSeeder extends Seeder
 {
@@ -44,10 +44,18 @@ class UserSeeder extends Seeder
     {
         $allFakeUsernames = array_values(array_unique(array_merge(self::FAKE_USERNAMES, self::LEGACY_FAKE_USERNAMES)));
 
-        // 1. Safe cleanup: remove only fake records from external databases
-        AdmUser::whereIn('username', $allFakeUsernames)->delete();
-        HrdEmployee::whereIn('employee_id', $allFakeUsernames)->delete();
+        // 1. Safe cleanup: remove fake records from USER_HRIS and legacy new_portal
+        AdmUser::whereIn('login_name', $allFakeUsernames)
+            ->orWhereIn('employee_id', $allFakeUsernames)
+            ->delete();
+        User::whereIn('employee_id', $allFakeUsernames)->delete();
         HrdOrgchart::whereIn('org_code', self::FAKE_ORG_CODES)->delete();
+
+        try {
+            DB::connection('new_portal')->table('users')->whereIn('username', $allFakeUsernames)->delete();
+        } catch (\Throwable $e) {
+            // Silently ignore if new_portal is unreachable in the current environment
+        }
 
         // 2. Create the dedicated fake test department in USER_HRIS
         $org = HrdOrgchart::create([
@@ -55,60 +63,60 @@ class UserSeeder extends Seeder
             'org_name' => 'Departemen Fasilitas Uji Coba',
         ]);
 
-        // 3. Seed fake employees in USER_HRIS and corresponding users in new_portal
-        $adminEmp = HrdEmployee::create([
-            'employee_id' => '999998',
-            'orgchart_id' => $org->id,
-            'employee_name' => 'Mas Mas Aset',
-            'email' => 'admin@example.com',
-            'active' => true,
-        ]);
-        AdmUser::create([
-            'username' => '999998',
-            'name' => 'Mas Mas Aset',
-            'password' => Hash::make('IfScFS?25#*'),
-        ]);
+        // 3. Seed fake employees in USER_HRIS (hrd_employee) and credentials in USER_HRIS (adm_user)
+        $users = [
+            [
+                'employee_id' => '999998',
+                'name' => 'Mas Mas Aset',
+                'email' => 'admin@example.com',
+                'password' => 'IfScFS?25#*',
+            ],
+            [
+                'employee_id' => '999997',
+                'name' => 'Karyawan Teladan',
+                'email' => 'user@example.com',
+                'password' => 'IfSIcT?25*#!',
+            ],
+            [
+                'employee_id' => '999996',
+                'name' => 'Dep Manajer',
+                'email' => 'tamiyi7651@hebase.com',
+                'password' => 'IfSerVicEs?25#!*',
+            ],
+            [
+                'employee_id' => '999995',
+                'name' => 'Proyek Manajer',
+                'email' => 'pm@example.com',
+                'password' => 'IfSPM?25#!*',
+            ],
+        ];
 
-        HrdEmployee::create([
-            'employee_id' => '999997',
-            'orgchart_id' => $org->id,
-            'employee_name' => 'Karyawan Teladan',
-            'email' => 'user@example.com',
-            'active' => true,
-        ]);
-        AdmUser::create([
-            'username' => '999997',
-            'name' => 'Karyawan Teladan',
-            'password' => Hash::make('IfSIcT?25*#!'),
-        ]);
+        $depEmp = null;
+        foreach ($users as $userData) {
+            $emp = User::create([
+                'employee_id' => $userData['employee_id'],
+                'orgchart_id' => $org->id,
+                'employee_name' => $userData['name'],
+                'email' => $userData['email'],
+                'active' => true,
+            ]);
 
-        $depEmp = HrdEmployee::create([
-            'employee_id' => '999996',
-            'orgchart_id' => $org->id,
-            'employee_name' => 'Dep Manajer',
-            'email' => 'tamiyi7651@hebase.com',
-            'active' => true,
-        ]);
-        AdmUser::create([
-            'username' => '999996',
-            'name' => 'Dep Manajer',
-            'password' => Hash::make('IfSerVicEs?25#!*'),
-        ]);
+            AdmUser::create([
+                'login_name' => $userData['employee_id'],
+                'employee_id' => $userData['employee_id'],
+                'name' => $userData['name'],
+                'password' => md5($userData['password']),
+                'active' => true,
+            ]);
 
-        $pmEmp = HrdEmployee::create([
-            'employee_id' => '999995',
-            'orgchart_id' => $org->id,
-            'employee_name' => 'Proyek Manajer',
-            'email' => 'pm@example.com',
-            'active' => true,
-        ]);
-        AdmUser::create([
-            'username' => '999995',
-            'name' => 'Proyek Manajer',
-            'password' => Hash::make('IfSPM?25#!*'),
-        ]);
+            if ($userData['employee_id'] === '999996') {
+                $depEmp = $emp;
+            }
+        }
 
         // 4. Designate Dep Manajer (999996) as manager of TEST-DEPT
-        $org->update(['employee_id' => $depEmp->id]);
+        if ($depEmp) {
+            $org->update(['employee_id' => $depEmp->id]);
+        }
     }
 }

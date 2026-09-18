@@ -2,10 +2,10 @@
 
 namespace Database\Factories\Inventory;
 
-use App\Models\AdmUser;
 use App\Models\Inventory\Barang;
 use App\Models\Inventory\InventoryLog;
 use App\Models\Inventory\Lot;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -21,7 +21,7 @@ class InventoryLogFactory extends Factory
             'barang_id' => Barang::factory(),
             'lot_id' => null,
             'unit_id' => null,
-            'user_id' => AdmUser::factory(),
+            'user_id' => User::factory(),
             'action_type' => 'create',
             'quantity_change' => 0,
             'previous_state' => null,

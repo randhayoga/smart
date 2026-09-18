@@ -111,11 +111,11 @@ class TbAssignProject extends Model
 
     /**
      * The user assigned to this project.
-     * ADM_USER ||--o{ TB_ASSIGN_PROJECT : "assigned to"
+     * USER ||--o{ TB_ASSIGN_PROJECT : "assigned to"
      */
-    public function admUser(): BelongsTo
+    public function user(): BelongsTo
     {
-        return $this->belongsTo(AdmUser::class, 'NPK', 'username');
+        return $this->belongsTo(User::class, 'npk', 'employee_id');
     }
 
     /**

@@ -2,7 +2,7 @@
 
 namespace App\Models\Request;
 
-use App\Models\AdmUser;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -29,6 +29,6 @@ class RequestAdminConfirmation extends Model
 
     public function admin(): BelongsTo
     {
-        return $this->belongsTo(AdmUser::class, 'admin_id');
+        return $this->belongsTo(User::class, 'admin_id');
     }
 }

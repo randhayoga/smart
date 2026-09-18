@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Models\AdmUser;
+use App\Models\User;
 use App\Models\HrdEmployee;
 use App\Models\HrdOrgchart;
 use App\Models\Inventory\Barang;
@@ -42,10 +42,9 @@ class AdminEmployeeControllerTest extends TestCase
         parent::tearDown();
     }
 
-    private function createAdmin(): AdmUser
+    private function createAdmin(): User
     {
-        $employee = HrdEmployee::factory()->create(['employee_id' => '252525']);
-        return AdmUser::factory()->create(['employee_id' => $employee->employee_id]);
+        return User::factory()->create(['employee_id' => '252525']);
     }
 
     private function createDepartment(string $name = 'Information Technology'): HrdOrgchart
@@ -57,26 +56,21 @@ class AdminEmployeeControllerTest extends TestCase
         ]);
     }
 
-    private function createEmployee(string $name, string $employeeId, ?HrdOrgchart $org = null): AdmUser
+    private function createEmployee(string $name, string $employeeId, ?HrdOrgchart $org = null): User
     {
         $org = $org ?? $this->createDepartment();
-        $hrdEmployee = HrdEmployee::create([
+        return User::create([
             'orgchart_id' => $org->id,
             'employee_id' => $employeeId,
             'employee_name' => $name,
             'email' => strtolower(str_replace(' ', '.', $name)) . rand(10, 99) . '@example.com',
             'active' => true,
         ]);
-
-        return AdmUser::factory()->create([
-            'employee_id' => $hrdEmployee->employee_id,
-            'name' => $name,
-        ]);
     }
 
-    private function createRequest(AdmUser $user, string $status = 'borrow'): SmartRequest
+    private function createRequest(User $user, string $status = 'borrow'): SmartRequest
     {
-        $admin = AdmUser::where('employee_id', '252525')->first() ?? $this->createAdmin();
+        $admin = User::where('employee_id', '252525')->first() ?? $this->createAdmin();
         $reqNum = 'REQ-' . rand(1000, 9999);
         return SmartRequest::create([
             'request_number' => $reqNum,

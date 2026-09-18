@@ -5,9 +5,9 @@ namespace App\Http\Controllers\Smart\Admin\ManajemenStok;
 use App\Actions\Request\ProcessConsumableManualRequest;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Smart\ConsumableManualRequestRequest;
-use App\Models\AdmUser;
 use App\Models\Inventory\Barang;
 use App\Models\Inventory\Lot;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 
@@ -66,7 +66,7 @@ class BarangManualRequestController extends Controller
                 $remaining -= $deductFromLot;
             }
 
-            $user = AdmUser::with('hrdEmployee.orgchart')->findOrFail($validated['user_id']);
+            $user = User::with('orgchart')->findOrFail($validated['user_id']);
             $processAction->execute(
                 admin: $request->user(),
                 requester: $user,
@@ -74,7 +74,7 @@ class BarangManualRequestController extends Controller
                 allocations: $allocations,
                 totalQty: $requestedQty,
                 utilization: $validated['utilization'],
-                orgId: $validated['utilization'] === 'corporate' ? ($validated['org_id'] ?? $user->hrdEmployee?->orgchart_id) : null,
+                orgId: $validated['utilization'] === 'corporate' ? ($validated['org_id'] ?? $user->orgchart_id) : null,
                 projectId: $validated['utilization'] === 'project' ? $validated['project_id'] : null,
                 note: $validated['note'] ?? null,
                 requestDate: $validated['request_date'] ?? null

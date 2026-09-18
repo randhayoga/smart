@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Models\AdmUser;
+use App\Models\User;
 use App\Models\HrdEmployee;
 use App\Models\HrdOrgchart;
 use App\Models\TbAssignProject;
@@ -17,14 +17,14 @@ class ConsumableRequestOptionControllerTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function createAdmin(): AdmUser
+    private function createAdmin(): User
     {
-        return AdmUser::factory()->create();
+        return User::factory()->create();
     }
 
-    private function createRequester(): AdmUser
+    private function createRequester(): User
     {
-        return AdmUser::factory()->create([
+        return User::factory()->create([
             'name' => 'Budi Santoso',
         ]);
     }

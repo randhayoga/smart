@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Models\AdmUser;
+use App\Models\User;
 use App\Models\HrdEmployee;
 use App\Models\HrdOrgchart;
 use App\Models\Inventory\Barang;
@@ -50,8 +50,8 @@ class NotificationFrameworkTest extends TestCase
 
     public function test_notification_service_send_to_user(): void
     {
-        /** @var AdmUser $user */
-        $user = AdmUser::factory()->create();
+        /** @var User $user */
+        $user = User::factory()->create();
         $service = app(NotificationService::class);
 
         $service->sendToUser(
@@ -73,8 +73,8 @@ class NotificationFrameworkTest extends TestCase
     public function test_notification_service_send_to_role(): void
     {
         // 1. Setup an IFS Manager
-        /** @var AdmUser $ifsManager */
-        $ifsManager = AdmUser::factory()->create();
+        /** @var User $ifsManager */
+        $ifsManager = User::factory()->create();
         $ifsEmployee = HrdEmployee::where('employee_id', $ifsManager->employee_id)->first();
         $ifsOrg = HrdOrgchart::find($ifsEmployee->orgchart_id);
         $ifsOrg->update([
@@ -84,8 +84,8 @@ class NotificationFrameworkTest extends TestCase
         $ifsManager->refresh();
 
         // 2. Setup a standard user
-        /** @var AdmUser $standardUser */
-        $standardUser = AdmUser::factory()->create();
+        /** @var User $standardUser */
+        $standardUser = User::factory()->create();
 
         // Send role-based notification to IFS Manager
         $service = app(NotificationService::class);
@@ -108,8 +108,8 @@ class NotificationFrameworkTest extends TestCase
 
     public function test_notification_controller_api_endpoints(): void
     {
-        /** @var AdmUser $user */
-        $user = AdmUser::factory()->create();
+        /** @var User $user */
+        $user = User::factory()->create();
         $service = app(NotificationService::class);
 
         $service->sendToUser($user, 'Notif 1', 'Pesan 1', 'info');
@@ -143,13 +143,13 @@ class NotificationFrameworkTest extends TestCase
     public function test_consumable_low_stock_notification_sent_to_admins_when_stock_at_or_below_threshold(): void
     {
         $employee = HrdEmployee::factory()->create(['employee_id' => '252525']);
-        /** @var AdmUser $admin */
-        $admin = AdmUser::factory()->create([
+        /** @var User $admin */
+        $admin = User::factory()->create([
             'employee_id' => $employee->employee_id,
         ]);
 
-        /** @var AdmUser $standardUser */
-        $standardUser = AdmUser::factory()->create();
+        /** @var User $standardUser */
+        $standardUser = User::factory()->create();
 
         $category = Category::factory()->create(['is_consumable' => true]);
         $subcategory = Subcategory::factory()->create(['category_id' => $category->id]);
@@ -189,8 +189,8 @@ class NotificationFrameworkTest extends TestCase
     public function test_consumable_low_stock_notification_not_sent_when_stock_above_threshold(): void
     {
         $employee = HrdEmployee::factory()->create(['employee_id' => '252525']);
-        /** @var AdmUser $admin */
-        $admin = AdmUser::factory()->create([
+        /** @var User $admin */
+        $admin = User::factory()->create([
             'employee_id' => $employee->employee_id,
         ]);
 
@@ -216,8 +216,8 @@ class NotificationFrameworkTest extends TestCase
     public function test_check_all_consumable_low_stock(): void
     {
         $employee = HrdEmployee::factory()->create(['employee_id' => '252525']);
-        /** @var AdmUser $admin */
-        $admin = AdmUser::factory()->create([
+        /** @var User $admin */
+        $admin = User::factory()->create([
             'employee_id' => $employee->employee_id,
         ]);
 
@@ -246,8 +246,8 @@ class NotificationFrameworkTest extends TestCase
     public function test_manually_updating_current_quantity_triggers_low_stock_notification(): void
     {
         $employee = HrdEmployee::factory()->create(['employee_id' => '252525']);
-        /** @var AdmUser $admin */
-        $admin = AdmUser::factory()->create([
+        /** @var User $admin */
+        $admin = User::factory()->create([
             'employee_id' => $employee->employee_id,
         ]);
 
@@ -267,17 +267,16 @@ class NotificationFrameworkTest extends TestCase
 
         $this->assertCount(0, $admin->notifications);
 
-        // Manually update current_quantity from 20 to 5 (below threshold 10)
-        $response = $this->actingAs($admin)->put(route('smart.inventory.lots.update', $lot), [
-            'number' => $lot->number,
-            'barang_id' => $barang->id,
-            'organizer_id' => $lot->organizer_id,
-            'vendor_id' => $lot->vendor_id,
-            'location_id' => $lot->location_id,
-            'po_number' => $lot->po_number,
-            'date_of_receipt' => $lot->date_of_receipt->format('Y-m-d'),
-            'current_quantity' => 5,
-            'burden' => 'Corporate',
+        // Deduct consumable quantity from 20 to 5 (below threshold 10) via manual request
+        $requester = User::factory()->create();
+        $orgchart = HrdOrgchart::factory()->create();
+        $response = $this->actingAs($admin)->post(route('smart.inventory.lots.manual-request', $lot), [
+            'user_id' => $requester->id,
+            'request_date' => now()->format('Y-m-d'),
+            'utilization' => 'corporate',
+            'org_id' => $orgchart->id,
+            'quantity' => 15,
+            'note' => 'Manual deduction',
         ]);
 
         $response->assertRedirect();
@@ -296,8 +295,8 @@ class NotificationFrameworkTest extends TestCase
     public function test_notify_ifs_manager_when_asset_switched_to_pending_dm(): void
     {
         Storage::fake('local');
-        /** @var AdmUser $ifsManager */
-        $ifsManager = AdmUser::factory()->create();
+        /** @var User $ifsManager */
+        $ifsManager = User::factory()->create();
         $ifsEmployee = HrdEmployee::where('employee_id', $ifsManager->employee_id)->first();
         $ifsOrg = HrdOrgchart::find($ifsEmployee->orgchart_id);
         $ifsOrg->update([
@@ -311,9 +310,9 @@ class NotificationFrameworkTest extends TestCase
         $lot = Lot::factory()->create(['barang_id' => $barang->id]);
         $unit = Unit::factory()->create(['lot_id' => $lot->id, 'number' => 'AST-DEL-001', 'status' => 'Pending:BoD/BoC']);
 
-        /** @var AdmUser $admin */
+        /** @var User $admin */
         $adminEmployee = HrdEmployee::factory()->create(['employee_id' => '252525']);
-        $admin = AdmUser::factory()->create(['employee_id' => $adminEmployee->employee_id]);
+        $admin = User::factory()->create(['employee_id' => $adminEmployee->employee_id]);
 
         $file = UploadedFile::fake()->create('bod_approval.pdf', 100, 'application/pdf');
 
@@ -338,12 +337,12 @@ class NotificationFrameworkTest extends TestCase
 
     public function test_notify_admin_when_dm_ifs_approves_asset_status(): void
     {
-        /** @var AdmUser $admin */
+        /** @var User $admin */
         $adminEmployee = HrdEmployee::factory()->create(['employee_id' => '252525']);
-        $admin = AdmUser::factory()->create(['employee_id' => $adminEmployee->employee_id]);
+        $admin = User::factory()->create(['employee_id' => $adminEmployee->employee_id]);
 
-        /** @var AdmUser $ifsManager */
-        $ifsManager = AdmUser::factory()->create();
+        /** @var User $ifsManager */
+        $ifsManager = User::factory()->create();
         $ifsEmployee = HrdEmployee::where('employee_id', $ifsManager->employee_id)->first();
         $ifsOrg = HrdOrgchart::find($ifsEmployee->orgchart_id);
         $ifsOrg->update([
@@ -388,12 +387,12 @@ class NotificationFrameworkTest extends TestCase
 
     public function test_notify_admin_when_dm_ifs_rejects_asset_status(): void
     {
-        /** @var AdmUser $admin */
+        /** @var User $admin */
         $adminEmployee = HrdEmployee::factory()->create(['employee_id' => '252525']);
-        $admin = AdmUser::factory()->create(['employee_id' => $adminEmployee->employee_id]);
+        $admin = User::factory()->create(['employee_id' => $adminEmployee->employee_id]);
 
-        /** @var AdmUser $ifsManager */
-        $ifsManager = AdmUser::factory()->create();
+        /** @var User $ifsManager */
+        $ifsManager = User::factory()->create();
         $ifsEmployee = HrdEmployee::where('employee_id', $ifsManager->employee_id)->first();
         $ifsOrg = HrdOrgchart::find($ifsEmployee->orgchart_id);
         $ifsOrg->update([

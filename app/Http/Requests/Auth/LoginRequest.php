@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
-use App\Models\AdmUser;
+use App\Models\User;
 
 /**
  * Login Request validating user credentials, enforcing rate limiting, and handling authentication.

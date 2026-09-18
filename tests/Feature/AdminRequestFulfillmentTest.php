@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Models\AdmUser;
+use App\Models\User;
 use App\Models\HrdEmployee;
 use App\Models\HrdOrgchart;
 use App\Models\Inventory\Barang;
@@ -37,20 +37,20 @@ class AdminRequestFulfillmentTest extends TestCase
         parent::tearDown();
     }
 
-    private function createAdmin(): AdmUser
+    private function createAdmin(): User
     {
         $employee = HrdEmployee::factory()->create(['employee_id' => '252525']);
-        return AdmUser::factory()->create(['employee_id' => $employee->employee_id]);
+        return User::factory()->create(['employee_id' => $employee->employee_id]);
     }
 
-    private function createRequester(): AdmUser
+    private function createRequester(): User
     {
-        return AdmUser::factory()->create(['name' => 'John Doe Requester']);
+        return User::factory()->create(['name' => 'John Doe Requester']);
     }
 
-    private function createManager(): AdmUser
+    private function createManager(): User
     {
-        $managerUser = AdmUser::factory()->create(['name' => 'Jane Doe Manager']);
+        $managerUser = User::factory()->create(['name' => 'Jane Doe Manager']);
         $employee = HrdEmployee::where('employee_id', $managerUser->employee_id)->first();
         $orgchart = HrdOrgchart::find($employee->orgchart_id);
         $orgchart->update(['employee_id' => $managerUser->employee_id]);
@@ -73,8 +73,8 @@ class AdminRequestFulfillmentTest extends TestCase
         ]);
 
         // 1. Unauthenticated gets redirected
-        $this->get(route('smart.fulfillment.index'))->assertRedirectContains('/auth/login');
-        $this->get(route('smart.partial.index'))->assertRedirectContains('/auth/login');
+        $this->get(route('smart.fulfillment.index'))->assertRedirectContains(route('login'));
+        $this->get(route('smart.partial.index'))->assertRedirectContains(route('login'));
 
         // 2. Regular user gets 403
         $this->actingAs($user)->get(route('smart.fulfillment.index'))->assertStatus(403);
@@ -885,7 +885,7 @@ class AdminRequestFulfillmentTest extends TestCase
     {
         $admin = $this->createAdmin();
         $user1 = $this->createRequester();
-        $user2 = AdmUser::factory()->create(['name' => 'VIP Requester']);
+        $user2 = User::factory()->create(['name' => 'VIP Requester']);
         $manager = $this->createManager();
 
         $cat = Category::factory()->create(['is_consumable' => false]);
@@ -955,7 +955,7 @@ class AdminRequestFulfillmentTest extends TestCase
     {
         $admin = $this->createAdmin();
         $user1 = $this->createRequester();
-        $user2 = AdmUser::factory()->create(['name' => 'VIP Requester']);
+        $user2 = User::factory()->create(['name' => 'VIP Requester']);
         $manager = $this->createManager();
 
         $cat = Category::factory()->create(['is_consumable' => false]);
@@ -1032,7 +1032,7 @@ class AdminRequestFulfillmentTest extends TestCase
     {
         $admin = $this->createAdmin();
         $user1 = $this->createRequester();
-        $user2 = AdmUser::factory()->create(['name' => 'VIP Requester']);
+        $user2 = User::factory()->create(['name' => 'VIP Requester']);
         $manager = $this->createManager();
 
         $cat = Category::factory()->create(['is_consumable' => true]);
@@ -1103,7 +1103,7 @@ class AdminRequestFulfillmentTest extends TestCase
     {
         $admin = $this->createAdmin();
         $user1 = $this->createRequester();
-        $user2 = AdmUser::factory()->create(['name' => 'VIP Requester']);
+        $user2 = User::factory()->create(['name' => 'VIP Requester']);
         $manager = $this->createManager();
 
         $cat = Category::factory()->create(['is_consumable' => true]);

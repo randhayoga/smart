@@ -2,8 +2,8 @@
 
 namespace App\Mail;
 
-use App\Models\AdmUser;
 use App\Models\Request\Request as SmartRequest;
+use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
@@ -19,7 +19,7 @@ class ManagerRequestApprovalMail extends Mailable
     use Queueable, SerializesModels;
 
     public SmartRequest $smartRequest;
-    public AdmUser $manager;
+    public User $manager;
     public string $type;
     public string $actionUrl;
     public string $loginUrl;
@@ -34,10 +34,10 @@ class ManagerRequestApprovalMail extends Mailable
      * Create a new message instance.
      *
      * @param SmartRequest $request
-     * @param AdmUser $manager
+     * @param User $manager
      * @param string $type 'Peminjaman' | 'Permintaan'
      */
-    public function __construct(SmartRequest $request, AdmUser $manager, string $type = 'Permintaan')
+    public function __construct(SmartRequest $request, User $manager, string $type = 'Permintaan')
     {
         $this->smartRequest = $request->loadMissing([
             'user',

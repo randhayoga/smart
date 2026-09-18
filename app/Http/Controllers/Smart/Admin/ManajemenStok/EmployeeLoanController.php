@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Smart\Admin\ManajemenStok;
 
 use App\Http\Controllers\Controller;
-use App\Models\AdmUser;
 use App\Models\HrdEmployee;
 use App\Models\Request\RequestFulfillment;
 use Carbon\Carbon;
@@ -20,7 +19,7 @@ class EmployeeLoanController extends Controller
      */
     public function index(HrdEmployee $employee): JsonResponse
     {
-        $userId = $employee->admUser?->id ?? AdmUser::where('username', $employee->employee_id)->value('id');
+        $userId = $employee->id;
 
         if (!$userId) {
             return response()->json([

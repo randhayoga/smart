@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Inventory\Barang;
-use App\Models\AdmUser as User;
+use App\Models\User;
 use App\Models\Master\Category;
 use App\Models\Master\Subcategory;
 use Illuminate\Foundation\Testing\RefreshDatabase;

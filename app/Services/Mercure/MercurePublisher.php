@@ -2,7 +2,7 @@
 
 namespace App\Services\Mercure;
 
-use App\Models\AdmUser;
+use App\Models\User;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -24,13 +24,13 @@ class MercurePublisher
     /**
      * Publish an event to a user's private notification topic.
      *
-     * @param AdmUser|int|string $user
+     * @param User|int|string $user
      * @param array<string, mixed> $data
      * @return bool
      */
-    public function publishToUser(AdmUser|int|string $user, array $data): bool
+    public function publishToUser(User|int|string $user, array $data): bool
     {
-        $userId = $user instanceof AdmUser ? $user->id : $user;
+        $userId = $user instanceof User ? $user->id : $user;
         $topic = $this->getUserTopic($userId);
 
         return $this->publish(
@@ -43,7 +43,7 @@ class MercurePublisher
     /**
      * Batch publish an event to multiple users' private topics in a single request.
      *
-     * @param iterable<AdmUser|int|string> $users
+     * @param iterable<User|int|string> $users
      * @param array<string, mixed> $data
      * @param bool $private
      * @return bool
@@ -52,7 +52,7 @@ class MercurePublisher
     {
         $topics = [];
         foreach ($users as $user) {
-            $userId = $user instanceof AdmUser ? $user->id : $user;
+            $userId = $user instanceof User ? $user->id : $user;
             $topics[] = $this->getUserTopic($userId);
         }
 

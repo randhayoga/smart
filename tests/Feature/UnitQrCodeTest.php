@@ -5,7 +5,7 @@ namespace Tests\Feature;
 use App\Models\Inventory\Unit;
 use App\Models\Inventory\Lot;
 use App\Models\HrdEmployee;
-use App\Models\AdmUser as User;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 

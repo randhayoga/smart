@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\AdmUser;
 use App\Models\Cart\AssetBasket;
 use App\Models\Cart\ConsumableBasket;
 use App\Models\HrdOrgchart;
@@ -11,6 +10,7 @@ use App\Models\Request\RequestItem;
 use App\Models\Request\RequestStatusLog;
 use App\Models\TbAssignProject;
 use App\Models\TbProject;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -27,7 +27,7 @@ class RequestSubmissionService
     /**
      * Submit a consumable request or asset borrow request atomically.
      *
-     * @param AdmUser $user
+     * @param User $user
      * @param array{
      *     items: array<int, array{id: int}>,
      *     pemanfaatan: string,
@@ -41,7 +41,7 @@ class RequestSubmissionService
      * @return SmartRequest
      * @throws ValidationException
      */
-    public function submit(AdmUser $user, array $data, string $type = 'consumable'): SmartRequest
+    public function submit(User $user, array $data, string $type = 'consumable'): SmartRequest
     {
         $managerUser = $this->resolveApprover($user, $data);
 
@@ -117,12 +117,12 @@ class RequestSubmissionService
      * Resolve the designated approver for the given request context.
      * Enforces project assignment authorization and eliminates arbitrary fallback approvers.
      *
-     * @param AdmUser $user
+     * @param User $user
      * @param array<string, mixed> $data
-     * @return AdmUser
+     * @return User
      * @throws ValidationException
      */
-    public function resolveApprover(AdmUser $user, array $data): AdmUser
+    public function resolveApprover(User $user, array $data): User
     {
         $utilization = $data['pemanfaatan'] ?? '';
 
@@ -142,9 +142,9 @@ class RequestSubmissionService
 
             $managerUser = null;
             if ($orgchart->manager) {
-                $managerUser = $orgchart->manager->admUser;
+                $managerUser = $orgchart->manager;
             } elseif ($orgchart->employee_id) {
-                $managerUser = AdmUser::where('username', (string)$orgchart->employee_id)->first();
+                $managerUser = User::where('employee_id', (string)$orgchart->employee_id)->first();
             }
 
             if (!$managerUser) {
@@ -190,7 +190,7 @@ class RequestSubmissionService
 
             $managerUser = null;
             if ($assignment && $assignment->npk) {
-                $managerUser = AdmUser::where('username', (string) $assignment->npk)->first();
+                $managerUser = User::where('employee_id', (string) $assignment->npk)->first();
             }
 
             if (!$managerUser) {

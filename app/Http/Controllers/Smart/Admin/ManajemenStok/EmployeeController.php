@@ -51,19 +51,19 @@ class EmployeeController extends Controller
             ->select('r.user_id', DB::raw('COUNT(DISTINCT rf.unit_id) as total_assets'))
             ->pluck('total_assets', 'r.user_id');
 
-        $employees = HrdEmployee::with(['orgchart', 'admUser'])
+        $employees = HrdEmployee::with(['orgchart'])
             ->orderBy('employee_id', 'asc')
             ->get()
             ->map(function ($emp) use ($activeAssetCounts) {
-                $npk = $emp->employee_id ?? $emp->admUser?->employee_id ?? '-';
-                $userId = $emp->admUser?->id;
+                $npk = $emp->employee_id ?? '-';
+                $userId = $emp->id;
                 return [
                     'id' => $emp->id,
                     'user_id' => $userId,
                     'employee_id' => $npk,
-                    'name' => $emp->employee_name ?? $emp->admUser?->name ?? '-',
+                    'name' => $emp->employee_name ?? '-',
                     'department' => $emp->orgchart?->org_name ?? '-',
-                    'active_assets_count' => (int) ($userId ? ($activeAssetCounts[$userId] ?? 0) : 0),
+                    'active_assets_count' => (int) ($activeAssetCounts[$userId] ?? 0),
                 ];
             });
 

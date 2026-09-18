@@ -2,9 +2,9 @@
 
 namespace App\Models\Request;
 
-use App\Models\AdmUser;
 use App\Models\HrdOrgchart;
 use App\Models\TbProject;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -66,12 +66,12 @@ class Request extends Model
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(AdmUser::class, 'user_id');
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function approver(): BelongsTo
     {
-        return $this->belongsTo(AdmUser::class, 'approver_id');
+        return $this->belongsTo(User::class, 'approver_id');
     }
 
     public function department(): BelongsTo

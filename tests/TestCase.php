@@ -11,7 +11,7 @@ use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
  */
 abstract class TestCase extends BaseTestCase
 {
-    protected $connectionsToTransact = ['SMART', 'new_portal', 'user_hris', 'reportal'];
+    protected $connectionsToTransact = ['SMART', 'user_hris', 'reportal', 'portal'];
 
     protected function setUp(): void
     {

@@ -4,7 +4,7 @@ namespace Tests\Feature;
 
 use App\Mail\ManagerRequestApprovalMail;
 use App\Mail\RequesterRequestRejectedMail;
-use App\Models\AdmUser;
+use App\Models\User;
 use App\Models\HrdEmployee;
 use App\Models\HrdOrgchart;
 use App\Models\Inventory\Barang;
@@ -42,27 +42,27 @@ class ManagerRequestEmailApprovalTest extends TestCase
         parent::tearDown();
     }
 
-    private function createManager(): AdmUser
+    private function createManager(): User
     {
         $employee = HrdEmployee::factory()->create(['email' => 'manager@test.com']);
-        $manager = AdmUser::factory()->create(['employee_id' => $employee->employee_id]);
+        $manager = User::factory()->create(['employee_id' => $employee->employee_id]);
         $orgchart = HrdOrgchart::find($employee->orgchart_id);
         $orgchart->update(['employee_id' => $manager->employee_id]);
         return $manager;
     }
 
-    private function createRequester(): AdmUser
+    private function createRequester(): User
     {
-        return AdmUser::factory()->create();
+        return User::factory()->create();
     }
 
-    private function createAdmin(): AdmUser
+    private function createAdmin(): User
     {
         $employee = HrdEmployee::factory()->create(['employee_id' => '252525']);
-        return AdmUser::factory()->create(['employee_id' => $employee->employee_id]);
+        return User::factory()->create(['employee_id' => $employee->employee_id]);
     }
 
-    private function createSmartRequestRecord(AdmUser $requester, AdmUser $manager): SmartRequest
+    private function createSmartRequestRecord(User $requester, User $manager): SmartRequest
     {
         $cat = Category::factory()->create(['is_consumable' => false]);
         $sub = Subcategory::factory()->create(['category_id' => $cat->id]);

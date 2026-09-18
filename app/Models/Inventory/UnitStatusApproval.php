@@ -2,7 +2,7 @@
 
 namespace App\Models\Inventory;
 
-use App\Models\AdmUser;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -75,7 +75,7 @@ class UnitStatusApproval extends Model
      */
     public function requester(): BelongsTo
     {
-        return $this->belongsTo(AdmUser::class, 'requester_id');
+        return $this->belongsTo(User::class, 'requester_id');
     }
 
     /**
@@ -83,6 +83,6 @@ class UnitStatusApproval extends Model
      */
     public function approver(): BelongsTo
     {
-        return $this->belongsTo(AdmUser::class, 'approver_id');
+        return $this->belongsTo(User::class, 'approver_id');
     }
 }

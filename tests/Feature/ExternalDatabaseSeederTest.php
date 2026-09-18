@@ -2,12 +2,11 @@
 
 namespace Tests\Feature;
 
-use App\Models\AdmUser;
-use App\Models\HrdEmployee;
 use App\Models\HrdOrgchart;
 use App\Models\TbAssignProject;
 use App\Models\TbProject;
 use App\Models\TbRbs;
+use App\Models\User;
 use Database\Seeders\TbAssignProjectSeeder;
 use Database\Seeders\TbProjectSeeder;
 use Database\Seeders\UserSeeder;
@@ -41,17 +40,12 @@ class ExternalDatabaseSeederTest extends TestCase
             'org_code' => 'REAL-DEPT',
             'org_name' => 'Real Department That Must Not Be Touched',
         ]);
-        $realEmp = HrdEmployee::create([
+        $realEmp = User::create([
             'employee_id' => '111111',
             'orgchart_id' => $realDept->id,
             'employee_name' => 'Real Employee',
             'email' => 'real@example.com',
             'active' => true,
-        ]);
-        $realUser = AdmUser::create([
-            'username' => '111111',
-            'name' => 'Real Employee',
-            'password' => 'secret',
         ]);
 
         $this->seed(UserSeeder::class);
@@ -63,11 +57,9 @@ class ExternalDatabaseSeederTest extends TestCase
         // Real department and user must still exist untouched
         $this->assertDatabaseHas('hrd_orgchart', ['id' => $realDept->id], 'user_hris');
         $this->assertDatabaseHas('hrd_employee', ['employee_id' => '111111'], 'user_hris');
-        $this->assertDatabaseHas('users', ['username' => '111111'], 'new_portal');
 
         // Verify all 4 fake users
         foreach (UserSeeder::FAKE_USERNAMES as $username) {
-            $this->assertDatabaseHas('users', ['username' => $username], 'new_portal');
             $this->assertDatabaseHas('hrd_employee', [
                 'employee_id' => $username,
                 'orgchart_id' => $testDept->id,
@@ -75,13 +67,13 @@ class ExternalDatabaseSeederTest extends TestCase
         }
 
         // Verify roles
-        $admin = AdmUser::where('username', '999998')->first();
+        $admin = User::where('employee_id', '999998')->first();
         $this->assertEquals('admin', $admin->role);
 
-        $regular = AdmUser::where('username', '999997')->first();
+        $regular = User::where('employee_id', '999997')->first();
         $this->assertEquals('user', $regular->role);
 
-        $deptManager = AdmUser::where('username', '999996')->first();
+        $deptManager = User::where('employee_id', '999996')->first();
         $this->assertEquals('manager', $deptManager->role);
     }
 
@@ -119,7 +111,7 @@ class ExternalDatabaseSeederTest extends TestCase
         ], 'reportal');
 
         // Project Manager 999995 should now evaluate to manager role
-        $pm = AdmUser::where('username', '999995')->first();
+        $pm = User::where('employee_id', '999995')->first();
         $this->assertEquals('manager', $pm->role);
     }
 
@@ -135,17 +127,12 @@ class ExternalDatabaseSeederTest extends TestCase
             'org_code' => 'PERS-DEPT',
             'org_name' => 'Persistent Department',
         ]);
-        $realEmp = HrdEmployee::create([
+        $realEmp = User::create([
             'employee_id' => '777777',
             'orgchart_id' => $realDept->id,
             'employee_name' => 'Persistent User',
             'email' => 'persist@example.com',
             'active' => true,
-        ]);
-        $realUser = AdmUser::create([
-            'username' => '777777',
-            'name' => 'Persistent User',
-            'password' => 'secret',
         ]);
         $realProject = TbProject::create([
             'no_project' => 'PERSIST-01',
@@ -159,8 +146,7 @@ class ExternalDatabaseSeederTest extends TestCase
         $this->seed(TbAssignProjectSeeder::class);
 
         // Counts of fake entries must be exactly the expected number (no duplicates)
-        $this->assertCount(4, AdmUser::whereIn('username', UserSeeder::FAKE_USERNAMES)->get());
-        $this->assertCount(4, HrdEmployee::whereIn('employee_id', UserSeeder::FAKE_USERNAMES)->get());
+        $this->assertCount(4, User::whereIn('employee_id', UserSeeder::FAKE_USERNAMES)->get());
         $this->assertCount(1, HrdOrgchart::whereIn('org_code', UserSeeder::FAKE_ORG_CODES)->get());
         $this->assertCount(2, TbProject::whereIn('no_project', TbProjectSeeder::FAKE_PROJECT_CODES)->get());
         $this->assertCount(2, TbAssignProject::whereIn('no_project', TbProjectSeeder::FAKE_PROJECT_CODES)->get());
@@ -168,7 +154,6 @@ class ExternalDatabaseSeederTest extends TestCase
         // Persistent records must remain intact
         $this->assertDatabaseHas('hrd_orgchart', ['id' => $realDept->id], 'user_hris');
         $this->assertDatabaseHas('hrd_employee', ['employee_id' => '777777'], 'user_hris');
-        $this->assertDatabaseHas('users', ['username' => '777777'], 'new_portal');
         $this->assertDatabaseHas('tb_project', ['no_project' => 'PERSIST-01'], 'reportal');
     }
 }

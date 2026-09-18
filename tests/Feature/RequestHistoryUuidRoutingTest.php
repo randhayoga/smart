@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Models\AdmUser;
+use App\Models\User;
 use App\Models\HrdEmployee;
 use App\Models\HrdOrgchart;
 use App\Models\Request\Request as SmartRequest;
@@ -35,9 +35,9 @@ class RequestHistoryUuidRoutingTest extends TestCase
         parent::tearDown();
     }
 
-    private function createUser(): AdmUser
+    private function createUser(): User
     {
-        return AdmUser::factory()->create();
+        return User::factory()->create();
     }
 
     public function test_new_request_automatically_generates_uuid(): void

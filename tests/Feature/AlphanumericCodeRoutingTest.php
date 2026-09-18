@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Models\AdmUser;
+use App\Models\User;
 use App\Models\HrdEmployee;
 use App\Models\Inventory\Barang;
 use App\Models\Inventory\Lot;
@@ -22,10 +22,10 @@ class AlphanumericCodeRoutingTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function createAdminUser(): AdmUser
+    private function createAdminUser(): User
     {
         HrdEmployee::factory()->create(['employee_id' => '252525']);
-        return AdmUser::factory()->create(['employee_id' => '252525']);
+        return User::factory()->create(['employee_id' => '252525']);
     }
 
     public function test_barang_get_route_key_is_alphanumeric_only(): void

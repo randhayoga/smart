@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Models\AdmUser;
+use App\Models\User;
 use App\Models\HrdEmployee;
 use App\Models\HrdOrgchart;
 use App\Models\Inventory\Barang;
@@ -38,19 +38,19 @@ class UnitBorrowControllerTest extends TestCase
         parent::tearDown();
     }
 
-    private function createAdmin(): AdmUser
+    private function createAdmin(): User
     {
-        $admin = AdmUser::where('username', '255578')->first();
+        $admin = User::where('username', '255578')->first();
         if ($admin) {
             return $admin;
         }
         $employee = HrdEmployee::firstOrCreate(['employee_id' => '255578']);
-        return AdmUser::factory()->create(['employee_id' => $employee->employee_id, 'username' => '255578']);
+        return User::factory()->create(['employee_id' => $employee->employee_id, 'username' => '255578']);
     }
 
-    private function createBorrower(): AdmUser
+    private function createBorrower(): User
     {
-        $borrower = AdmUser::factory()->create([
+        $borrower = User::factory()->create([
             'name' => 'Budi Santoso',
         ]);
         $borrower->load('hrdEmployee');
@@ -218,7 +218,7 @@ class UnitBorrowControllerTest extends TestCase
         $admin = $this->createAdmin();
         $borrower1 = $this->createBorrower();
         $borrower2Org = HrdOrgchart::factory()->create(['org_name' => 'Finance', 'org_code' => 'FIN']);
-        $borrower2 = AdmUser::factory()->create([
+        $borrower2 = User::factory()->create([
             'name' => 'Siti Nurhaliza',
         ]);
         $borrower2->load('hrdEmployee');

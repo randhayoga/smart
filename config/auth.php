@@ -62,13 +62,19 @@ return [
     'providers' => [
         'users' => [
             'driver' => 'eloquent',
-            'model' => env('AUTH_MODEL', App\Models\AdmUser::class),
+            'model' => env('AUTH_MODEL', App\Models\User::class),
         ],
 
         // 'users' => [
         //     'driver' => 'database',
         //     'table' => 'users',
         // ],
+    ],
+
+    'portal_sso' => [
+        'enabled' => env('PORTAL_SSO_ENABLED', env('APP_ENV') === 'production'),
+        'portal_url' => env('PORTAL_URL', env('RE_PORTAL_URL', 'https://portal.ptre.co.id')),
+        'session_lifetime' => (int) env('SESSION_LIFETIME', 120),
     ],
 
     /*

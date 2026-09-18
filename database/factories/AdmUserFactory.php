@@ -3,9 +3,8 @@
 namespace Database\Factories;
 
 use App\Models\AdmUser;
-use App\Models\HrdEmployee;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Facades\Hash;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\AdmUser>
@@ -20,24 +19,22 @@ class AdmUserFactory extends Factory
     protected $model = AdmUser::class;
 
     /**
-     * The current password being used by the factory.
-     */
-    protected static ?string $password;
-
-    /**
      * Define the model's default state.
      *
      * @return array<string, mixed>
      */
     public function definition(): array
     {
-        $employee = HrdEmployee::factory()->create();
+        $employee = User::factory()->create();
 
         return [
-            'username' => $employee->employee_id,
+            'login_name' => $employee->employee_id,
             'name' => $employee->employee_name,
-            'email' => $employee->email,
-            'password' => static::$password ??= Hash::make('password'),
+            'password' => md5('password'),
+            'employee_id' => $employee->employee_id,
+            'active' => true,
+            'login_ldap' => 0,
+            'flag_external' => 0,
         ];
     }
 }

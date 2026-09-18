@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Mail\RequesterRequestRejectedMail;
-use App\Models\AdmUser;
+use App\Models\User;
 use App\Models\HrdOrgchart;
 use App\Models\HrdEmployee;
 use App\Models\Inventory\Barang;
@@ -41,24 +41,24 @@ class RequestApprovalTest extends TestCase
         parent::tearDown();
     }
 
-    private function createManager(): AdmUser
+    private function createManager(): User
     {
-        $managerUser = AdmUser::factory()->create();
+        $managerUser = User::factory()->create();
         $employee = HrdEmployee::where('employee_id', $managerUser->employee_id)->first();
         $orgchart = HrdOrgchart::find($employee->orgchart_id);
         $orgchart->update(['employee_id' => $managerUser->employee_id]);
         return $managerUser;
     }
 
-    private function createRequester(): AdmUser
+    private function createRequester(): User
     {
-        return AdmUser::factory()->create();
+        return User::factory()->create();
     }
 
-    private function createAdmin(): AdmUser
+    private function createAdmin(): User
     {
         $employee = HrdEmployee::factory()->create(['employee_id' => '252525']);
-        return AdmUser::factory()->create(['employee_id' => $employee->employee_id]);
+        return User::factory()->create(['employee_id' => $employee->employee_id]);
     }
 
     public function test_only_manager_can_access_request_approval_pages(): void

@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Http\Controllers\LocaleController;
-use App\Models\AdmUser;
+use App\Models\User;
 use App\Models\HrdEmployee;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -78,7 +78,7 @@ class LocaleTest extends TestCase
     public function test_404_error_page_matches_selected_locale()
     {
         HrdEmployee::factory()->create(['employee_id' => '252525']);
-        $user = AdmUser::factory()->create(['employee_id' => '252525']);
+        $user = User::factory()->create(['employee_id' => '252525']);
 
         $response = $this->actingAs($user)
             ->withSession(['locale' => 'en'])

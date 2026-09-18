@@ -2,7 +2,7 @@
 
 namespace Tests\Unit;
 
-use App\Models\AdmUser;
+use App\Models\User;
 use App\Models\Inventory\Barang;
 use App\Models\Inventory\InventoryLog;
 use App\Models\Inventory\Lot;
@@ -23,7 +23,7 @@ class InventoryLogServiceTest extends TestCase
     use DatabaseTransactions;
 
     private InventoryLogService $service;
-    private AdmUser $user;
+    private User $user;
     private Barang $barang;
 
     protected function setUp(): void
@@ -31,7 +31,7 @@ class InventoryLogServiceTest extends TestCase
         parent::setUp();
 
         $this->service = app(InventoryLogService::class);
-        $this->user = AdmUser::factory()->create();
+        $this->user = User::factory()->create();
 
         $category = Category::factory()->create(['is_consumable' => true]);
         $subcategory = Subcategory::factory()->create(['category_id' => $category->id]);

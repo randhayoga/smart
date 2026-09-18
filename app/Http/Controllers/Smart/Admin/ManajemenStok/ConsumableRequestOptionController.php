@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Smart\Admin\ManajemenStok;
 
 use App\Http\Controllers\Controller;
-use App\Models\AdmUser;
 use App\Models\HrdOrgchart;
 use App\Models\TbProject;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -23,9 +23,8 @@ class ConsumableRequestOptionController extends Controller
         $targetUserId = $request->query('user_id');
 
         if ($targetUserId) {
-            $user = AdmUser::with(['hrdEmployee.orgchart'])->find((int) $targetUserId);
-            $userOrg = $user?->hrdEmployee?->orgchart
-                ?? ($user?->hrdEmployee?->orgchart_id ? HrdOrgchart::find($user->hrdEmployee->orgchart_id) : null);
+            $user = User::with(['orgchart'])->find((int) $targetUserId);
+            $userOrg = $user?->orgchart;
 
             $departments = $userOrg ? [
                 [
@@ -34,7 +33,7 @@ class ConsumableRequestOptionController extends Controller
                 ]
             ] : [];
 
-            $userEmployeeId = $user?->employee_id ?? $user?->username;
+            $userEmployeeId = $user?->employee_id;
             $projects = $userEmployeeId
                 ? TbProject::whereHas('assignProjects', function ($query) use ($userEmployeeId) {
                     $query->where('npk', $userEmployeeId)
@@ -57,15 +56,16 @@ class ConsumableRequestOptionController extends Controller
             ]);
         }
 
-        $users = AdmUser::select('id', 'name', 'username')
-            ->with(['hrdEmployee.orgchart'])
-            ->orderBy('name')
+        $users = User::select('id', 'employee_name', 'employee_id', 'orgchart_id')
+            ->with(['orgchart'])
+            ->where('active', 1)
+            ->orderBy('employee_name')
             ->get()
             ->map(function ($u) {
-                $org = $u->hrdEmployee?->orgchart;
+                $org = $u->orgchart;
                 return [
                     'id' => $u->id,
-                    'name' => $u->name,
+                    'name' => $u->employee_name,
                     'employee_id' => $u->employee_id,
                     'department' => $org ? [
                         'id' => (int) $org->id,

@@ -2,10 +2,10 @@
 
 namespace App\Actions\Request;
 
-use App\Models\AdmUser;
 use App\Models\Request\Request as SmartRequest;
 use App\Models\Request\RequestAdminConfirmation;
 use App\Models\Request\RequestStatusLog;
+use App\Models\User;
 use App\Services\NotificationService;
 use Illuminate\Support\Facades\DB;
 
@@ -24,16 +24,16 @@ class ProcessAdminConfirmation
      * @param  \App\Models\Request\Request  $req
      * @param  string  $action  'confirm' or 'reject'
      * @param  string|null  $note
-     * @param  \App\Models\AdmUser|int  $admin
+     * @param  \App\Models\User|int  $admin
      * @return void
      */
     public function execute(
         SmartRequest $req,
         string $action,
         ?string $note,
-        AdmUser|int $admin
+        User|int $admin
     ): void {
-        $adminUser = $admin instanceof AdmUser ? $admin : AdmUser::find($admin);
+        $adminUser = $admin instanceof User ? $admin : User::find($admin);
         $adminId = $adminUser?->id ?? (int) $admin;
         $adminName = $adminUser?->name ?? 'Admin';
 

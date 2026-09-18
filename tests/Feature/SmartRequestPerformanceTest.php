@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Models\AdmUser;
+use App\Models\User;
 use App\Models\HrdEmployee;
 use App\Models\HrdOrgchart;
 use App\Models\Inventory\Barang;
@@ -34,15 +34,15 @@ class SmartRequestPerformanceTest extends TestCase
         parent::tearDown();
     }
 
-    private function createAdmin(): AdmUser
+    private function createAdmin(): User
     {
         $employee = HrdEmployee::factory()->create(['employee_id' => '252525']);
-        return AdmUser::factory()->create(['employee_id' => $employee->employee_id]);
+        return User::factory()->create(['employee_id' => $employee->employee_id]);
     }
 
-    private function createManager(): AdmUser
+    private function createManager(): User
     {
-        $managerUser = AdmUser::factory()->create();
+        $managerUser = User::factory()->create();
         $employee = HrdEmployee::where('employee_id', $managerUser->employee_id)->first();
         $orgchart = HrdOrgchart::find($employee->orgchart_id);
         $orgchart->update(['employee_id' => $managerUser->employee_id]);
@@ -52,7 +52,7 @@ class SmartRequestPerformanceTest extends TestCase
     public function test_admin_inbox_does_not_suffer_from_n_plus_one_stock_queries(): void
     {
         $admin = $this->createAdmin();
-        $requester = AdmUser::factory()->create();
+        $requester = User::factory()->create();
 
         $cat = Category::factory()->create(['is_consumable' => false]);
         $sub = Subcategory::factory()->create(['category_id' => $cat->id]);
@@ -104,7 +104,7 @@ class SmartRequestPerformanceTest extends TestCase
     public function test_admin_active_requests_inbox_calculates_stock_correctly(): void
     {
         $admin = $this->createAdmin();
-        $requester = AdmUser::factory()->create();
+        $requester = User::factory()->create();
 
         $cat = Category::factory()->create(['is_consumable' => false]);
         $sub = Subcategory::factory()->create(['category_id' => $cat->id]);
@@ -148,7 +148,7 @@ class SmartRequestPerformanceTest extends TestCase
     public function test_manager_approved_requests_loads_cleanly_with_dates(): void
     {
         $manager = $this->createManager();
-        $requester = AdmUser::factory()->create();
+        $requester = User::factory()->create();
 
         $req = SmartRequest::create([
             'request_number' => 'REQ-APP01',

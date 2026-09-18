@@ -44,13 +44,13 @@ class HrdOrgchart extends Model
     public function setEmployeeIdAttribute($value): void
     {
         if ($value !== null && is_numeric($value)) {
-            // If the value directly matches an HrdEmployee id, use it
-            if (HrdEmployee::where('id', (int) $value)->exists()) {
+            // If the value directly matches a User id, use it
+            if (User::where('id', (int) $value)->exists()) {
                 $this->attributes['employee_id'] = (int) $value;
                 return;
             }
-            // Otherwise, check if it's an employee code (employee_id column on HrdEmployee)
-            $emp = HrdEmployee::where('employee_id', (string) $value)->first();
+            // Otherwise, check if it's an employee code (employee_id column on User)
+            $emp = User::where('employee_id', (string) $value)->first();
             if ($emp) {
                 $this->attributes['employee_id'] = $emp->id;
                 return;
@@ -65,7 +65,7 @@ class HrdOrgchart extends Model
      */
     public function manager(): BelongsTo
     {
-        return $this->belongsTo(HrdEmployee::class, 'employee_id', 'id');
+        return $this->belongsTo(User::class, 'employee_id', 'id');
     }
 
     /**
@@ -74,7 +74,7 @@ class HrdOrgchart extends Model
      */
     public function employees(): HasMany
     {
-        return $this->hasMany(HrdEmployee::class, 'orgchart_id', 'id');
+        return $this->hasMany(User::class, 'orgchart_id', 'id');
     }
 
     /**

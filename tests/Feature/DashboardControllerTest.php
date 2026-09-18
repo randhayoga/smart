@@ -8,7 +8,7 @@ use App\Models\Inventory\Unit;
 use App\Models\Master\Category;
 use App\Models\Master\Organizer;
 use App\Models\Master\Subcategory;
-use App\Models\AdmUser;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -25,7 +25,7 @@ class DashboardControllerTest extends TestCase
     {
         // 1. Setup Admin User
         $adminEmployee = \App\Models\HrdEmployee::factory()->create(['employee_id' => '252525']);
-        $adminUser = AdmUser::factory()->create(['employee_id' => $adminEmployee->employee_id]);
+        $adminUser = User::factory()->create(['employee_id' => $adminEmployee->employee_id]);
 
         // 2. Setup Consumable Data
         $consumableCat = Category::factory()->create(['is_consumable' => true, 'name' => 'Consumables']);
@@ -88,7 +88,7 @@ class DashboardControllerTest extends TestCase
     public function test_non_admin_forbidden_on_admin_dashboard()
     {
         config(['app.disable_test_admin_bypass' => true]);
-        $user = AdmUser::factory()->create();
+        $user = User::factory()->create();
         
         $response = $this->actingAs($user)->get(route('smart.dashboard'));
         $response->assertForbidden();
