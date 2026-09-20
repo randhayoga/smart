@@ -113,10 +113,10 @@ return [
 
         'portal' => [
             'driver' => 'sqlsrv',
-            'host' => env('DB_HOST_PORTAL', env('DB_PORTAL_HOST', env('DB_HOST_REPORTAL', env('DB_READY_HOST', '127.0.0.1')))),
-            'port' => env('DB_PORT_PORTAL', env('DB_PORTAL_PORT', env('DB_PORT_REPORTAL', env('DB_READY_PORT', '1433')))),
+            'host' => env('DB_HOST_PORTAL', env('DB_PORTAL_HOST', env('DB_HOST_REPORTAL', '127.0.0.1'))),
+            'port' => env('DB_PORT_PORTAL', env('DB_PORTAL_PORT', env('DB_PORT_REPORTAL', '1433'))),
             'database' => env('DB_DATABASE_PORTAL', env('DB_PORTAL_DATABASE', env('DB_DATABASE_REPORTAL', 'RE_PORTALDB'))),
-            'username' => env('DB_USERNAME_PORTAL', env('DB_PORTAL_USERNAME', env('DB_USERNAME_REPORTAL', env('DB_READY_USERNAME', 'sa')))),
+            'username' => env('DB_USERNAME_PORTAL', env('DB_PORTAL_USERNAME', env('DB_USERNAME_REPORTAL', 'sa'))),
             'password' => env('DB_PASSWORD_PORTAL', env('DB_PORTAL_PASSWORD', env('DB_PASSWORD_REPORTAL', env('MSSQL_SA_PASSWORD', env('DB_SMART_PASSWORD', 'secret'))))),
             'charset' => 'utf8',
             'prefix' => '',
@@ -132,26 +132,11 @@ return [
             'database' => env('DB_DATABASE', 'laravel'),
             'username' => env('DB_USERNAME', 'root'),
             'password' => env('DB_PASSWORD', ''),
-            'charset' => env('DB_CHARSET', 'utf8'),
+            'charset' => 'utf8',
             'prefix' => '',
             'prefix_indexes' => true,
             // 'encrypt' => env('DB_ENCRYPT', 'yes'),
             // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
-        ],
-
-        // READY Database Connection
-        'new_portal' => [
-            'driver' => 'sqlsrv',
-            'host' => env('DB_READY_HOST', 'localhost'),
-            'port' => env('DB_READY_PORT', '1433'),
-            'database' => env('DB_READY_DATABASE', 'new_portal'),
-            'username' => env('DB_READY_USERNAME', 'sa'),
-            'password' => env('DB_READY_PASSWORD', env('MSSQL_SA_PASSWORD', env('DB_SMART_PASSWORD', ''))),
-            'charset' => 'utf8',
-            'prefix' => '',
-            'prefix_indexes' => true,
-            // 'encrypt' => env('DB_READY_ENCRYPT', 'yes'),
-            'trust_server_certificate' => env('DB_READY_TRUST_SERVER_CERTIFICATE', 'true'),
         ],
 
         // SMART Database Connection

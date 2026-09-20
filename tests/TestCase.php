@@ -17,7 +17,10 @@ abstract class TestCase extends BaseTestCase
     {
         parent::setUp();
 
-        config(['app.disable_test_admin_bypass' => false]);
+        config([
+            'app.disable_test_admin_bypass' => false,
+            'auth.portal_sso.enabled' => false,
+        ]);
         $this->withoutVite();
         $this->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class);
     }
