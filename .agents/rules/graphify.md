@@ -9,7 +9,7 @@ This project has a graphify knowledge graph at graphify-out/.
 
 Rules:
 
-- The website language is Indonesian (Bahasa), the codebase and documentation language is English
+- The primary in-app language is English, Indonesian (Bahasa) is the secondary language. The codebase and documentation language is English
 - Adheres to CruddyByDesign, KISS, and DRY principles
 - Avoid technical debts!
 - Follows Test Driven Development, create test for every methods created

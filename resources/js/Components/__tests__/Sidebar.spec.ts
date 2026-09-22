@@ -106,13 +106,13 @@ describe('Sidebar.vue', () => {
     expect(wrapper.text()).toContain('Pergerakan Aset');
   });
 
-  it('renders inventory_audit in sidebar for IFS Manager but NOT jejak audit', () => {
+  it('renders inventory_audit, audit_trail, and stock items in sidebar for IFS Manager, but no admin-exclusive items', () => {
     vi.mocked(usePage).mockReturnValueOnce({
       url: '/smart/dashboard',
       props: {
         auth: {
           user: { name: 'IFS Manager', role: 'ifs_manager' },
-          isAdmin: true,
+          isAdmin: false,
         },
       },
     } as any);
@@ -123,8 +123,22 @@ describe('Sidebar.vue', () => {
       collapsed: false,
     });
 
+    // Allowed items for IFS Manager
+    expect(wrapper.text()).toContain('Dashboard');
+    expect(wrapper.text()).toContain('Daftar Stok (Habis Pakai)');
+    expect(wrapper.text()).toContain('Daftar Aset');
+    expect(wrapper.text()).toContain('Daftar Karyawan');
+    expect(wrapper.text()).toContain('Perlu Approval');
     expect(wrapper.text()).toContain('Audit Manajemen Stok');
-    expect(wrapper.text()).not.toContain('Pergerakan Aset');
+    expect(wrapper.text()).toContain('Pergerakan Aset');
+
+    // Forbidden / Hidden items for IFS Manager
+    expect(wrapper.text()).not.toContain('Manajemen Barang');
+    expect(wrapper.text()).not.toContain('Master Data');
+    expect(wrapper.text()).not.toContain('Pindai Barcode');
+    expect(wrapper.text()).not.toContain('Daftar Pending Nonaktif');
+    expect(wrapper.text()).not.toContain('Permintaan Aktif');
+    expect(wrapper.text()).not.toContain('Arsip');
   });
 
   it('does NOT render audit section in sidebar for regular User', () => {

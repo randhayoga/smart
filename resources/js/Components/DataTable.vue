@@ -64,7 +64,7 @@ const props = withDefaults(defineProps<{
    */
   skeletonThreshold?: number
 }>(), {
-  pageSize: 10,
+  pageSize: 50,
   showSelectionCount: true,
   defaultSorting: () => [],
   tableContainerClass: '',
@@ -80,7 +80,60 @@ const getRowClass = (row: any) => {
   return props.rowClass || ''
 }
 
-const sorting = ref<SortingState>(props.defaultSorting)
+const isCodeIdentifier = (id: string): boolean => {
+  const lower = id.toLowerCase()
+  if (lower.includes('phone') || lower.includes('count')) return false
+  if (['code', 'number', 'employee_id', 'nik', 'asset_code', 'assetcode', 'lot_code', 'lotcode', 'unit_number', 'kode_aset'].includes(lower)) return true
+  if (/^(.*_)?(code|kode)(_.*)?$/i.test(id)) return true
+  if (/^(.*_)?number$/i.test(id)) return true
+  return false
+}
+
+const isDateIdentifier = (id: string): boolean => {
+  const lower = id.toLowerCase()
+  if (lower === 'durasi' || lower === 'duration') return false
+  if (['waktu', 'lastupdate', 'created_at', 'updated_at', 'time'].includes(lower)) return true
+  if (/(date|time)$/i.test(id)) return true
+  if (/(^|_)(date|time)(_|$)/i.test(id)) return true
+  return false
+}
+
+const getColId = (col: any): string => {
+  return (col.id || (typeof col.accessorKey === 'string' ? col.accessorKey : '')) as string
+}
+
+const resolveDefaultSorting = (): SortingState => {
+  if (props.defaultSorting && props.defaultSorting.length > 0) {
+    return props.defaultSorting
+  }
+
+  // 1. Code (if exists): descending (exception: employee_id is sorted ascending)
+  for (const col of props.columns) {
+    if (col.enableSorting === false) continue
+    const colId = getColId(col)
+    const accessorKey = typeof (col as any).accessorKey === 'string' ? (col as any).accessorKey : ''
+    if ((colId && isCodeIdentifier(colId)) || (accessorKey && isCodeIdentifier(accessorKey))) {
+      const targetId = colId || accessorKey
+      const isAscendingCode = targetId.toLowerCase() === 'employee_id' || targetId.toLowerCase() === 'nik'
+      return [{ id: targetId, desc: !isAscendingCode }]
+    }
+  }
+
+  // 2. Date (if exists): newest (descending)
+  for (const col of props.columns) {
+    if (col.enableSorting === false) continue
+    const colId = getColId(col)
+    const accessorKey = typeof (col as any).accessorKey === 'string' ? (col as any).accessorKey : ''
+    if ((colId && isDateIdentifier(colId)) || (accessorKey && isDateIdentifier(accessorKey))) {
+      return [{ id: colId || accessorKey, desc: true }]
+    }
+  }
+
+  // 3. If both doesn't exists, keep the current default sort
+  return props.defaultSorting || []
+}
+
+const sorting = ref<SortingState>(resolveDefaultSorting())
 const columnFilters = ref<ColumnFiltersState>([])
 const columnVisibility = ref<VisibilityState>({})
 const rowSelection = ref({})
@@ -122,8 +175,23 @@ const table = useVueTable({
 
 // Update pagination when pageSize prop changes
 watch(() => props.pageSize, (newSize) => {
-  table.setPageSize(newSize || 10)
+  table.setPageSize(newSize || 50)
 })
+
+// Update sorting when defaultSorting or columns change
+watch(() => props.defaultSorting, (newVal) => {
+  if (newVal && newVal.length > 0) {
+    sorting.value = newVal
+  } else {
+    sorting.value = resolveDefaultSorting()
+  }
+}, { deep: true })
+
+watch(() => props.columns, () => {
+  if (!props.defaultSorting || props.defaultSorting.length === 0) {
+    sorting.value = resolveDefaultSorting()
+  }
+}, { deep: true })
 
 // Expose internal table for external filter control if needed
 defineExpose({

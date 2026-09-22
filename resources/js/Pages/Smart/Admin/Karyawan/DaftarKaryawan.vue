@@ -33,7 +33,7 @@ const props = defineProps<Props>();
 
 const searchQuery = ref('');
 const departmentFilter = ref<string | number | null>('');
-const rowsPerPage = ref('Semua baris');
+const rowsPerPage = ref('50');
 const dataTableRef = ref<any>(null);
 
 // Modal state
@@ -156,7 +156,7 @@ const pageSizeNumber = computed(() => {
   if (rowsPerPage.value === 'Semua baris' || !rowsPerPage.value) {
     return 999999;
   }
-  return parseInt(rowsPerPage.value, 10) || 10;
+  return parseInt(rowsPerPage.value, 10) || 50;
 });
 </script>
 

@@ -85,14 +85,14 @@ const activeSearchQuery = ref('');
 const activeBrandFilter = ref('');
 const activeConditionFilter = ref('');
 const activeLocationFilter = ref('');
-const activeRowsPerPage = ref('10');
+const activeRowsPerPage = ref('50');
 
 // --- Filters for Peminjaman Historis ---
 const historySearchQuery = ref('');
 const historyBrandFilter = ref('');
 const historyConditionFilter = ref('');
 const historyLocationFilter = ref('');
-const historyRowsPerPage = ref('10');
+const historyRowsPerPage = ref('50');
 
 // Dynamic tab labels with counters
 const tabLabels = computed(() => [
@@ -257,8 +257,8 @@ watch(() => props.open, (isOpen) => {
     activeTab.value = 'active';
     clearActiveFilters();
     clearHistoryFilters();
-    activeRowsPerPage.value = '10';
-    historyRowsPerPage.value = '10';
+    activeRowsPerPage.value = '50';
+    historyRowsPerPage.value = '50';
     fetchEmployeeLoans();
   } else {
     activeLoans.value = [];
@@ -292,14 +292,14 @@ const activePageSizeNumber = computed(() => {
   if (activeRowsPerPage.value === 'Semua baris' || !activeRowsPerPage.value) {
     return 999999;
   }
-  return parseInt(activeRowsPerPage.value, 10) || 10;
+  return parseInt(activeRowsPerPage.value, 10) || 50;
 });
 
 const historyPageSizeNumber = computed(() => {
   if (historyRowsPerPage.value === 'Semua baris' || !historyRowsPerPage.value) {
     return 999999;
   }
-  return parseInt(historyRowsPerPage.value, 10) || 10;
+  return parseInt(historyRowsPerPage.value, 10) || 50;
 });
 
 const activeRowsPerPageLabel = computed(() => {

@@ -1,12 +1,21 @@
 {{--
     Email notification template sent to Department Manager or Project Manager for borrowing or supply request approvals.
 --}}
+@php
+    $typeLower = strtolower($type ?? '');
+    $typeLabel = match($typeLower) {
+        'peminjaman', 'loan', 'borrowing' => 'Borrowing',
+        'permintaan', 'request' => 'Request',
+        default => ucfirst($type ?? 'Request'),
+    };
+    $typeLabelLower = strtolower($typeLabel);
+@endphp
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Persetujuan {{ $type }} - SMART</title>
+    <title>{{ $typeLabel }} Approval - SMART</title>
     <!--[if mso]>
     <style type="text/css">
         body, table, td, a { font-family: Arial, Helvetica, sans-serif !important; }
@@ -194,7 +203,7 @@
                         </td>
                         <td style="vertical-align: middle;">
                             <h1 class="app-title">SMART</h1>
-                            <div class="app-subtitle">Sistem Manajemen Aset & Request Tracking</div>
+                            <div class="app-subtitle">Stock Management and Request Tracking</div>
                         </td>
                     </tr>
                 </table>
@@ -203,40 +212,40 @@
             <!-- Content Area -->
             <div class="content">
                 <div class="greeting">
-                    Yth. {{ $recipientName }},
+                    Dear {{ $recipientName }},
                 </div>
 
                 <p class="message">
-                    Terdapat permohonan <strong>{{ strtolower($type) }}</strong> baru yang diajukan oleh <strong>{{ $requesterName }}</strong> untuk <strong>{{ $destinationName }}</strong> dan saat ini memerlukan persetujuan dari Anda.
+                    There is a new <strong>{{ $typeLabelLower }}</strong> submitted by <strong>{{ $requesterName }}</strong> for <strong>{{ $destinationName }}</strong> that currently requires your approval.
                 </p>
 
                 <!-- Request Summary Box -->
                 <div class="info-box">
                     <table class="info-table">
                         <tr>
-                            <td class="info-label">Nomor</td>
+                            <td class="info-label">Request Number</td>
                             <td class="info-value info-code">{{ $request->request_number }}</td>
                         </tr>
                         <tr>
-                            <td class="info-label">Tipe</td>
-                            <td class="info-value">{{ $type }}</td>
+                            <td class="info-label">Type</td>
+                            <td class="info-value">{{ $typeLabel }}</td>
                         </tr>
                         <tr>
-                            <td class="info-label">Pemohon</td>
+                            <td class="info-label">Requester</td>
                             <td class="info-value">{{ $requesterName }}</td>
                         </tr>
                         <tr>
-                            <td class="info-label">Pemanfaatan</td>
+                            <td class="info-label">Utilization</td>
                             <td class="info-value">{{ $destinationName }}</td>
                         </tr>
                         @if($isBorrow && $borrowPeriod)
                         <tr>
-                            <td class="info-label">Periode Pinjam</td>
-                            <td class="info-value">{{ $borrowPeriod }}</td>
+                            <td class="info-label">Borrowing Period</td>
+                            <td class="info-value">{{ str_replace([' s.d. ', 'Selesai'], [' to ', 'Completed'], $borrowPeriod) }}</td>
                         </tr>
                         @endif
                         <tr>
-                            <td class="info-label">Alasan</td>
+                            <td class="info-label">Reason</td>
                             <td class="info-value" style="font-weight: 500; font-style: italic; color: #334155;">"{{ $request->reasoning }}"</td>
                         </tr>
                     </table>
@@ -244,14 +253,14 @@
 
                 <!-- Items Table -->
                 <div style="margin-bottom: 24px;">
-                    <div style="font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 8px;">Daftar barang:</div>
+                    <div style="font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 8px;">Requested items:</div>
                     <table class="items-table">
                         <thead>
                             <tr>
-                                <th style="width: 30px;">No</th>
-                                <th>Nama Barang</th>
-                                <th style="width: 130px;">Kategori</th>
-                                <th style="width: 70px; text-align: center;">Jumlah</th>
+                                <th style="width: 30px;">#</th>
+                                <th>Item Name</th>
+                                <th style="width: 130px;">Category</th>
+                                <th style="width: 70px; text-align: center;">Quantity</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -275,23 +284,23 @@
                 <!-- Action Button -->
                 <div class="btn-container">
                     <a href="{{ $actionUrl }}" class="btn-primary" target="_blank">
-                        Tinjau & Berikan Keputusan
+                        Review & Provide Decision
                     </a>
                 </div>
                 <div class="security-note">
-                    *Tautan ini aman dan berlaku selama 48 jam. Anda dapat menyetujui atau menolak secara langsung tanpa login.
+                    *This link is secure and valid for 48 hours. You can approve or reject directly without logging in.
                 </div>
 
                 <!-- Fallback / Standard Login URL -->
                 <div class="fallback-text">
-                    Jika tombol di atas tidak berfungsi atau tautan telah kadaluarsa (lebih dari 48 jam), silakan masuk ke SMART untuk meninjau permohonan:<br>
+                    If the button above does not work or the link has expired (more than 48 hours), please log in to SMART to review the request:<br>
                     <a href="{{ $loginUrl }}">{{ $loginUrl }}</a>
                 </div>
             </div>
 
             <!-- Footer -->
             <div class="footer">
-                Email otomatis dari <strong>SMART</strong> &bull; Tidak perlu membalas email ini.
+                Automated email from <strong>SMART</strong> &bull; Please do not reply to this email.
             </div>
         </div>
     </div>

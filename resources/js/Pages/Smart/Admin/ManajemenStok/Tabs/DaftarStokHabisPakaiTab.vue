@@ -101,6 +101,7 @@ const openManualRequestModal = () => {
 };
 
 const page = usePage();
+const isAdmin = computed(() => (page.props.auth as any)?.user?.role === 'admin');
 
 const syncFromPropsOrUrl = () => {
   const url = new URL(page.url, window.location.origin);
@@ -185,7 +186,7 @@ const categoryFilter = ref('');
 const subcategoryFilter = ref('');
 const brandFilter = ref('');
 const stockStatusFilter = ref('');
-const rowsPerPage = ref<'all' | '10' | '25' | '50'>('all');
+const rowsPerPage = ref<'all' | '10' | '25' | '50'>('50');
 const dataTableRef = ref<any>(null);
 
 const getStockStatusLabel = (val: string) => {
@@ -267,7 +268,7 @@ const pageSizeNumber = computed(() => {
   if (rowsPerPage.value === 'all' || (rowsPerPage.value as any) === 'Semua baris' || !rowsPerPage.value) {
     return 999999;
   }
-  return parseInt(rowsPerPage.value, 10) || 10;
+  return parseInt(rowsPerPage.value, 10) || 50;
 });
 
 // Table columns for Consumable Barang
@@ -430,7 +431,7 @@ const columns = computed<ColumnDef<any>[]>(() => [
     size: 84,
     header: () => h('div', { class: 'text-center font-semibold text-foreground no-print' }, t('common.actions')),
     cell: ({ row }) => {
-      return h('div', { class: 'flex items-center justify-end gap-2 no-print' }, [
+      const buttons = [
         h(Button, {
           variant: 'table-view',
           size: 'icon-sm',
@@ -444,17 +445,24 @@ const columns = computed<ColumnDef<any>[]>(() => [
         }, () => [
           h(Eye),
           h('span', { class: 'sr-only' }, t('inventory.viewDetails'))
-        ]),
-        h(Button, {
-          variant: 'table-destructive',
-          size: 'icon-sm',
-          title: t('common.delete'),
-          onClick: () => openDeleteModal(row.original),
-        }, () => [
-          h(Trash2),
-          h('span', { class: 'sr-only' }, t('common.delete'))
         ])
-      ]);
+      ];
+
+      if (isAdmin.value) {
+        buttons.push(
+          h(Button, {
+            variant: 'table-destructive',
+            size: 'icon-sm',
+            title: t('common.delete'),
+            onClick: () => openDeleteModal(row.original),
+          }, () => [
+            h(Trash2),
+            h('span', { class: 'sr-only' }, t('common.delete'))
+          ])
+        );
+      }
+
+      return h('div', { class: 'flex items-center justify-end gap-2 no-print' }, buttons);
     },
   },
 ]);
@@ -638,7 +646,7 @@ const closeOnEscape = (e: KeyboardEvent) => {
       <div class="flex flex-wrap items-center justify-between gap-4 mb-2 no-print">
         <Tabs v-model="activeDetailTab" :tabs="detailTabs" />
 
-        <div class="flex items-center gap-3">
+        <div v-if="isAdmin" class="flex items-center gap-3">
           <Button
             @click="openManualRequestModal"
             variant="warning"
@@ -783,7 +791,7 @@ const closeOnEscape = (e: KeyboardEvent) => {
             </div>
 
             <!-- Row 2: Bulk Actions & New Item -->
-            <div class="flex flex-wrap items-end justify-between gap-4 pt-2">
+            <div v-if="isAdmin" class="flex flex-wrap items-end justify-between gap-4 pt-2">
               <div class="space-y-2 flex-1 min-w-0">
                 <label class="text-xs text-muted-foreground font-medium block ml-0.5">{{ t('inventory.selectedActions') }}</label>
                 <div class="flex flex-wrap gap-2">

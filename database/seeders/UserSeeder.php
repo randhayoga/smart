@@ -6,7 +6,6 @@ use App\Models\AdmUser;
 use App\Models\User;
 use App\Models\HrdOrgchart;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class UserSeeder extends Seeder
 {
@@ -16,7 +15,7 @@ class UserSeeder extends Seeder
     public const FAKE_USERNAMES = [
         '999998', // Admin: Mas Mas Aset
         '999997', // Regular User: Karyawan Teladan
-        '999996', // Dept Manager: Dep Manajer
+        '999996', // TEST-DEPT / Acting IFS Manager (in local dev): Dep Manajer
         '999995', // Project Manager: Proyek Manajer
     ];
 
@@ -42,20 +41,18 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
+        if (app()->isProduction()) {
+            throw new \RuntimeException('UserSeeder is strictly prohibited in production to protect USER_HRIS.');
+        }
+
         $allFakeUsernames = array_values(array_unique(array_merge(self::FAKE_USERNAMES, self::LEGACY_FAKE_USERNAMES)));
 
-        // 1. Safe cleanup: remove fake records from USER_HRIS and legacy new_portal
+        // 1. Safe cleanup: remove fake records from USER_HRIS
         AdmUser::whereIn('login_name', $allFakeUsernames)
             ->orWhereIn('employee_id', $allFakeUsernames)
             ->delete();
         User::whereIn('employee_id', $allFakeUsernames)->delete();
         HrdOrgchart::whereIn('org_code', self::FAKE_ORG_CODES)->delete();
-
-        try {
-            DB::connection('new_portal')->table('users')->whereIn('username', $allFakeUsernames)->delete();
-        } catch (\Throwable $e) {
-            // Silently ignore if new_portal is unreachable in the current environment
-        }
 
         // 2. Create the dedicated fake test department in USER_HRIS
         $org = HrdOrgchart::create([

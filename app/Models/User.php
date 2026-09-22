@@ -131,17 +131,28 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the effective organization code for the IFS department.
+     * In local development, defaults to 'TEST-DEPT' so that notifications
+     * and IFS approvals are routed to the test manager instead of production personnel.
+     */
+    public static function getIfsOrgCode(): string
+    {
+        return app()->environment('local') ? 'TEST-DEPT' : 'IFS';
+    }
+
+    /**
      * Get the dynamic role of the user.
      */
     public function getRoleAttribute(): string
     {
-        $admins = ['252525', '255578', '999998'];
+        $admins = ['255578', '999998'];
         $empId = (string) ($this->employee_id ?? '');
         if (in_array($empId, $admins, true) || ((app()->runningUnitTests() || app()->environment('testing')) && !config('app.disable_test_admin_bypass'))) {
             return 'admin';
         }
 
-        $ifsOrgs = HrdOrgchart::where('org_code', 'IFS')->get();
+        $ifsOrgCode = static::getIfsOrgCode();
+        $ifsOrgs = HrdOrgchart::where('org_code', $ifsOrgCode)->get();
         foreach ($ifsOrgs as $ifsOrg) {
             $ifsManagerId = (string) $ifsOrg->employee_id;
             if ($ifsManagerId === (string) $this->id || $ifsManagerId === (string) $this->employee_id) {
@@ -193,15 +204,16 @@ class User extends Authenticatable
     public static function getUsersByRole(string|array $roles)
     {
         $roles = (array) $roles;
-        $adminIds = ['252525', '255578', '999998'];
+        $adminIds = ['255578', '999998'];
+        $ifsOrgCode = static::getIfsOrgCode();
 
         $targetEmployeeIds = collect();
         $includeAllRegularUsers = false;
 
         $ifsEmployeeIds = null;
-        $getIfsEmployeeIds = function () use (&$ifsEmployeeIds) {
+        $getIfsEmployeeIds = function () use (&$ifsEmployeeIds, $ifsOrgCode) {
             if ($ifsEmployeeIds === null) {
-                $ifsOrgs = HrdOrgchart::where('org_code', 'IFS')->with('manager')->get();
+                $ifsOrgs = HrdOrgchart::where('org_code', $ifsOrgCode)->with('manager')->get();
                 $ifsEmployeeIds = [];
                 foreach ($ifsOrgs as $org) {
                     if ($org->manager?->employee_id) {
@@ -216,12 +228,13 @@ class User extends Authenticatable
         };
 
         $managerEmployeeIds = null;
-        $getManagerEmployeeIds = function () use (&$managerEmployeeIds) {
+        $getManagerEmployeeIds = function () use (&$managerEmployeeIds, $ifsOrgCode) {
             if ($managerEmployeeIds === null) {
-                // Dept managers from HRD_ORGCHART (except IFS)
+                // Dept managers from HRD_ORGCHART (except IFS and TEST-DEPT in local)
                 $orgs = HrdOrgchart::whereNotNull('employee_id')
-                    ->where(function ($q) {
-                        $q->where('org_code', '!=', 'IFS')->orWhereNull('org_code');
+                    ->where(function ($q) use ($ifsOrgCode) {
+                        $q->whereNotIn('org_code', array_unique(['IFS', $ifsOrgCode]))
+                            ->orWhereNull('org_code');
                     })
                     ->with('manager')
                     ->get();

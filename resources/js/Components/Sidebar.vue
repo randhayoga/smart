@@ -6,7 +6,7 @@ import { computed } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import { ChevronRight, LogOut, PanelLeftClose, PanelLeftOpen } from 'lucide-vue-next';
-import { mainNavigation, userNavigation, type NavItem, type NavSection } from '@/config/navigation';
+import { mainNavigation, userNavigation, ifsNavigation, type NavItem, type NavSection } from '@/config/navigation';
 import { ScrollArea } from '@/Components/ui/scroll-area';
 import { Badge } from '@/Components/ui/badge';
 import {
@@ -58,8 +58,9 @@ const navigation = computed<NavSection[]>(() => {
     // - Dashboard (/smart/dashboard)
     // - Approval Status (/smart/approve-status)
     // - History Approval Status (/smart/approve-status?history=true)
-    const menuUtama = mainNavigation.find(section => section.title === 'MENU UTAMA');
-    const approvalStatus = userNavigation.find(section => section.title === 'APPROVAL PENGHAPUSAN');
+    // - Pergerakan Aset (/smart/audit)
+    // - Audit Manajemen Stok (/smart/audit-stok)
+    sections = ifsNavigation;
     
     // ==========================================
     // [PHASE 2 - IFS MANAGER EXTRA MENUS]
@@ -88,23 +89,6 @@ const navigation = computed<NavSection[]>(() => {
       });
     */
     // ==========================================
-    
-    const auditSectionRaw = mainNavigation.find(section => section.id === 'audit' || section.title === 'AUDIT');
-    const ifsAudit = auditSectionRaw ? {
-      ...auditSectionRaw,
-      items: auditSectionRaw.items.filter(item => item.id === 'inventory_audit'),
-    } : null;
-
-    sections = [
-      menuUtama,
-      approvalStatus,
-      ifsAudit,
-      // ==========================================
-      // [PHASE 2 - IFS EXTRA SECTIONS]
-      // approvalPermintaan,
-      // ...restOfAdmin
-      // ==========================================
-    ].filter((section): section is NavSection => !!section);
   } else if (isAdmin.value) {
     // Admin:
     // - Menu Utama

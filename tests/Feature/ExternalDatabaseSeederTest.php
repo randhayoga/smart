@@ -7,6 +7,7 @@ use App\Models\TbAssignProject;
 use App\Models\TbProject;
 use App\Models\TbRbs;
 use App\Models\User;
+use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\TbAssignProjectSeeder;
 use Database\Seeders\TbProjectSeeder;
 use Database\Seeders\UserSeeder;
@@ -155,5 +156,55 @@ class ExternalDatabaseSeederTest extends TestCase
         $this->assertDatabaseHas('hrd_orgchart', ['id' => $realDept->id], 'user_hris');
         $this->assertDatabaseHas('hrd_employee', ['employee_id' => '777777'], 'user_hris');
         $this->assertDatabaseHas('tb_project', ['no_project' => 'PERSIST-01'], 'reportal');
+    }
+
+    public function test_seeders_are_strictly_prohibited_in_production(): void
+    {
+        $originalEnv = app()['env'];
+
+        try {
+            app()['env'] = 'production';
+
+            $this->expectException(\RuntimeException::class);
+            $this->expectExceptionMessage('Database seeding is strictly prohibited in production');
+            $this->artisan('db:seed', ['--class' => DatabaseSeeder::class, '--force' => true]);
+        } finally {
+            app()['env'] = $originalEnv;
+        }
+    }
+
+    public function test_individual_external_seeders_are_strictly_prohibited_in_production(): void
+    {
+        $originalEnv = app()['env'];
+
+        try {
+            app()['env'] = 'production';
+
+            // Test UserSeeder
+            try {
+                $this->artisan('db:seed', ['--class' => UserSeeder::class, '--force' => true]);
+                $this->fail('UserSeeder should have thrown RuntimeException in production.');
+            } catch (\RuntimeException $e) {
+                $this->assertStringContainsString('UserSeeder is strictly prohibited in production', $e->getMessage());
+            }
+
+            // Test TbProjectSeeder
+            try {
+                $this->artisan('db:seed', ['--class' => TbProjectSeeder::class, '--force' => true]);
+                $this->fail('TbProjectSeeder should have thrown RuntimeException in production.');
+            } catch (\RuntimeException $e) {
+                $this->assertStringContainsString('TbProjectSeeder is strictly prohibited in production', $e->getMessage());
+            }
+
+            // Test TbAssignProjectSeeder
+            try {
+                $this->artisan('db:seed', ['--class' => TbAssignProjectSeeder::class, '--force' => true]);
+                $this->fail('TbAssignProjectSeeder should have thrown RuntimeException in production.');
+            } catch (\RuntimeException $e) {
+                $this->assertStringContainsString('TbAssignProjectSeeder is strictly prohibited in production', $e->getMessage());
+            }
+        } finally {
+            app()['env'] = $originalEnv;
+        }
     }
 }

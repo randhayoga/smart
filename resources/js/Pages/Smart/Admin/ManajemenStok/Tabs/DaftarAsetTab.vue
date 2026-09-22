@@ -115,7 +115,7 @@ const locationFilter = ref('');
 const organizerFilter = ref('');
 const vendorFilter = ref('');
 const showAdvancedFilters = ref(false);
-const rowsPerPage = ref<'all' | '10' | '25' | '50'>('all');
+const rowsPerPage = ref<'all' | '10' | '25' | '50'>('50');
 const dataTableRef = ref<any>(null);
 
 const { t, te, locale } = useI18n();
@@ -262,6 +262,7 @@ const handlePrint = () => {
 
 // Flash Notifications
 const page = usePage();
+const isAdmin = computed(() => (page.props.auth as any)?.user?.role === 'admin');
 const flashSuccess = computed(() => (page.props as any).flash?.success);
 const flashError = computed(() => (page.props as any).flash?.error);
 
@@ -658,7 +659,7 @@ const pageSizeNumber = computed(() => {
   if (rowsPerPage.value === 'all' || (rowsPerPage.value as any) === 'Semua baris' || !rowsPerPage.value) {
     return 999999;
   }
-  return parseInt(rowsPerPage.value, 10) || 10;
+  return parseInt(rowsPerPage.value, 10) || 50;
 });
 
 const checkSearchParam = () => {
@@ -915,10 +916,11 @@ const totalAsetTerpilihCount = computed(() => {
           <!-- Row 2: Bulk Actions -->
           <div class="flex flex-wrap items-end justify-between gap-4 pt-2">
             <div class="space-y-2 flex-1 min-w-0">
-              <label class="text-xs text-muted-foreground font-medium block ml-0.5">{{ t('inventory.selectedActions') }}</label>
+              <label v-if="isAdmin" class="text-xs text-muted-foreground font-medium block ml-0.5">{{ t('inventory.selectedActions') }}</label>
               <div class="flex flex-wrap gap-2">
                 <!-- Edit Terpilih -->
                 <Button 
+                  v-if="isAdmin"
                   @click="handleEditTerpilih()"
                   :disabled="totalAsetTerpilihCount === 0"
                   variant="more-round-warning"
@@ -936,7 +938,7 @@ const totalAsetTerpilihCount = computed(() => {
               </div>
             </div>
 
-            <slot name="extra-actions"></slot>
+            <slot v-if="isAdmin" name="extra-actions"></slot>
           </div>
         </div>
       </div>
@@ -948,7 +950,7 @@ const totalAsetTerpilihCount = computed(() => {
           :data="filteredUnits" 
           :page-size="pageSizeNumber"
           :show-selection-count="false"
-          :default-sorting="[{ id: 'number', desc: false }]"
+          :default-sorting="[{ id: 'number', desc: true }]"
         />
 
         <div class="text-xs text-muted-foreground pl-1 mt-3 no-print">

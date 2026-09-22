@@ -88,12 +88,14 @@ interface Props {
 const props = defineProps<Props>();
 
 const { t, locale } = useI18n();
+const page = usePage();
+const isAdmin = computed(() => (page.props.auth as any)?.user?.role === 'admin');
 
 const searchQuery = ref('');
 const timeFilter = ref('');
 const organizerFilter = ref('');
 const vendorFilter = ref('');
-const rowsPerPage = ref<'all' | '10' | '25' | '50'>('all');
+const rowsPerPage = ref<'all' | '10' | '25' | '50'>('50');
 const dataTableRef = ref<any>(null);
 
 // Lot Modal Setup
@@ -299,17 +301,19 @@ const columns = computed<ColumnDef<any>[]>(() => {
             ])
           );
         }
-        buttons.push(
-          h(Button, {
-            variant: 'table-destructive',
-            size: 'icon-sm',
-            title: t('common.delete'),
-            onClick: () => openDeleteLotModal(row.original),
-          }, () => [
-            h(Trash2),
-            h('span', { class: 'sr-only' }, t('common.delete'))
-          ])
-        );
+        if (isAdmin.value) {
+          buttons.push(
+            h(Button, {
+              variant: 'table-destructive',
+              size: 'icon-sm',
+              title: t('common.delete'),
+              onClick: () => openDeleteLotModal(row.original),
+            }, () => [
+              h(Trash2),
+              h('span', { class: 'sr-only' }, t('common.delete'))
+            ])
+          );
+        }
         return h('div', { class: 'flex items-center justify-center gap-2 no-print' }, buttons);
       }
     }
@@ -322,7 +326,7 @@ const pageSizeNumber = computed(() => {
   if (rowsPerPage.value === 'all' || (rowsPerPage.value as any) === 'Semua baris' || !rowsPerPage.value) {
     return 999999;
   }
-  return parseInt(rowsPerPage.value, 10) || 10;
+  return parseInt(rowsPerPage.value, 10) || 50;
 });
 
 onMounted(() => {
@@ -614,7 +618,7 @@ const closeOnEscape = (e: KeyboardEvent) => {
       </div>
 
       <!-- Actions Row -->
-      <div class="mb-4 flex flex-wrap items-end justify-between gap-4 pt-2">
+      <div v-if="isAdmin" class="mb-4 flex flex-wrap items-end justify-between gap-4 pt-2">
         <div class="space-y-2 flex-1 min-w-0">
           <label class="text-xs text-muted-foreground font-medium block ml-0.5">{{ t('inventory.selectedActions') }}</label>
           <div class="flex flex-wrap gap-2">
@@ -651,7 +655,7 @@ const closeOnEscape = (e: KeyboardEvent) => {
         :columns="columns" 
         :data="filteredLots" 
         :page-size="pageSizeNumber"
-        :default-sorting="[{ id: 'date_of_receipt', desc: true }]"
+        :default-sorting="[{ id: 'number', desc: true }]"
       />
     </div>
   </div>

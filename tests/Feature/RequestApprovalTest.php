@@ -57,7 +57,7 @@ class RequestApprovalTest extends TestCase
 
     private function createAdmin(): User
     {
-        $employee = HrdEmployee::factory()->create(['employee_id' => '252525']);
+        $employee = HrdEmployee::factory()->create(['employee_id' => '999998']);
         return User::factory()->create(['employee_id' => $employee->employee_id]);
     }
 
@@ -220,10 +220,10 @@ class RequestApprovalTest extends TestCase
 
             $rendered = $mail->render();
             $this->assertStringContainsString($rejectionNote, $rendered);
-            $this->assertStringContainsString("Yth. " . e($requester->name), $rendered);
-            $this->assertStringContainsString("Peminjaman Anda dengan nomor", $rendered);
-            $this->assertStringContainsString("<strong style=\"color: #dc2626;\">ditolak</strong> oleh <strong>" . e($manager->name) . "</strong>", $rendered);
-            $this->assertStringContainsString("Lihat Detail Peminjaman", $rendered);
+            $this->assertStringContainsString("Dear " . e($requester->name), $rendered);
+            $this->assertStringContainsString("Your borrowing with number", $rendered);
+            $this->assertStringContainsString("<strong style=\"color: #dc2626;\">rejected</strong> by <strong>" . e($manager->name) . "</strong>", $rendered);
+            $this->assertStringContainsString("View Borrowing Details", $rendered);
             $this->assertStringContainsString(url('/smart/history/' . $req->uuid), $rendered);
 
             return true;

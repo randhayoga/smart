@@ -64,7 +64,7 @@ watch(() => props.requests, (newVal) => {
 const searchQuery = ref('');
 const typeFilter = ref('all');
 const utilizationFilter = ref('all');
-const rowsPerPage = ref('all');
+const rowsPerPage = ref('50');
 
 const typeFilterLabel = computed(() => {
   if (typeFilter.value === 'peminjaman') return t('fulfillment.loan');
@@ -119,9 +119,9 @@ const filteredRequests = computed(() => {
 
 const computedPageSize = computed(() => {
   if (rowsPerPage.value === 'all') {
-    return filteredRequests.value.length || 10;
+    return filteredRequests.value.length || 50;
   }
-  return parseInt(rowsPerPage.value, 10);
+  return parseInt(rowsPerPage.value, 10) || 50;
 });
 
 const openShowPage = (item: SmartRequestListItem) => {
@@ -347,6 +347,7 @@ watch(() => page.url, (newUrl) => {
               <DropdownMenuItem @select="rowsPerPage = 'all'">{{ t('fulfillment.allRows') }}</DropdownMenuItem>
               <DropdownMenuItem @select="rowsPerPage = '10'">10</DropdownMenuItem>
               <DropdownMenuItem @select="rowsPerPage = '25'">25</DropdownMenuItem>
+              <DropdownMenuItem @select="rowsPerPage = '50'">50</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

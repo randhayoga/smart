@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Smart\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Inventory\UnitLifecycle;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Inertia\Response;
 
 /**
  * Audit Controller aggregating all unit asset lifecycle events into a comprehensive audit trail.
@@ -14,8 +16,13 @@ class AuditController extends Controller
     /**
      * Display the primary Audit Trail overview page (aggregated audit logs for all units).
      */
-    public function index()
+    public function index(Request $request): Response
     {
+        $user = $request->user();
+        if (!$user || (!$user->is_admin && !in_array($user->role, ['admin', 'ifs_manager']))) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $lifecycles = UnitLifecycle::with(['unit.lot.barang', 'actor'])
             ->orderBy('start_date', 'desc')
             ->orderBy('id', 'desc')

@@ -36,7 +36,7 @@ const searchQuery = ref('');
 const typeFilter = ref('');
 const statusFilter = ref('');
 const timeFilter = ref('');
-const rowsPerPage = ref('Semua baris');
+const rowsPerPage = ref('50');
 const dataTableRef = ref<any>(null);
 
 const dummyArsip = computed(() => {
@@ -214,8 +214,12 @@ watch(rowsPerPage, (val) => {
 });
 
 onMounted(() => {
-  if (dataTableRef.value && dataTableRef.value.table && rowsPerPage.value === 'Semua baris') {
-    dataTableRef.value.table.setPageSize(999999);
+  if (dataTableRef.value && dataTableRef.value.table) {
+    if (rowsPerPage.value === 'Semua baris' || !rowsPerPage.value) {
+      dataTableRef.value.table.setPageSize(999999);
+    } else {
+      dataTableRef.value.table.setPageSize(Number(rowsPerPage.value));
+    }
   }
 });
 </script>

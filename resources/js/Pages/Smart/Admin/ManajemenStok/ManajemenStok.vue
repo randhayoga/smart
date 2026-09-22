@@ -68,7 +68,7 @@ const categoryFilter = ref('');
 const subcategoryFilter = ref('');
 const brandFilter = ref('');
 const typeFilter = ref('');
-const rowsPerPage = ref<'all' | '10' | '25' | '50'>('all');
+const rowsPerPage = ref<'all' | '10' | '25' | '50'>('50');
 
 const hasActiveFilters = computed(() => {
   return !!(categoryFilter.value || subcategoryFilter.value || brandFilter.value || typeFilter.value || searchQuery.value);
@@ -312,8 +312,12 @@ watch(rowsPerPage, (val) => {
 }, { immediate: true });
 
 onMounted(() => {
-  if (dataTableRef.value && rowsPerPage.value === 'all') {
-    dataTableRef.value.table.setPageSize(999999);
+  if (dataTableRef.value) {
+    if (rowsPerPage.value === 'all') {
+      dataTableRef.value.table.setPageSize(999999);
+    } else {
+      dataTableRef.value.table.setPageSize(Number(rowsPerPage.value));
+    }
   }
 });
 

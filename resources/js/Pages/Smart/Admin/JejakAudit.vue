@@ -91,7 +91,7 @@ const auditSearch = ref('');
 const auditStatusFilter = ref('semua');
 const auditActionFilter = ref('semua');
 const auditTimeFilter = ref('semua');
-const auditRowsPerPage = ref('Semua baris');
+const auditRowsPerPage = ref('50');
 
 const isAnyFilterActive = computed(() => {
   return auditSearch.value !== '' || 
@@ -142,7 +142,7 @@ const computedAuditPageSize = computed(() => {
   if (auditRowsPerPage.value === 'Semua baris' || !auditRowsPerPage.value) {
     return 999999;
   }
-  return parseInt(auditRowsPerPage.value, 10) || 10;
+  return parseInt(auditRowsPerPage.value, 10) || 50;
 });
 
 const filteredLifecycles = computed(() => {

@@ -34,7 +34,7 @@ const dummyBorrowed = computed(() => props.borrowedList);
 
 const searchQuery = ref('');
 const timeFilter = ref('');
-const rowsPerPage = ref('Semua baris');
+const rowsPerPage = ref('50');
 
 const timeFilterLabel = computed(() => {
   if (timeFilter.value === 'Hari ini') return t('fulfillment.today');

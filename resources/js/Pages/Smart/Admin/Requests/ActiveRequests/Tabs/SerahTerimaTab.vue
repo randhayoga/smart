@@ -35,7 +35,7 @@ const dummyHandovers = computed(() => props.handovers);
 const searchQuery = ref('');
 const timeFilter = ref('');
 const methodFilter = ref('');
-const rowsPerPage = ref('10');
+const rowsPerPage = ref('50');
 
 const timeFilterLabel = computed(() => {
   if (timeFilter.value === 'Hari ini') return t('fulfillment.today');

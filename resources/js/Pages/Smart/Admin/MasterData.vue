@@ -117,7 +117,7 @@ const currentTabSingular = computed(() => t(`masterData.tabSingular.${activeTab.
 
 const searchQuery = ref('');
 const parentFilter = ref('');
-const rowsPerPage = ref<'all' | '10' | '25' | '50'>('all');
+const rowsPerPage = ref<'all' | '10' | '25' | '50'>('50');
 
 // Map subcategories to include a `parent` string for display/filter
 const subcategoryRows = computed(() =>

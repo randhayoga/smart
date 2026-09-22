@@ -9,7 +9,7 @@ export default {
   statusHistoryTitle: 'Status Approval: Processed',
   externalTitle: '{type} Approval #{number} - SMART',
   externalAppTitle: 'SMART',
-  externalAppSubtitle: 'Asset Management & Request Tracking System',
+  externalAppSubtitle: 'Stok Management and Request Tracking',
   
   // Table columns
   number: 'Number',

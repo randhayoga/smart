@@ -238,10 +238,14 @@ const dummyAssets = [
 
 const assetSearchQuery = ref('');
 const lotFilter = ref('');
-const assetRowsPerPage = ref('Semua baris');
+const assetRowsPerPage = ref('50');
 const assetRowsPerPageLabel = computed(() => {
   if (assetRowsPerPage.value === 'Semua baris') return t('fulfillment.allRows');
   return assetRowsPerPage.value;
+});
+const assetPageSize = computed(() => {
+  if (assetRowsPerPage.value === 'Semua baris' || !assetRowsPerPage.value) return 999999;
+  return parseInt(assetRowsPerPage.value, 10) || 50;
 });
 const assetTableRef = ref<any>(null);
 
@@ -661,6 +665,7 @@ const confirmCancel = () => {
                 :columns="assetColumns" 
                 :data="activeItemToAllocate?.availableUnits || []" 
                 :filter-value="assetSearchQuery"
+                :page-size="assetPageSize"
                 :show-selection-count="false"
               />
             </div>

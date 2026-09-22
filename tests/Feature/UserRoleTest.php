@@ -34,7 +34,7 @@ class UserRoleTest extends TestCase
 
     public function test_get_users_by_role_admin(): void
     {
-        $admin = User::factory()->create(['employee_id' => '252525']);
+        $admin = User::factory()->create(['employee_id' => '999998']);
         $otherUser = User::factory()->create();
 
         $admins = User::getUsersByRole('admin');
@@ -154,5 +154,37 @@ class UserRoleTest extends TestCase
 
         $this->assertEquals('manager', $newPmUser->fresh()->role);
         $this->assertEquals('user', $oldPmUser->fresh()->role);
+    }
+
+    public function test_get_users_by_role_in_local_env(): void
+    {
+        $testDeptManager = User::factory()->create();
+        $testDeptOrg = HrdOrgchart::find($testDeptManager->orgchart_id);
+        $testDeptOrg->update([
+            'employee_id' => $testDeptManager->id,
+            'org_code' => 'TEST-DEPT',
+        ]);
+
+        $regularDeptManager = User::factory()->create();
+        $regularDeptOrg = HrdOrgchart::find($regularDeptManager->orgchart_id);
+        $regularDeptOrg->update([
+            'employee_id' => $regularDeptManager->id,
+            'org_code' => 'HRD',
+        ]);
+
+        $originalEnv = $this->app['env'];
+        try {
+            $this->app['env'] = 'local';
+
+            $ifsManagers = User::getUsersByRole('ifs_manager');
+            $this->assertTrue($ifsManagers->contains('id', $testDeptManager->id));
+            $this->assertFalse($ifsManagers->contains('id', $regularDeptManager->id));
+
+            $managers = User::getUsersByRole('manager');
+            $this->assertFalse($managers->contains('id', $testDeptManager->id));
+            $this->assertTrue($managers->contains('id', $regularDeptManager->id));
+        } finally {
+            $this->app['env'] = $originalEnv;
+        }
     }
 }

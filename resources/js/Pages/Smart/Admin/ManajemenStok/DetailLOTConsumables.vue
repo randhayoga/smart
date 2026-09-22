@@ -4,6 +4,7 @@
  */
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { usePage } from '@inertiajs/vue3';
 import { useModalLock } from '@/composables/useModalLock';
 import axios from 'axios';
 import { X } from 'lucide-vue-next';
@@ -26,14 +27,21 @@ const emit = defineEmits<{
 }>();
 
 const { t, locale } = useI18n();
+const page = usePage();
+const isAdmin = computed(() => (page.props.auth as any)?.user?.role === 'admin');
 
 useModalLock(computed(() => props.isOpen));
 
 const detailActiveTab = ref('Detail LOT');
-const tabs = computed(() => [
-  { id: 'Detail LOT', label: t('inventory.lotDetail') },
-  { id: 'Permintaan', label: t('inventory.manualRequest') },
-]);
+const tabs = computed(() => {
+  const items = [
+    { id: 'Detail LOT', label: t('inventory.lotDetail') },
+  ];
+  if (isAdmin.value) {
+    items.push({ id: 'Permintaan', label: t('inventory.manualRequest') });
+  }
+  return items;
+});
 
 const lotDetails = ref<any>(null);
 const isLoading = ref(false);
@@ -218,7 +226,7 @@ onUnmounted(() => {
 
             <!-- Modal Footer -->
             <div v-if="!isLoading && lotDetails" class="py-3 px-4 bg-muted/30 border-t border-border flex items-center justify-end gap-3">
-              <template v-if="detailActiveTab === 'Detail LOT'">
+              <template v-if="detailActiveTab === 'Detail LOT' && isAdmin">
                 <Button
                   @click="handleEdit"
                   variant="primary"

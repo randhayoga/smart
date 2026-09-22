@@ -37,6 +37,10 @@ class TbProjectSeeder extends Seeder
      */
     public function run(): void
     {
+        if (app()->isProduction()) {
+            throw new \RuntimeException('TbProjectSeeder is strictly prohibited in production to protect RE_PORTALDB.');
+        }
+
         // 1. Safe cleanup: remove only assignments on fake projects and fake projects themselves
         TbAssignProject::whereIn('no_project', self::FAKE_PROJECT_CODES)->delete();
         TbProject::whereIn('no_project', self::FAKE_PROJECT_CODES)->delete();

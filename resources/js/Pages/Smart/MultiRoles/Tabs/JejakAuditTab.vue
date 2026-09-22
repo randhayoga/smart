@@ -85,7 +85,7 @@ const auditSearch = ref('');
 const auditStatusFilter = ref('all');
 const auditActionFilter = ref('all');
 const auditTimeFilter = ref('all');
-const auditRowsPerPage = ref('all');
+const auditRowsPerPage = ref('50');
 
 const formatStatus = (st: string) => {
   if (st === 'all' || st === 'semua') return t('approvals.allStatus');
@@ -111,7 +111,7 @@ const computedAuditPageSize = computed(() => {
   if (auditRowsPerPage.value === 'all' || (auditRowsPerPage.value as any) === 'Semua baris' || !auditRowsPerPage.value) {
     return 999999;
   }
-  return parseInt(auditRowsPerPage.value, 10) || 10;
+  return parseInt(auditRowsPerPage.value, 10) || 50;
 });
 
 const filteredLifecycles = computed(() => {
@@ -345,6 +345,7 @@ const auditColumns = computed<ColumnDef<AuditTrail>[]>(() => [
             <DropdownMenuItem @select="auditRowsPerPage = 'all'">{{ $t('approvals.allRows') }}</DropdownMenuItem>
             <DropdownMenuItem @select="auditRowsPerPage = '10'">10</DropdownMenuItem>
             <DropdownMenuItem @select="auditRowsPerPage = '25'">25</DropdownMenuItem>
+            <DropdownMenuItem @select="auditRowsPerPage = '50'">50</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

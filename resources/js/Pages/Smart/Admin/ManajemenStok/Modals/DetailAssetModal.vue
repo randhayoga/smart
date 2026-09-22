@@ -5,7 +5,7 @@
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useModalLock } from '@/composables/useModalLock';
-import { router } from '@inertiajs/vue3';
+import { router, usePage } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 import { X, FileText, Upload } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
@@ -29,6 +29,8 @@ const emit = defineEmits<{
 }>();
 
 const { t, locale } = useI18n();
+const page = usePage();
+const isAdmin = computed(() => (page.props.auth as any)?.user?.role === 'admin');
 
 useModalLock(computed(() => props.open));
 
@@ -36,11 +38,16 @@ const detailActiveTab = ref('Detail Aset');
 const fileInputRef = ref<HTMLInputElement | null>(null);
 const isUploading = ref(false);
 
-const tabs = computed(() => [
-  { id: 'Detail Aset', label: t('inventory.assetDetail') },
-  { id: 'Peminjaman', label: t('inventory.borrowHistory') },
-  { id: 'Jejak Audit', label: t('inventory.auditTrail') },
-]);
+const tabs = computed(() => {
+  const list = [
+    { id: 'Detail Aset', label: t('inventory.assetDetail') },
+  ];
+  if (isAdmin.value) {
+    list.push({ id: 'Peminjaman', label: t('inventory.borrowHistory') });
+  }
+  list.push({ id: 'Jejak Audit', label: t('inventory.auditTrail') });
+  return list;
+});
 
 watch(() => props.open, (newVal) => {
   if (newVal) {
@@ -302,7 +309,7 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
 
               <!-- ── TAB 2: PEMINJAMAN ── -->
               <FormulirPeminjamanAset 
-                v-if="detailActiveTab === 'Peminjaman'" 
+                v-if="isAdmin && detailActiveTab === 'Peminjaman'" 
                 :asset="props.asset" 
                 :users="props.users" 
               />
@@ -318,7 +325,7 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
             <div class="py-3 px-4 border-t border-border flex items-center justify-end gap-3 bg-muted/10">
               <template v-if="detailActiveTab === 'Detail Aset'">
                 <Button 
-                  v-if="asset"
+                  v-if="isAdmin && asset"
                   as="a"
                   :href="`/smart/inventory/units/${asset.id}/qr-code`" 
                   download 
@@ -376,7 +383,7 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                 </Button>
 
                 <Button 
-                  v-else-if="asset && asset.memo_url"
+                  v-else-if="isAdmin && asset && asset.memo_url"
                   @click="triggerBodBocUpload"
                   :disabled="isUploading"
                   variant="warning"
@@ -388,6 +395,7 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                 </Button>
 
                 <Button 
+                  v-if="isAdmin"
                   @click="
                     emit('update:open', false);
                     emit('edit', props.asset);

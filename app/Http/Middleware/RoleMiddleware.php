@@ -32,7 +32,7 @@ class RoleMiddleware
 
         $satisfiedRoles = [$userRole];
         if ($userRole === 'ifs_manager') {
-            $satisfiedRoles = ['ifs_manager', 'admin', 'manager', 'user'];
+            $satisfiedRoles = ['ifs_manager', 'manager', 'user'];
         }
 
         if (empty(array_intersect($satisfiedRoles, $roles))) {

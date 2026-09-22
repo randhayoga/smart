@@ -289,3 +289,92 @@ export const userNavigation: NavSection[] = [
     */
     // ==========================================
 ];
+
+// Navigation for IFS Manager
+export const ifsNavigation: NavSection[] = [
+    {
+        id: 'main_menu',
+        title: 'MENU UTAMA',
+        titleKey: 'nav.sections.mainMenu',
+        items: [
+            {
+                id: 'dashboard',
+                title: 'Dashboard',
+                titleKey: 'nav.items.dashboard',
+                href: '/smart/dashboard',
+                icon: LayoutDashboard,
+            },
+        ],
+    },
+    {
+        id: 'stock',
+        title: 'STOK',
+        titleKey: 'nav.sections.stock',
+        items: [
+            {
+                id: 'consumable_stock',
+                title: 'Daftar Stok (Habis Pakai)',
+                titleKey: 'nav.items.consumableStock',
+                href: '/smart/inventory/stok-habis-pakai',
+                icon: Scroll,
+            },
+            {
+                id: 'assets',
+                title: 'Daftar Aset',
+                titleKey: 'nav.items.assets',
+                href: '/smart/inventory/assets',
+                icon: ScrollText,
+            },
+            {
+                id: 'employees',
+                title: 'Daftar Karyawan',
+                titleKey: 'nav.items.employees',
+                href: '/smart/karyawan',
+                icon: Users,
+            },
+        ],
+    },
+    {
+        id: 'approval_deletion',
+        title: 'APPROVAL PENGHAPUSAN',
+        titleKey: 'nav.sections.approvalDeletion',
+        items: [
+            {
+                id: 'need_approval_status',
+                title: 'Perlu Approval',
+                titleKey: 'nav.items.needApproval',
+                href: '/smart/approve-status',
+                icon: FileX,
+            },
+            {
+                id: 'processed_status',
+                title: 'Sudah Diproses',
+                titleKey: 'nav.items.processed',
+                href: '/smart/approve-status?history=true',
+                icon: Shredder,
+            },
+        ],
+    },
+    {
+        id: 'audit',
+        title: 'AUDIT',
+        titleKey: 'nav.sections.audit',
+        items: [
+            {
+                id: 'audit_trail',
+                title: 'Pergerakan Aset',
+                titleKey: 'nav.items.auditTrail',
+                href: '/smart/audit',
+                icon: ArrowLeftRight,
+            },
+            {
+                id: 'inventory_audit',
+                title: 'Audit Manajemen Stok',
+                titleKey: 'nav.items.inventoryAudit',
+                href: '/smart/audit-stok',
+                icon: FileClock,
+            },
+        ],
+    },
+];
+

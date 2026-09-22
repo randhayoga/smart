@@ -2,11 +2,11 @@
     Email notification template sent to Department Manager for asset disposal/deactivation approval requests.
 --}}
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Persetujuan Status Aset - SMART</title>
+    <title>Asset Status Approval - SMART</title>
     <!--[if mso]>
     <style type="text/css">
         body, table, td, a { font-family: Arial, Helvetica, sans-serif !important; }
@@ -174,7 +174,7 @@
                         </td>
                         <td style="vertical-align: middle;">
                             <h1 class="app-title">SMART</h1>
-                            <div class="app-subtitle">Sistem Manajemen Aset & Request Tracking</div>
+                            <div class="app-subtitle">Asset Management & Request Tracking System</div>
                         </td>
                     </tr>
                 </table>
@@ -183,22 +183,22 @@
             <!-- Main Content -->
             <div class="content">
                 <div class="greeting">
-                    Yth. {{ $recipientName ?? 'Department Manager IFS' }},
+                    Dear {{ $recipientName ?? 'IFS Department Manager' }},
                 </div>
 
                 <p class="message">
-                    Permohonan penonaktifan aset di bawah ini telah disetujui oleh <strong>BoD/BoC</strong> dan dokumen approval telah diunggah. Saat ini memerlukan <strong>persetujuan akhir</strong> dari Anda.
+                    The asset deactivation request below has been approved by the <strong>BoD/BoC</strong> and the approval document has been uploaded. It currently requires your <strong>final approval</strong>.
                 </p>
 
                 <!-- Asset Info Table -->
                 <div class="info-box">
                     <table class="info-table">
                         <tr>
-                            <td class="info-label">Nomor Aset</td>
+                            <td class="info-label">Asset Number</td>
                             <td class="info-value info-code" style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;">{{ $unit->number }}</td>
                         </tr>
                         <tr>
-                            <td class="info-label">Nama Barang</td>
+                            <td class="info-label">Item Name</td>
                             <td class="info-value">{{ $brandAndName }}</td>
                         </tr>
                         @if($unit->serial_number)
@@ -208,26 +208,26 @@
                         </tr>
                         @endif
                         <tr>
-                            <td class="info-label">Lokasi Aset</td>
+                            <td class="info-label">Asset Location</td>
                             <td class="info-value">{{ $locationText }}</td>
                         </tr>
                         <tr>
-                            <td class="info-label">Kondisi Awal</td>
+                            <td class="info-label">Initial Condition</td>
                             <td class="info-value">{{ $approval->previous_condition ?? $unit->condition }}</td>
                         </tr>
                         <tr>
-                            <td class="info-label">Kondisi Diajukan</td>
-                            <td class="info-value info-highlight">{{ $approval->proposed_condition ?? '-' }} (Nonaktif)</td>
+                            <td class="info-label">Proposed Condition</td>
+                            <td class="info-value info-highlight">{{ $approval->proposed_condition ?? '-' }} (Inactive)</td>
                         </tr>
                         @if($approval && $approval->requester)
                         <tr>
-                            <td class="info-label">Diajukan Oleh</td>
+                            <td class="info-label">Requested By</td>
                             <td class="info-value">{{ $approval->requester->name }}</td>
                         </tr>
                         @endif
                         @if($approval && $approval->note)
                         <tr>
-                            <td class="info-label">Catatan</td>
+                            <td class="info-label">Notes</td>
                             <td class="info-value" style="font-weight: 500; font-style: italic; color: #475569;">"{{ $approval->note }}"</td>
                         </tr>
                         @endif
@@ -237,20 +237,20 @@
                 <!-- CTA Button -->
                 <div class="btn-container">
                     <a href="{{ $actionUrl }}" class="btn-primary" target="_blank">
-                        Tinjau & Berikan Keputusan
+                        Review & Provide Decision
                     </a>
                 </div>
 
                 <!-- Fallback URL -->
                 <div class="fallback-text">
-                    Jika tombol di atas tidak berfungsi, buka tautan berikut di browser Anda:<br>
+                    If the button above does not work, open the following link in your browser:<br>
                     <a href="{{ $actionUrl }}">{{ $actionUrl }}</a>
                 </div>
             </div>
 
             <!-- Footer -->
             <div class="footer">
-                Email otomatis dari <strong>SMART</strong> &bull; Tidak perlu membalas email ini.
+                Automated email from <strong>SMART</strong> &bull; Please do not reply to this email.
             </div>
         </div>
     </div>

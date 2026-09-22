@@ -82,26 +82,110 @@ class IfsManagerRoleTest extends TestCase
         // Setup a standard user
         $standardUser = User::factory()->create();
 
-        // 1. Test Admin-only route (smart.inventory / smart.dashboard)
-        // Standard User -> Forbidden
-        $response = $this->actingAs($standardUser)->get(route('smart.inventory'));
-        $response->assertStatus(403);
+        // 1. Test Admin-only routes (must be 403 Forbidden for IFS Manager now)
+        $adminOnlyRoutes = [
+            route('smart.inventory'),
+            route('smart.master'),
+            route('smart.scan-barcode'),
+            route('smart.inventory.pending-nonaktif'),
+            route('smart.requests.index'),
+            route('smart.arsip'),
+        ];
 
-        // Standard Manager -> Forbidden
-        $response = $this->actingAs($managerUser)->get(route('smart.inventory'));
-        $response->assertStatus(403);
+        foreach ($adminOnlyRoutes as $adminRoute) {
+            $this->actingAs($standardUser)->get($adminRoute)->assertStatus(403);
+            $this->actingAs($managerUser)->get($adminRoute)->assertStatus(403);
+            $this->actingAs($ifsManagerUser)->get($adminRoute)->assertStatus(403);
+        }
 
-        // IFS Manager -> Allowed (since they have admin privileges, it returns Inertia render 200)
-        $response = $this->actingAs($ifsManagerUser)->get(route('smart.inventory'));
+        // 2. Test Shared routes accessible by IFS Manager (200 OK)
+        $sharedRoutes = [
+            route('smart.dashboard'),
+            route('smart.inventory.stok-habis-pakai'),
+            route('smart.inventory.assets'),
+            route('smart.karyawan.index'),
+            route('smart.audit'),
+            route('smart.audit-stok'),
+            route('smart.approve-status'),
+        ];
+
+        foreach ($sharedRoutes as $sharedRoute) {
+            $this->actingAs($ifsManagerUser)->get($sharedRoute)->assertStatus(200);
+        }
+
+        // 3. Test Audit Trail route returns proper component
+        $response = $this->actingAs($ifsManagerUser)->get(route('smart.audit'));
         $response->assertStatus(200);
+        $response->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+            ->component('Smart/Admin/JejakAudit')
+            ->has('lifecycles')
+        );
+    }
 
-        // 2. Test Manager-only route (smart.approve-status)
-        // Standard User -> Forbidden
-        $response = $this->actingAs($standardUser)->get(route('smart.approve-status'));
-        $response->assertStatus(403);
 
-        // IFS Manager -> Allowed (since ifs_manager satisfies manager role in hierarchy)
-        $response = $this->actingAs($ifsManagerUser)->get(route('smart.approve-status'));
-        $response->assertStatus(200);
+    public function test_ifs_org_code_resolution_based_on_environment(): void
+    {
+        $this->assertEquals('IFS', User::getIfsOrgCode());
+
+        $originalEnv = $this->app['env'];
+        try {
+            $this->app['env'] = 'local';
+            $this->assertEquals('TEST-DEPT', User::getIfsOrgCode());
+        } finally {
+            $this->app['env'] = $originalEnv;
+        }
+    }
+
+    public function test_dynamic_role_resolves_test_dept_manager_as_ifs_manager_in_local_env(): void
+    {
+        // 1. Setup TEST-DEPT manager
+        $testDeptManager = User::factory()->create();
+        $testEmployee = HrdEmployee::where('employee_id', $testDeptManager->employee_id)->first();
+        $testDeptOrg = HrdOrgchart::find($testEmployee->orgchart_id);
+        $testDeptOrg->update([
+            'employee_id' => $testDeptManager->employee_id,
+            'org_code' => 'TEST-DEPT',
+        ]);
+
+        // 2. Setup real IFS manager
+        $realIfsManager = User::factory()->create();
+        $realEmployee = HrdEmployee::where('employee_id', $realIfsManager->employee_id)->first();
+        $realIfsOrg = HrdOrgchart::find($realEmployee->orgchart_id);
+        $realIfsOrg->update([
+            'employee_id' => $realIfsManager->employee_id,
+            'org_code' => 'IFS',
+        ]);
+
+        $originalEnv = $this->app['env'];
+        try {
+            // Under local environment
+            $this->app['env'] = 'local';
+            $testDeptManager->refresh();
+            $realIfsManager->refresh();
+
+            $this->assertEquals('ifs_manager', $testDeptManager->role);
+            $this->assertTrue($testDeptManager->is_admin);
+            $this->assertEquals('manager', $realIfsManager->role);
+
+            $ifsUsers = User::getUsersByRole('ifs_manager');
+            $this->assertTrue($ifsUsers->contains('employee_id', $testDeptManager->employee_id));
+            $this->assertFalse($ifsUsers->contains('employee_id', $realIfsManager->employee_id));
+
+            // Under testing / non-local environment
+            $this->app['env'] = 'testing';
+            $testDeptManager->refresh();
+            $realIfsManager->refresh();
+
+            $this->assertEquals('manager', $testDeptManager->role);
+            $this->assertFalse($testDeptManager->is_admin);
+            $this->assertEquals('ifs_manager', $realIfsManager->role);
+
+            $ifsUsersNonLocal = User::getUsersByRole('ifs_manager');
+            $this->assertFalse($ifsUsersNonLocal->contains('employee_id', $testDeptManager->employee_id));
+            $this->assertTrue($ifsUsersNonLocal->contains('employee_id', $realIfsManager->employee_id));
+        } finally {
+            $this->app['env'] = $originalEnv;
+        }
     }
 }
+

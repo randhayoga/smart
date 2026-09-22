@@ -153,6 +153,7 @@ const handleConfirmDelete = () => {
 
 // Flash Notifications
 const page = usePage();
+const isAdmin = computed(() => (page.props.auth as any)?.user?.role === 'admin');
 const flashSuccess = computed(() => (page.props as any).flash?.success);
 
 watch(flashSuccess, (newVal) => {
@@ -224,7 +225,7 @@ onUnmounted(() => {
     <div class="flex flex-wrap items-center justify-between gap-4 mb-2 no-print">
       <Tabs v-model="activeTab" :tabs="tabs" />
 
-      <div class="flex items-center gap-3">
+      <div v-if="isAdmin" class="flex items-center gap-3">
         <Button
           v-if="props.barang.is_consumable"
           @click="openManualRequestModal"

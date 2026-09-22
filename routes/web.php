@@ -89,10 +89,28 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
         Route::delete('/{id}', [\App\Http\Controllers\Smart\NotificationController::class, 'destroy'])->name('destroy');
     });
 
+    // Routes accessible by Admin and IFS Manager
+    Route::middleware(['role:admin,ifs_manager'])->group(function () {
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+        Route::prefix('inventory')->name('inventory.')->group(function () {
+            Route::get('assets', [\App\Http\Controllers\Smart\Admin\ManajemenStok\UnitController::class, 'index'])->name('assets');
+            Route::get('stok-habis-pakai/{barang?}', [\App\Http\Controllers\Smart\Admin\ManajemenStok\ConsumableLotController::class, 'index'])->name('stok-habis-pakai');
+            Route::get('lots/{lot}', [\App\Http\Controllers\Smart\Admin\ManajemenStok\LotController::class, 'show'])->name('lots.show');
+            Route::get('units/{unit}/qr-code', [\App\Http\Controllers\Smart\Admin\ManajemenStok\UnitQrCodeController::class, 'show'])->name('units.qr-code');
+        });
+
+        // Daftar Karyawan & Nested Employee Loans Resource (Cruddy by Design)
+        Route::get('/karyawan', [\App\Http\Controllers\Smart\Admin\ManajemenStok\EmployeeController::class, 'index'])->name('karyawan.index');
+        Route::get('/karyawan/{employee}/loans', [\App\Http\Controllers\Smart\Admin\ManajemenStok\EmployeeLoanController::class, 'index'])->name('karyawan.loans');
+
+        Route::get('/audit', [AuditController::class, 'index'])->name('audit');
+        Route::get('/audit-stok', [\App\Http\Controllers\Smart\Admin\InventoryAuditController::class, 'index'])->name('audit-stok');
+    });
+
     // Admin only routes
     Route::middleware(['role:admin'])->group(function () {
         Route::get('/scan', [\App\Http\Controllers\Smart\MultiRoles\ScanBarcodeController::class, 'show'])->name('scan-barcode');
-        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
         Route::get('/inventory', [ManajemenStokController::class, 'index'])->name('inventory');
         Route::get('/master', [MasterController::class, 'index'])->name('master');
@@ -114,27 +132,20 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
             Route::resource('barangs', \App\Http\Controllers\Smart\Admin\ManajemenStok\BarangController::class)->only(['store', 'update', 'destroy']);
             Route::put('lots/bulk', [\App\Http\Controllers\Smart\Admin\ManajemenStok\BulkLotController::class, 'update'])->name('lots.bulk-update');
             Route::delete('lots/bulk', [\App\Http\Controllers\Smart\Admin\ManajemenStok\BulkLotController::class, 'destroy'])->name('lots.bulk-destroy');
-            Route::resource('lots', \App\Http\Controllers\Smart\Admin\ManajemenStok\LotController::class)->only(['store', 'update', 'destroy', 'show']);
+            Route::resource('lots', \App\Http\Controllers\Smart\Admin\ManajemenStok\LotController::class)->only(['store', 'update', 'destroy']);
             Route::post('units/bulk-update', [\App\Http\Controllers\Smart\Admin\ManajemenStok\BulkUnitController::class, 'update'])->name('units.bulk-update');
             Route::post('units/bulk', [\App\Http\Controllers\Smart\Admin\ManajemenStok\BulkUnitController::class, 'store'])->name('units.bulk-store');
             Route::post('units/{unit}/borrow', [\App\Http\Controllers\Smart\Admin\ManajemenStok\UnitBorrowController::class, 'borrow'])->name('units.borrow');
             Route::post('units/{unit}/finish-borrow', [\App\Http\Controllers\Smart\Admin\ManajemenStok\UnitBorrowController::class, 'finish'])->name('units.finish-borrow');
             Route::get('users', [\App\Http\Controllers\Smart\Admin\ManajemenStok\UnitBorrowController::class, 'users'])->name('users');
             Route::resource('units', \App\Http\Controllers\Smart\Admin\ManajemenStok\UnitController::class)->only(['store', 'update', 'destroy']);
-            Route::get('units/{unit}/qr-code', [\App\Http\Controllers\Smart\Admin\ManajemenStok\UnitQrCodeController::class, 'show'])->name('units.qr-code');
             Route::resource('unit-status-approvals', \App\Http\Controllers\Smart\MultiRoles\UnitStatusApproval\AdminUnitStatusApprovalController::class)->only(['store']);
-            Route::get('assets', [\App\Http\Controllers\Smart\Admin\ManajemenStok\UnitController::class, 'index'])->name('assets');
             Route::get('pending-nonaktif', [\App\Http\Controllers\Smart\Admin\ManajemenStok\PendingNonaktifController::class, 'index'])->name('pending-nonaktif');
             Route::post('barangs/{barang}/manual-request', [\App\Http\Controllers\Smart\Admin\ManajemenStok\BarangManualRequestController::class, 'store'])->name('barangs.manual-request');
             Route::post('lots/{lot}/manual-request', [\App\Http\Controllers\Smart\Admin\ManajemenStok\LotManualRequestController::class, 'store'])->name('lots.manual-request');
             Route::get('request-options', [\App\Http\Controllers\Smart\Admin\ManajemenStok\ConsumableRequestOptionController::class, 'index'])->name('request-options');
             Route::get('consumables/request-options', [\App\Http\Controllers\Smart\Admin\ManajemenStok\ConsumableRequestOptionController::class, 'index'])->name('consumables.request-options');
-            Route::get('stok-habis-pakai/{barang?}', [\App\Http\Controllers\Smart\Admin\ManajemenStok\ConsumableLotController::class, 'index'])->name('stok-habis-pakai');
         });
-
-        // Daftar Karyawan & Nested Employee Loans Resource (Cruddy by Design)
-        Route::get('/karyawan', [\App\Http\Controllers\Smart\Admin\ManajemenStok\EmployeeController::class, 'index'])->name('karyawan.index');
-        Route::get('/karyawan/{employee}/loans', [\App\Http\Controllers\Smart\Admin\ManajemenStok\EmployeeLoanController::class, 'index'])->name('karyawan.loans');
 
         Route::get('scan/{unit}', [\App\Http\Controllers\Smart\Admin\ManajemenStok\UnitScanController::class, 'show'])->name('scan');
 
@@ -210,8 +221,6 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
 
         Route::get('/arsip', [\App\Http\Controllers\Smart\Admin\ArsipController::class, 'index'])->name('arsip');
         Route::get('/arsip/{id}', [\App\Http\Controllers\Smart\Admin\ArsipController::class, 'show'])->name('arsip.show');
-        Route::get('/audit', [AuditController::class, 'index'])->name('audit');
-        Route::get('/audit-stok', [\App\Http\Controllers\Smart\Admin\InventoryAuditController::class, 'index'])->name('audit-stok');
     });
 
     // Manager only routes

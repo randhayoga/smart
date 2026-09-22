@@ -111,7 +111,7 @@ const tempAllocatedLots = ref<Record<number, number>>({});
 const unitSearchQuery = ref('');
 const selectedVariantFilter = ref<string | number | null>('');
 const isSavingAllocation = ref(false);
-const rowsPerPage = ref('10');
+const rowsPerPage = ref('50');
 
 const rowsPerPageLabel = computed(() => {
   if (rowsPerPage.value === 'Semua baris') return t('fulfillment.allRows');
@@ -134,7 +134,7 @@ const pageSizeNumber = computed(() => {
   if (rowsPerPage.value === 'Semua baris' || !rowsPerPage.value) {
     return 999999;
   }
-  return parseInt(rowsPerPage.value, 10) || 10;
+  return parseInt(rowsPerPage.value, 10) || 50;
 });
 
 // Modal Title based on consumable vs non-consumable
@@ -883,7 +883,7 @@ const saveAllocation = () => {
                     }
                     return isUnitSelected(row.id) ? 'bg-primary/5 cursor-pointer' : 'cursor-pointer';
                   }"
-                  :default-sorting="[isConsumable ? { id: 'lot_code', desc: false } : { id: 'asset_code', desc: false }]"
+                  :default-sorting="[isConsumable ? { id: 'lot_code', desc: true } : { id: 'asset_code', desc: true }]"
                   table-container-class="max-h-[350px]"
                 />
               </div>

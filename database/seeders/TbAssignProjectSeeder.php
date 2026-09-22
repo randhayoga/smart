@@ -14,6 +14,10 @@ class TbAssignProjectSeeder extends Seeder
      */
     public function run(): void
     {
+        if (app()->isProduction()) {
+            throw new \RuntimeException('TbAssignProjectSeeder is strictly prohibited in production to protect RE_PORTALDB.');
+        }
+
         $allFakeNpks = array_values(array_unique(array_merge(
             UserSeeder::FAKE_USERNAMES,
             UserSeeder::LEGACY_FAKE_USERNAMES
