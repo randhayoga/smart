@@ -12,7 +12,9 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         if (app()->isProduction()) {
-            throw new \RuntimeException('Database seeding is strictly prohibited in production to protect SMART and external databases (USER_HRIS, RE_PORTALDB).');
+            $this->command?->warn('Production environment detected: Skipping development and external dummy seeders.');
+            $this->call(RoleAndPermissionSeeder::class);
+            return;
         }
 
         $this->call([

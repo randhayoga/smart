@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Auth\Role;
 use App\Models\HrdOrgchart;
 use App\Models\TbAssignProject;
 use App\Models\TbProject;
@@ -155,16 +156,27 @@ class ExternalDatabaseSeederTest extends TestCase
         $this->assertDatabaseHas('tb_project', ['no_project' => 'PERSIST-01'], 'reportal');
     }
 
-    public function test_seeders_are_strictly_prohibited_in_production(): void
+    public function test_database_seeder_in_production_only_runs_role_and_permission_seeder(): void
     {
         $originalEnv = app()['env'];
+
+        // Clean any residual fake entries from preceding tests
+        User::whereIn('employee_id', UserSeeder::FAKE_USERNAMES)->delete();
+        TbProject::whereIn('no_project', TbProjectSeeder::FAKE_PROJECT_CODES)->delete();
 
         try {
             app()['env'] = 'production';
 
-            $this->expectException(\RuntimeException::class);
-            $this->expectExceptionMessage('Database seeding is strictly prohibited in production');
-            $this->artisan('db:seed', ['--class' => DatabaseSeeder::class, '--force' => true]);
+            $this->artisan('db:seed', ['--class' => DatabaseSeeder::class, '--force' => true])
+                ->assertSuccessful();
+
+            // External dummy data must NOT be seeded
+            $this->assertCount(0, User::whereIn('employee_id', UserSeeder::FAKE_USERNAMES)->get());
+            $this->assertCount(0, TbProject::whereIn('no_project', TbProjectSeeder::FAKE_PROJECT_CODES)->get());
+
+            // Core roles must be seeded into SMART
+            $this->assertDatabaseHas('roles', ['name' => 'superadmin'], 'SMART');
+            $this->assertDatabaseHas('roles', ['name' => 'admin'], 'SMART');
         } finally {
             app()['env'] = $originalEnv;
         }

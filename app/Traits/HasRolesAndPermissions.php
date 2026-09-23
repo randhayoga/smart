@@ -7,6 +7,16 @@ use App\Models\Auth\Role;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Collection;
 
+/**
+ * Trait HasRolesAndPermissions
+ *
+ * @property-read bool $is_superadmin
+ * @property-read string|null $role
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Auth\Role> $roles
+ * @property int|string|null $id
+ * @property string|null $employee_id
+ * @property bool $exists
+ */
 trait HasRolesAndPermissions
 {
     protected ?array $cachedRoleNames = null;

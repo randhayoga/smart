@@ -111,68 +111,112 @@ class RoleAndPermissionSeeder extends Seeder
         }
 
         // 3. Map permissions to roles
-        $allPermissionIds = collect($permissions)->pluck('id')->all();
+        $isProduction = app()->isProduction();
+        $isAlreadySeeded = $this->isAlreadySeeded();
+        $shouldSyncPermissions = !$isProduction || !$isAlreadySeeded || $this->shouldForceSync();
 
-        // Superadmin gets all permissions (including access.manage)
-        $roles['superadmin']->permissions()->sync($allPermissionIds);
+        if ($shouldSyncPermissions) {
+            $allPermissionIds = collect($permissions)->pluck('id')->all();
 
-        // Admin gets all permissions EXCEPT access management (exclusive to superadmin)
-        $adminPermissionIds = collect($permissions)
-            ->filter(fn($p) => $p->group !== 'access')
-            ->pluck('id')
-            ->all();
-        $roles['admin']->permissions()->sync($adminPermissionIds);
+            // Superadmin gets all permissions (including access.manage)
+            $roles['superadmin']->permissions()->sync($allPermissionIds);
 
-        // IFS Manager permissions
-        $ifsManagerPermissions = [
-            'dashboard.admin.view',
-            'dashboard.user.view',
-            'inventory.view',
-            'inventory.status_approval.decide',
-            'requests.create',
-            'requests.view_own',
-            'requests.approve',
-            'karyawan.view',
-            'audit.view',
-            'notifications.manage',
-        ];
-        $roles['ifs_manager']->permissions()->sync(
-            collect($ifsManagerPermissions)->map(fn($name) => $permissions[$name]->id)->all()
-        );
+            // Admin gets all permissions EXCEPT access management (exclusive to superadmin)
+            $adminPermissionIds = collect($permissions)
+                ->filter(fn($p) => $p->group !== 'access')
+                ->pluck('id')
+                ->all();
+            $roles['admin']->permissions()->sync($adminPermissionIds);
 
-        // Manager permissions
-        $managerPermissions = [
-            'dashboard.user.view',
-            'requests.create',
-            'requests.view_own',
-            'requests.approve',
-            'inventory.status_approval.decide',
-            'notifications.manage',
-        ];
-        $roles['manager']->permissions()->sync(
-            collect($managerPermissions)->map(fn($name) => $permissions[$name]->id)->all()
-        );
+            // IFS Manager permissions
+            $ifsManagerPermissions = [
+                'dashboard.admin.view',
+                'dashboard.user.view',
+                'inventory.view',
+                'inventory.status_approval.decide',
+                'requests.create',
+                'requests.view_own',
+                'requests.approve',
+                'karyawan.view',
+                'audit.view',
+                'notifications.manage',
+            ];
+            $roles['ifs_manager']->permissions()->sync(
+                collect($ifsManagerPermissions)->map(fn($name) => $permissions[$name]->id)->all()
+            );
 
-        // Regular User permissions
-        $userPermissions = [
-            'dashboard.user.view',
-            'requests.create',
-            'requests.view_own',
-            'notifications.manage',
-        ];
-        $roles['user']->permissions()->sync(
-            collect($userPermissions)->map(fn($name) => $permissions[$name]->id)->all()
-        );
+            // Manager permissions
+            $managerPermissions = [
+                'dashboard.user.view',
+                'requests.create',
+                'requests.view_own',
+                'requests.approve',
+                'inventory.status_approval.decide',
+                'notifications.manage',
+            ];
+            $roles['manager']->permissions()->sync(
+                collect($managerPermissions)->map(fn($name) => $permissions[$name]->id)->all()
+            );
+
+            // Regular User permissions
+            $userPermissions = [
+                'dashboard.user.view',
+                'requests.create',
+                'requests.view_own',
+                'notifications.manage',
+            ];
+            $roles['user']->permissions()->sync(
+                collect($userPermissions)->map(fn($name) => $permissions[$name]->id)->all()
+            );
+
+            if ($isProduction && $isAlreadySeeded) {
+                $this->command?->warn('FORCE_ROLE_SEED detected: Reset all role permissions to factory defaults in production.');
+            }
+        } else {
+            $this->command?->warn('RoleAndPermissionSeeder: Default permission sync skipped to protect active permissions. (Use FORCE_ROLE_SEED=true to override).');
+        }
 
         // 4. Initial User Assignment for existing hardcoded superadmin & admins
         $superadminUser = User::where('employee_id', '265656')->first();
-        if ($superadminUser) {
+        if ($superadminUser && !$superadminUser->hasRole('superadmin')) {
             $superadminUser->assignRole('superadmin');
         }
 
         $adminUser = User::where('employee_id', '255578')->first();
-        if ($adminUser) {
+        if ($adminUser && !$adminUser->hasRole('admin')) {
             $adminUser->assignRole('admin');
         }
+    }
+
+    /**
+     * Determine if roles and permissions have already been seeded in the database.
+     */
+    protected function isAlreadySeeded(): bool
+    {
+        return Role::where('name', 'superadmin')->exists()
+            && \Illuminate\Support\Facades\DB::connection('SMART')->table('role_permissions')->exists();
+    }
+
+    /**
+     * Determine if an intentional force override has been requested for production reseeding.
+     */
+    protected function shouldForceSync(): bool
+    {
+        if (filter_var(env('FORCE_ROLE_SEED', false), FILTER_VALIDATE_BOOLEAN)) {
+            return true;
+        }
+
+        if ($this->command && !app()->runningUnitTests()) {
+            try {
+                return $this->command->confirm(
+                    'Roles and permissions already exist in production. Reseeding will overwrite all custom permissions. Do you wish to continue?',
+                    false
+                );
+            } catch (\Throwable) {
+                return false;
+            }
+        }
+
+        return false;
     }
 }
