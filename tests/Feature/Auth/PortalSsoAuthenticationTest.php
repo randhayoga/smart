@@ -67,6 +67,24 @@ class PortalSsoAuthenticationTest extends TestCase
         $response->assertRedirect(route('smart.dashboard'));
     }
 
+    public function test_user_with_valid_ci_session_snake_case_query_param_logs_in_and_redirects_to_dashboard(): void
+    {
+        $admin = User::firstWhere('employee_id', '255578') ?? User::factory()->create(['employee_id' => '255578']);
+
+        $sessionId = 'sso_admin_snake_' . uniqid();
+        DB::connection('reportal')->table('ci_sessions')->insert([
+            'id' => $sessionId,
+            'ip_address' => '127.0.0.1',
+            'timestamp' => time(),
+            'data' => 'uname|s:6:"255578";',
+        ]);
+
+        $response = $this->get('/login?ci_session=' . $sessionId);
+
+        $this->assertAuthenticatedAs($admin);
+        $response->assertRedirect(route('smart.dashboard'));
+    }
+
     public function test_user_with_valid_cisession_and_intended_url_redirects_to_intended(): void
     {
         $admin = User::firstWhere('employee_id', '255578') ?? User::factory()->create(['employee_id' => '255578']);
