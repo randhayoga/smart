@@ -9,8 +9,10 @@ export default {
     audit: 'AUDIT',
     approvalBorrow: 'BORROWING APPROVAL',
     approvalDeletion: 'DEACTIVATION APPROVAL',
+    superadmin: 'SUPERADMIN',
   },
   items: {
+    accessManagement: 'Access Management',
     dashboard: 'Dashboard',
     inventoryManagement: 'Item Management',
     consumableStock: 'Consumables Stock List',

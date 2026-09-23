@@ -77,8 +77,8 @@ class LocaleTest extends TestCase
 
     public function test_404_error_page_matches_selected_locale()
     {
-        HrdEmployee::factory()->create(['employee_id' => '999998']);
-        $user = User::factory()->create(['employee_id' => '999998']);
+        HrdEmployee::factory()->create(['employee_id' => '255578']);
+        $user = User::factory()->create(['employee_id' => '255578']);
 
         $response = $this->actingAs($user)
             ->withSession(['locale' => 'en'])

@@ -31,7 +31,9 @@ class RoleMiddleware
         $userRole = $user->role;
 
         $satisfiedRoles = [$userRole];
-        if ($userRole === 'ifs_manager') {
+        if ($userRole === 'superadmin') {
+            $satisfiedRoles = ['superadmin', 'admin', 'ifs_manager', 'manager', 'user'];
+        } elseif ($userRole === 'ifs_manager') {
             $satisfiedRoles = ['ifs_manager', 'manager', 'user'];
         }
 

@@ -12,6 +12,7 @@ use App\Models\Request\RequestApproval;
 use App\Models\Request\RequestStatusLog;
 use App\Models\TbAssignProject;
 use App\Models\HrdOrgchart;
+use App\Traits\HasRolesAndPermissions;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -26,7 +27,7 @@ use Laravel\Sanctum\HasApiTokens;
  */
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable, HasRolesAndPermissions;
 
     protected $connection = 'user_hris';
 
@@ -54,6 +55,7 @@ class User extends Authenticatable
         'name',
         'role',
         'is_admin',
+        'is_superadmin',
         'org_name',
     ];
 
@@ -140,31 +142,81 @@ class User extends Authenticatable
         return app()->environment('local') ? 'TEST-DEPT' : 'IFS';
     }
 
+    protected ?string $cachedRoleName = null;
+
+    /**
+     * Refresh the model and clear cached attributes.
+     */
+    public function refresh()
+    {
+        $this->cachedRoleName = null;
+        return parent::refresh();
+    }
+
     /**
      * Get the dynamic role of the user.
      */
     public function getRoleAttribute(): string
     {
-        $admins = ['255578', '999998'];
-        $empId = (string) ($this->employee_id ?? '');
-        if (in_array($empId, $admins, true) || ((app()->runningUnitTests() || app()->environment('testing')) && !config('app.disable_test_admin_bypass'))) {
-            return 'admin';
+        if ($this->cachedRoleName !== null) {
+            return $this->cachedRoleName;
         }
 
+        // 1. Check if roles relation is already eager-loaded
+        if ($this->relationLoaded('roles')) {
+            $roleNames = $this->roles->pluck('name')->all();
+            foreach (['superadmin', 'admin', 'ifs_manager', 'manager', 'user'] as $priorityRole) {
+                if (in_array($priorityRole, $roleNames, true)) {
+                    return $this->cachedRoleName = $priorityRole;
+                }
+            }
+            if (!empty($roleNames)) {
+                return $this->cachedRoleName = $roleNames[0];
+            }
+        }
+
+        // 2. Check hardcoded superadmin and admin list
+        $empId = (string) ($this->employee_id ?? '');
+        if ($empId === '265656') {
+            return $this->cachedRoleName = 'superadmin';
+        }
+
+        $admins = ['255578'];
+        if (in_array($empId, $admins, true) || ((app()->runningUnitTests() || app()->environment('testing')) && !config('app.disable_test_admin_bypass'))) {
+            return $this->cachedRoleName = 'admin';
+        }
+
+        // 3. Query assigned roles from SMART database if model is persisted
+        if ($this->exists && !empty($this->id)) {
+            try {
+                $roleNames = $this->roles()->pluck('name')->all();
+                if (!empty($roleNames)) {
+                    foreach (['superadmin', 'admin', 'ifs_manager', 'manager', 'user'] as $priorityRole) {
+                        if (in_array($priorityRole, $roleNames, true)) {
+                            return $this->cachedRoleName = $priorityRole;
+                        }
+                    }
+                    return $this->cachedRoleName = $roleNames[0];
+                }
+            } catch (\Throwable $e) {
+                // Fall back to legacy dynamic calculation on DB error
+            }
+        }
+
+        // 4. Legacy dynamic fallback calculation
         $ifsOrgCode = static::getIfsOrgCode();
         $ifsOrgs = HrdOrgchart::where('org_code', $ifsOrgCode)->get();
         foreach ($ifsOrgs as $ifsOrg) {
             $ifsManagerId = (string) $ifsOrg->employee_id;
             if ($ifsManagerId === (string) $this->id || $ifsManagerId === (string) $this->employee_id) {
-                return 'ifs_manager';
+                return $this->cachedRoleName = 'ifs_manager';
             }
         }
 
-        $isDeptManager = HrdOrgchart::where('employee_id', $this->id)
-            ->orWhere('employee_id', $this->employee_id)
-            ->exists();
+        $numericIds = array_values(array_unique(array_filter([(string) $this->id, (string) $this->employee_id], 'is_numeric')));
+        $isDeptManager = !empty($numericIds) && HrdOrgchart::whereIn('employee_id', array_map('intval', $numericIds))->exists();
         if ($isDeptManager) {
-            return 'manager';
+            return $this->cachedRoleName = 'manager';
         }
 
         // Check if user is the newest Project Manager (P2211) for any project
@@ -180,11 +232,11 @@ class User extends Authenticatable
                 ->value('npk');
 
             if ($latestPmNpk === $empId) {
-                return 'manager';
+                return $this->cachedRoleName = 'manager';
             }
         }
 
-        return 'user';
+        return $this->cachedRoleName = 'user';
     }
 
     /**
@@ -192,7 +244,23 @@ class User extends Authenticatable
      */
     public function getIsAdminAttribute(): bool
     {
-        return $this->role === 'admin' || $this->role === 'ifs_manager';
+        return in_array($this->role, ['superadmin', 'admin', 'ifs_manager'], true);
+    }
+
+    /**
+     * Check if the user is a superadmin.
+     */
+    public function isSuperadmin(): bool
+    {
+        return $this->role === 'superadmin' || (string) ($this->employee_id ?? '') === '265656';
+    }
+
+    /**
+     * Check if the user is a superadmin accessor.
+     */
+    public function getIsSuperadminAttribute(): bool
+    {
+        return $this->isSuperadmin();
     }
 
     /**
@@ -204,7 +272,7 @@ class User extends Authenticatable
     public static function getUsersByRole(string|array $roles)
     {
         $roles = (array) $roles;
-        $adminIds = ['255578', '999998'];
+        $adminIds = ['255578'];
         $ifsOrgCode = static::getIfsOrgCode();
 
         $targetEmployeeIds = collect();
@@ -266,6 +334,7 @@ class User extends Authenticatable
 
         foreach ($roles as $role) {
             switch ($role) {
+                case 'superadmin':
                 case 'admin':
                     $targetEmployeeIds = $targetEmployeeIds->merge($adminIds);
                     break;
@@ -279,6 +348,22 @@ class User extends Authenticatable
                     $includeAllRegularUsers = true;
                     break;
             }
+        }
+
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('user_roles')) {
+                $dbUserIds = \Illuminate\Support\Facades\DB::table('user_roles')
+                    ->join('roles', 'user_roles.role_id', '=', 'roles.id')
+                    ->whereIn('roles.name', $roles)
+                    ->pluck('user_roles.user_id')
+                    ->all();
+                if (!empty($dbUserIds)) {
+                    $dbEmpIds = static::whereIn('id', $dbUserIds)->pluck('employee_id')->all();
+                    $targetEmployeeIds = $targetEmployeeIds->merge($dbEmpIds);
+                }
+            }
+        } catch (\Throwable $e) {
+            // Ignore schema / connection error during bootstrapping
         }
 
         if ($includeAllRegularUsers) {

@@ -9,8 +9,10 @@ export default {
     audit: 'AUDIT',
     approvalBorrow: 'APPROVAL PEMINJAMAN',
     approvalDeletion: 'APPROVAL PENGHAPUSAN',
+    superadmin: 'SUPERADMIN',
   },
   items: {
+    accessManagement: 'Manajemen Akses',
     dashboard: 'Dashboard',
     inventoryManagement: 'Manajemen Barang',
     consumableStock: 'Daftar Stok (Habis Pakai)',

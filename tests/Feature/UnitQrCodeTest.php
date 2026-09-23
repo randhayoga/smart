@@ -20,8 +20,8 @@ class UnitQrCodeTest extends TestCase
 
     private function createAdminUser(): User
     {
-        HrdEmployee::factory()->create(['employee_id' => '999998']);
-        return User::factory()->create(['employee_id' => '999998']);
+        HrdEmployee::factory()->create(['employee_id' => '255578']);
+        return User::factory()->create(['employee_id' => '255578']);
     }
 
     private function createUnit()

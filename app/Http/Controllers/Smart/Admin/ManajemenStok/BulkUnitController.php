@@ -173,7 +173,7 @@ class BulkUnitController extends Controller
             }
         }
 
-        return redirect()->back()->with('success', "Berhasil membuat {$quantity} aset secara otomatis.");
+        return redirect()->back()->with('success', __('inventory.bulk_create_success', ['count' => $quantity]));
     }
 
     /**

@@ -58,7 +58,7 @@ class ManagerRequestEmailApprovalTest extends TestCase
 
     private function createAdmin(): User
     {
-        $employee = HrdEmployee::factory()->create(['employee_id' => '999998']);
+        $employee = HrdEmployee::factory()->create(['employee_id' => '255578']);
         return User::factory()->create(['employee_id' => $employee->employee_id]);
     }
 

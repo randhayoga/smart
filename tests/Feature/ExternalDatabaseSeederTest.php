@@ -59,7 +59,7 @@ class ExternalDatabaseSeederTest extends TestCase
         $this->assertDatabaseHas('hrd_orgchart', ['id' => $realDept->id], 'user_hris');
         $this->assertDatabaseHas('hrd_employee', ['employee_id' => '111111'], 'user_hris');
 
-        // Verify all 4 fake users
+        // Verify all fake users
         foreach (UserSeeder::FAKE_USERNAMES as $username) {
             $this->assertDatabaseHas('hrd_employee', [
                 'employee_id' => $username,
@@ -68,9 +68,6 @@ class ExternalDatabaseSeederTest extends TestCase
         }
 
         // Verify roles
-        $admin = User::where('employee_id', '999998')->first();
-        $this->assertEquals('admin', $admin->role);
-
         $regular = User::where('employee_id', '999997')->first();
         $this->assertEquals('user', $regular->role);
 
@@ -147,7 +144,7 @@ class ExternalDatabaseSeederTest extends TestCase
         $this->seed(TbAssignProjectSeeder::class);
 
         // Counts of fake entries must be exactly the expected number (no duplicates)
-        $this->assertCount(4, User::whereIn('employee_id', UserSeeder::FAKE_USERNAMES)->get());
+        $this->assertCount(count(UserSeeder::FAKE_USERNAMES), User::whereIn('employee_id', UserSeeder::FAKE_USERNAMES)->get());
         $this->assertCount(1, HrdOrgchart::whereIn('org_code', UserSeeder::FAKE_ORG_CODES)->get());
         $this->assertCount(2, TbProject::whereIn('no_project', TbProjectSeeder::FAKE_PROJECT_CODES)->get());
         $this->assertCount(2, TbAssignProject::whereIn('no_project', TbProjectSeeder::FAKE_PROJECT_CODES)->get());

@@ -32,7 +32,6 @@ import { Field, FieldLabel, FieldContent, FieldError } from '@/Components/ui/fie
 import Switch from "@/Components/ui/switch/Switch.vue";
 import LocationCombobox from "@/Components/LocationCombobox.vue";
 import Heading from '@/Components/Heading.vue';
-import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem } from '@/Components/ui/breadcrumb';
 
 import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
@@ -1012,13 +1011,6 @@ onUnmounted(() => {
 
 <template>
   <AppLayout :title="t('masterData.title')">
-    <Breadcrumb>
-      <BreadcrumbList class="pb-3">
-        <BreadcrumbItem>
-          <BreadcrumbLink href="/smart/master">{{ t('masterData.breadcrumb') }}</BreadcrumbLink>
-        </BreadcrumbItem>
-      </BreadcrumbList>
-    </Breadcrumb>
     <div class="space-y-1">
       <!-- Tabs -->
       <Tabs v-model="currentTabLabel" :tabs="tabLabels" />

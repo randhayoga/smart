@@ -37,6 +37,7 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user()?->loadMissing('orgchart'),
                 'isAdmin' => $request->user()?->is_admin ?? false,
+                'isSuperadmin' => $request->user()?->is_superadmin ?? false,
                 'pendingRequestCount' => $request->user() && in_array($request->user()->role, ['manager', 'ifs_manager'])
                     ? \App\Models\Request\Request::where('approver_id', $request->user()->id)->where('status', 'wait')->count()
                     : 0,

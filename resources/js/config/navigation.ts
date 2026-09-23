@@ -22,6 +22,7 @@ import {
     ShoppingCart,
     ArrowLeftRight,
     FileClock,
+    ShieldCheck,
 } from 'lucide-vue-next';
 
 export interface NavItem {
@@ -377,4 +378,19 @@ export const ifsNavigation: NavSection[] = [
         ],
     },
 ];
+
+export const superadminSection: NavSection = {
+    id: 'superadmin_section',
+    title: 'SUPERADMIN',
+    titleKey: 'nav.sections.superadmin',
+    items: [
+        {
+            id: 'access_management',
+            title: 'Access Management',
+            titleKey: 'nav.items.accessManagement',
+            href: '/smart/access',
+            icon: ShieldCheck,
+        },
+    ],
+};
 

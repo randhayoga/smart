@@ -6,7 +6,7 @@ import { computed } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
 import { useI18n } from 'vue-i18n';
 import { ChevronRight, LogOut, PanelLeftClose, PanelLeftOpen } from 'lucide-vue-next';
-import { mainNavigation, userNavigation, ifsNavigation, type NavItem, type NavSection } from '@/config/navigation';
+import { mainNavigation, userNavigation, ifsNavigation, superadminSection, type NavItem, type NavSection } from '@/config/navigation';
 import { ScrollArea } from '@/Components/ui/scroll-area';
 import { Badge } from '@/Components/ui/badge';
 import {
@@ -45,6 +45,10 @@ const { t, te, locale } = useI18n();
 
 // Determine if user is admin from shared props
 const isAdmin = computed(() => (page.props.auth as { user: any; isAdmin?: boolean })?.isAdmin ?? false);
+const isSuperadmin = computed(() => {
+  const auth = page.props.auth as any;
+  return Boolean(auth?.isSuperadmin || auth?.user?.is_superadmin);
+});
 const isManager = computed(() => (page.props.auth as { user: any })?.user?.role === 'manager');
 const isIfsManager = computed(() => (page.props.auth as { user: any })?.user?.role === 'ifs_manager');
 
@@ -130,6 +134,10 @@ const navigation = computed<NavSection[]>(() => {
   }
   */
   // ==========================================
+
+  if (isSuperadmin.value) {
+    sections = [...sections, superadminSection];
+  }
 
   // Get dynamic counts from shared Inertia page props
   const pendingRequestCount = (page.props.auth as any)?.pendingRequestCount ?? 0;

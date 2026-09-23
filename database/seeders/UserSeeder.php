@@ -13,7 +13,6 @@ class UserSeeder extends Seeder
      * Deterministic fake usernames/employee IDs.
      */
     public const FAKE_USERNAMES = [
-        '999998', // Admin: Mas Mas Aset
         '999997', // Regular User: Karyawan Teladan
         '999996', // TEST-DEPT / Acting IFS Manager (in local dev): Dep Manajer
         '999995', // Project Manager: Proyek Manajer
@@ -62,12 +61,6 @@ class UserSeeder extends Seeder
 
         // 3. Seed fake employees in USER_HRIS (hrd_employee) and credentials in USER_HRIS (adm_user)
         $users = [
-            [
-                'employee_id' => '999998',
-                'name' => 'Mas Mas Aset',
-                'email' => 'admin@example.com',
-                'password' => 'IfScFS?25#*',
-            ],
             [
                 'employee_id' => '999997',
                 'name' => 'Karyawan Teladan',

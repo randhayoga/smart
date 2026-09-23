@@ -89,6 +89,17 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
         Route::delete('/{id}', [\App\Http\Controllers\Smart\NotificationController::class, 'destroy'])->name('destroy');
     });
 
+    // Superadmin only routes (Access Management)
+    Route::middleware(['role:superadmin'])->prefix('access')->name('access.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Smart\Admin\AccessManagement\AccessManagementController::class, 'index'])->name('index');
+        Route::put('/users/{user}/role', [\App\Http\Controllers\Smart\Admin\AccessManagement\UserRoleController::class, 'update'])->name('users.role.update');
+        Route::post('/sync-managers', [\App\Http\Controllers\Smart\Admin\AccessManagement\SyncUserHrisManagersController::class, 'store'])->name('sync-managers');
+        Route::post('/roles', [\App\Http\Controllers\Smart\Admin\AccessManagement\RoleController::class, 'store'])->name('roles.store');
+        Route::put('/roles/{role}', [\App\Http\Controllers\Smart\Admin\AccessManagement\RoleController::class, 'update'])->name('roles.update');
+        Route::delete('/roles/{role}', [\App\Http\Controllers\Smart\Admin\AccessManagement\RoleController::class, 'destroy'])->name('roles.destroy');
+        Route::put('/roles/{role}/permissions', [\App\Http\Controllers\Smart\Admin\AccessManagement\RolePermissionController::class, 'update'])->name('roles.permissions.update');
+    });
+
     // Routes accessible by Admin and IFS Manager
     Route::middleware(['role:admin,ifs_manager'])->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');

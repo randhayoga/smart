@@ -34,7 +34,7 @@ class UserRoleTest extends TestCase
 
     public function test_get_users_by_role_admin(): void
     {
-        $admin = User::factory()->create(['employee_id' => '999998']);
+        $admin = User::factory()->create(['employee_id' => '255578']);
         $otherUser = User::factory()->create();
 
         $admins = User::getUsersByRole('admin');

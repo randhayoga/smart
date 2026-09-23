@@ -44,7 +44,7 @@ class AdminEmployeeControllerTest extends TestCase
 
     private function createAdmin(): User
     {
-        return User::factory()->create(['employee_id' => '999998']);
+        return User::factory()->create(['employee_id' => '255578']);
     }
 
     private function createDepartment(string $name = 'Information Technology'): HrdOrgchart
@@ -70,7 +70,7 @@ class AdminEmployeeControllerTest extends TestCase
 
     private function createRequest(User $user, string $status = 'borrow'): SmartRequest
     {
-        $admin = User::where('employee_id', '999998')->first() ?? $this->createAdmin();
+        $admin = User::where('employee_id', '255578')->first() ?? $this->createAdmin();
         $reqNum = 'REQ-' . rand(1000, 9999);
         return SmartRequest::create([
             'request_number' => $reqNum,
