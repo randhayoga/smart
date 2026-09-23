@@ -135,6 +135,71 @@ class PortalSsoAuthenticationTest extends TestCase
         $this->assertGuest();
     }
 
+    public function test_user_with_ci_session_cookie_and_admin_role_logs_in_successfully(): void
+    {
+        $admin = User::firstWhere('employee_id', '255578') ?? User::factory()->create(['employee_id' => '255578']);
+
+        $sessionId = 'sso_cookie_admin_' . uniqid();
+        DB::connection('reportal')->table('ci_sessions')->insert([
+            'id' => $sessionId,
+            'ip_address' => '127.0.0.1',
+            'timestamp' => time(),
+            'data' => 'uname|s:6:"255578";isLogin|b:1;',
+        ]);
+
+        $response = $this->withUnencryptedCookies(['ci_session' => $sessionId])->get('/login');
+
+        $this->assertAuthenticatedAs($admin);
+        $response->assertRedirect(route('smart.dashboard'));
+    }
+
+    public function test_user_with_ci_session_cookie_and_ifs_manager_role_logs_in_successfully(): void
+    {
+        config(['app.disable_test_admin_bypass' => true]);
+
+        $ifsManager = User::factory()->create(['employee_id' => '554433']);
+        $employee = \App\Models\HrdEmployee::where('employee_id', $ifsManager->employee_id)->first();
+        $orgchart = \App\Models\HrdOrgchart::find($employee->orgchart_id);
+        $orgchart->update([
+            'employee_id' => $ifsManager->employee_id,
+            'org_code' => User::getIfsOrgCode(),
+        ]);
+        $ifsManager->refresh();
+        $this->assertEquals('ifs_manager', $ifsManager->role);
+
+        $sessionId = 'sso_cookie_ifs_' . uniqid();
+        DB::connection('reportal')->table('ci_sessions')->insert([
+            'id' => $sessionId,
+            'ip_address' => '127.0.0.1',
+            'timestamp' => time(),
+            'data' => 'uname|s:6:"554433";isLogin|b:1;',
+        ]);
+
+        $response = $this->withUnencryptedCookies(['ci_session' => $sessionId])->get('/login');
+
+        $this->assertAuthenticatedAs($ifsManager);
+        $response->assertRedirect(route('smart.dashboard'));
+    }
+
+    public function test_authenticated_ifs_manager_visiting_login_without_cisession_redirects_to_dashboard(): void
+    {
+        config(['app.disable_test_admin_bypass' => true]);
+
+        $ifsManager = User::factory()->create(['employee_id' => '554434']);
+        $employee = \App\Models\HrdEmployee::where('employee_id', $ifsManager->employee_id)->first();
+        $orgchart = \App\Models\HrdOrgchart::find($employee->orgchart_id);
+        $orgchart->update([
+            'employee_id' => $ifsManager->employee_id,
+            'org_code' => User::getIfsOrgCode(),
+        ]);
+        $ifsManager->refresh();
+        $this->assertEquals('ifs_manager', $ifsManager->role);
+
+        $response = $this->actingAs($ifsManager)->get('/login');
+
+        $response->assertRedirect(route('smart.dashboard'));
+    }
+
     public function test_logout_in_production_invalidates_session_and_redirects_to_portal(): void
     {
         $admin = User::firstWhere('employee_id', '255578') ?? User::factory()->create(['employee_id' => '255578']);

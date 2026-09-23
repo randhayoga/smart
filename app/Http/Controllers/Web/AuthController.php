@@ -25,13 +25,14 @@ class AuthController extends Controller
             return app(AuthenticatedSessionController::class)->create();
         }
 
-        $ciSession = $request->query('ciSession');
+        $ciSession = $verifyService->extractPortalSessionId($request);
 
         // If no session passed, redirect unauthenticated user to Central Portal
         if (empty($ciSession)) {
             if (Auth::check()) {
                 $user = Auth::user();
-                if (!$user->is_admin) {
+                $isAuthorizedPhase1 = in_array($user->role, ['admin', 'ifs_manager'], true) || $user->is_admin;
+                if (!$isAuthorizedPhase1) {
                     return response()->view('errors.phase1', [
                         'portalUrl' => config('app.redirect.portal', 'https://portal.ptre.co.id'),
                     ], 403);
@@ -55,8 +56,9 @@ class AuthController extends Controller
 
         if ($user) {
             // Phase 1 Access Control:
-            // If user is not an Admin or IFS Manager, deny access with dedicated Phase 1 error page
-            if (!$user->is_admin) {
+            // Explicitly allow both Admin and IFS Manager
+            $isAuthorizedPhase1 = in_array($user->role, ['admin', 'ifs_manager'], true) || $user->is_admin;
+            if (!$isAuthorizedPhase1) {
                 return response()->view('errors.phase1', [
                     'portalUrl' => config('app.redirect.portal', 'https://portal.ptre.co.id'),
                 ], 403);

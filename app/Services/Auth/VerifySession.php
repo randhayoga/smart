@@ -55,7 +55,30 @@ class VerifySession
     }
 
     /**
-     * Decode CodeIgniter 3 session data using PHP native session_decode.
+     * Extract Portal CI session ID from incoming HTTP request.
+     * Checks raw cookie first ('ci_session'), then query/input parameter ('ciSession' / 'ci_session').
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return string|null
+     */
+    public function extractPortalSessionId(\Illuminate\Http\Request $request): ?string
+    {
+        $cookie = $request->cookie('ci_session') ?: $request->cookies->get('ci_session');
+
+        if (!empty($cookie)) {
+            return (string) $cookie;
+        }
+
+        $param = $request->query('ciSession')
+            ?: $request->query('ci_session')
+            ?: $request->input('ciSession')
+            ?: $request->input('ci_session');
+
+        return !empty($param) ? (string) $param : null;
+    }
+
+    /**
+     * Decode CodeIgniter 3 session data using PHP native session_decode with regex fallback.
      *
      * @param CISession|string $data
      * @return array
@@ -68,16 +91,32 @@ class VerifySession
             return [];
         }
 
+        $decoded = [];
+
         if (session_status() !== PHP_SESSION_ACTIVE) {
             @session_start();
         }
 
-        $_SESSION = [];
-        @session_decode($sessionData);
-        $decoded = $_SESSION;
-
         if (session_status() === PHP_SESSION_ACTIVE) {
+            $_SESSION = [];
+            if (@session_decode($sessionData)) {
+                $decoded = $_SESSION;
+            }
             @session_write_close();
+        }
+
+        // Robust fallback: If session_decode failed or produced no uname,
+        // extract 'uname' directly from the CodeIgniter session serialized payload using regex.
+        if (empty($decoded['uname']) && preg_match('/(?:^|;)uname\|s:[0-9]+:"([^"]+)";/', $sessionData, $match)) {
+            $decoded['uname'] = $match[1];
+        }
+
+        if (empty($decoded['isLogin']) && preg_match('/(?:^|;)isLogin\|b:([01]);/', $sessionData, $match)) {
+            $decoded['isLogin'] = (bool) $match[1];
+        }
+
+        if (empty($decoded['org_code']) && preg_match('/(?:^|;)org_code\|s:[0-9]+:"([^"]+)";/', $sessionData, $match)) {
+            $decoded['org_code'] = $match[1];
         }
 
         return $decoded;

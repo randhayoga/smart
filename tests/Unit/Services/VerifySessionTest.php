@@ -113,4 +113,39 @@ class VerifySessionTest extends TestCase
         $this->assertEquals('255578', $decoded['uname'] ?? null);
         $this->assertEquals('IFS', $decoded['org_code'] ?? null);
     }
+
+    public function test_extract_portal_session_id_prioritizes_cookie(): void
+    {
+        $request = \Illuminate\Http\Request::create('/login?ciSession=query_id', 'GET', [], ['ci_session' => 'cookie_id']);
+        $extracted = $this->service->extractPortalSessionId($request);
+
+        $this->assertEquals('cookie_id', $extracted);
+    }
+
+    public function test_extract_portal_session_id_falls_back_to_query_param(): void
+    {
+        $request = \Illuminate\Http\Request::create('/login?ciSession=query_id', 'GET');
+        $extracted = $this->service->extractPortalSessionId($request);
+
+        $this->assertEquals('query_id', $extracted);
+    }
+
+    public function test_extract_portal_session_id_returns_null_when_empty(): void
+    {
+        $request = \Illuminate\Http\Request::create('/login', 'GET');
+        $extracted = $this->service->extractPortalSessionId($request);
+
+        $this->assertNull($extracted);
+    }
+
+    public function test_parse_ci_session_handles_complex_nested_payload_via_regex_fallback(): void
+    {
+        $complexData = '__ci_last_regenerate|i:1789329676;images|a:2:{i:0;s:12:"test_pic.jpg";i:1;s:10:"sample.png";}uname|s:6:"194829";isLogin|b:1;org_code|s:3:"IFS";';
+        $decoded = $this->service->parseCiSession($complexData);
+
+        $this->assertIsArray($decoded);
+        $this->assertEquals('194829', $decoded['uname'] ?? null);
+        $this->assertTrue($decoded['isLogin'] ?? false);
+        $this->assertEquals('IFS', $decoded['org_code'] ?? null);
+    }
 }
