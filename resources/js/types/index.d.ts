@@ -13,7 +13,8 @@ export type PageProps<
 > = T & {
     auth: {
         user: User;
-        isAdmin?: boolean;
+        roles?: string[];
+        permissions?: string[];
         pendingRequestCount?: number;
         pendingAssetStatusCount?: number;
         pendingAdminApprovedCount?: number;
@@ -27,3 +28,10 @@ export type PageProps<
         } | null;
     };
 };
+
+declare module 'vue' {
+    interface ComponentCustomProperties {
+        $can: (permission: string | string[]) => boolean;
+        $hasRole: (role: string | string[]) => boolean;
+    }
+}

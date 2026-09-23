@@ -33,6 +33,8 @@ export interface NavItem {
     icon: any;
     badge?: string | number;
     children?: NavItem[];
+    permission?: string | string[];
+    role?: string | string[];
 }
 
 export interface NavSection {
@@ -40,6 +42,8 @@ export interface NavSection {
     title?: string;
     titleKey?: string;
     items: NavItem[];
+    permission?: string | string[];
+    role?: string | string[];
 }
 
 export const mainNavigation: NavSection[] = [
@@ -54,6 +58,7 @@ export const mainNavigation: NavSection[] = [
                 titleKey: 'nav.items.dashboard',
                 href: '/smart/dashboard',
                 icon: LayoutDashboard,
+                permission: ['dashboard.admin.view', 'dashboard.user.view'],
             },
         ],
     },
@@ -68,6 +73,7 @@ export const mainNavigation: NavSection[] = [
                 titleKey: 'nav.items.inventoryManagement',
                 href: '/smart/inventory',
                 icon: Package,
+                permission: 'inventory.manage',
             },
             {
                 id: 'consumable_stock',
@@ -75,6 +81,7 @@ export const mainNavigation: NavSection[] = [
                 titleKey: 'nav.items.consumableStock',
                 href: '/smart/inventory/stok-habis-pakai',
                 icon: Scroll,
+                permission: 'inventory.view',
             },
             {
                 id: 'assets',
@@ -82,6 +89,7 @@ export const mainNavigation: NavSection[] = [
                 titleKey: 'nav.items.assets',
                 href: '/smart/inventory/assets',
                 icon: ScrollText,
+                permission: 'inventory.view',
             },
             {
                 id: 'employees',
@@ -89,6 +97,7 @@ export const mainNavigation: NavSection[] = [
                 titleKey: 'nav.items.employees',
                 href: '/smart/karyawan',
                 icon: Users,
+                permission: 'karyawan.view',
             },
             {
                 id: 'pending_inactive',
@@ -96,6 +105,7 @@ export const mainNavigation: NavSection[] = [
                 titleKey: 'nav.items.pendingInactive',
                 href: '/smart/inventory/pending-nonaktif',
                 icon: Shredder,
+                permission: 'inventory.status_approval.request',
             },
             {
                 id: 'master_data',
@@ -103,6 +113,7 @@ export const mainNavigation: NavSection[] = [
                 titleKey: 'nav.items.masterData',
                 href: '/smart/master',
                 icon: Database,
+                permission: 'master.view',
             },
             {
                 id: 'scan_barcode',
@@ -110,6 +121,7 @@ export const mainNavigation: NavSection[] = [
                 titleKey: 'nav.items.scanBarcode',
                 href: '/smart/scan',
                 icon: QrCode,
+                permission: ['inventory.manage', 'inventory.borrow'],
             },
         ],
     },
@@ -125,6 +137,7 @@ export const mainNavigation: NavSection[] = [
                 href: '/smart/requests',
                 icon: LayoutList,
                 badge: undefined,
+                permission: ['requests.inbox.view', 'requests.fulfill'],
             },
             {
                 id: 'archive',
@@ -132,6 +145,7 @@ export const mainNavigation: NavSection[] = [
                 titleKey: 'nav.items.archive',
                 href: '/smart/arsip',
                 icon: Archive,
+                permission: 'requests.archive.view',
             },
         ],
     },
@@ -146,6 +160,7 @@ export const mainNavigation: NavSection[] = [
                 titleKey: 'nav.items.auditTrail',
                 href: '/smart/audit',
                 icon: ArrowLeftRight,
+                permission: 'audit.view',
             },
             {
                 id: 'inventory_audit',
@@ -153,6 +168,7 @@ export const mainNavigation: NavSection[] = [
                 titleKey: 'nav.items.inventoryAudit',
                 href: '/smart/audit-stok',
                 icon: FileClock,
+                permission: 'audit.view',
             },
         ],
     },
@@ -304,6 +320,7 @@ export const ifsNavigation: NavSection[] = [
                 titleKey: 'nav.items.dashboard',
                 href: '/smart/dashboard',
                 icon: LayoutDashboard,
+                permission: 'dashboard.admin.view',
             },
         ],
     },
@@ -318,6 +335,7 @@ export const ifsNavigation: NavSection[] = [
                 titleKey: 'nav.items.consumableStock',
                 href: '/smart/inventory/stok-habis-pakai',
                 icon: Scroll,
+                permission: 'inventory.view',
             },
             {
                 id: 'assets',
@@ -325,6 +343,7 @@ export const ifsNavigation: NavSection[] = [
                 titleKey: 'nav.items.assets',
                 href: '/smart/inventory/assets',
                 icon: ScrollText,
+                permission: 'inventory.view',
             },
             {
                 id: 'employees',
@@ -332,6 +351,7 @@ export const ifsNavigation: NavSection[] = [
                 titleKey: 'nav.items.employees',
                 href: '/smart/karyawan',
                 icon: Users,
+                permission: 'karyawan.view',
             },
         ],
     },
@@ -339,6 +359,7 @@ export const ifsNavigation: NavSection[] = [
         id: 'approval_deletion',
         title: 'APPROVAL PENGHAPUSAN',
         titleKey: 'nav.sections.approvalDeletion',
+        permission: 'inventory.status_approval.decide',
         items: [
             {
                 id: 'need_approval_status',
@@ -346,6 +367,7 @@ export const ifsNavigation: NavSection[] = [
                 titleKey: 'nav.items.needApproval',
                 href: '/smart/approve-status',
                 icon: FileX,
+                permission: 'inventory.status_approval.decide',
             },
             {
                 id: 'processed_status',
@@ -353,6 +375,7 @@ export const ifsNavigation: NavSection[] = [
                 titleKey: 'nav.items.processed',
                 href: '/smart/approve-status?history=true',
                 icon: Shredder,
+                permission: 'inventory.status_approval.decide',
             },
         ],
     },
@@ -367,6 +390,7 @@ export const ifsNavigation: NavSection[] = [
                 titleKey: 'nav.items.auditTrail',
                 href: '/smart/audit',
                 icon: ArrowLeftRight,
+                permission: 'audit.view',
             },
             {
                 id: 'inventory_audit',
@@ -374,6 +398,7 @@ export const ifsNavigation: NavSection[] = [
                 titleKey: 'nav.items.inventoryAudit',
                 href: '/smart/audit-stok',
                 icon: FileClock,
+                permission: 'audit.view',
             },
         ],
     },
@@ -383,6 +408,7 @@ export const superadminSection: NavSection = {
     id: 'superadmin_section',
     title: 'SUPERADMIN',
     titleKey: 'nav.sections.superadmin',
+    permission: 'access.manage',
     items: [
         {
             id: 'access_management',
@@ -390,6 +416,7 @@ export const superadminSection: NavSection = {
             titleKey: 'nav.items.accessManagement',
             href: '/smart/access',
             icon: ShieldCheck,
+            permission: 'access.manage',
         },
     ],
 };

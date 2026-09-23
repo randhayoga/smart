@@ -260,9 +260,11 @@ const handlePrint = () => {
   });
 };
 
-// Flash Notifications
+// Permissions & Notifications
+import { usePermissions } from '@/composables/usePermissions';
+
 const page = usePage();
-const isAdmin = computed(() => (page.props.auth as any)?.user?.role === 'admin');
+const { can } = usePermissions();
 const flashSuccess = computed(() => (page.props as any).flash?.success);
 const flashError = computed(() => (page.props as any).flash?.error);
 
@@ -916,11 +918,11 @@ const totalAsetTerpilihCount = computed(() => {
           <!-- Row 2: Bulk Actions -->
           <div class="flex flex-wrap items-end justify-between gap-4 pt-2">
             <div class="space-y-2 flex-1 min-w-0">
-              <label v-if="isAdmin" class="text-xs text-muted-foreground font-medium block ml-0.5">{{ t('inventory.selectedActions') }}</label>
+              <label v-if="can('inventory.manage')" class="text-xs text-muted-foreground font-medium block ml-0.5">{{ t('inventory.selectedActions') }}</label>
               <div class="flex flex-wrap gap-2">
                 <!-- Edit Terpilih -->
                 <Button 
-                  v-if="isAdmin"
+                  v-if="can('inventory.manage')"
                   @click="handleEditTerpilih()"
                   :disabled="totalAsetTerpilihCount === 0"
                   variant="more-round-warning"
@@ -938,7 +940,7 @@ const totalAsetTerpilihCount = computed(() => {
               </div>
             </div>
 
-            <slot v-if="isAdmin" name="extra-actions"></slot>
+            <slot v-if="can('inventory.manage')" name="extra-actions"></slot>
           </div>
         </div>
       </div>

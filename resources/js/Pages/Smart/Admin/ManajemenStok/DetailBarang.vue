@@ -151,9 +151,11 @@ const handleConfirmDelete = () => {
   }
 };
 
-// Flash Notifications
+// Permissions & Notifications
+import { usePermissions } from '@/composables/usePermissions';
+
 const page = usePage();
-const isAdmin = computed(() => (page.props.auth as any)?.user?.role === 'admin');
+const { can } = usePermissions();
 const flashSuccess = computed(() => (page.props as any).flash?.success);
 
 watch(flashSuccess, (newVal) => {
@@ -225,9 +227,9 @@ onUnmounted(() => {
     <div class="flex flex-wrap items-center justify-between gap-4 mb-2 no-print">
       <Tabs v-model="activeTab" :tabs="tabs" />
 
-      <div v-if="isAdmin" class="flex items-center gap-3">
+      <div v-if="can('inventory.manage') || can('inventory.manual_request')" class="flex items-center gap-3">
         <Button
-          v-if="props.barang.is_consumable"
+          v-if="can('inventory.manual_request') && props.barang.is_consumable"
           @click="openManualRequestModal"
           variant="warning"
           size="lg"
@@ -235,10 +237,10 @@ onUnmounted(() => {
           <ClipboardList class="w-4 h-4" />
           {{ t('inventory.manualRequest') }}
         </Button>
-        <Button @click="openEditModal" variant="primary" size="lg">
+        <Button v-if="can('inventory.manage')" @click="openEditModal" variant="primary" size="lg">
           {{ t('inventory.editTypeDetail') }}
         </Button>
-        <Button @click="openDeleteModal" variant="destructive" size="lg">
+        <Button v-if="can('inventory.manage')" @click="openDeleteModal" variant="destructive" size="lg">
           {{ t('inventory.deleteType') }}
         </Button>
       </div>

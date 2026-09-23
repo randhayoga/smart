@@ -8,6 +8,30 @@ import { usePage } from '@inertiajs/vue3';
 // Mock ziggy route helper
 (global as any).route = vi.fn((name: string) => `/${name}`);
 
+const defaultAdminAuth = {
+  user: { name: 'Admin User', role: 'admin' },
+  roles: ['admin'],
+  permissions: [
+    'dashboard.admin.view',
+    'inventory.manage',
+    'inventory.view',
+    'karyawan.view',
+    'inventory.status_approval.request',
+    'master.view',
+    'requests.inbox.view',
+    'requests.fulfill',
+    'requests.archive.view',
+    'audit.view',
+  ],
+};
+
+const defaultPage = {
+  url: '/smart/dashboard',
+  props: {
+    auth: defaultAdminAuth,
+  },
+};
+
 // Mock @inertiajs/vue3
 vi.mock('@inertiajs/vue3', () => ({
   Link: {
@@ -15,15 +39,7 @@ vi.mock('@inertiajs/vue3', () => ({
     props: ['href', 'method', 'as'],
     template: '<a :href="href"><slot /></a>',
   },
-  usePage: vi.fn(() => ({
-    url: '/smart/dashboard',
-    props: {
-      auth: {
-        user: { name: 'Admin User', role: 'admin' },
-        isAdmin: true,
-      },
-    },
-  })),
+  usePage: vi.fn(() => defaultPage),
 }));
 
 const mountSidebar = (props: any) => {
@@ -40,7 +56,7 @@ const mountSidebar = (props: any) => {
 
 describe('Sidebar.vue', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.mocked(usePage).mockReturnValue(defaultPage as any);
   });
 
   it('renders expanded desktop sidebar when collapsed is false and isMobile is false', () => {
@@ -107,12 +123,19 @@ describe('Sidebar.vue', () => {
   });
 
   it('renders inventory_audit, audit_trail, and stock items in sidebar for IFS Manager, but no admin-exclusive items', () => {
-    vi.mocked(usePage).mockReturnValueOnce({
+    vi.mocked(usePage).mockReturnValue({
       url: '/smart/dashboard',
       props: {
         auth: {
           user: { name: 'IFS Manager', role: 'ifs_manager' },
-          isAdmin: false,
+          roles: ['ifs_manager'],
+          permissions: [
+            'dashboard.admin.view',
+            'inventory.view',
+            'karyawan.view',
+            'inventory.status_approval.decide',
+            'audit.view',
+          ],
         },
       },
     } as any);
@@ -142,12 +165,17 @@ describe('Sidebar.vue', () => {
   });
 
   it('does NOT render audit section in sidebar for regular User', () => {
-    vi.mocked(usePage).mockReturnValueOnce({
+    vi.mocked(usePage).mockReturnValue({
       url: '/smart/user/dashboard',
       props: {
         auth: {
           user: { name: 'Regular User', role: 'user' },
-          isAdmin: false,
+          roles: ['user'],
+          permissions: [
+            'dashboard.user.view',
+            'requests.create',
+            'requests.view_own',
+          ],
         },
       },
     } as any);
@@ -160,5 +188,27 @@ describe('Sidebar.vue', () => {
 
     expect(wrapper.text()).not.toContain('Audit Manajemen Stok');
     expect(wrapper.text()).not.toContain('Pergerakan Aset');
+  });
+
+  it('renders Access Management section for Superadmin with access.manage permission', () => {
+    vi.mocked(usePage).mockReturnValue({
+      url: '/smart/dashboard',
+      props: {
+        auth: {
+          user: { name: 'Superadmin User', role: 'superadmin', employee_id: '265656' },
+          roles: ['superadmin'],
+          permissions: ['access.manage', 'dashboard.admin.view'],
+        },
+      },
+    } as any);
+
+    const wrapper = mountSidebar({
+      open: true,
+      isMobile: false,
+      collapsed: false,
+    });
+
+    expect(wrapper.text()).toContain('SUPERADMIN');
+    expect(wrapper.text()).toMatch(/Manajemen Akses|Access Management/);
   });
 });

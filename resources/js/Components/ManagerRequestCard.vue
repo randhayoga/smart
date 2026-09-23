@@ -188,7 +188,7 @@ const toggleExpanded = () => {
 
       <!-- Show Cancel Request button only if pending approval and user is manager -->
       <button
-        v-if="request.status === 'Menunggu approval' && ($page.props.auth.user?.role === 'manager' || $page.props.auth.user?.role === 'ifs_manager')"
+        v-if="request.status === 'Menunggu approval' && $can('requests.approve')"
         class="h-9 px-5 rounded-lg text-xs font-bold bg-[#D9534F] hover:bg-[#C9302C] text-white shadow-sm flex items-center justify-center transition-colors cursor-pointer"
         @click="emit('cancel', request)"
       >

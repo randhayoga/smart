@@ -28,9 +28,10 @@ const emit = defineEmits<{
   (e: 'edit', asset: any): void;
 }>();
 
+import { usePermissions } from '@/composables/usePermissions';
+
 const { t, locale } = useI18n();
-const page = usePage();
-const isAdmin = computed(() => (page.props.auth as any)?.user?.role === 'admin');
+const { can } = usePermissions();
 
 useModalLock(computed(() => props.open));
 
@@ -42,7 +43,7 @@ const tabs = computed(() => {
   const list = [
     { id: 'Detail Aset', label: t('inventory.assetDetail') },
   ];
-  if (isAdmin.value) {
+  if (can('inventory.borrow')) {
     list.push({ id: 'Peminjaman', label: t('inventory.borrowHistory') });
   }
   list.push({ id: 'Jejak Audit', label: t('inventory.auditTrail') });
@@ -309,7 +310,7 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
 
               <!-- ── TAB 2: PEMINJAMAN ── -->
               <FormulirPeminjamanAset 
-                v-if="isAdmin && detailActiveTab === 'Peminjaman'" 
+                v-if="can('inventory.borrow') && detailActiveTab === 'Peminjaman'" 
                 :asset="props.asset" 
                 :users="props.users" 
               />
@@ -325,7 +326,7 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
             <div class="py-3 px-4 border-t border-border flex items-center justify-end gap-3 bg-muted/10">
               <template v-if="detailActiveTab === 'Detail Aset'">
                 <Button 
-                  v-if="isAdmin && asset"
+                  v-if="can('inventory.view') && asset"
                   as="a"
                   :href="`/smart/inventory/units/${asset.id}/qr-code`" 
                   download 
@@ -383,7 +384,7 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                 </Button>
 
                 <Button 
-                  v-else-if="isAdmin && asset && asset.memo_url"
+                  v-else-if="(can('inventory.status_approval.request') || can('inventory.manage')) && asset && asset.memo_url"
                   @click="triggerBodBocUpload"
                   :disabled="isUploading"
                   variant="warning"
@@ -395,7 +396,7 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                 </Button>
 
                 <Button 
-                  v-if="isAdmin"
+                  v-if="can('inventory.manage')"
                   @click="
                     emit('update:open', false);
                     emit('edit', props.asset);

@@ -17,7 +17,7 @@ class ManagerBulkUnitStatusApprovalController extends Controller
      */
     public function store(Request $request, ProcessUnitStatusApproval $processApproval)
     {
-        if (!in_array($request->user()->role, ['manager', 'ifs_manager'])) {
+        if (!$request->user()->hasPermission('inventory.status_approval.decide')) {
             abort(403, 'Akses ditolak.');
         }
 

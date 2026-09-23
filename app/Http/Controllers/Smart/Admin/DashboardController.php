@@ -27,7 +27,7 @@ class DashboardController extends Controller
         //     return redirect()->route('smart.user.dashboard');
         // }
         // ==========================================
-        if (!$user->is_admin) {
+        if (!$user->hasPermission('dashboard.admin.view')) {
             abort(403, 'Akses ditolak.');
         }
 

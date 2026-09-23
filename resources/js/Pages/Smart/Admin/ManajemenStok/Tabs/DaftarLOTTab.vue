@@ -87,9 +87,10 @@ interface Props {
 
 const props = defineProps<Props>();
 
+import { usePermissions } from '@/composables/usePermissions';
+
 const { t, locale } = useI18n();
-const page = usePage();
-const isAdmin = computed(() => (page.props.auth as any)?.user?.role === 'admin');
+const { can } = usePermissions();
 
 const searchQuery = ref('');
 const timeFilter = ref('');
@@ -301,7 +302,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
             ])
           );
         }
-        if (isAdmin.value) {
+        if (can('inventory.manage')) {
           buttons.push(
             h(Button, {
               variant: 'table-destructive',
@@ -618,7 +619,7 @@ const closeOnEscape = (e: KeyboardEvent) => {
       </div>
 
       <!-- Actions Row -->
-      <div v-if="isAdmin" class="mb-4 flex flex-wrap items-end justify-between gap-4 pt-2">
+      <div v-if="can('inventory.manage')" class="mb-4 flex flex-wrap items-end justify-between gap-4 pt-2">
         <div class="space-y-2 flex-1 min-w-0">
           <label class="text-xs text-muted-foreground font-medium block ml-0.5">{{ t('inventory.selectedActions') }}</label>
           <div class="flex flex-wrap gap-2">

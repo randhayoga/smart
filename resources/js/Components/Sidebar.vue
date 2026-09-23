@@ -25,6 +25,8 @@ import {
 import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 import LanguageSelector from '@/Components/LanguageSelector.vue';
 
+import { usePermissions } from '@/composables/usePermissions';
+
 interface Props {
   open: boolean;
   isMobile: boolean;
@@ -42,21 +44,13 @@ const emit = defineEmits<{
 
 const page = usePage();
 const { t, te, locale } = useI18n();
+const { can, hasRole, isSuperadmin, isAdmin } = usePermissions();
 
-// Determine if user is admin from shared props
-const isAdmin = computed(() => (page.props.auth as { user: any; isAdmin?: boolean })?.isAdmin ?? false);
-const isSuperadmin = computed(() => {
-  const auth = page.props.auth as any;
-  return Boolean(auth?.isSuperadmin || auth?.user?.is_superadmin);
-});
-const isManager = computed(() => (page.props.auth as { user: any })?.user?.role === 'manager');
-const isIfsManager = computed(() => (page.props.auth as { user: any })?.user?.role === 'ifs_manager');
-
-// Select navigation based on user role
+// Select navigation based on user role and permissions
 const navigation = computed<NavSection[]>(() => {
   let sections: NavSection[] = [];
 
-  if (isIfsManager.value) {
+  if (hasRole('ifs_manager')) {
     // Manager IFS:
     // Phase 1 views:
     // - Dashboard (/smart/dashboard)
@@ -65,34 +59,6 @@ const navigation = computed<NavSection[]>(() => {
     // - Pergerakan Aset (/smart/audit)
     // - Audit Manajemen Stok (/smart/audit-stok)
     sections = ifsNavigation;
-    
-    // ==========================================
-    // [PHASE 2 - IFS MANAGER EXTRA MENUS]
-    // Uncomment below when transitioning to Phase 2
-    // ==========================================
-    /*
-    const approvalPermintaan = userNavigation.find(section => section.title === 'APPROVAL PEMINJAMAN');
-    
-    const hiddenIfsStockTitles = [
-      'Manajemen Barang',
-      'Daftar Pending Nonaktif',
-      'Master Data',
-      'Pindai Barcode',
-    ];
-
-    const restOfAdmin = mainNavigation
-      .filter(section => section.title !== 'MENU UTAMA' && section.title !== 'Permintaan')
-      .map(section => {
-        if (section.title === 'STOK') {
-          return {
-            ...section,
-            items: section.items.filter(item => !hiddenIfsStockTitles.includes(item.title)),
-          };
-        }
-        return section;
-      });
-    */
-    // ==========================================
   } else if (isAdmin.value) {
     // Admin:
     // - Menu Utama
@@ -100,44 +66,35 @@ const navigation = computed<NavSection[]>(() => {
     // - Permintaan
     // - Audit
     sections = mainNavigation;
-  }
-  // ==========================================
-  // [PHASE 2 - REGULAR MANAGER & REGULAR USER NAVIGATION]
-  // Uncomment below when transitioning to Phase 2
-  // ==========================================
-  /*
-  else if (isManager.value) {
-    // Manager:
-    // - Menu Utama
-    // - Approval Permintaan
-    // - Permintaan
-    const menuUtama = userNavigation.find(section => section.title === 'MENU UTAMA');
-    const approvalPermintaan = userNavigation.find(section => section.title === 'APPROVAL PEMINJAMAN');
-    const permintaan = userNavigation.find(section => section.title === 'Permintaan');
-    
-    sections = [
-      menuUtama,
-      approvalPermintaan,
-      permintaan,
-    ].filter((section): section is NavSection => !!section);
   } else {
-    // User:
-    // - Menu Utama
-    // - Permintaan
-    const menuUtama = userNavigation.find(section => section.title === 'MENU UTAMA');
-    const permintaan = userNavigation.find(section => section.title === 'Permintaan');
-    
-    sections = [
-      menuUtama,
-      permintaan,
-    ].filter((section): section is NavSection => !!section);
+    // User / Default
+    sections = userNavigation;
   }
-  */
-  // ==========================================
 
-  if (isSuperadmin.value) {
+  if (can('access.manage')) {
     sections = [...sections, superadminSection];
   }
+
+  // Filter sections and items based on permissions
+  const filteredSections = sections
+    .map(section => {
+      if (section.permission && !can(section.permission)) return null;
+      if (section.role && !hasRole(section.role) && !isSuperadmin.value) return null;
+
+      const visibleItems = section.items.filter(item => {
+        if (item.permission && !can(item.permission)) return false;
+        if (item.role && !hasRole(item.role) && !isSuperadmin.value) return false;
+        return true;
+      });
+
+      if (visibleItems.length === 0) return null;
+
+      return {
+        ...section,
+        items: visibleItems,
+      };
+    })
+    .filter((s): s is NavSection => s !== null);
 
   // Get dynamic counts from shared Inertia page props
   const pendingRequestCount = (page.props.auth as any)?.pendingRequestCount ?? 0;
@@ -146,17 +103,11 @@ const navigation = computed<NavSection[]>(() => {
   const activeRequestsCount = (page.props.auth as any)?.activeRequestsCount ?? pendingAdminApprovedCount;
 
   // Map the navigation items to inject badges dynamically
-  return sections.map(section => ({
+  return filteredSections.map(section => ({
     ...section,
     items: section.items.map(item => {
       let badge = item.badge;
       
-      // ==========================================
-      // [PHASE 2 - REGULAR MANAGER PENDING REQUEST BADGE]
-      // if (item.href === '/smart/approve') {
-      //   badge = pendingRequestCount > 0 ? pendingRequestCount : undefined;
-      // } else
-      // ==========================================
       if (item.href === '/smart/approve-status') {
         badge = pendingAssetStatusCount > 0 ? pendingAssetStatusCount : undefined;
       } else if (item.href === '/smart/requests' || item.href === '/smart/inbox') {

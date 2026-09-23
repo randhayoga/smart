@@ -17,6 +17,7 @@ import {
   Check
 } from 'lucide-vue-next';
 import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem, BreadcrumbSeparator } from '@/Components/ui/breadcrumb';
+import { usePermissions } from '@/composables/usePermissions';
 
 interface RequestItem {
   id: number;
@@ -61,6 +62,7 @@ interface Props {
 
 const props = defineProps<Props>();
 const { t } = useI18n();
+const { can } = usePermissions();
 
 const items = computed(() => props.request.items);
 
@@ -338,7 +340,7 @@ const handleAturSerahTerima = () => {
     </div>
 
     <!-- Info Banner -->
-    <div v-if="user?.role === 'admin' || user?.role === 'ifs_manager'" class="mb-6 p-1.5 pl-6 rounded-xl border border-indigo-200 bg-white flex items-center justify-between gap-3 text-indigo-600">
+    <div v-if="can('requests.handover')" class="mb-6 p-1.5 pl-6 rounded-xl border border-indigo-200 bg-white flex items-center justify-between gap-3 text-indigo-600">
       <p class="text-sm font-semibold">
         {{ isAllConsumable ? t('fulfillment.confirmConsumableBanner') : t('fulfillment.confirmNonConsumableBanner') }}
       </p>
@@ -494,7 +496,7 @@ const handleAturSerahTerima = () => {
                   </p>
                   
                   <!-- Action Buttons inside timeline step -->
-                  <div v-if="step.isAction && (user?.role === 'admin' || user?.role === 'ifs_manager')" class="pt-3 flex gap-2">
+                  <div v-if="step.isAction && can(['requests.confirm', 'requests.fulfill'])" class="pt-3 flex gap-2">
                     <button 
                       v-if="canPartiallyApprove"
                       @click="handlePartiallyApprove"

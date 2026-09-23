@@ -213,8 +213,8 @@ const activeAssets = computed(() => {
           </template>
         </p>
 
-        <!-- Warehouse Stock Indicator (Admin only) -->
-        <div v-if="stock !== null && isAdmin" class="text-xs font-semibold text-foreground">
+        <!-- Warehouse Stock Indicator -->
+        <div v-if="stock !== null && (isAdmin || $can('inventory.view'))" class="text-xs font-semibold text-foreground">
           {{ $t('requests.availableStock') }} 
           <span :class="stock >= Number(quantity) ? 'text-green-600' : 'text-red-500'">
             {{ stock }} {{ uom }}

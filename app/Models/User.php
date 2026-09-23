@@ -150,6 +150,8 @@ class User extends Authenticatable
     public function refresh()
     {
         $this->cachedRoleName = null;
+        $this->cachedRoleNames = null;
+        $this->cachedPermissionNames = null;
         return parent::refresh();
     }
 

@@ -20,7 +20,7 @@ class InventoryAuditController extends Controller
     public function index(Request $request): Response
     {
         $user = $request->user();
-        if (!$user || (!$user->is_admin && !in_array($user->role, ['admin', 'ifs_manager']))) {
+        if (!$user || !$user->hasPermission('audit.view')) {
             abort(403, 'Unauthorized action.');
         }
 

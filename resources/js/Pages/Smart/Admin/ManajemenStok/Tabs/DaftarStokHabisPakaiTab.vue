@@ -101,7 +101,9 @@ const openManualRequestModal = () => {
 };
 
 const page = usePage();
-const isAdmin = computed(() => (page.props.auth as any)?.user?.role === 'admin');
+import { usePermissions } from '@/composables/usePermissions';
+
+const { can } = usePermissions();
 
 const syncFromPropsOrUrl = () => {
   const url = new URL(page.url, window.location.origin);
@@ -448,7 +450,7 @@ const columns = computed<ColumnDef<any>[]>(() => [
         ])
       ];
 
-      if (isAdmin.value) {
+      if (can('inventory.manage')) {
         buttons.push(
           h(Button, {
             variant: 'table-destructive',
@@ -646,8 +648,9 @@ const closeOnEscape = (e: KeyboardEvent) => {
       <div class="flex flex-wrap items-center justify-between gap-4 mb-2 no-print">
         <Tabs v-model="activeDetailTab" :tabs="detailTabs" />
 
-        <div v-if="isAdmin" class="flex items-center gap-3">
+        <div v-if="can('inventory.manage') || can('inventory.manual_request')" class="flex items-center gap-3">
           <Button
+            v-if="can('inventory.manual_request')"
             @click="openManualRequestModal"
             variant="warning"
             size="lg"
@@ -656,10 +659,10 @@ const closeOnEscape = (e: KeyboardEvent) => {
             <ClipboardList class="w-4 h-4" />
             {{ t('inventory.manualRequest') }}
           </Button>
-          <Button @click="openEditModal" variant="primary" size="lg">
+          <Button v-if="can('inventory.manage')" @click="openEditModal" variant="primary" size="lg">
             {{ t('inventory.editTypeDetail') }}
           </Button>
-          <Button @click="openDeleteModal" variant="destructive" size="lg">
+          <Button v-if="can('inventory.manage')" @click="openDeleteModal" variant="destructive" size="lg">
             {{ t('inventory.deleteType') }}
           </Button>
         </div>
@@ -791,7 +794,7 @@ const closeOnEscape = (e: KeyboardEvent) => {
             </div>
 
             <!-- Row 2: Bulk Actions & New Item -->
-            <div v-if="isAdmin" class="flex flex-wrap items-end justify-between gap-4 pt-2">
+            <div v-if="can('inventory.manage')" class="flex flex-wrap items-end justify-between gap-4 pt-2">
               <div class="space-y-2 flex-1 min-w-0">
                 <label class="text-xs text-muted-foreground font-medium block ml-0.5">{{ t('inventory.selectedActions') }}</label>
                 <div class="flex flex-wrap gap-2">

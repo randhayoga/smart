@@ -19,8 +19,8 @@ class ManagerUnitStatusApprovalController extends Controller
      */
     public function index(Request $request): Response
     {
-        if (!in_array($request->user()->role, ['manager', 'ifs_manager'])) {
-            abort(403, 'Akses ditolak. Halaman ini hanya untuk Manager.');
+        if (!$request->user()->hasPermission('inventory.status_approval.decide')) {
+            abort(403, 'Akses ditolak.');
         }
 
         $query = UnitStatusApproval::with([

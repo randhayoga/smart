@@ -36,18 +36,18 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'auth' => [
                 'user' => $request->user()?->loadMissing('orgchart'),
-                'isAdmin' => $request->user()?->is_admin ?? false,
-                'isSuperadmin' => $request->user()?->is_superadmin ?? false,
-                'pendingRequestCount' => $request->user() && in_array($request->user()->role, ['manager', 'ifs_manager'])
+                'roles' => fn () => $request->user() ? $request->user()->getRoleNames() : [],
+                'permissions' => fn () => $request->user() ? $request->user()->getAllPermissionNames() : [],
+                'pendingRequestCount' => $request->user() && $request->user()->hasPermission('requests.approve')
                     ? \App\Models\Request\Request::where('approver_id', $request->user()->id)->where('status', 'wait')->count()
                     : 0,
-                'pendingAssetStatusCount' => $request->user() && in_array($request->user()->role, ['manager', 'ifs_manager'])
+                'pendingAssetStatusCount' => $request->user() && $request->user()->hasPermission('inventory.status_approval.decide')
                     ? \App\Models\Inventory\UnitStatusApproval::where('decision', 'pending')->whereHas('unit', fn($q) => $q->where('status', 'Pending:DM'))->count()
                     : 0,
-                'pendingAdminApprovedCount' => $request->user() && ($request->user()->is_admin ?? false)
+                'pendingAdminApprovedCount' => $request->user() && $request->user()->hasPermission('requests.confirm')
                     ? \App\Models\Request\Request::where('status', 'approve')->count()
                     : 0,
-                'activeRequestsCount' => $request->user() && ($request->user()->is_admin ?? false)
+                'activeRequestsCount' => $request->user() && $request->user()->hasPermission('requests.inbox.view')
                     ? \App\Models\Request\Request::where(function ($q) {
                         $q->whereIn('status', ['approve', 'confirm', 'partial', 'handover', 'return'])
                           ->orWhere('status', 'like', '%menunggu_serah_terima%')

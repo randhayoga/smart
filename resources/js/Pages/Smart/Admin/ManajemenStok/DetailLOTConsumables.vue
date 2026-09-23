@@ -27,8 +27,9 @@ const emit = defineEmits<{
 }>();
 
 const { t, locale } = useI18n();
-const page = usePage();
-const isAdmin = computed(() => (page.props.auth as any)?.user?.role === 'admin');
+import { usePermissions } from '@/composables/usePermissions';
+
+const { can } = usePermissions();
 
 useModalLock(computed(() => props.isOpen));
 
@@ -37,7 +38,7 @@ const tabs = computed(() => {
   const items = [
     { id: 'Detail LOT', label: t('inventory.lotDetail') },
   ];
-  if (isAdmin.value) {
+  if (can('inventory.manual_request')) {
     items.push({ id: 'Permintaan', label: t('inventory.manualRequest') });
   }
   return items;
@@ -226,7 +227,7 @@ onUnmounted(() => {
 
             <!-- Modal Footer -->
             <div v-if="!isLoading && lotDetails" class="py-3 px-4 bg-muted/30 border-t border-border flex items-center justify-end gap-3">
-              <template v-if="detailActiveTab === 'Detail LOT' && isAdmin">
+              <template v-if="detailActiveTab === 'Detail LOT' && can('inventory.manage')">
                 <Button
                   @click="handleEdit"
                   variant="primary"

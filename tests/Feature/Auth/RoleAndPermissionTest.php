@@ -170,4 +170,51 @@ class RoleAndPermissionTest extends TestCase
         $this->assertEquals('admin', $user->role);
         $this->assertTrue($user->is_admin);
     }
+
+    public function test_get_role_names_and_get_all_permission_names_with_superadmin_wildcard(): void
+    {
+        $this->seed(RoleAndPermissionSeeder::class);
+
+        $superadmin = User::where('employee_id', '265656')->first();
+        if (!$superadmin) {
+            $superadmin = User::factory()->create(['employee_id' => '265656']);
+            $superadmin->assignRole('superadmin');
+        }
+
+        $this->assertContains('superadmin', $superadmin->getRoleNames());
+        $allPermissions = Permission::pluck('name')->all();
+        $this->assertEquals($allPermissions, $superadmin->getAllPermissionNames());
+        $this->assertTrue($superadmin->hasPermission('arbitrary.non_existent.permission'));
+
+        // Admin user receives assigned permissions but not access.manage
+        $admin = User::where('employee_id', '255578')->first();
+        if (!$admin) {
+            $admin = User::factory()->create(['employee_id' => '255578']);
+            $admin->assignRole('admin');
+        }
+
+        $adminPerms = $admin->getAllPermissionNames();
+        $this->assertContains('inventory.view', $adminPerms);
+        $this->assertNotContains('access.manage', $adminPerms);
+        $this->assertTrue($admin->hasPermission('inventory.view'));
+        $this->assertFalse($admin->hasPermission('access.manage'));
+    }
+
+    public function test_handle_inertia_requests_shares_roles_and_permissions(): void
+    {
+        $this->seed(RoleAndPermissionSeeder::class);
+
+        $superadmin = User::where('employee_id', '265656')->first() ?? User::factory()->create(['employee_id' => '265656']);
+        $superadmin->assignRole('superadmin');
+
+        $response = $this->actingAs($superadmin)->get(route('smart.dashboard'));
+        $response->assertOk();
+
+        $pageProps = $response->viewData('page')['props'];
+        $this->assertArrayHasKey('auth', $pageProps);
+        $this->assertArrayHasKey('roles', $pageProps['auth']);
+        $this->assertArrayHasKey('permissions', $pageProps['auth']);
+        $this->assertContains('superadmin', $pageProps['auth']['roles']);
+        $this->assertContains('access.manage', $pageProps['auth']['permissions']);
+    }
 }
