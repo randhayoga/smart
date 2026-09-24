@@ -100,6 +100,13 @@ const getConditionLabel = (cond: string) => {
   return map[cond] || cond;
 };
 
+const getClassificationLabel = (c: string) => {
+  if (!c) return '';
+  if (c === 'Aset') return t('inventory.classificationAsset');
+  if (c === 'Inventaris') return t('inventory.classificationInventory');
+  return c;
+};
+
 const getAge = (dateStr: string | null) => {
   if (!dateStr || dateStr === '-') return null;
   const receipt = new Date(dateStr);
@@ -215,7 +222,7 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
         >
           <div 
             v-if="open" 
-            class="bg-card w-full md:max-w-[80%] rounded-[14px] shadow-2xl overflow-hidden flex flex-col" 
+            class="bg-card w-full md:max-w-[90%] rounded-[14px] shadow-2xl overflow-hidden flex flex-col" 
             @click.stop
           >
             <!-- Modal Header -->
@@ -302,6 +309,8 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                       </p>
                       <p class="text-foreground">{{ t('inventory.value') }}: {{ formatRupiah(asset.price) }}</p>
                       <p class="text-foreground">{{ t('inventory.storageLocation') }}: {{ formatLocation(asset.location, asset.floor, asset.room) }}</p>
+                      <p v-if="asset.type" class="text-foreground">{{ t('inventory.type') }}: {{ asset.type }}</p>
+                      <p v-if="asset.classification" class="text-foreground">{{ t('inventory.classification') }}: {{ getClassificationLabel(asset.classification) }}</p>
                       <p class="text-foreground">{{ t('inventory.lastUpdate') }}: {{ asset.updated_at || '-' }}</p>
                     </div>
                   </div>

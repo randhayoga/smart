@@ -40,6 +40,7 @@ const props = withDefaults(defineProps<{
   pageSize?: number
   showSelectionCount?: boolean
   defaultSorting?: SortingState
+  defaultColumnVisibility?: VisibilityState
   cellClass?: string
   rowClass?: string | ((row: TData) => string)
   /**
@@ -67,6 +68,7 @@ const props = withDefaults(defineProps<{
   pageSize: 50,
   showSelectionCount: true,
   defaultSorting: () => [],
+  defaultColumnVisibility: () => ({}),
   tableContainerClass: '',
   loading: false,
   skeletonRows: 5,
@@ -135,8 +137,20 @@ const resolveDefaultSorting = (): SortingState => {
 
 const sorting = ref<SortingState>(resolveDefaultSorting())
 const columnFilters = ref<ColumnFiltersState>([])
-const columnVisibility = ref<VisibilityState>({})
+const columnVisibility = ref<VisibilityState>({ ...(props.defaultColumnVisibility || {}) })
 const rowSelection = ref({})
+
+watch(() => props.defaultSorting, (newVal) => {
+  if (newVal && newVal.length > 0) {
+    sorting.value = [...newVal]
+  }
+}, { deep: true })
+
+watch(() => props.defaultColumnVisibility, (newVal) => {
+  if (newVal) {
+    columnVisibility.value = { ...newVal }
+  }
+}, { deep: true })
 const pagination = ref({
   pageIndex: 0,
   pageSize: props.pageSize,

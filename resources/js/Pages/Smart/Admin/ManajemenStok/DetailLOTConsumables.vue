@@ -201,7 +201,7 @@ onUnmounted(() => {
                     <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.initialStock') }}:</span> {{ lotDetails.initial_quantity ?? 0 }}</p>
                     <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.minStockThreshold') }}:</span> {{ lotDetails.barang_min_stock_threshold !== null && lotDetails.barang_min_stock_threshold !== undefined ? `${lotDetails.barang_min_stock_threshold} ${lotDetails.barang_uom || ''}`.trim() : '-' }}</p>
                     <p class="text-foreground">{{ t('inventory.location') }}: {{ formatLocation(lotDetails) }}</p>
-                    <p class="text-foreground">{{ t('inventory.poNumber') }}: {{ lotDetails.po_number }}</p>
+                    <p class="text-foreground">{{ t('inventory.poNumber') }}: {{ lotDetails.po_number || '-' }}</p>
                     <p class="text-foreground">{{ t('inventory.registrationDate') }}: {{ formatDate(lotDetails.date_of_receipt) }}</p>
                     <p class="text-foreground">{{ t('inventory.age') }}: {{ lotDetails.age !== undefined && lotDetails.age !== null ? `${lotDetails.age} ${t('inventory.yearUnit')}` : '-' }}</p>
                     <p class="text-foreground">{{ t('inventory.unitPrice') }}: {{ formatRupiah(lotDetails.unitPrice) }}</p>

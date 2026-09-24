@@ -74,6 +74,13 @@ const getConditionLabel = (c: string) => {
   return map[c] || c;
 };
 
+const getClassificationLabel = (c: string) => {
+  if (!c) return '';
+  if (c === 'Aset') return t('inventory.classificationAsset');
+  if (c === 'Inventaris') return t('inventory.classificationInventory');
+  return c;
+};
+
 const isBorrowedUnit = computed(() => {
   return (props.items || []).some(item => String(item?.status).trim().toLowerCase() === 'dipinjam');
 });
@@ -114,6 +121,8 @@ const form = useForm({
   location_id: '' as string | number,
   status: '',
   condition: '',
+  type: '',
+  classification: '',
   price: '' as string | number,
   image_url: null as File | null,
   image_url_name: '',
@@ -131,6 +140,8 @@ const errors = ref({
   location_id: '',
   status: '',
   condition: '',
+  type: '',
+  classification: '',
   image_url: '',
   vehicle_registration: '',
   memo_file: '',
@@ -143,6 +154,8 @@ const resetErrors = () => {
     location_id: '',
     status: '',
     condition: '',
+    type: '',
+    classification: '',
     image_url: '',
     vehicle_registration: '',
     memo_file: '',
@@ -155,6 +168,8 @@ const resetErrors = () => {
 watch(() => form.location_id, v => { if (v && errors.value.location_id) errors.value.location_id = ''; });
 watch(() => form.status, v => { if (v && errors.value.status) errors.value.status = ''; });
 watch(() => form.condition, v => { if (v && errors.value.condition) errors.value.condition = ''; });
+watch(() => form.type, v => { if (v && errors.value.type) errors.value.type = ''; });
+watch(() => form.classification, v => { if (v && errors.value.classification) errors.value.classification = ''; });
 watch(() => form.image_url, v => { if (v && errors.value.image_url) errors.value.image_url = ''; });
 watch(() => form.image_url_name, v => { if (v && errors.value.image_url) errors.value.image_url = ''; });
 watch(() => form.vehicle_registration, v => { if (v && errors.value.vehicle_registration) errors.value.vehicle_registration = ''; });
@@ -206,6 +221,8 @@ watch(() => props.open, (val) => {
     form.location_id = item.location_id || '';
     form.status = item.status || '';
     form.condition = item.condition || '';
+    form.type = item.type || '';
+    form.classification = item.classification || '';
     if (arrInactiveConditions.includes(form.condition)) {
       form.status = 'Pending:BoD/BoC';
     }
@@ -222,6 +239,8 @@ watch(() => props.open, (val) => {
     form.location_id = sameLoc ? (firstLoc || '') : '';
     form.status = '';
     form.condition = '';
+    form.type = '';
+    form.classification = '';
     form.price = '';
     form.vehicle_registration = '';
   }
@@ -389,14 +408,36 @@ const parseCurrencyToNumber = (val: string | number) => {
   return isNaN(parsed) ? 0 : parsed;
 };
 
+const handleDecideClassification = () => {
+  if (form.price === '' || form.price === null || form.price === undefined) {
+    return;
+  }
+  if (typeof form.price === 'string' && form.price.trim() === '') {
+    return;
+  }
+  const currentPrice = parseCurrencyToNumber(form.price);
+  if (isNaN(currentPrice)) {
+    return;
+  }
+
+  const threshold = Number(import.meta.env.VITE_ASSET_CLASSIFICATION_THRESHOLD) || 5000000;
+  if (currentPrice > threshold) {
+    form.classification = 'Aset';
+  } else {
+    form.classification = 'Inventaris';
+  }
+};
+
 const handleSubmit = () => {
   resetErrors();
 
   if (isSingle.value) {
       let isValid = true;
       if (!form.location_id) { errors.value.location_id = t('inventory.locationRequired'); isValid = false; }
+      if (!form.type) { errors.value.type = t('inventory.typeRequired'); isValid = false; }
       if (!form.status) { errors.value.status = t('inventory.statusRequired'); isValid = false; }
       if (!form.condition) { errors.value.condition = t('inventory.conditionRequired'); isValid = false; }
+      if (!form.classification) { errors.value.classification = t('inventory.classificationRequired'); isValid = false; }
       if (!form.image_url && !form.image_url_name) { errors.value.image_url = t('inventory.assetPhotoRequired'); isValid = false; }
       if (isVehicle.value && !form.vehicle_registration) { errors.value.vehicle_registration = t('inventory.nopolRequired'); isValid = false; }
       if (arrNeedApproval.includes(form.condition) && !isDocumentDisabled.value && !form.memo_file_name) { errors.value.memo_file = t('inventory.memoRequired'); isValid = false; }
@@ -411,6 +452,8 @@ const handleSubmit = () => {
           location_id: data.location_id,
           status: data.status,
           condition: data.condition,
+          type: data.type,
+          classification: data.classification,
           price: data.price !== '' && data.price !== null ? parseCurrencyToNumber(data.price) : null,
         };
         if (isVehicle.value) fd.vehicle_registration = data.vehicle_registration;
@@ -428,6 +471,8 @@ const handleSubmit = () => {
       const hasField = !!(
         (form.status && !isStatusDisabled.value) ||
         (form.condition && !isKondisiDisabled.value) ||
+        form.type ||
+        form.classification ||
         form.location_id || form.price ||
         form.image_url || form.use_lot_image || form.memo_file || form.lost_doc_file || form.bod_boc_approval_file
       );
@@ -448,6 +493,8 @@ const handleSubmit = () => {
       const payload: any = { ids: form.ids };
       if (form.status && !isStatusDisabled.value) payload.status = form.status;
       if (form.condition && !isKondisiDisabled.value) payload.condition = form.condition;
+      if (form.type) payload.type = form.type;
+      if (form.classification) payload.classification = form.classification;
       
       if (form.location_id) {
         payload.location_id = form.location_id;
@@ -510,6 +557,28 @@ const handleSubmit = () => {
                       />
                     </FieldContent>
                     <FieldError v-if="isSingle && errors.location_id">{{ errors.location_id }}</FieldError>
+                  </Field>
+
+                  <Field :data-invalid="(isSingle && !!errors.type) || undefined">
+                    <FieldLabel>
+                      <span>{{ t('inventory.type') }}<span v-if="isSingle" class="text-rose-500">*</span></span>
+                    </FieldLabel>
+                    <FieldContent>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !form.type ? 'text-muted-foreground' : 'text-foreground', (isSingle && errors.type) ? 'border-destructive' : '']">
+                            {{ form.type || (isSingle ? t('inventory.selectType') : t('inventory.unchanged')) }}
+                            <ChevronDown class="w-4 h-4 opacity-50" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
+                          <DropdownMenuItem @select="form.type = 'LT'">LT</DropdownMenuItem>
+                          <DropdownMenuItem @select="form.type = 'ST'">ST</DropdownMenuItem>
+                          <DropdownMenuItem v-if="!isSingle" @select="form.type = ''">{{ t('inventory.unchanged') }}</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </FieldContent>
+                    <FieldError v-if="isSingle && errors.type">{{ errors.type }}</FieldError>
                   </Field>
 
                   <Field :data-invalid="(isSingle && !!errors.status) || undefined" :data-disabled="isStatusDisabled || undefined">
@@ -584,6 +653,33 @@ const handleSubmit = () => {
                         <Button type="button" @click="handleSamakanPrice" variant="warning" size="lg">{{ t('inventory.sameAsParent') }}</Button>
                       </div>
                     </FieldContent>
+                  </Field>
+
+                  <Field :data-invalid="(isSingle && !!errors.classification) || undefined">
+                    <FieldLabel>
+                      <span>{{ t('inventory.classification') }}<span v-if="isSingle" class="text-rose-500">*</span></span>
+                    </FieldLabel>
+                    <FieldContent>
+                      <div class="flex gap-2 w-full">
+                        <div class="flex-grow min-w-0">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !form.classification ? 'text-muted-foreground' : 'text-foreground', (isSingle && errors.classification) ? 'border-destructive' : '']">
+                                {{ getClassificationLabel(form.classification) || (isSingle ? t('inventory.selectClassification') : t('inventory.unchanged')) }}
+                                <ChevronDown class="w-4 h-4 opacity-50" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
+                              <DropdownMenuItem @select="form.classification = 'Aset'">{{ t('inventory.classificationAsset') }}</DropdownMenuItem>
+                              <DropdownMenuItem @select="form.classification = 'Inventaris'">{{ t('inventory.classificationInventory') }}</DropdownMenuItem>
+                              <DropdownMenuItem v-if="!isSingle" @select="form.classification = ''">{{ t('inventory.unchanged') }}</DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                        <Button type="button" @click="handleDecideClassification" variant="warning" size="lg">{{ t('inventory.decide') }}</Button>
+                      </div>
+                    </FieldContent>
+                    <FieldError v-if="isSingle && errors.classification">{{ errors.classification }}</FieldError>
                   </Field>
 
                   <Field :data-invalid="(isSingle && !!errors.image_url) || undefined">

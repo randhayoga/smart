@@ -29,6 +29,7 @@ interface Props {
   vendors: { id: number; name: string; }[];
   locations: any[];
   projects: { id: number; no_project: string; project_name: string; client_id: string; }[];
+  uom?: string | null;
 }
 
 const props = defineProps<Props>();
@@ -43,6 +44,9 @@ useModalLock(computed(() => props.open));
 
 const isSingle = computed(() => props.items.length === 1);
 const selectedItem = computed(() => isSingle.value ? props.items[0] : null);
+const lotUom = computed(() => {
+  return props.uom || selectedItem.value?.barang_uom || selectedItem.value?.uom || '';
+});
 
 const form = useForm({
   ids: [] as number[],
@@ -192,7 +196,6 @@ const handleSubmit = () => {
     if (!form.burden) { errors.value.burden = t('inventory.burdenRequired'); isValid = false; }
     if (form.burden === 'Project' && !form.project_id) { errors.value.project_id = t('inventory.projectRequired'); isValid = false; }
     if (!form.location_id) { errors.value.location_id = t('inventory.locationRequired'); isValid = false; }
-    if (!form.po_number) { errors.value.po_number = t('inventory.poNumberRequired'); isValid = false; }
     if (!form.date_of_receipt) { errors.value.date_of_receipt = t('inventory.dateOfReceiptRequired'); isValid = false; }
     if (!form.image_url && !form.image_url_name) {
       errors.value.image_url = props.isConsumable ? t('inventory.assetPhotoRequired') : t('inventory.photoRequired');
@@ -209,7 +212,7 @@ const handleSubmit = () => {
         organizer_id: data.organizer_id,
         vendor_id: data.vendor_id,
         location_id: data.location_id,
-        po_number: data.po_number,
+        po_number: data.po_number || null,
         date_of_receipt: data.date_of_receipt,
         unit_price: data.unit_price,
         burden: data.burden,
@@ -304,7 +307,7 @@ const handleSubmit = () => {
                   </Field>
 
                   <Field :data-invalid="(isSingle && !!errors.po_number) || undefined" :data-disabled="(!isSingle) || undefined">
-                    <FieldLabel><span>{{ t('inventory.poNumber') }}<span class="text-rose-500">*</span></span></FieldLabel>
+                    <FieldLabel><span>{{ t('inventory.poNumber') }}</span></FieldLabel>
                     <FieldContent>
                       <input type="text" v-model="form.po_number" :disabled="!isSingle" :placeholder="!isSingle ? t('inventory.cannotBeChangedBulk') : t('inventory.poNumberPlaceholder')"
                         class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10 disabled:bg-muted/30 disabled:text-muted-foreground disabled:cursor-not-allowed"
@@ -390,9 +393,14 @@ const handleSubmit = () => {
                   <Field v-if="isConsumable">
                     <FieldLabel><span>{{ t('inventory.stockCount') }}</span></FieldLabel>
                     <FieldContent>
-                      <input type="text" :value="isSingle && selectedItem ? (selectedItem.initial_quantity ?? selectedItem.initialQuantity ?? t('inventory.cannotBeChanged')) : t('inventory.cannotBeChanged')" disabled
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
-                      />
+                      <div class="flex w-full rounded-[14px] border border-input bg-muted/30 text-muted-foreground h-10 overflow-hidden">
+                        <input type="text" :value="isSingle && selectedItem ? (selectedItem.initial_quantity ?? selectedItem.initialQuantity ?? t('inventory.cannotBeChanged')) : t('inventory.cannotBeChanged')" disabled
+                          class="flex-1 min-w-0 px-4 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 cursor-not-allowed h-full text-muted-foreground"
+                        />
+                        <span v-if="lotUom" class="inline-flex items-center px-3 bg-muted/20 text-muted-foreground text-sm border-l border-input select-none font-medium">
+                          {{ lotUom }}
+                        </span>
+                      </div>
                     </FieldContent>
                   </Field>
 

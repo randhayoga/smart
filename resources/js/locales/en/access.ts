@@ -47,29 +47,55 @@ export default {
       general: 'General',
     },
     permissions: {
-      'dashboard.admin.view': 'View Admin Dashboard',
-      'dashboard.user.view': 'View User Dashboard',
-      'master.view': 'View Master Data',
-      'master.manage': 'Manage Master Data (Categories, Locations, etc.)',
-      'inventory.view': 'View Inventory Catalog, Lots & Assets',
-      'inventory.manage': 'Manage Inventory Items, Lots, and Units',
-      'inventory.borrow': 'Perform Direct Unit Borrow & Return',
-      'inventory.manual_request': 'Create Manual Stock Requests',
-      'inventory.status_approval.request': 'Submit Unit Status Change Requests',
-      'inventory.status_approval.decide': 'Approve or Reject Unit Status Changes',
-      'requests.create': 'Create and Submit Requisitions (Cart)',
-      'requests.view_own': 'View Own Requisition History & Cancel',
-      'requests.approve': 'Approve or Reject Subordinate Requisitions',
-      'requests.inbox.view': 'View Approved Requests Inbox',
-      'requests.confirm': 'Confirm and Review Requisitions',
-      'requests.fulfill': 'Allocate Units/Lots and Confirm Fulfillment',
-      'requests.handover': 'Schedule and Process Item Handovers',
-      'requests.returns': 'Process and Confirm Item Returns',
-      'requests.archive.view': 'View Requisition Archive',
-      'karyawan.view': 'View Employee Directory and Active Loans',
-      'audit.view': 'View Inventory Activity Logs and Stock Audits',
-      'notifications.manage': 'View and Manage Personal Notifications',
-      'access.manage': 'Manage System Roles and Permissions',
+      dashboard: {
+        admin: {
+          view: 'View Admin Dashboard',
+        },
+        user: {
+          view: 'View User Dashboard',
+        },
+      },
+      master: {
+        view: 'View Master Data',
+        manage: 'Manage Master Data (Categories, Locations, etc.)',
+      },
+      inventory: {
+        view: 'View Inventory Catalog, Lots & Assets',
+        manage: 'Manage Inventory Items, Lots, and Units',
+        borrow: 'Perform Direct Unit Borrow & Return',
+        manual_request: 'Create Manual Stock Requests',
+        status_approval: {
+          request: 'Submit Unit Status Change Requests',
+          decide: 'Approve or Reject Unit Status Changes',
+        },
+      },
+      requests: {
+        create: 'Create and Submit Requisitions (Cart)',
+        view_own: 'View Own Requisition History & Cancel',
+        approve: 'Approve or Reject Subordinate Requisitions',
+        inbox: {
+          view: 'View Approved Requests Inbox',
+        },
+        confirm: 'Confirm and Review Requisitions',
+        fulfill: 'Allocate Units/Lots and Confirm Fulfillment',
+        handover: 'Schedule and Process Item Handovers',
+        returns: 'Process and Confirm Item Returns',
+        archive: {
+          view: 'View Requisition Archive',
+        },
+      },
+      karyawan: {
+        view: 'View Employee Directory and Active Loans',
+      },
+      audit: {
+        view: 'View Inventory Activity Logs and Stock Audits',
+      },
+      notifications: {
+        manage: 'View and Manage Personal Notifications',
+      },
+      access: {
+        manage: 'Manage System Roles and Permissions',
+      },
     },
     tooltips: {
       superadminAll: 'Superadmin has all permissions by default',

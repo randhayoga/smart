@@ -69,6 +69,13 @@ const getConditionLabel = (c: string) => {
   return map[c] || c;
 };
 
+const getClassificationLabel = (c: string) => {
+  if (!c) return '';
+  if (c === 'Aset') return t('inventory.classificationAsset');
+  if (c === 'Inventaris') return t('inventory.classificationInventory');
+  return c;
+};
+
 const isStatusDisabled = computed(() => {
   return arrInactiveConditions.includes(form.condition);
 });
@@ -80,6 +87,8 @@ const form = useForm({
   location_id: '' as string | number,
   status: '',
   condition: '',
+  type: '',
+  classification: '',
   price: '' as string | number,
   image_url: null as File | null,
   image_url_name: '',
@@ -97,6 +106,8 @@ const errors = ref({
   location_id: '',
   status: '',
   condition: '',
+  type: '',
+  classification: '',
   image_url: '',
   vehicle_registration: '',
   bulk_quantity: '',
@@ -109,6 +120,8 @@ const resetErrors = () => {
     location_id: '',
     status: '',
     condition: '',
+    type: '',
+    classification: '',
     image_url: '',
     vehicle_registration: '',
     bulk_quantity: '',
@@ -121,6 +134,8 @@ const resetErrors = () => {
 watch(() => form.location_id, v => { if (v && errors.value.location_id) errors.value.location_id = ''; });
 watch(() => form.status, v => { if (v && errors.value.status) errors.value.status = ''; });
 watch(() => form.condition, v => { if (v && errors.value.condition) errors.value.condition = ''; });
+watch(() => form.type, v => { if (v && errors.value.type) errors.value.type = ''; });
+watch(() => form.classification, v => { if (v && errors.value.classification) errors.value.classification = ''; });
 watch(() => form.image_url, v => { if (v && errors.value.image_url) errors.value.image_url = ''; });
 watch(() => form.image_url_name, v => { if (v && errors.value.image_url) errors.value.image_url = ''; });
 watch(() => form.vehicle_registration, v => { if (v && errors.value.vehicle_registration) errors.value.vehicle_registration = ''; });
@@ -324,13 +339,35 @@ const parseCurrencyToNumber = (val: string | number) => {
   return isNaN(parsed) ? 0 : parsed;
 };
 
+const handleDecideClassification = () => {
+  if (form.price === '' || form.price === null || form.price === undefined) {
+    return;
+  }
+  if (typeof form.price === 'string' && form.price.trim() === '') {
+    return;
+  }
+  const currentPrice = parseCurrencyToNumber(form.price);
+  if (isNaN(currentPrice)) {
+    return;
+  }
+
+  const threshold = Number(import.meta.env.VITE_ASSET_CLASSIFICATION_THRESHOLD) || 5000000;
+  if (currentPrice > threshold) {
+    form.classification = 'Aset';
+  } else {
+    form.classification = 'Inventaris';
+  }
+};
+
 const handleSubmit = () => {
   resetErrors();
 
   let isValid = true;
   if (!form.location_id) { errors.value.location_id = t('inventory.locationRequired'); isValid = false; }
+  if (!form.type) { errors.value.type = t('inventory.typeRequired'); isValid = false; }
   if (!form.status) { errors.value.status = t('inventory.statusRequired'); isValid = false; }
   if (!form.condition) { errors.value.condition = t('inventory.conditionRequired'); isValid = false; }
+  if (!form.classification) { errors.value.classification = t('inventory.classificationRequired'); isValid = false; }
   if (!form.image_url && !form.image_url_name) { errors.value.image_url = t('inventory.assetPhotoRequired'); isValid = false; }
   if (isVehicle.value && !form.vehicle_registration) { errors.value.vehicle_registration = t('inventory.nopolRequired'); isValid = false; }
   if (arrNeedApproval.includes(form.status) && !form.memo_file_name) { errors.value.memo_file = t('inventory.memoRequired'); isValid = false; }
@@ -346,6 +383,8 @@ const handleSubmit = () => {
       location_id: data.location_id,
       status: data.status,
       condition: data.condition,
+      type: data.type,
+      classification: data.classification,
       price: data.price !== '' && data.price !== null ? parseCurrencyToNumber(data.price) : null,
     };
     if (isVehicle.value) fd.vehicle_registration = data.vehicle_registration;
@@ -425,6 +464,27 @@ const handleSubmit = () => {
                       />
                     </FieldContent>
                     <FieldError v-if="errors.location_id">{{ errors.location_id }}</FieldError>
+                  </Field>
+
+                  <Field :data-invalid="!!errors.type || undefined">
+                    <FieldLabel>
+                      <span>{{ t('inventory.type') }}<span class="text-rose-500">*</span></span>
+                    </FieldLabel>
+                    <FieldContent>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !form.type ? 'text-muted-foreground' : 'text-foreground', errors.type ? 'border-destructive' : '']">
+                            {{ form.type || t('inventory.selectType') }}
+                            <ChevronDown class="w-4 h-4 opacity-50" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
+                          <DropdownMenuItem @select="form.type = 'LT'">LT</DropdownMenuItem>
+                          <DropdownMenuItem @select="form.type = 'ST'">ST</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </FieldContent>
+                    <FieldError v-if="errors.type">{{ errors.type }}</FieldError>
                   </Field>
 
                   <Field :data-invalid="!!errors.status || undefined" :data-disabled="isStatusDisabled || undefined">
@@ -511,6 +571,32 @@ const handleSubmit = () => {
                         <Button type="button" @click="handleSamakanPrice" variant="warning" size="lg">{{ t('inventory.sameAsParent') }}</Button>
                       </div>
                     </FieldContent>
+                  </Field>
+
+                  <Field :data-invalid="!!errors.classification || undefined">
+                    <FieldLabel>
+                      <span>{{ t('inventory.classification') }}<span class="text-rose-500">*</span></span>
+                    </FieldLabel>
+                    <FieldContent>
+                      <div class="flex gap-2 w-full">
+                        <div class="flex-grow min-w-0">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !form.classification ? 'text-muted-foreground' : 'text-foreground', errors.classification ? 'border-destructive' : '']">
+                                {{ getClassificationLabel(form.classification) || t('inventory.selectClassification') }}
+                                <ChevronDown class="w-4 h-4 opacity-50" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
+                              <DropdownMenuItem @select="form.classification = 'Aset'">{{ t('inventory.classificationAsset') }}</DropdownMenuItem>
+                              <DropdownMenuItem @select="form.classification = 'Inventaris'">{{ t('inventory.classificationInventory') }}</DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                        <Button type="button" @click="handleDecideClassification" variant="warning" size="lg">{{ t('inventory.decide') }}</Button>
+                      </div>
+                    </FieldContent>
+                    <FieldError v-if="errors.classification">{{ errors.classification }}</FieldError>
                   </Field>
 
                   <Field :data-invalid="!!errors.image_url || undefined">

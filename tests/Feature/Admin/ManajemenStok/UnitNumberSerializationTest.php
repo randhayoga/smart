@@ -86,6 +86,8 @@ class UnitNumberSerializationTest extends TestCase
             'location_id' => $this->location->id,
             'status' => 'Tersedia',
             'condition' => 'Baik',
+            'type' => 'LT',
+            'classification' => 'Aset',
             'use_lot_image' => '1',
             'price' => 250000,
         ]);
@@ -105,6 +107,8 @@ class UnitNumberSerializationTest extends TestCase
             'location_id' => $this->location->id,
             'status' => 'Tersedia',
             'condition' => 'Baik',
+            'type' => 'LT',
+            'classification' => 'Aset',
             'use_lot_image' => '1',
             'price' => 500000,
         ]);
@@ -139,6 +143,8 @@ class UnitNumberSerializationTest extends TestCase
             'location_id' => $this->location->id,
             'status' => 'Tersedia',
             'condition' => 'Baik',
+            'type' => 'LT',
+            'classification' => 'Aset',
             'use_lot_image' => '1',
             'price' => 500000,
         ]);
@@ -171,6 +177,8 @@ class UnitNumberSerializationTest extends TestCase
             'location_id' => $this->location->id,
             'status' => 'Tersedia',
             'condition' => 'Baik',
+            'type' => 'LT',
+            'classification' => 'Aset',
             'use_lot_image' => '1',
             'bulk_quantity' => 3,
         ]);

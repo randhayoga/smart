@@ -84,6 +84,40 @@ const formatLocation = (lot: any) => {
   return parts.join(', ') || '-';
 };
 
+const getStatusLabel = (s: string) => {
+  if (!s) return '';
+  const map: Record<string, string> = {
+    'Tersedia': t('status.tersedia'),
+    'Dipinjam': t('status.dipinjam'),
+    'Standby': t('status.standby'),
+    'Pending': t('status.pending'),
+    'Pending:BoD/BoC': t('status.pending'),
+    'Scrapped': t('status.scrapped'),
+    'Lost': t('status.lost'),
+  };
+  return map[s] || s;
+};
+
+const getConditionLabel = (c: string) => {
+  if (!c) return '';
+  const map: Record<string, string> = {
+    'Bagus': t('inventory.conditionGood'),
+    'Rusak': t('inventory.conditionDamaged'),
+    'QC Passed': t('inventory.conditionQcPassed'),
+    'Lelang/Hibah': t('inventory.conditionAuctionGrant'),
+    'Rusak Total': t('inventory.conditionTotalDamage'),
+    'Hilang': t('inventory.conditionLost'),
+  };
+  return map[c] || c;
+};
+
+const getClassificationLabel = (c: string) => {
+  if (!c) return '';
+  if (c === 'Aset') return t('inventory.classificationAsset');
+  if (c === 'Inventaris') return t('inventory.classificationInventory');
+  return c;
+};
+
 const modalTitle = computed(() => {
   if (props.itemName === 'Perubahan Status Aset') {
     return props.actionType === 'approved' ? t('common.modals.approvalConfirmTitle') : t('common.modals.rejectConfirmTitle');
@@ -158,6 +192,8 @@ const displayFields = computed(() => {
   // Determine fields for Perubahan Status Aset
   if (props.itemName === 'Perubahan Status Aset') {
     if (data.asset_code) fields.push({ label: 'Kode Aset', value: data.asset_code });
+    if (data.type || data.unit_details?.type) fields.push({ label: 'Tipe', value: data.type || data.unit_details?.type });
+    if (data.classification || data.unit_details?.classification) fields.push({ label: 'Klasifikasi', value: getClassificationLabel(data.classification || data.unit_details?.classification) });
     if (data.status_label) fields.push({ label: 'Status', value: data.status_label });
     if (data.unit_details?.lot_code) fields.push({ label: 'Kode LOT', value: data.unit_details.lot_code });
     if (data.category) fields.push({ label: 'Kategori', value: data.category });
@@ -184,6 +220,23 @@ const displayFields = computed(() => {
       if (data.unit_details.vendor) fields.push({ label: 'Vendor', value: data.unit_details.vendor });
     }
     if (data.requested_at) fields.push({ label: 'Pembaruan Terakhir', value: data.requested_at });
+    return fields;
+  }
+
+  // Determine fields for Unit / Aset
+  const isUnit = props.itemName === 'Aset' || props.itemName === 'Asset' || props.itemName === 'Unit' ||
+    ('number' in data && ('lot_id' in data || 'condition' in data || 'type' in data || 'classification' in data) && !('po_number' in data));
+
+  if (isUnit) {
+    if (data.number || data.asset_code) fields.push({ label: t('inventory.assetCode'), value: data.number || data.asset_code });
+    if (data.type) fields.push({ label: t('inventory.type'), value: data.type });
+    if (data.classification) fields.push({ label: t('inventory.classification'), value: getClassificationLabel(data.classification) });
+    if (data.status) fields.push({ label: t('inventory.status'), value: getStatusLabel(data.status) });
+    if (data.condition) fields.push({ label: t('inventory.condition'), value: getConditionLabel(data.condition) });
+    if (data.location) fields.push({ label: t('inventory.location'), value: typeof data.location === 'string' ? data.location : formatLocation(data.location) });
+    if (data.price !== undefined && data.price !== null) fields.push({ label: t('inventory.unitPrice'), value: formatRupiah(data.price) });
+    if (data.vehicle_registration) fields.push({ label: t('inventory.tnkb'), value: data.vehicle_registration });
+    if (data.updated_at) fields.push({ label: t('inventory.lastUpdate'), value: data.updated_at });
     return fields;
   }
 
@@ -285,7 +338,22 @@ const bulkItemsFields = computed(() => {
     // Check if Perubahan Status Aset
     if (props.itemName === 'Perubahan Status Aset') {
       if (data.asset_code) fields.push({ label: 'Kode Aset', value: data.asset_code });
+      if (data.type || data.unit_details?.type) fields.push({ label: 'Tipe', value: data.type || data.unit_details?.type });
+      if (data.classification || data.unit_details?.classification) fields.push({ label: 'Klasifikasi', value: getClassificationLabel(data.classification || data.unit_details?.classification) });
       if (data.status_label) fields.push({ label: 'Status', value: data.status_label });
+      return fields;
+    }
+
+    // Check if Unit / Aset
+    const isUnit = props.itemName === 'Aset' || props.itemName === 'Asset' || props.itemName === 'Unit' ||
+      ('number' in data && ('lot_id' in data || 'condition' in data || 'type' in data || 'classification' in data) && !('po_number' in data));
+
+    if (isUnit) {
+      if (data.number || data.asset_code) fields.push({ label: t('inventory.assetCode'), value: data.number || data.asset_code });
+      if (data.type) fields.push({ label: t('inventory.type'), value: data.type });
+      if (data.classification) fields.push({ label: t('inventory.classification'), value: getClassificationLabel(data.classification) });
+      if (data.status) fields.push({ label: t('inventory.status'), value: getStatusLabel(data.status) });
+      if (data.condition) fields.push({ label: t('inventory.condition'), value: getConditionLabel(data.condition) });
       return fields;
     }
 

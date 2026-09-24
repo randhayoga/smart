@@ -107,6 +107,8 @@ class UnitSeeder extends Seeder
                     'location_id' => $lot->location_id,
                     'status' => $data['status'],
                     'condition' => $data['condition'],
+                    'type' => 'LT',
+                    'classification' => ((float)($lot->unit_price ?? 0) > 5000000 ? 'Aset' : 'Inventaris'),
                     'price' => $lot->unit_price,
                     'image_url' => $unitImagePath,
                     'vehicle_registration' => $data['vehicle_registration'],

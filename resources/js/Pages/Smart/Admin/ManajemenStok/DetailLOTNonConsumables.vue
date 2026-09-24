@@ -21,7 +21,7 @@ interface Props {
   lot: {
     id: number;
     number: string;
-    po_number: string;
+    po_number?: string | null;
     date_of_receipt: string;
     organizer: string;
     organizer_id: number;
@@ -55,6 +55,8 @@ interface Props {
     number: string;
     status: string;
     condition: string;
+    type?: string;
+    classification?: string;
     location: string;
     location_id: number;
     floor: string | null;
@@ -268,6 +270,7 @@ onUnmounted(() => {
       v-model:open="isLotModalOpen"
       :items="[props.lot]"
       :isConsumable="false"
+      :uom="props.lot.barang_uom"
       :parentImageUrl="(page.props as any).lot?.parent_image || null"
       :organizers="props.organizers"
       :vendors="props.vendors"

@@ -127,6 +127,23 @@ class InventoryLogServiceTest extends TestCase
         $this->assertStringContainsString('Penerimaan LOT baru LOT-2026-001 sebanyak 50 Pcs (PO: PO-999)', $log->note);
     }
 
+    public function test_log_lot_created_with_null_po_number(): void
+    {
+        $lot = Lot::factory()->create([
+            'barang_id' => $this->barang->id,
+            'initial_quantity' => 20,
+            'current_quantity' => 20,
+            'number' => 'LOT-2026-002',
+            'po_number' => null,
+        ]);
+
+        $log = $this->service->logLotCreated($lot, $this->user);
+
+        $this->assertInstanceOf(InventoryLog::class, $log);
+        $this->assertNull($log->new_state['po_number']);
+        $this->assertEquals('Penerimaan LOT baru LOT-2026-002 sebanyak 20 Pcs', $log->note);
+    }
+
     public function test_log_lot_updated(): void
     {
         $lot = Lot::factory()->create([

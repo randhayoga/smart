@@ -56,7 +56,7 @@ interface Props {
   lots: {
     id: number;
     number: string;
-    po_number: string;
+    po_number?: string | null;
     date_of_receipt: string;
     organizer: string;
     organizer_id: number;
@@ -205,7 +205,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
         t('inventory.poNumber'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ]),
-      cell: ({ row }) => h('div', { class: 'pl-0 font-medium' }, row.original.po_number),
+      cell: ({ row }) => h('div', { class: 'pl-0 font-medium' }, row.original.po_number || '-'),
     },
     {
       accessorKey: 'date_of_receipt',
@@ -462,7 +462,7 @@ const deleteFields = computed(() => {
       { label: t('inventory.availableStock'), value: availableStock },
       { label: t('inventory.initialStock'), value: initialStock },
       { label: t('inventory.location'), value: formatLocation(data.location, data.floor, data.room) },
-      { label: t('inventory.poNumber'), value: data.po_number },
+      { label: t('inventory.poNumber'), value: data.po_number || '-' },
       { label: t('inventory.registrationDate'), value: formatDate(data.date_of_receipt) },
       { label: t('inventory.age'), value: data.age !== undefined && data.age !== null ? `${data.age} ${t('inventory.yearUnit')}` : '-' },
       { label: t('inventory.unitPrice'), value: formatRupiah(data.unitPrice) },
@@ -675,6 +675,7 @@ const closeOnEscape = (e: KeyboardEvent) => {
     v-model:open="isBulkEditModalOpen"
     :items="selectedLotsForEdit"
     :isConsumable="props.barang.is_consumable"
+    :uom="props.barang.uom"
     :parentImageUrl="props.barang.image_url"
     :organizers="props.organizers"
     :vendors="props.vendors"

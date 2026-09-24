@@ -28,6 +28,7 @@ class PendingNonaktifController extends Controller
             'lot.organizer', 'lot.vendor', 'lifecycles.actor'
         ])
         ->where('status', 'like', 'Pending%')
+        ->orderBy('created_at', 'desc')
         ->get()
         ->map(function ($unit) {
             $pendingApproval = $unit->statusApprovals->firstWhere('decision', 'pending');
@@ -55,9 +56,12 @@ class PendingNonaktifController extends Controller
                     ? $pendingApproval->bod_boc_approval_url 
                     : ($approvedApproval ? $approvedApproval->bod_boc_approval_url : null),
                 'condition' => $unit->condition,
+                'type' => $unit->type,
+                'classification' => $unit->classification,
                 'price' => $unit->price,
                 'image_url' => $unit->image_url,
                 'vehicle_registration' => $unit->vehicle_registration,
+                'created_at' => $unit->created_at?->toIso8601String(),
                 'updated_at' => $unit->updated_at ? $unit->updated_at->format('d-m-Y H:i') : '-',
                 
                 // Location info

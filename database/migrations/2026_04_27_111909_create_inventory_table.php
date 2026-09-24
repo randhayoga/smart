@@ -30,7 +30,7 @@ return new class extends Migration {
             $table->foreignId('location_id')->constrained('locations')->comment('default location');
             $table->integer('initial_quantity');
             $table->integer('current_quantity')->nullable()->comment('for consumables');
-            $table->string('po_number');
+            $table->string('po_number')->nullable();
             $table->dateTime('date_of_receipt');
             $table->decimal('unit_price', 15, 2)->nullable()->comment('default unit price');
             $table->string('image_url')->comment('default image');

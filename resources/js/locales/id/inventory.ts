@@ -266,4 +266,13 @@ export default {
   loadLotDetailsFailed: 'Gagal memuat data detail LOT.',
   tryAgain: 'Coba Lagi',
   uploadBodBocFailed: 'Gagal mengunggah formulir persetujuan. Silakan coba lagi.',
+  type: 'Tipe',
+  selectType: 'Pilih tipe',
+  typeRequired: 'Tipe wajib dipilih',
+  classification: 'Klasifikasi',
+  selectClassification: 'Pilih klasifikasi',
+  classificationRequired: 'Klasifikasi wajib dipilih',
+  classificationAsset: 'Aset',
+  classificationInventory: 'Inventaris',
+  decide: 'Putuskan',
 };

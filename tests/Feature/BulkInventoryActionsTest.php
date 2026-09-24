@@ -189,6 +189,8 @@ class BulkInventoryActionsTest extends TestCase
             'location_id' => $location->id,
             'status' => 'Tersedia',
             'condition' => 'Bagus',
+            'type' => 'LT',
+            'classification' => 'Aset',
             'price' => 1500000,
             'use_lot_image' => '1',
             'bulk_quantity' => 3,

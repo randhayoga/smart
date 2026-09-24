@@ -14,7 +14,7 @@ interface Props {
   lot: {
     id: number;
     number: string;
-    po_number: string;
+    po_number?: string | null;
     date_of_receipt: string;
     organizer: string;
     organizer_id: number;
@@ -146,7 +146,7 @@ onUnmounted(() => {
             <p class="text-foreground">{{ t('inventory.availableStock') }}: {{ props.units.filter(u => u.status === 'Tersedia').length }}</p>
             <p class="text-foreground">{{ t('inventory.initialStock') }}: {{ props.units.length }}</p>
             <p class="text-foreground">{{ t('inventory.defaultLocation') }}: {{ formatLocation(props.lot.location, props.lot.floor, props.lot.room) }}</p>
-            <p class="text-foreground">{{ t('inventory.poNumber') }}: {{ props.lot.po_number }}</p>
+            <p class="text-foreground">{{ t('inventory.poNumber') }}: {{ props.lot.po_number || '-' }}</p>
             <p class="text-foreground">{{ t('inventory.registrationDate') }}: {{ formatDate(props.lot.date_of_receipt) }}</p>
             <p class="text-foreground">{{ t('inventory.age') }}: {{ props.lot.age !== undefined && props.lot.age !== null ? `${props.lot.age} ${t('inventory.yearUnit')}` : '-' }}</p>
             <p class="text-foreground">{{ t('inventory.defaultUnitPrice') }}: {{ formatRupiah(props.lot.unitPrice) }}</p>

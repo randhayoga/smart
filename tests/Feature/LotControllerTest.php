@@ -79,6 +79,8 @@ class LotControllerTest extends TestCase
             'location_id' => $location->id,
             'status' => 'Tersedia',
             'condition' => 'Bagus',
+            'type' => 'LT',
+            'classification' => 'Aset',
             'price' => 60000,
             'use_lot_image' => true,
             'bulk_quantity' => 3,
@@ -123,6 +125,60 @@ class LotControllerTest extends TestCase
             'user_id' => $user->id,
             'action_type' => 'update',
         ]);
+    }
+
+    public function test_can_store_lot_with_null_or_blank_po_number(): void
+    {
+        Storage::fake('local');
+        $user = User::factory()->create();
+        $barang = Barang::factory()->create();
+        $organizer = Organizer::factory()->create();
+        $vendor = Vendor::factory()->create();
+        $location = Location::factory()->create();
+        $file = UploadedFile::fake()->image('lot_null_po.jpg');
+
+        $response = $this->actingAs($user)->post(route('smart.inventory.lots.store'), [
+            'number' => 'LOT-2026-ATK-KER-0002-0001',
+            'barang_id' => $barang->id,
+            'organizer_id' => $organizer->id,
+            'vendor_id' => $vendor->id,
+            'location_id' => $location->id,
+            'po_number' => '', // blank input
+            'date_of_receipt' => '2026-05-22',
+            'unit_price' => 50000,
+            'image_url' => $file,
+            'burden' => 'Corporate',
+        ]);
+
+        $response->assertRedirect();
+
+        $this->assertDatabaseHas('lots', [
+            'number' => 'LOT-2026-ATK-KER-0002-0001',
+            'barang_id' => $barang->id,
+            'po_number' => null,
+        ]);
+    }
+
+    public function test_can_update_lot_with_null_or_blank_po_number(): void
+    {
+        Storage::fake('local');
+        $user = User::factory()->create();
+        $lot = Lot::factory()->create(['po_number' => 'PO-INITIAL']);
+
+        $response = $this->actingAs($user)->put(route('smart.inventory.lots.update', $lot), [
+            'number' => $lot->number,
+            'barang_id' => $lot->barang_id,
+            'organizer_id' => $lot->organizer_id,
+            'vendor_id' => $lot->vendor_id,
+            'location_id' => $lot->location_id,
+            'po_number' => '', // cleared to blank
+            'date_of_receipt' => $lot->date_of_receipt->format('Y-m-d'),
+            'unit_price' => $lot->unit_price,
+            'burden' => 'Corporate',
+        ]);
+
+        $response->assertRedirect();
+        $this->assertNull($lot->fresh()->po_number);
     }
 
     public function test_can_destroy_lot(): void
@@ -224,6 +280,8 @@ class LotControllerTest extends TestCase
             'location_id' => $location->id,
             'status' => 'Tersedia',
             'condition' => 'Bagus',
+            'type' => 'LT',
+            'classification' => 'Aset',
             'price' => 60000,
             'use_lot_image' => true,
             'bulk_quantity' => 2,

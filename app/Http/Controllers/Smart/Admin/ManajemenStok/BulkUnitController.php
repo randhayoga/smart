@@ -29,6 +29,8 @@ class BulkUnitController extends Controller
             'location_id' => 'required|exists:locations,id',
             'status' => 'required|string|max:255',
             'condition' => 'required|string|max:255',
+            'type' => 'required|string|in:LT,ST',
+            'classification' => 'required|string|in:Aset,Inventaris',
             'price' => 'nullable|numeric|min:0|max:999999999.99',
             'image_url' => 'required_without:use_lot_image|nullable|image|max:1024',
             'use_lot_image' => 'nullable',
@@ -105,6 +107,8 @@ class BulkUnitController extends Controller
                 'location_id' => $validated['location_id'],
                 'status' => $validated['status'],
                 'condition' => $validated['condition'],
+                'type' => $validated['type'],
+                'classification' => $validated['classification'],
                 'price' => $validated['price'] ?? null,
                 'image_url' => $finalImagePath,
                 'vehicle_registration' => $validated['vehicle_registration'] ?? null,
@@ -161,6 +165,8 @@ class BulkUnitController extends Controller
             'ids.*' => 'exists:units,id',
             'status' => ['nullable', 'string', 'in:Tersedia,Dipinjam,Standby,Tidak Aktif,Pending,Pending:BoD/BoC'],
             'condition' => ['nullable', 'string', 'in:Bagus,Rusak,QC Passed,Lelang/Hibah,Rusak Total,Hilang'],
+            'type' => ['nullable', 'string', 'in:LT,ST'],
+            'classification' => ['nullable', 'string', 'in:Aset,Inventaris'],
             'location_id' => 'nullable|exists:locations,id',
             'price' => 'nullable|numeric|min:0|max:999999999.99',
             'use_lot_image' => 'nullable',
@@ -284,7 +290,15 @@ class BulkUnitController extends Controller
             $updateData['price'] = $request->input('price') !== null ? (float)$request->input('price') : null;
         }
 
-        // 4. Image URL / Use LOT Image
+        // 4. Type & Classification (Leave empty to keep original values)
+        if ($request->filled('type')) {
+            $updateData['type'] = $request->input('type');
+        }
+        if ($request->filled('classification')) {
+            $updateData['classification'] = $request->input('classification');
+        }
+
+        // 5. Image URL / Use LOT Image
         $finalImagePath = null;
         $hasNewImage = false;
 

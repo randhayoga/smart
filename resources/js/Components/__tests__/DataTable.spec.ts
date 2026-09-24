@@ -186,4 +186,49 @@ describe('DataTable.vue default sorting rules', () => {
     const vm = wrapper.vm as any;
     expect(vm.table.getState().sorting).toEqual([{ id: 'name', desc: false }]);
   });
+
+  it('supports sorting by a hidden column via defaultColumnVisibility without rendering it', () => {
+    const columns: ColumnDef<any>[] = [
+      { id: 'created_at', accessorKey: 'created_at', enableHiding: true },
+      { accessorKey: 'number', header: 'Nomor' },
+      { accessorKey: 'name', header: 'Nama' },
+    ];
+    const data = [
+      { number: 'AST-001', name: 'Old Asset', created_at: '2024-01-01T10:00:00Z' },
+      { number: 'AST-002', name: 'New Asset', created_at: '2024-06-01T10:00:00Z' },
+      { number: 'AST-003', name: 'Mid Asset', created_at: '2024-03-01T10:00:00Z' },
+    ];
+
+    const wrapper = mount(DataTable, {
+      props: {
+        columns: columns as any,
+        data,
+        defaultSorting: [{ id: 'created_at', desc: true }],
+        defaultColumnVisibility: { created_at: false },
+      },
+      global: {
+        plugins: [i18n],
+      },
+    });
+
+    const vm = wrapper.vm as any;
+    // 1. Column is hidden in visibility state
+    expect(vm.table.getState().columnVisibility).toEqual({ created_at: false });
+
+    // 2. Visible headers do not contain 'created_at'
+    const headerIds = vm.table.getHeaderGroups()[0].headers.map((h: any) => h.id);
+    expect(headerIds).not.toContain('created_at');
+    expect(headerIds).toEqual(['number', 'name']);
+
+    // 3. Rows are sorted by created_at descending (newest first)
+    const rows = vm.table.getRowModel().rows;
+    expect(rows[0].original.number).toBe('AST-002');
+    expect(rows[1].original.number).toBe('AST-003');
+    expect(rows[2].original.number).toBe('AST-001');
+
+    // 4. Visible cells do not contain 'created_at'
+    const cellIds = rows[0].getVisibleCells().map((c: any) => c.column.id);
+    expect(cellIds).not.toContain('created_at');
+    expect(cellIds).toEqual(['number', 'name']);
+  });
 });

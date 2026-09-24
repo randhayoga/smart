@@ -44,9 +44,12 @@ interface Props {
     proposed_status?: string | null;
     doc_url?: string | null;
     condition: string;
+    type?: string;
+    classification?: string;
     price: number | string;
     image_url: string;
     vehicle_registration: string | null;
+    created_at?: string | null;
     updated_at: string;
     
     // Location info
@@ -473,6 +476,19 @@ const formatRupiah = (val: number | string | null | undefined) => {
 // Table Columns configuration
 const columns = computed<ColumnDef<any>[]>(() => {
   const list: ColumnDef<any>[] = [
+    {
+      id: 'created_at',
+      accessorKey: 'created_at',
+      enableHiding: true,
+      sortingFn: (rowA, rowB) => {
+        const timeA = rowA.original.created_at ? new Date(rowA.original.created_at).getTime() : 0;
+        const timeB = rowB.original.created_at ? new Date(rowB.original.created_at).getTime() : 0;
+        if (timeA !== timeB) {
+          return timeA - timeB;
+        }
+        return (rowA.original.id || 0) - (rowB.original.id || 0);
+      },
+    },
     {
       id: 'select',
       size: 40,
@@ -952,7 +968,8 @@ const totalAsetTerpilihCount = computed(() => {
           :data="filteredUnits" 
           :page-size="pageSizeNumber"
           :show-selection-count="false"
-          :default-sorting="[{ id: 'number', desc: true }]"
+          :default-sorting="[{ id: 'created_at', desc: true }]"
+          :default-column-visibility="{ created_at: false }"
         />
 
         <div class="text-xs text-muted-foreground pl-1 mt-3 no-print">

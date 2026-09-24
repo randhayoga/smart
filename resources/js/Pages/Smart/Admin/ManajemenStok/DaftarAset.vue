@@ -17,6 +17,7 @@ interface Props {
     price: number | string;
     image_url: string;
     vehicle_registration: string | null;
+    created_at?: string | null;
     updated_at: string;
     
     // Location info

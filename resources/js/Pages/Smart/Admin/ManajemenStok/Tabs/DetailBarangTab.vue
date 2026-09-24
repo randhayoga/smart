@@ -29,7 +29,7 @@ interface Props {
   lots: {
     id: number;
     number: string;
-    po_number: string;
+    po_number?: string | null;
     date_of_receipt: string;
     organizer: string;
     organizer_id: number;

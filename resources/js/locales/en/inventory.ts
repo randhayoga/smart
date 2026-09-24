@@ -266,4 +266,13 @@ export default {
   loadLotDetailsFailed: 'Failed to load LOT details.',
   tryAgain: 'Try Again',
   uploadBodBocFailed: 'Failed to upload approval form. Please try again.',
+  type: 'Type',
+  selectType: 'Select type',
+  typeRequired: 'Type is required',
+  classification: 'Classification',
+  selectClassification: 'Select classification',
+  classificationRequired: 'Classification is required',
+  classificationAsset: 'Asset',
+  classificationInventory: 'Inventory',
+  decide: 'Decide',
 };

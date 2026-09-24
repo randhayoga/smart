@@ -47,29 +47,55 @@ export default {
       general: 'Umum',
     },
     permissions: {
-      'dashboard.admin.view': 'Lihat Dashboard Admin',
-      'dashboard.user.view': 'Lihat Dashboard Pengguna',
-      'master.view': 'Lihat Master Data',
-      'master.manage': 'Kelola Master Data (Kategori, Lokasi, dll.)',
-      'inventory.view': 'Lihat Katalog Inventaris, LOT & Aset',
-      'inventory.manage': 'Kelola Barang Inventaris, LOT, dan Unit',
-      'inventory.borrow': 'Lakukan Peminjaman & Pengembalian Unit Langsung',
-      'inventory.manual_request': 'Buat Permintaan Stok Manual',
-      'inventory.status_approval.request': 'Ajukan Permintaan Perubahan Status Unit',
-      'inventory.status_approval.decide': 'Setujui atau Tolak Perubahan Status Unit',
-      'requests.create': 'Buat dan Ajukan Permintaan (Keranjang)',
-      'requests.view_own': 'Lihat Riwayat Permintaan Sendiri & Batalkan',
-      'requests.approve': 'Setujui atau Tolak Permintaan Bawahan',
-      'requests.inbox.view': 'Lihat Kotak Masuk Permintaan Disetujui',
-      'requests.confirm': 'Konfirmasi dan Tinjau Permintaan',
-      'requests.fulfill': 'Alokasikan Unit/LOT dan Konfirmasi Pemenuhan',
-      'requests.handover': 'Jadwalkan dan Proses Serah Terima Barang',
-      'requests.returns': 'Proses dan Konfirmasi Pengembalian Barang',
-      'requests.archive.view': 'Lihat Arsip Permintaan',
-      'karyawan.view': 'Lihat Direktori Karyawan dan Peminjaman Aktif',
-      'audit.view': 'Lihat Log Aktivitas Inventaris dan Audit Stok',
-      'notifications.manage': 'Lihat dan Kelola Notifikasi Pribadi',
-      'access.manage': 'Kelola Peran dan Hak Akses Sistem',
+      dashboard: {
+        admin: {
+          view: 'Lihat Dashboard Admin',
+        },
+        user: {
+          view: 'Lihat Dashboard Pengguna',
+        },
+      },
+      master: {
+        view: 'Lihat Master Data',
+        manage: 'Kelola Master Data (Kategori, Lokasi, dll.)',
+      },
+      inventory: {
+        view: 'Lihat Katalog Inventaris, LOT & Aset',
+        manage: 'Kelola Barang Inventaris, LOT, dan Unit',
+        borrow: 'Lakukan Peminjaman & Pengembalian Unit Langsung',
+        manual_request: 'Buat Permintaan Stok Manual',
+        status_approval: {
+          request: 'Ajukan Permintaan Perubahan Status Unit',
+          decide: 'Setujui atau Tolak Perubahan Status Unit',
+        },
+      },
+      requests: {
+        create: 'Buat dan Ajukan Permintaan (Keranjang)',
+        view_own: 'Lihat Riwayat Permintaan Sendiri & Batalkan',
+        approve: 'Setujui atau Tolak Permintaan Bawahan',
+        inbox: {
+          view: 'Lihat Kotak Masuk Permintaan Disetujui',
+        },
+        confirm: 'Konfirmasi dan Tinjau Permintaan',
+        fulfill: 'Alokasikan Unit/LOT dan Konfirmasi Pemenuhan',
+        handover: 'Jadwalkan dan Proses Serah Terima Barang',
+        returns: 'Proses dan Konfirmasi Pengembalian Barang',
+        archive: {
+          view: 'Lihat Arsip Permintaan',
+        },
+      },
+      karyawan: {
+        view: 'Lihat Direktori Karyawan dan Peminjaman Aktif',
+      },
+      audit: {
+        view: 'Lihat Log Aktivitas Inventaris dan Audit Stok',
+      },
+      notifications: {
+        manage: 'Lihat dan Kelola Notifikasi Pribadi',
+      },
+      access: {
+        manage: 'Kelola Peran dan Hak Akses Sistem',
+      },
     },
     tooltips: {
       superadminAll: 'Superadmin memiliki semua izin secara bawaan',

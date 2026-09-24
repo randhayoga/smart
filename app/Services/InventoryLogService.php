@@ -166,7 +166,7 @@ class InventoryLogService
             'quantity_change' => $quantity,
             'previous_state' => null,
             'new_state' => $newState,
-            'note' => $note ?? "Penerimaan LOT baru {$lot->number} sebanyak {$quantity} {$uomName} (PO: {$lot->po_number})",
+            'note' => $note ?? ("Penerimaan LOT baru {$lot->number} sebanyak {$quantity} {$uomName}" . ($lot->po_number ? " (PO: {$lot->po_number})" : '')),
             'created_at' => now(),
         ]);
     }

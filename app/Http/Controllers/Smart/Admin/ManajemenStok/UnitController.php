@@ -37,6 +37,7 @@ class UnitController extends Controller
             'fulfillments' => fn($q) => $q->whereNull('completed_at')->with('requestItem.request.user')
         ])
         ->where('status', 'not like', 'Pending%')
+        ->orderBy('created_at', 'desc')
         ->get()
         ->map(function ($unit) {
             $pendingApproval = $unit->statusApprovals->firstWhere('decision', 'pending');
@@ -64,9 +65,12 @@ class UnitController extends Controller
                     ? $pendingApproval->bod_boc_approval_url 
                     : ($approvedApproval ? $approvedApproval->bod_boc_approval_url : null),
                 'condition' => $unit->condition,
+                'type' => $unit->type,
+                'classification' => $unit->classification,
                 'price' => $unit->price,
                 'image_url' => $unit->image_url,
                 'vehicle_registration' => $unit->vehicle_registration,
+                'created_at' => $unit->created_at?->toIso8601String(),
                 'updated_at' => $unit->updated_at ? $unit->updated_at->format('d-m-Y H:i') : '-',
                 
                 // Location info
@@ -153,6 +157,8 @@ class UnitController extends Controller
             'location_id' => 'required|exists:locations,id',
             'status' => 'required|string|max:255',
             'condition' => 'required|string|max:255',
+            'type' => 'required|string|in:LT,ST',
+            'classification' => 'required|string|in:Aset,Inventaris',
             'price' => 'nullable|numeric|min:0|max:999999999.99',
             'image_url' => 'required_without:use_lot_image|nullable|image|max:1024',
             'use_lot_image' => 'nullable',
@@ -305,6 +311,8 @@ class UnitController extends Controller
             'location_id' => 'required|exists:locations,id',
             'status' => ['required', 'string', 'in:Tersedia,Dipinjam,Standby,Tidak Aktif,Pending,Pending:BoD/BoC'],
             'condition' => ['required', 'string', 'in:Bagus,Rusak,QC Passed,Lelang/Hibah,Rusak Total,Hilang'],
+            'type' => ['required', 'string', 'in:LT,ST'],
+            'classification' => ['required', 'string', 'in:Aset,Inventaris'],
             'price' => 'nullable|numeric|min:0|max:999999999.99',
             'image_url' => 'nullable|image|mimes:jpeg,jpg,png|max:1024',
             'use_lot_image' => 'nullable',
@@ -382,6 +390,10 @@ class UnitController extends Controller
             'status.in' => 'Status yang dipilih tidak valid.',
             'condition.required' => 'Kondisi belum dipilih.',
             'condition.in' => 'Kondisi yang dipilih tidak valid.',
+            'type.required' => 'Tipe belum dipilih.',
+            'type.in' => 'Tipe yang dipilih tidak valid.',
+            'classification.required' => 'Klasifikasi belum dipilih.',
+            'classification.in' => 'Klasifikasi yang dipilih tidak valid.',
             'price.numeric' => 'Harga Satuan harus berupa angka.',
             'price.min' => 'Harga Satuan minimal 0.',
             'price.max' => 'Harga Satuan terlalu besar.',

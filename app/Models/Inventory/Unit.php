@@ -157,12 +157,19 @@ class Unit extends Model
 
     protected $with = ['lot', 'location'];
 
+    protected $attributes = [
+        'type' => 'LT',
+        'classification' => 'Aset',
+    ];
+
     protected $fillable = [
         'number',
         'lot_id',
         'location_id',
         'status',
         'condition',
+        'type',
+        'classification',
         'price',
         'image_url',
         'vehicle_registration',

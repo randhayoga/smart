@@ -161,6 +161,7 @@ class ManajemenStokController extends Controller
             ->whereHas('lot', function ($query) use ($barang) {
                 $query->where('barang_id', $barang->id);
             })
+            ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($unit) {
                 $pendingApproval = $unit->statusApprovals->firstWhere('decision', 'pending');
@@ -185,9 +186,12 @@ class ManajemenStokController extends Controller
                         ? $pendingApproval->lost_doc_url 
                         : ($approvedApproval ? $approvedApproval->lost_doc_url : null),
                     'condition' => $unit->condition,
+                    'type' => $unit->type,
+                    'classification' => $unit->classification,
                     'price' => $unit->price,
                     'image_url' => $unit->image_url,
                     'vehicle_registration' => $unit->vehicle_registration,
+                    'created_at' => $unit->created_at?->toIso8601String(),
                     'updated_at' => $unit->updated_at ? $unit->updated_at->format('d-m-Y H:i') : '-',
                     
                     // Location info

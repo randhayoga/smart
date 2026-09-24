@@ -31,6 +31,8 @@ class UnitFactory extends Factory
             'location_id' => \App\Models\Master\Location::factory(),
             'status' => 'Tersedia',
             'condition' => 'Baik',
+            'type' => 'LT',
+            'classification' => 'Aset',
             'image_url' => 'units/sample.jpg',
         ];
     }

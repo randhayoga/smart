@@ -17,20 +17,7 @@ class LotSeeder extends Seeder
     {
         $lots = [
             [
-                'number' => 'LOT-26-ATK-HVS4-0001-0002',
-                'barang_id' => 1,
-                'organizer_id' => 1,
-                'vendor_id' => 1,
-                'location_id' => 3,
-                'initial_quantity' => 100,
-                'current_quantity' => 100,
-                'po_number' => 'PO-02',
-                'date_of_receipt' => '02/04/2026',
-                'unit_price' => 60000,
-                'image_url' => '/database/seeders/assets/sidu.jpg',
-            ],
-            [
-                'number' => 'LOT-26-ATK-HVS4-0001-0001',
+                'number' => 'LOT-0001-26-ATK-HVS4-0001',
                 'barang_id' => 1,
                 'organizer_id' => 1,
                 'vendor_id' => 1,
@@ -43,7 +30,20 @@ class LotSeeder extends Seeder
                 'image_url' => '/database/seeders/assets/sidu.jpg',
             ],
             [
-                'number' => 'LOT-26-COMP-NB-0001-0001',
+                'number' => 'LOT-0002-26-ATK-HVS4-0001',
+                'barang_id' => 1,
+                'organizer_id' => 1,
+                'vendor_id' => 1,
+                'location_id' => 3,
+                'initial_quantity' => 100,
+                'current_quantity' => 100,
+                'po_number' => 'PO-02',
+                'date_of_receipt' => '02/04/2026',
+                'unit_price' => 60000,
+                'image_url' => '/database/seeders/assets/sidu.jpg',
+            ],
+            [
+                'number' => 'LOT-0001-26-COMP-NB-0001',
                 'barang_id' => 6,
                 'organizer_id' => 2,
                 'vendor_id' => 1,
@@ -56,7 +56,7 @@ class LotSeeder extends Seeder
                 'image_url' => '/database/seeders/assets/acer.jpg',
             ],
             [
-                'number' => 'LOT-26-KEN-MO-0001-0001',
+                'number' => 'LOT-0001-26-KEN-MO-0001',
                 'barang_id' => 7,
                 'organizer_id' => 1,
                 'vendor_id' => 2,
@@ -69,7 +69,7 @@ class LotSeeder extends Seeder
                 'image_url' => '/database/seeders/assets/byd.jpg',
             ],
             [
-                'number' => 'LOT-26-KEN-MO-0001-0002',
+                'number' => 'LOT-0002-26-KEN-MO-0001',
                 'barang_id' => 7,
                 'organizer_id' => 1,
                 'vendor_id' => 3,
@@ -82,7 +82,7 @@ class LotSeeder extends Seeder
                 'image_url' => '/database/seeders/assets/byd.jpg',
             ],
             [
-                'number' => 'LOT-26-FUR-KK-0001-0001',
+                'number' => 'LOT-0001-26-FUR-KK-0001',
                 'barang_id' => 4,
                 'organizer_id' => 1,
                 'vendor_id' => 4,
@@ -95,7 +95,7 @@ class LotSeeder extends Seeder
                 'image_url' => '/database/seeders/assets/ikea.jpg',
             ],
             [
-                'number' => 'LOT-26-FUR-KK-0001-0002',
+                'number' => 'LOT-0002-26-FUR-KK-0001',
                 'barang_id' => 4,
                 'organizer_id' => 1,
                 'vendor_id' => 4,
@@ -135,13 +135,20 @@ class LotSeeder extends Seeder
                 $projectId = \App\Models\TbProject::inRandomOrder()->first()?->id;
             }
 
+            $parts = explode('-', $data['number'], 4);
+            $barangNumber = $parts[3] ?? null;
+            $barangId = ($barangNumber ? \App\Models\Inventory\Barang::where('number', $barangNumber)->value('id') : null) ?? $data['barang_id'];
+            $organizerId = \App\Models\Master\Organizer::where('id', $data['organizer_id'])->value('id') ?? \App\Models\Master\Organizer::first()?->id ?? $data['organizer_id'];
+            $vendorId = \App\Models\Master\Vendor::where('id', $data['vendor_id'])->value('id') ?? \App\Models\Master\Vendor::first()?->id ?? $data['vendor_id'];
+            $locationId = \App\Models\Master\Location::where('id', $data['location_id'])->value('id') ?? \App\Models\Master\Location::first()?->id ?? $data['location_id'];
+
             $lot = Lot::updateOrCreate(
                 ['number' => $data['number']],
                 [
-                    'barang_id' => $data['barang_id'],
-                    'organizer_id' => $data['organizer_id'],
-                    'vendor_id' => $data['vendor_id'],
-                    'location_id' => $data['location_id'],
+                    'barang_id' => $barangId,
+                    'organizer_id' => $organizerId,
+                    'vendor_id' => $vendorId,
+                    'location_id' => $locationId,
                     'initial_quantity' => $data['initial_quantity'],
                     'current_quantity' => $data['current_quantity'],
                     'po_number' => $data['po_number'],

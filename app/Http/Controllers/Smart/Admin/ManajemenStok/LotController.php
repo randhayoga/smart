@@ -38,7 +38,7 @@ class LotController extends Controller
             'location_id' => 'required|exists:locations,id',
             'initial_quantity' => 'nullable|integer|min:0|max:2147483647',
             'current_quantity' => 'nullable|integer|min:0|max:2147483647',
-            'po_number' => 'required|string|max:255',
+            'po_number' => 'nullable|string|max:255',
             'date_of_receipt' => 'required|date',
             'unit_price' => 'nullable|numeric|min:0|max:999999999.99',
             'image_url' => 'required_without:use_parent_image|nullable|image|max:1024',
@@ -97,7 +97,7 @@ class LotController extends Controller
             'vendor_id' => 'required|exists:vendors,id',
             'location_id' => 'required|exists:locations,id',
             'initial_quantity' => 'nullable|integer|min:0|max:2147483647',
-            'po_number' => 'required|string|max:255',
+            'po_number' => 'nullable|string|max:255',
             'date_of_receipt' => 'required|date',
             'unit_price' => 'nullable|numeric|min:0|max:999999999.99',
             'image_url' => 'nullable|image|max:1024',
@@ -251,6 +251,7 @@ class LotController extends Controller
             'lot.organizer', 'lot.vendor', 'lifecycles.actor'
         ])
         ->where('lot_id', $lot->id)
+        ->orderBy('created_at', 'desc')
         ->get()
         ->map(function ($unit) {
             $pendingApproval = $unit->statusApprovals->firstWhere('decision', 'pending');
@@ -275,9 +276,12 @@ class LotController extends Controller
                     ? $pendingApproval->lost_doc_url 
                     : ($approvedApproval ? $approvedApproval->lost_doc_url : null),
                 'condition' => $unit->condition,
+                'type' => $unit->type,
+                'classification' => $unit->classification,
                 'price' => $unit->price,
                 'image_url' => $unit->image_url,
                 'vehicle_registration' => $unit->vehicle_registration,
+                'created_at' => $unit->created_at?->toIso8601String(),
                 'updated_at' => $unit->updated_at ? $unit->updated_at->format('d-m-Y H:i') : '-',
                 
                 // Location info

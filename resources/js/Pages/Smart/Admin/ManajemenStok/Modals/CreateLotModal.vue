@@ -195,7 +195,6 @@ const handleSubmit = () => {
   if (!lotForm.organizer_id) { errors.value.organizer_id = t('inventory.organizerRequired'); isValid = false; }
   if (!lotForm.vendor_id) { errors.value.vendor_id = t('inventory.vendorRequired'); isValid = false; }
   if (!lotForm.location_id) { errors.value.location_id = t('inventory.locationRequired'); isValid = false; }
-  if (!lotForm.po_number) { errors.value.po_number = t('inventory.poNumberRequired'); isValid = false; }
   if (!lotForm.date_of_receipt) { errors.value.date_of_receipt = t('inventory.dateOfReceiptRequired'); isValid = false; }
   if (lotForm.burden === 'Project' && !lotForm.project_id) {
     errors.value.project_id = t('inventory.projectRequired');
@@ -227,7 +226,7 @@ const handleSubmit = () => {
       _method: data._method, number: data.number, barang_id: data.barang_id,
       organizer_id: data.organizer_id, vendor_id: data.vendor_id,
       location_id: data.location_id,
-      po_number: data.po_number, date_of_receipt: data.date_of_receipt,
+      po_number: data.po_number || null, date_of_receipt: data.date_of_receipt,
       unit_price: data.unit_price,
       burden: data.burden,
       project_id: data.burden === 'Project' ? data.project_id : null,
@@ -299,7 +298,7 @@ const handleSubmit = () => {
                   </Field>
 
                   <Field :data-invalid="!!errors.po_number || undefined">
-                    <FieldLabel><span>{{ t('inventory.poNumber') }}<span class="text-rose-500">*</span></span></FieldLabel>
+                    <FieldLabel><span>{{ t('inventory.poNumber') }}</span></FieldLabel>
                     <FieldContent>
                       <input type="text" v-model="lotForm.po_number" :placeholder="t('inventory.poNumberPlaceholder')"
                         class="w-full px-4 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors h-10"
@@ -381,11 +380,17 @@ const handleSubmit = () => {
                   <Field v-if="barang.is_consumable" :data-invalid="!!(lotForm.errors.initial_quantity || errors.initial_quantity) || undefined">
                     <FieldLabel><span>{{ t('inventory.totalStock') }}<span class="text-rose-500">*</span></span></FieldLabel>
                     <FieldContent>
-                      <input type="number" v-model="lotForm.initial_quantity" :placeholder="t('inventory.stockCountPlaceholder')" min="0"
-                        class="w-full px-4 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors h-10"
-                        :class="[(lotForm.errors.initial_quantity || errors.initial_quantity) ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']"
-                        @input="lotForm.current_quantity = lotForm.initial_quantity"
-                      />
+                      <div class="flex w-full rounded-[14px] border bg-background focus-within:ring-2 transition-colors h-10 overflow-hidden"
+                        :class="[(lotForm.errors.initial_quantity || errors.initial_quantity) ? 'border-destructive focus-within:ring-destructive/20 focus-within:border-destructive' : 'border-input focus-within:ring-primary/20 focus-within:border-primary']"
+                      >
+                        <input type="number" v-model="lotForm.initial_quantity" :placeholder="t('inventory.stockCountPlaceholder')" min="0"
+                          class="flex-1 min-w-0 px-4 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 transition-colors h-full"
+                          @input="lotForm.current_quantity = lotForm.initial_quantity"
+                        />
+                        <span v-if="barang.uom" class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-l border-input select-none font-medium">
+                          {{ barang.uom }}
+                        </span>
+                      </div>
                     </FieldContent>
                     <FieldError v-if="lotForm.errors.initial_quantity || errors.initial_quantity">{{ lotForm.errors.initial_quantity || errors.initial_quantity }}</FieldError>
                   </Field>
