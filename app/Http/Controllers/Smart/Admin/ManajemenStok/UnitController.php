@@ -13,6 +13,7 @@ use App\Models\Master\Organizer;
 use App\Models\Master\Vendor;
 use App\Models\Request\RequestFulfillment;
 use App\Models\TbProject;
+use App\Services\Inventory\UnitNumberService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
@@ -143,26 +144,8 @@ class UnitController extends Controller
     public function store(Request $request)
     {
         $lot = Lot::with('barang.subcategory.category', 'organizer')->findOrFail($request->input('lot_id'));
-        $subcategoryCode = $lot->barang->subcategory->code ?? '';
-        $organizerCode = $lot->organizer->name ?? '';
-
-        if ($subcategoryCode && $organizerCode) {
-            $combination = "{$subcategoryCode}-{$organizerCode}-PTRE";
-            $yy = $lot->date_of_receipt ? $lot->date_of_receipt->format('y') : date('y');
-            
-            $count = Unit::where('number', 'like', "%-{$combination}-%")->count();
-            $nextSerialVal = $count + 1;
-            do {
-                $serial = str_pad($nextSerialVal, 5, '0', STR_PAD_LEFT);
-                $generatedNumber = "{$serial}-{$combination}-{$yy}";
-                $exists = Unit::where('number', $generatedNumber)->exists();
-                if ($exists) {
-                    $nextSerialVal++;
-                }
-            } while ($exists);
-            
-            $request->merge(['number' => $generatedNumber]);
-        }
+        $generatedNumber = app(UnitNumberService::class)->generateUnitNumber($lot);
+        $request->merge(['number' => $generatedNumber]);
 
         $rules = [
             'number' => 'required|string|max:25|unique:units,number',

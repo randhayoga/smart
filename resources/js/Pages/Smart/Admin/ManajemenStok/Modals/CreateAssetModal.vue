@@ -146,6 +146,9 @@ watch(() => form.condition, (newVal, oldVal) => {
 });
 
 const generateAssetCode = () => {
+  if (props.lot?.next_asset_code) {
+    return props.lot.next_asset_code;
+  }
   const tipeCode = props.barang?.subcategory_code || '';
   const organizerCode = props.lot?.organizer || '';
   const combination = `${tipeCode}-${organizerCode}-PTRE`;
@@ -158,7 +161,7 @@ const generateAssetCode = () => {
     }
   }
 
-  const pattern = `-${combination}-`;
+  const pattern = `-${organizerCode}-PTRE`;
   const matchingUnits = (props.units || []).filter(unit => {
     return unit.number?.includes(pattern);
   });

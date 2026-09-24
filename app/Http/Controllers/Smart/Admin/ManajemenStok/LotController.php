@@ -13,6 +13,7 @@ use App\Models\Master\Uom;
 use App\Models\Master\Vendor;
 use App\Models\TbProject;
 use App\Services\InventoryLogService;
+use App\Services\Inventory\UnitNumberService;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -239,6 +240,7 @@ class LotController extends Controller
                 'barang_subcategory_code' => $lot->barang->subcategory->code ?? '-',
                 'barang_uom' => $lot->barang->uom->name ?? '-',
                 'barang_min_stock_threshold' => $lot->barang->min_stock_threshold ?? null,
+                'next_asset_code' => app(UnitNumberService::class)->generateUnitNumber($lot),
             ]);
         }
 
@@ -373,6 +375,7 @@ class LotController extends Controller
                 'barang_subcategory' => $lot->barang->subcategory->name ?? '-',
                 'barang_subcategory_code' => $lot->barang->subcategory->code ?? '-',
                 'barang_uom' => $lot->barang->uom->name ?? '-',
+                'next_asset_code' => app(UnitNumberService::class)->generateUnitNumber($lot),
             ],
             'units' => $units,
             'brands' => $brands,

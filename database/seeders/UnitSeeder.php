@@ -61,14 +61,14 @@ class UnitSeeder extends Seeder
             ],
 
             [
-                'number' => '00001-KEN-MO-CFS-PTRE-26',
+                'number' => '00005-KEN-MO-CFS-PTRE-26',
                 'lot_id' => 4,
                 'status' => 'Tersedia',
                 'condition' => 'Bagus',
                 'vehicle_registration' => 'B 1234 RE',
             ],
             [
-                'number' => '00002-KEN-MO-CFS-PTRE-26',
+                'number' => '00006-KEN-MO-CFS-PTRE-26',
                 'lot_id' => 4,
                 'status' => 'Tersedia',
                 'condition' => 'Bagus',
@@ -76,14 +76,14 @@ class UnitSeeder extends Seeder
             ],
 
             [
-                'number' => '00003-KEN-MO-CFS-PTRE-26',
+                'number' => '00007-KEN-MO-CFS-PTRE-26',
                 'lot_id' => 5,
                 'status' => 'Tersedia',
                 'condition' => 'Bagus',
                 'vehicle_registration' => 'B 1236 RE',
             ],
             [
-                'number' => '00004-KEN-MO-CFS-PTRE-26',
+                'number' => '00008-KEN-MO-CFS-PTRE-26',
                 'lot_id' => 5,
                 'status' => 'Tersedia',
                 'condition' => 'Bagus',
