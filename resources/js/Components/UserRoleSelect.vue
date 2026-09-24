@@ -4,6 +4,7 @@
  * Constrained to only allow selecting Superadmin, Admin, and User roles.
  */
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,9 +35,15 @@ const emit = defineEmits<{
   (e: 'change', roleName: string): void;
 }>();
 
+const { t, te } = useI18n();
+
 const ALLOWED_SELECTABLE_ROLES = ['superadmin', 'admin', 'user'];
 
 const formatRoleLabel = (name: string, label?: string) => {
+  const i18nKey = `access.roles.names.${name.toLowerCase()}`;
+  if (te(i18nKey)) {
+    return t(i18nKey);
+  }
   if (label) return label;
   return name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 };

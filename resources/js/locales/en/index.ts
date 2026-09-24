@@ -9,6 +9,7 @@ import masterData from './masterData';
 import inventory from './inventory';
 import fulfillment from './fulfillment';
 import scanner from './scanner';
+import access from './access';
 
 export default {
   common,
@@ -22,4 +23,5 @@ export default {
   inventory,
   fulfillment,
   scanner,
+  access,
 };

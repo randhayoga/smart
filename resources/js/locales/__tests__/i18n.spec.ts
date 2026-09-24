@@ -105,4 +105,22 @@ describe('i18n Configuration and Dictionaries', () => {
     expect(i18n.global.t('admin.auditActionTypes.peminjaman')).toBe('Peminjaman');
     expect(i18n.global.t('admin.auditActionTypes.pengembalian')).toBe('Pengembalian');
   });
+
+  it('should translate access management items correctly in both languages', () => {
+    setI18nLanguage('en');
+    expect(i18n.global.t('access.title')).toBe('Access Management');
+    expect(i18n.global.t('access.tabs.users')).toBe('User Management');
+    expect(i18n.global.t('access.tabs.roles')).toBe('Role Management');
+    expect(i18n.global.t('access.roles.names.superadmin')).toBe('Super Administrator');
+    expect(i18n.global.t('access.roles.groups.dashboard')).toBe('Dashboard');
+    expect(i18n.global.t('access.roles.permissions.dashboard.admin.view')).toBe('View Admin Dashboard');
+
+    setI18nLanguage('id');
+    expect(i18n.global.t('access.title')).toBe('Manajemen Akses');
+    expect(i18n.global.t('access.tabs.users')).toBe('Manajemen Pengguna');
+    expect(i18n.global.t('access.tabs.roles')).toBe('Manajemen Peran');
+    expect(i18n.global.t('access.roles.names.superadmin')).toBe('Super Administrator');
+    expect(i18n.global.t('access.roles.groups.dashboard')).toBe('Dashboard');
+    expect(i18n.global.t('access.roles.permissions.dashboard.admin.view')).toBe('Lihat Dashboard Admin');
+  });
 });

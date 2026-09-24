@@ -4,6 +4,7 @@
  * Manages user-role assignments, search, role filtering, pagination, and HRIS sync.
  */
 import { ref, computed, h } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { ChevronDown, ArrowUpDown, RefreshCw } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
 import {
@@ -53,6 +54,18 @@ const emit = defineEmits<{
   (e: 'sync-managers'): void;
 }>();
 
+const { t, te } = useI18n();
+
+const getRoleDisplay = (role: RoleItem | string) => {
+  const roleName = typeof role === 'string' ? role : role.name;
+  const roleLabel = typeof role === 'string' ? undefined : role.label;
+  const i18nKey = `access.roles.names.${roleName.toLowerCase()}`;
+  if (te(i18nKey)) {
+    return t(i18nKey);
+  }
+  return roleLabel || roleName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+};
+
 const userSearchQuery = ref('');
 const selectedRoleFilter = ref<string>('all');
 const userRowsPerPage = ref<string>('50');
@@ -88,7 +101,7 @@ const userColumns = computed<ColumnDef<UserItem>[]>(() => [
           class: 'px-2 hover:bg-transparent font-semibold text-foreground justify-start',
         },
         () => [
-          'User',
+          t('access.users.userColumn'),
           h(ArrowUpDown, { class: 'ml-2 h-4 w-4 text-muted-foreground' }),
         ]
       );
@@ -99,7 +112,7 @@ const userColumns = computed<ColumnDef<UserItem>[]>(() => [
   },
   {
     id: 'role',
-    header: () => h('div', { class: 'font-semibold text-foreground' }, 'Role'),
+    header: () => h('div', { class: 'font-semibold text-foreground' }, t('access.users.roleColumn')),
     cell: ({ row }) => {
       return h(UserRoleSelect, {
         user: row.original,
@@ -115,22 +128,22 @@ const userColumns = computed<ColumnDef<UserItem>[]>(() => [
 <template>
   <div class="px-4 bg-card rounded-xl border border-border shadow-sm overflow-hidden">
     <div class="py-3">
-      <Heading as="h2">User Management</Heading>
+      <Heading as="h2">{{ $t('access.users.title') }}</Heading>
 
       <div class="mt-4 flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <!-- Search & Filter on Left -->
         <div class="flex items-end gap-3 w-full max-w-xl">
           <div class="space-y-1.5 flex-1 max-w-xs">
-            <label class="text-xs text-muted-foreground font-medium block">Search User</label>
+            <label class="text-xs text-muted-foreground font-medium block">{{ $t('access.users.searchLabel') }}</label>
             <TableSearch
               v-model="userSearchQuery"
-              placeholder="Search NPK or User Name"
+              :placeholder="$t('access.users.searchPlaceholder')"
             />
           </div>
 
           <!-- Filter by Role -->
           <div class="flex-1 w-[240px] space-y-1.5">
-            <label class="text-xs text-muted-foreground font-medium block">Filter Role</label>
+            <label class="text-xs text-muted-foreground font-medium block">{{ $t('access.users.filterRoleLabel') }}</label>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -139,14 +152,14 @@ const userColumns = computed<ColumnDef<UserItem>[]>(() => [
                   :class="selectedRoleFilter === 'all' ? 'text-muted-foreground' : 'text-foreground'"
                 >
                   <span class="truncate capitalize">
-                    {{ selectedRoleFilter === 'all' ? 'All Roles' : (props.roles.find(r => r.name === selectedRoleFilter)?.label || selectedRoleFilter.replace('_', ' ')) }}
+                    {{ selectedRoleFilter === 'all' ? $t('access.users.allRoles') : getRoleDisplay(props.roles.find(r => r.name === selectedRoleFilter) || selectedRoleFilter) }}
                   </span>
                   <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
                 <DropdownMenuItem @select="selectedRoleFilter = 'all'">
-                  All Roles
+                  {{ $t('access.users.allRoles') }}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   v-for="role in props.roles"
@@ -154,7 +167,7 @@ const userColumns = computed<ColumnDef<UserItem>[]>(() => [
                   @select="selectedRoleFilter = role.name"
                   class="capitalize"
                 >
-                  {{ role.label || role.name.replace('_', ' ') }}
+                  {{ getRoleDisplay(role) }}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -164,16 +177,16 @@ const userColumns = computed<ColumnDef<UserItem>[]>(() => [
         <!-- Rows per page & Action Button on Right -->
         <div class="flex flex-wrap items-center justify-end gap-3 w-full sm:w-auto sm:ml-auto">
           <div class="flex items-center gap-2 text-sm text-muted-foreground">
-            <span class="text-right">Rows per page</span>
+            <span class="text-right">{{ $t('access.users.rowsPerPage') }}</span>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" class="w-[120px] justify-between rounded-[14px] font-normal">
-                  {{ userRowsPerPage === 'all' ? 'All Rows' : userRowsPerPage }}
+                  {{ userRowsPerPage === 'all' ? $t('access.users.allRows') : userRowsPerPage }}
                   <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px]">
-                <DropdownMenuItem @select="userRowsPerPage = 'all'">All Rows</DropdownMenuItem>
+                <DropdownMenuItem @select="userRowsPerPage = 'all'">{{ $t('access.users.allRows') }}</DropdownMenuItem>
                 <DropdownMenuItem @select="userRowsPerPage = '10'">10</DropdownMenuItem>
                 <DropdownMenuItem @select="userRowsPerPage = '25'">25</DropdownMenuItem>
                 <DropdownMenuItem @select="userRowsPerPage = '50'">50</DropdownMenuItem>
@@ -188,7 +201,7 @@ const userColumns = computed<ColumnDef<UserItem>[]>(() => [
             :disabled="props.isSyncing"
           >
             <RefreshCw class="w-4 h-4 mr-1.5" :class="{ 'animate-spin': props.isSyncing }" />
-            <span>Sync from USER_HRIS</span>
+            <span>{{ props.isSyncing ? $t('access.users.syncing') : $t('access.users.syncHris') }}</span>
           </Button>
         </div>
       </div>

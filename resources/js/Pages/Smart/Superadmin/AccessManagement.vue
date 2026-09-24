@@ -4,6 +4,7 @@
  * Orchestrates User Management and Role Management tabs, role creation/editing, and permissions.
  */
 import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useForm, router } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 import { useModalLock } from '@/composables/useModalLock';
@@ -54,16 +55,18 @@ const props = withDefaults(defineProps<Props>(), {
   permissions: () => [],
 });
 
+const { t } = useI18n();
+
 const PROTECTED_ROLES = ['superadmin', 'admin', 'ifs_manager', 'manager', 'user'];
 
 const isProtectedRole = (name: string): boolean => {
   return PROTECTED_ROLES.includes((name || '').toLowerCase());
 };
 
-const tabs = [
-  { id: 'users', label: 'User Management' },
-  { id: 'roles', label: 'Role Management' },
-];
+const tabs = computed(() => [
+  { id: 'users', label: t('access.tabs.users') },
+  { id: 'roles', label: t('access.tabs.roles') },
+]);
 
 const currentTab = ref<string>('users');
 
@@ -79,11 +82,12 @@ const handleRoleChange = (userId: number, roleName: string) => {
     { role: roleName },
     {
       preserveScroll: true,
-      onSuccess: () => {
-        toast.success('User role updated successfully.');
+      onSuccess: (page) => {
+        const msg = (page.props.flash as any)?.success || t('access.users.roleUpdateSuccess');
+        toast.success(msg);
       },
       onError: (errors: Record<string, string>) => {
-        toast.error(errors.role || 'Failed to update user role.');
+        toast.error(errors.role || t('access.users.roleUpdateError'));
       },
       onFinish: () => {
         updatingUserId.value = null;
@@ -102,11 +106,11 @@ const handleSyncManagers = () => {
     {
       preserveScroll: true,
       onSuccess: (page) => {
-        const msg = (page.props.flash as any)?.success || 'Successfully synchronized managers and non-managerial employees data from USER_HRIS.';
+        const msg = (page.props.flash as any)?.success || t('access.users.syncSuccess');
         toast.success(msg);
       },
       onError: () => {
-        toast.error('Failed to sync managers from HRIS.');
+        toast.error(t('access.users.syncError'));
       },
       onFinish: () => {
         isSyncing.value = false;
@@ -133,11 +137,12 @@ const handleTogglePermission = (roleId: number, permissionName: string, enabled:
     },
     {
       preserveScroll: true,
-      onSuccess: () => {
-        toast.success(`Permission ${enabled ? 'granted' : 'revoked'} successfully.`);
+      onSuccess: (page) => {
+        const msg = (page.props.flash as any)?.success || (enabled ? t('access.roles.modals.permissionGranted') : t('access.roles.modals.permissionRevoked'));
+        toast.success(msg);
       },
       onError: (errors: Record<string, string>) => {
-        toast.error(errors.permission || errors.granted || errors.enabled || 'Failed to update permission.');
+        toast.error(errors.permission || errors.granted || errors.enabled || t('access.roles.modals.permissionUpdateError'));
       },
       onFinish: () => {
         updatingPermissionKey.value = null;
@@ -171,14 +176,15 @@ const submitCreateRole = () => {
   createFormErrors.value = {};
   const trimmed = createRoleForm.name.trim();
   if (!trimmed) {
-    createFormErrors.value.name = 'Role name is required.';
+    createFormErrors.value.name = t('access.roles.modals.validation.roleNameRequired');
     return;
   }
   createRoleForm.name = trimmed;
   createRoleForm.post(route('smart.access.roles.store'), {
     preserveScroll: true,
-    onSuccess: () => {
-      toast.success('Role created successfully.');
+    onSuccess: (page) => {
+      const msg = (page.props.flash as any)?.success || t('access.roles.modals.createSuccess');
+      toast.success(msg);
       isCreateModalOpen.value = false;
       createRoleForm.reset();
     },
@@ -218,14 +224,15 @@ const submitUpdateRole = () => {
   editFormErrors.value = {};
   const trimmed = editRoleForm.name.trim();
   if (!trimmed) {
-    editFormErrors.value.name = 'Role name is required.';
+    editFormErrors.value.name = t('access.roles.modals.validation.roleNameRequired');
     return;
   }
   editRoleForm.name = trimmed;
   editRoleForm.put(route('smart.access.roles.update', editingRole.value.id), {
     preserveScroll: true,
-    onSuccess: () => {
-      toast.success('Role updated successfully.');
+    onSuccess: (page) => {
+      const msg = (page.props.flash as any)?.success || t('access.roles.modals.updateSuccess');
+      toast.success(msg);
       isEditModalOpen.value = false;
       editingRole.value = null;
     },
@@ -247,12 +254,15 @@ const errorModalMessage = ref('');
 
 const openDeleteModal = (role: RoleItem) => {
   if (isProtectedRole(role.name)) {
-    errorModalMessage.value = `Role '${role.label || role.name}' is a system-protected role and cannot be deleted.`;
+    errorModalMessage.value = t('access.roles.modals.errors.protectedRoleDelete', { name: role.label || role.name });
     isErrorModalOpen.value = true;
     return;
   }
   if (role.users_count > 0) {
-    errorModalMessage.value = `Role '${role.label || role.name}' cannot be deleted because it is currently assigned to ${role.users_count} active user(s). Please reassign all users before deleting this role.`;
+    errorModalMessage.value = t('access.roles.modals.errors.roleHasUsersDelete', {
+      name: role.label || role.name,
+      count: role.users_count,
+    });
     isErrorModalOpen.value = true;
     return;
   }
@@ -270,13 +280,14 @@ const handleConfirmDelete = () => {
   if (!roleToDelete.value) return;
   deleteForm.delete(route('smart.access.roles.destroy', roleToDelete.value.id), {
     preserveScroll: true,
-    onSuccess: () => {
-      toast.success('Role deleted successfully.');
+    onSuccess: (page) => {
+      const msg = (page.props.flash as any)?.success || t('access.roles.modals.deleteSuccess');
+      toast.success(msg);
       isDeleteModalOpen.value = false;
       roleToDelete.value = null;
     },
     onError: (errors: Record<string, string>) => {
-      toast.error((errors as any)?.role || 'Failed to delete role.');
+      toast.error((errors as any)?.role || t('access.roles.modals.deleteErrorDefault'));
     },
   });
 };
@@ -303,7 +314,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <AppLayout title="Access Management">
+  <AppLayout :title="$t('access.title')">
     <div class="space-y-1">
       <!-- Top Pill Tabs -->
       <Tabs v-model="currentTab" :tabs="tabs" />
@@ -355,7 +366,7 @@ onUnmounted(() => {
           >
             <!-- Modal Header -->
             <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
-              <h3 class="text-lg font-bold text-foreground">Create New Role</h3>
+              <h3 class="text-lg font-bold text-foreground">{{ $t('access.roles.modals.createTitle') }}</h3>
               <button @click="closeCreateModal" class="p-2 hover:bg-muted rounded-full transition-colors">
                 <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
               </button>
@@ -364,13 +375,13 @@ onUnmounted(() => {
             <!-- Modal Body -->
             <div class="p-6 flex-grow overflow-y-auto overscroll-contain">
               <Field :data-invalid="!!createFormErrors.name || undefined">
-                <FieldLabel><span>Role Name<span class="text-destructive">*</span></span></FieldLabel>
+                <FieldLabel><span>{{ $t('access.roles.modals.roleName') }}<span class="text-destructive">*</span></span></FieldLabel>
                 <FieldContent>
                   <input
                     type="text"
                     v-model="createRoleForm.name"
                     maxlength="255"
-                    placeholder="e.g. Quality Auditor"
+                    :placeholder="$t('access.roles.modals.roleNamePlaceholder')"
                     class="w-full px-3 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors"
                     :class="[createFormErrors.name ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']"
                     @keydown.enter.prevent="submitCreateRole"
@@ -382,15 +393,15 @@ onUnmounted(() => {
 
             <!-- Modal Footer -->
             <div class="py-3 px-4 border-t border-border flex items-center justify-between">
-              <p class="text-sm text-rose-500 italic font-medium">* Required field</p>
+              <p class="text-sm text-rose-500 italic font-medium">{{ $t('access.roles.modals.requiredField') }}</p>
               <div class="flex items-center gap-3">
                 <Button @click="closeCreateModal" variant="white" size="xl">
-                  Cancel
+                  {{ $t('access.roles.modals.cancel') }}
                 </Button>
                 <Button @click="submitCreateRole" variant="primary" :disabled="createRoleForm.processing" size="xl" class="relative">
                   <Loader2 v-if="createRoleForm.processing" class="absolute inset-0 m-auto h-5 w-5 animate-spin" />
                   <span :class="{ 'opacity-0': createRoleForm.processing }">
-                    Create Role
+                    {{ $t('access.roles.modals.createButton') }}
                   </span>
                 </Button>
               </div>
@@ -421,7 +432,7 @@ onUnmounted(() => {
           >
             <!-- Modal Header -->
             <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
-              <h3 class="text-lg font-bold text-foreground">Edit Role</h3>
+              <h3 class="text-lg font-bold text-foreground">{{ $t('access.roles.modals.editTitle') }}</h3>
               <button @click="closeEditModal" class="p-2 hover:bg-muted rounded-full transition-colors">
                 <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
               </button>
@@ -430,13 +441,13 @@ onUnmounted(() => {
             <!-- Modal Body -->
             <div class="p-6 flex-grow overflow-y-auto overscroll-contain">
               <Field :data-invalid="!!editFormErrors.name || undefined">
-                <FieldLabel><span>Role Name<span class="text-destructive">*</span></span></FieldLabel>
+                <FieldLabel><span>{{ $t('access.roles.modals.roleName') }}<span class="text-destructive">*</span></span></FieldLabel>
                 <FieldContent>
                   <input
                     type="text"
                     v-model="editRoleForm.name"
                     maxlength="255"
-                    placeholder="Role name"
+                    :placeholder="$t('access.roles.modals.editRoleNamePlaceholder')"
                     class="w-full px-3 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors"
                     :class="[editFormErrors.name ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']"
                     @keydown.enter.prevent="submitUpdateRole"
@@ -448,15 +459,15 @@ onUnmounted(() => {
 
             <!-- Modal Footer -->
             <div class="py-3 px-4 border-t border-border flex items-center justify-between">
-              <p class="text-sm text-rose-500 italic font-medium">* Required field</p>
+              <p class="text-sm text-rose-500 italic font-medium">{{ $t('access.roles.modals.requiredField') }}</p>
               <div class="flex items-center gap-3">
                 <Button @click="closeEditModal" variant="white" size="xl">
-                  Cancel
+                  {{ $t('access.roles.modals.cancel') }}
                 </Button>
                 <Button @click="submitUpdateRole" variant="primary" :disabled="editRoleForm.processing" size="xl" class="relative">
                   <Loader2 v-if="editRoleForm.processing" class="absolute inset-0 m-auto h-5 w-5 animate-spin" />
                   <span :class="{ 'opacity-0': editRoleForm.processing }">
-                    Save Changes
+                    {{ $t('access.roles.modals.saveChanges') }}
                   </span>
                 </Button>
               </div>
@@ -470,8 +481,8 @@ onUnmounted(() => {
     <DeleteConfirmationModal
       :is-open="isDeleteModalOpen"
       :item-count="1"
-      :item-name="'Role'"
-      :fields="roleToDelete ? [{ label: 'Role Name', value: roleToDelete.label || roleToDelete.name }] : []"
+      :item-name="$t('access.roles.modals.deleteConfirmItemName')"
+      :fields="roleToDelete ? [{ label: $t('access.roles.modals.roleName'), value: roleToDelete.label || roleToDelete.name }] : []"
       :processing="deleteForm.processing"
       @close="closeDeleteModal"
       @confirm="handleConfirmDelete"
