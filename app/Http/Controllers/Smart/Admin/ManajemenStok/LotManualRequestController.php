@@ -24,7 +24,7 @@ class LotManualRequestController extends Controller
         Lot $lot,
         ProcessConsumableManualRequest $processAction
     ): RedirectResponse {
-        $lot->loadMissing('barang.subcategory.category');
+        $lot->loadMissing('barang.subcategory');
         if (!$lot->barang?->is_consumable) {
             return redirect()->back()->withErrors([
                 'quantity' => 'LOT ini bukan merupakan barang habis pakai.',

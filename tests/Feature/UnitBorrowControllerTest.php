@@ -60,8 +60,8 @@ class UnitBorrowControllerTest extends TestCase
     private function createAvailableUnit(): Unit
     {
         $location = Location::create(['name' => 'Gudang Utama', 'full_name' => 'Gudang Utama']);
-        $category = Category::factory()->create(['is_consumable' => false]);
-        $subcategory = Subcategory::factory()->create(['category_id' => $category->id]);
+        $category = Category::factory()->create();
+        $subcategory = Subcategory::factory()->create(['category_id' => $category->id, 'is_consumable' => false]);
         $barang = Barang::factory()->create(['subcategory_id' => $subcategory->id]);
         $lot = Lot::factory()->create(['barang_id' => $barang->id, 'location_id' => $location->id]);
 

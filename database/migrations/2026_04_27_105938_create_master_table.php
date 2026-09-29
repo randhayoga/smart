@@ -11,7 +11,6 @@ return new class extends Migration {
             $table->id();
             $table->string('code', 4)->unique();
             $table->string('name');
-            $table->boolean('is_consumable')->default(true);
             $table->timestamps();
         });
 
@@ -20,6 +19,7 @@ return new class extends Migration {
             $table->string('code', 9)->unique();
             $table->string('name');
             $table->string('description')->nullable();
+            $table->boolean('is_consumable')->default(true);
             $table->foreignId('category_id')->constrained('categories')->cascadeOnDelete();
             $table->timestamps();
         });

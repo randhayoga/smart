@@ -31,15 +31,15 @@ class ConsumableLotController extends Controller
             $barang = Barang::find($request->query('barang_id'));
         }
 
-        $categories = Category::where('is_consumable', true)->orderBy('code')->get();
-        $subcategories = Subcategory::whereHas('category', function ($query) {
+        $categories = Category::whereHas('subcategories', function ($query) {
             $query->where('is_consumable', true);
-        })->with('category')->orderBy('code')->get();
+        })->orderBy('code')->get();
+        $subcategories = Subcategory::where('is_consumable', true)->with('category')->orderBy('code')->get();
         $brands = Brand::orderBy('name')->get();
         $uoms = Uom::orderBy('name')->get();
 
         $barangs = Barang::with(['subcategory.category', 'brand', 'uom', 'lots'])
-            ->whereHas('subcategory.category', function ($query) {
+            ->whereHas('subcategory', function ($query) {
                 $query->where('is_consumable', true);
             })
             ->get()
@@ -77,7 +77,7 @@ class ConsumableLotController extends Controller
             'location.parent',
             'project',
         ])
-        ->whereHas('barang.subcategory.category', function ($query) {
+        ->whereHas('barang.subcategory', function ($query) {
             $query->where('is_consumable', true);
         })
         ->get()

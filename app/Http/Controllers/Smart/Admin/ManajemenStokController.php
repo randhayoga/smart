@@ -36,7 +36,7 @@ class ManajemenStokController extends Controller
         $barangs = Barang::with(['subcategory.category', 'brand', 'uom', 'lots.units'])
             ->get()
             ->map(function ($barang) {
-                $isConsumable = (bool)($barang->subcategory->category->is_consumable ?? false);
+                $isConsumable = (bool)$barang->is_consumable;
                 $amount = $isConsumable 
                     ? (int)$barang->lots->sum('current_quantity')
                     : (int)$barang->lots->sum(fn($lot) => $lot->units->count());
@@ -57,7 +57,7 @@ class ManajemenStokController extends Controller
                     'uom' => $barang->uom->name ?? '-',
                     'subcategory_id' => $barang->subcategory_id,
                     'category_id' => $barang->subcategory->category_id ?? null,
-                    'is_consumable' => (bool)($barang->subcategory->category->is_consumable ?? false),
+                    'is_consumable' => $isConsumable,
                     'brand_id' => $barang->brand_id,
                     'uom_id' => $barang->uom_id,
                     'min_stock_threshold' => $barang->min_stock_threshold,
@@ -84,7 +84,7 @@ class ManajemenStokController extends Controller
     {
         $barang->loadMissing(['subcategory.category', 'brand', 'uom', 'lots.units']);
 
-        $isConsumable = (bool)($barang->subcategory->category->is_consumable ?? false);
+        $isConsumable = (bool)$barang->is_consumable;
         $amount = $isConsumable 
             ? (int)$barang->lots->sum('current_quantity')
             : (int)$barang->lots->sum(fn($lot) => $lot->units->count());
@@ -105,7 +105,7 @@ class ManajemenStokController extends Controller
             'uom' => $barang->uom->name ?? '-',
             'subcategory_id' => $barang->subcategory_id,
             'category_id' => $barang->subcategory->category_id ?? null,
-            'is_consumable' => (bool)($barang->subcategory->category->is_consumable ?? false),
+            'is_consumable' => $isConsumable,
             'brand_id' => $barang->brand_id,
             'uom_id' => $barang->uom_id,
             'min_stock_threshold' => $barang->min_stock_threshold,

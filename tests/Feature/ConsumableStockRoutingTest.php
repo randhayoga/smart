@@ -30,8 +30,8 @@ class ConsumableStockRoutingTest extends TestCase
     public function test_can_access_stok_habis_pakai_root(): void
     {
         $user = $this->createAdminUser();
-        $category = Category::factory()->create(['is_consumable' => true]);
-        $subcategory = Subcategory::factory()->create(['category_id' => $category->id]);
+        $category = Category::factory()->create();
+        $subcategory = Subcategory::factory()->create(['category_id' => $category->id, 'is_consumable' => true]);
         $barang = Barang::factory()->create([
             'number' => 'BRG-HP-001',
             'subcategory_id' => $subcategory->id,
@@ -55,8 +55,8 @@ class ConsumableStockRoutingTest extends TestCase
     public function test_can_access_stok_habis_pakai_with_kode_tipe(): void
     {
         $user = $this->createAdminUser();
-        $category = Category::factory()->create(['is_consumable' => true]);
-        $subcategory = Subcategory::factory()->create(['category_id' => $category->id]);
+        $category = Category::factory()->create();
+        $subcategory = Subcategory::factory()->create(['category_id' => $category->id, 'is_consumable' => true]);
         $barang = Barang::factory()->create([
             'number' => 'BRG-HP-002',
             'subcategory_id' => $subcategory->id,
@@ -79,8 +79,8 @@ class ConsumableStockRoutingTest extends TestCase
     public function test_can_access_stok_habis_pakai_with_legacy_query_param(): void
     {
         $user = $this->createAdminUser();
-        $category = Category::factory()->create(['is_consumable' => true]);
-        $subcategory = Subcategory::factory()->create(['category_id' => $category->id]);
+        $category = Category::factory()->create();
+        $subcategory = Subcategory::factory()->create(['category_id' => $category->id, 'is_consumable' => true]);
         $barang = Barang::factory()->create([
             'number' => 'BRG-HP-003',
             'subcategory_id' => $subcategory->id,

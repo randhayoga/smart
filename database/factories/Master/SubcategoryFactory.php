@@ -29,7 +29,28 @@ class SubcategoryFactory extends Factory
             'code' => strtoupper(fake()->unique()->lexify('???-???')),
             'name' => fake()->words(2, true),
             'description' => fake()->sentence(),
+            'is_consumable' => true,
             'category_id' => Category::factory(),
         ];
+    }
+
+    /**
+     * Indicate that the subcategory is consumable.
+     */
+    public function consumable(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_consumable' => true,
+        ]);
+    }
+
+    /**
+     * Indicate that the subcategory is an asset (non-consumable).
+     */
+    public function asset(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_consumable' => false,
+        ]);
     }
 }

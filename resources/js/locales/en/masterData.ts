@@ -120,6 +120,7 @@ export default {
   },
   validation: {
     categoryCodeRequired: 'Category Code is required',
+    categoryCodeLength: 'Category Code must be between 2 and 4 characters',
     categoryNameRequired: 'Category Name is required',
     parentCategoryRequired: 'Parent Category must be selected',
     subcategoryCodeRequired: 'Subcategory Code is required',

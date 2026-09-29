@@ -23,8 +23,8 @@ class RequestFulfillmentTest extends TestCase
     public function test_can_create_request_fulfillment_for_asset_and_consumable(): void
     {
         $user = User::factory()->create();
-        $category = Category::factory()->create(['is_consumable' => false]);
-        $subcategory = Subcategory::factory()->create(['category_id' => $category->id]);
+        $category = Category::factory()->create();
+        $subcategory = Subcategory::factory()->create(['category_id' => $category->id, 'is_consumable' => false]);
         $barang = Barang::factory()->create(['subcategory_id' => $subcategory->id]);
         $lot = Lot::factory()->create(['barang_id' => $barang->id]);
         $unit = Unit::factory()->create(['lot_id' => $lot->id]);

@@ -37,8 +37,8 @@ import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem } from '@/Co
 import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
 
-interface Category    { id: number; code: string; name: string; is_consumable: boolean; }
-interface Subcategory { id: number; code: string; name: string; category_id: number; category: Category; }
+interface Category    { id: number; code: string; name: string; }
+interface Subcategory { id: number; code: string; name: string; category_id: number; is_consumable: boolean; category: Category; }
 interface SimpleItem  { id: number; name: string; }
 
 interface Props {
@@ -384,17 +384,25 @@ const filteredBarangs = computed(() => {
 const filteredCategories = computed(() => {
   let list = props.categories || [];
   if (typeFilter.value === 'Habis pakai') {
-    return list.filter(c => c.is_consumable);
+    const consumableCatIds = new Set(props.subcategories.filter(s => s.is_consumable).map(s => s.category_id));
+    return list.filter(c => consumableCatIds.has(c.id));
   } else if (typeFilter.value === 'Aset') {
-    return list.filter(c => !c.is_consumable);
+    const assetCatIds = new Set(props.subcategories.filter(s => !s.is_consumable).map(s => s.category_id));
+    return list.filter(c => assetCatIds.has(c.id));
   }
   return list;
 });
 
 const mainFilteredSubcategories = computed(() => {
+  let subs = props.subcategories || [];
+  if (typeFilter.value === 'Habis pakai') {
+    subs = subs.filter(s => s.is_consumable);
+  } else if (typeFilter.value === 'Aset') {
+    subs = subs.filter(s => !s.is_consumable);
+  }
   const cat = filteredCategories.value.find(c => c.name === categoryFilter.value);
-  if (!cat) return props.subcategories.map(s => s.name);
-  return props.subcategories.filter(s => s.category_id == cat.id).map(s => s.name);
+  if (!cat) return subs.map(s => s.name);
+  return subs.filter(s => s.category_id == cat.id).map(s => s.name);
 });
 
 const mainFilteredBrands = computed(() => {

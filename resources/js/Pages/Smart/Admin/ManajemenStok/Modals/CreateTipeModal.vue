@@ -17,8 +17,8 @@ import {
 import Combobox from '@/Components/Combobox.vue';
 import { Field, FieldLabel, FieldContent, FieldError } from '@/Components/ui/field';
 
-interface Category    { id: number; code: string; name: string; is_consumable: boolean; }
-interface Subcategory { id: number; code: string; name: string; category_id: number; }
+interface Category    { id: number; code: string; name: string; }
+interface Subcategory { id: number; code: string; name: string; category_id: number; is_consumable: boolean; }
 interface SimpleItem  { id: number; name: string; }
 
 interface Props {
@@ -70,9 +70,9 @@ const resetErrors = () => {
 };
 
 const isConsumableSelected = computed(() => {
-  if (!newItem.category_id) return false;
-  const cat = props.categories.find(c => c.id === newItem.category_id);
-  return Boolean(cat?.is_consumable);
+  if (!newItem.subcategory_id) return false;
+  const sub = props.subcategories.find(s => s.id === newItem.subcategory_id);
+  return Boolean(sub?.is_consumable);
 });
 
 const filteredSubcategories = computed(() => {

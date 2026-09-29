@@ -113,9 +113,9 @@ class NotificationService
      */
     public function checkAndNotifyLowStock(Barang $barang): bool
     {
-        $barang->loadMissing(['subcategory.category', 'uom', 'brand']);
+        $barang->loadMissing(['subcategory', 'uom', 'brand']);
 
-        $isConsumable = (bool) ($barang->subcategory?->category?->is_consumable ?? false);
+        $isConsumable = (bool) $barang->is_consumable;
         if (!$isConsumable) {
             return false;
         }
@@ -176,7 +176,7 @@ class NotificationService
      */
     public function checkAllConsumableLowStock(): int
     {
-        $consumableBarangs = Barang::whereHas('subcategory.category', function ($query) {
+        $consumableBarangs = Barang::whereHas('subcategory', function ($query) {
             $query->where('is_consumable', true);
         })->whereNotNull('min_stock_threshold')->get();
 

@@ -25,7 +25,7 @@ class BarangManualRequestController extends Controller
         Barang $barang,
         ProcessConsumableManualRequest $processAction
     ): RedirectResponse {
-        $barang->loadMissing('subcategory.category');
+        $barang->loadMissing('subcategory');
         if (!$barang->is_consumable) {
             return redirect()->back()->withErrors([
                 'quantity' => 'Barang ini bukan merupakan barang habis pakai.',

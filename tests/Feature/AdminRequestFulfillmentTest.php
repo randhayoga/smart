@@ -151,8 +151,8 @@ class AdminRequestFulfillmentTest extends TestCase
         $user = $this->createRequester();
         $manager = $this->createManager();
 
-        $cat = Category::factory()->create(['is_consumable' => false]);
-        $sub = Subcategory::factory()->create(['category_id' => $cat->id]);
+        $cat = Category::factory()->create();
+        $sub = Subcategory::factory()->create(['category_id' => $cat->id, 'is_consumable' => false]);
         $barang = Barang::factory()->create(['subcategory_id' => $sub->id]);
 
         // Create 3 lots with different receipt dates
@@ -219,8 +219,8 @@ class AdminRequestFulfillmentTest extends TestCase
         $user = $this->createRequester();
         $manager = $this->createManager();
 
-        $cat = Category::factory()->create(['is_consumable' => true]);
-        $sub = Subcategory::factory()->create(['category_id' => $cat->id, 'name' => 'Kertas A4']);
+        $cat = Category::factory()->create();
+        $sub = Subcategory::factory()->create(['category_id' => $cat->id, 'name' => 'Kertas A4', 'is_consumable' => true]);
         $brand = Brand::factory()->create(['name' => 'PaperOne']);
         $barang = Barang::factory()->create([
             'subcategory_id' => $sub->id,
@@ -294,8 +294,8 @@ class AdminRequestFulfillmentTest extends TestCase
         $user = $this->createRequester();
         $manager = $this->createManager();
 
-        $cat = Category::factory()->create(['is_consumable' => false]);
-        $sub = Subcategory::factory()->create(['category_id' => $cat->id]);
+        $cat = Category::factory()->create();
+        $sub = Subcategory::factory()->create(['category_id' => $cat->id, 'is_consumable' => false]);
         $barang = Barang::factory()->create(['subcategory_id' => $sub->id]);
         $lot = Lot::factory()->create(['barang_id' => $barang->id]);
 
@@ -355,8 +355,8 @@ class AdminRequestFulfillmentTest extends TestCase
         $user = $this->createRequester();
         $manager = $this->createManager();
 
-        $cat = Category::factory()->create(['is_consumable' => false]);
-        $sub = Subcategory::factory()->create(['category_id' => $cat->id]);
+        $cat = Category::factory()->create();
+        $sub = Subcategory::factory()->create(['category_id' => $cat->id, 'is_consumable' => false]);
         $barang = Barang::factory()->create(['subcategory_id' => $sub->id]);
         $lot = Lot::factory()->create(['barang_id' => $barang->id]);
 
@@ -417,8 +417,8 @@ class AdminRequestFulfillmentTest extends TestCase
         $user = $this->createRequester();
         $manager = $this->createManager();
 
-        $cat = Category::factory()->create(['is_consumable' => false]);
-        $sub = Subcategory::factory()->create(['category_id' => $cat->id]);
+        $cat = Category::factory()->create();
+        $sub = Subcategory::factory()->create(['category_id' => $cat->id, 'is_consumable' => false]);
         $barang = Barang::factory()->create(['subcategory_id' => $sub->id]);
         $lot = Lot::factory()->create(['barang_id' => $barang->id]);
 
@@ -486,8 +486,8 @@ class AdminRequestFulfillmentTest extends TestCase
         $user = $this->createRequester();
         $manager = $this->createManager();
 
-        $cat = Category::factory()->create(['is_consumable' => false]);
-        $sub = Subcategory::factory()->create(['category_id' => $cat->id]);
+        $cat = Category::factory()->create();
+        $sub = Subcategory::factory()->create(['category_id' => $cat->id, 'is_consumable' => false]);
         $barang = Barang::factory()->create(['subcategory_id' => $sub->id]);
         $lot = Lot::factory()->create(['barang_id' => $barang->id]);
 
@@ -554,8 +554,8 @@ class AdminRequestFulfillmentTest extends TestCase
         $user = $this->createRequester();
         $manager = $this->createManager();
 
-        $cat = Category::factory()->create(['is_consumable' => false]);
-        $sub = Subcategory::factory()->create(['category_id' => $cat->id]);
+        $cat = Category::factory()->create();
+        $sub = Subcategory::factory()->create(['category_id' => $cat->id, 'is_consumable' => false]);
         $barang = Barang::factory()->create(['subcategory_id' => $sub->id]);
         $lot = Lot::factory()->create(['barang_id' => $barang->id]);
         $unit = Unit::factory()->create(['lot_id' => $lot->id, 'status' => 'Tersedia']);
@@ -710,8 +710,8 @@ class AdminRequestFulfillmentTest extends TestCase
         $user = $this->createRequester();
         $manager = $this->createManager();
 
-        $cat = Category::factory()->create(['is_consumable' => true]);
-        $sub = Subcategory::factory()->create(['category_id' => $cat->id]);
+        $cat = Category::factory()->create();
+        $sub = Subcategory::factory()->create(['category_id' => $cat->id, 'is_consumable' => true]);
         $barang = Barang::factory()->create(['subcategory_id' => $sub->id]);
         $lot1 = Lot::factory()->create(['barang_id' => $barang->id, 'current_quantity' => 20]);
         $lot2 = Lot::factory()->create(['barang_id' => $barang->id, 'current_quantity' => 15]);
@@ -764,8 +764,8 @@ class AdminRequestFulfillmentTest extends TestCase
         $user = $this->createRequester();
         $manager = $this->createManager();
 
-        $cat = Category::factory()->create(['is_consumable' => true]);
-        $sub = Subcategory::factory()->create(['category_id' => $cat->id]);
+        $cat = Category::factory()->create();
+        $sub = Subcategory::factory()->create(['category_id' => $cat->id, 'is_consumable' => true]);
         $barang = Barang::factory()->create(['subcategory_id' => $sub->id]);
         $lot = Lot::factory()->create(['barang_id' => $barang->id, 'current_quantity' => 5]);
 
@@ -813,8 +813,8 @@ class AdminRequestFulfillmentTest extends TestCase
         $manager = $this->createManager();
 
         // 1. Non-consumable non-specific item with brand
-        $catNonConsumable = Category::factory()->create(['is_consumable' => false]);
-        $subNonConsumable = Subcategory::factory()->create(['category_id' => $catNonConsumable->id, 'name' => 'Laptop']);
+        $catNonConsumable = Category::factory()->create();
+        $subNonConsumable = Subcategory::factory()->create(['category_id' => $catNonConsumable->id, 'name' => 'Laptop', 'is_consumable' => false]);
         $brand = Brand::factory()->create(['name' => 'Lenovo']);
         $barangAsset = Barang::factory()->create([
             'subcategory_id' => $subNonConsumable->id,
@@ -826,8 +826,8 @@ class AdminRequestFulfillmentTest extends TestCase
         $unit = Unit::factory()->create(['lot_id' => $lotAsset->id, 'status' => 'Tersedia', 'number' => 'AST-VAR-01']);
 
         // 2. Consumable item
-        $catConsumable = Category::factory()->create(['is_consumable' => true]);
-        $subConsumable = Subcategory::factory()->create(['category_id' => $catConsumable->id, 'name' => 'Kertas']);
+        $catConsumable = Category::factory()->create();
+        $subConsumable = Subcategory::factory()->create(['category_id' => $catConsumable->id, 'name' => 'Kertas', 'is_consumable' => true]);
         $barangConsumable = Barang::factory()->create([
             'subcategory_id' => $subConsumable->id,
             'name' => 'HVS A4 80gr',
@@ -888,8 +888,8 @@ class AdminRequestFulfillmentTest extends TestCase
         $user2 = User::factory()->create(['name' => 'VIP Requester']);
         $manager = $this->createManager();
 
-        $cat = Category::factory()->create(['is_consumable' => false]);
-        $sub = Subcategory::factory()->create(['category_id' => $cat->id]);
+        $cat = Category::factory()->create();
+        $sub = Subcategory::factory()->create(['category_id' => $cat->id, 'is_consumable' => false]);
         $barang = Barang::factory()->create(['subcategory_id' => $sub->id]);
         $lot = Lot::factory()->create(['barang_id' => $barang->id]);
         $unit = Unit::factory()->create(['lot_id' => $lot->id, 'status' => 'Tersedia', 'number' => 'AST-SHARED-01']);
@@ -958,8 +958,8 @@ class AdminRequestFulfillmentTest extends TestCase
         $user2 = User::factory()->create(['name' => 'VIP Requester']);
         $manager = $this->createManager();
 
-        $cat = Category::factory()->create(['is_consumable' => false]);
-        $sub = Subcategory::factory()->create(['category_id' => $cat->id]);
+        $cat = Category::factory()->create();
+        $sub = Subcategory::factory()->create(['category_id' => $cat->id, 'is_consumable' => false]);
         $barang = Barang::factory()->create(['subcategory_id' => $sub->id]);
         $lot = Lot::factory()->create(['barang_id' => $barang->id]);
         $unit = Unit::factory()->create(['lot_id' => $lot->id, 'status' => 'Tersedia', 'number' => 'AST-EVICT-01']);
@@ -1035,8 +1035,8 @@ class AdminRequestFulfillmentTest extends TestCase
         $user2 = User::factory()->create(['name' => 'VIP Requester']);
         $manager = $this->createManager();
 
-        $cat = Category::factory()->create(['is_consumable' => true]);
-        $sub = Subcategory::factory()->create(['category_id' => $cat->id]);
+        $cat = Category::factory()->create();
+        $sub = Subcategory::factory()->create(['category_id' => $cat->id, 'is_consumable' => true]);
         $barang = Barang::factory()->create(['subcategory_id' => $sub->id]);
         $lot = Lot::factory()->create(['barang_id' => $barang->id, 'current_quantity' => 10]);
 
@@ -1106,8 +1106,8 @@ class AdminRequestFulfillmentTest extends TestCase
         $user2 = User::factory()->create(['name' => 'VIP Requester']);
         $manager = $this->createManager();
 
-        $cat = Category::factory()->create(['is_consumable' => true]);
-        $sub = Subcategory::factory()->create(['category_id' => $cat->id]);
+        $cat = Category::factory()->create();
+        $sub = Subcategory::factory()->create(['category_id' => $cat->id, 'is_consumable' => true]);
         $barang = Barang::factory()->create(['subcategory_id' => $sub->id]);
         $lot = Lot::factory()->create(['barang_id' => $barang->id, 'current_quantity' => 10]);
 

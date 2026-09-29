@@ -57,11 +57,7 @@ class AdminPartialRequestController extends Controller
 
             foreach ($req->items as $item) {
                 $totalRequested += (int) $item->quantity_requested;
-                $isConsumable = (bool) (
-                    $item->barang?->subcategory?->category?->is_consumable 
-                    ?? $item->subcategory?->category?->is_consumable 
-                    ?? false
-                );
+                $isConsumable = (bool) $item->is_consumable;
 
                 if ($isConsumable) {
                     $totalFulfilled += (int) $item->fulfillments

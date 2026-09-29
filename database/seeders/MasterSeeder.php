@@ -21,23 +21,18 @@ class MasterSeeder extends Seeder
         $categories = [
             'ATK' => [
                 'name' => 'Alat Tulis Kantor',
-                'is_consumable' => true,
             ],
             'FUR' => [
                 'name' => 'Furnitur',
-                'is_consumable' => false,
             ],
             'COMP' => [
                 'name' => 'Computer',
-                'is_consumable' => false,
             ],
             'MON' => [
                 'name' => 'Monitor',
-                'is_consumable' => false,
             ],
             'KEN' => [
                 'name' => 'Kendaraan',
-                'is_consumable' => false,
             ],
         ];
         $categoryModels = [];
@@ -45,7 +40,6 @@ class MasterSeeder extends Seeder
             $categoryModels[$code] = Category::create([
                 'code' => $code,
                 'name' => $data['name'],
-                'is_consumable' => $data['is_consumable'],
             ]);
         }
 
@@ -54,37 +48,44 @@ class MasterSeeder extends Seeder
                 'code' => 'ATK-HVS4',
                 'name' => 'Kertas HVS A4',
                 'category_code' => 'ATK',
+                'is_consumable' => true,
             ],
             [
                 'code' => 'ATK-PLPH',
                 'name' => 'Pulpen Hitam',
                 'category_code' => 'ATK',
+                'is_consumable' => true,
             ],
             [
                 'code' => 'FUR-KK',
                 'name' => 'Kursi Kerja',
                 'description' => 'Kerja, Kerja, Kerja',
                 'category_code' => 'FUR',
+                'is_consumable' => false,
             ],
             [
                 'code' => 'FUR-MK',
                 'name' => 'Meja Kerja',
                 'category_code' => 'FUR',
+                'is_consumable' => false,
             ],
             [
                 'code' => 'COMP-NB',
                 'name' => 'Notebook',
                 'category_code' => 'COMP',
+                'is_consumable' => false,
             ],
             [
                 'code' => 'MON-LCD',
                 'name' => 'LCD',
                 'category_code' => 'MON',
+                'is_consumable' => false,
             ],
             [
                 'code' => 'KEN-MO',
                 'name' => 'Mobil',
                 'category_code' => 'KEN',
+                'is_consumable' => false,
             ],
         ];
         foreach ($subcategories as $sub) {
@@ -93,6 +94,7 @@ class MasterSeeder extends Seeder
                 'name' => $sub['name'],
                 'description' => $sub['description'] ?? null,
                 'category_id' => $categoryModels[$sub['category_code']]->id,
+                'is_consumable' => $sub['is_consumable'] ?? false,
             ]);
         }
 

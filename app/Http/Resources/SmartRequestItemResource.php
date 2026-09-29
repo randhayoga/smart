@@ -37,7 +37,7 @@ class SmartRequestItemResource extends JsonResource
     {
         $subcatName = $this->barang?->subcategory?->name ?? $this->subcategory?->name ?? '-';
         $catName = $this->barang?->subcategory?->category?->name ?? $this->subcategory?->category?->name ?? '-';
-        $isConsumable = (bool) ($this->barang?->subcategory?->category?->is_consumable ?? $this->subcategory?->category?->is_consumable ?? false);
+        $isConsumable = (bool) $this->is_consumable;
         $imageUrl = $this->barang?->image_url
             ? '/media/' . $this->barang->image_url
             : (($firstBarang = $this->subcategory?->barangs?->first()) && $firstBarang->image_url ? '/media/' . $firstBarang->image_url : null);

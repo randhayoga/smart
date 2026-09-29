@@ -45,8 +45,8 @@ class ProcessFulfillmentConfirmation
 
             $lockedRequest->loadMissing([
                 'items.fulfillments',
-                'items.barang.subcategory.category',
-                'items.subcategory.category',
+                'items.barang.subcategory',
+                'items.subcategory',
             ]);
 
             $totalRequested = 0;
@@ -57,11 +57,7 @@ class ProcessFulfillmentConfirmation
                 $requested = (int) $item->quantity_requested;
                 $totalRequested += $requested;
 
-                $isConsumable = (bool) (
-                    $item->barang?->subcategory?->category?->is_consumable 
-                    ?? $item->subcategory?->category?->is_consumable 
-                    ?? false
-                );
+                $isConsumable = (bool) $item->is_consumable;
 
                 if ($isConsumable) {
                     $assigned = (int) $item->fulfillments

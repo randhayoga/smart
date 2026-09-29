@@ -33,8 +33,8 @@ class InventoryLogServiceTest extends TestCase
         $this->service = app(InventoryLogService::class);
         $this->user = User::factory()->create();
 
-        $category = Category::factory()->create(['is_consumable' => true]);
-        $subcategory = Subcategory::factory()->create(['category_id' => $category->id]);
+        $category = Category::factory()->create();
+        $subcategory = Subcategory::factory()->create(['category_id' => $category->id, 'is_consumable' => true]);
         $brand = Brand::factory()->create();
         $uom = Uom::factory()->create(['name' => 'Pcs']);
 

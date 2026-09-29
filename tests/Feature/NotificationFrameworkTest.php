@@ -151,8 +151,8 @@ class NotificationFrameworkTest extends TestCase
         /** @var User $standardUser */
         $standardUser = User::factory()->create();
 
-        $category = Category::factory()->create(['is_consumable' => true]);
-        $subcategory = Subcategory::factory()->create(['category_id' => $category->id]);
+        $category = Category::factory()->create();
+        $subcategory = Subcategory::factory()->create(['category_id' => $category->id, 'is_consumable' => true]);
         $barang = Barang::factory()->create([
             'subcategory_id' => $subcategory->id,
             'name' => 'Kertas A4 80gr',
@@ -194,8 +194,8 @@ class NotificationFrameworkTest extends TestCase
             'employee_id' => $employee->employee_id,
         ]);
 
-        $category = Category::factory()->create(['is_consumable' => true]);
-        $subcategory = Subcategory::factory()->create(['category_id' => $category->id]);
+        $category = Category::factory()->create();
+        $subcategory = Subcategory::factory()->create(['category_id' => $category->id, 'is_consumable' => true]);
         $barang = Barang::factory()->create([
             'subcategory_id' => $subcategory->id,
             'min_stock_threshold' => 10,
@@ -221,8 +221,8 @@ class NotificationFrameworkTest extends TestCase
             'employee_id' => $employee->employee_id,
         ]);
 
-        $category = Category::factory()->create(['is_consumable' => true]);
-        $subcategory = Subcategory::factory()->create(['category_id' => $category->id]);
+        $category = Category::factory()->create();
+        $subcategory = Subcategory::factory()->create(['category_id' => $category->id, 'is_consumable' => true]);
 
         $barang1 = Barang::factory()->create([
             'subcategory_id' => $subcategory->id,
@@ -251,8 +251,8 @@ class NotificationFrameworkTest extends TestCase
             'employee_id' => $employee->employee_id,
         ]);
 
-        $category = Category::factory()->create(['is_consumable' => true]);
-        $subcategory = Subcategory::factory()->create(['category_id' => $category->id]);
+        $category = Category::factory()->create();
+        $subcategory = Subcategory::factory()->create(['category_id' => $category->id, 'is_consumable' => true]);
         $barang = Barang::factory()->create([
             'subcategory_id' => $subcategory->id,
             'name' => 'Spidol Boardmarker',

@@ -151,8 +151,8 @@ class RequestApprovalTest extends TestCase
         $manager = $this->createManager();
         $requester = $this->createRequester();
 
-        $cat = Category::factory()->create(['is_consumable' => false]);
-        $sub = Subcategory::factory()->create(['category_id' => $cat->id, 'name' => 'Laptop']);
+        $cat = Category::factory()->create();
+        $sub = Subcategory::factory()->create(['category_id' => $cat->id, 'name' => 'Laptop', 'is_consumable' => false]);
         $brand = Brand::factory()->create(['name' => 'Lenovo']);
         $uom = Uom::factory()->create(['name' => 'Unit']);
         $barang = Barang::factory()->create([

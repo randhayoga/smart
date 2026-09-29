@@ -85,7 +85,7 @@ class Barang extends Model
      */
     public function getIsConsumableAttribute(): bool
     {
-        return (bool) ($this->subcategory?->category?->is_consumable ?? false);
+        return (bool) ($this->subcategory?->is_consumable ?? false);
     }
 
     /**

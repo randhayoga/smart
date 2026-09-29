@@ -27,8 +27,8 @@ class InventoryAuditControllerTest extends TestCase
 
     private function createConsumableBarang(): Barang
     {
-        $category = Category::factory()->create(['is_consumable' => true]);
-        $subcategory = Subcategory::factory()->create(['category_id' => $category->id]);
+        $category = Category::factory()->create();
+        $subcategory = Subcategory::factory()->create(['category_id' => $category->id, 'is_consumable' => true]);
         return Barang::factory()->create(['subcategory_id' => $subcategory->id]);
     }
 

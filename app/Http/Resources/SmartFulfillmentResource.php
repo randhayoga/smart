@@ -76,11 +76,7 @@ class SmartFulfillmentResource extends JsonResource
             $requested = (int) $item->quantity_requested;
             $totalRequested += $requested;
 
-            $isConsumable = (bool) (
-                $item->barang?->subcategory?->category?->is_consumable 
-                ?? $item->subcategory?->category?->is_consumable 
-                ?? false
-            );
+            $isConsumable = (bool) $item->is_consumable;
 
             $subcatName = $item->barang?->subcategory?->name ?? $item->subcategory?->name ?? '-';
             $catName = $item->barang?->subcategory?->category?->name ?? $item->subcategory?->category?->name ?? '-';

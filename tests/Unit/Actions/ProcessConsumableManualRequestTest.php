@@ -37,8 +37,8 @@ class ProcessConsumableManualRequestTest extends TestCase
         $this->admin = User::factory()->create(['name' => 'Admin User']);
         $this->requester = User::factory()->create(['name' => 'Requester User']);
 
-        $category = Category::factory()->create(['is_consumable' => true]);
-        $subcategory = Subcategory::factory()->create(['category_id' => $category->id]);
+        $category = Category::factory()->create();
+        $subcategory = Subcategory::factory()->create(['category_id' => $category->id, 'is_consumable' => true]);
         $this->barang = Barang::factory()->create(['subcategory_id' => $subcategory->id]);
     }
 

@@ -24,11 +24,13 @@ class Subcategory extends Model
         'code',
         'name',
         'description',
+        'is_consumable',
         'category_id',
     ];
 
     protected $casts = [
         'category_id' => 'integer',
+        'is_consumable' => 'boolean',
     ];
 
     /**

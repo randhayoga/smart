@@ -186,7 +186,7 @@ class HandoverController extends Controller
 
             $subcatName = $item->barang?->subcategory?->name ?? $item->subcategory?->name ?? '-';
             $catName = $item->barang?->subcategory?->category?->name ?? $item->subcategory?->category?->name ?? '-';
-            $isConsumable = (bool) ($item->barang?->subcategory?->category?->is_consumable ?? $item->subcategory?->category?->is_consumable ?? false);
+            $isConsumable = (bool) $item->is_consumable;
             $imageUrl = $item->barang?->image_url
                 ? '/media/' . $item->barang->image_url
                 : (($firstBarang = $item->subcategory?->barangs?->first()) && $firstBarang->image_url ? '/media/' . $firstBarang->image_url : null);

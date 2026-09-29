@@ -155,6 +155,7 @@ class MasterDataTest extends TestCase
             'code' => 'ATKS-AAAA',
             'name' => 'Subcategory Baru',
             'description' => 'Deskripsi testing subcategory',
+            'is_consumable' => true,
         ]);
 
         $response->assertRedirect();
@@ -163,6 +164,7 @@ class MasterDataTest extends TestCase
             'code' => 'ATKS-AAAA',
             'name' => 'Subcategory Baru',
             'description' => 'Deskripsi testing subcategory',
+            'is_consumable' => true,
         ]);
     }
 

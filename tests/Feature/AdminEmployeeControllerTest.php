@@ -99,8 +99,8 @@ class AdminEmployeeControllerTest extends TestCase
             ['name' => 'Ruang Server'],
             ['full_name' => 'Gedung Pusat - Lantai 2 - Ruang Server']
         );
-        $category = Category::factory()->create(['is_consumable' => false]);
-        $subcategory = Subcategory::factory()->create(['category_id' => $category->id]);
+        $category = Category::factory()->create();
+        $subcategory = Subcategory::factory()->create(['category_id' => $category->id, 'is_consumable' => false]);
         $brand = Brand::firstOrCreate(['name' => $brandName]);
         $barang = Barang::factory()->create([
             'subcategory_id' => $subcategory->id,

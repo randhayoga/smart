@@ -60,6 +60,8 @@ class UnitStatusApprovalControllerTest extends TestCase
             'location_id' => $lot->location_id,
             'status' => 'Tersedia',
             'condition' => 'Bagus',
+            'type' => 'LT',
+            'classification' => 'Aset',
             'price' => $lot->unit_price,
             'image_url' => 'inventory/lots/placeholder.jpg',
         ]);
@@ -145,6 +147,8 @@ class UnitStatusApprovalControllerTest extends TestCase
             'location_id' => $location->id,
             'status' => 'Tersedia',
             'condition' => 'Rusak Total',
+            'type' => 'LT',
+            'classification' => 'Aset',
             'price' => 50000,
             'image_url' => $file,
             'use_lot_image' => false,
@@ -180,6 +184,8 @@ class UnitStatusApprovalControllerTest extends TestCase
             'location_id' => $unit->location_id,
             'status' => 'Tersedia',
             'condition' => 'Rusak Total',
+            'type' => 'LT',
+            'classification' => 'Aset',
             'price' => $unit->price,
             'memo_file' => \Illuminate\Http\UploadedFile::fake()->create('memo.pdf', 100),
         ]);
@@ -213,6 +219,8 @@ class UnitStatusApprovalControllerTest extends TestCase
             'location_id' => $newLocation->id,
             'status' => 'Standby',
             'condition' => 'Rusak',
+            'type' => 'LT',
+            'classification' => 'Aset',
             'price' => $unit->price,
         ]);
 

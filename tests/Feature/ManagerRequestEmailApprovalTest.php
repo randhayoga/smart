@@ -64,8 +64,8 @@ class ManagerRequestEmailApprovalTest extends TestCase
 
     private function createSmartRequestRecord(User $requester, User $manager): SmartRequest
     {
-        $cat = Category::factory()->create(['is_consumable' => false]);
-        $sub = Subcategory::factory()->create(['category_id' => $cat->id]);
+        $cat = Category::factory()->create();
+        $sub = Subcategory::factory()->create(['category_id' => $cat->id, 'is_consumable' => false]);
         $brand = Brand::factory()->create();
         $uom = Uom::factory()->create();
         $barang = Barang::factory()->create([
@@ -344,8 +344,8 @@ class ManagerRequestEmailApprovalTest extends TestCase
             'project_name' => 'Project Tower Alpha',
         ]);
 
-        $cat = Category::factory()->create(['is_consumable' => true]);
-        $sub = Subcategory::factory()->create(['category_id' => $cat->id, 'name' => 'Kabel UTP Cat6']);
+        $cat = Category::factory()->create();
+        $sub = Subcategory::factory()->create(['category_id' => $cat->id, 'name' => 'Kabel UTP Cat6', 'is_consumable' => true]);
         $brand = Brand::factory()->create();
         $uom = Uom::factory()->create(['name' => 'Roll']);
         Barang::factory()->create([

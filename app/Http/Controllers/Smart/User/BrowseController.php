@@ -19,7 +19,7 @@ class BrowseController extends Controller
      */
     public function index(Request $request): Response
     {
-        $categories = Category::orderBy('name')->get(['id', 'name', 'is_consumable']);
+        $categories = Category::orderBy('name')->get(['id', 'name']);
         
         $items = Subcategory::with(['category', 'barangs.brand', 'barangs.uom'])
             ->get()
@@ -34,7 +34,7 @@ class BrowseController extends Controller
                     'category_id' => $subcategory->category_id,
                     'category_name' => $subcategory->category->name ?? '-',
                     'subcategory_name' => $subcategory->name,
-                    'is_consumable' => (bool) ($subcategory->category->is_consumable ?? true),
+                    'is_consumable' => (bool) ($subcategory->is_consumable ?? true),
                     'brand' => $firstBarang && $firstBarang->brand ? $firstBarang->brand->name : '-',
                     'name' => $subcategory->name,
                     'spec' => $firstBarang ? $firstBarang->specification : '-',

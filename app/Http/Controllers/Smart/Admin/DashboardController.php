@@ -35,8 +35,7 @@ class DashboardController extends Controller
         $consumableSubcategoryStats = \Illuminate\Support\Facades\DB::table('lots')
             ->join('barangs', 'lots.barang_id', '=', 'barangs.id')
             ->join('subcategories', 'barangs.subcategory_id', '=', 'subcategories.id')
-            ->join('categories', 'subcategories.category_id', '=', 'categories.id')
-            ->where('categories.is_consumable', true)
+            ->where('subcategories.is_consumable', true)
             ->groupBy('subcategories.id', 'subcategories.name')
             ->select('subcategories.name as subcategory_name', \Illuminate\Support\Facades\DB::raw('SUM(lots.current_quantity) as total_quantity'))
             ->get();
@@ -48,7 +47,7 @@ class DashboardController extends Controller
             ->join('barangs', 'lots.barang_id', '=', 'barangs.id')
             ->join('subcategories', 'barangs.subcategory_id', '=', 'subcategories.id')
             ->join('categories', 'subcategories.category_id', '=', 'categories.id')
-            ->where('categories.is_consumable', false)
+            ->where('subcategories.is_consumable', false)
             ->whereIn('organizers.name', ['CFS', 'ICT'])
             ->groupBy('organizers.name', 'categories.id', 'categories.name')
             ->select(

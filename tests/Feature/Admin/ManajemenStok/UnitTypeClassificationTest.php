@@ -30,8 +30,8 @@ class UnitTypeClassificationTest extends TestCase
 
         $this->user = User::factory()->create();
 
-        $category = Category::factory()->create(['name' => 'Perangkat Kantor', 'is_consumable' => false]);
-        $subcategory = Subcategory::factory()->create(['category_id' => $category->id, 'code' => 'PK01']);
+        $category = Category::factory()->create(['name' => 'Perangkat Kantor']);
+        $subcategory = Subcategory::factory()->create(['category_id' => $category->id, 'code' => 'PK01', 'is_consumable' => false]);
         $barang = Barang::factory()->create(['subcategory_id' => $subcategory->id]);
         $organizer = Organizer::factory()->create(['name' => 'DIV-IT']);
 

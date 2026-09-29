@@ -40,7 +40,7 @@ const isConsumable = computed(() => {
   if (!selectedItem.value) return false;
   return Boolean(
     selectedItem.value.is_consumable ??
-    selectedItem.value.subcategory?.category?.is_consumable ??
+    selectedItem.value.subcategory?.is_consumable ??
     false
   );
 });

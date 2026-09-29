@@ -54,8 +54,8 @@ class SmartRequestPerformanceTest extends TestCase
         $admin = $this->createAdmin();
         $requester = User::factory()->create();
 
-        $cat = Category::factory()->create(['is_consumable' => false]);
-        $sub = Subcategory::factory()->create(['category_id' => $cat->id]);
+        $cat = Category::factory()->create();
+        $sub = Subcategory::factory()->create(['category_id' => $cat->id, 'is_consumable' => false]);
         $brand = Brand::factory()->create();
         $uom = Uom::factory()->create();
 
@@ -106,8 +106,8 @@ class SmartRequestPerformanceTest extends TestCase
         $admin = $this->createAdmin();
         $requester = User::factory()->create();
 
-        $cat = Category::factory()->create(['is_consumable' => false]);
-        $sub = Subcategory::factory()->create(['category_id' => $cat->id]);
+        $cat = Category::factory()->create();
+        $sub = Subcategory::factory()->create(['category_id' => $cat->id, 'is_consumable' => false]);
         $brand = Brand::factory()->create();
         $uom = Uom::factory()->create();
 

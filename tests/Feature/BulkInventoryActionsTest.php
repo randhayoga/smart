@@ -244,8 +244,8 @@ class BulkInventoryActionsTest extends TestCase
     public function test_can_view_consumable_lots_page(): void
     {
         $user = User::factory()->create();
-        $category = Category::factory()->create(['is_consumable' => true]);
-        $subcategory = Subcategory::factory()->create(['category_id' => $category->id]);
+        $category = Category::factory()->create();
+        $subcategory = Subcategory::factory()->create(['category_id' => $category->id, 'is_consumable' => true]);
         $barang = Barang::factory()->create(['subcategory_id' => $subcategory->id]);
         $lot = Lot::factory()->create(['barang_id' => $barang->id]);
 

@@ -30,15 +30,64 @@ class MasterDataManagementTest extends TestCase
         $response = $this->actingAs($user)->post(route('smart.master.categories.store'), [
             'code' => 'ATKS',
             'name' => 'Alat Tulis Kantor',
-            'is_consumable' => '1',
         ]);
 
         $response->assertRedirect();
         $this->assertDatabaseHas('categories', [
             'code' => 'ATKS',
             'name' => 'Alat Tulis Kantor',
-            'is_consumable' => true,
         ]);
+    }
+
+    public function test_can_store_category_with_three_character_code(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->post(route('smart.master.categories.store'), [
+            'code' => 'ATK',
+            'name' => 'Alat Tulis Kantor',
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('categories', [
+            'code' => 'ATK',
+            'name' => 'Alat Tulis Kantor',
+        ]);
+    }
+
+    public function test_can_store_category_with_lowercase_code_and_normalizes_to_uppercase(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->post(route('smart.master.categories.store'), [
+            'code' => 'fur',
+            'name' => 'Furnitur',
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('categories', [
+            'code' => 'FUR',
+            'name' => 'Furnitur',
+        ]);
+    }
+
+    public function test_cannot_store_category_with_invalid_code_length(): void
+    {
+        $user = User::factory()->create();
+
+        // Too short (1 char)
+        $response = $this->actingAs($user)->post(route('smart.master.categories.store'), [
+            'code' => 'A',
+            'name' => 'Kategori A',
+        ]);
+        $response->assertSessionHasErrors('code');
+
+        // Too long (5 chars)
+        $response = $this->actingAs($user)->post(route('smart.master.categories.store'), [
+            'code' => 'TOOLX',
+            'name' => 'Kategori Tools',
+        ]);
+        $response->assertSessionHasErrors('code');
     }
 
     public function test_can_update_category(): void
@@ -49,13 +98,68 @@ class MasterDataManagementTest extends TestCase
         $response = $this->actingAs($user)->put(route('smart.master.categories.update', $category), [
             'code' => 'ATKS',
             'name' => 'Alat Tulis Terbaru',
-            'is_consumable' => '0',
         ]);
 
         $response->assertRedirect();
         $this->assertDatabaseHas('categories', [
             'id' => $category->id,
             'name' => 'Alat Tulis Terbaru',
+        ]);
+    }
+
+    public function test_can_update_category_with_three_character_code(): void
+    {
+        $user = User::factory()->create();
+        $category = Category::factory()->create(['code' => 'ATK', 'name' => 'Lama']);
+
+        $response = $this->actingAs($user)->put(route('smart.master.categories.update', $category), [
+            'code' => 'ATK',
+            'name' => 'Alat Tulis Kantor Updated',
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('categories', [
+            'id' => $category->id,
+            'code' => 'ATK',
+            'name' => 'Alat Tulis Kantor Updated',
+        ]);
+    }
+
+    public function test_can_store_subcategory_with_classification(): void
+    {
+        $user = User::factory()->create();
+        $category = Category::factory()->create(['code' => 'ATKS']);
+
+        $response = $this->actingAs($user)->post(route('smart.master.subcategories.store'), [
+            'category_id' => $category->id,
+            'code' => 'ATKS-HVSS',
+            'name' => 'Kertas HVS',
+            'is_consumable' => '1',
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('subcategories', [
+            'category_id' => $category->id,
+            'code' => 'ATKS-HVSS',
+            'name' => 'Kertas HVS',
+            'is_consumable' => true,
+        ]);
+    }
+
+    public function test_can_update_subcategory_classification(): void
+    {
+        $user = User::factory()->create();
+        $subcategory = Subcategory::factory()->create(['is_consumable' => true]);
+
+        $response = $this->actingAs($user)->put(route('smart.master.subcategories.update', $subcategory), [
+            'name' => 'Subcategory Diperbarui',
+            'is_consumable' => '0',
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('subcategories', [
+            'id' => $subcategory->id,
+            'name' => 'Subcategory Diperbarui',
             'is_consumable' => false,
         ]);
     }

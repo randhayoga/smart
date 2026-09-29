@@ -52,8 +52,8 @@ class UserCartSecurityTest extends TestCase
             'start_date' => '2026-01-01 00:00:00',
         ]);
 
-        $category = Category::factory()->create(['is_consumable' => true]);
-        $subcategory = Subcategory::factory()->create(['category_id' => $category->id]);
+        $category = Category::factory()->create();
+        $subcategory = Subcategory::factory()->create(['category_id' => $category->id, 'is_consumable' => true]);
         $barang = Barang::factory()->create(['subcategory_id' => $subcategory->id]);
 
         $basketItem = ConsumableBasket::create([
@@ -83,8 +83,8 @@ class UserCartSecurityTest extends TestCase
             'employee_id' => null,
         ]);
 
-        $category = Category::factory()->create(['is_consumable' => true]);
-        $subcategory = Subcategory::factory()->create(['category_id' => $category->id]);
+        $category = Category::factory()->create();
+        $subcategory = Subcategory::factory()->create(['category_id' => $category->id, 'is_consumable' => true]);
         $barang = Barang::factory()->create(['subcategory_id' => $subcategory->id]);
 
         $basketItem = ConsumableBasket::create([
@@ -112,8 +112,8 @@ class UserCartSecurityTest extends TestCase
 
         $orgchart = HrdOrgchart::factory()->create(['employee_id' => $manager->employee_id]);
 
-        $category = Category::factory()->create(['is_consumable' => false]);
-        $subcategory = Subcategory::factory()->create(['category_id' => $category->id]);
+        $category = Category::factory()->create();
+        $subcategory = Subcategory::factory()->create(['category_id' => $category->id, 'is_consumable' => false]);
         $barang = Barang::factory()->create(['subcategory_id' => $subcategory->id]);
 
         $basketItem = AssetBasket::create([
@@ -167,8 +167,8 @@ class UserCartSecurityTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $category = Category::factory()->create(['is_consumable' => true]);
-        $subcategory = Subcategory::factory()->create(['category_id' => $category->id]);
+        $category = Category::factory()->create();
+        $subcategory = Subcategory::factory()->create(['category_id' => $category->id, 'is_consumable' => true]);
         $barang = Barang::factory()->create(['subcategory_id' => $subcategory->id]);
 
         ConsumableBasket::create([

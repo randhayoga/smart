@@ -29,10 +29,13 @@ class CategoryController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        if ($request->has('code')) {
+            $request->merge(['code' => strtoupper(trim((string) $request->code))]);
+        }
+
         $validated = $request->validate([
-            'code' => 'required|string|size:4|unique:categories,code',
-            'name' => 'required|string|max:255',
-            'is_consumable' => 'required|boolean',
+            'code' => ['required', 'string', 'min:2', 'max:4', 'regex:/^[A-Z0-9]+$/', 'unique:categories,code'],
+            'name' => ['required', 'string', 'max:255'],
         ]);
 
         Category::create($validated);
@@ -45,10 +48,13 @@ class CategoryController extends Controller
      */
     public function update(Request $request, Category $category): RedirectResponse
     {
+        if ($request->has('code')) {
+            $request->merge(['code' => strtoupper(trim((string) $request->code))]);
+        }
+
         $validated = $request->validate([
-            'code' => 'required|string|size:4|unique:categories,code,' . $category->id,
-            'name' => 'required|string|max:255',
-            'is_consumable' => 'required|boolean',
+            'code' => ['sometimes', 'required', 'string', 'min:2', 'max:4', 'regex:/^[A-Z0-9]+$/', 'unique:categories,code,' . $category->id],
+            'name' => ['required', 'string', 'max:255'],
         ]);
 
         $category->update($validated);

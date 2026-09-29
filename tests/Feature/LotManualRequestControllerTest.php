@@ -37,8 +37,8 @@ class LotManualRequestControllerTest extends TestCase
 
     private function createConsumableBarang(): Barang
     {
-        $category = Category::factory()->create(['is_consumable' => true]);
-        $subcategory = Subcategory::factory()->create(['category_id' => $category->id]);
+        $category = Category::factory()->create();
+        $subcategory = Subcategory::factory()->create(['category_id' => $category->id, 'is_consumable' => true]);
         return Barang::factory()->create(['subcategory_id' => $subcategory->id]);
     }
 
@@ -194,8 +194,8 @@ class LotManualRequestControllerTest extends TestCase
         $requester = $this->createRequester();
         $orgchart = HrdOrgchart::factory()->create();
 
-        $category = Category::factory()->create(['is_consumable' => false]);
-        $subcategory = Subcategory::factory()->create(['category_id' => $category->id]);
+        $category = Category::factory()->create();
+        $subcategory = Subcategory::factory()->create(['category_id' => $category->id, 'is_consumable' => false]);
         $nonConsumableBarang = Barang::factory()->create(['subcategory_id' => $subcategory->id]);
         $lot = Lot::factory()->create([
             'barang_id' => $nonConsumableBarang->id,

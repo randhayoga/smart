@@ -120,6 +120,7 @@ export default {
   },
   validation: {
     categoryCodeRequired: 'Kode Kategori belum diisi',
+    categoryCodeLength: 'Kode Kategori harus terdiri dari 2 hingga 4 karakter',
     categoryNameRequired: 'Nama Kategori belum diisi',
     parentCategoryRequired: 'Kategori Induk belum dipilih',
     subcategoryCodeRequired: 'Kode Subkategori belum diisi',

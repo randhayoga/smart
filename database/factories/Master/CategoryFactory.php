@@ -28,7 +28,6 @@ class CategoryFactory extends Factory
         return [
             'code' => strtoupper(fake()->unique()->lexify('????')),
             'name' => $name,
-            'is_consumable' => fake()->boolean(),
         ];
     }
 }

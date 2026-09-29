@@ -84,8 +84,8 @@ class EmailTemplatesTest extends TestCase
         $manager = User::factory()->create(['name' => 'Bob Manager', 'employee_id' => $employee->employee_id]);
         $requester = User::factory()->create(['name' => 'Charlie Requester']);
 
-        $cat = Category::factory()->create(['is_consumable' => false]);
-        $sub = Subcategory::factory()->create(['category_id' => $cat->id, 'name' => 'Laptops']);
+        $cat = Category::factory()->create();
+        $sub = Subcategory::factory()->create(['category_id' => $cat->id, 'name' => 'Laptops', 'is_consumable' => false]);
         $brand = Brand::factory()->create(['name' => 'Lenovo']);
         $uom = Uom::factory()->create(['name' => 'Unit']);
         $barang = Barang::factory()->create([
@@ -149,8 +149,8 @@ class EmailTemplatesTest extends TestCase
         $manager = User::factory()->create(['name' => 'Bob Manager', 'employee_id' => $employee->employee_id]);
         $requester = User::factory()->create(['name' => 'Charlie Requester']);
 
-        $cat = Category::factory()->create(['is_consumable' => true]);
-        $sub = Subcategory::factory()->create(['category_id' => $cat->id, 'name' => 'Supplies']);
+        $cat = Category::factory()->create();
+        $sub = Subcategory::factory()->create(['category_id' => $cat->id, 'name' => 'Supplies', 'is_consumable' => true]);
         $brand = Brand::factory()->create();
         $uom = Uom::factory()->create(['name' => 'Pack']);
         $barang = Barang::factory()->create([

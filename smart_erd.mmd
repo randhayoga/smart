@@ -13,7 +13,6 @@ erDiagram
         int id PK ""  
         char_4 code UK ""  
         varchar name  ""  
-        boolean is_consumable  ""  
     }
 
     SUBCATEGORY {
@@ -21,6 +20,7 @@ erDiagram
         char_9 code UK ""  
         varchar name  ""  
         varchar description  "nullable"  
+        boolean is_consumable  ""  
         int category_id FK ""  
     }
 

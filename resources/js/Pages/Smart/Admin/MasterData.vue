@@ -40,8 +40,8 @@ import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal.vue';
 import DeleteErrorModal from '@/Components/DeleteErrorModal.vue';
 import Tabs from '@/Components/Tabs.vue';
 
-interface Category    { id: number; code: string; name: string; is_consumable: boolean; }
-interface Subcategory { id: number; code: string; name: string; category_id: number; category: Category; }
+interface Category    { id: number; code: string; name: string; }
+interface Subcategory { id: number; code: string; name: string; category_id: number; is_consumable: boolean; category: Category; }
 interface SimpleItem  { id: number; name: string; description?: string; }
 interface VendorItem  {
   id: number;
@@ -262,8 +262,8 @@ const isAnyModalOpen = computed(() => isEditModalOpen.value || isCreateModalOpen
 useModalLock(isAnyModalOpen);
 
 // ── Create forms ────────────────────────────────────────────────
-const categoryForm    = useForm({ code: '', name: '', is_consumable: '1' });
-const subcategoryForm = useForm({ category_id: null as number | null, code: '', name: '', description: '' });
+const categoryForm    = useForm({ code: '', name: '' });
+const subcategoryForm = useForm({ category_id: null as number | null, code: '', name: '', description: '', is_consumable: '1' });
 const uomForm         = useForm({ name: '' });
 const brandForm       = useForm({ name: '', description: '' });
 const organizerForm   = useForm({ name: '' });
@@ -284,8 +284,8 @@ const vendorForm      = useForm({
 const locationForm    = useForm({ name: '', parent_id: null as number | null, is_active: true });
 
 // ── Edit forms ──────────────────────────────────────────────────
-const editCategoryForm    = useForm({ id: null as number | null, code: '', name: '', is_consumable: '1' });
-const editSubcategoryForm = useForm({ id: null as number | null, name: '', description: '' });
+const editCategoryForm    = useForm({ id: null as number | null, code: '', name: '' });
+const editSubcategoryForm = useForm({ id: null as number | null, name: '', description: '', is_consumable: '1' });
 const editUomForm         = useForm({ id: null as number | null, name: '' });
 const editBrandForm       = useForm({ id: null as number | null, name: '', description: '' });
 const editOrganizerForm   = useForm({ id: null as number | null, name: '' });
@@ -451,6 +451,8 @@ const openEditModal = (item: any) => {
   }
   if (activeTab.value === 'categories') {
     form.code = item.code;
+  }
+  if (activeTab.value === 'subcategories') {
     form.is_consumable = item.is_consumable ? '1' : '0';
   }
   if (activeTab.value === 'locations') {
@@ -552,8 +554,8 @@ const columns = computed<ColumnDef<any>[]>(() => {
     });
   }
 
-  // Classification column (categories only)
-  if (activeTab.value === 'categories') {
+  // Classification column (subcategories only)
+  if (activeTab.value === 'subcategories') {
     cols.push({
       accessorKey: 'is_consumable',
       header: ({ column }) => {
@@ -835,6 +837,9 @@ const submitCreate = () => {
     if (!form.code || !form.code.trim()) {
       createFormErrors.value.code = t('masterData.validation.categoryCodeRequired');
       hasError = true;
+    } else if (form.code.trim().length < 2 || form.code.trim().length > 4) {
+      createFormErrors.value.code = t('masterData.validation.categoryCodeLength');
+      hasError = true;
     }
     if (!form.name || !form.name.trim()) {
       createFormErrors.value.name = t('masterData.validation.categoryNameRequired');
@@ -895,6 +900,18 @@ const submitCreate = () => {
 
   submitForm.post(route(storeRouteMap[activeTab.value]), {
     onSuccess: () => closeCreateModal(),
+    onError: (errors: Record<string, string>) => {
+      let matched = false;
+      Object.keys(errors).forEach((key) => {
+        if (key in createFormErrors.value) {
+          (createFormErrors.value as any)[key] = errors[key];
+          matched = true;
+        }
+      });
+      if (!matched && Object.values(errors).length > 0) {
+        toast.error(Object.values(errors)[0]);
+      }
+    },
   });
 };
 
@@ -946,6 +963,18 @@ const submitUpdate = () => {
 
   form.put(route(updateRouteMap[activeTab.value], form.id), {
     onSuccess: () => closeEditModal(),
+    onError: (errors: Record<string, string>) => {
+      let matched = false;
+      Object.keys(errors).forEach((key) => {
+        if (key in editFormErrors.value) {
+          (editFormErrors.value as any)[key] = errors[key];
+          matched = true;
+        }
+      });
+      if (!matched && Object.values(errors).length > 0) {
+        toast.error(Object.values(errors)[0]);
+      }
+    },
   });
 };
 const pageSize = computed(() => {
@@ -1143,7 +1172,22 @@ onUnmounted(() => {
                   </FieldContent>
                   <FieldError v-if="editFormErrors.name">{{ editFormErrors.name }}</FieldError>
                 </Field>
-                <Field>
+                <Field data-disabled="true">
+                  <FieldLabel><span>{{ t('masterData.fields.classification') }}<span class="text-destructive">*</span></span></FieldLabel>
+                  <FieldContent>
+                    <RadioGroup v-model="editSubcategoryForm.is_consumable" disabled class="flex gap-6">
+                      <div class="flex items-center space-x-2 opacity-60">
+                        <RadioGroupItem id="edit-sub-consumable-true" value="1" class="cursor-not-allowed" />
+                        <Label for="edit-sub-consumable-true" class="font-normal cursor-not-allowed">{{ t('masterData.classification.consumable') }}</Label>
+                      </div>
+                      <div class="flex items-center space-x-2 opacity-60">
+                        <RadioGroupItem id="edit-sub-consumable-false" value="0" class="cursor-not-allowed" />
+                        <Label for="edit-sub-consumable-false" class="font-normal cursor-not-allowed">{{ t('masterData.classification.asset') }}</Label>
+                      </div>
+                    </RadioGroup>
+                  </FieldContent>
+                </Field>
+                <Field class="md:col-span-2">
                   <FieldLabel><span>{{ t('masterData.fields.description') }}</span></FieldLabel>
                   <FieldContent>
                     <textarea v-model="editSubcategoryForm.description" :placeholder="t('masterData.placeholders.subcategoryDescription')" rows="3"
@@ -1189,7 +1233,7 @@ onUnmounted(() => {
               </div>
 
               <!-- Edit: Kategori -->
-              <div v-else-if="activeTab === 'categories'" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div v-else-if="activeTab === 'categories'" class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Field :data-invalid="!!editFormErrors.code || undefined" data-disabled="true">
                   <FieldLabel>{{ t('masterData.fields.categoryCodeReadOnly') }}</FieldLabel>
                   <FieldContent>
@@ -1206,21 +1250,6 @@ onUnmounted(() => {
                       :class="[editFormErrors.name ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']" />
                   </FieldContent>
                   <FieldError v-if="editFormErrors.name">{{ editFormErrors.name }}</FieldError>
-                </Field>
-                <Field data-disabled="true">
-                  <FieldLabel><span>{{ t('masterData.fields.classification') }}<span class="text-destructive">*</span></span></FieldLabel>
-                  <FieldContent>
-                    <RadioGroup v-model="editCategoryForm.is_consumable" disabled class="flex gap-6">
-                      <div class="flex items-center space-x-2 opacity-60">
-                        <RadioGroupItem id="edit-consumable-true" value="1" class="cursor-not-allowed" />
-                        <Label for="edit-consumable-true" class="font-normal cursor-not-allowed">{{ t('masterData.classification.consumable') }}</Label>
-                      </div>
-                      <div class="flex items-center space-x-2 opacity-60">
-                        <RadioGroupItem id="edit-consumable-false" value="0" class="cursor-not-allowed" />
-                        <Label for="edit-consumable-false" class="font-normal cursor-not-allowed">{{ t('masterData.classification.asset') }}</Label>
-                      </div>
-                    </RadioGroup>
-                  </FieldContent>
                 </Field>
               </div>
 
@@ -1490,6 +1519,21 @@ onUnmounted(() => {
                   <FieldError v-if="createFormErrors.name">{{ createFormErrors.name }}</FieldError>
                 </Field>
                 <Field>
+                  <FieldLabel><span>{{ t('masterData.fields.classification') }}<span class="text-destructive">*</span></span></FieldLabel>
+                  <FieldContent>
+                    <RadioGroup v-model="subcategoryForm.is_consumable" class="flex gap-6">
+                      <div class="flex items-center space-x-2">
+                        <RadioGroupItem id="sub-consumable-true" value="1" class="cursor-pointer" />
+                        <Label for="sub-consumable-true" class="font-normal cursor-pointer">{{ t('masterData.classification.consumable') }}</Label>
+                      </div>
+                      <div class="flex items-center space-x-2">
+                        <RadioGroupItem id="sub-consumable-false" value="0" class="cursor-pointer" />
+                        <Label for="sub-consumable-false" class="font-normal cursor-pointer">{{ t('masterData.classification.asset') }}</Label>
+                      </div>
+                    </RadioGroup>
+                  </FieldContent>
+                </Field>
+                <Field class="md:col-span-2">
                   <FieldLabel><span>{{ t('masterData.fields.description') }}</span></FieldLabel>
                   <FieldContent>
                     <textarea v-model="subcategoryForm.description" :placeholder="t('masterData.placeholders.subcategoryDescription')" rows="3"
@@ -1534,7 +1578,7 @@ onUnmounted(() => {
               </div>
 
               <!-- Create: Kategori -->
-              <div v-else-if="activeTab === 'categories'" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div v-else-if="activeTab === 'categories'" class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Field :data-invalid="!!createFormErrors.code || undefined">
                   <FieldLabel><span>{{ t('masterData.fields.categoryCode') }}<span class="text-destructive">*</span></span></FieldLabel>
                   <FieldContent>
@@ -1554,21 +1598,6 @@ onUnmounted(() => {
                       :class="[createFormErrors.name ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']" />
                   </FieldContent>
                   <FieldError v-if="createFormErrors.name">{{ createFormErrors.name }}</FieldError>
-                </Field>
-                <Field>
-                  <FieldLabel><span>{{ t('masterData.fields.classification') }}<span class="text-destructive">*</span></span></FieldLabel>
-                  <FieldContent>
-                    <RadioGroup v-model="categoryForm.is_consumable" class="flex gap-6">
-                      <div class="flex items-center space-x-2">
-                        <RadioGroupItem id="consumable-true" value="1" class="cursor-pointer" />
-                        <Label for="consumable-true" class="font-normal cursor-pointer">{{ t('masterData.classification.consumable') }}</Label>
-                      </div>
-                      <div class="flex items-center space-x-2">
-                        <RadioGroupItem id="consumable-false" value="0" class="cursor-pointer" />
-                        <Label for="consumable-false" class="font-normal cursor-pointer">{{ t('masterData.classification.asset') }}</Label>
-                      </div>
-                    </RadioGroup>
-                  </FieldContent>
                 </Field>
               </div>
 

@@ -93,11 +93,7 @@ class RequestFulfillmentService
      */
     public function autoFulfillAssetItem(RequestItem $item): int
     {
-        $isConsumable = (bool) (
-            $item->barang?->subcategory?->category?->is_consumable 
-            ?? $item->subcategory?->category?->is_consumable 
-            ?? false
-        );
+        $isConsumable = (bool) $item->is_consumable;
 
         if ($isConsumable) {
             return 0;
@@ -160,11 +156,7 @@ class RequestFulfillmentService
      */
     public function autoFulfillConsumableItem(RequestItem $item): int
     {
-        $isConsumable = (bool) (
-            $item->barang?->subcategory?->category?->is_consumable 
-            ?? $item->subcategory?->category?->is_consumable 
-            ?? false
-        );
+        $isConsumable = (bool) $item->is_consumable;
 
         if (!$isConsumable) {
             return 0;
@@ -266,11 +258,7 @@ class RequestFulfillmentService
         $consumableQtyCount = 0;
 
         foreach ($request->items as $item) {
-            $isConsumable = (bool) (
-                $item->barang?->subcategory?->category?->is_consumable 
-                ?? $item->subcategory?->category?->is_consumable 
-                ?? false
-            );
+            $isConsumable = (bool) $item->is_consumable;
 
             if ($isConsumable) {
                 $consumableQtyCount += $this->autoFulfillConsumableItem($item);

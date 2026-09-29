@@ -27,8 +27,8 @@ class InventoryStockServiceTest extends TestCase
 
     public function test_get_available_stock_for_unit_tracked_barang(): void
     {
-        $cat = Category::factory()->create(['is_consumable' => false]);
-        $sub = Subcategory::factory()->create(['category_id' => $cat->id]);
+        $cat = Category::factory()->create();
+        $sub = Subcategory::factory()->create(['category_id' => $cat->id, 'is_consumable' => false]);
         $brand = Brand::factory()->create();
         $uom = Uom::factory()->create();
         $barang = Barang::factory()->create([
@@ -49,8 +49,8 @@ class InventoryStockServiceTest extends TestCase
 
     public function test_get_available_stock_for_consumable_barang(): void
     {
-        $cat = Category::factory()->create(['is_consumable' => true]);
-        $sub = Subcategory::factory()->create(['category_id' => $cat->id]);
+        $cat = Category::factory()->create();
+        $sub = Subcategory::factory()->create(['category_id' => $cat->id, 'is_consumable' => true]);
         $brand = Brand::factory()->create();
         $uom = Uom::factory()->create();
         $barang = Barang::factory()->create([
@@ -68,8 +68,8 @@ class InventoryStockServiceTest extends TestCase
 
     public function test_get_batch_available_stock_computes_accurately(): void
     {
-        $cat = Category::factory()->create(['is_consumable' => false]);
-        $sub = Subcategory::factory()->create(['category_id' => $cat->id]);
+        $cat = Category::factory()->create();
+        $sub = Subcategory::factory()->create(['category_id' => $cat->id, 'is_consumable' => false]);
         $brand = Brand::factory()->create();
         $uom = Uom::factory()->create();
 

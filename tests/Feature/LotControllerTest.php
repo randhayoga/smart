@@ -27,8 +27,8 @@ class LotControllerTest extends TestCase
     {
         Storage::fake('local');
         $user = User::factory()->create();
-        $category = \App\Models\Master\Category::factory()->create(['is_consumable' => false]);
-        $subcategory = \App\Models\Master\Subcategory::factory()->create(['category_id' => $category->id]);
+        $category = \App\Models\Master\Category::factory()->create();
+        $subcategory = \App\Models\Master\Subcategory::factory()->create(['category_id' => $category->id, 'is_consumable' => false]);
         $barang = Barang::factory()->create(['subcategory_id' => $subcategory->id]);
         $organizer = Organizer::factory()->create();
         $vendor = Vendor::factory()->create();
@@ -243,8 +243,8 @@ class LotControllerTest extends TestCase
         $barangImage = UploadedFile::fake()->image('barang.jpg');
         $barangImagePath = Storage::disk('local')->putFile('inventory/barangs', $barangImage);
         
-        $category = \App\Models\Master\Category::factory()->create(['is_consumable' => false]);
-        $subcategory = \App\Models\Master\Subcategory::factory()->create(['category_id' => $category->id]);
+        $category = \App\Models\Master\Category::factory()->create();
+        $subcategory = \App\Models\Master\Subcategory::factory()->create(['category_id' => $category->id, 'is_consumable' => false]);
         $barang = Barang::factory()->create([
             'image_url' => $barangImagePath,
             'subcategory_id' => $subcategory->id

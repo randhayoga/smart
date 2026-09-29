@@ -28,8 +28,8 @@ class DashboardControllerTest extends TestCase
         $adminUser = User::factory()->create(['employee_id' => $adminEmployee->employee_id]);
 
         // 2. Setup Consumable Data
-        $consumableCat = Category::factory()->create(['is_consumable' => true, 'name' => 'Consumables']);
-        $consumableSub = Subcategory::factory()->create(['category_id' => $consumableCat->id, 'name' => 'Stationery']);
+        $consumableCat = Category::factory()->create(['name' => 'Consumables']);
+        $consumableSub = Subcategory::factory()->create(['category_id' => $consumableCat->id, 'name' => 'Stationery', 'is_consumable' => true]);
         $consumableBarang = Barang::factory()->create(['subcategory_id' => $consumableSub->id]);
         
         Lot::factory()->create([
@@ -42,8 +42,8 @@ class DashboardControllerTest extends TestCase
         ]); // Total for Stationery should be 15
 
         // 3. Setup Non-Consumable Data for CFS
-        $nonConsumableCat = Category::factory()->create(['is_consumable' => false, 'name' => 'Electronics']);
-        $nonConsumableSub = Subcategory::factory()->create(['category_id' => $nonConsumableCat->id]);
+        $nonConsumableCat = Category::factory()->create(['name' => 'Electronics']);
+        $nonConsumableSub = Subcategory::factory()->create(['category_id' => $nonConsumableCat->id, 'is_consumable' => false]);
         $nonConsumableBarang = Barang::factory()->create(['subcategory_id' => $nonConsumableSub->id]);
         
         $cfsOrganizer = Organizer::factory()->create(['name' => 'CFS']);

@@ -46,4 +46,12 @@ class RequestItem extends Model
     {
         return $this->hasMany(RequestFulfillment::class, 'request_item_id');
     }
+
+    /**
+     * Accessor indicating whether this request item is consumable.
+     */
+    public function getIsConsumableAttribute(): bool
+    {
+        return (bool) ($this->barang?->is_consumable ?? $this->subcategory?->is_consumable ?? false);
+    }
 }
