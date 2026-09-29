@@ -24,7 +24,7 @@ class MasterController extends Controller
      */
     public function index(Request $request): Response
     {
-        return Inertia::render('Smart/Admin/MasterData', [
+        return Inertia::render('Smart/Admin/MasterData/MasterData', [
             'user'          => $request->user(),
             'categories'    => Category::orderBy('code')->get(),
             'subcategories' => Subcategory::with('category')->orderBy('code')->get(),

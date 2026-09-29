@@ -19,7 +19,7 @@ class CategoryController extends Controller
      */
     public function index(): Response
     {
-        return Inertia::render('Smart/Admin/MasterData', [
+        return Inertia::render('Smart/Admin/MasterData/MasterData', [
             'categories' => Category::orderBy('code')->get(),
         ]);
     }
