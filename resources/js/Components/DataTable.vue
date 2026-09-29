@@ -16,7 +16,7 @@ import {
   getSortedRowModel,
   useVueTable,
 } from '@tanstack/vue-table'
-import { ref, watch, computed, onMounted } from 'vue'
+import { ref, watch, computed, onMounted, onUnmounted } from 'vue'
 
 import {
   Table,
@@ -188,7 +188,37 @@ const table = useVueTable({
 })
 
 // Update pagination when pageSize prop changes
-watch(() => props.pageSize, (newSize) => {
+const isPageSizeChanging = ref(false)
+let pageSizeTimeout: ReturnType<typeof setTimeout> | null = null
+
+const isAllRowsSize = (size?: number): boolean => {
+  if (size === undefined || size === null) return false
+  return size >= 9999 || ((props.data?.length || 0) > 0 && size >= props.data.length && size > 50)
+}
+
+watch(() => props.pageSize, (newSize, oldSize) => {
+  if (oldSize !== undefined && (props.data?.length || 0) > 0) {
+    const wasAllRows = isAllRowsSize(oldSize)
+    const isNowAllRows = isAllRowsSize(newSize)
+
+    // Trigger skeleton if switching from allRows or to allRows
+    if (wasAllRows !== isNowAllRows) {
+      if (pageSizeTimeout) clearTimeout(pageSizeTimeout)
+      isPageSizeChanging.value = true
+
+      if (table.getState().pagination.pageIndex > 0) {
+        table.setPageIndex(0)
+      }
+      table.setPageSize(newSize || 50)
+
+      pageSizeTimeout = setTimeout(() => {
+        isPageSizeChanging.value = false
+        pageSizeTimeout = null
+      }, 200)
+      return
+    }
+  }
+
   table.setPageSize(newSize || 50)
 })
 
@@ -241,10 +271,11 @@ watch(() => props.data?.length, (newLen) => {
   }
 })
 
-// Show skeleton when explicitly loading, on initial mount of large tables, or when actively searching
+// Show skeleton when explicitly loading, on initial mount of large tables, when actively searching, or when switching to/from allRows
 const showSkeleton = computed(() => {
   return props.loading || 
          isInitialLoading.value || 
+         isPageSizeChanging.value || 
          (isLargeDataset.value && (isTableSearching.value || isInternalSearching.value))
 })
 
@@ -277,6 +308,11 @@ watch(() => props.filterValue, (val) => {
       table.setGlobalFilter(val)
     }
   }
+})
+
+onUnmounted(() => {
+  if (pageSizeTimeout) clearTimeout(pageSizeTimeout)
+  if (filterDebounceTimer) clearTimeout(filterDebounceTimer)
 })
 </script>
 

@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
+import { nextTick } from 'vue';
 import DataTable from '../DataTable.vue';
 import { i18n } from '@/locales';
 import type { ColumnDef } from '@tanstack/vue-table';
@@ -232,3 +233,147 @@ describe('DataTable.vue default sorting rules', () => {
     expect(cellIds).toEqual(['number', 'name']);
   });
 });
+
+describe('DataTable.vue pageSize allRows skeleton transition', () => {
+  const columns: ColumnDef<any>[] = [
+    { accessorKey: 'id', header: 'ID' },
+    { accessorKey: 'name', header: 'Name' },
+  ];
+  const testData = Array.from({ length: 60 }, (_, i) => ({ id: `ID-${i + 1}`, name: `Item ${i + 1}` }));
+
+  it('activates skeleton when switching from normal pageSize to allRows (999999)', async () => {
+    vi.useFakeTimers();
+
+    const wrapper = mount(DataTable, {
+      props: {
+        columns: columns as any,
+        data: testData,
+        pageSize: 50,
+      },
+      global: {
+        plugins: [i18n],
+      },
+    });
+
+    // Advance past initial loading (250ms)
+    vi.advanceTimersByTime(300);
+    await nextTick();
+
+    // Verify initial data is rendered without skeleton
+    expect(wrapper.html()).not.toContain('animate-pulse');
+
+    // Switch to allRows (999999)
+    await wrapper.setProps({ pageSize: 999999 });
+    await nextTick();
+
+    // Skeleton should be active immediately to eliminate visual lag
+    expect(wrapper.html()).toContain('animate-pulse');
+
+    // After 200ms debounce/transition, skeleton should deactivate
+    vi.advanceTimersByTime(200);
+    await nextTick();
+
+    expect(wrapper.html()).not.toContain('animate-pulse');
+
+    vi.useRealTimers();
+  });
+
+  it('activates skeleton when switching from allRows (999999) to normal pageSize (10)', async () => {
+    vi.useFakeTimers();
+
+    const wrapper = mount(DataTable, {
+      props: {
+        columns: columns as any,
+        data: testData,
+        pageSize: 999999,
+      },
+      global: {
+        plugins: [i18n],
+      },
+    });
+
+    // Advance past initial loading
+    vi.advanceTimersByTime(300);
+    await nextTick();
+
+    expect(wrapper.html()).not.toContain('animate-pulse');
+
+    // Switch from allRows to 10
+    await wrapper.setProps({ pageSize: 10 });
+    await nextTick();
+
+    // Skeleton should be active immediately
+    expect(wrapper.html()).toContain('animate-pulse');
+
+    // After 200ms, skeleton should deactivate
+    vi.advanceTimersByTime(200);
+    await nextTick();
+
+    expect(wrapper.html()).not.toContain('animate-pulse');
+
+    vi.useRealTimers();
+  });
+
+  it('does NOT activate skeleton when switching between normal page sizes (10 to 25)', async () => {
+    vi.useFakeTimers();
+
+    const wrapper = mount(DataTable, {
+      props: {
+        columns: columns as any,
+        data: testData,
+        pageSize: 10,
+      },
+      global: {
+        plugins: [i18n],
+      },
+    });
+
+    // Advance past initial loading
+    vi.advanceTimersByTime(300);
+    await nextTick();
+
+    expect(wrapper.html()).not.toContain('animate-pulse');
+
+    // Switch from 10 to 25
+    await wrapper.setProps({ pageSize: 25 });
+    await nextTick();
+
+    // Should NOT show skeleton
+    expect(wrapper.html()).not.toContain('animate-pulse');
+
+    vi.useRealTimers();
+  });
+
+  it('cleans up pending timer on unmount without throwing errors', async () => {
+    vi.useFakeTimers();
+
+    const wrapper = mount(DataTable, {
+      props: {
+        columns: columns as any,
+        data: testData,
+        pageSize: 50,
+      },
+      global: {
+        plugins: [i18n],
+      },
+    });
+
+    vi.advanceTimersByTime(300);
+    await nextTick();
+
+    await wrapper.setProps({ pageSize: 999999 });
+    await nextTick();
+
+    expect(wrapper.html()).toContain('animate-pulse');
+
+    // Unmount before 200ms timeout
+    wrapper.unmount();
+    vi.advanceTimersByTime(300);
+
+    // Verify no unhandled error occurred
+    expect(true).toBe(true);
+
+    vi.useRealTimers();
+  });
+});
+

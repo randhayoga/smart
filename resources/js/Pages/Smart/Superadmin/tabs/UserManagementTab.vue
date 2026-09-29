@@ -72,7 +72,7 @@ const userRowsPerPage = ref<string>('50');
 
 const userPageSize = computed(() => {
   if (userRowsPerPage.value === 'all') {
-    return filteredUsers.value.length || 50;
+    return 999999;
   }
   return parseInt(userRowsPerPage.value, 10) || 50;
 });

@@ -70,6 +70,13 @@ const brandFilter = ref('');
 const typeFilter = ref('');
 const rowsPerPage = ref<'all' | '10' | '25' | '50'>('50');
 
+const pageSizeNumber = computed(() => {
+  if (rowsPerPage.value === 'all' || !rowsPerPage.value) {
+    return 999999;
+  }
+  return parseInt(rowsPerPage.value, 10) || 50;
+});
+
 const hasActiveFilters = computed(() => {
   return !!(categoryFilter.value || subcategoryFilter.value || brandFilter.value || typeFilter.value || searchQuery.value);
 });
@@ -298,26 +305,6 @@ watch(subcategoryFilter, (val) => {
 watch(brandFilter, (val) => {
   if (dataTableRef.value) {
     dataTableRef.value.table.getColumn('brand')?.setFilterValue(val);
-  }
-});
-
-watch(rowsPerPage, (val) => {
-  if (dataTableRef.value) {
-    if (val === 'all') {
-      dataTableRef.value.table.setPageSize(999999);
-    } else {
-      dataTableRef.value.table.setPageSize(Number(val));
-    }
-  }
-}, { immediate: true });
-
-onMounted(() => {
-  if (dataTableRef.value) {
-    if (rowsPerPage.value === 'all') {
-      dataTableRef.value.table.setPageSize(999999);
-    } else {
-      dataTableRef.value.table.setPageSize(Number(rowsPerPage.value));
-    }
   }
 });
 
@@ -712,6 +699,7 @@ onUnmounted(() => {
             :columns="columns" 
             :data="filteredBarangs" 
             :filter-value="searchQuery"
+            :page-size="pageSizeNumber"
             :default-sorting="[{ id: 'lastUpdate', desc: true }]"
           />
         </div>

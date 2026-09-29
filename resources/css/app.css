@@ -1,5 +1,21 @@
-/* Plus Jakarta Sans Font - must be at top */
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600;1,700;1,800&display=swap');
+/* Plus Jakarta Sans Font (Local) */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('../fonts/PlusJakartaSans-VariableFont_wght.ttf') format('truetype-variations'),
+       url('../fonts/PlusJakartaSans-VariableFont_wght.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  font-style: italic;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('../fonts/PlusJakartaSans-Italic-VariableFont_wght.ttf') format('truetype-variations'),
+       url('../fonts/PlusJakartaSans-Italic-VariableFont_wght.ttf') format('truetype');
+}
 
 @import "tailwindcss";
 @import "tw-animate-css";

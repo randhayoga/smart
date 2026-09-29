@@ -150,7 +150,7 @@ const filteredApprovals = computed(() => {
 
 const computedPageSize = computed(() => {
   if (rowsPerPage.value === 'all') {
-    return filteredApprovals.value.length || 50;
+    return 999999;
   }
   return parseInt(rowsPerPage.value, 10) || 50;
 });

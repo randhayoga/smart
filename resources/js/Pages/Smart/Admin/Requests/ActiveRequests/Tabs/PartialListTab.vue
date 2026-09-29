@@ -119,7 +119,7 @@ const filteredRequests = computed(() => {
 
 const computedPageSize = computed(() => {
   if (rowsPerPage.value === 'all') {
-    return filteredRequests.value.length || 50;
+    return 999999;
   }
   return parseInt(rowsPerPage.value, 10) || 50;
 });

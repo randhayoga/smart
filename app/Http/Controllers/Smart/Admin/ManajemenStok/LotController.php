@@ -370,7 +370,6 @@ class LotController extends Controller
                 'age' => $lot->age,
                 
                 // Parent barang info
-                'barang_id' => $lot->barang->id ?? null,
                 'barang_code' => $lot->barang->number ?? '-',
                 'barang_brand' => $lot->barang->brand->name ?? '-',
                 'barang_nama' => $lot->barang->name ?? '-',

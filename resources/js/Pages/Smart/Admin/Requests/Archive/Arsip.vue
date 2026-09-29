@@ -72,8 +72,15 @@ const timeFilterLabel = computed(() => {
 });
 
 const rowsPerPageLabel = computed(() => {
-  if (rowsPerPage.value === 'Semua baris') return t('fulfillment.allRows');
+  if (rowsPerPage.value === 'Semua baris' || rowsPerPage.value === 'all') return t('fulfillment.allRows');
   return rowsPerPage.value;
+});
+
+const pageSizeNumber = computed(() => {
+  if (rowsPerPage.value === 'Semua baris' || rowsPerPage.value === 'all' || !rowsPerPage.value) {
+    return 999999;
+  }
+  return parseInt(rowsPerPage.value, 10) || 50;
 });
 
 const columns = computed<ColumnDef<any>[]>(() => [
@@ -203,25 +210,6 @@ const handleViewDetail = (item: any) => {
 const handleExportExcel = () => alert('Exporting to Excel...');
 const handleExportCSV = () => alert('Exporting to CSV...');
 
-watch(rowsPerPage, (val) => {
-  if (dataTableRef.value && dataTableRef.value.table) {
-    if (val === 'Semua baris' || !val) {
-      dataTableRef.value.table.setPageSize(999999);
-    } else {
-      dataTableRef.value.table.setPageSize(Number(val));
-    }
-  }
-});
-
-onMounted(() => {
-  if (dataTableRef.value && dataTableRef.value.table) {
-    if (rowsPerPage.value === 'Semua baris' || !rowsPerPage.value) {
-      dataTableRef.value.table.setPageSize(999999);
-    } else {
-      dataTableRef.value.table.setPageSize(Number(rowsPerPage.value));
-    }
-  }
-});
 </script>
 
 <template>
@@ -325,6 +313,7 @@ onMounted(() => {
             :columns="columns" 
             :data="dummyArsip" 
             :filter-value="searchQuery"
+            :page-size="pageSizeNumber"
           />
         </div>
       </div>
