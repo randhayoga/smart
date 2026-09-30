@@ -14,6 +14,7 @@ defineProps<{
   organizers?: any[];
   vendors?: any[];
   locations?: any[];
+  departments?: any[];
 }>();
 </script>
 

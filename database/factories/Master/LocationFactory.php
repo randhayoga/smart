@@ -27,7 +27,18 @@ class LocationFactory extends Factory
         return [
             'name' => fake()->city() . ' ' . fake()->unique()->randomNumber(5, false),
             'parent_id' => null,
+            'related_departement' => null,
             'is_active' => true,
         ];
+    }
+
+    /**
+     * Indicate that the location belongs to a specific department.
+     */
+    public function forDepartment(?int $orgchartId): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'related_departement' => $orgchartId,
+        ]);
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Smart\Admin\Master;
 
 use App\Http\Controllers\Controller;
+use App\Models\HrdOrgchart;
 use App\Models\Master\Location;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,14 +21,15 @@ class LocationController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'name'      => [
+            'name'                => [
                 'required', 'string', 'max:255',
                 Rule::unique('locations', 'name')->where(function ($query) use ($request) {
                     return $query->where('parent_id', $request->input('parent_id'));
                 }),
             ],
-            'parent_id' => 'nullable|integer|exists:locations,id',
-            'is_active' => 'nullable|boolean',
+            'parent_id'           => 'nullable|integer|exists:locations,id',
+            'related_departement' => ['nullable', 'integer', Rule::exists(HrdOrgchart::class, 'id')],
+            'is_active'           => 'nullable|boolean',
         ]);
 
         $validated['is_active'] = $request->boolean('is_active', true);
@@ -43,14 +45,15 @@ class LocationController extends Controller
     public function update(Request $request, Location $location): RedirectResponse
     {
         $validated = $request->validate([
-            'name'      => [
+            'name'                => [
                 'required', 'string', 'max:255',
                 Rule::unique('locations', 'name')->where(function ($query) use ($request) {
                     return $query->where('parent_id', $request->input('parent_id'));
                 })->ignore($location->id),
             ],
-            'parent_id' => 'nullable|integer|exists:locations,id',
-            'is_active' => 'nullable|boolean',
+            'parent_id'           => 'nullable|integer|exists:locations,id',
+            'related_departement' => ['nullable', 'integer', Rule::exists(HrdOrgchart::class, 'id')],
+            'is_active'           => 'nullable|boolean',
         ]);
 
         if ($request->has('is_active')) {

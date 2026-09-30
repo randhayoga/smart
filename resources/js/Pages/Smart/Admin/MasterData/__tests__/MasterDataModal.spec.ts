@@ -3,9 +3,26 @@ import { mount } from '@vue/test-utils';
 import MasterDataModal from '../Modals/MasterDataModal.vue';
 import { i18n, setI18nLanguage } from '@/locales';
 
+const mockPost = vi.fn();
+const mockPut = vi.fn();
+
+vi.mock('@inertiajs/vue3', async (importOriginal) => {
+  const actual = await importOriginal<any>();
+  return {
+    ...actual,
+    useForm: (initialData: any) => {
+      const form = actual.useForm(initialData);
+      form.post = mockPost;
+      form.put = mockPut;
+      return form;
+    },
+  };
+});
+
 describe('MasterDataModal.vue', () => {
   beforeEach(() => {
     setI18nLanguage('id');
+    (globalThis as any).route = vi.fn((name: string) => `/mock-${name}`);
   });
 
   const mountModal = (props: any) => {
@@ -115,4 +132,92 @@ describe('MasterDataModal.vue', () => {
     expect(wrapper.emitted('update:open')![0]).toEqual([false]);
     expect(wrapper.emitted('close')).toBeTruthy();
   });
+
+  it('renders department combobox in Location modal', () => {
+    const wrapper = mountModal({
+      mode: 'create',
+      activeTab: 'locations',
+      departments: [
+        { id: 1, name: 'IT - Information Technology' },
+        { id: 2, name: 'HR - Human Resources' },
+      ],
+    });
+
+    expect(wrapper.text()).toContain('Departemen Terkait');
+    expect(wrapper.text()).toContain('Tanpa Departemen');
+  });
+
+  it('populates related_departement in edit mode for Location', async () => {
+    const wrapper = mountModal({
+      mode: 'edit',
+      activeTab: 'locations',
+      item: {
+        id: 10,
+        name: 'Ruang Server',
+        parent_id: null,
+        related_departement: 1,
+        is_active: true,
+      },
+      departments: [
+        { id: 1, name: 'IT - Information Technology' },
+      ],
+    });
+
+    expect(wrapper.text()).toContain('Edit Lokasi');
+    expect(wrapper.text()).toContain('IT - Information Technology');
+  });
+
+  it('submits form with preserveScroll: true in create mode and closes modal on success', async () => {
+    mockPost.mockClear();
+    const wrapper = mountModal({
+      mode: 'create',
+      activeTab: 'categories',
+    });
+
+    const inputs = wrapper.findAll('input');
+    await inputs[0].setValue('TEST');
+    await inputs[1].setValue('Testing Category');
+
+    const submitBtn = wrapper.findAll('button').find(b => b.text().includes('Buat Kategori'));
+    expect(submitBtn?.exists()).toBe(true);
+
+    await submitBtn?.trigger('click');
+
+    expect(mockPost).toHaveBeenCalledTimes(1);
+    const [url, options] = mockPost.mock.calls[0];
+    expect(url).toBe('/mock-smart.master.categories.store');
+    expect(options.preserveScroll).toBe(true);
+
+    // Call onSuccess
+    options.onSuccess();
+    expect(wrapper.emitted('update:open')).toBeTruthy();
+    expect(wrapper.emitted('update:open')![0]).toEqual([false]);
+    expect(wrapper.emitted('close')).toBeTruthy();
+  });
+
+  it('submits form with preserveScroll: true in edit mode and closes modal on success', async () => {
+    mockPut.mockClear();
+    const wrapper = mountModal({
+      mode: 'edit',
+      activeTab: 'categories',
+      item: { id: 1, code: 'TEST', name: 'Existing Category' },
+    });
+
+    const submitBtn = wrapper.findAll('button').find(b => b.text().includes('Simpan Perubahan'));
+    expect(submitBtn?.exists()).toBe(true);
+
+    await submitBtn?.trigger('click');
+
+    expect(mockPut).toHaveBeenCalledTimes(1);
+    const [url, options] = mockPut.mock.calls[0];
+    expect(url).toBe('/mock-smart.master.categories.update');
+    expect(options.preserveScroll).toBe(true);
+
+    // Call onSuccess
+    options.onSuccess();
+    expect(wrapper.emitted('update:open')).toBeTruthy();
+    expect(wrapper.emitted('update:open')![0]).toEqual([false]);
+    expect(wrapper.emitted('close')).toBeTruthy();
+  });
 });
+

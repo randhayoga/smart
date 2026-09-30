@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\HrdOrgchart;
 use App\Models\Master\Brand;
 use App\Models\Master\Category;
 use App\Models\Master\Location;
@@ -165,9 +166,11 @@ class MasterSeeder extends Seeder
         ]);
 
         // 3: Ruang IFS Departemen (Child of Lantai Mezzanine)
+        $ifsDept = HrdOrgchart::where('org_code', 'IFS')->orWhere('org_code', 'TEST-DEPT')->first() ?? HrdOrgchart::first();
         $ruangIfs = Location::create([
             'name' => 'Ruang IFS Departemen',
             'parent_id' => $mezzanine->id,
+            'related_departement' => $ifsDept?->id,
             'is_active' => true,
         ]);
 

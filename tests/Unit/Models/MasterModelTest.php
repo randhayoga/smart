@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\Models;
 
+use App\Models\HrdOrgchart;
 use App\Models\Master\Brand;
 use App\Models\Master\Category;
 use App\Models\Master\Location;
@@ -52,6 +53,27 @@ class MasterModelTest extends TestCase
         $this->assertEquals('Graha RE 1, Lantai Mezzanine, Ruang IFS Departemen', $room->full_name);
         
         $this->assertEquals([$floor->id, $room->id], $building->allChildrenIds());
+    }
+
+    public function test_location_related_department_relationship(): void
+    {
+        $department = HrdOrgchart::create([
+            'org_code' => 'IT-DEV',
+            'org_name' => 'IT Development',
+        ]);
+
+        $location = Location::factory()->create([
+            'name' => 'Ruang Server IT',
+            'related_departement' => $department->id,
+        ]);
+
+        $this->assertTrue($location->relatedDepartment->is($department));
+        $this->assertTrue($location->department->is($department));
+        $this->assertTrue($location->relatedDepartement->is($department));
+        $this->assertTrue($department->locations->contains($location));
+
+        $locationWithoutDept = Location::factory()->create(['name' => 'Lobi Utama']);
+        $this->assertNull($locationWithoutDept->relatedDepartment);
     }
 
     public function test_brand_and_uom_relationships_to_barang(): void

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\HrdOrgchart;
 use App\Models\Master\Location;
 use App\Models\Master\Category;
 use App\Models\Master\Subcategory;
@@ -54,6 +55,83 @@ class MasterDataTest extends TestCase
             'name' => 'Lantai Mezzanine',
             'parent_id' => $parent->id,
             'is_active' => 1,
+        ]);
+    }
+
+    public function test_can_store_location_with_related_department(): void
+    {
+        $user = User::factory()->create();
+        $department = HrdOrgchart::create([
+            'org_code' => 'HRD',
+            'org_name' => 'Human Resources Department',
+        ]);
+
+        $response = $this->actingAs($user)->post(route('smart.master.locations.store'), [
+            'name' => 'Ruang HRD',
+            'related_departement' => $department->id,
+            'is_active' => true,
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('locations', [
+            'name' => 'Ruang HRD',
+            'related_departement' => $department->id,
+            'is_active' => 1,
+        ]);
+    }
+
+    public function test_cannot_store_location_with_invalid_related_department(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->post(route('smart.master.locations.store'), [
+            'name' => 'Ruang Invalid Dept',
+            'related_departement' => 999999,
+        ]);
+
+        $response->assertSessionHasErrors(['related_departement']);
+    }
+
+    public function test_can_update_location_related_department(): void
+    {
+        $user = User::factory()->create();
+        $department1 = HrdOrgchart::create([
+            'org_code' => 'FIN',
+            'org_name' => 'Finance Department',
+        ]);
+        $department2 = HrdOrgchart::create([
+            'org_code' => 'ACC',
+            'org_name' => 'Accounting Department',
+        ]);
+
+        $location = Location::factory()->create([
+            'name' => 'Ruang Keuangan',
+            'related_departement' => $department1->id,
+        ]);
+
+        // Update to department 2
+        $response = $this->actingAs($user)->put(route('smart.master.locations.update', $location), [
+            'name' => 'Ruang Akuntansi',
+            'related_departement' => $department2->id,
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('locations', [
+            'id' => $location->id,
+            'name' => 'Ruang Akuntansi',
+            'related_departement' => $department2->id,
+        ]);
+
+        // Clear department to null
+        $response = $this->actingAs($user)->put(route('smart.master.locations.update', $location), [
+            'name' => 'Ruang Akuntansi',
+            'related_departement' => null,
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('locations', [
+            'id' => $location->id,
+            'related_departement' => null,
         ]);
     }
 

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\HrdOrgchart;
 use App\Models\Master\Category;
 use App\Models\Master\Subcategory;
 use App\Models\Master\Location;
@@ -12,6 +13,7 @@ use App\Models\Inventory\Barang;
 use App\Models\Inventory\Lot;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 /**
@@ -256,6 +258,32 @@ class MasterDataManagementTest extends TestCase
             'parent_id' => $parent->id,
             'is_active' => 1,
         ]);
+    }
+
+    public function test_master_index_provides_departments_and_eager_loads_related_department(): void
+    {
+        $user = User::factory()->create();
+        $department = HrdOrgchart::create([
+            'org_code' => 'IFS',
+            'org_name' => 'Integrated Facility Services',
+        ]);
+        $location = Location::factory()->create([
+            'name' => 'Ruang Operasional',
+            'related_departement' => $department->id,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('smart.master'));
+
+        $response->assertOk();
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('Smart/Admin/MasterData/MasterData')
+            ->has('departments')
+            ->has('locations')
+            ->where('locations.0.id', $location->id)
+            ->where('locations.0.related_departement', $department->id)
+            ->where('locations.0.related_department.id', $department->id)
+            ->where('locations.0.related_department.org_name', 'Integrated Facility Services')
+        );
     }
 
     public function test_cannot_set_location_parent_to_self_or_descendant(): void

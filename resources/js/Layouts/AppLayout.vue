@@ -55,15 +55,27 @@ onMounted(() => {
 
   // Hook into Inertia visit events to display realistic page skeleton
   removeStartListener = router.on('start', (event) => {
+    const visit = event.detail.visit;
+    // Only display navigation skeleton for GET page navigations that do not preserve state
+    if (!visit || visit.method !== 'get' || visit.preserveState === true) {
+      return;
+    }
+
     try {
-      const rawUrl = event.detail.visit?.url;
+      const rawUrl = visit.url;
       const urlStr = typeof rawUrl === 'string'
         ? rawUrl
         : (rawUrl?.pathname || rawUrl?.href || String(rawUrl || ''));
       const urlObj = new URL(urlStr, window.location.origin);
+
+      // Do not display skeleton if staying on the same pathname
+      if (urlObj.pathname === window.location.pathname) {
+        return;
+      }
+
       targetPath.value = urlObj.pathname;
     } catch {
-      targetPath.value = window.location.pathname;
+      return;
     }
 
     if (navTimer) clearTimeout(navTimer);

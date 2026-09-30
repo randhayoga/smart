@@ -64,6 +64,7 @@ return new class extends Migration {
             $table->id();
             $table->string('name');
             $table->foreignId('parent_id')->nullable()->constrained('locations')->noActionOnDelete();
+            $table->unsignedBigInteger('related_departement')->nullable()->index()->comment('Refers to USER_HRIS:hrd_orgchart.id');
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });

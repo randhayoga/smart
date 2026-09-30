@@ -50,6 +50,7 @@ interface Props {
   organizers?:    SimpleItem[];
   vendors?:       VendorItem[];
   locations?:     LocationItem[];
+  departments?:   any[];
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -61,6 +62,7 @@ const props = withDefaults(defineProps<Props>(), {
   organizers:    () => [],
   vendors:       () => [],
   locations:     () => [],
+  departments:   () => [],
 });
 
 const { t } = useI18n();
@@ -165,7 +167,12 @@ const flattenedLocationDisplay = computed<LocationRow[]>(() => {
     }
 
     function checkMatch(node: LocationRow): boolean {
-      const selfMatch = node.name.toLowerCase().includes(q) || (node.full_name ?? '').toLowerCase().includes(q);
+      const dept = node.related_department;
+      const deptMatch = dept ? (
+        Boolean(dept.org_name?.toLowerCase().includes(q)) ||
+        Boolean(dept.org_code && dept.org_code.toLowerCase().includes(q))
+      ) : false;
+      const selfMatch = node.name.toLowerCase().includes(q) || (node.full_name ?? '').toLowerCase().includes(q) || deptMatch;
       let childMatch = false;
       node.childrenList.forEach(c => {
         if (checkMatch(c)) childMatch = true;
@@ -237,6 +244,12 @@ const closeModal = () => {
   isModalOpen.value = false;
   selectedItem.value = null;
 };
+
+watch(isModalOpen, (isOpen) => {
+  if (!isOpen) {
+    selectedItem.value = null;
+  }
+});
 
 function toggleLocationActive(item: LocationItem) {
   router.patch(route('smart.master.locations.toggle-active', item.id), {}, {
@@ -407,6 +420,23 @@ const columns = computed<ColumnDef<any>[]>(() => {
     });
   }
 
+  // Related Department column for Lokasi
+  if (activeTab.value === 'locations') {
+    cols.push({
+      accessorKey: 'related_departement',
+      header: () => h('div', { class: 'pl-2 py-1 font-semibold text-foreground leading-tight' }, t('masterData.columns.relatedDepartment')),
+      cell: ({ row }) => {
+        const item = row.original as LocationRow;
+        const dept = item.related_department;
+        if (!dept) {
+          return h('div', { class: 'pl-2 text-muted-foreground' }, '-');
+        }
+        const deptLabel = dept.org_code ? `${dept.org_code} - ${dept.org_name}` : dept.org_name;
+        return h('div', { class: 'pl-2 text-foreground font-medium truncate', title: deptLabel }, deptLabel);
+      },
+    });
+  }
+
   // Active column for Lokasi
   if (activeTab.value === 'locations') {
     cols.push({
@@ -521,6 +551,7 @@ const routeMap: Record<MasterDataTabKey, string> = {
 const handleConfirmDelete = () => {
   if (!itemToDelete.value) return;
   deleteForm.delete(route(routeMap[activeTab.value], itemToDelete.value.id), {
+    preserveScroll: true,
     onSuccess: () => closeDeleteModal(),
   });
 };
@@ -662,35 +693,36 @@ onUnmounted(() => {
         </div>
       </div>
     </div>
-
-    <!-- Unified Create & Edit Modal -->
-    <MasterDataModal
-      v-model:open="isModalOpen"
-      :mode="modalMode"
-      :active-tab="activeTab"
-      :item="selectedItem"
-      :categories="props.categories"
-      :locations="props.locations"
-      :vendors="props.vendors"
-      @close="closeModal"
-    />
-
-    <!-- Delete Confirmation Modal -->
-    <DeleteConfirmationModal 
-      :is-open="isDeleteModalOpen"
-      :item-count="1"
-      :item-name="currentTabSingular"
-      :item-data="itemToDelete"
-      :processing="deleteForm.processing"
-      @close="closeDeleteModal"
-      @confirm="handleConfirmDelete"
-    />
-
-    <!-- Cannot Delete Warning Modal -->
-    <DeleteErrorModal 
-      :is-open="isErrorModalOpen"
-      :error-message="errorModalMessage"
-      @close="closeErrorModal"
-    />
   </AppLayout>
+
+  <!-- Unified Create & Edit Modal -->
+  <MasterDataModal
+    v-model:open="isModalOpen"
+    :mode="modalMode"
+    :active-tab="activeTab"
+    :item="selectedItem"
+    :categories="props.categories"
+    :locations="props.locations"
+    :vendors="props.vendors"
+    :departments="props.departments"
+    @close="closeModal"
+  />
+
+  <!-- Delete Confirmation Modal -->
+  <DeleteConfirmationModal 
+    :is-open="isDeleteModalOpen"
+    :item-count="1"
+    :item-name="currentTabSingular"
+    :item-data="itemToDelete"
+    :processing="deleteForm.processing"
+    @close="closeDeleteModal"
+    @confirm="handleConfirmDelete"
+  />
+
+  <!-- Cannot Delete Warning Modal -->
+  <DeleteErrorModal 
+    :is-open="isErrorModalOpen"
+    :error-message="errorModalMessage"
+    @close="closeErrorModal"
+  />
 </template>

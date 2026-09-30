@@ -20,6 +20,7 @@ import { Label } from '@/Components/ui/label';
 import { Field, FieldLabel, FieldContent, FieldError } from '@/Components/ui/field';
 import Switch from '@/Components/ui/switch/Switch.vue';
 import LocationCombobox from '@/Components/LocationCombobox.vue';
+import Combobox from '@/Components/Combobox.vue';
 import { useModalLock } from '@/composables/useModalLock';
 
 export type MasterDataTabKey = 'categories' | 'subcategories' | 'uoms' | 'brands' | 'organizers' | 'vendors' | 'locations';
@@ -66,10 +67,23 @@ export interface LocationItem {
   id: number;
   name: string;
   parent_id: number | null;
+  related_departement?: number | null;
+  related_department?: {
+    id: number;
+    org_name: string;
+    org_code?: string;
+  } | null;
   is_active: boolean;
   parent?: { id: number; name: string } | null;
   children_count?: number;
   full_name?: string;
+}
+
+export interface DepartmentItem {
+  id: number | string;
+  name: string;
+  org_name?: string;
+  org_code?: string;
 }
 
 interface Props {
@@ -80,6 +94,7 @@ interface Props {
   categories?: Category[];
   locations?: LocationItem[];
   vendors?: VendorItem[];
+  departments?: DepartmentItem[];
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -90,6 +105,7 @@ const props = withDefaults(defineProps<Props>(), {
   categories: () => [],
   locations: () => [],
   vendors: () => [],
+  departments: () => [],
 });
 
 const emit = defineEmits<{
@@ -150,6 +166,7 @@ const form = useForm({
   cp_phone_2: '',
   category_id: null as number | null,
   parent_id: null as number | null,
+  related_departement: null as number | null,
   is_active: true,
   is_consumable: '1',
 });
@@ -169,6 +186,7 @@ const formErrors = ref<Record<string, string>>({
   cp_phone_2: '',
   category_id: '',
   parent_id: '',
+  related_departement: '',
 });
 
 const resetFormErrors = () => {
@@ -187,6 +205,7 @@ const resetFormErrors = () => {
     cp_phone_2: '',
     category_id: '',
     parent_id: '',
+    related_departement: '',
   };
 };
 
@@ -242,6 +261,7 @@ const populateForm = () => {
     form.category_id = item.category_id ?? null;
     form.is_consumable = item.is_consumable ? '1' : '0';
     form.parent_id = item.parent_id ?? null;
+    form.related_departement = item.related_departement ?? null;
     form.is_active = Boolean(item.is_active);
 
     if (props.activeTab === 'vendors') {
@@ -272,6 +292,7 @@ const populateForm = () => {
     form.cp_phone_2 = '';
     form.category_id = null;
     form.parent_id = null;
+    form.related_departement = null;
     form.is_active = true;
     form.is_consumable = '1';
   }
@@ -287,6 +308,7 @@ const closeModal = () => {
   emit('update:open', false);
   emit('close');
   resetFormErrors();
+  form.reset();
 };
 
 const getPayload = () => {
@@ -321,6 +343,7 @@ const getPayload = () => {
       ...(props.mode === 'edit' ? { id: form.id } : {}),
       parent_id: form.parent_id,
       name: form.name,
+      related_departement: form.related_departement ? Number(form.related_departement) : null,
       is_active: form.is_active,
     };
   }
@@ -438,12 +461,14 @@ const submit = () => {
 
   if (props.mode === 'create') {
     submitForm.post(route(storeRouteMap[props.activeTab]), {
+      preserveScroll: true,
       onSuccess: () => closeModal(),
       onError: (errors: Record<string, string>) => handleErrors(errors),
     });
   } else {
     if (!form.id) return;
     submitForm.put(route(updateRouteMap[props.activeTab], form.id), {
+      preserveScroll: true,
       onSuccess: () => closeModal(),
       onError: (errors: Record<string, string>) => handleErrors(errors),
     });
@@ -724,6 +749,21 @@ onUnmounted(() => {
                 <FieldError v-if="formErrors.name">{{ formErrors.name }}</FieldError>
               </Field>
 
+              <Field :data-invalid="!!formErrors.related_departement || undefined">
+                <FieldLabel>{{ t('masterData.fields.relatedDepartment') }}</FieldLabel>
+                <FieldContent>
+                  <Combobox
+                    v-model="form.related_departement"
+                    :options="props.departments"
+                    :placeholder="t('masterData.placeholders.selectDepartment')"
+                    :search-placeholder="t('masterData.placeholders.searchDepartment')"
+                    :default-label="t('masterData.placeholders.noDepartment')"
+                    width-class="w-full h-10 px-4"
+                  />
+                </FieldContent>
+                <FieldError v-if="formErrors.related_departement">{{ formErrors.related_departement }}</FieldError>
+              </Field>
+
               <div class="flex justify-between items-center pt-2 border-t border-border/50">
                 <span
                   class="text-sm font-medium text-foreground cursor-pointer select-none"
@@ -991,11 +1031,17 @@ onUnmounted(() => {
           <div class="py-3 px-4 border-t border-border flex items-center justify-between">
             <p class="text-sm text-rose-500 italic font-medium">{{ t('masterData.fields.requiredMarker') }}</p>
             <div class="flex items-center gap-3">
-              <Button @click="closeModal" variant="white" size="xl">
+              <Button
+                type="button"
+                @click.stop="closeModal"
+                variant="white"
+                size="xl"
+              >
                 {{ t('common.cancel') }}
               </Button>
               <Button
-                @click="submit"
+                type="button"
+                @click.stop="submit"
                 :disabled="form.processing"
                 variant="primary"
                 size="xl"

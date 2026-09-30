@@ -2,6 +2,7 @@
 
 namespace App\Models\Master;
 
+use App\Models\HrdOrgchart;
 use App\Models\Inventory\Lot;
 use App\Models\Inventory\Unit;
 use Illuminate\Database\Eloquent\Builder;
@@ -21,11 +22,13 @@ class Location extends Model
     protected $fillable = [
         'name',
         'parent_id',
+        'related_departement',
         'is_active',
     ];
 
     protected $casts = [
         'parent_id' => 'integer',
+        'related_departement' => 'integer',
         'is_active' => 'boolean',
     ];
 
@@ -39,6 +42,31 @@ class Location extends Model
     public function parent(): BelongsTo
     {
         return $this->belongsTo(Location::class, 'parent_id');
+    }
+
+    /**
+     * Related HRD department/orgchart.
+     * LOCATION ||--o{ HRD_ORGCHART : "allocated to department"
+     */
+    public function relatedDepartment(): BelongsTo
+    {
+        return $this->belongsTo(HrdOrgchart::class, 'related_departement', 'id');
+    }
+
+    /**
+     * Department alias for relatedDepartment.
+     */
+    public function department(): BelongsTo
+    {
+        return $this->relatedDepartment();
+    }
+
+    /**
+     * Related departement alias matching column name.
+     */
+    public function relatedDepartement(): BelongsTo
+    {
+        return $this->relatedDepartment();
     }
 
     /**

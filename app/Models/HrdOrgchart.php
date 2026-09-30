@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Master\Location;
 use App\Models\Request\Request;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -27,6 +28,10 @@ class HrdOrgchart extends Model
         'employee_id',
         'org_code',
         'org_name',
+    ];
+
+    protected $casts = [
+        'id' => 'integer',
     ];
 
     protected static function booted(): void
@@ -85,7 +90,7 @@ class HrdOrgchart extends Model
     {
         return tap(new $class, function ($instance) {
             if (! $instance->getConnectionName()) {
-                if (str_starts_with(get_class($instance), 'App\\Models\\Request\\')) {
+                if (str_starts_with(get_class($instance), 'App\\Models\\Request\\') || str_starts_with(get_class($instance), 'App\\Models\\Master\\')) {
                     $instance->setConnection(config('database.default', 'SMART'));
                 } else {
                     $instance->setConnection($this->connection);
@@ -101,5 +106,14 @@ class HrdOrgchart extends Model
     public function requests(): HasMany
     {
         return $this->hasMany(Request::class, 'org_id', 'id');
+    }
+
+    /**
+     * Locations associated with this orgchart (department).
+     * HRD_ORGCHART ||--o{ LOCATION : "allocated to dept"
+     */
+    public function locations(): HasMany
+    {
+        return $this->hasMany(Location::class, 'related_departement', 'id');
     }
 }

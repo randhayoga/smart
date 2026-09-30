@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Smart\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\HrdOrgchart;
 use App\Models\Master\Brand;
 use App\Models\Master\Category;
 use App\Models\Master\Location;
@@ -24,6 +25,17 @@ class MasterController extends Controller
      */
     public function index(Request $request): Response
     {
+        $departments = HrdOrgchart::select('id', 'org_name', 'org_code')
+            ->whereNotNull('org_name')
+            ->orderBy('org_name')
+            ->get()
+            ->map(fn($d) => [
+                'id' => (int) $d->id,
+                'name' => $d->org_code ? "{$d->org_code} - {$d->org_name}" : $d->org_name,
+                'org_name' => $d->org_name,
+                'org_code' => $d->org_code,
+            ]);
+
         return Inertia::render('Smart/Admin/MasterData/MasterData', [
             'user'          => $request->user(),
             'categories'    => Category::orderBy('code')->get(),
@@ -32,7 +44,8 @@ class MasterController extends Controller
             'brands'        => Brand::orderBy('name')->get(),
             'organizers'    => Organizer::orderBy('name')->get(),
             'vendors'       => Vendor::orderBy('name')->get(),
-            'locations'     => Location::with('parent')->withCount('children')->orderBy('name')->get(),
+            'locations'     => Location::with(['parent', 'relatedDepartment'])->withCount('children')->orderBy('name')->get(),
+            'departments'   => $departments,
         ]);
     }
 }
