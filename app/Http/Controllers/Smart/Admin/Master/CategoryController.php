@@ -40,7 +40,7 @@ class CategoryController extends Controller
 
         Category::create($validated);
 
-        return redirect()->back()->with('success', 'Kategori berhasil ditambahkan.');
+        return redirect()->back()->with('success', __('master.categories.created'));
     }
 
     /**
@@ -59,7 +59,7 @@ class CategoryController extends Controller
 
         $category->update($validated);
 
-        return redirect()->back()->with('success', 'Kategori berhasil diperbarui.');
+        return redirect()->back()->with('success', __('master.categories.updated'));
     }
 
     /**
@@ -68,11 +68,11 @@ class CategoryController extends Controller
     public function destroy(Category $category): RedirectResponse
     {
         if ($category->subcategories()->exists()) {
-            return redirect()->back()->with('error', 'Kategori tidak dapat dihapus karena masih memiliki subkategori.');
+            return redirect()->back()->with('error', __('master.categories.cannot_delete_has_subcategories'));
         }
 
         $category->delete();
 
-        return redirect()->back()->with('success', 'Kategori berhasil dihapus.');
+        return redirect()->back()->with('success', __('master.categories.deleted'));
     }
 }

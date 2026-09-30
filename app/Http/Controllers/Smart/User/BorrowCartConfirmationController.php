@@ -113,6 +113,6 @@ class BorrowCartConfirmationController extends Controller
     {
         $submissionService->submit($request->user(), $request->validated(), 'borrow');
 
-        return redirect()->back()->with('success', 'Permintaan peminjaman berhasil dikirim.');
+        return redirect()->back()->with('success', __('requests.borrow_request_submitted'));
     }
 }

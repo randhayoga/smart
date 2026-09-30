@@ -38,7 +38,7 @@ class SubcategoryController extends Controller
 
         Subcategory::create($validated);
 
-        return redirect()->back()->with('success', 'Subkategori berhasil ditambahkan.');
+        return redirect()->back()->with('success', __('master.subcategories.created'));
     }
 
     /**
@@ -54,7 +54,7 @@ class SubcategoryController extends Controller
 
         $subcategory->update($validated);
 
-        return redirect()->back()->with('success', 'Subkategori berhasil diperbarui.');
+        return redirect()->back()->with('success', __('master.subcategories.updated'));
     }
 
     /**
@@ -63,11 +63,11 @@ class SubcategoryController extends Controller
     public function destroy(Subcategory $subcategory): RedirectResponse
     {
         if (DB::table('barangs')->where('subcategory_id', $subcategory->id)->exists()) {
-            return redirect()->back()->with('error', 'Subkategori tidak dapat dihapus karena sedang digunakan oleh data barang.');
+            return redirect()->back()->with('error', __('master.subcategories.cannot_delete_used'));
         }
 
         $subcategory->delete();
 
-        return redirect()->back()->with('success', 'Subkategori berhasil dihapus.');
+        return redirect()->back()->with('success', __('master.subcategories.deleted'));
     }
 }

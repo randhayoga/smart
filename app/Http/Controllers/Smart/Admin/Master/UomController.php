@@ -24,7 +24,7 @@ class UomController extends Controller
 
         Uom::create($validated);
 
-        return redirect()->back()->with('success', 'Satuan berhasil ditambahkan.');
+        return redirect()->back()->with('success', __('master.uoms.created'));
     }
 
     /**
@@ -38,7 +38,7 @@ class UomController extends Controller
 
         $uom->update($validated);
 
-        return redirect()->back()->with('success', 'Satuan berhasil diperbarui.');
+        return redirect()->back()->with('success', __('master.uoms.updated'));
     }
 
     /**
@@ -47,11 +47,11 @@ class UomController extends Controller
     public function destroy(Uom $uom): RedirectResponse
     {
         if (DB::table('barangs')->where('uom_id', $uom->id)->exists()) {
-            return redirect()->back()->with('error', 'Satuan tidak dapat dihapus karena sedang digunakan oleh data barang.');
+            return redirect()->back()->with('error', __('master.uoms.cannot_delete_used'));
         }
 
         $uom->delete();
 
-        return redirect()->back()->with('success', 'Satuan berhasil dihapus.');
+        return redirect()->back()->with('success', __('master.uoms.deleted'));
     }
 }

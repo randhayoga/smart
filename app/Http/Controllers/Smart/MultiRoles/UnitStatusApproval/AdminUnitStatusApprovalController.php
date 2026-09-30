@@ -71,6 +71,6 @@ class AdminUnitStatusApprovalController extends Controller
 
         $unit->update(['status' => 'Pending:BoD/BoC']);
 
-        return redirect()->back()->with('success', 'Pengajuan perubahan status unit berhasil dikirim.');
+        return redirect()->back()->with('success', __('requests.unit_status_change_submitted'));
     }
 }

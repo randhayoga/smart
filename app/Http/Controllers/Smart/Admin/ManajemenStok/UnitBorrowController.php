@@ -170,7 +170,7 @@ class UnitBorrowController extends Controller
             }
         });
 
-        return redirect()->back()->with('success', 'Data peminjaman berhasil disimpan.');
+        return redirect()->back()->with('success', __('inventory.borrow_saved'));
     }
 
     /**
@@ -257,6 +257,6 @@ class UnitBorrowController extends Controller
             Unit::withoutEvents(fn() => $unit->update(['status' => 'Tersedia']));
         });
 
-        return redirect()->back()->with('success', 'Peminjaman selesai. Status aset kembali Tersedia.');
+        return redirect()->back()->with('success', __('inventory.borrow_completed'));
     }
 }

@@ -28,7 +28,7 @@ class RequestCancellationController extends Controller
         ]);
 
         if ($request->status !== 'wait') {
-            return redirect()->back()->with('error', 'Hanya permintaan yang berstatus menunggu persetujuan yang dapat dibatalkan.');
+            return redirect()->back()->with('error', __('requests.only_pending_can_be_cancelled'));
         }
 
         $userName = $httpRequest->user()->name;
@@ -47,6 +47,6 @@ class RequestCancellationController extends Controller
             ]);
         });
 
-        return redirect()->back()->with('success', 'Permintaan berhasil dibatalkan.');
+        return redirect()->back()->with('success', __('requests.request_cancelled'));
     }
 }

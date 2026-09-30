@@ -64,7 +64,7 @@ class LotManualRequestController extends Controller
                 requestDate: $validated['request_date'] ?? null
             );
 
-            return redirect()->back()->with('success', 'Permintaan manual berhasil dicatat.');
+            return redirect()->back()->with('success', __('inventory.manual_request_recorded'));
         });
     }
 }

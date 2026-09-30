@@ -32,6 +32,6 @@ class UserRoleController extends Controller
         $roleLabel = Role::where('name', $validated['role'])->value('label') ?? $validated['role'];
         $userName = $user->employee_name ?? $user->name;
 
-        return back()->with('success', "Peran untuk {$userName} berhasil diubah menjadi {$roleLabel}.");
+        return back()->with('success', __('access.user_role_updated', ['user' => $userName, 'role' => $roleLabel]));
     }
 }

@@ -26,11 +26,11 @@ class RequestItemLotAssignmentController extends Controller
 
         if ($request->wantsJson()) {
             return response()->json([
-                'message' => 'Alokasi stok LOT berhasil disimpan.',
+                'message' => __('requests.lot_allocation_saved'),
                 'fulfillments' => $fulfillments,
             ]);
         }
 
-        return redirect()->back()->with('success', 'Alokasi stok LOT berhasil disimpan.');
+        return redirect()->back()->with('success', __('requests.lot_allocation_saved'));
     }
 }

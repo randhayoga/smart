@@ -224,7 +224,7 @@ class BulkUnitController extends Controller
                 }
             });
 
-            return redirect()->back()->with('success', count($units) . ' aset terpilih berhasil disetujui BoD/BoC dan status diubah menjadi Pending:DM.');
+            return redirect()->back()->with('success', __('inventory.bulk_bod_boc_approved', ['count' => count($units)]));
         }
 
         $arrInactiveConditions = ['Rusak Total', 'Hilang', 'Lelang/Hibah'];
@@ -370,6 +370,6 @@ class BulkUnitController extends Controller
         }
 
         $count = count($ids);
-        return redirect()->back()->with('success', $count . ' aset terpilih berhasil diperbarui.');
+        return redirect()->back()->with('success', __('inventory.bulk_unit_updated', ['count' => $count]));
     }
 }

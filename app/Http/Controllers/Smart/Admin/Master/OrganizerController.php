@@ -24,7 +24,7 @@ class OrganizerController extends Controller
 
         Organizer::create($validated);
 
-        return redirect()->back()->with('success', 'Organizer berhasil ditambahkan.');
+        return redirect()->back()->with('success', __('master.organizers.created'));
     }
 
     /**
@@ -38,7 +38,7 @@ class OrganizerController extends Controller
 
         $organizer->update($validated);
 
-        return redirect()->back()->with('success', 'Organizer berhasil diperbarui.');
+        return redirect()->back()->with('success', __('master.organizers.updated'));
     }
 
     /**
@@ -47,11 +47,11 @@ class OrganizerController extends Controller
     public function destroy(Organizer $organizer): RedirectResponse
     {
         if (DB::table('lots')->where('organizer_id', $organizer->id)->exists()) {
-            return redirect()->back()->with('error', 'Organizer tidak dapat dihapus karena sedang digunakan oleh data lot barang.');
+            return redirect()->back()->with('error', __('master.organizers.cannot_delete_used'));
         }
 
         $organizer->delete();
 
-        return redirect()->back()->with('success', 'Organizer berhasil dihapus.');
+        return redirect()->back()->with('success', __('master.organizers.deleted'));
     }
 }

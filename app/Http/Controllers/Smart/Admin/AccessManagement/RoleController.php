@@ -46,7 +46,7 @@ class RoleController extends Controller
             'description' => $request->input('description'),
         ]);
 
-        return back()->with('success', "Peran '{$role->label}' berhasil dibuat.");
+        return back()->with('success', __('access.role_created', ['label' => $role->label]));
     }
 
     /**
@@ -79,7 +79,7 @@ class RoleController extends Controller
             ]);
         }
 
-        return back()->with('success', "Peran '{$role->label}' berhasil diperbarui.");
+        return back()->with('success', __('access.role_updated', ['label' => $role->label]));
     }
 
     /**
@@ -89,19 +89,19 @@ class RoleController extends Controller
     {
         // 1. Guard against deleting core system roles
         if (in_array($role->name, self::PROTECTED_ROLES, true)) {
-            return back()->with('error', "Peran sistem '{$role->label}' dilindungi dan tidak dapat dihapus.");
+            return back()->with('error', __('access.role_protected', ['label' => $role->label]));
         }
 
         // 2. Guard against deleting roles with active user assignments
         $activeUserCount = $role->users()->count();
         if ($activeUserCount > 0) {
-            return back()->with('error', "Peran '{$role->label}' tidak dapat dihapus karena masih digunakan oleh {$activeUserCount} karyawan aktif.");
+            return back()->with('error', __('access.role_in_use', ['label' => $role->label, 'count' => $activeUserCount]));
         }
 
         $roleName = $role->label;
         $role->permissions()->detach();
         $role->delete();
 
-        return back()->with('success', "Peran '{$roleName}' berhasil dihapus.");
+        return back()->with('success', __('access.role_deleted', ['name' => $roleName]));
     }
 }

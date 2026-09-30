@@ -46,8 +46,8 @@ class ManagerRequestApprovalController extends Controller
 
         $isMultiple = count($ids) > 1;
         $message = $decision === 'approve'
-            ? ($isMultiple ? 'Beberapa permintaan berhasil disetujui.' : 'Permintaan berhasil disetujui.')
-            : ($isMultiple ? 'Beberapa permintaan berhasil ditolak.' : 'Permintaan berhasil ditolak.');
+            ? ($isMultiple ? __('requests.requests_approved_multiple') : __('requests.request_approved'))
+            : ($isMultiple ? __('requests.requests_rejected_multiple') : __('requests.request_rejected'));
 
         return redirect()->back()->with('success', $message);
     }

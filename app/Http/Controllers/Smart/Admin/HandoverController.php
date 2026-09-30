@@ -247,6 +247,6 @@ class HandoverController extends Controller
             ]);
         }
 
-        return redirect()->back()->with('success', 'Alokasi aset berhasil disimpan.');
+        return redirect()->back()->with('success', __('requests.asset_allocation_saved'));
     }
 }

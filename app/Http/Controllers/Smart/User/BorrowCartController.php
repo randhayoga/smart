@@ -111,7 +111,7 @@ class BorrowCartController extends Controller
 
         $basketItem->save();
 
-        return redirect()->back()->with('success', 'Barang berhasil ditambahkan ke keranjang!');
+        return redirect()->back()->with('success', __('requests.cart_item_added'));
     }
 
     /**
@@ -133,7 +133,7 @@ class BorrowCartController extends Controller
 
         $item->update($validated);
 
-        return redirect()->back()->with('success', 'Keranjang peminjaman diperbarui.');
+        return redirect()->back()->with('success', __('requests.borrow_cart_updated'));
     }
 
     /**
@@ -146,6 +146,6 @@ class BorrowCartController extends Controller
 
         $item->delete();
 
-        return redirect()->back()->with('success', 'Barang dihapus dari keranjang.');
+        return redirect()->back()->with('success', __('requests.cart_item_removed'));
     }
 }

@@ -159,7 +159,7 @@ class ProcessFulfillmentConfirmation
 
                 return [
                     'status' => 'full',
-                    'message' => 'Semua alokasi unit berhasil dikonfirmasi secara penuh (Full Fulfillment). Menunggu Serah Terima.',
+                    'message' => __('requests.fulfillment_full_confirmed'),
                 ];
             }
 
@@ -179,7 +179,7 @@ class ProcessFulfillmentConfirmation
 
             return [
                 'status' => 'partial',
-                'message' => 'Pemenuhan sebagian (Partial Fulfillment) berhasil dikonfirmasi. Menunggu Serah Terima (Parsial).',
+                'message' => __('requests.fulfillment_partial_confirmed'),
             ];
         });
     }

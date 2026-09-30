@@ -82,7 +82,7 @@ class LotController extends Controller
             app(NotificationService::class)->checkAndNotifyLowStock($lot->barang);
         }
 
-        return redirect()->back()->with('success', 'LOT berhasil ditambahkan.');    
+        return redirect()->back()->with('success', __('inventory.lot_created'));
     }
 
     /**
@@ -156,7 +156,7 @@ class LotController extends Controller
             app(NotificationService::class)->checkAndNotifyLowStock($lot->barang);
         }
 
-        return redirect()->back()->with('success', 'LOT berhasil diperbarui.');
+        return redirect()->back()->with('success', __('inventory.lot_updated'));
     }
 
     /**
@@ -165,7 +165,7 @@ class LotController extends Controller
     public function destroy(Request $request, Lot $lot)
     {
         if ($lot->units()->exists()) {
-            return redirect()->back()->with('error', 'LOT tidak dapat dihapus karena masih memiliki unit terkait.');
+            return redirect()->back()->with('error', __('inventory.lot_cannot_delete_has_units'));
         }
 
         if ($lot->image_url && $lot->image_url !== 'inventory/lots/placeholder.jpg' && Storage::disk('local')->exists($lot->image_url)) {
@@ -188,7 +188,7 @@ class LotController extends Controller
             app(NotificationService::class)->checkAndNotifyLowStock($barang);
         }
 
-        return redirect()->back()->with('success', 'LOT berhasil dihapus.');
+        return redirect()->back()->with('success', __('inventory.lot_deleted'));
     }
 
     /**

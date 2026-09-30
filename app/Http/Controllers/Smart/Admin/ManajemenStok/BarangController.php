@@ -44,7 +44,7 @@ class BarangController extends Controller
         }
         app(NotificationService::class)->checkAndNotifyLowStock($barang);
 
-        return redirect()->back()->with('success', 'Tipe berhasil ditambahkan.');
+        return redirect()->back()->with('success', __('inventory.barang_created'));
     }
 
     /**
@@ -87,7 +87,7 @@ class BarangController extends Controller
 
         app(NotificationService::class)->checkAndNotifyLowStock($barang);
 
-        return redirect()->back()->with('success', 'Tipe berhasil diperbarui.');
+        return redirect()->back()->with('success', __('inventory.barang_updated'));
     }
 
 
@@ -97,7 +97,7 @@ class BarangController extends Controller
     public function destroy(Request $request, Barang $barang)
     {
         if ($barang->lots()->exists()) {
-            return redirect()->back()->with('error', 'Barang tidak dapat dihapus karena masih memiliki LOT terkait.');
+            return redirect()->back()->with('error', __('inventory.barang_cannot_delete_has_lots'));
         }
 
         if ($barang->image_url && Storage::disk('local')->exists($barang->image_url)) {
@@ -115,6 +115,6 @@ class BarangController extends Controller
 
         $barang->delete();
 
-        return redirect()->route('smart.inventory')->with('success', 'Tipe berhasil dihapus.');
+        return redirect()->route('smart.inventory')->with('success', __('inventory.barang_deleted'));
     }
 }

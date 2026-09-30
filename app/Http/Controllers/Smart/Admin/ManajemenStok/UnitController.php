@@ -243,7 +243,7 @@ class UnitController extends Controller
             ]);
         }
  
-        return redirect()->back()->with('success', 'Aset berhasil ditambahkan.');
+        return redirect()->back()->with('success', __('inventory.unit_created'));
     }
  
     /**
@@ -296,7 +296,7 @@ class UnitController extends Controller
                 ]);
             });
 
-            return redirect()->back()->with('success', 'Formulir Approval BoD/BoC berhasil diunggah dan status diubah menjadi Pending:DM.');
+            return redirect()->back()->with('success', __('inventory.bod_boc_uploaded'));
         }
 
         $arrInactiveConditions = ['Rusak Total', 'Hilang', 'Lelang/Hibah'];
@@ -482,7 +482,7 @@ class UnitController extends Controller
             }
         }
 
-        return redirect()->back()->with('success', 'Aset berhasil diperbarui.');
+        return redirect()->back()->with('success', __('inventory.unit_updated'));
     }
 
     /**
@@ -491,7 +491,7 @@ class UnitController extends Controller
     public function destroy(Unit $unit)
     {
         if (RequestFulfillment::where('unit_id', $unit->id)->exists()) {
-            return redirect()->back()->with('error', 'Aset tidak dapat dihapus karena sudah memiliki riwayat peminjaman/permintaan.');
+            return redirect()->back()->with('error', __('inventory.unit_cannot_delete_has_history'));
         }
 
         if ($unit->image_url && Storage::disk('local')->exists($unit->image_url)) {
@@ -505,6 +505,6 @@ class UnitController extends Controller
 
         $unit->delete();
 
-        return redirect()->back()->with('success', 'Aset berhasil dihapus.');
+        return redirect()->back()->with('success', __('inventory.unit_deleted'));
     }
 }

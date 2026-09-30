@@ -99,7 +99,7 @@ class BulkLotController extends Controller
         }
 
         $count = count($request->input('ids'));
-        return redirect()->back()->with('success', $count . ' LOT terpilih berhasil diperbarui.');
+        return redirect()->back()->with('success', __('inventory.bulk_lot_updated', ['count' => $count]));
     }
 
     /**
@@ -143,10 +143,13 @@ class BulkLotController extends Controller
 
         if ($undeletedCounter > 0) {
             $key = 'error';
-            $message = $deletedCounter . ' LOT terpilih berhasil dihapus.' . "\n" . $undeletedCounter . ' LOT tidak dapat dihapus karena masih memiliki unit terkait.';
+            $message = __('inventory.bulk_lot_deleted_partial', [
+                'deleted' => $deletedCounter,
+                'undeleted' => $undeletedCounter,
+            ]);
         } else {
             $key = 'success';
-            $message = $deletedCounter . ' LOT terpilih berhasil dihapus.';
+            $message = __('inventory.bulk_lot_deleted', ['count' => $deletedCounter]);
         }
 
         return redirect()->back()->with($key, $message);

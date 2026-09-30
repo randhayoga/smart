@@ -26,11 +26,11 @@ class RequestItemUnitAssignmentController extends Controller
 
         if ($request->wantsJson()) {
             return response()->json([
-                'message' => 'Alokasi unit aset berhasil disimpan.',
+                'message' => __('requests.unit_allocation_saved'),
                 'fulfillments' => $fulfillments,
             ]);
         }
 
-        return redirect()->back()->with('success', 'Alokasi unit aset berhasil disimpan.');
+        return redirect()->back()->with('success', __('requests.unit_allocation_saved'));
     }
 }

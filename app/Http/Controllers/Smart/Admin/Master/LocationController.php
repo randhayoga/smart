@@ -36,7 +36,7 @@ class LocationController extends Controller
 
         Location::create($validated);
 
-        return redirect()->back()->with('success', 'Lokasi berhasil ditambahkan.');
+        return redirect()->back()->with('success', __('master.locations.created'));
     }
 
     /**
@@ -72,7 +72,7 @@ class LocationController extends Controller
 
         $location->update($validated);
 
-        return redirect()->back()->with('success', 'Lokasi berhasil diperbarui.');
+        return redirect()->back()->with('success', __('master.locations.updated'));
     }
 
     /**
@@ -82,9 +82,11 @@ class LocationController extends Controller
     {
         $newStatus = !$location->is_active;
         $location->update(['is_active' => $newStatus]);
-        $statusText = $newStatus ? 'diaktifkan' : 'dinonaktifkan';
+        $message = $newStatus
+            ? __('master.locations.activated')
+            : __('master.locations.deactivated');
 
-        return redirect()->back()->with('success', "Lokasi berhasil {$statusText}.");
+        return redirect()->back()->with('success', $message);
     }
 
     /**
@@ -93,16 +95,16 @@ class LocationController extends Controller
     public function destroy(Location $location): RedirectResponse
     {
         if ($location->children()->exists()) {
-            return redirect()->back()->with('error', 'Lokasi tidak dapat dihapus karena masih memiliki sub-lokasi.');
+            return redirect()->back()->with('error', __('master.locations.cannot_delete_has_children'));
         }
 
         if (DB::table('lots')->where('location_id', $location->id)->exists() ||
             DB::table('units')->where('location_id', $location->id)->exists()) {
-            return redirect()->back()->with('error', 'Lokasi tidak dapat dihapus karena sedang digunakan oleh data lot/unit barang.');
+            return redirect()->back()->with('error', __('master.locations.cannot_delete_used'));
         }
 
         $location->delete();
 
-        return redirect()->back()->with('success', 'Lokasi berhasil dihapus.');
+        return redirect()->back()->with('success', __('master.locations.deleted'));
     }
 }

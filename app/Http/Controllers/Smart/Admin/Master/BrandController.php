@@ -25,7 +25,7 @@ class BrandController extends Controller
 
         Brand::create($validated);
 
-        return redirect()->back()->with('success', 'Merek berhasil ditambahkan.');
+        return redirect()->back()->with('success', __('master.brands.created'));
     }
 
     /**
@@ -40,7 +40,7 @@ class BrandController extends Controller
 
         $brand->update($validated);
 
-        return redirect()->back()->with('success', 'Merek berhasil diperbarui.');
+        return redirect()->back()->with('success', __('master.brands.updated'));
     }
 
     /**
@@ -49,11 +49,11 @@ class BrandController extends Controller
     public function destroy(Brand $brand): RedirectResponse
     {
         if (DB::table('barangs')->where('brand_id', $brand->id)->exists()) {
-            return redirect()->back()->with('error', 'Merek tidak dapat dihapus karena sedang digunakan oleh data barang.');
+            return redirect()->back()->with('error', __('master.brands.cannot_delete_used'));
         }
 
         $brand->delete();
 
-        return redirect()->back()->with('success', 'Merek berhasil dihapus.');
+        return redirect()->back()->with('success', __('master.brands.deleted'));
     }
 }

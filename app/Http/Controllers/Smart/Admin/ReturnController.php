@@ -225,6 +225,6 @@ class ReturnController extends Controller
             'note' => 'Pengembalian aset dikonfirmasi oleh Admin. Aset telah kembali di gudang.',
         ]);
 
-        return redirect()->route('smart.returns')->with('success', 'Pengembalian aset berhasil dikonfirmasi.');
+        return redirect()->route('smart.returns')->with('success', __('requests.return_confirmed'));
     }
 }

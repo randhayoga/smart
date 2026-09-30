@@ -35,7 +35,7 @@ class VendorController extends Controller
 
         Vendor::create($validated);
 
-        return redirect()->back()->with('success', 'Vendor berhasil ditambahkan.');
+        return redirect()->back()->with('success', __('master.vendors.created'));
     }
 
     /**
@@ -60,7 +60,7 @@ class VendorController extends Controller
 
         $vendor->update($validated);
 
-        return redirect()->back()->with('success', 'Vendor berhasil diperbarui.');
+        return redirect()->back()->with('success', __('master.vendors.updated'));
     }
 
     /**
@@ -69,11 +69,11 @@ class VendorController extends Controller
     public function destroy(Vendor $vendor): RedirectResponse
     {
         if (DB::table('lots')->where('vendor_id', $vendor->id)->exists()) {
-            return redirect()->back()->with('error', 'Vendor tidak dapat dihapus karena sedang digunakan oleh data lot barang.');
+            return redirect()->back()->with('error', __('master.vendors.cannot_delete_used'));
         }
 
         $vendor->delete();
 
-        return redirect()->back()->with('success', 'Vendor berhasil dihapus.');
+        return redirect()->back()->with('success', __('master.vendors.deleted'));
     }
 }

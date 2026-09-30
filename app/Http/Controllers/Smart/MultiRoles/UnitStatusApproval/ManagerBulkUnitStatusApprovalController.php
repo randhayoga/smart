@@ -49,8 +49,8 @@ class ManagerBulkUnitStatusApprovalController extends Controller
         }
 
         $message = $decision === 'approved' 
-            ? 'Status perubahan aset berhasil disetujui.' 
-            : 'Status perubahan aset berhasil ditolak.';
+            ? __('requests.unit_status_approved') 
+            : __('requests.unit_status_rejected');
 
         return redirect()->back()->with('success', $message);
     }

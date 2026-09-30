@@ -44,8 +44,8 @@ class AdminRequestConfirmationController extends Controller
 
         $isMultiple = count($ids) > 1;
         $message = $action === 'confirm'
-            ? ($isMultiple ? 'Beberapa permintaan berhasil dikonfirmasi.' : 'Permintaan berhasil dikonfirmasi.')
-            : ($isMultiple ? 'Beberapa permintaan berhasil ditolak.' : 'Permintaan berhasil ditolak.');
+            ? ($isMultiple ? __('requests.requests_confirmed_multiple') : __('requests.request_confirmed'))
+            : ($isMultiple ? __('requests.requests_rejected_multiple') : __('requests.request_rejected'));
 
         return redirect()->back()->with('success', $message);
     }

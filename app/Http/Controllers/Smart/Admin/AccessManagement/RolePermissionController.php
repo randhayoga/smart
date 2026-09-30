@@ -28,6 +28,6 @@ class RolePermissionController extends Controller
             $role->revokePermissionTo($validated['permission']);
         }
 
-        return back()->with('success', "Hak akses '{$validated['permission']}' untuk peran '{$role->label}' berhasil diperbarui.");
+        return back()->with('success', __('access.permission_updated', ['permission' => $validated['permission'], 'role' => $role->label]));
     }
 }

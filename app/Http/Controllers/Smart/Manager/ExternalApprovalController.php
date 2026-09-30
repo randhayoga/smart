@@ -56,7 +56,7 @@ class ExternalApprovalController extends Controller
         $smartRequest = SmartRequest::findOrFail($id);
 
         if ($smartRequest->status !== 'wait') {
-            return redirect()->to($request->fullUrl())->with('warning', 'Permohonan ini telah diproses sebelumnya.');
+            return redirect()->to($request->fullUrl())->with('warning', __('requests.already_processed'));
         }
 
         $processApproval->execute(
@@ -68,8 +68,8 @@ class ExternalApprovalController extends Controller
         );
 
         $message = $validated['action'] === 'approve'
-            ? 'Permohonan berhasil disetujui.'
-            : 'Permohonan berhasil ditolak.';
+            ? __('requests.permohonan_approved')
+            : __('requests.permohonan_rejected');
 
         return redirect()->to($request->fullUrl())->with('success', $message);
     }

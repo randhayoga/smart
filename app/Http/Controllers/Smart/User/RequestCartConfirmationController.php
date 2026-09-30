@@ -103,6 +103,6 @@ class RequestCartConfirmationController extends Controller
     {
         $submissionService->submit($request->user(), $request->validated(), 'consumable');
 
-        return redirect()->back()->with('success', 'Permintaan berhasil dikirim dan sedang menunggu approval.');
+        return redirect()->back()->with('success', __('requests.request_submitted_waiting_approval'));
     }
 }

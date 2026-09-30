@@ -90,7 +90,7 @@ class RequestCartController extends Controller
         $basketItem->quantity = ($basketItem->quantity ?? 0) + $validated['quantity'];
         $basketItem->save();
 
-        return redirect()->back()->with('success', 'Barang berhasil ditambahkan ke keranjang!');
+        return redirect()->back()->with('success', __('requests.cart_item_added'));
     }
 
     /**
@@ -107,7 +107,7 @@ class RequestCartController extends Controller
 
         $item->update(['quantity' => $validated['quantity']]);
 
-        return redirect()->back()->with('success', 'Jumlah barang diperbarui.');
+        return redirect()->back()->with('success', __('requests.cart_quantity_updated'));
     }
 
     /**
@@ -120,6 +120,6 @@ class RequestCartController extends Controller
 
         $item->delete();
 
-        return redirect()->back()->with('success', 'Barang dihapus dari keranjang.');
+        return redirect()->back()->with('success', __('requests.cart_item_removed'));
     }
 }
