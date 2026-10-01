@@ -69,6 +69,7 @@ interface Props {
     organizer_id?: number | null;
     vendor?: string;
     vendor_id?: number | null;
+    legacy_vendor_id?: number | null;
     lot_organizer?: string;
     lot_date_of_receipt?: string | null;
     lot_vendor?: string;
@@ -345,7 +346,7 @@ const filteredUnits = computed(() => {
   }
 
   if (vendorFilter.value) {
-    list = list.filter(u => String(u.vendor_id) === String(vendorFilter.value));
+    list = list.filter(u => String(u.vendor_id) === String(vendorFilter.value) || String(u.legacy_vendor_id) === String(vendorFilter.value));
   }
 
   return list;

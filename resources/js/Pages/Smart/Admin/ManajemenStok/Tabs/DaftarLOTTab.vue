@@ -61,7 +61,8 @@ interface Props {
     organizer: string;
     organizer_id: number;
     vendor: string;
-    vendor_id: number;
+    vendor_id?: number | null;
+    legacy_vendor_id?: number | null;
     location: string;
     location_id: number;
     floor: string | null;

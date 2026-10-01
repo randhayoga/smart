@@ -226,7 +226,6 @@ export default {
   atLeastOneField: 'Harap isi minimal satu input untuk melakukan perubahan massal.',
   lotCodeRequired: 'Kode LOT belum diisi',
   organizerRequired: 'Organizer belum dipilih',
-  vendorRequired: 'Vendor belum dipilih',
   locationRequired: 'Lokasi belum dipilih',
   poNumberRequired: 'Nomor PO belum diisi',
   dateOfReceiptRequired: 'Tanggal Registrasi belum diisi',

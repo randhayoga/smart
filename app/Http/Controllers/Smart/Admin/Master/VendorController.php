@@ -68,7 +68,7 @@ class VendorController extends Controller
      */
     public function destroy(Vendor $vendor): RedirectResponse
     {
-        if (DB::table('lots')->where('vendor_id', $vendor->id)->exists()) {
+        if (DB::table('lots')->where('legacy_vendor_id', $vendor->id)->exists()) {
             return redirect()->back()->with('error', __('master.vendors.cannot_delete_used'));
         }
 

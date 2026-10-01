@@ -74,6 +74,7 @@ class ConsumableLotController extends Controller
             'barang.uom',
             'organizer',
             'vendor',
+            'legacyVendor',
             'location.parent',
             'project',
         ])
@@ -90,8 +91,9 @@ class ConsumableLotController extends Controller
                 'date_of_receipt' => $lot->date_of_receipt ? $lot->date_of_receipt->format('Y-m-d') : null,
                 'organizer' => $lot->organizer->name ?? '-',
                 'organizer_id' => $lot->organizer_id,
-                'vendor' => $lot->vendor->name ?? '-',
+                'vendor' => $lot->vendor_name,
                 'vendor_id' => $lot->vendor_id,
+                'legacy_vendor_id' => $lot->legacy_vendor_id,
                 'location' => $lot->location ? $lot->location->full_name : '-',
                 'location_id' => $lot->location_id,
                 'unitPrice' => $lot->unit_price,
@@ -119,7 +121,9 @@ class ConsumableLotController extends Controller
         });
 
         $organizers = Organizer::orderBy('name')->get();
-        $vendors = Vendor::orderBy('name')->get();
+        // Target DB: eproc (vendors table).
+        // Eproc database is not operational yet, returning empty array for LOT vendor selection.
+        $vendors = []; // When operational: DB::connection('eproc')->table('vendors')->select('id', 'name')->orderBy('name')->get();
         $locations = Location::with('parent')->active()->orderBy('name')->get();
 
         $projects = TbProject::orderBy('project_name')->get();

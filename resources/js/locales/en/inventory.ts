@@ -226,7 +226,6 @@ export default {
   atLeastOneField: 'Please fill in at least one input for bulk changes.',
   lotCodeRequired: 'LOT code is required',
   organizerRequired: 'Organizer is required',
-  vendorRequired: 'Vendor is required',
   locationRequired: 'Location is required',
   poNumberRequired: 'PO number is required',
   dateOfReceiptRequired: 'Registration date is required',

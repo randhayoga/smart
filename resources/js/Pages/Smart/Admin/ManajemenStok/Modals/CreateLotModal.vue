@@ -193,7 +193,6 @@ const handleSubmit = () => {
   let isValid = true;
   if (!lotForm.number) { errors.value.number = t('inventory.lotCodeRequired'); isValid = false; }
   if (!lotForm.organizer_id) { errors.value.organizer_id = t('inventory.organizerRequired'); isValid = false; }
-  if (!lotForm.vendor_id) { errors.value.vendor_id = t('inventory.vendorRequired'); isValid = false; }
   if (!lotForm.location_id) { errors.value.location_id = t('inventory.locationRequired'); isValid = false; }
   if (!lotForm.date_of_receipt) { errors.value.date_of_receipt = t('inventory.dateOfReceiptRequired'); isValid = false; }
   if (lotForm.burden === 'Project' && !lotForm.project_id) {
@@ -224,7 +223,7 @@ const handleSubmit = () => {
   lotForm.transform((data) => {
     const formData: any = {
       _method: data._method, number: data.number, barang_id: data.barang_id,
-      organizer_id: data.organizer_id, vendor_id: data.vendor_id,
+      organizer_id: data.organizer_id, vendor_id: data.vendor_id ? Number(data.vendor_id) : null,
       location_id: data.location_id,
       po_number: data.po_number || null, date_of_receipt: data.date_of_receipt,
       unit_price: data.unit_price,
@@ -338,7 +337,7 @@ const handleSubmit = () => {
                   </Field>
 
                   <Field :data-invalid="!!errors.vendor_id || undefined">
-                    <FieldLabel><span>{{ t('inventory.vendor') }}<span class="text-rose-500">*</span></span></FieldLabel>
+                    <FieldLabel><span>{{ t('inventory.vendor') }}</span></FieldLabel>
                     <FieldContent>
                       <Combobox v-model="lotForm.vendor_id" :options="vendors" :search-placeholder="t('inventory.searchVendorPlaceholder')" :default-label="t('inventory.selectVendor')" width-class="w-full h-10 px-4" :error="!!errors.vendor_id" />
                     </FieldContent>

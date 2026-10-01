@@ -34,7 +34,8 @@ class LotController extends Controller
             'number' => 'required|string|max:26|unique:lots,number',
             'barang_id' => 'required|exists:barangs,id',
             'organizer_id' => 'required|exists:organizers,id',
-            'vendor_id' => 'required|exists:vendors,id',
+            'vendor_id' => 'nullable|integer', // Target DB: eproc (vendors table) - not operational yet
+            'legacy_vendor_id' => 'nullable|exists:vendors,id', // Legacy vendors in local DB
             'location_id' => 'required|exists:locations,id',
             'initial_quantity' => 'nullable|integer|min:0|max:2147483647',
             'current_quantity' => 'nullable|integer|min:0|max:2147483647',
@@ -71,6 +72,8 @@ class LotController extends Controller
         $validated['initial_quantity'] = $validated['initial_quantity'] ?? 0;
         $validated['burden'] = $validated['burden'] ?? 'Corporate';
         $validated['project_id'] = ($validated['burden'] === 'Project') ? ($validated['project_id'] ?? null) : null;
+        $validated['vendor_id'] = !empty($validated['vendor_id']) ? (int)$validated['vendor_id'] : null;
+        $validated['legacy_vendor_id'] = !empty($validated['legacy_vendor_id']) ? (int)$validated['legacy_vendor_id'] : null;
 
         $lot = Lot::create($validated);
 
@@ -94,7 +97,8 @@ class LotController extends Controller
             'number' => 'required|string|max:26|unique:lots,number,' . $lot->id,
             'barang_id' => 'required|exists:barangs,id',
             'organizer_id' => 'required|exists:organizers,id',
-            'vendor_id' => 'required|exists:vendors,id',
+            'vendor_id' => 'nullable|integer', // Target DB: eproc (vendors table) - not operational yet
+            'legacy_vendor_id' => 'nullable|exists:vendors,id', // Legacy vendors in local DB
             'location_id' => 'required|exists:locations,id',
             'initial_quantity' => 'nullable|integer|min:0|max:2147483647',
             'po_number' => 'nullable|string|max:255',
@@ -144,6 +148,12 @@ class LotController extends Controller
         }
         $validated['burden'] = $validated['burden'] ?? 'Corporate';
         $validated['project_id'] = ($validated['burden'] === 'Project') ? ($validated['project_id'] ?? null) : null;
+        if ($request->has('vendor_id')) {
+            $validated['vendor_id'] = !empty($validated['vendor_id']) ? (int)$validated['vendor_id'] : null;
+        }
+        if ($request->has('legacy_vendor_id')) {
+            $validated['legacy_vendor_id'] = !empty($validated['legacy_vendor_id']) ? (int)$validated['legacy_vendor_id'] : null;
+        }
 
         $original = $lot->getAttributes();
         $lot->update($validated);
@@ -202,6 +212,7 @@ class LotController extends Controller
             'barang.uom',
             'organizer',
             'vendor',
+            'legacyVendor',
             'location.parent',
             'project',
         ]);
@@ -215,8 +226,9 @@ class LotController extends Controller
                 'date_of_receipt' => $lot->date_of_receipt ? $lot->date_of_receipt->format('Y-m-d') : null,
                 'organizer' => $lot->organizer->name ?? '-',
                 'organizer_id' => $lot->organizer_id,
-                'vendor' => $lot->vendor->name ?? '-',
+                'vendor' => $lot->vendor_name,
                 'vendor_id' => $lot->vendor_id,
+                'legacy_vendor_id' => $lot->legacy_vendor_id,
                 'location' => $lot->location ? $lot->location->full_name : '-',
                 'location_id' => $lot->location_id,
                 'unitPrice' => $lot->unit_price,
@@ -248,7 +260,7 @@ class LotController extends Controller
         $units = Unit::with([
             'location.parent', 'statusApprovals',
             'lot.barang.subcategory.category', 'lot.barang.brand', 'lot.barang.uom',
-            'lot.organizer', 'lot.vendor', 'lifecycles.actor'
+            'lot.organizer', 'lot.vendor', 'lot.legacyVendor', 'lifecycles.actor'
         ])
         ->where('lot_id', $lot->id)
         ->orderBy('created_at', 'desc')
@@ -295,10 +307,11 @@ class LotController extends Controller
                 'lot_unitPrice' => $unit->lot->unit_price ?? null,
                 'organizer' => $unit->lot->organizer->name ?? '-',
                 'organizer_id' => $unit->lot->organizer_id ?? null,
-                'vendor' => $unit->lot->vendor->name ?? '-',
+                'vendor' => $unit->lot?->vendor_name ?? '-',
                 'vendor_id' => $unit->lot->vendor_id ?? null,
+                'legacy_vendor_id' => $unit->lot->legacy_vendor_id ?? null,
                 'lot_organizer' => $unit->lot->organizer->name ?? '-',
-                'lot_vendor' => $unit->lot->vendor->name ?? '-',
+                'lot_vendor' => $unit->lot?->vendor_name ?? '-',
                 'lot_po_number' => $unit->lot->po_number ?? '-',
                 'lot_date_of_receipt' => ($unit->lot && $unit->lot->date_of_receipt) ? $unit->lot->date_of_receipt->format('Y-m-d') : null,
                 'lot_age' => $unit->lot->age ?? null,
@@ -333,7 +346,9 @@ class LotController extends Controller
         $brands = Brand::orderBy('name')->get();
         $uoms = Uom::orderBy('name')->get();
         $organizers = Organizer::orderBy('name')->get();
-        $vendors = Vendor::orderBy('name')->get();
+        // Target DB: eproc (vendors table).
+        // Eproc database is not operational yet, returning empty array for LOT vendor selection.
+        $vendors = []; // When operational: DB::connection('eproc')->table('vendors')->select('id', 'name')->orderBy('name')->get();
         $locations = Location::with('parent')->active()->orderBy('name')->get();
         $projects = TbProject::orderBy('project_name')->get();
         $users = \App\Models\User::select('id', 'employee_name', 'employee_id')
@@ -354,8 +369,9 @@ class LotController extends Controller
                 'date_of_receipt' => $lot->date_of_receipt ? $lot->date_of_receipt->format('Y-m-d') : null,
                 'organizer' => $lot->organizer->name ?? '-',
                 'organizer_id' => $lot->organizer_id,
-                'vendor' => $lot->vendor->name ?? '-',
+                'vendor' => $lot->vendor_name,
                 'vendor_id' => $lot->vendor_id,
+                'legacy_vendor_id' => $lot->legacy_vendor_id,
                 'location' => $lot->location ? $lot->location->full_name : '-',
                 'location_id' => $lot->location_id,
                 'unitPrice' => $lot->unit_price,

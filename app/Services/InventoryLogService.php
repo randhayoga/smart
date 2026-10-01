@@ -136,7 +136,7 @@ class InventoryLogService
     public function logLotCreated(Lot $lot, User|int $user, ?string $note = null): InventoryLog
     {
         $userId = $user instanceof User ? $user->id : $user;
-        $lot->loadMissing(['barang.uom', 'vendor', 'location', 'project']);
+        $lot->loadMissing(['barang.uom', 'vendor', 'legacyVendor', 'location', 'project']);
 
         $quantity = (int) ($lot->initial_quantity ?? $lot->current_quantity ?? 0);
         $uomName = $lot->barang?->uom?->name ?? 'item';
@@ -150,7 +150,9 @@ class InventoryLogService
             'current_quantity' => $lot->current_quantity,
             'po_number' => $lot->po_number,
             'date_of_receipt' => $lot->date_of_receipt ? $lot->date_of_receipt->format('Y-m-d') : null,
-            'vendor' => $lot->vendor?->name,
+            'vendor' => $lot->vendor_name ?? null,
+            'vendor_id' => $lot->vendor_id,
+            'legacy_vendor_id' => $lot->legacy_vendor_id,
             'location' => $lot->location?->name,
             'burden' => $lot->burden,
             'project' => $lot->project?->project_name,
@@ -181,6 +183,7 @@ class InventoryLogService
         $trackedFields = [
             'organizer_id',
             'vendor_id',
+            'legacy_vendor_id',
             'location_id',
             'po_number',
             'date_of_receipt',
@@ -229,7 +232,7 @@ class InventoryLogService
     public function prepareAndLogLotDeleted(Lot $lot, User|int $user, ?string $note = null): InventoryLog
     {
         $userId = $user instanceof User ? $user->id : $user;
-        $lot->loadMissing(['barang', 'vendor', 'location']);
+        $lot->loadMissing(['barang', 'vendor', 'legacyVendor', 'location']);
 
         $previousState = [
             'id' => $lot->id,

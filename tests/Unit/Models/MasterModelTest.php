@@ -95,10 +95,12 @@ class MasterModelTest extends TestCase
         $vendor = Vendor::factory()->create(['name' => 'PT Tech Vendor']);
         $lot = Lot::factory()->create([
             'organizer_id' => $organizer->id,
-            'vendor_id' => $vendor->id,
+            'legacy_vendor_id' => $vendor->id,
+            'vendor_id' => null,
         ]);
 
         $this->assertTrue($organizer->lots->contains($lot));
         $this->assertTrue($vendor->lots->contains($lot));
+        $this->assertTrue($lot->legacyVendor->is($vendor));
     }
 }

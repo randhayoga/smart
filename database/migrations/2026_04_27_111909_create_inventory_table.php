@@ -26,7 +26,8 @@ return new class extends Migration {
             $table->string('number', 26)->unique();
             $table->foreignId('barang_id')->constrained('barangs')->cascadeOnDelete();
             $table->foreignId('organizer_id')->constrained('organizers')->cascadeOnDelete();
-            $table->foreignId('vendor_id')->constrained('vendors')->cascadeOnDelete();
+            $table->unsignedBigInteger('vendor_id')->nullable()->index()->comment('Refers to eproc:vendors.id');
+            $table->foreignId('legacy_vendor_id')->nullable()->constrained('vendors')->nullOnDelete()->comment('Refers to local vendors table (legacy)');
             $table->foreignId('location_id')->constrained('locations')->comment('default location');
             $table->integer('initial_quantity');
             $table->integer('current_quantity')->nullable()->comment('for consumables');

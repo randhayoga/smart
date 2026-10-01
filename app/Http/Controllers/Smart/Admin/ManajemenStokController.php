@@ -111,7 +111,7 @@ class ManajemenStokController extends Controller
             'min_stock_threshold' => $barang->min_stock_threshold,
         ];
 
-        $lots = Lot::with(['organizer', 'vendor', 'location.parent', 'project'])
+        $lots = Lot::with(['organizer', 'vendor', 'legacyVendor', 'location.parent', 'project'])
             ->withCount(['units', 'units as available_units_count' => function ($query) {
                 $query->where('status', 'Tersedia');
             }])
@@ -126,8 +126,9 @@ class ManajemenStokController extends Controller
                     'date_of_receipt' => $lot->date_of_receipt ? $lot->date_of_receipt->format('Y-m-d') : null,
                     'organizer' => $lot->organizer->name ?? '-',
                     'organizer_id' => $lot->organizer_id,
-                    'vendor' => $lot->vendor->name ?? '-',
+                    'vendor' => $lot->vendor_name,
                     'vendor_id' => $lot->vendor_id,
+                    'legacy_vendor_id' => $lot->legacy_vendor_id,
                     'location' => $lot->location?->full_name ?? '-',
                     'location_id' => $lot->location_id,
                     'unitPrice' => $lot->unit_price,
@@ -148,7 +149,9 @@ class ManajemenStokController extends Controller
         $brands = Brand::orderBy('name')->get();
         $uoms = Uom::orderBy('name')->get();
         $organizers = Organizer::orderBy('name')->get();
-        $vendors = Vendor::orderBy('name')->get();
+        // Target DB: eproc (vendors table).
+        // Eproc database is not operational yet, returning empty array for LOT vendor selection.
+        $vendors = []; // When operational: DB::connection('eproc')->table('vendors')->select('id', 'name')->orderBy('name')->get();
         $locations = Location::with('parent')->active()->orderBy('name')->get();
 
         $units = [];
@@ -156,7 +159,7 @@ class ManajemenStokController extends Controller
             $units = Unit::with([
                 'location.parent', 'statusApprovals',
                 'lot.barang.subcategory.category', 'lot.barang.brand', 'lot.barang.uom',
-                'lot.organizer', 'lot.vendor', 'lifecycles.actor'
+                'lot.organizer', 'lot.vendor', 'lot.legacyVendor', 'lifecycles.actor'
             ])
             ->whereHas('lot', function ($query) use ($barang) {
                 $query->where('barang_id', $barang->id);
@@ -205,10 +208,11 @@ class ManajemenStokController extends Controller
                     'lot_unitPrice' => $unit->lot->unit_price ?? null,
                     'organizer' => $unit->lot->organizer->name ?? '-',
                     'organizer_id' => $unit->lot->organizer_id ?? null,
-                    'vendor' => $unit->lot->vendor->name ?? '-',
+                    'vendor' => $unit->lot?->vendor_name ?? '-',
                     'vendor_id' => $unit->lot->vendor_id ?? null,
+                    'legacy_vendor_id' => $unit->lot->legacy_vendor_id ?? null,
                     'lot_organizer' => $unit->lot->organizer->name ?? '-',
-                    'lot_vendor' => $unit->lot->vendor->name ?? '-',
+                    'lot_vendor' => $unit->lot?->vendor_name ?? '-',
                     'lot_po_number' => $unit->lot->po_number ?? '-',
                     'lot_date_of_receipt' => ($unit->lot && $unit->lot->date_of_receipt) ? $unit->lot->date_of_receipt->format('Y-m-d') : null,
                     'lot_age' => $unit->lot->age ?? null,

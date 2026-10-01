@@ -192,7 +192,6 @@ const handleSubmit = () => {
   if (isSingle.value) {
     let isValid = true;
     if (!form.organizer_id) { errors.value.organizer_id = t('inventory.organizerRequired'); isValid = false; }
-    if (!form.vendor_id) { errors.value.vendor_id = t('inventory.vendorRequired'); isValid = false; }
     if (!form.burden) { errors.value.burden = t('inventory.burdenRequired'); isValid = false; }
     if (form.burden === 'Project' && !form.project_id) { errors.value.project_id = t('inventory.projectRequired'); isValid = false; }
     if (!form.location_id) { errors.value.location_id = t('inventory.locationRequired'); isValid = false; }
@@ -210,7 +209,7 @@ const handleSubmit = () => {
         number: data.number,
         barang_id: data.barang_id,
         organizer_id: data.organizer_id,
-        vendor_id: data.vendor_id,
+        vendor_id: data.vendor_id ? Number(data.vendor_id) : null,
         location_id: data.location_id,
         po_number: data.po_number || null,
         date_of_receipt: data.date_of_receipt,
@@ -348,7 +347,7 @@ const handleSubmit = () => {
 
                   <Field :data-invalid="(isSingle && !!errors.vendor_id) || undefined">
                     <FieldLabel>
-                      <span>{{ t('inventory.vendor') }}<span v-if="isSingle" class="text-rose-500">*</span></span>
+                      <span>{{ t('inventory.vendor') }}</span>
                     </FieldLabel>
                     <FieldContent>
                       <Combobox v-model="form.vendor_id" :options="vendors" :search-placeholder="t('inventory.searchVendorPlaceholder')" :default-label="isSingle ? t('inventory.selectVendor') : t('inventory.unchanged')" width-class="w-full h-10 px-4" />

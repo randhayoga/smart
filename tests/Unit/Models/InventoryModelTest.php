@@ -59,7 +59,8 @@ class InventoryModelTest extends TestCase
         $lot = Lot::factory()->create([
             'barang_id' => $barang->id,
             'organizer_id' => $organizer->id,
-            'vendor_id' => $vendor->id,
+            'legacy_vendor_id' => $vendor->id,
+            'vendor_id' => null,
             'location_id' => $location->id,
         ]);
 
@@ -75,7 +76,8 @@ class InventoryModelTest extends TestCase
 
         $this->assertTrue($lot->barang->is($barang));
         $this->assertTrue($lot->organizer->is($organizer));
-        $this->assertTrue($lot->vendor->is($vendor));
+        $this->assertTrue($lot->legacyVendor->is($vendor));
+        $this->assertEquals($vendor->name, $lot->vendor_name);
         $this->assertTrue($lot->location->is($location));
         $this->assertTrue($lot->units->contains($unit));
     }

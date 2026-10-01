@@ -447,7 +447,7 @@ class MasterDataTest extends TestCase
     {
         $user = User::factory()->create();
         $vendor = Vendor::factory()->create();
-        \App\Models\Inventory\Lot::factory()->create(['vendor_id' => $vendor->id]);
+        \App\Models\Inventory\Lot::factory()->create(['legacy_vendor_id' => $vendor->id, 'vendor_id' => null]);
 
         $response = $this->actingAs($user)->delete(route('smart.master.vendors.destroy', $vendor));
 

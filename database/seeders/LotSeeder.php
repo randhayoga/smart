@@ -147,7 +147,8 @@ class LotSeeder extends Seeder
                 [
                     'barang_id' => $barangId,
                     'organizer_id' => $organizerId,
-                    'vendor_id' => $vendorId,
+                    'vendor_id' => null,
+                    'legacy_vendor_id' => $vendorId,
                     'location_id' => $locationId,
                     'initial_quantity' => $data['initial_quantity'],
                     'current_quantity' => $data['current_quantity'],

@@ -29,6 +29,7 @@ class Lot extends Model
         'barang_id',
         'organizer_id',
         'vendor_id',
+        'legacy_vendor_id',
         'location_id',
         'initial_quantity',
         'current_quantity',
@@ -45,6 +46,8 @@ class Lot extends Model
         'unit_price' => 'decimal:2',
         'initial_quantity' => 'integer',
         'current_quantity' => 'integer',
+        'vendor_id' => 'integer',
+        'legacy_vendor_id' => 'integer',
     ];
 
     /**
@@ -64,11 +67,30 @@ class Lot extends Model
     }
 
     /**
-     * The vendor / supplier from whom this lot was purchased.
+     * The legacy vendor from local database (used for existing assets and inventory).
+     */
+    public function legacyVendor(): BelongsTo
+    {
+        return $this->belongsTo(Vendor::class, 'legacy_vendor_id');
+    }
+
+    /**
+     * The vendor from external eproc database (for new LOTs).
+     * Target db: "eproc" (not operational yet).
      */
     public function vendor(): BelongsTo
     {
-        return $this->belongsTo(Vendor::class);
+        // Future eproc vendor relation (target DB: eproc)
+        // return $this->belongsTo(EprocVendor::class, 'vendor_id');
+        return $this->belongsTo(Vendor::class, 'vendor_id');
+    }
+
+    /**
+     * Display name of the vendor (resolves legacy vendor first for existing assets, or eproc vendor).
+     */
+    public function getVendorNameAttribute(): string
+    {
+        return $this->vendor?->name ?? $this->legacyVendor?->name ?? '-';
     }
 
     /**

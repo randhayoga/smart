@@ -30,11 +30,11 @@ class Vendor extends Model
     ];
 
     /**
-     * Lots supplied by this vendor.
-     * VENDOR ||--o{ LOT : "supplied by"
+     * Lots supplied by this legacy vendor.
+     * VENDOR ||--o{ LOT : "supplied by (legacy)"
      */
     public function lots(): HasMany
     {
-        return $this->hasMany(Lot::class);
+        return $this->hasMany(Lot::class, 'legacy_vendor_id');
     }
 }
