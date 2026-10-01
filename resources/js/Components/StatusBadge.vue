@@ -36,6 +36,10 @@ const STATUS_KEY_MAP: Record<string, string> = {
   'approved': 'status.disetujui',
   'sukses': 'status.sukses',
   'success': 'status.sukses',
+  'belum diverifikasi': 'status.belumDiverifikasi',
+  'unverified': 'status.belumDiverifikasi',
+  'verifikasi ditolak': 'status.verifikasiDitolak',
+  'verification rejected': 'status.verifikasiDitolak',
   'menunggu approval': 'status.menungguApproval',
   'menunggu persetujuan': 'status.menungguApproval',
   'di-approve': 'status.diApprove',
@@ -58,6 +62,12 @@ const badgeClass = computed(() => {
   if (!s) return 'bg-gray-100 text-gray-800';
   const lower = s.toLowerCase();
 
+  if (s === 'Belum Diverifikasi' || lower === 'belum diverifikasi' || lower === 'unverified') {
+    return 'bg-amber-50 text-amber-900 border border-amber-300 dark:bg-amber-950/40 dark:text-amber-300';
+  }
+  if (s === 'Verifikasi Ditolak' || lower === 'verifikasi ditolak' || lower === 'verification rejected') {
+    return 'bg-rose-100 text-rose-800 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300';
+  }
   if (s === 'Tersedia' || lower === 'tersedia') return 'bg-emerald-100 text-emerald-800';
   if (s === 'Dipinjam' || lower === 'dipinjam') return 'bg-amber-100 text-amber-800';
   if (s === 'Standby' || lower === 'standby') return 'bg-blue-100 text-blue-800';

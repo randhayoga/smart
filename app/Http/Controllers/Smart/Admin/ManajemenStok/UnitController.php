@@ -7,6 +7,7 @@ use App\Models\Inventory\Barang;
 use App\Models\Inventory\Lot;
 use App\Models\Inventory\Unit;
 use App\Models\Inventory\UnitStatusApproval;
+use App\Models\Inventory\UnitActivationApproval;
 use App\Models\Inventory\UnitLifecycle;
 use App\Models\Master\Location;
 use App\Models\Master\Organizer;
@@ -185,7 +186,7 @@ class UnitController extends Controller
         $needApproval = in_array($proposedCondition, $arrNeedApproval);
 
         $inputStatusLower = strtolower(trim($request->input('status', '')));
-        if ($inputStatusLower === 'tidak aktif' && !$needApproval) {
+        if ($inputStatusLower === 'tidak aktif' && !$needApproval && $proposedCondition !== 'Belum Diverifikasi') {
             return redirect()->back()->withErrors(['status' => 'Status Tidak Aktif tidak dapat dipilih secara manual.']);
         }
 
@@ -242,6 +243,15 @@ class UnitController extends Controller
                 'memo_url' => $memoUrl,
                 'lost_doc_url' => $lostDocUrl,
             ]);
+        } elseif ($unit->condition === 'Belum Diverifikasi') {
+            UnitActivationApproval::create([
+                'unit_id' => $unit->id,
+                'requester_id' => $request->user()->id,
+                'decision' => 'pending',
+                'requested_at' => now(),
+            ]);
+
+            app(\App\Services\NotificationService::class)->notifyManagerNewAssetActivation($unit);
         }
  
         return redirect()->back()->with('success', __('inventory.unit_created'));

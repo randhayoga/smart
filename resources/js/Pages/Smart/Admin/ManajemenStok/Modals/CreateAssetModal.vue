@@ -85,8 +85,8 @@ const form = useForm({
   number: '',
   lot_id: props.lot?.id,
   location_id: '' as string | number,
-  status: '',
-  condition: '',
+  status: 'Tidak Aktif',
+  condition: 'Belum Diverifikasi',
   type: '',
   classification: '',
   price: '' as string | number,
@@ -201,6 +201,8 @@ watch(() => props.open, (val) => {
   resetErrors();
   form.lot_id = props.lot?.id;
   form.number = generateAssetCode();
+  form.status = 'Tidak Aktif';
+  form.condition = 'Belum Diverifikasi';
   form.image_url = null;
   form.image_url_name = '';
   form.use_lot_image = false;
@@ -487,7 +489,7 @@ const handleSubmit = () => {
                     <FieldError v-if="errors.type">{{ errors.type }}</FieldError>
                   </Field>
 
-                  <Field :data-invalid="!!errors.status || undefined" :data-disabled="isStatusDisabled || undefined">
+                  <Field v-show="false" :data-invalid="!!errors.status || undefined" :data-disabled="isStatusDisabled || undefined">
                     <FieldLabel>
                       <span>{{ t('inventory.status') }}<span class="text-rose-500">*</span></span>
                     </FieldLabel>
@@ -533,7 +535,7 @@ const handleSubmit = () => {
 
                 <!-- Right Column -->
                 <div class="space-y-6">
-                  <Field :data-invalid="!!errors.condition || undefined">
+                  <Field v-show="false" :data-invalid="!!errors.condition || undefined">
                     <FieldLabel>
                       <span>{{ t('inventory.condition') }}<span class="text-rose-500">*</span></span>
                     </FieldLabel>

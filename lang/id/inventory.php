@@ -26,4 +26,6 @@ return [
     'borrow_saved' => 'Data peminjaman berhasil disimpan.',
     'borrow_completed' => 'Peminjaman selesai. Status aset kembali Tersedia.',
     'manual_request_recorded' => 'Permintaan manual berhasil dicatat.',
+    'activation_approved' => 'Aset berhasil diaktivasi.',
+    'activation_rejected' => 'Aktivasi aset berhasil ditolak.',
 ];

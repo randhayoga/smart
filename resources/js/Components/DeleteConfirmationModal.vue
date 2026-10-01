@@ -5,7 +5,7 @@
 import { computed, onMounted, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useModalLock } from '@/composables/useModalLock';
-import { X, AlertTriangle, Loader2 } from 'lucide-vue-next';
+import { X, AlertTriangle, Loader2, ThumbsUp, Ban } from 'lucide-vue-next';
 import { Button } from "@/Components/ui/button";
 import { formatDate } from '@/lib/utils';
 
@@ -118,16 +118,46 @@ const getClassificationLabel = (c: string) => {
   return c;
 };
 
+const isApprovalAction = computed(() => {
+  return props.actionType === 'approved' ||
+         props.actionType === 'rejected' ||
+         props.actionType === 'approve' ||
+         props.actionType === 'reject' ||
+         props.itemName === 'Perubahan Status Aset' ||
+         props.itemName === 'Aktivasi Aset Baru' ||
+         props.itemName === t('approvals.assetStatusChange') ||
+         props.itemName === t('approvals.assetActivation');
+});
+
+const isActivationApproval = computed(() => {
+  return props.itemName === 'Aktivasi Aset Baru' ||
+         props.itemName === t('approvals.assetActivation');
+});
+
 const modalTitle = computed(() => {
-  if (props.itemName === 'Perubahan Status Aset') {
-    return props.actionType === 'approved' ? t('common.modals.approvalConfirmTitle') : t('common.modals.rejectConfirmTitle');
+  if (isApprovalAction.value) {
+    return props.actionType === 'approved' || props.actionType === 'approve'
+      ? t('common.modals.approvalConfirmTitle')
+      : t('common.modals.rejectConfirmTitle');
   }
   return props.title !== 'Konfirmasi Penghapusan' ? props.title : t('common.modals.deleteConfirmTitle');
 });
 
 const modalMessage = computed(() => {
-  if (props.itemName === 'Perubahan Status Aset') {
-    return props.actionType === 'approved'
+  if (isApprovalAction.value) {
+    const isApprove = props.actionType === 'approved' || props.actionType === 'approve';
+    if (isActivationApproval.value) {
+      if (isApprove) {
+        return props.itemCount === 1
+          ? t('common.modals.activationApprovalConfirmSingle')
+          : t('common.modals.activationApprovalConfirmMsg', { count: props.itemCount });
+      } else {
+        return props.itemCount === 1
+          ? t('common.modals.activationRejectConfirmSingle')
+          : t('common.modals.activationRejectConfirmMsg', { count: props.itemCount });
+      }
+    }
+    return isApprove
       ? t('common.modals.approvalConfirmMsg', { count: props.itemCount })
       : t('common.modals.rejectConfirmMsg', { count: props.itemCount });
   }
@@ -138,42 +168,48 @@ const modalMessage = computed(() => {
 });
 
 const modalMessageClass = computed(() => {
-  if (props.itemName === 'Perubahan Status Aset') {
-    return props.actionType === 'approved' ? 'text-[#66BB6A] font-bold' : 'text-destructive font-bold';
+  if (isApprovalAction.value) {
+    return (props.actionType === 'approved' || props.actionType === 'approve')
+      ? 'text-[#66BB6A] font-bold'
+      : 'text-destructive font-bold';
   }
   return props.messageClass;
 });
 
 const modalConfirmButtonText = computed(() => {
-  if (props.itemName === 'Perubahan Status Aset') {
-    return props.actionType === 'approved' ? t('common.modals.approvalConfirmTitle') : t('common.modals.rejectConfirmTitle');
+  if (isApprovalAction.value) {
+    return (props.actionType === 'approved' || props.actionType === 'approve')
+      ? t('common.modals.approvalConfirmTitle')
+      : t('common.modals.rejectConfirmTitle');
   }
   return props.confirmButtonText !== 'Konfirmasi Penghapusan' ? props.confirmButtonText : t('common.modals.deleteConfirmTitle');
 });
 
 const confirmButtonVariant = computed(() => {
-  if (props.itemName === 'Perubahan Status Aset') {
-    return props.actionType === 'approved' ? 'success' : 'destructive';
+  if (isApprovalAction.value) {
+    return (props.actionType === 'approved' || props.actionType === 'approve') ? 'success' : 'destructive';
   }
   return 'destructive';
 });
 
 const modalIconClass = computed(() => {
-  if (props.itemName === 'Perubahan Status Aset') {
-    return props.actionType === 'approved' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-destructive/10 text-destructive';
+  if (isApprovalAction.value) {
+    return (props.actionType === 'approved' || props.actionType === 'approve')
+      ? 'bg-emerald-500/10 text-emerald-500'
+      : 'bg-destructive/10 text-destructive';
   }
   return props.iconClass;
 });
 
 const modalShowNotice = computed(() => {
-  if (props.itemName === 'Perubahan Status Aset') {
+  if (isApprovalAction.value) {
     return false;
   }
   return props.showNotice;
 });
 
 const modalMaxWidthClass = computed(() => {
-  if (props.itemName === 'Perubahan Status Aset') {
+  if (isApprovalAction.value) {
     return 'max-w-2xl';
   }
   return props.maxWidthClass;
@@ -189,37 +225,43 @@ const displayFields = computed(() => {
 
   const fields: { label: string; value: any }[] = [];
 
-  // Determine fields for Perubahan Status Aset
-  if (props.itemName === 'Perubahan Status Aset') {
-    if (data.asset_code) fields.push({ label: 'Kode Aset', value: data.asset_code });
-    if (data.type || data.unit_details?.type) fields.push({ label: 'Tipe', value: data.type || data.unit_details?.type });
-    if (data.classification || data.unit_details?.classification) fields.push({ label: 'Klasifikasi', value: getClassificationLabel(data.classification || data.unit_details?.classification) });
-    if (data.status_label) fields.push({ label: 'Status', value: data.status_label });
-    if (data.unit_details?.lot_code) fields.push({ label: 'Kode LOT', value: data.unit_details.lot_code });
-    if (data.category) fields.push({ label: 'Kategori', value: data.category });
-    if (data.subcategory) fields.push({ label: 'Subkategori', value: data.subcategory });
-    if (data.brand) fields.push({ label: 'Merek', value: data.brand });
-    if (data.name || data.nama) fields.push({ label: 'Nama', value: data.name || data.nama });
-    if (data.specification) fields.push({ label: 'Spesifikasi', value: data.specification });
+  // Determine fields for Approval Actions (Perubahan Status Aset & Aktivasi Aset Baru)
+  if (isApprovalAction.value) {
+    if (data.asset_code || data.number) fields.push({ label: t('inventory.assetCode'), value: data.asset_code || data.number });
+    if (data.type || data.unit_details?.type) fields.push({ label: t('inventory.type'), value: data.type || data.unit_details?.type });
+    if (data.classification || data.unit_details?.classification) fields.push({ label: t('inventory.classification'), value: getClassificationLabel(data.classification || data.unit_details?.classification || 'Aset') });
+    if (data.status_label || data.unit_details?.status) fields.push({ label: t('inventory.status'), value: data.status_label || data.unit_details?.status });
+    if (data.proposed_condition || data.unit_details?.condition || data.condition) {
+      fields.push({
+        label: isActivationApproval.value ? t('inventory.condition') : t('approvals.proposedCondition'),
+        value: getConditionLabel(data.proposed_condition || data.unit_details?.condition || data.condition)
+      });
+    }
+    if (data.unit_details?.lot_code) fields.push({ label: t('approvals.lotCodeLabel').replace(':', ''), value: data.unit_details.lot_code });
+    if (data.category) fields.push({ label: t('approvals.category'), value: data.category });
+    if (data.subcategory) fields.push({ label: t('approvals.subcategory'), value: data.subcategory });
+    if (data.brand) fields.push({ label: t('approvals.brand'), value: data.brand });
+    if (data.name || data.nama) fields.push({ label: t('approvals.name'), value: data.name || data.nama });
+    if (data.specification) fields.push({ label: t('approvals.specification'), value: data.specification });
     if (data.unit_details) {
       const locParts = [];
       if (data.unit_details.location) locParts.push(data.unit_details.location);
       if (data.unit_details.floor) locParts.push(data.unit_details.floor);
       if (data.unit_details.room) locParts.push(data.unit_details.room);
-      fields.push({ label: 'Lokasi', value: locParts.join(', ') || '-' });
+      fields.push({ label: t('approvals.storageLocationLabel').replace(':', ''), value: locParts.join(', ') || '-' });
       
-      fields.push({ label: 'Nomor PO', value: data.unit_details.po_number || '-' });
+      fields.push({ label: t('approvals.poNumberLabel').replace(':', ''), value: data.unit_details.po_number || '-' });
       if (data.unit_details.date_of_receipt) {
-        fields.push({ label: 'Tanggal registrasi', value: formatDate(data.unit_details.date_of_receipt) });
-        fields.push({ label: 'Umur', value: getAge(data.unit_details) });
+        fields.push({ label: t('approvals.regDateLabel').replace(':', ''), value: formatDate(data.unit_details.date_of_receipt) });
+        fields.push({ label: t('approvals.ageLabel').replace(':', ''), value: getAge(data.unit_details) });
       }
       if (data.unit_details.price !== undefined && data.unit_details.price !== null) {
-        fields.push({ label: 'Harga', value: `Rp${data.unit_details.price}` });
+        fields.push({ label: t('approvals.priceLabel').replace(':', ''), value: formatRupiah(data.unit_details.price) });
       }
-      if (data.unit_details.organizer) fields.push({ label: 'Organizer', value: data.unit_details.organizer });
-      if (data.unit_details.vendor) fields.push({ label: 'Vendor', value: data.unit_details.vendor });
+      if (data.unit_details.organizer) fields.push({ label: t('approvals.organizerLabel').replace(':', ''), value: data.unit_details.organizer });
+      if (data.unit_details.vendor) fields.push({ label: t('approvals.vendorLabel').replace(':', ''), value: data.unit_details.vendor });
     }
-    if (data.requested_at) fields.push({ label: 'Pembaruan Terakhir', value: data.requested_at });
+    if (data.requested_at) fields.push({ label: t('approvals.lastUpdateLabel').replace(':', ''), value: data.requested_at });
     return fields;
   }
 
@@ -335,12 +377,19 @@ const bulkItemsFields = computed(() => {
     const fields: { label: string; value: any }[] = [];
     if (!data) return fields;
 
-    // Check if Perubahan Status Aset
-    if (props.itemName === 'Perubahan Status Aset') {
-      if (data.asset_code) fields.push({ label: 'Kode Aset', value: data.asset_code });
-      if (data.type || data.unit_details?.type) fields.push({ label: 'Tipe', value: data.type || data.unit_details?.type });
-      if (data.classification || data.unit_details?.classification) fields.push({ label: 'Klasifikasi', value: getClassificationLabel(data.classification || data.unit_details?.classification) });
-      if (data.status_label) fields.push({ label: 'Status', value: data.status_label });
+    // Check if Approval Actions
+    if (isApprovalAction.value) {
+      if (data.asset_code || data.number) fields.push({ label: t('inventory.assetCode'), value: data.asset_code || data.number });
+      if (data.brand) fields.push({ label: t('approvals.brand'), value: data.brand });
+      if (data.name || data.nama) fields.push({ label: t('approvals.name'), value: data.name || data.nama });
+      if (data.type || data.unit_details?.type) fields.push({ label: t('inventory.type'), value: data.type || data.unit_details?.type });
+      if (data.status_label || data.unit_details?.status) fields.push({ label: t('inventory.status'), value: data.status_label || data.unit_details?.status });
+      if (data.proposed_condition || data.unit_details?.condition || data.condition) {
+        fields.push({
+          label: isActivationApproval.value ? t('inventory.condition') : t('approvals.proposedCondition'),
+          value: getConditionLabel(data.proposed_condition || data.unit_details?.condition || data.condition)
+        });
+      }
       return fields;
     }
 
@@ -427,7 +476,10 @@ onUnmounted(() => {
             <!-- Modal Body -->
             <div class="p-6 flex flex-col items-center text-center space-y-4 flex-grow">
               <div :class="['w-12 h-12 rounded-full flex items-center justify-center', modalIconClass]">
-                <AlertTriangle class="w-6 h-6" />
+                <component 
+                  :is="isApprovalAction ? (actionType === 'approved' || actionType === 'approve' ? ThumbsUp : Ban) : AlertTriangle" 
+                  class="w-6 h-6" 
+                />
               </div>
               <div class="space-y-4 w-full">
                 <p class="font-semibold text-base" :class="modalMessageClass">

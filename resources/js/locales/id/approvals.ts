@@ -7,6 +7,9 @@ export default {
   statusPendingTitle: 'Approval Status: Perlu Perhatian Anda',
   statusPendingTaskbarTitle: 'Approval Status: Pending',
   statusHistoryTitle: 'Approval Status: Sudah Diproses',
+  activationPendingTitle: 'Approval Aktivasi: Perlu Perhatian Anda',
+  activationPendingTaskbarTitle: 'Approval Aktivasi: Pending',
+  activationHistoryTitle: 'Approval Aktivasi: Sudah Diproses',
   externalTitle: 'Persetujuan {type} #{number} - SMART',
   externalAppTitle: 'SMART',
   externalAppSubtitle: 'Sistem Manajemen Aset & Request Tracking',
@@ -66,6 +69,7 @@ export default {
   rejected: 'Ditolak',
   memoFileNotFound: 'File berita acara / memo tidak ditemukan.',
   assetStatusChange: 'Perubahan Status Aset',
+  assetActivation: 'Aktivasi Aset Baru',
 
   // Actions & Buttons
   approve: 'Approve',
@@ -91,6 +95,8 @@ export default {
   rejectedToast: 'Permintaan berhasil ditolak.',
   statusApprovedToast: 'Perubahan status aset berhasil disetujui.',
   statusRejectedToast: 'Perubahan status aset berhasil ditolak.',
+  activationApprovedToast: 'Aktivasi aset berhasil disetujui.',
+  activationRejectedToast: 'Aktivasi aset berhasil ditolak.',
   noRequestSelected: 'Tidak ada permintaan terpilih.',
   noAssetSelected: 'Tidak ada aset terpilih.',
 

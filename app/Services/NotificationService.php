@@ -8,6 +8,7 @@ use App\Mail\RequesterRequestRejectedMail;
 use App\Models\Inventory\Barang;
 use App\Models\Inventory\Unit;
 use App\Models\Inventory\UnitStatusApproval;
+use App\Models\Inventory\UnitActivationApproval;
 use App\Models\Request\Request as SmartRequest;
 use App\Models\User;
 use App\Notifications\AppNotification;
@@ -277,6 +278,80 @@ class NotificationService
             $message,
             $type,
             "/smart/inventory/assets?search=" . urlencode($unit->number),
+            [
+                'unit_id' => $unit->id,
+                'unit_number' => $unit->number,
+                'approval_id' => $approval->id,
+                'decision' => $decision,
+            ]
+        );
+    }
+
+    /**
+     * Send an in-app notification to all IFS Managers when a new asset is registered and requires activation approval.
+     *
+     * @param Unit $unit
+     */
+    public function notifyManagerNewAssetActivation(Unit $unit): void
+    {
+        $unit->loadMissing(['lot.barang.brand']);
+        $brand = $unit->lot?->barang?->brand?->name ?? '';
+        $assetName = $unit->lot?->barang?->name ?? '';
+        $brandAndName = trim("{$brand} {$assetName}") ?: $unit->number;
+
+        $title = "Approval Aset Baru {$brandAndName}: Perlu Perhatian Anda";
+        $message = "Aset baru dengan nomor {$unit->number} memerlukan approval Anda.";
+
+        $this->sendToRole(
+            'ifs_manager',
+            $title,
+            $message,
+            'warning',
+            "/smart/approve-activation?search=" . urlencode($unit->number),
+            [
+                'unit_id' => $unit->id,
+                'unit_number' => $unit->number,
+                'type' => 'activation_approval',
+            ]
+        );
+    }
+
+    /**
+     * Send a notification to all Admins when an asset activation approval is decided by DM IFS.
+     *
+     * @param UnitActivationApproval $approval
+     * @param string $decision 'approved' | 'rejected'
+     */
+    public function notifyAdminAssetActivationDecision(UnitActivationApproval $approval, string $decision): void
+    {
+        $approval->loadMissing(['unit.lot.barang.brand']);
+        $unit = $approval->unit;
+        if (!$unit) {
+            return;
+        }
+
+        $brand = $unit->lot?->barang?->brand?->name ?? '';
+        $name = $unit->lot?->barang?->name ?? '';
+        $brandAndName = trim("{$brand} {$name}") ?: $unit->number;
+
+        if ($decision === 'approved') {
+            $title = "Aktivasi Aset {$brandAndName} Disetujui DM IFS";
+            $message = "Status aset {$unit->number} telah berubah menjadi Tersedia dan kondisi berubah menjadi Bagus.";
+            $type = 'success';
+            $url = "/smart/inventory/assets?search=" . urlencode($unit->number);
+        } else {
+            $title = "Aktivasi Aset {$brandAndName} Ditolak DM IFS";
+            $message = "Aktivasi aset {$unit->number} ditolak oleh DM IFS. Kondisi: Verifikasi Ditolak.";
+            $type = 'error';
+            $url = "/smart/inventory/pending-aktivasi?search=" . urlencode($unit->number);
+        }
+
+        $this->sendToRole(
+            'admin',
+            $title,
+            $message,
+            $type,
+            $url,
             [
                 'unit_id' => $unit->id,
                 'unit_number' => $unit->number,

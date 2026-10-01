@@ -99,6 +99,7 @@ const navigation = computed<NavSection[]>(() => {
   // Get dynamic counts from shared Inertia page props
   const pendingRequestCount = (page.props.auth as any)?.pendingRequestCount ?? 0;
   const pendingAssetStatusCount = (page.props.auth as any)?.pendingAssetStatusCount ?? 0;
+  const pendingAssetActivationCount = (page.props.auth as any)?.pendingAssetActivationCount ?? 0;
   const pendingAdminApprovedCount = (page.props.auth as any)?.pendingAdminApprovedCount ?? 0;
   const activeRequestsCount = (page.props.auth as any)?.activeRequestsCount ?? pendingAdminApprovedCount;
 
@@ -110,6 +111,8 @@ const navigation = computed<NavSection[]>(() => {
       
       if (item.href === '/smart/approve-status') {
         badge = pendingAssetStatusCount > 0 ? pendingAssetStatusCount : undefined;
+      } else if (item.href === '/smart/approve-activation') {
+        badge = pendingAssetActivationCount > 0 ? pendingAssetActivationCount : undefined;
       } else if (item.href === '/smart/requests' || item.href === '/smart/inbox') {
         badge = activeRequestsCount > 0 ? activeRequestsCount : undefined;
       }
@@ -150,8 +153,22 @@ const isActive = (href: string): boolean => {
   if (target.pathname === '/smart/inventory' && (
     current.pathname.startsWith('/smart/inventory/assets') ||
     current.pathname.startsWith('/smart/inventory/stok-habis-pakai') ||
+    current.pathname.startsWith('/smart/inventory/pending-aktivasi') ||
     current.pathname.startsWith('/smart/inventory/pending-nonaktif')
   )) {
+    return false;
+  }
+
+  // Prevent parent route from activating if another nav item is a more specific match
+  const hasMoreSpecificNavItem = navigation.value.some(section =>
+    section.items.some(otherItem => {
+      const otherTarget = parseUrlPathAndQuery(otherItem.href);
+      if (otherTarget.pathname === target.pathname) return false;
+      if (!otherTarget.pathname.startsWith(target.pathname + '/')) return false;
+      return current.pathname === otherTarget.pathname || current.pathname.startsWith(otherTarget.pathname + '/');
+    })
+  );
+  if (hasMoreSpecificNavItem) {
     return false;
   }
 
@@ -159,6 +176,7 @@ const isActive = (href: string): boolean => {
   if (current.pathname === target.pathname) {
     return true;
   }
+
 
   // Active requests unified section (/smart/requests) matches its child workflow routes
   if (target.pathname === '/smart/requests') {

@@ -213,6 +213,9 @@ export default {
   conditionAuctionGrant: 'Lelang/Hibah',
   conditionTotalDamage: 'Rusak Total',
   conditionLost: 'Hilang',
+  conditionUnverified: 'Belum Diverifikasi',
+  conditionVerificationRejected: 'Verifikasi Ditolak',
+  statusAndCondition: 'Status & Kondisi',
 
   // Validation Messages & Alerts
   codeRequired: 'Kode Tipe belum diisi',

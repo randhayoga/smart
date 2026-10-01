@@ -9,6 +9,7 @@ export default {
     audit: 'AUDIT',
     approvalBorrow: 'BORROWING APPROVAL',
     approvalDeletion: 'DEACTIVATION APPROVAL',
+    approvalActivation: 'ACTIVATION APPROVAL',
     superadmin: 'SUPERADMIN',
   },
   items: {
@@ -18,6 +19,7 @@ export default {
     consumableStock: 'Consumables Stock List',
     assets: 'Asset List',
     employees: 'Employee List',
+    pendingActivation: 'Activation Pending List',
     pendingInactive: 'Pending Deactivation List',
     masterData: 'Master Data',
     scanBarcode: 'Scan Barcode',

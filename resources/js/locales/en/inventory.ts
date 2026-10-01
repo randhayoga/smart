@@ -213,6 +213,9 @@ export default {
   conditionAuctionGrant: 'Auction/Grant',
   conditionTotalDamage: 'Total Damage',
   conditionLost: 'Lost',
+  conditionUnverified: 'Unverified',
+  conditionVerificationRejected: 'Verification Rejected',
+  statusAndCondition: 'Status & Condition',
 
   // Validation Messages & Alerts
   codeRequired: 'Type code is required',

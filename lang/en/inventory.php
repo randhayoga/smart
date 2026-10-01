@@ -26,4 +26,6 @@ return [
     'borrow_saved' => 'Borrowing data successfully saved.',
     'borrow_completed' => 'Borrowing completed. Asset status returned to Available.',
     'manual_request_recorded' => 'Manual request successfully recorded.',
+    'activation_approved' => 'Asset successfully activated.',
+    'activation_rejected' => 'Asset activation successfully rejected.',
 ];

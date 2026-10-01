@@ -211,4 +211,99 @@ describe('Sidebar.vue', () => {
     expect(wrapper.text()).toContain('SUPERADMIN');
     expect(wrapper.text()).toMatch(/Manajemen Akses|Access Management/);
   });
+
+  describe('active link detection', () => {
+    it('activates only Daftar Pending Aktivasi and NOT Manajemen Barang when viewing /smart/inventory/pending-aktivasi', () => {
+      vi.mocked(usePage).mockReturnValue({
+        url: '/smart/inventory/pending-aktivasi',
+        props: {
+          auth: defaultAdminAuth,
+        },
+      } as any);
+
+      const wrapper = mountSidebar({
+        open: true,
+        isMobile: false,
+        collapsed: false,
+      });
+
+      const pendingActivationLink = wrapper.find('a[href="/smart/inventory/pending-aktivasi"]');
+      const inventoryLink = wrapper.find('a[href="/smart/inventory"]');
+
+      expect(pendingActivationLink.exists()).toBe(true);
+      expect(inventoryLink.exists()).toBe(true);
+
+      // Pending activation should be active
+      expect(pendingActivationLink.classes()).toContain('bg-gradient-primary');
+      expect(pendingActivationLink.classes()).toContain('text-white');
+
+      // Item Management (/smart/inventory) should NOT be active
+      expect(inventoryLink.classes()).not.toContain('bg-gradient-primary');
+      expect(inventoryLink.classes()).toContain('text-foreground');
+    });
+
+    it('activates only Manajemen Barang when viewing /smart/inventory', () => {
+      vi.mocked(usePage).mockReturnValue({
+        url: '/smart/inventory',
+        props: {
+          auth: defaultAdminAuth,
+        },
+      } as any);
+
+      const wrapper = mountSidebar({
+        open: true,
+        isMobile: false,
+        collapsed: false,
+      });
+
+      const inventoryLink = wrapper.find('a[href="/smart/inventory"]');
+      const pendingActivationLink = wrapper.find('a[href="/smart/inventory/pending-aktivasi"]');
+
+      expect(inventoryLink.classes()).toContain('bg-gradient-primary');
+      expect(pendingActivationLink.classes()).not.toContain('bg-gradient-primary');
+    });
+
+    it('activates Manajemen Barang when viewing item detail /smart/inventory/LAPTOP-01', () => {
+      vi.mocked(usePage).mockReturnValue({
+        url: '/smart/inventory/LAPTOP-01',
+        props: {
+          auth: defaultAdminAuth,
+        },
+      } as any);
+
+      const wrapper = mountSidebar({
+        open: true,
+        isMobile: false,
+        collapsed: false,
+      });
+
+      const inventoryLink = wrapper.find('a[href="/smart/inventory"]');
+      const pendingActivationLink = wrapper.find('a[href="/smart/inventory/pending-aktivasi"]');
+
+      expect(inventoryLink.classes()).toContain('bg-gradient-primary');
+      expect(pendingActivationLink.classes()).not.toContain('bg-gradient-primary');
+    });
+
+    it('activates only Daftar Pending Nonaktif and NOT Manajemen Barang when viewing /smart/inventory/pending-nonaktif', () => {
+      vi.mocked(usePage).mockReturnValue({
+        url: '/smart/inventory/pending-nonaktif',
+        props: {
+          auth: defaultAdminAuth,
+        },
+      } as any);
+
+      const wrapper = mountSidebar({
+        open: true,
+        isMobile: false,
+        collapsed: false,
+      });
+
+      const pendingInactiveLink = wrapper.find('a[href="/smart/inventory/pending-nonaktif"]');
+      const inventoryLink = wrapper.find('a[href="/smart/inventory"]');
+
+      expect(pendingInactiveLink.classes()).toContain('bg-gradient-primary');
+      expect(inventoryLink.classes()).not.toContain('bg-gradient-primary');
+    });
+  });
 });
+

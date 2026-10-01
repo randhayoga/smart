@@ -7,6 +7,9 @@ export default {
   statusPendingTitle: 'Status Approval: Requires Your Attention',
   statusPendingTaskbarTitle: 'Status Approval: Pending',
   statusHistoryTitle: 'Status Approval: Processed',
+  activationPendingTitle: 'Activation Approval: Requires Your Attention',
+  activationPendingTaskbarTitle: 'Activation Approval: Pending',
+  activationHistoryTitle: 'Activation Approval: Processed',
   externalTitle: '{type} Approval #{number} - SMART',
   externalAppTitle: 'SMART',
   externalAppSubtitle: 'Stok Management and Request Tracking',
@@ -66,6 +69,7 @@ export default {
   rejected: 'Rejected',
   memoFileNotFound: 'Official report / memo file not found.',
   assetStatusChange: 'Asset Status Change',
+  assetActivation: 'New Asset Activation',
 
   // Actions & Buttons
   approve: 'Approve',
@@ -91,6 +95,8 @@ export default {
   rejectedToast: 'Requests successfully rejected.',
   statusApprovedToast: 'Asset status change successfully approved.',
   statusRejectedToast: 'Asset status change successfully rejected.',
+  activationApprovedToast: 'Asset activation approved successfully.',
+  activationRejectedToast: 'Asset activation rejected successfully.',
   noRequestSelected: 'No requests selected.',
   noAssetSelected: 'No assets selected.',
 

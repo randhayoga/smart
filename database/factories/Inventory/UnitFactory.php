@@ -29,11 +29,22 @@ class UnitFactory extends Factory
             'number' => 'UNT-' . fake()->unique()->numerify('#####'),
             'lot_id' => Lot::factory(),
             'location_id' => \App\Models\Master\Location::factory(),
-            'status' => 'Tersedia',
-            'condition' => 'Baik',
+            'status' => 'Tidak Aktif',
+            'condition' => 'Belum Diverifikasi',
             'type' => 'LT',
             'classification' => 'Aset',
             'image_url' => 'units/sample.jpg',
         ];
+    }
+
+    /**
+     * Indicate that the unit is available and good condition.
+     */
+    public function available(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'status' => 'Tersedia',
+            'condition' => 'Bagus',
+        ]);
     }
 }

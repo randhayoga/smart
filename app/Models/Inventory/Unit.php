@@ -5,10 +5,12 @@ namespace App\Models\Inventory;
 use App\Models\Master\Location;
 use App\Models\Inventory\UnitLifecycle;
 use App\Models\Inventory\UnitStatusApproval;
+use App\Models\Inventory\UnitActivationApproval;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Auth;
 
 /**
@@ -160,6 +162,8 @@ class Unit extends Model
     protected $attributes = [
         'type' => 'LT',
         'classification' => 'Aset',
+        'status' => 'Tidak Aktif',
+        'condition' => 'Belum Diverifikasi',
     ];
 
     protected $fillable = [
@@ -209,6 +213,22 @@ class Unit extends Model
     public function statusApprovals(): HasMany
     {
         return $this->hasMany(UnitStatusApproval::class);
+    }
+
+    /**
+     * Activation approval requests for this newly created unit.
+     */
+    public function activationApprovals(): HasMany
+    {
+        return $this->hasMany(UnitActivationApproval::class);
+    }
+
+    /**
+     * Latest activation approval request for this unit.
+     */
+    public function latestActivationApproval(): HasOne
+    {
+        return $this->hasOne(UnitActivationApproval::class)->latestOfMany();
     }
 
     /**

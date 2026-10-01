@@ -23,6 +23,8 @@ import {
     ArrowLeftRight,
     FileClock,
     ShieldCheck,
+    Clock,
+    FileCheck,
 } from 'lucide-vue-next';
 
 export interface NavItem {
@@ -98,6 +100,14 @@ export const mainNavigation: NavSection[] = [
                 href: '/smart/karyawan',
                 icon: Users,
                 permission: 'karyawan.view',
+            },
+            {
+                id: 'pending_activation',
+                title: 'Daftar Pending Aktivasi',
+                titleKey: 'nav.items.pendingActivation',
+                href: '/smart/inventory/pending-aktivasi',
+                icon: Clock,
+                permission: 'inventory.status_approval.request',
             },
             {
                 id: 'pending_inactive',
@@ -352,6 +362,30 @@ export const ifsNavigation: NavSection[] = [
                 href: '/smart/karyawan',
                 icon: Users,
                 permission: 'karyawan.view',
+            },
+        ],
+    },
+    {
+        id: 'approval_activation',
+        title: 'APPROVAL AKTIVASI',
+        titleKey: 'nav.sections.approvalActivation',
+        permission: 'inventory.status_approval.decide',
+        items: [
+            {
+                id: 'need_approval_activation',
+                title: 'Perlu Approval',
+                titleKey: 'nav.items.needApproval',
+                href: '/smart/approve-activation',
+                icon: FileCheck,
+                permission: 'inventory.status_approval.decide',
+            },
+            {
+                id: 'processed_activation',
+                title: 'Sudah Diproses',
+                titleKey: 'nav.items.processed',
+                href: '/smart/approve-activation?history=true',
+                icon: ListCheck,
+                permission: 'inventory.status_approval.decide',
             },
         ],
     },

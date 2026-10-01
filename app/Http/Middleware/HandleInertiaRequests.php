@@ -44,6 +44,9 @@ class HandleInertiaRequests extends Middleware
                 'pendingAssetStatusCount' => $request->user() && $request->user()->hasPermission('inventory.status_approval.decide')
                     ? \App\Models\Inventory\UnitStatusApproval::where('decision', 'pending')->whereHas('unit', fn($q) => $q->where('status', 'Pending:DM'))->count()
                     : 0,
+                'pendingAssetActivationCount' => $request->user() && $request->user()->hasPermission('inventory.status_approval.decide')
+                    ? \App\Models\Inventory\UnitActivationApproval::where('decision', 'pending')->count()
+                    : 0,
                 'pendingAdminApprovedCount' => $request->user() && $request->user()->hasPermission('requests.confirm')
                     ? \App\Models\Request\Request::where('status', 'approve')->count()
                     : 0,

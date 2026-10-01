@@ -19,6 +19,8 @@ export default {
   ditolak: 'Rejected',
   disetujui: 'Approved',
   sukses: 'Success',
+  belumDiverifikasi: 'Unverified',
+  verifikasiDitolak: 'Verification Rejected',
 
   // Request statuses
   menungguApproval: 'Pending Approval',

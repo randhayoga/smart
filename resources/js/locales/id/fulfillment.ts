@@ -14,6 +14,7 @@ export default {
   listPrefix: 'Daftar {tab}',
   archiveListTitle: 'Daftar Permintaan Yang Selesai Diurus',
   pendingDeactivation: 'Daftar Pending Nonaktif',
+  pendingActivation: 'Daftar Pending Aktivasi',
 
   // Filters & Dropdowns
   filter: 'Filter',

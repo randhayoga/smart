@@ -175,6 +175,7 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
         Route::middleware(['permission:inventory.status_approval.request'])->group(function () {
             Route::resource('unit-status-approvals', \App\Http\Controllers\Smart\MultiRoles\UnitStatusApproval\AdminUnitStatusApprovalController::class)->only(['store']);
             Route::get('pending-nonaktif', [\App\Http\Controllers\Smart\Admin\ManajemenStok\PendingNonaktifController::class, 'index'])->name('pending-nonaktif');
+            Route::get('pending-aktivasi', [\App\Http\Controllers\Smart\Admin\ManajemenStok\PendingAktivasiController::class, 'index'])->name('pending-aktivasi');
         });
     });
 
@@ -186,6 +187,8 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
     Route::middleware(['permission:inventory.status_approval.decide'])->group(function () {
         Route::get('/approve-status', [\App\Http\Controllers\Smart\MultiRoles\UnitStatusApproval\ManagerUnitStatusApprovalController::class, 'index'])->name('approve-status');
         Route::post('/approve-status/bulk', [\App\Http\Controllers\Smart\MultiRoles\UnitStatusApproval\ManagerBulkUnitStatusApprovalController::class, 'store'])->name('approve-status.bulk-store');
+        Route::get('/approve-activation', [\App\Http\Controllers\Smart\MultiRoles\UnitActivationApproval\ManagerUnitActivationApprovalController::class, 'index'])->name('approve-activation');
+        Route::post('/approve-activation/bulk', [\App\Http\Controllers\Smart\MultiRoles\UnitActivationApproval\ManagerBulkUnitActivationApprovalController::class, 'store'])->name('approve-activation.bulk-store');
     });
 
     // Employee Directory & Loan History

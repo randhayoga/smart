@@ -19,6 +19,8 @@ export default {
   ditolak: 'Ditolak',
   disetujui: 'Disetujui',
   sukses: 'Sukses',
+  belumDiverifikasi: 'Belum Diverifikasi',
+  verifikasiDitolak: 'Verifikasi Ditolak',
 
   // Request statuses
   menungguApproval: 'Menunggu approval',

@@ -93,6 +93,8 @@ interface Props {
   users?: { id: number; name: string; }[];
   hideBarangColumns?: boolean;
   hideStatusFilter?: boolean;
+  hideConditionFilter?: boolean;
+  hideActions?: boolean;
   customPrintHandler?: (items: any[]) => void;
   lot?: any;
   barang?: {
@@ -105,6 +107,8 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   hideBarangColumns: false,
   hideStatusFilter: false,
+  hideConditionFilter: false,
+  hideActions: false,
   filterVariant: 'full',
   hideExport: false,
 });
@@ -422,7 +426,7 @@ const availableStatuses = computed(() => {
   if (dynamic.length > 0) return dynamic;
   return ['Tersedia', 'Dipinjam', 'Standby', 'Tidak Aktif'];
 });
-const availableConditions = ['Bagus', 'Rusak', 'QC Passed', 'Lelang/Hibah', 'Rusak Total', 'Hilang'];
+const availableConditions = ['Bagus', 'Rusak', 'QC Passed', 'Lelang/Hibah', 'Rusak Total', 'Hilang', 'Belum Diverifikasi', 'Verifikasi Ditolak'];
 
 const STATUS_LABEL_MAP: Record<string, string> = {
   'tersedia': 'status.tersedia',
@@ -457,6 +461,8 @@ const CONDITION_KEY_MAP: Record<string, string> = {
   'lelang/hibah': 'inventory.conditionAuctionGrant',
   'rusak total': 'inventory.conditionTotalDamage',
   'hilang': 'inventory.conditionLost',
+  'belum diverifikasi': 'inventory.conditionUnverified',
+  'verifikasi ditolak': 'inventory.conditionVerificationRejected',
 };
 
 const getConditionLabel = (cond: string) => {
@@ -490,7 +496,10 @@ const columns = computed<ColumnDef<any>[]>(() => {
         return (rowA.original.id || 0) - (rowB.original.id || 0);
       },
     },
-    {
+  ];
+
+  if (!props.hideActions) {
+    list.push({
       id: 'select',
       size: 40,
       header: ({ table }) => h('div', { class: 'text-center no-print flex items-center justify-center' }, [
@@ -509,20 +518,21 @@ const columns = computed<ColumnDef<any>[]>(() => {
           onChange: row.getToggleSelectedHandler(),
         })
       ]),
-    },
-    {
-      accessorKey: 'number',
-      header: ({ column }) => h(Button, {
-        variant: 'ghost',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
-      }, () => [
-        t('inventory.assetCode'),
-        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-      ]),
-      cell: ({ row }) => h('div', { class: 'text-muted-foreground font-mono text-sm truncate font-medium' }, row.getValue('number')),
-    }
-  ];
+    });
+  }
+
+  list.push({
+    accessorKey: 'number',
+    header: ({ column }) => h(Button, {
+      variant: 'ghost',
+      onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+      class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+    }, () => [
+      t('inventory.assetCode'),
+      h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+    ]),
+    cell: ({ row }) => h('div', { class: 'text-muted-foreground font-mono text-sm truncate font-medium' }, row.getValue('number')),
+  });
 
   if (!props.hideBarangColumns) {
     list.push(
@@ -614,6 +624,8 @@ const columns = computed<ColumnDef<any>[]>(() => {
         if (cond === 'Bagus' || cond === 'QC Passed') textClass = 'text-emerald-600 font-semibold';
         else if (cond === 'Lelang/Hibah') textClass = 'text-purple-600 font-semibold';
         else if (cond === 'Rusak' || cond === 'Rusak Total' || cond === 'Hilang') textClass = 'text-rose-600 font-semibold';
+        else if (cond === 'Belum Diverifikasi') textClass = 'text-amber-600 font-semibold';
+        else if (cond === 'Verifikasi Ditolak') textClass = 'text-rose-600 font-semibold';
         
         return h('span', { class: textClass }, getConditionLabel(cond));
       }
@@ -650,26 +662,28 @@ const columns = computed<ColumnDef<any>[]>(() => {
     });
   }
 
-  list.push(
-    {
-      id: 'actions',
-      size: 80,
-      header: () => h('div', { class: 'text-center font-semibold text-foreground no-print' }, t('common.actions')),
-      cell: ({ row }) => {
-        return h('div', { class: 'flex items-center justify-center gap-2 no-print' }, [
-          h(Button, {
-            variant: 'table-view',
-            size: 'icon-sm',
-            title: t('inventory.viewDetails'),
-            onClick: () => openViewAssetModal(row.original)
-          }, () => [
-            h(Eye),
-            h('span', { class: 'sr-only' }, t('inventory.viewDetails'))
-          ])
-        ]);
+  if (!props.hideActions) {
+    list.push(
+      {
+        id: 'actions',
+        size: 80,
+        header: () => h('div', { class: 'text-center font-semibold text-foreground no-print' }, t('common.actions')),
+        cell: ({ row }) => {
+          return h('div', { class: 'flex items-center justify-center gap-2 no-print' }, [
+            h(Button, {
+              variant: 'table-view',
+              size: 'icon-sm',
+              title: t('inventory.viewDetails'),
+              onClick: () => openViewAssetModal(row.original)
+            }, () => [
+              h(Eye),
+              h('span', { class: 'sr-only' }, t('inventory.viewDetails'))
+            ])
+          ]);
+        }
       }
-    }
-  );
+    );
+  }
 
   return list;
 });
@@ -800,7 +814,7 @@ const totalAsetTerpilihCount = computed(() => {
               </DropdownMenu>
 
               <!-- Condition Filter Dropdown -->
-              <DropdownMenu>
+              <DropdownMenu v-if="!props.hideConditionFilter">
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal', !conditionFilter ? 'text-muted-foreground' : 'text-foreground']">
                     <span class="truncate">{{ conditionFilter ? getConditionLabel(conditionFilter) : t('inventory.allConditions') }}</span>
@@ -935,11 +949,11 @@ const totalAsetTerpilihCount = computed(() => {
           <!-- Row 2: Bulk Actions -->
           <div class="flex flex-wrap items-end justify-between gap-4 pt-2">
             <div class="space-y-2 flex-1 min-w-0">
-              <label v-if="can('inventory.manage')" class="text-xs text-muted-foreground font-medium block ml-0.5">{{ t('inventory.selectedActions') }}</label>
+              <label v-if="can('inventory.manage') && !props.hideActions" class="text-xs text-muted-foreground font-medium block ml-0.5">{{ t('inventory.selectedActions') }}</label>
               <div class="flex flex-wrap gap-2">
                 <!-- Edit Terpilih -->
                 <Button 
-                  v-if="can('inventory.manage')"
+                  v-if="can('inventory.manage') && !props.hideActions"
                   @click="handleEditTerpilih()"
                   :disabled="totalAsetTerpilihCount === 0"
                   variant="more-round-warning"
@@ -957,7 +971,7 @@ const totalAsetTerpilihCount = computed(() => {
               </div>
             </div>
 
-            <slot v-if="can('inventory.manage')" name="extra-actions"></slot>
+            <slot v-if="can('inventory.manage') && !props.hideActions" name="extra-actions"></slot>
           </div>
         </div>
       </div>
@@ -973,7 +987,7 @@ const totalAsetTerpilihCount = computed(() => {
           :default-column-visibility="{ created_at: false }"
         />
 
-        <div class="text-xs text-muted-foreground pl-1 mt-3 no-print">
+        <div v-if="!props.hideActions" class="text-xs text-muted-foreground pl-1 mt-3 no-print">
           {{ t('inventory.rowsSelected', { selected: totalAsetTerpilihCount, total: filteredUnits.length }) }}
         </div>
       </div>

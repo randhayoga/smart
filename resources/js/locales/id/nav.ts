@@ -9,6 +9,7 @@ export default {
     audit: 'AUDIT',
     approvalBorrow: 'APPROVAL PEMINJAMAN',
     approvalDeletion: 'APPROVAL PENGHAPUSAN',
+    approvalActivation: 'APPROVAL AKTIVASI',
     superadmin: 'SUPERADMIN',
   },
   items: {
@@ -18,6 +19,7 @@ export default {
     consumableStock: 'Daftar Stok (Habis Pakai)',
     assets: 'Daftar Aset',
     employees: 'Daftar Karyawan',
+    pendingActivation: 'Daftar Pending Aktivasi',
     pendingInactive: 'Daftar Pending Nonaktif',
     masterData: 'Master Data',
     scanBarcode: 'Pindai Barcode',
