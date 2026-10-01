@@ -430,6 +430,48 @@ class MasterDataTest extends TestCase
         ]);
     }
 
+    public function test_can_store_vendor_without_address_and_phone_number(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->post(route('smart.master.vendors.store'), [
+            'code' => 'VN0010',
+            'name' => 'Vendor Minimal PT',
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('vendors', [
+            'code' => 'VN0010',
+            'name' => 'Vendor Minimal PT',
+            'address' => null,
+            'phone_number' => null,
+        ]);
+    }
+
+    public function test_can_update_vendor_without_address_and_phone_number(): void
+    {
+        $user = User::factory()->create();
+        $vendor = Vendor::factory()->create([
+            'address' => 'Old Address',
+            'phone_number' => '0812345678',
+        ]);
+
+        $response = $this->actingAs($user)->put(route('smart.master.vendors.update', $vendor), [
+            'code' => $vendor->code,
+            'name' => 'Vendor Minimal Updated PT',
+            'address' => null,
+            'phone_number' => null,
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('vendors', [
+            'id' => $vendor->id,
+            'name' => 'Vendor Minimal Updated PT',
+            'address' => null,
+            'phone_number' => null,
+        ]);
+    }
+
     public function test_can_destroy_vendor(): void
     {
         $user = User::factory()->create();

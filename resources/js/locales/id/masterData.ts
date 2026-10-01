@@ -133,8 +133,6 @@ export default {
     vendorCodeRequired: 'Kode Vendor belum diisi',
     vendorCodeFormat: 'Format Kode Vendor harus VN#### (contoh: VN0001)',
     vendorNameRequired: 'Nama Vendor belum diisi',
-    vendorAddressRequired: 'Alamat Vendor belum diisi',
-    vendorPhoneRequired: 'Nomor Telepon Vendor belum diisi',
     nameRequired: 'Nama {tab} belum diisi',
   },
 };

@@ -42,8 +42,8 @@ return new class extends Migration {
             $table->id();
             $table->string('code', 7)->unique();
             $table->string('name');
-            $table->string('address');
-            $table->string('phone_number');
+            $table->string('address')->nullable();
+            $table->string('phone_number')->nullable();
             $table->string('email')->nullable();
             $table->string('description')->nullable();
             $table->string('contact_person_1')->nullable();

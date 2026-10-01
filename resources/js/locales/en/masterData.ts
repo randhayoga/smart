@@ -133,8 +133,6 @@ export default {
     vendorCodeRequired: 'Vendor Code is required',
     vendorCodeFormat: 'Vendor Code format must be VN#### (example: VN0001)',
     vendorNameRequired: 'Vendor Name is required',
-    vendorAddressRequired: 'Vendor Address is required',
-    vendorPhoneRequired: 'Vendor Phone Number is required',
     nameRequired: '{tab} Name is required',
   },
 };

@@ -51,8 +51,8 @@ export interface VendorItem {
   id: number;
   code: string;
   name: string;
-  address: string;
-  phone_number: string;
+  address?: string | null;
+  phone_number?: string | null;
   email?: string;
   description?: string;
   contact_person_1?: string;
@@ -437,14 +437,6 @@ const submit = () => {
     }
     if (!form.name || !form.name.trim()) {
       formErrors.value.name = t('masterData.validation.vendorNameRequired');
-      hasError = true;
-    }
-    if (!form.address || !form.address.trim()) {
-      formErrors.value.address = t('masterData.validation.vendorAddressRequired');
-      hasError = true;
-    }
-    if (!form.phone_number || !form.phone_number.trim()) {
-      formErrors.value.phone_number = t('masterData.validation.vendorPhoneRequired');
       hasError = true;
     }
   } else {
@@ -859,9 +851,7 @@ onUnmounted(() => {
               </Field>
 
               <Field :data-invalid="!!formErrors.phone_number || undefined">
-                <FieldLabel>
-                  <span>{{ t('masterData.fields.phoneNumber') }}<span class="text-destructive">*</span></span>
-                </FieldLabel>
+                <FieldLabel>{{ t('masterData.fields.phoneNumber') }}</FieldLabel>
                 <FieldContent>
                   <input
                     type="text"
@@ -876,9 +866,7 @@ onUnmounted(() => {
               </Field>
 
               <Field :data-invalid="!!formErrors.address || undefined" class="md:col-span-2">
-                <FieldLabel>
-                  <span>{{ t('masterData.fields.address') }}<span class="text-destructive">*</span></span>
-                </FieldLabel>
+                <FieldLabel>{{ t('masterData.fields.address') }}</FieldLabel>
                 <FieldContent>
                   <input
                     type="text"

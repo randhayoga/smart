@@ -219,5 +219,48 @@ describe('MasterDataModal.vue', () => {
     expect(wrapper.emitted('update:open')![0]).toEqual([false]);
     expect(wrapper.emitted('close')).toBeTruthy();
   });
+
+  it('allows submitting vendor without address and phone_number in create mode', async () => {
+    mockPost.mockClear();
+    const wrapper = mountModal({
+      mode: 'create',
+      activeTab: 'vendors',
+    });
+
+    // Generate code
+    const generateBtn = wrapper.findAll('button').find(b => b.text().includes('Generate'));
+    expect(generateBtn?.exists()).toBe(true);
+    await generateBtn?.trigger('click');
+
+    // Fill in vendor name
+    const nameInput = wrapper.find('input[placeholder*="Nama vendor"]');
+    expect(nameInput.exists()).toBe(true);
+    await nameInput.setValue('PT Mitra Sejahtera');
+
+    const submitBtn = wrapper.findAll('button').find(b => b.text().includes('Buat Vendor'));
+    expect(submitBtn?.exists()).toBe(true);
+    await submitBtn?.trigger('click');
+
+    expect(mockPost).toHaveBeenCalledTimes(1);
+    const [url, options] = mockPost.mock.calls[0];
+    expect(url).toBe('/mock-smart.master.vendors.store');
+    expect(options.preserveScroll).toBe(true);
+  });
+
+  it('renders vendor phone_number and address without asterisk indicator', () => {
+    const wrapper = mountModal({
+      mode: 'create',
+      activeTab: 'vendors',
+    });
+
+    const labels = wrapper.findAll('label');
+    const phoneLabel = labels.find(l => l.text().includes('Telepon'));
+    const addressLabel = labels.find(l => l.text().includes('Alamat'));
+
+    expect(phoneLabel?.exists()).toBe(true);
+    expect(phoneLabel?.text()).not.toContain('*');
+    expect(addressLabel?.exists()).toBe(true);
+    expect(addressLabel?.text()).not.toContain('*');
+  });
 });
 

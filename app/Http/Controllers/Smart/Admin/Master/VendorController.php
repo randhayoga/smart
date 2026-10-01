@@ -21,8 +21,8 @@ class VendorController extends Controller
         $validated = $request->validate([
             'code'             => 'required|string|size:6|regex:/^VN\d{4}$/|unique:vendors,code',
             'name'             => 'required|string|max:255|unique:vendors,name',
-            'address'          => 'required|string|max:255',
-            'phone_number'     => 'required|string|max:255',
+            'address'          => 'nullable|string|max:255',
+            'phone_number'     => 'nullable|string|max:255',
             'email'            => 'nullable|email|max:255',
             'description'      => 'nullable|string|max:255',
             'contact_person_1' => 'nullable|string|max:255',
@@ -46,8 +46,8 @@ class VendorController extends Controller
         $validated = $request->validate([
             'code'             => 'required|string|size:6|regex:/^VN\d{4}$/|unique:vendors,code,' . $vendor->id,
             'name'             => 'required|string|max:255|unique:vendors,name,' . $vendor->id,
-            'address'          => 'required|string|max:255',
-            'phone_number'     => 'required|string|max:255',
+            'address'          => 'nullable|string|max:255',
+            'phone_number'     => 'nullable|string|max:255',
             'email'            => 'nullable|email|max:255',
             'description'      => 'nullable|string|max:255',
             'contact_person_1' => 'nullable|string|max:255',

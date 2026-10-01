@@ -370,12 +370,12 @@ const columns = computed<ColumnDef<any>[]>(() => {
     cols.push({
       accessorKey: 'address',
       header: () => h('div', { class: 'pl-2 py-1 font-semibold text-foreground leading-tight' }, t('masterData.columns.address')),
-      cell: ({ row }) => h('div', { class: 'pl-2 text-muted-foreground truncate' }, row.getValue('address')),
+      cell: ({ row }) => h('div', { class: 'pl-2 text-muted-foreground truncate' }, row.getValue('address') || '-'),
     });
     cols.push({
       accessorKey: 'phone_number',
       header: () => h('div', { class: 'pl-2 py-1 font-semibold text-foreground leading-tight' }, t('masterData.columns.phone')),
-      cell: ({ row }) => h('div', { class: 'pl-2 text-muted-foreground truncate' }, row.getValue('phone_number')),
+      cell: ({ row }) => h('div', { class: 'pl-2 text-muted-foreground truncate' }, row.getValue('phone_number') || '-'),
     });
     cols.push({
       accessorKey: 'email',
