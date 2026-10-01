@@ -81,6 +81,7 @@ class ManagerAssetStatusApprovalResource extends JsonResource
             'unit_details' => [
                 'id' => $unit->id,
                 'number' => $unit->number ?? '-',
+                'legacy_number' => $unit->legacy_number ?? null,
                 'status' => $unit->status ?? '-',
                 'condition' => $unit->condition ?? '-',
                 'price' => $unit->price ? number_format($unit->price, 0, ',', '.') : '-',

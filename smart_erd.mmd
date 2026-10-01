@@ -119,7 +119,7 @@ erDiagram
         varchar name  ""  
         varchar specification  "nullable"  
         int min_stock_threshold  "nullable | default to 0"  
-        varchar image_url  "default image"  
+        varchar image_url  "nullable | default image"  
         datetime last_restock_at  "nullable"  
     }
 
@@ -136,7 +136,7 @@ erDiagram
         varchar po_number  "nullable"  
         datetime date_of_receipt  ""  
         numeric unit_price  "nullable | default unit price"  
-        varchar image_url  "default image"  
+        varchar image_url  "nullable | default image"  
         varchar burden  "default to Corporate"  
         int project_id FK "nullable | RE_PORTALDB_TB_PROJECT's id"  
     }
@@ -144,12 +144,13 @@ erDiagram
     UNIT {
         int id PK ""  
         char_25 number UK ""  
+        varchar legacy_number  "nullable"  
         int lot_id FK ""  
         int location_id FK "current location"  
         varchar status  ""  
         varchar condition  ""  
         numeric price  "nullable"  
-        varchar image_url  ""  
+        varchar image_url  "nullable"  
         varchar vehicle_registration  "nullable"  
     }
 

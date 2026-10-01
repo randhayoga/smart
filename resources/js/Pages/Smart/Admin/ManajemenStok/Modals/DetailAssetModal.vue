@@ -252,7 +252,7 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                     />
                     <img 
                       v-else 
-                      src="https://placehold.co/400x400?text=Placeholder" 
+                      src="/media/inventory/placeholder.jpg" 
                       class="w-full h-full object-cover opacity-50" 
                     />
                   </div>
@@ -283,6 +283,7 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                     <!-- Column 3: Asset Info -->
                     <div class="md:col-span-5">
                       <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.assetCode') }}:</span> {{ asset.number }}</p>
+                      <p v-if="asset.legacy_number" class="text-foreground"><span class="text-foreground">{{ t('inventory.legacyNumber') }}:</span> {{ asset.legacy_number }}</p>
                       <!-- TNKB (Nopol) -->
                       <p v-if="isVehicle" class="font-bold text-foreground">
                         <span class="text-foreground">{{ t('inventory.nopol') }}:</span> {{ asset.vehicle_registration || '-' }}

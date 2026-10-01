@@ -38,6 +38,7 @@ class PendingAktivasiController extends Controller
             return [
                 'id' => $unit->id,
                 'number' => $unit->number,
+                'legacy_number' => $unit->legacy_number,
                 'status' => $unit->status,
                 'condition' => $unit->condition,
                 'type' => $unit->type,

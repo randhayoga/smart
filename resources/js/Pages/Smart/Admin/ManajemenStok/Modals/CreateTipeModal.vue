@@ -163,7 +163,6 @@ const handleSubmit = () => {
   if (!newItem.uom_id) { errors.value.uom_id = t('inventory.uomRequired'); isValid = false; }
   if (!newItem.brand_id) { errors.value.brand_id = t('inventory.brandRequired'); isValid = false; }
   if (!newItem.name) { errors.value.name = t('inventory.nameRequired'); isValid = false; }
-  if (!newItem.photo) { errors.value.photo = t('inventory.photoRequired'); isValid = false; }
   
   if (isConsumableSelected.value && newItem.min_stock_threshold !== null && newItem.min_stock_threshold !== '' && newItem.min_stock_threshold !== undefined) {
     const thresholdNum = Number(newItem.min_stock_threshold);
@@ -375,7 +374,7 @@ const handleSubmit = () => {
                   </Field>
 
                   <Field :data-invalid="!!errors.photo || undefined">
-                    <FieldLabel for="create-tipe-photo-upload"><span>{{ t('inventory.defaultPhoto') }}<span class="text-rose-500">*</span></span></FieldLabel>
+                    <FieldLabel for="create-tipe-photo-upload"><span>{{ t('inventory.defaultPhoto') }}</span></FieldLabel>
                     <FieldContent>
                       <div class="flex flex-col gap-1 w-full">
                         <div class="flex gap-2 w-full">

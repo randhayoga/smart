@@ -16,7 +16,7 @@ return new class extends Migration {
             $table->string('name');
             $table->string('specification')->nullable();
             $table->integer('min_stock_threshold')->default(0)->nullable()->comment('Threshold minimum stock untuk notifikasi barang consumable');
-            $table->string('image_url')->comment('default image');
+            $table->string('image_url')->nullable()->comment('default image');
             $table->dateTime('last_restock_at')->nullable();
             $table->timestamps();
         });
@@ -34,7 +34,7 @@ return new class extends Migration {
             $table->string('po_number')->nullable();
             $table->dateTime('date_of_receipt');
             $table->decimal('unit_price', 15, 2)->nullable()->comment('default unit price');
-            $table->string('image_url')->comment('default image');
+            $table->string('image_url')->nullable()->comment('default image');
             $table->string('burden')->default('Corporate');
             $table->unsignedBigInteger('project_id')->nullable()->index()->comment('Refers to RE_PORTALDB:tb_project.id_project');
             $table->timestamps();
@@ -43,12 +43,13 @@ return new class extends Migration {
         Schema::create('units', function (Blueprint $table) {
             $table->id();
             $table->string('number', 25)->unique();
+            $table->string('legacy_number', 50)->nullable()->comment('legacy asset code/number');
             $table->foreignId('lot_id')->constrained('lots')->cascadeOnDelete();
             $table->foreignId('location_id')->constrained('locations')->comment('current location');
             $table->string('status');
             $table->string('condition');
             $table->decimal('price', 15, 2)->nullable();
-            $table->string('image_url');
+            $table->string('image_url')->nullable();
             $table->string('vehicle_registration')->nullable();
             $table->timestamps();
         });

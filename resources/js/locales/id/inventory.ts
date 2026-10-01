@@ -92,6 +92,7 @@ export default {
   code: 'Kode',
   typeCode: 'Kode Tipe',
   assetCode: 'Kode Aset',
+  legacyNumber: 'Kode Aset Lama',
   lotCode: 'Kode LOT',
   name: 'Nama',
   typeName: 'Nama Tipe',

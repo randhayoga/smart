@@ -34,6 +34,7 @@ class UnitScanController extends Controller
         $mappedUnit = [
             'id' => $unit->id,
             'number' => $unit->number, // Kode Aset
+            'legacy_number' => $unit->legacy_number,
             'status' => $unit->status,
             'proposed_status' => $pendingApproval 
                 ? $pendingApproval->proposed_condition 

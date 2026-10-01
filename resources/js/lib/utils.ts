@@ -126,7 +126,7 @@ export function formatItemDisplayName(item: {
  * Returns a normalized, safe image URL with fallback to placeholder.
  */
 export function formatImageUrl(url?: string | null): string {
-  if (!url) return 'https://placehold.co/400x400?text=Barang';
+  if (!url) return '/media/inventory/placeholder.jpg';
   if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/')) {
     return url;
   }

@@ -150,7 +150,7 @@ const getConditionClass = (cond?: string | null) => {
                   />
                   <img 
                     v-else 
-                    src="https://placehold.co/400x400?text=Placeholder" 
+                    src="/media/inventory/placeholder.jpg" 
                     class="w-full h-full object-cover opacity-50" 
                   />
                 </div>
@@ -181,6 +181,7 @@ const getConditionClass = (cond?: string | null) => {
                   <!-- Column 3: Asset Info -->
                   <div class="md:col-span-5">
                     <p class="font-bold text-foreground"><span class="text-foreground">{{ $t('approvals.assetCodeLabel') }}</span> {{ approval.asset_code }}</p>
+                    <p v-if="approval.unit_details.legacy_number" class="text-foreground"><span class="text-foreground">{{ $t('inventory.legacyNumber') }}:</span> {{ approval.unit_details.legacy_number }}</p>
                     <!-- TNKB (Nopol) -->
                     <p v-if="isVehicle(approval)" class="font-bold text-foreground">
                       <span class="text-foreground">{{ $t('approvals.plateLabel') }}</span> {{ approval.unit_details.vehicle_registration || '-' }}

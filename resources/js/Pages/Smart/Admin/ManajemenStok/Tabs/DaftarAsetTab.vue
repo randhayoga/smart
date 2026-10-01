@@ -40,6 +40,7 @@ interface Props {
   units: {
     id: number;
     number: string;
+    legacy_number?: string | null;
     status: string;
     proposed_status?: string | null;
     doc_url?: string | null;
@@ -310,7 +311,8 @@ const filteredUnits = computed(() => {
     const q = searchQuery.value.toLowerCase();
     list = list.filter(u => 
       (u.number && u.number.toLowerCase().includes(q)) ||
-      (u.barang_nama && u.barang_nama.toLowerCase().includes(q))
+      (u.barang_nama && u.barang_nama.toLowerCase().includes(q)) ||
+      (u.legacy_number && u.legacy_number.toLowerCase().includes(q))
     );
   }
 

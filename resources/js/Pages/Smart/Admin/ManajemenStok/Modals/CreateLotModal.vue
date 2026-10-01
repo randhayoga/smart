@@ -199,10 +199,6 @@ const handleSubmit = () => {
     errors.value.project_id = t('inventory.projectRequired');
     isValid = false;
   }
-  if (!lotForm.image_url && !lotForm.image_url_name) {
-    errors.value.image_url = props.barang.is_consumable ? t('inventory.assetPhotoRequired') : t('inventory.photoRequired');
-    isValid = false;
-  }
   if (props.barang.is_consumable) {
     if (lotForm.initial_quantity === '' || lotForm.initial_quantity === null) {
       errors.value.initial_quantity = t('inventory.stockQtyRequired'); isValid = false;
@@ -412,7 +408,7 @@ const handleSubmit = () => {
 
                   <Field :data-invalid="!!errors.image_url || undefined">
                     <FieldLabel>
-                      <span>{{ barang.is_consumable ? t('inventory.photo') : t('inventory.defaultPhoto') }}<span class="text-rose-500">*</span></span>
+                      <span>{{ barang.is_consumable ? t('inventory.photo') : t('inventory.defaultPhoto') }}</span>
                     </FieldLabel>
                     <FieldContent>
                       <div class="flex gap-2">

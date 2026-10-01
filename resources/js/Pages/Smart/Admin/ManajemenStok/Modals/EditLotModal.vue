@@ -196,10 +196,6 @@ const handleSubmit = () => {
     if (form.burden === 'Project' && !form.project_id) { errors.value.project_id = t('inventory.projectRequired'); isValid = false; }
     if (!form.location_id) { errors.value.location_id = t('inventory.locationRequired'); isValid = false; }
     if (!form.date_of_receipt) { errors.value.date_of_receipt = t('inventory.dateOfReceiptRequired'); isValid = false; }
-    if (!form.image_url && !form.image_url_name) {
-      errors.value.image_url = props.isConsumable ? t('inventory.assetPhotoRequired') : t('inventory.photoRequired');
-      isValid = false;
-    }
     if (!isValid) return;
 
     // Single edit - direct endpoint
@@ -405,7 +401,7 @@ const handleSubmit = () => {
 
                   <Field :data-invalid="(isSingle && !!errors.image_url) || undefined">
                     <FieldLabel>
-                      <span>{{ isConsumable ? t('inventory.photo') : t('inventory.defaultPhoto') }}<span v-if="isSingle" class="text-rose-500">*</span></span>
+                      <span>{{ isConsumable ? t('inventory.photo') : t('inventory.defaultPhoto') }}</span>
                     </FieldLabel>
                     <FieldContent>
                       <div class="flex gap-2">

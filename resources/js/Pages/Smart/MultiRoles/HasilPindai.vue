@@ -371,7 +371,6 @@ const handleSubmit = () => {
   if (!form.location_id) { errors.value.location_id = t('scanner.locationRequired'); isValid = false; }
   if (!form.status) { errors.value.status = t('scanner.statusRequired'); isValid = false; }
   if (!form.condition) { errors.value.condition = t('scanner.conditionRequired'); isValid = false; }
-  if (!form.image_url && !form.image_url_name) { errors.value.image_url = t('scanner.photoRequired'); isValid = false; }
   if (isVehicle.value && !form.vehicle_registration) { errors.value.vehicle_registration = t('scanner.tnkbRequired'); isValid = false; }
   if (arrNeedApproval.includes(form.condition) && !isDocumentDisabled.value && !form.memo_file_name) { errors.value.memo_file = t('scanner.memoRequired'); isValid = false; }
   if (form.condition === 'Hilang' && !isDocumentDisabled.value && !form.lost_doc_file_name) { errors.value.lost_doc_file = t('scanner.lostDocRequired'); isValid = false; }
@@ -467,13 +466,15 @@ const handleSubmit = () => {
                 :src="'/media/' + props.lot.image_url" 
                 class="w-full h-full object-cover" 
               />
-              <div v-else class="w-full h-full flex flex-col items-center justify-center bg-muted/60 text-muted-foreground">
-                <Camera class="w-12 h-12 opacity-40 mb-1" />
-                <span class="text-xs font-medium opacity-60">{{ t('scanner.noPhoto') }}</span>
-              </div>
+              <img 
+                v-else 
+                src="/media/inventory/placeholder.jpg" 
+                class="w-full h-full object-cover opacity-60" 
+              />
             </div>
             <div class="mt-4 text-center">
               <h1 class="text-base font-bold text-foreground uppercase tracking-wider">{{ props.asset.number }}</h1>
+              <p v-if="props.asset.legacy_number" class="text-xs text-muted-foreground font-mono mt-0.5"><span class="font-medium">{{ t('inventory.legacyNumber') }}:</span> {{ props.asset.legacy_number }}</p>
               <h2 class="text-lg font-extrabold text-foreground leading-tight">{{ props.asset.barang_nama }}</h2>
               <p class="text-sm text-foreground mt-1">
                 {{ props.asset.barang_brand }} &bull; {{ props.asset.barang_category }} &bull; {{ props.asset.barang_subcategory }}
@@ -590,6 +591,18 @@ const handleSubmit = () => {
                 </FieldContent>
               </Field>
 
+              <Field v-if="props.asset.legacy_number">
+                <FieldLabel>{{ t('inventory.legacyNumber') }}</FieldLabel>
+                <FieldContent>
+                  <input 
+                    type="text" 
+                    :value="props.asset.legacy_number" 
+                    disabled 
+                    class="w-full px-4 py-2.5 text-sm border border-input rounded-xl bg-muted/30 text-muted-foreground cursor-not-allowed h-10" 
+                  />
+                </FieldContent>
+              </Field>
+
               <Field :data-invalid="!!errors.condition || undefined" :data-disabled="isKondisiDisabled || undefined">
                 <FieldLabel>
                   <span>{{ t('scanner.condition') }}<span class="text-rose-500">*</span></span>
@@ -684,7 +697,7 @@ const handleSubmit = () => {
 
               <Field :data-invalid="!!errors.image_url || undefined">
                 <FieldLabel>
-                  <span>{{ t('scanner.photo') }}<span class="text-rose-500">*</span></span>
+                  <span>{{ t('scanner.photo') }}</span>
                 </FieldLabel>
                 <FieldContent>
                   <div class="flex gap-2 flex-col xs:flex-row">

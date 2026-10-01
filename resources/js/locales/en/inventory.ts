@@ -92,6 +92,7 @@ export default {
   code: 'Code',
   typeCode: 'Type Code',
   assetCode: 'Asset Code',
+  legacyNumber: 'Legacy Asset Code',
   lotCode: 'LOT Code',
   name: 'Name',
   typeName: 'Type Name',

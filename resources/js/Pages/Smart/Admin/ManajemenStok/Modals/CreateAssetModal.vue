@@ -370,7 +370,6 @@ const handleSubmit = () => {
   if (!form.status) { errors.value.status = t('inventory.statusRequired'); isValid = false; }
   if (!form.condition) { errors.value.condition = t('inventory.conditionRequired'); isValid = false; }
   if (!form.classification) { errors.value.classification = t('inventory.classificationRequired'); isValid = false; }
-  if (!form.image_url && !form.image_url_name) { errors.value.image_url = t('inventory.assetPhotoRequired'); isValid = false; }
   if (isVehicle.value && !form.vehicle_registration) { errors.value.vehicle_registration = t('inventory.nopolRequired'); isValid = false; }
   if (arrNeedApproval.includes(form.status) && !form.memo_file_name) { errors.value.memo_file = t('inventory.memoRequired'); isValid = false; }
   if (form.status === 'Hilang' && !form.lost_doc_file_name) { errors.value.lost_doc_file = t('inventory.lostDocRequired'); isValid = false; }
@@ -603,7 +602,7 @@ const handleSubmit = () => {
 
                   <Field :data-invalid="!!errors.image_url || undefined">
                     <FieldLabel>
-                      <span>{{ t('inventory.photo') }}<span class="text-rose-500">*</span></span>
+                      <span>{{ t('inventory.photo') }}</span>
                     </FieldLabel>
                     <FieldContent>
                       <div class="flex gap-2">

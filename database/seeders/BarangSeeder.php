@@ -90,6 +90,14 @@ class BarangSeeder extends Seeder
             ],
         ];
 
+        $placeholderSource = base_path('database/seeders/assets/placeholder.jpg');
+        if (File::exists($placeholderSource)) {
+            if (!Storage::disk('local')->exists('inventory')) {
+                Storage::disk('local')->makeDirectory('inventory');
+            }
+            Storage::disk('local')->put('inventory/placeholder.jpg', File::get($placeholderSource));
+        }
+
         foreach ($barangs as $data) {
             $sourcePath = base_path(ltrim($data['image_url'], '/'));
 

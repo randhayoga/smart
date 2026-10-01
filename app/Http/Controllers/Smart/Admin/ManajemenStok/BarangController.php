@@ -32,7 +32,7 @@ class BarangController extends Controller
             'image_url' => 'nullable|image|max:1024',
         ]);
 
-        $imagePath = 'inventory/barangs/placeholder.jpg';
+        $imagePath = null;
         if ($request->hasFile('image_url')) {
             $imagePath = $request->file('image_url')->store('inventory', 'local');
         }

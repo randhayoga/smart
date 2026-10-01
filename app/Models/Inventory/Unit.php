@@ -168,6 +168,7 @@ class Unit extends Model
 
     protected $fillable = [
         'number',
+        'legacy_number',
         'lot_id',
         'location_id',
         'status',

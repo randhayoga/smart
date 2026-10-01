@@ -42,7 +42,7 @@ class LotController extends Controller
             'po_number' => 'nullable|string|max:255',
             'date_of_receipt' => 'required|date',
             'unit_price' => 'nullable|numeric|min:0|max:999999999.99',
-            'image_url' => 'required_without:use_parent_image|nullable|image|max:1024',
+            'image_url' => 'nullable|image|max:1024',
             'use_parent_image' => 'nullable',
             'auto_create_assets' => 'nullable|boolean',
             'auto_create_assets_count' => 'required_if:auto_create_assets,true|nullable|integer|min:1|max:999',
@@ -61,9 +61,11 @@ class LotController extends Controller
             } else {
                 return redirect()->back()->withErrors(['image_url' => 'Foto barang parent tidak ditemukan di storage.']);
             }
-        } else {
+        } else if ($request->hasFile('image_url')) {
             $imagePath = $request->file('image_url')->store('inventory', 'local');
             $validated['image_url'] = $imagePath;
+        } else {
+            $validated['image_url'] = null;
         }
 
         unset($validated['use_parent_image']);
@@ -274,6 +276,7 @@ class LotController extends Controller
             return [
                 'id' => $unit->id,
                 'number' => $unit->number,
+                'legacy_number' => $unit->legacy_number,
                 'status' => $unit->status,
                 'proposed_status' => $pendingApproval 
                     ? $pendingApproval->proposed_condition 

@@ -175,6 +175,7 @@ class ManajemenStokController extends Controller
                 return [
                     'id' => $unit->id,
                     'number' => $unit->number,
+                    'legacy_number' => $unit->legacy_number,
                     'status' => $unit->status,
                     'proposed_status' => $pendingApproval 
                         ? $pendingApproval->proposed_condition 

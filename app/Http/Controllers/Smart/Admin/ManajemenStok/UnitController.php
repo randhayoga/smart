@@ -49,6 +49,7 @@ class UnitController extends Controller
             return [
                 'id' => $unit->id,
                 'number' => $unit->number, // Asset code
+                'legacy_number' => $unit->legacy_number,
                 'status' => $unit->status,
                 'proposed_status' => $pendingApproval 
                     ? $pendingApproval->proposed_condition 
@@ -162,7 +163,7 @@ class UnitController extends Controller
             'type' => 'required|string|in:LT,ST',
             'classification' => 'required|string|in:Aset,Inventaris',
             'price' => 'nullable|numeric|min:0|max:999999999.99',
-            'image_url' => 'required_without:use_lot_image|nullable|image|max:1024',
+            'image_url' => 'nullable|image|max:1024',
             'use_lot_image' => 'nullable',
         ];
  
@@ -215,6 +216,8 @@ class UnitController extends Controller
         } else if ($request->hasFile('image_url')) {
             $imagePath = $request->file('image_url')->store('inventory', 'local');
             $validated['image_url'] = $imagePath;
+        } else {
+            $validated['image_url'] = null;
         }
  
         unset($validated['use_lot_image']);
@@ -343,10 +346,6 @@ class UnitController extends Controller
             $rules['vehicle_registration'] = 'required|string|max:15';
         } else {
             $rules['vehicle_registration'] = 'nullable|string|max:15';
-        }
-
-        if (!$unit->image_url && !$request->boolean('use_lot_image') && !$request->hasFile('image_url')) {
-            return redirect()->back()->withErrors(['image_url' => 'Foto belum dipilih.']);
         }
 
         $proposedCondition = $request->input('condition');

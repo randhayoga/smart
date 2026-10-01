@@ -118,6 +118,7 @@ const isBodBocFieldVisible = computed(() => {
 const form = useForm({
   ids: [] as number[],
   number: '',
+  legacy_number: '',
   location_id: '' as string | number,
   status: '',
   condition: '',
@@ -218,6 +219,7 @@ watch(() => props.open, (val) => {
   if (isSingle.value && selectedItem.value) {
     const item = selectedItem.value;
     form.number = item.number || '';
+    form.legacy_number = item.legacy_number || '';
     form.location_id = item.location_id || '';
     form.status = item.status || '';
     form.condition = item.condition || '';
@@ -234,6 +236,7 @@ watch(() => props.open, (val) => {
     form.bod_boc_approval_file_name = item.bod_boc_approval_file_name || (item.bod_boc_approval_url ? item.bod_boc_approval_url.split('/').pop() || '' : '');
   } else {
     form.number = '';
+    form.legacy_number = '';
     const firstLoc = props.items[0]?.location_id;
     const sameLoc = props.items.every(i => i.location_id === firstLoc);
     form.location_id = sameLoc ? (firstLoc || '') : '';
@@ -438,7 +441,6 @@ const handleSubmit = () => {
       if (!form.status) { errors.value.status = t('inventory.statusRequired'); isValid = false; }
       if (!form.condition) { errors.value.condition = t('inventory.conditionRequired'); isValid = false; }
       if (!form.classification) { errors.value.classification = t('inventory.classificationRequired'); isValid = false; }
-      if (!form.image_url && !form.image_url_name) { errors.value.image_url = t('inventory.assetPhotoRequired'); isValid = false; }
       if (isVehicle.value && !form.vehicle_registration) { errors.value.vehicle_registration = t('inventory.nopolRequired'); isValid = false; }
       if (arrNeedApproval.includes(form.condition) && !isDocumentDisabled.value && !form.memo_file_name) { errors.value.memo_file = t('inventory.memoRequired'); isValid = false; }
       if (form.condition === 'Hilang' && !isDocumentDisabled.value && !form.lost_doc_file_name) { errors.value.lost_doc_file = t('inventory.lostDocRequired'); isValid = false; }
@@ -539,6 +541,13 @@ const handleSubmit = () => {
                     <FieldLabel>{{ t('inventory.assetCode') }}</FieldLabel>
                     <FieldContent>
                       <input type="text" :value="isSingle ? form.number : t('inventory.cannotBeChangedBulk')" disabled class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10" />
+                    </FieldContent>
+                  </Field>
+
+                  <Field v-if="isSingle && form.legacy_number">
+                    <FieldLabel>{{ t('inventory.legacyNumber') }}</FieldLabel>
+                    <FieldContent>
+                      <input type="text" :value="form.legacy_number" disabled class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10" />
                     </FieldContent>
                   </Field>
 
@@ -684,7 +693,7 @@ const handleSubmit = () => {
 
                   <Field :data-invalid="(isSingle && !!errors.image_url) || undefined">
                     <FieldLabel>
-                      <span>{{ t('inventory.photo') }}<span v-if="isSingle" class="text-rose-500">*</span></span>
+                      <span>{{ t('inventory.photo') }}</span>
                     </FieldLabel>
                     <FieldContent>
                       <div class="flex gap-2">

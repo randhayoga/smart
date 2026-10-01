@@ -33,7 +33,7 @@ class BulkUnitController extends Controller
             'type' => 'required|string|in:LT,ST',
             'classification' => 'required|string|in:Aset,Inventaris',
             'price' => 'nullable|numeric|min:0|max:999999999.99',
-            'image_url' => 'required_without:use_lot_image|nullable|image|max:1024',
+            'image_url' => 'nullable|image|max:1024',
             'use_lot_image' => 'nullable',
             'bulk_quantity' => 'required|integer|min:1|max:999',
         ];
