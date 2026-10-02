@@ -74,7 +74,7 @@ describe('i18n Configuration and Dictionaries', () => {
     expect(i18n.global.t('inventory.inventoryManagement')).toBe('Item Management');
     expect(i18n.global.t('nav.items.consumableStock')).toBe('Consumables Stock List');
     expect(i18n.global.t('inventory.consumableStockList')).toBe('Consumables Stock List');
-    expect(i18n.global.t('nav.items.pendingInactive')).toBe('Pending Deactivation List');
+    expect(i18n.global.t('nav.items.pendingInactive')).toBe('Deactivation Pending List');
     expect(i18n.global.t('nav.sections.approvalDeletion')).toBe('DEACTIVATION APPROVAL');
   });
 

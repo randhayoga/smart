@@ -53,13 +53,25 @@ describe('DeleteConfirmationModal.vue', () => {
       asset_code: 'AST-001',
       brand: 'Lenovo',
       nama: 'ThinkPad T14',
-      status_label: 'Pending',
+      status_label: 'Rusak',
       proposed_condition: 'Rusak',
       previous_status: 'Tersedia',
       previous_condition: 'Bagus',
     };
 
-    it('renders approval confirmation when approving status change', () => {
+    const statusApprovalItem2 = {
+      id: 11,
+      asset_code: 'AST-002',
+      brand: 'Acer',
+      nama: 'Swift Go',
+      status_label: 'Hilang',
+      proposed_condition: 'Hilang',
+      previous_status: 'Tersedia',
+      previous_condition: 'Bagus',
+    };
+
+    it('renders single approval confirmation when approving status change in Indonesian', () => {
+      setI18nLanguage('id');
       const wrapper = mountModal({
         itemCount: 1,
         itemName: 'Perubahan Status Aset',
@@ -68,13 +80,15 @@ describe('DeleteConfirmationModal.vue', () => {
       });
 
       expect(wrapper.text()).toContain('Konfirmasi Approval');
-      expect(wrapper.text()).toContain('Apakah Anda yakin untuk meng-approve 1 perubahan aset yang Anda pilih?');
+      expect(wrapper.text()).toContain('Apakah Anda yakin untuk meng-approve penghapusan aset ini?');
       expect(wrapper.text()).not.toContain('Tindakan ini tidak dapat dibatalkan');
       expect(wrapper.text()).toContain('AST-001');
+      expect(wrapper.text()).toContain('Bagus');
       expect(wrapper.text()).toContain('Rusak');
     });
 
-    it('renders rejection confirmation when rejecting status change', () => {
+    it('renders single rejection confirmation when rejecting status change in Indonesian', () => {
+      setI18nLanguage('id');
       const wrapper = mountModal({
         itemCount: 1,
         itemName: 'Perubahan Status Aset',
@@ -83,8 +97,64 @@ describe('DeleteConfirmationModal.vue', () => {
       });
 
       expect(wrapper.text()).toContain('Konfirmasi Penolakan');
-      expect(wrapper.text()).toContain('Apakah Anda yakin untuk menolak 1 perubahan aset yang Anda pilih?');
+      expect(wrapper.text()).toContain('Apakah Anda yakin untuk menolak penghapusan aset ini?');
       expect(wrapper.text()).not.toContain('Tindakan ini tidak dapat dibatalkan');
+    });
+
+    it('renders bulk approval and rejection confirmations in Indonesian (> 1 selection)', () => {
+      setI18nLanguage('id');
+      const approveWrapper = mountModal({
+        itemCount: 2,
+        itemName: 'Perubahan Status Aset',
+        actionType: 'approved',
+        itemData: [statusApprovalItem, statusApprovalItem2],
+      });
+      expect(approveWrapper.text()).toContain('Apakah Anda yakin untuk meng-approve 2 penghapusan aset ini?');
+      expect(approveWrapper.text()).toContain('AST-001');
+      expect(approveWrapper.text()).toContain('AST-002');
+
+      const rejectWrapper = mountModal({
+        itemCount: 2,
+        itemName: 'Perubahan Status Aset',
+        actionType: 'rejected',
+        itemData: [statusApprovalItem, statusApprovalItem2],
+      });
+      expect(rejectWrapper.text()).toContain('Apakah Anda yakin untuk menolak 2 penghapusan aset ini?');
+    });
+
+    it('renders single and bulk approval/rejection confirmations in English', () => {
+      setI18nLanguage('en');
+      const singleApprove = mountModal({
+        itemCount: 1,
+        itemName: 'Perubahan Status Aset',
+        actionType: 'approved',
+        itemData: [statusApprovalItem],
+      });
+      expect(singleApprove.text()).toContain('Are you sure you want to approve this asset deactivation?');
+
+      const singleReject = mountModal({
+        itemCount: 1,
+        itemName: 'Perubahan Status Aset',
+        actionType: 'rejected',
+        itemData: [statusApprovalItem],
+      });
+      expect(singleReject.text()).toContain('Are you sure you want to reject this asset deactivation?');
+
+      const bulkApprove = mountModal({
+        itemCount: 2,
+        itemName: 'Perubahan Status Aset',
+        actionType: 'approved',
+        itemData: [statusApprovalItem, statusApprovalItem2],
+      });
+      expect(bulkApprove.text()).toContain('Are you sure you want to approve 2 selected assets deactivation?');
+
+      const bulkReject = mountModal({
+        itemCount: 2,
+        itemName: 'Perubahan Status Aset',
+        actionType: 'rejected',
+        itemData: [statusApprovalItem, statusApprovalItem2],
+      });
+      expect(bulkReject.text()).toContain('Are you sure you want to reject 2 selected assets deactivation?');
     });
   });
 

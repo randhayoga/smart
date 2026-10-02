@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * Admin Pending Deactivation List Page component tracking assets awaiting approval (BoD/BoC and DM stages).
+ * Admin Deactivation Pending List Page component tracking assets awaiting approval (BoD/BoC and DM stages).
  */
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';

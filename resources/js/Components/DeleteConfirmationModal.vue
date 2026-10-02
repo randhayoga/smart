@@ -158,8 +158,8 @@ const modalMessage = computed(() => {
       }
     }
     return isApprove
-      ? t('common.modals.approvalConfirmMsg', { count: props.itemCount })
-      : t('common.modals.rejectConfirmMsg', { count: props.itemCount });
+      ? (props.itemCount === 1 ? t('common.modals.approvalConfirmSingle') : t('common.modals.approvalConfirmMsg', { count: props.itemCount }))
+      : (props.itemCount === 1 ? t('common.modals.rejectConfirmSingle') : t('common.modals.rejectConfirmMsg', { count: props.itemCount }));
   }
   if (props.message) return props.message;
   return props.itemCount === 1
@@ -230,12 +230,28 @@ const displayFields = computed(() => {
     if (data.asset_code || data.number) fields.push({ label: t('inventory.assetCode'), value: data.asset_code || data.number });
     if (data.type || data.unit_details?.type) fields.push({ label: t('inventory.type'), value: data.type || data.unit_details?.type });
     if (data.classification || data.unit_details?.classification) fields.push({ label: t('inventory.classification'), value: getClassificationLabel(data.classification || data.unit_details?.classification || 'Aset') });
-    if (data.status_label || data.unit_details?.status) fields.push({ label: t('inventory.status'), value: data.status_label || data.unit_details?.status });
-    if (data.proposed_condition || data.unit_details?.condition || data.condition) {
-      fields.push({
-        label: isActivationApproval.value ? t('inventory.condition') : t('approvals.proposedCondition'),
-        value: getConditionLabel(data.proposed_condition || data.unit_details?.condition || data.condition)
-      });
+    if (isActivationApproval.value) {
+      if (data.unit_details?.status || data.status) fields.push({ label: t('inventory.status'), value: getStatusLabel(data.unit_details?.status || data.status) });
+      if (data.unit_details?.condition || data.condition) {
+        fields.push({
+          label: t('inventory.condition'),
+          value: getConditionLabel(data.unit_details?.condition || data.condition)
+        });
+      }
+    } else {
+      const actualCondition = data.previous_condition || data.unit_details?.condition || data.condition;
+      if (actualCondition) {
+        fields.push({
+          label: t('inventory.condition'),
+          value: getConditionLabel(actualCondition)
+        });
+      }
+      if (data.proposed_condition) {
+        fields.push({
+          label: t('approvals.proposedCondition'),
+          value: getConditionLabel(data.proposed_condition)
+        });
+      }
     }
     if (data.unit_details?.lot_code) fields.push({ label: t('approvals.lotCodeLabel').replace(':', ''), value: data.unit_details.lot_code });
     if (data.category) fields.push({ label: t('approvals.category'), value: data.category });
@@ -383,12 +399,28 @@ const bulkItemsFields = computed(() => {
       if (data.brand) fields.push({ label: t('approvals.brand'), value: data.brand });
       if (data.name || data.nama) fields.push({ label: t('approvals.name'), value: data.name || data.nama });
       if (data.type || data.unit_details?.type) fields.push({ label: t('inventory.type'), value: data.type || data.unit_details?.type });
-      if (data.status_label || data.unit_details?.status) fields.push({ label: t('inventory.status'), value: data.status_label || data.unit_details?.status });
-      if (data.proposed_condition || data.unit_details?.condition || data.condition) {
-        fields.push({
-          label: isActivationApproval.value ? t('inventory.condition') : t('approvals.proposedCondition'),
-          value: getConditionLabel(data.proposed_condition || data.unit_details?.condition || data.condition)
-        });
+      if (isActivationApproval.value) {
+        if (data.unit_details?.status || data.status) fields.push({ label: t('inventory.status'), value: getStatusLabel(data.unit_details?.status || data.status) });
+        if (data.unit_details?.condition || data.condition) {
+          fields.push({
+            label: t('inventory.condition'),
+            value: getConditionLabel(data.unit_details?.condition || data.condition)
+          });
+        }
+      } else {
+        const actualCondition = data.previous_condition || data.unit_details?.condition || data.condition;
+        if (actualCondition) {
+          fields.push({
+            label: t('inventory.condition'),
+            value: getConditionLabel(actualCondition)
+          });
+        }
+        if (data.proposed_condition) {
+          fields.push({
+            label: t('approvals.proposedCondition'),
+            value: getConditionLabel(data.proposed_condition)
+          });
+        }
       }
       return fields;
     }

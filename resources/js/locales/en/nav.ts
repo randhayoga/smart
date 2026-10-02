@@ -20,7 +20,7 @@ export default {
     assets: 'Asset List',
     employees: 'Employee List',
     pendingActivation: 'Activation Pending List',
-    pendingInactive: 'Pending Deactivation List',
+    pendingInactive: 'Deactivation Pending List',
     masterData: 'Master Data',
     scanBarcode: 'Scan Barcode',
     activeRequests: 'Active Requests',

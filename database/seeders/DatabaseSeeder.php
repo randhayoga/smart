@@ -22,29 +22,29 @@ class DatabaseSeeder extends Seeder
         // CONFIGURATION 1: ACTUAL / FINAL DATA (+ UOM & ORGANIZER DUMMY DATA)
         // Active by default. Comment this entire block when switching to dummy data.
         // =========================================================================
-        $this->call([
-            RoleAndPermissionSeeder::class,
-            ActualMasterSeeder::class,     // Categories, Subcategories, Brands, Vendors, Locations
-            DummyUomSeeder::class,         // Satuan barang (Unit, Rim, Buah)
-            DummyOrganizerSeeder::class,   // Unit pengelola (CFS, ICT, HSE)
-            UserSeeder::class,
-            TbProjectSeeder::class,
-            TbAssignProjectSeeder::class,
-        ]);
+        // $this->call([
+        //     RoleAndPermissionSeeder::class,
+        //     ActualMasterSeeder::class,     // Categories, Subcategories, Brands, Vendors, Locations
+        //     DummyUomSeeder::class,         // Satuan barang (Unit, Rim, Buah)
+        //     DummyOrganizerSeeder::class,   // Unit pengelola (CFS, ICT, HSE)
+        //     UserSeeder::class,
+        //     TbProjectSeeder::class,
+        //     TbAssignProjectSeeder::class,
+        // ]);
 
         // =========================================================================
         // CONFIGURATION 2: DUMMY DEVELOPMENT DATA (Mutually exclusive with Config 1)
         // Uncomment this entire block (and comment Config 1) to use mock inventory.
         // =========================================================================
-        // $this->call([
-        //     RoleAndPermissionSeeder::class,
-        //     DummyMasterSeeder::class,
-        //     UserSeeder::class,
-        //     TbProjectSeeder::class,
-        //     TbAssignProjectSeeder::class,
-        //     BarangSeeder::class,
-        //     LotSeeder::class,
-        //     UnitSeeder::class,
-        // ]);
+        $this->call([
+            RoleAndPermissionSeeder::class,
+            DummyMasterSeeder::class,
+            UserSeeder::class,
+            TbProjectSeeder::class,
+            TbAssignProjectSeeder::class,
+            BarangSeeder::class,
+            LotSeeder::class,
+            UnitSeeder::class,
+        ]);
     }
 }
