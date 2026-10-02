@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
         if (app()->isProduction()) {
             $this->command?->warn('Production environment detected: Skipping development and external dummy seeders.');
             $this->call(RoleAndPermissionSeeder::class);
+            $this->call(ActualMasterSeeder::class); // Categories, Subcategories, Brands, Vendors, Locations
             return;
         }
 
