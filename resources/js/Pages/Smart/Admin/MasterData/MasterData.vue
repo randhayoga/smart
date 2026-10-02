@@ -369,8 +369,8 @@ const columns = computed<ColumnDef<any>[]>(() => {
   if (activeTab.value === 'vendors') {
     cols.push({
       accessorKey: 'address',
-      header: () => h('div', { class: 'pl-2 py-1 font-semibold text-foreground leading-tight' }, t('masterData.columns.address')),
-      cell: ({ row }) => h('div', { class: 'pl-2 text-muted-foreground truncate' }, row.getValue('address') || '-'),
+      header: () => h('div', { class: 'pl-2 py-1 font-semibold text-foreground leading-tight max-w-[200px]' }, t('masterData.columns.address')),
+      cell: ({ row }) => h('div', { class: 'pl-2 text-muted-foreground truncate max-w-[200px]' }, row.getValue('address') || '-'),
     });
     cols.push({
       accessorKey: 'phone_number',
@@ -393,8 +393,8 @@ const columns = computed<ColumnDef<any>[]>(() => {
   if (['subcategories', 'brands', 'vendors'].includes(activeTab.value)) {
     cols.push({
       accessorKey: 'description',
-      header: () => h('div', { class: 'pl-2 py-1 font-semibold text-foreground leading-tight' }, t('masterData.columns.description')),
-      cell: ({ row }) => h('div', { class: 'pl-2 text-muted-foreground truncate' }, row.getValue('description') || '-'),
+      header: () => h('div', { class: 'pl-2 py-1 font-semibold text-foreground leading-tight max-w-[200px]' }, t('masterData.columns.description')),
+      cell: ({ row }) => h('div', { class: 'pl-2 text-muted-foreground truncate max-w-[200px]' }, row.getValue('description') || '-'),
     });
   }
 
