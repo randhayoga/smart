@@ -144,6 +144,7 @@ export default {
   newAsset: 'Aset Baru',
   viewDetails: 'Lihat Detail',
   delete: 'Hapus',
+  deletePhoto: 'Hapus Foto',
   deleteType: 'Hapus Tipe',
   deleteLot: 'Hapus LOT',
   saveChanges: 'Simpan Perubahan',

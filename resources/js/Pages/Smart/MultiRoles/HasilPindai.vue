@@ -462,11 +462,6 @@ const handleSubmit = () => {
                 class="w-full h-full object-cover" 
               />
               <img 
-                v-else-if="props.lot?.image_url" 
-                :src="'/media/' + props.lot.image_url" 
-                class="w-full h-full object-cover" 
-              />
-              <img 
                 v-else 
                 src="/media/inventory/placeholder.jpg" 
                 class="w-full h-full object-cover opacity-60" 

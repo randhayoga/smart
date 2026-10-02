@@ -144,6 +144,7 @@ export default {
   newAsset: 'New Asset',
   viewDetails: 'View Details',
   delete: 'Delete',
+  deletePhoto: 'Delete Photo',
   deleteType: 'Delete Type',
   deleteLot: 'Delete LOT',
   saveChanges: 'Save Changes',

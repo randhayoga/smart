@@ -128,6 +128,33 @@ class BarangControllerTest extends TestCase
         ]);
     }
 
+    public function test_can_update_barang_and_delete_image(): void
+    {
+        Storage::fake('local');
+        $user = User::factory()->create();
+        Storage::disk('local')->put('inventory/sample.jpg', 'fake content');
+
+        $barang = Barang::factory()->create([
+            'image_url' => 'inventory/sample.jpg',
+        ]);
+
+        $response = $this->actingAs($user)->put(route('smart.inventory.barangs.update', $barang), [
+            'number' => $barang->number,
+            'subcategory_id' => $barang->subcategory_id,
+            'brand_id' => $barang->brand_id,
+            'uom_id' => $barang->uom_id,
+            'name' => $barang->name,
+            'delete_image' => true,
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success', 'Tipe berhasil diperbarui.');
+
+        $barang->refresh();
+        $this->assertNull($barang->image_url);
+        Storage::disk('local')->assertMissing('inventory/sample.jpg');
+    }
+
     public function test_can_bulk_update_barangs(): void
     {
         Storage::fake('local');

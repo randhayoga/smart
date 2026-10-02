@@ -105,8 +105,8 @@ class LotController extends Controller
             'initial_quantity' => 'nullable|integer|min:0|max:2147483647',
             'po_number' => 'nullable|string|max:255',
             'date_of_receipt' => 'required|date',
-            'unit_price' => 'nullable|numeric|min:0|max:999999999.99',
             'image_url' => 'nullable|image|max:1024',
+            'delete_image' => 'nullable|boolean',
             'use_parent_image' => 'nullable',
             'burden' => 'nullable|string|in:Corporate,Project',
             'project_id' => ['required_if:burden,Project', 'nullable', Rule::exists(TbProject::class, 'id_project')],
@@ -114,7 +114,17 @@ class LotController extends Controller
             'initial_quantity.integer' => 'Tidak boleh desimal.',
         ]);
 
-        if ($request->boolean('use_parent_image')) {
+        if ($request->boolean('delete_image')) {
+            if ($lot->image_url && $lot->image_url !== 'inventory/lots/placeholder.jpg' && Storage::disk('local')->exists($lot->image_url)) {
+                $isShared = Lot::where('image_url', $lot->image_url)->where('id', '!=', $lot->id)->exists()
+                    || Barang::where('image_url', $lot->image_url)->exists()
+                    || Unit::where('image_url', $lot->image_url)->exists();
+                if (!$isShared) {
+                    Storage::disk('local')->delete($lot->image_url);
+                }
+            }
+            $validated['image_url'] = null;
+        } else if ($request->boolean('use_parent_image')) {
             if ($lot->image_url && $lot->image_url !== 'inventory/lots/placeholder.jpg' && Storage::disk('local')->exists($lot->image_url)) {
                 $isShared = Lot::where('image_url', $lot->image_url)->where('id', '!=', $lot->id)->exists()
                     || Barang::where('image_url', $lot->image_url)->exists()
@@ -145,6 +155,7 @@ class LotController extends Controller
         }
 
         unset($validated['use_parent_image']);
+        unset($validated['delete_image']);
         if (!$request->has('initial_quantity')) {
             unset($validated['initial_quantity']);
         }

@@ -190,7 +190,6 @@ const finalLotOrganizer = computed(() => props.lot?.organizer || props.asset?.lo
 const finalLotDateOfReceipt = computed(() => props.lot?.date_of_receipt || props.asset?.lot_date_of_receipt || '');
 const finalLotVendor = computed(() => props.lot?.vendor || props.asset?.lot_vendor || '');
 const finalLotPoNumber = computed(() => props.lot?.po_number || props.asset?.lot_po_number || '');
-const finalLotImageUrl = computed(() => props.lot?.imageUrl || props.asset?.lot_imageUrl || '');
 
 const finalBarangCode = computed(() => props.lot?.barang_code || props.asset?.barang_code || '');
 const finalBarangBrand = computed(() => props.lot?.barang_brand || props.asset?.barang_brand || '');
@@ -243,11 +242,6 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                     <img 
                       v-if="asset && asset.image_url" 
                       :src="'/media/' + asset.image_url" 
-                      class="w-full h-full object-cover" 
-                    />
-                    <img 
-                      v-else-if="finalLotImageUrl" 
-                      :src="'/media/' + finalLotImageUrl" 
                       class="w-full h-full object-cover" 
                     />
                     <img 

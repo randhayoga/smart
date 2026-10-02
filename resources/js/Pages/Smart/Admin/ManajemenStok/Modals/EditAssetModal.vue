@@ -7,7 +7,7 @@ import { useI18n } from 'vue-i18n';
 import { useModalLock } from '@/composables/useModalLock';
 import { useForm, router } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
-import { X, ChevronDown, Loader2 } from 'lucide-vue-next';
+import { X, ChevronDown, Loader2, Trash2 } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -199,12 +199,23 @@ watch(() => form.condition, (newVal, oldVal) => {
   }
 });
 
+const isImageDeleted = ref(false);
+
+const hasImage = computed(() => {
+  if (!isSingle.value) return false;
+  if (form.image_url) return true;
+  if (form.use_lot_image) return true;
+  if (isImageDeleted.value) return false;
+  return Boolean(selectedItem.value?.image_url);
+});
+
 // Init form when modal opens
 watch(() => props.open, (val) => {
   if (!val) return;
   form.reset();
   form.clearErrors();
   resetErrors();
+  isImageDeleted.value = false;
   form.ids = props.items.map(r => r.id);
   form.image_url = null;
   form.image_url_name = '';
@@ -249,7 +260,10 @@ watch(() => props.open, (val) => {
   }
 });
 
-const closeModal = () => { emit('update:open', false); };
+const closeModal = () => {
+  isImageDeleted.value = false;
+  emit('update:open', false);
+};
 
 const handleFileUpload = async (e: any) => {
   const target = e.target as HTMLInputElement;
@@ -270,6 +284,7 @@ const handleFileUpload = async (e: any) => {
       target.value = '';
       return;
     }
+    isImageDeleted.value = false;
     form.image_url = file;
     form.image_url_name = file.name;
     form.use_lot_image = false;
@@ -279,6 +294,15 @@ const handleFileUpload = async (e: any) => {
   } finally {
     target.value = '';
   }
+};
+
+const handleDeletePhoto = () => {
+  isImageDeleted.value = true;
+  form.image_url = null;
+  form.image_url_name = '';
+  form.use_lot_image = false;
+  const input = document.getElementById('edit-asset-photo-upload') as HTMLInputElement;
+  if (input) input.value = '';
 };
 
 const triggerFileInput = () => {
@@ -291,16 +315,19 @@ const viewImageInNewTab = () => {
     window.open(URL.createObjectURL(form.image_url), '_blank');
   } else if (form.use_lot_image && props.lot?.imageUrl) {
     window.open('/media/' + props.lot.imageUrl, '_blank');
-  } else if (isSingle.value && selectedItem.value?.image_url) {
+  } else if (!isImageDeleted.value && isSingle.value && selectedItem.value?.image_url) {
     window.open('/media/' + selectedItem.value.image_url, '_blank');
   }
 };
 
 const handleSamakanPhoto = () => {
   if (props.lot?.imageUrl) {
+    isImageDeleted.value = false;
     form.use_lot_image = true;
     form.image_url = null;
     form.image_url_name = props.lot.imageUrl.split('/').pop() || '';
+    const input = document.getElementById('edit-asset-photo-upload') as HTMLInputElement;
+    if (input) input.value = '';
   } else {
     toast.error(t('inventory.lotNoPhoto'));
   }
@@ -459,8 +486,13 @@ const handleSubmit = () => {
           price: data.price !== '' && data.price !== null ? parseCurrencyToNumber(data.price) : null,
         };
         if (isVehicle.value) fd.vehicle_registration = data.vehicle_registration;
-        if (data.image_url) fd.image_url = data.image_url;
-        if (data.use_lot_image) fd.use_lot_image = data.use_lot_image;
+        if (data.image_url) {
+          fd.image_url = data.image_url;
+        } else if (data.use_lot_image) {
+          fd.use_lot_image = data.use_lot_image;
+        } else if (isSingle.value && isImageDeleted.value) {
+          fd.delete_image = true;
+        }
         if (data.memo_file) fd.memo_file = data.memo_file;
         if (data.lost_doc_file) fd.lost_doc_file = data.lost_doc_file;
         if (data.bod_boc_approval_file) fd.bod_boc_approval_file = data.bod_boc_approval_file;
@@ -521,7 +553,7 @@ const handleSubmit = () => {
     <Transition enter-active-class="ease-out duration-200" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="ease-in duration-150" leave-from-class="opacity-100" leave-to-class="opacity-0">
       <div v-if="open" @click="closeModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 overscroll-contain">
         <Transition enter-active-class="ease-out duration-200" enter-from-class="opacity-0 scale-95" enter-to-class="opacity-100 scale-100" leave-active-class="ease-in duration-150" leave-from-class="opacity-100 scale-100" leave-to-class="opacity-0 scale-95">
-          <div v-if="open" class="bg-card w-full max-w-[1000px] rounded-[14px] shadow-2xl overflow-hidden flex flex-col" @click.stop>
+          <div v-if="open" class="bg-card w-full max-w-[1100px] rounded-[14px] shadow-2xl overflow-hidden flex flex-col" @click.stop>
             <!-- Header -->
             <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
               <h3 class="text-lg font-bold text-foreground">
@@ -698,14 +730,26 @@ const handleSubmit = () => {
                     <FieldContent>
                       <div class="flex gap-2">
                         <div class="flex-grow min-w-0 px-4 py-2 text-sm border rounded-[14px] bg-muted/10 truncate flex items-center h-10"
-                          :class="[(form.image_url || form.image_url_name) ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' : 'text-muted-foreground cursor-default', (isSingle && errors.image_url) ? 'border-destructive' : 'border-input']"
-                          @click="(form.image_url || form.image_url_name) && viewImageInNewTab()"
+                          :class="[hasImage ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' : 'text-muted-foreground cursor-default', (isSingle && errors.image_url) ? 'border-destructive' : 'border-input']"
+                          @click="hasImage && viewImageInNewTab()"
                         >
                           {{ form.image_url_name || (isSingle ? t('inventory.noPhotoSelected') : t('inventory.unchanged')) }}
                         </div>
                         <input type="file" id="edit-asset-photo-upload" class="hidden" accept=".jpg,.jpeg,.png" @change="handleFileUpload" />
-                        <Button type="button" @click="handleSamakanPhoto" variant="warning" size="lg">{{ t('inventory.sameAsParent') }}</Button>
-                        <Button type="button" @click="triggerFileInput" size="lg">{{ t('inventory.chooseFile') }}</Button>
+                        <Button type="button" @click="handleSamakanPhoto" variant="warning" size="lg" class="shrink-0">{{ t('inventory.sameAsParent') }}</Button>
+                        <Button type="button" @click="triggerFileInput" size="lg" class="shrink-0">{{ t('inventory.chooseFile') }}</Button>
+                        <Button
+                          v-if="isSingle"
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          class="w-9 shrink-0"
+                          :disabled="!hasImage"
+                          @click="handleDeletePhoto"
+                          :title="t('inventory.deletePhoto')"
+                        >
+                          <Trash2 class="w-4 h-4" />
+                        </Button>
                       </div>
                       <p class="text-[10px] text-muted-foreground ml-1 mt-1">{{ t('inventory.maxFileSize1Mb') }}</p>
                     </FieldContent>

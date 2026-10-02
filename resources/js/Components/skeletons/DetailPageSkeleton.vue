@@ -42,19 +42,19 @@ import { Card, CardHeader, CardContent } from '@/Components/ui/card';
       </CardHeader>
 
       <CardContent class="p-4 sm:p-6">
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <!-- Left 2 Cols: Attribute Grid -->
-          <div class="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="flex flex-col md:flex-row gap-6">
+          <!-- Left: Image / QR Preview Box -->
+          <div class="w-48 h-48 rounded-xl border border-dashed border-border bg-muted/10 shrink-0 flex flex-col items-center justify-center space-y-3 p-4">
+            <Skeleton class="h-32 w-32 sm:h-36 sm:w-36 rounded-lg" />
+            <Skeleton class="h-4 w-28" />
+          </div>
+
+          <!-- Right: Attribute Grid -->
+          <div class="flex-grow grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div v-for="i in 6" :key="i" class="p-3.5 rounded-lg border border-border/60 bg-muted/20 space-y-1.5">
               <Skeleton class="h-3.5 w-24" />
               <Skeleton class="h-5 w-36 sm:w-44" />
             </div>
-          </div>
-
-          <!-- Right Col: Image / QR Preview Box -->
-          <div class="lg:col-span-1 flex flex-col items-center justify-center p-6 rounded-xl border border-dashed border-border bg-muted/10 min-h-[180px] space-y-3">
-            <Skeleton class="h-32 w-32 sm:h-36 sm:w-36 rounded-lg" />
-            <Skeleton class="h-4 w-28" />
           </div>
         </div>
       </CardContent>

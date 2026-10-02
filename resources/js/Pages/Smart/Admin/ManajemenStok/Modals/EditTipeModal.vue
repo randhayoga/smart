@@ -7,7 +7,7 @@ import { useI18n } from 'vue-i18n';
 import { useModalLock } from '@/composables/useModalLock';
 import { useForm } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
-import { X, Loader2 } from 'lucide-vue-next';
+import { X, Loader2, Trash2 } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
 import Combobox from '@/Components/Combobox.vue';
 import { Field, FieldLabel, FieldContent, FieldError } from '@/Components/ui/field';
@@ -81,12 +81,22 @@ watch(() => form.uom_id, v => { if (v && errors.value.uom_id) errors.value.uom_i
 watch(() => form.brand_id, v => { if (v && errors.value.brand_id) errors.value.brand_id = ''; });
 watch(() => form.name, v => { if (v && errors.value.name) errors.value.name = ''; });
 
+const isImageDeleted = ref(false);
+
+const hasImage = computed(() => {
+  if (!isSingle.value) return false;
+  if (form.photo) return true;
+  if (isImageDeleted.value) return false;
+  return Boolean(selectedItem.value?.image_url);
+});
+
 // Initialize form when modal opens
 watch(() => props.open, (val) => {
   if (!val) return;
   form.reset();
   form.clearErrors();
   resetErrors();
+  isImageDeleted.value = false;
   form.ids = props.items.map(r => r.id);
 
   // Explicitly reset
@@ -116,6 +126,7 @@ const closeModal = () => {
   form.specification = '';
   form.photo = null;
   form.photoName = '';
+  isImageDeleted.value = false;
   form.clearErrors();
   resetErrors();
 };
@@ -126,8 +137,17 @@ const handleFileUpload = (e: any) => {
   const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
   if (!allowedTypes.includes(file.type)) { alert(t('inventory.invalidFileFormat')); return; }
   if (file.size > 1024 * 1024) { alert(t('inventory.fileTooLarge1Mb')); return; }
+  isImageDeleted.value = false;
   form.photo = file;
   form.photoName = file.name;
+};
+
+const handleDeletePhoto = () => {
+  isImageDeleted.value = true;
+  form.photo = null;
+  form.photoName = '';
+  const input = document.getElementById('edit-tipe-photo-upload') as HTMLInputElement;
+  if (input) input.value = '';
 };
 
 const triggerFileInput = () => {
@@ -139,7 +159,7 @@ const viewImageInNewTab = () => {
   if (form.photo) {
     const url = URL.createObjectURL(form.photo);
     window.open(url, '_blank');
-  } else if (selectedItem.value && selectedItem.value.image_url) {
+  } else if (!isImageDeleted.value && selectedItem.value && selectedItem.value.image_url) {
     window.open('/media/' + selectedItem.value.image_url, '_blank');
   }
 };
@@ -176,7 +196,11 @@ const handleSubmit = () => {
       formData.brand_id = data.brand_id;
       formData.name = data.name;
       formData.specification = data.specification;
-      if (data.photo) formData.image_url = data.photo;
+      if (data.photo) {
+        formData.image_url = data.photo;
+      } else if (isImageDeleted.value) {
+        formData.delete_image = true;
+      }
     } else {
       if (data.uom_id) formData.uom_id = data.uom_id;
       if (data.brand_id) formData.brand_id = data.brand_id;
@@ -215,7 +239,7 @@ const handleSubmit = () => {
         >
           <div 
             v-if="open" 
-            class="bg-card w-full max-w-[1000px] rounded-[14px] shadow-2xl overflow-hidden flex flex-col" 
+            class="bg-card w-full max-w-[1100px] rounded-[14px] shadow-2xl overflow-hidden flex flex-col" 
             @click.stop
           >
             <!-- Modal Header -->
@@ -344,11 +368,11 @@ const handleSubmit = () => {
                           <div 
                             class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/10 truncate flex items-center h-10"
                             :class="[
-                              (form.photo || (selectedItem && selectedItem.image_url)) 
+                              hasImage 
                                 ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' 
                                 : 'text-muted-foreground cursor-default'
                             ]"
-                            @click="(form.photo || (selectedItem && selectedItem.image_url)) && viewImageInNewTab()"
+                            @click="hasImage && viewImageInNewTab()"
                           >
                             {{ form.photoName || (isSingle ? t('inventory.noPhotoSelected') : t('inventory.unchanged')) }}
                           </div>
@@ -362,8 +386,21 @@ const handleSubmit = () => {
                           <Button 
                             @click="triggerFileInput"
                             size="lg"
+                            class="shrink-0"
                           >
                             {{ t('inventory.chooseFile') }}
+                          </Button>
+                          <Button
+                            v-if="isSingle"
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            class="w-9 shrink-0"
+                            :disabled="!hasImage"
+                            @click="handleDeletePhoto"
+                            :title="t('inventory.deletePhoto')"
+                          >
+                            <Trash2 class="w-4 h-4" />
                           </Button>
                         </div>
                         <p class="text-[10px] text-muted-foreground ml-1">{{ t('inventory.maxFileSize1Mb') }}</p>

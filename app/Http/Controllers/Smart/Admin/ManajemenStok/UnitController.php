@@ -329,6 +329,7 @@ class UnitController extends Controller
             'classification' => ['required', 'string', 'in:Aset,Inventaris'],
             'price' => 'nullable|numeric|min:0|max:999999999.99',
             'image_url' => 'nullable|image|mimes:jpeg,jpg,png|max:1024',
+            'delete_image' => 'nullable|boolean',
             'use_lot_image' => 'nullable',
         ];
 
@@ -422,7 +423,17 @@ class UnitController extends Controller
 
         $validated = $request->validate($rules, $messages);
 
-        if ($request->boolean('use_lot_image')) {
+        if ($request->boolean('delete_image')) {
+            if ($unit->image_url && Storage::disk('local')->exists($unit->image_url)) {
+                $isShared = Unit::where('image_url', $unit->image_url)->where('id', '!=', $unit->id)->exists()
+                    || Lot::where('image_url', $unit->image_url)->exists()
+                    || Barang::where('image_url', $unit->image_url)->exists();
+                if (!$isShared) {
+                    Storage::disk('local')->delete($unit->image_url);
+                }
+            }
+            $validated['image_url'] = null;
+        } else if ($request->boolean('use_lot_image')) {
             if ($unit->image_url && Storage::disk('local')->exists($unit->image_url)) {
                 $isShared = Unit::where('image_url', $unit->image_url)->where('id', '!=', $unit->id)->exists()
                     || Lot::where('image_url', $unit->image_url)->exists()
@@ -453,6 +464,7 @@ class UnitController extends Controller
         }
 
         unset($validated['use_lot_image']);
+        unset($validated['delete_image']);
 
         $previousStatus = str_starts_with($unit->status ?? '', 'Pending') ? 'Tersedia' : $unit->status;
         $previousCondition = $unit->condition;

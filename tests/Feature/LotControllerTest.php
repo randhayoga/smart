@@ -127,6 +127,37 @@ class LotControllerTest extends TestCase
         ]);
     }
 
+    public function test_can_update_lot_and_delete_image(): void
+    {
+        Storage::fake('local');
+        $user = User::factory()->create();
+        Storage::disk('local')->put('inventory/lot_sample.jpg', 'fake content');
+
+        $lot = Lot::factory()->create([
+            'image_url' => 'inventory/lot_sample.jpg',
+        ]);
+
+        $response = $this->actingAs($user)->put(route('smart.inventory.lots.update', $lot), [
+            'number' => $lot->number,
+            'barang_id' => $lot->barang_id,
+            'organizer_id' => $lot->organizer_id,
+            'vendor_id' => $lot->vendor_id,
+            'location_id' => $lot->location_id,
+            'po_number' => $lot->po_number,
+            'date_of_receipt' => $lot->date_of_receipt->format('Y-m-d'),
+            'unit_price' => $lot->unit_price,
+            'delete_image' => true,
+            'burden' => 'Corporate',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success', 'LOT berhasil diperbarui.');
+
+        $lot->refresh();
+        $this->assertNull($lot->image_url);
+        Storage::disk('local')->assertMissing('inventory/lot_sample.jpg');
+    }
+
     public function test_can_store_lot_with_null_or_blank_po_number(): void
     {
         Storage::fake('local');

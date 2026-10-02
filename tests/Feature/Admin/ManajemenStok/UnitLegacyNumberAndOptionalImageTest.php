@@ -209,6 +209,40 @@ class UnitLegacyNumberAndOptionalImageTest extends TestCase
         $this->assertNull($unit->image_url);
     }
 
+    public function test_unit_update_can_delete_image(): void
+    {
+        Storage::disk('local')->put('inventory/unit_sample.jpg', 'fake content');
+
+        $unit = Unit::factory()->create([
+            'lot_id' => $this->lot->id,
+            'number' => '00001-EL01-IT-PTRE-26',
+            'location_id' => $this->location->id,
+            'status' => 'Tersedia',
+            'condition' => 'Bagus',
+            'type' => 'LT',
+            'classification' => 'Aset',
+            'image_url' => 'inventory/unit_sample.jpg',
+        ]);
+
+        $response = $this->actingAs($this->user)->put(route('smart.inventory.units.update', $unit), [
+            'number' => $unit->number,
+            'lot_id' => $this->lot->id,
+            'location_id' => $this->location->id,
+            'status' => 'Tersedia',
+            'condition' => 'Bagus',
+            'type' => 'LT',
+            'classification' => 'Aset',
+            'delete_image' => true,
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success', 'Aset berhasil diperbarui.');
+
+        $unit->refresh();
+        $this->assertNull($unit->image_url);
+        Storage::disk('local')->assertMissing('inventory/unit_sample.jpg');
+    }
+
     public function test_manajemen_stok_and_lot_show_endpoints_expose_legacy_number(): void
     {
         $unit = Unit::factory()->create([

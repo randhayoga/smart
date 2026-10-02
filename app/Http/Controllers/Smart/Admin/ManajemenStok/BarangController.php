@@ -61,9 +61,20 @@ class BarangController extends Controller
             'specification' => 'nullable|string|max:255',
             'min_stock_threshold' => 'nullable|integer|min:0',
             'image_url' => 'nullable|image|max:1024',
+            'delete_image' => 'nullable|boolean',
         ]);
 
-        if ($request->hasFile('image_url')) {
+        if ($request->boolean('delete_image')) {
+            if ($barang->image_url && Storage::disk('local')->exists($barang->image_url)) {
+                $isShared = Barang::where('image_url', $barang->image_url)->where('id', '!=', $barang->id)->exists()
+                    || Lot::where('image_url', $barang->image_url)->exists()
+                    || Unit::where('image_url', $barang->image_url)->exists();
+                if (!$isShared) {
+                    Storage::disk('local')->delete($barang->image_url);
+                }
+            }
+            $validated['image_url'] = null;
+        } else if ($request->hasFile('image_url')) {
             if ($barang->image_url && Storage::disk('local')->exists($barang->image_url)) {
                 $isShared = Barang::where('image_url', $barang->image_url)->where('id', '!=', $barang->id)->exists()
                     || Lot::where('image_url', $barang->image_url)->exists()
@@ -77,6 +88,7 @@ class BarangController extends Controller
         } else {
             unset($validated['image_url']);
         }
+        unset($validated['delete_image']);
 
         $original = $barang->getAttributes();
         $barang->update($validated);
