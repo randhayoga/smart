@@ -93,8 +93,7 @@ const getConditionClass = (cond?: string | null) => {
   if (!cond) return 'text-foreground';
   if (cond === 'Bagus' || cond === 'QC Passed') return 'text-emerald-600 font-semibold';
   if (cond === 'Lelang/Hibah') return 'text-purple-600 font-semibold';
-  if (cond === 'Rusak' || cond === 'Rusak Total' || cond === 'Hilang' || cond === 'Verifikasi Ditolak') return 'text-rose-600 font-semibold';
-  if (cond === 'Belum Diverifikasi') return 'text-amber-600 font-semibold';
+  if (cond === 'Rusak' || cond === 'Rusak Total' || cond === 'Hilang') return 'text-rose-600 font-semibold';
   return 'text-foreground';
 };
 
@@ -105,8 +104,6 @@ const CONDITION_KEY_MAP: Record<string, string> = {
   'lelang/hibah': 'inventory.conditionAuctionGrant',
   'rusak total': 'inventory.conditionTotalDamage',
   'hilang': 'inventory.conditionLost',
-  'belum diverifikasi': 'inventory.conditionUnverified',
-  'verifikasi ditolak': 'inventory.conditionVerificationRejected',
 };
 
 const getConditionLabel = (cond?: string | null) => {
@@ -166,7 +163,7 @@ const getConditionLabel = (cond?: string | null) => {
                   />
                   <img 
                     v-else 
-                    src="/media/inventory/placeholder.jpg" 
+                    :src="'/media/inventory/placeholder.jpg'" 
                     class="w-full h-full object-cover opacity-50" 
                   />
                 </div>

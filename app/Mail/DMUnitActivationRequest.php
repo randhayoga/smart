@@ -3,33 +3,32 @@
 namespace App\Mail;
 
 use App\Models\Inventory\Unit;
-use App\Models\Inventory\UnitStatusApproval;
+use App\Models\Inventory\UnitActivationApproval;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
 /**
- * Mailable notification sent to IFS Department Manager to request approval for asset condition or status changes.
+ * Mailable notification sent to IFS Department Manager to request validation for newly created asset units.
  */
-class DMUnitStatusRequest extends Mailable
+class DMUnitActivationRequest extends Mailable
 {
     use Queueable, SerializesModels;
 
     /**
-     * The unit asset being reviewed.
+     * The unit asset being validated.
      */
     public Unit $unit;
 
     /**
-     * The status approval request record.
+     * The activation approval request record.
      */
-    public ?UnitStatusApproval $approval;
+    public ?UnitActivationApproval $approval;
 
     /**
-     * Direct URL link for the recipient to view/approve the request.
+     * Direct URL link for the recipient to view/validate the request.
      */
     public string $actionUrl;
 
@@ -52,10 +51,10 @@ class DMUnitStatusRequest extends Mailable
      * Create a new message instance.
      *
      * @param Unit $unit
-     * @param UnitStatusApproval|null $approval
+     * @param UnitActivationApproval|null $approval
      * @param string|null $recipientName
      */
-    public function __construct(Unit $unit, ?UnitStatusApproval $approval = null, ?string $recipientName = null)
+    public function __construct(Unit $unit, ?UnitActivationApproval $approval = null, ?string $recipientName = null)
     {
         $this->unit = $unit->loadMissing([
             'lot.barang.brand',
@@ -63,7 +62,7 @@ class DMUnitStatusRequest extends Mailable
             'location.parent',
         ]);
 
-        $this->approval = $approval ?? UnitStatusApproval::where('unit_id', $unit->id)
+        $this->approval = $approval ?? UnitActivationApproval::where('unit_id', $unit->id)
             ->where('decision', 'pending')
             ->latest('id')
             ->first();
@@ -79,7 +78,7 @@ class DMUnitStatusRequest extends Mailable
         $this->locationText = $this->unit->location?->full_name ?? '-';
 
         $this->recipientName = $recipientName;
-        $this->actionUrl = url('/smart/approve-status?search=' . urlencode($this->unit->number));
+        $this->actionUrl = url('/smart/approve-activation?search=' . urlencode($this->unit->number));
     }
 
     /**
@@ -88,7 +87,7 @@ class DMUnitStatusRequest extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "[SMART] Asset Status Approval Request: {$this->unit->number} ({$this->brandAndName})",
+            subject: "[SMART] New Asset Validation: {$this->unit->number} ({$this->brandAndName})",
         );
     }
 
@@ -98,7 +97,7 @@ class DMUnitStatusRequest extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.dm_unit_status_request',
+            view: 'emails.dm_unit_activation_request',
         );
     }
 

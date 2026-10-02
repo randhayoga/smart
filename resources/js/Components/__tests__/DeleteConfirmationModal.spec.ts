@@ -169,8 +169,8 @@ describe('DeleteConfirmationModal.vue', () => {
       unit_details: {
         type: 'LT',
         classification: 'Aset',
-        status: 'Tidak Aktif',
-        condition: 'Belum Diverifikasi',
+        status: 'Belum Diverifikasi',
+        condition: 'Bagus',
         lot_code: 'LOT-2026-001',
         location: 'Gd. Utama',
         floor: 'Lt. 2',
@@ -188,8 +188,8 @@ describe('DeleteConfirmationModal.vue', () => {
       unit_details: {
         type: 'LT',
         classification: 'Aset',
-        status: 'Tidak Aktif',
-        condition: 'Belum Diverifikasi',
+        status: 'Belum Diverifikasi',
+        condition: 'Bagus',
         lot_code: 'LOT-2026-002',
         location: 'Gd. Utama',
       },

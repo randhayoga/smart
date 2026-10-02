@@ -120,7 +120,7 @@ class UnitLegacyNumberAndOptionalImageTest extends TestCase
         $response->assertRedirect();
         $this->assertDatabaseHas('units', [
             'lot_id' => $this->lot->id,
-            'status' => 'Tersedia',
+            'status' => 'Belum Diverifikasi',
             'image_url' => null,
             'legacy_number' => null,
         ]);

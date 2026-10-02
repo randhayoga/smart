@@ -33,8 +33,8 @@ describe('ApprovalAktivasiModal.vue', () => {
       vendor: 'Vendor Utama',
       po_number: 'PO-2026-0901',
       price: 25000000,
-      status: 'Tidak Aktif',
-      condition: 'Belum Diverifikasi',
+      status: 'Belum Diverifikasi',
+      condition: 'Bagus',
       image_url: null,
       vehicle_registration: null,
       location: 'Gd. Menara',
@@ -43,7 +43,7 @@ describe('ApprovalAktivasiModal.vue', () => {
       lifecycles: [
         {
           waktu: '01-10-2026 14:30',
-          status: 'Tidak Aktif',
+          status: 'Belum Diverifikasi',
           action_type: 'Registrasi',
           aktor: 'Admin: John Doe',
           durasi: '1 hari',
@@ -87,8 +87,8 @@ describe('ApprovalAktivasiModal.vue', () => {
       const wrapper = mountModal({ mode: 'pending' });
 
       expect(wrapper.text()).toContain('Status & Kondisi');
-      expect(wrapper.text()).toContain('Tidak Aktif');
       expect(wrapper.text()).toContain('Belum Diverifikasi');
+      expect(wrapper.text()).toContain('Bagus');
     });
 
     it('renders approve, reject, back, and memo buttons in pending mode', () => {

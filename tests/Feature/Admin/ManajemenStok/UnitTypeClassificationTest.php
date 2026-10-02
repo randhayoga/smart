@@ -65,7 +65,7 @@ class UnitTypeClassificationTest extends TestCase
             'lot_id' => $this->lot->id,
             'type' => 'LT',
             'classification' => 'Aset',
-            'status' => 'Tersedia',
+            'status' => 'Belum Diverifikasi',
             'condition' => 'Bagus',
         ]);
     }

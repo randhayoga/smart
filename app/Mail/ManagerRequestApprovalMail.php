@@ -100,8 +100,9 @@ class ManagerRequestApprovalMail extends Mailable
      */
     public function envelope(): Envelope
     {
+        $typeLabel = $this->smartRequest->isBorrow() ? 'Borrowing' : 'Request';
         return new Envelope(
-            subject: "[SMART] Permohonan Persetujuan: {$this->type} Baru [{$this->smartRequest->request_number}]",
+            subject: "[SMART] Approval Request: New {$typeLabel} [{$this->smartRequest->request_number}]",
         );
     }
 

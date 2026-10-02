@@ -44,13 +44,11 @@ class ProcessUnitActivationApproval
             if ($decision === 'approved') {
                 $unit->update([
                     'status' => 'Tersedia',
-                    'condition' => 'Bagus',
                 ]);
                 $lifecycleNote = 'Aktivasi aset disetujui oleh DM IFS.' . ($note ? " Catatan: {$note}" : '');
             } else {
                 $unit->update([
-                    'condition' => 'Verifikasi Ditolak',
-                    // status remains 'Tidak Aktif'
+                    'status' => 'Verifikasi Ditolak',
                 ]);
                 $lifecycleNote = 'Aktivasi aset ditolak oleh DM IFS.' . ($note ? " Catatan: {$note}" : '');
             }

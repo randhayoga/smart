@@ -25,6 +25,7 @@ return [
     'bulk_unit_updated' => ':count selected assets successfully updated.',
     'borrow_saved' => 'Borrowing data successfully saved.',
     'borrow_completed' => 'Borrowing completed. Asset status returned to Available.',
+    'unit_not_borrowable' => 'Only units with "Available" or "Borrowed" status can be processed for borrowing.',
     'manual_request_recorded' => 'Manual request successfully recorded.',
     'activation_approved' => 'Asset successfully activated.',
     'activation_rejected' => 'Asset activation successfully rejected.',

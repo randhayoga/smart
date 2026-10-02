@@ -162,8 +162,7 @@ class Unit extends Model
     protected $attributes = [
         'type' => 'LT',
         'classification' => 'Aset',
-        'status' => 'Tidak Aktif',
-        'condition' => 'Belum Diverifikasi',
+        'status' => 'Belum Diverifikasi',
     ];
 
     protected $fillable = [

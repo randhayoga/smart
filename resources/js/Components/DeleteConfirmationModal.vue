@@ -87,6 +87,8 @@ const formatLocation = (lot: any) => {
 const getStatusLabel = (s: string) => {
   if (!s) return '';
   const map: Record<string, string> = {
+    'Belum Diverifikasi': t('status.belumDiverifikasi'),
+    'Verifikasi Ditolak': t('status.verifikasiDitolak'),
     'Tersedia': t('status.tersedia'),
     'Dipinjam': t('status.dipinjam'),
     'Standby': t('status.standby'),

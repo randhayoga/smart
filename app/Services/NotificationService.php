@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Mail\DMUnitActivationRequest;
 use App\Mail\DMUnitStatusRequest;
 use App\Mail\ManagerRequestApprovalMail;
 use App\Mail\RequesterRequestRejectedMail;
@@ -288,11 +289,12 @@ class NotificationService
     }
 
     /**
-     * Send an in-app notification to all IFS Managers when a new asset is registered and requires activation approval.
+     * Send an in-app notification and email to all IFS Managers when a new asset is registered and requires activation approval.
      *
      * @param Unit $unit
+     * @param UnitActivationApproval|null $approval
      */
-    public function notifyManagerNewAssetActivation(Unit $unit): void
+    public function notifyManagerNewAssetActivation(Unit $unit, ?UnitActivationApproval $approval = null): void
     {
         $unit->loadMissing(['lot.barang.brand']);
         $brand = $unit->lot?->barang?->brand?->name ?? '';
@@ -302,6 +304,7 @@ class NotificationService
         $title = "Approval Aset Baru {$brandAndName}: Perlu Perhatian Anda";
         $message = "Aset baru dengan nomor {$unit->number} memerlukan approval Anda.";
 
+        // 1. In-app database + Mercure notification
         $this->sendToRole(
             'ifs_manager',
             $title,
@@ -314,6 +317,27 @@ class NotificationService
                 'type' => 'activation_approval',
             ]
         );
+
+        // 2. Email notification to IFS Manager(s)
+        try {
+            $ifsUsers = User::getUsersByRole('ifs_manager');
+            foreach ($ifsUsers as $ifsUser) {
+                $email = $ifsUser->email;
+                if ($email && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    // ==========================================
+                    // [PHASE 2 - QUEUED EMAIL DISPATCH]
+                    // In Phase 1: ->send() runs synchronously.
+                    // In Phase 2: switch to ->queue() when smart-queue is running.
+                    // ==========================================
+                    Mail::to($email)->send(new DMUnitActivationRequest($unit, $approval, $ifsUser->name));
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::error("Gagal mengirim email DMUnitActivationRequest untuk unit {$unit->number}: " . $e->getMessage(), [
+                'exception' => $e,
+                'unit_id' => $unit->id,
+            ]);
+        }
     }
 
     /**
@@ -336,12 +360,12 @@ class NotificationService
 
         if ($decision === 'approved') {
             $title = "Aktivasi Aset {$brandAndName} Disetujui DM IFS";
-            $message = "Status aset {$unit->number} telah berubah menjadi Tersedia dan kondisi berubah menjadi Bagus.";
+            $message = "Status aset {$unit->number} telah berubah menjadi Tersedia.";
             $type = 'success';
             $url = "/smart/inventory/assets?search=" . urlencode($unit->number);
         } else {
             $title = "Aktivasi Aset {$brandAndName} Ditolak DM IFS";
-            $message = "Aktivasi aset {$unit->number} ditolak oleh DM IFS. Kondisi: Verifikasi Ditolak.";
+            $message = "Aktivasi aset {$unit->number} ditolak oleh DM IFS. Status: Verifikasi Ditolak.";
             $type = 'error';
             $url = "/smart/inventory/pending-aktivasi?search=" . urlencode($unit->number);
         }

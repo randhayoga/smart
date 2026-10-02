@@ -28,7 +28,7 @@ class BulkUnitController extends Controller
             'number' => 'required|string|max:255',
             'lot_id' => 'required|exists:lots,id',
             'location_id' => 'required|exists:locations,id',
-            'status' => 'required|string|max:255',
+            'status' => 'nullable|string|max:255',
             'condition' => 'required|string|max:255',
             'type' => 'required|string|in:LT,ST',
             'classification' => 'required|string|in:Aset,Inventaris',
@@ -58,11 +58,6 @@ class BulkUnitController extends Controller
         $proposedCondition = $request->input('condition');
         $needApproval = in_array($proposedCondition, $arrNeedApproval);
 
-        $inputStatusLower = strtolower(trim($request->input('status', '')));
-        if ($inputStatusLower === 'tidak aktif' && !$needApproval && $proposedCondition !== 'Belum Diverifikasi') {
-            return redirect()->back()->withErrors(['status' => 'Status Tidak Aktif tidak dapat dipilih secara manual.']);
-        }
-
         if ($needApproval) {
             $rules['memo_file'] = 'required|file|mimes:pdf,jpeg,jpg,png|max:2048';
             if ($proposedCondition === 'Hilang') {
@@ -76,6 +71,9 @@ class BulkUnitController extends Controller
 
         if ($needApproval) {
             $validated['status'] = 'Pending:BoD/BoC';
+        } else {
+            // Initial creation status is forced to 'Belum Diverifikasi'
+            $validated['status'] = 'Belum Diverifikasi';
         }
 
         $quantity = (int)$validated['bulk_quantity'];
@@ -129,7 +127,7 @@ class BulkUnitController extends Controller
                     'requester_id' => $request->user()->id,
                     'proposed_condition' => $proposedCondition,
                     'previous_condition' => 'Bagus',
-                    'previous_status' => $validated['status'] ?? 'Tersedia',
+                    'previous_status' => 'Tersedia',
                     'decision' => 'pending',
                     'note' => null,
                     'approver_id' => null,
@@ -137,15 +135,15 @@ class BulkUnitController extends Controller
                     'memo_url' => $memoUrl,
                     'lost_doc_url' => $lostDocUrl,
                 ]);
-            } elseif ($unit->condition === 'Belum Diverifikasi') {
-                UnitActivationApproval::create([
+            } elseif ($unit->status === 'Belum Diverifikasi') {
+                $approval = UnitActivationApproval::create([
                     'unit_id' => $unit->id,
                     'requester_id' => $request->user()->id,
                     'decision' => 'pending',
                     'requested_at' => now(),
                 ]);
 
-                app(\App\Services\NotificationService::class)->notifyManagerNewAssetActivation($unit);
+                app(\App\Services\NotificationService::class)->notifyManagerNewAssetActivation($unit, $approval);
             }
         }
 

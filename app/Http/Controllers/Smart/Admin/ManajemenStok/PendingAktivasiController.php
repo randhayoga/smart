@@ -28,7 +28,7 @@ class PendingAktivasiController extends Controller
             'lot.organizer', 'lot.vendor', 'lot.legacyVendor', 'lifecycles.actor'
         ])
         ->where(function ($q) {
-            $q->where('condition', 'Belum Diverifikasi')
+            $q->where('status', 'Belum Diverifikasi')
               ->orWhereHas('activationApprovals', fn($aq) => $aq->where('decision', 'pending'));
         })
         ->orderBy('created_at', 'desc')

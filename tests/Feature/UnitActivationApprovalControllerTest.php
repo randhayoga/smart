@@ -12,8 +12,10 @@ use App\Models\Inventory\UnitActivationApproval;
 use App\Models\Inventory\UnitLifecycle;
 use App\Models\Master\Location;
 use App\Models\User;
+use App\Mail\DMUnitActivationRequest;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
@@ -118,7 +120,7 @@ class UnitActivationApprovalControllerTest extends TestCase
         return $lot;
     }
 
-    public function test_creating_unit_defaults_to_unverified_condition_and_inactive_status_and_creates_approval(): void
+    public function test_creating_unit_forces_unverified_status_and_selectable_condition_and_creates_approval(): void
     {
         $admin = $this->createAdmin();
         $ifsManager = $this->createIfsManager();
@@ -128,8 +130,8 @@ class UnitActivationApprovalControllerTest extends TestCase
         $response = $this->actingAs($admin)->post(route('smart.inventory.units.store'), [
             'lot_id' => $lot->id,
             'location_id' => $location->id,
-            'status' => 'Tidak Aktif',
-            'condition' => 'Belum Diverifikasi',
+            'status' => 'Belum Diverifikasi',
+            'condition' => 'Bagus',
             'type' => 'LT',
             'classification' => 'Aset',
             'price' => 150000,
@@ -140,8 +142,8 @@ class UnitActivationApprovalControllerTest extends TestCase
         $response->assertRedirect();
 
         $unit = Unit::where('lot_id', $lot->id)->firstOrFail();
-        $this->assertEquals('Tidak Aktif', $unit->status);
-        $this->assertEquals('Belum Diverifikasi', $unit->condition);
+        $this->assertEquals('Belum Diverifikasi', $unit->status);
+        $this->assertEquals('Bagus', $unit->condition);
 
         $this->assertDatabaseHas('unit_activation_approvals', [
             'unit_id' => $unit->id,
@@ -154,8 +156,8 @@ class UnitActivationApprovalControllerTest extends TestCase
         $this->assertDatabaseHas('unit_lifecycles', [
             'unit_id' => $unit->id,
             'action_type' => 'Registrasi',
-            'status' => 'Tidak Aktif',
-            'condition' => 'Belum Diverifikasi',
+            'status' => 'Belum Diverifikasi',
+            'condition' => 'Bagus',
         ]);
     }
 
@@ -169,8 +171,8 @@ class UnitActivationApprovalControllerTest extends TestCase
         $this->actingAs($admin)->post(route('smart.inventory.units.store'), [
             'lot_id' => $lot->id,
             'location_id' => $location->id,
-            'status' => 'Tidak Aktif',
-            'condition' => 'Belum Diverifikasi',
+            'status' => 'Belum Diverifikasi',
+            'condition' => 'Bagus',
             'type' => 'LT',
             'classification' => 'Aset',
             'price' => 150000,
@@ -188,7 +190,37 @@ class UnitActivationApprovalControllerTest extends TestCase
         $this->assertEquals('warning', $notification->data['type']);
     }
 
-    public function test_bulk_creating_units_sets_unverified_condition_and_creates_approvals(): void
+    public function test_creating_unit_sends_email_notification_to_ifs_manager(): void
+    {
+        Mail::fake();
+
+        $admin = $this->createAdmin();
+        $ifsManager = $this->createIfsManager();
+        $ifsManager->update(['email' => 'ifs.manager@example.com']);
+        $lot = $this->createLot();
+        $location = Location::factory()->create();
+
+        $this->actingAs($admin)->post(route('smart.inventory.units.store'), [
+            'lot_id' => $lot->id,
+            'location_id' => $location->id,
+            'status' => 'Belum Diverifikasi',
+            'condition' => 'Bagus',
+            'type' => 'LT',
+            'classification' => 'Aset',
+            'price' => 150000,
+            'use_lot_image' => true,
+        ]);
+
+        $unit = Unit::where('lot_id', $lot->id)->firstOrFail();
+
+        Mail::assertSent(DMUnitActivationRequest::class, function ($mail) use ($unit) {
+            return $mail->hasTo('ifs.manager@example.com')
+                && $mail->unit->id === $unit->id
+                && str_contains($mail->envelope()->subject, $unit->number);
+        });
+    }
+
+    public function test_bulk_creating_units_sets_unverified_status_and_creates_approvals(): void
     {
         $admin = $this->createAdmin();
         $ifsManager = $this->createIfsManager();
@@ -200,8 +232,8 @@ class UnitActivationApprovalControllerTest extends TestCase
             'lot_id' => $lot->id,
             'location_id' => $location->id,
             'bulk_quantity' => 3,
-            'status' => 'Tidak Aktif',
-            'condition' => 'Belum Diverifikasi',
+            'status' => 'Belum Diverifikasi',
+            'condition' => 'QC Passed',
             'type' => 'LT',
             'classification' => 'Aset',
             'price' => 100000,
@@ -215,8 +247,8 @@ class UnitActivationApprovalControllerTest extends TestCase
         $this->assertCount(3, $units);
 
         foreach ($units as $unit) {
-            $this->assertEquals('Tidak Aktif', $unit->status);
-            $this->assertEquals('Belum Diverifikasi', $unit->condition);
+            $this->assertEquals('Belum Diverifikasi', $unit->status);
+            $this->assertEquals('QC Passed', $unit->condition);
 
             $this->assertDatabaseHas('unit_activation_approvals', [
                 'unit_id' => $unit->id,
@@ -235,8 +267,8 @@ class UnitActivationApprovalControllerTest extends TestCase
         $lot = $this->createLot();
         $unit = Unit::factory()->create([
             'lot_id' => $lot->id,
-            'status' => 'Tidak Aktif',
-            'condition' => 'Belum Diverifikasi',
+            'status' => 'Belum Diverifikasi',
+            'condition' => 'Bagus',
         ]);
 
         UnitActivationApproval::create([
@@ -253,7 +285,8 @@ class UnitActivationApprovalControllerTest extends TestCase
             ->component('Smart/Admin/ManajemenStok/DaftarPendingAktivasi')
             ->has('units')
             ->where('units.0.id', $unit->id)
-            ->where('units.0.condition', 'Belum Diverifikasi')
+            ->where('units.0.status', 'Belum Diverifikasi')
+            ->where('units.0.condition', 'Bagus')
         );
     }
 
@@ -264,8 +297,8 @@ class UnitActivationApprovalControllerTest extends TestCase
         $lot = $this->createLot();
         $unit = Unit::factory()->create([
             'lot_id' => $lot->id,
-            'status' => 'Tidak Aktif',
-            'condition' => 'Belum Diverifikasi',
+            'status' => 'Belum Diverifikasi',
+            'condition' => 'Bagus',
         ]);
 
         $approval = UnitActivationApproval::create([
@@ -326,15 +359,15 @@ class UnitActivationApprovalControllerTest extends TestCase
         $response->assertForbidden();
     }
 
-    public function test_ifs_manager_can_bulk_approve_activations_and_updates_unit_to_bagus_and_tersedia(): void
+    public function test_ifs_manager_can_bulk_approve_activations_and_updates_unit_to_tersedia_preserving_condition(): void
     {
         $admin = $this->createAdmin();
         $ifsManager = $this->createIfsManager();
         $lot = $this->createLot();
         $unit = Unit::factory()->create([
             'lot_id' => $lot->id,
-            'status' => 'Tidak Aktif',
-            'condition' => 'Belum Diverifikasi',
+            'status' => 'Belum Diverifikasi',
+            'condition' => 'QC Passed',
         ]);
 
         $approval = UnitActivationApproval::create([
@@ -360,13 +393,13 @@ class UnitActivationApprovalControllerTest extends TestCase
 
         $unit->refresh();
         $this->assertEquals('Tersedia', $unit->status);
-        $this->assertEquals('Bagus', $unit->condition);
+        $this->assertEquals('QC Passed', $unit->condition);
 
         $this->assertDatabaseHas('unit_lifecycles', [
             'unit_id' => $unit->id,
             'action_type' => 'Approval',
             'status' => 'Tersedia',
-            'condition' => 'Bagus',
+            'condition' => 'QC Passed',
             'actor_id' => $ifsManager->id,
         ]);
 
@@ -384,8 +417,8 @@ class UnitActivationApprovalControllerTest extends TestCase
         $lot = $this->createLot();
         $unit = Unit::factory()->create([
             'lot_id' => $lot->id,
-            'status' => 'Tidak Aktif',
-            'condition' => 'Belum Diverifikasi',
+            'status' => 'Belum Diverifikasi',
+            'condition' => 'Rusak',
         ]);
 
         $approval = UnitActivationApproval::create([
@@ -410,14 +443,14 @@ class UnitActivationApprovalControllerTest extends TestCase
         $this->assertNotNull($approval->decided_at);
 
         $unit->refresh();
-        $this->assertEquals('Tidak Aktif', $unit->status);
-        $this->assertEquals('Verifikasi Ditolak', $unit->condition);
+        $this->assertEquals('Verifikasi Ditolak', $unit->status);
+        $this->assertEquals('Rusak', $unit->condition);
 
         $this->assertDatabaseHas('unit_lifecycles', [
             'unit_id' => $unit->id,
             'action_type' => 'Approval',
-            'status' => 'Tidak Aktif',
-            'condition' => 'Verifikasi Ditolak',
+            'status' => 'Verifikasi Ditolak',
+            'condition' => 'Rusak',
             'actor_id' => $ifsManager->id,
         ]);
 

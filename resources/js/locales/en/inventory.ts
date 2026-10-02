@@ -215,8 +215,6 @@ export default {
   conditionAuctionGrant: 'Auction/Grant',
   conditionTotalDamage: 'Total Damage',
   conditionLost: 'Lost',
-  conditionUnverified: 'Unverified',
-  conditionVerificationRejected: 'Verification Rejected',
   statusAndCondition: 'Status & Condition',
 
   // Validation Messages & Alerts
@@ -254,6 +252,7 @@ export default {
   borrowCompleteRequired: 'Please complete required borrow data.',
   borrowSaveFailed: 'Failed to save borrowing data.',
   borrowFinishFailed: 'Failed to complete borrowing.',
+  unitNotBorrowable: 'Only units with "Available" or "Borrowed" status can be borrowed.',
   invalidFileFormat: 'Invalid file format! Only .jpg, .jpeg, or .png allowed',
   invalidDocFormat: 'Invalid file format! Only .pdf, .jpg, .jpeg, or .png allowed',
   fileTooLarge1Mb: 'Maximum photo size is 1MB',

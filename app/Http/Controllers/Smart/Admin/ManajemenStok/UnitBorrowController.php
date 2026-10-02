@@ -46,6 +46,12 @@ class UnitBorrowController extends Controller
      */
     public function borrow(Request $request, Unit $unit): RedirectResponse
     {
+        if (!in_array($unit->status, ['Tersedia', 'Dipinjam'], true)) {
+            return redirect()->back()->withErrors([
+                'borrow' => __('inventory.unit_not_borrowable'),
+            ]);
+        }
+
         $validated = $request->validate([
             'user_id' => ['required', Rule::exists(User::class, 'id')],
             'start_date' => 'required|date',
@@ -178,6 +184,12 @@ class UnitBorrowController extends Controller
      */
     public function finish(Request $request, Unit $unit): RedirectResponse
     {
+        if ($unit->status !== 'Dipinjam') {
+            return redirect()->back()->withErrors([
+                'borrow' => __('inventory.unit_not_borrowable'),
+            ]);
+        }
+
         DB::transaction(function () use ($unit, $request) {
             $activeAssignment = RequestFulfillment::with(['requestItem.request.user'])
                 ->where('unit_id', $unit->id)

@@ -158,7 +158,7 @@ class UnitController extends Controller
             'number' => 'required|string|max:25|unique:units,number',
             'lot_id' => 'required|exists:lots,id',
             'location_id' => 'required|exists:locations,id',
-            'status' => 'required|string|max:255',
+            'status' => 'nullable|string|max:255',
             'condition' => 'required|string|max:255',
             'type' => 'required|string|in:LT,ST',
             'classification' => 'required|string|in:Aset,Inventaris',
@@ -186,11 +186,6 @@ class UnitController extends Controller
         $proposedCondition = $request->input('condition');
         $needApproval = in_array($proposedCondition, $arrNeedApproval);
 
-        $inputStatusLower = strtolower(trim($request->input('status', '')));
-        if ($inputStatusLower === 'tidak aktif' && !$needApproval && $proposedCondition !== 'Belum Diverifikasi') {
-            return redirect()->back()->withErrors(['status' => 'Status Tidak Aktif tidak dapat dipilih secara manual.']);
-        }
-
         if ($needApproval) {
             $rules['memo_file'] = 'required|file|mimes:pdf,jpeg,jpg,png|max:2048';
             if ($proposedCondition === 'Hilang') {
@@ -200,10 +195,11 @@ class UnitController extends Controller
 
         $validated = $request->validate($rules);
 
-        $previousStatus = $validated['status'] ?? 'Tersedia';
-
         if ($needApproval) {
             $validated['status'] = 'Pending:BoD/BoC';
+        } else {
+            // Initial creation status is forced to 'Belum Diverifikasi'
+            $validated['status'] = 'Belum Diverifikasi';
         }
  
         // Single creation logic
@@ -238,7 +234,7 @@ class UnitController extends Controller
                 'requester_id' => $request->user()->id,
                 'proposed_condition' => $proposedCondition,
                 'previous_condition' => 'Bagus',
-                'previous_status' => $previousStatus,
+                'previous_status' => 'Tersedia',
                 'decision' => 'pending',
                 'note' => null,
                 'approver_id' => null,
@@ -246,15 +242,15 @@ class UnitController extends Controller
                 'memo_url' => $memoUrl,
                 'lost_doc_url' => $lostDocUrl,
             ]);
-        } elseif ($unit->condition === 'Belum Diverifikasi') {
-            UnitActivationApproval::create([
+        } elseif ($unit->status === 'Belum Diverifikasi') {
+            $approval = UnitActivationApproval::create([
                 'unit_id' => $unit->id,
                 'requester_id' => $request->user()->id,
                 'decision' => 'pending',
                 'requested_at' => now(),
             ]);
 
-            app(\App\Services\NotificationService::class)->notifyManagerNewAssetActivation($unit);
+            app(\App\Services\NotificationService::class)->notifyManagerNewAssetActivation($unit, $approval);
         }
  
         return redirect()->back()->with('success', __('inventory.unit_created'));
@@ -317,13 +313,13 @@ class UnitController extends Controller
         $arrNeedApproval = ['Rusak Total', 'Hilang'];
 
         $currentStatusLower = strtolower(trim($unit->status ?? ''));
-        $isRestricted = in_array($currentStatusLower, ['tidak aktif', 'pending', 'pending:bod/boc']) || str_starts_with($currentStatusLower, 'pending') || in_array($unit->condition, $arrInactiveConditions);
+        $isRestricted = in_array($currentStatusLower, ['tidak aktif', 'pending', 'pending:bod/boc', 'belum diverifikasi', 'verifikasi ditolak']) || str_starts_with($currentStatusLower, 'pending') || in_array($unit->condition, $arrInactiveConditions);
 
         $rules = [
             'number' => 'required|string|max:25|unique:units,number,' . $unit->id,
             'lot_id' => 'required|exists:lots,id',
             'location_id' => 'required|exists:locations,id',
-            'status' => ['required', 'string', 'in:Tersedia,Dipinjam,Standby,Tidak Aktif,Pending,Pending:BoD/BoC'],
+            'status' => ['required', 'string', 'in:Tersedia,Dipinjam,Standby,Tidak Aktif,Pending,Pending:BoD/BoC,Belum Diverifikasi,Verifikasi Ditolak'],
             'condition' => ['required', 'string', 'in:Bagus,Rusak,QC Passed,Lelang/Hibah,Rusak Total,Hilang'],
             'type' => ['required', 'string', 'in:LT,ST'],
             'classification' => ['required', 'string', 'in:Aset,Inventaris'],

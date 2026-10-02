@@ -426,12 +426,13 @@ watch(categoryFilter, () => {
 const availableStatuses = computed(() => {
   const dynamic = Array.from(new Set((props.units || []).map((u: any) => u.status).filter(Boolean)));
   if (dynamic.length > 0) return dynamic;
-  return ['Tersedia', 'Dipinjam', 'Standby', 'Tidak Aktif'];
+  return ['Tersedia', 'Dipinjam', 'Standby', 'Tidak Aktif', 'Belum Diverifikasi', 'Verifikasi Ditolak'];
 });
-const availableConditions = ['Bagus', 'Rusak', 'QC Passed', 'Lelang/Hibah', 'Rusak Total', 'Hilang', 'Belum Diverifikasi', 'Verifikasi Ditolak'];
+const availableConditions = ['Bagus', 'Rusak', 'QC Passed', 'Lelang/Hibah', 'Rusak Total', 'Hilang'];
 
 const STATUS_LABEL_MAP: Record<string, string> = {
   'tersedia': 'status.tersedia',
+  'available': 'status.tersedia',
   'dipinjam': 'status.dipinjam',
   'standby': 'status.standby',
   'tidak aktif': 'status.tidakAktif',
@@ -448,6 +449,10 @@ const STATUS_LABEL_MAP: Record<string, string> = {
   'ditolak': 'status.ditolak',
   'disetujui': 'status.disetujui',
   'sukses': 'status.sukses',
+  'belum diverifikasi': 'status.belumDiverifikasi',
+  'unverified': 'status.belumDiverifikasi',
+  'verifikasi ditolak': 'status.verifikasiDitolak',
+  'verification rejected': 'status.verifikasiDitolak',
 };
 
 const getStatusLabel = (status: string) => {
@@ -463,8 +468,6 @@ const CONDITION_KEY_MAP: Record<string, string> = {
   'lelang/hibah': 'inventory.conditionAuctionGrant',
   'rusak total': 'inventory.conditionTotalDamage',
   'hilang': 'inventory.conditionLost',
-  'belum diverifikasi': 'inventory.conditionUnverified',
-  'verifikasi ditolak': 'inventory.conditionVerificationRejected',
 };
 
 const getConditionLabel = (cond: string) => {
@@ -626,8 +629,6 @@ const columns = computed<ColumnDef<any>[]>(() => {
         if (cond === 'Bagus' || cond === 'QC Passed') textClass = 'text-emerald-600 font-semibold';
         else if (cond === 'Lelang/Hibah') textClass = 'text-purple-600 font-semibold';
         else if (cond === 'Rusak' || cond === 'Rusak Total' || cond === 'Hilang') textClass = 'text-rose-600 font-semibold';
-        else if (cond === 'Belum Diverifikasi') textClass = 'text-amber-600 font-semibold';
-        else if (cond === 'Verifikasi Ditolak') textClass = 'text-rose-600 font-semibold';
         
         return h('span', { class: textClass }, getConditionLabel(cond));
       }

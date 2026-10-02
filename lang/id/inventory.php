@@ -25,6 +25,7 @@ return [
     'bulk_unit_updated' => ':count aset terpilih berhasil diperbarui.',
     'borrow_saved' => 'Data peminjaman berhasil disimpan.',
     'borrow_completed' => 'Peminjaman selesai. Status aset kembali Tersedia.',
+    'unit_not_borrowable' => 'Hanya unit berstatus Tersedia atau sedang Dipinjam yang dapat diproses peminjamannya.',
     'manual_request_recorded' => 'Permintaan manual berhasil dicatat.',
     'activation_approved' => 'Aset berhasil diaktivasi.',
     'activation_rejected' => 'Aktivasi aset berhasil ditolak.',

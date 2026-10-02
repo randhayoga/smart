@@ -6,7 +6,7 @@ import { ref, computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { router } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
-import { CheckCircle } from 'lucide-vue-next';
+import { CheckCircle, AlertCircle } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import Combobox from '@/Components/Combobox.vue';
@@ -20,6 +20,8 @@ interface Props {
 const props = defineProps<Props>();
 
 const { t } = useI18n();
+
+const isBorrowable = computed(() => ['Tersedia', 'Dipinjam'].includes(props.asset?.status));
 
 const borrowUserId = ref<number | string | null>(null);
 const borrowStartDate = ref('');
@@ -202,6 +204,10 @@ watch(() => props.asset, async (newAsset) => {
 
 const handleSaveBorrow = () => {
   if (!props.asset) return;
+  if (!['Tersedia', 'Dipinjam'].includes(props.asset.status)) {
+    toast.error(t('inventory.unitNotBorrowable'));
+    return;
+  }
   errors.value = {};
 
   if (!borrowUserId.value) {
@@ -243,7 +249,8 @@ const handleSaveBorrow = () => {
       onError: (serverErrors: any) => {
         isBorrowSubmitting.value = false;
         errors.value = serverErrors || {};
-        if (serverErrors.user_id) toast.error(serverErrors.user_id);
+        if (serverErrors.borrow) toast.error(serverErrors.borrow);
+        else if (serverErrors.user_id) toast.error(serverErrors.user_id);
         else if (serverErrors.start_date) toast.error(serverErrors.start_date);
         else if (serverErrors.utilization) toast.error(serverErrors.utilization);
         else if (serverErrors.org_id) toast.error(serverErrors.org_id);
@@ -303,6 +310,15 @@ const handleFinishBorrow = () => {
         </p>
       </div>
       <StatusBadge :status="asset?.status" class="rounded-sm" />
+    </div>
+
+    <!-- Non-borrowable warning banner -->
+    <div
+      v-if="!isBorrowable"
+      class="flex items-center gap-3 p-4 rounded-xl border border-destructive/20 bg-destructive/5 text-destructive text-sm"
+    >
+      <AlertCircle class="w-5 h-5 flex-shrink-0" />
+      <span>{{ t('inventory.unitNotBorrowable') }}</span>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -473,7 +489,7 @@ const handleFinishBorrow = () => {
         type="button"
         variant="success"
         size="lg"
-        :disabled="isFinishSubmitting || isBorrowSubmitting"
+        :disabled="!isBorrowable || isFinishSubmitting || isBorrowSubmitting"
         @click="handleFinishBorrow"
         class="inline-flex items-center gap-2"
       >
@@ -485,7 +501,7 @@ const handleFinishBorrow = () => {
         type="button"
         variant="primary"
         size="lg"
-        :disabled="isBorrowSubmitting || isFinishSubmitting"
+        :disabled="!isBorrowable || isBorrowSubmitting || isFinishSubmitting"
         @click="handleSaveBorrow"
         class="inline-flex items-center gap-2"
       >

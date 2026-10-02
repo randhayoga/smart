@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Mail\DMUnitActivationRequest;
 use App\Mail\DMUnitStatusRequest;
 use App\Mail\ManagerRequestApprovalMail;
 use App\Mail\RequesterRequestRejectedMail;
@@ -9,6 +10,7 @@ use App\Models\HrdEmployee;
 use App\Models\Inventory\Barang;
 use App\Models\Inventory\Lot;
 use App\Models\Inventory\Unit;
+use App\Models\Inventory\UnitActivationApproval;
 use App\Models\Inventory\UnitStatusApproval;
 use App\Models\Master\Brand;
 use App\Models\Master\Category;
@@ -54,6 +56,7 @@ class EmailTemplatesTest extends TestCase
         ]);
 
         $mail = new DMUnitStatusRequest($unit, $approval, 'Jane Manager');
+        $this->assertEquals('[SMART] Asset Status Approval Request: AST-DEL-001 (Dell Monitor 27 inch)', $mail->envelope()->subject);
         $rendered = $mail->render();
 
         $this->assertStringContainsString('lang="en"', $rendered);
@@ -115,6 +118,7 @@ class EmailTemplatesTest extends TestCase
         ]);
 
         $mail = new ManagerRequestApprovalMail($req, $manager, 'Peminjaman');
+        $this->assertEquals('[SMART] Approval Request: New Borrowing [REQ-0000010]', $mail->envelope()->subject);
         $rendered = $mail->render();
 
         $this->assertStringContainsString('lang="en"', $rendered);
@@ -177,6 +181,7 @@ class EmailTemplatesTest extends TestCase
         ]);
 
         $mail = new RequesterRequestRejectedMail($req, $manager, 'Budget quota exceeded');
+        $this->assertEquals('[SMART] Request Request Rejected [REQ-0000011]', $mail->envelope()->subject);
         $rendered = $mail->render();
 
         $this->assertStringContainsString('lang="en"', $rendered);
@@ -197,6 +202,61 @@ class EmailTemplatesTest extends TestCase
         $this->assertStringContainsString('Quantity', $rendered);
         $this->assertStringContainsString('View Request Details', $rendered);
         $this->assertStringContainsString('If the button above does not work, you can view the request details using the following link:', $rendered);
+        $this->assertStringContainsString('Automated email from <strong>SMART</strong> &bull; Please do not reply to this email.', $rendered);
+    }
+
+    public function test_dm_unit_activation_request_email_renders_in_english(): void
+    {
+        $requester = User::factory()->create(['name' => 'Alice Requester']);
+        $cat = Category::factory()->create();
+        $sub = Subcategory::factory()->create(['category_id' => $cat->id]);
+        $brand = Brand::factory()->create(['name' => 'Lenovo']);
+        $barang = Barang::factory()->create([
+            'subcategory_id' => $sub->id,
+            'brand_id' => $brand->id,
+            'name' => 'ThinkPad T14',
+        ]);
+        $lot = Lot::factory()->create(['barang_id' => $barang->id]);
+        $unit = Unit::factory()->create([
+            'lot_id' => $lot->id,
+            'number' => '00001-LP-PTRE-26',
+            'condition' => 'Bagus',
+        ]);
+
+        $approval = UnitActivationApproval::create([
+            'unit_id' => $unit->id,
+            'requester_id' => $requester->id,
+            'decision' => 'pending',
+            'requested_at' => now(),
+            'note' => 'New asset procurement',
+        ]);
+
+        $mail = new DMUnitActivationRequest($unit, $approval, 'Jane Manager');
+        $this->assertEquals('[SMART] New Asset Validation: 00001-LP-PTRE-26 (Lenovo ThinkPad T14)', $mail->envelope()->subject);
+
+        $rendered = $mail->render();
+
+        $this->assertStringContainsString('lang="en"', $rendered);
+        $this->assertStringContainsString('New Asset Validation - SMART', $rendered);
+        $this->assertStringContainsString('Asset Management & Request Tracking System', $rendered);
+        $this->assertStringContainsString('Dear Jane Manager', $rendered);
+        $this->assertStringContainsString('A new asset has been inputted to the system and requires your <strong>validation</strong>.', $rendered);
+        $this->assertStringContainsString('Asset Number', $rendered);
+        $this->assertStringContainsString('00001-LP-PTRE-26', $rendered);
+        $this->assertStringContainsString('Item Name', $rendered);
+        $this->assertStringContainsString('Lenovo ThinkPad T14', $rendered);
+        $this->assertStringContainsString('Asset Location', $rendered);
+        $this->assertStringContainsString('Condition', $rendered);
+        $this->assertStringContainsString('Bagus', $rendered);
+        $this->assertStringNotContainsString('Initial Condition', $rendered);
+        $this->assertStringNotContainsString('Proposed Condition', $rendered);
+        $this->assertStringContainsString('Created By', $rendered);
+        $this->assertStringContainsString('Alice Requester', $rendered);
+        $this->assertStringContainsString('Notes', $rendered);
+        $this->assertStringContainsString('New asset procurement', $rendered);
+        $this->assertStringContainsString('Review & Validate Asset', $rendered);
+        $this->assertStringContainsString('/smart/approve-activation?search=' . urlencode('00001-LP-PTRE-26'), $rendered);
+        $this->assertStringContainsString('If the button above does not work, open the following link in your browser:', $rendered);
         $this->assertStringContainsString('Automated email from <strong>SMART</strong> &bull; Please do not reply to this email.', $rendered);
     }
 }

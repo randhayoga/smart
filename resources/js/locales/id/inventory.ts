@@ -215,8 +215,6 @@ export default {
   conditionAuctionGrant: 'Lelang/Hibah',
   conditionTotalDamage: 'Rusak Total',
   conditionLost: 'Hilang',
-  conditionUnverified: 'Belum Diverifikasi',
-  conditionVerificationRejected: 'Verifikasi Ditolak',
   statusAndCondition: 'Status & Kondisi',
 
   // Validation Messages & Alerts
@@ -254,6 +252,7 @@ export default {
   borrowCompleteRequired: 'Mohon lengkapi data peminjaman yang wajib diisi.',
   borrowSaveFailed: 'Gagal menyimpan data peminjaman.',
   borrowFinishFailed: 'Gagal menyelesaikan peminjaman.',
+  unitNotBorrowable: 'Hanya unit berstatus Tersedia atau sedang Dipinjam yang dapat dipinjam.',
   invalidFileFormat: 'Format file salah! Hanya diperbolehkan file .jpg, .jpeg, atau .png',
   invalidDocFormat: 'Format file salah! Hanya diperbolehkan file .pdf, .jpg, .jpeg, atau .png',
   fileTooLarge1Mb: 'Ukuran foto maksimal 1MB',

@@ -92,8 +92,9 @@ class RequesterRequestRejectedMail extends Mailable
      */
     public function envelope(): Envelope
     {
+        $typeLabel = $this->smartRequest->isBorrow() ? 'Borrowing' : 'Request';
         return new Envelope(
-            subject: "[SMART] {$this->type} Ditolak [{$this->smartRequest->request_number}]",
+            subject: "[SMART] {$typeLabel} Request Rejected [{$this->smartRequest->request_number}]",
         );
     }
 

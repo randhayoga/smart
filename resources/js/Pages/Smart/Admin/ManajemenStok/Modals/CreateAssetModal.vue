@@ -45,6 +45,7 @@ const arrInactiveConditions = ['Rusak Total', 'Hilang', 'Lelang/Hibah'];
 const getStatusLabel = (s: string) => {
   if (!s) return t('inventory.selectStatus');
   const map: Record<string, string> = {
+    'Belum Diverifikasi': t('status.belumDiverifikasi'),
     'Tersedia': t('status.tersedia'),
     'Dipinjam': t('status.dipinjam'),
     'Standby': t('status.standby'),
@@ -76,17 +77,13 @@ const getClassificationLabel = (c: string) => {
   return c;
 };
 
-const isStatusDisabled = computed(() => {
-  return arrInactiveConditions.includes(form.condition);
-});
-
 const form = useForm({
   _method: 'POST',
   number: '',
   lot_id: props.lot?.id,
   location_id: '' as string | number,
-  status: 'Tidak Aktif',
-  condition: 'Belum Diverifikasi',
+  status: 'Belum Diverifikasi',
+  condition: '',
   type: '',
   classification: '',
   price: '' as string | number,
@@ -143,13 +140,7 @@ watch(() => form.bulk_quantity, v => { if (v !== '' && errors.value.bulk_quantit
 watch(() => form.memo_file, v => { if (v && errors.value.memo_file) errors.value.memo_file = ''; });
 watch(() => form.lost_doc_file, v => { if (v && errors.value.lost_doc_file) errors.value.lost_doc_file = ''; });
 
-watch(() => form.condition, (newVal, oldVal) => {
-  if (arrInactiveConditions.includes(newVal)) {
-    form.status = 'Pending:BoD/BoC';
-  } else if (oldVal && arrInactiveConditions.includes(oldVal) && (form.status === 'Pending' || form.status === 'Pending:BoD/BoC')) {
-    form.status = '';
-  }
-
+watch(() => form.condition, (newVal) => {
   if (!arrNeedApproval.includes(newVal)) {
     form.memo_file = null;
     form.memo_file_name = '';
@@ -201,8 +192,8 @@ watch(() => props.open, (val) => {
   resetErrors();
   form.lot_id = props.lot?.id;
   form.number = generateAssetCode();
-  form.status = 'Tidak Aktif';
-  form.condition = 'Belum Diverifikasi';
+  form.status = 'Belum Diverifikasi';
+  form.condition = '';
   form.image_url = null;
   form.image_url_name = '';
   form.use_lot_image = false;
@@ -488,29 +479,18 @@ const handleSubmit = () => {
                     <FieldError v-if="errors.type">{{ errors.type }}</FieldError>
                   </Field>
 
-                  <Field v-show="false" :data-invalid="!!errors.status || undefined" :data-disabled="isStatusDisabled || undefined">
+                  <Field>
                     <FieldLabel>
-                      <span>{{ t('inventory.status') }}<span class="text-rose-500">*</span></span>
+                      <span>{{ t('inventory.status') }}</span>
                     </FieldLabel>
                     <FieldContent>
-                      <div v-if="isStatusDisabled" class="w-full flex items-center justify-between px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10 select-none">
-                        <span>{{ getStatusLabel(form.status) }}</span>
-                        <ChevronDown class="w-4 h-4 opacity-50" />
-                      </div>
-                      <DropdownMenu v-else>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !form.status ? 'text-muted-foreground' : 'text-foreground', errors.status ? 'border-destructive' : '']">
-                            {{ getStatusLabel(form.status) }}
-                            <ChevronDown class="w-4 h-4 opacity-50" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
-                          <DropdownMenuItem @select="form.status = 'Tersedia'">{{ t('status.tersedia') }}</DropdownMenuItem>
-                          <DropdownMenuItem @select="form.status = 'Standby'">{{ t('status.standby') }}</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <input 
+                        type="text" 
+                        :value="getStatusLabel(form.status)" 
+                        disabled 
+                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10 select-none" 
+                      />
                     </FieldContent>
-                    <FieldError v-if="errors.status">{{ errors.status }}</FieldError>
                   </Field>
 
                   <!-- Bulk Creation (Only when not vehicle category) -->
@@ -534,7 +514,7 @@ const handleSubmit = () => {
 
                 <!-- Right Column -->
                 <div class="space-y-6">
-                  <Field v-show="false" :data-invalid="!!errors.condition || undefined">
+                  <Field :data-invalid="!!errors.condition || undefined">
                     <FieldLabel>
                       <span>{{ t('inventory.condition') }}<span class="text-rose-500">*</span></span>
                     </FieldLabel>

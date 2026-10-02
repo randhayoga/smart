@@ -43,7 +43,7 @@ const tabs = computed(() => {
   const list = [
     { id: 'Detail Aset', label: t('inventory.assetDetail') },
   ];
-  if (can('inventory.borrow')) {
+  if (can('inventory.borrow') && ['Tersedia', 'Dipinjam'].includes(props.asset?.status)) {
     list.push({ id: 'Peminjaman', label: t('inventory.borrowHistory') });
   }
   list.push({ id: 'Jejak Audit', label: t('inventory.auditTrail') });

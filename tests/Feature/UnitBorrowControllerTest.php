@@ -311,4 +311,46 @@ class UnitBorrowControllerTest extends TestCase
         $this->assertEquals('Tersedia', $returnLog->status);
         $this->assertNull($returnLog->end_date);
     }
+
+    public function test_cannot_borrow_unit_with_inactive_or_non_borrowable_status(): void
+    {
+        $admin = $this->createAdmin();
+        $borrower = $this->createBorrower();
+        $unit = $this->createAvailableUnit();
+        $unit->update(['status' => 'Tidak Aktif']);
+
+        $response = $this->actingAs($admin)
+            ->from('/smart/inventory/assets')
+            ->post(route('smart.inventory.units.borrow', $unit->id), [
+                'user_id' => $borrower->id,
+                'start_date' => Carbon::now()->format('Y-m-d'),
+                'utilization' => 'corporate',
+                'org_id' => $borrower->hrdEmployee->orgchart_id,
+            ]);
+
+        $response->assertRedirect('/smart/inventory/assets');
+        $response->assertSessionHasErrors('borrow');
+
+        $unit->refresh();
+        $this->assertEquals('Tidak Aktif', $unit->status);
+        $this->assertNull($unit->active_borrowing);
+    }
+
+    public function test_cannot_finish_borrow_on_unit_not_in_dipinjam_status(): void
+    {
+        $admin = $this->createAdmin();
+        $unit = $this->createAvailableUnit();
+        $unit->update(['status' => 'Tersedia']);
+
+        $response = $this->actingAs($admin)
+            ->from('/smart/inventory/assets')
+            ->post(route('smart.inventory.units.finish-borrow', $unit->id));
+
+        $response->assertRedirect('/smart/inventory/assets');
+        $response->assertSessionHasErrors('borrow');
+
+        $unit->refresh();
+        $this->assertEquals('Tersedia', $unit->status);
+    }
 }
+
