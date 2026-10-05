@@ -54,7 +54,7 @@ class IfsManagerRoleTest extends TestCase
         $ifsOrgchart = HrdOrgchart::find($ifsEmployee->orgchart_id);
         $ifsOrgchart->update([
             'employee_id' => $ifsManagerUser->employee_id,
-            'org_code' => 'IFS'
+            'org_code' => User::getIfsOrgCode(),
         ]);
 
         $ifsManagerUser->refresh();
@@ -76,7 +76,7 @@ class IfsManagerRoleTest extends TestCase
         $ifsOrgchart = HrdOrgchart::find($ifsEmployee->orgchart_id);
         $ifsOrgchart->update([
             'employee_id' => $ifsManagerUser->employee_id,
-            'org_code' => 'IFS'
+            'org_code' => User::getIfsOrgCode(),
         ]);
 
         // Setup a standard user
@@ -125,18 +125,18 @@ class IfsManagerRoleTest extends TestCase
 
     public function test_ifs_org_code_resolution_based_on_environment(): void
     {
-        $this->assertEquals('IFS', User::getIfsOrgCode());
+        $this->assertEquals('TEST-DEPT', User::getIfsOrgCode());
 
         $originalEnv = $this->app['env'];
         try {
-            $this->app['env'] = 'local';
-            $this->assertEquals('TEST-DEPT', User::getIfsOrgCode());
+            $this->app['env'] = 'production';
+            $this->assertEquals('IFS', User::getIfsOrgCode());
         } finally {
             $this->app['env'] = $originalEnv;
         }
     }
 
-    public function test_dynamic_role_resolves_test_dept_manager_as_ifs_manager_in_local_env(): void
+    public function test_dynamic_role_resolves_test_dept_manager_as_ifs_manager_in_non_production_env(): void
     {
         // 1. Setup TEST-DEPT manager
         $testDeptManager = User::factory()->create();
@@ -158,8 +158,8 @@ class IfsManagerRoleTest extends TestCase
 
         $originalEnv = $this->app['env'];
         try {
-            // Under local environment
-            $this->app['env'] = 'local';
+            // Under testing / non-production environment
+            $this->app['env'] = 'testing';
             $testDeptManager->refresh();
             $realIfsManager->refresh();
 
@@ -171,8 +171,8 @@ class IfsManagerRoleTest extends TestCase
             $this->assertTrue($ifsUsers->contains('employee_id', $testDeptManager->employee_id));
             $this->assertFalse($ifsUsers->contains('employee_id', $realIfsManager->employee_id));
 
-            // Under testing / non-local environment
-            $this->app['env'] = 'testing';
+            // Under production environment
+            $this->app['env'] = 'production';
             $testDeptManager->refresh();
             $realIfsManager->refresh();
 
@@ -180,9 +180,9 @@ class IfsManagerRoleTest extends TestCase
             $this->assertFalse($testDeptManager->is_admin);
             $this->assertEquals('ifs_manager', $realIfsManager->role);
 
-            $ifsUsersNonLocal = User::getUsersByRole('ifs_manager');
-            $this->assertFalse($ifsUsersNonLocal->contains('employee_id', $testDeptManager->employee_id));
-            $this->assertTrue($ifsUsersNonLocal->contains('employee_id', $realIfsManager->employee_id));
+            $ifsUsersProd = User::getUsersByRole('ifs_manager');
+            $this->assertFalse($ifsUsersProd->contains('employee_id', $testDeptManager->employee_id));
+            $this->assertTrue($ifsUsersProd->contains('employee_id', $realIfsManager->employee_id));
         } finally {
             $this->app['env'] = $originalEnv;
         }

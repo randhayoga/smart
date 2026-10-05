@@ -2,19 +2,18 @@
 /**
  * Create LOT Modal component for registering new procurement batches, PO references, vendor information, and initial quantities.
  */
-import { ref, watch, computed } from 'vue';
+import { ref, watch, computed, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useModalLock } from '@/composables/useModalLock';
-import { router, useForm } from '@inertiajs/vue3';
+import { useForm } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
-import { X, ChevronDown, Loader2 } from 'lucide-vue-next';
+import { X, ChevronDown, Loader2, Trash2 } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/Components/ui/dropdown-menu';
 import Combobox from '@/Components/Combobox.vue';
 import LocationCombobox from '@/Components/LocationCombobox.vue';
-import { Checkbox } from '@/Components/ui/checkbox';
 import { Field, FieldLabel, FieldContent, FieldError } from '@/Components/ui/field';
 import { RadioGroup, RadioGroupItem } from '@/Components/ui/radio-group';
 
@@ -51,8 +50,6 @@ const lotForm = useForm({
   location_id: '' as string | number,
   initial_quantity: '' as string | number,
   current_quantity: '' as string | number,
-  auto_create_assets: false,
-  auto_create_assets_count: '' as string | number,
   po_number: '',
   date_of_receipt: '',
   unit_price: '' as string | number,
@@ -67,7 +64,7 @@ const lotForm = useForm({
 const errors = ref({
   number: '', organizer_id: '', vendor_id: '', location_id: '',
   po_number: '', date_of_receipt: '', image_url: '',
-  initial_quantity: '', auto_create_assets_count: '',
+  initial_quantity: '',
   project_id: '',
 });
 
@@ -75,7 +72,7 @@ const resetErrors = () => {
   errors.value = {
     number: '', organizer_id: '', vendor_id: '', location_id: '',
     po_number: '', date_of_receipt: '', image_url: '',
-    initial_quantity: '', auto_create_assets_count: '',
+    initial_quantity: '',
     project_id: '',
   };
 };
@@ -101,7 +98,6 @@ watch(() => lotForm.date_of_receipt, v => {
 watch(() => lotForm.image_url, v => { if (v && errors.value.image_url) errors.value.image_url = ''; });
 watch(() => lotForm.image_url_name, v => { if (v && errors.value.image_url) errors.value.image_url = ''; });
 watch(() => lotForm.initial_quantity, v => { if ((v !== '' && v !== null) && errors.value.initial_quantity) errors.value.initial_quantity = ''; });
-watch(() => lotForm.auto_create_assets_count, v => { if ((v !== '' && v !== null) && errors.value.auto_create_assets_count) errors.value.auto_create_assets_count = ''; });
 watch(() => lotForm.project_id, v => { if (v && errors.value.project_id) errors.value.project_id = ''; });
 watch(() => lotForm.burden, v => {
   if (v !== 'Project') {
@@ -168,15 +164,47 @@ const handleSamakanPhoto = () => {
   }
 };
 
+const hasImage = computed(() => Boolean(lotForm.image_url || lotForm.use_parent_image || lotForm.image_url_name));
+
+const handleDeletePhoto = () => {
+  lotForm.image_url = null;
+  lotForm.image_url_name = '';
+  lotForm.use_parent_image = false;
+  const input = document.getElementById('create-lot-photo-upload') as HTMLInputElement;
+  if (input) input.value = '';
+};
+
+const isProcessing = computed(() => lotForm.processing);
+
+const closeModal = () => {
+  if (isProcessing.value) return;
+  emit('update:open', false);
+};
+
+const handleKeydown = (e: KeyboardEvent) => {
+  if (e.key === 'Escape' && props.open) {
+    if (isProcessing.value) {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      return;
+    }
+    closeModal();
+  }
+};
+
 watch(() => props.open, (val) => {
-  if (!val) return;
+  if (!val) {
+    window.removeEventListener('keydown', handleKeydown, true);
+    return;
+  }
+  window.addEventListener('keydown', handleKeydown, true);
   lotForm.reset();
   lotForm.barang_id = props.barang.id;
   lotForm._method = 'POST';
   generateLotCode();
   lotForm.organizer_id = ''; lotForm.vendor_id = ''; lotForm.location_id = '';
   lotForm.initial_quantity = ''; lotForm.current_quantity = '';
-  lotForm.auto_create_assets = false; lotForm.auto_create_assets_count = '';
   lotForm.po_number = ''; lotForm.date_of_receipt = '';
   lotForm.unit_price = ''; lotForm.image_url = null; lotForm.image_url_name = '';
   lotForm.use_parent_image = false; lotForm.total_item = 1;
@@ -184,9 +212,11 @@ watch(() => props.open, (val) => {
   lotForm.project_id = '';
   lotForm.clearErrors();
   resetErrors();
-});
+}, { immediate: true });
 
-const closeModal = () => { emit('update:open', false); };
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeydown, true);
+});
 
 const handleSubmit = () => {
   resetErrors();
@@ -203,18 +233,8 @@ const handleSubmit = () => {
     if (lotForm.initial_quantity === '' || lotForm.initial_quantity === null) {
       errors.value.initial_quantity = t('inventory.stockQtyRequired'); isValid = false;
     }
-  } else {
-    if (lotForm.auto_create_assets) {
-      if (lotForm.auto_create_assets_count === '' || lotForm.auto_create_assets_count === null) {
-        errors.value.auto_create_assets_count = t('inventory.assetCountRequired'); isValid = false;
-      }
-    }
   }
   if (!isValid) return;
-
-  const autoCreate = lotForm.auto_create_assets;
-  const autoCreateCount = Number(lotForm.auto_create_assets_count);
-  const lotNumber = lotForm.number;
 
   lotForm.transform((data) => {
     const formData: any = {
@@ -229,9 +249,6 @@ const handleSubmit = () => {
     if (props.barang.is_consumable) {
       formData.initial_quantity = data.initial_quantity;
       formData.current_quantity = data.current_quantity;
-    } else {
-      formData.auto_create_assets = data.auto_create_assets;
-      formData.auto_create_assets_count = data.auto_create_assets_count;
     }
     if (data.image_url) formData.image_url = data.image_url;
     if (data.use_parent_image) formData.use_parent_image = data.use_parent_image;
@@ -240,27 +257,9 @@ const handleSubmit = () => {
   });
 
   lotForm.post('/smart/inventory/lots', {
-    onSuccess: (page) => {
+    onSuccess: () => {
       closeModal();
       emit('success');
-      if (autoCreate && autoCreateCount > 0) {
-        const updatedLots = (page.props as any).lots || props.lots;
-        const newLot = updatedLots.find((l: any) => l.number === lotNumber);
-        if (newLot) {
-          router.post('/smart/inventory/units/bulk', {
-            number: `${newLot.number}-U01`, lot_id: newLot.id,
-            location_id: newLot.location_id,
-            status: 'Tersedia', condition: 'Bagus', price: Number(newLot.unit_price || newLot.unitPrice),
-            use_lot_image: true, bulk_quantity: autoCreateCount
-          }, {
-            onError: (errs) => {
-              toast.error(t('inventory.autoAssetSuccess', { errors: Object.values(errs).join(', ') }));
-            }
-          });
-        } else {
-          toast.error(t('inventory.autoAssetNotFound'));
-        }
-      }
     }
   });
 };
@@ -271,11 +270,11 @@ const handleSubmit = () => {
     <Transition enter-active-class="ease-out duration-200" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="ease-in duration-150" leave-from-class="opacity-100" leave-to-class="opacity-0">
       <div v-if="open" @click="closeModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 overscroll-contain">
         <Transition enter-active-class="ease-out duration-200" enter-from-class="opacity-0 scale-95" enter-to-class="opacity-100 scale-100" leave-active-class="ease-in duration-150" leave-from-class="opacity-100 scale-100" leave-to-class="opacity-0 scale-95">
-          <div v-if="open" class="bg-card w-full max-w-[1000px] rounded-[14px] shadow-2xl overflow-hidden flex flex-col" @click.stop>
+          <div v-if="open" class="bg-card w-full max-w-[1100px] rounded-[14px] shadow-2xl overflow-hidden flex flex-col" @click.stop>
             <!-- Header -->
             <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
               <h3 class="text-lg font-bold text-foreground">{{ t('inventory.createNewLot') }}</h3>
-              <button @click="closeModal" class="p-2 hover:bg-muted rounded-full transition-colors">
+              <button @click="closeModal" :disabled="isProcessing" class="p-2 hover:bg-muted rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                 <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
               </button>
             </div>
@@ -390,21 +389,6 @@ const handleSubmit = () => {
                     <FieldError v-if="lotForm.errors.initial_quantity || errors.initial_quantity">{{ lotForm.errors.initial_quantity || errors.initial_quantity }}</FieldError>
                   </Field>
 
-                  <!-- Non-consumable, Non-vehicle: Auto create assets -->
-                  <Field v-else-if="barang.category !== 'Kendaraan'" :data-invalid="!!(lotForm.errors.auto_create_assets_count || errors.auto_create_assets_count) || undefined">
-                    <FieldContent>
-                      <div class="flex items-center gap-2 w-full pt-2">
-                        <Checkbox id="auto-create-checkbox-modal" v-model="lotForm.auto_create_assets" />
-                        <label for="auto-create-checkbox-modal" class="cursor-pointer select-none text-sm font-medium text-foreground">{{ t('inventory.autoCreateLabelPrefix') }}</label>
-                        <input type="number" v-model="lotForm.auto_create_assets_count" placeholder="..." min="1" :disabled="!lotForm.auto_create_assets"
-                          class="w-16 px-2 py-1 text-sm border rounded-[10px] bg-background focus:outline-none focus:ring-2 transition-colors h-8 disabled:opacity-50 disabled:cursor-not-allowed mx-1"
-                          :class="[(lotForm.errors.auto_create_assets_count || errors.auto_create_assets_count) ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']"
-                        />
-                        <span class="text-sm font-medium text-foreground">{{ t('inventory.autoCreateLabelSuffix') }}</span>
-                      </div>
-                    </FieldContent>
-                    <FieldError v-if="lotForm.errors.auto_create_assets_count || errors.auto_create_assets_count" class="pl-6">{{ lotForm.errors.auto_create_assets_count || errors.auto_create_assets_count }}</FieldError>
-                  </Field>
 
                   <Field :data-invalid="!!errors.image_url || undefined">
                     <FieldLabel>
@@ -419,8 +403,19 @@ const handleSubmit = () => {
                           {{ lotForm.image_url_name || t('inventory.noPhotoSelected') }}
                         </div>
                         <input type="file" id="create-lot-photo-upload" class="hidden" accept=".jpg,.jpeg,.png" @change="handleFileUpload" />
-                        <Button type="button" @click="handleSamakanPhoto" variant="warning" size="lg">{{ t('inventory.sameAsParent') }}</Button>
-                        <Button type="button" @click="triggerFileInput" size="lg">{{ t('inventory.chooseFile') }}</Button>
+                        <Button type="button" @click="handleSamakanPhoto" variant="warning" size="lg" class="shrink-0">{{ t('inventory.sameAsParent') }}</Button>
+                        <Button type="button" @click="triggerFileInput" size="lg" class="shrink-0">{{ t('inventory.chooseFile') }}</Button>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          class="w-9 shrink-0"
+                          :disabled="!hasImage"
+                          @click="handleDeletePhoto"
+                          :title="t('inventory.deletePhoto')"
+                        >
+                          <Trash2 class="w-4 h-4" />
+                        </Button>
                       </div>
                       <p class="text-[10px] text-muted-foreground ml-1 mt-1">{{ t('inventory.maxFileSize1Mb') }}</p>
                     </FieldContent>
@@ -458,10 +453,10 @@ const handleSubmit = () => {
             <div class="py-3 px-4 border-t border-border flex items-center justify-between">
               <p class="text-sm text-rose-500 italic font-medium">{{ t('inventory.requiredMarker') }}</p>
               <div class="flex items-center gap-3">
-                <Button @click="closeModal" variant="white" size="xl">{{ t('common.cancel') }}</Button>
-                <Button @click="handleSubmit" :disabled="lotForm.processing" variant="primary" size="xl" class="relative">
-                  <Loader2 v-if="lotForm.processing" class="absolute inset-0 m-auto h-5 w-5 animate-spin" />
-                  <span :class="{ 'opacity-0': lotForm.processing }">{{ t('inventory.createLotBtn') }}</span>
+                <Button @click="closeModal" :disabled="isProcessing" variant="white" size="xl">{{ t('common.cancel') }}</Button>
+                <Button @click="handleSubmit" :disabled="isProcessing" variant="primary" size="xl" class="relative flex items-center justify-center">
+                  <Loader2 v-if="isProcessing" class="h-5 w-5 animate-spin mr-2" />
+                  <span>{{ t('inventory.createLotBtn') }}</span>
                 </Button>
               </div>
             </div>

@@ -50,15 +50,20 @@ const arrInactiveConditions = ['Rusak Total', 'Hilang', 'Lelang/Hibah'];
 const getStatusLabel = (s: string) => {
   if (!s) return '';
   const map: Record<string, string> = {
-    'Tersedia': t('status.tersedia'),
-    'Dipinjam': t('status.dipinjam'),
-    'Standby': t('status.standby'),
-    'Pending': t('status.pending'),
-    'Pending:BoD/BoC': t('status.pending'),
-    'Scrapped': t('status.scrapped'),
-    'Lost': t('status.lost'),
+    'tersedia': t('status.tersedia'),
+    'dipinjam': t('status.dipinjam'),
+    'standby': t('status.standby'),
+    'tidak aktif': t('status.tidakAktif'),
+    'pending': t('status.pending'),
+    'pending:dm': t('status.pendingDm'),
+    'pending: dm': t('status.pendingDm'),
+    'pending:bod/boc': t('status.pendingBodBoc'),
+    'pending: bod/boc': t('status.pendingBodBoc'),
+    'scrapped': t('status.scrapped'),
+    'lost': t('status.lost'),
+    'belum diverifikasi': t('status.belumDiverifikasi'),
   };
-  return map[s] || s;
+  return map[s.toLowerCase()] || s;
 };
 
 const getConditionLabel = (c: string) => {
@@ -81,6 +86,16 @@ const getClassificationLabel = (c: string) => {
   return c;
 };
 
+const allowedStatuses = ['tersedia', 'standby'];
+
+const hasDisallowedStatus = computed(() => {
+  if (!props.items || props.items.length === 0) return true;
+  return props.items.some(item => {
+    const s = String(item?.status || '').trim().toLowerCase();
+    return !allowedStatuses.includes(s);
+  });
+});
+
 const isBorrowedUnit = computed(() => {
   return (props.items || []).some(item => String(item?.status).trim().toLowerCase() === 'dipinjam');
 });
@@ -88,7 +103,7 @@ const isBorrowedUnit = computed(() => {
 const isRestrictedStatus = (status: string | null | undefined) => {
   if (!status) return false;
   const s = String(status).trim().toLowerCase();
-  return s === 'tidak aktif' || s === 'pending' || s.startsWith('pending');
+  return s === 'tidak aktif' || s === 'pending' || s.startsWith('pending') || s === 'belum diverifikasi' || s === 'verifikasi ditolak';
 };
 
 const hasRestrictedUnit = computed(() => {
@@ -100,6 +115,7 @@ const isKondisiDisabled = computed(() => {
 });
 
 const isStatusDisabled = computed(() => {
+  if (hasDisallowedStatus.value) return true;
   if (hasRestrictedUnit.value || isBorrowedUnit.value) return true;
   return arrInactiveConditions.includes(form.condition);
 });
@@ -179,13 +195,19 @@ watch(() => form.lost_doc_file, v => { if (v && errors.value.lost_doc_file) erro
 watch(() => form.bod_boc_approval_file, v => { if (v && errors.value.bod_boc_approval_file) errors.value.bod_boc_approval_file = ''; });
 
 watch(() => form.condition, (newVal, oldVal) => {
-  if (arrInactiveConditions.includes(newVal)) {
-    form.status = 'Pending:BoD/BoC';
-  } else if (oldVal && arrInactiveConditions.includes(oldVal) && (form.status === 'Pending' || form.status === 'Pending:BoD/BoC')) {
-    if (isSingle.value && selectedItem.value?.status && !isRestrictedStatus(selectedItem.value.status)) {
-      form.status = selectedItem.value.status;
-    } else {
-      form.status = '';
+  const isRestricted = isSingle.value 
+    ? isRestrictedStatus(selectedItem.value?.status)
+    : hasRestrictedUnit.value;
+
+  if (!isRestricted) {
+    if (arrInactiveConditions.includes(newVal)) {
+      form.status = 'Pending:BoD/BoC';
+    } else if (oldVal && arrInactiveConditions.includes(oldVal) && (form.status === 'Pending' || form.status === 'Pending:BoD/BoC')) {
+      if (isSingle.value && selectedItem.value?.status && !isRestrictedStatus(selectedItem.value.status)) {
+        form.status = selectedItem.value.status;
+      } else {
+        form.status = '';
+      }
     }
   }
 
@@ -236,7 +258,7 @@ watch(() => props.open, (val) => {
     form.condition = item.condition || '';
     form.type = item.type || '';
     form.classification = item.classification || '';
-    if (arrInactiveConditions.includes(form.condition)) {
+    if (!isRestrictedStatus(item.status) && arrInactiveConditions.includes(form.condition)) {
       form.status = 'Pending:BoD/BoC';
     }
     form.price = item.price || '';
@@ -258,7 +280,7 @@ watch(() => props.open, (val) => {
     form.price = '';
     form.vehicle_registration = '';
   }
-});
+}, { immediate: true });
 
 const closeModal = () => {
   isImageDeleted.value = false;
@@ -464,10 +486,8 @@ const handleSubmit = () => {
   if (isSingle.value) {
       let isValid = true;
       if (!form.location_id) { errors.value.location_id = t('inventory.locationRequired'); isValid = false; }
-      if (!form.type) { errors.value.type = t('inventory.typeRequired'); isValid = false; }
       if (!form.status) { errors.value.status = t('inventory.statusRequired'); isValid = false; }
       if (!form.condition) { errors.value.condition = t('inventory.conditionRequired'); isValid = false; }
-      if (!form.classification) { errors.value.classification = t('inventory.classificationRequired'); isValid = false; }
       if (isVehicle.value && !form.vehicle_registration) { errors.value.vehicle_registration = t('inventory.nopolRequired'); isValid = false; }
       if (arrNeedApproval.includes(form.condition) && !isDocumentDisabled.value && !form.memo_file_name) { errors.value.memo_file = t('inventory.memoRequired'); isValid = false; }
       if (form.condition === 'Hilang' && !isDocumentDisabled.value && !form.lost_doc_file_name) { errors.value.lost_doc_file = t('inventory.lostDocRequired'); isValid = false; }
@@ -481,8 +501,8 @@ const handleSubmit = () => {
           location_id: data.location_id,
           status: data.status,
           condition: data.condition,
-          type: data.type,
-          classification: data.classification,
+          type: data.type || null,
+          classification: data.classification || null,
           price: data.price !== '' && data.price !== null ? parseCurrencyToNumber(data.price) : null,
         };
         if (isVehicle.value) fd.vehicle_registration = data.vehicle_registration;
@@ -602,7 +622,7 @@ const handleSubmit = () => {
 
                   <Field :data-invalid="(isSingle && !!errors.type) || undefined">
                     <FieldLabel>
-                      <span>{{ t('inventory.type') }}<span v-if="isSingle" class="text-rose-500">*</span></span>
+                      <span>{{ t('inventory.type') }}</span>
                     </FieldLabel>
                     <FieldContent>
                       <DropdownMenu>
@@ -615,6 +635,7 @@ const handleSubmit = () => {
                         <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
                           <DropdownMenuItem @select="form.type = 'LT'">LT</DropdownMenuItem>
                           <DropdownMenuItem @select="form.type = 'ST'">ST</DropdownMenuItem>
+                          <DropdownMenuItem v-if="isSingle && form.type" @select="form.type = ''">{{ t('inventory.selectType') }}</DropdownMenuItem>
                           <DropdownMenuItem v-if="!isSingle" @select="form.type = ''">{{ t('inventory.unchanged') }}</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -698,7 +719,7 @@ const handleSubmit = () => {
 
                   <Field :data-invalid="(isSingle && !!errors.classification) || undefined">
                     <FieldLabel>
-                      <span>{{ t('inventory.classification') }}<span v-if="isSingle" class="text-rose-500">*</span></span>
+                      <span>{{ t('inventory.classification') }}</span>
                     </FieldLabel>
                     <FieldContent>
                       <div class="flex gap-2 w-full">
@@ -713,6 +734,7 @@ const handleSubmit = () => {
                             <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
                               <DropdownMenuItem @select="form.classification = 'Aset'">{{ t('inventory.classificationAsset') }}</DropdownMenuItem>
                               <DropdownMenuItem @select="form.classification = 'Inventaris'">{{ t('inventory.classificationInventory') }}</DropdownMenuItem>
+                              <DropdownMenuItem v-if="isSingle && form.classification" @select="form.classification = ''">{{ t('inventory.selectClassification') }}</DropdownMenuItem>
                               <DropdownMenuItem v-if="!isSingle" @select="form.classification = ''">{{ t('inventory.unchanged') }}</DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>

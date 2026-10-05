@@ -222,7 +222,7 @@ class AccessManagementTest extends TestCase
         $ifsOrg = HrdOrgchart::find($ifsUser->orgchart_id);
         $ifsOrg->update([
             'employee_id' => $ifsUser->id,
-            'org_code' => 'IFS',
+            'org_code' => User::getIfsOrgCode(),
         ]);
 
         // 4. Regular Employee (should be synced to 'user')

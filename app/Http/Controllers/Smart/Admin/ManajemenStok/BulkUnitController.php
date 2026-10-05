@@ -30,8 +30,8 @@ class BulkUnitController extends Controller
             'location_id' => 'required|exists:locations,id',
             'status' => 'nullable|string|max:255',
             'condition' => 'required|string|max:255',
-            'type' => 'required|string|in:LT,ST',
-            'classification' => 'required|string|in:Aset,Inventaris',
+            'type' => 'nullable|string|in:LT,ST',
+            'classification' => 'nullable|string|in:Aset,Inventaris',
             'price' => 'nullable|numeric|min:0|max:999999999.99',
             'image_url' => 'nullable|image|max:1024',
             'use_lot_image' => 'nullable',
@@ -99,6 +99,19 @@ class BulkUnitController extends Controller
             $finalImagePath = $request->file('image_url')->store('inventory', 'local');
         }
 
+        $type = $request->input('type') ?: null;
+        $classification = $request->input('classification') ?: null;
+
+        if (empty($classification)) {
+            $lotPrice = $lot->unit_price ?? $request->input('price');
+            if ($lotPrice !== null && $lotPrice !== '' && (float) $lotPrice > 0) {
+                $threshold = (float) (env('ASSET_CLASSIFICATION_THRESHOLD', env('VITE_ASSET_CLASSIFICATION_THRESHOLD', 5000000)));
+                $classification = ((float) $lotPrice > $threshold) ? 'Aset' : 'Inventaris';
+            } else {
+                $classification = null;
+            }
+        }
+
         foreach ($generatedNumbers as $num) {
             $unit = Unit::create([
                 'number' => $num,
@@ -106,8 +119,8 @@ class BulkUnitController extends Controller
                 'location_id' => $validated['location_id'],
                 'status' => $validated['status'],
                 'condition' => $validated['condition'],
-                'type' => $validated['type'],
-                'classification' => $validated['classification'],
+                'type' => $type,
+                'classification' => $classification,
                 'price' => $validated['price'] ?? null,
                 'image_url' => $finalImagePath,
                 'vehicle_registration' => $validated['vehicle_registration'] ?? null,
@@ -246,6 +259,15 @@ class BulkUnitController extends Controller
                 return redirect()->back()->withErrors(['status' => 'Terdapat aset dengan status Tidak Aktif atau Pending. Status dan kondisi aset tersebut tidak dapat diubah.']);
             }
         } else {
+            if ($request->filled('status')) {
+                $hasDisallowedStatusUnits = $units->contains(function ($u) {
+                    $s = strtolower(trim($u->status ?? ''));
+                    return !in_array($s, ['tersedia', 'standby']);
+                });
+                if ($hasDisallowedStatusUnits) {
+                    return redirect()->back()->withErrors(['status' => 'Status hanya dapat diubah jika semua aset yang dipilih berstatus Tersedia atau Standby.']);
+                }
+            }
             $inputStatusLower = strtolower(trim($request->input('status', '')));
             $proposedCondition = $request->input('condition');
             if ($inputStatusLower === 'tidak aktif' && !in_array($proposedCondition, $arrInactiveConditions)) {

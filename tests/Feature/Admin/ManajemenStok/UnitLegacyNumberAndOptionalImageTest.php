@@ -285,4 +285,56 @@ class UnitLegacyNumberAndOptionalImageTest extends TestCase
         $response = $this->actingAs($this->user)->get('/media/inventory/placeholder.jpg');
         $response->assertOk();
     }
+
+    public function test_unit_update_disallows_changing_status_when_current_status_is_not_tersedia_or_standby(): void
+    {
+        $unit = Unit::factory()->create([
+            'lot_id' => $this->lot->id,
+            'number' => '00099-EL01-IT-PTRE-26',
+            'location_id' => $this->location->id,
+            'status' => 'Belum Diverifikasi',
+            'condition' => 'Bagus',
+        ]);
+
+        $response = $this->actingAs($this->user)->put(route('smart.inventory.units.update', $unit), [
+            'number' => $unit->number,
+            'lot_id' => $this->lot->id,
+            'location_id' => $this->location->id,
+            'status' => 'Tersedia',
+            'condition' => 'Bagus',
+        ]);
+
+        $response->assertSessionHasErrors(['status']);
+        $unit->refresh();
+        $this->assertEquals('Belum Diverifikasi', $unit->status);
+    }
+
+    public function test_bulk_unit_update_disallows_changing_status_when_at_least_one_unit_is_not_tersedia_or_standby(): void
+    {
+        $unit1 = Unit::factory()->create([
+            'lot_id' => $this->lot->id,
+            'number' => '00101-EL01-IT-PTRE-26',
+            'location_id' => $this->location->id,
+            'status' => 'Tersedia',
+            'condition' => 'Bagus',
+        ]);
+        $unit2 = Unit::factory()->create([
+            'lot_id' => $this->lot->id,
+            'number' => '00102-EL01-IT-PTRE-26',
+            'location_id' => $this->location->id,
+            'status' => 'Belum Diverifikasi',
+            'condition' => 'Bagus',
+        ]);
+
+        $response = $this->actingAs($this->user)->post(route('smart.inventory.units.bulk-update'), [
+            'ids' => [$unit1->id, $unit2->id],
+            'status' => 'Standby',
+        ]);
+
+        $response->assertSessionHasErrors(['status']);
+        $unit1->refresh();
+        $unit2->refresh();
+        $this->assertEquals('Tersedia', $unit1->status);
+        $this->assertEquals('Belum Diverifikasi', $unit2->status);
+    }
 }

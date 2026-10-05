@@ -36,6 +36,13 @@ import { printManajemenStok } from '@/utils/printManajemenStok';
 import { exportCSV } from '@/utils/exportCSV';
 import { exportExcel } from '@/utils/exportExcel';
 
+export type StatusScope = 
+  | 'standard' 
+  | 'unverified' 
+  | 'pending:bod/boc' 
+  | 'pending:manager' 
+  | 'all';
+
 interface Props {
   units: {
     id: number;
@@ -103,6 +110,7 @@ interface Props {
   };
   filterVariant?: 'simple' | 'full';
   hideExport?: boolean;
+  statusScope?: StatusScope;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -112,6 +120,7 @@ const props = withDefaults(defineProps<Props>(), {
   hideActions: false,
   filterVariant: 'full',
   hideExport: false,
+  statusScope: 'standard',
 });
 
 const searchQuery = ref('');
@@ -303,9 +312,30 @@ const closeErrorModal = () => {
   }
 };
 
+// Baseline Scoped Units based on statusScope prop
+const scopedUnits = computed(() => {
+  const units = props.units || [];
+  switch (props.statusScope) {
+    case 'unverified':
+      return units.filter(u => String(u?.status || '').trim().toLowerCase() === 'belum diverifikasi');
+    case 'pending:bod/boc':
+      return units.filter(u => ['pending:bod/boc', 'pending'].includes(String(u?.status || '').trim().toLowerCase()));
+    case 'pending:manager':
+      return units.filter(u => ['pending:dm', 'pending:manager'].includes(String(u?.status || '').trim().toLowerCase()));
+    case 'all':
+      return units;
+    case 'standard':
+    default:
+      return units.filter(u => {
+        const s = String(u?.status || '').trim().toLowerCase();
+        return s !== 'belum diverifikasi' && !s.startsWith('pending');
+      });
+  }
+});
+
 // Filtered Units list for Table
 const filteredUnits = computed(() => {
-  let list = props.units || [];
+  let list = scopedUnits.value;
 
   if (searchQuery.value) {
     const q = searchQuery.value.toLowerCase();
@@ -424,9 +454,13 @@ watch(categoryFilter, () => {
 
 // Dynamic values for dropdown filters
 const availableStatuses = computed(() => {
-  const dynamic = Array.from(new Set((props.units || []).map((u: any) => u.status).filter(Boolean)));
+  const dynamic = Array.from(new Set(
+    scopedUnits.value
+      .map((u: any) => u.status)
+      .filter((s): s is string => !!s)
+  ));
   if (dynamic.length > 0) return dynamic;
-  return ['Tersedia', 'Dipinjam', 'Standby', 'Tidak Aktif', 'Belum Diverifikasi', 'Verifikasi Ditolak'];
+  return ['Tersedia', 'Dipinjam', 'Standby', 'Tidak Aktif', 'Verifikasi Ditolak'];
 });
 const availableConditions = ['Bagus', 'Rusak', 'QC Passed', 'Lelang/Hibah', 'Rusak Total', 'Hilang'];
 
@@ -439,6 +473,10 @@ const STATUS_LABEL_MAP: Record<string, string> = {
   'pending': 'status.pending',
   'pending:dm': 'status.pendingDm',
   'pending: dm': 'status.pendingDm',
+  'pending:manager': 'status.pendingDm',
+  'pending: manager': 'status.pendingDm',
+  'pending:bod/boc': 'status.pendingBodBoc',
+  'pending: bod/boc': 'status.pendingBodBoc',
   'bagus': 'status.bagus',
   'rusak': 'status.rusak',
   'qc passed': 'status.qcPassed',

@@ -70,6 +70,7 @@ const { t } = useI18n();
       :organizers="props.organizers"
       :vendors="props.vendors"
       :users="props.users"
+      status-scope="standard"
     />
   </AppLayout>
 </template>

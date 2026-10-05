@@ -224,6 +224,10 @@ class NotificationService
         try {
             $ifsUsers = User::getUsersByRole('ifs_manager');
             foreach ($ifsUsers as $ifsUser) {
+                if (!$this->isAllowedIfsRecipient($ifsUser)) {
+                    continue;
+                }
+
                 $email = $ifsUser->email;
                 if ($email && filter_var($email, FILTER_VALIDATE_EMAIL)) {
                     // ==========================================
@@ -322,6 +326,10 @@ class NotificationService
         try {
             $ifsUsers = User::getUsersByRole('ifs_manager');
             foreach ($ifsUsers as $ifsUser) {
+                if (!$this->isAllowedIfsRecipient($ifsUser)) {
+                    continue;
+                }
+
                 $email = $ifsUser->email;
                 if ($email && filter_var($email, FILTER_VALIDATE_EMAIL)) {
                     // ==========================================
@@ -419,7 +427,7 @@ class NotificationService
         );
 
         // Dispatch email notification with signed 1-click approval URL
-        if (!empty($manager->email)) {
+        if (!empty($manager->email) && $this->isAllowedRecipient($manager, $manager->email)) {
             try {
                 // ==========================================
                 // [PHASE 2 - QUEUED EMAIL DISPATCH]
@@ -558,7 +566,7 @@ class NotificationService
         );
 
         // Dispatch email notification to requester
-        if (!empty($requester->email) && filter_var($requester->email, FILTER_VALIDATE_EMAIL)) {
+        if (!empty($requester->email) && filter_var($requester->email, FILTER_VALIDATE_EMAIL) && $this->isAllowedRecipient($requester, $requester->email)) {
             try {
                 // ==========================================
                 // [PHASE 2 - QUEUED EMAIL DISPATCH]
@@ -570,5 +578,65 @@ class NotificationService
                 Log::error("Failed to send rejection email for request {$request->id} to {$requester->email}: " . $e->getMessage());
             }
         }
+    }
+
+    /**
+     * Check if a recipient is safe to email in the current environment.
+     * In non-production, strictly prevent sending emails to real IFS personnel (e.g. Sonny Handini or IFS department).
+     */
+    protected function isAllowedRecipient(?User $user, ?string $email): bool
+    {
+        if (app()->isProduction()) {
+            return true;
+        }
+
+        if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return false;
+        }
+
+        $emailLower = strtolower($email);
+
+        // Explicit blacklists for non-production: never send to real IFS manager
+        if (str_contains($emailLower, 'sonny.handini') || ($user && (string) ($user->employee_id ?? '') === '033340')) {
+            Log::warning("Blocked email to actual IFS Manager in non-production environment: {$email}");
+            return false;
+        }
+
+        if ($user) {
+            $orgCode = $user->department?->org_code ?? $user->orgchart?->org_code;
+            if ($orgCode === 'IFS') {
+                Log::warning("Blocked email to user with IFS org code in non-production environment: {$email}");
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Check if an IFS manager recipient is allowed to receive emails.
+     * In non-production, only Departemen Fasilitas Uji Coba (TEST-DEPT) is permitted.
+     */
+    protected function isAllowedIfsRecipient(User $ifsUser): bool
+    {
+        if (app()->isProduction()) {
+            return true;
+        }
+
+        if (!$this->isAllowedRecipient($ifsUser, $ifsUser->email)) {
+            return false;
+        }
+
+        $orgCode = $ifsUser->department?->org_code ?? $ifsUser->orgchart?->org_code;
+        $isTestDept = ($orgCode === 'TEST-DEPT')
+            || ((string) ($ifsUser->employee_id ?? '') === '999996')
+            || (app()->runningUnitTests() && str_contains(strtolower($ifsUser->email ?? ''), 'example.com'));
+
+        if (!$isTestDept) {
+            Log::warning("Blocked sending IFS manager email in non-production to non-test user {$ifsUser->employee_id} ({$ifsUser->email}). Only Departemen Uji Coba (TEST-DEPT) is permitted.");
+            return false;
+        }
+
+        return true;
     }
 }

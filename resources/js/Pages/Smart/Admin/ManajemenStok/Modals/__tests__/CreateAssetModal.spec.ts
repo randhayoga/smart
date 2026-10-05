@@ -104,13 +104,15 @@ describe('CreateAssetModal.vue', () => {
     setI18nLanguage('id');
     const wrapper = mountModal();
 
-    // Condition options should include Bagus, Rusak, QC Passed, Lelang/Hibah, Rusak Total, Hilang
+    // Only initial valid condition options should be present: Bagus, Rusak, QC Passed
     expect(wrapper.text()).toContain('Bagus');
     expect(wrapper.text()).toContain('Rusak');
     expect(wrapper.text()).toContain('QC Passed');
-    expect(wrapper.text()).toContain('Lelang/Hibah');
-    expect(wrapper.text()).toContain('Rusak Total');
-    expect(wrapper.text()).toContain('Hilang');
+
+    // Lelang/Hibah, Rusak Total, Hilang must NOT be present in creation modal
+    expect(wrapper.text()).not.toContain('Lelang/Hibah');
+    expect(wrapper.text()).not.toContain('Rusak Total');
+    expect(wrapper.text()).not.toContain('Hilang');
 
     // Find condition menu items
     const menuItems = wrapper.findAll('[role="menuitem"]');
@@ -126,5 +128,66 @@ describe('CreateAssetModal.vue', () => {
       (input.element as HTMLInputElement).value === 'Belum Diverifikasi'
     );
     expect(statusInput).toBeDefined();
+  });
+
+  it('renders type and classification as optional without required asterisk', () => {
+    setI18nLanguage('id');
+    const wrapper = mountModal();
+
+    const labels = wrapper.findAll('label');
+    const typeLabel = labels.find(l => l.text().includes('Tipe'));
+    const classificationLabel = labels.find(l => l.text().includes('Klasifikasi'));
+
+    expect(typeLabel?.text()).not.toContain('*');
+    expect(classificationLabel?.text()).not.toContain('*');
+  });
+
+  it('matches LOT default location when clicking Samakan button for location', async () => {
+    setI18nLanguage('id');
+    const wrapper = mountModal({
+      lot: {
+        id: 1,
+        location_id: 1,
+      },
+    });
+
+    const vm = wrapper.vm as any;
+    expect(vm.form.location_id).toBe('');
+
+    const sameAsParentButtons = wrapper.findAll('button').filter(b => b.text().trim() === 'Samakan');
+    const locationSameBtn = sameAsParentButtons[0];
+    await locationSameBtn.trigger('click');
+
+    expect(vm.form.location_id).toBe(1);
+  });
+
+  it('renders remove photo button and clicking it clears selected or inherited photo', async () => {
+    setI18nLanguage('id');
+    const wrapper = mountModal({
+      lot: {
+        id: 1,
+        imageUrl: 'lots/sample-lot.jpg',
+      },
+    });
+
+    // Delete photo button exists
+    expect(wrapper.find('button[title="Hapus Foto"]').attributes('disabled')).toBeDefined();
+
+    // Click "Samakan" for photo (third Samakan button: location, price, photo)
+    const sameAsParentButtons = wrapper.findAll('button').filter(b => b.text().trim() === 'Samakan');
+    const photoSameAsParentBtn = sameAsParentButtons[2] || sameAsParentButtons[sameAsParentButtons.length - 1];
+    await photoSameAsParentBtn.trigger('click');
+
+    // Delete button should now be enabled
+    const enabledDeleteBtn = wrapper.find('button[title="Hapus Foto"]');
+    expect(enabledDeleteBtn.attributes('disabled')).toBeUndefined();
+    expect(wrapper.text()).toContain('sample-lot.jpg');
+
+    // Click delete photo
+    await enabledDeleteBtn.trigger('click');
+
+    // Photo should be cleared and delete button disabled again
+    expect(wrapper.text()).toContain('Belum ada foto yang dipilih');
+    expect(wrapper.find('button[title="Hapus Foto"]').attributes('disabled')).toBeDefined();
   });
 });

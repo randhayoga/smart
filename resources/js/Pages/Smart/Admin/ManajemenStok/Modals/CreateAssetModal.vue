@@ -7,7 +7,7 @@ import { useI18n } from 'vue-i18n';
 import { useModalLock } from '@/composables/useModalLock';
 import { useForm } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
-import { X, ChevronDown, Loader2 } from 'lucide-vue-next';
+import { X, ChevronDown, Loader2, Trash2 } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -258,6 +258,16 @@ const handleSamakanPhoto = () => {
   }
 };
 
+const hasImage = computed(() => Boolean(form.image_url || form.use_lot_image || form.image_url_name));
+
+const handleDeletePhoto = () => {
+  form.image_url = null;
+  form.image_url_name = '';
+  form.use_lot_image = false;
+  const input = document.getElementById('create-asset-photo-upload') as HTMLInputElement;
+  if (input) input.value = '';
+};
+
 const handleMemoUpload = (e: any) => {
   const file = e.target.files[0];
   if (!file) return;
@@ -310,6 +320,15 @@ const handleSamakanPrice = () => {
   }
 };
 
+const handleSamakanLocation = () => {
+  const lotLocId = props.lot?.location_id || props.lot?.locationId;
+  if (lotLocId) {
+    form.location_id = lotLocId;
+  } else {
+    toast.error(t('inventory.lotNoDefaultLocation'));
+  }
+};
+
 const parseCurrencyToNumber = (val: string | number) => {
   if (typeof val === 'number') return val;
   if (!val) return 0;
@@ -357,10 +376,8 @@ const handleSubmit = () => {
 
   let isValid = true;
   if (!form.location_id) { errors.value.location_id = t('inventory.locationRequired'); isValid = false; }
-  if (!form.type) { errors.value.type = t('inventory.typeRequired'); isValid = false; }
   if (!form.status) { errors.value.status = t('inventory.statusRequired'); isValid = false; }
   if (!form.condition) { errors.value.condition = t('inventory.conditionRequired'); isValid = false; }
-  if (!form.classification) { errors.value.classification = t('inventory.classificationRequired'); isValid = false; }
   if (isVehicle.value && !form.vehicle_registration) { errors.value.vehicle_registration = t('inventory.nopolRequired'); isValid = false; }
   if (arrNeedApproval.includes(form.status) && !form.memo_file_name) { errors.value.memo_file = t('inventory.memoRequired'); isValid = false; }
   if (form.status === 'Hilang' && !form.lost_doc_file_name) { errors.value.lost_doc_file = t('inventory.lostDocRequired'); isValid = false; }
@@ -375,8 +392,8 @@ const handleSubmit = () => {
       location_id: data.location_id,
       status: data.status,
       condition: data.condition,
-      type: data.type,
-      classification: data.classification,
+      type: data.type || null,
+      classification: data.classification || null,
       price: data.price !== '' && data.price !== null ? parseCurrencyToNumber(data.price) : null,
     };
     if (isVehicle.value) fd.vehicle_registration = data.vehicle_registration;
@@ -419,7 +436,7 @@ const handleSubmit = () => {
     >
       <div v-if="open" @click="closeModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 overscroll-contain">
         <Transition enter-active-class="ease-out duration-200" enter-from-class="opacity-0 scale-95" enter-to-class="opacity-100 scale-100" leave-active-class="ease-in duration-150" leave-from-class="opacity-100 scale-100" leave-to-class="opacity-0 scale-95">
-          <div v-if="open" class="bg-card w-full max-w-[1000px] rounded-[14px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]" @click.stop>
+          <div v-if="open" class="bg-card w-full max-w-[1100px] rounded-[14px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]" @click.stop>
             <!-- Header -->
             <div class="flex items-center justify-between pt-3 pb-2 px-6 border-b border-border">
               <h3 class="text-lg font-bold text-foreground">{{ t('inventory.createNewAsset') }}</h3>
@@ -447,20 +464,25 @@ const handleSubmit = () => {
                       <span>{{ t('inventory.location') }}<span class="text-rose-500">*</span></span>
                     </FieldLabel>
                     <FieldContent>
-                      <LocationCombobox
-                        v-model="form.location_id"
-                        :locations="locations"
-                        :placeholder="t('inventory.selectLocation')"
-                        :error="!!errors.location_id"
-                        :active-only="true"
-                      />
+                      <div class="flex gap-2">
+                        <div class="flex-grow min-w-0">
+                          <LocationCombobox
+                            v-model="form.location_id"
+                            :locations="locations"
+                            :placeholder="t('inventory.selectLocation')"
+                            :error="!!errors.location_id"
+                            :active-only="true"
+                          />
+                        </div>
+                        <Button type="button" @click="handleSamakanLocation" variant="warning" size="lg" class="shrink-0">{{ t('inventory.sameAsParent') }}</Button>
+                      </div>
                     </FieldContent>
                     <FieldError v-if="errors.location_id">{{ errors.location_id }}</FieldError>
                   </Field>
 
                   <Field :data-invalid="!!errors.type || undefined">
                     <FieldLabel>
-                      <span>{{ t('inventory.type') }}<span class="text-rose-500">*</span></span>
+                      <span>{{ t('inventory.type') }}</span>
                     </FieldLabel>
                     <FieldContent>
                       <DropdownMenu>
@@ -473,6 +495,7 @@ const handleSubmit = () => {
                         <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
                           <DropdownMenuItem @select="form.type = 'LT'">LT</DropdownMenuItem>
                           <DropdownMenuItem @select="form.type = 'ST'">ST</DropdownMenuItem>
+                          <DropdownMenuItem v-if="form.type" @select="form.type = ''">{{ t('inventory.selectType') }}</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </FieldContent>
@@ -530,9 +553,6 @@ const handleSubmit = () => {
                           <DropdownMenuItem @select="form.condition = 'Bagus'">{{ t('inventory.conditionGood') }}</DropdownMenuItem>
                           <DropdownMenuItem @select="form.condition = 'Rusak'">{{ t('inventory.conditionDamaged') }}</DropdownMenuItem>
                           <DropdownMenuItem @select="form.condition = 'QC Passed'">{{ t('inventory.conditionQcPassed') }}</DropdownMenuItem>
-                          <DropdownMenuItem @select="form.condition = 'Lelang/Hibah'">{{ t('inventory.conditionAuctionGrant') }}</DropdownMenuItem>
-                          <DropdownMenuItem @select="form.condition = 'Rusak Total'">{{ t('inventory.conditionTotalDamage') }}</DropdownMenuItem>
-                          <DropdownMenuItem @select="form.condition = 'Hilang'">{{ t('inventory.conditionLost') }}</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </FieldContent>
@@ -556,7 +576,7 @@ const handleSubmit = () => {
 
                   <Field :data-invalid="!!errors.classification || undefined">
                     <FieldLabel>
-                      <span>{{ t('inventory.classification') }}<span class="text-rose-500">*</span></span>
+                      <span>{{ t('inventory.classification') }}</span>
                     </FieldLabel>
                     <FieldContent>
                       <div class="flex gap-2 w-full">
@@ -571,6 +591,7 @@ const handleSubmit = () => {
                             <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
                               <DropdownMenuItem @select="form.classification = 'Aset'">{{ t('inventory.classificationAsset') }}</DropdownMenuItem>
                               <DropdownMenuItem @select="form.classification = 'Inventaris'">{{ t('inventory.classificationInventory') }}</DropdownMenuItem>
+                              <DropdownMenuItem v-if="form.classification" @select="form.classification = ''">{{ t('inventory.selectClassification') }}</DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>
@@ -593,8 +614,19 @@ const handleSubmit = () => {
                           {{ form.image_url_name || t('inventory.noPhotoSelected') }}
                         </div>
                         <input type="file" id="create-asset-photo-upload" class="hidden" accept=".jpg,.jpeg,.png" @change="handleFileUpload" />
-                        <Button type="button" @click="handleSamakanPhoto" variant="warning" size="lg">{{ t('inventory.sameAsParent') }}</Button>
-                        <Button type="button" @click="triggerFileInput" size="lg">{{ t('inventory.chooseFile') }}</Button>
+                        <Button type="button" @click="handleSamakanPhoto" variant="warning" size="lg" class="shrink-0">{{ t('inventory.sameAsParent') }}</Button>
+                        <Button type="button" @click="triggerFileInput" size="lg" class="shrink-0">{{ t('inventory.chooseFile') }}</Button>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          class="w-9 shrink-0"
+                          :disabled="!hasImage"
+                          @click="handleDeletePhoto"
+                          :title="t('inventory.deletePhoto')"
+                        >
+                          <Trash2 class="w-4 h-4" />
+                        </Button>
                       </div>
                       <p class="text-[10px] text-muted-foreground ml-1 mt-1">{{ t('inventory.maxFileSize1Mb') }}</p>
                     </FieldContent>

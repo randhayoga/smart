@@ -272,6 +272,7 @@ onUnmounted(() => {
         :units="props.units"
         :locations="props.locations"
         :hide-barang-columns="true"
+        status-scope="all"
       />
     </div>
 

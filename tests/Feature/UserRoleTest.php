@@ -49,7 +49,7 @@ class UserRoleTest extends TestCase
         $ifsOrg = HrdOrgchart::find($ifsUser->orgchart_id);
         $ifsOrg->update([
             'employee_id' => $ifsUser->id,
-            'org_code' => 'IFS',
+            'org_code' => User::getIfsOrgCode(),
         ]);
 
         $otherUser = User::factory()->create();
@@ -75,7 +75,7 @@ class UserRoleTest extends TestCase
         $ifsOrg = HrdOrgchart::find($ifsUser->orgchart_id);
         $ifsOrg->update([
             'employee_id' => $ifsUser->id,
-            'org_code' => 'IFS',
+            'org_code' => User::getIfsOrgCode(),
         ]);
 
         // Setup RBS roles

@@ -26,16 +26,8 @@ const computedTabs = computed(() => [
 ]);
 const activeTab = ref('Pending:BoD/BoC');
 
-const filteredUnits = computed(() => {
-  return (props.units || []).filter(unit => {
-    if (activeTab.value === 'Pending:BoD/BoC') {
-      return unit.status === 'Pending:BoD/BoC' || unit.status === 'Pending';
-    }
-    if (activeTab.value === 'Pending:DM') {
-      return unit.status === 'Pending:DM';
-    }
-    return unit.status === activeTab.value;
-  });
+const currentStatusScope = computed(() => {
+  return activeTab.value === 'Pending:BoD/BoC' ? 'pending:bod/boc' : 'pending:manager';
 });
 
 const handleCustomPrint = (items: any[]) => {
@@ -60,10 +52,11 @@ const handleCustomPrint = (items: any[]) => {
       <!-- Content Tab (Table view matching Daftar Aset) -->
       <DaftarAsetTab
         :key="activeTab"
-        :units="filteredUnits"
+        :units="props.units"
         :locations="props.locations"
         :organizers="props.organizers"
         :vendors="props.vendors"
+        :status-scope="currentStatusScope"
         :hide-status-filter="true"
         :hide-export="activeTab === 'Pending:DM'"
         :custom-print-handler="handleCustomPrint"

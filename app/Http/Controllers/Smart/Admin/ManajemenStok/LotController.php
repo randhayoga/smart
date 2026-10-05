@@ -44,14 +44,11 @@ class LotController extends Controller
             'unit_price' => 'nullable|numeric|min:0|max:999999999.99',
             'image_url' => 'nullable|image|max:1024',
             'use_parent_image' => 'nullable',
-            'auto_create_assets' => 'nullable|boolean',
-            'auto_create_assets_count' => 'required_if:auto_create_assets,true|nullable|integer|min:1|max:999',
             'burden' => 'nullable|string|in:Corporate,Project',
             'project_id' => ['required_if:burden,Project', 'nullable', Rule::exists(TbProject::class, 'id_project')],
         ], [
             'initial_quantity.integer' => 'Tidak boleh desimal.',
             'current_quantity.integer' => 'Tidak boleh desimal.',
-            'auto_create_assets_count.integer' => 'Tidak boleh desimal.',
         ]);
 
         if ($request->boolean('use_parent_image')) {
@@ -69,8 +66,6 @@ class LotController extends Controller
         }
 
         unset($validated['use_parent_image']);
-        unset($validated['auto_create_assets']);
-        unset($validated['auto_create_assets_count']);
         $validated['initial_quantity'] = $validated['initial_quantity'] ?? 0;
         $validated['burden'] = $validated['burden'] ?? 'Corporate';
         $validated['project_id'] = ($validated['burden'] === 'Project') ? ($validated['project_id'] ?? null) : null;
@@ -87,7 +82,8 @@ class LotController extends Controller
             app(NotificationService::class)->checkAndNotifyLowStock($lot->barang);
         }
 
-        return redirect()->back()->with('success', __('inventory.lot_created'));
+        return redirect()->back()
+            ->with('success', __('inventory.lot_created'));
     }
 
     /**

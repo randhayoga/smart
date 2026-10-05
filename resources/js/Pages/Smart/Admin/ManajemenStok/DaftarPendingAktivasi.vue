@@ -34,6 +34,7 @@ const { t } = useI18n();
         :locations="props.locations"
         :organizers="props.organizers"
         :vendors="props.vendors"
+        status-scope="unverified"
         :hide-status-filter="true"
         :hide-condition-filter="true"
         :hide-actions="true"

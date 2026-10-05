@@ -6,7 +6,7 @@ import { ref, watch, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useModalLock } from '@/composables/useModalLock';
 import { useForm } from '@inertiajs/vue3';
-import { X, ChevronDown, Loader2 } from 'lucide-vue-next';
+import { X, ChevronDown, Loader2, Trash2 } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
 import {
   DropdownMenu,
@@ -137,6 +137,13 @@ const triggerFileInput = () => {
   input?.click();
 };
 
+const handleDeletePhoto = () => {
+  newItem.photo = null;
+  newItem.photoName = '';
+  const input = document.getElementById('create-tipe-photo-upload') as HTMLInputElement;
+  if (input) input.value = '';
+};
+
 const closeModal = () => {
   emit('update:open', false);
   resetErrors();
@@ -213,7 +220,7 @@ const handleSubmit = () => {
         >
           <div 
             v-if="open"
-            class="bg-card w-full max-w-[1000px] rounded-[14px] shadow-2xl overflow-hidden flex flex-col"
+            class="bg-card w-full max-w-[1100px] rounded-[14px] shadow-2xl overflow-hidden flex flex-col"
             @click.stop
           >
             <!-- Modal Header -->
@@ -393,10 +400,23 @@ const handleSubmit = () => {
                             @change="handleFileUpload"
                           />
                           <Button
+                            type="button"
                             @click="triggerFileInput"
                             size="lg"
+                            class="shrink-0"
                           >
                             {{ t('inventory.chooseFile') }}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            class="w-9 shrink-0"
+                            :disabled="!newItem.photo"
+                            @click="handleDeletePhoto"
+                            :title="t('inventory.deletePhoto')"
+                          >
+                            <Trash2 class="w-4 h-4" />
                           </Button>
                         </div>
                         <p class="text-[10px] text-muted-foreground ml-1">{{ t('inventory.maxFileSize1Mb') }}</p>

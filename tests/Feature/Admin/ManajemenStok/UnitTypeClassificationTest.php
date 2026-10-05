@@ -12,6 +12,7 @@ use App\Models\Master\Subcategory;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -27,6 +28,7 @@ class UnitTypeClassificationTest extends TestCase
     {
         parent::setUp();
         Storage::fake('local');
+        Mail::fake();
 
         $this->user = User::factory()->create();
 
@@ -246,5 +248,186 @@ class UnitTypeClassificationTest extends TestCase
         ]);
 
         $response->assertSessionHasErrors(['type', 'classification']);
+    }
+
+    public function test_can_create_unit_single_without_type_and_classification(): void
+    {
+        $response = $this->actingAs($this->user)->post(route('smart.inventory.units.store'), [
+            'lot_id' => $this->lot->id,
+            'location_id' => $this->location->id,
+            'status' => 'Tersedia',
+            'condition' => 'Bagus',
+            'type' => null,
+            'classification' => null,
+            'price' => 7500000,
+            'use_lot_image' => '1',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseHas('units', [
+            'lot_id' => $this->lot->id,
+            'type' => null,
+            'classification' => null,
+            'status' => 'Belum Diverifikasi',
+            'condition' => 'Bagus',
+        ]);
+    }
+
+    public function test_can_update_unit_single_to_remove_type_and_classification(): void
+    {
+        $unit = Unit::create([
+            'number' => 'UNT-NULL-001',
+            'lot_id' => $this->lot->id,
+            'location_id' => $this->location->id,
+            'status' => 'Tersedia',
+            'condition' => 'Bagus',
+            'type' => 'LT',
+            'classification' => 'Aset',
+            'price' => 1000000,
+            'image_url' => 'inventory/placeholder.jpg',
+        ]);
+
+        $response = $this->actingAs($this->user)->put(route('smart.inventory.units.update', $unit->id), [
+            'number' => 'UNT-NULL-001',
+            'lot_id' => $this->lot->id,
+            'location_id' => $this->location->id,
+            'status' => 'Standby',
+            'condition' => 'Bagus',
+            'type' => null,
+            'classification' => null,
+            'price' => 1200000,
+            'use_lot_image' => '1',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseHas('units', [
+            'id' => $unit->id,
+            'type' => null,
+            'classification' => null,
+            'status' => 'Standby',
+        ]);
+    }
+
+    public function test_bulk_create_units_without_type_calculates_classification_as_aset_when_lot_price_exceeds_threshold(): void
+    {
+        // $this->lot has unit_price = 7,500,000 which is > 5,000,000 threshold
+        $response = $this->actingAs($this->user)->post(route('smart.inventory.units.bulk-store'), [
+            'number' => '00001-PK01-IT-PTRE-26',
+            'lot_id' => $this->lot->id,
+            'location_id' => $this->location->id,
+            'status' => 'Tersedia',
+            'condition' => 'Bagus',
+            'type' => null,
+            'price' => 7500000,
+            'use_lot_image' => '1',
+            'bulk_quantity' => 2,
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $units = Unit::where('lot_id', $this->lot->id)->get();
+        $this->assertCount(2, $units);
+        foreach ($units as $unit) {
+            $this->assertNull($unit->type);
+            $this->assertEquals('Aset', $unit->classification);
+        }
+    }
+
+    public function test_bulk_create_units_without_type_calculates_classification_as_inventaris_when_lot_price_below_or_equal_threshold(): void
+    {
+        $lowPriceLot = Lot::factory()->create([
+            'barang_id' => $this->lot->barang_id,
+            'organizer_id' => $this->lot->organizer_id,
+            'location_id' => $this->location->id,
+            'image_url' => $this->lot->image_url,
+            'unit_price' => 3000000,
+        ]);
+
+        $response = $this->actingAs($this->user)->post(route('smart.inventory.units.bulk-store'), [
+            'number' => '00001-PK01-IT-PTRE-26',
+            'lot_id' => $lowPriceLot->id,
+            'location_id' => $this->location->id,
+            'status' => 'Tersedia',
+            'condition' => 'Bagus',
+            'type' => null,
+            'price' => 3000000,
+            'use_lot_image' => '1',
+            'bulk_quantity' => 2,
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $units = Unit::where('lot_id', $lowPriceLot->id)->get();
+        $this->assertCount(2, $units);
+        foreach ($units as $unit) {
+            $this->assertNull($unit->type);
+            $this->assertEquals('Inventaris', $unit->classification);
+        }
+    }
+
+    public function test_bulk_create_units_without_type_leaves_classification_null_when_lot_price_is_empty(): void
+    {
+        $noPriceLot = Lot::factory()->create([
+            'barang_id' => $this->lot->barang_id,
+            'organizer_id' => $this->lot->organizer_id,
+            'location_id' => $this->location->id,
+            'image_url' => $this->lot->image_url,
+            'unit_price' => null,
+        ]);
+
+        $response = $this->actingAs($this->user)->post(route('smart.inventory.units.bulk-store'), [
+            'number' => '00001-PK01-IT-PTRE-26',
+            'lot_id' => $noPriceLot->id,
+            'location_id' => $this->location->id,
+            'status' => 'Tersedia',
+            'condition' => 'Bagus',
+            'type' => null,
+            'price' => null,
+            'use_lot_image' => '1',
+            'bulk_quantity' => 2,
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $units = Unit::where('lot_id', $noPriceLot->id)->get();
+        $this->assertCount(2, $units);
+        foreach ($units as $unit) {
+            $this->assertNull($unit->type);
+            $this->assertNull($unit->classification);
+        }
+    }
+
+    public function test_bulk_create_units_preserves_explicitly_provided_classification(): void
+    {
+        // Lot has 7.5M price (which would normally be Aset), but caller explicitly provided Inventaris
+        $response = $this->actingAs($this->user)->post(route('smart.inventory.units.bulk-store'), [
+            'number' => '00001-PK01-IT-PTRE-26',
+            'lot_id' => $this->lot->id,
+            'location_id' => $this->location->id,
+            'status' => 'Tersedia',
+            'condition' => 'Bagus',
+            'type' => null,
+            'classification' => 'Inventaris',
+            'price' => 7500000,
+            'use_lot_image' => '1',
+            'bulk_quantity' => 2,
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $units = Unit::where('lot_id', $this->lot->id)->get();
+        $this->assertCount(2, $units);
+        foreach ($units as $unit) {
+            $this->assertNull($unit->type);
+            $this->assertEquals('Inventaris', $unit->classification);
+        }
     }
 }

@@ -71,7 +71,7 @@ class InventoryAuditControllerTest extends TestCase
         $ifsOrgchart = \App\Models\HrdOrgchart::find($ifsEmployee->orgchart_id);
         $ifsOrgchart->update([
             'employee_id' => $ifsManager->employee_id,
-            'org_code' => 'IFS',
+            'org_code' => User::getIfsOrgCode(),
         ]);
         $ifsManager->refresh();
 

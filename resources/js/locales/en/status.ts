@@ -9,6 +9,7 @@ export default {
   tidakAktif: 'Inactive',
   pending: 'Pending',
   pendingDm: 'Pending: DM',
+  pendingBodBoc: 'Pending: BoD/BoC',
   bagus: 'Good',
   rusak: 'Damaged',
   qcPassed: 'QC Passed',

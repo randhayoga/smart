@@ -82,4 +82,59 @@ class AssetCreatedSortingTest extends TestCase
             ->where('units.1.created_at', fn ($val) => !empty($val))
         );
     }
+
+    public function test_assets_endpoint_excludes_unverified_units(): void
+    {
+        $user = User::factory()->create();
+        $location = Location::factory()->create();
+        $organizer = Organizer::firstOrCreate(['name' => 'CFS']);
+        $category = Category::factory()->create(['name' => 'Aset']);
+        $subcategory = Subcategory::factory()->create([
+            'category_id' => $category->id,
+            'code' => 'ASTX',
+            'name' => 'Aset X',
+        ]);
+        $brand = Brand::factory()->create();
+        $uom = Uom::factory()->create();
+
+        $barang = Barang::factory()->create([
+            'subcategory_id' => $subcategory->id,
+            'brand_id' => $brand->id,
+            'uom_id' => $uom->id,
+            'number' => 'ASTX-0002',
+        ]);
+
+        $lot = Lot::factory()->create([
+            'barang_id' => $barang->id,
+            'organizer_id' => $organizer->id,
+            'location_id' => $location->id,
+        ]);
+
+        // Verified unit
+        $verifiedUnit = Unit::factory()->create([
+            'lot_id' => $lot->id,
+            'location_id' => $location->id,
+            'number' => 'ASTX-CFS-1001',
+            'status' => 'Tersedia',
+            'condition' => 'Bagus',
+        ]);
+
+        // Unverified unit (Belum Diverifikasi)
+        $unverifiedUnit = Unit::factory()->create([
+            'lot_id' => $lot->id,
+            'location_id' => $location->id,
+            'number' => 'ASTX-CFS-1002',
+            'status' => 'Belum Diverifikasi',
+            'condition' => 'Bagus',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('smart.inventory.assets'));
+
+        $response->assertStatus(200);
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('Smart/Admin/ManajemenStok/DaftarAset')
+            ->has('units', 1)
+            ->where('units.0.id', $verifiedUnit->id)
+        );
+    }
 }

@@ -263,6 +263,7 @@ onUnmounted(() => {
         :hide-barang-columns="true"
         :lot="props.lot"
         :barang="{ category: props.lot.barang_category }"
+        status-scope="all"
       />
     </div>
 

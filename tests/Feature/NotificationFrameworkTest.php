@@ -15,6 +15,7 @@ use App\Models\Master\Subcategory;
 use App\Services\NotificationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -31,6 +32,7 @@ class NotificationFrameworkTest extends TestCase
     {
         parent::setUp();
         config(['app.disable_test_admin_bypass' => true]);
+        Mail::fake();
     }
 
     protected function tearDown(): void
@@ -79,7 +81,7 @@ class NotificationFrameworkTest extends TestCase
         $ifsOrg = HrdOrgchart::find($ifsEmployee->orgchart_id);
         $ifsOrg->update([
             'employee_id' => $ifsManager->employee_id,
-            'org_code' => 'IFS',
+            'org_code' => User::getIfsOrgCode(),
         ]);
         $ifsManager->refresh();
 
@@ -301,7 +303,7 @@ class NotificationFrameworkTest extends TestCase
         $ifsOrg = HrdOrgchart::find($ifsEmployee->orgchart_id);
         $ifsOrg->update([
             'employee_id' => $ifsManager->employee_id,
-            'org_code' => 'IFS',
+            'org_code' => User::getIfsOrgCode(),
         ]);
         $ifsManager->refresh();
 
@@ -347,7 +349,7 @@ class NotificationFrameworkTest extends TestCase
         $ifsOrg = HrdOrgchart::find($ifsEmployee->orgchart_id);
         $ifsOrg->update([
             'employee_id' => $ifsManager->employee_id,
-            'org_code' => 'IFS',
+            'org_code' => User::getIfsOrgCode(),
         ]);
 
         $brand = Brand::factory()->create(['name' => 'Dell']);
@@ -397,7 +399,7 @@ class NotificationFrameworkTest extends TestCase
         $ifsOrg = HrdOrgchart::find($ifsEmployee->orgchart_id);
         $ifsOrg->update([
             'employee_id' => $ifsManager->employee_id,
-            'org_code' => 'IFS',
+            'org_code' => User::getIfsOrgCode(),
         ]);
 
         $brand = Brand::factory()->create(['name' => 'Lenovo']);

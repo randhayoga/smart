@@ -90,7 +90,7 @@ class LotControllerTest extends TestCase
         $this->assertEquals(3, $lot->units()->count());
         $unit = $lot->units()->first();
         $this->assertMatchesRegularExpression('/^\d{5}-.+-PTRE-\d{2}$/', $unit->number);
-        $this->assertEquals('Tersedia', $unit->status);
+        $this->assertEquals('Belum Diverifikasi', $unit->status);
         $this->assertEquals(60000, $unit->price);
     }
 

@@ -150,7 +150,7 @@ const getConditionClass = (cond?: string | null) => {
                   />
                   <img 
                     v-else 
-                    src="/media/inventory/placeholder.jpg" 
+                    :src="'/media/inventory/placeholder.jpg'" 
                     class="w-full h-full object-cover opacity-50" 
                   />
                 </div>

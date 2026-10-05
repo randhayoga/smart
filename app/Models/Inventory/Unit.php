@@ -160,8 +160,6 @@ class Unit extends Model
     protected $with = ['lot', 'location'];
 
     protected $attributes = [
-        'type' => 'LT',
-        'classification' => 'Aset',
         'status' => 'Belum Diverifikasi',
     ];
 

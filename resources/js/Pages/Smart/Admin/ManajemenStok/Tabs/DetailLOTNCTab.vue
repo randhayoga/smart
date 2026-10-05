@@ -170,6 +170,7 @@ onUnmounted(() => {
       :lot="props.lot"
       :barang="{ category: props.lot.barang_category }"
       filter-variant="simple"
+      status-scope="all"
     >
       <template #extra-actions>
         <Button @click="openCreateAssetModal" variant="primary" size="lg">

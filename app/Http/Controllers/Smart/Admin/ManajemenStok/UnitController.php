@@ -38,6 +38,7 @@ class UnitController extends Controller
             'fulfillments' => fn($q) => $q->whereNull('completed_at')->with('requestItem.request.user')
         ])
         ->where('status', 'not like', 'Pending%')
+        ->where('status', '!=', 'Belum Diverifikasi')
         ->orderBy('created_at', 'desc')
         ->get()
         ->map(function ($unit) {
@@ -160,8 +161,8 @@ class UnitController extends Controller
             'location_id' => 'required|exists:locations,id',
             'status' => 'nullable|string|max:255',
             'condition' => 'required|string|max:255',
-            'type' => 'required|string|in:LT,ST',
-            'classification' => 'required|string|in:Aset,Inventaris',
+            'type' => 'nullable|string|in:LT,ST',
+            'classification' => 'nullable|string|in:Aset,Inventaris',
             'price' => 'nullable|numeric|min:0|max:999999999.99',
             'image_url' => 'nullable|image|max:1024',
             'use_lot_image' => 'nullable',
@@ -217,6 +218,8 @@ class UnitController extends Controller
         }
  
         unset($validated['use_lot_image']);
+        $validated['type'] = $validated['type'] ?? null;
+        $validated['classification'] = $validated['classification'] ?? null;
  
         $unit = Unit::create($validated);
  
@@ -321,8 +324,8 @@ class UnitController extends Controller
             'location_id' => 'required|exists:locations,id',
             'status' => ['required', 'string', 'in:Tersedia,Dipinjam,Standby,Tidak Aktif,Pending,Pending:BoD/BoC,Belum Diverifikasi,Verifikasi Ditolak'],
             'condition' => ['required', 'string', 'in:Bagus,Rusak,QC Passed,Lelang/Hibah,Rusak Total,Hilang'],
-            'type' => ['required', 'string', 'in:LT,ST'],
-            'classification' => ['required', 'string', 'in:Aset,Inventaris'],
+            'type' => ['nullable', 'string', 'in:LT,ST'],
+            'classification' => ['nullable', 'string', 'in:Aset,Inventaris'],
             'price' => 'nullable|numeric|min:0|max:999999999.99',
             'image_url' => 'nullable|image|mimes:jpeg,jpg,png|max:1024',
             'delete_image' => 'nullable|boolean',
@@ -368,6 +371,11 @@ class UnitController extends Controller
                 'condition' => $unit->condition,
             ]);
         } else {
+            if ($request->filled('status') && strtolower(trim($request->input('status'))) !== $currentStatusLower) {
+                if (!in_array($currentStatusLower, ['tersedia', 'standby'])) {
+                    return redirect()->back()->withErrors(['status' => 'Status hanya dapat diubah jika aset berstatus Tersedia atau Standby.']);
+                }
+            }
             $inputStatusLower = strtolower(trim($request->input('status', '')));
             if ($inputStatusLower === 'tidak aktif' && !in_array($proposedCondition, $arrInactiveConditions)) {
                 return redirect()->back()->withErrors(['status' => 'Status Tidak Aktif tidak dapat dipilih secara manual.']);
@@ -397,9 +405,7 @@ class UnitController extends Controller
             'status.in' => 'Status yang dipilih tidak valid.',
             'condition.required' => 'Kondisi belum dipilih.',
             'condition.in' => 'Kondisi yang dipilih tidak valid.',
-            'type.required' => 'Tipe belum dipilih.',
             'type.in' => 'Tipe yang dipilih tidak valid.',
-            'classification.required' => 'Klasifikasi belum dipilih.',
             'classification.in' => 'Klasifikasi yang dipilih tidak valid.',
             'price.numeric' => 'Harga Satuan harus berupa angka.',
             'price.min' => 'Harga Satuan minimal 0.',
@@ -461,6 +467,8 @@ class UnitController extends Controller
 
         unset($validated['use_lot_image']);
         unset($validated['delete_image']);
+        $validated['type'] = $request->input('type') ?: null;
+        $validated['classification'] = $request->input('classification') ?: null;
 
         $previousStatus = str_starts_with($unit->status ?? '', 'Pending') ? 'Tersedia' : $unit->status;
         $previousCondition = $unit->condition;

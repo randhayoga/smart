@@ -74,7 +74,7 @@ class UnitActivationApprovalControllerTest extends TestCase
         if (!$ifsEmployee) {
             $ifsOrg = HrdOrgchart::factory()->create([
                 'employee_id' => $ifsManager->employee_id,
-                'org_code' => 'IFS',
+                'org_code' => User::getIfsOrgCode(),
             ]);
             $ifsEmployee = HrdEmployee::factory()->create([
                 'employee_id' => $ifsManager->employee_id,
@@ -85,7 +85,7 @@ class UnitActivationApprovalControllerTest extends TestCase
             if ($ifsOrg) {
                 $ifsOrg->update([
                     'employee_id' => $ifsManager->employee_id,
-                    'org_code' => 'IFS',
+                    'org_code' => User::getIfsOrgCode(),
                 ]);
             }
         }

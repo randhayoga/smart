@@ -134,12 +134,13 @@ class User extends Authenticatable
 
     /**
      * Get the effective organization code for the IFS department.
-     * In local development, defaults to 'TEST-DEPT' so that notifications
-     * and IFS approvals are routed to the test manager instead of production personnel.
+     * In non-production environments (local, dev, testing), defaults to 'TEST-DEPT'
+     * so that notifications and IFS approvals are routed to the test manager
+     * (Departemen Fasilitas Uji Coba) instead of production personnel.
      */
     public static function getIfsOrgCode(): string
     {
-        return app()->environment('local') ? 'TEST-DEPT' : 'IFS';
+        return app()->isProduction() ? 'IFS' : 'TEST-DEPT';
     }
 
     protected ?string $cachedRoleName = null;
@@ -375,6 +376,10 @@ class User extends Authenticatable
                 $getManagerEmployeeIds()
             ));
             return static::whereNotIn('employee_id', $excludeIds)->get();
+        }
+
+        if (!app()->isProduction() && in_array('ifs_manager', $roles, true)) {
+            $targetEmployeeIds = $targetEmployeeIds->filter(fn($id) => (string) $id !== '033340');
         }
 
         $uniqueIds = $targetEmployeeIds->filter()->unique()->values()->all();
