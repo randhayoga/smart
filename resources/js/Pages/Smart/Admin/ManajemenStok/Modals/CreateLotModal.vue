@@ -223,9 +223,9 @@ const handleSubmit = () => {
   let isValid = true;
   if (!lotForm.number) { errors.value.number = t('inventory.lotCodeRequired'); isValid = false; }
   if (!lotForm.organizer_id) { errors.value.organizer_id = t('inventory.organizerRequired'); isValid = false; }
-  if (!lotForm.location_id) { errors.value.location_id = t('inventory.locationRequired'); isValid = false; }
   if (!lotForm.date_of_receipt) { errors.value.date_of_receipt = t('inventory.dateOfReceiptRequired'); isValid = false; }
   if (props.barang.is_consumable) {
+    if (!lotForm.location_id) { errors.value.location_id = t('inventory.locationRequired'); isValid = false; }
     if (lotForm.burden === 'Project' && !lotForm.project_id) {
       errors.value.project_id = t('inventory.projectRequired');
       isValid = false;
@@ -240,7 +240,7 @@ const handleSubmit = () => {
     const formData: any = {
       _method: data._method, number: data.number, barang_id: data.barang_id,
       organizer_id: data.organizer_id, vendor_id: data.vendor_id ? Number(data.vendor_id) : null,
-      location_id: data.location_id,
+      location_id: data.location_id ? Number(data.location_id) : null,
       po_number: data.po_number || null, date_of_receipt: data.date_of_receipt,
       unit_price: data.unit_price,
       burden: props.barang.is_consumable ? data.burden : null,
@@ -344,7 +344,7 @@ const handleSubmit = () => {
                 <div class="space-y-6">
                   <Field :data-invalid="!!errors.location_id || undefined">
                     <FieldLabel>
-                      <span>{{ barang.is_consumable ? t('inventory.location') : t('inventory.defaultLocation') }}<span class="text-rose-500">*</span></span>
+                      <span>{{ barang.is_consumable ? t('inventory.location') : t('inventory.defaultLocation') }}<span v-if="barang.is_consumable" class="text-rose-500">*</span></span>
                     </FieldLabel>
                     <FieldContent>
                       <LocationCombobox

@@ -26,7 +26,6 @@ import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
 import { formatDate } from '@/lib/utils';
 import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal.vue';
-import DeleteErrorModal from '@/Components/DeleteErrorModal.vue';
 import DetailLOTConsumables from '../DetailLOTConsumables.vue';
 import CreateLotModal from '../Modals/CreateLotModal.vue';
 import EditLotModal from '../Modals/EditLotModal.vue';
@@ -531,13 +530,6 @@ const handleConfirmDelete = () => {
   }
 };
 
-const isErrorModalOpen = ref(false);
-const errorModalMessage = ref('');
-
-const closeErrorModal = () => {
-  isErrorModalOpen.value = false;
-};
-
 const closeOnEscape = (e: KeyboardEvent) => {
   if (e.key === 'Escape') {
     if (isCreateLotModalOpen.value) {
@@ -546,8 +538,6 @@ const closeOnEscape = (e: KeyboardEvent) => {
       isBulkEditModalOpen.value = false;
     } else if (isDeleteModalOpen.value) {
       closeDeleteModal();
-    } else if (isErrorModalOpen.value) {
-      closeErrorModal();
     } else if (isDetailConsumablesOpen.value) {
       isDetailConsumablesOpen.value = false;
     }
@@ -695,12 +685,6 @@ const closeOnEscape = (e: KeyboardEvent) => {
     :processing="processing"
     @close="closeDeleteModal"
     @confirm="handleConfirmDelete"
-  />
-
-  <DeleteErrorModal 
-    :is-open="isErrorModalOpen"
-    :error-message="errorModalMessage"
-    @close="closeErrorModal"
   />
 
   <DetailLOTConsumables 

@@ -112,6 +112,7 @@ interface Props {
   filterVariant?: 'simple' | 'full';
   hideExport?: boolean;
   statusScope?: StatusScope;
+  showErrorModal?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -122,6 +123,7 @@ const props = withDefaults(defineProps<Props>(), {
   filterVariant: 'full',
   hideExport: false,
   statusScope: 'standard',
+  showErrorModal: true,
 });
 
 const searchQuery = ref('');
@@ -300,7 +302,7 @@ const isErrorModalOpen = ref(false);
 const errorModalMessage = ref('');
 
 watch(flashError, (newVal) => {
-  if (newVal) {
+  if (props.showErrorModal && newVal) {
     errorModalMessage.value = newVal;
     isErrorModalOpen.value = true;
   }
@@ -1049,6 +1051,7 @@ const totalAsetTerpilihCount = computed(() => {
 
   <!-- Delete Error Modal -->
   <DeleteErrorModal 
+    v-if="props.showErrorModal"
     :is-open="isErrorModalOpen"
     :error-message="errorModalMessage"
     @close="closeErrorModal"

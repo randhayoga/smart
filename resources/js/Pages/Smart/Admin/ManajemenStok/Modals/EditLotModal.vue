@@ -217,13 +217,11 @@ const handleSubmit = () => {
   resetErrors();
 
   if (isSingle.value) {
-    let isValid = true;
-    if (!form.organizer_id) { errors.value.organizer_id = t('inventory.organizerRequired'); isValid = false; }
     if (props.isConsumable) {
       if (!form.burden) { errors.value.burden = t('inventory.burdenRequired'); isValid = false; }
       if (form.burden === 'Project' && !form.project_id) { errors.value.project_id = t('inventory.projectRequired'); isValid = false; }
+      if (!form.location_id) { errors.value.location_id = t('inventory.locationRequired'); isValid = false; }
     }
-    if (!form.location_id) { errors.value.location_id = t('inventory.locationRequired'); isValid = false; }
     if (!form.date_of_receipt) { errors.value.date_of_receipt = t('inventory.dateOfReceiptRequired'); isValid = false; }
     if (!isValid) return;
 
@@ -235,7 +233,7 @@ const handleSubmit = () => {
         barang_id: data.barang_id,
         organizer_id: data.organizer_id,
         vendor_id: data.vendor_id ? Number(data.vendor_id) : null,
-        location_id: data.location_id,
+        location_id: data.location_id ? Number(data.location_id) : null,
         po_number: data.po_number || null,
         date_of_receipt: data.date_of_receipt,
         unit_price: data.unit_price,
@@ -391,7 +389,7 @@ const handleSubmit = () => {
                 <div class="space-y-6">
                   <Field :data-invalid="(isSingle && !!errors.location_id) || undefined">
                     <FieldLabel>
-                      <span>{{ isConsumable ? t('inventory.location') : t('inventory.defaultLocation') }}<span v-if="isSingle" class="text-rose-500">*</span></span>
+                      <span>{{ isConsumable ? t('inventory.location') : t('inventory.defaultLocation') }}<span v-if="isSingle && isConsumable" class="text-rose-500">*</span></span>
                     </FieldLabel>
                     <FieldContent>
                       <LocationCombobox

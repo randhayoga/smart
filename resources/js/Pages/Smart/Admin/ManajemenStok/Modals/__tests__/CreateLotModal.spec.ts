@@ -178,4 +178,44 @@ describe('CreateLotModal.vue', () => {
     expect(vm.errors.project_id).toBeTruthy();
     expect(vm.lotForm.post).not.toHaveBeenCalled();
   });
+
+  it('requires location_id when parent barang is consumable', async () => {
+    const wrapper = mountModal({
+      barang: {
+        is_consumable: true,
+      },
+    });
+
+    const vm = wrapper.vm as any;
+    vm.lotForm.number = 'LOT-0001-26-CS';
+    vm.lotForm.organizer_id = 1;
+    vm.lotForm.location_id = '';
+    vm.lotForm.date_of_receipt = '2026-10-02';
+    vm.lotForm.unit_price = '100000';
+
+    vm.handleSubmit();
+
+    expect(vm.errors.location_id).toBeTruthy();
+    expect(vm.lotForm.post).not.toHaveBeenCalled();
+  });
+
+  it('allows empty location_id when parent barang is not consumable', async () => {
+    const wrapper = mountModal({
+      barang: {
+        is_consumable: false,
+      },
+    });
+
+    const vm = wrapper.vm as any;
+    vm.lotForm.number = 'LOT-0002-26-NC';
+    vm.lotForm.organizer_id = 1;
+    vm.lotForm.location_id = '';
+    vm.lotForm.date_of_receipt = '2026-10-02';
+    vm.lotForm.unit_price = '7500000';
+
+    vm.handleSubmit();
+
+    expect(vm.errors.location_id).toBeFalsy();
+    expect(vm.lotForm.post).toHaveBeenCalledWith('/smart/inventory/lots', expect.any(Object));
+  });
 });

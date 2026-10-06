@@ -273,6 +273,7 @@ onUnmounted(() => {
         :locations="props.locations"
         :projects="props.projects"
         :hide-barang-columns="true"
+        :show-error-modal="false"
         status-scope="all"
       />
     </div>

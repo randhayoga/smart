@@ -32,8 +32,8 @@ class BulkUnitController extends Controller
             'location_id' => 'required|exists:locations,id',
             'status' => 'nullable|string|max:255',
             'condition' => 'required|string|max:255',
-            'type' => 'nullable|string|in:LT,ST',
-            'classification' => 'nullable|string|in:Aset,Inventaris',
+            'type' => 'required|string|in:LT,ST',
+            'classification' => 'required|string|in:Aset,Inventaris',
             'price' => 'nullable|numeric|min:0|max:999999999.99',
             'image_url' => 'nullable|image|max:1024',
             'use_lot_image' => 'nullable',
@@ -103,18 +103,8 @@ class BulkUnitController extends Controller
             $finalImagePath = $request->file('image_url')->store('inventory', 'local');
         }
 
-        $type = $request->input('type') ?: null;
-        $classification = $request->input('classification') ?: null;
-
-        if (empty($classification)) {
-            $lotPrice = $lot->unit_price ?? $request->input('price');
-            if ($lotPrice !== null && $lotPrice !== '' && (float) $lotPrice > 0) {
-                $threshold = (float) (env('ASSET_CLASSIFICATION_THRESHOLD', env('VITE_ASSET_CLASSIFICATION_THRESHOLD', 5000000)));
-                $classification = ((float) $lotPrice > $threshold) ? 'Aset' : 'Inventaris';
-            } else {
-                $classification = null;
-            }
-        }
+        $type = $validated['type'];
+        $classification = $validated['classification'];
 
         $burden = $request->input('burden') ?? 'Corporate';
         $projectId = ($burden === 'Project') ? ($request->input('project_id') ?? null) : null;

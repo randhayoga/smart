@@ -62,6 +62,26 @@ class Request extends Model
         return $value ? strtolower((string) $value) : null;
     }
 
+    /**
+     * Backfill missing UUIDv7 for requests that do not have one (e.g. after manual data migration).
+     *
+     * @return int Number of updated rows
+     */
+    public static function fillMissingUuids(): int
+    {
+        $count = 0;
+        static::whereNull('uuid')
+            ->chunkById(100, function ($requests) use (&$count) {
+                foreach ($requests as $request) {
+                    $request->uuid = (string) Str::uuid7();
+                    $request->saveQuietly();
+                    $count++;
+                }
+            });
+
+        return $count;
+    }
+
     protected $casts = [];
 
     public function user(): BelongsTo

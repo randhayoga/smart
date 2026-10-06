@@ -12,7 +12,7 @@ return new class extends Migration {
             $table->string('request_number', 11)->unique();
             $table->unsignedBigInteger('user_id')->index()->comment('Refers to new_portal:users.id');
             $table->unsignedBigInteger('approver_id')->index()->comment('Refers to new_portal:users.id');
-            $table->string('utilization')->comment('project | corporate');
+            $table->string('utilization')->nullable()->comment('project | corporate');
             $table->unsignedBigInteger('org_id')->nullable()->index()->comment('Refers to USER_HRIS:hrd_orgchart.id');
             $table->unsignedBigInteger('project_id')->nullable()->index()->comment('Refers to RE_PORTALDB:tb_project.id_project');
             $table->text('reasoning');

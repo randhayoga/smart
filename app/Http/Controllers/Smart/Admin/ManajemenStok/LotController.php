@@ -30,13 +30,16 @@ class LotController extends Controller
      */
     public function store(Request $request)
     {
+        $barang = Barang::findOrFail($request->input('barang_id'));
+        $isConsumable = (bool) $barang->is_consumable;
+
         $validated = $request->validate([
             'number' => 'required|string|max:26|unique:lots,number',
             'barang_id' => 'required|exists:barangs,id',
             'organizer_id' => 'required|exists:organizers,id',
             'vendor_id' => 'nullable|integer', // Target DB: eproc (vendors table) - not operational yet
             'legacy_vendor_id' => 'nullable|exists:vendors,id', // Legacy vendors in local DB
-            'location_id' => 'required|exists:locations,id',
+            'location_id' => [$isConsumable ? 'required' : 'nullable', 'exists:locations,id'],
             'initial_quantity' => 'nullable|integer|min:0|max:2147483647',
             'current_quantity' => 'nullable|integer|min:0|max:2147483647',
             'po_number' => 'nullable|string|max:255',
@@ -47,12 +50,13 @@ class LotController extends Controller
             'burden' => 'nullable|string|in:Corporate,Project',
             'project_id' => ['required_if:burden,Project', 'nullable', Rule::exists(TbProject::class, 'id_project')],
         ], [
+            'location_id.required' => 'Lokasi wajib dipilih.',
+            'initial_quantity.required' => 'Jumlah stok awal wajib diisi.',
             'initial_quantity.integer' => 'Tidak boleh desimal.',
             'current_quantity.integer' => 'Tidak boleh desimal.',
         ]);
 
         if ($request->boolean('use_parent_image')) {
-            $barang = Barang::findOrFail($request->input('barang_id'));
             if ($barang->image_url && Storage::disk('local')->exists($barang->image_url)) {
                 $validated['image_url'] = $barang->image_url;
             } else {
@@ -65,17 +69,17 @@ class LotController extends Controller
             $validated['image_url'] = null;
         }
 
-        $barang = Barang::findOrFail($request->input('barang_id'));
-        $isConsumable = (bool) $barang->is_consumable;
-
         unset($validated['use_parent_image']);
-        $validated['initial_quantity'] = $validated['initial_quantity'] ?? 0;
         if ($isConsumable) {
+            $validated['initial_quantity'] = $validated['initial_quantity'] ?? 0;
             $validated['burden'] = $validated['burden'] ?? 'Corporate';
             $validated['project_id'] = ($validated['burden'] === 'Project') ? ($validated['project_id'] ?? null) : null;
         } else {
+            $validated['initial_quantity'] = null;
+            $validated['current_quantity'] = null;
             $validated['burden'] = null;
             $validated['project_id'] = null;
+            $validated['location_id'] = $validated['location_id'] ?? null;
         }
         $validated['vendor_id'] = !empty($validated['vendor_id']) ? (int)$validated['vendor_id'] : null;
         $validated['legacy_vendor_id'] = !empty($validated['legacy_vendor_id']) ? (int)$validated['legacy_vendor_id'] : null;
@@ -99,13 +103,15 @@ class LotController extends Controller
      */
     public function update(Request $request, Lot $lot)
     {
+        $isConsumable = (bool) ($lot->barang?->is_consumable ?? false);
+
         $validated = $request->validate([
             'number' => 'required|string|max:26|unique:lots,number,' . $lot->id,
             'barang_id' => 'required|exists:barangs,id',
             'organizer_id' => 'required|exists:organizers,id',
             'vendor_id' => 'nullable|integer', // Target DB: eproc (vendors table) - not operational yet
             'legacy_vendor_id' => 'nullable|exists:vendors,id', // Legacy vendors in local DB
-            'location_id' => 'required|exists:locations,id',
+            'location_id' => [$isConsumable ? 'required' : 'nullable', 'exists:locations,id'],
             'initial_quantity' => 'nullable|integer|min:0|max:2147483647',
             'po_number' => 'nullable|string|max:255',
             'date_of_receipt' => 'required|date',
@@ -116,6 +122,7 @@ class LotController extends Controller
             'burden' => 'nullable|string|in:Corporate,Project',
             'project_id' => ['required_if:burden,Project', 'nullable', Rule::exists(TbProject::class, 'id_project')],
         ], [
+            'location_id.required' => 'Lokasi wajib dipilih.',
             'initial_quantity.integer' => 'Tidak boleh desimal.',
         ]);
 
@@ -161,14 +168,15 @@ class LotController extends Controller
 
         unset($validated['use_parent_image']);
         unset($validated['delete_image']);
-        if (!$request->has('initial_quantity')) {
-            unset($validated['initial_quantity']);
-        }
-        $isConsumable = (bool) ($lot->barang?->is_consumable ?? false);
         if ($isConsumable) {
+            if (!$request->has('initial_quantity')) {
+                unset($validated['initial_quantity']);
+            }
             $validated['burden'] = $validated['burden'] ?? $lot->burden ?? 'Corporate';
             $validated['project_id'] = ($validated['burden'] === 'Project') ? ($validated['project_id'] ?? null) : null;
         } else {
+            $validated['initial_quantity'] = null;
+            $validated['current_quantity'] = null;
             $validated['burden'] = null;
             $validated['project_id'] = null;
         }
@@ -216,10 +224,28 @@ class LotController extends Controller
         }
 
         $barang = $lot->barang;
+        $barangKey = $barang ? ($barang->getRouteKey() ?: $barang->id) : null;
+        $barangUrl = $barangKey ? route('smart.inventory.show', $barangKey) : route('smart.inventory.index');
+
         $lot->delete();
 
         if ($barang) {
             app(NotificationService::class)->checkAndNotifyLowStock($barang);
+        }
+
+        if ($request->filled('redirect_to')) {
+            return redirect($request->input('redirect_to'))->with('success', __('inventory.lot_deleted'));
+        }
+
+        $previous = url()->previous();
+        $lotKeys = array_filter([$lot->id, $lot->number, $lot->getRouteKey()]);
+        $isFromLotDetail = $previous && (
+            collect($lotKeys)->some(fn($k) => str_contains($previous, '/inventory/lots/' . $k))
+            || str_contains($previous, '/inventory/lots/')
+        );
+
+        if ($isFromLotDetail) {
+            return redirect($barangUrl)->with('success', __('inventory.lot_deleted'));
         }
 
         return redirect()->back()->with('success', __('inventory.lot_deleted'));

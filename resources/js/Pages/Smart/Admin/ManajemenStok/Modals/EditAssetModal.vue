@@ -513,6 +513,8 @@ const handleSubmit = () => {
   if (isSingle.value) {
       let isValid = true;
       if (!form.location_id) { errors.value.location_id = t('inventory.locationRequired'); isValid = false; }
+      if (!form.type) { errors.value.type = t('inventory.typeRequired'); isValid = false; }
+      if (!form.classification) { errors.value.classification = t('inventory.classificationRequired'); isValid = false; }
       if (!form.status) { errors.value.status = t('inventory.statusRequired'); isValid = false; }
       if (!form.condition) { errors.value.condition = t('inventory.conditionRequired'); isValid = false; }
       if (isVehicle.value && !form.vehicle_registration) { errors.value.vehicle_registration = t('inventory.nopolRequired'); isValid = false; }
@@ -530,8 +532,8 @@ const handleSubmit = () => {
           location_id: data.location_id,
           status: data.status,
           condition: data.condition,
-          type: data.type || null,
-          classification: data.classification || null,
+          type: data.type,
+          classification: data.classification,
           price: data.price !== '' && data.price !== null ? parseCurrencyToNumber(data.price) : null,
           burden: data.burden,
           project_id: data.burden === 'Project' ? data.project_id : null,
@@ -665,7 +667,7 @@ const handleSubmit = () => {
 
                   <Field :data-invalid="(isSingle && !!errors.type) || undefined">
                     <FieldLabel>
-                      <span>{{ t('inventory.type') }}</span>
+                      <span>{{ t('inventory.type') }}<span v-if="isSingle" class="text-rose-500">*</span></span>
                     </FieldLabel>
                     <FieldContent>
                       <DropdownMenu>
@@ -678,7 +680,6 @@ const handleSubmit = () => {
                         <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
                           <DropdownMenuItem @select="form.type = 'LT'">LT</DropdownMenuItem>
                           <DropdownMenuItem @select="form.type = 'ST'">ST</DropdownMenuItem>
-                          <DropdownMenuItem v-if="isSingle && form.type" @select="form.type = ''">{{ t('inventory.selectType') }}</DropdownMenuItem>
                           <DropdownMenuItem v-if="!isSingle" @select="form.type = ''">{{ t('inventory.unchanged') }}</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -793,7 +794,7 @@ const handleSubmit = () => {
 
                   <Field :data-invalid="(isSingle && !!errors.classification) || undefined">
                     <FieldLabel>
-                      <span>{{ t('inventory.classification') }}</span>
+                      <span>{{ t('inventory.classification') }}<span v-if="isSingle" class="text-rose-500">*</span></span>
                     </FieldLabel>
                     <FieldContent>
                       <div class="flex gap-2 w-full">
@@ -808,7 +809,6 @@ const handleSubmit = () => {
                             <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
                               <DropdownMenuItem @select="form.classification = 'Aset'">{{ t('inventory.classificationAsset') }}</DropdownMenuItem>
                               <DropdownMenuItem @select="form.classification = 'Inventaris'">{{ t('inventory.classificationInventory') }}</DropdownMenuItem>
-                              <DropdownMenuItem v-if="isSingle && form.classification" @select="form.classification = ''">{{ t('inventory.selectClassification') }}</DropdownMenuItem>
                               <DropdownMenuItem v-if="!isSingle" @select="form.classification = ''">{{ t('inventory.unchanged') }}</DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>

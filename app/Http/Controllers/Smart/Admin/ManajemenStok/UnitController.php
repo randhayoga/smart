@@ -166,8 +166,8 @@ class UnitController extends Controller
             'location_id' => 'required|exists:locations,id',
             'status' => 'nullable|string|max:255',
             'condition' => 'required|string|max:255',
-            'type' => 'nullable|string|in:LT,ST',
-            'classification' => 'nullable|string|in:Aset,Inventaris',
+            'type' => 'required|string|in:LT,ST',
+            'classification' => 'required|string|in:Aset,Inventaris',
             'price' => 'nullable|numeric|min:0|max:999999999.99',
             'image_url' => 'nullable|image|max:1024',
             'use_lot_image' => 'nullable',
@@ -225,8 +225,6 @@ class UnitController extends Controller
         }
  
         unset($validated['use_lot_image']);
-        $validated['type'] = $validated['type'] ?? null;
-        $validated['classification'] = $validated['classification'] ?? null;
         $validated['burden'] = $validated['burden'] ?? 'Corporate';
         $validated['project_id'] = ($validated['burden'] === 'Project') ? ($validated['project_id'] ?? null) : null;
 
@@ -333,8 +331,8 @@ class UnitController extends Controller
             'location_id' => 'required|exists:locations,id',
             'status' => ['required', 'string', 'in:Tersedia,Dipinjam,Standby,Tidak Aktif,Pending,Pending:BoD/BoC,Belum Diverifikasi,Verifikasi Ditolak'],
             'condition' => ['required', 'string', 'in:Bagus,Rusak,QC Passed,Lelang/Hibah,Rusak Total,Hilang'],
-            'type' => ['nullable', 'string', 'in:LT,ST'],
-            'classification' => ['nullable', 'string', 'in:Aset,Inventaris'],
+            'type' => ['required', 'string', 'in:LT,ST'],
+            'classification' => ['required', 'string', 'in:Aset,Inventaris'],
             'price' => 'nullable|numeric|min:0|max:999999999.99',
             'image_url' => 'nullable|image|mimes:jpeg,jpg,png|max:1024',
             'delete_image' => 'nullable|boolean',
@@ -478,8 +476,8 @@ class UnitController extends Controller
 
         unset($validated['use_lot_image']);
         unset($validated['delete_image']);
-        $validated['type'] = $request->input('type') ?: null;
-        $validated['classification'] = $request->input('classification') ?: null;
+        $validated['type'] = $validated['type'];
+        $validated['classification'] = $validated['classification'];
         if ($request->has('burden')) {
             $validated['burden'] = $request->input('burden');
             $validated['project_id'] = ($request->input('burden') === 'Project') ? $request->input('project_id') : null;

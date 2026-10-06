@@ -16,6 +16,13 @@ vi.mock('../Modals/EditAssetModal.vue', () => ({
   },
 }));
 
+import { reactive } from 'vue';
+
+const mockPageProps = reactive({
+  flash: {} as { error?: string | null; success?: string | null },
+  auth: { user: { id: 1 } },
+});
+
 vi.mock('@inertiajs/vue3', async (importOriginal) => {
   const actual: any = await importOriginal();
   return {
@@ -25,10 +32,7 @@ vi.mock('@inertiajs/vue3', async (importOriginal) => {
       delete: vi.fn(),
     },
     usePage: () => ({
-      props: {
-        flash: {},
-        auth: { user: { id: 1 } },
-      },
+      props: mockPageProps,
     }),
   };
 });
@@ -38,6 +42,7 @@ import DaftarAsetTab from '../DaftarAsetTab.vue';
 describe('DaftarAsetTab.vue - statusScope Flag', () => {
   beforeEach(() => {
     setI18nLanguage('id');
+    mockPageProps.flash = {};
     vi.clearAllMocks();
   });
 
@@ -161,7 +166,7 @@ describe('DaftarAsetTab.vue - statusScope Flag', () => {
           DropdownMenuContent: { template: '<div><slot /></div>' },
           DropdownMenuItem: { template: '<div><slot /></div>' },
           StatusBadge: { template: '<span></span>' },
-          DeleteErrorModal: { template: '<div></div>' },
+          DeleteErrorModal: { name: 'DeleteErrorModal', template: '<div data-testid="delete-error-modal"></div>' },
           ExportButtonGroup: { template: '<div></div>' },
           ResetFilterButton: { template: '<div></div>' },
         },
@@ -233,5 +238,24 @@ describe('DaftarAsetTab.vue - statusScope Flag', () => {
     expect(allVm.availableStatuses).toContain('Pending:BoD/BoC');
     expect(allVm.availableStatuses).toContain('Pending:DM');
     expect(allVm.availableStatuses).toContain('Tersedia');
+  });
+
+  describe('showErrorModal prop', () => {
+    it('opens error modal when flash.error is present and showErrorModal is true (default)', () => {
+      mockPageProps.flash = { error: 'Gagal menghapus aset!' };
+      const wrapper = mountTab();
+      const vm = wrapper.vm as any;
+      expect(vm.isErrorModalOpen).toBe(true);
+      expect(vm.errorModalMessage).toBe('Gagal menghapus aset!');
+      expect(wrapper.find('[data-testid="delete-error-modal"]').exists()).toBe(true);
+    });
+
+    it('does not open error modal when showErrorModal is false', () => {
+      mockPageProps.flash = { error: 'Gagal menghapus aset!' };
+      const wrapper = mountTab({ showErrorModal: false });
+      const vm = wrapper.vm as any;
+      expect(vm.isErrorModalOpen).toBe(false);
+      expect(wrapper.find('[data-testid="delete-error-modal"]').exists()).toBe(false);
+    });
   });
 });

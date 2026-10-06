@@ -233,6 +233,33 @@ class LotControllerTest extends TestCase
         ]);
     }
 
+    public function test_destroy_lot_from_detail_page_redirects_to_parent_barang(): void
+    {
+        $user = User::factory()->create();
+        $lot = Lot::factory()->create();
+        $barang = $lot->barang;
+
+        $response = $this->actingAs($user)
+            ->from(route('smart.inventory.lots.show', $lot))
+            ->delete(route('smart.inventory.lots.destroy', $lot));
+
+        $response->assertRedirect(route('smart.inventory.show', $barang));
+        $this->assertDatabaseMissing('lots', ['id' => $lot->id]);
+    }
+
+    public function test_destroy_lot_with_redirect_to_parameter_redirects_to_specified_url(): void
+    {
+        $user = User::factory()->create();
+        $lot = Lot::factory()->create();
+        $targetUrl = '/smart/inventory/custom-target';
+
+        $response = $this->actingAs($user)
+            ->delete(route('smart.inventory.lots.destroy', ['lot' => $lot, 'redirect_to' => $targetUrl]));
+
+        $response->assertRedirect($targetUrl);
+        $this->assertDatabaseMissing('lots', ['id' => $lot->id]);
+    }
+
     public function test_cannot_destroy_lot_with_units(): void
     {
         $user = User::factory()->create();
@@ -253,6 +280,8 @@ class LotControllerTest extends TestCase
             'location_id' => $lot->location_id ?? 1,
             'status' => 'Tersedia',
             'condition' => 'Bagus',
+            'type' => 'LT',
+            'classification' => 'Aset',
             'price' => $lot->unit_price ?? 0,
             'image_url' => $lot->image_url ?? 'inventory/lots/placeholder.jpg',
         ]);
@@ -430,6 +459,8 @@ class LotControllerTest extends TestCase
             'location_id' => $lotWithUnits->location_id ?? 1,
             'status' => 'Tersedia',
             'condition' => 'Baik',
+            'type' => 'LT',
+            'classification' => 'Aset',
             'price' => $lotWithUnits->unit_price ?? 0,
             'image_url' => $lotWithUnits->image_url ?? 'inventory/lots/placeholder.jpg',
         ]);
@@ -463,6 +494,8 @@ class LotControllerTest extends TestCase
                 'location_id' => $lot->location_id ?? 1,
                 'status' => 'Tersedia',
                 'condition' => 'Bagus',
+                'type' => 'LT',
+                'classification' => 'Aset',
                 'price' => $lot->unit_price ?? 0,
                 'image_url' => $lot->image_url ?? 'inventory/lots/placeholder.jpg',
             ]);
@@ -487,6 +520,68 @@ class LotControllerTest extends TestCase
                 'location_id' => $location->id,
             ]);
         }
+    }
+
+    public function test_consumable_lot_requires_location(): void
+    {
+        $user = User::factory()->create();
+        $category = \App\Models\Master\Category::factory()->create();
+        $subcategory = \App\Models\Master\Subcategory::factory()->create(['category_id' => $category->id, 'is_consumable' => true]);
+        $barang = Barang::factory()->create(['subcategory_id' => $subcategory->id]);
+        $organizer = Organizer::factory()->create();
+
+        // 1. Missing location_id should fail validation for consumable lot
+        $response = $this->actingAs($user)->post(route('smart.inventory.lots.store'), [
+            'number' => 'LOT-CONS-0001',
+            'barang_id' => $barang->id,
+            'organizer_id' => $organizer->id,
+            'date_of_receipt' => '2026-10-06',
+            'burden' => 'Corporate',
+        ]);
+
+        $response->assertSessionHasErrors(['location_id']);
+
+        // 2. Providing them succeeds
+        $location = Location::factory()->create();
+        $successResponse = $this->actingAs($user)->post(route('smart.inventory.lots.store'), [
+            'number' => 'LOT-CONS-0001',
+            'barang_id' => $barang->id,
+            'organizer_id' => $organizer->id,
+            'location_id' => $location->id,
+            'initial_quantity' => 50,
+            'date_of_receipt' => '2026-10-06',
+            'burden' => 'Corporate',
+        ]);
+
+        $successResponse->assertSessionHasNoErrors();
+        $lot = Lot::where('number', 'LOT-CONS-0001')->first();
+        $this->assertNotNull($lot);
+        $this->assertEquals(50, $lot->initial_quantity);
+        $this->assertEquals($location->id, $lot->location_id);
+    }
+
+    public function test_non_consumable_lot_allows_nullable_location_and_null_quantities(): void
+    {
+        $user = User::factory()->create();
+        $category = \App\Models\Master\Category::factory()->create();
+        $subcategory = \App\Models\Master\Subcategory::factory()->create(['category_id' => $category->id, 'is_consumable' => false]);
+        $barang = Barang::factory()->create(['subcategory_id' => $subcategory->id]);
+        $organizer = Organizer::factory()->create();
+
+        // Storing non-consumable without location_id or quantity
+        $response = $this->actingAs($user)->post(route('smart.inventory.lots.store'), [
+            'number' => 'LOT-NONC-0001',
+            'barang_id' => $barang->id,
+            'organizer_id' => $organizer->id,
+            'date_of_receipt' => '2026-10-06',
+        ]);
+
+        $response->assertSessionHasNoErrors();
+        $lot = Lot::where('number', 'LOT-NONC-0001')->first();
+        $this->assertNotNull($lot);
+        $this->assertNull($lot->location_id);
+        $this->assertNull($lot->initial_quantity);
+        $this->assertNull($lot->current_quantity);
     }
 }
 

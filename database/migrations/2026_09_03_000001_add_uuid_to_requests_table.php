@@ -24,9 +24,14 @@ return new class extends Migration {
                 ->update(['uuid' => (string) Str::uuid7()]);
         }
 
-        Schema::table('requests', function (Blueprint $table) {
-            $table->unique('uuid');
-        });
+        $driver = DB::getDriverName();
+        if ($driver === 'sqlsrv') {
+            DB::statement('CREATE UNIQUE NONCLUSTERED INDEX requests_uuid_unique ON requests(uuid) WHERE uuid IS NOT NULL');
+        } else {
+            Schema::table('requests', function (Blueprint $table) {
+                $table->unique('uuid');
+            });
+        }
     }
 
     /**

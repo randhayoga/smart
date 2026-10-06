@@ -141,11 +141,29 @@ describe('EditAssetModal.vue - Status Disabling Logic', () => {
     vm.form.location_id = 1;
     vm.form.status = 'Tersedia';
     vm.form.condition = 'Bagus';
+    vm.form.type = 'LT';
+    vm.form.classification = 'Aset';
     vm.form.burden = 'Project';
     vm.form.project_id = '';
 
     vm.handleSubmit();
     expect(vm.errors.project_id).toBeTruthy();
+  });
+
+  it('validates type and classification on single edit', () => {
+    const wrapper = mountModal([
+      { id: 1, number: 'AST-001', status: 'Tersedia', condition: 'Bagus', burden: 'Corporate', type: 'LT', classification: 'Aset' },
+    ]);
+    const vm = wrapper.vm as any;
+    vm.form.location_id = 1;
+    vm.form.status = 'Tersedia';
+    vm.form.condition = 'Bagus';
+    vm.form.type = '';
+    vm.form.classification = '';
+
+    vm.handleSubmit();
+    expect(vm.errors.type).toBeTruthy();
+    expect(vm.errors.classification).toBeTruthy();
   });
 
   it('defaults burden to Tidak berubah on bulk edit and validates project if changed to Project', () => {

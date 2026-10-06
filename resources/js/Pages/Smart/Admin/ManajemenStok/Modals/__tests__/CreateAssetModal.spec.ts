@@ -130,7 +130,7 @@ describe('CreateAssetModal.vue', () => {
     expect(statusInput).toBeDefined();
   });
 
-  it('renders type and classification as optional without required asterisk', () => {
+  it('renders type and classification with required asterisk', () => {
     setI18nLanguage('id');
     const wrapper = mountModal();
 
@@ -138,8 +138,23 @@ describe('CreateAssetModal.vue', () => {
     const typeLabel = labels.find(l => l.text().includes('Tipe'));
     const classificationLabel = labels.find(l => l.text().includes('Klasifikasi'));
 
-    expect(typeLabel?.text()).not.toContain('*');
-    expect(classificationLabel?.text()).not.toContain('*');
+    expect(typeLabel?.text()).toContain('*');
+    expect(classificationLabel?.text()).toContain('*');
+  });
+
+  it('validates type and classification as required on form submission', () => {
+    const wrapper = mountModal();
+    const vm = wrapper.vm as any;
+
+    vm.form.location_id = 1;
+    vm.form.condition = 'Bagus';
+    vm.form.type = '';
+    vm.form.classification = '';
+
+    vm.handleSubmit();
+
+    expect(vm.errors.type).toBeTruthy();
+    expect(vm.errors.classification).toBeTruthy();
   });
 
   it('matches LOT default location when clicking Samakan button for location', async () => {
@@ -199,6 +214,8 @@ describe('CreateAssetModal.vue', () => {
 
     vm.form.location_id = 1;
     vm.form.condition = 'Bagus';
+    vm.form.type = 'LT';
+    vm.form.classification = 'Aset';
     vm.form.burden = 'Project';
     vm.form.project_id = '';
 

@@ -171,9 +171,14 @@ const closeDeleteModal = () => {
 const isErrorModalOpen = ref(false);
 const errorModalMessage = ref('');
 
+const parentBarangUrl = computed(() => {
+  const code = props.lot.barang_code ? props.lot.barang_code.replace(/[^a-zA-Z0-9]/g, '') : props.lot.barang_id;
+  return `/smart/inventory/${code}`;
+});
+
 const handleConfirmDelete = () => {
   if (deleteMode.value === 'lot') {
-    router.delete(`/smart/inventory/lots/${props.lot.id}`, {
+    router.delete(`/smart/inventory/lots/${props.lot.id}?redirect_to=${encodeURIComponent(parentBarangUrl.value)}`, {
       onStart: () => { processing.value = true; },
       onFinish: () => { processing.value = false; },
       onSuccess: () => {
@@ -264,6 +269,7 @@ onUnmounted(() => {
         :hide-barang-columns="true"
         :lot="props.lot"
         :barang="{ category: props.lot.barang_category }"
+        :show-error-modal="false"
         status-scope="all"
       />
     </div>
