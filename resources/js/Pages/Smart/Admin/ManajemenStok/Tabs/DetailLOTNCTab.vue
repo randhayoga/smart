@@ -69,6 +69,7 @@ interface Props {
   rooms?: any[];
   organizers?: { id: number; name: string; }[];
   vendors?: { id: number; name: string; }[];
+  projects?: { id: number; no_project: string; project_name: string; client_id: string; }[];
 }
 
 const props = defineProps<Props>();
@@ -150,8 +151,6 @@ onUnmounted(() => {
             <p class="text-foreground">{{ t('inventory.registrationDate') }}: {{ formatDate(props.lot.date_of_receipt) }}</p>
             <p class="text-foreground">{{ t('inventory.age') }}: {{ props.lot.age !== undefined && props.lot.age !== null ? `${props.lot.age} ${t('inventory.yearUnit')}` : '-' }}</p>
             <p class="text-foreground">{{ t('inventory.defaultUnitPrice') }}: {{ formatRupiah(props.lot.unitPrice) }}</p>
-            <p class="text-foreground">{{ t('inventory.burden') }}: {{ props.lot.burden || '-' }}</p>
-            <p v-if="props.lot.burden === 'Project'" class="text-foreground">{{ t('inventory.project') }}: {{ props.lot.project_no ? `${props.lot.project_no} (${props.lot.project_name || '-'})` : '-' }}</p>
             <p class="text-foreground">{{ t('inventory.organizer') }}: {{ props.lot.organizer }}</p>
             <p class="text-foreground">{{ t('inventory.vendor') }}: {{ props.lot.vendor }}</p>
             <p class="text-foreground">{{ t('inventory.lastUpdate') }}: {{ props.lot.updated_at }}</p>
@@ -166,6 +165,7 @@ onUnmounted(() => {
       :locations="props.locations"
       :organizers="props.organizers"
       :vendors="props.vendors"
+      :projects="props.projects"
       :hide-barang-columns="true"
       :lot="props.lot"
       :barang="{ category: props.lot.barang_category }"
@@ -187,6 +187,7 @@ onUnmounted(() => {
     :units="props.units"
     :barang="{ category: props.lot.barang_category, subcategory_code: props.lot.barang_subcategory_code }"
     :locations="props.locations"
+    :projects="props.projects"
     @success="handleAssetSuccess"
   />
 </template>

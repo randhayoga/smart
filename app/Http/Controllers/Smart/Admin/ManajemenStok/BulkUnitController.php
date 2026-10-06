@@ -10,9 +10,11 @@ use App\Models\Inventory\UnitStatusApproval;
 use App\Models\Inventory\UnitActivationApproval;
 use App\Models\Inventory\UnitLifecycle;
 use App\Services\Inventory\UnitNumberService;
+use App\Models\TbProject;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 /**
  * Bulk Unit Controller managing automated multi-unit asset code generation, mass creation, and batch status updates.
@@ -36,6 +38,8 @@ class BulkUnitController extends Controller
             'image_url' => 'nullable|image|max:1024',
             'use_lot_image' => 'nullable',
             'bulk_quantity' => 'required|integer|min:1|max:999',
+            'burden' => 'nullable|string|in:Corporate,Project',
+            'project_id' => ['required_if:burden,Project', 'nullable', Rule::exists(TbProject::class, 'id_project')],
         ];
 
         $lot = Lot::with('barang.subcategory.category')->findOrFail($request->input('lot_id'));
@@ -112,6 +116,9 @@ class BulkUnitController extends Controller
             }
         }
 
+        $burden = $request->input('burden') ?? 'Corporate';
+        $projectId = ($burden === 'Project') ? ($request->input('project_id') ?? null) : null;
+
         foreach ($generatedNumbers as $num) {
             $unit = Unit::create([
                 'number' => $num,
@@ -124,6 +131,8 @@ class BulkUnitController extends Controller
                 'price' => $validated['price'] ?? null,
                 'image_url' => $finalImagePath,
                 'vehicle_registration' => $validated['vehicle_registration'] ?? null,
+                'burden' => $burden,
+                'project_id' => $projectId,
             ]);
 
             if ($needApproval) {
@@ -192,6 +201,8 @@ class BulkUnitController extends Controller
             'price' => 'nullable|numeric|min:0|max:999999999.99',
             'use_lot_image' => 'nullable',
             'image_url' => 'nullable|image|mimes:jpeg,jpg,png|max:1024',
+            'burden' => ['nullable', 'string', 'in:Corporate,Project,Tidak berubah'],
+            'project_id' => ['required_if:burden,Project', 'nullable', Rule::exists(TbProject::class, 'id_project')],
         ], $messages);
 
         $ids = $validated['ids'];
@@ -328,7 +339,13 @@ class BulkUnitController extends Controller
             $updateData['classification'] = $request->input('classification');
         }
 
-        // 5. Image URL / Use LOT Image
+        // 5. Burden & Project
+        if ($request->filled('burden') && $request->input('burden') !== 'Tidak berubah') {
+            $updateData['burden'] = $request->input('burden');
+            $updateData['project_id'] = ($request->input('burden') === 'Project') ? $request->input('project_id') : null;
+        }
+
+        // 6. Image URL / Use LOT Image
         $finalImagePath = null;
         $hasNewImage = false;
 

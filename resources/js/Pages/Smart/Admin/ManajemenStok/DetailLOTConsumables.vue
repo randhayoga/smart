@@ -206,7 +206,7 @@ onUnmounted(() => {
                     <p class="text-foreground">{{ t('inventory.age') }}: {{ lotDetails.age !== undefined && lotDetails.age !== null ? `${lotDetails.age} ${t('inventory.yearUnit')}` : '-' }}</p>
                     <p class="text-foreground">{{ t('inventory.unitPrice') }}: {{ formatRupiah(lotDetails.unitPrice) }}</p>
                     <p class="text-foreground">{{ t('inventory.burden') }}: {{ lotDetails.burden || '-' }}</p>
-                    <p v-if="lotDetails.burden === 'Project'" class="text-foreground">{{ t('inventory.project') }}: {{ lotDetails.project_no ? `${lotDetails.project_no} (${lotDetails.project_name || '-'})` : '-' }}</p>
+                    <p v-if="lotDetails.burden === 'Project'" class="text-foreground">{{ t('inventory.project') }}: {{ lotDetails.project_no ? `[${lotDetails.project_no}] ${lotDetails.project_name || '-'}` : (lotDetails.project_name || '-') }}</p>
                     <p class="text-foreground">{{ t('inventory.organizer') }}: {{ lotDetails.organizer }}</p>
                     <p class="text-foreground">{{ t('inventory.vendor') }}: {{ lotDetails.vendor }}</p>
                     <p class="text-foreground">{{ t('inventory.lastUpdate') }}: {{ lotDetails.updated_at }}</p>

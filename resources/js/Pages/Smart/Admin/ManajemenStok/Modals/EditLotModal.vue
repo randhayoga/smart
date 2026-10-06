@@ -142,8 +142,8 @@ watch(() => props.open, (val) => {
 
     form.unit_price = item.unitPrice || item.unit_price || '';
     form.image_url_name = (item.imageUrl || item.image_url || '').split('/').pop() || '';
-    form.burden = item.burden || '';
-    form.project_id = item.project_id || '';
+    form.burden = props.isConsumable ? (item.burden || '') : '';
+    form.project_id = props.isConsumable ? (item.project_id || '') : '';
   } else {
     form.organizer_id = '';
     form.vendor_id = '';
@@ -153,7 +153,7 @@ watch(() => props.open, (val) => {
     form.unit_price = '';
     form.number = '';
     form.barang_id = '';
-    form.burden = 'Tidak berubah';
+    form.burden = props.isConsumable ? 'Tidak berubah' : '';
     form.project_id = '';
   }
 });
@@ -219,8 +219,10 @@ const handleSubmit = () => {
   if (isSingle.value) {
     let isValid = true;
     if (!form.organizer_id) { errors.value.organizer_id = t('inventory.organizerRequired'); isValid = false; }
-    if (!form.burden) { errors.value.burden = t('inventory.burdenRequired'); isValid = false; }
-    if (form.burden === 'Project' && !form.project_id) { errors.value.project_id = t('inventory.projectRequired'); isValid = false; }
+    if (props.isConsumable) {
+      if (!form.burden) { errors.value.burden = t('inventory.burdenRequired'); isValid = false; }
+      if (form.burden === 'Project' && !form.project_id) { errors.value.project_id = t('inventory.projectRequired'); isValid = false; }
+    }
     if (!form.location_id) { errors.value.location_id = t('inventory.locationRequired'); isValid = false; }
     if (!form.date_of_receipt) { errors.value.date_of_receipt = t('inventory.dateOfReceiptRequired'); isValid = false; }
     if (!isValid) return;
@@ -237,8 +239,8 @@ const handleSubmit = () => {
         po_number: data.po_number || null,
         date_of_receipt: data.date_of_receipt,
         unit_price: data.unit_price,
-        burden: data.burden,
-        project_id: data.burden === 'Project' ? data.project_id : null,
+        burden: props.isConsumable ? data.burden : null,
+        project_id: (props.isConsumable && data.burden === 'Project') ? data.project_id : null,
       };
       if (data.image_url) {
         fd.image_url = data.image_url;
@@ -262,7 +264,7 @@ const handleSubmit = () => {
   } else {
     // Bulk edit
     let isValid = true;
-    if (form.burden === 'Project' && !form.project_id) {
+    if (props.isConsumable && form.burden === 'Project' && !form.project_id) {
       errors.value.project_id = t('inventory.projectRequired');
       isValid = false;
     }
@@ -271,7 +273,7 @@ const handleSubmit = () => {
     const hasField = !!(
       form.organizer_id || form.vendor_id || form.location_id ||
       form.po_number || form.date_of_receipt || form.unit_price ||
-      form.image_url || form.use_parent_image || (form.burden && form.burden !== 'Tidak berubah')
+      form.image_url || form.use_parent_image || (props.isConsumable && form.burden && form.burden !== 'Tidak berubah')
     );
     if (!hasField) {
       toast.error(t('inventory.atLeastOneField'));
@@ -288,7 +290,7 @@ const handleSubmit = () => {
       if (data.unit_price) fd.unit_price = data.unit_price;
       if (data.image_url) fd.image_url = data.image_url;
       if (data.use_parent_image) fd.use_parent_image = data.use_parent_image;
-      if (data.burden && data.burden !== 'Tidak berubah') {
+      if (props.isConsumable && data.burden && data.burden !== 'Tidak berubah') {
         fd.burden = data.burden;
         if (data.burden === 'Project') {
           fd.project_id = data.project_id;
@@ -464,36 +466,38 @@ const handleSubmit = () => {
                     <FieldError v-if="isSingle && errors.image_url">{{ errors.image_url }}</FieldError>
                   </Field>
 
-                  <Field :data-invalid="(isSingle && !!errors.burden) || undefined">
-                    <FieldLabel>
-                      <span>{{ t('inventory.burden') }}<span v-if="isSingle" class="text-rose-500">*</span></span>
-                    </FieldLabel>
-                    <FieldContent>
-                      <RadioGroup v-model="form.burden" class="flex items-center gap-6 h-10">
-                        <div v-if="!isSingle" class="flex items-center space-x-2">
-                          <RadioGroupItem id="edit-burden-none" value="Tidak berubah" />
-                          <label for="edit-burden-none" class="text-sm font-medium text-foreground cursor-pointer select-none">{{ t('inventory.unchanged') }}</label>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                          <RadioGroupItem id="edit-burden-corporate" value="Corporate" />
-                          <label for="edit-burden-corporate" class="text-sm font-medium text-foreground cursor-pointer select-none">Corporate</label>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                          <RadioGroupItem id="edit-burden-project" value="Project" />
-                          <label for="edit-burden-project" class="text-sm font-medium text-foreground cursor-pointer select-none">Project</label>
-                        </div>
-                      </RadioGroup>
-                    </FieldContent>
-                    <FieldError v-if="isSingle && errors.burden">{{ errors.burden }}</FieldError>
-                  </Field>
+                  <template v-if="props.isConsumable">
+                    <Field :data-invalid="(isSingle && !!errors.burden) || undefined">
+                      <FieldLabel>
+                        <span>{{ t('inventory.burden') }}<span v-if="isSingle" class="text-rose-500">*</span></span>
+                      </FieldLabel>
+                      <FieldContent>
+                        <RadioGroup v-model="form.burden" class="flex items-center gap-6 h-10">
+                          <div v-if="!isSingle" class="flex items-center space-x-2">
+                            <RadioGroupItem id="edit-burden-none" value="Tidak berubah" />
+                            <label for="edit-burden-none" class="text-sm font-medium text-foreground cursor-pointer select-none">{{ t('inventory.unchanged') }}</label>
+                          </div>
+                          <div class="flex items-center space-x-2">
+                            <RadioGroupItem id="edit-burden-corporate" value="Corporate" />
+                            <label for="edit-burden-corporate" class="text-sm font-medium text-foreground cursor-pointer select-none">Corporate</label>
+                          </div>
+                          <div class="flex items-center space-x-2">
+                            <RadioGroupItem id="edit-burden-project" value="Project" />
+                            <label for="edit-burden-project" class="text-sm font-medium text-foreground cursor-pointer select-none">Project</label>
+                          </div>
+                        </RadioGroup>
+                      </FieldContent>
+                      <FieldError v-if="isSingle && errors.burden">{{ errors.burden }}</FieldError>
+                    </Field>
 
-                  <Field v-if="form.burden === 'Project'" :data-invalid="!!errors.project_id || undefined">
-                    <FieldLabel><span>{{ t('inventory.project') }}<span class="text-rose-500">*</span></span></FieldLabel>
-                    <FieldContent>
-                      <Combobox v-model="form.project_id" :options="projectOptions" :search-placeholder="t('inventory.searchProjectPlaceholder')" :default-label="t('inventory.selectProject')" width-class="w-full h-10 px-4" :error="!!errors.project_id" />
-                    </FieldContent>
-                    <FieldError v-if="errors.project_id">{{ errors.project_id }}</FieldError>
-                  </Field>
+                    <Field v-if="form.burden === 'Project'" :data-invalid="!!errors.project_id || undefined">
+                      <FieldLabel><span>{{ t('inventory.project') }}<span class="text-rose-500">*</span></span></FieldLabel>
+                      <FieldContent>
+                        <Combobox v-model="form.project_id" :options="projectOptions" :search-placeholder="t('inventory.searchProjectPlaceholder')" :default-label="t('inventory.selectProject')" width-class="w-full h-10 px-4" :error="!!errors.project_id" />
+                      </FieldContent>
+                      <FieldError v-if="errors.project_id">{{ errors.project_id }}</FieldError>
+                    </Field>
+                  </template>
                 </div>
               </div>
             </div>

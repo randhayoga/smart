@@ -225,11 +225,11 @@ const handleSubmit = () => {
   if (!lotForm.organizer_id) { errors.value.organizer_id = t('inventory.organizerRequired'); isValid = false; }
   if (!lotForm.location_id) { errors.value.location_id = t('inventory.locationRequired'); isValid = false; }
   if (!lotForm.date_of_receipt) { errors.value.date_of_receipt = t('inventory.dateOfReceiptRequired'); isValid = false; }
-  if (lotForm.burden === 'Project' && !lotForm.project_id) {
-    errors.value.project_id = t('inventory.projectRequired');
-    isValid = false;
-  }
   if (props.barang.is_consumable) {
+    if (lotForm.burden === 'Project' && !lotForm.project_id) {
+      errors.value.project_id = t('inventory.projectRequired');
+      isValid = false;
+    }
     if (lotForm.initial_quantity === '' || lotForm.initial_quantity === null) {
       errors.value.initial_quantity = t('inventory.stockQtyRequired'); isValid = false;
     }
@@ -243,8 +243,8 @@ const handleSubmit = () => {
       location_id: data.location_id,
       po_number: data.po_number || null, date_of_receipt: data.date_of_receipt,
       unit_price: data.unit_price,
-      burden: data.burden,
-      project_id: data.burden === 'Project' ? data.project_id : null,
+      burden: props.barang.is_consumable ? data.burden : null,
+      project_id: (props.barang.is_consumable && data.burden === 'Project') ? data.project_id : null,
     };
     if (props.barang.is_consumable) {
       formData.initial_quantity = data.initial_quantity;
@@ -422,29 +422,31 @@ const handleSubmit = () => {
                     <FieldError v-if="errors.image_url">{{ errors.image_url }}</FieldError>
                   </Field>
 
-                  <Field>
-                    <FieldLabel><span>{{ t('inventory.burden') }}<span class="text-rose-500">*</span></span></FieldLabel>
-                    <FieldContent>
-                      <RadioGroup v-model="lotForm.burden" class="flex items-center gap-6 h-10">
-                        <div class="flex items-center space-x-2">
-                          <RadioGroupItem id="create-burden-corporate" value="Corporate" />
-                          <label for="create-burden-corporate" class="text-sm font-medium text-foreground cursor-pointer select-none">Corporate</label>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                          <RadioGroupItem id="create-burden-project" value="Project" />
-                          <label for="create-burden-project" class="text-sm font-medium text-foreground cursor-pointer select-none">Project</label>
-                        </div>
-                      </RadioGroup>
-                    </FieldContent>
-                  </Field>
+                  <template v-if="props.barang.is_consumable">
+                    <Field>
+                      <FieldLabel><span>{{ t('inventory.burden') }}<span class="text-rose-500">*</span></span></FieldLabel>
+                      <FieldContent>
+                        <RadioGroup v-model="lotForm.burden" class="flex items-center gap-6 h-10">
+                          <div class="flex items-center space-x-2">
+                            <RadioGroupItem id="create-burden-corporate" value="Corporate" />
+                            <label for="create-burden-corporate" class="text-sm font-medium text-foreground cursor-pointer select-none">Corporate</label>
+                          </div>
+                          <div class="flex items-center space-x-2">
+                            <RadioGroupItem id="create-burden-project" value="Project" />
+                            <label for="create-burden-project" class="text-sm font-medium text-foreground cursor-pointer select-none">Project</label>
+                          </div>
+                        </RadioGroup>
+                      </FieldContent>
+                    </Field>
 
-                  <Field v-if="lotForm.burden === 'Project'" :data-invalid="!!errors.project_id || undefined">
-                    <FieldLabel><span>{{ t('inventory.project') }}<span class="text-rose-500">*</span></span></FieldLabel>
-                    <FieldContent>
-                      <Combobox v-model="lotForm.project_id" :options="projectOptions" :search-placeholder="t('inventory.searchProjectPlaceholder')" :default-label="t('inventory.selectProject')" width-class="w-full h-10 px-4" :error="!!errors.project_id" />
-                    </FieldContent>
-                    <FieldError v-if="errors.project_id">{{ errors.project_id }}</FieldError>
-                  </Field>
+                    <Field v-if="lotForm.burden === 'Project'" :data-invalid="!!errors.project_id || undefined">
+                      <FieldLabel><span>{{ t('inventory.project') }}<span class="text-rose-500">*</span></span></FieldLabel>
+                      <FieldContent>
+                        <Combobox v-model="lotForm.project_id" :options="projectOptions" :search-placeholder="t('inventory.searchProjectPlaceholder')" :default-label="t('inventory.selectProject')" width-class="w-full h-10 px-4" :error="!!errors.project_id" />
+                      </FieldContent>
+                      <FieldError v-if="errors.project_id">{{ errors.project_id }}</FieldError>
+                    </Field>
+                  </template>
                 </div>
               </div>
             </div>

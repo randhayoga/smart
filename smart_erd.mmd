@@ -137,8 +137,8 @@ erDiagram
         datetime date_of_receipt  ""  
         numeric unit_price  "nullable | default unit price"  
         varchar image_url  "nullable | default image"  
-        varchar burden  "default to Corporate"  
-        int project_id FK "nullable | RE_PORTALDB_TB_PROJECT's id"  
+        varchar burden  "nullable | for consumables, default to Corporate"  
+        int project_id FK "nullable | for consumables, RE_PORTALDB_TB_PROJECT's id"  
     }
 
     UNIT {
@@ -152,6 +152,8 @@ erDiagram
         numeric price  "nullable"  
         varchar image_url  "nullable"  
         varchar vehicle_registration  "nullable"  
+        varchar burden  "default to Corporate"  
+        int project_id FK "nullable | RE_PORTALDB_TB_PROJECT's id"  
     }
 
     UNIT_STATUS_APPROVAL {
@@ -394,4 +396,5 @@ erDiagram
     ADM_USER_NEW_PORTAL_USERS||--o{INVENTORY_LOG:"actored"
     ADM_USER_NEW_PORTAL_USERS||--o{NOTIFICATION:"notified"
     RE_PORTALDB_TB_PROJECT||--o{LOT:"associated with project"
+    RE_PORTALDB_TB_PROJECT||--o{UNIT:"associated with project"
     ADM_USER_NEW_PORTAL_USERS||--o|SESSION:"session owner"

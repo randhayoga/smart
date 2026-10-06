@@ -295,6 +295,11 @@ const displayFields = computed(() => {
     if (data.condition) fields.push({ label: t('inventory.condition'), value: getConditionLabel(data.condition) });
     if (data.location) fields.push({ label: t('inventory.location'), value: typeof data.location === 'string' ? data.location : formatLocation(data.location) });
     if (data.price !== undefined && data.price !== null) fields.push({ label: t('inventory.unitPrice'), value: formatRupiah(data.price) });
+    if (data.burden) fields.push({ label: t('inventory.burden'), value: data.burden });
+    if (data.burden === 'Project') {
+      const projVal = data.project_no ? `[${data.project_no}] ${data.project_name || '-'}` : (data.project_name || '-');
+      fields.push({ label: t('inventory.project'), value: projVal });
+    }
     if (data.vehicle_registration) fields.push({ label: t('inventory.tnkb'), value: data.vehicle_registration });
     if (data.updated_at) fields.push({ label: t('inventory.lastUpdate'), value: data.updated_at });
     return fields;
@@ -348,6 +353,13 @@ const displayFields = computed(() => {
     
     if (data.organizer) fields.push({ label: 'Organizer', value: data.organizer });
     if (data.vendor) fields.push({ label: 'Vendor', value: data.vendor });
+    if (data.is_consumable && data.burden) {
+      fields.push({ label: 'Beban Biaya', value: data.burden });
+      if (data.burden === 'Project') {
+        const projVal = data.project_no ? `[${data.project_no}] ${data.project_name || '-'}` : (data.project_name || '-');
+        fields.push({ label: 'Proyek', value: projVal });
+      }
+    }
     if (data.updated_at) fields.push({ label: 'Pembaruan terakhir', value: data.updated_at });
     
     return fields;

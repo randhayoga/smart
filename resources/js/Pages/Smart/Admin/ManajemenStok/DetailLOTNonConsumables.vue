@@ -153,7 +153,6 @@ const deleteFields = computed(() => {
       { label: t('inventory.location'), value: formatLocation(props.lot.location, props.lot.floor, props.lot.room) },
       { label: t('inventory.registrationDate'), value: formatDate(props.lot.date_of_receipt) },
       { label: t('inventory.defaultUnitPrice'), value: formatRupiah(props.lot.unitPrice) },
-      { label: t('inventory.burden'), value: props.lot.burden || '-' },
     ];
   }
   return [];
@@ -251,6 +250,7 @@ onUnmounted(() => {
         :locations="props.locations"
         :organizers="props.organizers"
         :vendors="props.vendors"
+        :projects="props.projects"
       />
 
       <DaftarAsetTab
@@ -259,6 +259,7 @@ onUnmounted(() => {
         :locations="props.locations"
         :organizers="props.organizers"
         :vendors="props.vendors"
+        :projects="props.projects"
         :users="props.users"
         :hide-barang-columns="true"
         :lot="props.lot"

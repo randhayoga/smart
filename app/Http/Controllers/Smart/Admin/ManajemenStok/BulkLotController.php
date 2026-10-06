@@ -54,8 +54,13 @@ class BulkLotController extends Controller
                 $lotData['unit_price'] = $request->input('unit_price');
             }
             if ($request->filled('burden')) {
-                $lotData['burden'] = $request->input('burden');
-                $lotData['project_id'] = ($request->input('burden') === 'Project') ? $request->input('project_id') : null;
+                if ($lot->barang?->is_consumable) {
+                    $lotData['burden'] = $request->input('burden');
+                    $lotData['project_id'] = ($request->input('burden') === 'Project') ? $request->input('project_id') : null;
+                } else {
+                    $lotData['burden'] = null;
+                    $lotData['project_id'] = null;
+                }
             }
 
             if ($request->boolean('use_parent_image')) {

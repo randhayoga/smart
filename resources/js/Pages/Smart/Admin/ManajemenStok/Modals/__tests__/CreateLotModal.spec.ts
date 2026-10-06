@@ -146,4 +146,36 @@ describe('CreateLotModal.vue', () => {
     expect(wrapper.text()).toContain('Belum ada foto yang dipilih');
     expect(wrapper.find('button[title="Hapus Foto"]').attributes('disabled')).toBeDefined();
   });
+
+  it('hides burden fields when parent barang is not consumable', () => {
+    const wrapper = mountModal({
+      barang: {
+        is_consumable: false,
+      },
+    });
+
+    expect(wrapper.text()).not.toContain('Pembebanan');
+  });
+
+  it('shows burden fields when parent barang is consumable and validates project', async () => {
+    const wrapper = mountModal({
+      barang: {
+        is_consumable: true,
+      },
+    });
+
+    expect(wrapper.text()).toContain('Pembebanan');
+    const vm = wrapper.vm as any;
+    vm.lotForm.number = 'LOT-0001-26-CS';
+    vm.lotForm.organizer_id = 1;
+    vm.lotForm.location_id = 1;
+    vm.lotForm.date_of_receipt = '2026-10-02';
+    vm.lotForm.burden = 'Project';
+    vm.lotForm.project_id = '';
+
+    vm.handleSubmit();
+
+    expect(vm.errors.project_id).toBeTruthy();
+    expect(vm.lotForm.post).not.toHaveBeenCalled();
+  });
 });

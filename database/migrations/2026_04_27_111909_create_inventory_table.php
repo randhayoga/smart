@@ -35,8 +35,8 @@ return new class extends Migration {
             $table->dateTime('date_of_receipt');
             $table->decimal('unit_price', 15, 2)->nullable()->comment('default unit price');
             $table->string('image_url')->nullable()->comment('default image');
-            $table->string('burden')->default('Corporate');
-            $table->unsignedBigInteger('project_id')->nullable()->index()->comment('Refers to RE_PORTALDB:tb_project.id_project');
+            $table->string('burden')->nullable()->comment('for consumables');
+            $table->unsignedBigInteger('project_id')->nullable()->index()->comment('Refers to RE_PORTALDB:tb_project.id_project (for consumables)');
             $table->timestamps();
         });
 
@@ -51,6 +51,8 @@ return new class extends Migration {
             $table->decimal('price', 15, 2)->nullable();
             $table->string('image_url')->nullable();
             $table->string('vehicle_registration')->nullable();
+            $table->string('burden')->default('Corporate');
+            $table->unsignedBigInteger('project_id')->nullable()->index()->comment('Refers to RE_PORTALDB:tb_project.id_project');
             $table->timestamps();
         });
 

@@ -271,6 +271,7 @@ onUnmounted(() => {
         v-else-if="activeTab === 'Daftar Aset'"
         :units="props.units"
         :locations="props.locations"
+        :projects="props.projects"
         :hide-barang-columns="true"
         status-scope="all"
       />

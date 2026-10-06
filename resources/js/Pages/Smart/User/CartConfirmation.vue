@@ -84,7 +84,7 @@ const departemenOptions = computed(() => props.departments);
 const projectOptions = computed(() => {
   return props.projects.map(p => ({
     id: p.value,
-    name: p.no_project && p.project_name ? `${p.no_project} (${p.project_name})` : p.label,
+    name: p.no_project && p.project_name ? `[${p.no_project}] ${p.project_name}` : p.label,
   }));
 });
 

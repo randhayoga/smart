@@ -98,6 +98,7 @@ interface Props {
   rooms?: any[];
   organizers?: { id: number; name: string; }[];
   vendors?: { id: number; name: string; }[];
+  projects?: { id: number; no_project: string; project_name: string; client_id: string; }[];
   users?: { id: number; name: string; }[];
   hideBarangColumns?: boolean;
   hideStatusFilter?: boolean;
@@ -1042,6 +1043,7 @@ const totalAsetTerpilihCount = computed(() => {
     :lot="activeLotForEdit"
     :barang="activeBarangForEdit"
     :locations="props.locations"
+    :projects="props.projects"
     @success="handleAssetSuccess"
   />
 

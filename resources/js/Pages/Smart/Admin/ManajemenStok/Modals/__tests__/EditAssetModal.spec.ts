@@ -130,4 +130,36 @@ describe('EditAssetModal.vue - Status Disabling Logic', () => {
     const disabledDiv = wrapper.find('.cursor-not-allowed.select-none');
     expect(disabledDiv.exists()).toBe(true);
   });
+
+  it('populates burden on single edit and validates project when burden is Project', () => {
+    const wrapper = mountModal([
+      { id: 1, number: 'AST-001', status: 'Tersedia', condition: 'Bagus', burden: 'Corporate' },
+    ]);
+    const vm = wrapper.vm as any;
+    expect(vm.form.burden).toBe('Corporate');
+
+    vm.form.location_id = 1;
+    vm.form.status = 'Tersedia';
+    vm.form.condition = 'Bagus';
+    vm.form.burden = 'Project';
+    vm.form.project_id = '';
+
+    vm.handleSubmit();
+    expect(vm.errors.project_id).toBeTruthy();
+  });
+
+  it('defaults burden to Tidak berubah on bulk edit and validates project if changed to Project', () => {
+    const wrapper = mountModal([
+      { id: 1, number: 'AST-001', status: 'Tersedia', condition: 'Bagus' },
+      { id: 2, number: 'AST-002', status: 'Standby', condition: 'Bagus' },
+    ]);
+    const vm = wrapper.vm as any;
+    expect(vm.form.burden).toBe('Tidak berubah');
+
+    vm.form.burden = 'Project';
+    vm.form.project_id = '';
+
+    vm.handleSubmit();
+    expect(vm.errors.project_id).toBeTruthy();
+  });
 });

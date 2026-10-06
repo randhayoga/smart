@@ -175,10 +175,13 @@ class Unit extends Model
         'price',
         'image_url',
         'vehicle_registration',
+        'burden',
+        'project_id',
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
+        'project_id' => 'integer',
     ];
 
     /**
@@ -187,6 +190,14 @@ class Unit extends Model
     public function lot(): BelongsTo
     {
         return $this->belongsTo(Lot::class);
+    }
+
+    /**
+     * The project associated with this unit, if any.
+     */
+    public function project(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\TbProject::class, 'project_id', 'id_project');
     }
 
     /**

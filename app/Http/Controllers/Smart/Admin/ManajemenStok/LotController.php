@@ -65,10 +65,18 @@ class LotController extends Controller
             $validated['image_url'] = null;
         }
 
+        $barang = Barang::findOrFail($request->input('barang_id'));
+        $isConsumable = (bool) $barang->is_consumable;
+
         unset($validated['use_parent_image']);
         $validated['initial_quantity'] = $validated['initial_quantity'] ?? 0;
-        $validated['burden'] = $validated['burden'] ?? 'Corporate';
-        $validated['project_id'] = ($validated['burden'] === 'Project') ? ($validated['project_id'] ?? null) : null;
+        if ($isConsumable) {
+            $validated['burden'] = $validated['burden'] ?? 'Corporate';
+            $validated['project_id'] = ($validated['burden'] === 'Project') ? ($validated['project_id'] ?? null) : null;
+        } else {
+            $validated['burden'] = null;
+            $validated['project_id'] = null;
+        }
         $validated['vendor_id'] = !empty($validated['vendor_id']) ? (int)$validated['vendor_id'] : null;
         $validated['legacy_vendor_id'] = !empty($validated['legacy_vendor_id']) ? (int)$validated['legacy_vendor_id'] : null;
 
@@ -101,6 +109,7 @@ class LotController extends Controller
             'initial_quantity' => 'nullable|integer|min:0|max:2147483647',
             'po_number' => 'nullable|string|max:255',
             'date_of_receipt' => 'required|date',
+            'unit_price' => 'nullable|numeric|min:0|max:999999999.99',
             'image_url' => 'nullable|image|max:1024',
             'delete_image' => 'nullable|boolean',
             'use_parent_image' => 'nullable',
@@ -155,8 +164,14 @@ class LotController extends Controller
         if (!$request->has('initial_quantity')) {
             unset($validated['initial_quantity']);
         }
-        $validated['burden'] = $validated['burden'] ?? 'Corporate';
-        $validated['project_id'] = ($validated['burden'] === 'Project') ? ($validated['project_id'] ?? null) : null;
+        $isConsumable = (bool) ($lot->barang?->is_consumable ?? false);
+        if ($isConsumable) {
+            $validated['burden'] = $validated['burden'] ?? $lot->burden ?? 'Corporate';
+            $validated['project_id'] = ($validated['burden'] === 'Project') ? ($validated['project_id'] ?? null) : null;
+        } else {
+            $validated['burden'] = null;
+            $validated['project_id'] = null;
+        }
         if ($request->has('vendor_id')) {
             $validated['vendor_id'] = !empty($validated['vendor_id']) ? (int)$validated['vendor_id'] : null;
         }
@@ -267,7 +282,7 @@ class LotController extends Controller
 
         // Retrieve unit (asset) items associated with this LOT
         $units = Unit::with([
-            'location.parent', 'statusApprovals',
+            'location.parent', 'statusApprovals', 'project',
             'lot.barang.subcategory.category', 'lot.barang.brand', 'lot.barang.uom',
             'lot.organizer', 'lot.vendor', 'lot.legacyVendor', 'lifecycles.actor'
         ])
@@ -303,6 +318,10 @@ class LotController extends Controller
                 'price' => $unit->price,
                 'image_url' => $unit->image_url,
                 'vehicle_registration' => $unit->vehicle_registration,
+                'burden' => $unit->burden,
+                'project_id' => $unit->project_id,
+                'project_name' => $unit->project ? $unit->project->project_name : null,
+                'project_no' => $unit->project ? $unit->project->no_project : null,
                 'created_at' => $unit->created_at?->toIso8601String(),
                 'updated_at' => $unit->updated_at ? $unit->updated_at->format('d-m-Y H:i') : '-',
                 

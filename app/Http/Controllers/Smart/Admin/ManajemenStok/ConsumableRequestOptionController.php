@@ -43,7 +43,7 @@ class ConsumableRequestOptionController extends Controller
                     ->get(['id_project', 'no_project', 'project_name'])
                     ->map(fn($p) => [
                         'id' => (int) ($p->id_project ?? $p->id),
-                        'name' => $p->no_project ? "{$p->no_project} - {$p->project_name}" : $p->project_name,
+                        'name' => $p->no_project ? "[{$p->no_project}] {$p->project_name}" : $p->project_name,
                         'no_project' => $p->no_project,
                     ])
                     ->values()
@@ -87,7 +87,7 @@ class ConsumableRequestOptionController extends Controller
             ->get()
             ->map(fn($p) => [
                 'id' => (int) $p->id_project,
-                'name' => $p->no_project ? "{$p->no_project} - {$p->project_name}" : $p->project_name,
+                'name' => $p->no_project ? "[{$p->no_project}] {$p->project_name}" : $p->project_name,
                 'no_project' => $p->no_project,
             ]);
 

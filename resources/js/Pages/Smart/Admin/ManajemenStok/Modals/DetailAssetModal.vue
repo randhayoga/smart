@@ -306,6 +306,8 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                       <p class="text-foreground">{{ t('inventory.storageLocation') }}: {{ formatLocation(asset.location, asset.floor, asset.room) }}</p>
                       <p v-if="asset.type" class="text-foreground">{{ t('inventory.type') }}: {{ asset.type }}</p>
                       <p v-if="asset.classification" class="text-foreground">{{ t('inventory.classification') }}: {{ getClassificationLabel(asset.classification) }}</p>
+                      <p class="text-foreground">{{ t('inventory.burden') }}: {{ asset.burden || '-' }}</p>
+                      <p v-if="asset.burden === 'Project'" class="text-foreground">{{ t('inventory.project') }}: {{ asset.project_no ? `[${asset.project_no}] ${asset.project_name || '-'}` : (asset.project_name || '-') }}</p>
                       <p class="text-foreground">{{ t('inventory.lastUpdate') }}: {{ asset.updated_at || '-' }}</p>
                     </div>
                   </div>

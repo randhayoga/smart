@@ -190,4 +190,20 @@ describe('CreateAssetModal.vue', () => {
     expect(wrapper.text()).toContain('Belum ada foto yang dipilih');
     expect(wrapper.find('button[title="Hapus Foto"]').attributes('disabled')).toBeDefined();
   });
+
+  it('initializes burden as Corporate and validates project when Project is selected', () => {
+    const wrapper = mountModal();
+    const vm = wrapper.vm as any;
+
+    expect(vm.form.burden).toBe('Corporate');
+
+    vm.form.location_id = 1;
+    vm.form.condition = 'Bagus';
+    vm.form.burden = 'Project';
+    vm.form.project_id = '';
+
+    vm.handleSubmit();
+
+    expect(vm.errors.project_id).toBeTruthy();
+  });
 });

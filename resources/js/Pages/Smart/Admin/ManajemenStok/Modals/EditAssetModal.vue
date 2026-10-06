@@ -15,6 +15,7 @@ import {
 import Combobox from '@/Components/Combobox.vue';
 import LocationCombobox from '@/Components/LocationCombobox.vue';
 import { Field, FieldLabel, FieldContent, FieldError } from '@/Components/ui/field';
+import { RadioGroup, RadioGroupItem } from '@/Components/ui/radio-group';
 import { compressImageIfNeeded } from '@/utils/imageCompressor';
 
 interface Props {
@@ -28,6 +29,7 @@ interface Props {
   locations: any[];
   floors?: any[];
   rooms?: any[];
+  projects?: { id: number; no_project: string; project_name: string; client_id: string; }[];
 }
 
 const props = defineProps<Props>();
@@ -151,6 +153,8 @@ const form = useForm({
   lost_doc_file_name: '',
   bod_boc_approval_file: null as File | null,
   bod_boc_approval_file_name: '',
+  burden: '',
+  project_id: '' as string | number,
 });
 
 const errors = ref({
@@ -164,6 +168,8 @@ const errors = ref({
   memo_file: '',
   lost_doc_file: '',
   bod_boc_approval_file: '',
+  burden: '',
+  project_id: '',
 });
 
 const resetErrors = () => {
@@ -178,8 +184,17 @@ const resetErrors = () => {
     memo_file: '',
     lost_doc_file: '',
     bod_boc_approval_file: '',
+    burden: '',
+    project_id: '',
   };
 };
+
+const projectOptions = computed(() => {
+  return (props.projects || []).map(p => ({
+    id: p.id,
+    name: `[${p.no_project}] ${p.project_name}`
+  }));
+});
 
 // Reactive error clearing
 watch(() => form.location_id, v => { if (v && errors.value.location_id) errors.value.location_id = ''; });
@@ -193,6 +208,14 @@ watch(() => form.vehicle_registration, v => { if (v && errors.value.vehicle_regi
 watch(() => form.memo_file, v => { if (v && errors.value.memo_file) errors.value.memo_file = ''; });
 watch(() => form.lost_doc_file, v => { if (v && errors.value.lost_doc_file) errors.value.lost_doc_file = ''; });
 watch(() => form.bod_boc_approval_file, v => { if (v && errors.value.bod_boc_approval_file) errors.value.bod_boc_approval_file = ''; });
+watch(() => form.burden, v => {
+  if (v && errors.value.burden) errors.value.burden = '';
+  if (v !== 'Project') {
+    form.project_id = '';
+    errors.value.project_id = '';
+  }
+});
+watch(() => form.project_id, v => { if (v && errors.value.project_id) errors.value.project_id = ''; });
 
 watch(() => form.condition, (newVal, oldVal) => {
   const isRestricted = isSingle.value 
@@ -267,6 +290,8 @@ watch(() => props.open, (val) => {
     form.memo_file_name = item.memo_file_name || (item.memo_url ? item.memo_url.split('/').pop() || '' : '');
     form.lost_doc_file_name = item.lost_doc_file_name || (item.lost_doc_url ? item.lost_doc_url.split('/').pop() || '' : '');
     form.bod_boc_approval_file_name = item.bod_boc_approval_file_name || (item.bod_boc_approval_url ? item.bod_boc_approval_url.split('/').pop() || '' : '');
+    form.burden = item.burden || 'Corporate';
+    form.project_id = item.project_id || '';
   } else {
     form.number = '';
     form.legacy_number = '';
@@ -279,6 +304,8 @@ watch(() => props.open, (val) => {
     form.classification = '';
     form.price = '';
     form.vehicle_registration = '';
+    form.burden = 'Tidak berubah';
+    form.project_id = '';
   }
 }, { immediate: true });
 
@@ -491,6 +518,8 @@ const handleSubmit = () => {
       if (isVehicle.value && !form.vehicle_registration) { errors.value.vehicle_registration = t('inventory.nopolRequired'); isValid = false; }
       if (arrNeedApproval.includes(form.condition) && !isDocumentDisabled.value && !form.memo_file_name) { errors.value.memo_file = t('inventory.memoRequired'); isValid = false; }
       if (form.condition === 'Hilang' && !isDocumentDisabled.value && !form.lost_doc_file_name) { errors.value.lost_doc_file = t('inventory.lostDocRequired'); isValid = false; }
+      if (!form.burden) { errors.value.burden = t('inventory.burdenRequired'); isValid = false; }
+      if (form.burden === 'Project' && !form.project_id) { errors.value.project_id = t('inventory.projectRequired'); isValid = false; }
       if (!isValid) return;
 
       form.transform((data) => {
@@ -504,6 +533,8 @@ const handleSubmit = () => {
           type: data.type || null,
           classification: data.classification || null,
           price: data.price !== '' && data.price !== null ? parseCurrencyToNumber(data.price) : null,
+          burden: data.burden,
+          project_id: data.burden === 'Project' ? data.project_id : null,
         };
         if (isVehicle.value) fd.vehicle_registration = data.vehicle_registration;
         if (data.image_url) {
@@ -522,13 +553,19 @@ const handleSubmit = () => {
       });
     } else {
       // Bulk edit
+      if (form.burden === 'Project' && !form.project_id) {
+        errors.value.project_id = t('inventory.projectRequired');
+        return;
+      }
+
       const hasField = !!(
         (form.status && !isStatusDisabled.value) ||
         (form.condition && !isKondisiDisabled.value) ||
         form.type ||
         form.classification ||
         form.location_id || form.price ||
-        form.image_url || form.use_lot_image || form.memo_file || form.lost_doc_file || form.bod_boc_approval_file
+        form.image_url || form.use_lot_image || form.memo_file || form.lost_doc_file || form.bod_boc_approval_file ||
+        (form.burden && form.burden !== 'Tidak berubah')
       );
       if (!hasField) {
         toast.error(t('inventory.atLeastOneField'));
@@ -555,6 +592,12 @@ const handleSubmit = () => {
       }
       
       if (form.price) payload.price = parseCurrencyToNumber(form.price).toString();
+      if (form.burden && form.burden !== 'Tidak berubah') {
+        payload.burden = form.burden;
+        if (form.burden === 'Project') {
+          payload.project_id = form.project_id;
+        }
+      }
       if (form.use_lot_image) payload.use_lot_image = true;
       if (form.image_url instanceof File) payload.image_url = form.image_url;
       if (form.memo_file instanceof File) payload.memo_file = form.memo_file;
@@ -666,6 +709,37 @@ const handleSubmit = () => {
                       </DropdownMenu>
                     </FieldContent>
                     <FieldError v-if="isSingle && errors.status">{{ errors.status }}</FieldError>
+                  </Field>
+
+                  <Field :data-invalid="(isSingle && !!errors.burden) || undefined">
+                    <FieldLabel>
+                      <span>{{ t('inventory.burden') }}<span v-if="isSingle" class="text-rose-500">*</span></span>
+                    </FieldLabel>
+                    <FieldContent>
+                      <RadioGroup v-model="form.burden" class="flex items-center gap-6 h-10">
+                        <div v-if="!isSingle" class="flex items-center space-x-2">
+                          <RadioGroupItem id="edit-unit-burden-none" value="Tidak berubah" />
+                          <label for="edit-unit-burden-none" class="text-sm font-medium text-foreground cursor-pointer select-none">{{ t('inventory.unchanged') }}</label>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                          <RadioGroupItem id="edit-unit-burden-corporate" value="Corporate" />
+                          <label for="edit-unit-burden-corporate" class="text-sm font-medium text-foreground cursor-pointer select-none">Corporate</label>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                          <RadioGroupItem id="edit-unit-burden-project" value="Project" />
+                          <label for="edit-unit-burden-project" class="text-sm font-medium text-foreground cursor-pointer select-none">Project</label>
+                        </div>
+                      </RadioGroup>
+                    </FieldContent>
+                    <FieldError v-if="isSingle && errors.burden">{{ errors.burden }}</FieldError>
+                  </Field>
+
+                  <Field v-if="form.burden === 'Project'" :data-invalid="!!errors.project_id || undefined">
+                    <FieldLabel><span>{{ t('inventory.project') }}<span class="text-rose-500">*</span></span></FieldLabel>
+                    <FieldContent>
+                      <Combobox v-model="form.project_id" :options="projectOptions" :search-placeholder="t('inventory.searchProjectPlaceholder')" :default-label="t('inventory.selectProject')" width-class="w-full h-10 px-4" :error="!!errors.project_id" />
+                    </FieldContent>
+                    <FieldError v-if="errors.project_id">{{ errors.project_id }}</FieldError>
                   </Field>
                 </div>
 

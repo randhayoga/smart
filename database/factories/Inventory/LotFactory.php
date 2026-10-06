@@ -54,7 +54,8 @@ class LotFactory extends Factory
             'date_of_receipt' => $dateOfReceipt,
             'unit_price' => $this->faker->randomFloat(2, 10000, 10000000),
             'image_url' => 'inventory/lots/placeholder.jpg',
-            'burden' => 'Corporate',
+            'burden' => (bool) ($barang->is_consumable ?? false) ? 'Corporate' : null,
+            'project_id' => null,
         ];
     }
 }

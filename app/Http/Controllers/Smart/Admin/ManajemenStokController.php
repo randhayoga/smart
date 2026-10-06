@@ -157,7 +157,7 @@ class ManajemenStokController extends Controller
         $units = [];
         if (!$isConsumable) {
             $units = Unit::with([
-                'location.parent', 'statusApprovals',
+                'location.parent', 'statusApprovals', 'project',
                 'lot.barang.subcategory.category', 'lot.barang.brand', 'lot.barang.uom',
                 'lot.organizer', 'lot.vendor', 'lot.legacyVendor', 'lifecycles.actor'
             ])
@@ -195,6 +195,10 @@ class ManajemenStokController extends Controller
                     'price' => $unit->price,
                     'image_url' => $unit->image_url,
                     'vehicle_registration' => $unit->vehicle_registration,
+                    'burden' => $unit->burden,
+                    'project_id' => $unit->project_id,
+                    'project_name' => $unit->project ? $unit->project->project_name : null,
+                    'project_no' => $unit->project ? $unit->project->no_project : null,
                     'created_at' => $unit->created_at?->toIso8601String(),
                     'updated_at' => $unit->updated_at ? $unit->updated_at->format('d-m-Y H:i') : '-',
                     

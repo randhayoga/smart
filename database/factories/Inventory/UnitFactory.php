@@ -34,6 +34,8 @@ class UnitFactory extends Factory
             'type' => 'LT',
             'classification' => 'Aset',
             'image_url' => 'units/sample.jpg',
+            'burden' => 'Corporate',
+            'project_id' => null,
         ];
     }
 

@@ -100,6 +100,9 @@ class UnitSeeder extends Seeder
             // Use lot image directly without copying
             $unitImagePath = $lot->image_url;
 
+            $burden = ['Corporate', 'Project'][array_rand(['Corporate', 'Project'])];
+            $projectId = $burden === 'Project' ? \App\Models\TbProject::inRandomOrder()->first()?->id : null;
+
             Unit::updateOrCreate(
                 ['number' => $data['number']],
                 [
@@ -112,6 +115,8 @@ class UnitSeeder extends Seeder
                     'price' => $lot->unit_price,
                     'image_url' => $unitImagePath,
                     'vehicle_registration' => $data['vehicle_registration'],
+                    'burden' => $burden,
+                    'project_id' => $projectId,
                 ]
             );
         }

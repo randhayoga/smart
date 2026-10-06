@@ -129,18 +129,24 @@ class LotSeeder extends Seeder
                 Storage::disk('local')->put($destinationPath, File::get($sourcePath));
             }
 
-            $burden = ['Corporate', 'Project'][array_rand(['Corporate', 'Project'])];
-            $projectId = null;
-            if ($burden === 'Project') {
-                $projectId = \App\Models\TbProject::inRandomOrder()->first()?->id;
-            }
-
             $parts = explode('-', $data['number'], 4);
             $barangNumber = $parts[3] ?? null;
             $barangId = ($barangNumber ? \App\Models\Inventory\Barang::where('number', $barangNumber)->value('id') : null) ?? $data['barang_id'];
             $organizerId = \App\Models\Master\Organizer::where('id', $data['organizer_id'])->value('id') ?? \App\Models\Master\Organizer::first()?->id ?? $data['organizer_id'];
             $vendorId = \App\Models\Master\Vendor::where('id', $data['vendor_id'])->value('id') ?? \App\Models\Master\Vendor::first()?->id ?? $data['vendor_id'];
             $locationId = \App\Models\Master\Location::where('id', $data['location_id'])->value('id') ?? \App\Models\Master\Location::first()?->id ?? $data['location_id'];
+
+            $barang = \App\Models\Inventory\Barang::find($barangId);
+            $isConsumable = (bool) ($barang?->is_consumable ?? false);
+
+            $burden = null;
+            $projectId = null;
+            if ($isConsumable) {
+                $burden = ['Corporate', 'Project'][array_rand(['Corporate', 'Project'])];
+                if ($burden === 'Project') {
+                    $projectId = \App\Models\TbProject::inRandomOrder()->first()?->id;
+                }
+            }
 
             $lot = Lot::updateOrCreate(
                 ['number' => $data['number']],

@@ -18,6 +18,7 @@ use App\Services\Inventory\UnitNumberService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -32,7 +33,7 @@ class UnitController extends Controller
     public function index(Request $request): Response
     {
         $units = Unit::with([
-            'location.parent', 'statusApprovals',
+            'location.parent', 'statusApprovals', 'project',
             'lot.barang.subcategory.category', 'lot.barang.brand',
             'lot.organizer', 'lot.vendor', 'lot.legacyVendor', 'lifecycles.actor',
             'fulfillments' => fn($q) => $q->whereNull('completed_at')->with('requestItem.request.user')
@@ -73,6 +74,10 @@ class UnitController extends Controller
                 'price' => $unit->price,
                 'image_url' => $unit->image_url,
                 'vehicle_registration' => $unit->vehicle_registration,
+                'burden' => $unit->burden,
+                'project_id' => $unit->project_id,
+                'project_name' => $unit->project ? $unit->project->project_name : null,
+                'project_no' => $unit->project ? $unit->project->no_project : null,
                 'created_at' => $unit->created_at?->toIso8601String(),
                 'updated_at' => $unit->updated_at ? $unit->updated_at->format('d-m-Y H:i') : '-',
                 
@@ -166,6 +171,8 @@ class UnitController extends Controller
             'price' => 'nullable|numeric|min:0|max:999999999.99',
             'image_url' => 'nullable|image|max:1024',
             'use_lot_image' => 'nullable',
+            'burden' => 'nullable|string|in:Corporate,Project',
+            'project_id' => ['required_if:burden,Project', 'nullable', Rule::exists(TbProject::class, 'id_project')],
         ];
  
         $isVehicle = false;
@@ -220,7 +227,9 @@ class UnitController extends Controller
         unset($validated['use_lot_image']);
         $validated['type'] = $validated['type'] ?? null;
         $validated['classification'] = $validated['classification'] ?? null;
- 
+        $validated['burden'] = $validated['burden'] ?? 'Corporate';
+        $validated['project_id'] = ($validated['burden'] === 'Project') ? ($validated['project_id'] ?? null) : null;
+
         $unit = Unit::create($validated);
  
         if ($needApproval) {
@@ -330,6 +339,8 @@ class UnitController extends Controller
             'image_url' => 'nullable|image|mimes:jpeg,jpg,png|max:1024',
             'delete_image' => 'nullable|boolean',
             'use_lot_image' => 'nullable',
+            'burden' => 'nullable|string|in:Corporate,Project',
+            'project_id' => ['required_if:burden,Project', 'nullable', Rule::exists(TbProject::class, 'id_project')],
         ];
 
         $lot = Lot::with('barang.subcategory.category')->findOrFail($request->input('lot_id'));
@@ -469,6 +480,10 @@ class UnitController extends Controller
         unset($validated['delete_image']);
         $validated['type'] = $request->input('type') ?: null;
         $validated['classification'] = $request->input('classification') ?: null;
+        if ($request->has('burden')) {
+            $validated['burden'] = $request->input('burden');
+            $validated['project_id'] = ($request->input('burden') === 'Project') ? $request->input('project_id') : null;
+        }
 
         $previousStatus = str_starts_with($unit->status ?? '', 'Pending') ? 'Tersedia' : $unit->status;
         $previousCondition = $unit->condition;
@@ -509,28 +524,5 @@ class UnitController extends Controller
         }
 
         return redirect()->back()->with('success', __('inventory.unit_updated'));
-    }
-
-    /**
-     * Remove the specified asset unit from storage along with its stored image.
-     */
-    public function destroy(Unit $unit)
-    {
-        if (RequestFulfillment::where('unit_id', $unit->id)->exists()) {
-            return redirect()->back()->with('error', __('inventory.unit_cannot_delete_has_history'));
-        }
-
-        if ($unit->image_url && Storage::disk('local')->exists($unit->image_url)) {
-            $isShared = Unit::where('image_url', $unit->image_url)->where('id', '!=', $unit->id)->exists()
-                || Lot::where('image_url', $unit->image_url)->exists()
-                || Barang::where('image_url', $unit->image_url)->exists();
-            if (!$isShared) {
-                Storage::disk('local')->delete($unit->image_url);
-            }
-        }
-
-        $unit->delete();
-
-        return redirect()->back()->with('success', __('inventory.unit_deleted'));
     }
 }

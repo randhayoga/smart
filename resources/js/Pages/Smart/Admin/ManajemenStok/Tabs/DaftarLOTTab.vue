@@ -469,7 +469,7 @@ const deleteFields = computed(() => {
       { label: t('inventory.unitPrice'), value: formatRupiah(data.unitPrice) },
       { label: t('inventory.organizer'), value: data.organizer },
       { label: t('inventory.vendor'), value: data.vendor },
-      { label: t('inventory.burden'), value: data.burden || '-' },
+      ...(isConsumable ? [{ label: t('inventory.burden'), value: data.burden || '-' }] : []),
       { label: t('inventory.lastUpdate'), value: data.updated_at || '-' }
     ];
     
