@@ -14,7 +14,7 @@ class DatabaseSeeder extends Seeder
         if (app()->isProduction()) {
             $this->command?->warn('Production environment detected: Skipping development and external dummy seeders.');
             $this->call(RoleAndPermissionSeeder::class);
-            $this->call(ActualMasterSeeder::class); // Categories, Subcategories, Brands, Vendors, Locations
+            $this->call(ActualDatabaseSeeder::class);
             return;
         }
 
@@ -25,8 +25,6 @@ class DatabaseSeeder extends Seeder
         // $this->call([
         //     RoleAndPermissionSeeder::class,
         //     ActualMasterSeeder::class,     // Categories, Subcategories, Brands, Vendors, Locations
-        //     DummyUomSeeder::class,         // Satuan barang (Unit, Rim, Buah)
-        //     DummyOrganizerSeeder::class,   // Unit pengelola (CFS, ICT, HSE)
         //     UserSeeder::class,
         //     TbProjectSeeder::class,
         //     TbAssignProjectSeeder::class,
@@ -36,15 +34,15 @@ class DatabaseSeeder extends Seeder
         // CONFIGURATION 2: DUMMY DEVELOPMENT DATA (Mutually exclusive with Config 1)
         // Uncomment this entire block (and comment Config 1) to use mock inventory.
         // =========================================================================
-        $this->call([
-            RoleAndPermissionSeeder::class,
-            DummyMasterSeeder::class,
-            UserSeeder::class,
-            TbProjectSeeder::class,
-            TbAssignProjectSeeder::class,
-            BarangSeeder::class,
-            LotSeeder::class,
-            UnitSeeder::class,
-        ]);
+        // $this->call([
+        //     RoleAndPermissionSeeder::class,
+        //     DummyMasterSeeder::class,
+        //     UserSeeder::class,
+        //     TbProjectSeeder::class,
+        //     TbAssignProjectSeeder::class,
+        //     BarangSeeder::class,
+        //     LotSeeder::class,
+        //     UnitSeeder::class,
+        // ]);
     }
 }
