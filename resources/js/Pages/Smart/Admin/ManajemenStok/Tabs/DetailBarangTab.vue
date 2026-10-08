@@ -21,6 +21,7 @@ interface Props {
     uom: string;
     subcategory_id: number;
     category_id: number;
+    category_code?: string;
     brand_id: number;
     uom_id: number;
     is_consumable: boolean;
@@ -82,6 +83,11 @@ const stockColorClass = computed(() => {
   }
   return 'text-foreground';
 });
+const isCompCategory = computed(() => {
+  return props.barang.category_code === 'COMP' ||
+    props.barang.category === 'Computer' ||
+    props.barang.category === 'COMP';
+});
 </script>
 
 <template>
@@ -100,7 +106,7 @@ const stockColorClass = computed(() => {
           <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.typeCode') }}:</span> {{ props.barang.code }}</p>
           <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.brand') }}:</span> {{ props.barang.brand }}</p>
           <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.name') }}:</span> {{ props.barang.name }}</p>
-          <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.specification') }}:</span> {{ props.barang.specification || '-' }}</p>
+          <p v-if="!isCompCategory" class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.specification') }}:</span> {{ props.barang.specification || '-' }}</p>
           <p class="text-foreground">{{ t('inventory.category') }}: {{ props.barang.category }}</p>
           <p class="text-foreground">{{ t('inventory.subcategory') }}: {{ props.barang.subcategory }}</p>
           <p class="text-foreground">{{ t('inventory.lotCount') }}: {{ props.lots.length }}</p>

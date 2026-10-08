@@ -122,8 +122,8 @@ class ConsumableLotController extends Controller
 
         $organizers = Organizer::orderBy('name')->get();
         // Target DB: eproc (vendors table).
-        // Eproc database is not operational yet, returning empty array for LOT vendor selection.
-        $vendors = []; // When operational: DB::connection('eproc')->table('vendors')->select('id', 'name')->orderBy('name')->get();
+        // Using local vendors directory (falls back to eproc when connection configured)
+        $vendors = Vendor::orderBy('name')->get(['id', 'name']);
         $locations = Location::with('parent')->active()->orderBy('name')->get();
 
         $projects = TbProject::orderBy('project_name')->get();

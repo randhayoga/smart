@@ -84,6 +84,10 @@ const projectOptions = computed(() => {
   }));
 });
 
+const filteredVendors = computed(() => {
+  return (props.vendors || []).filter(v => v.name?.trim().toLowerCase() !== 'beragam');
+});
+
 // Reactive error clearing
 watch(() => lotForm.organizer_id, v => { if (v && errors.value.organizer_id) errors.value.organizer_id = ''; });
 watch(() => lotForm.vendor_id, v => { if (v && errors.value.vendor_id) errors.value.vendor_id = ''; });
@@ -223,6 +227,7 @@ const handleSubmit = () => {
   let isValid = true;
   if (!lotForm.number) { errors.value.number = t('inventory.lotCodeRequired'); isValid = false; }
   if (!lotForm.organizer_id) { errors.value.organizer_id = t('inventory.organizerRequired'); isValid = false; }
+  if (!lotForm.vendor_id) { errors.value.vendor_id = t('inventory.vendorRequired'); isValid = false; }
   if (!lotForm.date_of_receipt) { errors.value.date_of_receipt = t('inventory.dateOfReceiptRequired'); isValid = false; }
   if (props.barang.is_consumable) {
     if (!lotForm.location_id) { errors.value.location_id = t('inventory.locationRequired'); isValid = false; }
@@ -332,9 +337,9 @@ const handleSubmit = () => {
                   </Field>
 
                   <Field :data-invalid="!!errors.vendor_id || undefined">
-                    <FieldLabel><span>{{ t('inventory.vendor') }}</span></FieldLabel>
+                    <FieldLabel><span>{{ t('inventory.vendor') }}<span class="text-rose-500">*</span></span></FieldLabel>
                     <FieldContent>
-                      <Combobox v-model="lotForm.vendor_id" :options="vendors" :search-placeholder="t('inventory.searchVendorPlaceholder')" :default-label="t('inventory.selectVendor')" width-class="w-full h-10 px-4" :error="!!errors.vendor_id" />
+                      <Combobox v-model="lotForm.vendor_id" :options="filteredVendors" :search-placeholder="t('inventory.searchVendorPlaceholder')" :default-label="t('inventory.selectVendor')" width-class="w-full h-10 px-4" :error="!!errors.vendor_id" />
                     </FieldContent>
                     <FieldError v-if="errors.vendor_id">{{ errors.vendor_id }}</FieldError>
                   </Field>

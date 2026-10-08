@@ -208,7 +208,7 @@ onUnmounted(() => {
                     <p class="text-foreground">{{ t('inventory.burden') }}: {{ lotDetails.burden || '-' }}</p>
                     <p v-if="lotDetails.burden === 'Project'" class="text-foreground">{{ t('inventory.project') }}: {{ lotDetails.project_no ? `[${lotDetails.project_no}] ${lotDetails.project_name || '-'}` : (lotDetails.project_name || '-') }}</p>
                     <p class="text-foreground">{{ t('inventory.organizer') }}: {{ lotDetails.organizer }}</p>
-                    <p class="text-foreground">{{ t('inventory.vendor') }}: {{ lotDetails.vendor }}</p>
+                    <p class="text-foreground">{{ t('inventory.vendor') }}: {{ (lotDetails.vendor_id && lotDetails.vendor !== '-') ? lotDetails.vendor : t('inventory.vendorMultiple') }}</p>
                     <p class="text-foreground">{{ t('inventory.lastUpdate') }}: {{ lotDetails.updated_at }}</p>
                   </div>
                 </div>

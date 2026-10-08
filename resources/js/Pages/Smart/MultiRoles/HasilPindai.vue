@@ -49,6 +49,12 @@ const isVehicle = computed(() => {
          category.includes('motor') || subcategory.includes('motor');
 });
 
+const isComp = computed(() => {
+  const catCode = props.asset?.barang_category_code || props.barang?.category_code || '';
+  const cat = (props.asset?.barang_category || props.barang?.category || '').toLowerCase();
+  return catCode === 'COMP' || cat === 'computer' || cat === 'comp';
+});
+
 const arrNeedApproval = ['Rusak Total', 'Hilang'];
 const arrInactiveConditions = ['Rusak Total', 'Hilang', 'Lelang/Hibah'];
 
@@ -507,9 +513,17 @@ const handleSubmit = () => {
                   {{ formatLocation(props.asset.location, props.asset.floor, props.asset.room) }}
                 </span>
               </div>
+              <div v-if="isComp" class="flex justify-between items-start">
+                <span class="text-muted-foreground font-medium">{{ t('inventory.specification') }}</span>
+                <span class="text-foreground font-semibold text-right max-w-[200px]">{{ props.asset.specification || '-' }}</span>
+              </div>
               <div v-if="isVehicle" class="flex justify-between items-start">
                 <span class="text-muted-foreground font-medium">{{ t('scanner.licensePlate') }}</span>
                 <span class="text-foreground font-semibold">{{ props.asset.vehicle_registration || '-' }}</span>
+              </div>
+              <div v-if="!props.asset.lot_vendor_id || props.asset.lot_vendor === '-' || props.asset.lot_vendor?.toLowerCase() === 'beragam' || props.asset.unit_vendor" class="flex justify-between items-start">
+                <span class="text-muted-foreground font-medium">{{ t('inventory.vendor') }}</span>
+                <span class="text-foreground font-semibold text-right max-w-[200px]">{{ props.asset.unit_vendor || (props.asset.lot_vendor?.toLowerCase() !== 'beragam' ? props.asset.lot_vendor : '-') }}</span>
               </div>
               <div class="flex justify-between items-start">
                 <span class="text-muted-foreground font-medium">{{ t('scanner.assetValue') }}</span>
@@ -528,9 +542,9 @@ const handleSubmit = () => {
               <h3 class="text-xs font-bold text-foreground uppercase tracking-wider">{{ t('scanner.typeAndLotDetail') }}</h3>
             </div>
             <div class="p-4 space-y-3.5 text-sm">
-              <div class="flex justify-between items-start">
+              <div v-if="!isComp" class="flex justify-between items-start">
                 <span class="text-muted-foreground font-medium">{{ t('scanner.specification') }}</span>
-                <span class="text-foreground font-semibold text-right max-w-[200px]">{{ props.asset.barang_specification }}</span>
+                <span class="text-foreground font-semibold text-right max-w-[200px]">{{ props.asset.barang_specification || '-' }}</span>
               </div>
               <div class="flex justify-between items-start">
                 <span class="text-muted-foreground font-medium">{{ t('scanner.lotCode') }}</span>
@@ -542,7 +556,7 @@ const handleSubmit = () => {
               </div>
               <div class="flex justify-between items-start">
                 <span class="text-muted-foreground font-medium">{{ t('scanner.vendor') }}</span>
-                <span class="text-foreground font-semibold text-right max-w-[200px]">{{ props.asset.lot_vendor }}</span>
+                <span class="text-foreground font-semibold text-right max-w-[200px]">{{ (props.asset.lot_vendor_id && props.asset.lot_vendor !== '-') ? props.asset.lot_vendor : t('inventory.vendorMultiple') }}</span>
               </div>
               <div class="flex justify-between items-start">
                 <span class="text-muted-foreground font-medium">{{ t('scanner.registrationDate') }}</span>

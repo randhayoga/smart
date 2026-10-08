@@ -36,6 +36,8 @@ class UnitFactory extends Factory
             'image_url' => 'units/sample.jpg',
             'burden' => 'Corporate',
             'project_id' => null,
+            'vendor_id' => null,
+            'specification' => null,
         ];
     }
 
@@ -47,6 +49,16 @@ class UnitFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'status' => 'Tersedia',
             'condition' => 'Bagus',
+        ]);
+    }
+
+    /**
+     * Indicate that the unit has computer specifications.
+     */
+    public function comp(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'specification' => 'Intel Core i7-13700H, 16GB RAM, 512GB SSD',
         ]);
     }
 }

@@ -188,7 +188,24 @@ const finalLotAge = computed(() => {
 const finalLotNumber = computed(() => props.lot?.number || props.asset?.lot_number || '');
 const finalLotOrganizer = computed(() => props.lot?.organizer || props.asset?.lot_organizer || '');
 const finalLotDateOfReceipt = computed(() => props.lot?.date_of_receipt || props.asset?.lot_date_of_receipt || '');
-const finalLotVendor = computed(() => props.lot?.vendor || props.asset?.lot_vendor || '');
+const isComp = computed(() => {
+  const catCode = props.asset?.barang_category_code || props.lot?.barang_category_code || '';
+  const cat = (finalBarangCategory.value || '').toLowerCase();
+  return catCode === 'COMP' || cat === 'computer' || cat === 'comp';
+});
+
+const finalLotVendor = computed(() => {
+  const vId = props.lot?.vendor_id ?? props.asset?.lot_vendor_id;
+  const vName = props.lot?.vendor || props.asset?.lot_vendor;
+  if (!vId || vName === '-' || !vName || String(vName).trim().toLowerCase() === 'beragam') {
+    return t('inventory.vendorMultiple');
+  }
+  return vName;
+});
+const isLotVendorMultiple = computed(() => {
+  const vName = props.lot?.vendor || props.asset?.lot_vendor;
+  return !props.lot?.vendor_id && !props.asset?.lot_vendor_id || String(vName).trim().toLowerCase() === 'beragam' || finalLotVendor.value === t('inventory.vendorMultiple');
+});
 const finalLotPoNumber = computed(() => props.lot?.po_number || props.asset?.lot_po_number || '');
 
 const finalBarangCode = computed(() => props.lot?.barang_code || props.asset?.barang_code || '');
@@ -258,7 +275,7 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                       <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.typeCode') }}:</span> {{ finalBarangCode }}</p>
                       <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.brand') }}:</span> {{ finalBarangBrand }}</p>
                       <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.name') }}:</span> {{ finalBarangNama }}</p>
-                      <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.specification') }}:</span> {{ finalBarangSpecification }}</p>
+                      <p v-if="!isComp" class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.specification') }}:</span> {{ finalBarangSpecification }}</p>
                       <p class="text-foreground">{{ t('inventory.category') }}: {{ finalBarangCategory }}</p>
                       <p class="text-foreground">{{ t('inventory.subcategory') }}: {{ finalBarangSubcategory }}</p>
                       <p class="text-foreground">{{ t('inventory.uom') }}: {{ finalBarangUom }}</p>
@@ -278,6 +295,10 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                     <div class="md:col-span-5">
                       <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.assetCode') }}:</span> {{ asset.number }}</p>
                       <p v-if="asset.legacy_number" class="text-foreground"><span class="text-foreground">{{ t('inventory.legacyNumber') }}:</span> {{ asset.legacy_number }}</p>
+                      <p v-if="isComp" class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.specification') }}:</span> {{ asset.specification || '-' }}</p>
+                      <p v-if="isLotVendorMultiple || asset.unit_vendor" class="text-foreground">
+                        <span class="text-foreground">{{ t('inventory.vendor') }}:</span> {{ asset.unit_vendor || (String(asset.vendor || '').trim().toLowerCase() !== 'beragam' ? asset.vendor : null) || '-' }}
+                      </p>
                       <!-- TNKB (Nopol) -->
                       <p v-if="isVehicle" class="font-bold text-foreground">
                         <span class="text-foreground">{{ t('inventory.nopol') }}:</span> {{ asset.vehicle_registration || '-' }}

@@ -75,6 +75,12 @@ const isConsumableSelected = computed(() => {
   return Boolean(sub?.is_consumable);
 });
 
+const isCompCategory = computed(() => {
+  if (!newItem.category_id) return false;
+  const cat = props.categories.find(c => c.id === newItem.category_id);
+  return cat ? (cat.code === 'COMP' || cat.name?.toLowerCase() === 'computer') : false;
+});
+
 const filteredSubcategories = computed(() => {
   return newItem.category_id ? props.subcategories.filter(s => s.category_id == newItem.category_id) : props.subcategories;
 });
@@ -109,6 +115,9 @@ watch(() => newItem.category_id, () => {
   newItem.subcategory_id = null; 
   newItem.brand_id = null; 
   newItem.min_stock_threshold = null;
+  if (isCompCategory.value) {
+    newItem.specification = '';
+  }
 });
 watch(() => newItem.subcategory_id, () => { newItem.code = ''; });
 
@@ -187,7 +196,7 @@ const handleSubmit = () => {
     brand_id: data.brand_id,
     uom_id: data.uom_id,
     name: data.name,
-    specification: data.specification,
+    specification: isCompCategory.value ? null : (data.specification || null),
     min_stock_threshold: isConsumableSelected.value && data.min_stock_threshold !== '' && data.min_stock_threshold !== null ? Number(data.min_stock_threshold) : null,
     image_url: data.photo,
   })).post('/smart/inventory/barangs', {
@@ -365,7 +374,7 @@ const handleSubmit = () => {
                     <FieldError v-if="errors.name">{{ errors.name }}</FieldError>
                   </Field>
 
-                  <Field>
+                  <Field v-if="!isCompCategory">
                     <FieldLabel for="newItemSpecification">{{ t('inventory.specification') }}</FieldLabel>
                     <FieldContent>
                       <input 

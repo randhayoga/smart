@@ -45,7 +45,7 @@ class LotFactory extends Factory
             'number' => $number,
             'barang_id' => $barang->id,
             'organizer_id' => $organizer->id,
-            'vendor_id' => null,
+            'vendor_id' => $vendor->id,
             'legacy_vendor_id' => $vendor->id,
             'location_id' => $location->id,
             'initial_quantity' => 0,

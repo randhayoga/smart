@@ -15,6 +15,7 @@ import {
   SlidersHorizontal
 } from 'lucide-vue-next';
 import { Button } from "@/Components/ui/button";
+import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -81,7 +82,13 @@ interface Props {
     lot_organizer?: string;
     lot_date_of_receipt?: string | null;
     lot_vendor?: string;
+    lot_vendor_id?: number | null;
     lot_po_number?: string;
+
+    // Unit specific
+    specification?: string | null;
+    unit_vendor?: string | null;
+    unit_vendor_id?: number | null;
 
     // Parent barang info
     barang_id?: number;
@@ -90,6 +97,7 @@ interface Props {
     barang_brand?: string;
     barang_specification?: string;
     barang_category?: string;
+    barang_category_code?: string;
     barang_subcategory?: string;
     barang_uom?: string;
   }[];
@@ -140,6 +148,18 @@ const rowsPerPage = ref<'all' | '10' | '25' | '50'>('50');
 const dataTableRef = ref<any>(null);
 
 const { t, te, locale } = useI18n();
+
+const isComp = computed(() => {
+  const catCode = props.barang?.category || props.lot?.barang_category_code || props.lot?.barang_category || '';
+  const catLower = String(catCode).toLowerCase();
+  if (catCode === 'COMP' || catLower === 'computer' || catLower === 'comp') {
+    return true;
+  }
+  return props.units.some(u => {
+    const c = (u.barang_category_code || u.barang_category || '').toLowerCase();
+    return c === 'comp' || c === 'computer';
+  });
+});
 
 // View Asset Modal Setup
 const isViewAssetModalOpen = ref(false);
@@ -577,7 +597,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
       t('inventory.assetCode'),
       h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
     ]),
-    cell: ({ row }) => h('div', { class: 'text-muted-foreground font-mono text-sm truncate font-medium' }, row.getValue('number')),
+    cell: ({ row }) => h('div', { class: 'text-muted-foreground font-mono text-sm truncate font-medium max-w-[193px]' }, row.getValue('number')),
   });
 
   if (!props.hideBarangColumns) {
@@ -673,25 +693,51 @@ const columns = computed<ColumnDef<any>[]>(() => {
         
         return h('span', { class: textClass }, getConditionLabel(cond));
       }
-    },
-    {
-      accessorKey: 'location',
+    }
+  );
+
+  if (props.hideBarangColumns && isComp.value) {
+    list.push({
+      accessorKey: 'specification',
       header: ({ column }) => h(Button, {
         variant: 'ghost',
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        t('inventory.location'),
+        t('inventory.specification'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ]),
-      cell: ({ row }) => {
-        const r = row.original;
-        return h('div', { class: 'text-muted-foreground text-sm' }, formatLocation(r.location, r.floor, r.room));
-      }
-    }
-  );
+      cell: ({ row }) => h('div', { 
+        class: 'text-foreground truncate font-medium', 
+        title: row.original.specification || '-' 
+      }, row.original.specification || '-'),
+    });
+  }
 
-  if (props.hideBarangColumns) {
+  list.push({
+    accessorKey: 'location',
+    header: ({ column }) => h(Button, {
+      variant: 'ghost',
+      onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+      class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+    }, () => [
+      t('inventory.location'),
+      h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+    ]),
+    cell: ({ row }) => {
+      const r = row.original;
+      const formattedLoc = formatLocation(r.location, r.floor, r.room);
+      return h('div', { 
+        class: cn(
+          'text-muted-foreground text-sm',
+          (props.hideBarangColumns && isComp.value) ? 'truncate' : ''
+        ),
+        title: formattedLoc
+      }, formattedLoc);
+    }
+  });
+
+  if (props.hideBarangColumns && !isComp.value) {
     list.push({
       accessorKey: 'price',
       header: ({ column }) => h(Button, {

@@ -130,25 +130,26 @@ class DummyMasterSeeder extends Seeder
         }
 
         $vendors = [
+            'Beragam',
             'PT Surya Abadi Mandiri',
             'PT Jaya Sentosa Sejahtera',
             'PT Media Pratama Nusantara',
             'PT Mitra Global Solusindo',
             'PT Karya Indah Semesta',
         ];
-        $vendorCodes = ['VN0001', 'VN0002', 'VN0003', 'VN0004', 'VN0005'];
+        $vendorCodes = ['VN0000', 'VN0001', 'VN0002', 'VN0003', 'VN0004', 'VN0005'];
         foreach ($vendors as $index => $vendorName) {
             Vendor::firstOrCreate(
-                ['code' => $vendorCodes[$index]],
+                ['name' => $vendorName],
                 [
-                    'name' => $vendorName,
-                    'address' => 'Jl. Jenderal Sudirman No. ' . rand(1, 100) . ', Jakarta',
-                    'phone_number' => '08' . rand(5000000, 9999999),
-                    'email' => strtolower(str_replace(' ', '', $vendorName)) . '@example.com',
-                    'description' => 'Supplier untuk ' . $vendorName,
-                    'contact_person_1' => 'Budi Santoso',
-                    'cp_email_1' => 'budi.santoso@example.com',
-                    'cp_phone_1' => '0812' . rand(10000000, 99999999),
+                    'code' => $vendorCodes[$index],
+                    'address' => $vendorName === 'Beragam' ? null : 'Jl. Jenderal Sudirman No. ' . rand(1, 100) . ', Jakarta',
+                    'phone_number' => $vendorName === 'Beragam' ? null : '08' . rand(5000000, 9999999),
+                    'email' => $vendorName === 'Beragam' ? null : strtolower(str_replace(' ', '', $vendorName)) . '@example.com',
+                    'description' => $vendorName === 'Beragam' ? 'Vendor penampung untuk data migrasi beragam' : 'Supplier untuk ' . $vendorName,
+                    'contact_person_1' => $vendorName === 'Beragam' ? null : 'Budi Santoso',
+                    'cp_email_1' => $vendorName === 'Beragam' ? null : 'budi.santoso@example.com',
+                    'cp_phone_1' => $vendorName === 'Beragam' ? null : '0812' . rand(10000000, 99999999),
                 ]
             );
         }

@@ -35,7 +35,7 @@ class UnitController extends Controller
         $units = Unit::with([
             'location.parent', 'statusApprovals', 'project',
             'lot.barang.subcategory.category', 'lot.barang.brand',
-            'lot.organizer', 'lot.vendor', 'lot.legacyVendor', 'lifecycles.actor',
+            'lot.organizer', 'lot.vendor', 'lot.legacyVendor', 'vendor', 'lifecycles.actor',
             'fulfillments' => fn($q) => $q->whereNull('completed_at')->with('requestItem.request.user')
         ])
         ->where('status', 'not like', 'Pending%')
@@ -71,6 +71,7 @@ class UnitController extends Controller
                 'condition' => $unit->condition,
                 'type' => $unit->type,
                 'classification' => $unit->classification,
+                'specification' => $unit->specification,
                 'price' => $unit->price,
                 'image_url' => $unit->image_url,
                 'vehicle_registration' => $unit->vehicle_registration,
@@ -81,6 +82,10 @@ class UnitController extends Controller
                 'created_at' => $unit->created_at?->toIso8601String(),
                 'updated_at' => $unit->updated_at ? $unit->updated_at->format('d-m-Y H:i') : '-',
                 
+                // Unit-specific legacy vendor
+                'unit_vendor' => $unit->vendor?->name,
+                'unit_vendor_id' => $unit->vendor_id,
+
                 // Location info
                 'location' => $unit->location?->full_name ?? '-',
                 'location_id' => $unit->location_id,
@@ -97,6 +102,7 @@ class UnitController extends Controller
                 'legacy_vendor_id' => $unit->lot->legacy_vendor_id ?? null,
                 'lot_organizer' => $unit->lot->organizer->name ?? '-',
                 'lot_vendor' => $unit->lot?->vendor_name ?? '-',
+                'lot_vendor_id' => $unit->lot->vendor_id ?? null,
                 'lot_po_number' => $unit->lot->po_number ?? '-',
                 'lot_date_of_receipt' => ($unit->lot && $unit->lot->date_of_receipt) ? $unit->lot->date_of_receipt->format('Y-m-d') : null,
 
@@ -107,6 +113,7 @@ class UnitController extends Controller
                 'barang_brand' => $barang->brand->name ?? '-',
                 'barang_specification' => $barang->specification ?? '-',
                 'barang_category' => $barang->subcategory->category->name ?? '-',
+                'barang_category_code' => $barang->subcategory->category->code ?? null,
                 'barang_subcategory' => $barang->subcategory->name ?? '-',
                 'barang_uom' => $barang->uom->name ?? '-',
 
@@ -161,13 +168,14 @@ class UnitController extends Controller
         $request->merge(['number' => $generatedNumber]);
 
         $rules = [
-            'number' => 'required|string|max:25|unique:units,number',
+            'number' => 'required|string|max:50|unique:units,number',
             'lot_id' => 'required|exists:lots,id',
             'location_id' => 'required|exists:locations,id',
             'status' => 'nullable|string|max:255',
             'condition' => 'required|string|max:255',
             'type' => 'required|string|in:LT,ST',
             'classification' => 'required|string|in:Aset,Inventaris',
+            'specification' => 'nullable|string|max:255',
             'price' => 'nullable|numeric|min:0|max:999999999.99',
             'image_url' => 'nullable|image|max:1024',
             'use_lot_image' => 'nullable',
@@ -202,6 +210,11 @@ class UnitController extends Controller
         }
 
         $validated = $request->validate($rules);
+
+        $isComp = ($lot->barang?->subcategory?->category?->code === 'COMP');
+        if (!$isComp) {
+            $validated['specification'] = null;
+        }
 
         if ($needApproval) {
             $validated['status'] = 'Pending:BoD/BoC';
@@ -326,13 +339,14 @@ class UnitController extends Controller
         $isRestricted = in_array($currentStatusLower, ['tidak aktif', 'pending', 'pending:bod/boc', 'belum diverifikasi', 'verifikasi ditolak']) || str_starts_with($currentStatusLower, 'pending') || in_array($unit->condition, $arrInactiveConditions);
 
         $rules = [
-            'number' => 'required|string|max:25|unique:units,number,' . $unit->id,
+            'number' => 'required|string|max:50|unique:units,number,' . $unit->id,
             'lot_id' => 'required|exists:lots,id',
             'location_id' => 'required|exists:locations,id',
             'status' => ['required', 'string', 'in:Tersedia,Dipinjam,Standby,Tidak Aktif,Pending,Pending:BoD/BoC,Belum Diverifikasi,Verifikasi Ditolak'],
             'condition' => ['required', 'string', 'in:Bagus,Rusak,QC Passed,Lelang/Hibah,Rusak Total,Hilang'],
             'type' => ['required', 'string', 'in:LT,ST'],
             'classification' => ['required', 'string', 'in:Aset,Inventaris'],
+            'specification' => 'nullable|string|max:255',
             'price' => 'nullable|numeric|min:0|max:999999999.99',
             'image_url' => 'nullable|image|mimes:jpeg,jpg,png|max:1024',
             'delete_image' => 'nullable|boolean',
@@ -488,6 +502,11 @@ class UnitController extends Controller
 
         if ($needApproval) {
             $validated['status'] = 'Pending:BoD/BoC';
+        }
+
+        $isComp = ($lot->barang?->subcategory?->category?->code === 'COMP');
+        if (!$isComp) {
+            $validated['specification'] = null;
         }
 
         $unit->update($validated);

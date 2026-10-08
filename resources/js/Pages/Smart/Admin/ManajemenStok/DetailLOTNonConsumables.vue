@@ -26,7 +26,7 @@ interface Props {
     organizer: string;
     organizer_id: number;
     vendor: string;
-    vendor_id: number;
+    vendor_id?: number | null;
     location: string;
     location_id: number;
     floor: string | null;
@@ -47,6 +47,7 @@ interface Props {
     barang_nama: string;
     barang_specification: string;
     barang_category: string;
+    barang_category_code?: string;
     barang_subcategory: string;
     barang_uom: string;
   };

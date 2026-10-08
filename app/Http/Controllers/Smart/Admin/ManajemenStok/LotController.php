@@ -34,10 +34,10 @@ class LotController extends Controller
         $isConsumable = (bool) $barang->is_consumable;
 
         $validated = $request->validate([
-            'number' => 'required|string|max:26|unique:lots,number',
+            'number' => 'required|string|max:50|unique:lots,number',
             'barang_id' => 'required|exists:barangs,id',
             'organizer_id' => 'required|exists:organizers,id',
-            'vendor_id' => 'nullable|integer', // Target DB: eproc (vendors table) - not operational yet
+            'vendor_id' => 'required|integer', // Target DB: eproc (vendors table)
             'legacy_vendor_id' => 'nullable|exists:vendors,id', // Legacy vendors in local DB
             'location_id' => [$isConsumable ? 'required' : 'nullable', 'exists:locations,id'],
             'initial_quantity' => 'nullable|integer|min:0|max:2147483647',
@@ -50,6 +50,7 @@ class LotController extends Controller
             'burden' => 'nullable|string|in:Corporate,Project',
             'project_id' => ['required_if:burden,Project', 'nullable', Rule::exists(TbProject::class, 'id_project')],
         ], [
+            'vendor_id.required' => 'Vendor wajib dipilih.',
             'location_id.required' => 'Lokasi wajib dipilih.',
             'initial_quantity.required' => 'Jumlah stok awal wajib diisi.',
             'initial_quantity.integer' => 'Tidak boleh desimal.',
@@ -105,11 +106,13 @@ class LotController extends Controller
     {
         $isConsumable = (bool) ($lot->barang?->is_consumable ?? false);
 
-        $validated = $request->validate([
-            'number' => 'required|string|max:26|unique:lots,number,' . $lot->id,
+        $isBeragam = ($lot->vendor_name === 'Beragam' || $lot->vendor?->name === 'Beragam' || $lot->legacyVendor?->name === 'Beragam');
+
+        $rules = [
+            'number' => 'required|string|max:50|unique:lots,number,' . $lot->id,
             'barang_id' => 'required|exists:barangs,id',
             'organizer_id' => 'required|exists:organizers,id',
-            'vendor_id' => 'nullable|integer', // Target DB: eproc (vendors table) - not operational yet
+            'vendor_id' => $isBeragam ? 'nullable' : 'required|integer', // Target DB: eproc (vendors table)
             'legacy_vendor_id' => 'nullable|exists:vendors,id', // Legacy vendors in local DB
             'location_id' => [$isConsumable ? 'required' : 'nullable', 'exists:locations,id'],
             'initial_quantity' => 'nullable|integer|min:0|max:2147483647',
@@ -121,7 +124,10 @@ class LotController extends Controller
             'use_parent_image' => 'nullable',
             'burden' => 'nullable|string|in:Corporate,Project',
             'project_id' => ['required_if:burden,Project', 'nullable', Rule::exists(TbProject::class, 'id_project')],
-        ], [
+        ];
+
+        $validated = $request->validate($rules, [
+            'vendor_id.required' => 'Vendor wajib dipilih.',
             'location_id.required' => 'Lokasi wajib dipilih.',
             'initial_quantity.integer' => 'Tidak boleh desimal.',
         ]);
@@ -180,11 +186,15 @@ class LotController extends Controller
             $validated['burden'] = null;
             $validated['project_id'] = null;
         }
-        if ($request->has('vendor_id')) {
-            $validated['vendor_id'] = !empty($validated['vendor_id']) ? (int)$validated['vendor_id'] : null;
-        }
-        if ($request->has('legacy_vendor_id')) {
-            $validated['legacy_vendor_id'] = !empty($validated['legacy_vendor_id']) ? (int)$validated['legacy_vendor_id'] : null;
+
+        if ($isBeragam) {
+            // Prohibit changing vendor for migrated Beragam lot to prevent inconsistency with units
+            unset($validated['vendor_id'], $validated['legacy_vendor_id']);
+        } else {
+            if ($request->has('vendor_id')) {
+                $validated['vendor_id'] = !empty($validated['vendor_id']) ? (int)$validated['vendor_id'] : null;
+                $validated['legacy_vendor_id'] = $validated['vendor_id'];
+            }
         }
 
         $original = $lot->getAttributes();
@@ -298,6 +308,7 @@ class LotController extends Controller
                 'barang_nama' => $lot->barang->name ?? '-',
                 'barang_specification' => $lot->barang->specification ?? '-',
                 'barang_category' => $lot->barang->subcategory->category->name ?? '-',
+                'barang_category_code' => $lot->barang->subcategory->category->code ?? null,
                 'barang_subcategory' => $lot->barang->subcategory->name ?? '-',
                 'barang_subcategory_code' => $lot->barang->subcategory->code ?? '-',
                 'barang_uom' => $lot->barang->uom->name ?? '-',
@@ -310,7 +321,7 @@ class LotController extends Controller
         $units = Unit::with([
             'location.parent', 'statusApprovals', 'project',
             'lot.barang.subcategory.category', 'lot.barang.brand', 'lot.barang.uom',
-            'lot.organizer', 'lot.vendor', 'lot.legacyVendor', 'lifecycles.actor'
+            'lot.organizer', 'lot.vendor', 'lot.legacyVendor', 'vendor', 'lifecycles.actor'
         ])
         ->where('lot_id', $lot->id)
         ->orderBy('created_at', 'desc')
@@ -341,6 +352,7 @@ class LotController extends Controller
                 'condition' => $unit->condition,
                 'type' => $unit->type,
                 'classification' => $unit->classification,
+                'specification' => $unit->specification,
                 'price' => $unit->price,
                 'image_url' => $unit->image_url,
                 'vehicle_registration' => $unit->vehicle_registration,
@@ -351,6 +363,10 @@ class LotController extends Controller
                 'created_at' => $unit->created_at?->toIso8601String(),
                 'updated_at' => $unit->updated_at ? $unit->updated_at->format('d-m-Y H:i') : '-',
                 
+                // Unit-specific legacy vendor
+                'unit_vendor' => $unit->vendor?->name,
+                'unit_vendor_id' => $unit->vendor_id,
+
                 // Location info
                 'location' => $unit->location ? $unit->location->full_name : '-',
                 'location_id' => $unit->location_id,
@@ -367,6 +383,7 @@ class LotController extends Controller
                 'legacy_vendor_id' => $unit->lot->legacy_vendor_id ?? null,
                 'lot_organizer' => $unit->lot->organizer->name ?? '-',
                 'lot_vendor' => $unit->lot?->vendor_name ?? '-',
+                'lot_vendor_id' => $unit->lot->vendor_id ?? null,
                 'lot_po_number' => $unit->lot->po_number ?? '-',
                 'lot_date_of_receipt' => ($unit->lot && $unit->lot->date_of_receipt) ? $unit->lot->date_of_receipt->format('Y-m-d') : null,
                 'lot_age' => $unit->lot->age ?? null,
@@ -402,8 +419,8 @@ class LotController extends Controller
         $uoms = Uom::orderBy('name')->get();
         $organizers = Organizer::orderBy('name')->get();
         // Target DB: eproc (vendors table).
-        // Eproc database is not operational yet, returning empty array for LOT vendor selection.
-        $vendors = []; // When operational: DB::connection('eproc')->table('vendors')->select('id', 'name')->orderBy('name')->get();
+        // Using local vendors directory (falls back to eproc when connection configured)
+        $vendors = Vendor::orderBy('name')->get(['id', 'name']);
         $locations = Location::with('parent')->active()->orderBy('name')->get();
         $projects = TbProject::orderBy('project_name')->get();
         $users = \App\Models\User::select('id', 'employee_name', 'employee_id')

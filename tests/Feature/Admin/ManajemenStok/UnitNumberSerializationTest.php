@@ -134,6 +134,8 @@ class UnitNumberSerializationTest extends TestCase
             'location_id' => $this->location->id,
             'status' => 'Tersedia',
             'condition' => 'Baik',
+            'type' => 'LT',
+            'classification' => 'Aset',
             'image_url' => 'units/sample.jpg',
         ]);
 
@@ -168,6 +170,8 @@ class UnitNumberSerializationTest extends TestCase
             'location_id' => $this->location->id,
             'status' => 'Tersedia',
             'condition' => 'Baik',
+            'type' => 'LT',
+            'classification' => 'Aset',
             'image_url' => 'units/sample.jpg',
         ]);
 

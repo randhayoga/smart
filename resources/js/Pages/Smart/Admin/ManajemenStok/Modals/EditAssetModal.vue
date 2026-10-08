@@ -45,6 +45,12 @@ useModalLock(computed(() => props.open));
 const isSingle = computed(() => props.items.length === 1);
 const selectedItem = computed(() => isSingle.value ? props.items[0] : null);
 const isVehicle = computed(() => props.barang?.category === 'Kendaraan');
+const isComp = computed(() => {
+  return props.barang?.category_code === 'COMP' ||
+    props.barang?.category === 'Computer' ||
+    props.barang?.category === 'COMP' ||
+    props.lot?.barang_category_code === 'COMP';
+});
 
 const arrNeedApproval = ['Rusak Total', 'Hilang'];
 const arrInactiveConditions = ['Rusak Total', 'Hilang', 'Lelang/Hibah'];
@@ -143,6 +149,7 @@ const form = useForm({
   type: '',
   classification: '',
   price: '' as string | number,
+  specification: '',
   image_url: null as File | null,
   image_url_name: '',
   use_lot_image: false,
@@ -292,6 +299,7 @@ watch(() => props.open, (val) => {
     form.bod_boc_approval_file_name = item.bod_boc_approval_file_name || (item.bod_boc_approval_url ? item.bod_boc_approval_url.split('/').pop() || '' : '');
     form.burden = item.burden || 'Corporate';
     form.project_id = item.project_id || '';
+    form.specification = isComp.value ? (item.specification || '') : '';
   } else {
     form.number = '';
     form.legacy_number = '';
@@ -303,6 +311,7 @@ watch(() => props.open, (val) => {
     form.type = '';
     form.classification = '';
     form.price = '';
+    form.specification = '';
     form.vehicle_registration = '';
     form.burden = 'Tidak berubah';
     form.project_id = '';
@@ -311,6 +320,7 @@ watch(() => props.open, (val) => {
 
 const closeModal = () => {
   isImageDeleted.value = false;
+  form.specification = '';
   emit('update:open', false);
 };
 
@@ -539,6 +549,7 @@ const handleSubmit = () => {
           project_id: data.burden === 'Project' ? data.project_id : null,
         };
         if (isVehicle.value) fd.vehicle_registration = data.vehicle_registration;
+        if (isComp.value) fd.specification = data.specification || null;
         if (data.image_url) {
           fd.image_url = data.image_url;
         } else if (data.use_lot_image) {
@@ -566,6 +577,7 @@ const handleSubmit = () => {
         form.type ||
         form.classification ||
         form.location_id || form.price ||
+        (isComp.value && form.specification) ||
         form.image_url || form.use_lot_image || form.memo_file || form.lost_doc_file || form.bod_boc_approval_file ||
         (form.burden && form.burden !== 'Tidak berubah')
       );
@@ -588,6 +600,7 @@ const handleSubmit = () => {
       if (form.condition && !isKondisiDisabled.value) payload.condition = form.condition;
       if (form.type) payload.type = form.type;
       if (form.classification) payload.classification = form.classification;
+      if (isComp.value && form.specification) payload.specification = form.specification;
       
       if (form.location_id) {
         payload.location_id = form.location_id;
@@ -817,6 +830,22 @@ const handleSubmit = () => {
                       </div>
                     </FieldContent>
                     <FieldError v-if="isSingle && errors.classification">{{ errors.classification }}</FieldError>
+                  </Field>
+
+                  <!-- Specification (Only for COMP category) -->
+                  <Field v-if="isComp">
+                    <FieldLabel for="edit-unit-specification"><span>{{ t('inventory.specification') }}</span></FieldLabel>
+                    <FieldContent>
+                      <input 
+                        type="text" 
+                        id="edit-unit-specification"
+                        name="specification"
+                        v-model="form.specification" 
+                        maxlength="255"
+                        :placeholder="isSingle ? t('inventory.specificationPlaceholder') : t('inventory.unchanged')"
+                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
+                      />
+                    </FieldContent>
                   </Field>
 
                   <Field :data-invalid="(isSingle && !!errors.image_url) || undefined">

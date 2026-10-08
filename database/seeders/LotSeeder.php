@@ -46,7 +46,7 @@ class LotSeeder extends Seeder
                 'number' => 'LOT-0001-26-COMP-NB-0001',
                 'barang_id' => 6,
                 'organizer_id' => 2,
-                'vendor_id' => 1,
+                'vendor_id' => null,
                 'location_id' => 3,
                 'initial_quantity' => 0,
                 'current_quantity' => 0,
@@ -133,7 +133,10 @@ class LotSeeder extends Seeder
             $barangNumber = $parts[3] ?? null;
             $barangId = ($barangNumber ? \App\Models\Inventory\Barang::where('number', $barangNumber)->value('id') : null) ?? $data['barang_id'];
             $organizerId = \App\Models\Master\Organizer::where('id', $data['organizer_id'])->value('id') ?? \App\Models\Master\Organizer::first()?->id ?? $data['organizer_id'];
-            $vendorId = \App\Models\Master\Vendor::where('id', $data['vendor_id'])->value('id') ?? \App\Models\Master\Vendor::first()?->id ?? $data['vendor_id'];
+            $beragamVendorId = \App\Models\Master\Vendor::where('name', 'Beragam')->value('id');
+            $vendorId = !empty($data['vendor_id']) 
+                ? (\App\Models\Master\Vendor::where('id', $data['vendor_id'])->value('id') ?? $beragamVendorId ?? \App\Models\Master\Vendor::first()?->id)
+                : ($beragamVendorId ?? \App\Models\Master\Vendor::first()?->id);
             $locationId = \App\Models\Master\Location::where('id', $data['location_id'])->value('id') ?? \App\Models\Master\Location::first()?->id ?? $data['location_id'];
 
             $barang = \App\Models\Inventory\Barang::find($barangId);
@@ -153,7 +156,7 @@ class LotSeeder extends Seeder
                 [
                     'barang_id' => $barangId,
                     'organizer_id' => $organizerId,
-                    'vendor_id' => null,
+                    'vendor_id' => $vendorId,
                     'legacy_vendor_id' => $vendorId,
                     'location_id' => $locationId,
                     'initial_quantity' => $data['initial_quantity'],

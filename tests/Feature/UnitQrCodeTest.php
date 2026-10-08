@@ -33,8 +33,8 @@ class UnitQrCodeTest extends TestCase
         $combination = "{$tipeCode}-{$organizerCode}-PTRE";
         $yy = $lot->date_of_receipt ? $lot->date_of_receipt->format('y') : date('y');
         $unitNumber = "00001-{$combination}-{$yy}";
-        if (strlen($unitNumber) > 25) {
-            $unitNumber = substr($unitNumber, 0, 25);
+        if (strlen($unitNumber) > 50) {
+            $unitNumber = substr($unitNumber, 0, 50);
         }
 
         return Unit::create([
@@ -43,6 +43,8 @@ class UnitQrCodeTest extends TestCase
             'location_id' => $lot->location_id,
             'status' => 'Tersedia',
             'condition' => 'Baik',
+            'type' => 'LT',
+            'classification' => 'Aset',
             'price' => $lot->unit_price,
             'image_url' => 'inventory/lots/placeholder.jpg',
         ]);

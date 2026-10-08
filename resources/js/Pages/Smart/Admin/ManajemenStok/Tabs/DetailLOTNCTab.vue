@@ -2,7 +2,7 @@
 /**
  * Detail LOT Non-Consumable Tab component rendering non-consumable lot overview and its associated individual asset units.
  */
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { Plus } from 'lucide-vue-next';
 import { Button } from "@/Components/ui/button";
@@ -19,7 +19,7 @@ interface Props {
     organizer: string;
     organizer_id: number;
     vendor: string;
-    vendor_id: number;
+    vendor_id?: number | null;
     location: string;
     location_id: number;
     floor: string | null;
@@ -44,6 +44,7 @@ interface Props {
     barang_nama: string;
     barang_specification: string;
     barang_category: string;
+    barang_category_code?: string;
     barang_subcategory: string;
     barang_subcategory_code?: string;
     barang_uom: string;
@@ -75,6 +76,12 @@ interface Props {
 const props = defineProps<Props>();
 
 const { t, locale } = useI18n();
+
+const isComp = computed(() => {
+  return props.lot.barang_category_code === 'COMP' ||
+    props.lot.barang_category === 'Computer' ||
+    props.lot.barang_category === 'COMP';
+});
 
 const isCreateAssetModalOpen = ref(false);
 
@@ -137,7 +144,7 @@ onUnmounted(() => {
             <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.typeCode') }}:</span> {{ props.lot.barang_code }}</p>
             <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.brand') }}:</span> {{ props.lot.barang_brand }}</p>
             <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.name') }}:</span> {{ props.lot.barang_nama }}</p>
-            <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.specification') }}:</span> {{ props.lot.barang_specification }}</p>
+            <p v-if="!isComp" class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.specification') }}:</span> {{ props.lot.barang_specification || '-' }}</p>
             <p class="text-foreground">{{ t('inventory.category') }}: {{ props.lot.barang_category }}</p>
             <p class="text-foreground">{{ t('inventory.subcategory') }}: {{ props.lot.barang_subcategory }}</p>
             <p class="text-foreground">{{ t('inventory.uom') }}: {{ props.lot.barang_uom }}</p>
@@ -152,7 +159,7 @@ onUnmounted(() => {
             <p class="text-foreground">{{ t('inventory.age') }}: {{ props.lot.age !== undefined && props.lot.age !== null ? `${props.lot.age} ${t('inventory.yearUnit')}` : '-' }}</p>
             <p class="text-foreground">{{ t('inventory.defaultUnitPrice') }}: {{ formatRupiah(props.lot.unitPrice) }}</p>
             <p class="text-foreground">{{ t('inventory.organizer') }}: {{ props.lot.organizer }}</p>
-            <p class="text-foreground">{{ t('inventory.vendor') }}: {{ props.lot.vendor }}</p>
+            <p class="text-foreground">{{ t('inventory.vendor') }}: {{ (props.lot.vendor_id && props.lot.vendor !== '-') ? props.lot.vendor : t('inventory.vendorMultiple') }}</p>
             <p class="text-foreground">{{ t('inventory.lastUpdate') }}: {{ props.lot.updated_at }}</p>
           </div>
         </div>

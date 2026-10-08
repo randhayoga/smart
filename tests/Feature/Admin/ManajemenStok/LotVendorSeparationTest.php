@@ -37,10 +37,8 @@ class LotVendorSeparationTest extends TestCase
         $this->location = Location::factory()->create();
     }
 
-    public function test_lot_can_be_created_without_vendor_id(): void
+    public function test_lot_creation_requires_vendor_id(): void
     {
-        $file = UploadedFile::fake()->image('lot.jpg');
-
         $response = $this->actingAs($this->admin)->post(route('smart.inventory.lots.store'), [
             'number' => 'LOT-0001-26-TEST-0001',
             'barang_id' => $this->barang->id,
@@ -50,30 +48,22 @@ class LotVendorSeparationTest extends TestCase
             'po_number' => 'PO-NEW-01',
             'date_of_receipt' => '2026-10-01',
             'unit_price' => 50000,
-            'image_url' => $file,
             'burden' => 'Corporate',
         ]);
 
-        $response->assertRedirect();
-        $this->assertDatabaseHas('lots', [
-            'number' => 'LOT-0001-26-TEST-0001',
-            'vendor_id' => null,
-            'legacy_vendor_id' => null,
-        ]);
-
-        $lot = Lot::where('number', 'LOT-0001-26-TEST-0001')->firstOrFail();
-        $this->assertEquals('-', $lot->vendor_name);
+        $response->assertSessionHasErrors(['vendor_id']);
     }
 
-    public function test_lot_can_be_created_with_external_eproc_vendor_id(): void
+    public function test_lot_can_be_created_with_vendor_id(): void
     {
+        $vendor = Vendor::factory()->create();
         $file = UploadedFile::fake()->image('lot.jpg');
 
         $response = $this->actingAs($this->admin)->post(route('smart.inventory.lots.store'), [
             'number' => 'LOT-0002-26-TEST-0001',
             'barang_id' => $this->barang->id,
             'organizer_id' => $this->organizer->id,
-            'vendor_id' => 9999, // Unconstrained external eproc vendor ID
+            'vendor_id' => $vendor->id,
             'location_id' => $this->location->id,
             'po_number' => 'PO-NEW-02',
             'date_of_receipt' => '2026-10-01',
@@ -85,8 +75,7 @@ class LotVendorSeparationTest extends TestCase
         $response->assertRedirect();
         $this->assertDatabaseHas('lots', [
             'number' => 'LOT-0002-26-TEST-0001',
-            'vendor_id' => 9999,
-            'legacy_vendor_id' => null,
+            'vendor_id' => $vendor->id,
         ]);
     }
 
@@ -101,7 +90,7 @@ class LotVendorSeparationTest extends TestCase
             'barang_id' => $this->barang->id,
             'organizer_id' => $this->organizer->id,
             'location_id' => $this->location->id,
-            'vendor_id' => null,
+            'vendor_id' => $legacyVendor->id,
             'legacy_vendor_id' => $legacyVendor->id,
         ]);
 
@@ -116,18 +105,16 @@ class LotVendorSeparationTest extends TestCase
         $this->assertDatabaseHas('vendors', ['id' => $legacyVendor->id]);
     }
 
-    public function test_updating_lot_without_vendor_id_preserves_legacy_vendor_id(): void
+    public function test_updating_regular_lot_requires_vendor_id(): void
     {
-        $legacyVendor = Vendor::factory()->create([
-            'name' => 'PT Vendor Lama',
-        ]);
+        $vendor = Vendor::factory()->create(['name' => 'PT Vendor Asli']);
 
         $lot = Lot::factory()->create([
             'barang_id' => $this->barang->id,
             'organizer_id' => $this->organizer->id,
             'location_id' => $this->location->id,
-            'vendor_id' => null,
-            'legacy_vendor_id' => $legacyVendor->id,
+            'vendor_id' => $vendor->id,
+            'legacy_vendor_id' => $vendor->id,
             'unit_price' => 100000,
         ]);
 
@@ -135,6 +122,37 @@ class LotVendorSeparationTest extends TestCase
             'number' => $lot->number,
             'barang_id' => $this->barang->id,
             'organizer_id' => $this->organizer->id,
+            'vendor_id' => null,
+            'location_id' => $this->location->id,
+            'po_number' => 'PO-UPDATED',
+            'date_of_receipt' => '2026-10-01',
+            'unit_price' => 120000,
+            'burden' => 'Corporate',
+        ]);
+
+        $response->assertSessionHasErrors(['vendor_id']);
+    }
+
+    public function test_updating_beragam_lot_locks_vendor_id(): void
+    {
+        $beragamVendor = Vendor::factory()->create(['name' => 'Beragam']);
+        $otherVendor = Vendor::factory()->create(['name' => 'PT Lain']);
+
+        $lot = Lot::factory()->create([
+            'barang_id' => $this->barang->id,
+            'organizer_id' => $this->organizer->id,
+            'location_id' => $this->location->id,
+            'vendor_id' => $beragamVendor->id,
+            'legacy_vendor_id' => $beragamVendor->id,
+            'unit_price' => 100000,
+        ]);
+
+        // Attempting to update with another vendor_id should not change vendor_id
+        $response = $this->actingAs($this->admin)->put(route('smart.inventory.lots.update', $lot), [
+            'number' => $lot->number,
+            'barang_id' => $this->barang->id,
+            'organizer_id' => $this->organizer->id,
+            'vendor_id' => $otherVendor->id,
             'location_id' => $this->location->id,
             'po_number' => 'PO-UPDATED',
             'date_of_receipt' => '2026-10-01',
@@ -145,20 +163,18 @@ class LotVendorSeparationTest extends TestCase
         $response->assertRedirect();
         $lot->refresh();
         $this->assertEquals(120000, (int)$lot->unit_price);
-        $this->assertEquals($legacyVendor->id, $lot->legacy_vendor_id);
-        $this->assertNull($lot->vendor_id);
-        $this->assertEquals('PT Vendor Lama', $lot->vendor_name);
+        $this->assertEquals($beragamVendor->id, $lot->vendor_id);
     }
 
-    public function test_lot_show_json_returns_vendor_name_and_legacy_vendor_id(): void
+    public function test_lot_show_json_returns_vendor_name_and_vendor_id(): void
     {
-        $legacyVendor = Vendor::factory()->create(['name' => 'PT Sumber Rezeki']);
+        $vendor = Vendor::factory()->create(['name' => 'PT Sumber Rezeki']);
         $lot = Lot::factory()->create([
             'barang_id' => $this->barang->id,
             'organizer_id' => $this->organizer->id,
             'location_id' => $this->location->id,
-            'vendor_id' => null,
-            'legacy_vendor_id' => $legacyVendor->id,
+            'vendor_id' => $vendor->id,
+            'legacy_vendor_id' => $vendor->id,
         ]);
 
         $response = $this->actingAs($this->admin)->getJson(route('smart.inventory.lots.show', $lot));
@@ -166,26 +182,26 @@ class LotVendorSeparationTest extends TestCase
         $response->assertJson([
             'id' => $lot->id,
             'vendor' => 'PT Sumber Rezeki',
-            'vendor_id' => null,
-            'legacy_vendor_id' => $legacyVendor->id,
+            'vendor_id' => $vendor->id,
+            'legacy_vendor_id' => $vendor->id,
         ]);
     }
 
-    public function test_lot_show_inertia_passes_empty_vendors_for_eproc_selection(): void
+    public function test_lot_show_inertia_passes_vendors_list(): void
     {
+        $vendor = Vendor::factory()->create(['name' => 'Vendor Test']);
         $lot = Lot::factory()->create([
             'barang_id' => $this->barang->id,
             'organizer_id' => $this->organizer->id,
             'location_id' => $this->location->id,
+            'vendor_id' => $vendor->id,
         ]);
-
-        Vendor::factory()->count(3)->create();
 
         $response = $this->actingAs($this->admin)->get(route('smart.inventory.lots.show', $lot));
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page
             ->component('Smart/Admin/ManajemenStok/DetailLOTNonConsumables')
-            ->where('vendors', [])
+            ->has('vendors')
         );
     }
 }

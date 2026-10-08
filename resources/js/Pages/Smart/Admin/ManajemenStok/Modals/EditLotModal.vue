@@ -83,6 +83,23 @@ const projectOptions = computed(() => {
   }));
 });
 
+const filteredVendors = computed(() => {
+  return (props.vendors || []).filter(v => v.name?.trim().toLowerCase() !== 'beragam');
+});
+
+const isBeragamLot = computed(() => {
+  if (!isSingle.value || !selectedItem.value) return false;
+  const item = selectedItem.value;
+  const vendorName = String(item.vendor || item.vendor_name || '').trim().toLowerCase();
+  if (vendorName === 'beragam') return true;
+
+  const currentVendor = (props.vendors || []).find(v => v.id == item.vendor_id || v.id == item.legacy_vendor_id);
+  if (currentVendor && currentVendor.name?.trim().toLowerCase() === 'beragam') {
+    return true;
+  }
+  return false;
+});
+
 // Reactive error clearing
 watch(() => form.organizer_id, v => { if (v && errors.value.organizer_id) errors.value.organizer_id = ''; });
 watch(() => form.vendor_id, v => { if (v && errors.value.vendor_id) errors.value.vendor_id = ''; });
@@ -217,6 +234,11 @@ const handleSubmit = () => {
   resetErrors();
 
   if (isSingle.value) {
+    let isValid = true;
+    if (!isBeragamLot.value && !form.vendor_id) {
+      errors.value.vendor_id = t('inventory.vendorRequired');
+      isValid = false;
+    }
     if (props.isConsumable) {
       if (!form.burden) { errors.value.burden = t('inventory.burdenRequired'); isValid = false; }
       if (form.burden === 'Project' && !form.project_id) { errors.value.project_id = t('inventory.projectRequired'); isValid = false; }
@@ -375,10 +397,18 @@ const handleSubmit = () => {
 
                   <Field :data-invalid="(isSingle && !!errors.vendor_id) || undefined">
                     <FieldLabel>
-                      <span>{{ t('inventory.vendor') }}</span>
+                      <span>{{ t('inventory.vendor') }}<span v-if="isSingle && !isBeragamLot" class="text-rose-500">*</span></span>
                     </FieldLabel>
                     <FieldContent>
-                      <Combobox v-model="form.vendor_id" :options="vendors" :search-placeholder="t('inventory.searchVendorPlaceholder')" :default-label="isSingle ? t('inventory.selectVendor') : t('inventory.unchanged')" width-class="w-full h-10 px-4" />
+                      <Combobox
+                        v-model="form.vendor_id"
+                        :options="filteredVendors"
+                        :disabled="isBeragamLot"
+                        :search-placeholder="t('inventory.searchVendorPlaceholder')"
+                        :default-label="isBeragamLot ? (t('inventory.vendorMultiple') || 'Beragam') : (isSingle ? t('inventory.selectVendor') : t('inventory.unchanged'))"
+                        width-class="w-full h-10 px-4"
+                        :error="isSingle && !!errors.vendor_id"
+                      />
                     </FieldContent>
                     <FieldError v-if="isSingle && errors.vendor_id">{{ errors.vendor_id }}</FieldError>
                   </Field>

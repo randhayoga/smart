@@ -177,11 +177,14 @@ class Unit extends Model
         'vehicle_registration',
         'burden',
         'project_id',
+        'vendor_id',
+        'specification',
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
         'project_id' => 'integer',
+        'vendor_id' => 'integer',
     ];
 
     /**
@@ -206,6 +209,22 @@ class Unit extends Model
     public function location(): BelongsTo
     {
         return $this->belongsTo(Location::class);
+    }
+
+    /**
+     * The legacy vendor associated with this unit during migration.
+     */
+    public function vendor(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\Master\Vendor::class, 'vendor_id');
+    }
+
+    /**
+     * Display name of the vendor associated with this unit, if any.
+     */
+    public function getVendorNameAttribute(): ?string
+    {
+        return $this->vendor?->name;
     }
 
     /**

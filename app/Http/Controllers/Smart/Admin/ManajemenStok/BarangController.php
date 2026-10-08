@@ -22,7 +22,7 @@ class BarangController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'number' => 'required|string|max:255|unique:barangs',
+            'number' => 'required|string|max:50|unique:barangs',
             'subcategory_id' => 'required|exists:subcategories,id',
             'brand_id' => 'required|exists:brands,id',
             'uom_id' => 'required|exists:uoms,id',
@@ -31,6 +31,11 @@ class BarangController extends Controller
             'min_stock_threshold' => 'nullable|integer|min:0',
             'image_url' => 'nullable|image|max:1024',
         ]);
+
+        $subcategory = \App\Models\Master\Subcategory::with('category')->find($validated['subcategory_id']);
+        if ($subcategory?->category?->code === 'COMP') {
+            $validated['specification'] = null;
+        }
 
         $imagePath = null;
         if ($request->hasFile('image_url')) {
@@ -53,7 +58,7 @@ class BarangController extends Controller
     public function update(Request $request, Barang $barang)
     {
         $validated = $request->validate([
-            'number' => 'required|string|max:255|unique:barangs,number,' . $barang->id,
+            'number' => 'required|string|max:50|unique:barangs,number,' . $barang->id,
             'subcategory_id' => 'required|exists:subcategories,id',
             'brand_id' => 'required|exists:brands,id',
             'uom_id' => 'required|exists:uoms,id',
@@ -63,6 +68,11 @@ class BarangController extends Controller
             'image_url' => 'nullable|image|max:1024',
             'delete_image' => 'nullable|boolean',
         ]);
+
+        $subcategory = \App\Models\Master\Subcategory::with('category')->find($validated['subcategory_id']);
+        if ($subcategory?->category?->code === 'COMP') {
+            $validated['specification'] = null;
+        }
 
         if ($request->boolean('delete_image')) {
             if ($barang->image_url && Storage::disk('local')->exists($barang->image_url)) {

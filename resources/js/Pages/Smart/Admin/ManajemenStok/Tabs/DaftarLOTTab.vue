@@ -48,6 +48,7 @@ interface Props {
     uom: string;
     subcategory_id: number;
     category_id: number;
+    category_code?: string;
     brand_id: number;
     uom_id: number;
     is_consumable: boolean;
@@ -449,6 +450,7 @@ const deleteFields = computed(() => {
     };
 
     const isConsumable = props.barang.is_consumable;
+    const isComp = props.barang.category_code === 'COMP' || props.barang.category === 'Computer' || props.barang.category === 'COMP';
     const availableStock = isConsumable ? (data.current_quantity ?? 0) : (data.availableAssetCount ?? 0);
     const initialStock = isConsumable ? (data.initial_quantity ?? 0) : (data.assetCount ?? 0);
 
@@ -458,7 +460,7 @@ const deleteFields = computed(() => {
       { label: t('inventory.subcategory'), value: props.barang.subcategory },
       { label: t('inventory.brand'), value: props.barang.brand },
       { label: t('inventory.name'), value: props.barang.name },
-      { label: t('inventory.specification'), value: props.barang.specification || '-' },
+      ...(!isComp ? [{ label: t('inventory.specification'), value: props.barang.specification || '-' }] : []),
       { label: t('inventory.availableStock'), value: availableStock },
       { label: t('inventory.initialStock'), value: initialStock },
       { label: t('inventory.location'), value: formatLocation(data.location, data.floor, data.room) },
@@ -467,7 +469,7 @@ const deleteFields = computed(() => {
       { label: t('inventory.age'), value: data.age !== undefined && data.age !== null ? `${data.age} ${t('inventory.yearUnit')}` : '-' },
       { label: t('inventory.unitPrice'), value: formatRupiah(data.unitPrice) },
       { label: t('inventory.organizer'), value: data.organizer },
-      { label: t('inventory.vendor'), value: data.vendor },
+      { label: t('inventory.vendor'), value: (data.vendor_id && data.vendor !== '-') ? data.vendor : t('inventory.vendorMultiple') },
       ...(isConsumable ? [{ label: t('inventory.burden'), value: data.burden || '-' }] : []),
       { label: t('inventory.lastUpdate'), value: data.updated_at || '-' }
     ];

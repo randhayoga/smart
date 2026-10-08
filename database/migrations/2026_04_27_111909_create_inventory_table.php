@@ -9,7 +9,7 @@ return new class extends Migration {
     {
         Schema::create('barangs', function (Blueprint $table) {
             $table->id();
-            $table->string('number', 14)->unique();
+            $table->string('number', 50)->unique();
             $table->foreignId('subcategory_id')->constrained('subcategories');
             $table->foreignId('brand_id')->constrained('brands');
             $table->foreignId('uom_id')->constrained('uoms');
@@ -23,10 +23,10 @@ return new class extends Migration {
 
         Schema::create('lots', function (Blueprint $table) {
             $table->id();
-            $table->string('number', 26)->unique();
+            $table->string('number', 50)->unique();
             $table->foreignId('barang_id')->constrained('barangs')->cascadeOnDelete();
             $table->foreignId('organizer_id')->constrained('organizers')->cascadeOnDelete();
-            $table->unsignedBigInteger('vendor_id')->nullable()->index()->comment('Refers to eproc:vendors.id');
+            $table->unsignedBigInteger('vendor_id')->index()->comment('Refers to eproc:vendors.id');
             $table->foreignId('legacy_vendor_id')->nullable()->constrained('vendors')->nullOnDelete()->comment('Refers to local vendors table (legacy)');
             $table->foreignId('location_id')->nullable()->constrained('locations')->comment('default location');
             $table->integer('initial_quantity')->nullable();
@@ -42,12 +42,14 @@ return new class extends Migration {
 
         Schema::create('units', function (Blueprint $table) {
             $table->id();
-            $table->string('number', 25)->unique();
+            $table->string('number', 50)->unique();
             $table->string('legacy_number', 50)->nullable()->comment('legacy asset code/number');
             $table->foreignId('lot_id')->constrained('lots')->cascadeOnDelete();
+            $table->foreignId('vendor_id')->nullable()->constrained('vendors')->nullOnDelete()->comment('Refers to local vendors table (legacy migration only)');
             $table->foreignId('location_id')->constrained('locations')->comment('current location');
             $table->string('status');
             $table->string('condition');
+            $table->string('specification')->nullable();
             $table->decimal('price', 15, 2)->nullable();
             $table->string('image_url')->nullable();
             $table->string('vehicle_registration')->nullable();

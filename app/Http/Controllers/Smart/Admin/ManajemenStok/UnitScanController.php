@@ -22,7 +22,7 @@ class UnitScanController extends Controller
         $unit->load([
             'location.parent', 'statusApprovals',
             'lot.barang.subcategory.category', 'lot.barang.brand',
-            'lot.organizer', 'lot.vendor', 'lot.legacyVendor'
+            'lot.organizer', 'lot.vendor', 'lot.legacyVendor', 'vendor'
         ]);
 
         $pendingApproval = $unit->statusApprovals->firstWhere('decision', 'pending');
@@ -49,11 +49,18 @@ class UnitScanController extends Controller
                 ? $pendingApproval->lost_doc_url 
                 : ($approvedApproval ? $approvedApproval->lost_doc_url : null),
             'condition' => $unit->condition,
+            'type' => $unit->type,
+            'classification' => $unit->classification,
+            'specification' => $unit->specification,
             'price' => $unit->price,
             'image_url' => $unit->image_url,
             'vehicle_registration' => $unit->vehicle_registration,
             'updated_at' => $unit->updated_at ? $unit->updated_at->format('d-m-Y H:i') : '-',
             
+            // Unit-specific legacy vendor
+            'unit_vendor' => $unit->vendor?->name,
+            'unit_vendor_id' => $unit->vendor_id,
+
             // Location info
             'location' => $unit->location ? $unit->location->full_name : '-',
             'location_id' => $unit->location_id,
@@ -70,6 +77,7 @@ class UnitScanController extends Controller
             'legacy_vendor_id' => $unit->lot->legacy_vendor_id ?? null,
             'lot_organizer' => $unit->lot->organizer->name ?? '-',
             'lot_vendor' => $unit->lot?->vendor_name ?? '-',
+            'lot_vendor_id' => $unit->lot->vendor_id ?? null,
             'lot_po_number' => $unit->lot->po_number ?? '-',
             'lot_date_of_receipt' => ($unit->lot && $unit->lot->date_of_receipt) ? $unit->lot->date_of_receipt->format('Y-m-d') : null,
             'lot_age' => $unit->lot ? $unit->lot->age : null,
@@ -81,6 +89,7 @@ class UnitScanController extends Controller
             'barang_brand' => $barang->brand->name ?? '-',
             'barang_specification' => $barang->specification ?? '-',
             'barang_category' => $barang->subcategory->category->name ?? '-',
+            'barang_category_code' => $barang->subcategory->category->code ?? null,
             'barang_subcategory' => $barang->subcategory->name ?? '-',
             'barang_uom' => $barang->uom->name ?? '-',
         ];

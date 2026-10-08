@@ -27,13 +27,14 @@ class BulkUnitController extends Controller
     public function store(Request $request)
     {
         $rules = [
-            'number' => 'required|string|max:255',
+            'number' => 'required|string|max:50',
             'lot_id' => 'required|exists:lots,id',
             'location_id' => 'required|exists:locations,id',
             'status' => 'nullable|string|max:255',
             'condition' => 'required|string|max:255',
             'type' => 'required|string|in:LT,ST',
             'classification' => 'required|string|in:Aset,Inventaris',
+            'specification' => 'nullable|string|max:255',
             'price' => 'nullable|numeric|min:0|max:999999999.99',
             'image_url' => 'nullable|image|max:1024',
             'use_lot_image' => 'nullable',
@@ -72,6 +73,11 @@ class BulkUnitController extends Controller
         $validated = $request->validate($rules, [
             'bulk_quantity.integer' => 'Tidak boleh desimal.',
         ]);
+
+        $isComp = ($lot->barang?->subcategory?->category?->code === 'COMP');
+        if (!$isComp) {
+            $validated['specification'] = null;
+        }
 
         if ($needApproval) {
             $validated['status'] = 'Pending:BoD/BoC';
@@ -118,6 +124,7 @@ class BulkUnitController extends Controller
                 'condition' => $validated['condition'],
                 'type' => $type,
                 'classification' => $classification,
+                'specification' => $validated['specification'] ?? null,
                 'price' => $validated['price'] ?? null,
                 'image_url' => $finalImagePath,
                 'vehicle_registration' => $validated['vehicle_registration'] ?? null,
@@ -187,6 +194,7 @@ class BulkUnitController extends Controller
             'condition' => ['nullable', 'string', 'in:Bagus,Rusak,QC Passed,Lelang/Hibah,Rusak Total,Hilang'],
             'type' => ['nullable', 'string', 'in:LT,ST'],
             'classification' => ['nullable', 'string', 'in:Aset,Inventaris'],
+            'specification' => 'nullable|string|max:255',
             'location_id' => 'nullable|exists:locations,id',
             'price' => 'nullable|numeric|min:0|max:999999999.99',
             'use_lot_image' => 'nullable',
@@ -365,6 +373,13 @@ class BulkUnitController extends Controller
                         Storage::disk('local')->delete($unit->image_url);
                     }
                 }
+            }
+        }
+
+        if ($request->has('specification')) {
+            $firstLot = Lot::with('barang.subcategory.category')->find($units->first()?->lot_id);
+            if ($firstLot?->barang?->subcategory?->category?->code === 'COMP') {
+                $updateData['specification'] = $request->input('specification');
             }
         }
 

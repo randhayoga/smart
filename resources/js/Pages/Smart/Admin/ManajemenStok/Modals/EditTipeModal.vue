@@ -36,6 +36,20 @@ useModalLock(computed(() => props.open));
 const isSingle = computed(() => props.items.length === 1);
 const selectedItem = computed(() => isSingle.value ? props.items[0] : null);
 
+const isCompCategory = computed(() => {
+  if (isSingle.value) {
+    if (!selectedItem.value) return false;
+    const code = selectedItem.value.category_code || selectedItem.value.barang_category_code;
+    const cat = selectedItem.value.category || selectedItem.value.barang_category;
+    return code === 'COMP' || cat === 'Computer' || cat === 'COMP';
+  }
+  return props.items.length > 0 && props.items.every(item => {
+    const code = item.category_code || item.barang_category_code;
+    const cat = item.category || item.barang_category;
+    return code === 'COMP' || cat === 'Computer' || cat === 'COMP';
+  });
+});
+
 const isConsumable = computed(() => {
   if (!selectedItem.value) return false;
   return Boolean(
@@ -111,7 +125,7 @@ watch(() => props.open, (val) => {
     form.uom_id = selectedItem.value.uom_id;
     form.brand_id = selectedItem.value.brand_id;
     form.name = selectedItem.value.name;
-    form.specification = selectedItem.value.specification;
+    form.specification = isCompCategory.value ? '' : (selectedItem.value.specification || '');
     form.photo = null;
     form.photoName = selectedItem.value.image_url ? selectedItem.value.image_url.split('/').pop() : '';
   }
@@ -176,7 +190,7 @@ const handleSubmit = () => {
     if (!isValid) return;
   } else {
     const hasAtLeastOneField = !!(
-      form.uom_id || form.brand_id || form.name || form.specification || form.photo
+      form.uom_id || form.brand_id || form.name || (!isCompCategory.value && form.specification) || form.photo
     );
     if (!hasAtLeastOneField) {
       toast.error(t('inventory.atLeastOneField'));
@@ -195,7 +209,7 @@ const handleSubmit = () => {
       formData.uom_id = data.uom_id;
       formData.brand_id = data.brand_id;
       formData.name = data.name;
-      formData.specification = data.specification;
+      formData.specification = isCompCategory.value ? null : data.specification;
       if (data.photo) {
         formData.image_url = data.photo;
       } else if (isImageDeleted.value) {
@@ -205,7 +219,7 @@ const handleSubmit = () => {
       if (data.uom_id) formData.uom_id = data.uom_id;
       if (data.brand_id) formData.brand_id = data.brand_id;
       if (data.name) formData.name = data.name;
-      if (data.specification) formData.specification = data.specification;
+      if (data.specification && !isCompCategory.value) formData.specification = data.specification;
       if (data.photo) formData.image_url = data.photo;
     }
     return formData;
@@ -347,7 +361,7 @@ const handleSubmit = () => {
                     <FieldError v-if="isSingle && errors.name">{{ errors.name }}</FieldError>
                   </Field>
 
-                  <Field>
+                  <Field v-if="!isCompCategory">
                     <FieldLabel>{{ t('inventory.specification') }}</FieldLabel>
                     <FieldContent>
                       <input 

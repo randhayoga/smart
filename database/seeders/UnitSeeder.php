@@ -50,6 +50,8 @@ class UnitSeeder extends Seeder
                 'lot_id' => 3,
                 'status' => 'Tersedia',
                 'condition' => 'Bagus',
+                'specification' => 'Ultra 5 125H, 16GB LPDDR5X, 512GB NVMe SSD',
+                'vendor_id' => 2,
                 'vehicle_registration' => null,
             ],
             [
@@ -57,6 +59,8 @@ class UnitSeeder extends Seeder
                 'lot_id' => 3,
                 'status' => 'Tersedia',
                 'condition' => 'Bagus',
+                'specification' => 'Ultra 7 155H, 32GB LPDDR5X, 1TB NVMe SSD',
+                'vendor_id' => 3,
                 'vehicle_registration' => null,
             ],
 
@@ -117,6 +121,8 @@ class UnitSeeder extends Seeder
                     'vehicle_registration' => $data['vehicle_registration'],
                     'burden' => $burden,
                     'project_id' => $projectId,
+                    'specification' => $data['specification'] ?? null,
+                    'vendor_id' => $data['vendor_id'] ?? null,
                 ]
             );
         }

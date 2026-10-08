@@ -67,7 +67,7 @@ class BarangSeeder extends Seeder
                 'brand_id' => 3,
                 'uom_id' => 3,
                 'name' => 'Swift Go SFG14',
-                'specification' => 'Ultra 5 32GB 512GB',
+                'specification' => null,
                 'image_url' => 'database/seeders/assets/acer.jpg',
             ],
             [
