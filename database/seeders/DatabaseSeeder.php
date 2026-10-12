@@ -19,20 +19,21 @@ class DatabaseSeeder extends Seeder
         }
 
         // =========================================================================
-        // CONFIGURATION 1: ACTUAL / FINAL DATA (+ UOM & ORGANIZER DUMMY DATA)
-        // Active by default. Comment this entire block when switching to dummy data.
+        // CONFIGURATION 1: ACTUAL DATA + CONSUMABLE DUMMY DATA
+        // Active by default for development. Combines actual assets with consumable data.
         // =========================================================================
-        // $this->call([
-        //     RoleAndPermissionSeeder::class,
-        //     ActualMasterSeeder::class,     // Categories, Subcategories, Brands, Vendors, Locations
-        //     UserSeeder::class,
-        //     TbProjectSeeder::class,
-        //     TbAssignProjectSeeder::class,
-        // ]);
+        $this->call([
+            RoleAndPermissionSeeder::class,
+            ActualDatabaseSeeder::class,
+            UserSeeder::class,
+            TbProjectSeeder::class,
+            TbAssignProjectSeeder::class,
+            DummyConsumableDatabaseSeeder::class,
+        ]);
 
         // =========================================================================
-        // CONFIGURATION 2: DUMMY DEVELOPMENT DATA (Mutually exclusive with Config 1)
-        // Uncomment this entire block (and comment Config 1) to use mock inventory.
+        // CONFIGURATION 2: PURE DUMMY DEVELOPMENT DATA (Mutually exclusive with Config 1)
+        // Uncomment this entire block (and comment Config 1) to use mock inventory only.
         // =========================================================================
         // $this->call([
         //     RoleAndPermissionSeeder::class,
