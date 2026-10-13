@@ -37,10 +37,10 @@ class ManagerAssetActivationApprovalController extends Controller
 
         if ($request->boolean('history')) {
             $query->where('decision', '!=', 'pending');
-            $view = 'Smart/Manager/SudahApproveAktivasi';
+            $view = 'Smart/Manager/ProcessedActivationApprovals';
         } else {
             $query->where('decision', 'pending');
-            $view = 'Smart/Manager/PerluApproveAktivasi';
+            $view = 'Smart/Manager/PendingActivationApprovals';
         }
 
         $approvals = $query->orderBy('id', 'desc')->get();

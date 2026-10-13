@@ -16,6 +16,6 @@ class ScanBarcodeController extends Controller
      */
     public function show(): Response
     {
-        return Inertia::render('Smart/MultiRoles/PindaiBarcode');
+        return Inertia::render('Smart/MultiRoles/ScanBarcode');
     }
 }

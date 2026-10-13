@@ -47,7 +47,7 @@ class ArchiveController extends Controller
                 ];
             });
 
-        return Inertia::render('Smart/Admin/Requests/Archive/Arsip', [
+        return Inertia::render('Smart/Admin/Requests/Archive/ArchiveList', [
             'user' => [
                 'name' => auth()->user()->name,
                 'email' => auth()->user()->email,
@@ -166,7 +166,7 @@ class ArchiveController extends Controller
             'logs' => $logs,
         ];
 
-        return Inertia::render('Smart/Admin/Requests/Archive/ArsipDetail', [
+        return Inertia::render('Smart/Admin/Requests/Archive/ArchiveDetail', [
             'requestId' => $req->id,
             'request' => $mappedRequest,
             'user' => [

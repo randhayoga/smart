@@ -112,7 +112,7 @@ class AssetScanController extends Controller
 
         $locations = Location::with('parent')->active()->orderBy('name')->get();
 
-        return Inertia::render('Smart/MultiRoles/HasilPindai', [
+        return Inertia::render('Smart/MultiRoles/ScanResult', [
             'asset' => $mappedAsset,
             'locations' => $locations,
         ]);

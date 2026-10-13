@@ -153,7 +153,7 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
         ->name('scan');
 
     // Inventory Catalogs and Management
-    Route::get('/inventory', [ManajemenStokController::class, 'index'])
+    Route::get('/stock-management', [ManajemenStokController::class, 'index'])
         ->middleware(['permission:inventory.manage'])
         ->name('inventory');
 
@@ -213,21 +213,21 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
 
     // Asset Status Decisions
     Route::middleware(['permission:inventory.status_approval.decide'])->group(function () {
-        Route::get('/approve-status', [ManagerAssetStatusApprovalController::class, 'index'])->name('approve-status');
-        Route::post('/approve-status/bulk', [ManagerBulkAssetStatusApprovalController::class, 'store'])->name('approve-status.bulk-store');
+        Route::get('/approve-deactivation', [ManagerAssetStatusApprovalController::class, 'index'])->name('approve-status');
+        Route::post('/approve-deactivation/bulk', [ManagerBulkAssetStatusApprovalController::class, 'store'])->name('approve-status.bulk-store');
         Route::get('/approve-activation', [ManagerAssetActivationApprovalController::class, 'index'])->name('approve-activation');
         Route::post('/approve-activation/bulk', [ManagerBulkAssetActivationApprovalController::class, 'store'])->name('approve-activation.bulk-store');
     });
 
     // Employee Directory & Loan History
     Route::middleware(['permission:karyawan.view'])->group(function () {
-        Route::get('/employees', [EmployeeController::class, 'index'])->name('employees.index');
-        Route::get('/employees/{employee}/loans', [EmployeeLoanController::class, 'index'])->name('employees.loans');
+        Route::get('/employee-list', [EmployeeController::class, 'index'])->name('employees.index');
+        Route::get('/employee-list/{employee}/loans', [EmployeeLoanController::class, 'index'])->name('employees.loans');
     });
 
     // Audit Trails
     Route::middleware(['permission:audit.view'])->group(function () {
-        Route::get('/audit', [AuditController::class, 'index'])->name('audit');
+        Route::get('/audit-trail', [AuditController::class, 'index'])->name('audit');
         Route::get('/inventory-audit', [InventoryAuditController::class, 'index'])->name('inventory-audit');
     });
 
@@ -317,9 +317,9 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
 
     // Manager Approvals
     Route::middleware(['permission:requests.approve'])->group(function () {
-        Route::get('/approve', [ManagerRequestController::class, 'index'])->name('approve');
-        Route::post('/approve/action', [ManagerRequestApprovalController::class, 'store'])->name('approve.bulk-action');
-        Route::get('/approved', [ManagerApprovedRequestController::class, 'index'])->name('approved');
+        Route::get('/request-approve', [ManagerRequestController::class, 'index'])->name('approve');
+        Route::post('/request-approve/action', [ManagerRequestApprovalController::class, 'store'])->name('approve.bulk-action');
+        Route::get('/request-approved', [ManagerApprovedRequestController::class, 'index'])->name('approved');
     });
 
     // User Requisition & History

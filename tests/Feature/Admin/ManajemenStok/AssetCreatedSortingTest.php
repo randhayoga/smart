@@ -72,7 +72,7 @@ class AssetCreatedSortingTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertInertia(fn (Assert $page) => $page
-            ->component('Smart/Admin/ManajemenStok/DaftarTidakHabisPakai')
+            ->component('Smart/Admin/StockManagement/NonConsumableList')
             ->has('units', 2)
             ->where('units.0.id', $newerUnit->id)
             ->where('units.0.number', 'AST-CFS-0002')
@@ -132,7 +132,7 @@ class AssetCreatedSortingTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertInertia(fn (Assert $page) => $page
-            ->component('Smart/Admin/ManajemenStok/DaftarTidakHabisPakai')
+            ->component('Smart/Admin/StockManagement/NonConsumableList')
             ->has('units', 1)
             ->where('units.0.id', $verifiedUnit->id)
         );

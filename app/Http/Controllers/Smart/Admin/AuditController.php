@@ -42,7 +42,7 @@ class AuditController extends Controller
                 ];
             });
 
-        return Inertia::render('Smart/Admin/JejakAudit', [
+        return Inertia::render('Smart/Admin/AuditTrail', [
             'lifecycles' => $lifecycles,
         ]);
     }

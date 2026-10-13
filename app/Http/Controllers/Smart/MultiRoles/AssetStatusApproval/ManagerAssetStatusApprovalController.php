@@ -37,13 +37,13 @@ class ManagerAssetStatusApprovalController extends Controller
 
         if ($request->boolean('history')) {
             $query->where('decision', '!=', 'pending');
-            $view = 'Smart/Manager/SudahApproveStatus';
+            $view = 'Smart/Manager/ProcessedDeactivationApprovals';
         } else {
             $query->where('decision', 'pending')
                   ->whereHas('asset', function ($q) {
                       $q->where('status', 'Pending:DM');
                   });
-            $view = 'Smart/Manager/PerluApproveStatus';
+            $view = 'Smart/Manager/PendingDeactivationApprovals';
         }
 
         $approvals = $query->orderBy('id', 'desc')->get();

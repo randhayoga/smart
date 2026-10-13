@@ -258,7 +258,7 @@ class UnitLegacyNumberAndOptionalImageTest extends TestCase
         $response = $this->actingAs($this->user)->get(route('smart.inventory.non-consumables'));
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page
-            ->component('Smart/Admin/ManajemenStok/DaftarTidakHabisPakai')
+            ->component('Smart/Admin/StockManagement/NonConsumableList')
             ->has('units', fn (Assert $page) => $page
                 ->where('0.id', $unit->id)
                 ->where('0.legacy_number', 'LEGACY-EXPOSE-123')
@@ -269,7 +269,7 @@ class UnitLegacyNumberAndOptionalImageTest extends TestCase
         $lotResponse = $this->actingAs($this->user)->get(route('smart.inventory.lots.show', $this->lot));
         $lotResponse->assertOk();
         $lotResponse->assertInertia(fn (Assert $page) => $page
-            ->component('Smart/Admin/ManajemenStok/DetailLOTNonConsumables')
+            ->component('Smart/Admin/StockManagement/NonConsumableLotDetail')
             ->has('units', fn (Assert $page) => $page
                 ->where('0.id', $unit->id)
                 ->where('0.legacy_number', 'LEGACY-EXPOSE-123')

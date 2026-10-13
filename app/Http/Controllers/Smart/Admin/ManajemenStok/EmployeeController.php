@@ -73,7 +73,7 @@ class EmployeeController extends Controller
             ->unique()
             ->values();
 
-        return Inertia::render('Smart/Admin/Karyawan/DaftarKaryawan', [
+        return Inertia::render('Smart/Admin/Employees/EmployeeList', [
             'employees' => $employees,
             'departments' => $departments,
         ]);

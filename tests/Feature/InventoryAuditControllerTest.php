@@ -57,7 +57,7 @@ class InventoryAuditControllerTest extends TestCase
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page
-            ->component('Smart/Admin/AuditManajemenStok')
+            ->component('Smart/Admin/InventoryAudit')
             ->has('logs')
         );
     }
@@ -79,7 +79,7 @@ class InventoryAuditControllerTest extends TestCase
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page
-            ->component('Smart/Admin/AuditManajemenStok')
+            ->component('Smart/Admin/InventoryAudit')
             ->has('logs')
         );
 
@@ -121,7 +121,7 @@ class InventoryAuditControllerTest extends TestCase
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page
-            ->component('Smart/Admin/AuditManajemenStok')
+            ->component('Smart/Admin/InventoryAudit')
             ->has('logs', 1)
             ->where('logs.0.id', $log->id)
             ->where('logs.0.barang_number', $barang->number)
@@ -158,7 +158,7 @@ class InventoryAuditControllerTest extends TestCase
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page
-            ->component('Smart/Admin/AuditManajemenStok')
+            ->component('Smart/Admin/InventoryAudit')
             ->has('logs', 1)
             ->where('logs.0.barang_number', 'DEL-001')
             ->where('logs.0.barang_name', 'Barang Terhapus')

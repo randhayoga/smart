@@ -51,7 +51,7 @@ class AdminApprovedRequestController extends Controller
 
         SmartRequestItemResource::setBatchStockMap(null);
 
-        return Inertia::render('Smart/Admin/Requests/ActiveRequests/PermintaanAktif', [
+        return Inertia::render('Smart/Admin/Requests/ActiveRequests/ActiveRequests', [
             'user' => $request->user(),
             'activeTab' => 'Inbox',
             'inboxRequests' => $resolvedRequests,
@@ -87,7 +87,7 @@ class AdminApprovedRequestController extends Controller
             ]);
         }
 
-        return Inertia::render('Smart/Admin/Requests/ActiveRequests/PermintaanAktif', [
+        return Inertia::render('Smart/Admin/Requests/ActiveRequests/ActiveRequests', [
             'user' => $request->user(),
             'activeTab' => 'Inbox',
             'selectedRequest' => $resourceData,

@@ -282,7 +282,7 @@ class UnitActivationApprovalControllerTest extends TestCase
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page
-            ->component('Smart/Admin/ManajemenStok/DaftarPendingAktivasi')
+            ->component('Smart/Admin/StockManagement/PendingActivationList')
             ->has('units')
             ->where('units.0.id', $unit->id)
             ->where('units.0.status', 'Belum Diverifikasi')
@@ -312,7 +312,7 @@ class UnitActivationApprovalControllerTest extends TestCase
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page
-            ->component('Smart/Manager/PerluApproveAktivasi')
+            ->component('Smart/Manager/PendingActivationApprovals')
             ->has('approvals')
             ->where('approvals.0.id', $approval->id)
             ->where('approvals.0.decision', 'pending')
@@ -343,7 +343,7 @@ class UnitActivationApprovalControllerTest extends TestCase
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page
-            ->component('Smart/Manager/SudahApproveAktivasi')
+            ->component('Smart/Manager/ProcessedActivationApprovals')
             ->has('approvals')
             ->where('approvals.0.id', $approval->id)
             ->where('approvals.0.decision', 'approved')

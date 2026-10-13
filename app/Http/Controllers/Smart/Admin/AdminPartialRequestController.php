@@ -110,7 +110,7 @@ class AdminPartialRequestController extends Controller
             return response()->json(['requests' => $requests]);
         }
 
-        return Inertia::render('Smart/Admin/Requests/ActiveRequests/PermintaanAktif', [
+        return Inertia::render('Smart/Admin/Requests/ActiveRequests/ActiveRequests', [
             'user' => $request->user(),
             'activeTab' => 'Parsial',
             'partialRequests' => $requests,

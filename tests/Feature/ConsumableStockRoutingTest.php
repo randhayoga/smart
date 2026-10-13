@@ -45,7 +45,7 @@ class ConsumableStockRoutingTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertInertia(fn (Assert $page) => $page
-            ->component('Smart/Admin/ManajemenStok/DaftarHabisPakai')
+            ->component('Smart/Admin/StockManagement/ConsumableList')
             ->where('selectedBarangCode', null)
             ->has('barangs', 1)
             ->has('lots', 1)
@@ -70,7 +70,7 @@ class ConsumableStockRoutingTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertInertia(fn (Assert $page) => $page
-            ->component('Smart/Admin/ManajemenStok/DaftarHabisPakai')
+            ->component('Smart/Admin/StockManagement/ConsumableList')
             ->where('selectedBarangCode', 'BRG-HP-002')
             ->has('barangs', 1)
         );
@@ -94,7 +94,7 @@ class ConsumableStockRoutingTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertInertia(fn (Assert $page) => $page
-            ->component('Smart/Admin/ManajemenStok/DaftarHabisPakai')
+            ->component('Smart/Admin/StockManagement/ConsumableList')
             ->where('selectedBarangCode', 'BRG-HP-003')
             ->has('barangs', 1)
         );

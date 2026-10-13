@@ -465,7 +465,7 @@ class LotController extends Controller
                 'name' => "{$u->employee_name} ({$u->employee_id})",
             ]);
 
-        return Inertia::render('Smart/Admin/ManajemenStok/DetailLOTNonConsumables', [
+        return Inertia::render('Smart/Admin/StockManagement/NonConsumableLotDetail', [
             'lot' => [
                 'id' => $lot->id,
                 'number' => $lot->number,

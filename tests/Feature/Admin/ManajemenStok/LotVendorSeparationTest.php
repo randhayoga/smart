@@ -200,7 +200,7 @@ class LotVendorSeparationTest extends TestCase
         $response = $this->actingAs($this->admin)->get(route('smart.inventory.lots.show', $lot));
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page
-            ->component('Smart/Admin/ManajemenStok/DetailLOTNonConsumables')
+            ->component('Smart/Admin/StockManagement/NonConsumableLotDetail')
             ->has('vendors')
         );
     }

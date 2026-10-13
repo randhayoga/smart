@@ -144,13 +144,13 @@ const isActive = (href: string): boolean => {
   }
 
   // If current URL has history=true but target does not specify history, it shouldn't match
-  // (differentiates "Perlu Approval" /smart/approve-status from "Sudah Diproses" /smart/approve-status?history=true)
+  // (differentiates "Perlu Approval" /smart/approve-deactivation from "Sudah Diproses" /smart/approve-deactivation?history=true)
   if (current.params.get('history') === 'true' && target.params.get('history') !== 'true') {
     return false;
   }
 
-  // Prevent parent /smart/inventory from activating on separate sub-pages
-  if (target.pathname === '/smart/inventory' && (
+  // Prevent parent /smart/stock-management from activating on separate sub-pages
+  if (target.pathname === '/smart/stock-management' && (
     current.pathname.startsWith('/smart/inventory/non-consumables') ||
     current.pathname.startsWith('/smart/inventory/consumables') ||
     current.pathname.startsWith('/smart/inventory/pending-activation') ||

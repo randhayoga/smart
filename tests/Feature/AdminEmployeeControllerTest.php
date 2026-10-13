@@ -128,7 +128,7 @@ class AdminEmployeeControllerTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertInertia(fn (Assert $page) => $page
-            ->component('Smart/Admin/Karyawan/DaftarKaryawan')
+            ->component('Smart/Admin/Employees/EmployeeList')
             ->has('employees')
             ->has('departments')
             ->where('employees.0.employee_id', fn ($val) => !empty($val))

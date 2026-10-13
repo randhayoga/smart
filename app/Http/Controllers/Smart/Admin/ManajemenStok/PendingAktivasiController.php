@@ -109,7 +109,7 @@ class PendingAktivasiController extends Controller
         $vendors = Vendor::orderBy('name')->get();
         $projects = TbProject::orderBy('project_name')->get();
 
-        return Inertia::render('Smart/Admin/ManajemenStok/DaftarPendingAktivasi', [
+        return Inertia::render('Smart/Admin/StockManagement/PendingActivationList', [
             'user' => $request->user(),
             'assets' => $assets,
             'units' => $assets,

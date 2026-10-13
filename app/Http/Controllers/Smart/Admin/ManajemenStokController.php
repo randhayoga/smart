@@ -70,7 +70,7 @@ class ManajemenStokController extends Controller
 
         $projects = TbProject::orderBy('project_name')->get();
 
-        return Inertia::render('Smart/Admin/ManajemenStok/ManajemenStok', [
+        return Inertia::render('Smart/Admin/StockManagement/StockManagement', [
             'user' => $request->user(),
             'categories' => $categories,
             'types' => $types,
@@ -278,7 +278,7 @@ class ManajemenStokController extends Controller
 
         $projects = TbProject::orderBy('project_name')->get();
 
-        return Inertia::render('Smart/Admin/ManajemenStok/DetailBarang', [
+        return Inertia::render('Smart/Admin/StockManagement/ModelDetail', [
             'user' => $request->user(),
             'itemId' => $model->number,
             'model' => $formattedModel,

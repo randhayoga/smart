@@ -72,7 +72,7 @@ class AlphanumericCodeRoutingTest extends TestCase
         $response = $this->actingAs($user)->get('/smart/inventory/ATKHVS40001');
         $response->assertStatus(200);
         $response->assertInertia(fn (Assert $page) => $page
-            ->component('Smart/Admin/ManajemenStok/DetailBarang')
+            ->component('Smart/Admin/StockManagement/ModelDetail')
             ->where('barang.id', $barang->id)
             ->where('barang.code', 'ATK-HVS4-0001')
         );
@@ -104,7 +104,7 @@ class AlphanumericCodeRoutingTest extends TestCase
         $response = $this->actingAs($user)->get('/smart/inventory/consumables/BRGHP001');
         $response->assertStatus(200);
         $response->assertInertia(fn (Assert $page) => $page
-            ->component('Smart/Admin/ManajemenStok/DaftarHabisPakai')
+            ->component('Smart/Admin/StockManagement/ConsumableList')
             ->where('selectedBarangCode', 'BRG-HP-001')
         );
     }
@@ -126,7 +126,7 @@ class AlphanumericCodeRoutingTest extends TestCase
         $response = $this->actingAs($user)->get('/smart/scan/00001FURKKCFSPTRE26');
         $response->assertStatus(200);
         $response->assertInertia(fn (Assert $page) => $page
-            ->component('Smart/MultiRoles/HasilPindai')
+            ->component('Smart/MultiRoles/ScanResult')
             ->where('asset.id', $unit->id)
             ->where('asset.number', '00001-FUR-KK-CFS-PTRE-26')
         );
@@ -161,7 +161,7 @@ class AlphanumericCodeRoutingTest extends TestCase
         $response = $this->actingAs($user)->get('/smart/inventory/lots/LOT2026ATKKER0001');
         $response->assertStatus(200);
         $response->assertInertia(fn (Assert $page) => $page
-            ->component('Smart/Admin/ManajemenStok/DetailLOTNonConsumables')
+            ->component('Smart/Admin/StockManagement/NonConsumableLotDetail')
             ->where('lot.id', $lot->id)
             ->where('lot.number', 'LOT-2026-ATK-KER-0001')
         );

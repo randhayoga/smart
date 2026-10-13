@@ -37,8 +37,8 @@ import {
   Package
 } from 'lucide-vue-next';
 import { REQUEST_STATUS_PILL_BASE, getRequestStatusBadgeClass, getRequestStatusLabel, getRequestStatusBadges } from '@/lib/requestStatus';
-import PilihAlokasiAset from './modals/pilihAlokasiAset.vue';
-import KonfirmasiPemenuhan from './modals/konfirmasiPemenuhan.vue';
+import AssetAllocationModal from './modals/AssetAllocationModal.vue';
+import FulfillmentConfirmationModal from './modals/FulfillmentConfirmationModal.vue';
 
 // --- Types ---
 interface AllocationSlot {
@@ -518,14 +518,14 @@ const activeStepIndex = computed(() => {
 
     </div>
 
-    <!-- Modal: Pilih Alokasi Aset -->
-    <PilihAlokasiAset
+    <!-- Modal: Choose Asset Allocation -->
+    <AssetAllocationModal
       v-model:open="isAssetModalOpen"
       :item="activeItemForAllocation"
     />
 
-    <!-- Modal: Konfirmasi Alokasi Pemenuhan -->
-    <KonfirmasiPemenuhan
+    <!-- Modal: Confirmation Allocation Fulfillment -->
+    <FulfillmentConfirmationModal
       v-model:open="isConfirmModalOpen"
       :request="request"
     />

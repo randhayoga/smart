@@ -56,7 +56,7 @@ class ReturnController extends Controller
                 ];
             });
 
-        return Inertia::render('Smart/Admin/Requests/ActiveRequests/PermintaanAktif', [
+        return Inertia::render('Smart/Admin/Requests/ActiveRequests/ActiveRequests', [
             'user' => [
                 'name' => auth()->user()->name,
                 'email' => auth()->user()->email,

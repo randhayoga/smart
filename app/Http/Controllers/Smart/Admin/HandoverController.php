@@ -47,7 +47,7 @@ class HandoverController extends Controller
                 ];
             });
 
-        return Inertia::render('Smart/Admin/Requests/ActiveRequests/PermintaanAktif', [
+        return Inertia::render('Smart/Admin/Requests/ActiveRequests/ActiveRequests', [
             'user' => [
                 'name' => auth()->user()->name,
                 'email' => auth()->user()->email,
@@ -213,7 +213,7 @@ class HandoverController extends Controller
             ];
         });
 
-        return Inertia::render('Smart/Admin/Requests/ActiveRequests/Details/SerahTerimaDetail', [
+        return Inertia::render('Smart/Admin/Requests/ActiveRequests/Details/HandoverDetail', [
             'handover' => $handoverData,
             'items' => $items,
             'user' => [

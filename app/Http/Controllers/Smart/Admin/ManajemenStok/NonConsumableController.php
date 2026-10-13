@@ -155,7 +155,7 @@ class NonConsumableController extends Controller
                 'employee_id' => $u->employee_id,
             ]);
 
-        return Inertia::render('Smart/Admin/ManajemenStok/DaftarTidakHabisPakai', [
+        return Inertia::render('Smart/Admin/StockManagement/NonConsumableList', [
             'user' => $request->user(),
             'assets' => $assets,
             'units' => $assets,

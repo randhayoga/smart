@@ -138,7 +138,7 @@ class SmartRequestPerformanceTest extends TestCase
         $response = $this->actingAs($admin)->get(route('smart.requests.index', ['tab' => 'Inbox']));
         $response->assertStatus(200);
         $response->assertInertia(fn($page) =>
-            $page->component('Smart/Admin/Requests/ActiveRequests/PermintaanAktif')
+            $page->component('Smart/Admin/Requests/ActiveRequests/ActiveRequests')
                 ->has('inboxRequests', 1)
                 ->where('inboxRequests.0.items.0.stock', 5)
                 ->where('inboxRequests.0.items.0.stockQuantity', 5)
@@ -169,7 +169,7 @@ class SmartRequestPerformanceTest extends TestCase
         $response = $this->actingAs($manager)->get(route('smart.approved'));
         $response->assertStatus(200);
         $response->assertInertia(fn($page) => 
-            $page->component('Smart/Manager/SudahApprove')
+            $page->component('Smart/Manager/ProcessedRequestApprovals')
                 ->has('requests', 1)
         );
     }

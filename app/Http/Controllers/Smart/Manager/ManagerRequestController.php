@@ -39,7 +39,7 @@ class ManagerRequestController extends Controller
             ->orderBy('id', 'desc')
             ->get();
 
-        return Inertia::render('Smart/Manager/PerluApproval', [
+        return Inertia::render('Smart/Manager/PendingRequestApprovals', [
             'user' => $request->user(),
             'requests' => SmartRequestResource::collection($requests)->resolve(),
         ]);

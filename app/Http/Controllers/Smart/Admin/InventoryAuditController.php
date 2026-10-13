@@ -61,7 +61,7 @@ class InventoryAuditController extends Controller
                 ];
             });
 
-        return Inertia::render('Smart/Admin/AuditManajemenStok', [
+        return Inertia::render('Smart/Admin/InventoryAudit', [
             'logs' => $logs,
         ]);
     }

@@ -70,7 +70,7 @@ class AdminActiveRequestController extends Controller
             ]);
         }
 
-        return Inertia::render('Smart/Admin/Requests/ActiveRequests/PermintaanAktif', [
+        return Inertia::render('Smart/Admin/Requests/ActiveRequests/ActiveRequests', [
             'user' => $request->user(),
             'activeTab' => $activeTab,
             'inboxRequests' => ($activeTab === 'Inbox') ? fn() => $this->getInboxRequests($stockService) : Inertia::lazy(fn() => $this->getInboxRequests($stockService)),

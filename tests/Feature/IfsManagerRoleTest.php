@@ -117,7 +117,7 @@ class IfsManagerRoleTest extends TestCase
         $response = $this->actingAs($ifsManagerUser)->get(route('smart.audit'));
         $response->assertStatus(200);
         $response->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
-            ->component('Smart/Admin/JejakAudit')
+            ->component('Smart/Admin/AuditTrail')
             ->has('lifecycles')
         );
     }

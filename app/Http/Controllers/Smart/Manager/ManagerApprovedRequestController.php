@@ -36,7 +36,7 @@ class ManagerApprovedRequestController extends Controller
             ->orderBy('id', 'desc')
             ->get();
 
-        return Inertia::render('Smart/Manager/SudahApprove', [
+        return Inertia::render('Smart/Manager/ProcessedRequestApprovals', [
             'user' => $request->user(),
             'requests' => SmartRequestResource::collection($requests)->resolve(),
         ]);

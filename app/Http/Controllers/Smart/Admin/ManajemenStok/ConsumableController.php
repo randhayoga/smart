@@ -146,7 +146,7 @@ class ConsumableController extends Controller
         $locations = Location::with('parent')->active()->orderBy('name')->get();
         $projects = TbProject::orderBy('project_name')->get();
 
-        return Inertia::render('Smart/Admin/ManajemenStok/DaftarHabisPakai', [
+        return Inertia::render('Smart/Admin/StockManagement/ConsumableList', [
             'user' => $request->user(),
             'categories' => $categories,
             'types' => $types,

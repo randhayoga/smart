@@ -45,7 +45,7 @@ const skeletonType = computed<SkeletonType>(() => {
   }
 
   // 4. Employee List (Daftar Karyawan)
-  if (cleanPath.includes('/employees')) {
+  if (cleanPath.includes('/employee-list') || cleanPath.includes('/employees')) {
     return 'karyawan-table';
   }
 
@@ -55,7 +55,7 @@ const skeletonType = computed<SkeletonType>(() => {
   }
 
   // 6. Manager Approval Status (2 tabs: Perlu Approve & Sudah Approve)
-  if (cleanPath.includes('/approve-status')) {
+  if (cleanPath.includes('/approve-deactivation') || cleanPath.includes('/approve-status')) {
     return 'approval-table';
   }
 
@@ -65,7 +65,7 @@ const skeletonType = computed<SkeletonType>(() => {
   }
 
   // 8. Inventory List Views (Multi-combobox filters)
-  if (cleanPath.includes('/inventory')) {
+  if (cleanPath.includes('/inventory') || cleanPath.includes('/stock-management')) {
     return 'inventory-table';
   }
 
