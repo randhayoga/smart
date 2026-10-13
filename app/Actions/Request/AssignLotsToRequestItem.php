@@ -25,7 +25,7 @@ class AssignLotsToRequestItem
      */
     public function execute(RequestItem $item, array $lotAllocations): Collection
     {
-        $item->loadMissing(['request', 'barang', 'subcategory']);
+        $item->loadMissing(['request', 'model', 'type']);
 
         $quantityRequested = (int) $item->quantity_requested;
 
@@ -80,7 +80,7 @@ class AssignLotsToRequestItem
             // 2. Validate lots existence, matching category, and available capacity
             if (!empty($cleanAllocations)) {
                 $lotIds = array_keys($cleanAllocations);
-                $lots = Lot::with('barang')->whereIn('id', $lotIds)->get()->keyBy('id');
+                $lots = Lot::with('model')->whereIn('id', $lotIds)->get()->keyBy('id');
 
                 if ($lots->count() !== count($lotIds)) {
                     throw ValidationException::withMessages([
@@ -92,28 +92,28 @@ class AssignLotsToRequestItem
                     $lot = $lots[$lotId];
 
                     // Check that LOT belongs to requested item
-                    $lotBarangId = $lot->barang_id;
-                    $itemBarangId = $item->barang_id;
-                    $itemSubcatId = $item->subcategory_id ?? $item->barang?->subcategory_id;
-                    $lotSubcatId = $lot->barang?->subcategory_id;
+                    $lotModelId = $lot->model_id;
+                    $itemModelId = $item->model_id ?? $item->barang_id;
+                    $itemTypeId = $item->type_id ?? $item->subcategory_id ?? $item->model?->type_id;
+                    $lotTypeId = $lot->model?->type_id;
 
                     $matches = false;
-                    if ($itemBarangId && (int)$lotBarangId === (int)$itemBarangId) {
+                    if ($itemModelId && (int)$lotModelId === (int)$itemModelId) {
                         $matches = true;
-                    } elseif ($itemSubcatId && (int)$lotSubcatId === (int)$itemSubcatId) {
+                    } elseif ($itemTypeId && (int)$lotTypeId === (int)$itemTypeId) {
                         $matches = true;
                     }
 
                     if (!$matches) {
                         throw ValidationException::withMessages([
-                            'lot_allocations' => ["LOT {$lot->number} tidak cocok dengan tipe barang yang diminta."],
+                            'lot_allocations' => ["LOT {$lot->number} tidak cocok dengan model yang diminta."],
                         ]);
                     }
 
                     // Calculate max available in this LOT
                     $existingOnItem = RequestFulfillment::where('request_item_id', $item->id)
                         ->where('lot_id', $lotId)
-                        ->whereNull('unit_id')
+                        ->whereNull('asset_id')
                         ->first();
 
                     $alreadyOnItem = $existingOnItem ? (int)$existingOnItem->quantity_fulfilled : 0;
@@ -131,7 +131,7 @@ class AssignLotsToRequestItem
             $keptLotIds = array_keys($cleanAllocations);
             RequestFulfillment::where('request_item_id', $item->id)
                 ->whereNotNull('lot_id')
-                ->whereNull('unit_id')
+                ->whereNull('asset_id')
                 ->whereNotIn('id', $lockedFulfillments->pluck('id'))
                 ->whereNotIn('lot_id', $keptLotIds)
                 ->delete();
@@ -140,7 +140,7 @@ class AssignLotsToRequestItem
             foreach ($cleanAllocations as $lotId => $qty) {
                 $existing = RequestFulfillment::where('request_item_id', $item->id)
                     ->where('lot_id', $lotId)
-                    ->whereNull('unit_id')
+                    ->whereNull('asset_id')
                     ->first();
 
                 if ($existing) {
@@ -154,14 +154,14 @@ class AssignLotsToRequestItem
                     RequestFulfillment::create([
                         'request_item_id' => $item->id,
                         'lot_id' => $lotId,
-                        'unit_id' => null,
+                        'asset_id' => null,
                         'quantity_fulfilled' => $qty,
                         'assigned_at' => null,
                     ]);
                 }
             }
 
-            return RequestFulfillment::where('request_item_id', $item->id)->whereNotNull('lot_id')->with('lot.barang')->get();
+            return RequestFulfillment::where('request_item_id', $item->id)->whereNotNull('lot_id')->with('lot.model')->get();
         });
     }
 }

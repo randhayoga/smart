@@ -145,7 +145,7 @@ const handleBodBocUpload = (e: Event) => {
 
   isUploading.value = true;
   router.post(
-    `/smart/inventory/units/${props.asset.id}`,
+    `/smart/inventory/assets/${props.asset.id}`,
     {
       _method: 'PUT',
       bod_boc_approval_file: file,
@@ -355,7 +355,7 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                 <Button 
                   v-if="can('inventory.view') && asset"
                   as="a"
-                  :href="`/smart/inventory/units/${asset.id}/qr-code`" 
+                  :href="`/smart/inventory/assets/${asset.id}/qr-code`" 
                   download 
                   target="_blank"
                   variant="warning"

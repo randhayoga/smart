@@ -7,10 +7,10 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        Schema::create('barangs', function (Blueprint $table) {
+        Schema::create('models', function (Blueprint $table) {
             $table->id();
             $table->string('number', 50)->unique();
-            $table->foreignId('subcategory_id')->constrained('subcategories');
+            $table->foreignId('type_id')->constrained('types');
             $table->foreignId('brand_id')->constrained('brands');
             $table->foreignId('uom_id')->constrained('uoms');
             $table->string('name');
@@ -24,7 +24,7 @@ return new class extends Migration {
         Schema::create('lots', function (Blueprint $table) {
             $table->id();
             $table->string('number', 50)->unique();
-            $table->foreignId('barang_id')->constrained('barangs')->cascadeOnDelete();
+            $table->foreignId('model_id')->constrained('models')->cascadeOnDelete();
             $table->foreignId('organizer_id')->constrained('organizers')->cascadeOnDelete();
             $table->unsignedBigInteger('vendor_id')->nullable()->index()->comment('Refers to eproc:vendors.id');
             $table->foreignId('legacy_vendor_id')->nullable()->constrained('vendors')->nullOnDelete()->comment('Refers to local vendors table (legacy)');
@@ -40,16 +40,18 @@ return new class extends Migration {
             $table->timestamps();
         });
 
-        Schema::create('units', function (Blueprint $table) {
+        Schema::create('assets', function (Blueprint $table) {
             $table->id();
             $table->string('number', 50)->unique();
             $table->string('legacy_number', 50)->nullable()->comment('legacy asset code/number');
             $table->foreignId('lot_id')->constrained('lots')->cascadeOnDelete();
             $table->foreignId('vendor_id')->nullable()->constrained('vendors')->nullOnDelete()->comment('Refers to local vendors table (legacy migration only)');
-            $table->foreignId('location_id')->constrained('locations')->comment('current location');
-            $table->string('status');
+            $table->foreignId('location_id')->nullable()->constrained('locations')->comment('current location');
+            $table->string('status')->default('Belum Diverifikasi');
             $table->string('condition');
             $table->string('specification')->nullable();
+            $table->string('borrowing_type', 2)->default('LT')->comment('LT | ST');
+            $table->string('classification', 255)->default('Aset')->comment('Aset | Inventaris');
             $table->decimal('price', 15, 2)->nullable();
             $table->string('image_url')->nullable();
             $table->string('vehicle_registration')->nullable();
@@ -58,9 +60,9 @@ return new class extends Migration {
             $table->timestamps();
         });
 
-        Schema::create('unit_status_approvals', function (Blueprint $table) {
+        Schema::create('asset_status_approvals', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('unit_id')->constrained('units')->noActionOnDelete();
+            $table->foreignId('asset_id')->constrained('assets')->noActionOnDelete();
             $table->unsignedBigInteger('requester_id')->index()->comment("Refers to new_portal:users.id");
             $table->unsignedBigInteger('approver_id')->nullable()->index()->comment("nullable | Refers to new_portal:users.id");
             $table->string('proposed_condition');
@@ -78,9 +80,9 @@ return new class extends Migration {
 
         Schema::create('inventory_logs', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('barang_id')->nullable()->constrained('barangs')->noActionOnDelete();
+            $table->foreignId('model_id')->nullable()->constrained('models')->noActionOnDelete();
             $table->foreignId('lot_id')->nullable()->constrained('lots')->noActionOnDelete();
-            $table->foreignId('unit_id')->nullable()->constrained('units')->noActionOnDelete();
+            $table->foreignId('asset_id')->nullable()->constrained('assets')->noActionOnDelete();
             $table->unsignedBigInteger('user_id')->index()->comment("Refers to new_portal:users.id");
             $table->string('action_type')->comment('stock_in, stock_out, adjustment, relocation');
             $table->integer('quantity_change')->default(0);
@@ -91,13 +93,13 @@ return new class extends Migration {
             $table->dateTime('created_at');
         });
 
-        Schema::create('unit_lifecycles', function (Blueprint $table) {
+        Schema::create('asset_lifecycles', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('unit_id')->constrained('units')->cascadeOnDelete();
+            $table->foreignId('asset_id')->constrained('assets')->cascadeOnDelete();
             $table->string('action_type')->comment('registrasi, perubahan_status, perubahan_kondisi, pemindahan, peminjaman, pengembalian, pemeliharaan');
             $table->string('status');
             $table->string('condition');
-            $table->foreignId('location_id')->constrained('locations')->noActionOnDelete();
+            $table->foreignId('location_id')->nullable()->constrained('locations')->noActionOnDelete();
             $table->dateTime('start_date');
             $table->dateTime('end_date')->nullable();
             $table->unsignedBigInteger('actor_id')->nullable()->index()->comment("Siapa yang melakukan aksi | Refers to new_portal:users.id");
@@ -109,11 +111,11 @@ return new class extends Migration {
 
     public function down(): void
     {
-        Schema::dropIfExists('unit_lifecycles');
+        Schema::dropIfExists('asset_lifecycles');
         Schema::dropIfExists('inventory_logs');
-        Schema::dropIfExists('unit_status_approvals');
-        Schema::dropIfExists('units');
+        Schema::dropIfExists('asset_status_approvals');
+        Schema::dropIfExists('assets');
         Schema::dropIfExists('lots');
-        Schema::dropIfExists('barangs');
+        Schema::dropIfExists('models');
     }
 };

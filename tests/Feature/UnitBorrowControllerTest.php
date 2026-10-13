@@ -98,8 +98,8 @@ class UnitBorrowControllerTest extends TestCase
         $note = 'Keperluan dinas luar kota.';
 
         $response = $this->actingAs($admin)
-            ->from('/smart/inventory/assets')
-            ->post(route('smart.inventory.units.borrow', $unit->id), [
+            ->from('/smart/inventory/non-consumables')
+            ->post(route('smart.inventory.assets.borrow', $unit->id), [
                 'user_id' => $borrower->id,
                 'start_date' => $startDate,
                 'utilization' => 'corporate',
@@ -107,7 +107,7 @@ class UnitBorrowControllerTest extends TestCase
                 'note' => $note,
             ]);
 
-        $response->assertRedirect('/smart/inventory/assets');
+        $response->assertRedirect('/smart/inventory/non-consumables');
         $response->assertSessionHas('success');
 
         // Unit status changed to Dipinjam
@@ -155,8 +155,8 @@ class UnitBorrowControllerTest extends TestCase
         $note = 'Keperluan proyek overhaul.';
 
         $response = $this->actingAs($admin)
-            ->from('/smart/inventory/assets')
-            ->post(route('smart.inventory.units.borrow', $unit->id), [
+            ->from('/smart/inventory/non-consumables')
+            ->post(route('smart.inventory.assets.borrow', $unit->id), [
                 'user_id' => $borrower->id,
                 'start_date' => $startDate,
                 'utilization' => 'project',
@@ -164,7 +164,7 @@ class UnitBorrowControllerTest extends TestCase
                 'note' => $note,
             ]);
 
-        $response->assertRedirect('/smart/inventory/assets');
+        $response->assertRedirect('/smart/inventory/non-consumables');
         $response->assertSessionHas('success');
 
         $unit->refresh();
@@ -190,14 +190,14 @@ class UnitBorrowControllerTest extends TestCase
         $unit = $this->createAvailableUnit();
 
         // 1. Missing utilization
-        $response = $this->actingAs($admin)->post(route('smart.inventory.units.borrow', $unit->id), [
+        $response = $this->actingAs($admin)->post(route('smart.inventory.assets.borrow', $unit->id), [
             'user_id' => $borrower->id,
             'start_date' => Carbon::today()->toDateString(),
         ]);
         $response->assertSessionHasErrors(['utilization']);
 
         // 2. Corporate without org_id
-        $response = $this->actingAs($admin)->post(route('smart.inventory.units.borrow', $unit->id), [
+        $response = $this->actingAs($admin)->post(route('smart.inventory.assets.borrow', $unit->id), [
             'user_id' => $borrower->id,
             'start_date' => Carbon::today()->toDateString(),
             'utilization' => 'corporate',
@@ -205,7 +205,7 @@ class UnitBorrowControllerTest extends TestCase
         $response->assertSessionHasErrors(['org_id']);
 
         // 3. Project without project_id
-        $response = $this->actingAs($admin)->post(route('smart.inventory.units.borrow', $unit->id), [
+        $response = $this->actingAs($admin)->post(route('smart.inventory.assets.borrow', $unit->id), [
             'user_id' => $borrower->id,
             'start_date' => Carbon::today()->toDateString(),
             'utilization' => 'project',
@@ -228,7 +228,7 @@ class UnitBorrowControllerTest extends TestCase
         $startDate = Carbon::today()->toDateString();
 
         // 1. Initial borrow
-        $this->actingAs($admin)->post(route('smart.inventory.units.borrow', $unit->id), [
+        $this->actingAs($admin)->post(route('smart.inventory.assets.borrow', $unit->id), [
             'user_id' => $borrower1->id,
             'start_date' => $startDate,
             'utilization' => 'corporate',
@@ -240,7 +240,7 @@ class UnitBorrowControllerTest extends TestCase
         $newDate = Carbon::today()->addDay()->toDateString();
         $newNote = 'Updated note';
 
-        $this->actingAs($admin)->post(route('smart.inventory.units.borrow', $unit->id), [
+        $this->actingAs($admin)->post(route('smart.inventory.assets.borrow', $unit->id), [
             'user_id' => $borrower2->id,
             'start_date' => $newDate,
             'utilization' => 'corporate',
@@ -268,7 +268,7 @@ class UnitBorrowControllerTest extends TestCase
         $startDate = Carbon::today()->toDateString();
 
         // 1. Start borrow
-        $this->actingAs($admin)->post(route('smart.inventory.units.borrow', $unit->id), [
+        $this->actingAs($admin)->post(route('smart.inventory.assets.borrow', $unit->id), [
             'user_id' => $borrower->id,
             'start_date' => $startDate,
             'utilization' => 'corporate',
@@ -278,10 +278,10 @@ class UnitBorrowControllerTest extends TestCase
 
         // 2. Finish borrow
         $finishResponse = $this->actingAs($admin)
-            ->from('/smart/inventory/assets')
-            ->post(route('smart.inventory.units.finish-borrow', $unit->id));
+            ->from('/smart/inventory/non-consumables')
+            ->post(route('smart.inventory.assets.finish-borrow', $unit->id));
 
-        $finishResponse->assertRedirect('/smart/inventory/assets');
+        $finishResponse->assertRedirect('/smart/inventory/non-consumables');
         $finishResponse->assertSessionHas('success');
 
         // Unit status restored to Tersedia
@@ -320,15 +320,15 @@ class UnitBorrowControllerTest extends TestCase
         $unit->update(['status' => 'Tidak Aktif']);
 
         $response = $this->actingAs($admin)
-            ->from('/smart/inventory/assets')
-            ->post(route('smart.inventory.units.borrow', $unit->id), [
+            ->from('/smart/inventory/non-consumables')
+            ->post(route('smart.inventory.assets.borrow', $unit->id), [
                 'user_id' => $borrower->id,
                 'start_date' => Carbon::now()->format('Y-m-d'),
                 'utilization' => 'corporate',
                 'org_id' => $borrower->hrdEmployee->orgchart_id,
             ]);
 
-        $response->assertRedirect('/smart/inventory/assets');
+        $response->assertRedirect('/smart/inventory/non-consumables');
         $response->assertSessionHasErrors('borrow');
 
         $unit->refresh();
@@ -343,10 +343,10 @@ class UnitBorrowControllerTest extends TestCase
         $unit->update(['status' => 'Tersedia']);
 
         $response = $this->actingAs($admin)
-            ->from('/smart/inventory/assets')
-            ->post(route('smart.inventory.units.finish-borrow', $unit->id));
+            ->from('/smart/inventory/non-consumables')
+            ->post(route('smart.inventory.assets.finish-borrow', $unit->id));
 
-        $response->assertRedirect('/smart/inventory/assets');
+        $response->assertRedirect('/smart/inventory/non-consumables');
         $response->assertSessionHasErrors('borrow');
 
         $unit->refresh();

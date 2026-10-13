@@ -49,7 +49,7 @@ class UnitTypeClassificationTest extends TestCase
 
     public function test_can_create_unit_single_with_type_and_classification(): void
     {
-        $response = $this->actingAs($this->user)->post(route('smart.inventory.units.store'), [
+        $response = $this->actingAs($this->user)->post(route('smart.inventory.assets.store'), [
             'lot_id' => $this->lot->id,
             'location_id' => $this->location->id,
             'status' => 'Tersedia',
@@ -63,9 +63,9 @@ class UnitTypeClassificationTest extends TestCase
         $response->assertRedirect();
         $response->assertSessionHas('success');
 
-        $this->assertDatabaseHas('units', [
+        $this->assertDatabaseHas('assets', [
             'lot_id' => $this->lot->id,
-            'type' => 'LT',
+            'borrowing_type' => 'LT',
             'classification' => 'Aset',
             'status' => 'Belum Diverifikasi',
             'condition' => 'Bagus',
@@ -74,7 +74,7 @@ class UnitTypeClassificationTest extends TestCase
 
     public function test_can_create_unit_bulk_with_type_and_classification(): void
     {
-        $response = $this->actingAs($this->user)->post(route('smart.inventory.units.bulk-store'), [
+        $response = $this->actingAs($this->user)->post(route('smart.inventory.assets.bulk-store'), [
             'number' => '00001-PK01-IT-PTRE-26',
             'lot_id' => $this->lot->id,
             'location_id' => $this->location->id,
@@ -112,7 +112,7 @@ class UnitTypeClassificationTest extends TestCase
             'image_url' => 'inventory/placeholder.jpg',
         ]);
 
-        $response = $this->actingAs($this->user)->put(route('smart.inventory.units.update', $unit->id), [
+        $response = $this->actingAs($this->user)->put(route('smart.inventory.assets.update', $unit->id), [
             'number' => 'UNT-001',
             'lot_id' => $this->lot->id,
             'location_id' => $this->location->id,
@@ -127,9 +127,9 @@ class UnitTypeClassificationTest extends TestCase
         $response->assertRedirect();
         $response->assertSessionHas('success');
 
-        $this->assertDatabaseHas('units', [
+        $this->assertDatabaseHas('assets', [
             'id' => $unit->id,
-            'type' => 'ST',
+            'borrowing_type' => 'ST',
             'classification' => 'Inventaris',
             'status' => 'Standby',
         ]);
@@ -162,7 +162,7 @@ class UnitTypeClassificationTest extends TestCase
         ]);
 
         // Bulk update condition only, leaving type and classification empty
-        $response = $this->actingAs($this->user)->post(route('smart.inventory.units.bulk-update'), [
+        $response = $this->actingAs($this->user)->post(route('smart.inventory.assets.bulk-update'), [
             'ids' => [$unit1->id, $unit2->id],
             'condition' => 'Rusak',
         ]);
@@ -171,17 +171,17 @@ class UnitTypeClassificationTest extends TestCase
         $response->assertSessionHas('success');
 
         // Unit 1 should retain LT / Aset
-        $this->assertDatabaseHas('units', [
+        $this->assertDatabaseHas('assets', [
             'id' => $unit1->id,
-            'type' => 'LT',
+            'borrowing_type' => 'LT',
             'classification' => 'Aset',
             'condition' => 'Rusak',
         ]);
 
         // Unit 2 should retain ST / Inventaris
-        $this->assertDatabaseHas('units', [
+        $this->assertDatabaseHas('assets', [
             'id' => $unit2->id,
-            'type' => 'ST',
+            'borrowing_type' => 'ST',
             'classification' => 'Inventaris',
             'condition' => 'Rusak',
         ]);
@@ -213,7 +213,7 @@ class UnitTypeClassificationTest extends TestCase
             'image_url' => 'inventory/placeholder.jpg',
         ]);
 
-        $response = $this->actingAs($this->user)->post(route('smart.inventory.units.bulk-update'), [
+        $response = $this->actingAs($this->user)->post(route('smart.inventory.assets.bulk-update'), [
             'ids' => [$unit1->id, $unit2->id],
             'type' => 'ST',
             'classification' => 'Inventaris',
@@ -222,22 +222,22 @@ class UnitTypeClassificationTest extends TestCase
         $response->assertRedirect();
         $response->assertSessionHas('success');
 
-        $this->assertDatabaseHas('units', [
+        $this->assertDatabaseHas('assets', [
             'id' => $unit1->id,
-            'type' => 'ST',
+            'borrowing_type' => 'ST',
             'classification' => 'Inventaris',
         ]);
 
-        $this->assertDatabaseHas('units', [
+        $this->assertDatabaseHas('assets', [
             'id' => $unit2->id,
-            'type' => 'ST',
+            'borrowing_type' => 'ST',
             'classification' => 'Inventaris',
         ]);
     }
 
     public function test_validation_rejects_invalid_type_or_classification(): void
     {
-        $response = $this->actingAs($this->user)->post(route('smart.inventory.units.store'), [
+        $response = $this->actingAs($this->user)->post(route('smart.inventory.assets.store'), [
             'lot_id' => $this->lot->id,
             'location_id' => $this->location->id,
             'status' => 'Tersedia',
@@ -252,7 +252,7 @@ class UnitTypeClassificationTest extends TestCase
 
     public function test_cannot_create_unit_single_without_type_and_classification(): void
     {
-        $response = $this->actingAs($this->user)->post(route('smart.inventory.units.store'), [
+        $response = $this->actingAs($this->user)->post(route('smart.inventory.assets.store'), [
             'lot_id' => $this->lot->id,
             'location_id' => $this->location->id,
             'status' => 'Tersedia',
@@ -280,7 +280,7 @@ class UnitTypeClassificationTest extends TestCase
             'image_url' => 'inventory/placeholder.jpg',
         ]);
 
-        $response = $this->actingAs($this->user)->put(route('smart.inventory.units.update', $unit->id), [
+        $response = $this->actingAs($this->user)->put(route('smart.inventory.assets.update', $unit->id), [
             'number' => 'UNT-REQ-001',
             'lot_id' => $this->lot->id,
             'location_id' => $this->location->id,
@@ -297,7 +297,7 @@ class UnitTypeClassificationTest extends TestCase
 
     public function test_cannot_bulk_create_units_without_type_and_classification(): void
     {
-        $response = $this->actingAs($this->user)->post(route('smart.inventory.units.bulk-store'), [
+        $response = $this->actingAs($this->user)->post(route('smart.inventory.assets.bulk-store'), [
             'number' => '00001-PK01-IT-PTRE-26',
             'lot_id' => $this->lot->id,
             'location_id' => $this->location->id,
@@ -315,7 +315,7 @@ class UnitTypeClassificationTest extends TestCase
 
     public function test_bulk_create_units_saves_provided_type_and_classification(): void
     {
-        $response = $this->actingAs($this->user)->post(route('smart.inventory.units.bulk-store'), [
+        $response = $this->actingAs($this->user)->post(route('smart.inventory.assets.bulk-store'), [
             'number' => '00001-PK01-IT-PTRE-26',
             'lot_id' => $this->lot->id,
             'location_id' => $this->location->id,

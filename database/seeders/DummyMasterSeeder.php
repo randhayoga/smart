@@ -7,7 +7,7 @@ use App\Models\Master\Brand;
 use App\Models\Master\Category;
 use App\Models\Master\Location;
 use App\Models\Master\Organizer;
-use App\Models\Master\Subcategory;
+use App\Models\Master\Type;
 use App\Models\Master\Uom;
 use App\Models\Master\Vendor;
 use Illuminate\Database\Seeder;

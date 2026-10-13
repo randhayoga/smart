@@ -82,11 +82,11 @@ class ProcessAdminConfirmation
                 'user',
                 'department',
                 'project',
-                'items.barang.brand',
-                'items.barang.subcategory.category',
-                'items.barang.uom',
-                'items.subcategory.category',
-                'items.subcategory.barangs.uom',
+                'items.model.brand',
+                'items.model.type.category',
+                'items.model.uom',
+                'items.type.category',
+                'items.type.models.uom',
             ]);
 
             if ($action === 'reject') {

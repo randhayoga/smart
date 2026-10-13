@@ -2,97 +2,22 @@
 
 namespace App\Models\Inventory;
 
-use App\Models\User;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-
 /**
- * Unit Lifecycle model tracking historical movements, condition transitions, and status changes of units.
+ * Legacy alias for AssetLifecycle.
+ * @deprecated Use App\Models\Inventory\AssetLifecycle instead.
  */
-class UnitLifecycle extends Model
+class UnitLifecycle extends AssetLifecycle
 {
-    use HasFactory;
-
-    protected $table = 'unit_lifecycles';
-
-    public $timestamps = false;
-
-    protected $fillable = [
-        'unit_id',
-        'action_type',
-        'status',
-        'condition',
-        'location_id',
-        'start_date',
-        'end_date',
-        'actor_id',
-        'note',
-        'previous_state',
-        'new_state',
-    ];
-
-    protected $casts = [
-        'start_date' => 'datetime',
-        'end_date' => 'datetime',
-        'previous_state' => 'array',
-        'new_state' => 'array',
-    ];
-
-    /**
-     * The unit associated with this lifecycle entry.
-     */
-    public function unit(): BelongsTo
+    public function newEloquentBuilder($query)
     {
-        return $this->belongsTo(Unit::class);
-    }
-
-    /**
-     * The location during this lifecycle period.
-     */
-    public function location(): BelongsTo
-    {
-        return $this->belongsTo(\App\Models\Master\Location::class);
-    }
-
-    /**
-     * The actor/user who triggered this lifecycle change.
-     */
-    public function actor(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'actor_id');
-    }
-
-    /**
-     * Accessor to get a human-readable formatted duration string (Indonesian).
-     */
-    public function getFormattedDurationAttribute(): string
-    {
-        if (!$this->start_date || !$this->end_date) {
-            return '-';
-        }
-
-        $days = (int) floor($this->start_date->diffInDays($this->end_date));
-        if ($days < 30) {
-            return "{$days} hari";
-        }
-
-        $years = (int) floor($days / 365);
-        $remDaysAfterYears = $days % 365;
-        $months = (int) floor($remDaysAfterYears / 30);
-        $remainingDays = $remDaysAfterYears % 30;
-
-        $parts = [];
-        if ($years > 0) {
-            $parts[] = "{$years} tahun";
-        }
-        if ($months > 0) {
-            $parts[] = "{$months} bulan";
-        }
-        if ($remainingDays > 0 || empty($parts)) {
-            $parts[] = "{$remainingDays} hari";
-        }
-
-        return implode(' ', $parts);
+        return new class($query) extends \Illuminate\Database\Eloquent\Builder {
+            public function where($column, $operator = null, $value = null, $boolean = 'and')
+            {
+                if (is_string($column) && ($column === 'unit_id' || $column === 'asset_lifecycles.unit_id')) {
+                    $column = str_replace('unit_id', 'asset_id', $column);
+                }
+                return parent::where($column, $operator, $value, $boolean);
+            }
+        };
     }
 }

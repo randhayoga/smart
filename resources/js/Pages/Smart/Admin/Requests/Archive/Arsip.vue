@@ -203,7 +203,7 @@ const columns = computed<ColumnDef<any>[]>(() => [
 ]);
 
 const handleViewDetail = (item: any) => {
-  const url = `/smart/arsip/${item.id}`;
+  const url = `/smart/archive/${item.id}`;
   router.get(url);
 };
 
@@ -217,7 +217,7 @@ const handleExportCSV = () => alert('Exporting to CSV...');
     <Breadcrumb>
       <BreadcrumbList class="pb-3">
         <BreadcrumbItem>
-          <BreadcrumbLink href="/smart/arsip">{{ t('fulfillment.archive') }}</BreadcrumbLink>
+          <BreadcrumbLink href="/smart/archive">{{ t('fulfillment.archive') }}</BreadcrumbLink>
         </BreadcrumbItem>
       </BreadcrumbList>
     </Breadcrumb>

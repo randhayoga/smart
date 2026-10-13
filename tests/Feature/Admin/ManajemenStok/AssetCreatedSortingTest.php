@@ -68,11 +68,11 @@ class AssetCreatedSortingTest extends TestCase
             'created_at' => Carbon::now(),
         ]);
 
-        $response = $this->actingAs($user)->get(route('smart.inventory.assets'));
+        $response = $this->actingAs($user)->get(route('smart.inventory.non-consumables'));
 
         $response->assertStatus(200);
         $response->assertInertia(fn (Assert $page) => $page
-            ->component('Smart/Admin/ManajemenStok/DaftarAset')
+            ->component('Smart/Admin/ManajemenStok/DaftarTidakHabisPakai')
             ->has('units', 2)
             ->where('units.0.id', $newerUnit->id)
             ->where('units.0.number', 'AST-CFS-0002')
@@ -128,11 +128,11 @@ class AssetCreatedSortingTest extends TestCase
             'condition' => 'Bagus',
         ]);
 
-        $response = $this->actingAs($user)->get(route('smart.inventory.assets'));
+        $response = $this->actingAs($user)->get(route('smart.inventory.non-consumables'));
 
         $response->assertStatus(200);
         $response->assertInertia(fn (Assert $page) => $page
-            ->component('Smart/Admin/ManajemenStok/DaftarAset')
+            ->component('Smart/Admin/ManajemenStok/DaftarTidakHabisPakai')
             ->has('units', 1)
             ->where('units.0.id', $verifiedUnit->id)
         );

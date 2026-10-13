@@ -10,7 +10,7 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::table('units', function (Blueprint $table) {
+        Schema::table('assets', function (Blueprint $table) {
             $table->index('status');
             $table->index('condition');
         });
@@ -19,7 +19,7 @@ return new class extends Migration {
             $table->index('created_at');
         });
 
-        Schema::table('unit_lifecycles', function (Blueprint $table) {
+        Schema::table('asset_lifecycles', function (Blueprint $table) {
             $table->index('start_date');
             $table->index('status');
         });
@@ -30,7 +30,7 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::table('units', function (Blueprint $table) {
+        Schema::table('assets', function (Blueprint $table) {
             $table->dropIndex(['status']);
             $table->dropIndex(['condition']);
         });
@@ -39,7 +39,7 @@ return new class extends Migration {
             $table->dropIndex(['created_at']);
         });
 
-        Schema::table('unit_lifecycles', function (Blueprint $table) {
+        Schema::table('asset_lifecycles', function (Blueprint $table) {
             $table->dropIndex(['start_date']);
             $table->dropIndex(['status']);
         });

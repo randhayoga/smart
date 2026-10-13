@@ -11,13 +11,13 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Action to process confirmation of unit assignments for a request.
+ * Action to process confirmation of asset assignments for a request.
  * Handles the decision tree between Full Fulfillment and Partial Fulfillment.
  */
 class ProcessFulfillmentConfirmation
 {
     /**
-     * Execute confirmation of unit assignments.
+     * Execute confirmation of asset assignments.
      *
      * @param SmartRequest $request
      * @param bool $allowPartial
@@ -45,8 +45,8 @@ class ProcessFulfillmentConfirmation
 
             $lockedRequest->loadMissing([
                 'items.fulfillments',
-                'items.barang.subcategory',
-                'items.subcategory',
+                'items.model.type',
+                'items.type',
             ]);
 
             $totalRequested = 0;
@@ -62,11 +62,11 @@ class ProcessFulfillmentConfirmation
                 if ($isConsumable) {
                     $assigned = (int) $item->fulfillments
                         ->whereNotNull('lot_id')
-                        ->whereNull('unit_id')
+                        ->whereNull('asset_id')
                         ->sum('quantity_fulfilled');
                 } else {
                     $assigned = $item->fulfillments
-                        ->whereNotNull('unit_id')
+                        ->whereNotNull('asset_id')
                         ->count();
                 }
 
@@ -79,7 +79,7 @@ class ProcessFulfillmentConfirmation
 
             if ($totalAssigned === 0) {
                 throw ValidationException::withMessages([
-                    'allow_partial' => ['Belum ada unit atau barang yang dialokasikan. Alokasikan setidaknya 1 unit untuk melanjutkan.'],
+                    'allow_partial' => ['Belum ada aset atau model yang dialokasikan. Alokasikan setidaknya 1 item untuk melanjutkan.'],
                 ]);
             }
 
@@ -90,7 +90,7 @@ class ProcessFulfillmentConfirmation
                 ]);
             }
 
-            // Commit Phase: Lock allocations, evict duplicate staged units on other requests, and deduct LOT stock
+            // Commit Phase: Lock allocations, evict duplicate staged assets on other requests, and deduct LOT stock
             $itemIds = $lockedRequest->items->pluck('id')->all();
             $newlyAssignedFulfillments = RequestFulfillment::whereIn('request_item_id', $itemIds)
                 ->whereNull('assigned_at')
@@ -101,17 +101,17 @@ class ProcessFulfillmentConfirmation
                 RequestFulfillment::whereIn('id', $newlyAssignedFulfillments->pluck('id'))
                     ->update(['assigned_at' => $now]);
 
-                // 1. Evict duplicate unit assignments from competing unconfirmed requests
-                $assignedUnitIds = $newlyAssignedFulfillments->pluck('unit_id')->filter()->unique()->all();
-                if (!empty($assignedUnitIds)) {
-                    RequestFulfillment::whereIn('unit_id', $assignedUnitIds)
+                // 1. Evict duplicate asset assignments from competing unconfirmed requests
+                $assignedAssetIds = $newlyAssignedFulfillments->pluck('asset_id')->filter()->unique()->all();
+                if (!empty($assignedAssetIds)) {
+                    RequestFulfillment::whereIn('asset_id', $assignedAssetIds)
                         ->whereNotIn('request_item_id', $itemIds)
                         ->whereNull('assigned_at')
                         ->delete();
                 }
 
                 // 2. Deduct physical stock for confirmed LOTs and evict/clamp competing unconfirmed requests
-                $lotFulfillments = $newlyAssignedFulfillments->whereNotNull('lot_id')->whereNull('unit_id');
+                $lotFulfillments = $newlyAssignedFulfillments->whereNotNull('lot_id')->whereNull('asset_id');
                 foreach ($lotFulfillments as $lf) {
                     $lot = Lot::where('id', $lf->lot_id)->lockForUpdate()->first();
                     if (!$lot) {
@@ -124,7 +124,7 @@ class ProcessFulfillmentConfirmation
 
                     // Competing unconfirmed fulfillments on OTHER requests
                     $competingFulfillments = RequestFulfillment::where('lot_id', $lot->id)
-                        ->whereNull('unit_id')
+                        ->whereNull('asset_id')
                         ->whereNull('assigned_at')
                         ->whereNotIn('request_item_id', $itemIds)
                         ->get();

@@ -3,7 +3,7 @@
 namespace App\Actions\Request;
 
 use App\Models\HrdOrgchart;
-use App\Models\Inventory\Barang;
+use App\Models\Inventory\Model;
 use App\Models\Inventory\Lot;
 use App\Models\Request\Request as SmartRequest;
 use App\Models\Request\RequestFulfillment;
@@ -30,7 +30,7 @@ class ProcessConsumableManualRequest
      *
      * @param User $admin
      * @param User $requester
-     * @param Barang $barang
+     * @param Model $model
      * @param array<array{lot: Lot, quantity: int}> $allocations
      * @param int $totalQty
      * @param string $utilization 'corporate' | 'project'
@@ -42,7 +42,7 @@ class ProcessConsumableManualRequest
     public function execute(
         User $admin,
         User $requester,
-        Barang $barang,
+        Model $model,
         array $allocations,
         int $totalQty,
         string $utilization,
@@ -83,8 +83,8 @@ class ProcessConsumableManualRequest
         // 3. Buat RequestItem terkait
         $requestItem = RequestItem::create([
             'request_id' => $smartRequest->id,
-            'subcategory_id' => $barang->subcategory_id,
-            'barang_id' => $barang->id,
+            'type_id' => $model->type_id,
+            'model_id' => $model->id,
             'quantity_requested' => $totalQty,
             'start_date' => $dateObj,
             'end_date' => null,
@@ -103,7 +103,7 @@ class ProcessConsumableManualRequest
 
             // Evict atau sesuaikan unconfirmed competing fulfillments pada permintaan lain jika stok berkurang
             $competingFulfillments = RequestFulfillment::where('lot_id', $lot->id)
-                ->whereNull('unit_id')
+                ->whereNull('asset_id')
                 ->whereNull('assigned_at')
                 ->whereNotIn('request_item_id', [$requestItem->id])
                 ->get();
@@ -120,6 +120,7 @@ class ProcessConsumableManualRequest
             RequestFulfillment::create([
                 'request_item_id' => $requestItem->id,
                 'lot_id' => $lot->id,
+                'asset_id' => null,
                 'quantity_fulfilled' => $deductQty,
                 'assigned_at' => $dateObj,
                 'confirmed_at' => $dateObj,
@@ -137,7 +138,7 @@ class ProcessConsumableManualRequest
 
             // Buat InventoryLog dengan action_type 'stock_out' dan quantity_change negatif
             $this->inventoryLogService->logConsumableStockOut(
-                barang: $barang,
+                model: $model,
                 lot: $lot,
                 deductQty: $deductQty,
                 prevQty: $prevQty,
@@ -161,7 +162,7 @@ class ProcessConsumableManualRequest
         ]);
 
         // 6. Check and notify admins if stock dropped below threshold
-        app(\App\Services\NotificationService::class)->checkAndNotifyLowStock($barang);
+        app(\App\Services\NotificationService::class)->checkAndNotifyLowStock($model);
 
         return $smartRequest;
     }

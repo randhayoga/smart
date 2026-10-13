@@ -150,7 +150,7 @@ const timeline = computed((): TimelineStep[] => {
     <Breadcrumb>
       <BreadcrumbList class="pb-3">
         <BreadcrumbItem>
-          <BreadcrumbLink href="/smart/arsip">{{ t('fulfillment.archive') }}</BreadcrumbLink>
+          <BreadcrumbLink href="/smart/archive">{{ t('fulfillment.archive') }}</BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>

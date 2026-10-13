@@ -2,8 +2,8 @@
 
 namespace App\Mail;
 
-use App\Models\Inventory\Unit;
-use App\Models\Inventory\UnitActivationApproval;
+use App\Models\Inventory\Asset;
+use App\Models\Inventory\AssetActivationApproval;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
@@ -11,21 +11,27 @@ use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
 /**
- * Mailable notification sent to IFS Department Manager to request validation for newly created asset units.
+ * Base/Legacy class for asset activation request mailables.
+ * @deprecated Use App\Mail\DMAssetActivationRequest instead.
  */
 class DMUnitActivationRequest extends Mailable
 {
     use Queueable, SerializesModels;
 
     /**
-     * The unit asset being validated.
+     * The asset being validated.
      */
-    public Unit $unit;
+    public Asset $asset;
+
+    /**
+     * Backward-compatibility alias for the asset.
+     */
+    public Asset $unit;
 
     /**
      * The activation approval request record.
      */
-    public ?UnitActivationApproval $approval;
+    public ?AssetActivationApproval $approval;
 
     /**
      * Direct URL link for the recipient to view/validate the request.
@@ -50,19 +56,20 @@ class DMUnitActivationRequest extends Mailable
     /**
      * Create a new message instance.
      *
-     * @param Unit $unit
-     * @param UnitActivationApproval|null $approval
+     * @param Asset $asset
+     * @param AssetActivationApproval|null $approval
      * @param string|null $recipientName
      */
-    public function __construct(Unit $unit, ?UnitActivationApproval $approval = null, ?string $recipientName = null)
+    public function __construct(Asset $asset, ?AssetActivationApproval $approval = null, ?string $recipientName = null)
     {
-        $this->unit = $unit->loadMissing([
-            'lot.barang.brand',
-            'lot.barang.subcategory.category',
+        $this->asset = $asset->loadMissing([
+            'lot.model.brand',
+            'lot.model.type.category',
             'location.parent',
         ]);
+        $this->unit = $this->asset;
 
-        $this->approval = $approval ?? UnitActivationApproval::where('unit_id', $unit->id)
+        $this->approval = $approval ?? AssetActivationApproval::where('asset_id', $asset->id)
             ->where('decision', 'pending')
             ->latest('id')
             ->first();
@@ -71,14 +78,14 @@ class DMUnitActivationRequest extends Mailable
             $this->approval->loadMissing('requester');
         }
 
-        $brand = $this->unit->lot?->barang?->brand?->name ?? '';
-        $assetName = $this->unit->lot?->barang?->name ?? '';
-        $this->brandAndName = trim("{$brand} {$assetName}") ?: $this->unit->number;
+        $brand = $this->asset->lot?->model?->brand?->name ?? '';
+        $assetName = $this->asset->lot?->model?->name ?? '';
+        $this->brandAndName = trim("{$brand} {$assetName}") ?: $this->asset->number;
 
-        $this->locationText = $this->unit->location?->full_name ?? '-';
+        $this->locationText = $this->asset->location?->full_name ?? '-';
 
         $this->recipientName = $recipientName;
-        $this->actionUrl = url('/smart/approve-activation?search=' . urlencode($this->unit->number));
+        $this->actionUrl = url('/smart/approve-activation?search=' . urlencode($this->asset->number));
     }
 
     /**
@@ -87,7 +94,7 @@ class DMUnitActivationRequest extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "[SMART] New Asset Validation: {$this->unit->number} ({$this->brandAndName})",
+            subject: "[SMART] New Asset Validation: {$this->asset->number} ({$this->brandAndName})",
         );
     }
 
@@ -97,7 +104,7 @@ class DMUnitActivationRequest extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.dm_unit_activation_request',
+            view: 'emails.dm_asset_activation_request',
         );
     }
 

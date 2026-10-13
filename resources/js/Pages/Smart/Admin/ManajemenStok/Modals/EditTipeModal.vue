@@ -223,7 +223,7 @@ const handleSubmit = () => {
       if (data.photo) formData.image_url = data.photo;
     }
     return formData;
-  }).post(isSingle.value && selectedItem.value ? `/smart/inventory/barangs/${selectedItem.value.id}` : '/smart/inventory/barangs/bulk', {
+  }).post(isSingle.value && selectedItem.value ? `/smart/inventory/models/${selectedItem.value.id}` : '/smart/inventory/models/bulk', {
     onSuccess: () => {
       closeModal();
       emit('success');

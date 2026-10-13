@@ -35,23 +35,33 @@ class SmartRequestItemResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $subcatName = $this->barang?->subcategory?->name ?? $this->subcategory?->name ?? '-';
-        $catName = $this->barang?->subcategory?->category?->name ?? $this->subcategory?->category?->name ?? '-';
+        $model = $this->model ?? $this->barang;
+        $type = $this->type ?? $this->subcategory;
+
+        $typeName = $model?->type?->name ?? $type?->name ?? '-';
+        $catName = $model?->type?->category?->name ?? $type?->category?->name ?? '-';
         $isConsumable = (bool) $this->is_consumable;
-        $imageUrl = $this->barang?->image_url
-            ? '/media/' . $this->barang->image_url
-            : (($firstBarang = $this->subcategory?->barangs?->first()) && $firstBarang->image_url ? '/media/' . $firstBarang->image_url : null);
-        $uomName = $this->barang?->uom?->name 
-            ?? $this->subcategory?->barangs?->first()?->uom?->name 
+        $imageUrl = $model?->image_url
+            ? '/media/' . $model->image_url
+            : (($firstModel = $type?->models?->first()) && $firstModel->image_url ? '/media/' . $firstModel->image_url : null);
+        $uomName = $model?->uom?->name 
+            ?? $type?->models?->first()?->uom?->name 
             ?? 'satuan';
+
+        $modelId = $this->model_id ?? $this->barang_id;
+        $typeId = $this->type_id ?? $this->subcategory_id;
 
         $data = [
             'id' => $this->id,
-            'barang_id' => $this->barang_id,
-            'subcategory' => $subcatName,
-            'brand' => $this->barang?->brand?->name ?? '-',
-            'name' => $this->barang?->name ?? 'Tidak Spesifik',
-            'spec' => $this->barang?->specification ?? '',
+            'model_id' => $modelId,
+            'barang_id' => $modelId,
+            'type_id' => $typeId,
+            'subcategory_id' => $typeId,
+            'type' => $typeName,
+            'subcategory' => $typeName,
+            'brand' => $model?->brand?->name ?? '-',
+            'name' => $model?->name ?? 'Tidak Spesifik',
+            'spec' => $model?->specification ?? '',
             'quantity' => $this->quantity_requested,
             'category' => $catName,
             'is_consumable' => $isConsumable,
@@ -68,15 +78,15 @@ class SmartRequestItemResource extends JsonResource
 
         // Stock quantity calculation for warehouse inspection (Admin context only, secured against query tampering)
         if ($isAdminContext || $request->attributes->get('with_stock')) {
-            $key = InventoryStockService::itemKey($this->barang_id, $this->subcategory_id);
+            $key = InventoryStockService::itemKey($modelId, $typeId);
 
             if (static::$batchStockMap !== null && array_key_exists($key, static::$batchStockMap)) {
                 $availableStock = static::$batchStockMap[$key];
             } else {
                 $stockService = app(InventoryStockService::class);
-                $availableStock = $this->barang_id 
-                    ? $stockService->getAvailableStockForBarang((int) $this->barang_id)
-                    : $stockService->getAvailableStockForSubcategory((int) $this->subcategory_id);
+                $availableStock = $modelId 
+                    ? $stockService->getAvailableStockForModel((int) $modelId)
+                    : $stockService->getAvailableStockForType((int) $typeId);
             }
 
             $data['stockQuantity'] = $availableStock;
@@ -85,7 +95,9 @@ class SmartRequestItemResource extends JsonResource
 
         // Assigned assets / serial numbers
         if ($this->relationLoaded('fulfillments')) {
-            $data['assets'] = $this->fulfillments->pluck('unit.number')->filter()->values()->toArray();
+            $data['assets'] = $this->fulfillments->map(function ($f) {
+                return $f->asset?->number ?? $f->unit?->number;
+            })->filter()->values()->toArray();
         }
 
         return $data;

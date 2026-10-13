@@ -10,8 +10,8 @@ return new class extends Migration {
         Schema::create('consumable_baskets', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('user_id')->index()->comment('Refers to new_portal:users.id');
-            $table->foreignId('subcategory_id')->nullable()->constrained('subcategories')->cascadeOnDelete();
-            $table->foreignId('barang_id')->nullable()->constrained('barangs')->cascadeOnDelete();
+            $table->foreignId('type_id')->nullable()->constrained('types')->cascadeOnDelete();
+            $table->foreignId('model_id')->nullable()->constrained('models')->cascadeOnDelete();
             $table->integer('quantity');
             $table->timestamps();
         });
@@ -19,8 +19,8 @@ return new class extends Migration {
         Schema::create('asset_baskets', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('user_id')->index()->comment('Refers to new_portal:users.id');
-            $table->foreignId('subcategory_id')->nullable()->constrained('subcategories')->cascadeOnDelete();
-            $table->foreignId('barang_id')->nullable()->constrained('barangs')->cascadeOnDelete();
+            $table->foreignId('type_id')->nullable()->constrained('types')->cascadeOnDelete();
+            $table->foreignId('model_id')->nullable()->constrained('models')->cascadeOnDelete();
             $table->integer('quantity');
             $table->dateTime('start_date');
             $table->dateTime('end_date');

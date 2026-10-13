@@ -448,7 +448,7 @@ const handleSubmit = () => {
     return fd;
   });
 
-  const url = form.is_bulk ? '/smart/inventory/units/bulk' : '/smart/inventory/units';
+  const url = form.is_bulk ? '/smart/inventory/assets/bulk' : '/smart/inventory/assets';
   form.post(url, {
     forceFormData: true,
     preserveScroll: true,
@@ -522,13 +522,13 @@ const handleSubmit = () => {
 
                   <Field :data-invalid="!!errors.type || undefined">
                     <FieldLabel>
-                      <span>{{ t('inventory.type') }}<span class="text-rose-500">*</span></span>
+                      <span>{{ t('inventory.borrowingType') }}<span class="text-rose-500">*</span></span>
                     </FieldLabel>
                     <FieldContent>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !form.type ? 'text-muted-foreground' : 'text-foreground', errors.type ? 'border-destructive' : '']">
-                            {{ form.type || t('inventory.selectType') }}
+                            {{ form.type || t('inventory.selectBorrowingType') }}
                             <ChevronDown class="w-4 h-4 opacity-50" />
                           </Button>
                         </DropdownMenuTrigger>

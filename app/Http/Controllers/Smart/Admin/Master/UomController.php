@@ -46,7 +46,7 @@ class UomController extends Controller
      */
     public function destroy(Uom $uom): RedirectResponse
     {
-        if (DB::table('barangs')->where('uom_id', $uom->id)->exists()) {
+        if (DB::table('models')->where('uom_id', $uom->id)->exists()) {
             return redirect()->back()->with('error', __('master.uoms.cannot_delete_used'));
         }
 

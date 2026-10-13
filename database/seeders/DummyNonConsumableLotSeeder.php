@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\Inventory\Barang;
+use App\Models\Inventory\Model;
 use App\Models\Inventory\Lot;
 use App\Models\Master\Location;
 use App\Models\Master\Organizer;
@@ -108,8 +108,8 @@ class DummyNonConsumableLotSeeder extends Seeder
                 Storage::disk('local')->put($destinationPath, File::get($sourcePath));
             }
 
-            $barang = Barang::where('number', $data['barang_number'])->first();
-            if (!$barang) {
+            $model = Model::where('number', $data['barang_number'])->first();
+            if (!$model) {
                 continue;
             }
 
@@ -126,7 +126,7 @@ class DummyNonConsumableLotSeeder extends Seeder
             Lot::updateOrCreate(
                 ['number' => $data['number']],
                 [
-                    'barang_id' => $barang->id,
+                    'model_id' => $model->id,
                     'organizer_id' => $organizer?->id,
                     'vendor_id' => $vendor?->id,
                     'legacy_vendor_id' => $vendor?->id,

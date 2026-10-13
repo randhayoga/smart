@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\Inventory\Asset;
 use App\Models\Inventory\Lot;
-use App\Models\Inventory\Unit;
 use App\Models\Request\Request as SmartRequest;
 use App\Models\Request\RequestFulfillment;
 use App\Models\Request\RequestItem;
@@ -12,33 +12,36 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Request Fulfillment Service managing automatic FIFO fulfillment and unit availability queries.
+ * Request Fulfillment Service managing automatic FIFO fulfillment and asset availability queries.
  */
 class RequestFulfillmentService
 {
     /**
-     * Query available units for a given request item.
+     * Query available assets for a given request item.
      *
      * @param RequestItem $item
-     * @param bool $includeCurrentItemAssignments Whether to include units already assigned to this item
+     * @param bool $includeCurrentItemAssignments Whether to include assets already assigned to this item
      * @return Builder
      */
-    public function getAvailableUnitsQuery(RequestItem $item, bool $includeCurrentItemAssignments = false): Builder
+    public function getAvailableAssetsQuery(RequestItem $item, bool $includeCurrentItemAssignments = false): Builder
     {
-        $query = Unit::query()
-            ->with(['lot.barang.brand', 'location.parent'])
-            ->whereRaw("LOWER(units.status) = 'tersedia'");
+        $query = Asset::query()
+            ->with(['lot.model.brand', 'location.parent'])
+            ->whereRaw("LOWER(assets.status) = 'tersedia'");
 
-        // Filter by item barang or subcategory
+        // Filter by item model or type
         $query->whereHas('lot', function ($lq) use ($item) {
-            if ($item->barang_id) {
-                $lq->where('barang_id', $item->barang_id);
+            $mId = $item->model_id ?? $item->barang_id;
+            $tId = $item->type_id ?? $item->subcategory_id;
+
+            if ($mId) {
+                $lq->where('model_id', $mId);
             } else {
-                $lq->whereHas('barang', fn($bq) => $bq->where('subcategory_id', $item->subcategory_id));
+                $lq->whereHas('model', fn($mq) => $mq->where('type_id', $tId));
             }
         });
 
-        // Ensure unit is not locked by a confirmed fulfillment or already handed over
+        // Ensure asset is not locked by a confirmed fulfillment or already handed over
         $query->whereDoesntHave('fulfillments', function ($fq) use ($item, $includeCurrentItemAssignments) {
             $fq->where(function ($q) {
                 $q->whereNotNull('assigned_at')
@@ -52,13 +55,21 @@ class RequestFulfillmentService
         });
 
         // FIFO ordering: oldest lot receipt date first, then creation timestamp
-        $query->leftJoin('lots', 'units.lot_id', '=', 'lots.id')
-            ->select('units.*')
+        $query->leftJoin('lots', 'assets.lot_id', '=', 'lots.id')
+            ->select('assets.*')
             ->orderBy('lots.date_of_receipt', 'asc')
-            ->orderBy('units.created_at', 'asc')
-            ->orderBy('units.id', 'asc');
+            ->orderBy('assets.created_at', 'asc')
+            ->orderBy('assets.id', 'asc');
 
         return $query;
+    }
+
+    /**
+     * Alias for getAvailableAssetsQuery.
+     */
+    public function getAvailableUnitsQuery(RequestItem $item, bool $includeCurrentItemAssignments = false): Builder
+    {
+        return $this->getAvailableAssetsQuery($item, $includeCurrentItemAssignments);
     }
 
     /**
@@ -69,17 +80,20 @@ class RequestFulfillmentService
      */
     public function getAvailableLotsQuery(RequestItem $item): Builder
     {
+        $mId = $item->model_id ?? $item->barang_id;
+        $tId = $item->type_id ?? $item->subcategory_id;
+
         $query = Lot::query()
-            ->with(['barang.brand', 'barang.uom', 'location.parent'])
+            ->with(['model.brand', 'model.uom', 'location.parent'])
             ->where(function ($q) use ($item) {
                 $q->where('current_quantity', '>', 0)
                   ->orWhereHas('fulfillments', fn($fq) => $fq->where('request_item_id', $item->id));
             });
 
-        if ($item->barang_id) {
-            $query->where('barang_id', $item->barang_id);
+        if ($mId) {
+            $query->where('model_id', $mId);
         } else {
-            $query->whereHas('barang', fn($bq) => $bq->where('subcategory_id', $item->subcategory_id));
+            $query->whereHas('model', fn($mq) => $mq->where('type_id', $tId));
         }
 
         return $query->orderBy('date_of_receipt', 'asc')->orderBy('id', 'asc');
@@ -89,7 +103,7 @@ class RequestFulfillmentService
      * Auto-fulfill an asset (non-consumable) item using FIFO.
      *
      * @param RequestItem $item
-     * @return int Count of newly fulfilled units
+     * @return int Count of newly fulfilled assets
      */
     public function autoFulfillAssetItem(RequestItem $item): int
     {
@@ -99,27 +113,27 @@ class RequestFulfillmentService
             return 0;
         }
 
-        $existingCount = $item->fulfillments()->whereNotNull('unit_id')->count();
+        $existingCount = $item->fulfillments()->whereNotNull('asset_id')->count();
         $needed = (int) $item->quantity_requested - $existingCount;
 
         if ($needed <= 0) {
             return 0;
         }
 
-        // Fetch candidate units excluding already assigned to this item
-        $units = $this->getAvailableUnitsQuery($item, false)
+        // Fetch candidate assets excluding already assigned to this item
+        $assets = $this->getAvailableAssetsQuery($item, false)
             ->limit($needed)
             ->get();
 
-        if ($units->isEmpty()) {
+        if ($assets->isEmpty()) {
             return 0;
         }
 
         $createdCount = 0;
-        DB::transaction(function () use ($units, $item, &$createdCount) {
-            foreach ($units as $unit) {
-                // Ensure unit is not locked by a confirmed fulfillment
-                $alreadyTaken = RequestFulfillment::where('unit_id', $unit->id)
+        DB::transaction(function () use ($assets, $item, &$createdCount) {
+            foreach ($assets as $asset) {
+                // Ensure asset is not locked by a confirmed fulfillment
+                $alreadyTaken = RequestFulfillment::where('asset_id', $asset->id)
                     ->where(function ($q) {
                         $q->whereNotNull('assigned_at')
                           ->orWhereNotNull('confirmed_at')
@@ -135,8 +149,8 @@ class RequestFulfillmentService
 
                 RequestFulfillment::create([
                     'request_item_id' => $item->id,
-                    'unit_id' => $unit->id,
-                    'lot_id' => $unit->lot_id,
+                    'asset_id' => $asset->id,
+                    'lot_id' => $asset->lot_id,
                     'quantity_fulfilled' => 1,
                     'assigned_at' => null,
                 ]);
@@ -164,7 +178,7 @@ class RequestFulfillmentService
 
         $existingQuantity = (int) $item->fulfillments()
             ->whereNotNull('lot_id')
-            ->whereNull('unit_id')
+            ->whereNull('asset_id')
             ->sum('quantity_fulfilled');
 
         $needed = (int) $item->quantity_requested - $existingQuantity;
@@ -173,14 +187,17 @@ class RequestFulfillmentService
             return 0;
         }
 
+        $mId = $item->model_id ?? $item->barang_id;
+        $tId = $item->type_id ?? $item->subcategory_id;
+
         $lotQuery = Lot::query()
-            ->with(['barang.brand', 'location.parent'])
+            ->with(['model.brand', 'location.parent'])
             ->where('current_quantity', '>', 0);
 
-        if ($item->barang_id) {
-            $lotQuery->where('barang_id', $item->barang_id);
+        if ($mId) {
+            $lotQuery->where('model_id', $mId);
         } else {
-            $lotQuery->whereHas('barang', fn($bq) => $bq->where('subcategory_id', $item->subcategory_id));
+            $lotQuery->whereHas('model', fn($mq) => $mq->where('type_id', $tId));
         }
 
         $lots = $lotQuery->orderBy('date_of_receipt', 'asc')
@@ -203,7 +220,7 @@ class RequestFulfillmentService
                 // Check existing fulfillment for this item and lot
                 $existingFulfillment = RequestFulfillment::where('request_item_id', $item->id)
                     ->where('lot_id', $lot->id)
-                    ->whereNull('unit_id')
+                    ->whereNull('asset_id')
                     ->first();
 
                 $alreadyFulfilledFromThisLot = $existingFulfillment ? $existingFulfillment->quantity_fulfilled : 0;
@@ -223,7 +240,7 @@ class RequestFulfillmentService
                 } else {
                     RequestFulfillment::create([
                         'request_item_id' => $item->id,
-                        'unit_id' => null,
+                        'asset_id' => null,
                         'lot_id' => $lot->id,
                         'quantity_fulfilled' => $take,
                         'assigned_at' => null,
@@ -247,11 +264,11 @@ class RequestFulfillmentService
     public function autoFulfillRequest(SmartRequest $request): array
     {
         $request->loadMissing([
-            'items.barang.subcategory.category',
-            'items.barang.brand',
-            'items.subcategory.category',
-            'items.fulfillments.unit.lot',
-            'items.fulfillments.lot.barang.brand',
+            'items.model.type.category',
+            'items.model.brand',
+            'items.type.category',
+            'items.fulfillments.asset.lot',
+            'items.fulfillments.lot.model.brand',
         ]);
 
         $assetUnitsCount = 0;

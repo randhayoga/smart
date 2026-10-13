@@ -7,7 +7,7 @@ use App\Models\Master\Brand;
 use App\Models\Master\Category;
 use App\Models\Master\Location;
 use App\Models\Master\Organizer;
-use App\Models\Master\Subcategory;
+use App\Models\Master\Type;
 use App\Models\Master\Uom;
 use App\Models\Master\Vendor;
 use Illuminate\Database\Seeder;
@@ -42,7 +42,7 @@ class DummyNonConsumableMasterSeeder extends Seeder
             );
         }
 
-        $subcategories = [
+        $types = [
             [
                 'code' => 'FUR-KK',
                 'name' => 'Kursi Kerja',
@@ -76,16 +76,16 @@ class DummyNonConsumableMasterSeeder extends Seeder
             ],
         ];
 
-        foreach ($subcategories as $sub) {
-            $cat = $categoryModels[$sub['category_code']] ?? Category::where('code', $sub['category_code'])->first();
+        foreach ($types as $type) {
+            $cat = $categoryModels[$type['category_code']] ?? Category::where('code', $type['category_code'])->first();
             if ($cat) {
-                Subcategory::firstOrCreate(
-                    ['code' => $sub['code']],
+                Type::firstOrCreate(
+                    ['code' => $type['code']],
                     [
-                        'name' => $sub['name'],
-                        'description' => $sub['description'] ?? null,
+                        'name' => $type['name'],
+                        'description' => $type['description'] ?? null,
                         'category_id' => $cat->id,
-                        'is_consumable' => $sub['is_consumable'] ?? false,
+                        'is_consumable' => $type['is_consumable'] ?? false,
                     ]
                 );
             }

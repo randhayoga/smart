@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\Inventory\Barang;
+use App\Models\Inventory\Model;
 use App\Models\Inventory\Lot;
 use App\Models\Master\Location;
 use App\Models\Master\Organizer;
@@ -20,8 +20,8 @@ class DummyConsumableLotSeeder extends Seeder
      */
     public function run(): void
     {
-        $hvsBarang = Barang::where('number', 'ATK-HVS4-0001')->first();
-        $penBarang1 = Barang::where('number', 'ATK-PLPH-0001')->first();
+        $hvsModel = Model::where('number', 'ATK-HVS4-0001')->first();
+        $penModel1 = Model::where('number', 'ATK-PLPH-0001')->first();
 
         $organizer = Organizer::where('name', 'CFS')->first() ?? Organizer::first();
         $vendor = Vendor::where('name', 'PT Surya Abadi Mandiri')->first()
@@ -36,7 +36,7 @@ class DummyConsumableLotSeeder extends Seeder
         $lots = [
             [
                 'number' => 'LOT-0001-26-ATK-HVS4-0001',
-                'barang_id' => $hvsBarang?->id,
+                'model_id' => $hvsModel?->id,
                 'organizer_id' => $organizer?->id,
                 'vendor_id' => $vendor?->id,
                 'location_id' => $location?->id,
@@ -51,7 +51,7 @@ class DummyConsumableLotSeeder extends Seeder
             ],
             [
                 'number' => 'LOT-0002-26-ATK-HVS4-0001',
-                'barang_id' => $hvsBarang?->id,
+                'model_id' => $hvsModel?->id,
                 'organizer_id' => $organizer?->id,
                 'vendor_id' => $vendor?->id,
                 'location_id' => $location?->id,
@@ -66,7 +66,7 @@ class DummyConsumableLotSeeder extends Seeder
             ],
             [
                 'number' => 'LOT-0001-26-ATK-PLPH-0001',
-                'barang_id' => $penBarang1?->id,
+                'model_id' => $penModel1?->id,
                 'organizer_id' => $organizer?->id,
                 'vendor_id' => $vendor?->id,
                 'location_id' => $location?->id,
@@ -82,7 +82,7 @@ class DummyConsumableLotSeeder extends Seeder
         ];
 
         foreach ($lots as $data) {
-            if (!$data['barang_id']) {
+            if (!$data['model_id']) {
                 continue;
             }
 
@@ -108,7 +108,7 @@ class DummyConsumableLotSeeder extends Seeder
             Lot::updateOrCreate(
                 ['number' => $data['number']],
                 [
-                    'barang_id' => $data['barang_id'],
+                    'model_id' => $data['model_id'],
                     'organizer_id' => $data['organizer_id'],
                     'vendor_id' => $data['vendor_id'],
                     'legacy_vendor_id' => $data['vendor_id'],

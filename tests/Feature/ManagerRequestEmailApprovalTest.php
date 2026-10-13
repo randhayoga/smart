@@ -108,7 +108,7 @@ class ManagerRequestEmailApprovalTest extends TestCase
 
         Mail::assertSent(ManagerRequestApprovalMail::class, function ($mail) use ($manager, $req) {
             $this->assertEquals($manager->email, $mail->to[0]['address']);
-            $this->assertEquals("[SMART] Permohonan Persetujuan: Peminjaman Baru [{$req->request_number}]", $mail->envelope()->subject);
+            $this->assertEquals("[SMART] Approval Request: New Borrowing [{$req->request_number}]", $mail->envelope()->subject);
             $this->assertEquals(url('/smart/approve') . '?search=' . urlencode($req->request_number), $mail->loginUrl);
 
             // Ensure rendering blade view succeeds with borrow period
@@ -270,7 +270,7 @@ class ManagerRequestEmailApprovalTest extends TestCase
         // Requester receives rejection email
         Mail::assertSent(RequesterRequestRejectedMail::class, function ($mail) use ($requester, $req, $manager, $rejectionNote) {
             $this->assertEquals($requester->email, $mail->to[0]['address']);
-            $this->assertEquals("[SMART] {$req->type_name} Ditolak [{$req->request_number}]", $mail->envelope()->subject);
+            $this->assertEquals("[SMART] Borrowing Request Rejected [{$req->request_number}]", $mail->envelope()->subject);
             $this->assertEquals($rejectionNote, $mail->reason);
 
             return true;
@@ -375,7 +375,7 @@ class ManagerRequestEmailApprovalTest extends TestCase
         $mail = new ManagerRequestApprovalMail($req, $manager, 'Permintaan');
         $this->assertEquals("Project PRJ-888 (Project Tower Alpha)", $mail->destinationName);
         $this->assertEquals("Roll", $mail->formattedItems[0]['uom']);
-        $this->assertEquals("[SMART] Permohonan Persetujuan: Permintaan Baru [REQ-0000099]", $mail->envelope()->subject);
+        $this->assertEquals("[SMART] Approval Request: New Request [REQ-0000099]", $mail->envelope()->subject);
 
         $renderedHtml = $mail->render();
         $this->assertStringContainsString('Project PRJ-888 (Project Tower Alpha)', $renderedHtml);

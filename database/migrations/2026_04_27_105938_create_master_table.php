@@ -14,7 +14,7 @@ return new class extends Migration {
             $table->timestamps();
         });
 
-        Schema::create('subcategories', function (Blueprint $table) {
+        Schema::create('types', function (Blueprint $table) {
             $table->id();
             $table->string('code', 9)->unique();
             $table->string('name');
@@ -78,7 +78,7 @@ return new class extends Migration {
         Schema::dropIfExists('organizers');
         Schema::dropIfExists('brands');
         Schema::dropIfExists('uoms');
-        Schema::dropIfExists('subcategories');
+        Schema::dropIfExists('types');
         Schema::dropIfExists('categories');
     }
 };

@@ -16,9 +16,9 @@ use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 /**
- * Barang Controller Feature Tests
+ * Barang Controller Feature Tests (Backward Compatibility Aliases)
  *
- * Verifies single and bulk operations on item definitions (Barang), deletion constraints with LOTs, and authenticated media access.
+ * Verifies single and bulk operations on item definitions via legacy barangs routes.
  */
 class BarangControllerTest extends TestCase
 {
@@ -31,7 +31,7 @@ class BarangControllerTest extends TestCase
         $brand = Brand::factory()->create();
         $uom = Uom::factory()->create();
 
-        $response = $this->actingAs($user)->post(route('smart.inventory.barangs.store'), [
+        $response = $this->actingAs($user)->post(route('smart.inventory.models.store'), [
             'number' => 'BRG-STORE-1',
             'subcategory_id' => $subcategory->id,
             'brand_id' => $brand->id,
@@ -42,13 +42,13 @@ class BarangControllerTest extends TestCase
         ]);
 
         $response->assertRedirect();
-        $response->assertSessionHas('success', 'Tipe berhasil ditambahkan.');
+        $response->assertSessionHas('success', __('inventory.model_created'));
 
         $barang = Barang::where('number', 'BRG-STORE-1')->first();
         $this->assertNotNull($barang);
 
         $this->assertDatabaseHas('inventory_logs', [
-            'barang_id' => $barang->id,
+            'model_id' => $barang->id,
             'user_id' => $user->id,
             'action_type' => 'create',
             'quantity_change' => 0,
@@ -60,11 +60,11 @@ class BarangControllerTest extends TestCase
         $user = User::factory()->create();
         $barang = Barang::factory()->create();
 
-        $response = $this->actingAs($user)->delete(route('smart.inventory.barangs.destroy', $barang));
+        $response = $this->actingAs($user)->delete(route('smart.inventory.models.destroy', $barang));
 
         $response->assertRedirect(route('smart.inventory'));
-        $response->assertSessionHas('success', 'Tipe berhasil dihapus.');
-        $this->assertDatabaseMissing('barangs', [
+        $response->assertSessionHas('success', __('inventory.model_deleted'));
+        $this->assertDatabaseMissing('models', [
             'id' => $barang->id,
         ]);
 
@@ -81,11 +81,11 @@ class BarangControllerTest extends TestCase
         $lot = Lot::factory()->create();
         $barang = $lot->barang;
 
-        $response = $this->actingAs($user)->delete(route('smart.inventory.barangs.destroy', $barang));
+        $response = $this->actingAs($user)->delete(route('smart.inventory.models.destroy', $barang));
 
         $response->assertRedirect();
-        $response->assertSessionHas('error', 'Barang tidak dapat dihapus karena masih memiliki LOT terkait.');
-        $this->assertDatabaseHas('barangs', [
+        $response->assertSessionHas('error', 'Model tidak dapat dihapus karena masih memiliki LOT terkait.');
+        $this->assertDatabaseHas('models', [
             'id' => $barang->id,
         ]);
     }
@@ -101,7 +101,7 @@ class BarangControllerTest extends TestCase
         $newBrand = Brand::factory()->create();
         $newUom = Uom::factory()->create();
 
-        $response = $this->actingAs($user)->put(route('smart.inventory.barangs.update', $barang), [
+        $response = $this->actingAs($user)->put(route('smart.inventory.models.update', $barang), [
             'number' => $barang->number,
             'subcategory_id' => $barang->subcategory_id,
             'brand_id' => $newBrand->id,
@@ -111,9 +111,9 @@ class BarangControllerTest extends TestCase
         ]);
 
         $response->assertRedirect();
-        $response->assertSessionHas('success', 'Tipe berhasil diperbarui.');
+        $response->assertSessionHas('success', __('inventory.model_updated'));
 
-        $this->assertDatabaseHas('barangs', [
+        $this->assertDatabaseHas('models', [
             'id' => $barang->id,
             'brand_id' => $newBrand->id,
             'uom_id' => $newUom->id,
@@ -122,7 +122,7 @@ class BarangControllerTest extends TestCase
         ]);
 
         $this->assertDatabaseHas('inventory_logs', [
-            'barang_id' => $barang->id,
+            'model_id' => $barang->id,
             'user_id' => $user->id,
             'action_type' => 'update',
         ]);
@@ -138,7 +138,7 @@ class BarangControllerTest extends TestCase
             'image_url' => 'inventory/sample.jpg',
         ]);
 
-        $response = $this->actingAs($user)->put(route('smart.inventory.barangs.update', $barang), [
+        $response = $this->actingAs($user)->put(route('smart.inventory.models.update', $barang), [
             'number' => $barang->number,
             'subcategory_id' => $barang->subcategory_id,
             'brand_id' => $barang->brand_id,
@@ -148,7 +148,7 @@ class BarangControllerTest extends TestCase
         ]);
 
         $response->assertRedirect();
-        $response->assertSessionHas('success', 'Tipe berhasil diperbarui.');
+        $response->assertSessionHas('success', __('inventory.model_updated'));
 
         $barang->refresh();
         $this->assertNull($barang->image_url);
@@ -173,7 +173,7 @@ class BarangControllerTest extends TestCase
         $newUom = Uom::factory()->create();
         $file = UploadedFile::fake()->image('barang.png');
 
-        $response = $this->actingAs($user)->put(route('smart.inventory.barangs.bulk-update'), [
+        $response = $this->actingAs($user)->put(route('smart.inventory.models.bulk-update'), [
             'ids' => [$barang1->id, $barang2->id],
             'brand_id' => $newBrand->id,
             'uom_id' => $newUom->id,
@@ -183,9 +183,9 @@ class BarangControllerTest extends TestCase
         ]);
 
         $response->assertRedirect();
-        $response->assertSessionHas('success', '2 tipe terpilih berhasil diperbarui.');
+        $response->assertSessionHas('success', '2 model terpilih berhasil diperbarui.');
 
-        $this->assertDatabaseHas('barangs', [
+        $this->assertDatabaseHas('models', [
             'id' => $barang1->id,
             'brand_id' => $newBrand->id,
             'uom_id' => $newUom->id,
@@ -193,7 +193,7 @@ class BarangControllerTest extends TestCase
             'specification' => 'Spec New Bulk',
         ]);
 
-        $this->assertDatabaseHas('barangs', [
+        $this->assertDatabaseHas('models', [
             'id' => $barang2->id,
             'brand_id' => $newBrand->id,
             'uom_id' => $newUom->id,
@@ -202,12 +202,12 @@ class BarangControllerTest extends TestCase
         ]);
 
         $this->assertDatabaseHas('inventory_logs', [
-            'barang_id' => $barang1->id,
+            'model_id' => $barang1->id,
             'user_id' => $user->id,
             'action_type' => 'update',
         ]);
         $this->assertDatabaseHas('inventory_logs', [
-            'barang_id' => $barang2->id,
+            'model_id' => $barang2->id,
             'user_id' => $user->id,
             'action_type' => 'update',
         ]);
@@ -239,7 +239,7 @@ class BarangControllerTest extends TestCase
 
         // Bulk update sending only brand_id
         $newBrand = Brand::factory()->create();
-        $response = $this->actingAs($user)->put(route('smart.inventory.barangs.bulk-update'), [
+        $response = $this->actingAs($user)->put(route('smart.inventory.models.bulk-update'), [
             'ids' => [$barang1->id, $barang2->id],
             'brand_id' => $newBrand->id,
             // uom_id, nama and specification are not sent/empty
@@ -247,7 +247,7 @@ class BarangControllerTest extends TestCase
 
         $response->assertRedirect();
         
-        $this->assertDatabaseHas('barangs', [
+        $this->assertDatabaseHas('models', [
             'id' => $barang1->id,
             'brand_id' => $newBrand->id,
             'uom_id' => $uom->id, // kept old uom
@@ -255,7 +255,7 @@ class BarangControllerTest extends TestCase
             'specification' => 'Spec Keep 1', // kept old spec
         ]);
 
-        $this->assertDatabaseHas('barangs', [
+        $this->assertDatabaseHas('models', [
             'id' => $barang2->id,
             'brand_id' => $newBrand->id,
             'uom_id' => $uom->id, // kept old uom
@@ -270,15 +270,15 @@ class BarangControllerTest extends TestCase
         $barangs = Barang::factory()->count(3)->create();
         $ids = $barangs->pluck('id')->toArray();
 
-        $response = $this->actingAs($user)->delete(route('smart.inventory.barangs.bulk-destroy'), [
+        $response = $this->actingAs($user)->delete(route('smart.inventory.models.bulk-destroy'), [
             'ids' => $ids,
         ]);
 
         $response->assertRedirect();
-        $response->assertSessionHas('success', '3 barang terpilih berhasil dihapus.');
+        $response->assertSessionHas('success', '3 model terpilih berhasil dihapus.');
 
         foreach ($ids as $id) {
-            $this->assertDatabaseMissing('barangs', [
+            $this->assertDatabaseMissing('models', [
                 'id' => $id,
             ]);
         }
@@ -295,17 +295,17 @@ class BarangControllerTest extends TestCase
         ]);
         $barangWithLots = $lot->barang;
 
-        $response = $this->actingAs($user)->delete(route('smart.inventory.barangs.bulk-destroy'), [
+        $response = $this->actingAs($user)->delete(route('smart.inventory.models.bulk-destroy'), [
             'ids' => [$barangWithoutLots->id, $barangWithLots->id],
         ]);
 
         $response->assertRedirect();
-        $response->assertSessionHas('error', "1 barang terpilih berhasil dihapus.\n1 barang tidak dapat dihapus karena memiliki LOT terkait.");
+        $response->assertSessionHas('error', "1 model terpilih berhasil dihapus.\n1 model tidak dapat dihapus karena memiliki LOT terkait.");
 
-        $this->assertDatabaseMissing('barangs', [
+        $this->assertDatabaseMissing('models', [
             'id' => $barangWithoutLots->id,
         ]);
-        $this->assertDatabaseHas('barangs', [
+        $this->assertDatabaseHas('models', [
             'id' => $barangWithLots->id,
         ]);
     }
@@ -326,4 +326,3 @@ class BarangControllerTest extends TestCase
         $authResponse->assertHeader('Cache-Control', 'max-age=86400, private');
     }
 }
-

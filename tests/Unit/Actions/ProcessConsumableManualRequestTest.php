@@ -5,12 +5,12 @@ namespace Tests\Unit\Actions;
 use App\Actions\Request\ProcessConsumableManualRequest;
 use App\Models\User;
 use App\Models\HrdOrgchart;
-use App\Models\Inventory\Barang;
+use App\Models\Inventory\Model;
 use App\Models\Inventory\InventoryLog;
 use App\Models\Inventory\Lot;
 use App\Models\Master\Category;
 use App\Models\Master\Location;
-use App\Models\Master\Subcategory;
+use App\Models\Master\Type;
 use App\Models\Request\Request as SmartRequest;
 use App\Models\Request\RequestFulfillment;
 use App\Models\Request\RequestItem;
@@ -27,7 +27,7 @@ class ProcessConsumableManualRequestTest extends TestCase
     private ProcessConsumableManualRequest $action;
     private User $admin;
     private User $requester;
-    private Barang $barang;
+    private Model $model;
 
     protected function setUp(): void
     {
@@ -38,15 +38,15 @@ class ProcessConsumableManualRequestTest extends TestCase
         $this->requester = User::factory()->create(['name' => 'Requester User']);
 
         $category = Category::factory()->create();
-        $subcategory = Subcategory::factory()->create(['category_id' => $category->id, 'is_consumable' => true]);
-        $this->barang = Barang::factory()->create(['subcategory_id' => $subcategory->id]);
+        $type = Type::factory()->create(['category_id' => $category->id, 'is_consumable' => true]);
+        $this->model = Model::factory()->create(['type_id' => $type->id]);
     }
 
     private function createLot(int $quantity): Lot
     {
         $location = Location::firstOrCreate(['name' => 'Gudang Utama'], ['full_name' => 'Gudang Utama']);
         return Lot::factory()->create([
-            'barang_id' => $this->barang->id,
+            'model_id' => $this->model->id,
             'location_id' => $location->id,
             'initial_quantity' => $quantity,
             'current_quantity' => $quantity,
@@ -61,7 +61,7 @@ class ProcessConsumableManualRequestTest extends TestCase
         $smartReq = $this->action->execute(
             admin: $this->admin,
             requester: $this->requester,
-            barang: $this->barang,
+            model: $this->model,
             allocations: [
                 ['lot' => $lot, 'quantity' => 15],
             ],
@@ -89,7 +89,7 @@ class ProcessConsumableManualRequestTest extends TestCase
         $this->assertNotNull($item);
         $this->assertEquals(15, $item->quantity_requested);
         $this->assertEquals('fulfilled', $item->status);
-        $this->assertEquals($this->barang->id, $item->barang_id);
+        $this->assertEquals($this->model->id, $item->model_id);
         $this->assertEquals('2026-09-15', $item->start_date->toDateString());
 
         // RequestFulfillment
@@ -106,7 +106,7 @@ class ProcessConsumableManualRequestTest extends TestCase
 
         // InventoryLog
         $this->assertDatabaseHas('inventory_logs', [
-            'barang_id' => $this->barang->id,
+            'model_id' => $this->model->id,
             'lot_id' => $lot->id,
             'user_id' => $this->requester->id,
             'action_type' => 'stock_out',
@@ -132,7 +132,7 @@ class ProcessConsumableManualRequestTest extends TestCase
         $smartReq = $this->action->execute(
             admin: $this->admin,
             requester: $this->requester,
-            barang: $this->barang,
+            model: $this->model,
             allocations: [
                 ['lot' => $lot1, 'quantity' => 20],
                 ['lot' => $lot2, 'quantity' => 10],
@@ -180,15 +180,15 @@ class ProcessConsumableManualRequestTest extends TestCase
         ]);
         $competingItem = RequestItem::create([
             'request_id' => $competingRequest->id,
-            'subcategory_id' => $this->barang->subcategory_id,
-            'barang_id' => $this->barang->id,
+            'type_id' => $this->model->type_id,
+            'model_id' => $this->model->id,
             'quantity_requested' => 10,
             'status' => 'approved',
         ]);
         $competingFulfillment = RequestFulfillment::create([
             'request_item_id' => $competingItem->id,
             'lot_id' => $lot->id,
-            'unit_id' => null,
+            'asset_id' => null,
             'quantity_fulfilled' => 10,
             'assigned_at' => null,
         ]);
@@ -196,7 +196,7 @@ class ProcessConsumableManualRequestTest extends TestCase
         $this->action->execute(
             admin: $this->admin,
             requester: $this->requester,
-            barang: $this->barang,
+            model: $this->model,
             allocations: [
                 ['lot' => $lot, 'quantity' => 10],
             ],

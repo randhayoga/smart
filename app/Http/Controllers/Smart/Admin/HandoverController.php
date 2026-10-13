@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Smart\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Inventory\Lot;
-use App\Models\Inventory\Unit;
+use App\Models\Inventory\Asset;
 use App\Models\Request\Request as SmartRequest;
 use App\Models\Request\RequestItem;
 use App\Models\Request\RequestFulfillment;
@@ -70,10 +70,10 @@ class HandoverController extends Controller
             'adminConfirmation.admin',
             'project',
             'department',
-            'items.barang.subcategory.category',
-            'items.barang.brand',
-            'items.subcategory.category',
-            'items.subcategory.barangs',
+            'items.model.type.category',
+            'items.model.brand',
+            'items.type.category',
+            'items.type.models',
             'statusLogs.changer'
         ])
             ->findOrFail($id);
@@ -136,73 +136,77 @@ class HandoverController extends Controller
 
         $items = $req->items->map(function ($item) {
             $assets = RequestFulfillment::where('request_item_id', $item->id)
-                ->with('unit')
+                ->with('asset')
                 ->get()
-                ->pluck('unit.number')
+                ->pluck('asset.number')
                 ->filter()
                 ->values()
                 ->toArray();
 
-            $availableUnits = Unit::with(['lot', 'location'])
+            $availableAssets = Asset::with(['lot', 'location'])
                 ->whereHas('lot', function ($query) use ($item) {
-                    if ($item->barang_id) {
-                        $query->where('barang_id', $item->barang_id);
+                    if ($item->model_id) {
+                        $query->where('model_id', $item->model_id);
                     } else {
-                        $query->whereHas('barang', fn($bq) => $bq->where('subcategory_id', $item->subcategory_id));
+                        $query->whereHas('model', fn($mq) => $mq->where('type_id', $item->type_id));
                     }
                 })
                 ->get()
-                ->map(function ($unit) {
+                ->map(function ($asset) {
                     return [
-                        'id' => $unit->id,
-                        'assetCode' => $unit->number,
-                        'lotCode' => $unit->lot->number,
-                        'status' => $unit->status === 'tersedia' ? 'Tersedia' : ucfirst($unit->status),
-                        'condition' => $unit->condition,
-                        'location' => $unit->location->name ?? '-',
+                        'id' => $asset->id,
+                        'assetCode' => $asset->number,
+                        'assetNumber' => $asset->number,
+                        'lotCode' => $asset->lot->number,
+                        'status' => $asset->status === 'tersedia' ? 'Tersedia' : ucfirst($asset->status),
+                        'condition' => $asset->condition,
+                        'location' => $asset->location->name ?? '-',
                     ];
                 });
 
-            $barangId = $item->barang_id;
-            if ($barangId) {
-                $hasAnyUnit = Unit::whereHas('lot', fn($q) => $q->where('barang_id', $barangId))->exists();
-                if ($hasAnyUnit) {
-                    $availableStock = Unit::whereHas('lot', fn($q) => $q->where('barang_id', $barangId))
+            $modelId = $item->model_id;
+            if ($modelId) {
+                $hasAnyAsset = Asset::whereHas('lot', fn($q) => $q->where('model_id', $modelId))->exists();
+                if ($hasAnyAsset) {
+                    $availableStock = Asset::whereHas('lot', fn($q) => $q->where('model_id', $modelId))
                         ->where('status', 'tersedia')
                         ->count();
                 } else {
-                    $availableStock = Lot::where('barang_id', $barangId)->sum('current_quantity');
+                    $availableStock = Lot::where('model_id', $modelId)->sum('current_quantity');
                 }
             } else {
-                $hasAnyUnit = Unit::whereHas('lot.barang', fn($q) => $q->where('subcategory_id', $item->subcategory_id))->exists();
-                if ($hasAnyUnit) {
-                    $availableStock = Unit::whereHas('lot.barang', fn($q) => $q->where('subcategory_id', $item->subcategory_id))
+                $hasAnyAsset = Asset::whereHas('lot.model', fn($q) => $q->where('type_id', $item->type_id))->exists();
+                if ($hasAnyAsset) {
+                    $availableStock = Asset::whereHas('lot.model', fn($q) => $q->where('type_id', $item->type_id))
                         ->where('status', 'tersedia')
                         ->count();
                 } else {
-                    $availableStock = Lot::whereHas('barang', fn($q) => $q->where('subcategory_id', $item->subcategory_id))->sum('current_quantity');
+                    $availableStock = Lot::whereHas('model', fn($q) => $q->where('type_id', $item->type_id))->sum('current_quantity');
                 }
             }
 
-            $subcatName = $item->barang?->subcategory?->name ?? $item->subcategory?->name ?? '-';
-            $catName = $item->barang?->subcategory?->category?->name ?? $item->subcategory?->category?->name ?? '-';
+            $typeName = $item->model?->type?->name ?? $item->type?->name ?? '-';
+            $catName = $item->model?->type?->category?->name ?? $item->type?->category?->name ?? '-';
             $isConsumable = (bool) $item->is_consumable;
-            $imageUrl = $item->barang?->image_url
-                ? '/media/' . $item->barang->image_url
-                : (($firstBarang = $item->subcategory?->barangs?->first()) && $firstBarang->image_url ? '/media/' . $firstBarang->image_url : null);
-            $brandSpec = trim(($item->barang?->brand?->name ?? '') . ' ' . ($item->barang?->specification ?? ''));
+            $imageUrl = $item->model?->image_url
+                ? '/media/' . $item->model->image_url
+                : (($firstModel = $item->type?->models?->first()) && $firstModel->image_url ? '/media/' . $firstModel->image_url : null);
+            $brandSpec = trim(($item->model?->brand?->name ?? '') . ' ' . ($item->model?->specification ?? ''));
 
             return [
                 'id' => $item->id,
-                'barang_id' => $item->barang_id,
+                'model_id' => $item->model_id,
+                'barang_id' => $item->model_id,
                 'brand' => $brandSpec ?: '-',
-                'name' => $item->barang?->name ?? 'Tidak Spesifik',
+                'name' => $item->model?->name ?? 'Tidak Spesifik',
                 'category' => $catName,
-                'subcategory' => $subcatName,
+                'type' => $typeName,
+                'subcategory' => $typeName,
                 'quantity' => $item->quantity_requested,
                 'assets' => $assets,
                 'imageUrl' => $imageUrl,
-                'availableUnits' => $availableUnits,
+                'availableUnits' => $availableAssets,
+                'availableAssets' => $availableAssets,
                 'is_consumable' => $isConsumable,
                 'stock' => $availableStock,
                 'status' => $item->status,
@@ -220,28 +224,30 @@ class HandoverController extends Controller
     }
 
     /**
-     * Store asset unit allocations for the specified request item.
+     * Store asset allocations for the specified request item.
      */
     public function allocate(Request $request, $id)
     {
         $validated = $request->validate([
             'request_item_id' => 'required|exists:request_items,id',
-            'unit_numbers' => 'required|array',
+            'unit_numbers' => 'nullable|array',
+            'asset_numbers' => 'nullable|array',
         ]);
 
         $item = RequestItem::findOrFail($validated['request_item_id']);
+        $numbers = $validated['asset_numbers'] ?? $validated['unit_numbers'] ?? [];
 
-        // Find the units corresponding to the unit numbers
-        $units = Unit::whereIn('number', $validated['unit_numbers'])->get();
+        // Find the assets corresponding to the numbers
+        $assets = Asset::whereIn('number', $numbers)->get();
 
         // Clear existing assignments for this request item
         RequestFulfillment::where('request_item_id', $item->id)->delete();
 
         // Create new assignments
-        foreach ($units as $unit) {
+        foreach ($assets as $asset) {
             RequestFulfillment::create([
                 'request_item_id' => $item->id,
-                'unit_id' => $unit->id,
+                'asset_id' => $asset->id,
                 'quantity_fulfilled' => 1,
                 'assigned_at' => now(),
             ]);

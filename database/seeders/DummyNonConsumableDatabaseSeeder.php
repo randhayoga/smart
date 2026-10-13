@@ -18,9 +18,9 @@ class DummyNonConsumableDatabaseSeeder extends Seeder
     {
         $this->call([
             DummyNonConsumableMasterSeeder::class,
-            DummyNonConsumableBarangSeeder::class,
+            DummyNonConsumableModelSeeder::class,
             DummyNonConsumableLotSeeder::class,
-            DummyNonConsumableUnitSeeder::class,
+            DummyNonConsumableAssetSeeder::class,
         ]);
     }
 }

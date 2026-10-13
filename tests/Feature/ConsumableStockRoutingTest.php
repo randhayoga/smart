@@ -41,11 +41,11 @@ class ConsumableStockRoutingTest extends TestCase
             'current_quantity' => 10,
         ]);
 
-        $response = $this->actingAs($user)->get(route('smart.inventory.stok-habis-pakai'));
+        $response = $this->actingAs($user)->get(route('smart.inventory.consumables'));
 
         $response->assertStatus(200);
         $response->assertInertia(fn (Assert $page) => $page
-            ->component('Smart/Admin/ManajemenStok/DaftarStokHabisPakai')
+            ->component('Smart/Admin/ManajemenStok/DaftarHabisPakai')
             ->where('selectedBarangCode', null)
             ->has('barangs', 1)
             ->has('lots', 1)
@@ -66,11 +66,11 @@ class ConsumableStockRoutingTest extends TestCase
             'current_quantity' => 5,
         ]);
 
-        $response = $this->actingAs($user)->get(route('smart.inventory.stok-habis-pakai', ['barang' => $barang->number]));
+        $response = $this->actingAs($user)->get(route('smart.inventory.consumables', ['model' => $barang->number]));
 
         $response->assertStatus(200);
         $response->assertInertia(fn (Assert $page) => $page
-            ->component('Smart/Admin/ManajemenStok/DaftarStokHabisPakai')
+            ->component('Smart/Admin/ManajemenStok/DaftarHabisPakai')
             ->where('selectedBarangCode', 'BRG-HP-002')
             ->has('barangs', 1)
         );
@@ -90,11 +90,11 @@ class ConsumableStockRoutingTest extends TestCase
             'current_quantity' => 8,
         ]);
 
-        $response = $this->actingAs($user)->get(route('smart.inventory.stok-habis-pakai', ['barang_id' => $barang->id]));
+        $response = $this->actingAs($user)->get(route('smart.inventory.consumables', ['barang_id' => $barang->id]));
 
         $response->assertStatus(200);
         $response->assertInertia(fn (Assert $page) => $page
-            ->component('Smart/Admin/ManajemenStok/DaftarStokHabisPakai')
+            ->component('Smart/Admin/ManajemenStok/DaftarHabisPakai')
             ->where('selectedBarangCode', 'BRG-HP-003')
             ->has('barangs', 1)
         );

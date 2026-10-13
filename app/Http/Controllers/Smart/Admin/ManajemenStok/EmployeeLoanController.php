@@ -30,20 +30,20 @@ class EmployeeLoanController extends Controller
 
         $fulfillments = RequestFulfillment::query()
             ->with([
-                'unit.location.parent.parent',
-                'unit.statusApprovals',
-                'unit.lot.barang.subcategory.category',
-                'unit.lot.barang.brand',
-                'unit.lot.barang.uom',
-                'unit.lot.organizer',
-                'unit.lot.vendor',
-                'unit.lifecycles.actor',
+                'asset.location.parent.parent',
+                'asset.statusApprovals',
+                'asset.lot.model.type.category',
+                'asset.lot.model.brand',
+                'asset.lot.model.uom',
+                'asset.lot.organizer',
+                'asset.lot.vendor',
+                'asset.lifecycles.actor',
                 'requestItem.request.handover',
                 'requestItem.request.return',
                 'handover',
                 'return',
             ])
-            ->whereNotNull('unit_id')
+            ->whereNotNull('asset_id')
             ->whereHas('requestItem.request', function ($q) use ($userId) {
                 $q->where('user_id', $userId);
             })
@@ -65,22 +65,22 @@ class EmployeeLoanController extends Controller
                 ?? $f->return?->completed_at
                 ?? $f->requestItem?->request?->return?->completed_at;
 
-            $unit = $f->unit;
-            $lot = $unit?->lot;
-            $barang = $lot?->barang;
-            $brand = $barang?->brand?->name ?? '-';
-            $location = $unit?->location?->full_name ?? '-';
+            $asset = $f->asset;
+            $lot = $asset?->lot;
+            $model = $lot?->model;
+            $brand = $model?->brand?->name ?? '-';
+            $location = $asset?->location?->full_name ?? '-';
 
-            $pendingApproval = $unit?->statusApprovals?->firstWhere('decision', 'pending');
-            $approvedApproval = $unit?->status === 'Tidak Aktif' 
-                ? $unit?->statusApprovals?->where('decision', 'approved')->sortByDesc('updated_at')->first() 
+            $pendingApproval = $asset?->statusApprovals?->firstWhere('decision', 'pending');
+            $approvedApproval = $asset?->status === 'Tidak Aktif' 
+                ? $asset?->statusApprovals?->where('decision', 'approved')->sortByDesc('updated_at')->first() 
                 : null;
 
-            $assetData = $unit ? [
-                'id' => $unit->id,
-                'number' => $unit->number,
-                'legacy_number' => $unit->legacy_number,
-                'status' => $unit->status,
+            $assetData = $asset ? [
+                'id' => $asset->id,
+                'number' => $asset->number,
+                'legacy_number' => $asset->legacy_number,
+                'status' => $asset->status,
                 'proposed_status' => $pendingApproval 
                     ? $pendingApproval->proposed_condition 
                     : ($approvedApproval ? $approvedApproval->proposed_condition : null),
@@ -96,35 +96,41 @@ class EmployeeLoanController extends Controller
                 'bod_boc_approval_url' => $pendingApproval 
                     ? $pendingApproval->bod_boc_approval_url 
                     : ($approvedApproval ? $approvedApproval->bod_boc_approval_url : null),
-                'condition' => $unit->condition,
-                'price' => $unit->price,
-                'image_url' => $unit->image_url,
-                'vehicle_registration' => $unit->vehicle_registration,
-                'updated_at' => $unit->updated_at ? $unit->updated_at->format('d-m-Y H:i') : '-',
+                'condition' => $asset->condition,
+                'price' => $asset->price,
+                'type' => $asset->borrowing_type,
+                'borrowing_type' => $asset->borrowing_type,
+                'classification' => $asset->classification,
+                'specification' => $asset->specification,
+                'image_url' => $asset->image_url,
+                'vehicle_registration' => $asset->vehicle_registration,
+                'burden' => $asset->burden,
+                'created_at' => $asset->created_at?->toIso8601String(),
+                'updated_at' => $asset->updated_at ? $asset->updated_at->format('d-m-Y H:i') : '-',
                 'location' => $location,
-                'location_id' => $unit->location_id,
-                'lot_id' => $unit->lot_id,
+                'location_id' => $asset->location_id,
+                'lot_id' => $lot?->id,
                 'lot_number' => $lot?->number ?? '-',
-                'lot_imageUrl' => $lot?->image_url ?? null,
-                'lot_unitPrice' => $lot?->unit_price ?? null,
+                'lot_imageUrl' => $lot?->image_url,
                 'organizer' => $lot?->organizer?->name ?? '-',
-                'organizer_id' => $lot?->organizer_id ?? null,
-                'vendor' => $lot?->vendor?->name ?? '-',
-                'vendor_id' => $lot?->vendor_id ?? null,
-                'lot_organizer' => $lot?->organizer?->name ?? '-',
-                'lot_vendor' => $lot?->vendor?->name ?? '-',
-                'lot_po_number' => $lot?->po_number ?? '-',
-                'lot_date_of_receipt' => ($lot && $lot->date_of_receipt) ? $lot->date_of_receipt->format('Y-m-d') : null,
-                'barang_id' => $barang?->id ?? null,
-                'barang_code' => $barang?->number ?? '-',
-                'barang_nama' => $barang?->name ?? '-',
+                'vendor' => $lot?->vendor_name ?? '-',
+                'model_id' => $model?->id,
+                'model_number' => $model?->number ?? '-',
+                'model_name' => $model?->name ?? '-',
+                'model_brand' => $brand,
+                'model_specification' => $model?->specification ?? '-',
+                'model_category' => $model?->type?->category?->name ?? '-',
+                'model_type' => $model?->type?->name ?? '-',
+                'model_uom' => $model?->uom?->name ?? '-',
+                'barang_id' => $model?->id,
+                'barang_code' => $model?->number ?? '-',
+                'barang_nama' => $model?->name ?? '-',
                 'barang_brand' => $brand,
-                'barang_specification' => $barang?->specification ?? '-',
-                'barang_category' => $barang?->subcategory?->category?->name ?? '-',
-                'barang_subcategory' => $barang?->subcategory?->name ?? '-',
-                'barang_uom' => $barang?->uom?->name ?? '-',
-                'active_borrowing' => $unit->active_borrowing,
-                'lifecycles' => $unit->lifecycles ? $unit->lifecycles->map(function ($log) {
+                'barang_specification' => $model?->specification ?? '-',
+                'barang_category' => $model?->type?->category?->name ?? '-',
+                'barang_subcategory' => $model?->type?->name ?? '-',
+                'barang_uom' => $model?->uom?->name ?? '-',
+                'lifecycles' => $asset->lifecycles->map(function ($log) {
                     return [
                         'waktu' => $log->start_date ? $log->start_date->format('d-m-Y H:i:s') : '-',
                         'status' => $log->status,
@@ -133,31 +139,56 @@ class EmployeeLoanController extends Controller
                         'durasi' => $log->formatted_duration,
                         'catatan' => $log->note ?? '-',
                     ];
-                })->toArray() : [],
+                })->toArray(),
             ] : null;
 
-            $baseData = [
+            $itemName = $model?->name ?? '-';
+            $itemCode = $model?->number ?? '-';
+            $assetCode = $asset?->number ?? '-';
+            $lotCode = $lot?->number ?? '-';
+            $categoryName = $model?->type?->category?->name ?? '-';
+            $typeName = $model?->type?->name ?? '-';
+
+            $item = [
                 'id' => $f->id,
-                'unit_id' => $f->unit_id,
-                'unit_number' => $unit?->number ?? '-',
-                'barang_nama' => $barang?->name ?? '-',
+                'asset_id' => $f->asset_id,
+                'unit_id' => $f->asset_id,
+                'request_number' => $f->requestItem?->request?->request_number ?? '-',
+                'item_name' => $itemName,
+                'barang_nama' => $itemName,
+                'model_name' => $itemName,
+                'item_code' => $itemCode,
+                'item_number' => $itemCode,
+                'barang_code' => $itemCode,
+                'model_number' => $itemCode,
+                'asset_code' => $assetCode,
+                'asset_number' => $assetCode,
+                'unit_code' => $assetCode,
+                'unit_number' => $assetCode,
+                'lot_code' => $lotCode,
+                'lot_number' => $lotCode,
                 'brand' => $brand,
-                'condition' => $unit?->condition ?? '-',
+                'category' => $categoryName,
+                'type' => $typeName,
+                'subcategory' => $typeName,
+                'condition' => $asset?->condition ?? '-',
                 'location' => $location,
                 'start_date' => Carbon::parse($startDate)->format('d-m-Y H:i'),
                 'start_date_raw' => Carbon::parse($startDate)->toISOString(),
                 'asset' => $assetData,
+                'unit' => $assetData,
             ];
 
             if ($completedDate) {
-                $baseData['return_date'] = Carbon::parse($completedDate)->format('d-m-Y H:i');
-                $baseData['return_date_raw'] = Carbon::parse($completedDate)->toISOString();
-                $history[] = $baseData;
+                $item['completed_date'] = Carbon::parse($completedDate)->format('d-m-Y H:i');
+                $item['return_date'] = Carbon::parse($completedDate)->format('d-m-Y H:i');
+                $item['return_date_raw'] = Carbon::parse($completedDate)->toISOString();
+                $history[] = $item;
             } else {
                 $dueDate = $f->requestItem?->end_date;
-                $baseData['due_date'] = $dueDate ? Carbon::parse($dueDate)->format('d-m-Y') : '-';
-                $baseData['due_date_raw'] = $dueDate ? Carbon::parse($dueDate)->toISOString() : null;
-                $active[] = $baseData;
+                $item['due_date'] = $dueDate ? Carbon::parse($dueDate)->format('d-m-Y') : '-';
+                $item['due_date_raw'] = $dueDate ? Carbon::parse($dueDate)->toISOString() : null;
+                $active[] = $item;
             }
         }
 

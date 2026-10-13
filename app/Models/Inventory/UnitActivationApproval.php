@@ -2,54 +2,16 @@
 
 namespace App\Models\Inventory;
 
-use App\Models\User;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Database\Factories\Inventory\AssetActivationApprovalFactory;
 
 /**
- * Unit Activation Approval model representing workflow approval requests for newly created asset units.
+ * Legacy alias for AssetActivationApproval.
+ * @deprecated Use App\Models\Inventory\AssetActivationApproval instead.
  */
-class UnitActivationApproval extends Model
+class UnitActivationApproval extends AssetActivationApproval
 {
-    use HasFactory;
-
-    protected $fillable = [
-        'unit_id',
-        'requester_id',
-        'approver_id',
-        'decision',
-        'note',
-        'requested_at',
-        'decided_at',
-    ];
-
-    protected $casts = [
-        'requested_at' => 'datetime',
-        'decided_at' => 'datetime',
-    ];
-
-    /**
-     * The unit undergoing activation approval.
-     */
-    public function unit(): BelongsTo
+    protected static function newFactory()
     {
-        return $this->belongsTo(Unit::class);
-    }
-
-    /**
-     * The user who registered/created the unit and requested activation.
-     */
-    public function requester(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'requester_id');
-    }
-
-    /**
-     * The manager who approved or rejected the activation request.
-     */
-    public function approver(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'approver_id');
+        return AssetActivationApprovalFactory::new();
     }
 }

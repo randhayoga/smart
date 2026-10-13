@@ -215,7 +215,7 @@ class RequestApprovalTest extends TestCase
         // Verify email sent
         Mail::assertSent(RequesterRequestRejectedMail::class, function ($mail) use ($requester, $req, $manager, $rejectionNote) {
             $this->assertEquals($requester->email, $mail->to[0]['address']);
-            $this->assertEquals("[SMART] Peminjaman Ditolak [{$req->request_number}]", $mail->envelope()->subject);
+            $this->assertEquals("[SMART] Borrowing Request Rejected [{$req->request_number}]", $mail->envelope()->subject);
             $this->assertEquals($rejectionNote, $mail->reason);
 
             $rendered = $mail->render();

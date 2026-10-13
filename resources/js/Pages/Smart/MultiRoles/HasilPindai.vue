@@ -403,7 +403,7 @@ const handleSubmit = () => {
     if (data.lost_doc_file) fd.lost_doc_file = data.lost_doc_file;
     if (data.bod_boc_approval_file) fd.bod_boc_approval_file = data.bod_boc_approval_file;
     return fd;
-  }).post(`/smart/inventory/units/${props.asset.id}`, {
+  }).post(`/smart/inventory/assets/${props.asset.id}`, {
     onSuccess: () => {
       toast.success(t('scanner.assetUpdatedSuccess'));
       activeTab.value = 'detail';

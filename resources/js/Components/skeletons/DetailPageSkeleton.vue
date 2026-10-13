@@ -2,11 +2,11 @@
 /**
  * Detail Page Skeleton Component
  * Mimics the silhouette of Phase 1 detail and inspect views:
- * - Detail Barang (/smart/inventory/{barang})
+ * - Detail Model (/smart/inventory/{model})
  * - Detail LOT Consumables & Non-Consumables (/smart/inventory/lots/{lot})
  * - Detail Lacak Peminjaman (/smart/borrowed/{id})
- * - Detail Arsip (/smart/arsip/{id})
- * - Hasil Pindai Barcode (/smart/scan/{unit})
+ * - Detail Arsip (/smart/archive/{id})
+ * - Hasil Pindai Barcode (/smart/scan/{asset})
  */
 import { Skeleton } from '@/Components/ui/skeleton';
 import { Card, CardHeader, CardContent } from '@/Components/ui/card';

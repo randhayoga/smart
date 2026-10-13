@@ -3,14 +3,14 @@
 namespace Tests\Unit;
 
 use App\Models\User;
-use App\Models\Inventory\Barang;
+use App\Models\Inventory\Model;
 use App\Models\Inventory\InventoryLog;
 use App\Models\Inventory\Lot;
 use App\Models\Master\Brand;
 use App\Models\Master\Category;
 use App\Models\Master\Location;
 use App\Models\Master\Organizer;
-use App\Models\Master\Subcategory;
+use App\Models\Master\Type;
 use App\Models\Master\Uom;
 use App\Models\Master\Vendor;
 use App\Models\TbProject;
@@ -24,7 +24,7 @@ class InventoryLogServiceTest extends TestCase
 
     private InventoryLogService $service;
     private User $user;
-    private Barang $barang;
+    private Model $model;
 
     protected function setUp(): void
     {
@@ -34,12 +34,12 @@ class InventoryLogServiceTest extends TestCase
         $this->user = User::factory()->create();
 
         $category = Category::factory()->create();
-        $subcategory = Subcategory::factory()->create(['category_id' => $category->id, 'is_consumable' => true]);
+        $type = Type::factory()->create(['category_id' => $category->id, 'is_consumable' => true]);
         $brand = Brand::factory()->create();
         $uom = Uom::factory()->create(['name' => 'Pcs']);
 
-        $this->barang = Barang::factory()->create([
-            'subcategory_id' => $subcategory->id,
+        $this->model = Model::factory()->create([
+            'type_id' => $type->id,
             'brand_id' => $brand->id,
             'uom_id' => $uom->id,
             'name' => 'Spidol Hitam',
@@ -47,12 +47,12 @@ class InventoryLogServiceTest extends TestCase
         ]);
     }
 
-    public function test_log_barang_created(): void
+    public function test_log_model_created(): void
     {
-        $log = $this->service->logBarangCreated($this->barang, $this->user);
+        $log = $this->service->logModelCreated($this->model, $this->user);
 
         $this->assertInstanceOf(InventoryLog::class, $log);
-        $this->assertEquals($this->barang->id, $log->barang_id);
+        $this->assertEquals($this->model->id, $log->model_id);
         $this->assertNull($log->lot_id);
         $this->assertEquals($this->user->id, $log->user_id);
         $this->assertEquals('create', $log->action_type);
@@ -60,16 +60,16 @@ class InventoryLogServiceTest extends TestCase
         $this->assertNull($log->previous_state);
         $this->assertIsArray($log->new_state);
         $this->assertEquals('Spidol Hitam', $log->new_state['name']);
-        $this->assertStringContainsString('Menambahkan tipe barang baru: Spidol Hitam (BRG-001)', $log->note);
+        $this->assertStringContainsString('Menambahkan model baru: Spidol Hitam (BRG-001)', $log->note);
     }
 
-    public function test_log_barang_updated_records_diff_when_changed(): void
+    public function test_log_model_updated_records_diff_when_changed(): void
     {
-        $original = $this->barang->getAttributes();
-        $this->barang->name = 'Spidol Biru';
-        $this->barang->save();
+        $original = $this->model->getAttributes();
+        $this->model->name = 'Spidol Biru';
+        $this->model->save();
 
-        $log = $this->service->logBarangUpdated($this->barang, $original, $this->user);
+        $log = $this->service->logModelUpdated($this->model, $original, $this->user);
 
         $this->assertNotNull($log);
         $this->assertEquals('update', $log->action_type);
@@ -78,37 +78,37 @@ class InventoryLogServiceTest extends TestCase
         $this->assertEquals(['name' => 'Spidol Biru'], $log->new_state);
     }
 
-    public function test_log_barang_updated_returns_null_when_no_tracked_field_changed(): void
+    public function test_log_model_updated_returns_null_when_no_tracked_field_changed(): void
     {
-        $original = $this->barang->getAttributes();
-        $log = $this->service->logBarangUpdated($this->barang, $original, $this->user);
+        $original = $this->model->getAttributes();
+        $log = $this->service->logModelUpdated($this->model, $original, $this->user);
 
         $this->assertNull($log);
     }
 
-    public function test_prepare_and_log_barang_deleted_unlinks_foreign_keys_safely(): void
+    public function test_prepare_and_log_model_deleted_unlinks_foreign_keys_safely(): void
     {
-        // First, create an existing log referencing the barang
-        $existingLog = $this->service->logBarangCreated($this->barang, $this->user);
-        $this->assertEquals($this->barang->id, $existingLog->barang_id);
+        // First, create an existing log referencing the model
+        $existingLog = $this->service->logModelCreated($this->model, $this->user);
+        $this->assertEquals($this->model->id, $existingLog->model_id);
 
-        // Perform prepareAndLogBarangDeleted
-        $deleteLog = $this->service->prepareAndLogBarangDeleted($this->barang, $this->user);
+        // Perform prepareAndLogModelDeleted
+        $deleteLog = $this->service->prepareAndLogModelDeleted($this->model, $this->user);
 
-        // The existing log must now have barang_id null
-        $this->assertNull($existingLog->fresh()->barang_id);
+        // The existing log must now have model_id null
+        $this->assertNull($existingLog->fresh()->model_id);
 
-        // The delete log itself should have barang_id null, previous_state populated
-        $this->assertNull($deleteLog->barang_id);
+        // The delete log itself should have model_id null, previous_state populated
+        $this->assertNull($deleteLog->model_id);
         $this->assertEquals('delete', $deleteLog->action_type);
         $this->assertEquals('Spidol Hitam', $deleteLog->previous_state['name']);
-        $this->assertStringContainsString('Menghapus tipe barang: Spidol Hitam', $deleteLog->note);
+        $this->assertStringContainsString('Menghapus model: Spidol Hitam', $deleteLog->note);
     }
 
     public function test_log_lot_created(): void
     {
         $lot = Lot::factory()->create([
-            'barang_id' => $this->barang->id,
+            'model_id' => $this->model->id,
             'initial_quantity' => 50,
             'current_quantity' => 50,
             'number' => 'LOT-2026-001',
@@ -118,7 +118,7 @@ class InventoryLogServiceTest extends TestCase
         $log = $this->service->logLotCreated($lot, $this->user);
 
         $this->assertInstanceOf(InventoryLog::class, $log);
-        $this->assertEquals($this->barang->id, $log->barang_id);
+        $this->assertEquals($this->model->id, $log->model_id);
         $this->assertEquals($lot->id, $log->lot_id);
         $this->assertEquals('stock_in', $log->action_type);
         $this->assertEquals(50, $log->quantity_change);
@@ -130,7 +130,7 @@ class InventoryLogServiceTest extends TestCase
     public function test_log_lot_created_with_null_po_number(): void
     {
         $lot = Lot::factory()->create([
-            'barang_id' => $this->barang->id,
+            'model_id' => $this->model->id,
             'initial_quantity' => 20,
             'current_quantity' => 20,
             'number' => 'LOT-2026-002',
@@ -147,7 +147,7 @@ class InventoryLogServiceTest extends TestCase
     public function test_log_lot_updated(): void
     {
         $lot = Lot::factory()->create([
-            'barang_id' => $this->barang->id,
+            'model_id' => $this->model->id,
             'po_number' => 'PO-OLD',
         ]);
 
@@ -166,7 +166,7 @@ class InventoryLogServiceTest extends TestCase
     public function test_prepare_and_log_lot_deleted_unlinks_foreign_keys_safely(): void
     {
         $lot = Lot::factory()->create([
-            'barang_id' => $this->barang->id,
+            'model_id' => $this->model->id,
             'current_quantity' => 15,
         ]);
 
@@ -177,7 +177,7 @@ class InventoryLogServiceTest extends TestCase
 
         $this->assertNull($existingLog->fresh()->lot_id);
         $this->assertNull($deleteLog->lot_id);
-        $this->assertEquals($this->barang->id, $deleteLog->barang_id);
+        $this->assertEquals($this->model->id, $deleteLog->model_id);
         $this->assertEquals('delete', $deleteLog->action_type);
         $this->assertEquals(-15, $deleteLog->quantity_change);
     }
@@ -185,13 +185,13 @@ class InventoryLogServiceTest extends TestCase
     public function test_log_consumable_stock_out_note_formatting(): void
     {
         $lot = Lot::factory()->create([
-            'barang_id' => $this->barang->id,
+            'model_id' => $this->model->id,
             'current_quantity' => 20,
         ]);
 
         // Scenario 1: Corporate with note
         $log1 = $this->service->logConsumableStockOut(
-            barang: $this->barang,
+            model: $this->model,
             lot: $lot,
             deductQty: 5,
             prevQty: 20,
@@ -208,7 +208,7 @@ class InventoryLogServiceTest extends TestCase
 
         // Scenario 2: Corporate with null note
         $log2 = $this->service->logConsumableStockOut(
-            barang: $this->barang,
+            model: $this->model,
             lot: $lot,
             deductQty: 3,
             prevQty: 15,
@@ -223,7 +223,7 @@ class InventoryLogServiceTest extends TestCase
 
         // Scenario 3: Project with note
         $log3 = $this->service->logConsumableStockOut(
-            barang: $this->barang,
+            model: $this->model,
             lot: $lot,
             deductQty: 10,
             prevQty: 12,

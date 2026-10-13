@@ -3,18 +3,18 @@
 namespace App\Http\Controllers\Smart\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Inventory\UnitLifecycle;
+use App\Models\Inventory\AssetLifecycle;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * Audit Controller aggregating all unit asset lifecycle events into a comprehensive audit trail.
+ * Audit Controller aggregating all asset lifecycle events into a comprehensive audit trail.
  */
 class AuditController extends Controller
 {
     /**
-     * Display the primary Audit Trail overview page (aggregated audit logs for all units).
+     * Display the primary Audit Trail overview page (aggregated audit logs for all assets).
      */
     public function index(Request $request): Response
     {
@@ -23,15 +23,16 @@ class AuditController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        $lifecycles = UnitLifecycle::with(['unit.lot.barang', 'actor'])
+        $lifecycles = AssetLifecycle::with(['asset.lot.model', 'actor'])
             ->orderBy('start_date', 'desc')
             ->orderBy('id', 'desc')
             ->get()
             ->map(function ($log) {
                 return [
                     'id' => $log->id,
-                    'kode_aset' => $log->unit->number ?? '-',
-                    'nama_aset' => $log->unit->lot->barang->name ?? '-',
+                    'nomor_aset' => $log->asset->number ?? '-',
+                    'kode_aset' => $log->asset->number ?? '-',
+                    'nama_aset' => $log->asset->lot->model->name ?? '-',
                     'waktu' => $log->start_date ? $log->start_date->format('d-m-Y H:i:s') : '-',
                     'status' => $log->status ?? '-',
                     'action_type' => $log->action_type ?? '-',

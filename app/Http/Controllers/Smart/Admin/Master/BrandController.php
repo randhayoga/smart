@@ -48,7 +48,7 @@ class BrandController extends Controller
      */
     public function destroy(Brand $brand): RedirectResponse
     {
-        if (DB::table('barangs')->where('brand_id', $brand->id)->exists()) {
+        if (DB::table('models')->where('brand_id', $brand->id)->exists()) {
             return redirect()->back()->with('error', __('master.brands.cannot_delete_used'));
         }
 

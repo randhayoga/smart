@@ -11,16 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // 1. Update units table default values
-        Schema::table('units', function (Blueprint $table) {
-            $table->string('status')->default('Tidak Aktif')->change();
-            $table->string('condition')->default('Belum Diverifikasi')->change();
-        });
-
-        // 2. Create unit_activation_approvals table
-        Schema::create('unit_activation_approvals', function (Blueprint $table) {
+        Schema::create('asset_activation_approvals', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('unit_id')->constrained('units')->cascadeOnDelete();
+            $table->foreignId('asset_id')->constrained('assets')->cascadeOnDelete();
             $table->unsignedBigInteger('requester_id')->index()->comment('Refers to new_portal:users.id');
             $table->unsignedBigInteger('approver_id')->nullable()->index()->comment('nullable | Refers to new_portal:users.id');
             $table->string('decision')->default('pending')->comment('pending | approved | rejected');
@@ -36,11 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('unit_activation_approvals');
-
-        Schema::table('units', function (Blueprint $table) {
-            $table->string('status')->change();
-            $table->string('condition')->change();
-        });
+        Schema::dropIfExists('asset_activation_approvals');
     }
 };

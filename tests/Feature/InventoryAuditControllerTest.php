@@ -45,7 +45,7 @@ class InventoryAuditControllerTest extends TestCase
 
     public function test_unauthenticated_user_cannot_access_inventory_audit_page(): void
     {
-        $response = $this->get(route('smart.audit-stok'));
+        $response = $this->get(route('smart.inventory-audit'));
         $response->assertRedirect();
     }
 
@@ -53,7 +53,7 @@ class InventoryAuditControllerTest extends TestCase
     {
         $admin = $this->createAdmin();
 
-        $response = $this->actingAs($admin)->get(route('smart.audit-stok'));
+        $response = $this->actingAs($admin)->get(route('smart.inventory-audit'));
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page
@@ -75,7 +75,7 @@ class InventoryAuditControllerTest extends TestCase
         ]);
         $ifsManager->refresh();
 
-        $response = $this->actingAs($ifsManager)->get(route('smart.audit-stok'));
+        $response = $this->actingAs($ifsManager)->get(route('smart.inventory-audit'));
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page
@@ -93,7 +93,7 @@ class InventoryAuditControllerTest extends TestCase
         $user = User::factory()->create();
         $this->assertEquals('user', $user->role);
 
-        $response = $this->actingAs($user)->get(route('smart.audit-stok'));
+        $response = $this->actingAs($user)->get(route('smart.inventory-audit'));
 
         $response->assertForbidden();
 
@@ -117,7 +117,7 @@ class InventoryAuditControllerTest extends TestCase
             'created_at' => now(),
         ]);
 
-        $response = $this->actingAs($admin)->get(route('smart.audit-stok'));
+        $response = $this->actingAs($admin)->get(route('smart.inventory-audit'));
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page
@@ -154,7 +154,7 @@ class InventoryAuditControllerTest extends TestCase
             'created_at' => now(),
         ]);
 
-        $response = $this->actingAs($admin)->get(route('smart.audit-stok'));
+        $response = $this->actingAs($admin)->get(route('smart.inventory-audit'));
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page

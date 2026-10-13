@@ -3,14 +3,14 @@
 namespace App\Http\Controllers\Smart\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Inventory\Barang;
+use App\Models\Inventory\Model as InventoryModel;
 use App\Models\Inventory\Lot;
-use App\Models\Inventory\Unit;
+use App\Models\Inventory\Asset;
 use App\Models\Master\Brand;
 use App\Models\Master\Category;
 use App\Models\Master\Location;
 use App\Models\Master\Organizer;
-use App\Models\Master\Subcategory;
+use App\Models\Master\Type;
 use App\Models\Master\Uom;
 use App\Models\Master\Vendor;
 use App\Models\TbProject;
@@ -29,39 +29,42 @@ class ManajemenStokController extends Controller
     public function index(Request $request): Response
     {
         $categories = Category::orderBy('code')->get();
-        $subcategories = Subcategory::with('category')->orderBy('code')->get();
+        $types = Type::with('category')->orderBy('code')->get();
         $brands = Brand::orderBy('name')->get();
         $uoms = Uom::orderBy('name')->get();
         
-        $barangs = Barang::with(['subcategory.category', 'brand', 'uom', 'lots.units'])
+        $models = InventoryModel::with(['type.category', 'brand', 'uom', 'lots.assets'])
             ->get()
-            ->map(function ($barang) {
-                $isConsumable = (bool)$barang->is_consumable;
+            ->map(function ($model) {
+                $isConsumable = (bool)$model->is_consumable;
                 $amount = $isConsumable 
-                    ? (int)$barang->lots->sum('current_quantity')
-                    : (int)$barang->lots->sum(fn($lot) => $lot->units->count());
+                    ? (int)$model->lots->sum('current_quantity')
+                    : (int)$model->lots->sum(fn($lot) => $lot->assets->count());
                 
                 return [
-                    'id' => $barang->id,
-                    'code' => $barang->number,
-                    'category' => $barang->subcategory->category->name ?? '-',
-                    'subcategory' => $barang->subcategory->name ?? '-',
-                    'brand' => $barang->brand->name ?? '-',
-                    'name' => $barang->name,
-                    'specification' => $barang->specification,
-                    'lastUpdate' => $barang->updated_at ? $barang->updated_at->format('d-m-Y H:i') : '-',
+                    'id' => $model->id,
+                    'code' => $model->number,
+                    'number' => $model->number,
+                    'category' => $model->type->category->name ?? '-',
+                    'type' => $model->type->name ?? '-',
+                    'type_id' => $model->type_id,
+                    'subcategory' => $model->type->name ?? '-',
+                    'subcategory_id' => $model->type_id,
+                    'brand' => $model->brand->name ?? '-',
+                    'name' => $model->name,
+                    'specification' => $model->specification,
+                    'lastUpdate' => $model->updated_at ? $model->updated_at->format('d-m-Y H:i') : '-',
                     'amount' => $amount,
-                    'initial_stock' => (int)$barang->lots->sum('initial_quantity'),
+                    'initial_stock' => (int)$model->lots->sum('initial_quantity'),
                     'available_stock' => $amount,
-                    'image_url' => $barang->image_url,
-                    'uom' => $barang->uom->name ?? '-',
-                    'subcategory_id' => $barang->subcategory_id,
-                    'category_id' => $barang->subcategory->category_id ?? null,
-                    'category_code' => $barang->subcategory->category->code ?? null,
+                    'image_url' => $model->image_url,
+                    'uom' => $model->uom->name ?? '-',
+                    'category_id' => $model->type->category_id ?? null,
+                    'category_code' => $model->type->category->code ?? null,
                     'is_consumable' => $isConsumable,
-                    'brand_id' => $barang->brand_id,
-                    'uom_id' => $barang->uom_id,
-                    'min_stock_threshold' => $barang->min_stock_threshold,
+                    'brand_id' => $model->brand_id,
+                    'uom_id' => $model->uom_id,
+                    'min_stock_threshold' => $model->min_stock_threshold,
                 ];
             });
 
@@ -70,10 +73,12 @@ class ManajemenStokController extends Controller
         return Inertia::render('Smart/Admin/ManajemenStok/ManajemenStok', [
             'user' => $request->user(),
             'categories' => $categories,
-            'subcategories' => $subcategories,
+            'types' => $types,
+            'subcategories' => $types,
             'brands' => $brands,
             'uoms' => $uoms,
-            'barangs' => $barangs,
+            'models' => $models,
+            'barangs' => $models,
             'projects' => $projects,
         ]);
     }
@@ -81,49 +86,53 @@ class ManajemenStokController extends Controller
     /**
      * Display detailed item information, parent lots, and units.
      */
-    public function show(Request $request, Barang $barang): Response
+    public function show(Request $request, InventoryModel $model): Response
     {
-        $barang->loadMissing(['subcategory.category', 'brand', 'uom', 'lots.units']);
+        $model->loadMissing(['type.category', 'brand', 'uom', 'lots.assets']);
 
-        $isConsumable = (bool)$barang->is_consumable;
+        $isConsumable = (bool)$model->is_consumable;
         $amount = $isConsumable 
-            ? (int)$barang->lots->sum('current_quantity')
-            : (int)$barang->lots->sum(fn($lot) => $lot->units->count());
+            ? (int)$model->lots->sum('current_quantity')
+            : (int)$model->lots->sum(fn($lot) => $lot->assets->count());
 
-        $formattedBarang = [
-            'id' => $barang->id,
-            'code' => $barang->number,
-            'category' => $barang->subcategory->category->name ?? '-',
-            'subcategory' => $barang->subcategory->name ?? '-',
-            'brand' => $barang->brand->name ?? '-',
-            'name' => $barang->name,
-            'specification' => $barang->specification,
-            'lastUpdate' => $barang->updated_at ? $barang->updated_at->format('d-m-Y H:i') : '-',
+        $formattedModel = [
+            'id' => $model->id,
+            'code' => $model->number,
+            'number' => $model->number,
+            'category' => $model->type->category->name ?? '-',
+            'type' => $model->type->name ?? '-',
+            'type_id' => $model->type_id,
+            'subcategory' => $model->type->name ?? '-',
+            'subcategory_id' => $model->type_id,
+            'brand' => $model->brand->name ?? '-',
+            'name' => $model->name,
+            'specification' => $model->specification,
+            'lastUpdate' => $model->updated_at ? $model->updated_at->format('d-m-Y H:i') : '-',
             'amount' => $amount,
-            'initial_stock' => (int)$barang->lots->sum('initial_quantity'),
+            'initial_stock' => (int)$model->lots->sum('initial_quantity'),
             'available_stock' => $amount,
-            'image_url' => $barang->image_url,
-            'uom' => $barang->uom->name ?? '-',
-            'subcategory_id' => $barang->subcategory_id,
-            'category_id' => $barang->subcategory->category_id ?? null,
-            'category_code' => $barang->subcategory->category->code ?? null,
+            'image_url' => $model->image_url,
+            'uom' => $model->uom->name ?? '-',
+            'category_id' => $model->type->category_id ?? null,
+            'category_code' => $model->type->category->code ?? null,
             'is_consumable' => $isConsumable,
-            'brand_id' => $barang->brand_id,
-            'uom_id' => $barang->uom_id,
-            'min_stock_threshold' => $barang->min_stock_threshold,
+            'brand_id' => $model->brand_id,
+            'uom_id' => $model->uom_id,
+            'min_stock_threshold' => $model->min_stock_threshold,
         ];
 
         $lots = Lot::with(['organizer', 'vendor', 'legacyVendor', 'location.parent', 'project'])
-            ->withCount(['units', 'units as available_units_count' => function ($query) {
+            ->withCount(['assets', 'assets as available_assets_count' => function ($query) {
                 $query->where('status', 'Tersedia');
             }])
-            ->where('barang_id', $barang->id)
+            ->where('model_id', $model->id)
             ->get()
             ->map(function ($lot) {
                 return [
                     'id' => $lot->id,
                     'number' => $lot->number,
-                    'barang_id' => $lot->barang_id,
+                    'model_id' => $lot->model_id,
+                    'barang_id' => $lot->model_id,
                     'po_number' => $lot->po_number,
                     'date_of_receipt' => $lot->date_of_receipt ? $lot->date_of_receipt->format('Y-m-d') : null,
                     'organizer' => $lot->organizer->name ?? '-',
@@ -135,8 +144,8 @@ class ManajemenStokController extends Controller
                     'location_id' => $lot->location_id,
                     'unitPrice' => $lot->unit_price,
                     'imageUrl' => $lot->image_url,
-                    'assetCount' => $lot->units_count,
-                    'availableAssetCount' => $lot->available_units_count,
+                    'assetCount' => $lot->assets_count,
+                    'availableAssetCount' => $lot->available_assets_count,
                     'initial_quantity' => $lot->initial_quantity,
                     'current_quantity' => $lot->current_quantity,
                     'age' => $lot->age,
@@ -151,34 +160,31 @@ class ManajemenStokController extends Controller
         $brands = Brand::orderBy('name')->get();
         $uoms = Uom::orderBy('name')->get();
         $organizers = Organizer::orderBy('name')->get();
-        // Target DB: eproc (vendors table).
-        // Using local vendors directory (falls back to eproc when connection configured)
         $vendors = Vendor::orderBy('name')->get(['id', 'name']);
         $locations = Location::with('parent')->active()->orderBy('name')->get();
 
-        $units = [];
+        $assets = [];
         if (!$isConsumable) {
-            $units = Unit::with([
+            $assets = Asset::with([
                 'location.parent', 'statusApprovals', 'project',
-                'lot.barang.subcategory.category', 'lot.barang.brand', 'lot.barang.uom',
+                'lot.model.type.category', 'lot.model.brand', 'lot.model.uom',
                 'lot.organizer', 'lot.vendor', 'lot.legacyVendor', 'vendor', 'lifecycles.actor'
             ])
-            ->whereHas('lot', function ($query) use ($barang) {
-                $query->where('barang_id', $barang->id);
+            ->whereHas('lot', function ($query) use ($model) {
+                $query->where('model_id', $model->id);
             })
             ->orderBy('created_at', 'desc')
             ->get()
-            ->map(function ($unit) {
-                $pendingApproval = $unit->statusApprovals->firstWhere('decision', 'pending');
-                $approvedApproval = $unit->status === 'Tidak Aktif' 
-                    ? $unit->statusApprovals->where('decision', 'approved')->sortByDesc('updated_at')->first() 
+            ->map(function ($asset) use ($model) {
+                $pendingApproval = $asset->statusApprovals->firstWhere('decision', 'pending');
+                $approvedApproval = $asset->status === 'Tidak Aktif' 
+                    ? $asset->statusApprovals->where('decision', 'approved')->sortByDesc('updated_at')->first() 
                     : null;
-                $barang = $unit->lot->barang ?? null;
                 return [
-                    'id' => $unit->id,
-                    'number' => $unit->number,
-                    'legacy_number' => $unit->legacy_number,
-                    'status' => $unit->status,
+                    'id' => $asset->id,
+                    'number' => $asset->number,
+                    'legacy_number' => $asset->legacy_number,
+                    'status' => $asset->status,
                     'proposed_status' => $pendingApproval 
                         ? $pendingApproval->proposed_condition 
                         : ($approvedApproval ? $approvedApproval->proposed_condition : null),
@@ -191,58 +197,72 @@ class ManajemenStokController extends Controller
                     'lost_doc_url' => $pendingApproval 
                         ? $pendingApproval->lost_doc_url 
                         : ($approvedApproval ? $approvedApproval->lost_doc_url : null),
-                    'condition' => $unit->condition,
-                    'type' => $unit->type,
-                    'classification' => $unit->classification,
-                    'specification' => $unit->specification,
-                    'price' => $unit->price,
-                    'image_url' => $unit->image_url,
-                    'vehicle_registration' => $unit->vehicle_registration,
-                    'burden' => $unit->burden,
-                    'project_id' => $unit->project_id,
-                    'project_name' => $unit->project ? $unit->project->project_name : null,
-                    'project_no' => $unit->project ? $unit->project->no_project : null,
-                    'created_at' => $unit->created_at?->toIso8601String(),
-                    'updated_at' => $unit->updated_at ? $unit->updated_at->format('d-m-Y H:i') : '-',
+                    'condition' => $asset->condition,
+                    'type' => $asset->borrowing_type,
+                    'borrowing_type' => $asset->borrowing_type,
+                    'classification' => $asset->classification,
+                    'specification' => $asset->specification,
+                    'price' => $asset->price,
+                    'image_url' => $asset->image_url,
+                    'vehicle_registration' => $asset->vehicle_registration,
+                    'burden' => $asset->burden,
+                    'project_id' => $asset->project_id,
+                    'project_name' => $asset->project ? $asset->project->project_name : null,
+                    'project_no' => $asset->project ? $asset->project->no_project : null,
+                    'created_at' => $asset->created_at?->toIso8601String(),
+                    'updated_at' => $asset->updated_at ? $asset->updated_at->format('d-m-Y H:i') : '-',
                     
-                    // Unit-specific legacy vendor
-                    'unit_vendor' => $unit->vendor?->name,
-                    'unit_vendor_id' => $unit->vendor_id,
+                    // Asset-specific legacy vendor
+                    'asset_vendor' => $asset->vendor?->name,
+                    'asset_vendor_id' => $asset->vendor_id,
+                    'unit_vendor' => $asset->vendor?->name,
+                    'unit_vendor_id' => $asset->vendor_id,
 
                     // Location info
-                    'location' => $unit->location?->full_name ?? '-',
-                    'location_id' => $unit->location_id,
+                    'location' => $asset->location?->full_name ?? '-',
+                    'location_id' => $asset->location_id,
 
                     // Parent lot info
-                    'lot_id' => $unit->lot_id,
-                    'lot_number' => $unit->lot->number ?? '-',
-                    'lot_imageUrl' => $unit->lot->image_url ?? null,
-                    'lot_unitPrice' => $unit->lot->unit_price ?? null,
-                    'organizer' => $unit->lot->organizer->name ?? '-',
-                    'organizer_id' => $unit->lot->organizer_id ?? null,
-                    'vendor' => $unit->lot?->vendor_name ?? '-',
-                    'vendor_id' => $unit->lot->vendor_id ?? null,
-                    'legacy_vendor_id' => $unit->lot->legacy_vendor_id ?? null,
-                    'lot_organizer' => $unit->lot->organizer->name ?? '-',
-                    'lot_vendor' => $unit->lot?->vendor_name ?? '-',
-                    'lot_vendor_id' => $unit->lot->vendor_id ?? null,
-                    'lot_po_number' => $unit->lot->po_number ?? '-',
-                    'lot_date_of_receipt' => ($unit->lot && $unit->lot->date_of_receipt) ? $unit->lot->date_of_receipt->format('Y-m-d') : null,
-                    'lot_age' => $unit->lot->age ?? null,
+                    'lot_id' => $asset->lot_id,
+                    'lot_number' => $asset->lot->number ?? '-',
+                    'lot_imageUrl' => $asset->lot->image_url ?? null,
+                    'lot_unitPrice' => $asset->lot->unit_price ?? null,
+                    'organizer' => $asset->lot->organizer->name ?? '-',
+                    'organizer_id' => $asset->lot->organizer_id ?? null,
+                    'vendor' => $asset->lot?->vendor_name ?? '-',
+                    'vendor_id' => $asset->lot->vendor_id ?? null,
+                    'legacy_vendor_id' => $asset->lot->legacy_vendor_id ?? null,
+                    'lot_organizer' => $asset->lot->organizer->name ?? '-',
+                    'lot_vendor' => $asset->lot?->vendor_name ?? '-',
+                    'lot_vendor_id' => $asset->lot->vendor_id ?? null,
+                    'lot_po_number' => $asset->lot->po_number ?? '-',
+                    'lot_date_of_receipt' => ($asset->lot && $asset->lot->date_of_receipt) ? $asset->lot->date_of_receipt->format('Y-m-d') : null,
+                    'lot_age' => $asset->lot->age ?? null,
 
-                    // Parent barang info
-                    'barang_id' => $barang->id ?? null,
-                    'barang_code' => $barang->number ?? '-',
-                    'barang_nama' => $barang->name ?? '-',
-                    'barang_brand' => $barang->brand->name ?? '-',
-                    'barang_specification' => $barang->specification ?? '-',
-                    'barang_category' => $barang->subcategory->category->name ?? '-',
-                    'barang_category_code' => $barang->subcategory->category->code ?? null,
-                    'barang_subcategory' => $barang->subcategory->name ?? '-',
-                    'barang_uom' => $barang->uom->name ?? '-',
+                    // Parent model info
+                    'model_id' => $model->id ?? null,
+                    'model_code' => $model->number ?? '-',
+                    'model_number' => $model->number ?? '-',
+                    'model_name' => $model->name ?? '-',
+                    'model_brand' => $model->brand->name ?? '-',
+                    'model_specification' => $model->specification ?? '-',
+                    'model_category' => $model->type->category->name ?? '-',
+                    'model_type' => $model->type->name ?? '-',
+                    'model_uom' => $model->uom->name ?? '-',
+
+                    // Legacy keys
+                    'barang_id' => $model->id ?? null,
+                    'barang_code' => $model->number ?? '-',
+                    'barang_nama' => $model->name ?? '-',
+                    'barang_brand' => $model->brand->name ?? '-',
+                    'barang_specification' => $model->specification ?? '-',
+                    'barang_category' => $model->type->category->name ?? '-',
+                    'barang_category_code' => $model->type->category->code ?? null,
+                    'barang_subcategory' => $model->type->name ?? '-',
+                    'barang_uom' => $model->uom->name ?? '-',
 
                     // Audit trails (lifecycles)
-                    'lifecycles' => $unit->lifecycles->map(function ($log) {
+                    'lifecycles' => $asset->lifecycles->map(function ($log) {
                         return [
                             'waktu' => $log->start_date ? $log->start_date->format('d-m-Y H:i:s') : '-',
                             'status' => $log->status,
@@ -260,15 +280,17 @@ class ManajemenStokController extends Controller
 
         return Inertia::render('Smart/Admin/ManajemenStok/DetailBarang', [
             'user' => $request->user(),
-            'itemId' => $barang->number,
-            'barang' => $formattedBarang,
+            'itemId' => $model->number,
+            'model' => $formattedModel,
+            'barang' => $formattedModel,
             'brands' => $brands,
             'uoms' => $uoms,
             'lots' => $lots,
             'organizers' => $organizers,
             'vendors' => $vendors,
             'locations' => $locations,
-            'units' => $units,
+            'assets' => $assets,
+            'units' => $assets,
             'projects' => $projects,
         ]);
     }

@@ -16,9 +16,9 @@ class ActualInventorySeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            ActualBarangSeeder::class,
+            ActualModelSeeder::class,
             ActualLotSeeder::class,
-            ActualUnitSeeder::class,
+            ActualAssetSeeder::class,
         ]);
     }
 }

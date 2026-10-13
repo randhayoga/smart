@@ -27,8 +27,8 @@ class AdminActiveRequestController extends Controller
         'department',
         'project',
         'items.fulfillments',
-        'items.barang.subcategory.category',
-        'items.subcategory.category',
+        'items.model.type.category',
+        'items.type.category',
     ];
 
     /**
@@ -38,11 +38,11 @@ class AdminActiveRequestController extends Controller
         'user',
         'approver',
         'approval.approver',
-        'items.barang.subcategory.category',
-        'items.barang.brand',
-        'items.barang.uom',
-        'items.subcategory.category',
-        'items.subcategory.barangs.uom',
+        'items.model.type.category',
+        'items.model.brand',
+        'items.model.uom',
+        'items.type.category',
+        'items.type.models.uom',
         'project',
         'department',
     ];

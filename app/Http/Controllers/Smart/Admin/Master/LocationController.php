@@ -99,7 +99,7 @@ class LocationController extends Controller
         }
 
         if (DB::table('lots')->where('location_id', $location->id)->exists() ||
-            DB::table('units')->where('location_id', $location->id)->exists()) {
+            DB::table('assets')->where('location_id', $location->id)->exists()) {
             return redirect()->back()->with('error', __('master.locations.cannot_delete_used'));
         }
 

@@ -57,7 +57,7 @@ const navigation = computed<NavSection[]>(() => {
     // - Approval Status (/smart/approve-status)
     // - History Approval Status (/smart/approve-status?history=true)
     // - Pergerakan Aset (/smart/audit)
-    // - Audit Manajemen Stok (/smart/audit-stok)
+    // - Audit Manajemen Stok (/smart/inventory-audit)
     sections = ifsNavigation;
   } else if (isAdmin.value) {
     // Admin:
@@ -151,10 +151,10 @@ const isActive = (href: string): boolean => {
 
   // Prevent parent /smart/inventory from activating on separate sub-pages
   if (target.pathname === '/smart/inventory' && (
-    current.pathname.startsWith('/smart/inventory/assets') ||
-    current.pathname.startsWith('/smart/inventory/stok-habis-pakai') ||
-    current.pathname.startsWith('/smart/inventory/pending-aktivasi') ||
-    current.pathname.startsWith('/smart/inventory/pending-nonaktif')
+    current.pathname.startsWith('/smart/inventory/non-consumables') ||
+    current.pathname.startsWith('/smart/inventory/consumables') ||
+    current.pathname.startsWith('/smart/inventory/pending-activation') ||
+    current.pathname.startsWith('/smart/inventory/pending-deactivation')
   )) {
     return false;
   }

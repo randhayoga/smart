@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Master\Brand;
 use App\Models\Master\Category;
-use App\Models\Master\Subcategory;
+use App\Models\Master\Type;
 use App\Models\Master\Uom;
 use App\Models\Master\Vendor;
 use Illuminate\Database\Seeder;
@@ -22,8 +22,8 @@ class DummyConsumableMasterSeeder extends Seeder
             ['name' => 'Alat Tulis Kantor']
         );
 
-        // 2. Consumable Subcategories
-        $subcategories = [
+        // 2. Consumable Types
+        $types = [
             [
                 'code' => 'ATK-HVS4',
                 'name' => 'Kertas HVS A4',
@@ -38,14 +38,14 @@ class DummyConsumableMasterSeeder extends Seeder
             ],
         ];
 
-        foreach ($subcategories as $sub) {
-            Subcategory::firstOrCreate(
-                ['code' => $sub['code']],
+        foreach ($types as $type) {
+            Type::firstOrCreate(
+                ['code' => $type['code']],
                 [
-                    'name' => $sub['name'],
-                    'description' => $sub['description'],
+                    'name' => $type['name'],
+                    'description' => $type['description'],
                     'category_id' => $category->id,
-                    'is_consumable' => $sub['is_consumable'],
+                    'is_consumable' => $type['is_consumable'],
                 ]
             );
         }

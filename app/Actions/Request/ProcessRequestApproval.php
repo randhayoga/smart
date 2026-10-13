@@ -84,11 +84,11 @@ class ProcessRequestApproval
                 'user',
                 'department',
                 'project',
-                'items.barang.brand',
-                'items.barang.subcategory.category',
-                'items.barang.uom',
-                'items.subcategory.category',
-                'items.subcategory.barangs.uom',
+                'items.model.brand',
+                'items.model.type.category',
+                'items.model.uom',
+                'items.type.category',
+                'items.type.models.uom',
             ]);
 
             // Clean up the manager's pending request in-app notification so it is not left outdated

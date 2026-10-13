@@ -2,8 +2,11 @@ import type { RequestStatus, RawRequestStatus } from '@/lib/requestStatus';
 
 export interface SmartRequestItem {
   id: number;
+  model_id?: number | null;
   barang_id?: number | null;
-  subcategory: string;
+  type_id?: number | null;
+  type?: string;
+  subcategory?: string;
   brand: string;
   name?: string;
   spec: string;

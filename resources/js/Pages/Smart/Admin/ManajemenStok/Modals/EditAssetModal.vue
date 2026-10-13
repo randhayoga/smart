@@ -561,7 +561,7 @@ const handleSubmit = () => {
         if (data.lost_doc_file) fd.lost_doc_file = data.lost_doc_file;
         if (data.bod_boc_approval_file) fd.bod_boc_approval_file = data.bod_boc_approval_file;
         return fd;
-      }).post(`/smart/inventory/units/${form.ids[0]}`, {
+      }).post(`/smart/inventory/assets/${form.ids[0]}`, {
         onSuccess: () => { closeModal(); emit('success'); },
       });
     } else {
@@ -619,7 +619,7 @@ const handleSubmit = () => {
       if (form.lost_doc_file instanceof File) payload.lost_doc_file = form.lost_doc_file;
       if (form.bod_boc_approval_file instanceof File) payload.bod_boc_approval_file = form.bod_boc_approval_file;
 
-    router.post('/smart/inventory/units/bulk-update', payload, {
+    router.post('/smart/inventory/assets/bulk-update', payload, {
       onSuccess: () => { closeModal(); emit('success'); },
     });
   }

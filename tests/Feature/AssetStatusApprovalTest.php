@@ -125,26 +125,26 @@ class AssetStatusApprovalTest extends TestCase
         $this->assertEquals('Tidak Aktif', $unit2->status);
         $this->assertEquals('Rusak Total', $unit2->condition);
 
-        $this->assertDatabaseHas('unit_lifecycles', [
-            'unit_id' => $unit1->id,
+        $this->assertDatabaseHas('asset_lifecycles', [
+            'asset_id' => $unit1->id,
             'condition' => 'Hilang',
             'actor_id' => $app1->requester_id,
         ]);
 
-        $this->assertDatabaseHas('unit_lifecycles', [
-            'unit_id' => $unit1->id,
+        $this->assertDatabaseHas('asset_lifecycles', [
+            'asset_id' => $unit1->id,
             'status' => 'Tidak Aktif',
             'actor_id' => $manager->id,
         ]);
 
-        $this->assertDatabaseHas('unit_lifecycles', [
-            'unit_id' => $unit2->id,
+        $this->assertDatabaseHas('asset_lifecycles', [
+            'asset_id' => $unit2->id,
             'condition' => 'Rusak Total',
             'actor_id' => $app2->requester_id,
         ]);
 
-        $this->assertDatabaseHas('unit_lifecycles', [
-            'unit_id' => $unit2->id,
+        $this->assertDatabaseHas('asset_lifecycles', [
+            'asset_id' => $unit2->id,
             'status' => 'Tidak Aktif',
             'actor_id' => $manager->id,
         ]);
@@ -201,7 +201,7 @@ class AssetStatusApprovalTest extends TestCase
         $this->assertEquals('Tersedia', $unit1->status); // unchanged
         $this->assertEquals('Tersedia', $unit2->status); // unchanged
 
-        $this->assertDatabaseHas('unit_status_approvals', [
+        $this->assertDatabaseHas('asset_status_approvals', [
             'id' => $app1->id,
             'decision' => 'rejected',
             'note' => 'Bulk reject reason',

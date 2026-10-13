@@ -2,87 +2,16 @@
 
 namespace App\Models\Inventory;
 
-use App\Models\User;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-
-use App\Models\Inventory\UnitLifecycle;
+use Database\Factories\Inventory\AssetStatusApprovalFactory;
 
 /**
- * Unit Status Approval model representing workflow approval requests for asset condition / disposal changes.
+ * Legacy alias for AssetStatusApproval.
+ * @deprecated Use App\Models\Inventory\AssetStatusApproval instead.
  */
-class UnitStatusApproval extends Model
+class UnitStatusApproval extends AssetStatusApproval
 {
-    use HasFactory;
-
-    protected static function booted()
+    protected static function newFactory()
     {
-        static::created(function ($approval) {
-            $unit = $approval->unit;
-
-            // Close any active unit lifecycles
-            UnitLifecycle::where('unit_id', $approval->unit_id)
-                ->whereNull('end_date')
-                ->update(['end_date' => now()]);
-
-            // Create requester lifecycle entry
-            UnitLifecycle::create([
-                'unit_id' => $approval->unit_id,
-                'action_type' => 'Perubahan kondisi',
-                'status' => $unit->status ?? 'Pending',
-                'condition' => $approval->proposed_condition,
-                'location_id' => $unit->location_id,
-                'start_date' => now(),
-                'end_date' => null,
-                'actor_id' => $approval->requester_id,
-                'note' => $approval->note ?? "Pengajuan perubahan kondisi unit dari '{$approval->previous_condition}' menjadi '{$approval->proposed_condition}'",
-            ]);
-        });
-    }
-
-    protected $fillable = [
-        'unit_id',
-        'requester_id',
-        'approver_id',
-        'proposed_condition',
-        'previous_condition',
-        'previous_status',
-        'decision',
-        'note',
-        'requested_at',
-        'decided_at',
-        'memo_url',
-        'lost_doc_url',
-        'bod_boc_approval_url',
-    ];
-
-    protected $casts = [
-        'requested_at' => 'datetime',
-        'decided_at' => 'datetime',
-    ];
-
-    /**
-     * The unit undergoing status/condition approval.
-     */
-    public function unit(): BelongsTo
-    {
-        return $this->belongsTo(Unit::class);
-    }
-
-    /**
-     * The user who requested the status/condition change.
-     */
-    public function requester(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'requester_id');
-    }
-
-    /**
-     * The user who approved or rejected the status/condition change.
-     */
-    public function approver(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'approver_id');
+        return AssetStatusApprovalFactory::new();
     }
 }

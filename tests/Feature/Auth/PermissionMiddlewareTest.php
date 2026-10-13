@@ -102,7 +102,7 @@ class PermissionMiddlewareTest extends TestCase
 
         // Can access audit views
         $this->actingAs($user)->get(route('smart.audit'))->assertStatus(200);
-        $this->actingAs($user)->get(route('smart.audit-stok'))->assertStatus(200);
+        $this->actingAs($user)->get(route('smart.inventory-audit'))->assertStatus(200);
 
         // Blocked on other views
         $this->actingAs($user)->get(route('smart.inventory'))->assertStatus(403);

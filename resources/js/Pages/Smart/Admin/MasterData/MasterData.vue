@@ -540,7 +540,7 @@ const deleteForm = useForm({});
 
 const routeMap: Record<MasterDataTabKey, string> = {
   categories:    'smart.master.categories.destroy',
-  subcategories: 'smart.master.subcategories.destroy',
+  subcategories: 'smart.master.types.destroy',
   uoms:          'smart.master.uoms.destroy',
   brands:        'smart.master.brands.destroy',
   organizers:    'smart.master.organizers.destroy',

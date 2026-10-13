@@ -2,14 +2,14 @@
 
 namespace App\Services;
 
-use App\Mail\DMUnitActivationRequest;
-use App\Mail\DMUnitStatusRequest;
+use App\Mail\DMAssetActivationRequest;
+use App\Mail\DMAssetStatusRequest;
 use App\Mail\ManagerRequestApprovalMail;
 use App\Mail\RequesterRequestRejectedMail;
-use App\Models\Inventory\Barang;
-use App\Models\Inventory\Unit;
-use App\Models\Inventory\UnitStatusApproval;
-use App\Models\Inventory\UnitActivationApproval;
+use App\Models\Inventory\Model;
+use App\Models\Inventory\Asset;
+use App\Models\Inventory\AssetStatusApproval;
+use App\Models\Inventory\AssetActivationApproval;
 use App\Models\Request\Request as SmartRequest;
 use App\Models\User;
 use App\Notifications\AppNotification;
@@ -107,37 +107,37 @@ class NotificationService
     }
 
     /**
-     * Check if a consumable barang's stock is equal to or below its min_stock_threshold,
+     * Check if a consumable model's stock is equal to or below its min_stock_threshold,
      * and notify all Admins if true.
      *
-     * @param Barang $barang
+     * @param Model $model
      * @return bool Whether notifications were sent
      */
-    public function checkAndNotifyLowStock(Barang $barang): bool
+    public function checkAndNotifyLowStock(Model $model): bool
     {
-        $barang->loadMissing(['subcategory', 'uom', 'brand']);
+        $model->loadMissing(['type', 'uom', 'brand']);
 
-        $isConsumable = (bool) $barang->is_consumable;
+        $isConsumable = (bool) $model->is_consumable;
         if (!$isConsumable) {
             return false;
         }
 
-        if (is_null($barang->min_stock_threshold)) {
+        if (is_null($model->min_stock_threshold)) {
             return false;
         }
 
-        $currentStock = (int) $barang->lots()->sum('current_quantity');
+        $currentStock = (int) $model->lots()->sum('current_quantity');
 
-        if ($currentStock <= $barang->min_stock_threshold) {
+        if ($currentStock <= $model->min_stock_threshold) {
             $targetAdmins = User::getUsersByRole('admin');
             if ($targetAdmins->isEmpty()) {
                 return false;
             }
 
-            // Deduplication: Avoid sending if an unread notification for this barang was sent within the last 2 hours
+            // Deduplication: Avoid sending if an unread notification for this model was sent within the last 2 hours
             $firstAdmin = $targetAdmins->first();
             $recentUnreadExists = $firstAdmin->unreadNotifications()
-                ->where('data', 'like', '%"barang_id":' . $barang->id . '%')
+                ->where('data', 'like', '%"model_id":' . $model->id . '%')
                 ->where('created_at', '>=', now()->subHours(2))
                 ->exists();
 
@@ -145,23 +145,24 @@ class NotificationService
                 return false;
             }
 
-            $uomName = $barang->uom->name ?? 'unit';
-            $brandName = $barang->brand->name ?? '';
-            $fullName = trim(($brandName ? $brandName . ' ' : '') . $barang->name);
+            $uomName = $model->uom->name ?? 'unit';
+            $brandName = $model->brand->name ?? '';
+            $fullName = trim(($brandName ? $brandName . ' ' : '') . $model->name);
             $title = "Peringatan Stok Minimum: {$fullName}";
-            $message = "Stok barang {$barang->number} saat ini {$currentStock} {$uomName}, telah mencapai atau di bawah batas minimum ({$barang->min_stock_threshold} {$uomName}).";
+            $message = "Stok model {$model->number} saat ini {$currentStock} {$uomName}, telah mencapai atau di bawah batas minimum ({$model->min_stock_threshold} {$uomName}).";
 
-            $barangRouteKey = preg_replace('/[^a-zA-Z0-9]/', '', (string)$barang->number);
+            $modelRouteKey = preg_replace('/[^a-zA-Z0-9]/', '', (string)$model->number);
             $this->sendToRole(
                 'admin',
                 $title,
                 $message,
                 'warning',
-                "/smart/inventory/stok-habis-pakai/{$barangRouteKey}",
+                "/smart/inventory/consumables/{$modelRouteKey}",
                 [
-                    'barang_id' => $barang->id,
+                    'model_id' => $model->id,
+                    'barang_id' => $model->id,
                     'current_stock' => $currentStock,
-                    'min_stock_threshold' => $barang->min_stock_threshold,
+                    'min_stock_threshold' => $model->min_stock_threshold,
                 ]
             );
 
@@ -172,19 +173,19 @@ class NotificationService
     }
 
     /**
-     * Check all consumable barangs and send notifications for any that are at or below minimum stock threshold.
+     * Check all consumable models and send notifications for any that are at or below minimum stock threshold.
      *
-     * @return int Number of barangs that triggered low stock notifications
+     * @return int Number of models that triggered low stock notifications
      */
     public function checkAllConsumableLowStock(): int
     {
-        $consumableBarangs = Barang::whereHas('subcategory', function ($query) {
+        $consumableModels = Model::whereHas('type', function ($query) {
             $query->where('is_consumable', true);
         })->whereNotNull('min_stock_threshold')->get();
 
         $notifiedCount = 0;
-        foreach ($consumableBarangs as $barang) {
-            if ($this->checkAndNotifyLowStock($barang)) {
+        foreach ($consumableModels as $model) {
+            if ($this->checkAndNotifyLowStock($model)) {
                 $notifiedCount++;
             }
         }
@@ -195,17 +196,17 @@ class NotificationService
     /**
      * Send a notification to IFS Manager when an asset status is switched to Pending:DM.
      *
-     * @param Unit $unit
+     * @param Asset $asset
      */
-    public function notifyIfsManagerPendingDm(Unit $unit): void
+    public function notifyIfsManagerPendingDm(Asset $asset): void
     {
-        $unit->loadMissing('lot.barang.brand');
-        $brand = $unit->lot?->barang?->brand?->name ?? '';
-        $assetName = $unit->lot?->barang?->name ?? '';
-        $brandAndName = trim("{$brand} {$assetName}") ?: $unit->number;
+        $asset->loadMissing('lot.model.brand');
+        $brand = $asset->lot?->model?->brand?->name ?? '';
+        $assetName = $asset->lot?->model?->name ?? '';
+        $brandAndName = trim("{$brand} {$assetName}") ?: $asset->number;
 
         $title = "Penghapusan Aset {$brandAndName}: Perlu Perhatian Anda";
-        $message = "Penghapusan aset {$unit->number} telah disetujui oleh BoD/BoC dan sekarang memerlukan approval Anda";
+        $message = "Penghapusan aset {$asset->number} telah disetujui oleh BoD/BoC dan sekarang memerlukan approval Anda";
 
         // 1. In-app database + Mercure notification
         $this->sendToRole(
@@ -213,10 +214,10 @@ class NotificationService
             $title,
             $message,
             'warning',
-            "/smart/approve-status?search=" . urlencode($unit->number),
+            "/smart/approve-status?search=" . urlencode($asset->number),
             [
-                'unit_id' => $unit->id,
-                'unit_number' => $unit->number,
+                'asset_id' => $asset->id,
+                'asset_number' => $asset->number,
             ]
         );
 
@@ -230,18 +231,13 @@ class NotificationService
 
                 $email = $ifsUser->email;
                 if ($email && filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                    // ==========================================
-                    // [PHASE 2 - QUEUED EMAIL DISPATCH]
-                    // In Phase 1: ->send() runs synchronously.
-                    // In Phase 2: switch to ->queue() when smart-queue is running.
-                    // ==========================================
-                    Mail::to($email)->send(new DMUnitStatusRequest($unit, null, $ifsUser->name));
+                    Mail::to($email)->send(new DMAssetStatusRequest($asset, null, $ifsUser->name));
                 }
             }
         } catch (\Throwable $e) {
-            Log::error("Gagal mengirim email DMUnitStatusRequest untuk unit {$unit->number}: " . $e->getMessage(), [
+            Log::error("Gagal mengirim email DMAssetStatusRequest untuk aset {$asset->number}: " . $e->getMessage(), [
                 'exception' => $e,
-                'unit_id' => $unit->id,
+                'asset_id' => $asset->id,
             ]);
         }
     }
@@ -249,31 +245,31 @@ class NotificationService
     /**
      * Send a notification to all Admins when an asset status approval is decided by DM IFS.
      *
-     * @param UnitStatusApproval $approval
+     * @param AssetStatusApproval $approval
      * @param string $decision 'approved' | 'rejected'
      */
-    public function notifyAdminAssetStatusDecision(UnitStatusApproval $approval, string $decision): void
+    public function notifyAdminAssetStatusDecision(AssetStatusApproval $approval, string $decision): void
     {
-        $approval->loadMissing(['unit.lot.barang.brand']);
-        $unit = $approval->unit;
-        if (!$unit) {
+        $approval->loadMissing(['asset.lot.model.brand']);
+        $asset = $approval->asset;
+        if (!$asset) {
             return;
         }
 
-        $brand = $unit->lot?->barang?->brand?->name ?? '';
-        $name = $unit->lot?->barang?->name ?? '';
-        $brandAndName = trim("{$brand} {$name}") ?: $unit->number;
+        $brand = $asset->lot?->model?->brand?->name ?? '';
+        $name = $asset->lot?->model?->name ?? '';
+        $brandAndName = trim("{$brand} {$name}") ?: $asset->number;
 
         if ($decision === 'approved') {
             $currentCondition = $approval->proposed_condition;
             $title = "Penghapusan Aset {$brandAndName} Disetujui DM IFS";
-            $message = "Status aset {$unit->number} telah berubah menjadi Tidak Aktif dan kondisi berubah menjadi {$currentCondition}.";
+            $message = "Status aset {$asset->number} telah berubah menjadi Tidak Aktif dan kondisi berubah menjadi {$currentCondition}.";
             $type = 'success';
         } else {
             $currentStatus = $approval->previous_status ?? 'Tersedia';
-            $currentCondition = $approval->previous_condition ?? $unit->condition;
+            $currentCondition = $approval->previous_condition ?? $asset->condition;
             $title = "Penghapusan Aset {$brandAndName} Ditolak DM IFS";
-            $message = "Status aset {$unit->number} telah dikembalikan menjadi {$currentStatus} dan kondisi dikembalikan menjadi {$currentCondition}.";
+            $message = "Status aset {$asset->number} telah dikembalikan menjadi {$currentStatus} dan kondisi dikembalikan menjadi {$currentCondition}.";
             $type = 'error';
         }
 
@@ -282,10 +278,10 @@ class NotificationService
             $title,
             $message,
             $type,
-            "/smart/inventory/assets?search=" . urlencode($unit->number),
+            "/smart/inventory/non-consumables?search=" . urlencode($asset->number),
             [
-                'unit_id' => $unit->id,
-                'unit_number' => $unit->number,
+                'asset_id' => $asset->id,
+                'asset_number' => $asset->number,
                 'approval_id' => $approval->id,
                 'decision' => $decision,
             ]
@@ -295,18 +291,18 @@ class NotificationService
     /**
      * Send an in-app notification and email to all IFS Managers when a new asset is registered and requires activation approval.
      *
-     * @param Unit $unit
-     * @param UnitActivationApproval|null $approval
+     * @param Asset $asset
+     * @param AssetActivationApproval|null $approval
      */
-    public function notifyManagerNewAssetActivation(Unit $unit, ?UnitActivationApproval $approval = null): void
+    public function notifyManagerNewAssetActivation(Asset $asset, ?AssetActivationApproval $approval = null): void
     {
-        $unit->loadMissing(['lot.barang.brand']);
-        $brand = $unit->lot?->barang?->brand?->name ?? '';
-        $assetName = $unit->lot?->barang?->name ?? '';
-        $brandAndName = trim("{$brand} {$assetName}") ?: $unit->number;
+        $asset->loadMissing(['lot.model.brand']);
+        $brand = $asset->lot?->model?->brand?->name ?? '';
+        $assetName = $asset->lot?->model?->name ?? '';
+        $brandAndName = trim("{$brand} {$assetName}") ?: $asset->number;
 
         $title = "Approval Aset Baru {$brandAndName}: Perlu Perhatian Anda";
-        $message = "Aset baru dengan nomor {$unit->number} memerlukan approval Anda.";
+        $message = "Aset baru dengan nomor {$asset->number} memerlukan approval Anda.";
 
         // 1. In-app database + Mercure notification
         $this->sendToRole(
@@ -314,10 +310,10 @@ class NotificationService
             $title,
             $message,
             'warning',
-            "/smart/approve-activation?search=" . urlencode($unit->number),
+            "/smart/approve-activation?search=" . urlencode($asset->number),
             [
-                'unit_id' => $unit->id,
-                'unit_number' => $unit->number,
+                'asset_id' => $asset->id,
+                'asset_number' => $asset->number,
                 'type' => 'activation_approval',
             ]
         );
@@ -332,18 +328,13 @@ class NotificationService
 
                 $email = $ifsUser->email;
                 if ($email && filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                    // ==========================================
-                    // [PHASE 2 - QUEUED EMAIL DISPATCH]
-                    // In Phase 1: ->send() runs synchronously.
-                    // In Phase 2: switch to ->queue() when smart-queue is running.
-                    // ==========================================
-                    Mail::to($email)->send(new DMUnitActivationRequest($unit, $approval, $ifsUser->name));
+                    Mail::to($email)->send(new DMAssetActivationRequest($asset, $approval, $ifsUser->name));
                 }
             }
         } catch (\Throwable $e) {
-            Log::error("Gagal mengirim email DMUnitActivationRequest untuk unit {$unit->number}: " . $e->getMessage(), [
+            Log::error("Gagal mengirim email DMAssetActivationRequest untuk aset {$asset->number}: " . $e->getMessage(), [
                 'exception' => $e,
-                'unit_id' => $unit->id,
+                'asset_id' => $asset->id,
             ]);
         }
     }
@@ -351,31 +342,31 @@ class NotificationService
     /**
      * Send a notification to all Admins when an asset activation approval is decided by DM IFS.
      *
-     * @param UnitActivationApproval $approval
+     * @param AssetActivationApproval $approval
      * @param string $decision 'approved' | 'rejected'
      */
-    public function notifyAdminAssetActivationDecision(UnitActivationApproval $approval, string $decision): void
+    public function notifyAdminAssetActivationDecision(AssetActivationApproval $approval, string $decision): void
     {
-        $approval->loadMissing(['unit.lot.barang.brand']);
-        $unit = $approval->unit;
-        if (!$unit) {
+        $approval->loadMissing(['asset.lot.model.brand']);
+        $asset = $approval->asset;
+        if (!$asset) {
             return;
         }
 
-        $brand = $unit->lot?->barang?->brand?->name ?? '';
-        $name = $unit->lot?->barang?->name ?? '';
-        $brandAndName = trim("{$brand} {$name}") ?: $unit->number;
+        $brand = $asset->lot?->model?->brand?->name ?? '';
+        $name = $asset->lot?->model?->name ?? '';
+        $brandAndName = trim("{$brand} {$name}") ?: $asset->number;
 
         if ($decision === 'approved') {
             $title = "Aktivasi Aset {$brandAndName} Disetujui DM IFS";
-            $message = "Status aset {$unit->number} telah berubah menjadi Tersedia.";
+            $message = "Status aset {$asset->number} telah berubah menjadi Tersedia.";
             $type = 'success';
-            $url = "/smart/inventory/assets?search=" . urlencode($unit->number);
+            $url = "/smart/inventory/non-consumables?search=" . urlencode($asset->number);
         } else {
             $title = "Aktivasi Aset {$brandAndName} Ditolak DM IFS";
-            $message = "Aktivasi aset {$unit->number} ditolak oleh DM IFS. Status: Verifikasi Ditolak.";
+            $message = "Aktivasi aset {$asset->number} ditolak oleh DM IFS. Status: Verifikasi Ditolak.";
             $type = 'error';
-            $url = "/smart/inventory/pending-aktivasi?search=" . urlencode($unit->number);
+            $url = "/smart/inventory/pending-activation?search=" . urlencode($asset->number);
         }
 
         $this->sendToRole(
@@ -385,8 +376,8 @@ class NotificationService
             $type,
             $url,
             [
-                'unit_id' => $unit->id,
-                'unit_number' => $unit->number,
+                'asset_id' => $asset->id,
+                'asset_number' => $asset->number,
                 'approval_id' => $approval->id,
                 'decision' => $decision,
             ]

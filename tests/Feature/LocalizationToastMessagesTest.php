@@ -101,7 +101,7 @@ class LocalizationToastMessagesTest extends TestCase
         // Store Barang with locale = id
         $response = $this->actingAs($user)
             ->withSession(['locale' => 'id'])
-            ->post(route('smart.inventory.barangs.store'), [
+            ->post(route('smart.inventory.models.store'), [
                 'number' => 'BRG-TEST-1',
                 'name' => 'Barang ID Test',
                 'subcategory_id' => $sub->id,
@@ -109,13 +109,13 @@ class LocalizationToastMessagesTest extends TestCase
                 'uom_id' => $uom->id,
             ]);
 
-        $response->assertSessionHas('success', 'Tipe berhasil ditambahkan.');
+        $response->assertSessionHas('success', 'Model berhasil ditambahkan.');
         $barang = Barang::where('name', 'Barang ID Test')->first();
 
         // Update Barang with locale = en
         $response = $this->actingAs($user)
             ->withSession(['locale' => 'en'])
-            ->put(route('smart.inventory.barangs.update', $barang), [
+            ->put(route('smart.inventory.models.update', $barang), [
                 'number' => 'BRG-TEST-1',
                 'name' => 'Barang EN Test',
                 'subcategory_id' => $sub->id,
@@ -123,14 +123,14 @@ class LocalizationToastMessagesTest extends TestCase
                 'uom_id' => $uom->id,
             ]);
 
-        $response->assertSessionHas('success', 'Item type successfully updated.');
+        $response->assertSessionHas('success', 'Model successfully updated.');
 
         // Delete Barang with locale = en
         $response = $this->actingAs($user)
             ->withSession(['locale' => 'en'])
-            ->delete(route('smart.inventory.barangs.destroy', $barang));
+            ->delete(route('smart.inventory.models.destroy', $barang));
 
-        $response->assertSessionHas('success', 'Item type successfully deleted.');
+        $response->assertSessionHas('success', 'Model successfully deleted.');
     }
 
     public function test_request_cancellation_toast_messages_are_localized(): void

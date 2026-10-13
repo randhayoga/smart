@@ -62,8 +62,8 @@ class BrowseControllerTest extends TestCase
         $response->assertRedirect();
         $this->assertDatabaseHas('consumable_baskets', [
             'user_id' => $user->id,
-            'subcategory_id' => $subcategory->id,
-            'barang_id' => $barang->id,
+            'type_id' => $subcategory->id,
+            'model_id' => $barang->id,
             'quantity' => 3,
         ]);
     }
@@ -87,8 +87,8 @@ class BrowseControllerTest extends TestCase
         $response->assertRedirect();
         $this->assertDatabaseHas('consumable_baskets', [
             'user_id' => $user->id,
-            'subcategory_id' => $subcategory->id,
-            'barang_id' => null,
+            'type_id' => $subcategory->id,
+            'model_id' => null,
             'quantity' => 5,
         ]);
     }
@@ -115,15 +115,15 @@ class BrowseControllerTest extends TestCase
         $response->assertRedirect();
         $this->assertDatabaseHas('asset_baskets', [
             'user_id' => $user->id,
-            'subcategory_id' => $subcategory->id,
-            'barang_id' => $barang->id,
+            'type_id' => $subcategory->id,
+            'model_id' => $barang->id,
             'quantity' => 1,
         ]);
 
         // Verify start_date and end_date are not null
         $basketItem = \App\Models\Cart\AssetBasket::where([
             'user_id' => $user->id,
-            'barang_id' => $barang->id,
+            'model_id' => $barang->id,
         ])->first();
 
         $this->assertNotNull($basketItem);
@@ -150,16 +150,16 @@ class BrowseControllerTest extends TestCase
         $response->assertRedirect();
         $this->assertDatabaseHas('asset_baskets', [
             'user_id' => $user->id,
-            'subcategory_id' => $subcategory->id,
-            'barang_id' => null,
+            'type_id' => $subcategory->id,
+            'model_id' => null,
             'quantity' => 2,
         ]);
 
         // Verify start_date and end_date are not null
         $basketItem = \App\Models\Cart\AssetBasket::where([
             'user_id' => $user->id,
-            'subcategory_id' => $subcategory->id,
-            'barang_id' => null,
+            'type_id' => $subcategory->id,
+            'model_id' => null,
         ])->first();
 
         $this->assertNotNull($basketItem);
@@ -217,8 +217,8 @@ class BrowseControllerTest extends TestCase
 
         $this->assertDatabaseHas('request_items', [
             'request_id' => $request->id,
-            'subcategory_id' => $subcategory->id,
-            'barang_id' => $barang->id,
+            'type_id' => $subcategory->id,
+            'model_id' => $barang->id,
             'quantity_requested' => 5,
         ]);
     }
@@ -277,8 +277,8 @@ class BrowseControllerTest extends TestCase
 
         $this->assertDatabaseHas('request_items', [
             'request_id' => $request->id,
-            'subcategory_id' => $subcategory->id,
-            'barang_id' => $barang->id,
+            'type_id' => $subcategory->id,
+            'model_id' => $barang->id,
             'quantity_requested' => 2,
         ]);
     }

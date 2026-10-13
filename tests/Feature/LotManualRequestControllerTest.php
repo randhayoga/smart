@@ -73,7 +73,7 @@ class LotManualRequestControllerTest extends TestCase
         $note = 'Kebutuhan ATK departemen operasional';
 
         $response = $this->actingAs($admin)
-            ->from('/smart/inventory/stok-habis-pakai')
+            ->from('/smart/inventory/consumables')
             ->post(route('smart.inventory.lots.manual-request', $lot->id), [
                 'user_id' => $requester->id,
                 'request_date' => '2026-09-15',
@@ -83,7 +83,7 @@ class LotManualRequestControllerTest extends TestCase
                 'note' => $note,
             ]);
 
-        $response->assertRedirect('/smart/inventory/stok-habis-pakai');
+        $response->assertRedirect('/smart/inventory/consumables');
         $response->assertSessionHas('success', 'Permintaan manual berhasil dicatat.');
 
         // 1. Lot quantity deducted
@@ -116,7 +116,7 @@ class LotManualRequestControllerTest extends TestCase
 
         // 5. InventoryLog created with stock_out and negative quantity_change
         $this->assertDatabaseHas('inventory_logs', [
-            'barang_id' => $barang->id,
+            'model_id' => $barang->id,
             'lot_id' => $lot->id,
             'user_id' => $requester->id,
             'action_type' => 'stock_out',
@@ -244,7 +244,7 @@ class LotManualRequestControllerTest extends TestCase
         $this->assertNull($smartReq->reasoning);
 
         $this->assertDatabaseHas('inventory_logs', [
-            'barang_id' => $barang->id,
+            'model_id' => $barang->id,
             'lot_id' => $lot->id,
             'user_id' => $requester->id,
             'action_type' => 'stock_out',

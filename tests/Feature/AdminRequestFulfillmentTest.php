@@ -190,15 +190,15 @@ class AdminRequestFulfillmentTest extends TestCase
         // The 2 oldest units should be assigned (AST-OLD-01 and AST-MID-02)
         $this->assertDatabaseHas('request_fulfillments', [
             'request_item_id' => $item->id,
-            'unit_id' => $oldUnit->id,
+            'asset_id' => $oldUnit->id,
         ]);
         $this->assertDatabaseHas('request_fulfillments', [
             'request_item_id' => $item->id,
-            'unit_id' => $midUnit->id,
+            'asset_id' => $midUnit->id,
         ]);
         $this->assertDatabaseMissing('request_fulfillments', [
             'request_item_id' => $item->id,
-            'unit_id' => $newUnit->id,
+            'asset_id' => $newUnit->id,
         ]);
 
         // Assert JSON contains slots and colors
@@ -329,15 +329,15 @@ class AdminRequestFulfillmentTest extends TestCase
 
         $this->assertDatabaseHas('request_fulfillments', [
             'request_item_id' => $item->id,
-            'unit_id' => $unit2->id,
+            'asset_id' => $unit2->id,
         ]);
         $this->assertDatabaseHas('request_fulfillments', [
             'request_item_id' => $item->id,
-            'unit_id' => $unit3->id,
+            'asset_id' => $unit3->id,
         ]);
         $this->assertDatabaseMissing('request_fulfillments', [
             'request_item_id' => $item->id,
-            'unit_id' => $unit1->id,
+            'asset_id' => $unit1->id,
         ]);
 
         // Exceeding requested quantity fails validation
@@ -746,14 +746,14 @@ class AdminRequestFulfillmentTest extends TestCase
         $this->assertDatabaseHas('request_fulfillments', [
             'request_item_id' => $item->id,
             'lot_id' => $lot1->id,
-            'unit_id' => null,
+            'asset_id' => null,
             'quantity_fulfilled' => 4,
         ]);
 
         $this->assertDatabaseHas('request_fulfillments', [
             'request_item_id' => $item->id,
             'lot_id' => $lot2->id,
-            'unit_id' => null,
+            'asset_id' => null,
             'quantity_fulfilled' => 6,
         ]);
     }
@@ -932,7 +932,7 @@ class AdminRequestFulfillmentTest extends TestCase
 
         $this->assertDatabaseHas('request_fulfillments', [
             'request_item_id' => $item1->id,
-            'unit_id' => $unit->id,
+            'asset_id' => $unit->id,
             'assigned_at' => null,
             'confirmed_at' => null,
         ]);
@@ -945,7 +945,7 @@ class AdminRequestFulfillmentTest extends TestCase
 
         $this->assertDatabaseHas('request_fulfillments', [
             'request_item_id' => $item2->id,
-            'unit_id' => $unit->id,
+            'asset_id' => $unit->id,
             'assigned_at' => null,
             'confirmed_at' => null,
         ]);
@@ -1018,7 +1018,7 @@ class AdminRequestFulfillmentTest extends TestCase
         // Request 1's duplicate fulfillment must be completely evicted (deleted)
         $this->assertDatabaseMissing('request_fulfillments', [
             'request_item_id' => $item1->id,
-            'unit_id' => $unit->id,
+            'asset_id' => $unit->id,
         ]);
 
         // Attempting to assign Unit to Request 1 now fails with 422 because it's locked by Request 2

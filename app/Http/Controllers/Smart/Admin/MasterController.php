@@ -8,7 +8,7 @@ use App\Models\Master\Brand;
 use App\Models\Master\Category;
 use App\Models\Master\Location;
 use App\Models\Master\Organizer;
-use App\Models\Master\Subcategory;
+use App\Models\Master\Type;
 use App\Models\Master\Uom;
 use App\Models\Master\Vendor;
 use Illuminate\Http\Request;
@@ -36,10 +36,13 @@ class MasterController extends Controller
                 'org_code' => $d->org_code,
             ]);
 
+        $types = Type::with('category')->orderBy('code')->get();
+
         return Inertia::render('Smart/Admin/MasterData/MasterData', [
             'user'          => $request->user(),
             'categories'    => Category::orderBy('code')->get(),
-            'subcategories' => Subcategory::with('category')->orderBy('code')->get(),
+            'types'         => $types,
+            'subcategories' => $types,
             'uoms'          => Uom::orderBy('name')->get(),
             'brands'        => Brand::orderBy('name')->get(),
             'organizers'    => Organizer::orderBy('name')->get(),

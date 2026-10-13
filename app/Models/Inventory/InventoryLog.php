@@ -4,22 +4,22 @@ namespace App\Models\Inventory;
 
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Model as EloquentModel;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Inventory Log model recording audit trail of stock, status, and assignment changes.
  */
-class InventoryLog extends Model
+class InventoryLog extends EloquentModel
 {
     use HasFactory;
 
     public const UPDATED_AT = null;
 
     protected $fillable = [
-        'barang_id',
+        'model_id',
         'lot_id',
-        'unit_id',
+        'asset_id',
         'user_id',
         'action_type',
         'quantity_change',
@@ -36,11 +36,26 @@ class InventoryLog extends Model
     ];
 
     /**
-     * The catalog item associated with this log entry.
+     * The catalog model associated with this log entry.
      */
+    public function model(): BelongsTo
+    {
+        return $this->belongsTo(Model::class);
+    }
+
     public function barang(): BelongsTo
     {
-        return $this->belongsTo(Barang::class);
+        return $this->belongsTo(Model::class, 'model_id');
+    }
+
+    public function setBarangIdAttribute($value): void
+    {
+        $this->attributes['model_id'] = $value;
+    }
+
+    public function getBarangIdAttribute()
+    {
+        return $this->attributes['model_id'] ?? null;
     }
 
     /**
@@ -52,11 +67,26 @@ class InventoryLog extends Model
     }
 
     /**
-     * The specific asset unit associated with this log entry.
+     * The specific asset associated with this log entry.
      */
+    public function asset(): BelongsTo
+    {
+        return $this->belongsTo(Asset::class);
+    }
+
     public function unit(): BelongsTo
     {
-        return $this->belongsTo(Unit::class);
+        return $this->belongsTo(Asset::class, 'asset_id');
+    }
+
+    public function setUnitIdAttribute($value): void
+    {
+        $this->attributes['asset_id'] = $value;
+    }
+
+    public function getUnitIdAttribute()
+    {
+        return $this->attributes['asset_id'] ?? null;
     }
 
     /**

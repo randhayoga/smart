@@ -37,7 +37,7 @@ class EmployeeController extends Controller
                         $q->whereNull('rf.return_id')->whereColumn('rr.request_id', 'r.id');
                     });
             })
-            ->whereNotNull('rf.unit_id')
+            ->whereNotNull('rf.asset_id')
             ->where(function ($q) {
                 $q->whereNotNull('rf.confirmed_at')
                     ->orWhereNotNull('rh.user_confirmed_at');
@@ -48,7 +48,7 @@ class EmployeeController extends Controller
                     ->orWhereNull('rr.completed_at');
             })
             ->groupBy('r.user_id')
-            ->select('r.user_id', DB::raw('COUNT(DISTINCT rf.unit_id) as total_assets'))
+            ->select('r.user_id', DB::raw('COUNT(DISTINCT rf.asset_id) as total_assets'))
             ->pluck('total_assets', 'r.user_id');
 
         $employees = HrdEmployee::with(['orgchart'])

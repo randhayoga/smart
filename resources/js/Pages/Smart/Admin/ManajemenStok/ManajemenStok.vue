@@ -469,7 +469,7 @@ const handleConfirmDelete = () => {
   const ids = itemsToDelete.value.map(item => item.id);
   
   if (ids.length === 1) {
-    router.delete(`/smart/inventory/barangs/${ids[0]}`, {
+    router.delete(`/smart/inventory/models/${ids[0]}`, {
       onStart: () => { processing.value = true; },
       onFinish: () => { processing.value = false; },
       onSuccess: () => {
@@ -480,7 +480,7 @@ const handleConfirmDelete = () => {
       }
     });
   } else {
-    router.delete('/smart/inventory/barangs/bulk', {
+    router.delete('/smart/inventory/models/bulk', {
       data: { ids },
       onStart: () => { processing.value = true; },
       onFinish: () => { processing.value = false; },

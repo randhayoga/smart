@@ -39,13 +39,13 @@ const skeletonType = computed<SkeletonType>(() => {
     /\/smart\/inventory\/lots\/[^\/]+$/.test(cleanPath) ||
     /\/smart\/inventory\/\d+$/.test(cleanPath) ||
     /\/smart\/borrowed\/\d+$/.test(cleanPath) ||
-    /\/smart\/arsip\/\d+$/.test(cleanPath)
+    /\/smart\/archive\/\d+$/.test(cleanPath)
   ) {
     return 'detail';
   }
 
   // 4. Employee List (Daftar Karyawan)
-  if (cleanPath.includes('/karyawan')) {
+  if (cleanPath.includes('/employees')) {
     return 'karyawan-table';
   }
 

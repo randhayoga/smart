@@ -72,7 +72,7 @@ class UnitStatusApprovalControllerTest extends TestCase
         $user = User::factory()->create();
         $unit = $this->createUnit();
 
-        $response = $this->actingAs($user)->post(route('smart.inventory.unit-status-approvals.store'), [
+        $response = $this->actingAs($user)->post(route('smart.inventory.asset-status-approvals.store'), [
             'unit_id' => $unit->id,
             'proposed_condition' => 'Rusak Total',
             'note' => 'Butuh penggantian unit',
@@ -80,10 +80,10 @@ class UnitStatusApprovalControllerTest extends TestCase
         ]);
 
         $response->assertRedirect();
-        $response->assertSessionHas('success', 'Pengajuan perubahan status unit berhasil dikirim.');
+        $response->assertSessionHas('success', __('requests.unit_status_change_submitted'));
 
-        $this->assertDatabaseHas('unit_status_approvals', [
-            'unit_id' => $unit->id,
+        $this->assertDatabaseHas('asset_status_approvals', [
+            'asset_id' => $unit->id,
             'requester_id' => $user->id,
             'proposed_condition' => 'Rusak Total',
             'previous_condition' => 'Bagus',
@@ -113,7 +113,7 @@ class UnitStatusApprovalControllerTest extends TestCase
             'lost_doc_url' => null,
         ]);
 
-        $response = $this->actingAs($user)->post(route('smart.inventory.unit-status-approvals.store'), [
+        $response = $this->actingAs($user)->post(route('smart.inventory.asset-status-approvals.store'), [
             'unit_id' => $unit->id,
             'proposed_condition' => 'Hilang',
             'memo_file' => \Illuminate\Http\UploadedFile::fake()->create('memo.pdf', 100),
@@ -141,7 +141,7 @@ class UnitStatusApprovalControllerTest extends TestCase
             $unitNumber = substr($unitNumber, 0, 25);
         }
 
-        $response = $this->actingAs($user)->post(route('smart.inventory.units.store'), [
+        $response = $this->actingAs($user)->post(route('smart.inventory.assets.store'), [
             'number' => $unitNumber,
             'lot_id' => $lot->id,
             'location_id' => $location->id,
@@ -161,8 +161,8 @@ class UnitStatusApprovalControllerTest extends TestCase
         $unit = Unit::where('lot_id', $lot->id)->firstOrFail();
         $this->assertEquals('Pending:BoD/BoC', $unit->status);
 
-        $this->assertDatabaseHas('unit_status_approvals', [
-            'unit_id' => $unit->id,
+        $this->assertDatabaseHas('asset_status_approvals', [
+            'asset_id' => $unit->id,
             'requester_id' => $user->id,
             'proposed_condition' => 'Rusak Total',
             'previous_condition' => 'Bagus',
@@ -178,7 +178,7 @@ class UnitStatusApprovalControllerTest extends TestCase
         $user = User::factory()->create();
         $unit = $this->createUnit();
 
-        $response = $this->actingAs($user)->put(route('smart.inventory.units.update', $unit), [
+        $response = $this->actingAs($user)->put(route('smart.inventory.assets.update', $unit), [
             'number' => $unit->number,
             'lot_id' => $unit->lot_id,
             'location_id' => $unit->location_id,
@@ -195,8 +195,8 @@ class UnitStatusApprovalControllerTest extends TestCase
         $unit->refresh();
         $this->assertEquals('Pending:BoD/BoC', $unit->status);
 
-        $this->assertDatabaseHas('unit_status_approvals', [
-            'unit_id' => $unit->id,
+        $this->assertDatabaseHas('asset_status_approvals', [
+            'asset_id' => $unit->id,
             'requester_id' => $user->id,
             'proposed_condition' => 'Rusak Total',
             'previous_condition' => 'Bagus',
@@ -213,7 +213,7 @@ class UnitStatusApprovalControllerTest extends TestCase
         $unit = $this->createUnit();
         $newLocation = \App\Models\Master\Location::factory()->create();
 
-        $response = $this->actingAs($user)->put(route('smart.inventory.units.update', $unit), [
+        $response = $this->actingAs($user)->put(route('smart.inventory.assets.update', $unit), [
             'number' => $unit->number,
             'lot_id' => $unit->lot_id,
             'location_id' => $newLocation->id,

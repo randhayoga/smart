@@ -8,7 +8,7 @@ import { Plus } from 'lucide-vue-next';
 import { Button } from "@/Components/ui/button";
 import { formatDate } from '@/lib/utils';
 import CreateAssetModal from '../Modals/CreateAssetModal.vue';
-import DaftarAsetTab from './DaftarAsetTab.vue';
+import DaftarTidakHabisPakaiTab from './DaftarTidakHabisPakaiTab.vue';
 
 interface Props {
   lot: {
@@ -166,8 +166,8 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- Daftar Aset Card using the unified component -->
-    <DaftarAsetTab
+    <!-- Daftar Tidak Habis Pakai Card using the unified component -->
+    <DaftarTidakHabisPakaiTab
       :units="props.units"
       :locations="props.locations"
       :organizers="props.organizers"
@@ -186,7 +186,7 @@ onUnmounted(() => {
           <span>{{ t('inventory.newAsset') }}</span>
         </Button>
       </template>
-    </DaftarAsetTab>
+    </DaftarTidakHabisPakaiTab>
   </div>
 
   <CreateAssetModal

@@ -67,8 +67,8 @@ class RequestSubmissionService
 
                     RequestItem::create([
                         'request_id' => $smartRequest->id,
-                        'subcategory_id' => $basketItem->subcategory_id,
-                        'barang_id' => $basketItem->barang_id,
+                        'type_id' => $basketItem->type_id,
+                        'model_id' => $basketItem->model_id,
                         'quantity_requested' => $basketItem->quantity,
                     ]);
 
@@ -84,8 +84,8 @@ class RequestSubmissionService
 
                     RequestItem::create([
                         'request_id' => $smartRequest->id,
-                        'subcategory_id' => $basketItem->subcategory_id,
-                        'barang_id' => $basketItem->barang_id,
+                        'type_id' => $basketItem->type_id,
+                        'model_id' => $basketItem->model_id,
                         'quantity_requested' => $basketItem->quantity,
                         'start_date' => $startDate,
                         'end_date' => $endDate,

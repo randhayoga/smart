@@ -3,53 +3,61 @@
 namespace App\Services;
 
 use App\Models\User;
-use App\Models\Inventory\Barang;
+use App\Models\Inventory\Model;
 use App\Models\Inventory\InventoryLog;
 use App\Models\Inventory\Lot;
 use Carbon\Carbon;
 
 /**
- * Inventory Log Service managing centralized, clean audit trail records for Barang and LOT operations.
+ * Inventory Log Service managing centralized, clean audit trail records for Model and LOT operations.
  */
 class InventoryLogService
 {
     /**
-     * Log item type (Barang) creation.
+     * Log item model creation.
      */
-    public function logBarangCreated(Barang $barang, User|int $user, ?string $note = null): InventoryLog
+    public function logModelCreated(Model $model, User|int $user, ?string $note = null): InventoryLog
     {
         $userId = $user instanceof User ? $user->id : $user;
-        $barang->loadMissing(['brand', 'uom', 'subcategory']);
+        $model->loadMissing(['brand', 'uom', 'type']);
 
         $newState = [
-            'id' => $barang->id,
-            'number' => $barang->number,
-            'name' => $barang->name,
-            'brand' => $barang->brand?->name,
-            'uom' => $barang->uom?->name,
-            'subcategory' => $barang->subcategory?->name,
-            'specification' => $barang->specification,
-            'min_stock_threshold' => $barang->min_stock_threshold,
+            'id' => $model->id,
+            'number' => $model->number,
+            'name' => $model->name,
+            'brand' => $model->brand?->name,
+            'uom' => $model->uom?->name,
+            'type' => $model->type?->name,
+            'specification' => $model->specification,
+            'min_stock_threshold' => $model->min_stock_threshold,
         ];
 
         return InventoryLog::create([
-            'barang_id' => $barang->id,
+            'model_id' => $model->id,
             'lot_id' => null,
-            'unit_id' => null,
+            'asset_id' => null,
             'user_id' => $userId,
             'action_type' => 'create',
             'quantity_change' => 0,
             'previous_state' => null,
             'new_state' => $newState,
-            'note' => $note ?? "Menambahkan tipe barang baru: {$barang->name} ({$barang->number})",
+            'note' => $note ?? "Menambahkan model baru: {$model->name} ({$model->number})",
             'created_at' => now(),
         ]);
     }
 
     /**
-     * Log item type (Barang) update, only if tracked attributes actually changed.
+     * Alias for logModelCreated.
      */
-    public function logBarangUpdated(Barang $barang, array $originalAttributes, User|int $user, ?string $note = null): ?InventoryLog
+    public function logBarangCreated(Model $model, User|int $user, ?string $note = null): InventoryLog
+    {
+        return $this->logModelCreated($model, $user, $note);
+    }
+
+    /**
+     * Log item model update, only if tracked attributes actually changed.
+     */
+    public function logModelUpdated(Model $model, array $originalAttributes, User|int $user, ?string $note = null): ?InventoryLog
     {
         $userId = $user instanceof User ? $user->id : $user;
 
@@ -58,7 +66,7 @@ class InventoryLogService
             'name',
             'brand_id',
             'uom_id',
-            'subcategory_id',
+            'type_id',
             'specification',
             'min_stock_threshold',
             'image_url',
@@ -69,7 +77,7 @@ class InventoryLogService
 
         foreach ($trackedFields as $field) {
             $oldVal = $originalAttributes[$field] ?? null;
-            $newVal = $barang->getAttribute($field);
+            $newVal = $model->getAttribute($field);
 
             if (!$this->areValuesEqual($field, $oldVal, $newVal)) {
                 $oldDiff[$field] = $this->formatStateValue($field, $oldVal);
@@ -82,52 +90,68 @@ class InventoryLogService
         }
 
         return InventoryLog::create([
-            'barang_id' => $barang->id,
+            'model_id' => $model->id,
             'lot_id' => null,
-            'unit_id' => null,
+            'asset_id' => null,
             'user_id' => $userId,
             'action_type' => 'update',
             'quantity_change' => 0,
             'previous_state' => $oldDiff,
             'new_state' => $newDiff,
-            'note' => $note ?? "Memperbarui tipe barang {$barang->name} ({$barang->number})",
+            'note' => $note ?? "Memperbarui model {$model->name} ({$model->number})",
             'created_at' => now(),
         ]);
     }
 
     /**
+     * Alias for logModelUpdated.
+     */
+    public function logBarangUpdated(Model $model, array $originalAttributes, User|int $user, ?string $note = null): ?InventoryLog
+    {
+        return $this->logModelUpdated($model, $originalAttributes, $user, $note);
+    }
+
+    /**
      * Prepare existing logs for safe deletion (unlinking foreign keys) and log the deletion event.
      */
-    public function prepareAndLogBarangDeleted(Barang $barang, User|int $user, ?string $note = null): InventoryLog
+    public function prepareAndLogModelDeleted(Model $model, User|int $user, ?string $note = null): InventoryLog
     {
         $userId = $user instanceof User ? $user->id : $user;
-        $barang->loadMissing(['brand', 'uom', 'subcategory']);
+        $model->loadMissing(['brand', 'uom', 'type']);
 
         $previousState = [
-            'id' => $barang->id,
-            'number' => $barang->number,
-            'name' => $barang->name,
-            'brand' => $barang->brand?->name,
-            'uom' => $barang->uom?->name,
-            'subcategory' => $barang->subcategory?->name,
-            'specification' => $barang->specification,
+            'id' => $model->id,
+            'number' => $model->number,
+            'name' => $model->name,
+            'brand' => $model->brand?->name,
+            'uom' => $model->uom?->name,
+            'type' => $model->type?->name,
+            'specification' => $model->specification,
         ];
 
         // Unlink foreign key in prior logs to prevent SQL Server foreign key constraint conflicts on delete
-        InventoryLog::where('barang_id', $barang->id)->update(['barang_id' => null]);
+        InventoryLog::where('model_id', $model->id)->update(['model_id' => null]);
 
         return InventoryLog::create([
-            'barang_id' => null,
+            'model_id' => null,
             'lot_id' => null,
-            'unit_id' => null,
+            'asset_id' => null,
             'user_id' => $userId,
             'action_type' => 'delete',
             'quantity_change' => 0,
             'previous_state' => $previousState,
             'new_state' => null,
-            'note' => $note ?? "Menghapus tipe barang: {$barang->name} ({$barang->number})",
+            'note' => $note ?? "Menghapus model: {$model->name} ({$model->number})",
             'created_at' => now(),
         ]);
+    }
+
+    /**
+     * Alias for prepareAndLogModelDeleted.
+     */
+    public function prepareAndLogBarangDeleted(Model $model, User|int $user, ?string $note = null): InventoryLog
+    {
+        return $this->prepareAndLogModelDeleted($model, $user, $note);
     }
 
     /**
@@ -136,16 +160,16 @@ class InventoryLogService
     public function logLotCreated(Lot $lot, User|int $user, ?string $note = null): InventoryLog
     {
         $userId = $user instanceof User ? $user->id : $user;
-        $lot->loadMissing(['barang.uom', 'vendor', 'legacyVendor', 'location', 'project']);
+        $lot->loadMissing(['model.uom', 'vendor', 'legacyVendor', 'location', 'project']);
 
         $quantity = (int) ($lot->initial_quantity ?? $lot->current_quantity ?? 0);
-        $uomName = $lot->barang?->uom?->name ?? 'item';
+        $uomName = $lot->model?->uom?->name ?? 'item';
 
         $newState = [
             'id' => $lot->id,
             'number' => $lot->number,
-            'barang_id' => $lot->barang_id,
-            'barang_name' => $lot->barang?->name,
+            'model_id' => $lot->model_id,
+            'model_name' => $lot->model?->name,
             'initial_quantity' => $lot->initial_quantity,
             'current_quantity' => $lot->current_quantity,
             'po_number' => $lot->po_number,
@@ -160,9 +184,9 @@ class InventoryLogService
         ];
 
         return InventoryLog::create([
-            'barang_id' => $lot->barang_id,
+            'model_id' => $lot->model_id,
             'lot_id' => $lot->id,
-            'unit_id' => null,
+            'asset_id' => null,
             'user_id' => $userId,
             'action_type' => 'stock_in',
             'quantity_change' => $quantity,
@@ -210,18 +234,18 @@ class InventoryLogService
             return null;
         }
 
-        $lot->loadMissing('barang');
+        $lot->loadMissing('model');
 
         return InventoryLog::create([
-            'barang_id' => $lot->barang_id,
+            'model_id' => $lot->model_id,
             'lot_id' => $lot->id,
-            'unit_id' => null,
+            'asset_id' => null,
             'user_id' => $userId,
             'action_type' => 'update',
             'quantity_change' => 0,
             'previous_state' => $oldDiff,
             'new_state' => $newDiff,
-            'note' => $note ?? "Memperbarui data LOT {$lot->number} pada tipe barang " . ($lot->barang?->name ?? '-'),
+            'note' => $note ?? "Memperbarui data LOT {$lot->number} pada model " . ($lot->model?->name ?? '-'),
             'created_at' => now(),
         ]);
     }
@@ -232,13 +256,13 @@ class InventoryLogService
     public function prepareAndLogLotDeleted(Lot $lot, User|int $user, ?string $note = null): InventoryLog
     {
         $userId = $user instanceof User ? $user->id : $user;
-        $lot->loadMissing(['barang', 'vendor', 'legacyVendor', 'location']);
+        $lot->loadMissing(['model', 'vendor', 'legacyVendor', 'location']);
 
         $previousState = [
             'id' => $lot->id,
             'number' => $lot->number,
-            'barang_id' => $lot->barang_id,
-            'barang_name' => $lot->barang?->name,
+            'model_id' => $lot->model_id,
+            'model_name' => $lot->model?->name,
             'initial_quantity' => $lot->initial_quantity,
             'current_quantity' => $lot->current_quantity,
             'po_number' => $lot->po_number,
@@ -250,15 +274,15 @@ class InventoryLogService
         $currentQty = (int) ($lot->current_quantity ?? 0);
 
         return InventoryLog::create([
-            'barang_id' => $lot->barang_id,
+            'model_id' => $lot->model_id,
             'lot_id' => null,
-            'unit_id' => null,
+            'asset_id' => null,
             'user_id' => $userId,
             'action_type' => 'delete',
             'quantity_change' => -$currentQty,
             'previous_state' => $previousState,
             'new_state' => null,
-            'note' => $note ?? "Menghapus LOT {$lot->number} dari tipe barang " . ($lot->barang?->name ?? '-'),
+            'note' => $note ?? "Menghapus LOT {$lot->number} dari model " . ($lot->model?->name ?? '-'),
             'created_at' => now(),
         ]);
     }
@@ -267,7 +291,7 @@ class InventoryLogService
      * Log consumable stock deduction (stock_out) with formatted note.
      */
     public function logConsumableStockOut(
-        Barang $barang,
+        Model $model,
         Lot $lot,
         int $deductQty,
         int $prevQty,
@@ -287,9 +311,9 @@ class InventoryLogService
         $note = "Permintaan untuk {$utilizationLabel}{$destPart}, dengan catatan {$catatan}";
 
         return InventoryLog::create([
-            'barang_id' => $barang->id,
+            'model_id' => $model->id,
             'lot_id' => $lot->id,
-            'unit_id' => null,
+            'asset_id' => null,
             'user_id' => $userId,
             'action_type' => 'stock_out',
             'quantity_change' => -$deductQty,

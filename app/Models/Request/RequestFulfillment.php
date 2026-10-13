@@ -2,8 +2,8 @@
 
 namespace App\Models\Request;
 
+use App\Models\Inventory\Asset;
 use App\Models\Inventory\Lot;
-use App\Models\Inventory\Unit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -13,6 +13,7 @@ class RequestFulfillment extends Model
 
     protected $fillable = [
         'request_item_id',
+        'asset_id',
         'unit_id',
         'lot_id',
         'handover_id',
@@ -39,11 +40,39 @@ class RequestFulfillment extends Model
     }
 
     /**
-     * Unit associated with this fulfillment (for serialized assets).
+     * Asset associated with this fulfillment (for serialized assets).
      */
+    public function asset(): BelongsTo
+    {
+        return $this->belongsTo(Asset::class, 'asset_id');
+    }
+
     public function unit(): BelongsTo
     {
-        return $this->belongsTo(Unit::class, 'unit_id');
+        return $this->belongsTo(Asset::class, 'asset_id');
+    }
+
+    public function setUnitIdAttribute($value): void
+    {
+        $this->attributes['asset_id'] = $value;
+    }
+
+    public function getUnitIdAttribute()
+    {
+        return $this->attributes['asset_id'] ?? null;
+    }
+
+    public function newEloquentBuilder($query)
+    {
+        return new class($query) extends \Illuminate\Database\Eloquent\Builder {
+            public function where($column, $operator = null, $value = null, $boolean = 'and')
+            {
+                if (is_string($column) && ($column === 'unit_id' || $column === 'request_fulfillments.unit_id')) {
+                    $column = str_replace('unit_id', 'asset_id', $column);
+                }
+                return parent::where($column, $operator, $value, $boolean);
+            }
+        };
     }
 
     /**

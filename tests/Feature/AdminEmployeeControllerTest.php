@@ -124,7 +124,7 @@ class AdminEmployeeControllerTest extends TestCase
         $dept = $this->createDepartment('Human Resources');
         $employee = $this->createEmployee('Budi Santoso', '112233', $dept);
 
-        $response = $this->actingAs($admin)->get(route('smart.karyawan.index'));
+        $response = $this->actingAs($admin)->get(route('smart.employees.index'));
 
         $response->assertStatus(200);
         $response->assertInertia(fn (Assert $page) => $page
@@ -139,7 +139,7 @@ class AdminEmployeeControllerTest extends TestCase
     {
         $user = $this->createEmployee('Regular User', '999999');
 
-        $response = $this->actingAs($user)->get(route('smart.karyawan.index'));
+        $response = $this->actingAs($user)->get(route('smart.employees.index'));
 
         $response->assertStatus(403);
     }
@@ -201,7 +201,7 @@ class AdminEmployeeControllerTest extends TestCase
             'completed_at' => null,
         ]);
 
-        $response = $this->actingAs($admin)->get(route('smart.karyawan.index'));
+        $response = $this->actingAs($admin)->get(route('smart.employees.index'));
         $response->assertStatus(200);
 
         $response->assertInertia(function (Assert $page) use ($userActive, $userHistorical, $userNatural) {
@@ -255,7 +255,7 @@ class AdminEmployeeControllerTest extends TestCase
         ]);
 
         $hrdEmployee = HrdEmployee::where('employee_id', $employee->employee_id)->firstOrFail();
-        $response = $this->actingAs($admin)->getJson(route('smart.karyawan.loans', $hrdEmployee));
+        $response = $this->actingAs($admin)->getJson(route('smart.employees.loans', $hrdEmployee));
 
         $response->assertStatus(200);
         $response->assertJsonStructure([
@@ -312,7 +312,7 @@ class AdminEmployeeControllerTest extends TestCase
         $employee = $this->createEmployee('Target Employee', '555001');
         $hrdEmployee = HrdEmployee::where('employee_id', $employee->employee_id)->firstOrFail();
 
-        $response = $this->actingAs($user)->getJson(route('smart.karyawan.loans', $hrdEmployee));
+        $response = $this->actingAs($user)->getJson(route('smart.employees.loans', $hrdEmployee));
 
         $response->assertStatus(403);
     }
@@ -323,7 +323,7 @@ class AdminEmployeeControllerTest extends TestCase
         $employee = $this->createEmployee('Empty Employee', '666001');
         $hrdEmployee = HrdEmployee::where('employee_id', $employee->employee_id)->firstOrFail();
 
-        $response = $this->actingAs($admin)->getJson(route('smart.karyawan.loans', $hrdEmployee));
+        $response = $this->actingAs($admin)->getJson(route('smart.employees.loans', $hrdEmployee));
 
         $response->assertStatus(200);
         $response->assertJson([

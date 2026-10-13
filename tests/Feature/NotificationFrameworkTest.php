@@ -182,7 +182,7 @@ class NotificationFrameworkTest extends TestCase
         $this->assertStringContainsString($barang->name, $notif->data['title']);
         $this->assertEquals('warning', $notif->data['type']);
         $cleanNumber = preg_replace('/[^a-zA-Z0-9]/', '', (string)$barang->number);
-        $this->assertEquals('/smart/inventory/stok-habis-pakai/' . $cleanNumber, $notif->data['url']);
+        $this->assertEquals('/smart/inventory/consumables/' . $cleanNumber, $notif->data['url']);
         $this->assertEquals($barang->id, $notif->data['extra']['barang_id']);
         $this->assertEquals(5, $notif->data['extra']['current_stock']);
         $this->assertEquals(10, $notif->data['extra']['min_stock_threshold']);
@@ -318,7 +318,7 @@ class NotificationFrameworkTest extends TestCase
 
         $file = UploadedFile::fake()->create('bod_approval.pdf', 100, 'application/pdf');
 
-        $response = $this->actingAs($admin)->put(route('smart.inventory.units.update', $unit), [
+        $response = $this->actingAs($admin)->put(route('smart.inventory.assets.update', $unit), [
             'bod_boc_approval_file' => $file,
         ]);
 
@@ -384,7 +384,7 @@ class NotificationFrameworkTest extends TestCase
         $this->assertEquals('Penghapusan Aset Dell Laptop XPS Disetujui DM IFS', $notif->data['title']);
         $this->assertEquals('Status aset AST-XPS-001 telah berubah menjadi Tidak Aktif dan kondisi berubah menjadi Rusak Total.', $notif->data['message']);
         $this->assertEquals('success', $notif->data['type']);
-        $this->assertEquals('/smart/inventory/assets?search=AST-XPS-001', $notif->data['url']);
+        $this->assertEquals('/smart/inventory/non-consumables?search=AST-XPS-001', $notif->data['url']);
     }
 
     public function test_notify_admin_when_dm_ifs_rejects_asset_status(): void
@@ -438,6 +438,6 @@ class NotificationFrameworkTest extends TestCase
         $this->assertEquals('Penghapusan Aset Lenovo ThinkPad Ditolak DM IFS', $notif->data['title']);
         $this->assertEquals('Status aset AST-LNV-002 telah dikembalikan menjadi Tersedia dan kondisi dikembalikan menjadi Bagus.', $notif->data['message']);
         $this->assertEquals('error', $notif->data['type']);
-        $this->assertEquals('/smart/inventory/assets?search=AST-LNV-002', $notif->data['url']);
+        $this->assertEquals('/smart/inventory/non-consumables?search=AST-LNV-002', $notif->data['url']);
     }
 }

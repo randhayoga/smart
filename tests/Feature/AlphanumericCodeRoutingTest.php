@@ -101,10 +101,10 @@ class AlphanumericCodeRoutingTest extends TestCase
         ]);
 
         // Access via alphanumeric code
-        $response = $this->actingAs($user)->get('/smart/inventory/stok-habis-pakai/BRGHP001');
+        $response = $this->actingAs($user)->get('/smart/inventory/consumables/BRGHP001');
         $response->assertStatus(200);
         $response->assertInertia(fn (Assert $page) => $page
-            ->component('Smart/Admin/ManajemenStok/DaftarStokHabisPakai')
+            ->component('Smart/Admin/ManajemenStok/DaftarHabisPakai')
             ->where('selectedBarangCode', 'BRG-HP-001')
         );
     }

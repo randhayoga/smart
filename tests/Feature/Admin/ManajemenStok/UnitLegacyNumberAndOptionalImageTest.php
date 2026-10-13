@@ -67,7 +67,7 @@ class UnitLegacyNumberAndOptionalImageTest extends TestCase
 
     public function test_barang_can_be_created_without_image(): void
     {
-        $response = $this->actingAs($this->user)->post(route('smart.inventory.barangs.store'), [
+        $response = $this->actingAs($this->user)->post(route('smart.inventory.models.store'), [
             'number' => 'EL01-9999',
             'subcategory_id' => $this->subcategory->id,
             'brand_id' => $this->brand->id,
@@ -77,7 +77,7 @@ class UnitLegacyNumberAndOptionalImageTest extends TestCase
         ]);
 
         $response->assertRedirect();
-        $this->assertDatabaseHas('barangs', [
+        $this->assertDatabaseHas('models', [
             'number' => 'EL01-9999',
             'name' => 'Laptop Tanpa Gambar',
             'image_url' => null,
@@ -99,14 +99,14 @@ class UnitLegacyNumberAndOptionalImageTest extends TestCase
 
         $response->assertRedirect();
         $this->assertDatabaseHas('lots', [
-            'number' => 'LOT-0001-26-IT-0001',
+            'model_id' => $this->barang->id,
             'image_url' => null,
         ]);
     }
 
     public function test_unit_single_can_be_created_without_image(): void
     {
-        $response = $this->actingAs($this->user)->post(route('smart.inventory.units.store'), [
+        $response = $this->actingAs($this->user)->post(route('smart.inventory.assets.store'), [
             'lot_id' => $this->lot->id,
             'location_id' => $this->location->id,
             'status' => 'Tersedia',
@@ -118,7 +118,7 @@ class UnitLegacyNumberAndOptionalImageTest extends TestCase
         ]);
 
         $response->assertRedirect();
-        $this->assertDatabaseHas('units', [
+        $this->assertDatabaseHas('assets', [
             'lot_id' => $this->lot->id,
             'status' => 'Belum Diverifikasi',
             'image_url' => null,
@@ -128,7 +128,7 @@ class UnitLegacyNumberAndOptionalImageTest extends TestCase
 
     public function test_unit_bulk_can_be_created_without_image(): void
     {
-        $response = $this->actingAs($this->user)->post(route('smart.inventory.units.bulk-store'), [
+        $response = $this->actingAs($this->user)->post(route('smart.inventory.assets.bulk-store'), [
             'number' => '00001-EL01-IT-PTRE-26',
             'lot_id' => $this->lot->id,
             'location_id' => $this->location->id,
@@ -142,7 +142,7 @@ class UnitLegacyNumberAndOptionalImageTest extends TestCase
         ]);
 
         $response->assertRedirect();
-        $this->assertDatabaseCount('units', 3);
+        $this->assertDatabaseCount('assets', 3);
 
         $units = Unit::where('lot_id', $this->lot->id)->get();
         foreach ($units as $unit) {
@@ -170,8 +170,8 @@ class UnitLegacyNumberAndOptionalImageTest extends TestCase
         ]);
 
         $this->assertEquals($unit1->legacy_number, $unit2->legacy_number);
-        $this->assertDatabaseHas('units', ['id' => $unit1->id, 'legacy_number' => 'LEGACY-NON-UNIQUE-01']);
-        $this->assertDatabaseHas('units', ['id' => $unit2->id, 'legacy_number' => 'LEGACY-NON-UNIQUE-01']);
+        $this->assertDatabaseHas('assets', ['id' => $unit1->id, 'legacy_number' => 'LEGACY-NON-UNIQUE-01']);
+        $this->assertDatabaseHas('assets', ['id' => $unit2->id, 'legacy_number' => 'LEGACY-NON-UNIQUE-01']);
     }
 
     public function test_unit_update_does_not_require_photo_and_preserves_legacy_number(): void
@@ -188,7 +188,7 @@ class UnitLegacyNumberAndOptionalImageTest extends TestCase
             'image_url' => null,
         ]);
 
-        $response = $this->actingAs($this->user)->put(route('smart.inventory.units.update', $unit), [
+        $response = $this->actingAs($this->user)->put(route('smart.inventory.assets.update', $unit), [
             'number' => $unit->number,
             'lot_id' => $this->lot->id,
             'location_id' => $this->location->id,
@@ -224,7 +224,7 @@ class UnitLegacyNumberAndOptionalImageTest extends TestCase
             'image_url' => 'inventory/unit_sample.jpg',
         ]);
 
-        $response = $this->actingAs($this->user)->put(route('smart.inventory.units.update', $unit), [
+        $response = $this->actingAs($this->user)->put(route('smart.inventory.assets.update', $unit), [
             'number' => $unit->number,
             'lot_id' => $this->lot->id,
             'location_id' => $this->location->id,
@@ -255,10 +255,10 @@ class UnitLegacyNumberAndOptionalImageTest extends TestCase
             'image_url' => null,
         ]);
 
-        $response = $this->actingAs($this->user)->get(route('smart.inventory.assets'));
+        $response = $this->actingAs($this->user)->get(route('smart.inventory.non-consumables'));
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page
-            ->component('Smart/Admin/ManajemenStok/DaftarAset')
+            ->component('Smart/Admin/ManajemenStok/DaftarTidakHabisPakai')
             ->has('units', fn (Assert $page) => $page
                 ->where('0.id', $unit->id)
                 ->where('0.legacy_number', 'LEGACY-EXPOSE-123')
@@ -296,7 +296,7 @@ class UnitLegacyNumberAndOptionalImageTest extends TestCase
             'condition' => 'Bagus',
         ]);
 
-        $response = $this->actingAs($this->user)->put(route('smart.inventory.units.update', $unit), [
+        $response = $this->actingAs($this->user)->put(route('smart.inventory.assets.update', $unit), [
             'number' => $unit->number,
             'lot_id' => $this->lot->id,
             'location_id' => $this->location->id,
@@ -326,7 +326,7 @@ class UnitLegacyNumberAndOptionalImageTest extends TestCase
             'condition' => 'Bagus',
         ]);
 
-        $response = $this->actingAs($this->user)->post(route('smart.inventory.units.bulk-update'), [
+        $response = $this->actingAs($this->user)->post(route('smart.inventory.assets.bulk-update'), [
             'ids' => [$unit1->id, $unit2->id],
             'status' => 'Standby',
         ]);

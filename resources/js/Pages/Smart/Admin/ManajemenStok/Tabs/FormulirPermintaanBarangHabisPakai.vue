@@ -237,7 +237,7 @@ const handleSubmit = () => {
 
   const submitUrl = props.mode === 'lot' && props.lot?.id
     ? `/smart/inventory/lots/${props.lot.id}/manual-request`
-    : `/smart/inventory/barangs/${props.barang?.id}/manual-request`;
+    : `/smart/inventory/models/${props.barang?.id}/manual-request`;
 
   isSubmitting.value = true;
 

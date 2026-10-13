@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Smart\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -20,40 +21,37 @@ class DashboardController extends Controller
     {
         $user = $request->user();
         
-        // ==========================================
-        // [PHASE 2 - NON-ADMIN DASHBOARD REDIRECT]
-        // Uncomment below when transitioning to Phase 2
-        // if (!$user->is_admin) {
-        //     return redirect()->route('smart.user.dashboard');
-        // }
-        // ==========================================
         if (!$user->hasPermission('dashboard.admin.view')) {
             abort(403, 'Akses ditolak.');
         }
 
-        // Fetch the total amount of current quantity of each consumable subcategory
-        $consumableSubcategoryStats = \Illuminate\Support\Facades\DB::table('lots')
-            ->join('barangs', 'lots.barang_id', '=', 'barangs.id')
-            ->join('subcategories', 'barangs.subcategory_id', '=', 'subcategories.id')
-            ->where('subcategories.is_consumable', true)
-            ->groupBy('subcategories.id', 'subcategories.name')
-            ->select('subcategories.name as subcategory_name', \Illuminate\Support\Facades\DB::raw('SUM(lots.current_quantity) as total_quantity'))
+        // Fetch the total amount of current quantity of each consumable type
+        $consumableTypeStats = DB::table('lots')
+            ->join('models', 'lots.model_id', '=', 'models.id')
+            ->join('types', 'models.type_id', '=', 'types.id')
+            ->where('types.is_consumable', true)
+            ->groupBy('types.id', 'types.name')
+            ->select(
+                'types.name as type_name',
+                'types.name as subcategory_name',
+                DB::raw('SUM(lots.current_quantity) as total_quantity')
+            )
             ->get();
 
-        // Optimized Single Query: Fetch total number of units for non_consumable categories under CFS and ICT organizers
-        $nonConsumableCategoryStats = \Illuminate\Support\Facades\DB::table('units')
-            ->join('lots', 'units.lot_id', '=', 'lots.id')
+        // Optimized Single Query: Fetch total number of assets for non_consumable categories under CFS and ICT organizers
+        $nonConsumableCategoryStats = DB::table('assets')
+            ->join('lots', 'assets.lot_id', '=', 'lots.id')
             ->join('organizers', 'lots.organizer_id', '=', 'organizers.id')
-            ->join('barangs', 'lots.barang_id', '=', 'barangs.id')
-            ->join('subcategories', 'barangs.subcategory_id', '=', 'subcategories.id')
-            ->join('categories', 'subcategories.category_id', '=', 'categories.id')
-            ->where('subcategories.is_consumable', false)
+            ->join('models', 'lots.model_id', '=', 'models.id')
+            ->join('types', 'models.type_id', '=', 'types.id')
+            ->join('categories', 'types.category_id', '=', 'categories.id')
+            ->where('types.is_consumable', false)
             ->whereIn('organizers.name', ['CFS', 'ICT'])
             ->groupBy('organizers.name', 'categories.id', 'categories.name')
             ->select(
                 'organizers.name as organizer_name',
                 'categories.name as category_name',
-                \Illuminate\Support\Facades\DB::raw('COUNT(units.id) as total_units')
+                DB::raw('COUNT(assets.id) as total_units')
             )
             ->get();
 
@@ -62,6 +60,7 @@ class DashboardController extends Controller
             ->map(fn ($item) => [
                 'category_name' => $item->category_name,
                 'total_units' => (int) $item->total_units,
+                'total_assets' => (int) $item->total_units,
             ])
             ->values();
 
@@ -70,12 +69,14 @@ class DashboardController extends Controller
             ->map(fn ($item) => [
                 'category_name' => $item->category_name,
                 'total_units' => (int) $item->total_units,
+                'total_assets' => (int) $item->total_units,
             ])
             ->values();
         
         return Inertia::render('Smart/Admin/Dashboard', [
             'user' => $user,
-            'consumableSubcategoryStats' => $consumableSubcategoryStats,
+            'consumableTypeStats' => $consumableTypeStats,
+            'consumableSubcategoryStats' => $consumableTypeStats,
             'cfsCategoryStats' => $cfsCategoryStats,
             'ictCategoryStats' => $ictCategoryStats,
         ]);

@@ -15,7 +15,7 @@ erDiagram
         varchar name  ""  
     }
 
-    SUBCATEGORY {
+    TYPE {
         int id PK ""  
         char_9 code UK ""  
         varchar name  ""  
@@ -110,10 +110,10 @@ erDiagram
         varchar showing_name  ""  
     }
 
-    BARANG {
+    MODEL {
         int id PK ""  
         char_14 number UK ""  
-        int subcategory_id FK ""  
+        int type_id FK ""  
         int brand_id FK ""  
         int uom_id FK ""  
         varchar name  ""  
@@ -126,7 +126,7 @@ erDiagram
     LOT {
         int id PK ""  
         char_26 number UK ""  
-        int barang_id FK ""  
+        int model_id FK ""  
         int organizer_id FK ""  
         int vendor_id FK "nullable | Refers to eproc:vendors.id"  
         int legacy_vendor_id FK "nullable | Refers to vendors.id"  
@@ -141,7 +141,7 @@ erDiagram
         int project_id FK "nullable | for consumables, RE_PORTALDB_TB_PROJECT's id"  
     }
 
-    UNIT {
+    ASSET {
         int id PK ""  
         char_25 number UK ""  
         varchar legacy_number  "nullable"  
@@ -149,7 +149,7 @@ erDiagram
         int location_id FK "current location"  
         varchar status  ""  
         varchar condition  ""  
-        varchar_2 type  "LT | ST"  
+        varchar_2 borrowing_type  "LT | ST"  
         varchar_255 classification  "Aset | Inventaris"  
         numeric price  "nullable"  
         varchar image_url  "nullable"  
@@ -158,9 +158,9 @@ erDiagram
         int project_id FK "nullable | RE_PORTALDB_TB_PROJECT's id"  
     }
 
-    UNIT_STATUS_APPROVAL {
+    ASSET_STATUS_APPROVAL {
         int id PK ""  
-        int unit_id FK ""  
+        int asset_id FK ""  
         int requester_id FK "ADM_USER_NEW_PORTAL_USERS's id"  
         int approver_id FK "nullable | ADM_USER_NEW_PORTAL_USERS's id"  
         varchar proposed_condition  ""  
@@ -177,9 +177,9 @@ erDiagram
 
     INVENTORY_LOG {
         int id PK ""  
-        int barang_id FK "nullable"  
+        int model_id FK "nullable"  
         int lot_id FK "nullable"  
-        int unit_id FK "nullable"  
+        int asset_id FK "nullable"  
         int user_id FK "ADM_USER_NEW_PORTAL_USERS's id"  
         varchar action_type  "stock_in, stock_out, adjustment, relocation"  
         int quantity_change  "default to 0"  
@@ -190,9 +190,9 @@ erDiagram
         datetime created_at  ""  
     }
 
-    UNIT_LIFECYCLE {
+    ASSET_LIFECYCLE {
         int id PK ""  
-        int unit_id FK ""  
+        int asset_id FK ""  
         varchar action_type  "registrasi, perubahan_status, perubahan_kondisi, pemindahan, peminjaman, pengembalian, pemeliharaan"  
         varchar status  ""  
         varchar condition  ""  
@@ -208,16 +208,16 @@ erDiagram
     CONSUMABLE_BASKET {
         int id PK ""  
         int user_id FK "ADM_USER_NEW_PORTAL_USERS's id"  
-        int subcategory_id FK "nullable"  
-        int barang_id FK "nullable"  
+        int type_id FK "nullable"  
+        int model_id FK "nullable"  
         int quantity  ""  
     }
 
     ASSET_BASKET {
         int id PK ""  
         int user_id FK "ADM_USER_NEW_PORTAL_USERS's id"  
-        int subcategory_id FK "nullable"  
-        int barang_id FK "nullable"  
+        int type_id FK "nullable"  
+        int model_id FK "nullable"  
         int quantity  ""  
         datetime start_date  ""  
         datetime end_date  ""  
@@ -239,8 +239,8 @@ erDiagram
     REQUEST_ITEM {
         int id PK ""  
         int request_id FK ""  
-        int subcategory_id FK "nullable"  
-        int barang_id FK "nullable"  
+        int type_id FK "nullable"  
+        int model_id FK "nullable"  
         int quantity_requested  ""  
         datetime start_date  "nullable | assets only"  
         datetime end_date  "nullable | assets only"  
@@ -250,7 +250,7 @@ erDiagram
     REQUEST_FULFILLMENT {
         int id PK ""  
         int request_item_id FK ""  
-        int unit_id FK "nullable | for assets"  
+        int asset_id FK "nullable | for assets"  
         int lot_id FK "nullable | for consumables"  
         int handover_id FK "nullable | links to schedule"  
         int return_id FK "nullable | links to return schedule"  
@@ -343,26 +343,26 @@ erDiagram
         int expiration  "index"  
     }
 
-    CATEGORY||--o{SUBCATEGORY:"has"
-    SUBCATEGORY||--o{BARANG:"classifies"
-    UOM||--o{BARANG:"measures"
-    BRAND||--o{BARANG:"made by"
-    BARANG||--o{LOT:"procured in"
+    CATEGORY||--o{TYPE:"has"
+    TYPE||--o{MODEL:"classifies"
+    UOM||--o{MODEL:"measures"
+    BRAND||--o{MODEL:"made by"
+    MODEL||--o{LOT:"procured in"
     ORGANIZER||--o{LOT:"managed by"
     VENDOR||--o{LOT:"supplied by (legacy)"
     LOCATION||--o{LOT:"default location"
     LOCATION||--o{LOCATION:"parent to child"
-    LOT||--o{UNIT:"contains"
-    LOCATION||--o{UNIT:"currently at"
+    LOT||--o{ASSET:"contains"
+    LOCATION||--o{ASSET:"currently at"
     USER_HRIS_HRD_EMPLOYEE||--||ADM_USER_NEW_PORTAL_USERS:"credentials"
     USER_HRIS_HRD_ORGCHART||--o{USER_HRIS_HRD_EMPLOYEE:"employs"
     USER_HRIS_HRD_EMPLOYEE||--o{USER_HRIS_HRD_ORGCHART:"manages"
     ADM_USER_NEW_PORTAL_USERS||--o{CONSUMABLE_BASKET:"owns"
-    BARANG||--o{CONSUMABLE_BASKET:"in"
-    SUBCATEGORY||--o{CONSUMABLE_BASKET:"in"
+    MODEL||--o{CONSUMABLE_BASKET:"in"
+    TYPE||--o{CONSUMABLE_BASKET:"in"
     ADM_USER_NEW_PORTAL_USERS||--o{ASSET_BASKET:"owns"
-    BARANG||--o{ASSET_BASKET:"in"
-    SUBCATEGORY||--o{ASSET_BASKET:"in"
+    MODEL||--o{ASSET_BASKET:"in"
+    TYPE||--o{ASSET_BASKET:"in"
     ADM_USER_NEW_PORTAL_USERS||--o{RE_PORTALDB_TB_ASSIGN_PROJECT :"assigned to"
     RE_PORTALDB_TB_PROJECT||--o{RE_PORTALDB_TB_ASSIGN_PROJECT :"project details"
     RE_PORTALDB_TB_RBS||--o{RE_PORTALDB_TB_ASSIGN_PROJECT :"assigned as"
@@ -371,10 +371,10 @@ erDiagram
     RE_PORTALDB_TB_PROJECT||--o{REQUEST:"allocated to project"
     USER_HRIS_HRD_ORGCHART||--o{REQUEST:"allocated to dept"
     REQUEST||--o{REQUEST_ITEM:"contains"
-    BARANG||--o{REQUEST_ITEM:"requested as"
-    SUBCATEGORY||--o{REQUEST_ITEM:"requested category"
+    MODEL||--o{REQUEST_ITEM:"requested as"
+    TYPE||--o{REQUEST_ITEM:"requested type"
     REQUEST_ITEM||--o{REQUEST_FULFILLMENT:"fulfilled by"
-    UNIT||--o{REQUEST_FULFILLMENT:"assigned in"
+    ASSET||--o{REQUEST_FULFILLMENT:"assigned in"
     LOT||--o{REQUEST_FULFILLMENT:"deducted from"
     REQUEST||--o{REQUEST_HANDOVER:"generates handovers"
     REQUEST_HANDOVER||--o{REQUEST_FULFILLMENT:"delivers"
@@ -386,17 +386,17 @@ erDiagram
     ADM_USER_NEW_PORTAL_USERS||--o{REQUEST_ADMIN_CONFIRMATION:"acts on"
     REQUEST||--o{REQUEST_STATUS_LOG:"transitions"
     ADM_USER_NEW_PORTAL_USERS||--o{REQUEST_STATUS_LOG:"actored"
-    BARANG||--o{INVENTORY_LOG:"logged"
+    MODEL||--o{INVENTORY_LOG:"logged"
     LOT||--o{INVENTORY_LOG:"logged"
-    UNIT||--o{INVENTORY_LOG:"logged"
-    UNIT||--o{UNIT_LIFECYCLE:"tracks lifecycle of"
-    LOCATION||--o{UNIT_LIFECYCLE:"location during lifecycle"
-    ADM_USER_NEW_PORTAL_USERS||--o{UNIT_LIFECYCLE:"actor"
-    UNIT||--o{UNIT_STATUS_APPROVAL:"has pending changes"
-    ADM_USER_NEW_PORTAL_USERS||--o{UNIT_STATUS_APPROVAL:"requests status change"
-    ADM_USER_NEW_PORTAL_USERS||--o{UNIT_STATUS_APPROVAL:"decides status change"
+    ASSET||--o{INVENTORY_LOG:"logged"
+    ASSET||--o{ASSET_LIFECYCLE:"tracks lifecycle of"
+    LOCATION||--o{ASSET_LIFECYCLE:"location during lifecycle"
+    ADM_USER_NEW_PORTAL_USERS||--o{ASSET_LIFECYCLE:"actor"
+    ASSET||--o{ASSET_STATUS_APPROVAL:"has pending changes"
+    ADM_USER_NEW_PORTAL_USERS||--o{ASSET_STATUS_APPROVAL:"requests status change"
+    ADM_USER_NEW_PORTAL_USERS||--o{ASSET_STATUS_APPROVAL:"decides status change"
     ADM_USER_NEW_PORTAL_USERS||--o{INVENTORY_LOG:"actored"
     ADM_USER_NEW_PORTAL_USERS||--o{NOTIFICATION:"notified"
     RE_PORTALDB_TB_PROJECT||--o{LOT:"associated with project"
-    RE_PORTALDB_TB_PROJECT||--o{UNIT:"associated with project"
+    RE_PORTALDB_TB_PROJECT||--o{ASSET:"associated with project"
     ADM_USER_NEW_PORTAL_USERS||--o|SESSION:"session owner"

@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Smart\Admin\ManajemenStok;
 
 use App\Http\Controllers\Controller;
-use App\Models\Inventory\Barang;
+use App\Models\Inventory\Model as InventoryModel;
 use App\Models\Inventory\Lot;
-use App\Models\Inventory\Unit;
+use App\Models\Inventory\Asset;
 use App\Models\Master\Brand;
 use App\Models\Master\Location;
 use App\Models\Master\Organizer;
@@ -13,7 +13,7 @@ use App\Models\Master\Uom;
 use App\Models\Master\Vendor;
 use App\Models\TbProject;
 use App\Services\InventoryLogService;
-use App\Services\Inventory\UnitNumberService;
+use App\Services\Inventory\AssetNumberService;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -30,12 +30,15 @@ class LotController extends Controller
      */
     public function store(Request $request)
     {
-        $barang = Barang::findOrFail($request->input('barang_id'));
-        $isConsumable = (bool) $barang->is_consumable;
+        $modelId = $request->input('model_id', $request->input('barang_id'));
+        $request->merge(['model_id' => $modelId]);
+
+        $model = InventoryModel::findOrFail($modelId);
+        $isConsumable = (bool) $model->is_consumable;
 
         $validated = $request->validate([
             'number' => 'required|string|max:50|unique:lots,number',
-            'barang_id' => 'required|exists:barangs,id',
+            'model_id' => 'required|exists:models,id',
             'organizer_id' => 'required|exists:organizers,id',
             'vendor_id' => 'required|integer', // Target DB: eproc (vendors table)
             'legacy_vendor_id' => 'nullable|exists:vendors,id', // Legacy vendors in local DB
@@ -58,10 +61,10 @@ class LotController extends Controller
         ]);
 
         if ($request->boolean('use_parent_image')) {
-            if ($barang->image_url && Storage::disk('local')->exists($barang->image_url)) {
-                $validated['image_url'] = $barang->image_url;
+            if ($model->image_url && Storage::disk('local')->exists($model->image_url)) {
+                $validated['image_url'] = $model->image_url;
             } else {
-                return redirect()->back()->withErrors(['image_url' => 'Foto barang parent tidak ditemukan di storage.']);
+                return redirect()->back()->withErrors(['image_url' => 'Foto model parent tidak ditemukan di storage.']);
             }
         } else if ($request->hasFile('image_url')) {
             $imagePath = $request->file('image_url')->store('inventory', 'local');
@@ -91,8 +94,8 @@ class LotController extends Controller
             app(InventoryLogService::class)->logLotCreated($lot, $request->user());
         }
 
-        if ($lot->barang) {
-            app(NotificationService::class)->checkAndNotifyLowStock($lot->barang);
+        if ($lot->model) {
+            app(NotificationService::class)->checkAndNotifyLowStock($lot->model);
         }
 
         return redirect()->back()
@@ -104,16 +107,18 @@ class LotController extends Controller
      */
     public function update(Request $request, Lot $lot)
     {
-        $isConsumable = (bool) ($lot->barang?->is_consumable ?? false);
-
+        $isConsumable = (bool) ($lot->model?->is_consumable ?? false);
         $isBeragam = ($lot->vendor_name === 'Beragam' || $lot->vendor?->name === 'Beragam' || $lot->legacyVendor?->name === 'Beragam');
+
+        $modelId = $request->input('model_id', $request->input('barang_id', $lot->model_id));
+        $request->merge(['model_id' => $modelId]);
 
         $rules = [
             'number' => 'required|string|max:50|unique:lots,number,' . $lot->id,
-            'barang_id' => 'required|exists:barangs,id',
+            'model_id' => 'required|exists:models,id',
             'organizer_id' => 'required|exists:organizers,id',
-            'vendor_id' => $isBeragam ? 'nullable' : 'required|integer', // Target DB: eproc (vendors table)
-            'legacy_vendor_id' => 'nullable|exists:vendors,id', // Legacy vendors in local DB
+            'vendor_id' => $isBeragam ? 'nullable' : 'required|integer',
+            'legacy_vendor_id' => 'nullable|exists:vendors,id',
             'location_id' => [$isConsumable ? 'required' : 'nullable', 'exists:locations,id'],
             'initial_quantity' => 'nullable|integer|min:0|max:2147483647',
             'po_number' => 'nullable|string|max:255',
@@ -135,8 +140,8 @@ class LotController extends Controller
         if ($request->boolean('delete_image')) {
             if ($lot->image_url && $lot->image_url !== 'inventory/lots/placeholder.jpg' && Storage::disk('local')->exists($lot->image_url)) {
                 $isShared = Lot::where('image_url', $lot->image_url)->where('id', '!=', $lot->id)->exists()
-                    || Barang::where('image_url', $lot->image_url)->exists()
-                    || Unit::where('image_url', $lot->image_url)->exists();
+                    || InventoryModel::where('image_url', $lot->image_url)->exists()
+                    || Asset::where('image_url', $lot->image_url)->exists();
                 if (!$isShared) {
                     Storage::disk('local')->delete($lot->image_url);
                 }
@@ -145,23 +150,23 @@ class LotController extends Controller
         } else if ($request->boolean('use_parent_image')) {
             if ($lot->image_url && $lot->image_url !== 'inventory/lots/placeholder.jpg' && Storage::disk('local')->exists($lot->image_url)) {
                 $isShared = Lot::where('image_url', $lot->image_url)->where('id', '!=', $lot->id)->exists()
-                    || Barang::where('image_url', $lot->image_url)->exists()
-                    || Unit::where('image_url', $lot->image_url)->exists();
+                    || InventoryModel::where('image_url', $lot->image_url)->exists()
+                    || Asset::where('image_url', $lot->image_url)->exists();
                 if (!$isShared) {
                     Storage::disk('local')->delete($lot->image_url);
                 }
             }
-            $barang = Barang::findOrFail($request->input('barang_id'));
-            if ($barang->image_url && Storage::disk('local')->exists($barang->image_url)) {
-                $validated['image_url'] = $barang->image_url;
+            $model = InventoryModel::findOrFail($request->input('model_id'));
+            if ($model->image_url && Storage::disk('local')->exists($model->image_url)) {
+                $validated['image_url'] = $model->image_url;
             } else {
-                return redirect()->back()->withErrors(['image_url' => 'Foto barang parent tidak ditemukan di storage.']);
+                return redirect()->back()->withErrors(['image_url' => 'Foto model parent tidak ditemukan di storage.']);
             }
         } else if ($request->hasFile('image_url')) {
             if ($lot->image_url && $lot->image_url !== 'inventory/lots/placeholder.jpg' && Storage::disk('local')->exists($lot->image_url)) {
                 $isShared = Lot::where('image_url', $lot->image_url)->where('id', '!=', $lot->id)->exists()
-                    || Barang::where('image_url', $lot->image_url)->exists()
-                    || Unit::where('image_url', $lot->image_url)->exists();
+                    || InventoryModel::where('image_url', $lot->image_url)->exists()
+                    || Asset::where('image_url', $lot->image_url)->exists();
                 if (!$isShared) {
                     Storage::disk('local')->delete($lot->image_url);
                 }
@@ -188,7 +193,6 @@ class LotController extends Controller
         }
 
         if ($isBeragam) {
-            // Prohibit changing vendor for migrated Beragam lot to prevent inconsistency with units
             unset($validated['vendor_id'], $validated['legacy_vendor_id']);
         } else {
             if ($request->has('vendor_id')) {
@@ -204,8 +208,8 @@ class LotController extends Controller
             app(InventoryLogService::class)->logLotUpdated($lot, $original, $request->user());
         }
 
-        if ($lot->barang) {
-            app(NotificationService::class)->checkAndNotifyLowStock($lot->barang);
+        if ($lot->model) {
+            app(NotificationService::class)->checkAndNotifyLowStock($lot->model);
         }
 
         return redirect()->back()->with('success', __('inventory.lot_updated'));
@@ -216,14 +220,14 @@ class LotController extends Controller
      */
     public function destroy(Request $request, Lot $lot)
     {
-        if ($lot->units()->exists()) {
+        if ($lot->assets()->exists()) {
             return redirect()->back()->with('error', __('inventory.lot_cannot_delete_has_units'));
         }
 
         if ($lot->image_url && $lot->image_url !== 'inventory/lots/placeholder.jpg' && Storage::disk('local')->exists($lot->image_url)) {
             $isShared = Lot::where('image_url', $lot->image_url)->where('id', '!=', $lot->id)->exists()
-                || Barang::where('image_url', $lot->image_url)->exists()
-                || Unit::where('image_url', $lot->image_url)->exists();
+                || InventoryModel::where('image_url', $lot->image_url)->exists()
+                || Asset::where('image_url', $lot->image_url)->exists();
             if (!$isShared) {
                 Storage::disk('local')->delete($lot->image_url);
             }
@@ -233,14 +237,14 @@ class LotController extends Controller
             app(InventoryLogService::class)->prepareAndLogLotDeleted($lot, $request->user());
         }
 
-        $barang = $lot->barang;
-        $barangKey = $barang ? ($barang->getRouteKey() ?: $barang->id) : null;
-        $barangUrl = $barangKey ? route('smart.inventory.show', $barangKey) : route('smart.inventory.index');
+        $model = $lot->model;
+        $modelKey = $model ? ($model->getRouteKey() ?: $model->id) : null;
+        $modelUrl = $modelKey ? route('smart.inventory.show', $modelKey) : route('smart.inventory.index');
 
         $lot->delete();
 
-        if ($barang) {
-            app(NotificationService::class)->checkAndNotifyLowStock($barang);
+        if ($model) {
+            app(NotificationService::class)->checkAndNotifyLowStock($model);
         }
 
         if ($request->filled('redirect_to')) {
@@ -255,7 +259,7 @@ class LotController extends Controller
         );
 
         if ($isFromLotDetail) {
-            return redirect($barangUrl)->with('success', __('inventory.lot_deleted'));
+            return redirect($modelUrl)->with('success', __('inventory.lot_deleted'));
         }
 
         return redirect()->back()->with('success', __('inventory.lot_deleted'));
@@ -267,9 +271,9 @@ class LotController extends Controller
     public function show(Request $request, Lot $lot)
     {
         $lot->load([
-            'barang.subcategory.category',
-            'barang.brand',
-            'barang.uom',
+            'model.type.category',
+            'model.brand',
+            'model.uom',
             'organizer',
             'vendor',
             'legacyVendor',
@@ -277,11 +281,14 @@ class LotController extends Controller
             'project',
         ]);
 
+        $nextAssetNumber = app(AssetNumberService::class)->generateAssetNumber($lot);
+
         if ($request->wantsJson() && !$request->headers->has('X-Inertia')) {
             return response()->json([
                 'id' => $lot->id,
                 'number' => $lot->number,
-                'barang_id' => $lot->barang_id,
+                'model_id' => $lot->model_id,
+                'barang_id' => $lot->model_id,
                 'po_number' => $lot->po_number,
                 'date_of_receipt' => $lot->date_of_receipt ? $lot->date_of_receipt->format('Y-m-d') : null,
                 'organizer' => $lot->organizer->name ?? '-',
@@ -302,41 +309,55 @@ class LotController extends Controller
                 'updated_at' => $lot->updated_at ? $lot->updated_at->format('d-m-Y H:i') : '-',
                 'age' => $lot->age,
                 
-                // Parent barang info
-                'barang_code' => $lot->barang->number ?? '-',
-                'barang_brand' => $lot->barang->brand->name ?? '-',
-                'barang_nama' => $lot->barang->name ?? '-',
-                'barang_specification' => $lot->barang->specification ?? '-',
-                'barang_category' => $lot->barang->subcategory->category->name ?? '-',
-                'barang_category_code' => $lot->barang->subcategory->category->code ?? null,
-                'barang_subcategory' => $lot->barang->subcategory->name ?? '-',
-                'barang_subcategory_code' => $lot->barang->subcategory->code ?? '-',
-                'barang_uom' => $lot->barang->uom->name ?? '-',
-                'barang_min_stock_threshold' => $lot->barang->min_stock_threshold ?? null,
-                'next_asset_code' => app(UnitNumberService::class)->generateUnitNumber($lot),
+                // Parent model info
+                'model_code' => $lot->model->number ?? '-',
+                'model_number' => $lot->model->number ?? '-',
+                'model_brand' => $lot->model->brand->name ?? '-',
+                'model_nama' => $lot->model->name ?? '-',
+                'model_name' => $lot->model->name ?? '-',
+                'model_specification' => $lot->model->specification ?? '-',
+                'model_category' => $lot->model->type->category->name ?? '-',
+                'model_category_code' => $lot->model->type->category->code ?? null,
+                'model_type' => $lot->model->type->name ?? '-',
+                'type_name' => $lot->model->type->name ?? '-',
+                'model_uom' => $lot->model->uom->name ?? '-',
+                'model_min_stock_threshold' => $lot->model->min_stock_threshold ?? null,
+
+                // Legacy keys
+                'barang_code' => $lot->model->number ?? '-',
+                'barang_brand' => $lot->model->brand->name ?? '-',
+                'barang_nama' => $lot->model->name ?? '-',
+                'barang_specification' => $lot->model->specification ?? '-',
+                'barang_category' => $lot->model->type->category->name ?? '-',
+                'barang_category_code' => $lot->model->type->category->code ?? null,
+                'barang_subcategory' => $lot->model->type->name ?? '-',
+                'barang_uom' => $lot->model->uom->name ?? '-',
+                'barang_min_stock_threshold' => $lot->model->min_stock_threshold ?? null,
+                'next_asset_code' => $nextAssetNumber,
+                'next_asset_number' => $nextAssetNumber,
             ]);
         }
 
-        // Retrieve unit (asset) items associated with this LOT
-        $units = Unit::with([
+        // Retrieve asset items associated with this LOT
+        $assets = Asset::with([
             'location.parent', 'statusApprovals', 'project',
-            'lot.barang.subcategory.category', 'lot.barang.brand', 'lot.barang.uom',
+            'lot.model.type.category', 'lot.model.brand', 'lot.model.uom',
             'lot.organizer', 'lot.vendor', 'lot.legacyVendor', 'vendor', 'lifecycles.actor'
         ])
         ->where('lot_id', $lot->id)
         ->orderBy('created_at', 'desc')
         ->get()
-        ->map(function ($unit) {
-            $pendingApproval = $unit->statusApprovals->firstWhere('decision', 'pending');
-            $approvedApproval = $unit->status === 'Tidak Aktif' 
-                ? $unit->statusApprovals->where('decision', 'approved')->sortByDesc('updated_at')->first() 
+        ->map(function ($asset) {
+            $pendingApproval = $asset->statusApprovals->firstWhere('decision', 'pending');
+            $approvedApproval = $asset->status === 'Tidak Aktif' 
+                ? $asset->statusApprovals->where('decision', 'approved')->sortByDesc('updated_at')->first() 
                 : null;
-            $barang = $unit->lot->barang ?? null;
+            $model = $asset->lot->model ?? null;
             return [
-                'id' => $unit->id,
-                'number' => $unit->number,
-                'legacy_number' => $unit->legacy_number,
-                'status' => $unit->status,
+                'id' => $asset->id,
+                'number' => $asset->number,
+                'legacy_number' => $asset->legacy_number,
+                'status' => $asset->status,
                 'proposed_status' => $pendingApproval 
                     ? $pendingApproval->proposed_condition 
                     : ($approvedApproval ? $approvedApproval->proposed_condition : null),
@@ -349,60 +370,74 @@ class LotController extends Controller
                 'lost_doc_url' => $pendingApproval 
                     ? $pendingApproval->lost_doc_url 
                     : ($approvedApproval ? $approvedApproval->lost_doc_url : null),
-                'condition' => $unit->condition,
-                'type' => $unit->type,
-                'classification' => $unit->classification,
-                'specification' => $unit->specification,
-                'price' => $unit->price,
-                'image_url' => $unit->image_url,
-                'vehicle_registration' => $unit->vehicle_registration,
-                'burden' => $unit->burden,
-                'project_id' => $unit->project_id,
-                'project_name' => $unit->project ? $unit->project->project_name : null,
-                'project_no' => $unit->project ? $unit->project->no_project : null,
-                'created_at' => $unit->created_at?->toIso8601String(),
-                'updated_at' => $unit->updated_at ? $unit->updated_at->format('d-m-Y H:i') : '-',
+                'condition' => $asset->condition,
+                'type' => $asset->borrowing_type,
+                'borrowing_type' => $asset->borrowing_type,
+                'classification' => $asset->classification,
+                'specification' => $asset->specification,
+                'price' => $asset->price,
+                'image_url' => $asset->image_url,
+                'vehicle_registration' => $asset->vehicle_registration,
+                'burden' => $asset->burden,
+                'project_id' => $asset->project_id,
+                'project_name' => $asset->project ? $asset->project->project_name : null,
+                'project_no' => $asset->project ? $asset->project->no_project : null,
+                'created_at' => $asset->created_at?->toIso8601String(),
+                'updated_at' => $asset->updated_at ? $asset->updated_at->format('d-m-Y H:i') : '-',
                 
-                // Unit-specific legacy vendor
-                'unit_vendor' => $unit->vendor?->name,
-                'unit_vendor_id' => $unit->vendor_id,
+                // Asset-specific legacy vendor
+                'asset_vendor' => $asset->vendor?->name,
+                'asset_vendor_id' => $asset->vendor_id,
+                'unit_vendor' => $asset->vendor?->name,
+                'unit_vendor_id' => $asset->vendor_id,
 
                 // Location info
-                'location' => $unit->location ? $unit->location->full_name : '-',
-                'location_id' => $unit->location_id,
+                'location' => $asset->location ? $asset->location->full_name : '-',
+                'location_id' => $asset->location_id,
 
                 // Parent lot info
-                'lot_id' => $unit->lot_id,
-                'lot_number' => $unit->lot->number ?? '-',
-                'lot_imageUrl' => $unit->lot->image_url ?? null,
-                'lot_unitPrice' => $unit->lot->unit_price ?? null,
-                'organizer' => $unit->lot->organizer->name ?? '-',
-                'organizer_id' => $unit->lot->organizer_id ?? null,
-                'vendor' => $unit->lot?->vendor_name ?? '-',
-                'vendor_id' => $unit->lot->vendor_id ?? null,
-                'legacy_vendor_id' => $unit->lot->legacy_vendor_id ?? null,
-                'lot_organizer' => $unit->lot->organizer->name ?? '-',
-                'lot_vendor' => $unit->lot?->vendor_name ?? '-',
-                'lot_vendor_id' => $unit->lot->vendor_id ?? null,
-                'lot_po_number' => $unit->lot->po_number ?? '-',
-                'lot_date_of_receipt' => ($unit->lot && $unit->lot->date_of_receipt) ? $unit->lot->date_of_receipt->format('Y-m-d') : null,
-                'lot_age' => $unit->lot->age ?? null,
+                'lot_id' => $asset->lot_id,
+                'lot_number' => $asset->lot->number ?? '-',
+                'lot_imageUrl' => $asset->lot->image_url ?? null,
+                'lot_unitPrice' => $asset->lot->unit_price ?? null,
+                'organizer' => $asset->lot->organizer->name ?? '-',
+                'organizer_id' => $asset->lot->organizer_id ?? null,
+                'vendor' => $asset->lot?->vendor_name ?? '-',
+                'vendor_id' => $asset->lot->vendor_id ?? null,
+                'legacy_vendor_id' => $asset->lot->legacy_vendor_id ?? null,
+                'lot_organizer' => $asset->lot->organizer->name ?? '-',
+                'lot_vendor' => $asset->lot?->vendor_name ?? '-',
+                'lot_vendor_id' => $asset->lot->vendor_id ?? null,
+                'lot_po_number' => $asset->lot->po_number ?? '-',
+                'lot_date_of_receipt' => ($asset->lot && $asset->lot->date_of_receipt) ? $asset->lot->date_of_receipt->format('Y-m-d') : null,
+                'lot_age' => $asset->lot->age ?? null,
 
-                // Parent barang info
-                'barang_id' => $barang->id ?? null,
-                'barang_code' => $barang->number ?? '-',
-                'barang_nama' => $barang->name ?? '-',
-                'barang_brand' => $barang->brand->name ?? '-',
-                'barang_specification' => $barang->specification ?? '-',
-                'barang_category' => $barang->subcategory->category->name ?? '-',
-                'barang_subcategory' => $barang->subcategory->name ?? '-',
-                'barang_uom' => $barang->uom->name ?? '-',
+                // Parent model info
+                'model_id' => $model->id ?? null,
+                'model_code' => $model->number ?? '-',
+                'model_number' => $model->number ?? '-',
+                'model_name' => $model->name ?? '-',
+                'model_brand' => $model->brand->name ?? '-',
+                'model_specification' => $model->specification ?? '-',
+                'model_category' => $model->type->category->name ?? '-',
+                'model_type' => $model->type->name ?? '-',
+                'model_uom' => $model->uom->name ?? '-',
+
+                // Backwards compat with legacy keys
+                'barang_id' => $model->id ?? null,
+                'barang_code' => $model->number ?? '-',
+                'barang_nama' => $model->name ?? '-',
+                'barang_brand' => $model->brand->name ?? '-',
+                'barang_specification' => $model->specification ?? '-',
+                'barang_category' => $model->type->category->name ?? '-',
+                'barang_subcategory' => $model->type->name ?? '-',
+                'barang_uom' => $model->uom->name ?? '-',
 
                 // Active borrowing info
-                'active_borrowing' => $unit->active_borrowing,
+                'active_borrowing' => $asset->active_borrowing,
 
                 // Audit trails (lifecycles)
-                'lifecycles' => $unit->lifecycles->map(function ($log) {
+                'lifecycles' => $asset->lifecycles->map(function ($log) {
                     return [
                         'waktu' => $log->start_date ? $log->start_date->format('d-m-Y H:i:s') : '-',
                         'status' => $log->status,
@@ -418,8 +453,6 @@ class LotController extends Controller
         $brands = Brand::orderBy('name')->get();
         $uoms = Uom::orderBy('name')->get();
         $organizers = Organizer::orderBy('name')->get();
-        // Target DB: eproc (vendors table).
-        // Using local vendors directory (falls back to eproc when connection configured)
         $vendors = Vendor::orderBy('name')->get(['id', 'name']);
         $locations = Location::with('parent')->active()->orderBy('name')->get();
         $projects = TbProject::orderBy('project_name')->get();
@@ -436,7 +469,8 @@ class LotController extends Controller
             'lot' => [
                 'id' => $lot->id,
                 'number' => $lot->number,
-                'barang_id' => $lot->barang_id,
+                'model_id' => $lot->model_id,
+                'barang_id' => $lot->model_id,
                 'po_number' => $lot->po_number,
                 'date_of_receipt' => $lot->date_of_receipt ? $lot->date_of_receipt->format('Y-m-d') : null,
                 'organizer' => $lot->organizer->name ?? '-',
@@ -457,18 +491,29 @@ class LotController extends Controller
                 'updated_at' => $lot->updated_at ? $lot->updated_at->format('d-m-Y H:i') : '-',
                 'age' => $lot->age,
                 
-                // Parent barang info
-                'barang_code' => $lot->barang->number ?? '-',
-                'barang_brand' => $lot->barang->brand->name ?? '-',
-                'barang_nama' => $lot->barang->name ?? '-',
-                'barang_specification' => $lot->barang->specification ?? '-',
-                'barang_category' => $lot->barang->subcategory->category->name ?? '-',
-                'barang_subcategory' => $lot->barang->subcategory->name ?? '-',
-                'barang_subcategory_code' => $lot->barang->subcategory->code ?? '-',
-                'barang_uom' => $lot->barang->uom->name ?? '-',
-                'next_asset_code' => app(UnitNumberService::class)->generateUnitNumber($lot),
+                // Parent model info
+                'model_code' => $lot->model->number ?? '-',
+                'model_number' => $lot->model->number ?? '-',
+                'model_brand' => $lot->model->brand->name ?? '-',
+                'model_name' => $lot->model->name ?? '-',
+                'model_specification' => $lot->model->specification ?? '-',
+                'model_category' => $lot->model->type->category->name ?? '-',
+                'model_type' => $lot->model->type->name ?? '-',
+                'model_uom' => $lot->model->uom->name ?? '-',
+
+                // Backwards compat with legacy keys
+                'barang_code' => $lot->model->number ?? '-',
+                'barang_brand' => $lot->model->brand->name ?? '-',
+                'barang_nama' => $lot->model->name ?? '-',
+                'barang_specification' => $lot->model->specification ?? '-',
+                'barang_category' => $lot->model->type->category->name ?? '-',
+                'barang_subcategory' => $lot->model->type->name ?? '-',
+                'barang_uom' => $lot->model->uom->name ?? '-',
+                'next_asset_code' => $nextAssetNumber,
+                'next_asset_number' => $nextAssetNumber,
             ],
-            'units' => $units,
+            'assets' => $assets,
+            'units' => $assets,
             'brands' => $brands,
             'uoms' => $uoms,
             'organizers' => $organizers,

@@ -54,7 +54,7 @@ class UnitQrCodeTest extends TestCase
     {
         $unit = $this->createUnit();
 
-        $response = $this->get(route('smart.inventory.units.qr-code', $unit));
+        $response = $this->get(route('smart.inventory.assets.qr-code', $unit));
 
         $response->assertRedirectContains(route('login'));
     }
@@ -64,7 +64,7 @@ class UnitQrCodeTest extends TestCase
         $user = $this->createAdminUser();
         $unit = $this->createUnit();
 
-        $response = $this->actingAs($user)->get(route('smart.inventory.units.qr-code', $unit));
+        $response = $this->actingAs($user)->get(route('smart.inventory.assets.qr-code', $unit));
 
         $response->assertStatus(200);
         $response->assertHeader('Content-Type', 'image/png');

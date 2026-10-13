@@ -81,7 +81,7 @@ class UnitNumberSerializationTest extends TestCase
         $lotFur = $this->createLot($this->organizerCfs, 'FUR-KK', '2026-01-15');
 
         // Store first unit for CFS (FUR-KK)
-        $response1 = $this->actingAs($this->user)->post(route('smart.inventory.units.store'), [
+        $response1 = $this->actingAs($this->user)->post(route('smart.inventory.assets.store'), [
             'lot_id' => $lotFur->id,
             'location_id' => $this->location->id,
             'status' => 'Tersedia',
@@ -102,7 +102,7 @@ class UnitNumberSerializationTest extends TestCase
         // Store second unit for CFS with a different subcategory (COMP-NB) and year 2027
         $lotComp = $this->createLot($this->organizerCfs, 'COMP-NB', '2027-02-20');
 
-        $response2 = $this->actingAs($this->user)->post(route('smart.inventory.units.store'), [
+        $response2 = $this->actingAs($this->user)->post(route('smart.inventory.assets.store'), [
             'lot_id' => $lotComp->id,
             'location_id' => $this->location->id,
             'status' => 'Tersedia',
@@ -140,7 +140,7 @@ class UnitNumberSerializationTest extends TestCase
         ]);
 
         // Creating a unit for ICT should start at 00001 despite CFS having 00005
-        $response = $this->actingAs($this->user)->post(route('smart.inventory.units.store'), [
+        $response = $this->actingAs($this->user)->post(route('smart.inventory.assets.store'), [
             'lot_id' => $lotIct->id,
             'location_id' => $this->location->id,
             'status' => 'Tersedia',
@@ -175,7 +175,7 @@ class UnitNumberSerializationTest extends TestCase
             'image_url' => 'units/sample.jpg',
         ]);
 
-        $response = $this->actingAs($this->user)->post(route('smart.inventory.units.bulk-store'), [
+        $response = $this->actingAs($this->user)->post(route('smart.inventory.assets.bulk-store'), [
             'number' => 'preview-placeholder',
             'lot_id' => $lot->id,
             'location_id' => $this->location->id,

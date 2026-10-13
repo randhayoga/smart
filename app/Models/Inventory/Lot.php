@@ -9,23 +9,24 @@ use App\Models\TbProject;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Model as EloquentModel;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Lot (Inventory Batch) model representing received batches, procurement info, and stock counts.
  */
-class Lot extends Model
+class Lot extends EloquentModel
 {
     use HasFactory;
 
-    protected $with = ['barang'];
+    protected $with = ['model'];
 
     protected $appends = ['age'];
 
     protected $fillable = [
         'number',
+        'model_id',
         'barang_id',
         'organizer_id',
         'vendor_id',
@@ -51,11 +52,29 @@ class Lot extends Model
     ];
 
     /**
-     * The catalog item associated with this lot.
+     * The catalog model associated with this lot.
+     */
+    public function model(): BelongsTo
+    {
+        return $this->belongsTo(Model::class, 'model_id');
+    }
+
+    /**
+     * Backward-compatibility relation for barang.
      */
     public function barang(): BelongsTo
     {
-        return $this->belongsTo(Barang::class);
+        return $this->belongsTo(Model::class, 'model_id');
+    }
+
+    public function setBarangIdAttribute($value): void
+    {
+        $this->attributes['model_id'] = $value;
+    }
+
+    public function getBarangIdAttribute()
+    {
+        return $this->attributes['model_id'] ?? null;
     }
 
     /**
@@ -110,11 +129,19 @@ class Lot extends Model
     }
 
     /**
-     * Serialized asset units created from this lot.
+     * Serialized assets created from this lot.
+     */
+    public function assets(): HasMany
+    {
+        return $this->hasMany(Asset::class);
+    }
+
+    /**
+     * Backward-compatibility relation for units.
      */
     public function units(): HasMany
     {
-        return $this->hasMany(Unit::class);
+        return $this->hasMany(Asset::class);
     }
 
     /**

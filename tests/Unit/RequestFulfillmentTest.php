@@ -3,11 +3,11 @@
 namespace Tests\Unit;
 
 use App\Models\User;
-use App\Models\Inventory\Barang;
+use App\Models\Inventory\Model;
 use App\Models\Inventory\Lot;
-use App\Models\Inventory\Unit;
+use App\Models\Inventory\Asset;
 use App\Models\Master\Category;
-use App\Models\Master\Subcategory;
+use App\Models\Master\Type;
 use App\Models\Request\Request as SmartRequest;
 use App\Models\Request\RequestFulfillment;
 use App\Models\Request\RequestHandover;
@@ -24,10 +24,10 @@ class RequestFulfillmentTest extends TestCase
     {
         $user = User::factory()->create();
         $category = Category::factory()->create();
-        $subcategory = Subcategory::factory()->create(['category_id' => $category->id, 'is_consumable' => false]);
-        $barang = Barang::factory()->create(['subcategory_id' => $subcategory->id]);
-        $lot = Lot::factory()->create(['barang_id' => $barang->id]);
-        $unit = Unit::factory()->create(['lot_id' => $lot->id]);
+        $type = Type::factory()->create(['category_id' => $category->id, 'is_consumable' => false]);
+        $model = Model::factory()->create(['type_id' => $type->id]);
+        $lot = Lot::factory()->create(['model_id' => $model->id]);
+        $asset = Asset::factory()->create(['lot_id' => $lot->id]);
 
         $request = SmartRequest::create([
             'request_number' => '0926-0001',
@@ -40,8 +40,8 @@ class RequestFulfillmentTest extends TestCase
 
         $requestItem = RequestItem::create([
             'request_id' => $request->id,
-            'subcategory_id' => $subcategory->id,
-            'barang_id' => $barang->id,
+            'type_id' => $type->id,
+            'model_id' => $model->id,
             'quantity_requested' => 1,
             'status' => 'fulfilled',
         ]);
@@ -64,7 +64,7 @@ class RequestFulfillmentTest extends TestCase
 
         $fulfillment = RequestFulfillment::create([
             'request_item_id' => $requestItem->id,
-            'unit_id' => $unit->id,
+            'asset_id' => $asset->id,
             'lot_id' => $lot->id,
             'handover_id' => $handover->id,
             'return_id' => $return->id,
@@ -75,7 +75,7 @@ class RequestFulfillmentTest extends TestCase
 
         $this->assertDatabaseHas('request_fulfillments', [
             'id' => $fulfillment->id,
-            'unit_id' => $unit->id,
+            'asset_id' => $asset->id,
             'lot_id' => $lot->id,
             'handover_id' => $handover->id,
             'return_id' => $return->id,
@@ -85,8 +85,8 @@ class RequestFulfillmentTest extends TestCase
         $this->assertInstanceOf(RequestItem::class, $fulfillment->requestItem);
         $this->assertEquals($requestItem->id, $fulfillment->requestItem->id);
 
-        $this->assertInstanceOf(Unit::class, $fulfillment->unit);
-        $this->assertEquals($unit->id, $fulfillment->unit->id);
+        $this->assertInstanceOf(Asset::class, $fulfillment->asset);
+        $this->assertEquals($asset->id, $fulfillment->asset->id);
 
         $this->assertInstanceOf(Lot::class, $fulfillment->lot);
         $this->assertEquals($lot->id, $fulfillment->lot->id);
@@ -99,7 +99,7 @@ class RequestFulfillmentTest extends TestCase
 
         // Inverse Relationships
         $this->assertTrue($requestItem->fulfillments->contains($fulfillment));
-        $this->assertTrue($unit->fulfillments->contains($fulfillment));
+        $this->assertTrue($asset->fulfillments->contains($fulfillment));
         $this->assertTrue($lot->fulfillments->contains($fulfillment));
         $this->assertTrue($handover->fulfillments->contains($fulfillment));
         $this->assertTrue($return->fulfillments->contains($fulfillment));

@@ -41,9 +41,9 @@ class DatabaseSeeder extends Seeder
         //     UserSeeder::class,
         //     TbProjectSeeder::class,
         //     TbAssignProjectSeeder::class,
-        //     BarangSeeder::class,
+        //     ModelSeeder::class,
         //     LotSeeder::class,
-        //     UnitSeeder::class,
+        //     AssetSeeder::class,
         // ]);
     }
 }

@@ -4,12 +4,12 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use App\Models\Inventory\UnitLifecycle;
+use App\Models\Inventory\AssetLifecycle;
 
 /**
  * Manager Asset Activation Approval Resource transforming asset unit registration approval requests with lifecycle trails.
  *
- * @mixin \App\Models\Inventory\UnitActivationApproval
+ * @mixin \App\Models\Inventory\AssetActivationApproval
  */
 class ManagerAssetActivationApprovalResource extends JsonResource
 {
@@ -20,13 +20,15 @@ class ManagerAssetActivationApprovalResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $unit = $this->unit;
-        $lot = $unit->lot ?? null;
-        $barang = $lot->barang ?? null;
+        $asset = $this->asset ?? $this->unit;
+        $lot = $asset?->lot;
+        $model = $lot?->model ?? $lot?->barang;
+
+        $assetId = $this->asset_id ?? $this->unit_id;
 
         // Fetch lifecycles for audit trail
-        $lifecycles = UnitLifecycle::with(['actor'])
-            ->where('unit_id', $this->unit_id)
+        $lifecycles = AssetLifecycle::with(['actor'])
+            ->where('asset_id', $assetId)
             ->orderBy('id', 'desc')
             ->get()
             ->map(function ($lc) {
@@ -55,42 +57,78 @@ class ManagerAssetActivationApprovalResource extends JsonResource
                 ];
             });
 
+        $catName = $model?->type?->category?->name ?? $model?->subcategory?->category?->name ?? '-';
+        $typeName = $model?->type?->name ?? $model?->subcategory?->name ?? '-';
+
         return [
             'id' => $this->id,
-            'unit_id' => $this->unit_id,
-            'asset_code' => $unit->number ?? '-',
-            'category' => $barang->subcategory->category->name ?? '-',
-            'subcategory' => $barang->subcategory->name ?? '-',
-            'brand' => $barang->brand->name ?? '-',
-            'nama' => $barang->name ?? '-',
-            'specification' => $barang->specification ?? '-',
+            'asset_id' => $assetId,
+            'unit_id' => $assetId,
+            'asset_code' => $asset->number ?? '-',
+            'asset_number' => $asset->number ?? '-',
+            'category' => $catName,
+            'type' => $typeName,
+            'subcategory' => $typeName,
+            'brand' => $model?->brand?->name ?? '-',
+            'name' => $model?->name ?? '-',
+            'nama' => $model?->name ?? '-',
+            'specification' => $model?->specification ?? '-',
             'decision' => $this->decision,
             'note' => $this->note,
             'requested_by' => $this->requester->name ?? '-',
             'requested_at' => $this->requested_at ? $this->requested_at->format('d-m-Y H:i') : '-',
             'decided_at' => $this->decided_at ? $this->decided_at->format('d-m-Y H:i') : null,
             'approver_name' => $this->approver->name ?? null,
-            'unit_details' => [
-                'id' => $unit->id,
-                'number' => $unit->number ?? '-',
-                'legacy_number' => $unit->legacy_number ?? null,
-                'status' => $unit->status ?? '-',
-                'condition' => $unit->condition ?? '-',
-                'price' => $unit->price ? number_format($unit->price, 0, ',', '.') : '-',
-                'image_url' => $unit->image_url ? '/media/' . $unit->image_url : ($lot->image_url ? '/media/' . $lot->image_url : null),
-                'vehicle_registration' => $unit->vehicle_registration ?? '-',
-                'location' => $unit->location ? $unit->location->full_name : '-',
+            'asset_details' => [
+                'id' => $asset?->id,
+                'number' => $asset?->number ?? '-',
+                'legacy_number' => $asset?->legacy_number ?? null,
+                'status' => $asset?->status ?? '-',
+                'condition' => $asset?->condition ?? '-',
+                'price' => $asset?->price ? number_format($asset->price, 0, ',', '.') : '-',
+                'image_url' => $asset?->image_url ? '/media/' . $asset->image_url : ($lot?->image_url ? '/media/' . $lot->image_url : null),
+                'vehicle_registration' => $asset?->vehicle_registration ?? '-',
+                'location' => $asset?->location ? $asset->location->full_name : '-',
 
-                'lot_code' => $lot->number ?? '-',
-                'organizer' => $lot->organizer->name ?? '-',
-                'date_of_receipt' => $lot->date_of_receipt ? $lot->date_of_receipt->format('d-m-Y') : '-',
+                'lot_number' => $lot?->number ?? '-',
+                'lot_code' => $lot?->number ?? '-',
+                'organizer' => $lot?->organizer->name ?? '-',
+                'date_of_receipt' => $lot?->date_of_receipt ? $lot->date_of_receipt->format('d-m-Y') : '-',
                 'age' => $lot ? $lot->age : null,
                 'vendor' => $lot?->vendor_name ?? '-',
-                'po_number' => $lot->po_number ?? '-',
-                'barang_code' => $barang->number ?? '-',
-                'barang_nama' => $barang->name ?? '-',
-                'barang_spec' => $barang->specification ?? '-',
-                'barang_unit' => $barang->uom->name ?? 'pcs',
+                'po_number' => $lot?->po_number ?? '-',
+                'model_code' => $model?->number ?? '-',
+                'model_name' => $model?->name ?? '-',
+                'model_spec' => $model?->specification ?? '-',
+                'model_unit' => $model?->uom?->name ?? 'pcs',
+                'barang_code' => $model?->number ?? '-',
+                'barang_nama' => $model?->name ?? '-',
+                'barang_spec' => $model?->specification ?? '-',
+                'barang_unit' => $model?->uom?->name ?? 'pcs',
+
+                'lifecycles' => $lifecycles,
+            ],
+            'unit_details' => [
+                'id' => $asset?->id,
+                'number' => $asset?->number ?? '-',
+                'legacy_number' => $asset?->legacy_number ?? null,
+                'status' => $asset?->status ?? '-',
+                'condition' => $asset?->condition ?? '-',
+                'price' => $asset?->price ? number_format($asset->price, 0, ',', '.') : '-',
+                'image_url' => $asset?->image_url ? '/media/' . $asset->image_url : ($lot?->image_url ? '/media/' . $lot->image_url : null),
+                'vehicle_registration' => $asset?->vehicle_registration ?? '-',
+                'location' => $asset?->location ? $asset->location->full_name : '-',
+
+                'lot_code' => $lot?->number ?? '-',
+                'organizer' => $lot?->organizer->name ?? '-',
+                'date_of_receipt' => $lot?->date_of_receipt ? $lot->date_of_receipt->format('d-m-Y') : '-',
+                'age' => $lot ? $lot->age : null,
+                'vendor' => $lot?->vendor_name ?? '-',
+                'po_number' => $lot?->po_number ?? '-',
+                'barang_code' => $model?->number ?? '-',
+                'barang_nama' => $model?->name ?? '-',
+                'barang_spec' => $model?->specification ?? '-',
+                'barang_unit' => $model?->uom?->name ?? 'pcs',
 
                 'lifecycles' => $lifecycles,
             ],

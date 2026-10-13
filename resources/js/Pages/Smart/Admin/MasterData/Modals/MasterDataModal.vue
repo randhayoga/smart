@@ -132,7 +132,7 @@ const modalMaxWidth = computed(() => {
 
 const storeRouteMap: Record<MasterDataTabKey, string> = {
   categories:    'smart.master.categories.store',
-  subcategories: 'smart.master.subcategories.store',
+  subcategories: 'smart.master.types.store',
   uoms:          'smart.master.uoms.store',
   brands:        'smart.master.brands.store',
   organizers:    'smart.master.organizers.store',
@@ -142,7 +142,7 @@ const storeRouteMap: Record<MasterDataTabKey, string> = {
 
 const updateRouteMap: Record<MasterDataTabKey, string> = {
   categories:    'smart.master.categories.update',
-  subcategories: 'smart.master.subcategories.update',
+  subcategories: 'smart.master.types.update',
   uoms:          'smart.master.uoms.update',
   brands:        'smart.master.brands.update',
   organizers:    'smart.master.organizers.update',

@@ -199,7 +199,7 @@ const handleSubmit = () => {
     specification: isCompCategory.value ? null : (data.specification || null),
     min_stock_threshold: isConsumableSelected.value && data.min_stock_threshold !== '' && data.min_stock_threshold !== null ? Number(data.min_stock_threshold) : null,
     image_url: data.photo,
-  })).post('/smart/inventory/barangs', {
+  })).post('/smart/inventory/models', {
     onSuccess: () => {
       closeModal();
       emit('success');

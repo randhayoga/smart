@@ -132,7 +132,7 @@ class MasterDataManagementTest extends TestCase
         $user = User::factory()->create();
         $category = Category::factory()->create(['code' => 'ATKS']);
 
-        $response = $this->actingAs($user)->post(route('smart.master.subcategories.store'), [
+        $response = $this->actingAs($user)->post(route('smart.master.types.store'), [
             'category_id' => $category->id,
             'code' => 'ATKS-HVSS',
             'name' => 'Kertas HVS',
@@ -140,7 +140,7 @@ class MasterDataManagementTest extends TestCase
         ]);
 
         $response->assertRedirect();
-        $this->assertDatabaseHas('subcategories', [
+        $this->assertDatabaseHas('types', [
             'category_id' => $category->id,
             'code' => 'ATKS-HVSS',
             'name' => 'Kertas HVS',
@@ -153,13 +153,13 @@ class MasterDataManagementTest extends TestCase
         $user = User::factory()->create();
         $subcategory = Subcategory::factory()->create(['is_consumable' => true]);
 
-        $response = $this->actingAs($user)->put(route('smart.master.subcategories.update', $subcategory), [
+        $response = $this->actingAs($user)->put(route('smart.master.types.update', $subcategory), [
             'name' => 'Subcategory Diperbarui',
             'is_consumable' => '0',
         ]);
 
         $response->assertRedirect();
-        $this->assertDatabaseHas('subcategories', [
+        $this->assertDatabaseHas('types', [
             'id' => $subcategory->id,
             'name' => 'Subcategory Diperbarui',
             'is_consumable' => false,
@@ -188,7 +188,7 @@ class MasterDataManagementTest extends TestCase
         $response = $this->actingAs($user)->delete(route('smart.master.categories.destroy', $category));
 
         $response->assertRedirect();
-        $response->assertSessionHas('error', 'Kategori tidak dapat dihapus karena masih memiliki subkategori.');
+        $response->assertSessionHas('error', __('master.categories.cannot_delete_has_types'));
         $this->assertDatabaseHas('categories', ['id' => $category->id]);
     }
 
@@ -366,7 +366,7 @@ class MasterDataManagementTest extends TestCase
         $response = $this->actingAs($user)->delete(route('smart.master.organizers.destroy', $organizer));
 
         $response->assertRedirect();
-        $response->assertSessionHas('error', 'Organizer tidak dapat dihapus karena sedang digunakan oleh data lot barang.');
+        $response->assertSessionHas('error', __('master.organizers.cannot_delete_used'));
         $this->assertDatabaseHas('organizers', ['id' => $organizer->id]);
     }
 
@@ -415,7 +415,7 @@ class MasterDataManagementTest extends TestCase
         $response = $this->actingAs($user)->delete(route('smart.master.uoms.destroy', $uom));
 
         $response->assertRedirect();
-        $response->assertSessionHas('error', 'Satuan tidak dapat dihapus karena sedang digunakan oleh data barang.');
+        $response->assertSessionHas('error', __('master.uoms.cannot_delete_used'));
         $this->assertDatabaseHas('uoms', ['id' => $uom->id]);
     }
 }

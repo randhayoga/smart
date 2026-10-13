@@ -231,7 +231,7 @@ const handleSaveBorrow = () => {
 
   isBorrowSubmitting.value = true;
   router.post(
-    `/smart/inventory/units/${props.asset.id}/borrow`,
+    `/smart/inventory/assets/${props.asset.id}/borrow`,
     {
       user_id: borrowUserId.value,
       start_date: borrowStartDate.value,
@@ -269,7 +269,7 @@ const handleFinishBorrow = () => {
   if (!props.asset) return;
   isFinishSubmitting.value = true;
   router.post(
-    `/smart/inventory/units/${props.asset.id}/finish-borrow`,
+    `/smart/inventory/assets/${props.asset.id}/finish-borrow`,
     {},
     {
       preserveScroll: true,

@@ -15,7 +15,7 @@ import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal.vue';
 import DeleteErrorModal from '@/Components/DeleteErrorModal.vue';
 import EditLotModal from './Modals/EditLotModal.vue';
 import DetailLOTNCTab from './Tabs/DetailLOTNCTab.vue';
-import DaftarAsetTab from './Tabs/DaftarAsetTab.vue';
+import DaftarTidakHabisPakaiTab from './Tabs/DaftarTidakHabisPakaiTab.vue';
 
 interface Props {
   lot: {
@@ -86,7 +86,7 @@ const { t, locale } = useI18n();
 
 const tabs = computed(() => [
   { id: 'Detail', label: t('inventory.lotDetail') },
-  { id: 'Daftar Aset', label: t('inventory.assetList') }
+  { id: 'Daftar Tidak Habis Pakai', label: t('inventory.nonConsumableList') }
 ]);
 const activeTab = ref('Detail');
 
@@ -259,8 +259,8 @@ onUnmounted(() => {
         :projects="props.projects"
       />
 
-      <DaftarAsetTab
-        v-else-if="activeTab === 'Daftar Aset'"
+      <DaftarTidakHabisPakaiTab
+        v-else-if="activeTab === 'Daftar Tidak Habis Pakai'"
         :units="props.units"
         :locations="props.locations"
         :organizers="props.organizers"

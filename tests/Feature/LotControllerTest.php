@@ -53,7 +53,7 @@ class LotControllerTest extends TestCase
         
         $this->assertDatabaseHas('lots', [
             'number' => 'LOT-2026-ATK-KER-0001-0001',
-            'barang_id' => $barang->id,
+            'model_id' => $barang->id,
             'organizer_id' => $organizer->id,
             'vendor_id' => $vendor->id,
             'location_id' => $location->id,
@@ -68,12 +68,12 @@ class LotControllerTest extends TestCase
 
         $this->assertDatabaseHas('inventory_logs', [
             'lot_id' => $lot->id,
-            'barang_id' => $barang->id,
+            'model_id' => $barang->id,
             'user_id' => $user->id,
             'action_type' => 'stock_in',
         ]);
 
-        $bulkResponse = $this->actingAs($user)->post(route('smart.inventory.units.bulk-store'), [
+        $bulkResponse = $this->actingAs($user)->post(route('smart.inventory.assets.bulk-store'), [
             'number' => 'LOT-2026-ATK-KER-0001-0001-U01',
             'lot_id' => $lot->id,
             'location_id' => $location->id,
@@ -185,7 +185,7 @@ class LotControllerTest extends TestCase
 
         $this->assertDatabaseHas('lots', [
             'number' => 'LOT-2026-ATK-KER-0002-0001',
-            'barang_id' => $barang->id,
+            'model_id' => $barang->id,
             'po_number' => null,
         ]);
     }
@@ -227,7 +227,7 @@ class LotControllerTest extends TestCase
         Storage::disk('local')->assertMissing($imagePath);
 
         $this->assertDatabaseHas('inventory_logs', [
-            'barang_id' => $lot->barang_id,
+            'model_id' => $lot->model_id,
             'user_id' => $user->id,
             'action_type' => 'delete',
         ]);
@@ -289,7 +289,7 @@ class LotControllerTest extends TestCase
         $response = $this->actingAs($user)->delete(route('smart.inventory.lots.destroy', $lot));
 
         $response->assertRedirect();
-        $response->assertSessionHas('error', 'LOT tidak dapat dihapus karena masih memiliki unit terkait.');
+        $response->assertSessionHas('error', __('inventory.lot_cannot_delete_has_assets'));
         $this->assertDatabaseHas('lots', [
             'id' => $lot->id,
         ]);
@@ -334,7 +334,7 @@ class LotControllerTest extends TestCase
         $this->assertEquals($barangImagePath, $lot->image_url);
         Storage::disk('local')->assertExists($lot->image_url);
 
-        $bulkResponse = $this->actingAs($user)->post(route('smart.inventory.units.bulk-store'), [
+        $bulkResponse = $this->actingAs($user)->post(route('smart.inventory.assets.bulk-store'), [
             'number' => 'LOT-2026-ATK-KER-0001-0001-U01',
             'lot_id' => $lot->id,
             'location_id' => $location->id,
@@ -502,7 +502,7 @@ class LotControllerTest extends TestCase
         }
         $ids = collect($units)->pluck('id')->toArray();
 
-        $response = $this->actingAs($user)->post(route('smart.inventory.units.bulk-update'), [
+        $response = $this->actingAs($user)->post(route('smart.inventory.assets.bulk-update'), [
             'ids' => $ids,
             'status' => 'Standby',
             'condition' => 'Rusak',
@@ -513,7 +513,7 @@ class LotControllerTest extends TestCase
         $response->assertRedirect();
         
         foreach ($ids as $id) {
-            $this->assertDatabaseHas('units', [
+            $this->assertDatabaseHas('assets', [
                 'id' => $id,
                 'status' => 'Standby',
                 'condition' => 'Rusak',
@@ -535,6 +535,7 @@ class LotControllerTest extends TestCase
             'number' => 'LOT-CONS-0001',
             'barang_id' => $barang->id,
             'organizer_id' => $organizer->id,
+            'vendor_id' => 1,
             'date_of_receipt' => '2026-10-06',
             'burden' => 'Corporate',
         ]);
@@ -547,6 +548,7 @@ class LotControllerTest extends TestCase
             'number' => 'LOT-CONS-0001',
             'barang_id' => $barang->id,
             'organizer_id' => $organizer->id,
+            'vendor_id' => 1,
             'location_id' => $location->id,
             'initial_quantity' => 50,
             'date_of_receipt' => '2026-10-06',
@@ -573,6 +575,7 @@ class LotControllerTest extends TestCase
             'number' => 'LOT-NONC-0001',
             'barang_id' => $barang->id,
             'organizer_id' => $organizer->id,
+            'vendor_id' => 1,
             'date_of_receipt' => '2026-10-06',
         ]);
 

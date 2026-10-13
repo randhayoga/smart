@@ -86,7 +86,7 @@ class AuthenticationTest extends TestCase
         $ifsUser = User::factory()->create(['employee_id' => '880022']);
         $orgchart = HrdOrgchart::create([
             'org_name' => 'Integrated Facilities Services',
-            'org_code' => 'IFS',
+            'org_code' => User::getIfsOrgCode(),
             'employee_id' => $ifsUser->employee_id,
         ]);
         $ifsUser->update(['orgchart_id' => $orgchart->id]);

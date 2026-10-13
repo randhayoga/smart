@@ -3,7 +3,7 @@
 namespace Database\Factories\Inventory;
 
 use App\Models\Inventory\Lot;
-use App\Models\Inventory\Barang;
+use App\Models\Inventory\Model;
 use App\Models\Master\Organizer;
 use App\Models\Master\Vendor;
 use App\Models\Master\Location;
@@ -28,22 +28,22 @@ class LotFactory extends Factory
      */
     public function definition(): array
     {
-        $barang = Barang::inRandomOrder()->first() ?? Barang::factory()->create();
+        $model = Model::inRandomOrder()->first() ?? Model::factory()->create();
         $organizer = Organizer::inRandomOrder()->first() ?? Organizer::factory()->create();
         $vendor = Vendor::inRandomOrder()->first() ?? Vendor::factory()->create();
         $location = Location::inRandomOrder()->first() ?? Location::factory()->create();
         
         $dateOfReceipt = $this->faker->dateTimeBetween('-1 year', 'now');
         $yy = $dateOfReceipt->format('y');
-        $tipeCode = $barang->number;
+        $modelCode = $model->number;
         
         static $lotSerial = 1;
         $serial = str_pad($lotSerial++, 4, '0', STR_PAD_LEFT);
-        $number = "LOT-{$serial}-{$yy}-{$tipeCode}";
+        $number = "LOT-{$serial}-{$yy}-{$modelCode}";
 
         return [
             'number' => $number,
-            'barang_id' => $barang->id,
+            'model_id' => $model->id,
             'organizer_id' => $organizer->id,
             'vendor_id' => $vendor->id,
             'legacy_vendor_id' => $vendor->id,
@@ -54,7 +54,7 @@ class LotFactory extends Factory
             'date_of_receipt' => $dateOfReceipt,
             'unit_price' => $this->faker->randomFloat(2, 10000, 10000000),
             'image_url' => 'inventory/lots/placeholder.jpg',
-            'burden' => (bool) ($barang->is_consumable ?? false) ? 'Corporate' : null,
+            'burden' => (bool) ($model->is_consumable ?? false) ? 'Corporate' : null,
             'project_id' => null,
         ];
     }

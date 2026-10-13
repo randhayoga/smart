@@ -17,7 +17,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 1,
                 'number' => 'LOT-0001-26-ACC-AM-0001',
-                'barang_id' => 1,
+                'model_id' => 1,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -36,7 +36,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 2,
                 'number' => 'LOT-0001-26-ACC-AM-0002',
-                'barang_id' => 2,
+                'model_id' => 2,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -55,7 +55,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 3,
                 'number' => 'LOT-0001-26-ACC-AP-0001',
-                'barang_id' => 3,
+                'model_id' => 3,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -74,7 +74,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 4,
                 'number' => 'LOT-0001-26-ACC-AP-0002',
-                'barang_id' => 4,
+                'model_id' => 4,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -93,7 +93,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 5,
                 'number' => 'LOT-0001-26-ACC-AP-0003',
-                'barang_id' => 5,
+                'model_id' => 5,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -112,7 +112,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 6,
                 'number' => 'LOT-0001-26-ACC-AP-0004',
-                'barang_id' => 6,
+                'model_id' => 6,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -131,7 +131,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 7,
                 'number' => 'LOT-0001-26-ACC-AP-0005',
-                'barang_id' => 7,
+                'model_id' => 7,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -150,7 +150,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 8,
                 'number' => 'LOT-0001-26-ACC-AP-0006',
-                'barang_id' => 8,
+                'model_id' => 8,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -169,7 +169,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 9,
                 'number' => 'LOT-0001-26-ACC-AP-0007',
-                'barang_id' => 9,
+                'model_id' => 9,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -188,7 +188,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 10,
                 'number' => 'LOT-0001-26-ACC-AP-0008',
-                'barang_id' => 10,
+                'model_id' => 10,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -207,7 +207,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 11,
                 'number' => 'LOT-0001-26-ACC-AP-0009',
-                'barang_id' => 11,
+                'model_id' => 11,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -226,7 +226,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 12,
                 'number' => 'LOT-0001-26-ACC-AP-0010',
-                'barang_id' => 12,
+                'model_id' => 12,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -245,7 +245,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 13,
                 'number' => 'LOT-0001-26-ACC-AP-0011',
-                'barang_id' => 13,
+                'model_id' => 13,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -264,7 +264,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 14,
                 'number' => 'LOT-0001-26-ACC-AP-0012',
-                'barang_id' => 14,
+                'model_id' => 14,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -283,7 +283,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 15,
                 'number' => 'LOT-0001-26-ACC-BL-0001',
-                'barang_id' => 15,
+                'model_id' => 15,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -302,7 +302,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 16,
                 'number' => 'LOT-0001-26-ACC-BL-0002',
-                'barang_id' => 16,
+                'model_id' => 16,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -321,7 +321,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 17,
                 'number' => 'LOT-0001-26-ACC-BRS-0001',
-                'barang_id' => 17,
+                'model_id' => 17,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -340,7 +340,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 18,
                 'number' => 'LOT-0001-26-ACC-BT-0001',
-                'barang_id' => 18,
+                'model_id' => 18,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -359,7 +359,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 19,
                 'number' => 'LOT-0001-26-ACC-BT-0002',
-                'barang_id' => 19,
+                'model_id' => 19,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -378,7 +378,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 20,
                 'number' => 'LOT-0001-26-ACC-BT-0003',
-                'barang_id' => 20,
+                'model_id' => 20,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -397,7 +397,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 21,
                 'number' => 'LOT-0001-26-ACC-CM-0001',
-                'barang_id' => 21,
+                'model_id' => 21,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -416,7 +416,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 22,
                 'number' => 'LOT-0001-26-ACC-DG-0001',
-                'barang_id' => 22,
+                'model_id' => 22,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -435,7 +435,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 23,
                 'number' => 'LOT-0001-26-ACC-DP-0001',
-                'barang_id' => 23,
+                'model_id' => 23,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -454,7 +454,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 24,
                 'number' => 'LOT-0001-26-ACC-DP-0002',
-                'barang_id' => 24,
+                'model_id' => 24,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -473,7 +473,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 25,
                 'number' => 'LOT-0001-26-ACC-FC-0001',
-                'barang_id' => 25,
+                'model_id' => 25,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -492,7 +492,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 26,
                 'number' => 'LOT-0001-26-ACC-FC-0002',
-                'barang_id' => 26,
+                'model_id' => 26,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -511,7 +511,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 27,
                 'number' => 'LOT-0001-26-ACC-GE-0001',
-                'barang_id' => 27,
+                'model_id' => 27,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -530,7 +530,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 28,
                 'number' => 'LOT-0001-26-ACC-GL-0001',
-                'barang_id' => 28,
+                'model_id' => 28,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -549,7 +549,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 29,
                 'number' => 'LOT-0001-26-ACC-GL-0002',
-                'barang_id' => 29,
+                'model_id' => 29,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -568,7 +568,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 30,
                 'number' => 'LOT-0001-26-ACC-GL-0003',
-                'barang_id' => 30,
+                'model_id' => 30,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -587,7 +587,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 31,
                 'number' => 'LOT-0001-26-ACC-GL-0004',
-                'barang_id' => 31,
+                'model_id' => 31,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -606,7 +606,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 32,
                 'number' => 'LOT-0001-26-ACC-GL-0005',
-                'barang_id' => 32,
+                'model_id' => 32,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -625,7 +625,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 33,
                 'number' => 'LOT-0001-26-ACC-GL-0006',
-                'barang_id' => 33,
+                'model_id' => 33,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -644,7 +644,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 34,
                 'number' => 'LOT-0001-26-ACC-GL-0007',
-                'barang_id' => 34,
+                'model_id' => 34,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -663,7 +663,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 35,
                 'number' => 'LOT-0001-26-ACC-GPS-0001',
-                'barang_id' => 35,
+                'model_id' => 35,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -682,7 +682,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 36,
                 'number' => 'LOT-0001-26-ACC-GR-0001',
-                'barang_id' => 36,
+                'model_id' => 36,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -701,7 +701,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 37,
                 'number' => 'LOT-0001-26-ACC-JAM-0001',
-                'barang_id' => 37,
+                'model_id' => 37,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -720,7 +720,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 38,
                 'number' => 'LOT-0001-26-ACC-JAM-0002',
-                'barang_id' => 38,
+                'model_id' => 38,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -739,7 +739,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 39,
                 'number' => 'LOT-0001-26-ACC-JAM-0003',
-                'barang_id' => 39,
+                'model_id' => 39,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -758,7 +758,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 40,
                 'number' => 'LOT-0001-26-ACC-JAM-0004',
-                'barang_id' => 40,
+                'model_id' => 40,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -777,7 +777,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 41,
                 'number' => 'LOT-0001-26-ACC-KA-0001',
-                'barang_id' => 41,
+                'model_id' => 41,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -796,7 +796,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 42,
                 'number' => 'LOT-0001-26-ACC-KA-0002',
-                'barang_id' => 42,
+                'model_id' => 42,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -815,7 +815,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 43,
                 'number' => 'LOT-0001-26-ACC-KA-0003',
-                'barang_id' => 43,
+                'model_id' => 43,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -834,7 +834,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 44,
                 'number' => 'LOT-0001-26-ACC-KL-0001',
-                'barang_id' => 44,
+                'model_id' => 44,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -853,7 +853,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 45,
                 'number' => 'LOT-0001-26-ACC-KR-0001',
-                'barang_id' => 45,
+                'model_id' => 45,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -872,7 +872,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 46,
                 'number' => 'LOT-0001-26-ACC-LAY-0001',
-                'barang_id' => 46,
+                'model_id' => 46,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -891,7 +891,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 47,
                 'number' => 'LOT-0001-26-ACC-LS-0001',
-                'barang_id' => 47,
+                'model_id' => 47,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -910,7 +910,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 48,
                 'number' => 'LOT-0001-26-ACC-LS-0002',
-                'barang_id' => 48,
+                'model_id' => 48,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -929,7 +929,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 49,
                 'number' => 'LOT-0001-26-ACC-LS-0003',
-                'barang_id' => 49,
+                'model_id' => 49,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -948,7 +948,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 50,
                 'number' => 'LOT-0001-26-ACC-LS-0004',
-                'barang_id' => 50,
+                'model_id' => 50,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -967,7 +967,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 51,
                 'number' => 'LOT-0001-26-ACC-LS-0005',
-                'barang_id' => 51,
+                'model_id' => 51,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -986,7 +986,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 52,
                 'number' => 'LOT-0001-26-ACC-LS-0006',
-                'barang_id' => 52,
+                'model_id' => 52,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1005,7 +1005,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 53,
                 'number' => 'LOT-0001-26-ACC-LS-0007',
-                'barang_id' => 53,
+                'model_id' => 53,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1024,7 +1024,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 54,
                 'number' => 'LOT-0001-26-ACC-LS-0008',
-                'barang_id' => 54,
+                'model_id' => 54,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1043,7 +1043,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 55,
                 'number' => 'LOT-0001-26-ACC-LS-0009',
-                'barang_id' => 55,
+                'model_id' => 55,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1062,7 +1062,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 56,
                 'number' => 'LOT-0001-26-ACC-LS-0010',
-                'barang_id' => 56,
+                'model_id' => 56,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1081,7 +1081,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 57,
                 'number' => 'LOT-0001-26-ACC-LS-0011',
-                'barang_id' => 57,
+                'model_id' => 57,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1100,7 +1100,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 58,
                 'number' => 'LOT-0001-26-ACC-P3K-0001',
-                'barang_id' => 58,
+                'model_id' => 58,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1119,7 +1119,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 59,
                 'number' => 'LOT-0001-26-ACC-P3K-0002',
-                'barang_id' => 59,
+                'model_id' => 59,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1138,7 +1138,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 60,
                 'number' => 'LOT-0001-26-ACC-P3K-0003',
-                'barang_id' => 60,
+                'model_id' => 60,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1157,7 +1157,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 61,
                 'number' => 'LOT-0001-26-ACC-P3K-0004',
-                'barang_id' => 61,
+                'model_id' => 61,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1176,7 +1176,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 62,
                 'number' => 'LOT-0001-26-ACC-PC-0001',
-                'barang_id' => 62,
+                'model_id' => 62,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1195,7 +1195,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 63,
                 'number' => 'LOT-0001-26-ACC-PD-0001',
-                'barang_id' => 63,
+                'model_id' => 63,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1214,7 +1214,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 64,
                 'number' => 'LOT-0001-26-ACC-PH-0001',
-                'barang_id' => 64,
+                'model_id' => 64,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1233,7 +1233,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 65,
                 'number' => 'LOT-0001-26-ACC-PH-0002',
-                'barang_id' => 65,
+                'model_id' => 65,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1252,7 +1252,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 66,
                 'number' => 'LOT-0001-26-ACC-PH-0003',
-                'barang_id' => 66,
+                'model_id' => 66,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1271,7 +1271,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 67,
                 'number' => 'LOT-0001-26-ACC-PH-0004',
-                'barang_id' => 67,
+                'model_id' => 67,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1290,7 +1290,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 68,
                 'number' => 'LOT-0001-26-ACC-PH-0005',
-                'barang_id' => 68,
+                'model_id' => 68,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1309,7 +1309,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 69,
                 'number' => 'LOT-0001-26-ACC-PH-0006',
-                'barang_id' => 69,
+                'model_id' => 69,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1328,7 +1328,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 70,
                 'number' => 'LOT-0001-26-ACC-PK-0001',
-                'barang_id' => 70,
+                'model_id' => 70,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1347,7 +1347,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 71,
                 'number' => 'LOT-0001-26-ACC-PM-0001',
-                'barang_id' => 71,
+                'model_id' => 71,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1366,7 +1366,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 72,
                 'number' => 'LOT-0001-26-ACC-PM-0002',
-                'barang_id' => 72,
+                'model_id' => 72,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1385,7 +1385,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 73,
                 'number' => 'LOT-0001-26-ACC-POT-0001',
-                'barang_id' => 73,
+                'model_id' => 73,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1404,7 +1404,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 74,
                 'number' => 'LOT-0001-26-ACC-POT-0002',
-                'barang_id' => 74,
+                'model_id' => 74,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1423,7 +1423,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 75,
                 'number' => 'LOT-0001-26-ACC-POT-0003',
-                'barang_id' => 75,
+                'model_id' => 75,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1442,7 +1442,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 76,
                 'number' => 'LOT-0001-26-ACC-POT-0004',
-                'barang_id' => 76,
+                'model_id' => 76,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1461,7 +1461,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 77,
                 'number' => 'LOT-0001-26-ACC-PS-0001',
-                'barang_id' => 77,
+                'model_id' => 77,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1480,7 +1480,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 78,
                 'number' => 'LOT-0001-26-ACC-RB-0001',
-                'barang_id' => 78,
+                'model_id' => 78,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1499,7 +1499,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 79,
                 'number' => 'LOT-0001-26-ACC-RP-0001',
-                'barang_id' => 79,
+                'model_id' => 79,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1518,7 +1518,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 80,
                 'number' => 'LOT-0001-26-ACC-RS-0001',
-                'barang_id' => 80,
+                'model_id' => 80,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1537,7 +1537,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 81,
                 'number' => 'LOT-0001-26-ACC-RS-0002',
-                'barang_id' => 81,
+                'model_id' => 81,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1556,7 +1556,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 82,
                 'number' => 'LOT-0001-26-ACC-STB-0001',
-                'barang_id' => 82,
+                'model_id' => 82,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1575,7 +1575,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 83,
                 'number' => 'LOT-0001-26-ACC-TAP-0001',
-                'barang_id' => 83,
+                'model_id' => 83,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1594,7 +1594,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 84,
                 'number' => 'LOT-0001-26-ACC-TAP-0002',
-                'barang_id' => 84,
+                'model_id' => 84,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1613,7 +1613,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 85,
                 'number' => 'LOT-0001-26-ACC-TAP-0003',
-                'barang_id' => 85,
+                'model_id' => 85,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1632,7 +1632,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 86,
                 'number' => 'LOT-0001-26-ACC-TAP-0004',
-                'barang_id' => 86,
+                'model_id' => 86,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1651,7 +1651,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 87,
                 'number' => 'LOT-0001-26-ACC-TB-0001',
-                'barang_id' => 87,
+                'model_id' => 87,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1670,7 +1670,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 88,
                 'number' => 'LOT-0001-26-ACC-TI-0001',
-                'barang_id' => 88,
+                'model_id' => 88,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1689,7 +1689,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 89,
                 'number' => 'LOT-0001-26-ACC-TK-0001',
-                'barang_id' => 89,
+                'model_id' => 89,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1708,7 +1708,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 90,
                 'number' => 'LOT-0001-26-ACC-TK-0002',
-                'barang_id' => 90,
+                'model_id' => 90,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1727,7 +1727,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 91,
                 'number' => 'LOT-0001-26-ACC-TK-0003',
-                'barang_id' => 91,
+                'model_id' => 91,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1746,7 +1746,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 92,
                 'number' => 'LOT-0001-26-ACC-TM-0001',
-                'barang_id' => 92,
+                'model_id' => 92,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1765,7 +1765,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 93,
                 'number' => 'LOT-0001-26-ACC-TO-0001',
-                'barang_id' => 93,
+                'model_id' => 93,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1784,7 +1784,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 94,
                 'number' => 'LOT-0001-26-ACC-TS-0001',
-                'barang_id' => 94,
+                'model_id' => 94,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1803,7 +1803,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 95,
                 'number' => 'LOT-0001-26-ACC-TS-0002',
-                'barang_id' => 95,
+                'model_id' => 95,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1822,7 +1822,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 96,
                 'number' => 'LOT-0001-26-ACC-TS-0003',
-                'barang_id' => 96,
+                'model_id' => 96,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1841,7 +1841,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 97,
                 'number' => 'LOT-0001-26-ACC-TS-0004',
-                'barang_id' => 97,
+                'model_id' => 97,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1860,7 +1860,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 98,
                 'number' => 'LOT-0001-26-ACC-TS-0005',
-                'barang_id' => 98,
+                'model_id' => 98,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1879,7 +1879,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 99,
                 'number' => 'LOT-0001-26-ACC-TS-0006',
-                'barang_id' => 99,
+                'model_id' => 99,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1898,7 +1898,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 100,
                 'number' => 'LOT-0001-26-ACC-TS-0007',
-                'barang_id' => 100,
+                'model_id' => 100,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1917,7 +1917,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 101,
                 'number' => 'LOT-0001-26-ACC-TS-0008',
-                'barang_id' => 101,
+                'model_id' => 101,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1936,7 +1936,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 102,
                 'number' => 'LOT-0001-26-ACC-TS-0009',
-                'barang_id' => 102,
+                'model_id' => 102,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1955,7 +1955,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 103,
                 'number' => 'LOT-0001-26-ACC-TS-0010',
-                'barang_id' => 103,
+                'model_id' => 103,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1974,7 +1974,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 104,
                 'number' => 'LOT-0001-26-ACC-TS-0011',
-                'barang_id' => 104,
+                'model_id' => 104,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -1993,7 +1993,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 105,
                 'number' => 'LOT-0001-26-ACC-TS-0012',
-                'barang_id' => 105,
+                'model_id' => 105,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2012,7 +2012,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 106,
                 'number' => 'LOT-0001-26-ACC-TS-0013',
-                'barang_id' => 106,
+                'model_id' => 106,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2031,7 +2031,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 107,
                 'number' => 'LOT-0001-26-ACC-TS-0014',
-                'barang_id' => 107,
+                'model_id' => 107,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2050,7 +2050,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 108,
                 'number' => 'LOT-0001-26-ACC-TS-0015',
-                'barang_id' => 108,
+                'model_id' => 108,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2069,7 +2069,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 109,
                 'number' => 'LOT-0001-26-ACC-TS-0016',
-                'barang_id' => 109,
+                'model_id' => 109,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2088,7 +2088,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 110,
                 'number' => 'LOT-0001-26-ACC-TS-0017',
-                'barang_id' => 110,
+                'model_id' => 110,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2107,7 +2107,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 111,
                 'number' => 'LOT-0001-26-ACC-WB-0001',
-                'barang_id' => 111,
+                'model_id' => 111,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2126,7 +2126,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 112,
                 'number' => 'LOT-0001-26-ACC-WB-0002',
-                'barang_id' => 112,
+                'model_id' => 112,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2145,7 +2145,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 113,
                 'number' => 'LOT-0001-26-COMP-DESK-0001',
-                'barang_id' => 113,
+                'model_id' => 113,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2164,7 +2164,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 114,
                 'number' => 'LOT-0001-26-COMP-DESK-0002',
-                'barang_id' => 114,
+                'model_id' => 114,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2183,7 +2183,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 115,
                 'number' => 'LOT-0001-26-COMP-DESK-0003',
-                'barang_id' => 115,
+                'model_id' => 115,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2202,7 +2202,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 116,
                 'number' => 'LOT-0001-26-COMP-DESK-0004',
-                'barang_id' => 116,
+                'model_id' => 116,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2221,7 +2221,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 117,
                 'number' => 'LOT-0001-26-COMP-DESK-0005',
-                'barang_id' => 117,
+                'model_id' => 117,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2240,7 +2240,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 118,
                 'number' => 'LOT-0001-26-COMP-DESK-0006',
-                'barang_id' => 118,
+                'model_id' => 118,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2259,7 +2259,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 119,
                 'number' => 'LOT-0001-26-COMP-DESK-0007',
-                'barang_id' => 119,
+                'model_id' => 119,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2278,7 +2278,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 120,
                 'number' => 'LOT-0001-26-COMP-DESK-0008',
-                'barang_id' => 120,
+                'model_id' => 120,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2297,7 +2297,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 121,
                 'number' => 'LOT-0001-26-COMP-DESK-0009',
-                'barang_id' => 121,
+                'model_id' => 121,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2316,7 +2316,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 122,
                 'number' => 'LOT-0001-26-COMP-DESK-0010',
-                'barang_id' => 122,
+                'model_id' => 122,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2335,7 +2335,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 123,
                 'number' => 'LOT-0001-26-COMP-DESK-0011',
-                'barang_id' => 123,
+                'model_id' => 123,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2354,7 +2354,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 124,
                 'number' => 'LOT-0001-26-COMP-DESK-0012',
-                'barang_id' => 124,
+                'model_id' => 124,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2373,7 +2373,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 125,
                 'number' => 'LOT-0001-26-COMP-DESK-0013',
-                'barang_id' => 125,
+                'model_id' => 125,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2392,7 +2392,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 126,
                 'number' => 'LOT-0001-26-COMP-DESK-0014',
-                'barang_id' => 126,
+                'model_id' => 126,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2411,7 +2411,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 127,
                 'number' => 'LOT-0001-26-COMP-DESK-0015',
-                'barang_id' => 127,
+                'model_id' => 127,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2430,7 +2430,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 128,
                 'number' => 'LOT-0001-26-COMP-DESK-0016',
-                'barang_id' => 128,
+                'model_id' => 128,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2449,7 +2449,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 129,
                 'number' => 'LOT-0001-26-COMP-DESK-0017',
-                'barang_id' => 129,
+                'model_id' => 129,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2468,7 +2468,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 130,
                 'number' => 'LOT-0001-26-COMP-DESK-0018',
-                'barang_id' => 130,
+                'model_id' => 130,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2487,7 +2487,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 131,
                 'number' => 'LOT-0001-26-COMP-DESK-0019',
-                'barang_id' => 131,
+                'model_id' => 131,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2506,7 +2506,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 132,
                 'number' => 'LOT-0001-26-COMP-DESK-0020',
-                'barang_id' => 132,
+                'model_id' => 132,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2525,7 +2525,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 133,
                 'number' => 'LOT-0001-26-COMP-DESK-0021',
-                'barang_id' => 133,
+                'model_id' => 133,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2544,7 +2544,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 134,
                 'number' => 'LOT-0001-26-COMP-DESK-0022',
-                'barang_id' => 134,
+                'model_id' => 134,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2563,7 +2563,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 135,
                 'number' => 'LOT-0001-26-COMP-DESK-0023',
-                'barang_id' => 135,
+                'model_id' => 135,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2582,7 +2582,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 136,
                 'number' => 'LOT-0001-26-COMP-NB-0001',
-                'barang_id' => 136,
+                'model_id' => 136,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2601,7 +2601,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 137,
                 'number' => 'LOT-0001-26-COMP-NB-0002',
-                'barang_id' => 137,
+                'model_id' => 137,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2620,7 +2620,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 138,
                 'number' => 'LOT-0001-26-COMP-NB-0003',
-                'barang_id' => 138,
+                'model_id' => 138,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2639,7 +2639,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 139,
                 'number' => 'LOT-0001-26-COMP-NB-0004',
-                'barang_id' => 139,
+                'model_id' => 139,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2658,7 +2658,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 140,
                 'number' => 'LOT-0001-26-COMP-NB-0005',
-                'barang_id' => 140,
+                'model_id' => 140,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2677,7 +2677,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 141,
                 'number' => 'LOT-0001-26-COMP-NB-0006',
-                'barang_id' => 141,
+                'model_id' => 141,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2696,7 +2696,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 142,
                 'number' => 'LOT-0001-26-COMP-NB-0007',
-                'barang_id' => 142,
+                'model_id' => 142,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2715,7 +2715,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 143,
                 'number' => 'LOT-0001-26-COMP-NB-0008',
-                'barang_id' => 143,
+                'model_id' => 143,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2734,7 +2734,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 144,
                 'number' => 'LOT-0001-26-COMP-NB-0009',
-                'barang_id' => 144,
+                'model_id' => 144,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2753,7 +2753,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 145,
                 'number' => 'LOT-0001-26-COMP-NB-0010',
-                'barang_id' => 145,
+                'model_id' => 145,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2772,7 +2772,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 146,
                 'number' => 'LOT-0001-26-COMP-NB-0011',
-                'barang_id' => 146,
+                'model_id' => 146,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2791,7 +2791,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 147,
                 'number' => 'LOT-0001-26-COMP-NB-0012',
-                'barang_id' => 147,
+                'model_id' => 147,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2810,7 +2810,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 148,
                 'number' => 'LOT-0001-26-COMP-NB-0013',
-                'barang_id' => 148,
+                'model_id' => 148,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2829,7 +2829,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 149,
                 'number' => 'LOT-0001-26-COMP-NB-0014',
-                'barang_id' => 149,
+                'model_id' => 149,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2848,7 +2848,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 150,
                 'number' => 'LOT-0001-26-COMP-NB-0015',
-                'barang_id' => 150,
+                'model_id' => 150,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2867,7 +2867,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 151,
                 'number' => 'LOT-0001-26-COMP-NB-0016',
-                'barang_id' => 151,
+                'model_id' => 151,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2886,7 +2886,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 152,
                 'number' => 'LOT-0001-26-COMP-NB-0017',
-                'barang_id' => 152,
+                'model_id' => 152,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2905,7 +2905,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 153,
                 'number' => 'LOT-0001-26-COMP-NB-0018',
-                'barang_id' => 153,
+                'model_id' => 153,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2924,7 +2924,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 154,
                 'number' => 'LOT-0001-26-COMP-NB-0019',
-                'barang_id' => 154,
+                'model_id' => 154,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2943,7 +2943,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 155,
                 'number' => 'LOT-0001-26-COMP-NB-0020',
-                'barang_id' => 155,
+                'model_id' => 155,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2962,7 +2962,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 156,
                 'number' => 'LOT-0001-26-COMP-NB-0021',
-                'barang_id' => 156,
+                'model_id' => 156,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -2981,7 +2981,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 157,
                 'number' => 'LOT-0001-26-COMP-NB-0022',
-                'barang_id' => 157,
+                'model_id' => 157,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3000,7 +3000,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 158,
                 'number' => 'LOT-0001-26-COMP-NB-0023',
-                'barang_id' => 158,
+                'model_id' => 158,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3019,7 +3019,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 159,
                 'number' => 'LOT-0001-26-COMP-NB-0024',
-                'barang_id' => 159,
+                'model_id' => 159,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3038,7 +3038,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 160,
                 'number' => 'LOT-0001-26-COMP-NB-0025',
-                'barang_id' => 160,
+                'model_id' => 160,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3057,7 +3057,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 161,
                 'number' => 'LOT-0001-26-COMP-NB-0026',
-                'barang_id' => 161,
+                'model_id' => 161,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3076,7 +3076,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 162,
                 'number' => 'LOT-0001-26-COMP-NB-0027',
-                'barang_id' => 162,
+                'model_id' => 162,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3095,7 +3095,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 163,
                 'number' => 'LOT-0001-26-COMP-NB-0028',
-                'barang_id' => 163,
+                'model_id' => 163,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3114,7 +3114,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 164,
                 'number' => 'LOT-0001-26-COMP-NB-0029',
-                'barang_id' => 164,
+                'model_id' => 164,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3133,7 +3133,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 165,
                 'number' => 'LOT-0001-26-COMP-NB-0030',
-                'barang_id' => 165,
+                'model_id' => 165,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3152,7 +3152,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 166,
                 'number' => 'LOT-0001-26-COMP-NB-0031',
-                'barang_id' => 166,
+                'model_id' => 166,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3171,7 +3171,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 167,
                 'number' => 'LOT-0001-26-COMP-NB-0032',
-                'barang_id' => 167,
+                'model_id' => 167,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3190,7 +3190,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 168,
                 'number' => 'LOT-0001-26-COMP-NB-0033',
-                'barang_id' => 168,
+                'model_id' => 168,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3209,7 +3209,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 169,
                 'number' => 'LOT-0001-26-COMP-NB-0034',
-                'barang_id' => 169,
+                'model_id' => 169,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3228,7 +3228,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 170,
                 'number' => 'LOT-0001-26-COMP-NB-0035',
-                'barang_id' => 170,
+                'model_id' => 170,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3247,7 +3247,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 171,
                 'number' => 'LOT-0001-26-COMP-NB-0036',
-                'barang_id' => 171,
+                'model_id' => 171,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3266,7 +3266,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 172,
                 'number' => 'LOT-0001-26-COMP-NB-0037',
-                'barang_id' => 172,
+                'model_id' => 172,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3285,7 +3285,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 173,
                 'number' => 'LOT-0001-26-COMP-NB-0038',
-                'barang_id' => 173,
+                'model_id' => 173,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3304,7 +3304,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 174,
                 'number' => 'LOT-0001-26-COMP-NB-0039',
-                'barang_id' => 174,
+                'model_id' => 174,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3323,7 +3323,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 175,
                 'number' => 'LOT-0001-26-COMP-NB-0040',
-                'barang_id' => 175,
+                'model_id' => 175,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3342,7 +3342,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 176,
                 'number' => 'LOT-0001-26-COMP-NB-0041',
-                'barang_id' => 176,
+                'model_id' => 176,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3361,7 +3361,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 177,
                 'number' => 'LOT-0001-26-COMP-NB-0042',
-                'barang_id' => 177,
+                'model_id' => 177,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3380,7 +3380,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 178,
                 'number' => 'LOT-0001-26-COMP-NB-0043',
-                'barang_id' => 178,
+                'model_id' => 178,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3399,7 +3399,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 179,
                 'number' => 'LOT-0001-26-COMP-NB-0044',
-                'barang_id' => 179,
+                'model_id' => 179,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3418,7 +3418,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 180,
                 'number' => 'LOT-0001-26-COMP-NB-0045',
-                'barang_id' => 180,
+                'model_id' => 180,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3437,7 +3437,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 181,
                 'number' => 'LOT-0001-26-COMP-NB-0046',
-                'barang_id' => 181,
+                'model_id' => 181,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3456,7 +3456,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 182,
                 'number' => 'LOT-0001-26-COMP-NB-0047',
-                'barang_id' => 182,
+                'model_id' => 182,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3475,7 +3475,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 183,
                 'number' => 'LOT-0001-26-COMP-NB-0048',
-                'barang_id' => 183,
+                'model_id' => 183,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3494,7 +3494,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 184,
                 'number' => 'LOT-0001-26-COMP-NB-0049',
-                'barang_id' => 184,
+                'model_id' => 184,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3513,7 +3513,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 185,
                 'number' => 'LOT-0001-26-COMP-NB-0050',
-                'barang_id' => 185,
+                'model_id' => 185,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3532,7 +3532,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 186,
                 'number' => 'LOT-0001-26-COMP-NB-0051',
-                'barang_id' => 186,
+                'model_id' => 186,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3551,7 +3551,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 187,
                 'number' => 'LOT-0001-26-COMP-NB-0052',
-                'barang_id' => 187,
+                'model_id' => 187,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3570,7 +3570,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 188,
                 'number' => 'LOT-0001-26-COMP-NB-0053',
-                'barang_id' => 188,
+                'model_id' => 188,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3589,7 +3589,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 189,
                 'number' => 'LOT-0001-26-COMP-NB-0054',
-                'barang_id' => 189,
+                'model_id' => 189,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3608,7 +3608,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 190,
                 'number' => 'LOT-0001-26-COMP-NB-0055',
-                'barang_id' => 190,
+                'model_id' => 190,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3627,7 +3627,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 191,
                 'number' => 'LOT-0001-26-COMP-SVR-0001',
-                'barang_id' => 191,
+                'model_id' => 191,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3646,7 +3646,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 192,
                 'number' => 'LOT-0001-26-COMP-SVR-0002',
-                'barang_id' => 192,
+                'model_id' => 192,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3665,7 +3665,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 193,
                 'number' => 'LOT-0001-26-COMP-SVR-0003',
-                'barang_id' => 193,
+                'model_id' => 193,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3684,7 +3684,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 194,
                 'number' => 'LOT-0001-26-COMP-SVR-0004',
-                'barang_id' => 194,
+                'model_id' => 194,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3703,7 +3703,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 195,
                 'number' => 'LOT-0001-26-COMP-SVR-0005',
-                'barang_id' => 195,
+                'model_id' => 195,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3722,7 +3722,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 196,
                 'number' => 'LOT-0001-26-COMP-SVR-0006',
-                'barang_id' => 196,
+                'model_id' => 196,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3741,7 +3741,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 197,
                 'number' => 'LOT-0001-26-COMP-WORK-0001',
-                'barang_id' => 197,
+                'model_id' => 197,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3760,7 +3760,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 198,
                 'number' => 'LOT-0001-26-COMP-WORK-0002',
-                'barang_id' => 198,
+                'model_id' => 198,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3779,7 +3779,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 199,
                 'number' => 'LOT-0001-26-ELEK-ATS-0001',
-                'barang_id' => 199,
+                'model_id' => 199,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3798,7 +3798,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 200,
                 'number' => 'LOT-0001-26-ELEK-CCT-0001',
-                'barang_id' => 200,
+                'model_id' => 200,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3817,7 +3817,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 201,
                 'number' => 'LOT-0001-26-ELEK-CCT-0002',
-                'barang_id' => 201,
+                'model_id' => 201,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3836,7 +3836,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 202,
                 'number' => 'LOT-0001-26-ELEK-CCT-0003',
-                'barang_id' => 202,
+                'model_id' => 202,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3855,7 +3855,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 203,
                 'number' => 'LOT-0001-26-ELEK-CCT-0004',
-                'barang_id' => 203,
+                'model_id' => 203,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3874,7 +3874,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 204,
                 'number' => 'LOT-0001-26-ELEK-CCT-0005',
-                'barang_id' => 204,
+                'model_id' => 204,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3893,7 +3893,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 205,
                 'number' => 'LOT-0001-26-ELEK-CCT-0006',
-                'barang_id' => 205,
+                'model_id' => 205,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3912,7 +3912,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 206,
                 'number' => 'LOT-0001-26-ELEK-CP-0001',
-                'barang_id' => 206,
+                'model_id' => 206,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3931,7 +3931,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 207,
                 'number' => 'LOT-0001-26-ELEK-CS-0001',
-                'barang_id' => 207,
+                'model_id' => 207,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3950,7 +3950,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 208,
                 'number' => 'LOT-0001-26-ELEK-CS-0002',
-                'barang_id' => 208,
+                'model_id' => 208,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3969,7 +3969,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 209,
                 'number' => 'LOT-0001-26-ELEK-EXH-0001',
-                'barang_id' => 209,
+                'model_id' => 209,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -3988,7 +3988,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 210,
                 'number' => 'LOT-0001-26-ELEK-FR-0001',
-                'barang_id' => 210,
+                'model_id' => 210,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4007,7 +4007,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 211,
                 'number' => 'LOT-0001-26-ELEK-FR-0002',
-                'barang_id' => 211,
+                'model_id' => 211,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4026,7 +4026,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 212,
                 'number' => 'LOT-0001-26-ELEK-HD-0001',
-                'barang_id' => 212,
+                'model_id' => 212,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4045,7 +4045,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 213,
                 'number' => 'LOT-0001-26-ELEK-HD-0002',
-                'barang_id' => 213,
+                'model_id' => 213,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4064,7 +4064,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 214,
                 'number' => 'LOT-0001-26-ELEK-KUL-0001',
-                'barang_id' => 214,
+                'model_id' => 214,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4083,7 +4083,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 215,
                 'number' => 'LOT-0001-26-ELEK-KUL-0002',
-                'barang_id' => 215,
+                'model_id' => 215,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4102,7 +4102,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 216,
                 'number' => 'LOT-0001-26-ELEK-KUL-0003',
-                'barang_id' => 216,
+                'model_id' => 216,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4121,7 +4121,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 217,
                 'number' => 'LOT-0001-26-ELEK-MD-0001',
-                'barang_id' => 217,
+                'model_id' => 217,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4140,7 +4140,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 218,
                 'number' => 'LOT-0001-26-ELEK-MIC-0001',
-                'barang_id' => 218,
+                'model_id' => 218,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4159,7 +4159,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 219,
                 'number' => 'LOT-0001-26-ELEK-MIC-0002',
-                'barang_id' => 219,
+                'model_id' => 219,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4178,7 +4178,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 220,
                 'number' => 'LOT-0001-26-ELEK-MK-0001',
-                'barang_id' => 220,
+                'model_id' => 220,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4197,7 +4197,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 221,
                 'number' => 'LOT-0001-26-ELEK-MPK-0001',
-                'barang_id' => 221,
+                'model_id' => 221,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4216,7 +4216,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 222,
                 'number' => 'LOT-0001-26-ELEK-PCT-0001',
-                'barang_id' => 222,
+                'model_id' => 222,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4235,7 +4235,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 223,
                 'number' => 'LOT-0001-26-ELEK-PVC-0001',
-                'barang_id' => 223,
+                'model_id' => 223,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4254,7 +4254,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 224,
                 'number' => 'LOT-0001-26-ELEK-SD-0001',
-                'barang_id' => 224,
+                'model_id' => 224,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4273,7 +4273,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 225,
                 'number' => 'LOT-0001-26-ELEK-SD-0002',
-                'barang_id' => 225,
+                'model_id' => 225,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4292,7 +4292,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 226,
                 'number' => 'LOT-0001-26-ELEK-SD-0003',
-                'barang_id' => 226,
+                'model_id' => 226,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4311,7 +4311,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 227,
                 'number' => 'LOT-0001-26-ELEK-SD-0004',
-                'barang_id' => 227,
+                'model_id' => 227,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4330,7 +4330,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 228,
                 'number' => 'LOT-0001-26-ELEK-SD-0005',
-                'barang_id' => 228,
+                'model_id' => 228,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4349,7 +4349,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 229,
                 'number' => 'LOT-0001-26-ELEK-SPE-0001',
-                'barang_id' => 229,
+                'model_id' => 229,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4368,7 +4368,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 230,
                 'number' => 'LOT-0001-26-ELEK-SPE-0002',
-                'barang_id' => 230,
+                'model_id' => 230,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4387,7 +4387,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 231,
                 'number' => 'LOT-0001-26-ELEK-SPE-0003',
-                'barang_id' => 231,
+                'model_id' => 231,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4406,7 +4406,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 232,
                 'number' => 'LOT-0001-26-ELEK-SPE-0004',
-                'barang_id' => 232,
+                'model_id' => 232,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4425,7 +4425,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 233,
                 'number' => 'LOT-0001-26-ELEK-SPE-0005',
-                'barang_id' => 233,
+                'model_id' => 233,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4444,7 +4444,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 234,
                 'number' => 'LOT-0001-26-ELEK-SPE-0006',
-                'barang_id' => 234,
+                'model_id' => 234,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4463,7 +4463,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 235,
                 'number' => 'LOT-0001-26-ELEK-SPE-0007',
-                'barang_id' => 235,
+                'model_id' => 235,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4482,7 +4482,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 236,
                 'number' => 'LOT-0001-26-ELEK-SPE-0008',
-                'barang_id' => 236,
+                'model_id' => 236,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4501,7 +4501,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 237,
                 'number' => 'LOT-0001-26-ELEK-SPE-0009',
-                'barang_id' => 237,
+                'model_id' => 237,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4520,7 +4520,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 238,
                 'number' => 'LOT-0001-26-ELEK-SPE-0010',
-                'barang_id' => 238,
+                'model_id' => 238,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4539,7 +4539,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 239,
                 'number' => 'LOT-0001-26-ELEK-SPE-0011',
-                'barang_id' => 239,
+                'model_id' => 239,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4558,7 +4558,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 240,
                 'number' => 'LOT-0001-26-ELEK-SPE-0012',
-                'barang_id' => 240,
+                'model_id' => 240,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4577,7 +4577,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 241,
                 'number' => 'LOT-0001-26-ELEK-SPR-0001',
-                'barang_id' => 241,
+                'model_id' => 241,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4596,7 +4596,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 242,
                 'number' => 'LOT-0001-26-ELEK-SPR-0002',
-                'barang_id' => 242,
+                'model_id' => 242,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4615,7 +4615,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 243,
                 'number' => 'LOT-0001-26-ELEK-TG-0001',
-                'barang_id' => 243,
+                'model_id' => 243,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4634,7 +4634,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 244,
                 'number' => 'LOT-0001-26-ELEK-TG-0002',
-                'barang_id' => 244,
+                'model_id' => 244,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4653,7 +4653,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 245,
                 'number' => 'LOT-0001-26-ELEK-TG-0003',
-                'barang_id' => 245,
+                'model_id' => 245,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4672,7 +4672,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 246,
                 'number' => 'LOT-0001-26-ELEK-TG-0004',
-                'barang_id' => 246,
+                'model_id' => 246,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4691,7 +4691,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 247,
                 'number' => 'LOT-0001-26-ELEK-TG-0005',
-                'barang_id' => 247,
+                'model_id' => 247,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4710,7 +4710,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 248,
                 'number' => 'LOT-0001-26-ELEK-TG-0006',
-                'barang_id' => 248,
+                'model_id' => 248,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4729,7 +4729,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 249,
                 'number' => 'LOT-0001-26-ELEK-TG-0007',
-                'barang_id' => 249,
+                'model_id' => 249,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4748,7 +4748,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 250,
                 'number' => 'LOT-0001-26-ELEK-TG-0008',
-                'barang_id' => 250,
+                'model_id' => 250,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4767,7 +4767,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 251,
                 'number' => 'LOT-0001-26-ELEK-TG-0009',
-                'barang_id' => 251,
+                'model_id' => 251,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4786,7 +4786,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 252,
                 'number' => 'LOT-0001-26-ELEK-TG-0010',
-                'barang_id' => 252,
+                'model_id' => 252,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4805,7 +4805,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 253,
                 'number' => 'LOT-0001-26-ELEK-TV-0001',
-                'barang_id' => 253,
+                'model_id' => 253,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4824,7 +4824,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 254,
                 'number' => 'LOT-0001-26-ELEK-TV-0002',
-                'barang_id' => 254,
+                'model_id' => 254,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4843,7 +4843,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 255,
                 'number' => 'LOT-0001-26-ELEK-TV-0003',
-                'barang_id' => 255,
+                'model_id' => 255,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4862,7 +4862,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 256,
                 'number' => 'LOT-0001-26-ELEK-TV-0004',
-                'barang_id' => 256,
+                'model_id' => 256,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4881,7 +4881,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 257,
                 'number' => 'LOT-0001-26-ELEK-TV-0005',
-                'barang_id' => 257,
+                'model_id' => 257,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4900,7 +4900,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 258,
                 'number' => 'LOT-0001-26-ELEK-TV-0006',
-                'barang_id' => 258,
+                'model_id' => 258,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4919,7 +4919,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 259,
                 'number' => 'LOT-0001-26-ELEK-TV-0007',
-                'barang_id' => 259,
+                'model_id' => 259,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4938,7 +4938,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 260,
                 'number' => 'LOT-0001-26-ELEK-TV-0008',
-                'barang_id' => 260,
+                'model_id' => 260,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4957,7 +4957,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 261,
                 'number' => 'LOT-0001-26-ELEK-TV-0009',
-                'barang_id' => 261,
+                'model_id' => 261,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4976,7 +4976,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 262,
                 'number' => 'LOT-0001-26-ELEK-TV-0010',
-                'barang_id' => 262,
+                'model_id' => 262,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -4995,7 +4995,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 263,
                 'number' => 'LOT-0001-26-ELEK-TV-0011',
-                'barang_id' => 263,
+                'model_id' => 263,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5014,7 +5014,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 264,
                 'number' => 'LOT-0001-26-ELEK-TV-0012',
-                'barang_id' => 264,
+                'model_id' => 264,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5033,7 +5033,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 265,
                 'number' => 'LOT-0001-26-FUR-KK-0001',
-                'barang_id' => 265,
+                'model_id' => 265,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5052,7 +5052,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 266,
                 'number' => 'LOT-0001-26-FUR-KK-0002',
-                'barang_id' => 266,
+                'model_id' => 266,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5071,7 +5071,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 267,
                 'number' => 'LOT-0001-26-FUR-KK-0003',
-                'barang_id' => 267,
+                'model_id' => 267,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5090,7 +5090,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 268,
                 'number' => 'LOT-0001-26-FUR-KK-0004',
-                'barang_id' => 268,
+                'model_id' => 268,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5109,7 +5109,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 269,
                 'number' => 'LOT-0001-26-FUR-KK-0005',
-                'barang_id' => 269,
+                'model_id' => 269,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5128,7 +5128,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 270,
                 'number' => 'LOT-0001-26-FUR-KK-0006',
-                'barang_id' => 270,
+                'model_id' => 270,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5147,7 +5147,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 271,
                 'number' => 'LOT-0001-26-FUR-KK-0007',
-                'barang_id' => 271,
+                'model_id' => 271,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5166,7 +5166,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 272,
                 'number' => 'LOT-0001-26-FUR-KK-0008',
-                'barang_id' => 272,
+                'model_id' => 272,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5185,7 +5185,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 273,
                 'number' => 'LOT-0001-26-FUR-KK-0009',
-                'barang_id' => 273,
+                'model_id' => 273,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5204,7 +5204,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 274,
                 'number' => 'LOT-0001-26-FUR-KK-0010',
-                'barang_id' => 274,
+                'model_id' => 274,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5223,7 +5223,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 275,
                 'number' => 'LOT-0001-26-FUR-KK-0011',
-                'barang_id' => 275,
+                'model_id' => 275,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5242,7 +5242,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 276,
                 'number' => 'LOT-0001-26-FUR-KK-0012',
-                'barang_id' => 276,
+                'model_id' => 276,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5261,7 +5261,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 277,
                 'number' => 'LOT-0001-26-FUR-KK-0013',
-                'barang_id' => 277,
+                'model_id' => 277,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5280,7 +5280,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 278,
                 'number' => 'LOT-0001-26-FUR-KK-0014',
-                'barang_id' => 278,
+                'model_id' => 278,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5299,7 +5299,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 279,
                 'number' => 'LOT-0001-26-FUR-KK-0015',
-                'barang_id' => 279,
+                'model_id' => 279,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5318,7 +5318,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 280,
                 'number' => 'LOT-0001-26-FUR-KK-0016',
-                'barang_id' => 280,
+                'model_id' => 280,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5337,7 +5337,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 281,
                 'number' => 'LOT-0001-26-FUR-KK-0017',
-                'barang_id' => 281,
+                'model_id' => 281,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5356,7 +5356,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 282,
                 'number' => 'LOT-0001-26-FUR-KK-0018',
-                'barang_id' => 282,
+                'model_id' => 282,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5375,7 +5375,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 283,
                 'number' => 'LOT-0001-26-FUR-KK-0019',
-                'barang_id' => 283,
+                'model_id' => 283,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5394,7 +5394,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 284,
                 'number' => 'LOT-0001-26-FUR-KK-0020',
-                'barang_id' => 284,
+                'model_id' => 284,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5413,7 +5413,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 285,
                 'number' => 'LOT-0001-26-FUR-KK-0021',
-                'barang_id' => 285,
+                'model_id' => 285,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5432,7 +5432,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 286,
                 'number' => 'LOT-0001-26-FUR-KK-0022',
-                'barang_id' => 286,
+                'model_id' => 286,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5451,7 +5451,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 287,
                 'number' => 'LOT-0001-26-FUR-KK-0023',
-                'barang_id' => 287,
+                'model_id' => 287,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5470,7 +5470,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 288,
                 'number' => 'LOT-0001-26-FUR-KK-0024',
-                'barang_id' => 288,
+                'model_id' => 288,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5489,7 +5489,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 289,
                 'number' => 'LOT-0001-26-FUR-KK-0025',
-                'barang_id' => 289,
+                'model_id' => 289,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5508,7 +5508,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 290,
                 'number' => 'LOT-0001-26-FUR-KK-0026',
-                'barang_id' => 290,
+                'model_id' => 290,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5527,7 +5527,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 291,
                 'number' => 'LOT-0001-26-FUR-KK-0027',
-                'barang_id' => 291,
+                'model_id' => 291,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5546,7 +5546,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 292,
                 'number' => 'LOT-0001-26-FUR-KK-0028',
-                'barang_id' => 292,
+                'model_id' => 292,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5565,7 +5565,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 293,
                 'number' => 'LOT-0001-26-FUR-KK-0029',
-                'barang_id' => 293,
+                'model_id' => 293,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5584,7 +5584,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 294,
                 'number' => 'LOT-0001-26-FUR-KK-0030',
-                'barang_id' => 294,
+                'model_id' => 294,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5603,7 +5603,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 295,
                 'number' => 'LOT-0001-26-FUR-KK-0031',
-                'barang_id' => 295,
+                'model_id' => 295,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5622,7 +5622,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 296,
                 'number' => 'LOT-0001-26-FUR-KK-0032',
-                'barang_id' => 296,
+                'model_id' => 296,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5641,7 +5641,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 297,
                 'number' => 'LOT-0001-26-FUR-KP-0001',
-                'barang_id' => 297,
+                'model_id' => 297,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5660,7 +5660,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 298,
                 'number' => 'LOT-0001-26-FUR-KT-0001',
-                'barang_id' => 298,
+                'model_id' => 298,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5679,7 +5679,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 299,
                 'number' => 'LOT-0001-26-FUR-KT-0002',
-                'barang_id' => 299,
+                'model_id' => 299,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5698,7 +5698,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 300,
                 'number' => 'LOT-0001-26-FUR-KT-0003',
-                'barang_id' => 300,
+                'model_id' => 300,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5717,7 +5717,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 301,
                 'number' => 'LOT-0001-26-FUR-KT-0004',
-                'barang_id' => 301,
+                'model_id' => 301,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5736,7 +5736,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 302,
                 'number' => 'LOT-0001-26-FUR-KT-0005',
-                'barang_id' => 302,
+                'model_id' => 302,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5755,7 +5755,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 303,
                 'number' => 'LOT-0001-26-FUR-KT-0006',
-                'barang_id' => 303,
+                'model_id' => 303,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5774,7 +5774,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 304,
                 'number' => 'LOT-0001-26-FUR-KT-0007',
-                'barang_id' => 304,
+                'model_id' => 304,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5793,7 +5793,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 305,
                 'number' => 'LOT-0001-26-FUR-LC-0001',
-                'barang_id' => 305,
+                'model_id' => 305,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5812,7 +5812,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 306,
                 'number' => 'LOT-0001-26-FUR-LC-0002',
-                'barang_id' => 306,
+                'model_id' => 306,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5831,7 +5831,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 307,
                 'number' => 'LOT-0001-26-FUR-LC-0003',
-                'barang_id' => 307,
+                'model_id' => 307,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5850,7 +5850,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 308,
                 'number' => 'LOT-0001-26-FUR-LC-0004',
-                'barang_id' => 308,
+                'model_id' => 308,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5869,7 +5869,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 309,
                 'number' => 'LOT-0001-26-FUR-LC-0005',
-                'barang_id' => 309,
+                'model_id' => 309,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5888,7 +5888,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 310,
                 'number' => 'LOT-0001-26-FUR-LC-0006',
-                'barang_id' => 310,
+                'model_id' => 310,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5907,7 +5907,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 311,
                 'number' => 'LOT-0001-26-FUR-LC-0007',
-                'barang_id' => 311,
+                'model_id' => 311,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5926,7 +5926,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 312,
                 'number' => 'LOT-0001-26-FUR-LC-0008',
-                'barang_id' => 312,
+                'model_id' => 312,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5945,7 +5945,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 313,
                 'number' => 'LOT-0001-26-FUR-LC-0009',
-                'barang_id' => 313,
+                'model_id' => 313,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5964,7 +5964,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 314,
                 'number' => 'LOT-0001-26-FUR-LM-0001',
-                'barang_id' => 314,
+                'model_id' => 314,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -5983,7 +5983,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 315,
                 'number' => 'LOT-0001-26-FUR-LM-0002',
-                'barang_id' => 315,
+                'model_id' => 315,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6002,7 +6002,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 316,
                 'number' => 'LOT-0001-26-FUR-LM-0003',
-                'barang_id' => 316,
+                'model_id' => 316,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6021,7 +6021,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 317,
                 'number' => 'LOT-0001-26-FUR-LM-0004',
-                'barang_id' => 317,
+                'model_id' => 317,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6040,7 +6040,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 318,
                 'number' => 'LOT-0001-26-FUR-LM-0005',
-                'barang_id' => 318,
+                'model_id' => 318,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6059,7 +6059,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 319,
                 'number' => 'LOT-0001-26-FUR-LM-0006',
-                'barang_id' => 319,
+                'model_id' => 319,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6078,7 +6078,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 320,
                 'number' => 'LOT-0001-26-FUR-LM-0007',
-                'barang_id' => 320,
+                'model_id' => 320,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6097,7 +6097,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 321,
                 'number' => 'LOT-0001-26-FUR-LM-0008',
-                'barang_id' => 321,
+                'model_id' => 321,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6116,7 +6116,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 322,
                 'number' => 'LOT-0001-26-FUR-LM-0009',
-                'barang_id' => 322,
+                'model_id' => 322,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6135,7 +6135,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 323,
                 'number' => 'LOT-0001-26-FUR-LM-0010',
-                'barang_id' => 323,
+                'model_id' => 323,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6154,7 +6154,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 324,
                 'number' => 'LOT-0001-26-FUR-LM-0011',
-                'barang_id' => 324,
+                'model_id' => 324,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6173,7 +6173,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 325,
                 'number' => 'LOT-0001-26-FUR-LM-0012',
-                'barang_id' => 325,
+                'model_id' => 325,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6192,7 +6192,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 326,
                 'number' => 'LOT-0001-26-FUR-LM-0013',
-                'barang_id' => 326,
+                'model_id' => 326,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6211,7 +6211,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 327,
                 'number' => 'LOT-0001-26-FUR-LM-0014',
-                'barang_id' => 327,
+                'model_id' => 327,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6230,7 +6230,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 328,
                 'number' => 'LOT-0001-26-FUR-LM-0015',
-                'barang_id' => 328,
+                'model_id' => 328,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6249,7 +6249,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 329,
                 'number' => 'LOT-0001-26-FUR-MB-0001',
-                'barang_id' => 329,
+                'model_id' => 329,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6268,7 +6268,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 330,
                 'number' => 'LOT-0001-26-FUR-MB-0002',
-                'barang_id' => 330,
+                'model_id' => 330,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6287,7 +6287,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 331,
                 'number' => 'LOT-0001-26-FUR-MB-0003',
-                'barang_id' => 331,
+                'model_id' => 331,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6306,7 +6306,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 332,
                 'number' => 'LOT-0001-26-FUR-MK-0001',
-                'barang_id' => 332,
+                'model_id' => 332,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6325,7 +6325,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 333,
                 'number' => 'LOT-0001-26-FUR-MK-0002',
-                'barang_id' => 333,
+                'model_id' => 333,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6344,7 +6344,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 334,
                 'number' => 'LOT-0001-26-FUR-MK-0003',
-                'barang_id' => 334,
+                'model_id' => 334,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6363,7 +6363,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 335,
                 'number' => 'LOT-0001-26-FUR-MK-0004',
-                'barang_id' => 335,
+                'model_id' => 335,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6382,7 +6382,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 336,
                 'number' => 'LOT-0001-26-FUR-MK-0005',
-                'barang_id' => 336,
+                'model_id' => 336,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6401,7 +6401,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 337,
                 'number' => 'LOT-0001-26-FUR-MK-0006',
-                'barang_id' => 337,
+                'model_id' => 337,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6420,7 +6420,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 338,
                 'number' => 'LOT-0001-26-FUR-MK-0007',
-                'barang_id' => 338,
+                'model_id' => 338,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6439,7 +6439,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 339,
                 'number' => 'LOT-0001-26-FUR-MK-0008',
-                'barang_id' => 339,
+                'model_id' => 339,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6458,7 +6458,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 340,
                 'number' => 'LOT-0001-26-FUR-MK-0009',
-                'barang_id' => 340,
+                'model_id' => 340,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6477,7 +6477,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 341,
                 'number' => 'LOT-0001-26-FUR-MK-0010',
-                'barang_id' => 341,
+                'model_id' => 341,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6496,7 +6496,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 342,
                 'number' => 'LOT-0001-26-FUR-MK-0011',
-                'barang_id' => 342,
+                'model_id' => 342,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6515,7 +6515,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 343,
                 'number' => 'LOT-0001-26-FUR-MK-0012',
-                'barang_id' => 343,
+                'model_id' => 343,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6534,7 +6534,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 344,
                 'number' => 'LOT-0001-26-FUR-MK-0013',
-                'barang_id' => 344,
+                'model_id' => 344,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6553,7 +6553,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 345,
                 'number' => 'LOT-0001-26-FUR-MK-0014',
-                'barang_id' => 345,
+                'model_id' => 345,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6572,7 +6572,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 346,
                 'number' => 'LOT-0001-26-FUR-MK-0015',
-                'barang_id' => 346,
+                'model_id' => 346,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6591,7 +6591,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 347,
                 'number' => 'LOT-0001-26-FUR-MK-0016',
-                'barang_id' => 347,
+                'model_id' => 347,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6610,7 +6610,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 348,
                 'number' => 'LOT-0001-26-FUR-MK-0017',
-                'barang_id' => 348,
+                'model_id' => 348,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6629,7 +6629,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 349,
                 'number' => 'LOT-0001-26-FUR-MK-0018',
-                'barang_id' => 349,
+                'model_id' => 349,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6648,7 +6648,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 350,
                 'number' => 'LOT-0001-26-FUR-MK-0019',
-                'barang_id' => 350,
+                'model_id' => 350,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6667,7 +6667,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 351,
                 'number' => 'LOT-0001-26-FUR-MK-0020',
-                'barang_id' => 351,
+                'model_id' => 351,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6686,7 +6686,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 352,
                 'number' => 'LOT-0001-26-FUR-MK-0021',
-                'barang_id' => 352,
+                'model_id' => 352,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6705,7 +6705,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 353,
                 'number' => 'LOT-0001-26-FUR-MK-0022',
-                'barang_id' => 353,
+                'model_id' => 353,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6724,7 +6724,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 354,
                 'number' => 'LOT-0001-26-FUR-MK-0023',
-                'barang_id' => 354,
+                'model_id' => 354,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6743,7 +6743,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 355,
                 'number' => 'LOT-0001-26-FUR-MK-0024',
-                'barang_id' => 355,
+                'model_id' => 355,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6762,7 +6762,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 356,
                 'number' => 'LOT-0001-26-FUR-MK-0025',
-                'barang_id' => 356,
+                'model_id' => 356,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6781,7 +6781,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 357,
                 'number' => 'LOT-0001-26-FUR-MK-0026',
-                'barang_id' => 357,
+                'model_id' => 357,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6800,7 +6800,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 358,
                 'number' => 'LOT-0001-26-FUR-MK-0027',
-                'barang_id' => 358,
+                'model_id' => 358,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6819,7 +6819,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 359,
                 'number' => 'LOT-0001-26-FUR-MK-0028',
-                'barang_id' => 359,
+                'model_id' => 359,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6838,7 +6838,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 360,
                 'number' => 'LOT-0001-26-FUR-MK-0029',
-                'barang_id' => 360,
+                'model_id' => 360,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6857,7 +6857,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 361,
                 'number' => 'LOT-0001-26-FUR-MT-0001',
-                'barang_id' => 361,
+                'model_id' => 361,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6876,7 +6876,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 362,
                 'number' => 'LOT-0001-26-FUR-MT-0002',
-                'barang_id' => 362,
+                'model_id' => 362,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6895,7 +6895,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 363,
                 'number' => 'LOT-0001-26-FUR-MT-0003',
-                'barang_id' => 363,
+                'model_id' => 363,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6914,7 +6914,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 364,
                 'number' => 'LOT-0001-26-FUR-MT-0004',
-                'barang_id' => 364,
+                'model_id' => 364,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6933,7 +6933,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 365,
                 'number' => 'LOT-0001-26-FUR-MT-0005',
-                'barang_id' => 365,
+                'model_id' => 365,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6952,7 +6952,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 366,
                 'number' => 'LOT-0001-26-KEND-MO-0001',
-                'barang_id' => 366,
+                'model_id' => 366,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6971,7 +6971,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 367,
                 'number' => 'LOT-0001-26-MES-GEN-0001',
-                'barang_id' => 367,
+                'model_id' => 367,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -6990,7 +6990,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 368,
                 'number' => 'LOT-0001-26-MES-LIF-0001',
-                'barang_id' => 368,
+                'model_id' => 368,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7009,7 +7009,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 369,
                 'number' => 'LOT-0001-26-MES-PAN-0001',
-                'barang_id' => 369,
+                'model_id' => 369,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7028,7 +7028,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 370,
                 'number' => 'LOT-0001-26-MES-PAN-0002',
-                'barang_id' => 370,
+                'model_id' => 370,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7047,7 +7047,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 371,
                 'number' => 'LOT-0001-26-MES-PAN-0003',
-                'barang_id' => 371,
+                'model_id' => 371,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7066,7 +7066,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 372,
                 'number' => 'LOT-0001-26-MES-PAN-0004',
-                'barang_id' => 372,
+                'model_id' => 372,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7085,7 +7085,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 373,
                 'number' => 'LOT-0001-26-MES-PAN-0005',
-                'barang_id' => 373,
+                'model_id' => 373,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7104,7 +7104,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 374,
                 'number' => 'LOT-0001-26-MES-PAN-0006',
-                'barang_id' => 374,
+                'model_id' => 374,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7123,7 +7123,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 375,
                 'number' => 'LOT-0001-26-MES-PAN-0007',
-                'barang_id' => 375,
+                'model_id' => 375,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7142,7 +7142,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 376,
                 'number' => 'LOT-0001-26-MES-PAN-0008',
-                'barang_id' => 376,
+                'model_id' => 376,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7161,7 +7161,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 377,
                 'number' => 'LOT-0001-26-MES-PAN-0009',
-                'barang_id' => 377,
+                'model_id' => 377,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7180,7 +7180,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 378,
                 'number' => 'LOT-0001-26-MES-PAN-0010',
-                'barang_id' => 378,
+                'model_id' => 378,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7199,7 +7199,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 379,
                 'number' => 'LOT-0001-26-MES-PAN-0011',
-                'barang_id' => 379,
+                'model_id' => 379,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7218,7 +7218,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 380,
                 'number' => 'LOT-0001-26-MES-PAN-0012',
-                'barang_id' => 380,
+                'model_id' => 380,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7237,7 +7237,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 381,
                 'number' => 'LOT-0001-26-MES-PAN-0013',
-                'barang_id' => 381,
+                'model_id' => 381,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7256,7 +7256,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 382,
                 'number' => 'LOT-0001-26-MES-PAN-0014',
-                'barang_id' => 382,
+                'model_id' => 382,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7275,7 +7275,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 383,
                 'number' => 'LOT-0001-26-MES-PAN-0015',
-                'barang_id' => 383,
+                'model_id' => 383,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7294,7 +7294,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 384,
                 'number' => 'LOT-0001-26-MES-PAN-0016',
-                'barang_id' => 384,
+                'model_id' => 384,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7313,7 +7313,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 385,
                 'number' => 'LOT-0001-26-MES-PAN-0017',
-                'barang_id' => 385,
+                'model_id' => 385,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7332,7 +7332,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 386,
                 'number' => 'LOT-0001-26-MES-PAN-0018',
-                'barang_id' => 386,
+                'model_id' => 386,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7351,7 +7351,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 387,
                 'number' => 'LOT-0001-26-MES-PAN-0019',
-                'barang_id' => 387,
+                'model_id' => 387,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7370,7 +7370,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 388,
                 'number' => 'LOT-0001-26-MES-PAN-0020',
-                'barang_id' => 388,
+                'model_id' => 388,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7389,7 +7389,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 389,
                 'number' => 'LOT-0001-26-MES-PAN-0021',
-                'barang_id' => 389,
+                'model_id' => 389,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7408,7 +7408,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 390,
                 'number' => 'LOT-0001-26-MES-PAN-0022',
-                'barang_id' => 390,
+                'model_id' => 390,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7427,7 +7427,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 391,
                 'number' => 'LOT-0001-26-MES-WTH-0001',
-                'barang_id' => 391,
+                'model_id' => 391,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7446,7 +7446,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 392,
                 'number' => 'LOT-0001-26-MON-CRT-0001',
-                'barang_id' => 392,
+                'model_id' => 392,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7465,7 +7465,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 393,
                 'number' => 'LOT-0001-26-MON-CRT-0002',
-                'barang_id' => 393,
+                'model_id' => 393,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7484,7 +7484,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 394,
                 'number' => 'LOT-0001-26-MON-CRT-0003',
-                'barang_id' => 394,
+                'model_id' => 394,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7503,7 +7503,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 395,
                 'number' => 'LOT-0001-26-MON-CRT-0004',
-                'barang_id' => 395,
+                'model_id' => 395,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7522,7 +7522,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 396,
                 'number' => 'LOT-0001-26-MON-CRT-0005',
-                'barang_id' => 396,
+                'model_id' => 396,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7541,7 +7541,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 397,
                 'number' => 'LOT-0001-26-MON-CRT-0006',
-                'barang_id' => 397,
+                'model_id' => 397,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7560,7 +7560,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 398,
                 'number' => 'LOT-0001-26-MON-CRT-0007',
-                'barang_id' => 398,
+                'model_id' => 398,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7579,7 +7579,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 399,
                 'number' => 'LOT-0001-26-MON-CRT-0008',
-                'barang_id' => 399,
+                'model_id' => 399,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7598,7 +7598,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 400,
                 'number' => 'LOT-0001-26-MON-LCD-0001',
-                'barang_id' => 400,
+                'model_id' => 400,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7617,7 +7617,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 401,
                 'number' => 'LOT-0001-26-MON-LCD-0002',
-                'barang_id' => 401,
+                'model_id' => 401,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7636,7 +7636,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 402,
                 'number' => 'LOT-0001-26-MON-LCD-0003',
-                'barang_id' => 402,
+                'model_id' => 402,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7655,7 +7655,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 403,
                 'number' => 'LOT-0001-26-MON-LCD-0004',
-                'barang_id' => 403,
+                'model_id' => 403,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7674,7 +7674,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 404,
                 'number' => 'LOT-0001-26-MON-LCD-0005',
-                'barang_id' => 404,
+                'model_id' => 404,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7693,7 +7693,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 405,
                 'number' => 'LOT-0001-26-MON-LCD-0006',
-                'barang_id' => 405,
+                'model_id' => 405,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7712,7 +7712,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 406,
                 'number' => 'LOT-0001-26-MON-LCD-0008',
-                'barang_id' => 406,
+                'model_id' => 406,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7731,7 +7731,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 407,
                 'number' => 'LOT-0001-26-MON-LCD-0009',
-                'barang_id' => 407,
+                'model_id' => 407,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7750,7 +7750,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 408,
                 'number' => 'LOT-0001-26-MON-LCD-0010',
-                'barang_id' => 408,
+                'model_id' => 408,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7769,7 +7769,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 409,
                 'number' => 'LOT-0001-26-MON-LCD-0011',
-                'barang_id' => 409,
+                'model_id' => 409,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7788,7 +7788,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 410,
                 'number' => 'LOT-0001-26-MON-LCD-0012',
-                'barang_id' => 410,
+                'model_id' => 410,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7807,7 +7807,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 411,
                 'number' => 'LOT-0001-26-MON-LCD-0013',
-                'barang_id' => 411,
+                'model_id' => 411,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7826,7 +7826,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 412,
                 'number' => 'LOT-0001-26-MON-LCD-0014',
-                'barang_id' => 412,
+                'model_id' => 412,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7845,7 +7845,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 413,
                 'number' => 'LOT-0001-26-MON-LCD-0015',
-                'barang_id' => 413,
+                'model_id' => 413,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7864,7 +7864,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 414,
                 'number' => 'LOT-0001-26-MON-LCD-0016',
-                'barang_id' => 414,
+                'model_id' => 414,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7883,7 +7883,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 415,
                 'number' => 'LOT-0001-26-MON-LCD-0017',
-                'barang_id' => 415,
+                'model_id' => 415,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7902,7 +7902,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 416,
                 'number' => 'LOT-0001-26-MON-LCD-0018',
-                'barang_id' => 416,
+                'model_id' => 416,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7921,7 +7921,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 417,
                 'number' => 'LOT-0001-26-MON-LCD-0019',
-                'barang_id' => 417,
+                'model_id' => 417,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7940,7 +7940,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 418,
                 'number' => 'LOT-0001-26-MON-LCD-0020',
-                'barang_id' => 418,
+                'model_id' => 418,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7959,7 +7959,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 419,
                 'number' => 'LOT-0001-26-MON-LCD-0021',
-                'barang_id' => 419,
+                'model_id' => 419,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7978,7 +7978,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 420,
                 'number' => 'LOT-0001-26-MON-LCD-0022',
-                'barang_id' => 420,
+                'model_id' => 420,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -7997,7 +7997,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 421,
                 'number' => 'LOT-0001-26-MON-LCD-0023',
-                'barang_id' => 421,
+                'model_id' => 421,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8016,7 +8016,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 422,
                 'number' => 'LOT-0001-26-MON-LCD-0024',
-                'barang_id' => 422,
+                'model_id' => 422,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8035,7 +8035,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 423,
                 'number' => 'LOT-0001-26-MON-LCD-0025',
-                'barang_id' => 423,
+                'model_id' => 423,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8054,7 +8054,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 424,
                 'number' => 'LOT-0001-26-MON-LCD-0026',
-                'barang_id' => 424,
+                'model_id' => 424,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8073,7 +8073,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 425,
                 'number' => 'LOT-0001-26-MON-LCD-0027',
-                'barang_id' => 425,
+                'model_id' => 425,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8092,7 +8092,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 426,
                 'number' => 'LOT-0001-26-MON-LCD-0028',
-                'barang_id' => 426,
+                'model_id' => 426,
                 'organizer_id' => 2,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8111,7 +8111,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 427,
                 'number' => 'LOT-0001-26-PDGR-ACN-0001',
-                'barang_id' => 427,
+                'model_id' => 427,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8130,7 +8130,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 428,
                 'number' => 'LOT-0001-26-PDGR-ACN-0002',
-                'barang_id' => 428,
+                'model_id' => 428,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8149,7 +8149,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 429,
                 'number' => 'LOT-0001-26-PDGR-ACN-0003',
-                'barang_id' => 429,
+                'model_id' => 429,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8168,7 +8168,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 430,
                 'number' => 'LOT-0001-26-PDGR-ACN-0004',
-                'barang_id' => 430,
+                'model_id' => 430,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8187,7 +8187,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 431,
                 'number' => 'LOT-0001-26-PDGR-ACP-0001',
-                'barang_id' => 431,
+                'model_id' => 431,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8206,7 +8206,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 432,
                 'number' => 'LOT-0001-26-PDGR-ACP-0002',
-                'barang_id' => 432,
+                'model_id' => 432,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8225,7 +8225,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 433,
                 'number' => 'LOT-0001-26-PDGR-ACP-0003',
-                'barang_id' => 433,
+                'model_id' => 433,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8244,7 +8244,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 434,
                 'number' => 'LOT-0001-26-PDGR-ACS-0001',
-                'barang_id' => 434,
+                'model_id' => 434,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8263,7 +8263,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 435,
                 'number' => 'LOT-0001-26-PDGR-ACS-0002',
-                'barang_id' => 435,
+                'model_id' => 435,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8282,7 +8282,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 436,
                 'number' => 'LOT-0001-26-PDGR-ACSP-0001',
-                'barang_id' => 436,
+                'model_id' => 436,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8301,7 +8301,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 437,
                 'number' => 'LOT-0001-26-PDGR-ACSP-0002',
-                'barang_id' => 437,
+                'model_id' => 437,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8320,7 +8320,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 438,
                 'number' => 'LOT-0001-26-PDGR-ACSP-0003',
-                'barang_id' => 438,
+                'model_id' => 438,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8339,7 +8339,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 439,
                 'number' => 'LOT-0001-26-PDGR-ACSP-0004',
-                'barang_id' => 439,
+                'model_id' => 439,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8358,7 +8358,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 440,
                 'number' => 'LOT-0001-26-PDGR-ACSP-0005',
-                'barang_id' => 440,
+                'model_id' => 440,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8377,7 +8377,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 441,
                 'number' => 'LOT-0001-26-PDGR-ACSP-0006',
-                'barang_id' => 441,
+                'model_id' => 441,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8396,7 +8396,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 442,
                 'number' => 'LOT-0001-26-PDGR-ACSP-0007',
-                'barang_id' => 442,
+                'model_id' => 442,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8415,7 +8415,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 443,
                 'number' => 'LOT-0001-26-PDGR-ACSP-0008',
-                'barang_id' => 443,
+                'model_id' => 443,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8434,7 +8434,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 444,
                 'number' => 'LOT-0001-26-PDGR-ACSP-0009',
-                'barang_id' => 444,
+                'model_id' => 444,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8453,7 +8453,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 445,
                 'number' => 'LOT-0001-26-PDGR-ACSP-0010',
-                'barang_id' => 445,
+                'model_id' => 445,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8472,7 +8472,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 446,
                 'number' => 'LOT-0001-26-PDGR-ACSP-0012',
-                'barang_id' => 446,
+                'model_id' => 446,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8491,7 +8491,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 447,
                 'number' => 'LOT-0001-26-PDGR-ACSP-0013',
-                'barang_id' => 447,
+                'model_id' => 447,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8510,7 +8510,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 448,
                 'number' => 'LOT-0001-26-PDGR-ACSP-0014',
-                'barang_id' => 448,
+                'model_id' => 448,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8529,7 +8529,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 449,
                 'number' => 'LOT-0001-26-PDGR-ACSP-0015',
-                'barang_id' => 449,
+                'model_id' => 449,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8548,7 +8548,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 450,
                 'number' => 'LOT-0001-26-PDGR-ACSP-0016',
-                'barang_id' => 450,
+                'model_id' => 450,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8567,7 +8567,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 451,
                 'number' => 'LOT-0001-26-PDGR-ACSP-0017',
-                'barang_id' => 451,
+                'model_id' => 451,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8586,7 +8586,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 452,
                 'number' => 'LOT-0001-26-PDGR-ACSP-0018',
-                'barang_id' => 452,
+                'model_id' => 452,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8605,7 +8605,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 453,
                 'number' => 'LOT-0001-26-PDGR-AHU-0001',
-                'barang_id' => 453,
+                'model_id' => 453,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8624,7 +8624,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 454,
                 'number' => 'LOT-0001-26-PDGR-AHU-0002',
-                'barang_id' => 454,
+                'model_id' => 454,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8643,7 +8643,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 455,
                 'number' => 'LOT-0001-26-PERP-ACCN-0001',
-                'barang_id' => 455,
+                'model_id' => 455,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8662,7 +8662,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 456,
                 'number' => 'LOT-0001-26-PERP-ACCS-0001',
-                'barang_id' => 456,
+                'model_id' => 456,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8681,7 +8681,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 457,
                 'number' => 'LOT-0001-26-PERP-ACCS-0002',
-                'barang_id' => 457,
+                'model_id' => 457,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8700,7 +8700,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 458,
                 'number' => 'LOT-0001-26-PERP-ACCS-0003',
-                'barang_id' => 458,
+                'model_id' => 458,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8719,7 +8719,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 459,
                 'number' => 'LOT-0001-26-PERP-CAM-0001',
-                'barang_id' => 459,
+                'model_id' => 459,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8738,7 +8738,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 460,
                 'number' => 'LOT-0001-26-PERP-CAM-0002',
-                'barang_id' => 460,
+                'model_id' => 460,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8757,7 +8757,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 461,
                 'number' => 'LOT-0001-26-PERP-CAM-0003',
-                'barang_id' => 461,
+                'model_id' => 461,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8776,7 +8776,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 462,
                 'number' => 'LOT-0001-26-PERP-CAM-0004',
-                'barang_id' => 462,
+                'model_id' => 462,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8795,7 +8795,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 463,
                 'number' => 'LOT-0001-26-PERP-CAM-0005',
-                'barang_id' => 463,
+                'model_id' => 463,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8814,7 +8814,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 464,
                 'number' => 'LOT-0001-26-PERP-CAM-0006',
-                'barang_id' => 464,
+                'model_id' => 464,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8833,7 +8833,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 465,
                 'number' => 'LOT-0001-26-PERP-CAM-0007',
-                'barang_id' => 465,
+                'model_id' => 465,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8852,7 +8852,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 466,
                 'number' => 'LOT-0001-26-PERP-CAM-0008',
-                'barang_id' => 466,
+                'model_id' => 466,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8871,7 +8871,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 467,
                 'number' => 'LOT-0001-26-PERP-CAM-0009',
-                'barang_id' => 467,
+                'model_id' => 467,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8890,7 +8890,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 468,
                 'number' => 'LOT-0001-26-PERP-COMM-0001',
-                'barang_id' => 468,
+                'model_id' => 468,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8909,7 +8909,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 469,
                 'number' => 'LOT-0001-26-PERP-COMM-0002',
-                'barang_id' => 469,
+                'model_id' => 469,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8928,7 +8928,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 470,
                 'number' => 'LOT-0001-26-PERP-COMM-0003',
-                'barang_id' => 470,
+                'model_id' => 470,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8947,7 +8947,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 471,
                 'number' => 'LOT-0001-26-PERP-COMM-0004',
-                'barang_id' => 471,
+                'model_id' => 471,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8966,7 +8966,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 472,
                 'number' => 'LOT-0001-26-PERP-MEXT-0001',
-                'barang_id' => 472,
+                'model_id' => 472,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -8985,7 +8985,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 473,
                 'number' => 'LOT-0001-26-PERP-MEXT-0002',
-                'barang_id' => 473,
+                'model_id' => 473,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9004,7 +9004,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 474,
                 'number' => 'LOT-0001-26-PERP-MEXT-0003',
-                'barang_id' => 474,
+                'model_id' => 474,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9023,7 +9023,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 475,
                 'number' => 'LOT-0001-26-PERP-MEXT-0004',
-                'barang_id' => 475,
+                'model_id' => 475,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9042,7 +9042,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 476,
                 'number' => 'LOT-0001-26-PERP-MEXT-0005',
-                'barang_id' => 476,
+                'model_id' => 476,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9061,7 +9061,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 477,
                 'number' => 'LOT-0001-26-PERP-MEXT-0006',
-                'barang_id' => 477,
+                'model_id' => 477,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9080,7 +9080,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 478,
                 'number' => 'LOT-0001-26-PERP-MEXT-0007',
-                'barang_id' => 478,
+                'model_id' => 478,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9099,7 +9099,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 479,
                 'number' => 'LOT-0001-26-PERP-MEXT-0008',
-                'barang_id' => 479,
+                'model_id' => 479,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9118,7 +9118,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 480,
                 'number' => 'LOT-0001-26-PERP-MEXT-0009',
-                'barang_id' => 480,
+                'model_id' => 480,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9137,7 +9137,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 481,
                 'number' => 'LOT-0001-26-PERP-MEXT-0010',
-                'barang_id' => 481,
+                'model_id' => 481,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9156,7 +9156,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 482,
                 'number' => 'LOT-0001-26-PERP-MEXT-0011',
-                'barang_id' => 482,
+                'model_id' => 482,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9175,7 +9175,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 483,
                 'number' => 'LOT-0001-26-PERP-MEXT-0012',
-                'barang_id' => 483,
+                'model_id' => 483,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9194,7 +9194,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 484,
                 'number' => 'LOT-0001-26-PERP-MEXT-0013',
-                'barang_id' => 484,
+                'model_id' => 484,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9213,7 +9213,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 485,
                 'number' => 'LOT-0001-26-PERP-MEXT-0014',
-                'barang_id' => 485,
+                'model_id' => 485,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9232,7 +9232,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 486,
                 'number' => 'LOT-0001-26-PERP-MEXT-0015',
-                'barang_id' => 486,
+                'model_id' => 486,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9251,7 +9251,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 487,
                 'number' => 'LOT-0001-26-PERP-MEXT-0016',
-                'barang_id' => 487,
+                'model_id' => 487,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9270,7 +9270,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 488,
                 'number' => 'LOT-0001-26-PERP-MMD-0001',
-                'barang_id' => 488,
+                'model_id' => 488,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9289,7 +9289,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 489,
                 'number' => 'LOT-0001-26-PERP-MMD-0002',
-                'barang_id' => 489,
+                'model_id' => 489,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9308,7 +9308,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 490,
                 'number' => 'LOT-0001-26-PERP-MMD-0003',
-                'barang_id' => 490,
+                'model_id' => 490,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9327,7 +9327,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 491,
                 'number' => 'LOT-0001-26-PERP-MMD-0004',
-                'barang_id' => 491,
+                'model_id' => 491,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9346,7 +9346,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 492,
                 'number' => 'LOT-0001-26-PERP-MMD-0005',
-                'barang_id' => 492,
+                'model_id' => 492,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9365,7 +9365,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 493,
                 'number' => 'LOT-0001-26-PERP-NETW-0001',
-                'barang_id' => 493,
+                'model_id' => 493,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9384,7 +9384,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 494,
                 'number' => 'LOT-0001-26-PERP-NETW-0002',
-                'barang_id' => 494,
+                'model_id' => 494,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9403,7 +9403,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 495,
                 'number' => 'LOT-0001-26-PERP-NETW-0003',
-                'barang_id' => 495,
+                'model_id' => 495,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9422,7 +9422,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 496,
                 'number' => 'LOT-0001-26-PERP-NETW-0004',
-                'barang_id' => 496,
+                'model_id' => 496,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9441,7 +9441,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 497,
                 'number' => 'LOT-0001-26-PERP-NETW-0005',
-                'barang_id' => 497,
+                'model_id' => 497,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9460,7 +9460,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 498,
                 'number' => 'LOT-0001-26-PERP-NETW-0006',
-                'barang_id' => 498,
+                'model_id' => 498,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9479,7 +9479,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 499,
                 'number' => 'LOT-0001-26-PERP-NETW-0007',
-                'barang_id' => 499,
+                'model_id' => 499,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9498,7 +9498,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 500,
                 'number' => 'LOT-0001-26-PERP-NETW-0008',
-                'barang_id' => 500,
+                'model_id' => 500,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9517,7 +9517,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 501,
                 'number' => 'LOT-0001-26-PERP-NETW-0009',
-                'barang_id' => 501,
+                'model_id' => 501,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9536,7 +9536,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 502,
                 'number' => 'LOT-0001-26-PERP-NETW-0010',
-                'barang_id' => 502,
+                'model_id' => 502,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9555,7 +9555,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 503,
                 'number' => 'LOT-0001-26-PERP-NETW-0011',
-                'barang_id' => 503,
+                'model_id' => 503,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9574,7 +9574,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 504,
                 'number' => 'LOT-0001-26-PERP-NETW-0012',
-                'barang_id' => 504,
+                'model_id' => 504,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9593,7 +9593,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 505,
                 'number' => 'LOT-0001-26-PERP-NETW-0013',
-                'barang_id' => 505,
+                'model_id' => 505,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9612,7 +9612,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 506,
                 'number' => 'LOT-0001-26-PERP-NETW-0014',
-                'barang_id' => 506,
+                'model_id' => 506,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9631,7 +9631,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 507,
                 'number' => 'LOT-0001-26-PERP-NETW-0015',
-                'barang_id' => 507,
+                'model_id' => 507,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9650,7 +9650,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 508,
                 'number' => 'LOT-0001-26-PERP-NETW-0016',
-                'barang_id' => 508,
+                'model_id' => 508,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9669,7 +9669,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 509,
                 'number' => 'LOT-0001-26-PERP-NETW-0017',
-                'barang_id' => 509,
+                'model_id' => 509,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9688,7 +9688,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 510,
                 'number' => 'LOT-0001-26-PERP-NETW-0018',
-                'barang_id' => 510,
+                'model_id' => 510,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9707,7 +9707,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 511,
                 'number' => 'LOT-0001-26-PERP-NETW-0019',
-                'barang_id' => 511,
+                'model_id' => 511,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9726,7 +9726,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 512,
                 'number' => 'LOT-0001-26-PERP-NETW-0020',
-                'barang_id' => 512,
+                'model_id' => 512,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9745,7 +9745,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 513,
                 'number' => 'LOT-0001-26-PERP-NETW-0021',
-                'barang_id' => 513,
+                'model_id' => 513,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9764,7 +9764,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 514,
                 'number' => 'LOT-0001-26-PERP-NETW-0022',
-                'barang_id' => 514,
+                'model_id' => 514,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9783,7 +9783,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 515,
                 'number' => 'LOT-0001-26-PERP-NETW-0023',
-                'barang_id' => 515,
+                'model_id' => 515,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9802,7 +9802,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 516,
                 'number' => 'LOT-0001-26-PERP-NETW-0024',
-                'barang_id' => 516,
+                'model_id' => 516,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9821,7 +9821,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 517,
                 'number' => 'LOT-0001-26-PERP-NETW-0025',
-                'barang_id' => 517,
+                'model_id' => 517,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9840,7 +9840,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 518,
                 'number' => 'LOT-0001-26-PERP-PROJ-0001',
-                'barang_id' => 518,
+                'model_id' => 518,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9859,7 +9859,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 519,
                 'number' => 'LOT-0001-26-PERP-PROJ-0002',
-                'barang_id' => 519,
+                'model_id' => 519,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9878,7 +9878,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 520,
                 'number' => 'LOT-0001-26-PERP-PROJ-0003',
-                'barang_id' => 520,
+                'model_id' => 520,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9897,7 +9897,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 521,
                 'number' => 'LOT-0001-26-PERP-PROJ-0004',
-                'barang_id' => 521,
+                'model_id' => 521,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9916,7 +9916,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 522,
                 'number' => 'LOT-0001-26-PERP-PROJ-0005',
-                'barang_id' => 522,
+                'model_id' => 522,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9935,7 +9935,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 523,
                 'number' => 'LOT-0001-26-PERP-PROJ-0006',
-                'barang_id' => 523,
+                'model_id' => 523,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9954,7 +9954,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 524,
                 'number' => 'LOT-0001-26-PERP-PROJ-0007',
-                'barang_id' => 524,
+                'model_id' => 524,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9973,7 +9973,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 525,
                 'number' => 'LOT-0001-26-PERP-PROJ-0008',
-                'barang_id' => 525,
+                'model_id' => 525,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -9992,7 +9992,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 526,
                 'number' => 'LOT-0001-26-PERP-PROJ-0009',
-                'barang_id' => 526,
+                'model_id' => 526,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10011,7 +10011,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 527,
                 'number' => 'LOT-0001-26-PERP-PROJ-0010',
-                'barang_id' => 527,
+                'model_id' => 527,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10030,7 +10030,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 528,
                 'number' => 'LOT-0001-26-PERP-RAKS-0001',
-                'barang_id' => 528,
+                'model_id' => 528,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10049,7 +10049,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 529,
                 'number' => 'LOT-0001-26-PERP-RAKS-0002',
-                'barang_id' => 529,
+                'model_id' => 529,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10068,7 +10068,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 530,
                 'number' => 'LOT-0001-26-PERP-RAKS-0003',
-                'barang_id' => 530,
+                'model_id' => 530,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10087,7 +10087,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 531,
                 'number' => 'LOT-0001-26-PERP-RAKS-0004',
-                'barang_id' => 531,
+                'model_id' => 531,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10106,7 +10106,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 532,
                 'number' => 'LOT-0001-26-PERP-SCAN-0001',
-                'barang_id' => 532,
+                'model_id' => 532,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10125,7 +10125,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 533,
                 'number' => 'LOT-0001-26-PERP-SCAN-0002',
-                'barang_id' => 533,
+                'model_id' => 533,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10144,7 +10144,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 534,
                 'number' => 'LOT-0001-26-PERP-SCAN-0003',
-                'barang_id' => 534,
+                'model_id' => 534,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10163,7 +10163,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 535,
                 'number' => 'LOT-0001-26-PERP-SCAN-0004',
-                'barang_id' => 535,
+                'model_id' => 535,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10182,7 +10182,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 536,
                 'number' => 'LOT-0001-26-PERP-SCAN-0005',
-                'barang_id' => 536,
+                'model_id' => 536,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10201,7 +10201,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 537,
                 'number' => 'LOT-0001-26-PERP-SCAN-0006',
-                'barang_id' => 537,
+                'model_id' => 537,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10220,7 +10220,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 538,
                 'number' => 'LOT-0001-26-PERP-SCAN-0007',
-                'barang_id' => 538,
+                'model_id' => 538,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10239,7 +10239,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 539,
                 'number' => 'LOT-0001-26-PERP-SCRN-0001',
-                'barang_id' => 539,
+                'model_id' => 539,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10258,7 +10258,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 540,
                 'number' => 'LOT-0001-26-PERP-STRG-0001',
-                'barang_id' => 540,
+                'model_id' => 540,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10277,7 +10277,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 541,
                 'number' => 'LOT-0001-26-PERP-STRG-0002',
-                'barang_id' => 541,
+                'model_id' => 541,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10296,7 +10296,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 542,
                 'number' => 'LOT-0001-26-PERP-STRG-0003',
-                'barang_id' => 542,
+                'model_id' => 542,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10315,7 +10315,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 543,
                 'number' => 'LOT-0001-26-PERP-STRG-0004',
-                'barang_id' => 543,
+                'model_id' => 543,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10334,7 +10334,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 544,
                 'number' => 'LOT-0001-26-PERP-STRG-0005',
-                'barang_id' => 544,
+                'model_id' => 544,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10353,7 +10353,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 545,
                 'number' => 'LOT-0001-26-PERP-STRG-0006',
-                'barang_id' => 545,
+                'model_id' => 545,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10372,7 +10372,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 546,
                 'number' => 'LOT-0001-26-PERP-STRG-0007',
-                'barang_id' => 546,
+                'model_id' => 546,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10391,7 +10391,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 547,
                 'number' => 'LOT-0001-26-PERP-STRG-0008',
-                'barang_id' => 547,
+                'model_id' => 547,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10410,7 +10410,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 548,
                 'number' => 'LOT-0001-26-PERP-STRG-0009',
-                'barang_id' => 548,
+                'model_id' => 548,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10429,7 +10429,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 549,
                 'number' => 'LOT-0001-26-PERP-STRG-0010',
-                'barang_id' => 549,
+                'model_id' => 549,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10448,7 +10448,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 550,
                 'number' => 'LOT-0001-26-PERP-STRG-0011',
-                'barang_id' => 550,
+                'model_id' => 550,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10467,7 +10467,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 551,
                 'number' => 'LOT-0001-26-PERP-STRG-0012',
-                'barang_id' => 551,
+                'model_id' => 551,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10486,7 +10486,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 552,
                 'number' => 'LOT-0001-26-PERP-STRG-0013',
-                'barang_id' => 552,
+                'model_id' => 552,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10505,7 +10505,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 553,
                 'number' => 'LOT-0001-26-PERP-UPS-0001',
-                'barang_id' => 553,
+                'model_id' => 553,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10524,7 +10524,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 554,
                 'number' => 'LOT-0001-26-PERP-UPS-0002',
-                'barang_id' => 554,
+                'model_id' => 554,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10543,7 +10543,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 555,
                 'number' => 'LOT-0001-26-PERP-UPS-0003',
-                'barang_id' => 555,
+                'model_id' => 555,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10562,7 +10562,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 556,
                 'number' => 'LOT-0001-26-PERP-UPS-0004',
-                'barang_id' => 556,
+                'model_id' => 556,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10581,7 +10581,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 557,
                 'number' => 'LOT-0001-26-PERP-VGA-0001',
-                'barang_id' => 557,
+                'model_id' => 557,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10600,7 +10600,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 558,
                 'number' => 'LOT-0001-26-PERP-VGA-0002',
-                'barang_id' => 558,
+                'model_id' => 558,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10619,7 +10619,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 559,
                 'number' => 'LOT-0001-26-PRNT-DOT-0001',
-                'barang_id' => 559,
+                'model_id' => 559,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10638,7 +10638,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 560,
                 'number' => 'LOT-0001-26-PRNT-DOT-0002',
-                'barang_id' => 560,
+                'model_id' => 560,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10657,7 +10657,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 561,
                 'number' => 'LOT-0001-26-PRNT-IDC-0001',
-                'barang_id' => 561,
+                'model_id' => 561,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10676,7 +10676,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 562,
                 'number' => 'LOT-0001-26-PRNT-INK-0001',
-                'barang_id' => 562,
+                'model_id' => 562,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10695,7 +10695,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 563,
                 'number' => 'LOT-0001-26-PRNT-INK-0002',
-                'barang_id' => 563,
+                'model_id' => 563,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10714,7 +10714,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 564,
                 'number' => 'LOT-0001-26-PRNT-INK-0003',
-                'barang_id' => 564,
+                'model_id' => 564,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10733,7 +10733,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 565,
                 'number' => 'LOT-0001-26-PRNT-INK-0004',
-                'barang_id' => 565,
+                'model_id' => 565,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10752,7 +10752,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 566,
                 'number' => 'LOT-0001-26-PRNT-INK-0005',
-                'barang_id' => 566,
+                'model_id' => 566,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10771,7 +10771,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 567,
                 'number' => 'LOT-0001-26-PRNT-INK-0006',
-                'barang_id' => 567,
+                'model_id' => 567,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10790,7 +10790,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 568,
                 'number' => 'LOT-0001-26-PRNT-INK-0007',
-                'barang_id' => 568,
+                'model_id' => 568,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10809,7 +10809,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 569,
                 'number' => 'LOT-0001-26-PRNT-INK-0008',
-                'barang_id' => 569,
+                'model_id' => 569,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10828,7 +10828,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 570,
                 'number' => 'LOT-0001-26-PRNT-LJT-0001',
-                'barang_id' => 570,
+                'model_id' => 570,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10847,7 +10847,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 571,
                 'number' => 'LOT-0001-26-PRNT-LJT-0002',
-                'barang_id' => 571,
+                'model_id' => 571,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10866,7 +10866,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 572,
                 'number' => 'LOT-0001-26-PRNT-LJT-0003',
-                'barang_id' => 572,
+                'model_id' => 572,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10885,7 +10885,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 573,
                 'number' => 'LOT-0001-26-PRNT-LJT-0004',
-                'barang_id' => 573,
+                'model_id' => 573,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10904,7 +10904,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 574,
                 'number' => 'LOT-0001-26-PRNT-LJT-0005',
-                'barang_id' => 574,
+                'model_id' => 574,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10923,7 +10923,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 575,
                 'number' => 'LOT-0001-26-PRNT-LJT-0006',
-                'barang_id' => 575,
+                'model_id' => 575,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10942,7 +10942,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 576,
                 'number' => 'LOT-0001-26-PRNT-LJT-0007',
-                'barang_id' => 576,
+                'model_id' => 576,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10961,7 +10961,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 577,
                 'number' => 'LOT-0001-26-PRNT-LJT-0008',
-                'barang_id' => 577,
+                'model_id' => 577,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10980,7 +10980,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 578,
                 'number' => 'LOT-0001-26-PRNT-MLT-0001',
-                'barang_id' => 578,
+                'model_id' => 578,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -10999,7 +10999,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 579,
                 'number' => 'LOT-0001-26-PRNT-MLT-0002',
-                'barang_id' => 579,
+                'model_id' => 579,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11018,7 +11018,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 580,
                 'number' => 'LOT-0001-26-PRNT-MLT-0003',
-                'barang_id' => 580,
+                'model_id' => 580,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11037,7 +11037,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 581,
                 'number' => 'LOT-0001-26-PRNT-MLT-0004',
-                'barang_id' => 581,
+                'model_id' => 581,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11056,7 +11056,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 582,
                 'number' => 'LOT-0001-26-PRNT-MLT-0005',
-                'barang_id' => 582,
+                'model_id' => 582,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11075,7 +11075,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 583,
                 'number' => 'LOT-0001-26-PRNT-MLT-0006',
-                'barang_id' => 583,
+                'model_id' => 583,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11094,7 +11094,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 584,
                 'number' => 'LOT-0001-26-PRNT-PLT-0001',
-                'barang_id' => 584,
+                'model_id' => 584,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11113,7 +11113,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 585,
                 'number' => 'LOT-0001-26-PROP-PRO-0001',
-                'barang_id' => 585,
+                'model_id' => 585,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11132,7 +11132,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 586,
                 'number' => 'LOT-0001-26-PROP-PRO-0002',
-                'barang_id' => 586,
+                'model_id' => 586,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11151,7 +11151,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 587,
                 'number' => 'LOT-0001-26-PROP-PRO-0003',
-                'barang_id' => 587,
+                'model_id' => 587,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11170,7 +11170,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 588,
                 'number' => 'LOT-0001-26-PROP-PRO-0004',
-                'barang_id' => 588,
+                'model_id' => 588,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11189,7 +11189,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 589,
                 'number' => 'LOT-0001-26-PROP-PRO-0005',
-                'barang_id' => 589,
+                'model_id' => 589,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11208,7 +11208,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 590,
                 'number' => 'LOT-0001-26-PROP-PRO-0006',
-                'barang_id' => 590,
+                'model_id' => 590,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11227,7 +11227,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 591,
                 'number' => 'LOT-0001-26-PROP-PRO-0007',
-                'barang_id' => 591,
+                'model_id' => 591,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11246,7 +11246,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 592,
                 'number' => 'LOT-0001-26-PROP-PRO-0008',
-                'barang_id' => 592,
+                'model_id' => 592,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11265,7 +11265,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 593,
                 'number' => 'LOT-0001-26-SOFT-ENG-0001',
-                'barang_id' => 593,
+                'model_id' => 593,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11284,7 +11284,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 594,
                 'number' => 'LOT-0001-26-SOFT-ENG-0002',
-                'barang_id' => 594,
+                'model_id' => 594,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11303,7 +11303,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 595,
                 'number' => 'LOT-0001-26-SOFT-ENG-0003',
-                'barang_id' => 595,
+                'model_id' => 595,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11322,7 +11322,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 596,
                 'number' => 'LOT-0001-26-SOFT-ENG-0004',
-                'barang_id' => 596,
+                'model_id' => 596,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11341,7 +11341,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 597,
                 'number' => 'LOT-0001-26-SOFT-ENG-0005',
-                'barang_id' => 597,
+                'model_id' => 597,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11360,7 +11360,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 598,
                 'number' => 'LOT-0001-26-SOFT-ENG-0006',
-                'barang_id' => 598,
+                'model_id' => 598,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11379,7 +11379,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 599,
                 'number' => 'LOT-0001-26-SOFT-ENG-0007',
-                'barang_id' => 599,
+                'model_id' => 599,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11398,7 +11398,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 600,
                 'number' => 'LOT-0001-26-SOFT-ENG-0008',
-                'barang_id' => 600,
+                'model_id' => 600,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11417,7 +11417,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 601,
                 'number' => 'LOT-0001-26-SOFT-ENG-0009',
-                'barang_id' => 601,
+                'model_id' => 601,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11436,7 +11436,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 602,
                 'number' => 'LOT-0001-26-SOFT-ENG-0010',
-                'barang_id' => 602,
+                'model_id' => 602,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11455,7 +11455,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 603,
                 'number' => 'LOT-0001-26-SOFT-ENG-0011',
-                'barang_id' => 603,
+                'model_id' => 603,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11474,7 +11474,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 604,
                 'number' => 'LOT-0001-26-SOFT-ENG-0012',
-                'barang_id' => 604,
+                'model_id' => 604,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11493,7 +11493,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 605,
                 'number' => 'LOT-0001-26-SOFT-ENG-0013',
-                'barang_id' => 605,
+                'model_id' => 605,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11512,7 +11512,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 606,
                 'number' => 'LOT-0001-26-SOFT-ENG-0014',
-                'barang_id' => 606,
+                'model_id' => 606,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11531,7 +11531,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 607,
                 'number' => 'LOT-0001-26-SOFT-ENG-0015',
-                'barang_id' => 607,
+                'model_id' => 607,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11550,7 +11550,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 608,
                 'number' => 'LOT-0001-26-SOFT-ENG-0016',
-                'barang_id' => 608,
+                'model_id' => 608,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11569,7 +11569,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 609,
                 'number' => 'LOT-0001-26-SOFT-ENG-0017',
-                'barang_id' => 609,
+                'model_id' => 609,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11588,7 +11588,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 610,
                 'number' => 'LOT-0001-26-SOFT-ENG-0018',
-                'barang_id' => 610,
+                'model_id' => 610,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11607,7 +11607,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 611,
                 'number' => 'LOT-0001-26-SOFT-ENG-0019',
-                'barang_id' => 611,
+                'model_id' => 611,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11626,7 +11626,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 612,
                 'number' => 'LOT-0001-26-SOFT-ENG-0020',
-                'barang_id' => 612,
+                'model_id' => 612,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11645,7 +11645,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 613,
                 'number' => 'LOT-0001-26-SOFT-ENG-0021',
-                'barang_id' => 613,
+                'model_id' => 613,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11664,7 +11664,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 614,
                 'number' => 'LOT-0001-26-SOFT-ENG-0022',
-                'barang_id' => 614,
+                'model_id' => 614,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11683,7 +11683,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 615,
                 'number' => 'LOT-0001-26-SOFT-ENG-0023',
-                'barang_id' => 615,
+                'model_id' => 615,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11702,7 +11702,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 616,
                 'number' => 'LOT-0001-26-SOFT-ENG-0024',
-                'barang_id' => 616,
+                'model_id' => 616,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11721,7 +11721,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 617,
                 'number' => 'LOT-0001-26-SOFT-ENG-0025',
-                'barang_id' => 617,
+                'model_id' => 617,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11740,7 +11740,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 618,
                 'number' => 'LOT-0001-26-SOFT-ENG-0026',
-                'barang_id' => 618,
+                'model_id' => 618,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11759,7 +11759,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 619,
                 'number' => 'LOT-0001-26-SOFT-GEN-0001',
-                'barang_id' => 619,
+                'model_id' => 619,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11778,7 +11778,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 620,
                 'number' => 'LOT-0001-26-SOFT-GEN-0002',
-                'barang_id' => 620,
+                'model_id' => 620,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11797,7 +11797,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 621,
                 'number' => 'LOT-0001-26-SOFT-GEN-0003',
-                'barang_id' => 621,
+                'model_id' => 621,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11816,7 +11816,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 622,
                 'number' => 'LOT-0001-26-SOFT-GEN-0004',
-                'barang_id' => 622,
+                'model_id' => 622,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11835,7 +11835,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 623,
                 'number' => 'LOT-0001-26-SOFT-GEN-0005',
-                'barang_id' => 623,
+                'model_id' => 623,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11854,7 +11854,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 624,
                 'number' => 'LOT-0001-26-SOFT-GEN-0006',
-                'barang_id' => 624,
+                'model_id' => 624,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11873,7 +11873,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 625,
                 'number' => 'LOT-0001-26-SOFT-GEN-0007',
-                'barang_id' => 625,
+                'model_id' => 625,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11892,7 +11892,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 626,
                 'number' => 'LOT-0001-26-SOFT-GEN-0008',
-                'barang_id' => 626,
+                'model_id' => 626,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11911,7 +11911,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 627,
                 'number' => 'LOT-0001-26-SOFT-GEN-0009',
-                'barang_id' => 627,
+                'model_id' => 627,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11930,7 +11930,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 628,
                 'number' => 'LOT-0001-26-SOFT-GEN-0010',
-                'barang_id' => 628,
+                'model_id' => 628,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11949,7 +11949,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 629,
                 'number' => 'LOT-0001-26-SOFT-GEN-0011',
-                'barang_id' => 629,
+                'model_id' => 629,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11968,7 +11968,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 630,
                 'number' => 'LOT-0001-26-SOFT-GEN-0012',
-                'barang_id' => 630,
+                'model_id' => 630,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -11987,7 +11987,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 631,
                 'number' => 'LOT-0001-26-SOFT-GEN-0013',
-                'barang_id' => 631,
+                'model_id' => 631,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -12006,7 +12006,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 632,
                 'number' => 'LOT-0001-26-SOFT-GEN-0014',
-                'barang_id' => 632,
+                'model_id' => 632,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -12025,7 +12025,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 633,
                 'number' => 'LOT-0001-26-SOFT-GEN-0015',
-                'barang_id' => 633,
+                'model_id' => 633,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -12044,7 +12044,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 634,
                 'number' => 'LOT-0001-26-SOFT-GEN-0016',
-                'barang_id' => 634,
+                'model_id' => 634,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -12063,7 +12063,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 635,
                 'number' => 'LOT-0001-26-SOFT-GEN-0017',
-                'barang_id' => 635,
+                'model_id' => 635,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -12082,7 +12082,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 636,
                 'number' => 'LOT-0001-26-SOFT-GEN-0018',
-                'barang_id' => 636,
+                'model_id' => 636,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -12101,7 +12101,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 637,
                 'number' => 'LOT-0001-26-SOFT-GEN-0019',
-                'barang_id' => 637,
+                'model_id' => 637,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -12120,7 +12120,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 638,
                 'number' => 'LOT-0001-26-SOFT-GEN-0020',
-                'barang_id' => 638,
+                'model_id' => 638,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -12139,7 +12139,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 639,
                 'number' => 'LOT-0001-26-SOFT-GEN-0021',
-                'barang_id' => 639,
+                'model_id' => 639,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -12158,7 +12158,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 640,
                 'number' => 'LOT-0001-26-SOFT-GEN-0022',
-                'barang_id' => 640,
+                'model_id' => 640,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -12177,7 +12177,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 641,
                 'number' => 'LOT-0001-26-SOFT-GEN-0023',
-                'barang_id' => 641,
+                'model_id' => 641,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -12196,7 +12196,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 642,
                 'number' => 'LOT-0001-26-SOFT-GEN-0024',
-                'barang_id' => 642,
+                'model_id' => 642,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -12215,7 +12215,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 643,
                 'number' => 'LOT-0001-26-TLKM-FAX-0001',
-                'barang_id' => 643,
+                'model_id' => 643,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -12234,7 +12234,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 644,
                 'number' => 'LOT-0001-26-TLKM-FAX-0002',
-                'barang_id' => 644,
+                'model_id' => 644,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -12253,7 +12253,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 645,
                 'number' => 'LOT-0001-26-TLKM-HT-0001',
-                'barang_id' => 645,
+                'model_id' => 645,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -12272,7 +12272,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 646,
                 'number' => 'LOT-0001-26-TLKM-SP-0001',
-                'barang_id' => 646,
+                'model_id' => 646,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -12291,7 +12291,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 647,
                 'number' => 'LOT-0001-26-TLKM-TL-0001',
-                'barang_id' => 647,
+                'model_id' => 647,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -12310,7 +12310,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 648,
                 'number' => 'LOT-0001-26-TLKM-TL-0002',
-                'barang_id' => 648,
+                'model_id' => 648,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -12329,7 +12329,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 649,
                 'number' => 'LOT-0001-26-TLKM-TL-0003',
-                'barang_id' => 649,
+                'model_id' => 649,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -12348,7 +12348,7 @@ class ActualLotSeeder extends Seeder
             [
                 'id' => 650,
                 'number' => 'LOT-0001-26-TLKM-TL-0004',
-                'barang_id' => 650,
+                'model_id' => 650,
                 'organizer_id' => 1,
                 'vendor_id' => null,
                 'legacy_vendor_id' => null,
@@ -12378,7 +12378,7 @@ class ActualLotSeeder extends Seeder
                 ['id'],
                 [
                     'number',
-                    'barang_id',
+                    'model_id',
                     'organizer_id',
                     'vendor_id',
                     'legacy_vendor_id',

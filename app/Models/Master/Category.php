@@ -19,11 +19,19 @@ class Category extends Model
     ];
 
     /**
-     * Subcategories belonging to this category.
+     * Types belonging to this category.
+     */
+    public function types(): HasMany
+    {
+        return $this->hasMany(Type::class);
+    }
+
+    /**
+     * Backward-compatibility relation for subcategories.
      */
     public function subcategories(): HasMany
     {
-        return $this->hasMany(Subcategory::class);
+        return $this->hasMany(Type::class);
     }
 
     /**

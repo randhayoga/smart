@@ -16,7 +16,7 @@ import DeleteErrorModal from '@/Components/DeleteErrorModal.vue';
 import EditTipeModal from './Modals/EditTipeModal.vue';
 import ManualRequestBarangModal from './Modals/ManualRequestBarangModal.vue';
 import DetailBarangTab from './Tabs/DetailBarangTab.vue';
-import DaftarAsetTab from './Tabs/DaftarAsetTab.vue';
+import DaftarTidakHabisPakaiTab from './Tabs/DaftarTidakHabisPakaiTab.vue';
 import DaftarLOTTab from './Tabs/DaftarLOTTab.vue';
 
 interface Props {
@@ -82,8 +82,8 @@ const { t } = useI18n();
 const tabs = computed(() => [
   { id: 'Detail', label: t('inventory.typeDetail') },
   { 
-    id: props.barang.is_consumable ? 'Daftar LOT' : 'Daftar Aset', 
-    label: props.barang.is_consumable ? t('inventory.lotList') : t('inventory.assetList') 
+    id: props.barang.is_consumable ? 'Daftar LOT' : 'Daftar Tidak Habis Pakai', 
+    label: props.barang.is_consumable ? t('inventory.lotList') : t('inventory.nonConsumableList') 
   }
 ]);
 const activeTab = ref('Detail');
@@ -141,7 +141,7 @@ const handleConfirmDelete = () => {
   const ids = itemsToDelete.value.map(item => item.id);
   
   if (deleteMode.value === 'barang') {
-    router.delete(`/smart/inventory/barangs/${ids[0]}`, {
+    router.delete(`/smart/inventory/models/${ids[0]}`, {
       onStart: () => { processing.value = true; },
       onFinish: () => { processing.value = false; },
       onSuccess: () => {
@@ -267,8 +267,8 @@ onUnmounted(() => {
         :projects="props.projects"
       />
 
-      <DaftarAsetTab
-        v-else-if="activeTab === 'Daftar Aset'"
+      <DaftarTidakHabisPakaiTab
+        v-else-if="activeTab === 'Daftar Tidak Habis Pakai'"
         :units="props.units"
         :locations="props.locations"
         :projects="props.projects"

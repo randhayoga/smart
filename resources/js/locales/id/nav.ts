@@ -15,9 +15,9 @@ export default {
   items: {
     accessManagement: 'Manajemen Akses',
     dashboard: 'Dashboard',
-    inventoryManagement: 'Manajemen Barang',
-    consumableStock: 'Daftar Stok (Habis Pakai)',
-    assets: 'Daftar Aset',
+    inventoryManagement: 'Manajemen Stok',
+    consumableStock: 'Daftar Habis Pakai',
+    assets: 'Daftar Tidak Habis Pakai',
     employees: 'Daftar Karyawan',
     pendingActivation: 'Daftar Pending Aktivasi',
     pendingInactive: 'Daftar Pending Nonaktif',

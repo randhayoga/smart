@@ -78,24 +78,27 @@ class SmartFulfillmentResource extends JsonResource
 
             $isConsumable = (bool) $item->is_consumable;
 
-            $subcatName = $item->barang?->subcategory?->name ?? $item->subcategory?->name ?? '-';
-            $catName = $item->barang?->subcategory?->category?->name ?? $item->subcategory?->category?->name ?? '-';
-            $imageUrl = $item->barang?->image_url
-                ? '/media/' . $item->barang->image_url
-                : (($firstBarang = $item->subcategory?->barangs?->first()) && $firstBarang->image_url ? '/media/' . $firstBarang->image_url : null);
-            $uomName = $item->barang?->uom?->name 
-                ?? $item->subcategory?->barangs?->first()?->uom?->name 
+            $typeName = $item->model?->type?->name ?? $item->type?->name ?? '-';
+            $catName = $item->model?->type?->category?->name ?? $item->type?->category?->name ?? '-';
+            $imageUrl = $item->model?->image_url
+                ? '/media/' . $item->model->image_url
+                : (($firstModel = $item->type?->models?->first()) && $firstModel->image_url ? '/media/' . $firstModel->image_url : null);
+            $uomName = $item->model?->uom?->name 
+                ?? $item->type?->models?->first()?->uom?->name 
                 ?? 'satuan';
 
             $itemData = [
                 'id' => $item->id,
-                'barang_id' => $item->barang_id,
-                'subcategory_id' => $item->subcategory_id,
+                'model_id' => $item->model_id,
+                'barang_id' => $item->model_id,
+                'type_id' => $item->type_id,
+                'subcategory_id' => $item->type_id,
                 'category' => $catName,
-                'subcategory' => $subcatName,
-                'brand' => $item->barang?->brand?->name ?? '-',
-                'name' => $item->barang?->name ?? 'Tidak Spesifik',
-                'spec' => $item->barang?->specification ?? '',
+                'type' => $typeName,
+                'subcategory' => $typeName,
+                'brand' => $item->model?->brand?->name ?? '-',
+                'name' => $item->model?->name ?? 'Tidak Spesifik',
+                'spec' => $item->model?->specification ?? '',
                 'quantity' => $requested,
                 'quantity_requested' => $requested,
                 'is_consumable' => $isConsumable,
@@ -108,7 +111,7 @@ class SmartFulfillmentResource extends JsonResource
                 // Consumable item: LOT breakdown
                 $lotFulfillments = $item->fulfillments
                     ->whereNotNull('lot_id')
-                    ->whereNull('unit_id')
+                    ->whereNull('asset_id')
                     ->map(function ($f) {
                         $loc = $f->lot?->location?->full_name ?? '-';
 
@@ -116,9 +119,9 @@ class SmartFulfillmentResource extends JsonResource
                             'fulfillment_id' => $f->id,
                             'lot_id' => $f->lot_id,
                             'lot_number' => $f->lot?->number ?? '-',
-                            'brand_name' => $f->lot?->barang?->brand?->name ?? '-',
-                            'item_name' => $f->lot?->barang?->name ?? '-',
-                            'specification' => $f->lot?->barang?->specification ?? '',
+                            'brand_name' => $f->lot?->model?->brand?->name ?? '-',
+                            'item_name' => $f->lot?->model?->name ?? '-',
+                            'specification' => $f->lot?->model?->specification ?? '',
                             'quantity_fulfilled' => (int) $f->quantity_fulfilled,
                             'storage_location' => $loc,
                             'date_of_receipt' => $f->lot?->date_of_receipt ? $f->lot->date_of_receipt->format('d-m-Y') : '-',
@@ -133,7 +136,7 @@ class SmartFulfillmentResource extends JsonResource
 
                 $existingLotMap = $item->fulfillments
                     ->whereNotNull('lot_id')
-                    ->whereNull('unit_id')
+                    ->whereNull('asset_id')
                     ->pluck('quantity_fulfilled', 'lot_id')
                     ->toArray();
 
@@ -142,11 +145,11 @@ class SmartFulfillmentResource extends JsonResource
                     ->map(function ($l) use ($existingLotMap) {
                         $loc = $l->location?->full_name ?? '-';
 
-                        $brand = $l->barang?->brand?->name ?? '';
-                        $name = $l->barang?->name ?? '';
-                        $spec = $l->barang?->specification ?? '';
+                        $brand = $l->model?->brand?->name ?? '';
+                        $name = $l->model?->name ?? '';
+                        $spec = $l->model?->specification ?? '';
                         $variantParts = array_filter([$brand, $name, $spec], fn($v) => !empty($v) && $v !== '-');
-                        $variant = !empty($variantParts) ? implode(' ', $variantParts) : ($l->barang?->name ?? '-');
+                        $variant = !empty($variantParts) ? implode(' ', $variantParts) : ($l->model?->name ?? '-');
 
                         $assignedQty = (int) ($existingLotMap[$l->id] ?? 0);
                         $totalAvailable = (int) $l->current_quantity;
@@ -154,6 +157,7 @@ class SmartFulfillmentResource extends JsonResource
                         return [
                             'id' => $l->id,
                             'lot_code' => $l->number ?? '-',
+                            'lot_number' => $l->number ?? '-',
                             'brand' => $brand,
                             'name' => $name,
                             'spec' => $spec,
@@ -161,7 +165,7 @@ class SmartFulfillmentResource extends JsonResource
                             'storage_location' => $loc,
                             'current_quantity' => $totalAvailable,
                             'allocated_quantity' => $assignedQty,
-                            'uom' => $l->barang?->uom?->name ?? 'satuan',
+                            'uom' => $l->model?->uom?->name ?? 'satuan',
                             'date_of_receipt' => $l->date_of_receipt ? $l->date_of_receipt->format('d-m-Y') : '-',
                         ];
                     })->values()->toArray();
@@ -174,9 +178,9 @@ class SmartFulfillmentResource extends JsonResource
                     'is_fully_fulfilled' => $sumFulfilled >= $requested,
                 ];
             } else {
-                // Non-consumable item: Serialized Unit slots & modal datatable
+                // Non-consumable item: Serialized Asset slots & modal datatable
                 $fulfillments = $item->fulfillments
-                    ->whereNotNull('unit_id')
+                    ->whereNotNull('asset_id')
                     ->sortBy('id')
                     ->values();
 
@@ -187,23 +191,23 @@ class SmartFulfillmentResource extends JsonResource
                 }
 
                 $slots = [];
-                $assignedUnitIds = [];
-                $lockedUnitIds = [];
+                $assignedAssetIds = [];
+                $lockedAssetIds = [];
 
                 for ($i = 0; $i < $requested; $i++) {
                     $slotNum = $i + 1;
                     if ($i < $assignedCount) {
                         $f = $fulfillments[$i];
-                        $unit = $f->unit;
-                        $unitId = $unit?->id;
-                        $assetNumber = $unit?->number;
+                        $asset = $f->asset;
+                        $assetId = $asset?->id;
+                        $assetNumber = $asset?->number;
 
-                        if ($unitId) {
-                            $assignedUnitIds[] = $unitId;
+                        if ($assetId) {
+                            $assignedAssetIds[] = $assetId;
                         }
 
                         $isBorrowed = ($f->handover_id !== null) 
-                            || ($unit && strtolower((string)$unit->status) === 'dipinjam')
+                            || ($asset && strtolower((string)$asset->status) === 'dipinjam')
                             || in_array($this->status, ['borrow', 'success']);
 
                         $isAssigned = ($f->assigned_at !== null) || $isBorrowed;
@@ -213,16 +217,16 @@ class SmartFulfillmentResource extends JsonResource
                             $color = 'green';
                             $label = 'Sudah diserahkan / Dipinjam';
                             $isLocked = true;
-                            if ($unitId) {
-                                $lockedUnitIds[] = $unitId;
+                            if ($assetId) {
+                                $lockedAssetIds[] = $assetId;
                             }
                         } elseif ($isAssigned) {
                             $state = 'assigned';
                             $color = 'purple';
                             $label = 'Dikonfirmasi (Menunggu Serah Terima)';
                             $isLocked = true;
-                            if ($unitId) {
-                                $lockedUnitIds[] = $unitId;
+                            if ($assetId) {
+                                $lockedAssetIds[] = $assetId;
                             }
                         } else {
                             $state = 'assigned';
@@ -234,7 +238,8 @@ class SmartFulfillmentResource extends JsonResource
                         $slots[] = [
                             'slot_number' => $slotNum,
                             'fulfillment_id' => $f->id,
-                            'unit_id' => $unitId,
+                            'asset_id' => $assetId,
+                            'unit_id' => $assetId,
                             'asset_number' => $assetNumber,
                             'state' => $state,
                             'color' => $color,
@@ -245,6 +250,7 @@ class SmartFulfillmentResource extends JsonResource
                         $slots[] = [
                             'slot_number' => $slotNum,
                             'fulfillment_id' => null,
+                            'asset_id' => null,
                             'unit_id' => null,
                             'asset_number' => null,
                             'state' => 'unfulfilled',
@@ -255,29 +261,31 @@ class SmartFulfillmentResource extends JsonResource
                     }
                 }
 
-                // Available units for the "Pilih Alokasi Aset" modal datatable
-                $availableUnitModels = $fulfillmentService->getAvailableUnitsQuery($item, true)->get();
-                $stagedElsewhereUnitIds = RequestFulfillment::whereIn('unit_id', $availableUnitModels->pluck('id'))
+                // Available assets for the "Pilih Alokasi Aset" modal datatable
+                $availableAssetModels = $fulfillmentService->getAvailableAssetsQuery($item, true)->get();
+                $stagedElsewhereAssetIds = RequestFulfillment::whereIn('asset_id', $availableAssetModels->pluck('id'))
                     ->where('request_item_id', '!=', $item->id)
                     ->whereNull('assigned_at')
                     ->whereNull('completed_at')
-                    ->pluck('unit_id')
+                    ->pluck('asset_id')
                     ->all();
 
-                $availableUnits = $availableUnitModels
-                    ->map(function ($u) use ($assignedUnitIds, $lockedUnitIds, $stagedElsewhereUnitIds) {
+                $availableAssets = $availableAssetModels
+                    ->map(function ($u) use ($assignedAssetIds, $lockedAssetIds, $stagedElsewhereAssetIds) {
                         $loc = $u->location?->full_name ?? '-';
 
-                        $brand = $u->lot?->barang?->brand?->name ?? '';
-                        $name = $u->lot?->barang?->name ?? '';
-                        $spec = $u->lot?->barang?->specification ?? '';
+                        $brand = $u->lot?->model?->brand?->name ?? '';
+                        $name = $u->lot?->model?->name ?? '';
+                        $spec = $u->lot?->model?->specification ?? '';
                         $variantParts = array_filter([$brand, $name, $spec], fn($v) => !empty($v) && $v !== '-');
-                        $variant = !empty($variantParts) ? implode(' ', $variantParts) : ($u->lot?->barang?->name ?? '-');
+                        $variant = !empty($variantParts) ? implode(' ', $variantParts) : ($u->lot?->model?->name ?? '-');
 
                         return [
                             'id' => $u->id,
                             'asset_code' => $u->number,
+                            'asset_number' => $u->number,
                             'lot_code' => $u->lot?->number ?? '-',
+                            'lot_number' => $u->lot?->number ?? '-',
                             'brand' => $brand,
                             'name' => $name,
                             'spec' => $spec,
@@ -285,15 +293,16 @@ class SmartFulfillmentResource extends JsonResource
                             'status' => $u->status,
                             'condition' => $u->condition ?? 'Baik',
                             'storage_location' => $loc,
-                            'is_currently_assigned' => in_array($u->id, $assignedUnitIds),
-                            'is_locked' => in_array($u->id, $lockedUnitIds),
-                            'is_staged_elsewhere' => in_array($u->id, $stagedElsewhereUnitIds),
+                            'is_currently_assigned' => in_array($u->id, $assignedAssetIds),
+                            'is_locked' => in_array($u->id, $lockedAssetIds),
+                            'is_staged_elsewhere' => in_array($u->id, $stagedElsewhereAssetIds),
                         ];
                     })->values()->toArray();
 
                 $itemData['allocation_slots'] = $slots;
-                $itemData['available_units'] = $availableUnits;
-                $itemData['assets'] = $fulfillments->pluck('unit.number')->filter()->values()->toArray();
+                $itemData['available_units'] = $availableAssets;
+                $itemData['available_assets'] = $availableAssets;
+                $itemData['assets'] = $fulfillments->pluck('asset.number')->filter()->values()->toArray();
             }
 
             return $itemData;

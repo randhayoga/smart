@@ -228,7 +228,7 @@ class MasterDataTest extends TestCase
         $user = User::factory()->create();
         $category = Category::factory()->create(['code' => 'ATKS']);
 
-        $response = $this->actingAs($user)->post(route('smart.master.subcategories.store'), [
+        $response = $this->actingAs($user)->post(route('smart.master.types.store'), [
             'category_id' => $category->id,
             'code' => 'ATKS-AAAA',
             'name' => 'Subcategory Baru',
@@ -237,7 +237,7 @@ class MasterDataTest extends TestCase
         ]);
 
         $response->assertRedirect();
-        $this->assertDatabaseHas('subcategories', [
+        $this->assertDatabaseHas('types', [
             'category_id' => $category->id,
             'code' => 'ATKS-AAAA',
             'name' => 'Subcategory Baru',
@@ -251,7 +251,7 @@ class MasterDataTest extends TestCase
         $user = User::factory()->create();
         $category = Category::factory()->create(['code' => 'ATKS']);
 
-        $response = $this->actingAs($user)->post(route('smart.master.subcategories.store'), [
+        $response = $this->actingAs($user)->post(route('smart.master.types.store'), [
             'category_id' => $category->id,
             'code' => 'FURN-AAAA', // invalid prefix
             'name' => 'Subcategory Baru',
@@ -265,7 +265,7 @@ class MasterDataTest extends TestCase
         $user = User::factory()->create();
         $category = Category::factory()->create(['code' => 'ATKS']);
 
-        $response = $this->actingAs($user)->post(route('smart.master.subcategories.store'), [
+        $response = $this->actingAs($user)->post(route('smart.master.types.store'), [
             'category_id' => $category->id,
             'code' => 'ATKS-AAAAA', // 5-char suffix (invalid length)
             'name' => 'Subcategory Baru',
@@ -279,7 +279,7 @@ class MasterDataTest extends TestCase
         $user = User::factory()->create();
         $category = Category::factory()->create(['code' => 'ATKS']);
 
-        $response = $this->actingAs($user)->post(route('smart.master.subcategories.store'), [
+        $response = $this->actingAs($user)->post(route('smart.master.types.store'), [
             'category_id' => $category->id,
             'code' => 'ATKS-1234', // digits instead of alphabets
             'name' => 'Subcategory Baru',
@@ -293,13 +293,13 @@ class MasterDataTest extends TestCase
         $user = User::factory()->create();
         $subcategory = Subcategory::factory()->create();
 
-        $response = $this->actingAs($user)->put(route('smart.master.subcategories.update', $subcategory), [
+        $response = $this->actingAs($user)->put(route('smart.master.types.update', $subcategory), [
             'name' => 'Subcategory Updated',
             'description' => 'Updated Description',
         ]);
 
         $response->assertRedirect();
-        $this->assertDatabaseHas('subcategories', [
+        $this->assertDatabaseHas('types', [
             'id' => $subcategory->id,
             'name' => 'Subcategory Updated',
             'description' => 'Updated Description',
@@ -362,7 +362,7 @@ class MasterDataTest extends TestCase
         $response = $this->actingAs($user)->delete(route('smart.master.brands.destroy', $brand));
 
         $response->assertRedirect();
-        $response->assertSessionHas('error', 'Merek tidak dapat dihapus karena sedang digunakan oleh data barang.');
+        $response->assertSessionHas('error', __('master.brands.cannot_delete_used'));
         $this->assertDatabaseHas('brands', [
             'id' => $brand->id,
         ]);
@@ -494,7 +494,7 @@ class MasterDataTest extends TestCase
         $response = $this->actingAs($user)->delete(route('smart.master.vendors.destroy', $vendor));
 
         $response->assertRedirect();
-        $response->assertSessionHas('error', 'Vendor tidak dapat dihapus karena sedang digunakan oleh data lot barang.');
+        $response->assertSessionHas('error', __('master.vendors.cannot_delete_used'));
         $this->assertDatabaseHas('vendors', [
             'id' => $vendor->id,
         ]);

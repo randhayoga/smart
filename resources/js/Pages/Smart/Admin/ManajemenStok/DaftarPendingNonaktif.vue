@@ -7,7 +7,7 @@ import { useI18n } from 'vue-i18n';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem } from '@/Components/ui/breadcrumb';
 import Tabs from '@/Components/Tabs.vue';
-import DaftarAsetTab from './Tabs/DaftarAsetTab.vue';
+import DaftarTidakHabisPakaiTab from './Tabs/DaftarTidakHabisPakaiTab.vue';
 import { printFormulirPersetujuanPenghapusan } from '@/utils/printFormulirPersetujuanPenghapusan';
 
 interface Props {
@@ -40,7 +40,7 @@ const handleCustomPrint = (items: any[]) => {
     <Breadcrumb>
       <BreadcrumbList class="pb-3">
         <BreadcrumbItem>
-          <BreadcrumbLink href="/smart/inventory/pending-nonaktif">{{ t('fulfillment.pendingDeactivation') }}</BreadcrumbLink>
+          <BreadcrumbLink href="/smart/inventory/pending-deactivation">{{ t('fulfillment.pendingDeactivation') }}</BreadcrumbLink>
         </BreadcrumbItem>
       </BreadcrumbList>
     </Breadcrumb>
@@ -49,8 +49,8 @@ const handleCustomPrint = (items: any[]) => {
       <!-- Tabs header matching Master Data -->
       <Tabs v-model="activeTab" :tabs="computedTabs" />
 
-      <!-- Content Tab (Table view matching Daftar Aset) -->
-      <DaftarAsetTab
+      <!-- Content Tab (Table view matching Daftar Tidak Habis Pakai) -->
+      <DaftarTidakHabisPakaiTab
         :key="activeTab"
         :units="props.units"
         :locations="props.locations"

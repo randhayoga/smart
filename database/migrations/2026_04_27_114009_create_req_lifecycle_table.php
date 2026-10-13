@@ -65,14 +65,18 @@ return new class extends Migration {
         Schema::create('request_fulfillments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('request_item_id')->constrained('request_items')->cascadeOnDelete();
-            $table->foreignId('unit_id')->nullable()->constrained('units')->comment('nullable | for assets');
+            $table->foreignId('asset_id')->nullable()->constrained('assets')->comment('nullable | for assets');
             $table->foreignId('lot_id')->nullable()->constrained('lots')->comment('nullable | for consumables');
             $table->foreignId('handover_id')->nullable()->constrained('request_handovers')->comment('nullable | links to schedule');
             $table->foreignId('return_id')->nullable()->constrained('request_returns')->comment('nullable | links to return schedule');
             $table->integer('quantity_fulfilled')->default(1)->comment('defaults to 1 for assets');
             $table->dateTime('assigned_at')->nullable();
+            $table->dateTime('confirmed_at')->nullable();
             $table->dateTime('completed_at')->nullable();
             $table->timestamps();
+
+            $table->index(['asset_id', 'confirmed_at'], 'rf_asset_confirmed_idx');
+            $table->index(['lot_id', 'confirmed_at'], 'rf_lot_confirmed_idx');
         });
     }
 

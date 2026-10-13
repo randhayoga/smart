@@ -2,7 +2,7 @@
 
 namespace Database\Factories\Inventory;
 
-use App\Models\Inventory\Barang;
+use App\Models\Inventory\Model;
 use App\Models\Inventory\InventoryLog;
 use App\Models\Inventory\Lot;
 use App\Models\User;
@@ -18,9 +18,9 @@ class InventoryLogFactory extends Factory
     public function definition(): array
     {
         return [
-            'barang_id' => Barang::factory(),
+            'model_id' => Model::factory(),
             'lot_id' => null,
-            'unit_id' => null,
+            'asset_id' => null,
             'user_id' => User::factory(),
             'action_type' => 'create',
             'quantity_change' => 0,

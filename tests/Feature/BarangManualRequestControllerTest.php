@@ -58,7 +58,7 @@ class BarangManualRequestControllerTest extends TestCase
     {
         $barang = $this->createConsumableBarang();
 
-        $this->post(route('smart.inventory.barangs.manual-request', $barang->id))->assertRedirect();
+        $this->post(route('smart.inventory.models.manual-request', $barang->id))->assertRedirect();
     }
 
     public function test_cannot_create_request_for_non_consumable_barang(): void
@@ -71,7 +71,7 @@ class BarangManualRequestControllerTest extends TestCase
         $subcategory = Subcategory::factory()->create(['category_id' => $category->id, 'is_consumable' => false]);
         $nonConsumableBarang = Barang::factory()->create(['subcategory_id' => $subcategory->id]);
 
-        $response = $this->actingAs($admin)->post(route('smart.inventory.barangs.manual-request', $nonConsumableBarang->id), [
+        $response = $this->actingAs($admin)->post(route('smart.inventory.models.manual-request', $nonConsumableBarang->id), [
             'user_id' => $requester->id,
             'request_date' => '2026-09-15',
             'utilization' => 'corporate',
@@ -92,7 +92,7 @@ class BarangManualRequestControllerTest extends TestCase
         $barang = $this->createConsumableBarang();
         $lot = $this->createConsumableLot($barang, 40, now()->subDays(10));
 
-        $response = $this->actingAs($admin)->post(route('smart.inventory.barangs.manual-request', $barang->id), [
+        $response = $this->actingAs($admin)->post(route('smart.inventory.models.manual-request', $barang->id), [
             'user_id' => $requester->id,
             'request_date' => '2026-09-15',
             'utilization' => 'corporate',
@@ -121,7 +121,7 @@ class BarangManualRequestControllerTest extends TestCase
         $this->assertEquals('2026-09-15', $fulfillments->first()->completed_at->toDateString());
 
         $this->assertDatabaseHas('inventory_logs', [
-            'barang_id' => $barang->id,
+            'model_id' => $barang->id,
             'lot_id' => $lot->id,
             'user_id' => $requester->id,
             'quantity_change' => -25,
@@ -142,7 +142,7 @@ class BarangManualRequestControllerTest extends TestCase
         $midLot = $this->createConsumableLot($barang, 30, now()->subDays(10));
         $newLot = $this->createConsumableLot($barang, 50, now()->subDays(2));
 
-        $response = $this->actingAs($admin)->post(route('smart.inventory.barangs.manual-request', $barang->id), [
+        $response = $this->actingAs($admin)->post(route('smart.inventory.models.manual-request', $barang->id), [
             'user_id' => $requester->id,
             'request_date' => '2026-09-15',
             'utilization' => 'corporate',
@@ -182,7 +182,7 @@ class BarangManualRequestControllerTest extends TestCase
         $this->createConsumableLot($barang, 15, now()->subDays(10));
         $this->createConsumableLot($barang, 10, now()->subDays(5));
 
-        $response = $this->actingAs($admin)->post(route('smart.inventory.barangs.manual-request', $barang->id), [
+        $response = $this->actingAs($admin)->post(route('smart.inventory.models.manual-request', $barang->id), [
             'user_id' => $requester->id,
             'request_date' => '2026-09-15',
             'utilization' => 'corporate',
@@ -203,7 +203,7 @@ class BarangManualRequestControllerTest extends TestCase
         $barang = $this->createConsumableBarang();
         $this->createConsumableLot($barang, 20);
 
-        $response = $this->actingAs($admin)->post(route('smart.inventory.barangs.manual-request', $barang->id), [
+        $response = $this->actingAs($admin)->post(route('smart.inventory.models.manual-request', $barang->id), [
             'user_id' => $requester->id,
             'request_date' => '2026-09-15',
             'utilization' => 'corporate',
@@ -223,7 +223,7 @@ class BarangManualRequestControllerTest extends TestCase
         $barang = $this->createConsumableBarang();
         $this->createConsumableLot($barang, 20);
 
-        $response = $this->actingAs($admin)->post(route('smart.inventory.barangs.manual-request', $barang->id), [
+        $response = $this->actingAs($admin)->post(route('smart.inventory.models.manual-request', $barang->id), [
             'user_id' => $requester->id,
             'request_date' => '2026-09-15',
             'utilization' => 'project',
@@ -244,7 +244,7 @@ class BarangManualRequestControllerTest extends TestCase
         $barang = $this->createConsumableBarang();
         $this->createConsumableLot($barang, 20);
 
-        $response = $this->actingAs($admin)->post(route('smart.inventory.barangs.manual-request', $barang->id), [
+        $response = $this->actingAs($admin)->post(route('smart.inventory.models.manual-request', $barang->id), [
             'user_id' => $requester->id,
             'request_date' => null,
             'utilization' => 'corporate',

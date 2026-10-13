@@ -17,7 +17,7 @@ use App\Http\Controllers\Smart\Admin\AdminActiveRequestController;
 use App\Http\Controllers\Smart\Admin\AdminConfirmedRequestController;
 use App\Http\Controllers\Smart\Admin\AdminPartialRequestController;
 use App\Http\Controllers\Smart\Admin\AdminRequestFulfillmentController;
-use App\Http\Controllers\Smart\Admin\RequestItemUnitAssignmentController;
+use App\Http\Controllers\Smart\Admin\RequestItemAssetAssignmentController;
 use App\Http\Controllers\Smart\Admin\RequestItemLotAssignmentController;
 use App\Http\Controllers\Smart\Admin\RequestFulfillmentConfirmationController;
 use App\Http\Controllers\Smart\Admin\HandoverController;
@@ -36,13 +36,38 @@ use App\Http\Controllers\Smart\Manager\ManagerApprovedRequestController;
 use App\Http\Controllers\Smart\Manager\ManagerRequestApprovalController;
 use App\Http\Controllers\Smart\Manager\ExternalApprovalController;
 use App\Http\Controllers\Smart\Admin\AuditController;
+use App\Http\Controllers\Smart\Admin\ArchiveController;
+use App\Http\Controllers\Smart\Admin\InventoryAuditController;
 use App\Http\Controllers\Smart\Admin\Master\CategoryController;
-use App\Http\Controllers\Smart\Admin\Master\SubcategoryController;
+use App\Http\Controllers\Smart\Admin\Master\TypeController;
 use App\Http\Controllers\Smart\Admin\Master\UomController;
 use App\Http\Controllers\Smart\Admin\Master\BrandController;
 use App\Http\Controllers\Smart\Admin\Master\OrganizerController;
 use App\Http\Controllers\Smart\Admin\Master\VendorController;
 use App\Http\Controllers\Smart\Admin\Master\LocationController;
+use App\Http\Controllers\Smart\Admin\ManajemenStok\AssetController;
+use App\Http\Controllers\Smart\Admin\ManajemenStok\BulkAssetController;
+use App\Http\Controllers\Smart\Admin\ManajemenStok\AssetBorrowController;
+use App\Http\Controllers\Smart\Admin\ManajemenStok\AssetScanController;
+use App\Http\Controllers\Smart\Admin\ManajemenStok\AssetQrCodeController;
+use App\Http\Controllers\Smart\Admin\ManajemenStok\ModelController;
+use App\Http\Controllers\Smart\Admin\ManajemenStok\BulkModelController;
+use App\Http\Controllers\Smart\Admin\ManajemenStok\ModelManualRequestController;
+use App\Http\Controllers\Smart\Admin\ManajemenStok\ConsumableController;
+use App\Http\Controllers\Smart\Admin\ManajemenStok\NonConsumableController;
+use App\Http\Controllers\Smart\Admin\ManajemenStok\LotController;
+use App\Http\Controllers\Smart\Admin\ManajemenStok\BulkLotController;
+use App\Http\Controllers\Smart\Admin\ManajemenStok\LotManualRequestController;
+use App\Http\Controllers\Smart\Admin\ManajemenStok\ConsumableRequestOptionController;
+use App\Http\Controllers\Smart\Admin\ManajemenStok\PendingNonaktifController;
+use App\Http\Controllers\Smart\Admin\ManajemenStok\PendingAktivasiController;
+use App\Http\Controllers\Smart\Admin\ManajemenStok\EmployeeController;
+use App\Http\Controllers\Smart\Admin\ManajemenStok\EmployeeLoanController;
+use App\Http\Controllers\Smart\MultiRoles\AssetStatusApproval\AdminAssetStatusApprovalController;
+use App\Http\Controllers\Smart\MultiRoles\AssetStatusApproval\ManagerAssetStatusApprovalController;
+use App\Http\Controllers\Smart\MultiRoles\AssetStatusApproval\ManagerBulkAssetStatusApprovalController;
+use App\Http\Controllers\Smart\MultiRoles\AssetActivationApproval\ManagerAssetActivationApprovalController;
+use App\Http\Controllers\Smart\MultiRoles\AssetActivationApproval\ManagerBulkAssetActivationApprovalController;
 use App\Http\Controllers\LocaleController;
 use Illuminate\Support\Facades\Route;
 
@@ -60,8 +85,6 @@ Route::get('/', function (\Illuminate\Http\Request $request) {
     }
     return redirect()->route('smart.user.dashboard');
 });
-
-
 
 // Secure media route for private storage
 Route::middleware(['auth'])->group(function () {
@@ -112,7 +135,7 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
 
     Route::prefix('master')->name('master.')->middleware(['permission:master.manage'])->group(function () {
         Route::resource('categories',    CategoryController::class)->only(['store', 'update', 'destroy']);
-        Route::resource('subcategories', SubcategoryController::class)->only(['store', 'update', 'destroy']);
+        Route::resource('types',         TypeController::class)->only(['store', 'update', 'destroy']);
         Route::resource('uoms',          UomController::class)->only(['store', 'update', 'destroy']);
         Route::resource('brands',        BrandController::class)->only(['store', 'update', 'destroy']);
         Route::resource('organizers',    OrganizerController::class)->only(['store', 'update', 'destroy']);
@@ -125,7 +148,7 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
     Route::get('/scan', [\App\Http\Controllers\Smart\MultiRoles\ScanBarcodeController::class, 'show'])
         ->middleware(['permission:inventory.manage,inventory.borrow'])
         ->name('scan-barcode');
-    Route::get('scan/{unit}', [\App\Http\Controllers\Smart\Admin\ManajemenStok\UnitScanController::class, 'show'])
+    Route::get('scan/{asset}', [AssetScanController::class, 'show'])
         ->middleware(['permission:inventory.view'])
         ->name('scan');
 
@@ -135,78 +158,82 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
         ->name('inventory');
 
     Route::prefix('inventory')->name('inventory.')->group(function () {
-        // Read-only Inventory Views (Assets, Consumable Lots, Unit QR)
+        // Read-only Inventory Views (Assets, Consumable Lots, Asset QR)
         Route::middleware(['permission:inventory.view'])->group(function () {
-            Route::get('assets', [\App\Http\Controllers\Smart\Admin\ManajemenStok\UnitController::class, 'index'])->name('assets');
-            Route::get('stok-habis-pakai/{barang?}', [\App\Http\Controllers\Smart\Admin\ManajemenStok\ConsumableLotController::class, 'index'])->name('stok-habis-pakai');
-            Route::get('lots/{lot}', [\App\Http\Controllers\Smart\Admin\ManajemenStok\LotController::class, 'show'])->name('lots.show');
-            Route::get('units/{unit}/qr-code', [\App\Http\Controllers\Smart\Admin\ManajemenStok\UnitQrCodeController::class, 'show'])->name('units.qr-code');
+            Route::get('non-consumables', [NonConsumableController::class, 'index'])->name('non-consumables');
+            Route::get('consumables/request-options', [ConsumableRequestOptionController::class, 'index'])->name('consumables.request-options');
+            Route::get('consumables/{model?}', [ConsumableController::class, 'index'])->name('consumables');
+            Route::get('lots/{lot}', [LotController::class, 'show'])->name('lots.show');
+            Route::get('assets/{asset}/qr-code', [AssetQrCodeController::class, 'show'])->name('assets.qr-code');
         });
 
-        // Items, Lots, Units Management (CRUD & Bulk)
+        // Models, Lots, Assets Management (CRUD & Bulk)
         Route::middleware(['permission:inventory.manage'])->group(function () {
-            Route::put('barangs/bulk', [\App\Http\Controllers\Smart\Admin\ManajemenStok\BulkBarangController::class, 'update'])->name('barangs.bulk-update');
-            Route::delete('barangs/bulk', [\App\Http\Controllers\Smart\Admin\ManajemenStok\BulkBarangController::class, 'destroy'])->name('barangs.bulk-destroy');
-            Route::resource('barangs', \App\Http\Controllers\Smart\Admin\ManajemenStok\BarangController::class)->only(['store', 'update', 'destroy']);
-            Route::put('lots/bulk', [\App\Http\Controllers\Smart\Admin\ManajemenStok\BulkLotController::class, 'update'])->name('lots.bulk-update');
-            Route::delete('lots/bulk', [\App\Http\Controllers\Smart\Admin\ManajemenStok\BulkLotController::class, 'destroy'])->name('lots.bulk-destroy');
-            Route::resource('lots', \App\Http\Controllers\Smart\Admin\ManajemenStok\LotController::class)->only(['store', 'update', 'destroy']);
-            Route::post('units/bulk-update', [\App\Http\Controllers\Smart\Admin\ManajemenStok\BulkUnitController::class, 'update'])->name('units.bulk-update');
-            Route::post('units/bulk', [\App\Http\Controllers\Smart\Admin\ManajemenStok\BulkUnitController::class, 'store'])->name('units.bulk-store');
-            Route::resource('units', \App\Http\Controllers\Smart\Admin\ManajemenStok\UnitController::class)->only(['store', 'update']);
+            // Models
+            Route::put('models/bulk', [BulkModelController::class, 'update'])->name('models.bulk-update');
+            Route::delete('models/bulk', [BulkModelController::class, 'destroy'])->name('models.bulk-destroy');
+            Route::resource('models', ModelController::class)->only(['store', 'update', 'destroy']);
+
+            // Lots
+            Route::put('lots/bulk', [BulkLotController::class, 'update'])->name('lots.bulk-update');
+            Route::delete('lots/bulk', [BulkLotController::class, 'destroy'])->name('lots.bulk-destroy');
+            Route::resource('lots', LotController::class)->only(['store', 'update', 'destroy']);
+
+            // Assets
+            Route::post('assets/bulk-update', [BulkAssetController::class, 'update'])->name('assets.bulk-update');
+            Route::post('assets/bulk', [BulkAssetController::class, 'store'])->name('assets.bulk-store');
+            Route::resource('assets', AssetController::class)->only(['store', 'update']);
         });
 
         // Direct Borrowing Actions
         Route::middleware(['permission:inventory.borrow'])->group(function () {
-            Route::post('units/{unit}/borrow', [\App\Http\Controllers\Smart\Admin\ManajemenStok\UnitBorrowController::class, 'borrow'])->name('units.borrow');
-            Route::post('units/{unit}/finish-borrow', [\App\Http\Controllers\Smart\Admin\ManajemenStok\UnitBorrowController::class, 'finish'])->name('units.finish-borrow');
-            Route::get('users', [\App\Http\Controllers\Smart\Admin\ManajemenStok\UnitBorrowController::class, 'users'])->name('users');
+            Route::post('assets/{asset}/borrow', [AssetBorrowController::class, 'borrow'])->name('assets.borrow');
+            Route::post('assets/{asset}/finish-borrow', [AssetBorrowController::class, 'finish'])->name('assets.finish-borrow');
+            Route::get('users', [AssetBorrowController::class, 'users'])->name('users');
         });
 
         // Manual Stock Request Actions
         Route::middleware(['permission:inventory.manual_request'])->group(function () {
-            Route::post('barangs/{barang}/manual-request', [\App\Http\Controllers\Smart\Admin\ManajemenStok\BarangManualRequestController::class, 'store'])->name('barangs.manual-request');
-            Route::post('lots/{lot}/manual-request', [\App\Http\Controllers\Smart\Admin\ManajemenStok\LotManualRequestController::class, 'store'])->name('lots.manual-request');
-            Route::get('request-options', [\App\Http\Controllers\Smart\Admin\ManajemenStok\ConsumableRequestOptionController::class, 'index'])->name('request-options');
-            Route::get('consumables/request-options', [\App\Http\Controllers\Smart\Admin\ManajemenStok\ConsumableRequestOptionController::class, 'index'])->name('consumables.request-options');
+            Route::post('models/{model}/manual-request', [ModelManualRequestController::class, 'store'])->name('models.manual-request');
+            Route::post('lots/{lot}/manual-request', [LotManualRequestController::class, 'store'])->name('lots.manual-request');
+            Route::get('request-options', [ConsumableRequestOptionController::class, 'index'])->name('request-options');
         });
 
-        // Unit Status Change Submissions
+        // Asset Status Change Submissions
         Route::middleware(['permission:inventory.status_approval.request'])->group(function () {
-            Route::resource('unit-status-approvals', \App\Http\Controllers\Smart\MultiRoles\UnitStatusApproval\AdminUnitStatusApprovalController::class)->only(['store']);
-            Route::get('pending-nonaktif', [\App\Http\Controllers\Smart\Admin\ManajemenStok\PendingNonaktifController::class, 'index'])->name('pending-nonaktif');
-            Route::get('pending-aktivasi', [\App\Http\Controllers\Smart\Admin\ManajemenStok\PendingAktivasiController::class, 'index'])->name('pending-aktivasi');
+            Route::resource('asset-status-approvals', AdminAssetStatusApprovalController::class)->only(['store']);
+            Route::get('pending-deactivation', [PendingNonaktifController::class, 'index'])->name('pending-deactivation');
+            Route::get('pending-activation', [PendingAktivasiController::class, 'index'])->name('pending-activation');
         });
     });
 
-    Route::get('/inventory/{barang}', [ManajemenStokController::class, 'show'])
+    Route::get('/inventory/{model}', [ManajemenStokController::class, 'show'])
         ->middleware(['permission:inventory.view'])
         ->name('inventory.show');
 
     // Asset Status Decisions
     Route::middleware(['permission:inventory.status_approval.decide'])->group(function () {
-        Route::get('/approve-status', [\App\Http\Controllers\Smart\MultiRoles\UnitStatusApproval\ManagerUnitStatusApprovalController::class, 'index'])->name('approve-status');
-        Route::post('/approve-status/bulk', [\App\Http\Controllers\Smart\MultiRoles\UnitStatusApproval\ManagerBulkUnitStatusApprovalController::class, 'store'])->name('approve-status.bulk-store');
-        Route::get('/approve-activation', [\App\Http\Controllers\Smart\MultiRoles\UnitActivationApproval\ManagerUnitActivationApprovalController::class, 'index'])->name('approve-activation');
-        Route::post('/approve-activation/bulk', [\App\Http\Controllers\Smart\MultiRoles\UnitActivationApproval\ManagerBulkUnitActivationApprovalController::class, 'store'])->name('approve-activation.bulk-store');
+        Route::get('/approve-status', [ManagerAssetStatusApprovalController::class, 'index'])->name('approve-status');
+        Route::post('/approve-status/bulk', [ManagerBulkAssetStatusApprovalController::class, 'store'])->name('approve-status.bulk-store');
+        Route::get('/approve-activation', [ManagerAssetActivationApprovalController::class, 'index'])->name('approve-activation');
+        Route::post('/approve-activation/bulk', [ManagerBulkAssetActivationApprovalController::class, 'store'])->name('approve-activation.bulk-store');
     });
 
     // Employee Directory & Loan History
     Route::middleware(['permission:karyawan.view'])->group(function () {
-        Route::get('/karyawan', [\App\Http\Controllers\Smart\Admin\ManajemenStok\EmployeeController::class, 'index'])->name('karyawan.index');
-        Route::get('/karyawan/{employee}/loans', [\App\Http\Controllers\Smart\Admin\ManajemenStok\EmployeeLoanController::class, 'index'])->name('karyawan.loans');
+        Route::get('/employees', [EmployeeController::class, 'index'])->name('employees.index');
+        Route::get('/employees/{employee}/loans', [EmployeeLoanController::class, 'index'])->name('employees.loans');
     });
 
     // Audit Trails
     Route::middleware(['permission:audit.view'])->group(function () {
         Route::get('/audit', [AuditController::class, 'index'])->name('audit');
-        Route::get('/audit-stok', [\App\Http\Controllers\Smart\Admin\InventoryAuditController::class, 'index'])->name('audit-stok');
+        Route::get('/inventory-audit', [InventoryAuditController::class, 'index'])->name('inventory-audit');
     });
 
-    // Permintaan Aktif (Active Requisitions Management)
+    // Active Requisitions Management
     Route::middleware(['permission:requests.inbox.view'])->group(function () {
         Route::get('/requests', [AdminActiveRequestController::class, 'index'])->name('requests.index');
-        Route::get('/permintaan-aktif', fn() => redirect()->route('smart.requests.index'))->name('permintaan-aktif');
         Route::get('/inbox', function (\Illuminate\Http\Request $request, \App\Services\InventoryStockService $stockService) {
             if ($request->wantsJson()) {
                 return app(AdminApprovedRequestController::class)->index($request, $stockService);
@@ -221,7 +248,7 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
         ->middleware(['permission:requests.confirm'])
         ->name('inbox.confirmation');
 
-    // Request Fulfillment (Unit Assignment & Lot Allocation)
+    // Request Fulfillment (Asset Assignment & Lot Allocation)
     Route::prefix('fulfillment')->name('fulfillment.')->middleware(['permission:requests.confirm,requests.fulfill'])->group(function () {
         Route::get('/', function (\Illuminate\Http\Request $request, \App\Services\InventoryStockService $stockService) {
             if ($request->wantsJson()) {
@@ -231,7 +258,7 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
             return app(AdminActiveRequestController::class)->index($request, $stockService);
         })->name('index');
         Route::get('/{id}', [AdminRequestFulfillmentController::class, 'show'])->name('show');
-        Route::post('/items/{item}/assign', [RequestItemUnitAssignmentController::class, 'store'])->name('items.assign');
+        Route::post('/items/{item}/assign', [RequestItemAssetAssignmentController::class, 'store'])->name('items.assign');
         Route::post('/items/{item}/assign-lots', [RequestItemLotAssignmentController::class, 'store'])->name('items.assign-lots');
         Route::post('/{id}/confirm', [RequestFulfillmentConfirmationController::class, 'store'])->name('confirm');
     });
@@ -284,8 +311,8 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
 
     // Requisition Archive
     Route::middleware(['permission:requests.archive.view'])->group(function () {
-        Route::get('/arsip', [\App\Http\Controllers\Smart\Admin\ArsipController::class, 'index'])->name('arsip');
-        Route::get('/arsip/{id}', [\App\Http\Controllers\Smart\Admin\ArsipController::class, 'show'])->name('arsip.show');
+        Route::get('/archive', [ArchiveController::class, 'index'])->name('archive');
+        Route::get('/archive/{id}', [ArchiveController::class, 'show'])->name('archive.show');
     });
 
     // Manager Approvals
@@ -323,8 +350,6 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
         Route::post('/history/{request:uuid}/cancel', [RequestCancellationController::class, 'store'])->name('history.cancel');
     });
 });
-
-
 
 // Error Page Preview Routes (for testing and design inspection in local/debug environments)
 if (app()->environment('local', 'testing') || config('app.debug', false)) {

@@ -43,11 +43,11 @@ class ManagerRequestApprovalMail extends Mailable
             'user',
             'department',
             'project',
-            'items.barang.brand',
-            'items.barang.subcategory.category',
-            'items.barang.uom',
-            'items.subcategory.category',
-            'items.subcategory.barangs.uom',
+            'items.model.brand',
+            'items.model.type.category',
+            'items.model.uom',
+            'items.type.category',
+            'items.type.models.uom',
         ]);
 
         $this->manager = $manager;
@@ -68,12 +68,12 @@ class ManagerRequestApprovalMail extends Mailable
         }
 
         $this->formattedItems = $request->items->map(function ($item) {
-            $brand = $item->barang?->brand?->name;
-            $name = $item->barang?->name ?? $item->subcategory?->name ?? 'Barang';
+            $brand = $item->model?->brand?->name;
+            $name = $item->model?->name ?? $item->type?->name ?? 'Barang';
             $fullName = trim("{$brand} {$name}") ?: 'Barang';
-            $spec = $item->barang?->specification ?? '';
-            $category = $item->barang?->subcategory?->category?->name ?? $item->subcategory?->category?->name ?? '-';
-            $uom = $item->barang?->uom?->name ?? $item->subcategory?->barangs?->first()?->uom?->name ?? '';
+            $spec = $item->model?->specification ?? '';
+            $category = $item->model?->type?->category?->name ?? $item->type?->category?->name ?? '-';
+            $uom = $item->model?->uom?->name ?? $item->type?->models?->first()?->uom?->name ?? '';
 
             return [
                 'name' => $fullName,

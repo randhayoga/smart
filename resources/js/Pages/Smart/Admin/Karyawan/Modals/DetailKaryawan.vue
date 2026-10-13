@@ -238,7 +238,7 @@ const fetchEmployeeLoans = async () => {
   isLoading.value = true;
 
   try {
-    const url = `/smart/karyawan/${props.employee.id}/loans`;
+    const url = `/smart/employees/${props.employee.id}/loans`;
     const response = await axios.get(url);
     activeLoans.value = response.data.active || [];
     historicalLoans.value = response.data.history || [];

@@ -35,11 +35,11 @@ class BorrowCartConfirmationController extends Controller
         $ids = array_filter(explode(',', $idsStr));
 
         $selectedItems = AssetBasket::with([
-            'barang.subcategory.category',
-            'barang.brand',
-            'barang.uom',
-            'subcategory.category',
-            'subcategory.barangs.uom',
+            'model.type.category',
+            'model.brand',
+            'model.uom',
+            'type.category',
+            'type.models.uom',
         ])
             ->where('user_id', $request->user()->id)
             ->whereIn('id', $ids)
@@ -47,22 +47,30 @@ class BorrowCartConfirmationController extends Controller
             ->map(function ($item) {
                 return [
                     'id' => $item->id,
-                    'barang_id' => $item->barang_id,
-                    'brand' => $item->barang?->brand->name ?? '-',
-                    'name' => $item->barang?->name ?? 'Tidak Spesifik',
-                    'spec' => $item->barang?->specification ?? '',
-                    'category' => $item->barang 
-                        ? ($item->barang->subcategory->category->name ?? '-') 
-                        : ($item->subcategory->category->name ?? '-'),
-                    'subcategory' => $item->barang 
-                        ? ($item->barang->subcategory->name ?? '-') 
-                        : ($item->subcategory->name ?? '-'),
+                    'model_id' => $item->model_id,
+                    'barang_id' => $item->model_id,
+                    'type_id' => $item->type_id,
+                    'subcategory_id' => $item->type_id,
+                    'brand' => $item->model?->brand->name ?? '-',
+                    'name' => $item->model?->name ?? 'Tidak Spesifik',
+                    'spec' => $item->model?->specification ?? '',
+                    'category' => $item->model 
+                        ? ($item->model->type->category->name ?? '-') 
+                        : ($item->type->category->name ?? '-'),
+                    'type' => $item->model 
+                        ? ($item->model->type->name ?? '-') 
+                        : ($item->type->name ?? '-'),
+                    'subcategory' => $item->model 
+                        ? ($item->model->type->name ?? '-') 
+                        : ($item->type->name ?? '-'),
+                    'number' => $item->model?->number ?? '-',
+                    'code' => $item->model?->number ?? '-',
                     'stock' => 0, // Stock calculation deprecated; loans can be requested regardless of stock
                     'quantity' => (int) $item->quantity,
-                    'uom' => $item->barang?->uom?->name ?? ($item->subcategory?->barangs?->first()?->uom?->name ?? 'satuan'),
-                    'imageUrl' => $item->barang_id
-                        ? ($item->barang?->image_url ? '/media/' . $item->barang->image_url : null)
-                        : (($firstBarang = $item->subcategory?->barangs?->first()) && $firstBarang->image_url ? '/media/' . $firstBarang->image_url : null),
+                    'uom' => $item->model?->uom?->name ?? ($item->type?->models?->first()?->uom?->name ?? 'satuan'),
+                    'imageUrl' => $item->model_id
+                        ? ($item->model?->image_url ? '/media/' . $item->model->image_url : null)
+                        : (($firstModel = $item->type?->models?->first()) && $firstModel->image_url ? '/media/' . $firstModel->image_url : null),
                 ];
             });
 

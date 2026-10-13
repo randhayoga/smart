@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Smart\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Inventory\Unit;
+use App\Models\Inventory\Asset;
 use App\Models\Request\Request as SmartRequest;
 use App\Models\Request\RequestItem;
 use App\Models\Request\RequestReturn;
@@ -78,10 +78,10 @@ class ReturnController extends Controller
             'approval.approver',
             'adminConfirmation.admin',
             'statusLogs.changer',
-            'items.barang.subcategory.category',
-            'items.barang.brand',
-            'items.subcategory.category',
-            'items.subcategory.barangs',
+            'items.model.type.category',
+            'items.model.brand',
+            'items.type.category',
+            'items.type.models',
         ])
             ->findOrFail($id);
 
@@ -97,27 +97,30 @@ class ReturnController extends Controller
 
         $items = $req->items->map(function ($item) {
             $assets = RequestFulfillment::where('request_item_id', $item->id)
-                ->with('unit')
+                ->with('asset')
                 ->get()
-                ->pluck('unit.number')
+                ->pluck('asset.number')
                 ->filter()
                 ->values()
                 ->toArray();
 
-            $subcatName = $item->barang?->subcategory?->name ?? $item->subcategory?->name ?? '-';
-            $catName = $item->barang?->subcategory?->category?->name ?? $item->subcategory?->category?->name ?? '-';
+            $typeName = $item->model?->type?->name ?? $item->type?->name ?? '-';
+            $catName = $item->model?->type?->category?->name ?? $item->type?->category?->name ?? '-';
             $isConsumable = (bool) $item->is_consumable;
-            $imageUrl = $item->barang?->image_url
-                ? '/media/' . $item->barang->image_url
-                : (($firstBarang = $item->subcategory?->barangs?->first()) && $firstBarang->image_url ? '/media/' . $firstBarang->image_url : null);
-            $brandSpec = trim(($item->barang?->brand?->name ?? '') . ' ' . ($item->barang?->specification ?? ''));
+            $imageUrl = $item->model?->image_url
+                ? '/media/' . $item->model->image_url
+                : (($firstModel = $item->type?->models?->first()) && $firstModel->image_url ? '/media/' . $firstModel->image_url : null);
+            $brandSpec = trim(($item->model?->brand?->name ?? '') . ' ' . ($item->model?->specification ?? ''));
 
             return [
                 'id' => $item->id,
+                'model_id' => $item->model_id,
+                'barang_id' => $item->model_id,
                 'brand' => $brandSpec ?: '-',
-                'name' => $item->barang?->name ?? 'Tidak Spesifik',
+                'name' => $item->model?->name ?? 'Tidak Spesifik',
                 'category' => $catName,
-                'subcategory' => $subcatName,
+                'type' => $typeName,
+                'subcategory' => $typeName,
                 'quantity' => $item->quantity_requested,
                 'assets' => $assets,
                 'imageUrl' => $imageUrl,
@@ -191,7 +194,7 @@ class ReturnController extends Controller
     }
 
     /**
-     * Mengonfirmasi pengembalian aset dan mengubah status unit kembali tersedia.
+     * Mengonfirmasi pengembalian aset dan mengubah status asset kembali tersedia.
      */
     public function confirm(Request $request, $id)
     {
@@ -199,14 +202,16 @@ class ReturnController extends Controller
         $oldStatus = $req->status;
         $req->update(['status' => 'success']);
 
-        // Return units status back to 'tersedia'
+        // Return assets status back to 'tersedia'
         $requestItems = RequestItem::where('request_id', $req->id)->get();
         foreach ($requestItems as $reqItem) {
             $assignments = RequestFulfillment::where('request_item_id', $reqItem->id)->get();
             foreach ($assignments as $asn) {
-                $asn->unit->update([
-                    'status' => 'Tersedia',
-                ]);
+                if ($asn->asset) {
+                    $asn->asset->update([
+                        'status' => 'Tersedia',
+                    ]);
+                }
                 $asn->update(['completed_at' => now()]);
             }
         }

@@ -15,9 +15,9 @@ export default {
   items: {
     accessManagement: 'Access Management',
     dashboard: 'Dashboard',
-    inventoryManagement: 'Item Management',
-    consumableStock: 'Consumables Stock List',
-    assets: 'Asset List',
+    inventoryManagement: 'Stock Management',
+    consumableStock: 'Consumable List',
+    assets: 'Non-Consumable List',
     employees: 'Employee List',
     pendingActivation: 'Activation Pending List',
     pendingInactive: 'Deactivation Pending List',

@@ -36,7 +36,7 @@ class BulkInventoryActionsTest extends TestCase
 
         $ids = $barangs->pluck('id')->toArray();
 
-        $response = $this->actingAs($user)->put(route('smart.inventory.barangs.bulk-update'), [
+        $response = $this->actingAs($user)->put(route('smart.inventory.models.bulk-update'), [
             'ids' => $ids,
             'brand_id' => $brand->id,
             'uom_id' => $uom->id,
@@ -47,7 +47,7 @@ class BulkInventoryActionsTest extends TestCase
         $response->assertSessionHas('success');
 
         foreach ($ids as $id) {
-            $this->assertDatabaseHas('barangs', [
+            $this->assertDatabaseHas('models', [
                 'id' => $id,
                 'brand_id' => $brand->id,
                 'uom_id' => $uom->id,
@@ -62,7 +62,7 @@ class BulkInventoryActionsTest extends TestCase
         $barangs = Barang::factory()->count(2)->create();
         $ids = $barangs->pluck('id')->toArray();
 
-        $response = $this->actingAs($user)->delete(route('smart.inventory.barangs.bulk-destroy'), [
+        $response = $this->actingAs($user)->delete(route('smart.inventory.models.bulk-destroy'), [
             'ids' => $ids,
         ]);
 
@@ -70,7 +70,7 @@ class BulkInventoryActionsTest extends TestCase
         $response->assertSessionHas('success');
 
         foreach ($ids as $id) {
-            $this->assertDatabaseMissing('barangs', ['id' => $id]);
+            $this->assertDatabaseMissing('models', ['id' => $id]);
         }
     }
 
@@ -82,14 +82,14 @@ class BulkInventoryActionsTest extends TestCase
 
         $barangEmpty = Barang::factory()->create();
 
-        $response = $this->actingAs($user)->delete(route('smart.inventory.barangs.bulk-destroy'), [
+        $response = $this->actingAs($user)->delete(route('smart.inventory.models.bulk-destroy'), [
             'ids' => [$barangWithLot->id, $barangEmpty->id],
         ]);
 
         $response->assertRedirect();
         $response->assertSessionHas('error');
-        $this->assertDatabaseHas('barangs', ['id' => $barangWithLot->id]);
-        $this->assertDatabaseMissing('barangs', ['id' => $barangEmpty->id]);
+        $this->assertDatabaseHas('models', ['id' => $barangWithLot->id]);
+        $this->assertDatabaseMissing('models', ['id' => $barangEmpty->id]);
     }
 
     public function test_can_bulk_update_lots(): void
@@ -183,7 +183,7 @@ class BulkInventoryActionsTest extends TestCase
         ]);
         $location = Location::factory()->create();
 
-        $response = $this->actingAs($user)->post(route('smart.inventory.units.bulk-store'), [
+        $response = $this->actingAs($user)->post(route('smart.inventory.assets.bulk-store'), [
             'number' => '00001-ELKT-IT-PTRE-26',
             'lot_id' => $lot->id,
             'location_id' => $location->id,
@@ -228,7 +228,7 @@ class BulkInventoryActionsTest extends TestCase
             'image_url' => 'inventory/placeholder.jpg',
         ]);
 
-        $response = $this->actingAs($user)->post(route('smart.inventory.units.bulk-update'), [
+        $response = $this->actingAs($user)->post(route('smart.inventory.assets.bulk-update'), [
             'ids' => [$unit1->id, $unit2->id],
             'location_id' => $location2->id,
             'condition' => 'Rusak',
@@ -237,8 +237,8 @@ class BulkInventoryActionsTest extends TestCase
         $response->assertRedirect();
         $response->assertSessionHas('success');
 
-        $this->assertDatabaseHas('units', ['id' => $unit1->id, 'location_id' => $location2->id, 'condition' => 'Rusak']);
-        $this->assertDatabaseHas('units', ['id' => $unit2->id, 'location_id' => $location2->id, 'condition' => 'Rusak']);
+        $this->assertDatabaseHas('assets', ['id' => $unit1->id, 'location_id' => $location2->id, 'condition' => 'Rusak']);
+        $this->assertDatabaseHas('assets', ['id' => $unit2->id, 'location_id' => $location2->id, 'condition' => 'Rusak']);
     }
 
     public function test_can_view_consumable_lots_page(): void
@@ -249,7 +249,7 @@ class BulkInventoryActionsTest extends TestCase
         $barang = Barang::factory()->create(['subcategory_id' => $subcategory->id]);
         $lot = Lot::factory()->create(['barang_id' => $barang->id]);
 
-        $response = $this->actingAs($user)->get(route('smart.inventory.stok-habis-pakai'));
+        $response = $this->actingAs($user)->get(route('smart.inventory.consumables'));
 
         $response->assertStatus(200);
     }

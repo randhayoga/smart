@@ -148,20 +148,20 @@ describe('Sidebar.vue', () => {
 
     // Allowed items for IFS Manager
     expect(wrapper.text()).toContain('Dashboard');
-    expect(wrapper.text()).toContain('Daftar Stok (Habis Pakai)');
-    expect(wrapper.text()).toContain('Daftar Aset');
+    expect(wrapper.text()).toContain('Daftar Habis Pakai');
+    expect(wrapper.text()).toContain('Daftar Tidak Habis Pakai');
     expect(wrapper.text()).toContain('Daftar Karyawan');
     expect(wrapper.text()).toContain('Perlu Approval');
     expect(wrapper.text()).toContain('Audit Manajemen Stok');
     expect(wrapper.text()).toContain('Pergerakan Aset');
 
     // Forbidden / Hidden items for IFS Manager
-    expect(wrapper.text()).not.toContain('Manajemen Barang');
-    expect(wrapper.text()).not.toContain('Master Data');
-    expect(wrapper.text()).not.toContain('Pindai Barcode');
-    expect(wrapper.text()).not.toContain('Daftar Pending Nonaktif');
-    expect(wrapper.text()).not.toContain('Permintaan Aktif');
-    expect(wrapper.text()).not.toContain('Arsip');
+    expect(wrapper.find('a[href="/smart/inventory"]').exists()).toBe(false);
+    expect(wrapper.find('a[href="/smart/master"]').exists()).toBe(false);
+    expect(wrapper.find('a[href="/smart/scan"]').exists()).toBe(false);
+    expect(wrapper.find('a[href="/smart/inventory/pending-deactivation"]').exists()).toBe(false);
+    expect(wrapper.find('a[href="/smart/requests"]').exists()).toBe(false);
+    expect(wrapper.find('a[href="/smart/archive"]').exists()).toBe(false);
   });
 
   it('does NOT render audit section in sidebar for regular User', () => {
@@ -213,9 +213,9 @@ describe('Sidebar.vue', () => {
   });
 
   describe('active link detection', () => {
-    it('activates only Daftar Pending Aktivasi and NOT Manajemen Barang when viewing /smart/inventory/pending-aktivasi', () => {
+    it('activates only Daftar Pending Aktivasi and NOT Manajemen Stok when viewing /smart/inventory/pending-activation', () => {
       vi.mocked(usePage).mockReturnValue({
-        url: '/smart/inventory/pending-aktivasi',
+        url: '/smart/inventory/pending-activation',
         props: {
           auth: defaultAdminAuth,
         },
@@ -227,7 +227,7 @@ describe('Sidebar.vue', () => {
         collapsed: false,
       });
 
-      const pendingActivationLink = wrapper.find('a[href="/smart/inventory/pending-aktivasi"]');
+      const pendingActivationLink = wrapper.find('a[href="/smart/inventory/pending-activation"]');
       const inventoryLink = wrapper.find('a[href="/smart/inventory"]');
 
       expect(pendingActivationLink.exists()).toBe(true);
@@ -237,12 +237,12 @@ describe('Sidebar.vue', () => {
       expect(pendingActivationLink.classes()).toContain('bg-gradient-primary');
       expect(pendingActivationLink.classes()).toContain('text-white');
 
-      // Item Management (/smart/inventory) should NOT be active
+      // Stock Management (/smart/inventory) should NOT be active
       expect(inventoryLink.classes()).not.toContain('bg-gradient-primary');
       expect(inventoryLink.classes()).toContain('text-foreground');
     });
 
-    it('activates only Manajemen Barang when viewing /smart/inventory', () => {
+    it('activates only Manajemen Stok when viewing /smart/inventory', () => {
       vi.mocked(usePage).mockReturnValue({
         url: '/smart/inventory',
         props: {
@@ -257,13 +257,13 @@ describe('Sidebar.vue', () => {
       });
 
       const inventoryLink = wrapper.find('a[href="/smart/inventory"]');
-      const pendingActivationLink = wrapper.find('a[href="/smart/inventory/pending-aktivasi"]');
+      const pendingActivationLink = wrapper.find('a[href="/smart/inventory/pending-activation"]');
 
       expect(inventoryLink.classes()).toContain('bg-gradient-primary');
       expect(pendingActivationLink.classes()).not.toContain('bg-gradient-primary');
     });
 
-    it('activates Manajemen Barang when viewing item detail /smart/inventory/LAPTOP-01', () => {
+    it('activates Manajemen Stok when viewing item detail /smart/inventory/LAPTOP-01', () => {
       vi.mocked(usePage).mockReturnValue({
         url: '/smart/inventory/LAPTOP-01',
         props: {
@@ -278,15 +278,15 @@ describe('Sidebar.vue', () => {
       });
 
       const inventoryLink = wrapper.find('a[href="/smart/inventory"]');
-      const pendingActivationLink = wrapper.find('a[href="/smart/inventory/pending-aktivasi"]');
+      const pendingActivationLink = wrapper.find('a[href="/smart/inventory/pending-activation"]');
 
       expect(inventoryLink.classes()).toContain('bg-gradient-primary');
       expect(pendingActivationLink.classes()).not.toContain('bg-gradient-primary');
     });
 
-    it('activates only Daftar Pending Nonaktif and NOT Manajemen Barang when viewing /smart/inventory/pending-nonaktif', () => {
+    it('activates only Daftar Pending Nonaktif and NOT Manajemen Stok when viewing /smart/inventory/pending-deactivation', () => {
       vi.mocked(usePage).mockReturnValue({
-        url: '/smart/inventory/pending-nonaktif',
+        url: '/smart/inventory/pending-deactivation',
         props: {
           auth: defaultAdminAuth,
         },
@@ -298,7 +298,7 @@ describe('Sidebar.vue', () => {
         collapsed: false,
       });
 
-      const pendingInactiveLink = wrapper.find('a[href="/smart/inventory/pending-nonaktif"]');
+      const pendingInactiveLink = wrapper.find('a[href="/smart/inventory/pending-deactivation"]');
       const inventoryLink = wrapper.find('a[href="/smart/inventory"]');
 
       expect(pendingInactiveLink.classes()).toContain('bg-gradient-primary');

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Smart\Admin\ManajemenStok;
 
 use App\Http\Controllers\Controller;
-use App\Models\Inventory\Unit;
+use App\Models\Inventory\Asset;
 use App\Models\Master\Location;
 use App\Models\Master\Organizer;
 use App\Models\Master\Vendor;
@@ -22,25 +22,25 @@ class PendingNonaktifController extends Controller
      */
     public function index(Request $request): Response
     {
-        $units = Unit::with([
+        $assets = Asset::with([
             'location.parent', 'statusApprovals',
-            'lot.barang.subcategory.category', 'lot.barang.brand',
+            'lot.model.type.category', 'lot.model.brand',
             'lot.organizer', 'lot.vendor', 'lot.legacyVendor', 'lifecycles.actor'
         ])
         ->where('status', 'like', 'Pending%')
         ->orderBy('created_at', 'desc')
         ->get()
-        ->map(function ($unit) {
-            $pendingApproval = $unit->statusApprovals->firstWhere('decision', 'pending');
-            $approvedApproval = $unit->status === 'Tidak Aktif' 
-                ? $unit->statusApprovals->where('decision', 'approved')->sortByDesc('updated_at')->first() 
+        ->map(function ($asset) {
+            $pendingApproval = $asset->statusApprovals->firstWhere('decision', 'pending');
+            $approvedApproval = $asset->status === 'Tidak Aktif' 
+                ? $asset->statusApprovals->where('decision', 'approved')->sortByDesc('updated_at')->first() 
                 : null;
-            $barang = $unit->lot->barang ?? null;
+            $model = $asset->lot->model ?? null;
             return [
-                'id' => $unit->id,
-                'number' => $unit->number,
-                'legacy_number' => $unit->legacy_number,
-                'status' => $unit->status,
+                'id' => $asset->id,
+                'number' => $asset->number,
+                'legacy_number' => $asset->legacy_number,
+                'status' => $asset->status,
                 'proposed_status' => $pendingApproval 
                     ? $pendingApproval->proposed_condition 
                     : ($approvedApproval ? $approvedApproval->proposed_condition : null),
@@ -56,46 +56,58 @@ class PendingNonaktifController extends Controller
                 'bod_boc_approval_url' => $pendingApproval 
                     ? $pendingApproval->bod_boc_approval_url 
                     : ($approvedApproval ? $approvedApproval->bod_boc_approval_url : null),
-                'condition' => $unit->condition,
-                'type' => $unit->type,
-                'classification' => $unit->classification,
-                'price' => $unit->price,
-                'image_url' => $unit->image_url,
-                'vehicle_registration' => $unit->vehicle_registration,
-                'created_at' => $unit->created_at?->toIso8601String(),
-                'updated_at' => $unit->updated_at ? $unit->updated_at->format('d-m-Y H:i') : '-',
+                'condition' => $asset->condition,
+                'type' => $asset->borrowing_type,
+                'borrowing_type' => $asset->borrowing_type,
+                'classification' => $asset->classification,
+                'price' => $asset->price,
+                'image_url' => $asset->image_url,
+                'vehicle_registration' => $asset->vehicle_registration,
+                'created_at' => $asset->created_at?->toIso8601String(),
+                'updated_at' => $asset->updated_at ? $asset->updated_at->format('d-m-Y H:i') : '-',
                 
                 // Location info
-                'location' => $unit->location ? $unit->location->full_name : '-',
-                'location_id' => $unit->location_id,
+                'location' => $asset->location ? $asset->location->full_name : '-',
+                'location_id' => $asset->location_id,
 
                 // Parent lot info
-                'lot_id' => $unit->lot_id,
-                'lot_number' => $unit->lot->number ?? '-',
-                'lot_imageUrl' => $unit->lot->image_url ?? null,
-                'lot_unitPrice' => $unit->lot->unit_price ?? null,
-                'organizer' => $unit->lot->organizer->name ?? '-',
-                'organizer_id' => $unit->lot->organizer_id ?? null,
-                'vendor' => $unit->lot?->vendor_name ?? '-',
-                'vendor_id' => $unit->lot->vendor_id ?? null,
-                'legacy_vendor_id' => $unit->lot->legacy_vendor_id ?? null,
-                'lot_organizer' => $unit->lot->organizer->name ?? '-',
-                'lot_vendor' => $unit->lot?->vendor_name ?? '-',
-                'lot_po_number' => $unit->lot->po_number ?? '-',
-                'lot_date_of_receipt' => ($unit->lot && $unit->lot->date_of_receipt) ? $unit->lot->date_of_receipt->format('Y-m-d') : null,
+                'lot_id' => $asset->lot_id,
+                'lot_number' => $asset->lot->number ?? '-',
+                'lot_imageUrl' => $asset->lot->image_url ?? null,
+                'lot_unitPrice' => $asset->lot->unit_price ?? null,
+                'organizer' => $asset->lot->organizer->name ?? '-',
+                'organizer_id' => $asset->lot->organizer_id ?? null,
+                'vendor' => $asset->lot?->vendor_name ?? '-',
+                'vendor_id' => $asset->lot->vendor_id ?? null,
+                'legacy_vendor_id' => $asset->lot->legacy_vendor_id ?? null,
+                'lot_organizer' => $asset->lot->organizer->name ?? '-',
+                'lot_vendor' => $asset->lot?->vendor_name ?? '-',
+                'lot_po_number' => $asset->lot->po_number ?? '-',
+                'lot_date_of_receipt' => ($asset->lot && $asset->lot->date_of_receipt) ? $asset->lot->date_of_receipt->format('Y-m-d') : null,
 
-                // Parent barang info
-                'barang_id' => $barang->id ?? null,
-                'barang_code' => $barang->number ?? '-',
-                'barang_nama' => $barang->name ?? '-',
-                'barang_brand' => $barang->brand->name ?? '-',
-                'barang_specification' => $barang->specification ?? '-',
-                'barang_category' => $barang->subcategory->category->name ?? '-',
-                'barang_subcategory' => $barang->subcategory->name ?? '-',
-                'barang_uom' => $barang->uom->name ?? '-',
+                // Parent model info
+                'model_id' => $model->id ?? null,
+                'model_code' => $model->number ?? '-',
+                'model_number' => $model->number ?? '-',
+                'model_name' => $model->name ?? '-',
+                'model_brand' => $model->brand->name ?? '-',
+                'model_specification' => $model->specification ?? '-',
+                'model_category' => $model->type->category->name ?? '-',
+                'model_type' => $model->type->name ?? '-',
+                'model_uom' => $model->uom->name ?? '-',
+
+                // Backwards compat with legacy keys
+                'barang_id' => $model->id ?? null,
+                'barang_code' => $model->number ?? '-',
+                'barang_nama' => $model->name ?? '-',
+                'barang_brand' => $model->brand->name ?? '-',
+                'barang_specification' => $model->specification ?? '-',
+                'barang_category' => $model->type->category->name ?? '-',
+                'barang_subcategory' => $model->type->name ?? '-',
+                'barang_uom' => $model->uom->name ?? '-',
 
                 // Audit trails (lifecycles)
-                'lifecycles' => $unit->lifecycles->map(function ($log) {
+                'lifecycles' => $asset->lifecycles->map(function ($log) {
                     return [
                         'waktu' => $log->start_date ? $log->start_date->format('d-m-Y H:i:s') : '-',
                         'status' => $log->status,
@@ -115,7 +127,8 @@ class PendingNonaktifController extends Controller
 
         return Inertia::render('Smart/Admin/ManajemenStok/DaftarPendingNonaktif', [
             'user' => $request->user(),
-            'units' => $units,
+            'assets' => $assets,
+            'units' => $assets,
             'locations' => $locations,
             'organizers' => $organizers,
             'vendors' => $vendors,

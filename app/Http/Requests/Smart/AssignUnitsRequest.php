@@ -15,16 +15,16 @@ class AssignUnitsRequest extends FormRequest
     {
         return [
             'unit_ids' => 'present|array',
-            'unit_ids.*' => 'integer|exists:units,id',
+            'unit_ids.*' => 'integer|exists:assets,id',
         ];
     }
 
     public function messages(): array
     {
         return [
-            'unit_ids.present' => 'Data alokasi unit harus disertakan.',
-            'unit_ids.array' => 'Format data alokasi unit tidak valid.',
-            'unit_ids.*.exists' => 'Salah satu unit aset yang dipilih tidak terdaftar di sistem.',
+            'unit_ids.present' => 'Data alokasi aset harus disertakan.',
+            'unit_ids.array' => 'Format data alokasi aset tidak valid.',
+            'unit_ids.*.exists' => 'Salah satu aset yang dipilih tidak terdaftar di sistem.',
         ];
     }
 }

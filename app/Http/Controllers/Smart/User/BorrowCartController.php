@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Smart\User;
 
 use App\Http\Controllers\Controller;
 use App\Models\Cart\AssetBasket;
+use App\Models\Inventory\Model as InventoryModel;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -20,39 +21,46 @@ class BorrowCartController extends Controller
     public function index(Request $request): Response
     {
         $cartItems = AssetBasket::with([
-            'barang.subcategory.category',
-            'barang.brand',
-            'barang.uom',
-            'subcategory.category',
-            'subcategory.barangs.uom',
+            'model.type.category',
+            'model.brand',
+            'model.uom',
+            'type.category',
+            'type.models.uom',
         ])
             ->where('user_id', $request->user()->id)
             ->get()
             ->map(function ($item) {
                 return [
                     'id' => $item->id,
-                    'barang_id' => $item->barang_id,
-                    'brand' => $item->barang?->brand->name ?? '-',
-                    'name' => $item->barang?->name ?? 'Tidak Spesifik',
-                    'spec' => $item->barang?->specification ?? '',
-                    'category' => $item->barang 
-                        ? ($item->barang->subcategory->category->name ?? '-') . ' (' . ($item->barang->subcategory->name ?? '-') . ')'
-                        : ($item->subcategory->category->name ?? '-') . ' (' . ($item->subcategory->name ?? '-') . ')',
-                    'category_name' => $item->barang 
-                        ? ($item->barang->subcategory->category->name ?? '-') 
-                        : ($item->subcategory->category->name ?? '-'),
-                    'subcategory_name' => $item->barang 
-                        ? ($item->barang->subcategory->name ?? '-') 
-                        : ($item->subcategory->name ?? '-'),
-                    'code' => $item->barang?->number ?? '-',
+                    'model_id' => $item->model_id,
+                    'barang_id' => $item->model_id,
+                    'type_id' => $item->type_id,
+                    'subcategory_id' => $item->type_id,
+                    'brand' => $item->model?->brand->name ?? '-',
+                    'name' => $item->model?->name ?? 'Tidak Spesifik',
+                    'spec' => $item->model?->specification ?? '',
+                    'category' => $item->model 
+                        ? ($item->model->type->category->name ?? '-') . ' (' . ($item->model->type->name ?? '-') . ')'
+                        : ($item->type->category->name ?? '-') . ' (' . ($item->type->name ?? '-') . ')',
+                    'category_name' => $item->model 
+                        ? ($item->model->type->category->name ?? '-') 
+                        : ($item->type->category->name ?? '-'),
+                    'type_name' => $item->model 
+                        ? ($item->model->type->name ?? '-') 
+                        : ($item->type->name ?? '-'),
+                    'subcategory_name' => $item->model 
+                        ? ($item->model->type->name ?? '-') 
+                        : ($item->type->name ?? '-'),
+                    'number' => $item->model?->number ?? '-',
+                    'code' => $item->model?->number ?? '-',
                     'stock' => 0, // Stock calculation deprecated; loans can be placed regardless of stock
                     'quantity' => $item->quantity,
                     'selected' => false,
                     'isPreorder' => false,
-                    'uom' => $item->barang?->uom?->name ?? ($item->subcategory?->barangs?->first()?->uom?->name ?? 'satuan'),
-                    'imageUrl' => $item->barang_id
-                        ? ($item->barang?->image_url ? '/media/' . $item->barang->image_url : null)
-                        : (($firstBarang = $item->subcategory?->barangs?->first()) && $firstBarang->image_url ? '/media/' . $firstBarang->image_url : null),
+                    'uom' => $item->model?->uom?->name ?? ($item->type?->models?->first()?->uom?->name ?? 'satuan'),
+                    'imageUrl' => $item->model_id
+                        ? ($item->model?->image_url ? '/media/' . $item->model->image_url : null)
+                        : (($firstModel = $item->type?->models?->first()) && $firstModel->image_url ? '/media/' . $firstModel->image_url : null),
                 ];
             });
 
@@ -77,28 +85,33 @@ class BorrowCartController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        $typeId = $request->input('type_id', $request->input('subcategory_id'));
+        $modelId = $request->input('model_id', $request->input('barang_id'));
+
         $validated = $request->validate([
-            'subcategory_id' => 'required_without:barang_id|nullable|exists:subcategories,id',
-            'barang_id' => 'required_without:subcategory_id|nullable|exists:barangs,id',
             'quantity' => 'required|integer|min:1|max:999999',
+            'type_id' => 'nullable|exists:types,id',
+            'subcategory_id' => 'nullable|exists:types,id',
+            'model_id' => 'nullable|exists:models,id',
+            'barang_id' => 'nullable|exists:models,id',
         ]);
+
+        if (empty($typeId) && empty($modelId)) {
+            return redirect()->back()->withErrors(['type_id' => 'Type or Model is required.']);
+        }
+
+        if (empty($typeId) && !empty($modelId)) {
+            $typeId = InventoryModel::find($modelId)?->type_id;
+        }
 
         $userId = $request->user()->id;
 
         // Find or create in asset basket
-        if (empty($validated['barang_id'])) {
-            $basketItem = AssetBasket::firstOrNew([
-                'user_id' => $userId,
-                'subcategory_id' => $validated['subcategory_id'],
-                'barang_id' => null,
-            ]);
-        } else {
-            $basketItem = AssetBasket::firstOrNew([
-                'user_id' => $userId,
-                'subcategory_id' => $validated['subcategory_id'],
-                'barang_id' => $validated['barang_id'],
-            ]);
-        }
+        $basketItem = AssetBasket::firstOrNew([
+            'user_id' => $userId,
+            'type_id' => $typeId,
+            'model_id' => $modelId ?: null,
+        ]);
         $basketItem->quantity = ($basketItem->quantity ?? 0) + $validated['quantity'];
 
         // Assets need default start and end dates if not set

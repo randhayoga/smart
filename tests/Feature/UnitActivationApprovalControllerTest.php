@@ -127,7 +127,7 @@ class UnitActivationApprovalControllerTest extends TestCase
         $lot = $this->createLot();
         $location = Location::factory()->create();
 
-        $response = $this->actingAs($admin)->post(route('smart.inventory.units.store'), [
+        $response = $this->actingAs($admin)->post(route('smart.inventory.assets.store'), [
             'lot_id' => $lot->id,
             'location_id' => $location->id,
             'status' => 'Belum Diverifikasi',
@@ -145,16 +145,16 @@ class UnitActivationApprovalControllerTest extends TestCase
         $this->assertEquals('Belum Diverifikasi', $unit->status);
         $this->assertEquals('Bagus', $unit->condition);
 
-        $this->assertDatabaseHas('unit_activation_approvals', [
-            'unit_id' => $unit->id,
+        $this->assertDatabaseHas('asset_activation_approvals', [
+            'asset_id' => $unit->id,
             'requester_id' => $admin->id,
             'decision' => 'pending',
             'approver_id' => null,
             'note' => null,
         ]);
 
-        $this->assertDatabaseHas('unit_lifecycles', [
-            'unit_id' => $unit->id,
+        $this->assertDatabaseHas('asset_lifecycles', [
+            'asset_id' => $unit->id,
             'action_type' => 'Registrasi',
             'status' => 'Belum Diverifikasi',
             'condition' => 'Bagus',
@@ -168,7 +168,7 @@ class UnitActivationApprovalControllerTest extends TestCase
         $lot = $this->createLot();
         $location = Location::factory()->create();
 
-        $this->actingAs($admin)->post(route('smart.inventory.units.store'), [
+        $this->actingAs($admin)->post(route('smart.inventory.assets.store'), [
             'lot_id' => $lot->id,
             'location_id' => $location->id,
             'status' => 'Belum Diverifikasi',
@@ -200,7 +200,7 @@ class UnitActivationApprovalControllerTest extends TestCase
         $lot = $this->createLot();
         $location = Location::factory()->create();
 
-        $this->actingAs($admin)->post(route('smart.inventory.units.store'), [
+        $this->actingAs($admin)->post(route('smart.inventory.assets.store'), [
             'lot_id' => $lot->id,
             'location_id' => $location->id,
             'status' => 'Belum Diverifikasi',
@@ -227,7 +227,7 @@ class UnitActivationApprovalControllerTest extends TestCase
         $lot = $this->createLot();
         $location = Location::factory()->create();
 
-        $response = $this->actingAs($admin)->post(route('smart.inventory.units.bulk-store'), [
+        $response = $this->actingAs($admin)->post(route('smart.inventory.assets.bulk-store'), [
             'number' => '00001-BULK-ORG-PTRE-26',
             'lot_id' => $lot->id,
             'location_id' => $location->id,
@@ -250,8 +250,8 @@ class UnitActivationApprovalControllerTest extends TestCase
             $this->assertEquals('Belum Diverifikasi', $unit->status);
             $this->assertEquals('QC Passed', $unit->condition);
 
-            $this->assertDatabaseHas('unit_activation_approvals', [
-                'unit_id' => $unit->id,
+            $this->assertDatabaseHas('asset_activation_approvals', [
+                'asset_id' => $unit->id,
                 'requester_id' => $admin->id,
                 'decision' => 'pending',
             ]);
@@ -278,7 +278,7 @@ class UnitActivationApprovalControllerTest extends TestCase
             'requested_at' => now(),
         ]);
 
-        $response = $this->actingAs($admin)->get(route('smart.inventory.pending-aktivasi'));
+        $response = $this->actingAs($admin)->get(route('smart.inventory.pending-activation'));
 
         $response->assertOk();
         $response->assertInertia(fn (Assert $page) => $page
@@ -395,8 +395,8 @@ class UnitActivationApprovalControllerTest extends TestCase
         $this->assertEquals('Tersedia', $unit->status);
         $this->assertEquals('QC Passed', $unit->condition);
 
-        $this->assertDatabaseHas('unit_lifecycles', [
-            'unit_id' => $unit->id,
+        $this->assertDatabaseHas('asset_lifecycles', [
+            'asset_id' => $unit->id,
             'action_type' => 'Approval',
             'status' => 'Tersedia',
             'condition' => 'QC Passed',
@@ -446,8 +446,8 @@ class UnitActivationApprovalControllerTest extends TestCase
         $this->assertEquals('Verifikasi Ditolak', $unit->status);
         $this->assertEquals('Rusak', $unit->condition);
 
-        $this->assertDatabaseHas('unit_lifecycles', [
-            'unit_id' => $unit->id,
+        $this->assertDatabaseHas('asset_lifecycles', [
+            'asset_id' => $unit->id,
             'action_type' => 'Approval',
             'status' => 'Verifikasi Ditolak',
             'condition' => 'Rusak',

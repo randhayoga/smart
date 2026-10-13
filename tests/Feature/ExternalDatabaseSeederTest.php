@@ -73,7 +73,7 @@ class ExternalDatabaseSeederTest extends TestCase
         $this->assertEquals('user', $regular->role);
 
         $deptManager = User::where('employee_id', '999996')->first();
-        $this->assertEquals('manager', $deptManager->role);
+        $this->assertEquals('ifs_manager', $deptManager->role);
     }
 
     public function test_tb_project_and_assign_seeders(): void

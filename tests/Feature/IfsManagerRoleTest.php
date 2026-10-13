@@ -87,9 +87,9 @@ class IfsManagerRoleTest extends TestCase
             route('smart.inventory'),
             route('smart.master'),
             route('smart.scan-barcode'),
-            route('smart.inventory.pending-nonaktif'),
+            route('smart.inventory.pending-deactivation'),
             route('smart.requests.index'),
-            route('smart.arsip'),
+            route('smart.archive'),
         ];
 
         foreach ($adminOnlyRoutes as $adminRoute) {
@@ -101,11 +101,11 @@ class IfsManagerRoleTest extends TestCase
         // 2. Test Shared routes accessible by IFS Manager (200 OK)
         $sharedRoutes = [
             route('smart.dashboard'),
-            route('smart.inventory.stok-habis-pakai'),
-            route('smart.inventory.assets'),
-            route('smart.karyawan.index'),
+            route('smart.inventory.consumables'),
+            route('smart.inventory.non-consumables'),
+            route('smart.employees.index'),
             route('smart.audit'),
-            route('smart.audit-stok'),
+            route('smart.inventory-audit'),
             route('smart.approve-status'),
         ];
 

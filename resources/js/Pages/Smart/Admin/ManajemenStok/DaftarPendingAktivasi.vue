@@ -5,7 +5,7 @@
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem } from '@/Components/ui/breadcrumb';
-import DaftarAsetTab from './Tabs/DaftarAsetTab.vue';
+import DaftarTidakHabisPakaiTab from './Tabs/DaftarTidakHabisPakaiTab.vue';
 
 interface Props {
   units: any[];
@@ -23,13 +23,13 @@ const { t } = useI18n();
     <Breadcrumb>
       <BreadcrumbList class="pb-3">
         <BreadcrumbItem>
-          <BreadcrumbLink href="/smart/inventory/pending-aktivasi">{{ t('fulfillment.pendingActivation') }}</BreadcrumbLink>
+          <BreadcrumbLink href="/smart/inventory/pending-activation">{{ t('fulfillment.pendingActivation') }}</BreadcrumbLink>
         </BreadcrumbItem>
       </BreadcrumbList>
     </Breadcrumb>
 
     <div class="space-y-1">
-      <DaftarAsetTab
+      <DaftarTidakHabisPakaiTab
         :units="props.units"
         :locations="props.locations"
         :organizers="props.organizers"
