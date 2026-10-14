@@ -241,7 +241,7 @@ class NewStockControllerTest extends TestCase
         $this->assertEquals('PO-ATOMIC-01', $lot->po_number);
 
         $asset = Asset::where('lot_id', $lot->id)->firstOrFail();
-        $this->assertEquals('Intel Core Ultra 7, 32GB RAM, 1TB SSD', $asset->specification);
+        $this->assertEquals('Intel Core Ultra 7, 32GB RAM, 1TB SSD', $asset->comp_specification);
         $this->assertEquals('LT', $asset->borrowing_type);
         $this->assertEquals('Bagus', $asset->condition);
         $this->assertEquals('Belum Diverifikasi', $asset->status);

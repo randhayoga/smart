@@ -123,12 +123,10 @@ class NewStockController extends Controller
                         'condition' => $condition,
                         'borrowing_type' => $validated['borrowing_type'],
                         'classification' => $validated['classification'],
-                        'specification' => $isComp ? ($validated['asset_specification'] ?? null) : null,
+                        'comp_specification' => $isComp ? ($validated['asset_specification'] ?? null) : null,
                         'price' => $validated['price'] ?? null,
                         'image_url' => $photoUrl,
                         'vehicle_registration' => $isKend ? ($validated['plate_number'] ?? null) : null,
-                        'burden' => $lot->burden ?? 'Corporate',
-                        'project_id' => $lot->project_id,
                     ]);
 
                     $approval = AssetActivationApproval::create([

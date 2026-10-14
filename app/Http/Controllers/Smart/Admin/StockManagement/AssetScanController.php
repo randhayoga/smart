@@ -22,7 +22,7 @@ class AssetScanController extends Controller
         $asset->load([
             'location.parent', 'statusApprovals',
             'lot.model.type.category', 'lot.model.brand',
-            'lot.organizer', 'lot.vendor', 'lot.legacyVendor', 'vendor'
+            'lot.organizer', 'lot.vendor', 'lot.legacyVendor', 'legacyVendor'
         ]);
 
         $pendingApproval = $asset->statusApprovals->firstWhere('decision', 'pending');
@@ -52,17 +52,19 @@ class AssetScanController extends Controller
             'type' => $asset->borrowing_type,
             'borrowing_type' => $asset->borrowing_type,
             'classification' => $asset->classification,
-            'specification' => $asset->specification,
+            'comp_specification' => $asset->comp_specification,
+            'specification' => $asset->comp_specification,
             'price' => $asset->price,
             'image_url' => $asset->image_url,
             'vehicle_registration' => $asset->vehicle_registration,
             'updated_at' => $asset->updated_at ? $asset->updated_at->format('d-m-Y H:i') : '-',
             
             // Asset-specific legacy vendor
-            'asset_vendor' => $asset->vendor?->name,
-            'asset_vendor_id' => $asset->vendor_id,
-            'unit_vendor' => $asset->vendor?->name,
-            'unit_vendor_id' => $asset->vendor_id,
+            'asset_vendor' => $asset->legacyVendor?->name,
+            'asset_vendor_id' => $asset->legacy_vendor_id,
+            'unit_vendor' => $asset->legacyVendor?->name,
+            'unit_vendor_id' => $asset->legacy_vendor_id,
+            'legacy_vendor_id' => $asset->legacy_vendor_id,
 
             // Location info
             'location' => $asset->location ? $asset->location->full_name : '-',

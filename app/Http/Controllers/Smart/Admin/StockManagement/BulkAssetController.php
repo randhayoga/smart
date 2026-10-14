@@ -39,13 +39,14 @@ class BulkAssetController extends Controller
             'condition' => 'required|string|max:255',
             'borrowing_type' => 'required|string|in:LT,ST',
             'classification' => 'required|string|in:Aset,Inventaris',
+            'comp_specification' => 'nullable|string|max:255',
             'specification' => 'nullable|string|max:255',
             'price' => 'nullable|numeric|min:0|max:999999999.99',
             'image_url' => 'nullable|image|max:1024',
             'use_lot_image' => 'nullable',
             'bulk_quantity' => 'required|integer|min:1|max:999',
             'burden' => 'nullable|string|in:Corporate,Project',
-            'project_id' => ['required_if:burden,Project', 'nullable', Rule::exists(TbProject::class, 'id_project')],
+            'project_id' => 'nullable',
         ];
 
         $lot = Lot::with('model.type.category')->findOrFail($request->input('lot_id'));
@@ -87,9 +88,8 @@ class BulkAssetController extends Controller
         $validated = $validator->validated();
 
         $isComp = ($lot->model?->type?->category?->code === 'COMP');
-        if (!$isComp) {
-            $validated['specification'] = null;
-        }
+        $compSpec = $request->input('comp_specification', $request->input('specification'));
+        $finalCompSpec = $isComp ? $compSpec : null;
 
         if ($needApproval) {
             $validated['status'] = 'Pending:BoD/BoC';
@@ -121,8 +121,6 @@ class BulkAssetController extends Controller
         }
 
         $classification = $validated['classification'];
-        $burden = $request->input('burden') ?? 'Corporate';
-        $projectId = ($burden === 'Project') ? ($request->input('project_id') ?? null) : null;
 
         foreach ($generatedNumbers as $num) {
             $asset = Asset::create([
@@ -133,12 +131,10 @@ class BulkAssetController extends Controller
                 'condition' => $validated['condition'],
                 'borrowing_type' => $borrowingType,
                 'classification' => $classification,
-                'specification' => $validated['specification'] ?? null,
+                'comp_specification' => $finalCompSpec,
                 'price' => $validated['price'] ?? null,
                 'image_url' => $finalImagePath,
                 'vehicle_registration' => $validated['vehicle_registration'] ?? null,
-                'burden' => $burden,
-                'project_id' => $projectId,
             ]);
 
             if ($needApproval) {
@@ -208,13 +204,14 @@ class BulkAssetController extends Controller
             'borrowing_type' => ['nullable', 'string', 'in:LT,ST'],
             'type' => ['nullable', 'string', 'in:LT,ST'],
             'classification' => ['nullable', 'string', 'in:Aset,Inventaris'],
+            'comp_specification' => 'nullable|string|max:255',
             'specification' => 'nullable|string|max:255',
             'location_id' => 'nullable|exists:locations,id',
             'price' => 'nullable|numeric|min:0|max:999999999.99',
             'use_lot_image' => 'nullable',
             'image_url' => 'nullable|image|mimes:jpeg,jpg,png|max:1024',
-            'burden' => ['nullable', 'string', 'in:Corporate,Project,Tidak berubah'],
-            'project_id' => ['required_if:burden,Project', 'nullable', Rule::exists(TbProject::class, 'id_project')],
+            'burden' => 'nullable',
+            'project_id' => 'nullable',
         ], $messages);
         if ($validator->fails()) {
             if ($validator->errors()->has('borrowing_type')) {
@@ -359,13 +356,7 @@ class BulkAssetController extends Controller
             $updateData['classification'] = $request->input('classification');
         }
 
-        // 5. Burden & Project
-        if ($request->filled('burden') && $request->input('burden') !== 'Tidak berubah') {
-            $updateData['burden'] = $request->input('burden');
-            $updateData['project_id'] = ($request->input('burden') === 'Project') ? $request->input('project_id') : null;
-        }
-
-        // 6. Image URL / Use LOT Image
+        // 5. Image URL / Use LOT Image
         $finalImagePath = null;
         $hasNewImage = false;
 
@@ -396,10 +387,10 @@ class BulkAssetController extends Controller
             }
         }
 
-        if ($request->has('specification')) {
+        if ($request->has('comp_specification') || $request->has('specification')) {
             $firstLot = Lot::with('model.type.category')->find($assets->first()?->lot_id);
             if ($firstLot?->model?->type?->category?->code === 'COMP') {
-                $updateData['specification'] = $request->input('specification');
+                $updateData['comp_specification'] = $request->input('comp_specification', $request->input('specification'));
             }
         }
 

@@ -198,7 +198,7 @@ class CompCategorySpecificationTest extends TestCase
             'number' => 'UNIT-WITH-VENDOR-01',
             'lot_id' => $lot->id,
             'location_id' => $this->location->id,
-            'vendor_id' => $this->vendor->id,
+            'legacy_vendor_id' => $this->vendor->id,
             'type' => 'LT',
             'classification' => 'Aset',
         ]);
@@ -207,18 +207,18 @@ class CompCategorySpecificationTest extends TestCase
             'number' => 'UNIT-NO-VENDOR-01',
             'lot_id' => $lot->id,
             'location_id' => $this->location->id,
-            'vendor_id' => null,
+            'legacy_vendor_id' => null,
             'type' => 'LT',
             'classification' => 'Aset',
         ]);
 
-        $this->assertSame($this->vendor->id, $unitWithVendor->fresh()->vendor_id);
-        $this->assertSame('PT Mitra Solusi', $unitWithVendor->fresh()->vendor_name);
-        $this->assertInstanceOf(Vendor::class, $unitWithVendor->fresh()->vendor);
+        $this->assertSame($this->vendor->id, $unitWithVendor->fresh()->legacy_vendor_id);
+        $this->assertSame('PT Mitra Solusi', $unitWithVendor->fresh()->legacy_vendor_name);
+        $this->assertInstanceOf(Vendor::class, $unitWithVendor->fresh()->legacyVendor);
 
-        $this->assertNull($unitWithoutVendor->fresh()->vendor_id);
-        $this->assertNull($unitWithoutVendor->fresh()->vendor_name);
-        $this->assertNull($unitWithoutVendor->fresh()->vendor);
+        $this->assertNull($unitWithoutVendor->fresh()->legacy_vendor_id);
+        $this->assertNull($unitWithoutVendor->fresh()->legacy_vendor_name);
+        $this->assertNull($unitWithoutVendor->fresh()->legacyVendor);
     }
 
     public function test_comp_category_unit_stores_and_updates_specification(): void
@@ -246,13 +246,12 @@ class CompCategorySpecificationTest extends TestCase
             'condition' => 'Bagus',
             'type' => 'LT',
             'classification' => 'Aset',
-            'burden' => 'Corporate',
-            'specification' => 'Core i7-1185G7, 32GB RAM, 512GB SSD',
+            'comp_specification' => 'Core i7-1185G7, 32GB RAM, 512GB SSD',
         ]);
 
         $response->assertSessionHasNoErrors();
         $unit = Unit::where('lot_id', $lot->id)->firstOrFail();
-        $this->assertSame('Core i7-1185G7, 32GB RAM, 512GB SSD', $unit->specification);
+        $this->assertSame('Core i7-1185G7, 32GB RAM, 512GB SSD', $unit->comp_specification);
 
         // Update specification
         $updateResponse = $this->actingAs($this->user)->put("/smart/inventory/assets/{$unit->id}", [
@@ -263,12 +262,11 @@ class CompCategorySpecificationTest extends TestCase
             'condition' => 'Bagus',
             'type' => 'LT',
             'classification' => 'Aset',
-            'burden' => 'Corporate',
-            'specification' => 'Core i7-1185G7, 64GB RAM, 1TB SSD',
+            'comp_specification' => 'Core i7-1185G7, 64GB RAM, 1TB SSD',
         ]);
 
         $updateResponse->assertSessionHasNoErrors();
-        $this->assertSame('Core i7-1185G7, 64GB RAM, 1TB SSD', $unit->fresh()->specification);
+        $this->assertSame('Core i7-1185G7, 64GB RAM, 1TB SSD', $unit->fresh()->comp_specification);
     }
 
     public function test_non_comp_category_unit_forces_specification_null(): void
@@ -296,13 +294,12 @@ class CompCategorySpecificationTest extends TestCase
             'condition' => 'Bagus',
             'type' => 'LT',
             'classification' => 'Aset',
-            'burden' => 'Corporate',
-            'specification' => 'Unit spec that should be null for non-COMP',
+            'comp_specification' => 'Unit spec that should be null for non-COMP',
         ]);
 
         $response->assertSessionHasNoErrors();
         $unit = Unit::where('lot_id', $lot->id)->firstOrFail();
-        $this->assertNull($unit->specification);
+        $this->assertNull($unit->comp_specification);
     }
 
     public function test_bulk_unit_creation_stores_specification_for_comp_units(): void
@@ -329,15 +326,14 @@ class CompCategorySpecificationTest extends TestCase
             'condition' => 'Bagus',
             'type' => 'LT',
             'classification' => 'Aset',
-            'burden' => 'Corporate',
-            'specification' => 'Core i5-1135G7, 8GB RAM, 256GB SSD',
+            'comp_specification' => 'Core i5-1135G7, 8GB RAM, 256GB SSD',
         ]);
 
         $response->assertSessionHasNoErrors();
         $units = Unit::where('lot_id', $lot->id)->get();
         $this->assertCount(2, $units);
         foreach ($units as $unit) {
-            $this->assertSame('Core i5-1135G7, 8GB RAM, 256GB SSD', $unit->specification);
+            $this->assertSame('Core i5-1135G7, 8GB RAM, 256GB SSD', $unit->comp_specification);
         }
     }
 }

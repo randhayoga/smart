@@ -515,7 +515,7 @@ const handleSubmit = () => {
               </div>
               <div v-if="isComp" class="flex justify-between items-start">
                 <span class="text-muted-foreground font-medium">{{ t('inventory.specification') }}</span>
-                <span class="text-foreground font-semibold text-right max-w-[200px]">{{ props.asset.specification || '-' }}</span>
+                <span class="text-foreground font-semibold text-right max-w-[200px]">{{ props.asset.comp_specification || props.asset.specification || '-' }}</span>
               </div>
               <div v-if="isVehicle" class="flex justify-between items-start">
                 <span class="text-muted-foreground font-medium">{{ t('scanner.licensePlate') }}</span>

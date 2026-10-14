@@ -50,12 +50,13 @@ class AssetController extends Controller
             'condition' => 'required|string|max:255',
             'borrowing_type' => 'required|string|in:LT,ST',
             'classification' => 'required|string|in:Aset,Inventaris',
+            'comp_specification' => 'nullable|string|max:255',
             'specification' => 'nullable|string|max:255',
             'price' => 'nullable|numeric|min:0|max:999999999.99',
             'image_url' => 'nullable|image|max:1024',
             'use_lot_image' => 'nullable',
             'burden' => 'nullable|string|in:Corporate,Project',
-            'project_id' => ['required_if:burden,Project', 'nullable', Rule::exists(TbProject::class, 'id_project')],
+            'project_id' => 'nullable',
         ];
  
         $isVehicle = false;
@@ -94,9 +95,9 @@ class AssetController extends Controller
         $validated = $validator->validated();
 
         $isComp = ($lot->model?->type?->category?->code === 'COMP');
-        if (!$isComp) {
-            $validated['specification'] = null;
-        }
+        $compSpec = $request->input('comp_specification', $request->input('specification'));
+        $validated['comp_specification'] = $isComp ? $compSpec : null;
+        unset($validated['specification']);
 
         if ($needApproval) {
             $validated['status'] = 'Pending:BoD/BoC';
@@ -119,8 +120,8 @@ class AssetController extends Controller
  
         unset($validated['use_lot_image']);
         unset($validated['type']);
-        $validated['burden'] = $validated['burden'] ?? 'Corporate';
-        $validated['project_id'] = ($validated['burden'] === 'Project') ? ($validated['project_id'] ?? null) : null;
+        unset($validated['burden']);
+        unset($validated['project_id']);
 
         $asset = Asset::create($validated);
  
@@ -232,13 +233,14 @@ class AssetController extends Controller
             'condition' => ['required', 'string', 'in:Bagus,Rusak,QC Passed,Lelang/Hibah,Rusak Total,Hilang'],
             'borrowing_type' => ['required', 'string', 'in:LT,ST'],
             'classification' => ['required', 'string', 'in:Aset,Inventaris'],
+            'comp_specification' => 'nullable|string|max:255',
             'specification' => 'nullable|string|max:255',
             'price' => 'nullable|numeric|min:0|max:999999999.99',
             'image_url' => 'nullable|image|mimes:jpeg,jpg,png|max:1024',
             'delete_image' => 'nullable|boolean',
             'use_lot_image' => 'nullable',
             'burden' => 'nullable|string|in:Corporate,Project',
-            'project_id' => ['required_if:burden,Project', 'nullable', Rule::exists(TbProject::class, 'id_project')],
+            'project_id' => 'nullable',
         ];
 
         $lot = Lot::with('model.type.category')->findOrFail($request->input('lot_id'));
@@ -373,10 +375,8 @@ class AssetController extends Controller
         unset($validated['use_lot_image']);
         unset($validated['delete_image']);
         unset($validated['type']);
-        if ($request->has('burden')) {
-            $validated['burden'] = $request->input('burden');
-            $validated['project_id'] = ($request->input('burden') === 'Project') ? $request->input('project_id') : null;
-        }
+        unset($validated['burden']);
+        unset($validated['project_id']);
 
         $previousStatus = str_starts_with($asset->status ?? '', 'Pending') ? 'Tersedia' : $asset->status;
         $previousCondition = $asset->condition;
@@ -386,9 +386,11 @@ class AssetController extends Controller
         }
 
         $isComp = ($lot->model?->type?->category?->code === 'COMP');
-        if (!$isComp) {
-            $validated['specification'] = null;
+        if ($request->has('comp_specification') || $request->has('specification')) {
+            $compSpec = $request->input('comp_specification', $request->input('specification'));
+            $validated['comp_specification'] = $isComp ? $compSpec : null;
         }
+        unset($validated['specification']);
 
         $asset->update($validated);
 

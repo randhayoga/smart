@@ -44,18 +44,18 @@ return new class extends Migration {
             $table->string('number', 50)->unique();
             $table->string('legacy_number', 50)->nullable()->comment('legacy asset code/number');
             $table->foreignId('lot_id')->constrained('lots')->cascadeOnDelete();
-            $table->foreignId('vendor_id')->nullable()->constrained('vendors')->nullOnDelete()->comment('Refers to local vendors table (legacy migration only)');
+            $table->foreignId('legacy_vendor_id')->nullable()->constrained('vendors')->nullOnDelete()->comment('Refers to local vendors table (legacy migration only)');
             $table->foreignId('location_id')->nullable()->constrained('locations')->comment('current location');
             $table->string('status')->default('Belum Diverifikasi');
             $table->string('condition');
-            $table->string('specification')->nullable();
+            $table->string('comp_specification')->nullable()->comment('Specification for computer category assets only');
             $table->string('borrowing_type', 2)->default('LT')->comment('LT | ST');
             $table->string('classification', 255)->default('Aset')->comment('Aset | Inventaris');
             $table->decimal('price', 15, 2)->nullable();
             $table->string('image_url')->nullable();
             $table->string('vehicle_registration')->nullable();
-            $table->string('burden')->default('Corporate');
-            $table->unsignedBigInteger('project_id')->nullable()->index()->comment('Refers to RE_PORTALDB:tb_project.id_project');
+            $table->string('legacy_burden')->nullable()->comment('Legacy migration only');
+            $table->unsignedBigInteger('legacy_project_id')->nullable()->index()->comment('Refers to RE_PORTALDB:tb_project.id_project (legacy migration only)');
             $table->timestamps();
 
             $table->index('status');

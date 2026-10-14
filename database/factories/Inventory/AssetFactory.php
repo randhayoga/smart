@@ -34,10 +34,10 @@ class AssetFactory extends Factory
             'borrowing_type' => 'LT',
             'classification' => 'Aset',
             'image_url' => 'assets/sample.jpg',
-            'burden' => 'Corporate',
-            'project_id' => null,
-            'vendor_id' => null,
-            'specification' => null,
+            'legacy_burden' => null,
+            'legacy_project_id' => null,
+            'legacy_vendor_id' => null,
+            'comp_specification' => null,
         ];
     }
 
@@ -58,7 +58,7 @@ class AssetFactory extends Factory
     public function comp(): static
     {
         return $this->state(fn (array $attributes) => [
-            'specification' => 'Intel Core i7-13700H, 16GB RAM, 512GB SSD',
+            'comp_specification' => 'Intel Core i7-13700H, 16GB RAM, 512GB SSD',
         ]);
     }
 }

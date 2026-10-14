@@ -86,6 +86,7 @@ interface Props {
     lot_po_number?: string;
 
     // Unit specific
+    comp_specification?: string | null;
     specification?: string | null;
     unit_vendor?: string | null;
     unit_vendor_id?: number | null;
@@ -698,7 +699,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
 
   if (props.hideBarangColumns && isComp.value) {
     list.push({
-      accessorKey: 'specification',
+      accessorKey: 'comp_specification',
       header: ({ column }) => h(Button, {
         variant: 'ghost',
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
@@ -707,10 +708,13 @@ const columns = computed<ColumnDef<any>[]>(() => {
         t('inventory.specification'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ]),
-      cell: ({ row }) => h('div', { 
-        class: 'text-foreground truncate font-medium', 
-        title: row.original.specification || '-' 
-      }, row.original.specification || '-'),
+      cell: ({ row }) => {
+        const spec = row.original.comp_specification || row.original.specification || '-';
+        return h('div', { 
+          class: 'text-foreground truncate font-medium', 
+          title: spec 
+        }, spec);
+      },
     });
   }
 

@@ -299,7 +299,7 @@ watch(() => props.open, (val) => {
     form.bod_boc_approval_file_name = item.bod_boc_approval_file_name || (item.bod_boc_approval_url ? item.bod_boc_approval_url.split('/').pop() || '' : '');
     form.burden = item.burden || 'Corporate';
     form.project_id = item.project_id || '';
-    form.specification = isComp.value ? (item.specification || '') : '';
+    form.specification = isComp.value ? (item.comp_specification || item.specification || '') : '';
   } else {
     form.number = '';
     form.legacy_number = '';
@@ -529,7 +529,10 @@ const handleSubmit = () => {
           project_id: data.burden === 'Project' ? data.project_id : null,
         };
         if (isVehicle.value) fd.vehicle_registration = data.vehicle_registration;
-        if (isComp.value) fd.specification = data.specification || null;
+        if (isComp.value) {
+          fd.comp_specification = data.specification || null;
+          fd.specification = data.specification || null;
+        }
         if (data.image_url) {
           fd.image_url = data.image_url;
         } else if (data.use_lot_image) {
@@ -580,7 +583,10 @@ const handleSubmit = () => {
       if (form.condition && !isKondisiDisabled.value) payload.condition = form.condition;
       if (form.type) payload.type = form.type;
       if (form.classification) payload.classification = form.classification;
-      if (isComp.value && form.specification) payload.specification = form.specification;
+      if (isComp.value && form.specification) {
+        payload.comp_specification = form.specification;
+        payload.specification = form.specification;
+      }
       
       if (form.location_id) {
         payload.location_id = form.location_id;

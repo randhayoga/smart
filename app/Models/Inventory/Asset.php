@@ -177,16 +177,16 @@ class Asset extends Model
         'price',
         'image_url',
         'vehicle_registration',
-        'burden',
-        'project_id',
-        'vendor_id',
-        'specification',
+        'legacy_burden',
+        'legacy_project_id',
+        'legacy_vendor_id',
+        'comp_specification',
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
-        'project_id' => 'integer',
-        'vendor_id' => 'integer',
+        'legacy_project_id' => 'integer',
+        'legacy_vendor_id' => 'integer',
     ];
 
     /**
@@ -198,11 +198,11 @@ class Asset extends Model
     }
 
     /**
-     * The project associated with this asset, if any.
+     * The legacy project associated with this asset during migration, if any.
      */
-    public function project(): BelongsTo
+    public function legacyProject(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\TbProject::class, 'project_id', 'id_project');
+        return $this->belongsTo(\App\Models\TbProject::class, 'legacy_project_id', 'id_project');
     }
 
     /**
@@ -216,17 +216,17 @@ class Asset extends Model
     /**
      * The legacy vendor associated with this asset during migration.
      */
-    public function vendor(): BelongsTo
+    public function legacyVendor(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\Master\Vendor::class, 'vendor_id');
+        return $this->belongsTo(\App\Models\Master\Vendor::class, 'legacy_vendor_id');
     }
 
     /**
-     * Display name of the vendor associated with this asset, if any.
+     * Display name of the legacy vendor associated with this asset, if any.
      */
-    public function getVendorNameAttribute(): ?string
+    public function getLegacyVendorNameAttribute(): ?string
     {
-        return $this->vendor?->name;
+        return $this->legacyVendor?->name;
     }
 
     /**

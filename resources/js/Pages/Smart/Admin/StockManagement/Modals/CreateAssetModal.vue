@@ -106,8 +106,6 @@ const form = useForm({
   memo_file_name: '',
   lost_doc_file: null as File | null,
   lost_doc_file_name: '',
-  burden: 'Corporate',
-  project_id: '' as string | number,
 });
 
 const errors = ref({
@@ -121,8 +119,6 @@ const errors = ref({
   bulk_quantity: '',
   memo_file: '',
   lost_doc_file: '',
-  burden: '',
-  project_id: '',
 });
 
 const resetErrors = () => {
@@ -137,17 +133,8 @@ const resetErrors = () => {
     bulk_quantity: '',
     memo_file: '',
     lost_doc_file: '',
-    burden: '',
-    project_id: '',
   };
 };
-
-const projectOptions = computed(() => {
-  return (props.projects || []).map(p => ({
-    id: p.id,
-    name: `[${p.no_project}] ${p.project_name}`
-  }));
-});
 
 // Reactive error clearing
 watch(() => form.location_id, v => { if (v && errors.value.location_id) errors.value.location_id = ''; });
@@ -161,14 +148,6 @@ watch(() => form.vehicle_registration, v => { if (v && errors.value.vehicle_regi
 watch(() => form.bulk_quantity, v => { if (v !== '' && errors.value.bulk_quantity) errors.value.bulk_quantity = ''; });
 watch(() => form.memo_file, v => { if (v && errors.value.memo_file) errors.value.memo_file = ''; });
 watch(() => form.lost_doc_file, v => { if (v && errors.value.lost_doc_file) errors.value.lost_doc_file = ''; });
-watch(() => form.burden, v => {
-  if (v && errors.value.burden) errors.value.burden = '';
-  if (v !== 'Project') {
-    form.project_id = '';
-    errors.value.project_id = '';
-  }
-});
-watch(() => form.project_id, v => { if (v && errors.value.project_id) errors.value.project_id = ''; });
 
 watch(() => form.condition, (newVal) => {
   if (!arrNeedApproval.includes(newVal)) {
@@ -232,8 +211,6 @@ watch(() => props.open, (val) => {
   form.memo_file_name = '';
   form.lost_doc_file = null;
   form.lost_doc_file_name = '';
-  form.burden = 'Corporate';
-  form.project_id = '';
 });
 
 const closeModal = () => { emit('update:open', false); };
@@ -396,8 +373,6 @@ const handleSubmit = () => {
   if (isVehicle.value && !form.vehicle_registration) { errors.value.vehicle_registration = t('inventory.nopolRequired'); isValid = false; }
   if (arrNeedApproval.includes(form.status) && !form.memo_file_name) { errors.value.memo_file = t('inventory.memoRequired'); isValid = false; }
   if (form.status === 'Hilang' && !form.lost_doc_file_name) { errors.value.lost_doc_file = t('inventory.lostDocRequired'); isValid = false; }
-  if (!form.burden) { errors.value.burden = t('inventory.burdenRequired'); isValid = false; }
-  if (form.burden === 'Project' && !form.project_id) { errors.value.project_id = t('inventory.projectRequired'); isValid = false; }
   if (form.is_bulk && (form.bulk_quantity === '' || form.bulk_quantity === null)) { errors.value.bulk_quantity = t('inventory.assetCountRequired'); isValid = false; }
   if (!isValid) return;
 
@@ -412,11 +387,12 @@ const handleSubmit = () => {
       type: data.type,
       classification: data.classification,
       price: data.price !== '' && data.price !== null ? parseCurrencyToNumber(data.price) : null,
-      burden: data.burden,
-      project_id: data.burden === 'Project' ? data.project_id : null,
     };
     if (isVehicle.value) fd.vehicle_registration = data.vehicle_registration;
-    if (isComp.value) fd.specification = data.specification || null;
+    if (isComp.value) {
+      fd.comp_specification = data.specification || null;
+      fd.specification = data.specification || null;
+    }
     if (data.image_url) fd.image_url = data.image_url;
     if (data.use_lot_image) fd.use_lot_image = data.use_lot_image;
     if (data.memo_file) fd.memo_file = data.memo_file;
@@ -534,32 +510,6 @@ const handleSubmit = () => {
                       />
                     </FieldContent>
                   </Field>
-
-                  <Field :data-invalid="!!errors.burden || undefined">
-                    <FieldLabel><span>{{ t('inventory.burden') }}<span class="text-rose-500">*</span></span></FieldLabel>
-                    <FieldContent>
-                      <RadioGroup v-model="form.burden" class="flex items-center gap-6 h-10">
-                        <div class="flex items-center space-x-2">
-                          <RadioGroupItem id="create-unit-burden-corporate" value="Corporate" />
-                          <label for="create-unit-burden-corporate" class="text-sm font-medium text-foreground cursor-pointer select-none">Corporate</label>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                          <RadioGroupItem id="create-unit-burden-project" value="Project" />
-                          <label for="create-unit-burden-project" class="text-sm font-medium text-foreground cursor-pointer select-none">Project</label>
-                        </div>
-                      </RadioGroup>
-                    </FieldContent>
-                    <FieldError v-if="errors.burden">{{ errors.burden }}</FieldError>
-                  </Field>
-
-                  <Field v-if="form.burden === 'Project'" :data-invalid="!!errors.project_id || undefined">
-                    <FieldLabel><span>{{ t('inventory.project') }}<span class="text-rose-500">*</span></span></FieldLabel>
-                    <FieldContent>
-                      <Combobox v-model="form.project_id" :options="projectOptions" :search-placeholder="t('inventory.searchProjectPlaceholder')" :default-label="t('inventory.selectProject')" width-class="w-full h-10 px-4" :error="!!errors.project_id" />
-                    </FieldContent>
-                    <FieldError v-if="errors.project_id">{{ errors.project_id }}</FieldError>
-                  </Field>
-
                   <!-- Bulk Creation (Only when not vehicle category) -->
                   <Field v-if="!isVehicle" :data-invalid="!!errors.bulk_quantity || undefined">
                     <FieldContent>

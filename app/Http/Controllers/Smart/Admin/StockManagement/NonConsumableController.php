@@ -24,9 +24,9 @@ class NonConsumableController extends Controller
     public function index(Request $request): Response
     {
         $assets = Asset::with([
-            'location.parent', 'statusApprovals', 'project',
+            'location.parent', 'statusApprovals', 'legacyProject',
             'lot.model.type.category', 'lot.model.brand',
-            'lot.organizer', 'lot.vendor', 'lot.legacyVendor', 'vendor', 'lifecycles.actor',
+            'lot.organizer', 'lot.vendor', 'lot.legacyVendor', 'legacyVendor', 'lifecycles.actor',
             'fulfillments' => fn($q) => $q->whereNull('completed_at')->with('requestItem.request.user')
         ])
         ->where('status', 'not like', 'Pending%')
@@ -63,22 +63,26 @@ class NonConsumableController extends Controller
                 'type' => $asset->borrowing_type,
                 'borrowing_type' => $asset->borrowing_type,
                 'classification' => $asset->classification,
-                'specification' => $asset->specification,
+                'comp_specification' => $asset->comp_specification,
+                'specification' => $asset->comp_specification,
                 'price' => $asset->price,
                 'image_url' => $asset->image_url,
                 'vehicle_registration' => $asset->vehicle_registration,
-                'burden' => $asset->burden,
-                'project_id' => $asset->project_id,
-                'project_name' => $asset->project ? $asset->project->project_name : null,
-                'project_no' => $asset->project ? $asset->project->no_project : null,
+                'legacy_burden' => $asset->legacy_burden,
+                'burden' => $asset->legacy_burden,
+                'legacy_project_id' => $asset->legacy_project_id,
+                'project_id' => $asset->legacy_project_id,
+                'project_name' => $asset->legacyProject ? $asset->legacyProject->project_name : null,
+                'project_no' => $asset->legacyProject ? $asset->legacyProject->no_project : null,
                 'created_at' => $asset->created_at?->toIso8601String(),
                 'updated_at' => $asset->updated_at ? $asset->updated_at->format('d-m-Y H:i') : '-',
                 
                 // Asset-specific legacy vendor
-                'asset_vendor' => $asset->vendor?->name,
-                'asset_vendor_id' => $asset->vendor_id,
-                'unit_vendor' => $asset->vendor?->name,
-                'unit_vendor_id' => $asset->vendor_id,
+                'asset_vendor' => $asset->legacyVendor?->name,
+                'asset_vendor_id' => $asset->legacy_vendor_id,
+                'unit_vendor' => $asset->legacyVendor?->name,
+                'unit_vendor_id' => $asset->legacy_vendor_id,
+                'legacy_vendor_id' => $asset->legacy_vendor_id,
 
                 // Location info
                 'location' => $asset->location?->full_name ?? '-',
