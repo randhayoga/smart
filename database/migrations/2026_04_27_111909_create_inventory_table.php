@@ -56,6 +56,7 @@ return new class extends Migration {
             $table->string('vehicle_registration')->nullable();
             $table->string('legacy_burden')->nullable()->comment('Legacy migration only');
             $table->unsignedBigInteger('legacy_project_id')->nullable()->index()->comment('Refers to RE_PORTALDB:tb_project.id_project (legacy migration only)');
+            $table->string('legacy_memo_number')->nullable()->comment('Legacy migration only');
             $table->timestamps();
 
             $table->index('status');

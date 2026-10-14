@@ -221,6 +221,34 @@ class CompCategorySpecificationTest extends TestCase
         $this->assertNull($unitWithoutVendor->fresh()->legacyVendor);
     }
 
+    public function test_unit_supports_legacy_memo_number(): void
+    {
+        $barang = Barang::factory()->create([
+            'number' => 'COMP-NB-0006',
+            'subcategory_id' => $this->compSubcategory->id,
+            'brand_id' => $this->brand->id,
+            'uom_id' => $this->uom->id,
+        ]);
+
+        $lot = Lot::factory()->create([
+            'number' => 'LOT-0006',
+            'barang_id' => $barang->id,
+            'organizer_id' => $this->organizer->id,
+            'vendor_id' => $this->vendor->id,
+        ]);
+
+        $unit = Unit::factory()->create([
+            'number' => 'UNIT-MEMO-01',
+            'lot_id' => $lot->id,
+            'location_id' => $this->location->id,
+            'legacy_memo_number' => 'MEMO/LEGACY/2023/001',
+            'type' => 'LT',
+            'classification' => 'Aset',
+        ]);
+
+        $this->assertSame('MEMO/LEGACY/2023/001', $unit->fresh()->legacy_memo_number);
+    }
+
     public function test_comp_category_unit_stores_and_updates_specification(): void
     {
         $barang = Barang::factory()->create([

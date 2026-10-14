@@ -74,6 +74,7 @@ class NonConsumableController extends Controller
                 'project_id' => $asset->legacy_project_id,
                 'project_name' => $asset->legacyProject ? $asset->legacyProject->project_name : null,
                 'project_no' => $asset->legacyProject ? $asset->legacyProject->no_project : null,
+                'legacy_memo_number' => $asset->legacy_memo_number,
                 'created_at' => $asset->created_at?->toIso8601String(),
                 'updated_at' => $asset->updated_at ? $asset->updated_at->format('d-m-Y H:i') : '-',
                 
