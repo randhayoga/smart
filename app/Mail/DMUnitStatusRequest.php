@@ -85,7 +85,7 @@ class DMUnitStatusRequest extends Mailable
         $this->locationText = $this->asset->location?->full_name ?? '-';
 
         $this->recipientName = $recipientName;
-        $this->actionUrl = url('/smart/approve-status?search=' . urlencode($this->asset->number));
+        $this->actionUrl = url('/smart/approve-deactivation?search=' . urlencode($this->asset->number));
     }
 
     /**

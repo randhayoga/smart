@@ -9,7 +9,7 @@
  */
 
 use App\Http\Controllers\Smart\Admin\DashboardController;
-use App\Http\Controllers\Smart\Admin\ManajemenStokController;
+use App\Http\Controllers\Smart\Admin\StockManagementController;
 use App\Http\Controllers\Smart\Admin\MasterController;
 use App\Http\Controllers\Smart\Admin\AdminApprovedRequestController;
 use App\Http\Controllers\Smart\Admin\AdminRequestConfirmationController;
@@ -35,7 +35,7 @@ use App\Http\Controllers\Smart\Manager\ManagerRequestController;
 use App\Http\Controllers\Smart\Manager\ManagerApprovedRequestController;
 use App\Http\Controllers\Smart\Manager\ManagerRequestApprovalController;
 use App\Http\Controllers\Smart\Manager\ExternalApprovalController;
-use App\Http\Controllers\Smart\Admin\AuditController;
+use App\Http\Controllers\Smart\Admin\AuditTrailController;
 use App\Http\Controllers\Smart\Admin\ArchiveController;
 use App\Http\Controllers\Smart\Admin\InventoryAuditController;
 use App\Http\Controllers\Smart\Admin\Master\CategoryController;
@@ -45,27 +45,27 @@ use App\Http\Controllers\Smart\Admin\Master\BrandController;
 use App\Http\Controllers\Smart\Admin\Master\OrganizerController;
 use App\Http\Controllers\Smart\Admin\Master\VendorController;
 use App\Http\Controllers\Smart\Admin\Master\LocationController;
-use App\Http\Controllers\Smart\Admin\ManajemenStok\AssetController;
-use App\Http\Controllers\Smart\Admin\ManajemenStok\BulkAssetController;
-use App\Http\Controllers\Smart\Admin\ManajemenStok\AssetBorrowController;
-use App\Http\Controllers\Smart\Admin\ManajemenStok\AssetScanController;
-use App\Http\Controllers\Smart\Admin\ManajemenStok\AssetQrCodeController;
-use App\Http\Controllers\Smart\Admin\ManajemenStok\ModelController;
-use App\Http\Controllers\Smart\Admin\ManajemenStok\BulkModelController;
-use App\Http\Controllers\Smart\Admin\ManajemenStok\ModelManualRequestController;
-use App\Http\Controllers\Smart\Admin\ManajemenStok\ConsumableController;
-use App\Http\Controllers\Smart\Admin\ManajemenStok\NonConsumableController;
-use App\Http\Controllers\Smart\Admin\ManajemenStok\LotController;
-use App\Http\Controllers\Smart\Admin\ManajemenStok\BulkLotController;
-use App\Http\Controllers\Smart\Admin\ManajemenStok\LotManualRequestController;
-use App\Http\Controllers\Smart\Admin\ManajemenStok\ConsumableRequestOptionController;
-use App\Http\Controllers\Smart\Admin\ManajemenStok\PendingNonaktifController;
-use App\Http\Controllers\Smart\Admin\ManajemenStok\PendingAktivasiController;
-use App\Http\Controllers\Smart\Admin\ManajemenStok\EmployeeController;
-use App\Http\Controllers\Smart\Admin\ManajemenStok\EmployeeLoanController;
-use App\Http\Controllers\Smart\MultiRoles\AssetStatusApproval\AdminAssetStatusApprovalController;
-use App\Http\Controllers\Smart\MultiRoles\AssetStatusApproval\ManagerAssetStatusApprovalController;
-use App\Http\Controllers\Smart\MultiRoles\AssetStatusApproval\ManagerBulkAssetStatusApprovalController;
+use App\Http\Controllers\Smart\Admin\StockManagement\AssetController;
+use App\Http\Controllers\Smart\Admin\StockManagement\BulkAssetController;
+use App\Http\Controllers\Smart\Admin\StockManagement\AssetBorrowController;
+use App\Http\Controllers\Smart\Admin\StockManagement\AssetScanController;
+use App\Http\Controllers\Smart\Admin\StockManagement\AssetQrCodeController;
+use App\Http\Controllers\Smart\Admin\StockManagement\ModelController;
+use App\Http\Controllers\Smart\Admin\StockManagement\BulkModelController;
+use App\Http\Controllers\Smart\Admin\StockManagement\ModelManualRequestController;
+use App\Http\Controllers\Smart\Admin\StockManagement\ConsumableController;
+use App\Http\Controllers\Smart\Admin\StockManagement\NonConsumableController;
+use App\Http\Controllers\Smart\Admin\StockManagement\LotController;
+use App\Http\Controllers\Smart\Admin\StockManagement\BulkLotController;
+use App\Http\Controllers\Smart\Admin\StockManagement\LotManualRequestController;
+use App\Http\Controllers\Smart\Admin\StockManagement\ConsumableRequestOptionController;
+use App\Http\Controllers\Smart\Admin\StockManagement\PendingDeactivationController;
+use App\Http\Controllers\Smart\Admin\StockManagement\PendingActivationController;
+use App\Http\Controllers\Smart\Admin\Employees\EmployeeController;
+use App\Http\Controllers\Smart\Admin\Employees\EmployeeLoanController;
+use App\Http\Controllers\Smart\MultiRoles\AssetDeactivationApproval\AdminAssetDeactivationApprovalController;
+use App\Http\Controllers\Smart\MultiRoles\AssetDeactivationApproval\ManagerAssetDeactivationApprovalController;
+use App\Http\Controllers\Smart\MultiRoles\AssetDeactivationApproval\ManagerBulkAssetDeactivationApprovalController;
 use App\Http\Controllers\Smart\MultiRoles\AssetActivationApproval\ManagerAssetActivationApprovalController;
 use App\Http\Controllers\Smart\MultiRoles\AssetActivationApproval\ManagerBulkAssetActivationApprovalController;
 use App\Http\Controllers\LocaleController;
@@ -153,7 +153,7 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
         ->name('scan');
 
     // Inventory Catalogs and Management
-    Route::get('/stock-management', [ManajemenStokController::class, 'index'])
+    Route::get('/stock-management', [StockManagementController::class, 'index'])
         ->middleware(['permission:inventory.manage'])
         ->name('inventory');
 
@@ -199,22 +199,22 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
             Route::get('request-options', [ConsumableRequestOptionController::class, 'index'])->name('request-options');
         });
 
-        // Asset Status Change Submissions
+        // Asset Deactivation Submissions
         Route::middleware(['permission:inventory.status_approval.request'])->group(function () {
-            Route::resource('asset-status-approvals', AdminAssetStatusApprovalController::class)->only(['store']);
-            Route::get('pending-deactivation', [PendingNonaktifController::class, 'index'])->name('pending-deactivation');
-            Route::get('pending-activation', [PendingAktivasiController::class, 'index'])->name('pending-activation');
+            Route::resource('asset-deactivation-approvals', AdminAssetDeactivationApprovalController::class)->only(['store']);
+            Route::get('pending-deactivation', [PendingDeactivationController::class, 'index'])->name('pending-deactivation');
+            Route::get('pending-activation', [PendingActivationController::class, 'index'])->name('pending-activation');
         });
     });
 
-    Route::get('/inventory/{model}', [ManajemenStokController::class, 'show'])
+    Route::get('/inventory/{model}', [StockManagementController::class, 'show'])
         ->middleware(['permission:inventory.view'])
         ->name('inventory.show');
 
     // Asset Status Decisions
     Route::middleware(['permission:inventory.status_approval.decide'])->group(function () {
-        Route::get('/approve-deactivation', [ManagerAssetStatusApprovalController::class, 'index'])->name('approve-status');
-        Route::post('/approve-deactivation/bulk', [ManagerBulkAssetStatusApprovalController::class, 'store'])->name('approve-status.bulk-store');
+        Route::get('/approve-deactivation', [ManagerAssetDeactivationApprovalController::class, 'index'])->name('approve-deactivation');
+        Route::post('/approve-deactivation/bulk', [ManagerBulkAssetDeactivationApprovalController::class, 'store'])->name('approve-deactivation.bulk-store');
         Route::get('/approve-activation', [ManagerAssetActivationApprovalController::class, 'index'])->name('approve-activation');
         Route::post('/approve-activation/bulk', [ManagerBulkAssetActivationApprovalController::class, 'store'])->name('approve-activation.bulk-store');
     });
@@ -227,7 +227,7 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
 
     // Audit Trails
     Route::middleware(['permission:audit.view'])->group(function () {
-        Route::get('/audit-trail', [AuditController::class, 'index'])->name('audit');
+        Route::get('/audit-trail', [AuditTrailController::class, 'index'])->name('audit');
         Route::get('/inventory-audit', [InventoryAuditController::class, 'index'])->name('inventory-audit');
     });
 

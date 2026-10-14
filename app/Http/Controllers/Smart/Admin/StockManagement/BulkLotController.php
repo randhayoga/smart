@@ -1,0 +1,162 @@
+<?php
+
+namespace App\Http\Controllers\Smart\Admin\StockManagement;
+
+use App\Http\Controllers\Controller;
+use App\Models\Inventory\Model as InventoryModel;
+use App\Models\Inventory\Lot;
+use App\Models\Inventory\Asset;
+use App\Models\TbProject;
+use App\Services\InventoryLogService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
+
+/**
+ * Bulk Lot Controller managing batch updates and batch deletions of inventory lots.
+ */
+class BulkLotController extends Controller
+{
+    /**
+     * Bulk update multiple lot batches in storage.
+     */
+    public function update(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'required|exists:lots,id',
+            'organizer_id' => 'nullable|exists:organizers,id',
+            'vendor_id' => 'nullable|exists:vendors,id',
+            'location_id' => 'nullable|exists:locations,id',
+            'unit_price' => 'nullable|numeric|min:0|max:999999999.99',
+            'image_url' => 'nullable|image|max:1024',
+            'use_parent_image' => 'nullable',
+            'burden' => 'nullable|string|in:Corporate,Project',
+            'project_id' => ['required_if:burden,Project', 'nullable', Rule::exists(TbProject::class, 'id_project')],
+        ]);
+
+        $lots = Lot::whereIn('id', $request->input('ids'))->get();
+        $storedImagePath = null;
+
+        foreach ($lots as $lot) {
+            $lotData = [];
+
+            if ($request->filled('organizer_id')) {
+                $lotData['organizer_id'] = $request->input('organizer_id');
+            }
+            if ($request->filled('vendor_id')) {
+                $lotData['vendor_id'] = $request->input('vendor_id');
+            }
+            if ($request->filled('location_id')) {
+                $lotData['location_id'] = $request->input('location_id');
+            }
+            if ($request->has('unit_price')) {
+                $lotData['unit_price'] = $request->input('unit_price');
+            }
+            if ($request->filled('burden')) {
+                if ($lot->model?->is_consumable) {
+                    $lotData['burden'] = $request->input('burden');
+                    $lotData['project_id'] = ($request->input('burden') === 'Project') ? $request->input('project_id') : null;
+                } else {
+                    $lotData['burden'] = null;
+                    $lotData['project_id'] = null;
+                }
+            }
+
+            if ($request->boolean('use_parent_image')) {
+                if ($lot->image_url && $lot->image_url !== 'inventory/lots/placeholder.jpg' && Storage::disk('local')->exists($lot->image_url)) {
+                    $isShared = Lot::where('image_url', $lot->image_url)->where('id', '!=', $lot->id)->exists()
+                        || InventoryModel::where('image_url', $lot->image_url)->exists()
+                        || Asset::where('image_url', $lot->image_url)->exists();
+                    if (!$isShared) {
+                        Storage::disk('local')->delete($lot->image_url);
+                    }
+                }
+                $model = $lot->model;
+                if ($model && $model->image_url && Storage::disk('local')->exists($model->image_url)) {
+                    $lotData['image_url'] = $model->image_url;
+                }
+            } else if ($request->hasFile('image_url')) {
+                if ($lot->image_url && $lot->image_url !== 'inventory/lots/placeholder.jpg' && Storage::disk('local')->exists($lot->image_url)) {
+                    $isShared = Lot::where('image_url', $lot->image_url)->where('id', '!=', $lot->id)->exists()
+                        || InventoryModel::where('image_url', $lot->image_url)->exists()
+                        || Asset::where('image_url', $lot->image_url)->exists();
+                    if (!$isShared) {
+                        Storage::disk('local')->delete($lot->image_url);
+                    }
+                }
+                if (!$storedImagePath) {
+                    $storedImagePath = $request->file('image_url')->store('inventory', 'local');
+                }
+                $lotData['image_url'] = $storedImagePath;
+            }
+
+            if (!empty($lotData)) {
+                $original = $lot->getAttributes();
+                $lot->update($lotData);
+                if ($request->user()) {
+                    app(InventoryLogService::class)->logLotUpdated($lot, $original, $request->user());
+                }
+                if ($lot->model) {
+                    app(\App\Services\NotificationService::class)->checkAndNotifyLowStock($lot->model);
+                }
+            }
+        }
+
+        $count = count($request->input('ids'));
+        return redirect()->back()->with('success', __('inventory.bulk_lot_updated', ['count' => $count]));
+    }
+
+    /**
+     * Bulk remove multiple lot batches from storage along with their stored images.
+     */
+    public function destroy(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'required|exists:lots,id',
+        ]);
+
+        $lots = Lot::whereIn('id', $request->input('ids'))->get();
+
+        $deletedCounter = 0;
+        $undeletedCounter = 0;
+
+        foreach ($lots as $lot) {
+            if ($lot->assets()->exists()) {
+                $undeletedCounter++;
+            } else {
+                if ($lot->image_url && $lot->image_url !== 'inventory/lots/placeholder.jpg' && Storage::disk('local')->exists($lot->image_url)) {
+                    $isShared = Lot::where('image_url', $lot->image_url)
+                        ->whereNotIn('id', $request->input('ids'))
+                        ->exists()
+                        || InventoryModel::where('image_url', $lot->image_url)->exists()
+                        || Asset::where('image_url', $lot->image_url)->exists();
+                    if (!$isShared) {
+                        Storage::disk('local')->delete($lot->image_url);
+                    }
+                }
+
+                if ($request->user()) {
+                    app(InventoryLogService::class)->prepareAndLogLotDeleted($lot, $request->user());
+                }
+
+                $lot->delete();
+                $deletedCounter++;
+            }
+        }
+
+        if ($undeletedCounter > 0) {
+            $key = 'error';
+            $message = __('inventory.bulk_lot_delete_partial_has_units', [
+                'deleted' => $deletedCounter,
+                'undeleted' => $undeletedCounter
+            ]);
+        } else {
+            $key = 'success';
+            $message = __('inventory.bulk_lot_deleted', ['count' => $deletedCounter]);
+        }
+
+        return redirect()->back()->with($key, $message);
+    }
+}

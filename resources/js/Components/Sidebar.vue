@@ -54,9 +54,9 @@ const navigation = computed<NavSection[]>(() => {
     // Manager IFS:
     // Phase 1 views:
     // - Dashboard (/smart/dashboard)
-    // - Approval Status (/smart/approve-status)
-    // - History Approval Status (/smart/approve-status?history=true)
-    // - Pergerakan Aset (/smart/audit)
+    // - Approval Deactivation (/smart/approve-deactivation)
+    // - History Approval Deactivation (/smart/approve-deactivation?history=true)
+    // - Pergerakan Aset (/smart/audit-trail)
     // - Audit Manajemen Stok (/smart/inventory-audit)
     sections = ifsNavigation;
   } else if (isAdmin.value) {
@@ -109,7 +109,7 @@ const navigation = computed<NavSection[]>(() => {
     items: section.items.map(item => {
       let badge = item.badge;
       
-      if (item.href === '/smart/approve-status') {
+      if (item.href === '/smart/approve-deactivation') {
         badge = pendingAssetStatusCount > 0 ? pendingAssetStatusCount : undefined;
       } else if (item.href === '/smart/approve-activation') {
         badge = pendingAssetActivationCount > 0 ? pendingAssetActivationCount : undefined;

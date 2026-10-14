@@ -61,14 +61,14 @@ class NotificationFrameworkTest extends TestCase
             'Perlu Approval Status',
             'Aset LAPTOP-001 membutuhkan persetujuan',
             'warning',
-            '/smart/approve-status'
+            '/smart/approve-deactivation'
         );
 
         $this->assertCount(1, $user->notifications);
         $notification = $user->notifications->first();
         $this->assertEquals('Perlu Approval Status', $notification->data['title']);
         $this->assertEquals('warning', $notification->data['type']);
-        $this->assertEquals('/smart/approve-status', $notification->data['url']);
+        $this->assertEquals('/smart/approve-deactivation', $notification->data['url']);
         $this->assertNull($notification->read_at);
     }
 
@@ -334,7 +334,7 @@ class NotificationFrameworkTest extends TestCase
         $notif = $ifsManager->notifications->first();
         $this->assertEquals('Penghapusan Aset Dell Laptop Inspiron: Perlu Perhatian Anda', $notif->data['title']);
         $this->assertEquals('Penghapusan aset AST-DEL-001 telah disetujui oleh BoD/BoC dan sekarang memerlukan approval Anda', $notif->data['message']);
-        $this->assertEquals('/smart/approve-status?search=AST-DEL-001', $notif->data['url']);
+        $this->assertEquals('/smart/approve-deactivation?search=AST-DEL-001', $notif->data['url']);
     }
 
     public function test_notify_admin_when_dm_ifs_approves_asset_status(): void
@@ -368,7 +368,7 @@ class NotificationFrameworkTest extends TestCase
             'memo_url' => 'memos/test.pdf',
         ]);
 
-        $response = $this->actingAs($ifsManager)->post(route('smart.approve-status.bulk-store'), [
+        $response = $this->actingAs($ifsManager)->post(route('smart.approve-deactivation.bulk-store'), [
             'ids' => [$approval->id],
             'decision' => 'approved',
             'note' => 'Disetujui untuk dihapus',
@@ -418,7 +418,7 @@ class NotificationFrameworkTest extends TestCase
             'memo_url' => 'memos/test.pdf',
         ]);
 
-        $response = $this->actingAs($ifsManager)->post(route('smart.approve-status.bulk-store'), [
+        $response = $this->actingAs($ifsManager)->post(route('smart.approve-deactivation.bulk-store'), [
             'ids' => [$approval->id],
             'decision' => 'rejected',
             'note' => 'Dokumen tidak lengkap',

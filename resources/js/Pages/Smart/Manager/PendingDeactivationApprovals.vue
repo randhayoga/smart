@@ -416,7 +416,7 @@ const handleConfirmSubmit = () => {
     return;
   }
 
-  router.post(route('smart.approve-status.bulk-store'), {
+  router.post(route('smart.approve-deactivation.bulk-store'), {
     ids: idsToProcess,
     decision: confirmActionType.value,
     note: confirmNote.value,

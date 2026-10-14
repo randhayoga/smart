@@ -214,7 +214,7 @@ class NotificationService
             $title,
             $message,
             'warning',
-            "/smart/approve-status?search=" . urlencode($asset->number),
+            "/smart/approve-deactivation?search=" . urlencode($asset->number),
             [
                 'asset_id' => $asset->id,
                 'asset_number' => $asset->number,

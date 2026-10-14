@@ -106,7 +106,7 @@ class IfsManagerRoleTest extends TestCase
             route('smart.employees.index'),
             route('smart.audit'),
             route('smart.inventory-audit'),
-            route('smart.approve-status'),
+            route('smart.approve-deactivation'),
         ];
 
         foreach ($sharedRoutes as $sharedRoute) {

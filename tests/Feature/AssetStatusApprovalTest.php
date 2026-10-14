@@ -63,12 +63,12 @@ class AssetStatusApprovalTest extends TestCase
         $manager = $this->createManager();
 
         // Standard user -> 403
-        $this->actingAs($user)->get(route('smart.approve-status'))->assertStatus(403);
-        $this->actingAs($user)->get(route('smart.approve-status', ['history' => 'true']))->assertStatus(403);
+        $this->actingAs($user)->get(route('smart.approve-deactivation'))->assertStatus(403);
+        $this->actingAs($user)->get(route('smart.approve-deactivation', ['history' => 'true']))->assertStatus(403);
 
         // Manager -> 200
-        $this->actingAs($manager)->get(route('smart.approve-status'))->assertStatus(200);
-        $this->actingAs($manager)->get(route('smart.approve-status', ['history' => 'true']))->assertStatus(200);
+        $this->actingAs($manager)->get(route('smart.approve-deactivation'))->assertStatus(200);
+        $this->actingAs($manager)->get(route('smart.approve-deactivation', ['history' => 'true']))->assertStatus(200);
     }
 
     public function test_manager_can_bulk_approve_status(): void
@@ -103,7 +103,7 @@ class AssetStatusApprovalTest extends TestCase
         ]);
         $unit2->update(['status' => 'Pending']);
 
-        $response = $this->actingAs($manager)->post(route('smart.approve-status.bulk-store'), [
+        $response = $this->actingAs($manager)->post(route('smart.approve-deactivation.bulk-store'), [
             'ids' => [$app1->id, $app2->id],
             'decision' => 'approved',
             'note' => 'Bulk approval works',
@@ -182,7 +182,7 @@ class AssetStatusApprovalTest extends TestCase
         ]);
         $unit2->update(['status' => 'Pending']);
 
-        $response = $this->actingAs($manager)->post(route('smart.approve-status.bulk-store'), [
+        $response = $this->actingAs($manager)->post(route('smart.approve-deactivation.bulk-store'), [
             'ids' => [$app1->id, $app2->id],
             'decision' => 'rejected',
             'note' => 'Bulk reject reason',
