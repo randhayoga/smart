@@ -72,7 +72,7 @@ class DashboardControllerTest extends TestCase
         
         // Assert Inertia Props
         $response->assertInertia(fn ($page) => $page
-            ->component('Smart/Admin/Dashboard')
+            ->component('Smart/MultiRoles/Dashboard')
             ->has('consumableSubcategoryStats', 1)
             ->where('consumableSubcategoryStats.0.subcategory_name', 'Stationery')
             ->where('consumableSubcategoryStats.0.total_quantity', fn ($val) => (int) $val === 15)

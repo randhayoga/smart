@@ -73,7 +73,7 @@ class DashboardController extends Controller
             ])
             ->values();
         
-        return Inertia::render('Smart/Admin/Dashboard', [
+        return Inertia::render('Smart/MultiRoles/Dashboard', [
             'user' => $user,
             'consumableTypeStats' => $consumableTypeStats,
             'consumableSubcategoryStats' => $consumableTypeStats,

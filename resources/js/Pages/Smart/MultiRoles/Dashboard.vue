@@ -211,6 +211,7 @@ const ictChartColors = ['#0D9488', '#0284C7', '#F59E0B', '#E11D48', '#8B5CF6', '
                 index="subcategory_name"
                 category="total_quantity"
                 :colors="consumableChartColors"
+                :show-legend="false"
                 :value-formatter="(v) => `${v.toLocaleString(locale === 'en' ? 'en-US' : 'id-ID')}`"
               />
               <div v-else class="py-12 text-center text-muted-foreground text-sm flex flex-col items-center gap-2">
@@ -236,6 +237,7 @@ const ictChartColors = ['#0D9488', '#0284C7', '#F59E0B', '#E11D48', '#8B5CF6', '
                 index="category_name"
                 category="total_units"
                 :colors="cfsChartColors"
+                :show-legend="false"
                 :value-formatter="(v) => `${v.toLocaleString(locale === 'en' ? 'en-US' : 'id-ID')}`"
               />
               <div v-else class="py-12 text-center text-muted-foreground text-sm flex flex-col items-center gap-2">
@@ -261,6 +263,7 @@ const ictChartColors = ['#0D9488', '#0284C7', '#F59E0B', '#E11D48', '#8B5CF6', '
                 index="category_name"
                 category="total_units"
                 :colors="ictChartColors"
+                :show-legend="false"
                 :value-formatter="(v) => `${v.toLocaleString(locale === 'en' ? 'en-US' : 'id-ID')}`"
               />
               <div v-else class="py-12 text-center text-muted-foreground text-sm flex flex-col items-center gap-2">
