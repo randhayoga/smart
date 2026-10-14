@@ -51,7 +51,7 @@ class AssetNumberService
         }
 
         $combination = "{$typeCode}-{$organizerCode}-PTRE";
-        $yy = $lot->date_of_receipt ? $lot->date_of_receipt->format('y') : date('y');
+        $yy = $lot->purchase_grant_date ? $lot->purchase_grant_date->format('y') : date('y');
 
         $currentSerial = $serial ?? $this->getNextSerial($organizerCode);
 
@@ -79,7 +79,7 @@ class AssetNumberService
 
         if ($typeCode && $organizerCode) {
             $combination = "{$typeCode}-{$organizerCode}-PTRE";
-            $yy = $lot->date_of_receipt ? $lot->date_of_receipt->format('y') : date('y');
+            $yy = $lot->purchase_grant_date ? $lot->purchase_grant_date->format('y') : date('y');
 
             $currentSerial = $this->getNextSerial($organizerCode);
             $generatedNumbers = [];

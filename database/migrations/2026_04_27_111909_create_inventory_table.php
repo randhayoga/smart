@@ -16,7 +16,6 @@ return new class extends Migration {
             $table->string('name');
             $table->string('specification')->nullable();
             $table->integer('min_stock_threshold')->default(0)->nullable()->comment('Threshold minimum stock untuk notifikasi barang consumable');
-            $table->string('image_url')->nullable()->comment('default image');
             $table->dateTime('last_restock_at')->nullable();
             $table->timestamps();
         });
@@ -28,13 +27,13 @@ return new class extends Migration {
             $table->foreignId('organizer_id')->constrained('organizers')->cascadeOnDelete();
             $table->unsignedBigInteger('vendor_id')->nullable()->index()->comment('Refers to eproc:vendors.id');
             $table->foreignId('legacy_vendor_id')->nullable()->constrained('vendors')->nullOnDelete()->comment('Refers to local vendors table (legacy)');
-            $table->foreignId('location_id')->nullable()->constrained('locations')->comment('default location');
             $table->integer('initial_quantity')->nullable();
             $table->integer('current_quantity')->nullable()->comment('for consumables');
+            $table->string('entry_type', 50)->default('Procurement');
             $table->string('po_number')->nullable();
-            $table->dateTime('date_of_receipt');
-            $table->decimal('unit_price', 15, 2)->nullable()->comment('default unit price');
-            $table->string('image_url')->nullable()->comment('default image');
+            $table->dateTime('purchase_grant_date');
+            $table->string('memo_number')->nullable();
+            $table->string('memo_url')->nullable();
             $table->string('burden')->nullable()->comment('for consumables');
             $table->unsignedBigInteger('project_id')->nullable()->index()->comment('Refers to RE_PORTALDB:tb_project.id_project (for consumables)');
             $table->timestamps();
@@ -58,6 +57,9 @@ return new class extends Migration {
             $table->string('burden')->default('Corporate');
             $table->unsignedBigInteger('project_id')->nullable()->index()->comment('Refers to RE_PORTALDB:tb_project.id_project');
             $table->timestamps();
+
+            $table->index('status');
+            $table->index('condition');
         });
 
         Schema::create('asset_status_approvals', function (Blueprint $table) {
@@ -78,6 +80,18 @@ return new class extends Migration {
             $table->timestamps();
         });
 
+        Schema::create('asset_activation_approvals', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('asset_id')->constrained('assets')->cascadeOnDelete();
+            $table->unsignedBigInteger('requester_id')->index()->comment('Refers to new_portal:users.id');
+            $table->unsignedBigInteger('approver_id')->nullable()->index()->comment('nullable | Refers to new_portal:users.id');
+            $table->string('decision')->default('pending')->comment('pending | approved | rejected');
+            $table->text('note')->nullable()->comment('nullable | decision explanation note');
+            $table->dateTime('requested_at');
+            $table->dateTime('decided_at')->nullable();
+            $table->timestamps();
+        });
+
         Schema::create('inventory_logs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('model_id')->nullable()->constrained('models')->noActionOnDelete();
@@ -91,6 +105,8 @@ return new class extends Migration {
             $table->text('note')->nullable();
             $table->string('document_url')->nullable();
             $table->dateTime('created_at');
+
+            $table->index('created_at');
         });
 
         Schema::create('asset_lifecycles', function (Blueprint $table) {
@@ -106,6 +122,9 @@ return new class extends Migration {
             $table->text('note')->nullable();
             $table->json('previous_state')->nullable();
             $table->json('new_state')->nullable();
+
+            $table->index('start_date');
+            $table->index('status');
         });
     }
 
@@ -113,6 +132,7 @@ return new class extends Migration {
     {
         Schema::dropIfExists('asset_lifecycles');
         Schema::dropIfExists('inventory_logs');
+        Schema::dropIfExists('asset_activation_approvals');
         Schema::dropIfExists('asset_status_approvals');
         Schema::dropIfExists('assets');
         Schema::dropIfExists('lots');

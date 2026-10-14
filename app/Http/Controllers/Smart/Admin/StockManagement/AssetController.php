@@ -108,7 +108,7 @@ class AssetController extends Controller
             if ($lot->image_url && Storage::disk('local')->exists($lot->image_url)) {
                 $validated['image_url'] = $lot->image_url;
             } else {
-                return redirect()->back()->withErrors(['image_url' => 'Foto LOT tidak ditemukan di storage.']);
+                $validated['image_url'] = null;
             }
         } else if ($request->hasFile('image_url')) {
             $imagePath = $request->file('image_url')->store('inventory', 'local');
@@ -343,9 +343,7 @@ class AssetController extends Controller
 
         if ($request->boolean('delete_image')) {
             if ($asset->image_url && Storage::disk('local')->exists($asset->image_url)) {
-                $isShared = Asset::where('image_url', $asset->image_url)->where('id', '!=', $asset->id)->exists()
-                    || Lot::where('image_url', $asset->image_url)->exists()
-                    || InventoryModel::where('image_url', $asset->image_url)->exists();
+                $isShared = Asset::where('image_url', $asset->image_url)->where('id', '!=', $asset->id)->exists();
                 if (!$isShared) {
                     Storage::disk('local')->delete($asset->image_url);
                 }
@@ -353,24 +351,15 @@ class AssetController extends Controller
             $validated['image_url'] = null;
         } else if ($request->boolean('use_lot_image')) {
             if ($asset->image_url && Storage::disk('local')->exists($asset->image_url)) {
-                $isShared = Asset::where('image_url', $asset->image_url)->where('id', '!=', $asset->id)->exists()
-                    || Lot::where('image_url', $asset->image_url)->exists()
-                    || InventoryModel::where('image_url', $asset->image_url)->exists();
+                $isShared = Asset::where('image_url', $asset->image_url)->where('id', '!=', $asset->id)->exists();
                 if (!$isShared) {
                     Storage::disk('local')->delete($asset->image_url);
                 }
             }
-            $lot = Lot::findOrFail($request->input('lot_id'));
-            if ($lot->image_url && Storage::disk('local')->exists($lot->image_url)) {
-                $validated['image_url'] = $lot->image_url;
-            } else {
-                $validated['image_url'] = null;
-            }
+            $validated['image_url'] = null;
         } else if ($request->hasFile('image_url')) {
             if ($asset->image_url && Storage::disk('local')->exists($asset->image_url)) {
-                $isShared = Asset::where('image_url', $asset->image_url)->where('id', '!=', $asset->id)->exists()
-                    || Lot::where('image_url', $asset->image_url)->exists()
-                    || InventoryModel::where('image_url', $asset->image_url)->exists();
+                $isShared = Asset::where('image_url', $asset->image_url)->where('id', '!=', $asset->id)->exists();
                 if (!$isShared) {
                     Storage::disk('local')->delete($asset->image_url);
                 }

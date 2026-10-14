@@ -49,26 +49,6 @@ class BulkModelController extends Controller
             $updateData['min_stock_threshold'] = $request->input('min_stock_threshold');
         }
 
-        if ($request->hasFile('image_url')) {
-            $imagePath = $request->file('image_url')->store('inventory', 'local');
-            $updateData['image_url'] = $imagePath;
-
-            // Delete old images of updated models if they are not shared
-            $models = Model::whereIn('id', $request->input('ids'))->get();
-            foreach ($models as $model) {
-                if ($model->image_url && Storage::disk('local')->exists($model->image_url)) {
-                    $isShared = Model::where('image_url', $model->image_url)
-                        ->whereNotIn('id', $request->input('ids'))
-                        ->exists()
-                        || Lot::where('image_url', $model->image_url)->exists()
-                        || Asset::where('image_url', $model->image_url)->exists();
-                    if (!$isShared) {
-                        Storage::disk('local')->delete($model->image_url);
-                    }
-                }
-            }
-        }
-
         if (!empty($updateData)) {
             $models = Model::whereIn('id', $request->input('ids'))->get();
             $originals = [];
@@ -109,17 +89,6 @@ class BulkModelController extends Controller
             if ($model->lots()->exists()) {
                 $undeletedCounter++;
             } else {
-                if ($model->image_url && Storage::disk('local')->exists($model->image_url)) {
-                    $isShared = Model::where('image_url', $model->image_url)
-                        ->whereNotIn('id', $request->input('ids'))
-                        ->exists()
-                        || Lot::where('image_url', $model->image_url)->exists()
-                        || Asset::where('image_url', $model->image_url)->exists();
-                    if (!$isShared) {
-                        Storage::disk('local')->delete($model->image_url);
-                    }
-                }
-
                 if ($request->user()) {
                     app(InventoryLogService::class)->prepareAndLogModelDeleted($model, $request->user());
                 }

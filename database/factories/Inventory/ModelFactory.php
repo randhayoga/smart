@@ -41,7 +41,6 @@ class ModelFactory extends Factory
             'uom_id' => Uom::inRandomOrder()->first() ?? Uom::factory(),
             'name' => $this->faker->words(3, true),
             'specification' => $this->faker->sentence(),
-            'image_url' => 'inventory/models/placeholder.jpg',
         ];
     }
 }

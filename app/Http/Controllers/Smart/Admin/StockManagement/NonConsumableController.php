@@ -98,7 +98,7 @@ class NonConsumableController extends Controller
                 'lot_vendor' => $asset->lot?->vendor_name ?? '-',
                 'lot_vendor_id' => $asset->lot->vendor_id ?? null,
                 'lot_po_number' => $asset->lot->po_number ?? '-',
-                'lot_date_of_receipt' => ($asset->lot && $asset->lot->date_of_receipt) ? $asset->lot->date_of_receipt->format('Y-m-d') : null,
+                'lot_purchase_grant_date' => ($asset->lot && $asset->lot->purchase_grant_date) ? $asset->lot->purchase_grant_date->format('Y-m-d') : null,
 
                 // Parent model info
                 'model_id' => $model->id ?? null,

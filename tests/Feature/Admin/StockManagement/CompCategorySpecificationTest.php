@@ -143,7 +143,6 @@ class CompCategorySpecificationTest extends TestCase
             'barang_id' => $barang->id,
             'organizer_id' => $this->organizer->id,
             'vendor_id' => $this->vendor->id,
-            'location_id' => $this->location->id,
         ]);
         $this->assertSame($longLotNumber, $lot->fresh()->number);
 
@@ -174,7 +173,6 @@ class CompCategorySpecificationTest extends TestCase
             'barang_id' => $barang->id,
             'organizer_id' => $this->organizer->id,
             'vendor_id' => $this->vendor->id,
-            'location_id' => $this->location->id,
         ]);
 
         $this->assertSame($this->vendor->id, $lot->fresh()->vendor_id);
@@ -194,7 +192,6 @@ class CompCategorySpecificationTest extends TestCase
             'barang_id' => $barang->id,
             'organizer_id' => $this->organizer->id,
             'vendor_id' => $this->vendor->id,
-            'location_id' => $this->location->id,
         ]);
 
         $unitWithVendor = Unit::factory()->create([
@@ -239,7 +236,6 @@ class CompCategorySpecificationTest extends TestCase
             'barang_id' => $barang->id,
             'organizer_id' => $this->organizer->id,
             'vendor_id' => $this->vendor->id,
-            'location_id' => $this->location->id,
         ]);
 
         $response = $this->actingAs($this->user)->post('/smart/inventory/assets', [
@@ -290,7 +286,6 @@ class CompCategorySpecificationTest extends TestCase
             'barang_id' => $barang->id,
             'organizer_id' => $this->organizer->id,
             'vendor_id' => $this->vendor->id,
-            'location_id' => $this->location->id,
         ]);
 
         $response = $this->actingAs($this->user)->post('/smart/inventory/assets', [
@@ -323,7 +318,6 @@ class CompCategorySpecificationTest extends TestCase
             'number' => 'LOT-0006',
             'barang_id' => $barang->id,
             'organizer_id' => $this->organizer->id,
-            'location_id' => $this->location->id,
         ]);
 
         $response = $this->actingAs($this->user)->post('/smart/inventory/assets/bulk', [

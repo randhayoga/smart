@@ -37,12 +37,9 @@ class UnitTypeClassificationTest extends TestCase
         $barang = Barang::factory()->create(['subcategory_id' => $subcategory->id]);
         $organizer = Organizer::factory()->create(['name' => 'DIV-IT']);
 
-        $imagePath = Storage::disk('local')->putFile('inventory', UploadedFile::fake()->image('lot.jpg'));
         $this->lot = Lot::factory()->create([
             'barang_id' => $barang->id,
             'organizer_id' => $organizer->id,
-            'image_url' => $imagePath,
-            'unit_price' => 7500000,
         ]);
         $this->location = Location::factory()->create();
     }

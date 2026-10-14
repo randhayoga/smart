@@ -124,7 +124,7 @@ class SmartFulfillmentResource extends JsonResource
                             'specification' => $f->lot?->model?->specification ?? '',
                             'quantity_fulfilled' => (int) $f->quantity_fulfilled,
                             'storage_location' => $loc,
-                            'date_of_receipt' => $f->lot?->date_of_receipt ? $f->lot->date_of_receipt->format('d-m-Y') : '-',
+                            'purchase_grant_date' => $f->lot?->purchase_grant_date ? $f->lot->purchase_grant_date->format('d-m-Y') : '-',
                         ];
                     })->values()->toArray();
 
@@ -166,7 +166,7 @@ class SmartFulfillmentResource extends JsonResource
                             'current_quantity' => $totalAvailable,
                             'allocated_quantity' => $assignedQty,
                             'uom' => $l->model?->uom?->name ?? 'satuan',
-                            'date_of_receipt' => $l->date_of_receipt ? $l->date_of_receipt->format('d-m-Y') : '-',
+                            'purchase_grant_date' => $l->purchase_grant_date ? $l->purchase_grant_date->format('d-m-Y') : '-',
                         ];
                     })->values()->toArray();
 

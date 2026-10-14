@@ -36,7 +36,7 @@ import ResetFilterButton from '@/Components/ResetFilterButton.vue';
 import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal.vue';
 import DeleteErrorModal from '@/Components/DeleteErrorModal.vue';
 import Combobox from '@/Components/Combobox.vue';
-import CreateModelModal from '../Modals/CreateModelModal.vue';
+import InputNewStockModal from '../Modals/InputNewStockModal.vue';
 import EditModelModal from '../Modals/EditModelModal.vue';
 import ManualRequestModelModal from '../Modals/ManualRequestModelModal.vue';
 import Tabs from '@/Components/Tabs.vue';
@@ -823,7 +823,7 @@ const closeOnEscape = (e: KeyboardEvent) => {
                 size="lg"
               >
                 <Plus class="w-4 h-4" />
-                <span>{{ t('inventory.newType') }}</span>               
+                <span>{{ t('inventory.inputNewStock') }}</span>               
               </Button>
             </div>
           </div>
@@ -844,13 +844,19 @@ const closeOnEscape = (e: KeyboardEvent) => {
     </div>
 
     <!-- Modals -->
-    <CreateModelModal
+    <InputNewStockModal
       v-model:open="isCreateModalOpen"
       :categories="props.categories"
+      :types="props.subcategories"
       :subcategories="props.subcategories"
       :uoms="props.uoms"
       :brands="props.brands"
+      :models="props.barangs"
       :barangs="props.barangs"
+      :lots="props.lots"
+      :organizers="props.organizers"
+      :locations="props.locations"
+      :projects="props.projects"
     />
 
     <EditModelModal

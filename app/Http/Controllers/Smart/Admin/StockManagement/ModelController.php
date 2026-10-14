@@ -34,19 +34,12 @@ class ModelController extends Controller
             'name' => 'required|string|max:255',
             'specification' => 'nullable|string|max:255',
             'min_stock_threshold' => 'nullable|integer|min:0',
-            'image_url' => 'nullable|image|max:1024',
         ]);
 
         $type = Type::with('category')->find($validated['type_id']);
         if ($type?->category?->code === 'COMP') {
             $validated['specification'] = null;
         }
-
-        $imagePath = null;
-        if ($request->hasFile('image_url')) {
-            $imagePath = $request->file('image_url')->store('inventory', 'local');
-        }
-        $validated['image_url'] = $imagePath;
 
         $model = Model::create($validated);
         if ($request->user()) {
@@ -74,40 +67,12 @@ class ModelController extends Controller
             'name' => 'required|string|max:255',
             'specification' => 'nullable|string|max:255',
             'min_stock_threshold' => 'nullable|integer|min:0',
-            'image_url' => 'nullable|image|max:1024',
-            'delete_image' => 'nullable|boolean',
         ]);
 
         $type = Type::with('category')->find($validated['type_id']);
         if ($type?->category?->code === 'COMP') {
             $validated['specification'] = null;
         }
-
-        if ($request->boolean('delete_image')) {
-            if ($model->image_url && Storage::disk('local')->exists($model->image_url)) {
-                $isShared = Model::where('image_url', $model->image_url)->where('id', '!=', $model->id)->exists()
-                    || Lot::where('image_url', $model->image_url)->exists()
-                    || Asset::where('image_url', $model->image_url)->exists();
-                if (!$isShared) {
-                    Storage::disk('local')->delete($model->image_url);
-                }
-            }
-            $validated['image_url'] = null;
-        } else if ($request->hasFile('image_url')) {
-            if ($model->image_url && Storage::disk('local')->exists($model->image_url)) {
-                $isShared = Model::where('image_url', $model->image_url)->where('id', '!=', $model->id)->exists()
-                    || Lot::where('image_url', $model->image_url)->exists()
-                    || Asset::where('image_url', $model->image_url)->exists();
-                if (!$isShared) {
-                    Storage::disk('local')->delete($model->image_url);
-                }
-            }
-            $imagePath = $request->file('image_url')->store('inventory', 'local');
-            $validated['image_url'] = $imagePath;
-        } else {
-            unset($validated['image_url']);
-        }
-        unset($validated['delete_image']);
 
         $original = $model->getAttributes();
         $model->update($validated);
@@ -128,15 +93,6 @@ class ModelController extends Controller
     {
         if ($model->lots()->exists()) {
             return redirect()->back()->with('error', __('inventory.model_cannot_delete_has_lots'));
-        }
-
-        if ($model->image_url && Storage::disk('local')->exists($model->image_url)) {
-            $isShared = Model::where('image_url', $model->image_url)->where('id', '!=', $model->id)->exists()
-                || Lot::where('image_url', $model->image_url)->exists()
-                || Asset::where('image_url', $model->image_url)->exists();
-            if (!$isShared) {
-                Storage::disk('local')->delete($model->image_url);
-            }
         }
 
         if ($request->user()) {

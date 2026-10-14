@@ -22,11 +22,13 @@ class AssetNumberServiceTest extends TestCase
     use RefreshDatabase;
 
     protected AssetNumberService $service;
+    protected Location $location;
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->service = new AssetNumberService();
+        $this->location = Location::factory()->create();
     }
 
     private function createLot(string $organizerName, string $typeCode, ?string $receiptDate = '2026-05-15'): Lot
@@ -54,13 +56,10 @@ class AssetNumberServiceTest extends TestCase
             'model_id' => $model->id,
             'organizer_id' => $organizer->id,
             'vendor_id' => $vendor->id,
-            'location_id' => $location->id,
             'initial_quantity' => 10,
             'current_quantity' => 10,
             'po_number' => 'PO-01',
-            'date_of_receipt' => $receiptDate ? Carbon::parse($receiptDate) : null,
-            'unit_price' => 100000,
-            'image_url' => 'inventory/lots/placeholder.jpg',
+            'purchase_grant_date' => $receiptDate ? Carbon::parse($receiptDate) : null,
             'burden' => 'Corporate',
         ]);
     }
@@ -78,7 +77,7 @@ class AssetNumberServiceTest extends TestCase
         Asset::create([
             'number' => '00001-FUR-KK-CFS-PTRE-26',
             'lot_id' => $lot->id,
-            'location_id' => $lot->location_id,
+            'location_id' => $this->location->id,
             'status' => 'Tersedia',
             'condition' => 'Baik',
             'image_url' => 'assets/sample.jpg',
@@ -88,7 +87,7 @@ class AssetNumberServiceTest extends TestCase
         Asset::create([
             'number' => '00004-FUR-KK-CFS-PTRE-26',
             'lot_id' => $lot->id,
-            'location_id' => $lot->location_id,
+            'location_id' => $this->location->id,
             'status' => 'Tersedia',
             'condition' => 'Baik',
             'image_url' => 'assets/sample.jpg',
@@ -105,7 +104,7 @@ class AssetNumberServiceTest extends TestCase
         Asset::create([
             'number' => '00010-COMP-NB-ICT-PTRE-26',
             'lot_id' => $ictLot->id,
-            'location_id' => $ictLot->location_id,
+            'location_id' => $this->location->id,
             'status' => 'Tersedia',
             'condition' => 'Baik',
             'image_url' => 'assets/sample.jpg',
@@ -114,7 +113,7 @@ class AssetNumberServiceTest extends TestCase
         Asset::create([
             'number' => '00002-FUR-KK-CFS-PTRE-26',
             'lot_id' => $cfsLot->id,
-            'location_id' => $cfsLot->location_id,
+            'location_id' => $this->location->id,
             'status' => 'Tersedia',
             'condition' => 'Baik',
             'image_url' => 'assets/sample.jpg',
@@ -134,7 +133,7 @@ class AssetNumberServiceTest extends TestCase
         Asset::create([
             'number' => $asset1Number,
             'lot_id' => $lotFur2026->id,
-            'location_id' => $lotFur2026->location_id,
+            'location_id' => $this->location->id,
             'status' => 'Tersedia',
             'condition' => 'Baik',
             'image_url' => 'assets/sample.jpg',
@@ -155,7 +154,7 @@ class AssetNumberServiceTest extends TestCase
         Asset::create([
             'number' => '00003-FUR-KK-CFS-PTRE-26',
             'lot_id' => $lot->id,
-            'location_id' => $lot->location_id,
+            'location_id' => $this->location->id,
             'status' => 'Tersedia',
             'condition' => 'Baik',
             'image_url' => 'assets/sample.jpg',

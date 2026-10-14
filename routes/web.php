@@ -61,6 +61,7 @@ use App\Http\Controllers\Smart\Admin\StockManagement\LotManualRequestController;
 use App\Http\Controllers\Smart\Admin\StockManagement\ConsumableRequestOptionController;
 use App\Http\Controllers\Smart\Admin\StockManagement\PendingDeactivationController;
 use App\Http\Controllers\Smart\Admin\StockManagement\PendingActivationController;
+use App\Http\Controllers\Smart\Admin\StockManagement\NewStockController;
 use App\Http\Controllers\Smart\Admin\Employees\EmployeeController;
 use App\Http\Controllers\Smart\Admin\Employees\EmployeeLoanController;
 use App\Http\Controllers\Smart\MultiRoles\AssetDeactivationApproval\AdminAssetDeactivationApprovalController;
@@ -183,6 +184,9 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
             Route::post('assets/bulk-update', [BulkAssetController::class, 'update'])->name('assets.bulk-update');
             Route::post('assets/bulk', [BulkAssetController::class, 'store'])->name('assets.bulk-store');
             Route::resource('assets', AssetController::class)->only(['store', 'update']);
+
+            // New Stock Unified Input
+            Route::post('new-stock', [NewStockController::class, 'store'])->name('new-stock.store');
         });
 
         // Direct Borrowing Actions

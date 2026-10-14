@@ -114,7 +114,7 @@ class BulkAssetController extends Controller
             if ($lot->image_url && Storage::disk('local')->exists($lot->image_url)) {
                 $finalImagePath = $lot->image_url;
             } else {
-                return redirect()->back()->withErrors(['image_url' => 'Foto LOT tidak ditemukan di storage.']);
+                $finalImagePath = null;
             }
         } else if ($request->hasFile('image_url')) {
             $finalImagePath = $request->file('image_url')->store('inventory', 'local');
@@ -388,9 +388,7 @@ class BulkAssetController extends Controller
             // Delete old images for each asset if not shared
             foreach ($assets as $asset) {
                 if ($asset->image_url && Storage::disk('local')->exists($asset->image_url)) {
-                    $isShared = Asset::where('image_url', $asset->image_url)->where('id', '!=', $asset->id)->exists()
-                        || Lot::where('image_url', $asset->image_url)->exists()
-                        || InventoryModel::where('image_url', $asset->image_url)->exists();
+                    $isShared = Asset::where('image_url', $asset->image_url)->where('id', '!=', $asset->id)->exists();
                     if (!$isShared) {
                         Storage::disk('local')->delete($asset->image_url);
                     }

@@ -93,7 +93,7 @@ class ManagerAssetActivationApprovalResource extends JsonResource
                 'lot_number' => $lot?->number ?? '-',
                 'lot_code' => $lot?->number ?? '-',
                 'organizer' => $lot?->organizer->name ?? '-',
-                'date_of_receipt' => $lot?->date_of_receipt ? $lot->date_of_receipt->format('d-m-Y') : '-',
+                'purchase_grant_date' => $lot?->purchase_grant_date ? $lot->purchase_grant_date->format('d-m-Y') : '-',
                 'age' => $lot ? $lot->age : null,
                 'vendor' => $lot?->vendor_name ?? '-',
                 'po_number' => $lot?->po_number ?? '-',
@@ -121,7 +121,7 @@ class ManagerAssetActivationApprovalResource extends JsonResource
 
                 'lot_code' => $lot?->number ?? '-',
                 'organizer' => $lot?->organizer->name ?? '-',
-                'date_of_receipt' => $lot?->date_of_receipt ? $lot->date_of_receipt->format('d-m-Y') : '-',
+                'purchase_grant_date' => $lot?->purchase_grant_date ? $lot->purchase_grant_date->format('d-m-Y') : '-',
                 'age' => $lot ? $lot->age : null,
                 'vendor' => $lot?->vendor_name ?? '-',
                 'po_number' => $lot?->po_number ?? '-',

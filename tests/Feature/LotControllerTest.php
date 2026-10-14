@@ -17,7 +17,7 @@ use Tests\TestCase;
 /**
  * Lot Controller Feature Tests
  *
- * Verifies single and bulk operations on LOT batches, parent image inheritance, unit quantity limits, and deletion constraints.
+ * Verifies single and bulk operations on LOT batches, unit quantity limits, and deletion constraints.
  */
 class LotControllerTest extends TestCase
 {
@@ -34,18 +34,13 @@ class LotControllerTest extends TestCase
         $vendor = Vendor::factory()->create();
         $location = Location::factory()->create();
 
-        $file = UploadedFile::fake()->image('lot.jpg');
-
         $response = $this->actingAs($user)->post(route('smart.inventory.lots.store'), [
             'number' => 'LOT-2026-ATK-KER-0001-0001',
             'barang_id' => $barang->id,
             'organizer_id' => $organizer->id,
             'vendor_id' => $vendor->id,
-            'location_id' => $location->id,
             'po_number' => 'PO-01',
-            'date_of_receipt' => '2026-05-22',
-            'unit_price' => 60000,
-            'image_url' => $file,
+            'purchase_grant_date' => '2026-05-22',
             'burden' => 'Corporate',
         ]);
 
@@ -56,15 +51,10 @@ class LotControllerTest extends TestCase
             'model_id' => $barang->id,
             'organizer_id' => $organizer->id,
             'vendor_id' => $vendor->id,
-            'location_id' => $location->id,
             'po_number' => 'PO-01',
-            'unit_price' => 60000,
         ]);
 
         $lot = Lot::first();
-        $this->assertNotNull($lot->image_url);
-        $this->assertNotEquals('inventory/lots/placeholder.jpg', $lot->image_url);
-        Storage::disk('local')->assertExists($lot->image_url);
 
         $this->assertDatabaseHas('inventory_logs', [
             'lot_id' => $lot->id,
@@ -82,7 +72,6 @@ class LotControllerTest extends TestCase
             'type' => 'LT',
             'classification' => 'Aset',
             'price' => 60000,
-            'use_lot_image' => true,
             'bulk_quantity' => 3,
         ]);
         $bulkResponse->assertRedirect();
@@ -99,63 +88,31 @@ class LotControllerTest extends TestCase
         Storage::fake('local');
         $user = User::factory()->create();
         $lot = Lot::factory()->create();
-        $file = UploadedFile::fake()->image('lot_updated.jpg');
+        $newOrganizer = Organizer::factory()->create();
 
         $response = $this->actingAs($user)->put(route('smart.inventory.lots.update', $lot), [
             'number' => $lot->number,
             'barang_id' => $lot->barang_id,
-            'organizer_id' => $lot->organizer_id,
+            'organizer_id' => $newOrganizer->id,
             'vendor_id' => $lot->vendor_id,
-            'location_id' => $lot->location_id,
-            'po_number' => $lot->po_number,
-            'date_of_receipt' => $lot->date_of_receipt->format('Y-m-d'),
-            'unit_price' => $lot->unit_price,
-            'image_url' => $file,
+            'po_number' => 'PO-UPDATED',
+            'purchase_grant_date' => $lot->purchase_grant_date->format('Y-m-d'),
             'burden' => 'Corporate',
         ]);
 
         $response->assertRedirect();
 
-        $lot->refresh();
-        $this->assertNotNull($lot->image_url);
-        Storage::disk('local')->assertExists($lot->image_url);
+        $this->assertDatabaseHas('lots', [
+            'id' => $lot->id,
+            'organizer_id' => $newOrganizer->id,
+            'po_number' => 'PO-UPDATED',
+        ]);
 
         $this->assertDatabaseHas('inventory_logs', [
             'lot_id' => $lot->id,
             'user_id' => $user->id,
             'action_type' => 'update',
         ]);
-    }
-
-    public function test_can_update_lot_and_delete_image(): void
-    {
-        Storage::fake('local');
-        $user = User::factory()->create();
-        Storage::disk('local')->put('inventory/lot_sample.jpg', 'fake content');
-
-        $lot = Lot::factory()->create([
-            'image_url' => 'inventory/lot_sample.jpg',
-        ]);
-
-        $response = $this->actingAs($user)->put(route('smart.inventory.lots.update', $lot), [
-            'number' => $lot->number,
-            'barang_id' => $lot->barang_id,
-            'organizer_id' => $lot->organizer_id,
-            'vendor_id' => $lot->vendor_id,
-            'location_id' => $lot->location_id,
-            'po_number' => $lot->po_number,
-            'date_of_receipt' => $lot->date_of_receipt->format('Y-m-d'),
-            'unit_price' => $lot->unit_price,
-            'delete_image' => true,
-            'burden' => 'Corporate',
-        ]);
-
-        $response->assertRedirect();
-        $response->assertSessionHas('success', 'LOT berhasil diperbarui.');
-
-        $lot->refresh();
-        $this->assertNull($lot->image_url);
-        Storage::disk('local')->assertMissing('inventory/lot_sample.jpg');
     }
 
     public function test_can_store_lot_with_null_or_blank_po_number(): void
@@ -165,19 +122,14 @@ class LotControllerTest extends TestCase
         $barang = Barang::factory()->create();
         $organizer = Organizer::factory()->create();
         $vendor = Vendor::factory()->create();
-        $location = Location::factory()->create();
-        $file = UploadedFile::fake()->image('lot_null_po.jpg');
 
         $response = $this->actingAs($user)->post(route('smart.inventory.lots.store'), [
             'number' => 'LOT-2026-ATK-KER-0002-0001',
             'barang_id' => $barang->id,
             'organizer_id' => $organizer->id,
             'vendor_id' => $vendor->id,
-            'location_id' => $location->id,
             'po_number' => '', // blank input
-            'date_of_receipt' => '2026-05-22',
-            'unit_price' => 50000,
-            'image_url' => $file,
+            'purchase_grant_date' => '2026-05-22',
             'burden' => 'Corporate',
         ]);
 
@@ -201,10 +153,8 @@ class LotControllerTest extends TestCase
             'barang_id' => $lot->barang_id,
             'organizer_id' => $lot->organizer_id,
             'vendor_id' => $lot->vendor_id,
-            'location_id' => $lot->location_id,
             'po_number' => '', // cleared to blank
-            'date_of_receipt' => $lot->date_of_receipt->format('Y-m-d'),
-            'unit_price' => $lot->unit_price,
+            'purchase_grant_date' => $lot->purchase_grant_date->format('Y-m-d'),
             'burden' => 'Corporate',
         ]);
 
@@ -214,17 +164,13 @@ class LotControllerTest extends TestCase
 
     public function test_can_destroy_lot(): void
     {
-        Storage::fake('local');
         $user = User::factory()->create();
-        $file = UploadedFile::fake()->image('lot.jpg');
-        $imagePath = Storage::disk('local')->putFile('inventory', $file);
-        $lot = Lot::factory()->create(['image_url' => $imagePath]);
+        $lot = Lot::factory()->create();
 
         $response = $this->actingAs($user)->delete(route('smart.inventory.lots.destroy', $lot));
 
         $response->assertRedirect();
         $this->assertDatabaseMissing('lots', ['id' => $lot->id]);
-        Storage::disk('local')->assertMissing($imagePath);
 
         $this->assertDatabaseHas('inventory_logs', [
             'model_id' => $lot->model_id,
@@ -264,11 +210,12 @@ class LotControllerTest extends TestCase
     {
         $user = User::factory()->create();
         $lot = Lot::factory()->create();
+        $location = Location::factory()->create();
         
         $tipeCode = $lot->barang->subcategory->code ?? 'SUB';
         $organizerCode = $lot->organizer->name ?? 'ORG';
         $combination = "{$tipeCode}-{$organizerCode}-PTRE";
-        $yy = $lot->date_of_receipt ? $lot->date_of_receipt->format('y') : date('y');
+        $yy = $lot->purchase_grant_date ? $lot->purchase_grant_date->format('y') : date('y');
         $unitNumber = "00001-{$combination}-{$yy}";
         if (strlen($unitNumber) > 25) {
             $unitNumber = substr($unitNumber, 0, 25);
@@ -277,13 +224,13 @@ class LotControllerTest extends TestCase
         \App\Models\Inventory\Unit::create([
             'number' => $unitNumber,
             'lot_id' => $lot->id,
-            'location_id' => $lot->location_id ?? 1,
+            'location_id' => $location->id,
             'status' => 'Tersedia',
             'condition' => 'Bagus',
             'type' => 'LT',
             'classification' => 'Aset',
-            'price' => $lot->unit_price ?? 0,
-            'image_url' => $lot->image_url ?? 'inventory/lots/placeholder.jpg',
+            'price' => 0,
+            'image_url' => 'inventory/lots/placeholder.jpg',
         ]);
 
         $response = $this->actingAs($user)->delete(route('smart.inventory.lots.destroy', $lot));
@@ -293,98 +240,6 @@ class LotControllerTest extends TestCase
         $this->assertDatabaseHas('lots', [
             'id' => $lot->id,
         ]);
-    }
-
-    public function test_can_store_lot_using_parent_image(): void
-    {
-        Storage::fake('local');
-        $user = User::factory()->create();
-        
-        $barangImage = UploadedFile::fake()->image('barang.jpg');
-        $barangImagePath = Storage::disk('local')->putFile('inventory/barangs', $barangImage);
-        
-        $category = \App\Models\Master\Category::factory()->create();
-        $subcategory = \App\Models\Master\Subcategory::factory()->create(['category_id' => $category->id, 'is_consumable' => false]);
-        $barang = Barang::factory()->create([
-            'image_url' => $barangImagePath,
-            'subcategory_id' => $subcategory->id
-        ]);
-        
-        $organizer = Organizer::factory()->create();
-        $vendor = Vendor::factory()->create();
-        $location = Location::factory()->create();
-
-        $response = $this->actingAs($user)->post(route('smart.inventory.lots.store'), [
-            'number' => 'LOT-2026-ATK-KER-0001-0001',
-            'barang_id' => $barang->id,
-            'organizer_id' => $organizer->id,
-            'vendor_id' => $vendor->id,
-            'location_id' => $location->id,
-            'po_number' => 'PO-01',
-            'date_of_receipt' => '2026-05-22',
-            'unit_price' => 60000,
-            'use_parent_image' => true,
-            'burden' => 'Corporate',
-        ]);
-
-        $response->assertRedirect();
-        
-        $lot = Lot::first();
-        $this->assertNotNull($lot->image_url);
-        $this->assertEquals($barangImagePath, $lot->image_url);
-        Storage::disk('local')->assertExists($lot->image_url);
-
-        $bulkResponse = $this->actingAs($user)->post(route('smart.inventory.assets.bulk-store'), [
-            'number' => 'LOT-2026-ATK-KER-0001-0001-U01',
-            'lot_id' => $lot->id,
-            'location_id' => $location->id,
-            'status' => 'Tersedia',
-            'condition' => 'Bagus',
-            'type' => 'LT',
-            'classification' => 'Aset',
-            'price' => 60000,
-            'use_lot_image' => true,
-            'bulk_quantity' => 2,
-        ]);
-        $bulkResponse->assertRedirect();
-
-        $this->assertEquals(2, $lot->units()->count());
-        $unit = $lot->units()->first();
-        $this->assertMatchesRegularExpression('/^\d{5}-.+-PTRE-\d{2}$/', $unit->number);
-    }
-
-    public function test_can_update_lot_using_parent_image(): void
-    {
-        Storage::fake('local');
-        $user = User::factory()->create();
-        
-        $barangImage = UploadedFile::fake()->image('barang.jpg');
-        $barangImagePath = Storage::disk('local')->putFile('inventory/barangs', $barangImage);
-        $barang = Barang::factory()->create(['image_url' => $barangImagePath]);
-        
-        $lot = Lot::factory()->create(['barang_id' => $barang->id]);
-        $project = \App\Models\TbProject::factory()->create();
-        
-        $response = $this->actingAs($user)->put(route('smart.inventory.lots.update', $lot), [
-            'number' => $lot->number,
-            'barang_id' => $barang->id,
-            'organizer_id' => $lot->organizer_id,
-            'vendor_id' => $lot->vendor_id,
-            'location_id' => $lot->location_id,
-            'po_number' => $lot->po_number,
-            'date_of_receipt' => $lot->date_of_receipt->format('Y-m-d'),
-            'unit_price' => $lot->unit_price,
-            'use_parent_image' => true,
-            'burden' => 'Project',
-            'project_id' => $project->id,
-        ]);
-
-        $response->assertRedirect();
-        
-        $lot->refresh();
-        $this->assertNotNull($lot->image_url);
-        $this->assertEquals($barangImagePath, $lot->image_url);
-        Storage::disk('local')->assertExists($lot->image_url);
     }
 
     public function test_can_bulk_update_lots(): void
@@ -397,14 +252,11 @@ class LotControllerTest extends TestCase
         
         $newOrganizer = Organizer::factory()->create();
         $newVendor = Vendor::factory()->create();
-        $newLocation = Location::factory()->create();
 
         $response = $this->actingAs($user)->put(route('smart.inventory.lots.bulk-update'), [
             'ids' => $ids,
             'organizer_id' => $newOrganizer->id,
             'vendor_id' => $newVendor->id,
-            'location_id' => $newLocation->id,
-            'unit_price' => 99000,
         ]);
 
         $response->assertRedirect();
@@ -414,8 +266,6 @@ class LotControllerTest extends TestCase
                 'id' => $id,
                 'organizer_id' => $newOrganizer->id,
                 'vendor_id' => $newVendor->id,
-                'location_id' => $newLocation->id,
-                'unit_price' => 99000,
             ]);
 
             $this->assertDatabaseHas('inventory_logs', [
@@ -453,16 +303,18 @@ class LotControllerTest extends TestCase
         $user = User::factory()->create();
         $lotWithoutUnits = Lot::factory()->create();
         $lotWithUnits = Lot::factory()->create();
+        $location = Location::factory()->create();
+
         \App\Models\Inventory\Unit::create([
             'number' => substr($lotWithUnits->number, 0, 20) . '-U01',
             'lot_id' => $lotWithUnits->id,
-            'location_id' => $lotWithUnits->location_id ?? 1,
+            'location_id' => $location->id,
             'status' => 'Tersedia',
             'condition' => 'Baik',
             'type' => 'LT',
             'classification' => 'Aset',
-            'price' => $lotWithUnits->unit_price ?? 0,
-            'image_url' => $lotWithUnits->image_url ?? 'inventory/lots/placeholder.jpg',
+            'price' => 0,
+            'image_url' => 'inventory/lots/placeholder.jpg',
         ]);
 
         $response = $this->actingAs($user)->delete(route('smart.inventory.lots.bulk-destroy'), [
@@ -491,13 +343,13 @@ class LotControllerTest extends TestCase
             $units[] = \App\Models\Inventory\Unit::create([
                 'number' => substr($lot->number, 0, 20) . '-U0' . ($i + 1),
                 'lot_id' => $lot->id,
-                'location_id' => $lot->location_id ?? 1,
+                'location_id' => $location->id,
                 'status' => 'Tersedia',
                 'condition' => 'Bagus',
                 'type' => 'LT',
                 'classification' => 'Aset',
-                'price' => $lot->unit_price ?? 0,
-                'image_url' => $lot->image_url ?? 'inventory/lots/placeholder.jpg',
+                'price' => 0,
+                'image_url' => 'inventory/lots/placeholder.jpg',
             ]);
         }
         $ids = collect($units)->pluck('id')->toArray();
@@ -522,69 +374,28 @@ class LotControllerTest extends TestCase
         }
     }
 
-    public function test_consumable_lot_requires_location(): void
-    {
-        $user = User::factory()->create();
-        $category = \App\Models\Master\Category::factory()->create();
-        $subcategory = \App\Models\Master\Subcategory::factory()->create(['category_id' => $category->id, 'is_consumable' => true]);
-        $barang = Barang::factory()->create(['subcategory_id' => $subcategory->id]);
-        $organizer = Organizer::factory()->create();
-
-        // 1. Missing location_id should fail validation for consumable lot
-        $response = $this->actingAs($user)->post(route('smart.inventory.lots.store'), [
-            'number' => 'LOT-CONS-0001',
-            'barang_id' => $barang->id,
-            'organizer_id' => $organizer->id,
-            'vendor_id' => 1,
-            'date_of_receipt' => '2026-10-06',
-            'burden' => 'Corporate',
-        ]);
-
-        $response->assertSessionHasErrors(['location_id']);
-
-        // 2. Providing them succeeds
-        $location = Location::factory()->create();
-        $successResponse = $this->actingAs($user)->post(route('smart.inventory.lots.store'), [
-            'number' => 'LOT-CONS-0001',
-            'barang_id' => $barang->id,
-            'organizer_id' => $organizer->id,
-            'vendor_id' => 1,
-            'location_id' => $location->id,
-            'initial_quantity' => 50,
-            'date_of_receipt' => '2026-10-06',
-            'burden' => 'Corporate',
-        ]);
-
-        $successResponse->assertSessionHasNoErrors();
-        $lot = Lot::where('number', 'LOT-CONS-0001')->first();
-        $this->assertNotNull($lot);
-        $this->assertEquals(50, $lot->initial_quantity);
-        $this->assertEquals($location->id, $lot->location_id);
-    }
-
-    public function test_non_consumable_lot_allows_nullable_location_and_null_quantities(): void
+    public function test_non_consumable_lot_sets_null_quantities(): void
     {
         $user = User::factory()->create();
         $category = \App\Models\Master\Category::factory()->create();
         $subcategory = \App\Models\Master\Subcategory::factory()->create(['category_id' => $category->id, 'is_consumable' => false]);
         $barang = Barang::factory()->create(['subcategory_id' => $subcategory->id]);
         $organizer = Organizer::factory()->create();
+        $vendor = Vendor::factory()->create();
 
-        // Storing non-consumable without location_id or quantity
+        // Storing non-consumable without quantity sets null quantities
         $response = $this->actingAs($user)->post(route('smart.inventory.lots.store'), [
             'number' => 'LOT-NONC-0001',
             'barang_id' => $barang->id,
             'organizer_id' => $organizer->id,
-            'vendor_id' => 1,
-            'date_of_receipt' => '2026-10-06',
+            'vendor_id' => $vendor->id,
+            'purchase_grant_date' => '2026-10-06',
         ]);
 
         $response->assertSessionHasNoErrors();
         $lot = Lot::where('number', 'LOT-NONC-0001')->first();
         $this->assertNotNull($lot);
-        $this->assertNull($lot->location_id);
         $this->assertNull($lot->initial_quantity);
         $this->assertNull($lot->current_quantity);
     }
 }
-

@@ -33,8 +33,8 @@ class LotFactory extends Factory
         $vendor = Vendor::inRandomOrder()->first() ?? Vendor::factory()->create();
         $location = Location::inRandomOrder()->first() ?? Location::factory()->create();
         
-        $dateOfReceipt = $this->faker->dateTimeBetween('-1 year', 'now');
-        $yy = $dateOfReceipt->format('y');
+        $purchaseGrantDate = $this->faker->dateTimeBetween('-1 year', 'now');
+        $yy = $purchaseGrantDate->format('y');
         $modelCode = $model->number;
         
         static $lotSerial = 1;
@@ -47,13 +47,13 @@ class LotFactory extends Factory
             'organizer_id' => $organizer->id,
             'vendor_id' => $vendor->id,
             'legacy_vendor_id' => $vendor->id,
-            'location_id' => $location->id,
             'initial_quantity' => 0,
             'current_quantity' => 0,
+            'entry_type' => 'Procurement',
             'po_number' => $this->faker->bothify('PO-##'),
-            'date_of_receipt' => $dateOfReceipt,
-            'unit_price' => $this->faker->randomFloat(2, 10000, 10000000),
-            'image_url' => 'inventory/lots/placeholder.jpg',
+            'purchase_grant_date' => $purchaseGrantDate,
+            'memo_number' => null,
+            'memo_url' => null,
             'burden' => (bool) ($model->is_consumable ?? false) ? 'Corporate' : null,
             'project_id' => null,
         ];

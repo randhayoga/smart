@@ -45,7 +45,6 @@ class AssetCreatedSortingTest extends TestCase
         $lot = Lot::factory()->create([
             'barang_id' => $barang->id,
             'organizer_id' => $organizer->id,
-            'location_id' => $location->id,
         ]);
 
         // Create older unit (3 days ago)
@@ -107,7 +106,6 @@ class AssetCreatedSortingTest extends TestCase
         $lot = Lot::factory()->create([
             'barang_id' => $barang->id,
             'organizer_id' => $organizer->id,
-            'location_id' => $location->id,
         ]);
 
         // Verified unit

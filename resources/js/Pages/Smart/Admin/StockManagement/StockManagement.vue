@@ -44,23 +44,35 @@ interface SimpleItem  { id: number; name: string; }
 interface Props {
   user: { name: string; email: string; };
   categories:    Category[];
-  subcategories: Subcategory[];
+  subcategories?: Subcategory[];
+  types?:        Subcategory[];
   uoms:          SimpleItem[];
   brands:        SimpleItem[];
   barangs?:      any[];
+  models?:       any[];
+  organizers?:   SimpleItem[];
+  locations?:    any[];
+  projects?:     any[];
+  lots?:         any[];
 }
 
 const props = withDefaults(defineProps<Props>(), {
   categories:    () => [],
   subcategories: () => [],
+  types:         () => [],
   uoms:          () => [],
   brands:        () => [],
   barangs:       () => [],
+  models:        () => [],
+  organizers:    () => [],
+  locations:     () => [],
+  projects:      () => [],
+  lots:          () => [],
 });
 
 const { t } = useI18n();
 
-import CreateModelModal from './Modals/CreateModelModal.vue';
+import InputNewStockModal from './Modals/InputNewStockModal.vue';
 import EditModelModal from './Modals/EditModelModal.vue';
 
 const searchQuery = ref('');
@@ -692,7 +704,7 @@ onUnmounted(() => {
                 size="lg"
               >
                 <Plus class="w-4 h-4" />
-                <span>{{ t('inventory.newType') }}</span>               
+                <span>{{ t('inventory.inputNewStock') }}</span>               
               </Button>
             </div>
           </div>
@@ -714,13 +726,19 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <CreateModelModal
+    <InputNewStockModal
       v-model:open="isCreateModalOpen"
       :categories="props.categories"
-      :subcategories="props.subcategories"
+      :types="props.types || props.subcategories"
+      :subcategories="props.subcategories || props.types"
       :uoms="props.uoms"
       :brands="props.brands"
-      :barangs="props.barangs"
+      :models="props.models || props.barangs"
+      :barangs="props.barangs || props.models"
+      :organizers="props.organizers"
+      :locations="props.locations"
+      :projects="props.projects"
+      :lots="props.lots"
     />
 
     <EditModelModal

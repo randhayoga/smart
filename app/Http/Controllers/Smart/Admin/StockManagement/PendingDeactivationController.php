@@ -73,8 +73,6 @@ class PendingDeactivationController extends Controller
                 // Parent lot info
                 'lot_id' => $asset->lot_id,
                 'lot_number' => $asset->lot->number ?? '-',
-                'lot_imageUrl' => $asset->lot->image_url ?? null,
-                'lot_unitPrice' => $asset->lot->unit_price ?? null,
                 'organizer' => $asset->lot->organizer->name ?? '-',
                 'organizer_id' => $asset->lot->organizer_id ?? null,
                 'vendor' => $asset->lot?->vendor_name ?? '-',
@@ -83,7 +81,7 @@ class PendingDeactivationController extends Controller
                 'lot_organizer' => $asset->lot->organizer->name ?? '-',
                 'lot_vendor' => $asset->lot?->vendor_name ?? '-',
                 'lot_po_number' => $asset->lot->po_number ?? '-',
-                'lot_date_of_receipt' => ($asset->lot && $asset->lot->date_of_receipt) ? $asset->lot->date_of_receipt->format('Y-m-d') : null,
+                'lot_purchase_grant_date' => ($asset->lot && $asset->lot->purchase_grant_date) ? $asset->lot->purchase_grant_date->format('Y-m-d') : null,
 
                 // Parent model info
                 'model_id' => $model->id ?? null,

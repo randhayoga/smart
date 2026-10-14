@@ -27,16 +27,11 @@ class BulkLotController extends Controller
             'ids.*' => 'required|exists:lots,id',
             'organizer_id' => 'nullable|exists:organizers,id',
             'vendor_id' => 'nullable|exists:vendors,id',
-            'location_id' => 'nullable|exists:locations,id',
-            'unit_price' => 'nullable|numeric|min:0|max:999999999.99',
-            'image_url' => 'nullable|image|max:1024',
-            'use_parent_image' => 'nullable',
             'burden' => 'nullable|string|in:Corporate,Project',
             'project_id' => ['required_if:burden,Project', 'nullable', Rule::exists(TbProject::class, 'id_project')],
         ]);
 
         $lots = Lot::whereIn('id', $request->input('ids'))->get();
-        $storedImagePath = null;
 
         foreach ($lots as $lot) {
             $lotData = [];
@@ -47,12 +42,6 @@ class BulkLotController extends Controller
             if ($request->filled('vendor_id')) {
                 $lotData['vendor_id'] = $request->input('vendor_id');
             }
-            if ($request->filled('location_id')) {
-                $lotData['location_id'] = $request->input('location_id');
-            }
-            if ($request->has('unit_price')) {
-                $lotData['unit_price'] = $request->input('unit_price');
-            }
             if ($request->filled('burden')) {
                 if ($lot->model?->is_consumable) {
                     $lotData['burden'] = $request->input('burden');
@@ -61,34 +50,6 @@ class BulkLotController extends Controller
                     $lotData['burden'] = null;
                     $lotData['project_id'] = null;
                 }
-            }
-
-            if ($request->boolean('use_parent_image')) {
-                if ($lot->image_url && $lot->image_url !== 'inventory/lots/placeholder.jpg' && Storage::disk('local')->exists($lot->image_url)) {
-                    $isShared = Lot::where('image_url', $lot->image_url)->where('id', '!=', $lot->id)->exists()
-                        || InventoryModel::where('image_url', $lot->image_url)->exists()
-                        || Asset::where('image_url', $lot->image_url)->exists();
-                    if (!$isShared) {
-                        Storage::disk('local')->delete($lot->image_url);
-                    }
-                }
-                $model = $lot->model;
-                if ($model && $model->image_url && Storage::disk('local')->exists($model->image_url)) {
-                    $lotData['image_url'] = $model->image_url;
-                }
-            } else if ($request->hasFile('image_url')) {
-                if ($lot->image_url && $lot->image_url !== 'inventory/lots/placeholder.jpg' && Storage::disk('local')->exists($lot->image_url)) {
-                    $isShared = Lot::where('image_url', $lot->image_url)->where('id', '!=', $lot->id)->exists()
-                        || InventoryModel::where('image_url', $lot->image_url)->exists()
-                        || Asset::where('image_url', $lot->image_url)->exists();
-                    if (!$isShared) {
-                        Storage::disk('local')->delete($lot->image_url);
-                    }
-                }
-                if (!$storedImagePath) {
-                    $storedImagePath = $request->file('image_url')->store('inventory', 'local');
-                }
-                $lotData['image_url'] = $storedImagePath;
             }
 
             if (!empty($lotData)) {
@@ -108,7 +69,7 @@ class BulkLotController extends Controller
     }
 
     /**
-     * Bulk remove multiple lot batches from storage along with their stored images.
+     * Bulk remove multiple lot batches from storage.
      */
     public function destroy(Request $request)
     {
@@ -126,17 +87,6 @@ class BulkLotController extends Controller
             if ($lot->assets()->exists()) {
                 $undeletedCounter++;
             } else {
-                if ($lot->image_url && $lot->image_url !== 'inventory/lots/placeholder.jpg' && Storage::disk('local')->exists($lot->image_url)) {
-                    $isShared = Lot::where('image_url', $lot->image_url)
-                        ->whereNotIn('id', $request->input('ids'))
-                        ->exists()
-                        || InventoryModel::where('image_url', $lot->image_url)->exists()
-                        || Asset::where('image_url', $lot->image_url)->exists();
-                    if (!$isShared) {
-                        Storage::disk('local')->delete($lot->image_url);
-                    }
-                }
-
                 if ($request->user()) {
                     app(InventoryLogService::class)->prepareAndLogLotDeleted($lot, $request->user());
                 }

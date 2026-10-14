@@ -67,7 +67,7 @@ class PendingActivationController extends Controller
                 'lot_organizer' => $asset->lot->organizer->name ?? '-',
                 'lot_vendor' => $asset->lot?->vendor_name ?? '-',
                 'lot_po_number' => $asset->lot->po_number ?? '-',
-                'lot_date_of_receipt' => ($asset->lot && $asset->lot->date_of_receipt) ? $asset->lot->date_of_receipt->format('Y-m-d') : null,
+                'lot_purchase_grant_date' => ($asset->lot && $asset->lot->purchase_grant_date) ? $asset->lot->purchase_grant_date->format('Y-m-d') : null,
 
                 // Parent model info
                 'model_id' => $model->id ?? null,

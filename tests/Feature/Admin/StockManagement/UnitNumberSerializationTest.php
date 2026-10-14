@@ -54,10 +54,8 @@ class UnitNumberSerializationTest extends TestCase
             'brand_id' => $brand->id,
             'uom_id' => $uom->id,
             'number' => "{$subcatCode}-0001",
-            'image_url' => 'inventory/barangs/sample.jpg',
         ]);
 
-        Storage::disk('local')->put('inventory/barangs/sample.jpg', 'content');
         Storage::disk('local')->put('inventory/lots/sample.jpg', 'content');
 
         return Lot::create([
@@ -65,13 +63,10 @@ class UnitNumberSerializationTest extends TestCase
             'barang_id' => $barang->id,
             'organizer_id' => $organizer->id,
             'vendor_id' => Vendor::factory()->create()->id,
-            'location_id' => $this->location->id,
             'initial_quantity' => 10,
             'current_quantity' => 10,
             'po_number' => 'PO-01',
-            'date_of_receipt' => Carbon::parse($receiptDate),
-            'unit_price' => 250000,
-            'image_url' => 'inventory/lots/sample.jpg',
+            'purchase_grant_date' => Carbon::parse($receiptDate),
             'burden' => 'Corporate',
         ]);
     }

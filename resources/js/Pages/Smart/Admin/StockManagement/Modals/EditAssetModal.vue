@@ -497,26 +497,6 @@ const parseCurrencyToNumber = (val: string | number) => {
   return isNaN(parsed) ? 0 : parsed;
 };
 
-const handleDecideClassification = () => {
-  if (form.price === '' || form.price === null || form.price === undefined) {
-    return;
-  }
-  if (typeof form.price === 'string' && form.price.trim() === '') {
-    return;
-  }
-  const currentPrice = parseCurrencyToNumber(form.price);
-  if (isNaN(currentPrice)) {
-    return;
-  }
-
-  const threshold = Number(import.meta.env.VITE_ASSET_CLASSIFICATION_THRESHOLD) || 5000000;
-  if (currentPrice > threshold) {
-    form.classification = 'Aset';
-  } else {
-    form.classification = 'Inventaris';
-  }
-};
-
 const handleSubmit = () => {
   resetErrors();
 
@@ -810,24 +790,19 @@ const handleSubmit = () => {
                       <span>{{ t('inventory.classification') }}<span v-if="isSingle" class="text-rose-500">*</span></span>
                     </FieldLabel>
                     <FieldContent>
-                      <div class="flex gap-2 w-full">
-                        <div class="flex-grow min-w-0">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !form.classification ? 'text-muted-foreground' : 'text-foreground', (isSingle && errors.classification) ? 'border-destructive' : '']">
-                                {{ getClassificationLabel(form.classification) || (isSingle ? t('inventory.selectClassification') : t('inventory.unchanged')) }}
-                                <ChevronDown class="w-4 h-4 opacity-50" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
-                              <DropdownMenuItem @select="form.classification = 'Aset'">{{ t('inventory.classificationAsset') }}</DropdownMenuItem>
-                              <DropdownMenuItem @select="form.classification = 'Inventaris'">{{ t('inventory.classificationInventory') }}</DropdownMenuItem>
-                              <DropdownMenuItem v-if="!isSingle" @select="form.classification = ''">{{ t('inventory.unchanged') }}</DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                        <Button type="button" @click="handleDecideClassification" variant="warning" size="lg">{{ t('inventory.decide') }}</Button>
-                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !form.classification ? 'text-muted-foreground' : 'text-foreground', (isSingle && errors.classification) ? 'border-destructive' : '']">
+                            {{ getClassificationLabel(form.classification) || (isSingle ? t('inventory.selectClassification') : t('inventory.unchanged')) }}
+                            <ChevronDown class="w-4 h-4 opacity-50" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
+                          <DropdownMenuItem @select="form.classification = 'Aset'">{{ t('inventory.classificationAsset') }}</DropdownMenuItem>
+                          <DropdownMenuItem @select="form.classification = 'Inventaris'">{{ t('inventory.classificationInventory') }}</DropdownMenuItem>
+                          <DropdownMenuItem v-if="!isSingle" @select="form.classification = ''">{{ t('inventory.unchanged') }}</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </FieldContent>
                     <FieldError v-if="isSingle && errors.classification">{{ errors.classification }}</FieldError>
                   </Field>

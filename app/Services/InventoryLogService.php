@@ -173,14 +173,14 @@ class InventoryLogService
             'initial_quantity' => $lot->initial_quantity,
             'current_quantity' => $lot->current_quantity,
             'po_number' => $lot->po_number,
-            'date_of_receipt' => $lot->date_of_receipt ? $lot->date_of_receipt->format('Y-m-d') : null,
+            'purchase_grant_date' => $lot->purchase_grant_date ? $lot->purchase_grant_date->format('Y-m-d') : null,
             'vendor' => $lot->vendor_name ?? null,
             'vendor_id' => $lot->vendor_id,
             'legacy_vendor_id' => $lot->legacy_vendor_id,
-            'location' => $lot->location?->name,
             'burden' => $lot->burden,
             'project' => $lot->project?->project_name,
-            'unit_price' => $lot->unit_price,
+            'entry_type' => $lot->entry_type,
+            'memo_number' => $lot->memo_number,
         ];
 
         return InventoryLog::create([
@@ -208,13 +208,12 @@ class InventoryLogService
             'organizer_id',
             'vendor_id',
             'legacy_vendor_id',
-            'location_id',
             'po_number',
-            'date_of_receipt',
-            'unit_price',
+            'purchase_grant_date',
             'burden',
             'project_id',
-            'image_url',
+            'entry_type',
+            'memo_number',
         ];
 
         $oldDiff = [];
@@ -340,7 +339,7 @@ class InventoryLogService
             return (float) $oldVal === (float) $newVal;
         }
 
-        if ($field === 'date_of_receipt') {
+        if ($field === 'purchase_grant_date') {
             $oldDate = $oldVal instanceof \DateTimeInterface ? $oldVal->format('Y-m-d') : substr((string) $oldVal, 0, 10);
             $newDate = $newVal instanceof \DateTimeInterface ? $newVal->format('Y-m-d') : substr((string) $newVal, 0, 10);
             return $oldDate === $newDate;
@@ -358,7 +357,7 @@ class InventoryLogService
             return null;
         }
 
-        if ($field === 'date_of_receipt') {
+        if ($field === 'purchase_grant_date') {
             return $value instanceof \DateTimeInterface ? $value->format('Y-m-d') : substr((string) $value, 0, 10);
         }
 

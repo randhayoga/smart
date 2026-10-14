@@ -41,8 +41,6 @@ class AssetBorrowingTypeTest extends TestCase
         $this->lot = Lot::factory()->create([
             'model_id' => $model->id,
             'organizer_id' => $organizer->id,
-            'image_url' => $imagePath,
-            'unit_price' => 7500000,
         ]);
         $this->location = Location::factory()->create();
     }

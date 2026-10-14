@@ -52,7 +52,6 @@ class UnitLegacyNumberAndOptionalImageTest extends TestCase
             'subcategory_id' => $this->subcategory->id,
             'brand_id' => $this->brand->id,
             'uom_id' => $this->uom->id,
-            'image_url' => null,
         ]);
         $this->organizer = Organizer::factory()->create(['name' => 'DIV-IT']);
         $this->location = Location::factory()->create();
@@ -60,8 +59,6 @@ class UnitLegacyNumberAndOptionalImageTest extends TestCase
         $this->lot = Lot::factory()->create([
             'barang_id' => $this->barang->id,
             'organizer_id' => $this->organizer->id,
-            'image_url' => null,
-            'unit_price' => 2000000,
         ]);
     }
 
@@ -80,7 +77,6 @@ class UnitLegacyNumberAndOptionalImageTest extends TestCase
         $this->assertDatabaseHas('models', [
             'number' => 'EL01-9999',
             'name' => 'Laptop Tanpa Gambar',
-            'image_url' => null,
         ]);
     }
 
@@ -90,17 +86,14 @@ class UnitLegacyNumberAndOptionalImageTest extends TestCase
             'number' => 'LOT-0001-26-IT-0001',
             'barang_id' => $this->barang->id,
             'organizer_id' => $this->organizer->id,
-            'location_id' => $this->location->id,
             'po_number' => 'PO-TEST-001',
-            'date_of_receipt' => '2026-10-01',
-            'unit_price' => 1500000,
+            'purchase_grant_date' => '2026-10-01',
             'burden' => 'Corporate',
         ]);
 
         $response->assertRedirect();
         $this->assertDatabaseHas('lots', [
             'model_id' => $this->barang->id,
-            'image_url' => null,
         ]);
     }
 

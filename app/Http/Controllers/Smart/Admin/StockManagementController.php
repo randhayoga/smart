@@ -69,6 +69,17 @@ class StockManagementController extends Controller
             });
 
         $projects = TbProject::orderBy('project_name')->get();
+        $organizers = Organizer::orderBy('name')->get();
+        $locations = Location::with('parent')->active()->orderBy('name')->get();
+        $lots = Lot::select('id', 'number', 'model_id', 'purchase_grant_date', 'organizer_id')->get()->map(function ($lot) {
+            return [
+                'id' => $lot->id,
+                'number' => $lot->number,
+                'model_id' => $lot->model_id,
+                'organizer_id' => $lot->organizer_id,
+                'purchase_grant_date' => $lot->purchase_grant_date ? $lot->purchase_grant_date->format('Y-m-d') : null,
+            ];
+        });
 
         return Inertia::render('Smart/Admin/StockManagement/StockManagement', [
             'user' => $request->user(),
@@ -80,6 +91,9 @@ class StockManagementController extends Controller
             'models' => $models,
             'barangs' => $models,
             'projects' => $projects,
+            'organizers' => $organizers,
+            'locations' => $locations,
+            'lots' => $lots,
         ]);
     }
 
@@ -121,7 +135,7 @@ class StockManagementController extends Controller
             'min_stock_threshold' => $model->min_stock_threshold,
         ];
 
-        $lots = Lot::with(['organizer', 'vendor', 'legacyVendor', 'location.parent', 'project'])
+        $lots = Lot::with(['organizer', 'vendor', 'legacyVendor', 'project'])
             ->withCount(['assets', 'assets as available_assets_count' => function ($query) {
                 $query->where('status', 'Tersedia');
             }])
@@ -134,16 +148,15 @@ class StockManagementController extends Controller
                     'model_id' => $lot->model_id,
                     'barang_id' => $lot->model_id,
                     'po_number' => $lot->po_number,
-                    'date_of_receipt' => $lot->date_of_receipt ? $lot->date_of_receipt->format('Y-m-d') : null,
+                    'purchase_grant_date' => $lot->purchase_grant_date ? $lot->purchase_grant_date->format('Y-m-d') : null,
+                    'entry_type' => $lot->entry_type ?? 'Procurement',
+                    'memo_number' => $lot->memo_number,
+                    'memo_url' => $lot->memo_url,
                     'organizer' => $lot->organizer->name ?? '-',
                     'organizer_id' => $lot->organizer_id,
                     'vendor' => $lot->vendor_name,
                     'vendor_id' => $lot->vendor_id,
                     'legacy_vendor_id' => $lot->legacy_vendor_id,
-                    'location' => $lot->location?->full_name ?? '-',
-                    'location_id' => $lot->location_id,
-                    'unitPrice' => $lot->unit_price,
-                    'imageUrl' => $lot->image_url,
                     'assetCount' => $lot->assets_count,
                     'availableAssetCount' => $lot->available_assets_count,
                     'initial_quantity' => $lot->initial_quantity,
@@ -225,8 +238,6 @@ class StockManagementController extends Controller
                     // Parent lot info
                     'lot_id' => $asset->lot_id,
                     'lot_number' => $asset->lot->number ?? '-',
-                    'lot_imageUrl' => $asset->lot->image_url ?? null,
-                    'lot_unitPrice' => $asset->lot->unit_price ?? null,
                     'organizer' => $asset->lot->organizer->name ?? '-',
                     'organizer_id' => $asset->lot->organizer_id ?? null,
                     'vendor' => $asset->lot?->vendor_name ?? '-',
@@ -236,7 +247,7 @@ class StockManagementController extends Controller
                     'lot_vendor' => $asset->lot?->vendor_name ?? '-',
                     'lot_vendor_id' => $asset->lot->vendor_id ?? null,
                     'lot_po_number' => $asset->lot->po_number ?? '-',
-                    'lot_date_of_receipt' => ($asset->lot && $asset->lot->date_of_receipt) ? $asset->lot->date_of_receipt->format('Y-m-d') : null,
+                    'lot_purchase_grant_date' => ($asset->lot && $asset->lot->purchase_grant_date) ? $asset->lot->purchase_grant_date->format('Y-m-d') : null,
                     'lot_age' => $asset->lot->age ?? null,
 
                     // Parent model info

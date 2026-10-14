@@ -36,10 +36,10 @@ class ModelManualRequestController extends Controller
         $requestedQty = (int) $validated['quantity'];
 
         return DB::transaction(function () use ($request, $model, $validated, $requestedQty, $processAction) {
-            // Lock semua LOT aktif untuk model ini dengan urutan FIFO (date_of_receipt ASC, id ASC)
+            // Lock semua LOT aktif untuk model ini dengan urutan FIFO (purchase_grant_date ASC, id ASC)
             $lots = Lot::where('model_id', $model->id)
                 ->where('current_quantity', '>', 0)
-                ->orderBy('date_of_receipt', 'asc')
+                ->orderBy('purchase_grant_date', 'asc')
                 ->orderBy('id', 'asc')
                 ->lockForUpdate()
                 ->get();

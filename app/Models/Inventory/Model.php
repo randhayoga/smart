@@ -30,7 +30,6 @@ class Model extends EloquentModel
         'name',
         'specification',
         'min_stock_threshold',
-        'image_url',
         'last_restock_at'
     ];
 

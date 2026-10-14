@@ -31,20 +31,19 @@ class Lot extends EloquentModel
         'organizer_id',
         'vendor_id',
         'legacy_vendor_id',
-        'location_id',
         'initial_quantity',
         'current_quantity',
         'po_number',
-        'date_of_receipt',
-        'unit_price',
-        'image_url',
+        'purchase_grant_date',
         'burden',
         'project_id',
+        'entry_type',
+        'memo_number',
+        'memo_url',
     ];
 
     protected $casts = [
-        'date_of_receipt' => 'datetime',
-        'unit_price' => 'decimal:2',
+        'purchase_grant_date' => 'datetime',
         'initial_quantity' => 'integer',
         'current_quantity' => 'integer',
         'vendor_id' => 'integer',
@@ -175,10 +174,10 @@ class Lot extends EloquentModel
     protected function age(): Attribute
     {
         return Attribute::get(function () {
-            if (!$this->date_of_receipt) {
+            if (!$this->purchase_grant_date) {
                 return 0;
             }
-            return (int) floor($this->date_of_receipt->diffInYears(now()));
+            return (int) floor($this->purchase_grant_date->diffInYears(now()));
         });
     }
 

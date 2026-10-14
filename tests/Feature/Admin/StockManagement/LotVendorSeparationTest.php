@@ -44,10 +44,8 @@ class LotVendorSeparationTest extends TestCase
             'barang_id' => $this->barang->id,
             'organizer_id' => $this->organizer->id,
             'vendor_id' => null,
-            'location_id' => $this->location->id,
             'po_number' => 'PO-NEW-01',
-            'date_of_receipt' => '2026-10-01',
-            'unit_price' => 50000,
+            'purchase_grant_date' => '2026-10-01',
             'burden' => 'Corporate',
         ]);
 
@@ -57,18 +55,14 @@ class LotVendorSeparationTest extends TestCase
     public function test_lot_can_be_created_with_vendor_id(): void
     {
         $vendor = Vendor::factory()->create();
-        $file = UploadedFile::fake()->image('lot.jpg');
 
         $response = $this->actingAs($this->admin)->post(route('smart.inventory.lots.store'), [
             'number' => 'LOT-0002-26-TEST-0001',
             'barang_id' => $this->barang->id,
             'organizer_id' => $this->organizer->id,
             'vendor_id' => $vendor->id,
-            'location_id' => $this->location->id,
             'po_number' => 'PO-NEW-02',
-            'date_of_receipt' => '2026-10-01',
-            'unit_price' => 75000,
-            'image_url' => $file,
+            'purchase_grant_date' => '2026-10-01',
             'burden' => 'Corporate',
         ]);
 
@@ -89,7 +83,6 @@ class LotVendorSeparationTest extends TestCase
         $lot = Lot::factory()->create([
             'barang_id' => $this->barang->id,
             'organizer_id' => $this->organizer->id,
-            'location_id' => $this->location->id,
             'vendor_id' => $legacyVendor->id,
             'legacy_vendor_id' => $legacyVendor->id,
         ]);
@@ -112,10 +105,8 @@ class LotVendorSeparationTest extends TestCase
         $lot = Lot::factory()->create([
             'barang_id' => $this->barang->id,
             'organizer_id' => $this->organizer->id,
-            'location_id' => $this->location->id,
             'vendor_id' => $vendor->id,
             'legacy_vendor_id' => $vendor->id,
-            'unit_price' => 100000,
         ]);
 
         $response = $this->actingAs($this->admin)->put(route('smart.inventory.lots.update', $lot), [
@@ -123,10 +114,8 @@ class LotVendorSeparationTest extends TestCase
             'barang_id' => $this->barang->id,
             'organizer_id' => $this->organizer->id,
             'vendor_id' => null,
-            'location_id' => $this->location->id,
             'po_number' => 'PO-UPDATED',
-            'date_of_receipt' => '2026-10-01',
-            'unit_price' => 120000,
+            'purchase_grant_date' => '2026-10-01',
             'burden' => 'Corporate',
         ]);
 
@@ -141,10 +130,8 @@ class LotVendorSeparationTest extends TestCase
         $lot = Lot::factory()->create([
             'barang_id' => $this->barang->id,
             'organizer_id' => $this->organizer->id,
-            'location_id' => $this->location->id,
             'vendor_id' => $beragamVendor->id,
             'legacy_vendor_id' => $beragamVendor->id,
-            'unit_price' => 100000,
         ]);
 
         // Attempting to update with another vendor_id should not change vendor_id
@@ -153,16 +140,13 @@ class LotVendorSeparationTest extends TestCase
             'barang_id' => $this->barang->id,
             'organizer_id' => $this->organizer->id,
             'vendor_id' => $otherVendor->id,
-            'location_id' => $this->location->id,
             'po_number' => 'PO-UPDATED',
-            'date_of_receipt' => '2026-10-01',
-            'unit_price' => 120000,
+            'purchase_grant_date' => '2026-10-01',
             'burden' => 'Corporate',
         ]);
 
         $response->assertRedirect();
         $lot->refresh();
-        $this->assertEquals(120000, (int)$lot->unit_price);
         $this->assertEquals($beragamVendor->id, $lot->vendor_id);
     }
 
@@ -172,7 +156,6 @@ class LotVendorSeparationTest extends TestCase
         $lot = Lot::factory()->create([
             'barang_id' => $this->barang->id,
             'organizer_id' => $this->organizer->id,
-            'location_id' => $this->location->id,
             'vendor_id' => $vendor->id,
             'legacy_vendor_id' => $vendor->id,
         ]);
@@ -193,7 +176,6 @@ class LotVendorSeparationTest extends TestCase
         $lot = Lot::factory()->create([
             'barang_id' => $this->barang->id,
             'organizer_id' => $this->organizer->id,
-            'location_id' => $this->location->id,
             'vendor_id' => $vendor->id,
         ]);
 

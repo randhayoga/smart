@@ -35,45 +35,35 @@ class LotController extends Controller
 
         $model = InventoryModel::findOrFail($modelId);
         $isConsumable = (bool) $model->is_consumable;
+        $isHibah = ($request->input('entry_type') === 'Hibah');
 
         $validated = $request->validate([
             'number' => 'required|string|max:50|unique:lots,number',
             'model_id' => 'required|exists:models,id',
             'organizer_id' => 'required|exists:organizers,id',
-            'vendor_id' => 'required|integer', // Target DB: eproc (vendors table)
-            'legacy_vendor_id' => 'nullable|exists:vendors,id', // Legacy vendors in local DB
-            'location_id' => [$isConsumable ? 'required' : 'nullable', 'exists:locations,id'],
+            'vendor_id' => $isHibah ? 'nullable|integer' : 'required_without:legacy_vendor_id|nullable|integer',
+            'legacy_vendor_id' => 'nullable|exists:vendors,id',
             'initial_quantity' => 'nullable|integer|min:0|max:2147483647',
             'current_quantity' => 'nullable|integer|min:0|max:2147483647',
             'po_number' => 'nullable|string|max:255',
-            'date_of_receipt' => 'required|date',
-            'unit_price' => 'nullable|numeric|min:0|max:999999999.99',
-            'image_url' => 'nullable|image|max:1024',
-            'use_parent_image' => 'nullable',
+            'purchase_grant_date' => 'required|date',
+            'entry_type' => 'nullable|string|in:Procurement,Hibah',
+            'memo_number' => 'nullable|string|max:255',
             'burden' => 'nullable|string|in:Corporate,Project',
             'project_id' => ['required_if:burden,Project', 'nullable', Rule::exists(TbProject::class, 'id_project')],
         ], [
             'vendor_id.required' => 'Vendor wajib dipilih.',
-            'location_id.required' => 'Lokasi wajib dipilih.',
+            'vendor_id.required_without' => 'Vendor wajib dipilih.',
             'initial_quantity.required' => 'Jumlah stok awal wajib diisi.',
             'initial_quantity.integer' => 'Tidak boleh desimal.',
             'current_quantity.integer' => 'Tidak boleh desimal.',
+            'purchase_grant_date.required' => 'Tanggal pembelian/hibah wajib diisi.',
         ]);
 
-        if ($request->boolean('use_parent_image')) {
-            if ($model->image_url && Storage::disk('local')->exists($model->image_url)) {
-                $validated['image_url'] = $model->image_url;
-            } else {
-                return redirect()->back()->withErrors(['image_url' => 'Foto model parent tidak ditemukan di storage.']);
-            }
-        } else if ($request->hasFile('image_url')) {
-            $imagePath = $request->file('image_url')->store('inventory', 'local');
-            $validated['image_url'] = $imagePath;
-        } else {
-            $validated['image_url'] = null;
+        if ($request->hasFile('memo_file')) {
+            $validated['memo_url'] = $request->file('memo_file')->store('memos', 'local');
         }
 
-        unset($validated['use_parent_image']);
         if ($isConsumable) {
             $validated['initial_quantity'] = $validated['initial_quantity'] ?? 0;
             $validated['burden'] = $validated['burden'] ?? 'Corporate';
@@ -83,7 +73,6 @@ class LotController extends Controller
             $validated['current_quantity'] = null;
             $validated['burden'] = null;
             $validated['project_id'] = null;
-            $validated['location_id'] = $validated['location_id'] ?? null;
         }
         $validated['vendor_id'] = !empty($validated['vendor_id']) ? (int)$validated['vendor_id'] : null;
         $validated['legacy_vendor_id'] = !empty($validated['legacy_vendor_id']) ? (int)$validated['legacy_vendor_id'] : null;
@@ -113,72 +102,34 @@ class LotController extends Controller
         $modelId = $request->input('model_id', $request->input('barang_id', $lot->model_id));
         $request->merge(['model_id' => $modelId]);
 
+        $isHibah = ($request->input('entry_type', $lot->entry_type) === 'Hibah');
+        $vendorRule = ($isBeragam || $isHibah) ? 'nullable|integer' : 'required_without:legacy_vendor_id|nullable|integer';
+
         $rules = [
             'number' => 'required|string|max:50|unique:lots,number,' . $lot->id,
             'model_id' => 'required|exists:models,id',
             'organizer_id' => 'required|exists:organizers,id',
-            'vendor_id' => $isBeragam ? 'nullable' : 'required|integer',
+            'vendor_id' => $vendorRule,
             'legacy_vendor_id' => 'nullable|exists:vendors,id',
-            'location_id' => [$isConsumable ? 'required' : 'nullable', 'exists:locations,id'],
             'initial_quantity' => 'nullable|integer|min:0|max:2147483647',
             'po_number' => 'nullable|string|max:255',
-            'date_of_receipt' => 'required|date',
-            'unit_price' => 'nullable|numeric|min:0|max:999999999.99',
-            'image_url' => 'nullable|image|max:1024',
-            'delete_image' => 'nullable|boolean',
-            'use_parent_image' => 'nullable',
+            'purchase_grant_date' => 'required|date',
+            'entry_type' => 'nullable|string|in:Procurement,Hibah',
+            'memo_number' => 'nullable|string|max:255',
             'burden' => 'nullable|string|in:Corporate,Project',
             'project_id' => ['required_if:burden,Project', 'nullable', Rule::exists(TbProject::class, 'id_project')],
         ];
 
         $validated = $request->validate($rules, [
             'vendor_id.required' => 'Vendor wajib dipilih.',
-            'location_id.required' => 'Lokasi wajib dipilih.',
+            'vendor_id.required_without' => 'Vendor wajib dipilih.',
             'initial_quantity.integer' => 'Tidak boleh desimal.',
+            'purchase_grant_date.required' => 'Tanggal pembelian/hibah wajib diisi.',
         ]);
 
-        if ($request->boolean('delete_image')) {
-            if ($lot->image_url && $lot->image_url !== 'inventory/lots/placeholder.jpg' && Storage::disk('local')->exists($lot->image_url)) {
-                $isShared = Lot::where('image_url', $lot->image_url)->where('id', '!=', $lot->id)->exists()
-                    || InventoryModel::where('image_url', $lot->image_url)->exists()
-                    || Asset::where('image_url', $lot->image_url)->exists();
-                if (!$isShared) {
-                    Storage::disk('local')->delete($lot->image_url);
-                }
-            }
-            $validated['image_url'] = null;
-        } else if ($request->boolean('use_parent_image')) {
-            if ($lot->image_url && $lot->image_url !== 'inventory/lots/placeholder.jpg' && Storage::disk('local')->exists($lot->image_url)) {
-                $isShared = Lot::where('image_url', $lot->image_url)->where('id', '!=', $lot->id)->exists()
-                    || InventoryModel::where('image_url', $lot->image_url)->exists()
-                    || Asset::where('image_url', $lot->image_url)->exists();
-                if (!$isShared) {
-                    Storage::disk('local')->delete($lot->image_url);
-                }
-            }
-            $model = InventoryModel::findOrFail($request->input('model_id'));
-            if ($model->image_url && Storage::disk('local')->exists($model->image_url)) {
-                $validated['image_url'] = $model->image_url;
-            } else {
-                return redirect()->back()->withErrors(['image_url' => 'Foto model parent tidak ditemukan di storage.']);
-            }
-        } else if ($request->hasFile('image_url')) {
-            if ($lot->image_url && $lot->image_url !== 'inventory/lots/placeholder.jpg' && Storage::disk('local')->exists($lot->image_url)) {
-                $isShared = Lot::where('image_url', $lot->image_url)->where('id', '!=', $lot->id)->exists()
-                    || InventoryModel::where('image_url', $lot->image_url)->exists()
-                    || Asset::where('image_url', $lot->image_url)->exists();
-                if (!$isShared) {
-                    Storage::disk('local')->delete($lot->image_url);
-                }
-            }
-            $imagePath = $request->file('image_url')->store('inventory', 'local');
-            $validated['image_url'] = $imagePath;
-        } else {
-            unset($validated['image_url']);
+        if ($request->hasFile('memo_file')) {
+            $validated['memo_url'] = $request->file('memo_file')->store('memos', 'local');
         }
-
-        unset($validated['use_parent_image']);
-        unset($validated['delete_image']);
         if ($isConsumable) {
             if (!$request->has('initial_quantity')) {
                 unset($validated['initial_quantity']);
@@ -222,15 +173,6 @@ class LotController extends Controller
     {
         if ($lot->assets()->exists()) {
             return redirect()->back()->with('error', __('inventory.lot_cannot_delete_has_units'));
-        }
-
-        if ($lot->image_url && $lot->image_url !== 'inventory/lots/placeholder.jpg' && Storage::disk('local')->exists($lot->image_url)) {
-            $isShared = Lot::where('image_url', $lot->image_url)->where('id', '!=', $lot->id)->exists()
-                || InventoryModel::where('image_url', $lot->image_url)->exists()
-                || Asset::where('image_url', $lot->image_url)->exists();
-            if (!$isShared) {
-                Storage::disk('local')->delete($lot->image_url);
-            }
         }
 
         if ($request->user()) {
@@ -290,16 +232,15 @@ class LotController extends Controller
                 'model_id' => $lot->model_id,
                 'barang_id' => $lot->model_id,
                 'po_number' => $lot->po_number,
-                'date_of_receipt' => $lot->date_of_receipt ? $lot->date_of_receipt->format('Y-m-d') : null,
+                'purchase_grant_date' => $lot->purchase_grant_date ? $lot->purchase_grant_date->format('Y-m-d') : null,
+                'entry_type' => $lot->entry_type ?? 'Procurement',
+                'memo_number' => $lot->memo_number,
+                'memo_url' => $lot->memo_url,
                 'organizer' => $lot->organizer->name ?? '-',
                 'organizer_id' => $lot->organizer_id,
                 'vendor' => $lot->vendor_name,
                 'vendor_id' => $lot->vendor_id,
                 'legacy_vendor_id' => $lot->legacy_vendor_id,
-                'location' => $lot->location ? $lot->location->full_name : '-',
-                'location_id' => $lot->location_id,
-                'unitPrice' => $lot->unit_price,
-                'imageUrl' => $lot->image_url,
                 'initial_quantity' => $lot->initial_quantity,
                 'current_quantity' => $lot->current_quantity,
                 'burden' => $lot->burden,
@@ -409,7 +350,7 @@ class LotController extends Controller
                 'lot_vendor' => $asset->lot?->vendor_name ?? '-',
                 'lot_vendor_id' => $asset->lot->vendor_id ?? null,
                 'lot_po_number' => $asset->lot->po_number ?? '-',
-                'lot_date_of_receipt' => ($asset->lot && $asset->lot->date_of_receipt) ? $asset->lot->date_of_receipt->format('Y-m-d') : null,
+                'lot_purchase_grant_date' => ($asset->lot && $asset->lot->purchase_grant_date) ? $asset->lot->purchase_grant_date->format('Y-m-d') : null,
                 'lot_age' => $asset->lot->age ?? null,
 
                 // Parent model info
@@ -472,16 +413,15 @@ class LotController extends Controller
                 'model_id' => $lot->model_id,
                 'barang_id' => $lot->model_id,
                 'po_number' => $lot->po_number,
-                'date_of_receipt' => $lot->date_of_receipt ? $lot->date_of_receipt->format('Y-m-d') : null,
+                'purchase_grant_date' => $lot->purchase_grant_date ? $lot->purchase_grant_date->format('Y-m-d') : null,
+                'entry_type' => $lot->entry_type ?? 'Procurement',
+                'memo_number' => $lot->memo_number,
+                'memo_url' => $lot->memo_url,
                 'organizer' => $lot->organizer->name ?? '-',
                 'organizer_id' => $lot->organizer_id,
                 'vendor' => $lot->vendor_name,
                 'vendor_id' => $lot->vendor_id,
                 'legacy_vendor_id' => $lot->legacy_vendor_id,
-                'location' => $lot->location ? $lot->location->full_name : '-',
-                'location_id' => $lot->location_id,
-                'unitPrice' => $lot->unit_price,
-                'imageUrl' => $lot->image_url,
                 'initial_quantity' => $lot->initial_quantity,
                 'current_quantity' => $lot->current_quantity,
                 'burden' => $lot->burden,

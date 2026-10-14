@@ -57,7 +57,7 @@ class RequestFulfillmentService
         // FIFO ordering: oldest lot receipt date first, then creation timestamp
         $query->leftJoin('lots', 'assets.lot_id', '=', 'lots.id')
             ->select('assets.*')
-            ->orderBy('lots.date_of_receipt', 'asc')
+            ->orderBy('lots.purchase_grant_date', 'asc')
             ->orderBy('assets.created_at', 'asc')
             ->orderBy('assets.id', 'asc');
 
@@ -96,7 +96,7 @@ class RequestFulfillmentService
             $query->whereHas('model', fn($mq) => $mq->where('type_id', $tId));
         }
 
-        return $query->orderBy('date_of_receipt', 'asc')->orderBy('id', 'asc');
+        return $query->orderBy('purchase_grant_date', 'asc')->orderBy('id', 'asc');
     }
 
     /**
@@ -200,7 +200,7 @@ class RequestFulfillmentService
             $lotQuery->whereHas('model', fn($mq) => $mq->where('type_id', $tId));
         }
 
-        $lots = $lotQuery->orderBy('date_of_receipt', 'asc')
+        $lots = $lotQuery->orderBy('purchase_grant_date', 'asc')
             ->orderBy('id', 'asc')
             ->get();
 
