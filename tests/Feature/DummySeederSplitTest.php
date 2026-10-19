@@ -40,18 +40,23 @@ class DummySeederSplitTest extends TestCase
         $this->assertNotNull($penBarang);
         $this->assertTrue($penBarang->is_consumable);
 
-        // Consumable lots must exist with quantity > 0
+        // Consumable lots must exist with quantity > 0, image_url, location_id, and unit_price
         $lots = Lot::whereIn('number', [
             'LOT-0001-26-ATK-HVS4-0001',
             'LOT-0002-26-ATK-HVS4-0001',
             'LOT-0001-26-ATK-PLPH-0001',
+            'LOT-0002-26-ATK-PLPH-0002',
         ])->get();
-        $this->assertCount(3, $lots);
+        $this->assertCount(4, $lots);
 
         foreach ($lots as $lot) {
             $this->assertGreaterThan(0, $lot->initial_quantity);
             $this->assertGreaterThan(0, $lot->current_quantity);
             $this->assertNotNull($lot->burden);
+            $this->assertNotNull($lot->location_id);
+            $this->assertNotNull($lot->unit_price);
+            $this->assertNotNull($lot->image_url);
+            $this->assertTrue(\Illuminate\Support\Facades\Storage::disk('local')->exists($lot->image_url));
         }
 
         // Consumables must NEVER generate unit records

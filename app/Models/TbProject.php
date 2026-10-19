@@ -87,4 +87,15 @@ class TbProject extends Model
     {
         return $this->hasMany(Request::class, 'project_id', 'id_project');
     }
+
+    /**
+     * Scope projects that have both non-empty project number and project name.
+     */
+    public function scopeValidForSelection(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    {
+        return $query->whereNotNull('no_project')
+            ->where('no_project', '!=', '')
+            ->whereNotNull('project_name')
+            ->where('project_name', '!=', '');
+    }
 }

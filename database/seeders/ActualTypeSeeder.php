@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 class ActualTypeSeeder extends Seeder
 {
     /**
-     * Run the master Type database seeds.
+     * Run the actual Type database seeds.
      * Total records: 111
      */
     public function run(): void
@@ -641,8 +641,8 @@ class ActualTypeSeeder extends Seeder
                 'description' => null,
                 'is_consumable' => false,
                 'category_id' => 5,
-                'created_at' => '2016-12-19 13:42:52',
-                'updated_at' => '2016-12-19 13:42:52',
+                'created_at' => '2016-12-19 13:42:52.963',
+                'updated_at' => '2016-12-19 13:42:52.963',
             ],
             [
                 'id' => 64,
@@ -651,8 +651,8 @@ class ActualTypeSeeder extends Seeder
                 'description' => null,
                 'is_consumable' => false,
                 'category_id' => 5,
-                'created_at' => '2016-12-19 13:44:06',
-                'updated_at' => '2016-12-19 13:44:06',
+                'created_at' => '2016-12-19 13:44:06.947',
+                'updated_at' => '2016-12-19 13:44:06.947',
             ],
             [
                 'id' => 65,
@@ -661,8 +661,8 @@ class ActualTypeSeeder extends Seeder
                 'description' => null,
                 'is_consumable' => false,
                 'category_id' => 5,
-                'created_at' => '2016-12-19 13:44:37',
-                'updated_at' => '2016-12-19 13:44:37',
+                'created_at' => '2016-12-19 13:44:37.330',
+                'updated_at' => '2016-12-19 13:44:37.330',
             ],
             [
                 'id' => 66,
@@ -671,8 +671,8 @@ class ActualTypeSeeder extends Seeder
                 'description' => null,
                 'is_consumable' => false,
                 'category_id' => 5,
-                'created_at' => '2016-12-19 13:45:21',
-                'updated_at' => '2016-12-19 13:45:21',
+                'created_at' => '2016-12-19 13:45:21.910',
+                'updated_at' => '2016-12-19 13:45:21.910',
             ],
             [
                 'id' => 67,
@@ -681,8 +681,8 @@ class ActualTypeSeeder extends Seeder
                 'description' => null,
                 'is_consumable' => false,
                 'category_id' => 5,
-                'created_at' => '2016-12-19 13:46:35',
-                'updated_at' => '2016-12-19 13:46:35',
+                'created_at' => '2016-12-19 13:46:35.137',
+                'updated_at' => '2016-12-19 13:46:35.137',
             ],
             [
                 'id' => 68,
@@ -691,8 +691,8 @@ class ActualTypeSeeder extends Seeder
                 'description' => null,
                 'is_consumable' => false,
                 'category_id' => 5,
-                'created_at' => '2016-12-19 13:46:48',
-                'updated_at' => '2016-12-19 13:46:48',
+                'created_at' => '2016-12-19 13:46:48.950',
+                'updated_at' => '2016-12-19 13:46:48.950',
             ],
             [
                 'id' => 69,
@@ -711,8 +711,8 @@ class ActualTypeSeeder extends Seeder
                 'description' => null,
                 'is_consumable' => false,
                 'category_id' => 6,
-                'created_at' => '2016-12-19 08:55:42',
-                'updated_at' => '2016-12-19 08:55:42',
+                'created_at' => '2016-12-19 08:55:42.957',
+                'updated_at' => '2016-12-19 08:55:42.957',
             ],
             [
                 'id' => 71,
@@ -721,8 +721,8 @@ class ActualTypeSeeder extends Seeder
                 'description' => null,
                 'is_consumable' => false,
                 'category_id' => 6,
-                'created_at' => '2016-12-19 09:12:28',
-                'updated_at' => '2016-12-19 09:12:28',
+                'created_at' => '2016-12-19 09:12:28.683',
+                'updated_at' => '2016-12-19 09:12:28.683',
             ],
             [
                 'id' => 72,
@@ -731,8 +731,8 @@ class ActualTypeSeeder extends Seeder
                 'description' => null,
                 'is_consumable' => false,
                 'category_id' => 6,
-                'created_at' => '2016-12-19 09:16:01',
-                'updated_at' => '2016-12-19 09:16:01',
+                'created_at' => '2016-12-19 09:16:01.747',
+                'updated_at' => '2016-12-19 09:16:01.747',
             ],
             [
                 'id' => 73,
@@ -741,8 +741,8 @@ class ActualTypeSeeder extends Seeder
                 'description' => null,
                 'is_consumable' => false,
                 'category_id' => 6,
-                'created_at' => '2016-12-19 09:18:28',
-                'updated_at' => '2016-12-19 09:18:28',
+                'created_at' => '2016-12-19 09:18:28.347',
+                'updated_at' => '2016-12-19 09:18:28.347',
             ],
             [
                 'id' => 74,
@@ -751,8 +751,8 @@ class ActualTypeSeeder extends Seeder
                 'description' => null,
                 'is_consumable' => false,
                 'category_id' => 6,
-                'created_at' => '2016-12-19 09:32:30',
-                'updated_at' => '2016-12-19 09:32:30',
+                'created_at' => '2016-12-19 09:32:30.590',
+                'updated_at' => '2016-12-19 09:32:30.590',
             ],
             [
                 'id' => 75,
@@ -761,8 +761,8 @@ class ActualTypeSeeder extends Seeder
                 'description' => null,
                 'is_consumable' => false,
                 'category_id' => 6,
-                'created_at' => '2016-12-19 09:33:46',
-                'updated_at' => '2016-12-19 09:33:46',
+                'created_at' => '2016-12-19 09:33:46.867',
+                'updated_at' => '2016-12-19 09:33:46.867',
             ],
             [
                 'id' => 76,
@@ -771,8 +771,8 @@ class ActualTypeSeeder extends Seeder
                 'description' => null,
                 'is_consumable' => false,
                 'category_id' => 7,
-                'created_at' => '2016-12-19 13:49:37',
-                'updated_at' => '2016-12-19 13:49:37',
+                'created_at' => '2016-12-19 13:49:37.140',
+                'updated_at' => '2016-12-19 13:49:37.140',
             ],
             [
                 'id' => 77,
@@ -781,8 +781,8 @@ class ActualTypeSeeder extends Seeder
                 'description' => null,
                 'is_consumable' => false,
                 'category_id' => 7,
-                'created_at' => '2016-12-19 13:50:06',
-                'updated_at' => '2016-12-19 13:50:06',
+                'created_at' => '2016-12-19 13:50:06.807',
+                'updated_at' => '2016-12-19 13:50:06.807',
             ],
             [
                 'id' => 78,
@@ -926,8 +926,8 @@ class ActualTypeSeeder extends Seeder
             ],
             [
                 'id' => 92,
-                'code' => 'ELEK-FVC',
-                'name' => 'Fogging Volume Control',
+                'code' => 'ELEK-PVC',
+                'name' => 'Paging Volume Control',
                 'description' => null,
                 'is_consumable' => false,
                 'category_id' => 11,
@@ -936,8 +936,8 @@ class ActualTypeSeeder extends Seeder
             ],
             [
                 'id' => 93,
-                'code' => 'ELEK-FCT',
-                'name' => 'Fogging Control Toa',
+                'code' => 'ELEK-PCT',
+                'name' => 'Paging Control TOA',
                 'description' => null,
                 'is_consumable' => false,
                 'category_id' => 11,
@@ -1136,7 +1136,14 @@ class ActualTypeSeeder extends Seeder
             DB::table('types')->upsert(
                 $chunk,
                 ['id'],
-                ['code', 'name', 'description', 'is_consumable', 'category_id', 'updated_at']
+                [
+                    'code',
+                    'name',
+                    'description',
+                    'is_consumable',
+                    'category_id',
+                    'updated_at',
+                ]
             );
         }
 

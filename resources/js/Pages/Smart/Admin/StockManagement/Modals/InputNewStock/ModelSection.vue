@@ -37,6 +37,7 @@ interface ModelItem {
   number?: string;
   code?: string;
   name: string;
+  specification?: string | null;
   brand_id: number;
   type_id?: number;
   subcategory_id?: number;
@@ -80,26 +81,21 @@ const isConsumableSelected = computed(() => {
 
 const filteredBrands = computed(() => {
   if (!props.form.type_id) return [];
-  if (props.form.create_new_type) {
-    return props.brands;
-  }
-  const brandIds = new Set(
-    props.models
-      .filter(m => (m.type_id == props.form.type_id || m.subcategory_id == props.form.type_id))
-      .map(m => m.brand_id)
-  );
-  const matched = props.brands.filter(b => brandIds.has(b.id));
-  return matched.length > 0 ? matched : props.brands;
+  return props.brands;
 });
 
 const filteredExistingModels = computed(() => {
   if (!props.form.type_id || !props.form.brand_id) return [];
   return props.models
     .filter(m => (m.type_id == props.form.type_id || m.subcategory_id == props.form.type_id) && m.brand_id == props.form.brand_id)
-    .map(m => ({
-      id: m.id,
-      name: `${m.number || m.code || ''} - ${m.name}`,
-    }));
+    .map(m => {
+      const spec = m.specification?.trim();
+      const label = spec ? `${m.name} - ${spec}` : m.name;
+      return {
+        id: m.id,
+        name: label,
+      };
+    });
 });
 
 const onCategoryChange = (val: string | number | null) => {
@@ -141,7 +137,7 @@ const onModelChange = (val: string | number | null) => {
   props.form.lot_id = null;
 };
 
-const onToggleCreateNewType = (checked: boolean | 'indeterminate') => {
+const onToggleCreateNewType = (checked: boolean | 'indeterminate' | null | undefined) => {
   props.form.create_new_type = checked === true;
   if (props.form.create_new_type) {
     props.form.model_id = null;
@@ -240,7 +236,7 @@ const onToggleCreateNewType = (checked: boolean | 'indeterminate') => {
         for="create-new-type-check"
         class="text-sm font-semibold text-foreground cursor-pointer select-none leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
       >
-        {{ t('inventory.createNewTypeWithData') }}
+        {{ t('inventory.createNewModelWithData') }}
       </label>
     </div>
 

@@ -109,7 +109,6 @@ class DummyNonConsumableModelSeeder extends Seeder
                     'name' => $data['name'],
                     'specification' => $data['specification'] ?? null,
                     'min_stock_threshold' => $data['min_stock_threshold'] ?? null,
-                    'image_url' => $destinationPath,
                 ]
             );
         }

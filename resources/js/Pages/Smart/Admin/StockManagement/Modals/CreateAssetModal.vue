@@ -281,7 +281,7 @@ const handleDeletePhoto = () => {
 const handleMemoUpload = (e: any) => {
   const file = e.target.files[0];
   if (!file) return;
-  const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+  const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
   if (!allowedTypes.includes(file.type)) { toast.error(t('inventory.invalidDocFormat')); return; }
   if (file.size > 2 * 1024 * 1024) { toast.error(t('inventory.fileTooLarge2Mb')); return; }
   form.memo_file = file;
@@ -302,7 +302,7 @@ const viewMemoInNewTab = () => {
 const handleLostDocUpload = (e: any) => {
   const file = e.target.files[0];
   if (!file) return;
-  const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+  const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
   if (!allowedTypes.includes(file.type)) { toast.error(t('inventory.invalidDocFormat')); return; }
   if (file.size > 2 * 1024 * 1024) { toast.error(t('inventory.fileTooLarge2Mb')); return; }
   form.lost_doc_file = file;
@@ -617,7 +617,7 @@ const handleSubmit = () => {
                         >
                           {{ form.image_url_name || t('inventory.noPhotoSelected') }}
                         </div>
-                        <input type="file" id="create-asset-photo-upload" class="hidden" accept=".jpg,.jpeg,.png" @change="handleFileUpload" />
+                        <input type="file" id="create-asset-photo-upload" class="hidden" accept=".jpg,.jpeg,.png,.webp" @change="handleFileUpload" />
                         <Button type="button" @click="handleSamakanPhoto" variant="warning" size="lg" class="shrink-0">{{ t('inventory.sameAsParent') }}</Button>
                         <Button type="button" @click="triggerFileInput" size="lg" class="shrink-0">{{ t('inventory.chooseFile') }}</Button>
                         <Button
@@ -660,7 +660,7 @@ const handleSubmit = () => {
                         >
                           {{ form.memo_file_name || t('inventory.noFileSelected') }}
                         </div>
-                        <input type="file" id="create-asset-memo-upload" class="hidden" accept=".pdf,.jpg,.jpeg,.png" @change="handleMemoUpload" />
+                        <input type="file" id="create-asset-memo-upload" class="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp" @change="handleMemoUpload" />
                         <Button type="button" @click="triggerMemoFileInput" size="lg">{{ t('inventory.chooseDoc') }}</Button>
                       </div>
                       <p class="text-[10px] text-muted-foreground ml-1 mt-1">{{ t('inventory.maxFileSize2Mb') }}</p>
@@ -679,7 +679,7 @@ const handleSubmit = () => {
                         >
                           {{ form.lost_doc_file_name || t('inventory.noFileSelected') }}
                         </div>
-                        <input type="file" id="create-asset-lost-doc-upload" class="hidden" accept=".pdf,.jpg,.jpeg,.png" @change="handleLostDocUpload" />
+                        <input type="file" id="create-asset-lost-doc-upload" class="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp" @change="handleLostDocUpload" />
                         <Button type="button" @click="triggerLostDocFileInput" size="lg">{{ t('inventory.chooseDoc') }}</Button>
                       </div>
                       <p class="text-[10px] text-muted-foreground ml-1 mt-1">{{ t('inventory.maxFileSize2Mb') }}</p>

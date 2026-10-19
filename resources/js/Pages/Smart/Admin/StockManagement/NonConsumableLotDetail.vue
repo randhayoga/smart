@@ -221,7 +221,7 @@ onUnmounted(() => {
     <Breadcrumb class="no-print">
       <BreadcrumbList class="pb-3">
         <BreadcrumbItem>
-          <BreadcrumbLink href="/smart/inventory">{{ t('inventory.inventoryManagement') }}</BreadcrumbLink>
+          <BreadcrumbLink href="/smart/stock-management">{{ t('inventory.inventoryManagement') }}</BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>

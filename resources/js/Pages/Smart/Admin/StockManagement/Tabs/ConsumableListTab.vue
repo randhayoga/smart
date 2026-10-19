@@ -585,13 +585,33 @@ const closeErrorModal = () => {
 
 // Flash Notifications
 const flashSuccess = computed(() => (page.props as any).flash?.success);
+const flashNewStockCreated = computed(() => (page.props as any).flash?.new_stock_created);
 const flashError = computed(() => (page.props as any).flash?.error);
 
 watch(flashSuccess, (newVal) => {
   if (newVal && (page.props as any).flash?.success) {
-    toast.success(newVal);
+    const newStock = flashNewStockCreated.value;
+    if (newStock && newStock.target_url) {
+      toast.success(
+        h('span', [
+          t('inventory.newStockSuccessPrefix'),
+          h('a', {
+            href: newStock.target_url,
+            class: 'underline font-semibold text-primary hover:text-primary/80 transition-colors cursor-pointer',
+            onClick: (e: MouseEvent) => {
+              e.preventDefault();
+              router.visit(newStock.target_url);
+            }
+          }, t('inventory.seeHere'))
+        ])
+      );
+    } else {
+      toast.success(newVal);
+    }
+
     if ((page.props as any).flash) {
       (page.props as any).flash.success = null;
+      (page.props as any).flash.new_stock_created = null;
     }
   }
 }, { immediate: true });

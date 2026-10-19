@@ -82,10 +82,17 @@ const pemanfaatanOptions = [
 
 const departemenOptions = computed(() => props.departments);
 const projectOptions = computed(() => {
-  return props.projects.map(p => ({
-    id: p.value,
-    name: p.no_project && p.project_name ? `[${p.no_project}] ${p.project_name}` : p.label,
-  }));
+  return props.projects
+    .filter(p => {
+      if (p.no_project !== undefined || p.project_name !== undefined) {
+        return Boolean(p.no_project?.trim() && p.project_name?.trim());
+      }
+      return Boolean(p.label && !p.label.startsWith('[]'));
+    })
+    .map(p => ({
+      id: p.value,
+      name: p.no_project && p.project_name ? `[${p.no_project}] ${p.project_name}` : p.label,
+    }));
 });
 
 const selectedPemanfaatanLabel = computed(() => {

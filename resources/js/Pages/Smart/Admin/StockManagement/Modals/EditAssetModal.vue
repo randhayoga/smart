@@ -197,10 +197,12 @@ const resetErrors = () => {
 };
 
 const projectOptions = computed(() => {
-  return (props.projects || []).map(p => ({
-    id: p.id,
-    name: `[${p.no_project}] ${p.project_name}`
-  }));
+  return (props.projects || [])
+    .filter(p => Boolean(p.no_project?.trim() && p.project_name?.trim()))
+    .map(p => ({
+      id: p.id,
+      name: `[${p.no_project}] ${p.project_name}`
+    }));
 });
 
 // Reactive error clearing
@@ -396,7 +398,7 @@ const handleMemoUpload = (e: any) => {
   if (isDocumentDisabled.value) return;
   const file = e.target.files[0];
   if (!file) return;
-  const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+  const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
   if (!allowedTypes.includes(file.type)) { toast.error(t('inventory.invalidDocFormat')); return; }
   if (file.size > 2 * 1024 * 1024) { toast.error(t('inventory.fileTooLarge2Mb')); return; }
   form.memo_file = file;
@@ -421,7 +423,7 @@ const handleLostDocUpload = (e: any) => {
   if (isDocumentDisabled.value) return;
   const file = e.target.files[0];
   if (!file) return;
-  const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+  const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
   if (!allowedTypes.includes(file.type)) { toast.error(t('inventory.invalidDocFormat')); return; }
   if (file.size > 2 * 1024 * 1024) { toast.error(t('inventory.fileTooLarge2Mb')); return; }
   form.lost_doc_file = file;
@@ -445,7 +447,7 @@ const viewLostDocInNewTab = () => {
 const handleBodBocDocUpload = (e: any) => {
   const file = e.target.files[0];
   if (!file) return;
-  const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+  const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
   if (!allowedTypes.includes(file.type)) { toast.error(t('inventory.invalidDocFormat')); return; }
   if (file.size > 2 * 1024 * 1024) { toast.error(t('inventory.fileTooLarge2Mb')); return; }
   form.bod_boc_approval_file = file;
@@ -841,7 +843,7 @@ const handleSubmit = () => {
                         >
                           {{ form.image_url_name || (isSingle ? t('inventory.noPhotoSelected') : t('inventory.unchanged')) }}
                         </div>
-                        <input type="file" id="edit-asset-photo-upload" class="hidden" accept=".jpg,.jpeg,.png" @change="handleFileUpload" />
+                        <input type="file" id="edit-asset-photo-upload" class="hidden" accept=".jpg,.jpeg,.png,.webp" @change="handleFileUpload" />
                         <Button type="button" @click="handleSamakanPhoto" variant="warning" size="lg" class="shrink-0">{{ t('inventory.sameAsParent') }}</Button>
                         <Button type="button" @click="triggerFileInput" size="lg" class="shrink-0">{{ t('inventory.chooseFile') }}</Button>
                         <Button
@@ -888,7 +890,7 @@ const handleSubmit = () => {
                         >
                           {{ form.memo_file_name || t('inventory.noFileSelected') }}
                         </div>
-                        <input type="file" id="edit-asset-memo-upload" class="hidden" accept=".pdf,.jpg,.jpeg,.png" @change="handleMemoUpload" :disabled="isDocumentDisabled" />
+                        <input type="file" id="edit-asset-memo-upload" class="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp" @change="handleMemoUpload" :disabled="isDocumentDisabled" />
                         <Button type="button" @click="triggerMemoFileInput" size="lg" :disabled="isDocumentDisabled">{{ t('inventory.chooseDoc') }}</Button>
                       </div>
                       <p class="text-[10px] text-muted-foreground ml-1 mt-1">{{ t('inventory.maxFileSize2Mb') }}</p>
@@ -911,7 +913,7 @@ const handleSubmit = () => {
                         >
                           {{ form.lost_doc_file_name || t('inventory.noFileSelected') }}
                         </div>
-                        <input type="file" id="edit-asset-lost-doc-upload" class="hidden" accept=".pdf,.jpg,.jpeg,.png" @change="handleLostDocUpload" :disabled="isDocumentDisabled" />
+                        <input type="file" id="edit-asset-lost-doc-upload" class="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp" @change="handleLostDocUpload" :disabled="isDocumentDisabled" />
                         <Button type="button" @click="triggerLostDocFileInput" size="lg" :disabled="isDocumentDisabled">{{ t('inventory.chooseDoc') }}</Button>
                       </div>
                       <p class="text-[10px] text-muted-foreground ml-1 mt-1">{{ t('inventory.maxFileSize2Mb') }}</p>
@@ -933,7 +935,7 @@ const handleSubmit = () => {
                         >
                           {{ form.bod_boc_approval_file_name || t('inventory.noFileSelected') }}
                         </div>
-                        <input type="file" id="edit-asset-bod-boc-doc-upload" class="hidden" accept=".pdf,.jpg,.jpeg,.png" @change="handleBodBocDocUpload" />
+                        <input type="file" id="edit-asset-bod-boc-doc-upload" class="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp" @change="handleBodBocDocUpload" />
                         <Button type="button" @click="triggerBodBocDocFileInput" size="lg">{{ t('inventory.chooseDoc') }}</Button>
                       </div>
                       <p class="text-[10px] text-muted-foreground ml-1 mt-1">{{ t('inventory.maxFileSize2Mb') }}</p>

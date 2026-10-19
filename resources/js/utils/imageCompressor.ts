@@ -74,18 +74,20 @@ export const compressImageIfNeeded = async (
               return;
             }
 
-            // Convert to JPEG format with proper filename
+            // Convert to WebP format with proper filename
             const cleanBaseName = file.name.replace(/\.[^/.]+$/, '') || 'foto_kamera';
-            const newFileName = `${cleanBaseName}.jpg`;
+            const isWebp = blob.type === 'image/webp';
+            const extension = isWebp ? 'webp' : 'jpg';
+            const newFileName = `${cleanBaseName}.${extension}`;
 
             const compressedFile = new File([blob], newFileName, {
-              type: 'image/jpeg',
+              type: blob.type || 'image/webp',
               lastModified: Date.now(),
             });
 
             resolve(compressedFile);
           },
-          'image/jpeg',
+          'image/webp',
           quality
         );
       };

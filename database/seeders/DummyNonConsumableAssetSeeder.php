@@ -119,10 +119,10 @@ class DummyNonConsumableAssetSeeder extends Seeder
                     'price' => $lot->unit_price,
                     'image_url' => $lot->image_url,
                     'vehicle_registration' => $data['vehicle_registration'],
-                    'burden' => $burden,
-                    'project_id' => $projectId,
-                    'specification' => $data['specification'] ?? null,
-                    'vendor_id' => $vendorId,
+                    'legacy_burden' => $burden,
+                    'legacy_project_id' => $projectId,
+                    'comp_specification' => $data['specification'] ?? null,
+                    'legacy_vendor_id' => $vendorId,
                 ]
             );
         }

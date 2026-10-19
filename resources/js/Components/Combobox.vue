@@ -153,8 +153,8 @@ const handleSelect = (val: string | number | null) => {
               :value="String(opt.name)"
               @select="handleSelect(opt.id)"
             >
-              <Check :class="['mr-2 h-4 w-4', String(modelValue) === String(opt.id) ? 'opacity-100' : 'opacity-0']" />
-              {{ opt.name }}
+              <Check :class="['mr-2 h-4 w-4 shrink-0', String(modelValue) === String(opt.id) ? 'opacity-100' : 'opacity-0']" />
+              <span class="truncate flex-1" :title="String(opt.name)">{{ opt.name }}</span>
             </CommandItem>
           </CommandGroup>
         </CommandList>

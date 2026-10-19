@@ -131,7 +131,7 @@ const handleBodBocUpload = (e: Event) => {
   const file = target.files?.[0];
   if (!file || !props.asset) return;
 
-  const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+  const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
   if (!allowedTypes.includes(file.type)) {
     toast.error(t('inventory.invalidDocFormat'));
     target.value = '';
@@ -395,7 +395,7 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                   ref="fileInputRef"
                   type="file"
                   class="hidden"
-                  accept=".pdf,.jpg,.jpeg,.png"
+                  accept=".pdf,.jpg,.jpeg,.png,.webp"
                   @change="handleBodBocUpload"
                 />
 

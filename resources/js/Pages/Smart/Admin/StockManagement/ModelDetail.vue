@@ -199,8 +199,21 @@ const closeOnEscape = (e: KeyboardEvent) => {
   }
 };
 
+const initialLotId = ref<number | null>(null);
+
 onMounted(() => {
   document.addEventListener('keydown', closeOnEscape);
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const tabParam = urlParams.get('tab');
+  const lotIdParam = urlParams.get('lot_id');
+
+  if (tabParam === 'lots' || lotIdParam) {
+    activeTab.value = props.barang.is_consumable ? 'Daftar LOT' : 'Daftar Tidak Habis Pakai';
+    if (lotIdParam) {
+      initialLotId.value = parseInt(lotIdParam, 10) || null;
+    }
+  }
 });
 
 onUnmounted(() => {
@@ -214,7 +227,7 @@ onUnmounted(() => {
     <Breadcrumb class="no-print">
       <BreadcrumbList class="pb-3">
         <BreadcrumbItem>
-          <BreadcrumbLink href="/smart/inventory">{{ t('inventory.inventoryManagement') }}</BreadcrumbLink>
+          <BreadcrumbLink href="/smart/stock-management">{{ t('inventory.inventoryManagement') }}</BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
@@ -265,6 +278,7 @@ onUnmounted(() => {
         :vendors="props.vendors"
         :locations="props.locations"
         :projects="props.projects"
+        :initial-lot-id="initialLotId"
       />
 
       <NonConsumableListTab

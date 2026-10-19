@@ -74,7 +74,6 @@ class NonConsumableController extends Controller
                 'project_id' => $asset->legacy_project_id,
                 'project_name' => $asset->legacyProject ? $asset->legacyProject->project_name : null,
                 'project_no' => $asset->legacyProject ? $asset->legacyProject->no_project : null,
-                'legacy_memo_number' => $asset->legacy_memo_number,
                 'created_at' => $asset->created_at?->toIso8601String(),
                 'updated_at' => $asset->updated_at ? $asset->updated_at->format('d-m-Y H:i') : '-',
                 
@@ -149,7 +148,7 @@ class NonConsumableController extends Controller
         $locations = Location::with('parent')->orderBy('name')->get();
         $organizers = Organizer::orderBy('name')->get();
         $vendors = Vendor::orderBy('name')->get();
-        $projects = TbProject::orderBy('project_name')->get();
+        $projects = TbProject::validForSelection()->orderBy('project_name')->get();
         $users = User::select('id', 'employee_name', 'employee_id')
             ->where('active', 1)
             ->orderBy('employee_name')

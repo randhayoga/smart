@@ -108,6 +108,8 @@ class ConsumableController extends Controller
                 'entry_type' => $lot->entry_type ?? 'Procurement',
                 'memo_number' => $lot->memo_number,
                 'memo_url' => $lot->memo_url,
+                'image_url' => $lot->image_url,
+                'imageUrl' => $lot->image_url,
                 'assetCount' => 0,
                 'availableAssetCount' => 0,
                 'initial_quantity' => $lot->initial_quantity,
@@ -143,7 +145,7 @@ class ConsumableController extends Controller
         $organizers = Organizer::orderBy('name')->get();
         $vendors = Vendor::orderBy('name')->get(['id', 'name']);
         $locations = Location::with('parent')->active()->orderBy('name')->get();
-        $projects = TbProject::orderBy('project_name')->get();
+        $projects = TbProject::validForSelection()->orderBy('project_name')->get();
 
         return Inertia::render('Smart/Admin/StockManagement/ConsumableList', [
             'user' => $request->user(),

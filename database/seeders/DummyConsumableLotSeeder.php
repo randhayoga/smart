@@ -22,6 +22,7 @@ class DummyConsumableLotSeeder extends Seeder
     {
         $hvsModel = Model::where('number', 'ATK-HVS4-0001')->first();
         $penModel1 = Model::where('number', 'ATK-PLPH-0001')->first();
+        $penModel2 = Model::where('number', 'ATK-PLPH-0002')->first();
 
         $organizer = Organizer::where('name', 'CFS')->first() ?? Organizer::first();
         $vendor = Vendor::where('name', 'PT Surya Abadi Mandiri')->first()
@@ -79,6 +80,21 @@ class DummyConsumableLotSeeder extends Seeder
                 'burden' => 'Corporate',
                 'project_id' => null,
             ],
+            [
+                'number' => 'LOT-0002-26-ATK-PLPH-0002',
+                'model_id' => $penModel2?->id,
+                'organizer_id' => $organizer?->id,
+                'vendor_id' => $vendor?->id,
+                'location_id' => $location?->id,
+                'initial_quantity' => 40,
+                'current_quantity' => 40,
+                'po_number' => 'PO-ATK-04',
+                'date_of_receipt' => '20/04/2026',
+                'unit_price' => 20000,
+                'image_url' => '/database/seeders/assets/standard.jpg',
+                'burden' => 'Corporate',
+                'project_id' => null,
+            ],
         ];
 
         foreach ($lots as $data) {
@@ -113,12 +129,13 @@ class DummyConsumableLotSeeder extends Seeder
                     'vendor_id' => $data['vendor_id'],
                     'legacy_vendor_id' => $data['vendor_id'],
                     'location_id' => $data['location_id'],
+                    'unit_price' => $data['unit_price'],
                     'initial_quantity' => $data['initial_quantity'],
                     'current_quantity' => $data['current_quantity'],
-                    'po_number' => $data['po_number'],
-                    'date_of_receipt' => Carbon::createFromFormat('d/m/Y', $data['date_of_receipt']),
-                    'unit_price' => $data['unit_price'],
                     'image_url' => $destinationPath,
+                    'entry_type' => 'Procurement',
+                    'po_number' => $data['po_number'],
+                    'purchase_grant_date' => Carbon::createFromFormat('d/m/Y', $data['date_of_receipt']),
                     'burden' => $data['burden'],
                     'project_id' => $data['project_id'],
                 ]

@@ -34,6 +34,9 @@ return new class extends Migration {
             $table->dateTime('purchase_grant_date');
             $table->string('memo_number')->nullable();
             $table->string('memo_url')->nullable();
+            $table->foreignId('location_id')->nullable()->constrained('locations')->nullOnDelete()->comment('for consumables');
+            $table->decimal('unit_price', 15, 2)->nullable()->comment('for consumables');
+            $table->string('image_url')->nullable()->comment('for consumables');
             $table->string('burden')->nullable()->comment('for consumables');
             $table->unsignedBigInteger('project_id')->nullable()->index()->comment('Refers to RE_PORTALDB:tb_project.id_project (for consumables)');
             $table->timestamps();
@@ -56,7 +59,6 @@ return new class extends Migration {
             $table->string('vehicle_registration')->nullable();
             $table->string('legacy_burden')->nullable()->comment('Legacy migration only');
             $table->unsignedBigInteger('legacy_project_id')->nullable()->index()->comment('Refers to RE_PORTALDB:tb_project.id_project (legacy migration only)');
-            $table->string('legacy_memo_number')->nullable()->comment('Legacy migration only');
             $table->timestamps();
 
             $table->index('status');

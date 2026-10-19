@@ -68,8 +68,9 @@ class StockManagementController extends Controller
                 ];
             });
 
-        $projects = TbProject::orderBy('project_name')->get();
+        $projects = TbProject::validForSelection()->orderBy('project_name')->get();
         $organizers = Organizer::orderBy('name')->get();
+        $vendors = Vendor::orderBy('name')->get(['id', 'name']);
         $locations = Location::with('parent')->active()->orderBy('name')->get();
         $lots = Lot::select('id', 'number', 'model_id', 'purchase_grant_date', 'organizer_id')->get()->map(function ($lot) {
             return [
@@ -92,6 +93,7 @@ class StockManagementController extends Controller
             'barangs' => $models,
             'projects' => $projects,
             'organizers' => $organizers,
+            'vendors' => $vendors,
             'locations' => $locations,
             'lots' => $lots,
         ]);
@@ -225,7 +227,6 @@ class StockManagementController extends Controller
                     'project_id' => $asset->legacy_project_id,
                     'project_name' => $asset->legacyProject ? $asset->legacyProject->project_name : null,
                     'project_no' => $asset->legacyProject ? $asset->legacyProject->no_project : null,
-                    'legacy_memo_number' => $asset->legacy_memo_number,
                     'created_at' => $asset->created_at?->toIso8601String(),
                     'updated_at' => $asset->updated_at ? $asset->updated_at->format('d-m-Y H:i') : '-',
                     
@@ -292,7 +293,7 @@ class StockManagementController extends Controller
             });
         }
 
-        $projects = TbProject::orderBy('project_name')->get();
+        $projects = TbProject::validForSelection()->orderBy('project_name')->get();
 
         return Inertia::render('Smart/Admin/StockManagement/ModelDetail', [
             'user' => $request->user(),

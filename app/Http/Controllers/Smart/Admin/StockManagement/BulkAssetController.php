@@ -42,7 +42,7 @@ class BulkAssetController extends Controller
             'comp_specification' => 'nullable|string|max:255',
             'specification' => 'nullable|string|max:255',
             'price' => 'nullable|numeric|min:0|max:999999999.99',
-            'image_url' => 'nullable|image|max:1024',
+            'image_url' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:1024',
             'use_lot_image' => 'nullable',
             'bulk_quantity' => 'required|integer|min:1|max:999',
             'burden' => 'nullable|string|in:Corporate,Project',
@@ -70,9 +70,9 @@ class BulkAssetController extends Controller
         $needApproval = in_array($proposedCondition, $arrNeedApproval);
 
         if ($needApproval) {
-            $rules['memo_file'] = 'required|file|mimes:pdf,jpeg,jpg,png|max:2048';
+            $rules['memo_file'] = 'required|file|mimes:pdf,jpeg,jpg,png,webp|max:2048';
             if ($proposedCondition === 'Hilang') {
-                $rules['lost_doc_file'] = 'required|file|mimes:pdf,jpeg,jpg,png|max:2048';
+                $rules['lost_doc_file'] = 'required|file|mimes:pdf,jpeg,jpg,png,webp|max:2048';
             }
         }
 
@@ -109,6 +109,8 @@ class BulkAssetController extends Controller
             return redirect()->back()->withErrors(['number' => 'Beberapa Nomor Aset sudah terpakai: ' . implode(', ', $existing)]);
         }
 
+        $imageUploadService = app(\App\Services\ImageUploadService::class);
+
         $finalImagePath = null;
         if ($request->boolean('use_lot_image')) {
             if ($lot->image_url && Storage::disk('local')->exists($lot->image_url)) {
@@ -117,7 +119,7 @@ class BulkAssetController extends Controller
                 $finalImagePath = null;
             }
         } else if ($request->hasFile('image_url')) {
-            $finalImagePath = $request->file('image_url')->store('inventory', 'local');
+            $finalImagePath = $imageUploadService->storeAsWebp($request->file('image_url'), 'inventory');
         }
 
         $classification = $validated['classification'];
@@ -140,11 +142,11 @@ class BulkAssetController extends Controller
             if ($needApproval) {
                 $memoUrl = 'memos/placeholder.pdf';
                 if ($request->hasFile('memo_file')) {
-                    $memoUrl = $request->file('memo_file')->store('memos', 'local');
+                    $memoUrl = $imageUploadService->storeImageOrFile($request->file('memo_file'), 'memos');
                 }
                 $lostDocUrl = null;
                 if ($proposedCondition === 'Hilang' && $request->hasFile('lost_doc_file')) {
-                    $lostDocUrl = $request->file('lost_doc_file')->store('lost_docs', 'local');
+                    $lostDocUrl = $imageUploadService->storeImageOrFile($request->file('lost_doc_file'), 'lost_docs');
                 }
                 AssetStatusApproval::create([
                     'asset_id' => $asset->id,
@@ -209,7 +211,7 @@ class BulkAssetController extends Controller
             'location_id' => 'nullable|exists:locations,id',
             'price' => 'nullable|numeric|min:0|max:999999999.99',
             'use_lot_image' => 'nullable',
-            'image_url' => 'nullable|image|mimes:jpeg,jpg,png|max:1024',
+            'image_url' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:1024',
             'burden' => 'nullable',
             'project_id' => 'nullable',
         ], $messages);
@@ -230,15 +232,15 @@ class BulkAssetController extends Controller
         $allPendingBodBoc = $assets->every(fn($u) => $u->status === 'Pending:BoD/BoC');
         if ($allPendingBodBoc && $request->hasFile('bod_boc_approval_file')) {
             $request->validate([
-                'bod_boc_approval_file' => 'required|file|mimes:pdf,jpeg,jpg,png|max:2048',
+                'bod_boc_approval_file' => 'required|file|mimes:pdf,jpeg,jpg,png,webp|max:2048',
             ], [
                 'bod_boc_approval_file.required' => 'Formulir Approval BoD/BoC belum dipilih.',
-                'bod_boc_approval_file.mimes' => 'Format Formulir Approval BoD/BoC salah! Hanya diperbolehkan file .pdf, .jpg, .jpeg, atau .png.',
+                'bod_boc_approval_file.mimes' => 'Format Formulir Approval BoD/BoC salah! Hanya diperbolehkan file .pdf, .jpg, .jpeg, .png, atau .webp.',
                 'bod_boc_approval_file.max' => 'Gagal! Ukuran Formulir Approval BoD/BoC maksimal 2MB.',
             ]);
 
             DB::transaction(function () use ($assets, $request) {
-                $bodBocUrl = $request->file('bod_boc_approval_file')->store('bod_boc_approvals', 'local');
+                $bodBocUrl = app(\App\Services\ImageUploadService::class)->storeImageOrFile($request->file('bod_boc_approval_file'), 'bod_boc_approvals');
 
                 foreach ($assets as $asset) {
                     $approval = AssetStatusApproval::where('asset_id', $asset->id)
@@ -308,17 +310,17 @@ class BulkAssetController extends Controller
 
         if ($needApproval && !$hasRestrictedAssets) {
             $rulesForApproval = [
-                'memo_file' => 'required|file|mimes:pdf,jpeg,jpg,png|max:2048',
+                'memo_file' => 'required|file|mimes:pdf,jpeg,jpg,png,webp|max:2048',
             ];
             $messagesForApproval = [
                 'memo_file.required' => 'Berita Acara / Memo wajib diisi jika kondisi Hilang atau Rusak Total.',
-                'memo_file.mimes' => 'Format Berita Acara / Memo salah! Hanya diperbolehkan file .pdf, .jpg, .jpeg, atau .png.',
+                'memo_file.mimes' => 'Format Berita Acara / Memo salah! Hanya diperbolehkan file .pdf, .jpg, .jpeg, .png, atau .webp.',
                 'memo_file.max' => 'Gagal! Ukuran Berita Acara / Memo maksimal 2MB.',
             ];
             if ($proposedCondition === 'Hilang') {
-                $rulesForApproval['lost_doc_file'] = 'required|file|mimes:pdf,jpeg,jpg,png|max:2048';
+                $rulesForApproval['lost_doc_file'] = 'required|file|mimes:pdf,jpeg,jpg,png,webp|max:2048';
                 $messagesForApproval['lost_doc_file.required'] = 'Surat Keterangan Kehilangan wajib diisi jika kondisi Hilang.';
-                $messagesForApproval['lost_doc_file.mimes'] = 'Format Surat Keterangan Kehilangan salah! Hanya diperbolehkan file .pdf, .jpg, .jpeg, atau .png.';
+                $messagesForApproval['lost_doc_file.mimes'] = 'Format Surat Keterangan Kehilangan salah! Hanya diperbolehkan file .pdf, .jpg, .jpeg, .png, atau .webp.';
                 $messagesForApproval['lost_doc_file.max'] = 'Gagal! Ukuran Surat Keterangan Kehilangan maksimal 2MB.';
             }
             $request->validate($rulesForApproval, $messagesForApproval);
@@ -369,7 +371,7 @@ class BulkAssetController extends Controller
                 return redirect()->back()->withErrors(['image_url' => 'Foto LOT tidak ditemukan di storage.']);
             }
         } else if ($request->hasFile('image_url')) {
-            $finalImagePath = $request->file('image_url')->store('inventory', 'local');
+            $finalImagePath = app(\App\Services\ImageUploadService::class)->storeAsWebp($request->file('image_url'), 'inventory');
             $hasNewImage = true;
         }
 
@@ -403,11 +405,11 @@ class BulkAssetController extends Controller
         if ($needApproval) {
             $memoUrl = 'memos/placeholder.pdf';
             if ($request->hasFile('memo_file')) {
-                $memoUrl = $request->file('memo_file')->store('memos', 'local');
+                $memoUrl = app(\App\Services\ImageUploadService::class)->storeImageOrFile($request->file('memo_file'), 'memos');
             }
             $lostDocUrl = null;
             if ($proposedCondition === 'Hilang' && $request->hasFile('lost_doc_file')) {
-                $lostDocUrl = $request->file('lost_doc_file')->store('lost_docs', 'local');
+                $lostDocUrl = app(\App\Services\ImageUploadService::class)->storeImageOrFile($request->file('lost_doc_file'), 'lost_docs');
             }
             foreach ($assets as $asset) {
                 $existing = AssetStatusApproval::where('asset_id', $asset->id)

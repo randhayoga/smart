@@ -9,6 +9,7 @@ use App\Models\Inventory\UnitLifecycle;
 use App\Models\User;
 use App\Models\HrdEmployee;
 use App\Models\HrdOrgchart;
+use App\Models\Master\Location;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -43,7 +44,8 @@ class AssetDeactivationApprovalControllerTest extends TestCase
 
     private function createUnit()
     {
-        $lot = Lot::factory()->create();
+        $location = Location::factory()->create();
+        $lot = Lot::factory()->create(['location_id' => $location->id]);
         
         $tipeCode = $lot->barang->subcategory->code ?? 'SUB';
         $organizerCode = $lot->organizer->name ?? 'ORG';
@@ -57,7 +59,7 @@ class AssetDeactivationApprovalControllerTest extends TestCase
         return Unit::create([
             'number' => $unitNumber,
             'lot_id' => $lot->id,
-            'location_id' => $lot->location_id,
+            'location_id' => $location->id,
             'status' => 'Tersedia',
             'condition' => 'Bagus',
             'type' => 'LT',

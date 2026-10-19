@@ -37,7 +37,6 @@ class AssetFactory extends Factory
             'legacy_burden' => null,
             'legacy_project_id' => null,
             'legacy_vendor_id' => null,
-            'legacy_memo_number' => null,
             'comp_specification' => null,
         ];
     }

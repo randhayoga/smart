@@ -27,11 +27,11 @@ class AdminAssetDeactivationApprovalController extends Controller
             'proposed_condition' => 'required_without:proposed_status|string|max:255',
             'proposed_status' => 'required_without:proposed_condition|string|max:255',
             'note' => 'nullable|string',
-            'memo_file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:2048',
+            'memo_file' => 'required|file|mimes:pdf,jpg,jpeg,png,webp|max:2048',
         ];
 
         if ($proposedCondition === 'Hilang') {
-            $rules['lost_doc_file'] = 'required|file|mimes:pdf,jpg,jpeg,png|max:2048';
+            $rules['lost_doc_file'] = 'required|file|mimes:pdf,jpg,jpeg,png,webp|max:2048';
         }
 
         $validated = $request->validate($rules);
@@ -50,14 +50,16 @@ class AdminAssetDeactivationApprovalController extends Controller
             ]);
         }
 
+        $imageUploadService = app(\App\Services\ImageUploadService::class);
+
         $memoUrl = 'memos/placeholder.pdf';
         if ($request->hasFile('memo_file')) {
-            $memoUrl = $request->file('memo_file')->store('memos', 'local');
+            $memoUrl = $imageUploadService->storeImageOrFile($request->file('memo_file'), 'memos');
         }
 
         $lostDocUrl = null;
         if ($proposedCondition === 'Hilang' && $request->hasFile('lost_doc_file')) {
-            $lostDocUrl = $request->file('lost_doc_file')->store('lost_docs', 'local');
+            $lostDocUrl = $imageUploadService->storeImageOrFile($request->file('lost_doc_file'), 'lost_docs');
         }
 
         AssetStatusApproval::create([

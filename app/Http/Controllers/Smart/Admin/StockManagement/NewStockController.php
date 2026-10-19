@@ -33,8 +33,9 @@ class NewStockController extends Controller
         $type = Type::findOrFail($validated['type_id']);
         $isComp = ($category->code === 'COMP' || strtolower($category->name) === 'computer');
         $isKend = ($category->code === 'KEND');
+        $isConsumable = (bool) $type->is_consumable;
 
-        $result = DB::transaction(function () use ($request, $validated, $category, $type, $isComp, $isKend) {
+        $result = DB::transaction(function () use ($request, $validated, $category, $type, $isComp, $isKend, $isConsumable) {
             // 1. Model Resolution
             if ($request->boolean('create_new_type')) {
                 $modelNumber = $validated['model_number'] ?? $this->generateModelNumber($category, $type);
@@ -68,19 +69,31 @@ class NewStockController extends Controller
 
                     $lotNumber = $this->generateLotNumber($model, $date);
 
+                    $imageUploadService = app(\App\Services\ImageUploadService::class);
+
                     $memoUrl = null;
                     if ($entryType === 'Hibah' && $request->hasFile('memo_file')) {
-                        $memoUrl = $request->file('memo_file')->store('memos', 'local');
+                        $memoUrl = $imageUploadService->storeImageOrFile($request->file('memo_file'), 'memos');
+                    }
+
+                    $lotPhotoUrl = null;
+                    if ($request->hasFile('lot_photo')) {
+                        $lotPhotoUrl = $imageUploadService->storeAsWebp($request->file('lot_photo'), 'inventory');
+                    } elseif ($request->boolean('use_parent_image') && $model->image_url) {
+                        $lotPhotoUrl = $model->image_url;
                     }
 
                     $lot = Lot::create([
                         'number' => $lotNumber,
                         'model_id' => $model->id,
                         'organizer_id' => $validated['organizer_id'],
-                        'vendor_id' => null,
+                        'vendor_id' => ($entryType === 'Procurement') ? ($validated['vendor_id'] ?? null) : null,
                         'legacy_vendor_id' => null,
-                        'initial_quantity' => 0,
-                        'current_quantity' => 0,
+                        'location_id' => $isConsumable ? ($validated['location_id'] ?? null) : null,
+                        'unit_price' => $isConsumable ? ($validated['unit_price'] ?? null) : null,
+                        'initial_quantity' => $isConsumable ? (int) ($validated['initial_quantity'] ?? 0) : 0,
+                        'current_quantity' => $isConsumable ? (int) ($validated['initial_quantity'] ?? 0) : 0,
+                        'image_url' => $lotPhotoUrl,
                         'entry_type' => $entryType,
                         'po_number' => ($entryType === 'Procurement') ? ($validated['po_number'] ?? null) : null,
                         'purchase_grant_date' => $date,
@@ -89,6 +102,10 @@ class NewStockController extends Controller
                         'burden' => $validated['burden'],
                         'project_id' => ($validated['burden'] === 'Project') ? ($validated['project_id'] ?? null) : null,
                     ]);
+
+                    if ($isConsumable && $lot->model) {
+                        app(NotificationService::class)->checkAndNotifyLowStock($lot->model);
+                    }
 
                     if ($request->user()) {
                         app(InventoryLogService::class)->logLotCreated($lot, $request->user());
@@ -110,40 +127,79 @@ class NewStockController extends Controller
 
                     $photoUrl = null;
                     if ($request->hasFile('photo')) {
-                        $photoUrl = $request->file('photo')->store('assets', 'local');
+                        $photoUrl = app(\App\Services\ImageUploadService::class)->storeAsWebp($request->file('photo'), 'inventory');
                     }
 
-                    $assetNumber = app(AssetNumberService::class)->generateAssetNumber($lot);
+                    $isBulk = !$isKend && $request->boolean('is_bulk');
+                    $quantity = $isBulk ? (int) ($validated['bulk_quantity'] ?? 1) : 1;
 
-                    $asset = Asset::create([
-                        'number' => $assetNumber,
-                        'lot_id' => $lot->id,
-                        'location_id' => $validated['location_id'],
-                        'status' => 'Belum Diverifikasi',
-                        'condition' => $condition,
-                        'borrowing_type' => $validated['borrowing_type'],
-                        'classification' => $validated['classification'],
-                        'comp_specification' => $isComp ? ($validated['asset_specification'] ?? null) : null,
-                        'price' => $validated['price'] ?? null,
-                        'image_url' => $photoUrl,
-                        'vehicle_registration' => $isKend ? ($validated['plate_number'] ?? null) : null,
-                    ]);
+                    if ($isBulk) {
+                        $assetNumbers = app(AssetNumberService::class)->generateBulkAssetNumbers($lot, $quantity);
+                    } else {
+                        $assetNumbers = [app(AssetNumberService::class)->generateAssetNumber($lot)];
+                    }
 
-                    $approval = AssetActivationApproval::create([
-                        'asset_id' => $asset->id,
-                        'requester_id' => $request->user()->id,
-                        'decision' => 'pending',
-                        'requested_at' => now(),
-                    ]);
+                    foreach ($assetNumbers as $assetNumber) {
+                        $asset = Asset::create([
+                            'number' => $assetNumber,
+                            'lot_id' => $lot->id,
+                            'location_id' => $validated['location_id'],
+                            'status' => 'Belum Diverifikasi',
+                            'condition' => $condition,
+                            'borrowing_type' => $validated['borrowing_type'],
+                            'classification' => $validated['classification'],
+                            'comp_specification' => $isComp ? ($validated['asset_specification'] ?? null) : null,
+                            'price' => $validated['price'] ?? null,
+                            'image_url' => $photoUrl,
+                            'vehicle_registration' => $isKend ? ($validated['plate_number'] ?? null) : null,
+                        ]);
 
-                    app(NotificationService::class)->notifyManagerNewAssetActivation($asset, $approval);
+                        $approval = AssetActivationApproval::create([
+                            'asset_id' => $asset->id,
+                            'requester_id' => $request->user()->id,
+                            'decision' => 'pending',
+                            'requested_at' => now(),
+                        ]);
+
+                        app(NotificationService::class)->notifyManagerNewAssetActivation($asset, $approval);
+                    }
                 }
             }
 
-            return $model;
+            return [
+                'model' => $model,
+                'lot' => $lot,
+                'is_consumable' => $isConsumable,
+            ];
         });
 
-        return redirect()->back()->with('success', __('inventory.newStockSuccess'));
+        $model = $result['model'];
+        $lot = $result['lot'];
+        $isConsumable = $result['is_consumable'];
+
+        $modelParam = preg_replace('/[^a-zA-Z0-9]/', '', (string)$model->number) ?: $model->id;
+
+        if ($lot) {
+            if ($isConsumable) {
+                $targetUrl = "/smart/inventory/{$modelParam}?tab=lots&lot_id={$lot->id}";
+            } else {
+                $lotParam = preg_replace('/[^a-zA-Z0-9]/', '', (string)$lot->number) ?: $lot->id;
+                $targetUrl = "/smart/inventory/lots/{$lotParam}";
+            }
+        } else {
+            $targetUrl = "/smart/inventory/{$modelParam}";
+        }
+
+        return redirect()->back()->with([
+            'success' => __('inventory.newStockSuccess'),
+            'new_stock_created' => [
+                'target_url' => $targetUrl,
+                'model_id' => $model->id,
+                'lot_id' => $lot?->id,
+                'is_consumable' => $isConsumable,
+                'has_lot' => $lot !== null,
+            ],
+        ]);
     }
 
     /**

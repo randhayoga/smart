@@ -10,6 +10,7 @@ use App\Models\Master\Brand;
 use App\Models\Master\Location;
 use App\Models\Master\Organizer;
 use App\Models\Master\Uom;
+use App\Models\Master\Vendor;
 use App\Models\TbProject;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -80,10 +81,20 @@ class NewStockRequest extends FormRequest
                 if ($this->input('entry_type') === 'Procurement') {
                     $rules['po_number'] = ['required', 'string', 'max:255'];
                     $rules['purchase_date'] = ['required', 'date'];
+                    $rules['vendor_id'] = ['required', Rule::exists(Vendor::class, 'id')];
                 } elseif ($this->input('entry_type') === 'Hibah') {
                     $rules['memo_number'] = ['required', 'string', 'max:255'];
                     $rules['date_of_grant'] = ['required', 'date'];
-                    $rules['memo_file'] = ['nullable', 'file', 'mimes:pdf,jpeg,jpg,png', 'max:2048'];
+                    $rules['memo_file'] = ['nullable', 'file', 'mimes:pdf,jpeg,jpg,png,webp', 'max:2048'];
+                    $rules['vendor_id'] = ['nullable', Rule::exists(Vendor::class, 'id')];
+                }
+
+                if ($isConsumable) {
+                    $rules['initial_quantity'] = ['required', 'integer', 'min:0', 'max:2147483647'];
+                    $rules['location_id'] = ['required', Rule::exists(Location::class, 'id')];
+                    $rules['unit_price'] = ['nullable', 'numeric', 'min:0', 'max:999999999999.99'];
+                    $rules['lot_photo'] = ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:1024'];
+                    $rules['use_parent_image'] = ['nullable', 'boolean'];
                 }
             }
 
@@ -95,7 +106,7 @@ class NewStockRequest extends FormRequest
                 $rules['location_id'] = ['required', Rule::exists(Location::class, 'id')];
                 $rules['price'] = ['nullable', 'numeric', 'min:0', 'max:999999999999.99'];
                 $rules['classification'] = ['required', Rule::in(['Aset', 'Inventaris'])];
-                $rules['photo'] = ['nullable', 'image', 'mimes:jpeg,jpg,png', 'max:1024'];
+                $rules['photo'] = ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:1024'];
 
                 if ($isComp) {
                     $rules['asset_specification'] = ['required', 'string', 'max:1000'];
@@ -107,6 +118,13 @@ class NewStockRequest extends FormRequest
                     $rules['plate_number'] = ['required', 'string', 'max:20'];
                 } else {
                     $rules['plate_number'] = ['nullable', 'string', 'max:20'];
+                }
+
+                $rules['is_bulk'] = ['nullable', 'boolean'];
+                if (!$isKend && $this->boolean('is_bulk')) {
+                    $rules['bulk_quantity'] = ['required', 'integer', 'min:1', 'max:999'];
+                } else {
+                    $rules['bulk_quantity'] = ['nullable', 'integer', 'min:1', 'max:999'];
                 }
             }
         }

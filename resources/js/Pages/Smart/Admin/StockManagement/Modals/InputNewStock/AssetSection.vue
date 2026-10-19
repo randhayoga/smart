@@ -36,7 +36,7 @@ const { t } = useI18n();
 
 const photoFileInputRef = ref<HTMLInputElement | null>(null);
 
-const onToggleInputAsset = (checked: boolean | 'indeterminate') => {
+const onToggleInputAsset = (checked: boolean | 'indeterminate' | null | undefined) => {
   props.form.input_asset = checked === true;
   if (!props.form.input_asset) {
     props.form.asset_specification = '';
@@ -48,6 +48,18 @@ const onToggleInputAsset = (checked: boolean | 'indeterminate') => {
     props.form.photo = null;
     props.form.photo_name = '';
     props.form.plate_number = '';
+    props.form.is_bulk = false;
+    props.form.bulk_quantity = '';
+  }
+};
+
+const onToggleIsBulk = (checked: boolean | 'indeterminate' | null | undefined) => {
+  props.form.is_bulk = checked === true;
+  if (!props.form.is_bulk) {
+    props.form.bulk_quantity = '';
+    if (props.errors.bulk_quantity) {
+      delete props.errors.bulk_quantity;
+    }
   }
 };
 
@@ -60,7 +72,7 @@ const handlePhotoFileUpload = (e: Event) => {
   const file = target.files?.[0];
   if (!file) return;
 
-  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
   if (!allowedTypes.includes(file.type)) {
     alert(t('inventory.invalidFileFormat'));
     target.value = '';
@@ -206,6 +218,33 @@ const getClassificationLabel = (cls: string) => {
             </FieldContent>
             <FieldError v-if="errors.location_id">{{ errors.location_id }}</FieldError>
           </Field>
+
+          <!-- Bulk Creation (Only when not vehicle category) -->
+          <Field v-if="!isKend" :data-invalid="!!errors.bulk_quantity || undefined">
+            <FieldContent>
+              <div class="flex items-center gap-2 w-full pt-2">
+                <Checkbox
+                  id="auto-create-checkbox"
+                  :model-value="form.is_bulk"
+                  @update:model-value="onToggleIsBulk"
+                />
+                <label for="auto-create-checkbox" class="cursor-pointer select-none text-sm font-medium text-foreground">
+                  {{ t('inventory.autoCreateLabelPrefix') }}
+                </label>
+                <input
+                  type="number"
+                  v-model="form.bulk_quantity"
+                  placeholder="..."
+                  min="1"
+                  :disabled="!form.is_bulk"
+                  class="w-16 px-2 py-1 text-sm border rounded-[10px] bg-background focus:outline-none focus:ring-2 transition-colors h-8 disabled:opacity-50 disabled:cursor-not-allowed mx-1"
+                  :class="[errors.bulk_quantity ? 'border-destructive' : 'border-input']"
+                />
+                <span class="text-sm font-medium text-foreground">{{ t('inventory.autoCreateLabelSuffix') }}</span>
+              </div>
+            </FieldContent>
+            <FieldError v-if="errors.bulk_quantity" class="pl-6">{{ errors.bulk_quantity }}</FieldError>
+          </Field>
         </div>
 
         <!-- Right Column -->
@@ -276,7 +315,7 @@ const getClassificationLabel = (cls: string) => {
                     ref="photoFileInputRef"
                     type="file"
                     class="hidden"
-                    accept=".jpg,.jpeg,.png"
+                    accept=".jpg,.jpeg,.png,.webp"
                     @change="handlePhotoFileUpload"
                   />
                   <Button

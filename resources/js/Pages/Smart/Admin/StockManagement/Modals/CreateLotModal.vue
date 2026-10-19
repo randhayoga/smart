@@ -78,10 +78,12 @@ const resetErrors = () => {
 };
 
 const projectOptions = computed(() => {
-  return (props.projects || []).map(p => ({
-    id: p.id,
-    name: `[${p.no_project}] ${p.project_name}`
-  }));
+  return (props.projects || [])
+    .filter(p => Boolean(p.no_project?.trim() && p.project_name?.trim()))
+    .map(p => ({
+      id: p.id,
+      name: `[${p.no_project}] ${p.project_name}`
+    }));
 });
 
 const filteredVendors = computed(() => {
@@ -137,7 +139,7 @@ const generateLotCode = () => {
 const handleFileUpload = (e: any) => {
   const file = e.target.files[0];
   if (!file) return;
-  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
   if (!allowedTypes.includes(file.type)) { alert(t('inventory.invalidFileFormat')); return; }
   if (file.size > 1024 * 1024) { alert(t('inventory.fileTooLarge1Mb')); return; }
   lotForm.image_url = file;
@@ -407,7 +409,7 @@ const handleSubmit = () => {
                         >
                           {{ lotForm.image_url_name || t('inventory.noPhotoSelected') }}
                         </div>
-                        <input type="file" id="create-lot-photo-upload" class="hidden" accept=".jpg,.jpeg,.png" @change="handleFileUpload" />
+                        <input type="file" id="create-lot-photo-upload" class="hidden" accept=".jpg,.jpeg,.png,.webp" @change="handleFileUpload" />
                         <Button type="button" @click="handleSamakanPhoto" variant="warning" size="lg" class="shrink-0">{{ t('inventory.sameAsParent') }}</Button>
                         <Button type="button" @click="triggerFileInput" size="lg" class="shrink-0">{{ t('inventory.chooseFile') }}</Button>
                         <Button

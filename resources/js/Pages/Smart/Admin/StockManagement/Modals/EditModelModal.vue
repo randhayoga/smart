@@ -148,7 +148,7 @@ const closeModal = () => {
 const handleFileUpload = (e: any) => {
   const file = e.target.files[0];
   if (!file) return;
-  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
   if (!allowedTypes.includes(file.type)) { alert(t('inventory.invalidFileFormat')); return; }
   if (file.size > 1024 * 1024) { alert(t('inventory.fileTooLarge1Mb')); return; }
   isImageDeleted.value = false;
@@ -394,7 +394,7 @@ const handleSubmit = () => {
                             type="file" 
                             id="edit-tipe-photo-upload" 
                             class="hidden" 
-                            accept=".jpg,.jpeg,.png"
+                            accept=".jpg,.jpeg,.png,.webp"
                             @change="handleFileUpload"
                           />
                           <Button 

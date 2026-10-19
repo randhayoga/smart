@@ -89,6 +89,7 @@ class RequestCartConfirmationController extends Controller
             ? TbProject::whereHas('assignProjects', function ($query) use ($userEmployeeId) {
                 $query->where('npk', $userEmployeeId);
             })
+                ->validForSelection()
                 ->orderBy('project_name')
                 ->get(['id_project', 'no_project', 'project_name'])
                 ->map(fn($p) => [

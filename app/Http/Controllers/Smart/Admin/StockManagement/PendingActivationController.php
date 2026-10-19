@@ -107,7 +107,7 @@ class PendingActivationController extends Controller
         $locations = Location::with('parent')->active()->orderBy('name')->get();
         $organizers = Organizer::orderBy('name')->get();
         $vendors = Vendor::orderBy('name')->get();
-        $projects = TbProject::orderBy('project_name')->get();
+        $projects = TbProject::validForSelection()->orderBy('project_name')->get();
 
         return Inertia::render('Smart/Admin/StockManagement/PendingActivationList', [
             'user' => $request->user(),

@@ -22,7 +22,7 @@ class MediaController extends Controller
         }
 
         // Security: Restrict media retrieval to authorized media directories
-        $allowedPrefixes = ['inventory/', 'memos/', 'lost_docs/', 'bod_boc_approvals/'];
+        $allowedPrefixes = ['inventory/', 'assets/', 'memos/', 'lost_docs/', 'bod_boc_approvals/'];
         $isAllowed = false;
         foreach ($allowedPrefixes as $prefix) {
             if (str_starts_with($path, $prefix)) {

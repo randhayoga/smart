@@ -130,11 +130,19 @@ class Model extends EloquentModel
     }
 
     /**
-     * Accessor to ensure number attribute is properly trimmed.
+     * Product image URL accessor resolving from consumable lots or serialized assets.
      */
-    public function getNumberAttribute(?string $value): ?string
+    public function getImageUrlAttribute(): ?string
     {
-        return $value !== null ? trim($value) : null;
+        if ($this->is_consumable) {
+            $lotWithImage = $this->lots->first(fn($lot) => !empty($lot->image_url));
+            if (!$lotWithImage && !$this->relationLoaded('lots')) {
+                $lotWithImage = $this->lots()->whereNotNull('image_url')->first();
+            }
+            return $lotWithImage?->image_url;
+        }
+
+        return null;
     }
 
     /**

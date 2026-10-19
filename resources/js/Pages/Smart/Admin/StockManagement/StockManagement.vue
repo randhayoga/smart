@@ -51,6 +51,7 @@ interface Props {
   barangs?:      any[];
   models?:       any[];
   organizers?:   SimpleItem[];
+  vendors?:      SimpleItem[];
   locations?:    any[];
   projects?:     any[];
   lots?:         any[];
@@ -65,6 +66,7 @@ const props = withDefaults(defineProps<Props>(), {
   barangs:       () => [],
   models:        () => [],
   organizers:    () => [],
+  vendors:       () => [],
   locations:     () => [],
   projects:      () => [],
   lots:          () => [],
@@ -509,12 +511,32 @@ const handleConfirmDelete = () => {
 // Flash Notifications
 const page = usePage();
 const flashSuccess = computed(() => (page.props as any).flash?.success);
+const flashNewStockCreated = computed(() => (page.props as any).flash?.new_stock_created);
 
 watch(flashSuccess, (newVal) => {
   if (newVal && (page.props as any).flash?.success) {
-    toast.success(newVal);
+    const newStock = flashNewStockCreated.value;
+    if (newStock && newStock.target_url) {
+      toast.success(
+        h('span', [
+          t('inventory.newStockSuccessPrefix'),
+          h('a', {
+            href: newStock.target_url,
+            class: 'underline font-semibold text-primary hover:text-primary/80 transition-colors cursor-pointer',
+            onClick: (e: MouseEvent) => {
+              e.preventDefault();
+              router.visit(newStock.target_url);
+            }
+          }, t('inventory.seeHere'))
+        ])
+      );
+    } else {
+      toast.success(newVal);
+    }
+
     if ((page.props as any).flash) {
       (page.props as any).flash.success = null;
+      (page.props as any).flash.new_stock_created = null;
     }
   }
 }, { immediate: true });
@@ -565,7 +587,7 @@ onUnmounted(() => {
     <Breadcrumb>
       <BreadcrumbList class="pb-3">
         <BreadcrumbItem>
-          <BreadcrumbLink href="/smart/inventory">{{ t('inventory.inventoryManagement') }}</BreadcrumbLink>
+          <BreadcrumbLink href="/smart/stock-management">{{ t('inventory.inventoryManagement') }}</BreadcrumbLink>
         </BreadcrumbItem>
       </BreadcrumbList>
     </Breadcrumb>
@@ -736,6 +758,7 @@ onUnmounted(() => {
       :models="props.models || props.barangs"
       :barangs="props.barangs || props.models"
       :organizers="props.organizers"
+      :vendors="props.vendors"
       :locations="props.locations"
       :projects="props.projects"
       :lots="props.lots"

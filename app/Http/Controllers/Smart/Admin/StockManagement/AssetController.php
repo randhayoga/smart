@@ -53,7 +53,7 @@ class AssetController extends Controller
             'comp_specification' => 'nullable|string|max:255',
             'specification' => 'nullable|string|max:255',
             'price' => 'nullable|numeric|min:0|max:999999999.99',
-            'image_url' => 'nullable|image|max:1024',
+            'image_url' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:1024',
             'use_lot_image' => 'nullable',
             'burden' => 'nullable|string|in:Corporate,Project',
             'project_id' => 'nullable',
@@ -79,9 +79,9 @@ class AssetController extends Controller
         $needApproval = in_array($proposedCondition, $arrNeedApproval);
 
         if ($needApproval) {
-            $rules['memo_file'] = 'required|file|mimes:pdf,jpeg,jpg,png|max:2048';
+            $rules['memo_file'] = 'required|file|mimes:pdf,jpeg,jpg,png,webp|max:2048';
             if ($proposedCondition === 'Hilang') {
-                $rules['lost_doc_file'] = 'required|file|mimes:pdf,jpeg,jpg,png|max:2048';
+                $rules['lost_doc_file'] = 'required|file|mimes:pdf,jpeg,jpg,png,webp|max:2048';
             }
         }
 
@@ -104,6 +104,8 @@ class AssetController extends Controller
         } else {
             $validated['status'] = 'Belum Diverifikasi';
         }
+
+        $imageUploadService = app(\App\Services\ImageUploadService::class);
  
         if ($request->boolean('use_lot_image')) {
             if ($lot->image_url && Storage::disk('local')->exists($lot->image_url)) {
@@ -112,7 +114,7 @@ class AssetController extends Controller
                 $validated['image_url'] = null;
             }
         } else if ($request->hasFile('image_url')) {
-            $imagePath = $request->file('image_url')->store('inventory', 'local');
+            $imagePath = $imageUploadService->storeAsWebp($request->file('image_url'), 'inventory');
             $validated['image_url'] = $imagePath;
         } else {
             $validated['image_url'] = null;
@@ -128,11 +130,11 @@ class AssetController extends Controller
         if ($needApproval) {
             $memoUrl = 'memos/placeholder.pdf';
             if ($request->hasFile('memo_file')) {
-                $memoUrl = $request->file('memo_file')->store('memos', 'local');
+                $memoUrl = $imageUploadService->storeImageOrFile($request->file('memo_file'), 'memos');
             }
             $lostDocUrl = null;
             if ($proposedCondition === 'Hilang' && $request->hasFile('lost_doc_file')) {
-                $lostDocUrl = $request->file('lost_doc_file')->store('lost_docs', 'local');
+                $lostDocUrl = $imageUploadService->storeImageOrFile($request->file('lost_doc_file'), 'lost_docs');
             }
             AssetStatusApproval::create([
                 'asset_id' => $asset->id,
@@ -168,15 +170,15 @@ class AssetController extends Controller
     {
         if ($asset->status === 'Pending:BoD/BoC' && $request->hasFile('bod_boc_approval_file')) {
             $request->validate([
-                'bod_boc_approval_file' => 'required|file|mimes:pdf,jpeg,jpg,png|max:2048',
+                'bod_boc_approval_file' => 'required|file|mimes:pdf,jpeg,jpg,png,webp|max:2048',
             ], [
                 'bod_boc_approval_file.required' => 'Formulir Approval BoD/BoC belum dipilih.',
-                'bod_boc_approval_file.mimes' => 'Format Formulir Approval BoD/BoC salah! Hanya diperbolehkan file .pdf, .jpg, .jpeg, atau .png.',
+                'bod_boc_approval_file.mimes' => 'Format Formulir Approval BoD/BoC salah! Hanya diperbolehkan file .pdf, .jpg, .jpeg, .png, atau .webp.',
                 'bod_boc_approval_file.max' => 'Gagal! Ukuran Formulir Approval BoD/BoC maksimal 2MB.',
             ]);
 
             DB::transaction(function () use ($asset, $request) {
-                $bodBocUrl = $request->file('bod_boc_approval_file')->store('bod_boc_approvals', 'local');
+                $bodBocUrl = app(\App\Services\ImageUploadService::class)->storeImageOrFile($request->file('bod_boc_approval_file'), 'bod_boc_approvals');
 
                 $approval = AssetStatusApproval::where('asset_id', $asset->id)
                     ->where('decision', 'pending')
@@ -236,7 +238,7 @@ class AssetController extends Controller
             'comp_specification' => 'nullable|string|max:255',
             'specification' => 'nullable|string|max:255',
             'price' => 'nullable|numeric|min:0|max:999999999.99',
-            'image_url' => 'nullable|image|mimes:jpeg,jpg,png|max:1024',
+            'image_url' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:1024',
             'delete_image' => 'nullable|boolean',
             'use_lot_image' => 'nullable',
             'burden' => 'nullable|string|in:Corporate,Project',
@@ -298,9 +300,9 @@ class AssetController extends Controller
                 ->where('decision', 'pending')
                 ->first();
             if (!$existing) {
-                $rules['memo_file'] = 'required|file|mimes:pdf,jpeg,jpg,png|max:2048';
+                $rules['memo_file'] = 'required|file|mimes:pdf,jpeg,jpg,png,webp|max:2048';
                 if ($proposedCondition === 'Hilang') {
-                    $rules['lost_doc_file'] = 'required|file|mimes:pdf,jpeg,jpg,png|max:2048';
+                    $rules['lost_doc_file'] = 'required|file|mimes:pdf,jpeg,jpg,png,webp|max:2048';
                 }
             }
         }
@@ -321,16 +323,16 @@ class AssetController extends Controller
             'price.numeric' => 'Harga Satuan harus berupa angka.',
             'price.min' => 'Harga Satuan minimal 0.',
             'price.max' => 'Harga Satuan terlalu besar.',
-            'image_url.image' => 'Format foto salah! Hanya diperbolehkan file .jpg, .jpeg, atau .png.',
-            'image_url.mimes' => 'Format foto salah! Hanya diperbolehkan file .jpg, .jpeg, atau .png.',
+            'image_url.image' => 'Format foto salah! Hanya diperbolehkan file .jpg, .jpeg, .png, atau .webp.',
+            'image_url.mimes' => 'Format foto salah! Hanya diperbolehkan file .jpg, .jpeg, .png, atau .webp.',
             'image_url.max' => 'Gagal! Ukuran foto maksimal 1MB.',
             'vehicle_registration.required' => 'TNKB (Nomor Polisi) belum diisi.',
             'vehicle_registration.max' => 'TNKB (Nomor Polisi) maksimal 15 karakter.',
             'memo_file.required' => 'Berita Acara / Memo belum dipilih.',
-            'memo_file.mimes' => 'Format Berita Acara / Memo salah! Hanya diperbolehkan file .pdf, .jpg, .jpeg, atau .png.',
+            'memo_file.mimes' => 'Format Berita Acara / Memo salah! Hanya diperbolehkan file .pdf, .jpg, .jpeg, .png, atau .webp.',
             'memo_file.max' => 'Gagal! Ukuran Berita Acara / Memo maksimal 2MB.',
             'lost_doc_file.required' => 'Surat Keterangan Kehilangan belum dipilih.',
-            'lost_doc_file.mimes' => 'Format Surat Keterangan Kehilangan salah! Hanya diperbolehkan file .pdf, .jpg, .jpeg, atau .png.',
+            'lost_doc_file.mimes' => 'Format Surat Keterangan Kehilangan salah! Hanya diperbolehkan file .pdf, .jpg, .jpeg, .png, atau .webp.',
             'lost_doc_file.max' => 'Gagal! Ukuran Surat Keterangan Kehilangan maksimal 2MB.',
         ];
 
@@ -366,7 +368,7 @@ class AssetController extends Controller
                     Storage::disk('local')->delete($asset->image_url);
                 }
             }
-            $imagePath = $request->file('image_url')->store('inventory', 'local');
+            $imagePath = app(\App\Services\ImageUploadService::class)->storeAsWebp($request->file('image_url'), 'inventory');
             $validated['image_url'] = $imagePath;
         } else {
             unset($validated['image_url']);
@@ -401,11 +403,11 @@ class AssetController extends Controller
             if (!$existing) {
                 $memoUrl = 'memos/placeholder.pdf';
                 if ($request->hasFile('memo_file')) {
-                    $memoUrl = $request->file('memo_file')->store('memos', 'local');
+                    $memoUrl = app(\App\Services\ImageUploadService::class)->storeImageOrFile($request->file('memo_file'), 'memos');
                 }
                 $lostDocUrl = null;
                 if ($proposedCondition === 'Hilang' && $request->hasFile('lost_doc_file')) {
-                    $lostDocUrl = $request->file('lost_doc_file')->store('lost_docs', 'local');
+                    $lostDocUrl = app(\App\Services\ImageUploadService::class)->storeImageOrFile($request->file('lost_doc_file'), 'lost_docs');
                 }
                 AssetStatusApproval::create([
                     'asset_id' => $asset->id,

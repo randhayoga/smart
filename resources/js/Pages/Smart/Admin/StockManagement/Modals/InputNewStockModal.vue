@@ -37,6 +37,7 @@ interface ModelItem {
   number?: string;
   code?: string;
   name: string;
+  specification?: string | null;
   brand_id: number;
   type_id?: number;
   subcategory_id?: number;
@@ -60,6 +61,7 @@ interface Props {
   models?: ModelItem[];
   barangs?: ModelItem[];
   organizers?: SimpleItem[];
+  vendors?: SimpleItem[];
   locations?: any[];
   projects?: ProjectItem[];
   lots?: any[];
@@ -73,6 +75,7 @@ const props = withDefaults(defineProps<Props>(), {
   models: () => [],
   barangs: () => [],
   organizers: () => [],
+  vendors: () => [],
   locations: () => [],
   projects: () => [],
   lots: () => [],
@@ -117,8 +120,14 @@ const form = useForm({
   memo_file: null as File | null,
   memo_file_name: '',
   organizer_id: null as number | null,
+  vendor_id: null as number | null,
   burden: 'Corporate' as 'Corporate' | 'Project',
   project_id: null as number | null,
+  initial_quantity: '' as number | string,
+  unit_price: '' as number | string,
+  lot_photo: null as File | null,
+  lot_photo_name: '',
+  use_parent_image: false,
 
   input_asset: false,
   asset_specification: '',
@@ -130,6 +139,8 @@ const form = useForm({
   photo: null as File | null,
   photo_name: '',
   plate_number: '',
+  is_bulk: false,
+  bulk_quantity: '' as string | number,
 });
 
 const errors = ref<Record<string, string>>({});
@@ -159,16 +170,35 @@ const isConsumable = computed(() => {
   return Boolean(selectedType.value?.is_consumable);
 });
 
+const selectedModel = computed(() => {
+  return effectiveModels.value.find(m => m.id === form.model_id);
+});
+
+const activeUomName = computed(() => {
+  if (form.create_new_type) {
+    return props.uoms.find(u => u.id === form.uom_id)?.name || '';
+  }
+  if (selectedModel.value) {
+    const m = selectedModel.value as any;
+    if (m.uom) return m.uom;
+    if (m.uom_name) return m.uom_name;
+    if (m.uom_id) return props.uoms.find(u => u.id === m.uom_id)?.name || '';
+  }
+  return '';
+});
+
+const parentImageUrl = computed(() => {
+  if (!form.create_new_type && selectedModel.value) {
+    return (selectedModel.value as any).image_url || null;
+  }
+  return null;
+});
+
 const lotReady = computed(() => {
   return form.input_lot && !isConsumable.value && (Boolean(form.lot_id) || form.create_new_lot);
 });
 
-const closeModal = () => {
-  emit('update:open', false);
-  resetErrors();
-};
-
-const openModal = () => {
+const resetFormState = () => {
   form.reset();
   form.clearErrors();
   resetErrors();
@@ -176,11 +206,69 @@ const openModal = () => {
   form.memo_file_name = '';
   form.photo = null;
   form.photo_name = '';
+  form.is_bulk = false;
+  form.bulk_quantity = '';
+  form.vendor_id = null;
+  form.initial_quantity = '';
+  form.unit_price = '';
+  form.lot_photo = null;
+  form.lot_photo_name = '';
+  form.use_parent_image = false;
+};
+
+const closeModal = () => {
+  emit('update:open', false);
+  resetFormState();
+};
+
+const openModal = () => {
+  resetFormState();
   emit('update:open', true);
 };
 
+watch(() => form.initial_quantity, (v) => {
+  if (v !== '' && errors.value.initial_quantity) {
+    delete errors.value.initial_quantity;
+  }
+});
+
+watch(() => form.bulk_quantity, (v) => {
+  if (v !== '' && errors.value.bulk_quantity) {
+    delete errors.value.bulk_quantity;
+  }
+});
+
+watch(isKend, (val) => {
+  if (val) {
+    form.is_bulk = false;
+    form.bulk_quantity = '';
+    if (errors.value.bulk_quantity) {
+      delete errors.value.bulk_quantity;
+    }
+  }
+});
+
+watch(() => form.entry_type, (type) => {
+  if (type === 'Hibah') {
+    form.vendor_id = null;
+    if (errors.value.vendor_id) {
+      delete errors.value.vendor_id;
+    }
+  }
+});
+
+watch(() => form.vendor_id, (val) => {
+  if (val && errors.value.vendor_id) {
+    delete errors.value.vendor_id;
+  }
+});
+
 watch(() => props.open, (val) => {
-  if (val) openModal();
+  if (val) {
+    openModal();
+  } else {
+    resetFormState();
+  }
 });
 
 const handleSubmit = () => {
@@ -218,6 +306,24 @@ const handleSubmit = () => {
     if (!form.create_new_lot) {
       if (!form.lot_id) { errors.value.lot_id = t('inventory.lotNumberRequired'); isValid = false; }
     } else {
+      if (isConsumable.value) {
+        const qtyVal = form.initial_quantity;
+        if (qtyVal === '' || qtyVal === null || qtyVal === undefined) {
+          errors.value.initial_quantity = t('inventory.stockQtyRequired');
+          isValid = false;
+        } else {
+          const qty = Number(qtyVal);
+          if (isNaN(qty) || !Number.isInteger(qty) || qty < 0) {
+            errors.value.initial_quantity = t('inventory.stockQtyRequired');
+            isValid = false;
+          }
+        }
+        if (!form.location_id) {
+          errors.value.location_id = t('inventory.locationRequired');
+          isValid = false;
+        }
+      }
+
       if (!form.organizer_id) { errors.value.organizer_id = t('inventory.organizerRequired'); isValid = false; }
       if (!form.burden) { errors.value.burden = t('inventory.burdenRequired'); isValid = false; }
       if (form.burden === 'Project' && !form.project_id) {
@@ -226,6 +332,7 @@ const handleSubmit = () => {
       }
 
       if (form.entry_type === 'Procurement') {
+        if (!form.vendor_id) { errors.value.vendor_id = t('inventory.vendorRequired'); isValid = false; }
         if (!form.po_number) { errors.value.po_number = t('inventory.poNumberRequired'); isValid = false; }
         if (!form.purchase_date) { errors.value.purchase_date = t('inventory.purchaseDateRequired'); isValid = false; }
       } else if (form.entry_type === 'Hibah') {
@@ -247,6 +354,19 @@ const handleSubmit = () => {
         errors.value.plate_number = t('inventory.plateNumberRequired');
         isValid = false;
       }
+      if (!isKend.value && form.is_bulk) {
+        const bulkQty = form.bulk_quantity;
+        if (bulkQty === '' || bulkQty === null || bulkQty === undefined) {
+          errors.value.bulk_quantity = t('inventory.assetCountRequired');
+          isValid = false;
+        } else {
+          const qty = Number(bulkQty);
+          if (isNaN(qty) || !Number.isInteger(qty) || qty < 1) {
+            errors.value.bulk_quantity = t('inventory.assetCountRequired');
+            isValid = false;
+          }
+        }
+      }
     }
   }
 
@@ -254,6 +374,7 @@ const handleSubmit = () => {
 
   form.post('/smart/inventory/new-stock', {
     onSuccess: () => {
+      resetFormState();
       closeModal();
       emit('success');
     },
@@ -319,8 +440,13 @@ const handleSubmit = () => {
                 :errors="errors"
                 :lots="lots"
                 :organizers="organizers"
+                :vendors="props.vendors"
+                :locations="locations"
                 :projects="projects"
                 :active-model-id="form.model_id"
+                :is-consumable="isConsumable"
+                :uom-name="activeUomName"
+                :parent-image-url="parentImageUrl"
               />
 
               <!-- Section 3: Asset Details -->

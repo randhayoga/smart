@@ -267,7 +267,7 @@ const handleMemoUpload = (e: any) => {
   if (isDocumentDisabled.value) return;
   const file = e.target.files[0];
   if (!file) return;
-  const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+  const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
   if (!allowedTypes.includes(file.type)) { toast.error(t('scanner.invalidDocFormat')); return; }
   if (file.size > 2 * 1024 * 1024) { toast.error(t('scanner.docMaxSize2MB')); return; }
   form.memo_file = file;
@@ -293,7 +293,7 @@ const handleLostDocUpload = (e: any) => {
   if (isDocumentDisabled.value) return;
   const file = e.target.files[0];
   if (!file) return;
-  const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+  const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
   if (!allowedTypes.includes(file.type)) { toast.error(t('scanner.invalidDocFormat')); return; }
   if (file.size > 2 * 1024 * 1024) { toast.error(t('scanner.docMaxSize2MB')); return; }
   form.lost_doc_file = file;
@@ -318,7 +318,7 @@ const viewLostDocInNewTab = () => {
 const handleBodBocDocUpload = (e: any) => {
   const file = e.target.files[0];
   if (!file) return;
-  const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+  const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
   if (!allowedTypes.includes(file.type)) { toast.error(t('scanner.invalidDocFormat')); return; }
   if (file.size > 2 * 1024 * 1024) { toast.error(t('scanner.docMaxSize2MB')); return; }
   form.bod_boc_approval_file = file;
@@ -719,7 +719,7 @@ const handleSubmit = () => {
                     </div>
                     <div class="flex gap-2 shrink-0">
                       <input ref="cameraInput" type="file" id="edit-asset-camera-upload" class="hidden" accept="image/*" capture="environment" @change="handleFileUpload" />
-                      <input ref="photoInput" type="file" id="edit-asset-photo-upload" class="hidden" accept=".jpg,.jpeg,.png" @change="handleFileUpload" />
+                      <input ref="photoInput" type="file" id="edit-asset-photo-upload" class="hidden" accept=".jpg,.jpeg,.png,.webp" @change="handleFileUpload" />
                       <Button type="button" @click="handleSamakanPhoto" variant="warning" size="lg" class="rounded-xl h-10 flex-1 xs:flex-none">{{ t('scanner.equalize') }}</Button>
                       <Button type="button" @click="triggerFileInput" size="lg" class="rounded-xl h-10 flex-1 xs:flex-none">{{ t('scanner.upload') }}</Button>
                       <Button type="button" @click="triggerCameraInput" variant="success" size="lg" class="rounded-xl h-10 px-3 bg-emerald-600 hover:bg-emerald-700 text-white shrink-0" :title="t('scanner.takePhoto')">
@@ -763,7 +763,7 @@ const handleSubmit = () => {
                       {{ form.memo_file_name || t('scanner.noFileSelected') }}
                     </div>
                     <div class="flex gap-2 shrink-0">
-                      <input ref="memoFileInput" type="file" id="edit-asset-memo-upload" class="hidden" accept=".pdf,.jpg,.jpeg,.png" @change="handleMemoUpload" :disabled="isDocumentDisabled" />
+                      <input ref="memoFileInput" type="file" id="edit-asset-memo-upload" class="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp" @change="handleMemoUpload" :disabled="isDocumentDisabled" />
                       <Button type="button" @click="triggerMemoFileInput" size="lg" class="rounded-xl h-10 w-full xs:w-auto" :disabled="isDocumentDisabled">{{ t('scanner.chooseDocument') }}</Button>
                     </div>
                   </div>
@@ -789,7 +789,7 @@ const handleSubmit = () => {
                       {{ form.lost_doc_file_name || t('scanner.noFileSelected') }}
                     </div>
                     <div class="flex gap-2 shrink-0">
-                      <input ref="lostDocFileInput" type="file" id="edit-asset-lost-doc-upload" class="hidden" accept=".pdf,.jpg,.jpeg,.png" @change="handleLostDocUpload" :disabled="isDocumentDisabled" />
+                      <input ref="lostDocFileInput" type="file" id="edit-asset-lost-doc-upload" class="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp" @change="handleLostDocUpload" :disabled="isDocumentDisabled" />
                       <Button type="button" @click="triggerLostDocFileInput" size="lg" class="rounded-xl h-10 w-full xs:w-auto" :disabled="isDocumentDisabled">{{ t('scanner.chooseDocument') }}</Button>
                     </div>
                   </div>
@@ -814,7 +814,7 @@ const handleSubmit = () => {
                       {{ form.bod_boc_approval_file_name || t('scanner.noFileSelected') }}
                     </div>
                     <div class="flex gap-2 shrink-0">
-                      <input ref="bodBocFileInput" type="file" id="edit-asset-bod-boc-doc-upload" class="hidden" accept=".pdf,.jpg,.jpeg,.png" @change="handleBodBocDocUpload" />
+                      <input ref="bodBocFileInput" type="file" id="edit-asset-bod-boc-doc-upload" class="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp" @change="handleBodBocDocUpload" />
                       <Button type="button" @click="triggerBodBocDocFileInput" size="lg" class="rounded-xl h-10 w-full xs:w-auto">{{ t('scanner.chooseDocument') }}</Button>
                     </div>
                   </div>

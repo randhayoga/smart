@@ -35,17 +35,22 @@ class Lot extends EloquentModel
         'current_quantity',
         'po_number',
         'purchase_grant_date',
+        'location_id',
+        'unit_price',
         'burden',
         'project_id',
         'entry_type',
         'memo_number',
         'memo_url',
+        'image_url',
     ];
 
     protected $casts = [
         'purchase_grant_date' => 'datetime',
         'initial_quantity' => 'integer',
         'current_quantity' => 'integer',
+        'location_id' => 'integer',
+        'unit_price' => 'decimal:2',
         'vendor_id' => 'integer',
         'legacy_vendor_id' => 'integer',
     ];

@@ -39,6 +39,7 @@ class ConsumableRequestOptionController extends Controller
                     $query->where('npk', $userEmployeeId)
                         ->where('DELETION', '0');
                 })
+                    ->validForSelection()
                     ->orderBy('project_name')
                     ->get(['id_project', 'no_project', 'project_name'])
                     ->map(fn($p) => [
@@ -83,7 +84,8 @@ class ConsumableRequestOptionController extends Controller
                 'name' => $d->org_code ? "{$d->org_code} - {$d->org_name}" : $d->org_name,
             ]);
 
-        $projects = TbProject::orderBy('project_name')
+        $projects = TbProject::validForSelection()
+            ->orderBy('project_name')
             ->get()
             ->map(fn($p) => [
                 'id' => (int) $p->id_project,

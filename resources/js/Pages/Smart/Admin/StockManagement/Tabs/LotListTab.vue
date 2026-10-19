@@ -84,6 +84,7 @@ interface Props {
   floors?: any[];
   rooms?: any[];
   projects: { id: number; no_project: string; project_name: string; client_id: string; }[];
+  initialLotId?: number | null;
 }
 
 const props = defineProps<Props>();
@@ -107,6 +108,13 @@ const selectedLotsForEdit = ref<any[]>([]);
 
 const isDetailConsumablesOpen = ref(false);
 const selectedLotForDetail = ref<number | null>(null);
+
+onMounted(() => {
+  if (props.initialLotId) {
+    selectedLotForDetail.value = Number(props.initialLotId);
+    isDetailConsumablesOpen.value = true;
+  }
+});
 
 const openDetailLOTConsumables = (lot: any) => {
   selectedLotForDetail.value = lot.id;

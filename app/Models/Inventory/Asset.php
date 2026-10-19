@@ -180,7 +180,6 @@ class Asset extends Model
         'legacy_burden',
         'legacy_project_id',
         'legacy_vendor_id',
-        'legacy_memo_number',
         'comp_specification',
     ];
 
