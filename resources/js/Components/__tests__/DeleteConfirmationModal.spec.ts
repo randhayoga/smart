@@ -47,6 +47,88 @@ describe('DeleteConfirmationModal.vue', () => {
     });
   });
 
+  describe('Model Deletion Mode', () => {
+    const sampleModel = {
+      id: 1,
+      code: 'MOD-001',
+      number: 'MOD-001',
+      category: 'Elektronik',
+      type: 'Laptop',
+      subcategory: 'Laptop',
+      brand: 'Lenovo',
+      name: 'ThinkPad T14',
+      specification: 'Core i7 / 16GB',
+      lastUpdate: '20-10-2026 14:00',
+      amount: 15,
+    };
+
+    it('renders single model rich details correctly in Indonesian', () => {
+      setI18nLanguage('id');
+      const wrapper = mountModal({
+        itemCount: 1,
+        itemName: 'Tipe Barang',
+        itemData: sampleModel,
+      });
+
+      expect(wrapper.text()).toContain('Konfirmasi Penghapusan');
+      expect(wrapper.text()).toContain('MOD-001');
+      expect(wrapper.text()).toContain('Elektronik');
+      expect(wrapper.text()).toContain('Laptop');
+      expect(wrapper.text()).toContain('Lenovo');
+      expect(wrapper.text()).toContain('ThinkPad T14');
+      expect(wrapper.text()).toContain('Core i7 / 16GB');
+      expect(wrapper.text()).toContain('20-10-2026 14:00');
+      expect(wrapper.text()).toContain('15');
+      // Ensure it does not mistakenly treat it as an asset/unit
+      expect(wrapper.text()).not.toContain('Nomor Aset');
+    });
+
+    it('renders single model rich details correctly in English', () => {
+      setI18nLanguage('en');
+      const wrapper = mountModal({
+        itemCount: 1,
+        itemName: 'Item Type',
+        itemData: sampleModel,
+      });
+
+      expect(wrapper.text()).toContain('Confirm Deletion');
+      expect(wrapper.text()).toContain('Model Number');
+      expect(wrapper.text()).toContain('MOD-001');
+      expect(wrapper.text()).toContain('Category');
+      expect(wrapper.text()).toContain('Type');
+      expect(wrapper.text()).toContain('Brand');
+      expect(wrapper.text()).toContain('Lenovo');
+      expect(wrapper.text()).toContain('Name');
+      expect(wrapper.text()).toContain('ThinkPad T14');
+      expect(wrapper.text()).toContain('Specification');
+      expect(wrapper.text()).toContain('Last Update');
+      expect(wrapper.text()).toContain('Total');
+      // Ensure it does not mistakenly treat it as an asset/unit
+      expect(wrapper.text()).not.toContain('Asset Number');
+    });
+
+    it('hides specification details and row when model category is COMP (Computer)', () => {
+      setI18nLanguage('en');
+      const compModel = {
+        ...sampleModel,
+        category: 'Computer',
+        category_code: 'COMP',
+      };
+      const wrapper = mountModal({
+        itemCount: 1,
+        itemName: 'Item Type',
+        itemData: compModel,
+      });
+
+      expect(wrapper.text()).toContain('Model Number');
+      expect(wrapper.text()).toContain('Computer');
+      expect(wrapper.text()).toContain('ThinkPad T14');
+      // Specification row & details should NOT be present
+      expect(wrapper.text()).not.toContain('Specification');
+      expect(wrapper.text()).not.toContain('Core i7 / 16GB');
+    });
+  });
+
   describe('Asset Status Change Approval Mode', () => {
     const statusApprovalItem = {
       id: 10,

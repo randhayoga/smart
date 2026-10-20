@@ -161,7 +161,7 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
         ->middleware(['permission:inventory.manage'])
         ->name('inventory');
 
-    Route::prefix('inventory')->name('inventory.')->group(function () {
+    Route::prefix('stock-management')->name('inventory.')->group(function () {
         // Read-only Inventory Views (Assets, Consumable Lots, Asset QR)
         Route::middleware(['permission:inventory.view'])->group(function () {
             Route::get('non-consumables', [NonConsumableController::class, 'index'])->name('non-consumables');
@@ -212,11 +212,11 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
             Route::get('pending-deactivation', [PendingDeactivationController::class, 'index'])->name('pending-deactivation');
             Route::get('pending-activation', [PendingActivationController::class, 'index'])->name('pending-activation');
         });
-    });
 
-    Route::get('/inventory/{model}', [StockManagementController::class, 'show'])
-        ->middleware(['permission:inventory.view'])
-        ->name('inventory.show');
+        Route::get('{model}', [StockManagementController::class, 'show'])
+            ->middleware(['permission:inventory.view'])
+            ->name('show');
+    });
 
     // Asset Status Decisions
     Route::middleware(['permission:inventory.status_approval.decide'])->group(function () {

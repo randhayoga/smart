@@ -272,7 +272,7 @@ const handleSubmit = () => {
         fd.delete_image = true;
       }
       return fd;
-    }).post(`/smart/inventory/lots/${form.ids[0]}`, {
+    }).post(`/smart/stock-management/lots/${form.ids[0]}`, {
       onSuccess: () => { closeModal(); emit('success'); },
       onError: (errs) => {
         Object.keys(errs).forEach((key) => {
@@ -319,7 +319,7 @@ const handleSubmit = () => {
         }
       }
       return fd;
-    }).post('/smart/inventory/lots/bulk', {
+    }).post('/smart/stock-management/lots/bulk', {
       onSuccess: () => { closeModal(); emit('success'); },
       onError: (errs) => {
         toast.error(t('inventory.bulkLotFailed'));

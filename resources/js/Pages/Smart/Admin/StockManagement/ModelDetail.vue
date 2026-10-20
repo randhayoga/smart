@@ -141,7 +141,7 @@ const handleConfirmDelete = () => {
   const ids = itemsToDelete.value.map(item => item.id);
   
   if (deleteMode.value === 'barang') {
-    router.delete(`/smart/inventory/models/${ids[0]}`, {
+    router.delete(`/smart/stock-management/models/${ids[0]}`, {
       onStart: () => { processing.value = true; },
       onFinish: () => { processing.value = false; },
       onSuccess: () => {

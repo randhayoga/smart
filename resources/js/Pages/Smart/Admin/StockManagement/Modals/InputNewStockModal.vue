@@ -372,7 +372,7 @@ const handleSubmit = () => {
 
   if (!isValid) return;
 
-  form.post('/smart/inventory/new-stock', {
+  form.post('/smart/stock-management/new-stock', {
     onSuccess: () => {
       resetFormState();
       closeModal();

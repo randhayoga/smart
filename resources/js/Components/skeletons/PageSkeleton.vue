@@ -36,8 +36,8 @@ const skeletonType = computed<SkeletonType>(() => {
   // 3. Detail Views (URLs with dynamic IDs or sub-detail paths)
   if (
     cleanPath.startsWith('/smart/scan/') ||
-    /\/smart\/inventory\/lots\/[^\/]+$/.test(cleanPath) ||
-    /\/smart\/inventory\/\d+$/.test(cleanPath) ||
+    /\/smart\/stock-management\/lots\/[^\/]+$/.test(cleanPath) ||
+    /\/smart\/stock-management\/\d+$/.test(cleanPath) ||
     /\/smart\/borrowed\/\d+$/.test(cleanPath) ||
     /\/smart\/archive\/\d+$/.test(cleanPath)
   ) {

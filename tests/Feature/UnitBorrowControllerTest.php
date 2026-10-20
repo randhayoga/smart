@@ -98,7 +98,7 @@ class UnitBorrowControllerTest extends TestCase
         $note = 'Keperluan dinas luar kota.';
 
         $response = $this->actingAs($admin)
-            ->from('/smart/inventory/non-consumables')
+            ->from('/smart/stock-management/non-consumables')
             ->post(route('smart.inventory.assets.borrow', $unit->id), [
                 'user_id' => $borrower->id,
                 'start_date' => $startDate,
@@ -107,7 +107,7 @@ class UnitBorrowControllerTest extends TestCase
                 'note' => $note,
             ]);
 
-        $response->assertRedirect('/smart/inventory/non-consumables');
+        $response->assertRedirect('/smart/stock-management/non-consumables');
         $response->assertSessionHas('success');
 
         // Unit status changed to Dipinjam
@@ -155,7 +155,7 @@ class UnitBorrowControllerTest extends TestCase
         $note = 'Keperluan proyek overhaul.';
 
         $response = $this->actingAs($admin)
-            ->from('/smart/inventory/non-consumables')
+            ->from('/smart/stock-management/non-consumables')
             ->post(route('smart.inventory.assets.borrow', $unit->id), [
                 'user_id' => $borrower->id,
                 'start_date' => $startDate,
@@ -164,7 +164,7 @@ class UnitBorrowControllerTest extends TestCase
                 'note' => $note,
             ]);
 
-        $response->assertRedirect('/smart/inventory/non-consumables');
+        $response->assertRedirect('/smart/stock-management/non-consumables');
         $response->assertSessionHas('success');
 
         $unit->refresh();
@@ -278,10 +278,10 @@ class UnitBorrowControllerTest extends TestCase
 
         // 2. Finish borrow
         $finishResponse = $this->actingAs($admin)
-            ->from('/smart/inventory/non-consumables')
+            ->from('/smart/stock-management/non-consumables')
             ->post(route('smart.inventory.assets.finish-borrow', $unit->id));
 
-        $finishResponse->assertRedirect('/smart/inventory/non-consumables');
+        $finishResponse->assertRedirect('/smart/stock-management/non-consumables');
         $finishResponse->assertSessionHas('success');
 
         // Unit status restored to Tersedia
@@ -320,7 +320,7 @@ class UnitBorrowControllerTest extends TestCase
         $unit->update(['status' => 'Tidak Aktif']);
 
         $response = $this->actingAs($admin)
-            ->from('/smart/inventory/non-consumables')
+            ->from('/smart/stock-management/non-consumables')
             ->post(route('smart.inventory.assets.borrow', $unit->id), [
                 'user_id' => $borrower->id,
                 'start_date' => Carbon::now()->format('Y-m-d'),
@@ -328,7 +328,7 @@ class UnitBorrowControllerTest extends TestCase
                 'org_id' => $borrower->hrdEmployee->orgchart_id,
             ]);
 
-        $response->assertRedirect('/smart/inventory/non-consumables');
+        $response->assertRedirect('/smart/stock-management/non-consumables');
         $response->assertSessionHasErrors('borrow');
 
         $unit->refresh();
@@ -343,10 +343,10 @@ class UnitBorrowControllerTest extends TestCase
         $unit->update(['status' => 'Tersedia']);
 
         $response = $this->actingAs($admin)
-            ->from('/smart/inventory/non-consumables')
+            ->from('/smart/stock-management/non-consumables')
             ->post(route('smart.inventory.assets.finish-borrow', $unit->id));
 
-        $response->assertRedirect('/smart/inventory/non-consumables');
+        $response->assertRedirect('/smart/stock-management/non-consumables');
         $response->assertSessionHasErrors('borrow');
 
         $unit->refresh();

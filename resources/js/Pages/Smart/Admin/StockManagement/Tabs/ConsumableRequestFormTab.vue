@@ -65,7 +65,7 @@ const isRequesterSelected = computed(() => !!userId.value);
 const fetchUserOptions = async (targetUserId: number | string) => {
   isLoadingUserOptions.value = true;
   try {
-    const res = await fetch(`/smart/inventory/consumables/request-options?user_id=${targetUserId}`);
+    const res = await fetch(`/smart/stock-management/consumables/request-options?user_id=${targetUserId}`);
     if (res.ok) {
       const data = await res.json();
       userDepartments.value = data.departments || [];
@@ -148,7 +148,7 @@ const usersOptions = computed(() => {
 const fetchOptions = async () => {
   isLoadingOptions.value = true;
   try {
-    const res = await fetch('/smart/inventory/consumables/request-options');
+    const res = await fetch('/smart/stock-management/consumables/request-options');
     if (res.ok) {
       const data = await res.json();
       rawUsersList.value = data.users || [];
@@ -236,8 +236,8 @@ const handleSubmit = () => {
   }
 
   const submitUrl = props.mode === 'lot' && props.lot?.id
-    ? `/smart/inventory/lots/${props.lot.id}/manual-request`
-    : `/smart/inventory/models/${props.barang?.id}/manual-request`;
+    ? `/smart/stock-management/lots/${props.lot.id}/manual-request`
+    : `/smart/stock-management/models/${props.barang?.id}/manual-request`;
 
   isSubmitting.value = true;
 

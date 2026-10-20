@@ -404,7 +404,7 @@ const handleSubmit = () => {
     return fd;
   });
 
-  const url = form.is_bulk ? '/smart/inventory/assets/bulk' : '/smart/inventory/assets';
+  const url = form.is_bulk ? '/smart/stock-management/assets/bulk' : '/smart/stock-management/assets';
   form.post(url, {
     forceFormData: true,
     preserveScroll: true,

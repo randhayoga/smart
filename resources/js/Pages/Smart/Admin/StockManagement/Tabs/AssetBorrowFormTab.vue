@@ -85,7 +85,7 @@ const fetchUsers = async () => {
     return;
   }
   try {
-    const res = await fetch('/smart/inventory/request-options');
+    const res = await fetch('/smart/stock-management/request-options');
     if (res.ok) {
       const data = await res.json();
       rawUsersList.value = data.users || [];
@@ -102,7 +102,7 @@ const fetchUserOptions = async (
 ) => {
   isLoadingUserOptions.value = true;
   try {
-    const res = await fetch(`/smart/inventory/request-options?user_id=${targetUserId}`);
+    const res = await fetch(`/smart/stock-management/request-options?user_id=${targetUserId}`);
     if (res.ok) {
       const data = await res.json();
       userDepartments.value = data.departments || [];
@@ -231,7 +231,7 @@ const handleSaveBorrow = () => {
 
   isBorrowSubmitting.value = true;
   router.post(
-    `/smart/inventory/assets/${props.asset.id}/borrow`,
+    `/smart/stock-management/assets/${props.asset.id}/borrow`,
     {
       user_id: borrowUserId.value,
       start_date: borrowStartDate.value,
@@ -269,7 +269,7 @@ const handleFinishBorrow = () => {
   if (!props.asset) return;
   isFinishSubmitting.value = true;
   router.post(
-    `/smart/inventory/assets/${props.asset.id}/finish-borrow`,
+    `/smart/stock-management/assets/${props.asset.id}/finish-borrow`,
     {},
     {
       preserveScroll: true,

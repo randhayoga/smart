@@ -265,7 +265,8 @@ class LotController extends Controller
         $previous = url()->previous();
         $lotKeys = array_filter([$lot->id, $lot->number, $lot->getRouteKey()]);
         $isFromLotDetail = $previous && (
-            collect($lotKeys)->some(fn($k) => str_contains($previous, '/inventory/lots/' . $k))
+            collect($lotKeys)->some(fn($k) => str_contains($previous, '/stock-management/lots/' . $k) || str_contains($previous, '/inventory/lots/' . $k))
+            || str_contains($previous, '/stock-management/lots/')
             || str_contains($previous, '/inventory/lots/')
         );
 

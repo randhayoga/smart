@@ -197,7 +197,7 @@ class LotControllerTest extends TestCase
     {
         $user = User::factory()->create();
         $lot = Lot::factory()->create();
-        $targetUrl = '/smart/inventory/custom-target';
+        $targetUrl = '/smart/stock-management/custom-target';
 
         $response = $this->actingAs($user)
             ->delete(route('smart.inventory.lots.destroy', ['lot' => $lot, 'redirect_to' => $targetUrl]));

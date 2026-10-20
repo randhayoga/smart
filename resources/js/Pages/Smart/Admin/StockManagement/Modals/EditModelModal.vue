@@ -223,7 +223,7 @@ const handleSubmit = () => {
       if (data.photo) formData.image_url = data.photo;
     }
     return formData;
-  }).post(isSingle.value && selectedItem.value ? `/smart/inventory/models/${selectedItem.value.id}` : '/smart/inventory/models/bulk', {
+  }).post(isSingle.value && selectedItem.value ? `/smart/stock-management/models/${selectedItem.value.id}` : '/smart/stock-management/models/bulk', {
     onSuccess: () => {
       closeModal();
       emit('success');
@@ -422,8 +422,8 @@ const handleSubmit = () => {
                     </FieldContent>
                   </Field>
 
-                  <!-- Stock input (Disabled in Edit) -->
-                  <Field data-disabled>
+                  <!-- Stock input (Disabled in Edit, only for consumables) -->
+                  <Field v-if="isConsumable" data-disabled>
                     <FieldLabel><span>{{ t('inventory.stockCount') }}</span></FieldLabel>
                     <FieldContent>
                       <input 

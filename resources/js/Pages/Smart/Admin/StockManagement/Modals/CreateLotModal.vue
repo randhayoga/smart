@@ -263,7 +263,7 @@ const handleSubmit = () => {
     return formData;
   });
 
-  lotForm.post('/smart/inventory/lots', {
+  lotForm.post('/smart/stock-management/lots', {
     onSuccess: () => {
       closeModal();
       emit('success');

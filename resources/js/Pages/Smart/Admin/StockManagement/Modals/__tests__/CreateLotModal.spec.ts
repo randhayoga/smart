@@ -95,7 +95,7 @@ describe('CreateLotModal.vue', () => {
 
     vm.handleSubmit();
 
-    expect(vm.lotForm.post).toHaveBeenCalledWith('/smart/inventory/lots', expect.any(Object));
+    expect(vm.lotForm.post).toHaveBeenCalledWith('/smart/stock-management/lots', expect.any(Object));
     expect(wrapper.emitted('update:open')?.[0]).toEqual([false]);
     expect(wrapper.emitted('success')).toHaveLength(1);
   });
@@ -218,6 +218,6 @@ describe('CreateLotModal.vue', () => {
     vm.handleSubmit();
 
     expect(vm.errors.location_id).toBeFalsy();
-    expect(vm.lotForm.post).toHaveBeenCalledWith('/smart/inventory/lots', expect.any(Object));
+    expect(vm.lotForm.post).toHaveBeenCalledWith('/smart/stock-management/lots', expect.any(Object));
   });
 });

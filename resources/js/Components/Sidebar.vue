@@ -151,10 +151,10 @@ const isActive = (href: string): boolean => {
 
   // Prevent parent /smart/stock-management from activating on separate sub-pages
   if (target.pathname === '/smart/stock-management' && (
-    current.pathname.startsWith('/smart/inventory/non-consumables') ||
-    current.pathname.startsWith('/smart/inventory/consumables') ||
-    current.pathname.startsWith('/smart/inventory/pending-activation') ||
-    current.pathname.startsWith('/smart/inventory/pending-deactivation')
+    current.pathname.startsWith('/smart/stock-management/non-consumables') ||
+    current.pathname.startsWith('/smart/stock-management/consumables') ||
+    current.pathname.startsWith('/smart/stock-management/pending-activation') ||
+    current.pathname.startsWith('/smart/stock-management/pending-deactivation')
   )) {
     return false;
   }

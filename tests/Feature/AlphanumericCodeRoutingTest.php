@@ -38,7 +38,7 @@ class AlphanumericCodeRoutingTest extends TestCase
         ]);
 
         $this->assertEquals('ATKHVS40001', $barang->getRouteKey());
-        $this->assertStringEndsWith('/smart/inventory/ATKHVS40001', route('smart.inventory.show', $barang));
+        $this->assertStringEndsWith('/smart/stock-management/ATKHVS40001', route('smart.inventory.show', $barang));
     }
 
     public function test_unit_get_route_key_is_alphanumeric_only(): void
@@ -69,7 +69,7 @@ class AlphanumericCodeRoutingTest extends TestCase
         ]);
 
         // 1. Using alphanumeric code
-        $response = $this->actingAs($user)->get('/smart/inventory/ATKHVS40001');
+        $response = $this->actingAs($user)->get('/smart/stock-management/ATKHVS40001');
         $response->assertStatus(200);
         $response->assertInertia(fn (Assert $page) => $page
             ->component('Smart/Admin/StockManagement/ModelDetail')
@@ -78,11 +78,11 @@ class AlphanumericCodeRoutingTest extends TestCase
         );
 
         // 2. Using original code with dashes
-        $responseDash = $this->actingAs($user)->get('/smart/inventory/ATK-HVS4-0001');
+        $responseDash = $this->actingAs($user)->get('/smart/stock-management/ATK-HVS4-0001');
         $responseDash->assertStatus(200);
 
         // 3. Using lowercase alphanumeric code
-        $responseLower = $this->actingAs($user)->get('/smart/inventory/atkhvs40001');
+        $responseLower = $this->actingAs($user)->get('/smart/stock-management/atkhvs40001');
         $responseLower->assertStatus(200);
     }
 
@@ -101,7 +101,7 @@ class AlphanumericCodeRoutingTest extends TestCase
         ]);
 
         // Access via alphanumeric code
-        $response = $this->actingAs($user)->get('/smart/inventory/consumables/BRGHP001');
+        $response = $this->actingAs($user)->get('/smart/stock-management/consumables/BRGHP001');
         $response->assertStatus(200);
         $response->assertInertia(fn (Assert $page) => $page
             ->component('Smart/Admin/StockManagement/ConsumableList')
@@ -190,7 +190,7 @@ class AlphanumericCodeRoutingTest extends TestCase
         ]);
 
         $this->assertEquals('LOT2026ATKKER0001', $lot->getRouteKey());
-        $this->assertStringEndsWith('/smart/inventory/lots/LOT2026ATKKER0001', route('smart.inventory.lots.show', $lot));
+        $this->assertStringEndsWith('/smart/stock-management/lots/LOT2026ATKKER0001', route('smart.inventory.lots.show', $lot));
     }
 
     public function test_can_access_lot_detail_using_alphanumeric_code(): void
@@ -201,7 +201,7 @@ class AlphanumericCodeRoutingTest extends TestCase
         ]);
 
         // 1. Using alphanumeric code
-        $response = $this->actingAs($user)->get('/smart/inventory/lots/LOT2026ATKKER0001');
+        $response = $this->actingAs($user)->get('/smart/stock-management/lots/LOT2026ATKKER0001');
         $response->assertStatus(200);
         $response->assertInertia(fn (Assert $page) => $page
             ->component('Smart/Admin/StockManagement/NonConsumableLotDetail')
@@ -210,11 +210,11 @@ class AlphanumericCodeRoutingTest extends TestCase
         );
 
         // 2. Using original code with dashes
-        $responseDash = $this->actingAs($user)->get('/smart/inventory/lots/LOT-2026-ATK-KER-0001');
+        $responseDash = $this->actingAs($user)->get('/smart/stock-management/lots/LOT-2026-ATK-KER-0001');
         $responseDash->assertStatus(200);
 
         // 3. Using lowercase alphanumeric code
-        $responseLower = $this->actingAs($user)->get('/smart/inventory/lots/lot2026atkker0001');
+        $responseLower = $this->actingAs($user)->get('/smart/stock-management/lots/lot2026atkker0001');
         $responseLower->assertStatus(200);
     }
 }

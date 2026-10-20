@@ -128,8 +128,8 @@ const syncFromPropsOrUrl = () => {
     }
   }
 
-  // 2. Check path segment from page.url (e.g. /smart/inventory/consumables/BRGHP001)
-  const pathMatch = url.pathname.match(/\/smart\/inventory\/consumables\/([^/?#]+)/);
+  // 2. Check path segment from page.url (e.g. /smart/stock-management/consumables/BRGHP001)
+  const pathMatch = url.pathname.match(/\/smart\/stock-management\/consumables\/([^/?#]+)/);
   if (pathMatch && pathMatch[1]) {
     const codeParam = decodeURIComponent(pathMatch[1]);
     const targetNorm = normalizeCode(codeParam);
@@ -442,7 +442,7 @@ const columns = computed<ColumnDef<any>[]>(() => [
             const rawCode = row.original.code || row.original.number || '';
             const cleanCode = String(rawCode).replace(/[^a-zA-Z0-9]/g, '');
             const identifier = cleanCode || row.original.id;
-            router.get(`/smart/inventory/consumables/${identifier}`);
+            router.get(`/smart/stock-management/consumables/${identifier}`);
           },
         }, () => [
           h(Eye),
@@ -541,7 +541,7 @@ const handleConfirmDelete = () => {
   const isSelectedDeleted = selectedBarang.value && ids.includes(selectedBarang.value.id);
   
   if (ids.length === 1) {
-    router.delete(`/smart/inventory/models/${ids[0]}`, {
+    router.delete(`/smart/stock-management/models/${ids[0]}`, {
       onStart: () => { processing.value = true; },
       onFinish: () => { processing.value = false; },
       onSuccess: () => {
@@ -550,12 +550,12 @@ const handleConfirmDelete = () => {
         }
         closeDeleteModal();
         if (isSelectedDeleted) {
-          router.get('/smart/inventory/consumables');
+          router.get('/smart/stock-management/consumables');
         }
       }
     });
   } else {
-    router.delete('/smart/inventory/models/bulk', {
+    router.delete('/smart/stock-management/models/bulk', {
       data: { ids },
       onStart: () => { processing.value = true; },
       onFinish: () => { processing.value = false; },
@@ -565,7 +565,7 @@ const handleConfirmDelete = () => {
         }
         closeDeleteModal();
         if (isSelectedDeleted) {
-          router.get('/smart/inventory/consumables');
+          router.get('/smart/stock-management/consumables');
         }
       }
     });
@@ -647,7 +647,7 @@ const closeOnEscape = (e: KeyboardEvent) => {
       <BreadcrumbList>
         <BreadcrumbItem>
           <BreadcrumbLink 
-            :href="selectedBarang ? '/smart/inventory/consumables' : undefined"
+            :href="selectedBarang ? '/smart/stock-management/consumables' : undefined"
             :class="selectedBarang ? 'cursor-pointer hover:text-foreground' : ''"
           >
             {{ t('inventory.consumableList') }}
@@ -900,6 +900,7 @@ const closeOnEscape = (e: KeyboardEvent) => {
       :item-count="itemsToDelete.length"
       :item-name="t('inventory.itemType')"
       :item-data="itemsToDelete.length === 1 ? itemsToDelete[0] : itemsToDelete"
+      :max-width-class="itemsToDelete.length === 1 ? 'max-w-2xl' : undefined"
       :processing="processing"
       @close="closeDeleteModal"
       @confirm="handleConfirmDelete"

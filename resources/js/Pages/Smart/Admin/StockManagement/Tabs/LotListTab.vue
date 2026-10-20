@@ -303,7 +303,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
                 const lotParam = row.original.number 
                   ? String(row.original.number).replace(/[^a-zA-Z0-9]/g, '') 
                   : row.original.id;
-                router.get(`/smart/inventory/lots/${lotParam}`);
+                router.get(`/smart/stock-management/lots/${lotParam}`);
               }
             }, () => [
               h(Eye),
@@ -515,7 +515,7 @@ const handleConfirmDelete = () => {
   const ids = itemsToDelete.value.map(item => item.id);
   
   if (ids.length === 1) {
-    router.delete(`/smart/inventory/lots/${ids[0]}`, {
+    router.delete(`/smart/stock-management/lots/${ids[0]}`, {
       onStart: () => { processing.value = true; },
       onFinish: () => { processing.value = false; },
       onSuccess: () => {
@@ -526,7 +526,7 @@ const handleConfirmDelete = () => {
       }
     });
   } else {
-    router.delete('/smart/inventory/lots/bulk', {
+    router.delete('/smart/stock-management/lots/bulk', {
       data: { ids },
       onStart: () => { processing.value = true; },
       onFinish: () => { processing.value = false; },

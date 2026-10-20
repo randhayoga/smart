@@ -2,8 +2,8 @@
 /**
  * Detail Page Skeleton Component
  * Mimics the silhouette of Phase 1 detail and inspect views:
- * - Detail Model (/smart/inventory/{model})
- * - Detail LOT Consumables & Non-Consumables (/smart/inventory/lots/{lot})
+ * - Detail Model (/smart/stock-management/{model})
+ * - Detail LOT Consumables & Non-Consumables (/smart/stock-management/lots/{lot})
  * - Detail Lacak Peminjaman (/smart/borrowed/{id})
  * - Detail Arsip (/smart/archive/{id})
  * - Hasil Pindai Barcode (/smart/scan/{asset})

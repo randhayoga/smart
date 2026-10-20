@@ -283,9 +283,38 @@ const displayFields = computed(() => {
     return fields;
   }
 
+  // Determine fields for Model / Item Type (e.g. for StockManagement / ModelDetail / ConsumableList)
+  const isModel = props.itemName === t('inventory.itemType') ||
+    props.itemName === 'Tipe Barang' ||
+    props.itemName === 'Item Type' ||
+    props.itemName === 'Tipe' ||
+    props.itemName === 'Model' ||
+    props.itemName === 'Barang' ||
+    (!('lot_id' in data || 'condition' in data || 'classification' in data || 'asset_code' in data || 'po_number' in data) &&
+     ('specification' in data || 'lastUpdate' in data || 'amount' in data || 'subcategory' in data));
+
+  if (isModel) {
+    const isCompCategory = data.category_code?.toUpperCase() === 'COMP' ||
+      data.barang_category_code?.toUpperCase() === 'COMP' ||
+      data.category?.toLowerCase() === 'computer' ||
+      data.category?.toUpperCase() === 'COMP' ||
+      data.barang_category?.toLowerCase() === 'computer' ||
+      data.barang_category?.toUpperCase() === 'COMP';
+
+    if (data.code || data.number) fields.push({ label: t('inventory.typeCode'), value: data.code || data.number });
+    if (data.category) fields.push({ label: t('inventory.category'), value: data.category });
+    if (data.subcategory || data.type) fields.push({ label: t('inventory.subcategory'), value: data.subcategory || data.type });
+    if (data.brand) fields.push({ label: t('inventory.brand'), value: data.brand });
+    if (data.name || data.nama) fields.push({ label: t('inventory.name'), value: data.name || data.nama });
+    if (!isCompCategory && data.specification !== undefined) fields.push({ label: t('inventory.specification'), value: data.specification || '-' });
+    if (data.lastUpdate) fields.push({ label: t('inventory.lastUpdate'), value: data.lastUpdate });
+    if (data.amount !== undefined) fields.push({ label: t('inventory.total'), value: data.amount });
+    return fields;
+  }
+
   // Determine fields for Unit / Aset
-  const isUnit = props.itemName === 'Aset' || props.itemName === 'Asset' || props.itemName === 'Unit' ||
-    ('number' in data && ('lot_id' in data || 'condition' in data || 'type' in data || 'classification' in data) && !('po_number' in data));
+  const isUnit = props.itemName === 'Aset' || props.itemName === 'Asset' || props.itemName === 'Unit' || props.itemName === t('inventory.asset') ||
+    ('number' in data && ('lot_id' in data || 'condition' in data || 'classification' in data) && !('po_number' in data));
 
   if (isUnit) {
     if (data.number || data.asset_code) fields.push({ label: t('inventory.assetCode'), value: data.number || data.asset_code });
@@ -302,19 +331,6 @@ const displayFields = computed(() => {
     }
     if (data.vehicle_registration) fields.push({ label: t('inventory.tnkb'), value: data.vehicle_registration });
     if (data.updated_at) fields.push({ label: t('inventory.lastUpdate'), value: data.updated_at });
-    return fields;
-  }
-
-  // Determine fields based on keys present in the item data (e.g. for ManajemenStok)
-  if ('specification' in data || 'lastUpdate' in data || 'amount' in data) {
-    if (data.code) fields.push({ label: 'Kode', value: data.code });
-    if (data.category) fields.push({ label: 'Kategori', value: data.category });
-    if (data.subcategory) fields.push({ label: 'Subkategori', value: data.subcategory });
-    if (data.brand) fields.push({ label: 'Merek', value: data.brand });
-    if (data.name || data.nama) fields.push({ label: 'Nama', value: data.name || data.nama });
-    if (data.specification) fields.push({ label: 'Spesifikasi', value: data.specification });
-    if (data.lastUpdate) fields.push({ label: 'Pembaruan Terakhir', value: data.lastUpdate });
-    if (data.amount !== undefined) fields.push({ label: 'Jumlah', value: data.amount });
     return fields;
   }
 

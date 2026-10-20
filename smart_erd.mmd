@@ -39,16 +39,18 @@ erDiagram
         int id PK ""  
         char_7 code UK ""  
         varchar name  ""  
-        varchar address  ""  
-        varchar phone_number  ""  
+        varchar address  "nullable"  
+        varchar phone_number  "nullable"  
         varchar email  "nullable"  
         varchar description  "nullable"  
-        varchar contact_person_1  "nullable"  
-        varchar cp_email_1  "nullable"  
-        varchar cp_phone_1  "nullable"  
-        varchar contact_person_2  "nullable"  
-        varchar cp_email_2  "nullable"  
-        varchar cp_phone_2  "nullable"  
+    }
+
+    VENDORS_CP {
+        int id PK ""  
+        int vendor_id FK ""  
+        varchar contact_person  "nullable"  
+        varchar cp_email  "nullable"  
+        varchar cp_phone  "nullable"  
     }
 
     ORGANIZER {
@@ -60,6 +62,7 @@ erDiagram
         int id PK ""  
         varchar name  ""  
         int parent_id FK "nullable | self-referential indirection"  
+        int related_departement FK "nullable | USER_HRIS_HRD_ORGCHART's id"  
         boolean is_active  "default to true"  
     }
 
@@ -110,52 +113,83 @@ erDiagram
         varchar showing_name  ""  
     }
 
+    ROLE {
+        int id PK ""  
+        varchar_50 name UK ""  
+        varchar_100 label  ""  
+        text description  "nullable"  
+    }
+
+    PERMISSION {
+        int id PK ""  
+        varchar_100 name UK ""  
+        varchar_150 label  ""  
+        varchar_50 group  "index"  
+        text description  "nullable"  
+    }
+
+    ROLE_PERMISSION {
+        int id PK ""  
+        int role_id FK ""  
+        int permission_id FK ""  
+    }
+
+    USER_ROLE {
+        int id PK ""  
+        int user_id FK "USER_HRIS_HRD_EMPLOYEE's id"  
+        int role_id FK ""  
+    }
+
     MODEL {
         int id PK ""  
-        char_14 number UK ""  
+        varchar_50 number UK ""  
         int type_id FK ""  
         int brand_id FK ""  
         int uom_id FK ""  
         varchar name  ""  
         varchar specification  "nullable"  
         int min_stock_threshold  "nullable | default to 0"  
-        varchar image_url  "nullable | default image"  
         datetime last_restock_at  "nullable"  
     }
 
     LOT {
         int id PK ""  
-        char_26 number UK ""  
+        varchar_50 number UK ""  
         int model_id FK ""  
         int organizer_id FK ""  
         int vendor_id FK "nullable | Refers to eproc:vendors.id"  
         int legacy_vendor_id FK "nullable | Refers to vendors.id"  
-        int location_id FK "nullable in db for data migration | in-app mandatory for consumables, optional for non-consumables"  
-        int initial_quantity  "nullable in db | for consumables only"  
+        int initial_quantity  "nullable in db | for consumables"  
         int current_quantity  "nullable | for consumables"  
+        varchar_50 entry_type  "default to Procurement"  
         varchar po_number  "nullable"  
-        datetime date_of_receipt  ""  
-        numeric unit_price  "nullable | default unit price"  
-        varchar image_url  "nullable | default image"  
-        varchar burden  "nullable | for consumables, default to Corporate"  
+        datetime purchase_grant_date  ""  
+        varchar memo_number  "nullable"  
+        varchar memo_url  "nullable"  
+        int location_id FK "nullable | for consumables"  
+        numeric unit_price  "nullable | for consumables"  
+        varchar image_url  "nullable | for consumables"  
+        varchar burden  "nullable | for consumables"  
         int project_id FK "nullable | for consumables, RE_PORTALDB_TB_PROJECT's id"  
     }
 
     ASSET {
         int id PK ""  
-        char_25 number UK ""  
-        varchar legacy_number  "nullable"  
+        varchar_50 number UK ""  
+        varchar_50 legacy_number  "nullable | legacy asset code/number"  
         int lot_id FK ""  
-        int location_id FK "current location"  
-        varchar status  ""  
+        int legacy_vendor_id FK "nullable | Refers to vendors.id (legacy migration only)"  
+        int location_id FK "nullable | current location"  
+        varchar status  "default to Belum Diverifikasi"  
         varchar condition  ""  
+        varchar comp_specification  "nullable | specification for computer category"  
         varchar_2 borrowing_type  "LT | ST"  
         varchar_255 classification  "Aset | Inventaris"  
         numeric price  "nullable"  
         varchar image_url  "nullable"  
         varchar vehicle_registration  "nullable"  
-        varchar burden  "default to Corporate"  
-        int project_id FK "nullable | RE_PORTALDB_TB_PROJECT's id"  
+        varchar legacy_burden  "nullable | legacy migration only"  
+        int legacy_project_id FK "nullable | RE_PORTALDB_TB_PROJECT's id (legacy migration only)"  
     }
 
     ASSET_STATUS_APPROVAL {
@@ -170,7 +204,18 @@ erDiagram
         varchar lost_doc_url  "nullable"  
         varchar bod_boc_approval_url  "nullable"  
         varchar decision  "default to pending | pending, approved, rejected"  
-        text note  "nullable"  
+        text note  "nullable | required if rejected"  
+        datetime requested_at  ""  
+        datetime decided_at  "nullable"  
+    }
+
+    ASSET_ACTIVATION_APPROVAL {
+        int id PK ""  
+        int asset_id FK ""  
+        int requester_id FK "ADM_USER_NEW_PORTAL_USERS's id"  
+        int approver_id FK "nullable | ADM_USER_NEW_PORTAL_USERS's id"  
+        varchar decision  "default to pending | pending, approved, rejected"  
+        text note  "nullable | decision explanation note"  
         datetime requested_at  ""  
         datetime decided_at  "nullable"  
     }
@@ -196,7 +241,7 @@ erDiagram
         varchar action_type  "registrasi, perubahan_status, perubahan_kondisi, pemindahan, peminjaman, pengembalian, pemeliharaan"  
         varchar status  ""  
         varchar condition  ""  
-        int location_id FK ""  
+        int location_id FK "nullable"  
         datetime start_date  ""  
         datetime end_date  "nullable"  
         int actor_id FK "nullable | ADM_USER_NEW_PORTAL_USERS's id"  
@@ -225,14 +270,14 @@ erDiagram
 
     REQUEST {
         int id PK ""  
-        uuid uuid UK ""  
+        uuid uuid UK "nullable"  
         char_11 request_number UK ""  
         int user_id FK "ADM_USER_NEW_PORTAL_USERS's id"  
         int approver_id FK "ADM_USER_NEW_PORTAL_USERS's id"  
         varchar utilization  "nullable in db for data migration | mandatory in-app | project / corporate"  
-        int org_id FK "nullable"  
-        int project_id FK "nullable"  
-        text reasoning  ""  
+        int org_id FK "nullable | USER_HRIS_HRD_ORGCHART's id"  
+        int project_id FK "nullable | RE_PORTALDB_TB_PROJECT's id"  
+        text reasoning  "nullable"  
         varchar status  "wait | approve | confirm | handover | borrow | return | success | reject | cancel | pending"  
     }
 
@@ -257,7 +302,7 @@ erDiagram
         int quantity_fulfilled  "defaults to 1 for assets"  
         datetime assigned_at  "nullable | manual & natural"  
         datetime confirmed_at  "nullable | manual"  
-        datetime completed_at  "nullable | manual"
+        datetime completed_at  "nullable | manual"  
     }
 
     REQUEST_APPROVAL {
@@ -335,7 +380,7 @@ erDiagram
         varchar key PK ""  
         mediumtext value  ""  
         int expiration  "index"  
-        }
+    }
 
     CACHE_LOCK {
         varchar key PK ""  
@@ -343,20 +388,60 @@ erDiagram
         int expiration  "index"  
     }
 
+    JOB {
+        int id PK ""  
+        varchar queue "index"  
+        longtext payload ""  
+        int attempts ""  
+        int reserved_at "nullable"  
+        int available_at ""  
+        int created_at ""  
+    }
+
+    JOB_BATCH {
+        varchar id PK ""  
+        varchar name ""  
+        int total_jobs ""  
+        int pending_jobs ""  
+        int failed_jobs ""  
+        longtext failed_job_ids ""  
+        mediumtext options "nullable"  
+        int cancelled_at "nullable"  
+        int created_at ""  
+        int finished_at "nullable"  
+    }
+
+    FAILED_JOB {
+        int id PK ""  
+        varchar uuid UK ""  
+        text connection ""  
+        text queue ""  
+        longtext payload ""  
+        longtext exception ""  
+        timestamp failed_at ""  
+    }
+
     CATEGORY||--o{TYPE:"has"
     TYPE||--o{MODEL:"classifies"
     UOM||--o{MODEL:"measures"
     BRAND||--o{MODEL:"made by"
+    VENDOR||--o{VENDORS_CP:"has contact persons"
     MODEL||--o{LOT:"procured in"
     ORGANIZER||--o{LOT:"managed by"
     VENDOR||--o{LOT:"supplied by (legacy)"
-    LOCATION||--o{LOT:"default location"
+    LOCATION||--o{LOT:"storage location (consumables)"
     LOCATION||--o{LOCATION:"parent to child"
+    USER_HRIS_HRD_ORGCHART||--o{LOCATION:"allocated to department"
     LOT||--o{ASSET:"contains"
+    VENDOR||--o{ASSET:"supplied by (legacy migration)"
     LOCATION||--o{ASSET:"currently at"
     USER_HRIS_HRD_EMPLOYEE||--||ADM_USER_NEW_PORTAL_USERS:"credentials"
     USER_HRIS_HRD_ORGCHART||--o{USER_HRIS_HRD_EMPLOYEE:"employs"
     USER_HRIS_HRD_EMPLOYEE||--o{USER_HRIS_HRD_ORGCHART:"manages"
+    ROLE||--o{ROLE_PERMISSION:"grants"
+    PERMISSION||--o{ROLE_PERMISSION:"assigned to"
+    ROLE||--o{USER_ROLE:"assigned to"
+    USER_HRIS_HRD_EMPLOYEE||--o{USER_ROLE:"holds"
     ADM_USER_NEW_PORTAL_USERS||--o{CONSUMABLE_BASKET:"owns"
     MODEL||--o{CONSUMABLE_BASKET:"in"
     TYPE||--o{CONSUMABLE_BASKET:"in"
@@ -392,11 +477,14 @@ erDiagram
     ASSET||--o{ASSET_LIFECYCLE:"tracks lifecycle of"
     LOCATION||--o{ASSET_LIFECYCLE:"location during lifecycle"
     ADM_USER_NEW_PORTAL_USERS||--o{ASSET_LIFECYCLE:"actor"
-    ASSET||--o{ASSET_STATUS_APPROVAL:"has pending changes"
+    ASSET||--o{ASSET_STATUS_APPROVAL:"has pending status changes"
     ADM_USER_NEW_PORTAL_USERS||--o{ASSET_STATUS_APPROVAL:"requests status change"
     ADM_USER_NEW_PORTAL_USERS||--o{ASSET_STATUS_APPROVAL:"decides status change"
+    ASSET||--o{ASSET_ACTIVATION_APPROVAL:"has activation approvals"
+    ADM_USER_NEW_PORTAL_USERS||--o{ASSET_ACTIVATION_APPROVAL:"requests activation"
+    ADM_USER_NEW_PORTAL_USERS||--o{ASSET_ACTIVATION_APPROVAL:"decides activation"
     ADM_USER_NEW_PORTAL_USERS||--o{INVENTORY_LOG:"actored"
     ADM_USER_NEW_PORTAL_USERS||--o{NOTIFICATION:"notified"
     RE_PORTALDB_TB_PROJECT||--o{LOT:"associated with project"
-    RE_PORTALDB_TB_PROJECT||--o{ASSET:"associated with project"
+    RE_PORTALDB_TB_PROJECT||--o{ASSET:"associated with project (legacy migration)"
     ADM_USER_NEW_PORTAL_USERS||--o|SESSION:"session owner"

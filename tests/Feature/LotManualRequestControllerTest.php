@@ -73,7 +73,7 @@ class LotManualRequestControllerTest extends TestCase
         $note = 'Kebutuhan ATK departemen operasional';
 
         $response = $this->actingAs($admin)
-            ->from('/smart/inventory/consumables')
+            ->from('/smart/stock-management/consumables')
             ->post(route('smart.inventory.lots.manual-request', $lot->id), [
                 'user_id' => $requester->id,
                 'request_date' => '2026-09-15',
@@ -83,7 +83,7 @@ class LotManualRequestControllerTest extends TestCase
                 'note' => $note,
             ]);
 
-        $response->assertRedirect('/smart/inventory/consumables');
+        $response->assertRedirect('/smart/stock-management/consumables');
         $response->assertSessionHas('success', 'Permintaan manual berhasil dicatat.');
 
         // 1. Lot quantity deducted

@@ -331,7 +331,7 @@ const handleViewDetail = (item: any) => {
   const rawCode = item.code || item.number || '';
   const cleanCode = String(rawCode).replace(/[^a-zA-Z0-9]/g, '');
   const identifier = cleanCode || item.id;
-  router.get(`/smart/inventory/${identifier}`);
+  router.get(`/smart/stock-management/${identifier}`);
 };
 
 // Export & Print Logic
@@ -483,7 +483,7 @@ const handleConfirmDelete = () => {
   const ids = itemsToDelete.value.map(item => item.id);
   
   if (ids.length === 1) {
-    router.delete(`/smart/inventory/models/${ids[0]}`, {
+    router.delete(`/smart/stock-management/models/${ids[0]}`, {
       onStart: () => { processing.value = true; },
       onFinish: () => { processing.value = false; },
       onSuccess: () => {
@@ -494,7 +494,7 @@ const handleConfirmDelete = () => {
       }
     });
   } else {
-    router.delete('/smart/inventory/models/bulk', {
+    router.delete('/smart/stock-management/models/bulk', {
       data: { ids },
       onStart: () => { processing.value = true; },
       onFinish: () => { processing.value = false; },
@@ -776,6 +776,7 @@ onUnmounted(() => {
       :item-count="itemsToDelete.length"
       :item-name="t('inventory.itemType')"
       :item-data="itemsToDelete.length === 1 ? itemsToDelete[0] : itemsToDelete"
+      :max-width-class="itemsToDelete.length === 1 ? 'max-w-2xl' : undefined"
       :processing="processing"
       @close="closeDeleteModal"
       @confirm="handleConfirmDelete"

@@ -181,13 +181,13 @@ class NewStockController extends Controller
 
         if ($lot) {
             if ($isConsumable) {
-                $targetUrl = "/smart/inventory/{$modelParam}?tab=lots&lot_id={$lot->id}";
+                $targetUrl = "/smart/stock-management/{$modelParam}?tab=lots&lot_id={$lot->id}";
             } else {
                 $lotParam = preg_replace('/[^a-zA-Z0-9]/', '', (string)$lot->number) ?: $lot->id;
-                $targetUrl = "/smart/inventory/lots/{$lotParam}";
+                $targetUrl = "/smart/stock-management/lots/{$lotParam}";
             }
         } else {
-            $targetUrl = "/smart/inventory/{$modelParam}";
+            $targetUrl = "/smart/stock-management/{$modelParam}";
         }
 
         return redirect()->back()->with([

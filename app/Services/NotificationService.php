@@ -157,7 +157,7 @@ class NotificationService
                 $title,
                 $message,
                 'warning',
-                "/smart/inventory/consumables/{$modelRouteKey}",
+                "/smart/stock-management/consumables/{$modelRouteKey}",
                 [
                     'model_id' => $model->id,
                     'barang_id' => $model->id,
@@ -278,7 +278,7 @@ class NotificationService
             $title,
             $message,
             $type,
-            "/smart/inventory/non-consumables?search=" . urlencode($asset->number),
+            "/smart/stock-management/non-consumables?search=" . urlencode($asset->number),
             [
                 'asset_id' => $asset->id,
                 'asset_number' => $asset->number,
@@ -361,12 +361,12 @@ class NotificationService
             $title = "Aktivasi Aset {$brandAndName} Disetujui DM IFS";
             $message = "Status aset {$asset->number} telah berubah menjadi Tersedia.";
             $type = 'success';
-            $url = "/smart/inventory/non-consumables?search=" . urlencode($asset->number);
+            $url = "/smart/stock-management/non-consumables?search=" . urlencode($asset->number);
         } else {
             $title = "Aktivasi Aset {$brandAndName} Ditolak DM IFS";
             $message = "Aktivasi aset {$asset->number} ditolak oleh DM IFS. Status: Verifikasi Ditolak.";
             $type = 'error';
-            $url = "/smart/inventory/pending-activation?search=" . urlencode($asset->number);
+            $url = "/smart/stock-management/pending-activation?search=" . urlencode($asset->number);
         }
 
         $this->sendToRole(

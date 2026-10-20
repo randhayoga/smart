@@ -82,7 +82,7 @@ class LocaleTest extends TestCase
 
         $response = $this->actingAs($user)
             ->withSession(['locale' => 'en'])
-            ->get('/smart/inventory/ATKHVS400011');
+            ->get('/smart/stock-management/ATKHVS400011');
 
         $response->assertStatus(404);
         $response->assertSee(__('errors.404.title', [], 'en'));

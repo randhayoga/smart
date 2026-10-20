@@ -149,11 +149,29 @@ const processing = ref(false);
 
 const deleteFields = computed(() => {
   if (deleteMode.value === 'lot') {
+    const isComp = props.lot.category_code === 'COMP' || props.lot.category === 'Computer' || props.lot.category === 'COMP' || props.lot.barang_category === 'COMP';
+    const isConsumable = props.lot.is_consumable ?? false;
+    const availableStock = isConsumable ? (props.lot.current_quantity ?? 0) : (props.lot.availableAssetCount ?? (props.lot.assetCount ?? 0));
+    const initialStock = isConsumable ? (props.lot.initial_quantity ?? 0) : (props.lot.assetCount ?? 0);
+
     return [
       { label: t('inventory.lotCode'), value: props.lot.number },
+      { label: t('inventory.category'), value: props.lot.barang_category || props.lot.category || '-' },
+      { label: t('inventory.subcategory'), value: props.lot.barang_subcategory || props.lot.subcategory || '-' },
+      { label: t('inventory.brand'), value: props.lot.barang_brand || props.lot.brand || '-' },
+      { label: t('inventory.name'), value: props.lot.barang_nama || props.lot.name || '-' },
+      ...(!isComp ? [{ label: t('inventory.specification'), value: props.lot.barang_specification || props.lot.specification || '-' }] : []),
+      { label: t('inventory.availableStock'), value: availableStock },
+      { label: t('inventory.initialStock'), value: initialStock },
       { label: t('inventory.location'), value: formatLocation(props.lot.location, props.lot.floor, props.lot.room) },
+      { label: t('inventory.poNumber'), value: props.lot.po_number || '-' },
       { label: t('inventory.registrationDate'), value: formatDate(props.lot.date_of_receipt) },
+      { label: t('inventory.age'), value: props.lot.age !== undefined && props.lot.age !== null ? `${props.lot.age} ${t('inventory.yearUnit')}` : '-' },
       { label: t('inventory.defaultUnitPrice'), value: formatRupiah(props.lot.unitPrice) },
+      { label: t('inventory.organizer'), value: props.lot.organizer || '-' },
+      { label: t('inventory.vendor'), value: (props.lot.vendor_id && props.lot.vendor !== '-') ? props.lot.vendor : (props.lot.vendor || t('inventory.vendorMultiple')) },
+      ...(isConsumable ? [{ label: t('inventory.burden'), value: props.lot.burden || '-' }] : []),
+      { label: t('inventory.lastUpdate'), value: props.lot.updated_at || '-' }
     ];
   }
   return [];
@@ -174,12 +192,12 @@ const errorModalMessage = ref('');
 
 const parentBarangUrl = computed(() => {
   const code = props.lot.barang_code ? props.lot.barang_code.replace(/[^a-zA-Z0-9]/g, '') : props.lot.barang_id;
-  return `/smart/inventory/${code}`;
+  return `/smart/stock-management/${code}`;
 });
 
 const handleConfirmDelete = () => {
   if (deleteMode.value === 'lot') {
-    router.delete(`/smart/inventory/lots/${props.lot.id}?redirect_to=${encodeURIComponent(parentBarangUrl.value)}`, {
+    router.delete(`/smart/stock-management/lots/${props.lot.id}?redirect_to=${encodeURIComponent(parentBarangUrl.value)}`, {
       onStart: () => { processing.value = true; },
       onFinish: () => { processing.value = false; },
       onSuccess: () => {
@@ -225,7 +243,7 @@ onUnmounted(() => {
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
-          <BreadcrumbLink :href="'/smart/inventory/' + (props.lot.barang_code ? props.lot.barang_code.replace(/[^a-zA-Z0-9]/g, '') : props.lot.barang_id)">{{ props.lot.barang_code }}</BreadcrumbLink>
+          <BreadcrumbLink :href="'/smart/stock-management/' + (props.lot.barang_code ? props.lot.barang_code.replace(/[^a-zA-Z0-9]/g, '') : props.lot.barang_id)">{{ props.lot.barang_code }}</BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
@@ -294,6 +312,7 @@ onUnmounted(() => {
       :item-name="t('inventory.lotItem')"
       :item-data="lotToDelete"
       :fields="deleteFields"
+      :max-width-class="'max-w-2xl'"
       :processing="processing"
       @close="closeDeleteModal"
       @confirm="handleConfirmDelete"

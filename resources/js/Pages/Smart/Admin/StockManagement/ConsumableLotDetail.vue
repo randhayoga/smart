@@ -52,7 +52,7 @@ const fetchLotDetails = async (id: number) => {
   isLoading.value = true;
   error.value = null;
   try {
-    const response = await axios.get(`/smart/inventory/lots/${id}`);
+    const response = await axios.get(`/smart/stock-management/lots/${id}`);
     lotDetails.value = response.data;
   } catch (err: any) {
     console.error(err);

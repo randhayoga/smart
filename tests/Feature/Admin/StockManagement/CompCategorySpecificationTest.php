@@ -68,7 +68,7 @@ class CompCategorySpecificationTest extends TestCase
 
     public function test_comp_category_barang_forces_specification_null_on_creation(): void
     {
-        $response = $this->actingAs($this->user)->post('/smart/inventory/models', [
+        $response = $this->actingAs($this->user)->post('/smart/stock-management/models', [
             'number' => 'COMP-NB-0001',
             'subcategory_id' => $this->compSubcategory->id,
             'brand_id' => $this->brand->id,
@@ -93,7 +93,7 @@ class CompCategorySpecificationTest extends TestCase
             'specification' => null,
         ]);
 
-        $response = $this->actingAs($this->user)->put("/smart/inventory/models/{$barang->id}", [
+        $response = $this->actingAs($this->user)->put("/smart/stock-management/models/{$barang->id}", [
             'number' => 'COMP-NB-0002',
             'subcategory_id' => $this->compSubcategory->id,
             'brand_id' => $this->brand->id,
@@ -108,7 +108,7 @@ class CompCategorySpecificationTest extends TestCase
 
     public function test_non_comp_category_barang_preserves_specification(): void
     {
-        $response = $this->actingAs($this->user)->post('/smart/inventory/models', [
+        $response = $this->actingAs($this->user)->post('/smart/stock-management/models', [
             'number' => 'ELEC-TV-0001',
             'subcategory_id' => $this->otherSubcategory->id,
             'brand_id' => $this->brand->id,
@@ -238,7 +238,7 @@ class CompCategorySpecificationTest extends TestCase
             'vendor_id' => $this->vendor->id,
         ]);
 
-        $response = $this->actingAs($this->user)->post('/smart/inventory/assets', [
+        $response = $this->actingAs($this->user)->post('/smart/stock-management/assets', [
             'number' => 'UNIT-COMP-SPEC-01',
             'lot_id' => $lot->id,
             'location_id' => $this->location->id,
@@ -254,7 +254,7 @@ class CompCategorySpecificationTest extends TestCase
         $this->assertSame('Core i7-1185G7, 32GB RAM, 512GB SSD', $unit->comp_specification);
 
         // Update specification
-        $updateResponse = $this->actingAs($this->user)->put("/smart/inventory/assets/{$unit->id}", [
+        $updateResponse = $this->actingAs($this->user)->put("/smart/stock-management/assets/{$unit->id}", [
             'number' => $unit->number,
             'lot_id' => $lot->id,
             'location_id' => $this->location->id,
@@ -286,7 +286,7 @@ class CompCategorySpecificationTest extends TestCase
             'vendor_id' => $this->vendor->id,
         ]);
 
-        $response = $this->actingAs($this->user)->post('/smart/inventory/assets', [
+        $response = $this->actingAs($this->user)->post('/smart/stock-management/assets', [
             'number' => 'UNIT-ELEC-01',
             'lot_id' => $lot->id,
             'location_id' => $this->location->id,
@@ -317,7 +317,7 @@ class CompCategorySpecificationTest extends TestCase
             'organizer_id' => $this->organizer->id,
         ]);
 
-        $response = $this->actingAs($this->user)->post('/smart/inventory/assets/bulk', [
+        $response = $this->actingAs($this->user)->post('/smart/stock-management/assets/bulk', [
             'number' => '00001-COMP-NB-DIV-IT-PTRE-26',
             'lot_id' => $lot->id,
             'location_id' => $this->location->id,

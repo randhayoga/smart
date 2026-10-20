@@ -213,9 +213,9 @@ describe('Sidebar.vue', () => {
   });
 
   describe('active link detection', () => {
-    it('activates only Daftar Pending Aktivasi and NOT Manajemen Stok when viewing /smart/inventory/pending-activation', () => {
+    it('activates only Daftar Pending Aktivasi and NOT Manajemen Stok when viewing /smart/stock-management/pending-activation', () => {
       vi.mocked(usePage).mockReturnValue({
-        url: '/smart/inventory/pending-activation',
+        url: '/smart/stock-management/pending-activation',
         props: {
           auth: defaultAdminAuth,
         },
@@ -227,7 +227,7 @@ describe('Sidebar.vue', () => {
         collapsed: false,
       });
 
-      const pendingActivationLink = wrapper.find('a[href="/smart/inventory/pending-activation"]');
+      const pendingActivationLink = wrapper.find('a[href="/smart/stock-management/pending-activation"]');
       const inventoryLink = wrapper.find('a[href="/smart/stock-management"]');
 
       expect(pendingActivationLink.exists()).toBe(true);
@@ -257,7 +257,7 @@ describe('Sidebar.vue', () => {
       });
 
       const inventoryLink = wrapper.find('a[href="/smart/stock-management"]');
-      const pendingActivationLink = wrapper.find('a[href="/smart/inventory/pending-activation"]');
+      const pendingActivationLink = wrapper.find('a[href="/smart/stock-management/pending-activation"]');
 
       expect(inventoryLink.classes()).toContain('bg-gradient-primary');
       expect(pendingActivationLink.classes()).not.toContain('bg-gradient-primary');
@@ -278,15 +278,15 @@ describe('Sidebar.vue', () => {
       });
 
       const inventoryLink = wrapper.find('a[href="/smart/stock-management"]');
-      const pendingActivationLink = wrapper.find('a[href="/smart/inventory/pending-activation"]');
+      const pendingActivationLink = wrapper.find('a[href="/smart/stock-management/pending-activation"]');
 
       expect(inventoryLink.classes()).toContain('bg-gradient-primary');
       expect(pendingActivationLink.classes()).not.toContain('bg-gradient-primary');
     });
 
-    it('activates only Daftar Pending Nonaktif and NOT Manajemen Stok when viewing /smart/inventory/pending-deactivation', () => {
+    it('activates Manajemen Stok when viewing lot detail /smart/stock-management/lots/LOT-001', () => {
       vi.mocked(usePage).mockReturnValue({
-        url: '/smart/inventory/pending-deactivation',
+        url: '/smart/stock-management/lots/LOT-001',
         props: {
           auth: defaultAdminAuth,
         },
@@ -298,7 +298,46 @@ describe('Sidebar.vue', () => {
         collapsed: false,
       });
 
-      const pendingInactiveLink = wrapper.find('a[href="/smart/inventory/pending-deactivation"]');
+      const inventoryLink = wrapper.find('a[href="/smart/stock-management"]');
+      expect(inventoryLink.classes()).toContain('bg-gradient-primary');
+    });
+
+    it('activates only Daftar Habis Pakai when viewing /smart/stock-management/consumables', () => {
+      vi.mocked(usePage).mockReturnValue({
+        url: '/smart/stock-management/consumables',
+        props: {
+          auth: defaultAdminAuth,
+        },
+      } as any);
+
+      const wrapper = mountSidebar({
+        open: true,
+        isMobile: false,
+        collapsed: false,
+      });
+
+      const consumableLink = wrapper.find('a[href="/smart/stock-management/consumables"]');
+      const inventoryLink = wrapper.find('a[href="/smart/stock-management"]');
+
+      expect(consumableLink.classes()).toContain('bg-gradient-primary');
+      expect(inventoryLink.classes()).not.toContain('bg-gradient-primary');
+    });
+
+    it('activates only Daftar Pending Nonaktif and NOT Manajemen Stok when viewing /smart/stock-management/pending-deactivation', () => {
+      vi.mocked(usePage).mockReturnValue({
+        url: '/smart/stock-management/pending-deactivation',
+        props: {
+          auth: defaultAdminAuth,
+        },
+      } as any);
+
+      const wrapper = mountSidebar({
+        open: true,
+        isMobile: false,
+        collapsed: false,
+      });
+
+      const pendingInactiveLink = wrapper.find('a[href="/smart/stock-management/pending-deactivation"]');
       const inventoryLink = wrapper.find('a[href="/smart/stock-management"]');
 
       expect(pendingInactiveLink.classes()).toContain('bg-gradient-primary');
