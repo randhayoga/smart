@@ -29,7 +29,7 @@ class TypeController extends Controller
                 'string',
                 'max:9',
                 'unique:types,code',
-                'regex:/^' . preg_quote($categoryCode, '/') . '-[A-Z]{4}$/i'
+                'regex:/^' . preg_quote($categoryCode, '/') . '-[A-Z0-9]{2,4}$/i'
             ],
             'name'          => 'required|string|max:255',
             'description'   => 'nullable|string|max:255',

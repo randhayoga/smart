@@ -5,6 +5,7 @@
 import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { Head, router } from '@inertiajs/vue3';
+import axios from 'axios';
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink } from '@/Components/ui/breadcrumb';
@@ -251,7 +252,7 @@ const onScanError = (_errorMessage: string) => {
 };
 
 // Process Scanned Text & Route User safely
-const processScannedData = (rawText: string) => {
+const processScannedData = async (rawText: string) => {
   const cleanText = rawText.trim();
   if (!cleanText) return;
 
@@ -267,9 +268,29 @@ const processScannedData = (rawText: string) => {
   }
 
   // Omit all dashes, spaces, and non-alphanumeric characters
-  const alphanumericCode = extractedCode.replace(/[^a-zA-Z0-9]/g, '');
+  let alphanumericCode = extractedCode.replace(/[^a-zA-Z0-9]/g, '');
 
   if (alphanumericCode.length > 0) {
+    try {
+      // Lookup code via backend to ensure legacy_number resolves to the active asset's new alphanumericCode
+      const response = await axios.get(`/smart/scan/lookup/${encodeURIComponent(extractedCode)}`);
+      if (response.data && response.data.alphanumeric_code) {
+        alphanumericCode = response.data.alphanumeric_code;
+      }
+    } catch {
+      // If lookup query with extractedCode wasn't matched directly, check with alphanumericCode
+      if (alphanumericCode !== extractedCode) {
+        try {
+          const fallbackResp = await axios.get(`/smart/scan/lookup/${encodeURIComponent(alphanumericCode)}`);
+          if (fallbackResp.data && fallbackResp.data.alphanumeric_code) {
+            alphanumericCode = fallbackResp.data.alphanumeric_code;
+          }
+        } catch {
+          // Proceed with current alphanumericCode
+        }
+      }
+    }
+
     router.visit(`/smart/scan/${alphanumericCode}`);
     return;
   }

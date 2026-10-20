@@ -228,6 +228,7 @@ class MasterDataTest extends TestCase
         $user = User::factory()->create();
         $category = Category::factory()->create(['code' => 'ATKS']);
 
+        // Test with 4-character suffix
         $response = $this->actingAs($user)->post(route('smart.master.types.store'), [
             'category_id' => $category->id,
             'code' => 'ATKS-AAAA',
@@ -243,6 +244,36 @@ class MasterDataTest extends TestCase
             'name' => 'Subcategory Baru',
             'description' => 'Deskripsi testing subcategory',
             'is_consumable' => true,
+        ]);
+
+        // Test with 2-character suffix
+        $response = $this->actingAs($user)->post(route('smart.master.types.store'), [
+            'category_id' => $category->id,
+            'code' => 'ATKS-BB',
+            'name' => 'Subcategory Dua Huruf',
+            'is_consumable' => false,
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('types', [
+            'category_id' => $category->id,
+            'code' => 'ATKS-BB',
+            'name' => 'Subcategory Dua Huruf',
+        ]);
+
+        // Test with 3-character suffix
+        $response = $this->actingAs($user)->post(route('smart.master.types.store'), [
+            'category_id' => $category->id,
+            'code' => 'ATKS-CCC',
+            'name' => 'Subcategory Tiga Huruf',
+            'is_consumable' => false,
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('types', [
+            'category_id' => $category->id,
+            'code' => 'ATKS-CCC',
+            'name' => 'Subcategory Tiga Huruf',
         ]);
     }
 
@@ -265,27 +296,56 @@ class MasterDataTest extends TestCase
         $user = User::factory()->create();
         $category = Category::factory()->create(['code' => 'ATKS']);
 
+        // 1-char suffix (below min length 2)
         $response = $this->actingAs($user)->post(route('smart.master.types.store'), [
             'category_id' => $category->id,
-            'code' => 'ATKS-AAAAA', // 5-char suffix (invalid length)
-            'name' => 'Subcategory Baru',
+            'code' => 'ATKS-A',
+            'name' => 'Subcategory Satu Huruf',
         ]);
+        $response->assertSessionHasErrors(['code']);
 
+        // 5-char suffix (invalid length > 4)
+        $response = $this->actingAs($user)->post(route('smart.master.types.store'), [
+            'category_id' => $category->id,
+            'code' => 'ATKS-AAAAA',
+            'name' => 'Subcategory Lima Huruf',
+        ]);
         $response->assertSessionHasErrors(['code']);
     }
 
-    public function test_cannot_store_subcategory_with_digits_in_suffix(): void
+    public function test_can_store_subcategory_with_digits_in_suffix(): void
     {
         $user = User::factory()->create();
         $category = Category::factory()->create(['code' => 'ATKS']);
 
         $response = $this->actingAs($user)->post(route('smart.master.types.store'), [
             'category_id' => $category->id,
-            'code' => 'ATKS-1234', // digits instead of alphabets
-            'name' => 'Subcategory Baru',
+            'code' => 'ATKS-1234', // digits allowed
+            'name' => 'Subcategory Angka',
+            'is_consumable' => true,
         ]);
 
-        $response->assertSessionHasErrors(['code']);
+        $response->assertRedirect();
+        $this->assertDatabaseHas('types', [
+            'category_id' => $category->id,
+            'code' => 'ATKS-1234',
+            'name' => 'Subcategory Angka',
+        ]);
+
+        // alphanumeric combo
+        $response = $this->actingAs($user)->post(route('smart.master.types.store'), [
+            'category_id' => $category->id,
+            'code' => 'ATKS-A1',
+            'name' => 'Subcategory Alfanumerik',
+            'is_consumable' => false,
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('types', [
+            'category_id' => $category->id,
+            'code' => 'ATKS-A1',
+            'name' => 'Subcategory Alfanumerik',
+        ]);
     }
 
     public function test_can_update_subcategory_with_description(): void

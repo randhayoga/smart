@@ -140,6 +140,49 @@ class AlphanumericCodeRoutingTest extends TestCase
         $responseLower->assertStatus(200);
     }
 
+    public function test_can_access_scan_using_legacy_number(): void
+    {
+        $user = $this->createAdminUser();
+        $lot = Lot::factory()->create();
+        $unit = Unit::create([
+            'number' => '00002-ACC-GL-CFS-PTRE-26',
+            'legacy_number' => '00002-FUR-GL-CFS-PTRE-14',
+            'lot_id' => $lot->id,
+            'location_id' => $lot->location_id,
+            'status' => 'Tersedia',
+            'condition' => 'Bagus',
+            'image_url' => 'inventory/lots/placeholder.jpg',
+        ]);
+
+        // 1. Using alphanumeric legacy number
+        $responseAlpha = $this->actingAs($user)->get('/smart/scan/00002FURGLCFSPTRE14');
+        $responseAlpha->assertStatus(200);
+        $responseAlpha->assertInertia(fn (Assert $page) => $page
+            ->component('Smart/MultiRoles/ScanResult')
+            ->where('asset.id', $unit->id)
+            ->where('asset.number', '00002-ACC-GL-CFS-PTRE-26')
+        );
+
+        // 2. Using dashed legacy number
+        $responseDash = $this->actingAs($user)->get('/smart/scan/00002-FUR-GL-CFS-PTRE-14');
+        $responseDash->assertStatus(200);
+        $responseDash->assertInertia(fn (Assert $page) => $page
+            ->component('Smart/MultiRoles/ScanResult')
+            ->where('asset.id', $unit->id)
+            ->where('asset.number', '00002-ACC-GL-CFS-PTRE-26')
+        );
+
+        // 3. Using scan lookup endpoint
+        $responseLookup = $this->actingAs($user)->get('/smart/scan/lookup/00002-FUR-GL-CFS-PTRE-14');
+        $responseLookup->assertStatus(200);
+        $responseLookup->assertJson([
+            'found' => true,
+            'id' => $unit->id,
+            'number' => '00002-ACC-GL-CFS-PTRE-26',
+            'alphanumeric_code' => '00002ACCGLCFSPTRE26',
+        ]);
+    }
+
     public function test_lot_get_route_key_is_alphanumeric_only(): void
     {
         $lot = Lot::factory()->create([

@@ -388,19 +388,26 @@ class Asset extends Model
     }
 
     /**
-     * Retrieve the model for a bound value, supporting alphanumeric code, raw code (number), and numeric ID.
+     * Retrieve the model for a bound value, supporting alphanumeric code, raw code (number),
+     * legacy number, and numeric ID.
      */
     public function resolveRouteBinding($value, $field = null)
     {
         $field = $field ?? $this->getRouteKeyName();
 
-        // 1. Direct exact match
+        // 1. Direct exact match on field (number)
         $model = $this->where($field, $value)->first();
         if ($model) {
             return $model;
         }
 
-        // 2. Numeric ID match
+        // 2. Direct exact match on legacy_number
+        $model = $this->where('legacy_number', $value)->first();
+        if ($model) {
+            return $model;
+        }
+
+        // 3. Numeric ID match
         if (is_numeric($value)) {
             $model = $this->where('id', $value)->first();
             if ($model) {
@@ -408,9 +415,10 @@ class Asset extends Model
             }
         }
 
-        // 3. Alphanumeric normalized match
+        // 4. Alphanumeric normalized match
         $cleanValue = preg_replace('/[^a-zA-Z0-9]/', '', (string)$value);
         if (!empty($cleanValue)) {
+            // Check number column
             $model = $this->whereRaw(
                 "LOWER(REPLACE(REPLACE(REPLACE(REPLACE({$field}, '-', ''), ' ', ''), '_', ''), '/', '')) = ?",
                 [strtolower($cleanValue)]
@@ -420,10 +428,24 @@ class Asset extends Model
                 return $model;
             }
 
-            // Fallback in-memory check
+            // Check legacy_number column
+            $model = $this->whereRaw(
+                "LOWER(REPLACE(REPLACE(REPLACE(REPLACE(legacy_number, '-', ''), ' ', ''), '_', ''), '/', '')) = ?",
+                [strtolower($cleanValue)]
+            )->first();
+
+            if ($model) {
+                return $model;
+            }
+
+            // Fallback in-memory check (number and legacy_number)
             return $this->all()->first(function ($item) use ($field, $cleanValue) {
                 $itemClean = preg_replace('/[^a-zA-Z0-9]/', '', (string)($item->{$field} ?? ''));
-                return strcasecmp($itemClean, $cleanValue) === 0;
+                if (strcasecmp($itemClean, $cleanValue) === 0) {
+                    return true;
+                }
+                $legacyClean = preg_replace('/[^a-zA-Z0-9]/', '', (string)($item->legacy_number ?? ''));
+                return strcasecmp($legacyClean, $cleanValue) === 0;
             });
         }
 

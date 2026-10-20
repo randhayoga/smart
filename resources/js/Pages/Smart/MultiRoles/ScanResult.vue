@@ -474,8 +474,8 @@ const handleSubmit = () => {
               />
             </div>
             <div class="mt-4 text-center">
+              <p v-if="props.asset.legacy_number" class="text-xs text-muted-foreground font-mono"><span class="font-medium">{{ t('inventory.legacyNumber') }}:</span> {{ props.asset.legacy_number }}</p>
               <h1 class="text-base font-bold text-foreground uppercase tracking-wider">{{ props.asset.number }}</h1>
-              <p v-if="props.asset.legacy_number" class="text-xs text-muted-foreground font-mono mt-0.5"><span class="font-medium">{{ t('inventory.legacyNumber') }}:</span> {{ props.asset.legacy_number }}</p>
               <h2 class="text-lg font-extrabold text-foreground leading-tight">{{ props.asset.barang_nama }}</h2>
               <p class="text-sm text-foreground mt-1">
                 {{ props.asset.barang_brand }} &bull; {{ props.asset.barang_category }} &bull; {{ props.asset.barang_subcategory }}

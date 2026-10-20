@@ -421,6 +421,9 @@ const submit = () => {
       if (!form.code || !form.code.trim()) {
         formErrors.value.code = t('masterData.validation.subcategoryCodeRequired');
         hasError = true;
+      } else if (form.code.trim().length < 2 || form.code.trim().length > 4) {
+        formErrors.value.code = t('masterData.validation.subcategoryCodeLength');
+        hasError = true;
       }
     }
     if (!form.name || !form.name.trim()) {
@@ -631,10 +634,10 @@ onUnmounted(() => {
                     <input
                       type="text"
                       v-model="form.code"
-                      @input="form.code = form.code.replace(/[^A-Za-z]/g, '').toUpperCase()"
+                      @input="form.code = form.code.replace(/[^A-Za-z0-9]/g, '').toUpperCase()"
                       maxlength="4"
                       :disabled="!form.category_id"
-                      :placeholder="t('masterData.placeholders.fourUppercaseLetters')"
+                      :placeholder="t('masterData.placeholders.twoToFourAlphanumeric')"
                       class="w-full pr-3 py-2 text-sm bg-transparent border-none focus:ring-0 focus:outline-none"
                       :class="{ 'cursor-not-allowed': !form.category_id }"
                     />

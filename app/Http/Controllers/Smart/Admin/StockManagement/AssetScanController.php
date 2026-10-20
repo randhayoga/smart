@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Smart\Admin\StockManagement;
 use App\Http\Controllers\Controller;
 use App\Models\Inventory\Asset;
 use App\Models\Master\Location;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -14,6 +15,31 @@ use Inertia\Response;
  */
 class AssetScanController extends Controller
 {
+    /**
+     * Look up an asset by raw/alphanumeric code or legacy number and return matching asset number & clean route key.
+     */
+    public function lookup(string $code): JsonResponse
+    {
+        $asset = (new Asset())->resolveRouteBinding($code);
+
+        if (!$asset) {
+            return response()->json([
+                'found' => false,
+            ], 404);
+        }
+
+        $cleanNumber = preg_replace('/[^a-zA-Z0-9]/', '', (string)$asset->number);
+
+        return response()->json([
+            'found' => true,
+            'id' => $asset->id,
+            'number' => $asset->number,
+            'legacy_number' => $asset->legacy_number,
+            'alphanumeric_code' => $cleanNumber,
+            'url' => route('smart.scan', ['asset' => $cleanNumber]),
+        ]);
+    }
+
     /**
      * Show the standalone mobile scan page for the specified asset.
      */

@@ -149,6 +149,9 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
     Route::get('/scan', [\App\Http\Controllers\Smart\MultiRoles\ScanBarcodeController::class, 'show'])
         ->middleware(['permission:inventory.manage,inventory.borrow'])
         ->name('scan-barcode');
+    Route::get('scan/lookup/{code}', [AssetScanController::class, 'lookup'])
+        ->middleware(['permission:inventory.view,inventory.manage,inventory.borrow'])
+        ->name('scan.lookup');
     Route::get('scan/{asset}', [AssetScanController::class, 'show'])
         ->middleware(['permission:inventory.view'])
         ->name('scan');
