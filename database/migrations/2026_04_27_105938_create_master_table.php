@@ -46,12 +46,16 @@ return new class extends Migration {
             $table->string('phone_number')->nullable();
             $table->string('email')->nullable();
             $table->string('description')->nullable();
-            $table->string('contact_person_1')->nullable();
-            $table->string('cp_email_1')->nullable();
-            $table->string('cp_phone_1')->nullable();
-            $table->string('contact_person_2')->nullable();
-            $table->string('cp_email_2')->nullable();
-            $table->string('cp_phone_2')->nullable();
+            $table->timestamps();
+        });
+
+        Schema::create('vendors_cp', function (Blueprint $table) {
+            $table->comment('Vendor contact persons (1:N relationship)');
+            $table->id();
+            $table->foreignId('vendor_id')->constrained('vendors')->cascadeOnDelete();
+            $table->string('contact_person')->nullable();
+            $table->string('cp_email')->nullable();
+            $table->string('cp_phone')->nullable();
             $table->timestamps();
         });
 
@@ -74,6 +78,7 @@ return new class extends Migration {
     public function down(): void
     {
         Schema::dropIfExists('locations');
+        Schema::dropIfExists('vendors_cp');
         Schema::dropIfExists('vendors');
         Schema::dropIfExists('organizers');
         Schema::dropIfExists('brands');

@@ -46,7 +46,7 @@ class MasterController extends Controller
             'uoms'          => Uom::orderBy('name')->get(),
             'brands'        => Brand::orderBy('name')->get(),
             'organizers'    => Organizer::orderBy('name')->get(),
-            'vendors'       => Vendor::orderBy('name')->get(),
+            'vendors'       => Vendor::with('contactPersons')->orderBy('name')->get(),
             'locations'     => Location::with(['parent', 'relatedDepartment'])->withCount('children')->orderBy('name')->get(),
             'departments'   => $departments,
         ]);

@@ -267,7 +267,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
   const cols: ColumnDef<any>[] = [];
 
   // Code column (if applicable)
-  if (!['uoms', 'brands', 'organizers', 'locations'].includes(activeTab.value)) {
+  if (!['uoms', 'brands', 'organizers', 'locations', 'vendors'].includes(activeTab.value)) {
     cols.push({
       accessorKey: 'code',
       header: ({ column }) => {
@@ -365,13 +365,8 @@ const columns = computed<ColumnDef<any>[]>(() => {
     },
   });
 
-  // Address & Phone & Email & Contact Person columns (Vendor only)
+  // Phone & Email & Contact Person columns (Vendor only)
   if (activeTab.value === 'vendors') {
-    cols.push({
-      accessorKey: 'address',
-      header: () => h('div', { class: 'pl-2 py-1 font-semibold text-foreground leading-tight max-w-[200px]' }, t('masterData.columns.address')),
-      cell: ({ row }) => h('div', { class: 'pl-2 text-muted-foreground truncate max-w-[200px]' }, row.getValue('address') || '-'),
-    });
     cols.push({
       accessorKey: 'phone_number',
       header: () => h('div', { class: 'pl-2 py-1 font-semibold text-foreground leading-tight' }, t('masterData.columns.phone')),
@@ -383,14 +378,28 @@ const columns = computed<ColumnDef<any>[]>(() => {
       cell: ({ row }) => h('div', { class: 'pl-2 text-muted-foreground truncate' }, row.getValue('email') || '-'),
     });
     cols.push({
-      accessorKey: 'contact_person_1',
+      id: 'contact_person',
       header: () => h('div', { class: 'pl-2 py-1 font-semibold text-foreground leading-tight' }, t('masterData.columns.contactPerson')),
-      cell: ({ row }) => h('div', { class: 'pl-2 text-muted-foreground truncate' }, row.getValue('contact_person_1') || '-'),
+      cell: ({ row }) => {
+        const vendor = row.original as VendorItem;
+        const cps = vendor.contact_persons || [];
+        if (!cps.length) {
+          return h('div', { class: 'pl-2 text-muted-foreground truncate' }, '-');
+        }
+        const first = cps[0].contact_person || cps[0].cp_phone || cps[0].cp_email || '-';
+        if (cps.length === 1) {
+          return h('div', { class: 'pl-2 text-muted-foreground truncate' }, first);
+        }
+        return h('div', { class: 'pl-2 text-muted-foreground truncate flex items-center gap-1.5' }, [
+          h('span', { class: 'truncate' }, first),
+          h('span', { class: 'inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground shrink-0' }, `+${cps.length - 1}`)
+        ]);
+      },
     });
   }
 
-  // Description column (Subkategori & Merek & Vendor)
-  if (['subcategories', 'brands', 'vendors'].includes(activeTab.value)) {
+  // Description column (Subkategori & Merek)
+  if (['subcategories', 'brands'].includes(activeTab.value)) {
     cols.push({
       accessorKey: 'description',
       header: () => h('div', { class: 'pl-2 py-1 font-semibold text-foreground leading-tight max-w-[200px]' }, t('masterData.columns.description')),

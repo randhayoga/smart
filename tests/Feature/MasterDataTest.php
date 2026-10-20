@@ -433,28 +433,36 @@ class MasterDataTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->post(route('smart.master.vendors.store'), [
-            'code' => 'VN0009',
+            'code' => 'VN00009',
             'name' => 'Vendor Baru PT',
             'address' => 'Jalan Baru No. 12',
             'phone_number' => '021-123456',
             'email' => 'vendor@baru.com',
             'description' => 'Description Vendor Baru',
-            'contact_person_1' => 'John Doe',
-            'cp_email_1' => 'john@baru.com',
-            'cp_phone_1' => '0812345678',
+            'contact_persons' => [
+                [
+                    'contact_person' => 'John Doe',
+                    'cp_email' => 'john@baru.com',
+                    'cp_phone' => '0812345678',
+                ],
+            ],
         ]);
 
         $response->assertRedirect();
         $this->assertDatabaseHas('vendors', [
-            'code' => 'VN0009',
+            'code' => 'VN00009',
             'name' => 'Vendor Baru PT',
             'address' => 'Jalan Baru No. 12',
             'phone_number' => '021-123456',
             'email' => 'vendor@baru.com',
             'description' => 'Description Vendor Baru',
-            'contact_person_1' => 'John Doe',
-            'cp_email_1' => 'john@baru.com',
-            'cp_phone_1' => '0812345678',
+        ]);
+        $vendor = Vendor::where('code', 'VN00009')->firstOrFail();
+        $this->assertDatabaseHas('vendors_cp', [
+            'vendor_id' => $vendor->id,
+            'contact_person' => 'John Doe',
+            'cp_email' => 'john@baru.com',
+            'cp_phone' => '0812345678',
         ]);
     }
 
@@ -462,32 +470,84 @@ class MasterDataTest extends TestCase
     {
         $user = User::factory()->create();
         $vendor = Vendor::factory()->create();
+        $vendor->contactPersons()->create([
+            'contact_person' => 'Old CP',
+            'cp_email' => 'old@vendor.com',
+            'cp_phone' => '0811111111',
+        ]);
 
         $response = $this->actingAs($user)->put(route('smart.master.vendors.update', $vendor), [
-            'code' => 'VN9999',
+            'code' => 'VN09999',
             'name' => 'Vendor Updated PT',
             'address' => 'Jalan Updated No. 12',
             'phone_number' => '021-654321',
             'email' => 'vendor@updated.com',
             'description' => 'Description Vendor Updated',
-            'contact_person_1' => 'Jane Doe',
-            'cp_email_1' => 'jane@updated.com',
-            'cp_phone_1' => '0898765432',
+            'contact_persons' => [
+                [
+                    'contact_person' => 'Jane Doe',
+                    'cp_email' => 'jane@updated.com',
+                    'cp_phone' => '0898765432',
+                ],
+            ],
         ]);
 
         $response->assertRedirect();
         $this->assertDatabaseHas('vendors', [
             'id' => $vendor->id,
-            'code' => 'VN9999',
+            'code' => 'VN09999',
             'name' => 'Vendor Updated PT',
             'address' => 'Jalan Updated No. 12',
             'phone_number' => '021-654321',
             'email' => 'vendor@updated.com',
             'description' => 'Description Vendor Updated',
-            'contact_person_1' => 'Jane Doe',
-            'cp_email_1' => 'jane@updated.com',
-            'cp_phone_1' => '0898765432',
         ]);
+        $this->assertDatabaseMissing('vendors_cp', [
+            'vendor_id' => $vendor->id,
+            'contact_person' => 'Old CP',
+        ]);
+        $this->assertDatabaseHas('vendors_cp', [
+            'vendor_id' => $vendor->id,
+            'contact_person' => 'Jane Doe',
+            'cp_email' => 'jane@updated.com',
+            'cp_phone' => '0898765432',
+        ]);
+    }
+
+    public function test_can_store_and_update_vendor_with_multiple_contact_persons(): void
+    {
+        $user = User::factory()->create();
+
+        // 1. Store vendor with 3 contact persons
+        $response = $this->actingAs($user)->post(route('smart.master.vendors.store'), [
+            'code' => 'VN00015',
+            'name' => 'Vendor Multi CP PT',
+            'contact_persons' => [
+                ['contact_person' => 'CP Satu', 'cp_email' => 'satu@multi.com', 'cp_phone' => '0811'],
+                ['contact_person' => 'CP Dua', 'cp_email' => 'dua@multi.com', 'cp_phone' => '0822'],
+                ['contact_person' => 'CP Tiga', 'cp_email' => 'tiga@multi.com', 'cp_phone' => '0833'],
+            ],
+        ]);
+
+        $response->assertRedirect();
+        $vendor = Vendor::where('code', 'VN00015')->firstOrFail();
+        $this->assertCount(3, $vendor->contactPersons);
+
+        // 2. Update to 4 contact persons
+        $updateResponse = $this->actingAs($user)->put(route('smart.master.vendors.update', $vendor), [
+            'code' => 'VN00015',
+            'name' => 'Vendor Multi CP PT Updated',
+            'contact_persons' => [
+                ['contact_person' => 'CP Alpha', 'cp_email' => 'alpha@multi.com', 'cp_phone' => '0811'],
+                ['contact_person' => 'CP Beta', 'cp_email' => 'beta@multi.com', 'cp_phone' => '0822'],
+                ['contact_person' => 'CP Gamma', 'cp_email' => 'gamma@multi.com', 'cp_phone' => '0833'],
+                ['contact_person' => 'CP Delta', 'cp_email' => 'delta@multi.com', 'cp_phone' => '0844'],
+            ],
+        ]);
+
+        $updateResponse->assertRedirect();
+        $this->assertCount(4, $vendor->fresh()->contactPersons);
+        $this->assertDatabaseHas('vendors_cp', ['vendor_id' => $vendor->id, 'contact_person' => 'CP Delta']);
     }
 
     public function test_can_store_vendor_without_address_and_phone_number(): void
@@ -495,13 +555,13 @@ class MasterDataTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->post(route('smart.master.vendors.store'), [
-            'code' => 'VN0010',
+            'code' => 'VN00010',
             'name' => 'Vendor Minimal PT',
         ]);
 
         $response->assertRedirect();
         $this->assertDatabaseHas('vendors', [
-            'code' => 'VN0010',
+            'code' => 'VN00010',
             'name' => 'Vendor Minimal PT',
             'address' => null,
             'phone_number' => null,
@@ -558,5 +618,70 @@ class MasterDataTest extends TestCase
         $this->assertDatabaseHas('vendors', [
             'id' => $vendor->id,
         ]);
+    }
+
+    public function test_dummy_consumable_seeder_increments_last_actual_vendor_code(): void
+    {
+        Vendor::factory()->create(['code' => 'VN00117', 'name' => 'Existing Vendor PT']);
+
+        $seeder = new \Database\Seeders\DummyConsumableMasterSeeder();
+        $seeder->run();
+
+        $this->assertDatabaseHas('vendors', [
+            'name' => 'PT Surya Abadi Mandiri',
+            'code' => 'VN00118',
+        ]);
+        $this->assertDatabaseHas('vendors', [
+            'name' => 'PT Mitra Global Solusindo',
+            'code' => 'VN00119',
+        ]);
+    }
+
+    public function test_vendor_phone_number_and_cp_phone_validation(): void
+    {
+        $user = User::factory()->create();
+
+        // 1. Success with allowed characters: digits, +, -, and spaces
+        $validResponse = $this->actingAs($user)->post(route('smart.master.vendors.store'), [
+            'code' => 'VN00021',
+            'name' => 'Valid Phone Vendor PT',
+            'phone_number' => '+62 21-555 1234',
+            'contact_persons' => [
+                [
+                    'contact_person' => 'Budi',
+                    'cp_phone' => '+62 812-3456 7890',
+                ],
+            ],
+        ]);
+        $validResponse->assertRedirect();
+        $this->assertDatabaseHas('vendors', [
+            'code' => 'VN00021',
+            'phone_number' => '+62 21-555 1234',
+        ]);
+        $this->assertDatabaseHas('vendors_cp', [
+            'contact_person' => 'Budi',
+            'cp_phone' => '+62 812-3456 7890',
+        ]);
+
+        // 2. Failure when phone_number contains forbidden characters (e.g. parentheses or letters)
+        $invalidPhoneResponse = $this->actingAs($user)->post(route('smart.master.vendors.store'), [
+            'code' => 'VN00022',
+            'name' => 'Invalid Phone Vendor PT',
+            'phone_number' => '(021) 555-1234',
+        ]);
+        $invalidPhoneResponse->assertSessionHasErrors(['phone_number']);
+
+        // 3. Failure when contact_person cp_phone contains letters
+        $invalidCpPhoneResponse = $this->actingAs($user)->post(route('smart.master.vendors.store'), [
+            'code' => 'VN00023',
+            'name' => 'Invalid CP Phone Vendor PT',
+            'contact_persons' => [
+                [
+                    'contact_person' => 'Charlie',
+                    'cp_phone' => '0812-CALL-ME',
+                ],
+            ],
+        ]);
+        $invalidCpPhoneResponse->assertSessionHasErrors(['contact_persons.0.cp_phone']);
     }
 }

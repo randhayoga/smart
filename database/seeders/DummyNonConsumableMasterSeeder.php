@@ -123,7 +123,7 @@ class DummyNonConsumableMasterSeeder extends Seeder
         ];
         $vendorCodes = ['VN0000', 'VN0002', 'VN0003', 'VN0005'];
         foreach ($vendors as $index => $vendorName) {
-            Vendor::firstOrCreate(
+            $vendor = Vendor::firstOrCreate(
                 ['name' => $vendorName],
                 [
                     'code' => $vendorCodes[$index],
@@ -131,11 +131,18 @@ class DummyNonConsumableMasterSeeder extends Seeder
                     'phone_number' => $vendorName === 'Beragam' ? null : '08' . rand(5000000, 9999999),
                     'email' => $vendorName === 'Beragam' ? null : strtolower(str_replace(' ', '', $vendorName)) . '@example.com',
                     'description' => $vendorName === 'Beragam' ? 'Vendor penampung untuk data migrasi beragam' : 'Supplier untuk ' . $vendorName,
-                    'contact_person_1' => $vendorName === 'Beragam' ? null : 'Budi Santoso',
-                    'cp_email_1' => $vendorName === 'Beragam' ? null : 'budi.santoso@example.com',
-                    'cp_phone_1' => $vendorName === 'Beragam' ? null : '0812' . rand(10000000, 99999999),
                 ]
             );
+
+            if ($vendorName !== 'Beragam') {
+                $vendor->contactPersons()->firstOrCreate(
+                    ['contact_person' => 'Budi Santoso'],
+                    [
+                        'cp_email' => 'budi.santoso@example.com',
+                        'cp_phone' => '0812' . rand(10000000, 99999999),
+                    ]
+                );
+            }
         }
 
         // 1: Graha RE 1 (Root)

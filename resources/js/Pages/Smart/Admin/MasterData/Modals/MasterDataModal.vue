@@ -22,8 +22,18 @@ import Switch from '@/Components/ui/switch/Switch.vue';
 import LocationCombobox from '@/Components/LocationCombobox.vue';
 import Combobox from '@/Components/Combobox.vue';
 import { useModalLock } from '@/composables/useModalLock';
+import VendorContactPersonsSection from './Components/VendorContactPersonsSection.vue';
 
 export type MasterDataTabKey = 'categories' | 'subcategories' | 'uoms' | 'brands' | 'organizers' | 'vendors' | 'locations';
+
+export interface VendorCpItem {
+  id?: number;
+  vendor_id?: number;
+  contact_person: string;
+  cp_email?: string | null;
+  cp_phone?: string | null;
+  is_collapsed?: boolean;
+}
 
 export interface Category {
   id: number;
@@ -55,12 +65,7 @@ export interface VendorItem {
   phone_number?: string | null;
   email?: string;
   description?: string;
-  contact_person_1?: string;
-  cp_email_1?: string;
-  cp_phone_1?: string;
-  contact_person_2?: string;
-  cp_email_2?: string;
-  cp_phone_2?: string;
+  contact_persons?: VendorCpItem[];
 }
 
 export interface LocationItem {
@@ -158,12 +163,7 @@ const form = useForm({
   address: '',
   phone_number: '',
   email: '',
-  contact_person_1: '',
-  cp_email_1: '',
-  cp_phone_1: '',
-  contact_person_2: '',
-  cp_email_2: '',
-  cp_phone_2: '',
+  contact_persons: [] as VendorCpItem[],
   category_id: null as number | null,
   parent_id: null as number | null,
   related_departement: null as number | null,
@@ -178,12 +178,6 @@ const formErrors = ref<Record<string, string>>({
   address: '',
   phone_number: '',
   email: '',
-  contact_person_1: '',
-  cp_email_1: '',
-  cp_phone_1: '',
-  contact_person_2: '',
-  cp_email_2: '',
-  cp_phone_2: '',
   category_id: '',
   parent_id: '',
   related_departement: '',
@@ -197,12 +191,6 @@ const resetFormErrors = () => {
     address: '',
     phone_number: '',
     email: '',
-    contact_person_1: '',
-    cp_email_1: '',
-    cp_phone_1: '',
-    contact_person_2: '',
-    cp_email_2: '',
-    cp_phone_2: '',
     category_id: '',
     parent_id: '',
     related_departement: '',
@@ -215,6 +203,15 @@ watch(() => form.name, (v) => { if (v && formErrors.value.name) formErrors.value
 watch(() => form.category_id, (v) => { if (v && formErrors.value.category_id) formErrors.value.category_id = ''; });
 watch(() => form.address, (v) => { if (v && formErrors.value.address) formErrors.value.address = ''; });
 watch(() => form.phone_number, (v) => { if (v && formErrors.value.phone_number) formErrors.value.phone_number = ''; });
+
+const handlePhoneNumberInput = (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  const filtered = target.value.replace(/[^0-9+\-\s]/g, '');
+  form.phone_number = filtered;
+  if (target.value !== filtered) {
+    target.value = filtered;
+  }
+};
 
 function getDescendantIds(locId: number): number[] {
   const result: number[] = [];
@@ -232,16 +229,20 @@ function getDescendantIds(locId: number): number[] {
 
 const generateVendorCode = () => {
   const existingVendors = props.vendors || [];
-  let nextNumber = 0;
+  let maxNumber = 0;
   if (existingVendors.length > 0) {
-    const numbers = existingVendors.map(vendor => {
-      const match = vendor.code.match(/^VN(\d{4})$/);
-      return match ? parseInt(match[1]) : -1;
+    existingVendors.forEach(vendor => {
+      const match = vendor.code.match(/^VN(\d+)$/);
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (num > maxNumber) {
+          maxNumber = num;
+        }
+      }
     });
-    nextNumber = Math.max(...numbers) + 1;
-    if (nextNumber < 0) nextNumber = 0;
   }
-  const formattedNumber = nextNumber.toString().padStart(4, '0');
+  const nextNumber = maxNumber > 0 ? maxNumber + 1 : 1;
+  const formattedNumber = nextNumber.toString().padStart(5, '0');
   form.code = `VN${formattedNumber}`;
   if (formErrors.value.code) {
     formErrors.value.code = '';
@@ -268,12 +269,16 @@ const populateForm = () => {
       form.address = item.address ?? '';
       form.phone_number = item.phone_number ?? '';
       form.email = item.email ?? '';
-      form.contact_person_1 = item.contact_person_1 ?? '';
-      form.cp_email_1 = item.cp_email_1 ?? '';
-      form.cp_phone_1 = item.cp_phone_1 ?? '';
-      form.contact_person_2 = item.contact_person_2 ?? '';
-      form.cp_email_2 = item.cp_email_2 ?? '';
-      form.cp_phone_2 = item.cp_phone_2 ?? '';
+      form.contact_persons = (item.contact_persons && item.contact_persons.length > 0)
+        ? item.contact_persons.map((cp: VendorCpItem) => ({
+            id: cp.id,
+            vendor_id: cp.vendor_id,
+            contact_person: cp.contact_person ?? '',
+            cp_email: cp.cp_email ?? '',
+            cp_phone: cp.cp_phone ?? '',
+            is_collapsed: false,
+          }))
+        : [{ contact_person: '', cp_email: '', cp_phone: '', is_collapsed: false }];
     }
   } else {
     // Create mode
@@ -284,17 +289,16 @@ const populateForm = () => {
     form.address = '';
     form.phone_number = '';
     form.email = '';
-    form.contact_person_1 = '';
-    form.cp_email_1 = '';
-    form.cp_phone_1 = '';
-    form.contact_person_2 = '';
-    form.cp_email_2 = '';
-    form.cp_phone_2 = '';
+    form.contact_persons = [{ contact_person: '', cp_email: '', cp_phone: '', is_collapsed: false }];
     form.category_id = null;
     form.parent_id = null;
     form.related_departement = null;
     form.is_active = true;
     form.is_consumable = '1';
+
+    if (props.activeTab === 'vendors') {
+      generateVendorCode();
+    }
   }
 };
 
@@ -365,12 +369,11 @@ const getPayload = () => {
       phone_number: form.phone_number,
       email: form.email,
       description: form.description,
-      contact_person_1: form.contact_person_1,
-      cp_email_1: form.cp_email_1,
-      cp_phone_1: form.cp_phone_1,
-      contact_person_2: form.contact_person_2,
-      cp_email_2: form.cp_email_2,
-      cp_phone_2: form.cp_phone_2,
+      contact_persons: form.contact_persons.map(cp => ({
+        contact_person: cp.contact_person,
+        cp_email: cp.cp_email || null,
+        cp_phone: cp.cp_phone || null,
+      })),
     };
   }
 
@@ -434,13 +437,25 @@ const submit = () => {
     if (!form.code || !form.code.trim()) {
       formErrors.value.code = t('masterData.validation.vendorCodeRequired');
       hasError = true;
-    } else if (!/^VN\d{4}$/.test(form.code)) {
+    } else if (!/^VN\d{5}$/.test(form.code)) {
       formErrors.value.code = t('masterData.validation.vendorCodeFormat');
       hasError = true;
     }
     if (!form.name || !form.name.trim()) {
       formErrors.value.name = t('masterData.validation.vendorNameRequired');
       hasError = true;
+    }
+    if (form.phone_number && !/^[0-9+\-\s]+$/.test(form.phone_number)) {
+      formErrors.value.phone_number = t('masterData.validation.phoneNumberFormat');
+      hasError = true;
+    }
+    if (form.contact_persons && form.contact_persons.length > 0) {
+      form.contact_persons.forEach((cp, idx) => {
+        if (cp.cp_phone && !/^[0-9+\-\s]+$/.test(cp.cp_phone)) {
+          formErrors.value[`contact_persons.${idx}.cp_phone`] = t('masterData.validation.cpPhoneFormat');
+          hasError = true;
+        }
+      });
     }
   } else {
     // uoms, brands, organizers, locations
@@ -811,26 +826,11 @@ onUnmounted(() => {
                   <span>{{ t('masterData.fields.vendorCode') }}<span class="text-destructive">*</span></span>
                 </FieldLabel>
                 <FieldContent>
-                  <div v-if="mode === 'create'" class="flex gap-2 w-full">
-                    <input
-                      type="text"
-                      v-model="form.code"
-                      disabled
-                      :placeholder="t('masterData.placeholders.vendorCodeNotGenerated')"
-                      class="flex-grow px-3 py-2 text-sm border rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed"
-                      :class="[formErrors.code ? 'border-destructive' : 'border-input']"
-                    />
-                    <Button type="button" @click="generateVendorCode" size="lg">
-                      {{ t('masterData.actions.generate') }}
-                    </Button>
-                  </div>
                   <input
-                    v-else
                     type="text"
                     :value="form.code"
                     disabled
-                    class="w-full px-3 py-2 text-sm border rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed"
-                    :class="[formErrors.code ? 'border-destructive' : 'border-input']"
+                    class="w-full px-3 py-2 text-sm border rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed border-input"
                   />
                 </FieldContent>
                 <FieldError v-if="formErrors.code">{{ formErrors.code }}</FieldError>
@@ -858,7 +858,8 @@ onUnmounted(() => {
                 <FieldContent>
                   <input
                     type="text"
-                    v-model="form.phone_number"
+                    :value="form.phone_number"
+                    @input="handlePhoneNumberInput"
                     maxlength="255"
                     :placeholder="t('masterData.placeholders.phoneNumber')"
                     class="w-full px-3 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors"
@@ -910,91 +911,11 @@ onUnmounted(() => {
                 </FieldContent>
               </Field>
 
-              <!-- Contact Person 1 Section -->
-              <div class="md:col-span-3 border-t pt-4 mt-2">
-                <h4 class="text-sm font-semibold text-foreground mb-3">{{ t('masterData.fields.contactPerson1') }}</h4>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Field>
-                    <FieldLabel>{{ t('masterData.fields.cp1Name') }}</FieldLabel>
-                    <FieldContent>
-                      <input
-                        type="text"
-                        v-model="form.contact_person_1"
-                        maxlength="255"
-                        :placeholder="t('masterData.placeholders.cp1Name')"
-                        class="w-full px-3 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors border-input focus:ring-primary/20 focus:border-primary"
-                      />
-                    </FieldContent>
-                  </Field>
-                  <Field>
-                    <FieldLabel>{{ t('masterData.fields.cp1Email') }}</FieldLabel>
-                    <FieldContent>
-                      <input
-                        type="email"
-                        v-model="form.cp_email_1"
-                        maxlength="255"
-                        :placeholder="t('masterData.placeholders.cp1Email')"
-                        class="w-full px-3 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors border-input focus:ring-primary/20 focus:border-primary"
-                      />
-                    </FieldContent>
-                  </Field>
-                  <Field>
-                    <FieldLabel>{{ t('masterData.fields.cp1Phone') }}</FieldLabel>
-                    <FieldContent>
-                      <input
-                        type="text"
-                        v-model="form.cp_phone_1"
-                        maxlength="255"
-                        :placeholder="t('masterData.placeholders.cp1Phone')"
-                        class="w-full px-3 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors border-input focus:ring-primary/20 focus:border-primary"
-                      />
-                    </FieldContent>
-                  </Field>
-                </div>
-              </div>
-
-              <!-- Contact Person 2 Section -->
-              <div class="md:col-span-3 border-t pt-4 mt-2">
-                <h4 class="text-sm font-semibold text-foreground mb-3">{{ t('masterData.fields.contactPerson2') }}</h4>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Field>
-                    <FieldLabel>{{ t('masterData.fields.cp2Name') }}</FieldLabel>
-                    <FieldContent>
-                      <input
-                        type="text"
-                        v-model="form.contact_person_2"
-                        maxlength="255"
-                        :placeholder="t('masterData.placeholders.cp2Name')"
-                        class="w-full px-3 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors border-input focus:ring-primary/20 focus:border-primary"
-                      />
-                    </FieldContent>
-                  </Field>
-                  <Field>
-                    <FieldLabel>{{ t('masterData.fields.cp2Email') }}</FieldLabel>
-                    <FieldContent>
-                      <input
-                        type="email"
-                        v-model="form.cp_email_2"
-                        maxlength="255"
-                        :placeholder="t('masterData.placeholders.cp2Email')"
-                        class="w-full px-3 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors border-input focus:ring-primary/20 focus:border-primary"
-                      />
-                    </FieldContent>
-                  </Field>
-                  <Field>
-                    <FieldLabel>{{ t('masterData.fields.cp2Phone') }}</FieldLabel>
-                    <FieldContent>
-                      <input
-                        type="text"
-                        v-model="form.cp_phone_2"
-                        maxlength="255"
-                        :placeholder="t('masterData.placeholders.cp2Phone')"
-                        class="w-full px-3 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors border-input focus:ring-primary/20 focus:border-primary"
-                      />
-                    </FieldContent>
-                  </Field>
-                </div>
-              </div>
+              <!-- Dynamic Collapsible Contact Persons Section -->
+              <VendorContactPersonsSection
+                v-model="form.contact_persons"
+                :errors="formErrors"
+              />
             </div>
 
             <!-- Simple items: UOMs, Organizers -->

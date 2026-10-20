@@ -76,7 +76,7 @@ class LotVendorSeparationTest extends TestCase
     public function test_existing_lot_with_legacy_vendor_preserves_vendor_information(): void
     {
         $legacyVendor = Vendor::factory()->create([
-            'code' => 'VN0001',
+            'code' => 'VN00001',
             'name' => 'PT Mitra Sejati',
         ]);
 

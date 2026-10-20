@@ -1909,7 +1909,46 @@ class ActualVendorSeeder extends Seeder
             DB::unprepared('SET IDENTITY_INSERT vendors ON;');
         }
 
-        foreach (array_chunk($records, 100) as $chunk) {
+        $vendorRecords = [];
+        $cpRecords = [];
+
+        foreach ($records as $r) {
+            $vendorRecords[] = [
+                'id' => $r['id'],
+                'code' => $r['code'],
+                'name' => $r['name'],
+                'address' => $r['address'],
+                'phone_number' => $r['phone_number'],
+                'email' => $r['email'],
+                'description' => $r['description'],
+                'created_at' => $r['created_at'],
+                'updated_at' => $r['updated_at'],
+            ];
+
+            if (!empty($r['contact_person_1']) || !empty($r['cp_email_1']) || !empty($r['cp_phone_1'])) {
+                $cpRecords[] = [
+                    'vendor_id' => $r['id'],
+                    'contact_person' => $r['contact_person_1'] ?? null,
+                    'cp_email' => $r['cp_email_1'] ?? null,
+                    'cp_phone' => $r['cp_phone_1'] ?? null,
+                    'created_at' => $r['created_at'],
+                    'updated_at' => $r['updated_at'],
+                ];
+            }
+
+            if (!empty($r['contact_person_2']) || !empty($r['cp_email_2']) || !empty($r['cp_phone_2'])) {
+                $cpRecords[] = [
+                    'vendor_id' => $r['id'],
+                    'contact_person' => $r['contact_person_2'] ?? null,
+                    'cp_email' => $r['cp_email_2'] ?? null,
+                    'cp_phone' => $r['cp_phone_2'] ?? null,
+                    'created_at' => $r['created_at'],
+                    'updated_at' => $r['updated_at'],
+                ];
+            }
+        }
+
+        foreach (array_chunk($vendorRecords, 100) as $chunk) {
             DB::table('vendors')->upsert(
                 $chunk,
                 ['id'],
@@ -1920,15 +1959,15 @@ class ActualVendorSeeder extends Seeder
                     'phone_number',
                     'email',
                     'description',
-                    'contact_person_1',
-                    'cp_email_1',
-                    'cp_phone_1',
-                    'contact_person_2',
-                    'cp_email_2',
-                    'cp_phone_2',
                     'updated_at',
                 ]
             );
+        }
+
+        if (!empty($cpRecords)) {
+            foreach (array_chunk($cpRecords, 100) as $chunk) {
+                DB::table('vendors_cp')->insert($chunk);
+            }
         }
 
         if ($isSqlsrv) {

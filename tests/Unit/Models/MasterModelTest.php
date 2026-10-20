@@ -10,6 +10,7 @@ use App\Models\Master\Organizer;
 use App\Models\Master\Subcategory;
 use App\Models\Master\Uom;
 use App\Models\Master\Vendor;
+use App\Models\Master\VendorCp;
 use App\Models\Inventory\Barang;
 use App\Models\Inventory\Lot;
 use App\Models\Inventory\Unit;
@@ -102,5 +103,32 @@ class MasterModelTest extends TestCase
         $this->assertTrue($organizer->lots->contains($lot));
         $this->assertTrue($vendor->lots->contains($lot));
         $this->assertTrue($lot->legacyVendor->is($vendor));
+    }
+
+    public function test_vendor_and_vendor_cp_relationship(): void
+    {
+        $vendor = Vendor::factory()->create();
+        $cp1 = VendorCp::factory()->create([
+            'vendor_id' => $vendor->id,
+            'contact_person' => 'Contact Person 1',
+            'cp_email' => 'cp1@vendor.com',
+            'cp_phone' => '0811111111',
+        ]);
+        $cp2 = VendorCp::factory()->create([
+            'vendor_id' => $vendor->id,
+            'contact_person' => 'Contact Person 2',
+            'cp_email' => 'cp2@vendor.com',
+            'cp_phone' => '0822222222',
+        ]);
+
+        $this->assertCount(2, $vendor->fresh()->contactPersons);
+        $this->assertTrue($vendor->contactPersons->contains($cp1));
+        $this->assertTrue($vendor->contactPersons->contains($cp2));
+        $this->assertTrue($cp1->vendor->is($vendor));
+
+        // Test cascade deletion
+        $vendor->delete();
+        $this->assertDatabaseMissing('vendors_cp', ['id' => $cp1->id]);
+        $this->assertDatabaseMissing('vendors_cp', ['id' => $cp2->id]);
     }
 }

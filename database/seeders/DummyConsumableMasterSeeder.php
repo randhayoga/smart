@@ -88,36 +88,65 @@ class DummyConsumableMasterSeeder extends Seeder
         }
 
         // 5. Consumable Vendors / Suppliers
+        $maxVendorNumber = 0;
+        $existingVendors = Vendor::where('code', 'like', 'VN%')->get(['code']);
+        foreach ($existingVendors as $ev) {
+            if (preg_match('/^VN(\d+)$/', $ev->code, $matches)) {
+                $num = (int) $matches[1];
+                if ($num > $maxVendorNumber) {
+                    $maxVendorNumber = $num;
+                }
+            }
+        }
+
         $vendors = [
             [
                 'name' => 'PT Surya Abadi Mandiri',
-                'code' => 'VN-SAM1',
                 'address' => 'Jl. Jenderal Sudirman No. 45, Jakarta',
                 'phone_number' => '081234567890',
                 'email' => 'sales@suryaabadi.com',
                 'description' => 'Supplier ATK dan Kertas Kantor',
-                'contact_person_1' => 'Budi Santoso',
-                'cp_email_1' => 'budi.santoso@suryaabadi.com',
-                'cp_phone_1' => '081234567891',
+                'contact_persons' => [
+                    [
+                        'contact_person' => 'Budi Santoso',
+                        'cp_email' => 'budi.santoso@suryaabadi.com',
+                        'cp_phone' => '081234567891',
+                    ],
+                ],
             ],
             [
                 'name' => 'PT Mitra Global Solusindo',
-                'code' => 'VN-MGS1',
                 'address' => 'Jl. Gatot Subroto No. 12, Jakarta',
                 'phone_number' => '081298765432',
                 'email' => 'contact@mitraglobal.com',
                 'description' => 'Distributor Alat Kantor & Perlengkapan Kerja',
-                'contact_person_1' => 'Dewi Lestari',
-                'cp_email_1' => 'dewi.lestari@mitraglobal.com',
-                'cp_phone_1' => '081298765433',
+                'contact_persons' => [
+                    [
+                        'contact_person' => 'Dewi Lestari',
+                        'cp_email' => 'dewi.lestari@mitraglobal.com',
+                        'cp_phone' => '081298765433',
+                    ],
+                ],
             ],
         ];
 
         foreach ($vendors as $vendorData) {
-            Vendor::firstOrCreate(
-                ['name' => $vendorData['name']],
-                $vendorData
-            );
+            $cps = $vendorData['contact_persons'] ?? [];
+            unset($vendorData['contact_persons']);
+
+            $vendor = Vendor::where('name', $vendorData['name'])->first();
+            if (! $vendor) {
+                $maxVendorNumber++;
+                $vendorData['code'] = 'VN' . str_pad((string) $maxVendorNumber, 5, '0', STR_PAD_LEFT);
+                $vendor = Vendor::create($vendorData);
+            }
+
+            foreach ($cps as $cp) {
+                $vendor->contactPersons()->firstOrCreate(
+                    ['contact_person' => $cp['contact_person']],
+                    $cp
+                );
+            }
         }
     }
 }

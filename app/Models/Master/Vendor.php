@@ -21,13 +21,16 @@ class Vendor extends Model
         'phone_number',
         'email',
         'description',
-        'contact_person_1',
-        'cp_email_1',
-        'cp_phone_1',
-        'contact_person_2',
-        'cp_email_2',
-        'cp_phone_2',
     ];
+
+    /**
+     * Contact persons for this vendor.
+     * VENDOR ||--o{ VENDORS_CP : "has many contact persons"
+     */
+    public function contactPersons(): HasMany
+    {
+        return $this->hasMany(VendorCp::class, 'vendor_id');
+    }
 
     /**
      * Lots supplied by this legacy vendor.

@@ -25,18 +25,12 @@ class VendorFactory extends Factory
     public function definition(): array
     {
         return [
-            'code' => 'VN' . fake()->unique()->numerify('####'),
+            'code' => 'VN' . fake()->unique()->numerify('#####'),
             'name' => fake()->company(),
             'address' => fake()->address(),
-            'phone_number' => fake()->phoneNumber(),
+            'phone_number' => '08' . fake()->numerify('##########'),
             'email' => fake()->safeEmail(),
             'description' => fake()->sentence(),
-            'contact_person_1' => fake()->name(),
-            'cp_email_1' => fake()->safeEmail(),
-            'cp_phone_1' => fake()->phoneNumber(),
-            'contact_person_2' => fake()->name(),
-            'cp_email_2' => fake()->safeEmail(),
-            'cp_phone_2' => fake()->phoneNumber(),
         ];
     }
 }

@@ -19,21 +19,44 @@ class VendorController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'code'             => 'required|string|size:6|regex:/^VN\d{4}$/|unique:vendors,code',
+            'code'             => 'required|string|size:7|regex:/^VN\d{5}$/|unique:vendors,code',
             'name'             => 'required|string|max:255|unique:vendors,name',
             'address'          => 'nullable|string|max:255',
-            'phone_number'     => 'nullable|string|max:255',
+            'phone_number'     => ['nullable', 'string', 'max:255', 'regex:/^[0-9+\-\s]+$/'],
             'email'            => 'nullable|email|max:255',
             'description'      => 'nullable|string|max:255',
-            'contact_person_1' => 'nullable|string|max:255',
-            'cp_email_1'       => 'nullable|email|max:255',
-            'cp_phone_1'       => 'nullable|string|max:255',
-            'contact_person_2' => 'nullable|string|max:255',
-            'cp_email_2'       => 'nullable|email|max:255',
-            'cp_phone_2'       => 'nullable|string|max:255',
+            'contact_persons'  => 'nullable|array',
+            'contact_persons.*.contact_person' => 'nullable|string|max:255',
+            'contact_persons.*.cp_email'       => 'nullable|email|max:255',
+            'contact_persons.*.cp_phone'       => ['nullable', 'string', 'max:255', 'regex:/^[0-9+\-\s]+$/'],
         ]);
 
-        Vendor::create($validated);
+        DB::transaction(function () use ($validated) {
+            $vendor = Vendor::create([
+                'code'         => $validated['code'],
+                'name'         => $validated['name'],
+                'address'      => $validated['address'] ?? null,
+                'phone_number' => $validated['phone_number'] ?? null,
+                'email'        => $validated['email'] ?? null,
+                'description'  => $validated['description'] ?? null,
+            ]);
+
+            if (!empty($validated['contact_persons'])) {
+                $cps = collect($validated['contact_persons'])
+                    ->filter(fn ($cp) => !empty($cp['contact_person']) || !empty($cp['cp_email']) || !empty($cp['cp_phone']))
+                    ->map(fn ($cp) => [
+                        'contact_person' => $cp['contact_person'] ?? null,
+                        'cp_email'       => $cp['cp_email'] ?? null,
+                        'cp_phone'       => $cp['cp_phone'] ?? null,
+                    ])
+                    ->values()
+                    ->all();
+
+                if (!empty($cps)) {
+                    $vendor->contactPersons()->createMany($cps);
+                }
+            }
+        });
 
         return redirect()->back()->with('success', __('master.vendors.created'));
     }
@@ -44,21 +67,46 @@ class VendorController extends Controller
     public function update(Request $request, Vendor $vendor): RedirectResponse
     {
         $validated = $request->validate([
-            'code'             => 'required|string|size:6|regex:/^VN\d{4}$/|unique:vendors,code,' . $vendor->id,
+            'code'             => 'required|string|size:7|regex:/^VN\d{5}$/|unique:vendors,code,' . $vendor->id,
             'name'             => 'required|string|max:255|unique:vendors,name,' . $vendor->id,
             'address'          => 'nullable|string|max:255',
-            'phone_number'     => 'nullable|string|max:255',
+            'phone_number'     => ['nullable', 'string', 'max:255', 'regex:/^[0-9+\-\s]+$/'],
             'email'            => 'nullable|email|max:255',
             'description'      => 'nullable|string|max:255',
-            'contact_person_1' => 'nullable|string|max:255',
-            'cp_email_1'       => 'nullable|email|max:255',
-            'cp_phone_1'       => 'nullable|string|max:255',
-            'contact_person_2' => 'nullable|string|max:255',
-            'cp_email_2'       => 'nullable|email|max:255',
-            'cp_phone_2'       => 'nullable|string|max:255',
+            'contact_persons'  => 'nullable|array',
+            'contact_persons.*.contact_person' => 'nullable|string|max:255',
+            'contact_persons.*.cp_email'       => 'nullable|email|max:255',
+            'contact_persons.*.cp_phone'       => ['nullable', 'string', 'max:255', 'regex:/^[0-9+\-\s]+$/'],
         ]);
 
-        $vendor->update($validated);
+        DB::transaction(function () use ($validated, $vendor) {
+            $vendor->update([
+                'code'         => $validated['code'],
+                'name'         => $validated['name'],
+                'address'      => $validated['address'] ?? null,
+                'phone_number' => $validated['phone_number'] ?? null,
+                'email'        => $validated['email'] ?? null,
+                'description'  => $validated['description'] ?? null,
+            ]);
+
+            $vendor->contactPersons()->delete();
+
+            if (!empty($validated['contact_persons'])) {
+                $cps = collect($validated['contact_persons'])
+                    ->filter(fn ($cp) => !empty($cp['contact_person']) || !empty($cp['cp_email']) || !empty($cp['cp_phone']))
+                    ->map(fn ($cp) => [
+                        'contact_person' => $cp['contact_person'] ?? null,
+                        'cp_email'       => $cp['cp_email'] ?? null,
+                        'cp_phone'       => $cp['cp_phone'] ?? null,
+                    ])
+                    ->values()
+                    ->all();
+
+                if (!empty($cps)) {
+                    $vendor->contactPersons()->createMany($cps);
+                }
+            }
+        });
 
         return redirect()->back()->with('success', __('master.vendors.updated'));
     }
