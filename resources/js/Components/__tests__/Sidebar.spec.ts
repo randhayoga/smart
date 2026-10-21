@@ -188,6 +188,19 @@ describe('Sidebar.vue', () => {
 
     expect(wrapper.text()).not.toContain('Audit Manajemen Stok');
     expect(wrapper.text()).not.toContain('Pergerakan Aset');
+    expect(wrapper.find('a[href="/smart/approve-deactivation"]').exists()).toBe(false);
+    expect(wrapper.find('a[href="/smart/approve-activation"]').exists()).toBe(false);
+  });
+
+  it('does NOT render approval deactivation or activation links for Admin', () => {
+    const wrapper = mountSidebar({
+      open: true,
+      isMobile: false,
+      collapsed: false,
+    });
+
+    expect(wrapper.find('a[href="/smart/approve-deactivation"]').exists()).toBe(false);
+    expect(wrapper.find('a[href="/smart/approve-activation"]').exists()).toBe(false);
   });
 
   it('renders Access Management section for Superadmin with access.manage permission', () => {

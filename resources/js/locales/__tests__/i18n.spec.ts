@@ -80,12 +80,12 @@ describe('i18n Configuration and Dictionaries', () => {
 
   it('should localize status pending taskbar title distinctly from page heading', () => {
     setI18nLanguage('en');
-    expect(i18n.global.t('approvals.statusPendingTaskbarTitle')).toBe('Status Approval: Pending');
-    expect(i18n.global.t('approvals.statusPendingTitle')).toBe('Status Approval: Requires Your Attention');
+    expect(i18n.global.t('approvals.statusPendingTaskbarTitle')).toBe('Deactivation Approval: Pending');
+    expect(i18n.global.t('approvals.statusPendingTitle')).toBe('Deactivation Approval: Requires Your Attention');
 
     setI18nLanguage('id');
-    expect(i18n.global.t('approvals.statusPendingTaskbarTitle')).toBe('Approval Status: Pending');
-    expect(i18n.global.t('approvals.statusPendingTitle')).toBe('Approval Status: Perlu Perhatian Anda');
+    expect(i18n.global.t('approvals.statusPendingTaskbarTitle')).toBe('Approval Deaktivasi: Pending');
+    expect(i18n.global.t('approvals.statusPendingTitle')).toBe('Approval Deaktivasi: Perlu Perhatian Anda');
   });
 
   it('should localize auditActionTypes properly in both languages', () => {

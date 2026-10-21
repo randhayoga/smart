@@ -16,6 +16,12 @@ import Combobox from '@/Components/Combobox.vue';
 import LocationCombobox from '@/Components/LocationCombobox.vue';
 import { Field, FieldLabel, FieldContent, FieldError } from '@/Components/ui/field';
 import { compressImageIfNeeded } from '@/utils/imageCompressor';
+import {
+  hasAssetStatus,
+  getBaseAssetStatus,
+  isRestrictedAssetStatus,
+  formatAssetStatusLabels,
+} from '@/lib/assetStatus';
 
 interface Props {
   open: boolean;
@@ -37,7 +43,7 @@ const emit = defineEmits<{
   (e: 'success'): void;
 }>();
 
-const { t } = useI18n();
+const { t, te } = useI18n();
 
 useModalLock(computed(() => props.open));
 
@@ -60,19 +66,7 @@ const arrNeedApproval = ['Rusak Total', 'Hilang'];
 const arrInactiveConditions = ['Rusak Total', 'Hilang'];
 
 const getStatusLabel = (s: string) => {
-  if (!s) return '';
-  const map: Record<string, string> = {
-    'tersedia': t('status.tersedia'),
-    'dipinjam': t('status.dipinjam'),
-    'tidak aktif': t('status.tidakAktif'),
-    'pending': t('status.pending'),
-    'pending:dm': t('status.pendingDm'),
-    'pending: dm': t('status.pendingDm'),
-    'pending:bod/boc': t('status.pendingBodBoc'),
-    'pending: bod/boc': t('status.pendingBodBoc'),
-    'belum diverifikasi': t('status.belumDiverifikasi'),
-  };
-  return map[s.toLowerCase()] || s;
+  return formatAssetStatusLabels(s, t, te);
 };
 
 const getConditionLabel = (c: string) => {
@@ -116,9 +110,7 @@ const isBorrowedUnit = computed(() => {
 });
 
 const isRestrictedStatus = (status: string | null | undefined) => {
-  if (!status) return false;
-  const s = String(status).trim().toLowerCase();
-  return s === 'tidak aktif' || s === 'pending' || s.startsWith('pending') || s === 'belum diverifikasi' || s === 'verifikasi ditolak';
+  return isRestrictedAssetStatus(status);
 };
 
 const hasRestrictedUnit = computed(() => {
@@ -139,9 +131,9 @@ const isDocumentDisabled = computed(() => {
 const isBodBocFieldVisible = computed(() => {
   if (!props.open) return false;
   if (isSingle.value) {
-    return selectedItem.value?.status === 'Pending:BoD/BoC';
+    return hasAssetStatus(selectedItem.value?.status, 'Pending:BoD/BoC');
   }
-  return props.items.length > 0 && props.items.every((item: any) => item.status === 'Pending:BoD/BoC');
+  return props.items.length > 0 && props.items.every((item: any) => hasAssetStatus(item.status, 'Pending:BoD/BoC'));
 });
 
 const form = useForm({
@@ -244,8 +236,9 @@ watch(() => form.condition, (newVal, oldVal) => {
 
   if (!isRestricted) {
     if (arrInactiveConditions.includes(newVal)) {
-      form.status = 'Pending:BoD/BoC';
-    } else if (oldVal && arrInactiveConditions.includes(oldVal) && (form.status === 'Pending' || form.status === 'Pending:BoD/BoC')) {
+      const baseStatus = isSingle.value ? getBaseAssetStatus(selectedItem.value?.status) : 'Tersedia';
+      form.status = `${baseStatus},Pending:DM`;
+    } else if (oldVal && arrInactiveConditions.includes(oldVal) && hasAssetStatus(form.status, 'Pending:DM')) {
       if (isSingle.value && selectedItem.value?.status && !isRestrictedStatus(selectedItem.value.status)) {
         form.status = selectedItem.value.status;
       } else {
@@ -331,7 +324,7 @@ watch(() => props.open, (val) => {
     form.type = item.type || item.borrowing_type || '';
     form.classification = item.classification || '';
     if (!isRestrictedStatus(item.status) && arrInactiveConditions.includes(form.condition)) {
-      form.status = 'Pending:BoD/BoC';
+      form.status = `${getBaseAssetStatus(item.status)},Pending:DM`;
     }
     form.price = item.price || '';
     form.image_url_name = item.image_url ? item.image_url.split('/').pop() || '' : '';

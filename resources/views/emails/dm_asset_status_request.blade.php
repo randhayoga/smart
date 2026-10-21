@@ -6,7 +6,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Asset Status Approval - SMART</title>
+    <title>Asset Deactivation Approval - SMART</title>
     <!--[if mso]>
     <style type="text/css">
         body, table, td, a { font-family: Arial, Helvetica, sans-serif !important; }
@@ -187,7 +187,7 @@
                 </div>
 
                 <p class="message">
-                    The asset deactivation request below has been approved by the <strong>BoD/BoC</strong> and the approval document has been uploaded. It currently requires your <strong>final approval</strong>.
+                    An asset deactivation request has been submitted below and requires your <strong>approval</strong> before proceeding to BoD/BoC approval.
                 </p>
 
                 <!-- Asset Info Table -->

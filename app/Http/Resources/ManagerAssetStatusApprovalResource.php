@@ -20,45 +20,48 @@ class ManagerAssetStatusApprovalResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $asset = $this->asset ?? $this->unit;
+        $asset = $this->asset;
         $lot = $asset?->lot;
-        $model = $lot?->model ?? $lot?->barang;
+        $model = $lot?->model;
 
-        $assetId = $this->asset_id ?? $this->unit_id;
+        $assetId = $this->asset_id;
 
-        // Fetch lifecycles for audit trail
-        $lifecycles = AssetLifecycle::with(['actor'])
-            ->where('asset_id', $assetId)
-            ->orderBy('id', 'desc')
-            ->get()
-            ->map(function ($lc) {
-                $duration = $lc->formatted_duration;
+        // Use eager-loaded lifecycles if available to avoid N+1 queries
+        $rawLifecycles = ($asset && $asset->relationLoaded('lifecycles'))
+            ? $asset->lifecycles->sortByDesc('id')->values()
+            : AssetLifecycle::with(['actor'])
+                ->where('asset_id', $assetId)
+                ->orderBy('id', 'desc')
+                ->get();
 
-                $actorRole = 'System';
-                $actorName = 'System';
-                if ($lc->actor) {
-                    $actorName = $lc->actor->name ?? '-';
-                    if ($lc->actor->role === 'admin') {
-                        $actorRole = 'Admin';
-                    } else if (in_array($lc->actor->role, ['manager', 'ifs_manager'])) {
-                        $actorRole = 'Manager';
-                    } else {
-                        $actorRole = 'User';
-                    }
+        $lifecycles = $rawLifecycles->map(function ($lc) {
+            $duration = $lc->formatted_duration;
+
+            $actorRole = 'System';
+            $actorName = 'System';
+            if ($lc->actor) {
+                $actorName = $lc->actor->name ?? '-';
+                if ($lc->actor->role === 'admin') {
+                    $actorRole = 'Admin';
+                } else if (in_array($lc->actor->role, ['manager', 'ifs_manager'])) {
+                    $actorRole = 'Manager';
+                } else {
+                    $actorRole = 'User';
                 }
+            }
 
-                return [
-                    'waktu' => $lc->start_date ? $lc->start_date->format('d-m-Y H:i:s') : '-',
-                    'status' => $lc->status ?? '-',
-                    'action_type' => $lc->action_type ?? '-',
-                    'aktor' => "{$actorRole}: {$actorName}",
-                    'durasi' => $duration,
-                    'catatan' => $lc->note ?? '-',
-                ];
-            });
+            return [
+                'waktu' => $lc->start_date ? $lc->start_date->format('d-m-Y H:i:s') : '-',
+                'status' => $lc->status ?? '-',
+                'action_type' => $lc->action_type ?? '-',
+                'aktor' => "{$actorRole}: {$actorName}",
+                'durasi' => $duration,
+                'catatan' => $lc->note ?? '-',
+            ];
+        });
 
-        $catName = $model?->type?->category?->name ?? $model?->subcategory?->category?->name ?? '-';
-        $typeName = $model?->type?->name ?? $model?->subcategory?->name ?? '-';
+        $catName = $model?->type?->category?->name ?? '-';
+        $typeName = $model?->type?->name ?? '-';
 
         return [
             'id' => $this->id,

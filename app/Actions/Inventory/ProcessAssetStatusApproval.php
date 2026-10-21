@@ -36,8 +36,7 @@ class ProcessAssetStatusApproval
             if ($decision === 'approved') {
                 if ($asset) {
                     $asset->update([
-                        'condition' => $approval->proposed_condition,
-                        'status' => 'Tidak Aktif',
+                        'status' => 'Tidak Aktif,Pending:BoD/BoC',
                     ]);
                 }
             } else {

@@ -251,27 +251,6 @@ export const userNavigation: NavSection[] = [
     */
     // ==========================================
 
-    {
-        id: 'approval_deletion',
-        title: 'APPROVAL PENGHAPUSAN',
-        titleKey: 'nav.sections.approvalDeletion',
-        items: [
-            {
-                id: 'need_approval_status',
-                title: 'Perlu Approval',
-                titleKey: 'nav.items.needApproval',
-                href: '/smart/approve-deactivation',
-                icon: FileX,
-            },
-            {
-                id: 'processed_status',
-                title: 'Sudah Diproses',
-                titleKey: 'nav.items.processed',
-                href: '/smart/approve-deactivation?history=true',
-                icon: Shredder,
-            },
-        ],
-    },
 
     // ==========================================
     // [PHASE 2 - REGULAR USER REQUESTS & CARTS]

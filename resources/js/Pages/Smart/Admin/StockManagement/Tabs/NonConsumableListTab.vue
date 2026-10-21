@@ -33,6 +33,11 @@ import DeleteErrorModal from '@/Components/DeleteErrorModal.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import EditAssetModal from '../Modals/EditAssetModal.vue';
 import DetailAssetModal from '../Modals/DetailAssetModal.vue';
+import {
+  parseAssetStatuses,
+  hasAssetStatus,
+  getAssetStatusLabel,
+} from '@/lib/assetStatus';
 import { printManajemenStok } from '@/utils/printManajemenStok';
 import { exportCSV } from '@/utils/exportCSV';
 import { exportExcel } from '@/utils/exportExcel';
@@ -343,18 +348,21 @@ const scopedUnits = computed(() => {
   const units = props.units || [];
   switch (props.statusScope) {
     case 'unverified':
-      return units.filter(u => String(u?.status || '').trim().toLowerCase() === 'belum diverifikasi');
+      return units.filter(u => hasAssetStatus(u?.status, 'Belum Diverifikasi'));
     case 'pending:bod/boc':
-      return units.filter(u => ['pending:bod/boc', 'pending'].includes(String(u?.status || '').trim().toLowerCase()));
+      return units.filter(u => hasAssetStatus(u?.status, 'Pending:BoD/BoC') || String(u?.status || '').trim().toLowerCase() === 'pending');
     case 'pending:manager':
-      return units.filter(u => ['pending:dm', 'pending:manager'].includes(String(u?.status || '').trim().toLowerCase()));
+      return units.filter(u => hasAssetStatus(u?.status, 'Pending:DM') || hasAssetStatus(u?.status, 'Pending:Manager'));
     case 'all':
       return units;
     case 'standard':
     default:
       return units.filter(u => {
-        const s = String(u?.status || '').trim().toLowerCase();
-        return s !== 'belum diverifikasi' && !s.startsWith('pending');
+        const tokens = parseAssetStatuses(u?.status);
+        if (tokens.length === 0) return true;
+        if (tokens.some(t => t.toLowerCase() === 'belum diverifikasi')) return false;
+        // Include any unit that has at least one non-pending status token (e.g. 'Tersedia,Pending:DM', 'Tidak Aktif,Pending:BoD/BoC', 'Dihapus')
+        return tokens.some(t => !t.toLowerCase().startsWith('pending'));
       });
   }
 });
@@ -385,7 +393,7 @@ const filteredUnits = computed(() => {
     list = list.filter(u => {
       const status = (u.status || '').toLowerCase();
       const proposed = (u.proposed_status || '').toLowerCase();
-      return status === filterVal || (['pending', 'dihapus'].includes(status) && proposed === filterVal);
+      return hasAssetStatus(u.status, filterVal) || status === filterVal || (['pending', 'dihapus'].includes(status) && proposed === filterVal);
     });
   }
 
@@ -482,44 +490,16 @@ watch(categoryFilter, () => {
 const availableStatuses = computed(() => {
   const dynamic = Array.from(new Set(
     scopedUnits.value
-      .map((u: any) => u.status)
+      .flatMap((u: any) => parseAssetStatuses(u.status))
       .filter((s): s is string => !!s)
   ));
   if (dynamic.length > 0) return dynamic;
-  return ['Tersedia', 'Dipinjam', 'Tidak Aktif', 'Verifikasi Ditolak'];
+  return ['Tersedia', 'Dipinjam', 'Tidak Aktif', 'Dihapus', 'Verifikasi Ditolak'];
 });
 const availableConditions = ['Bagus', 'Rusak', 'Rusak Total', 'Hilang'];
 
-const STATUS_LABEL_MAP: Record<string, string> = {
-  'tersedia': 'status.tersedia',
-  'available': 'status.tersedia',
-  'dipinjam': 'status.dipinjam',
-  'tidak aktif': 'status.tidakAktif',
-  'pending': 'status.pending',
-  'pending:dm': 'status.pendingDm',
-  'pending: dm': 'status.pendingDm',
-  'pending:manager': 'status.pendingDm',
-  'pending: manager': 'status.pendingDm',
-  'pending:bod/boc': 'status.pendingBodBoc',
-  'pending: bod/boc': 'status.pendingBodBoc',
-  'bagus': 'status.bagus',
-  'rusak': 'status.rusak',
-  'rusak total': 'status.rusakTotal',
-  'hilang': 'status.hilang',
-  'dihapus': 'status.dihapus',
-  'ditolak': 'status.ditolak',
-  'disetujui': 'status.disetujui',
-  'sukses': 'status.sukses',
-  'belum diverifikasi': 'status.belumDiverifikasi',
-  'unverified': 'status.belumDiverifikasi',
-  'verifikasi ditolak': 'status.verifikasiDitolak',
-  'verification rejected': 'status.verifikasiDitolak',
-};
-
 const getStatusLabel = (status: string) => {
-  if (!status) return '';
-  const key = STATUS_LABEL_MAP[status.toLowerCase()];
-  return key && te(key) ? t(key) : status;
+  return getAssetStatusLabel(status, t, te);
 };
 
 const CONDITION_KEY_MAP: Record<string, string> = {

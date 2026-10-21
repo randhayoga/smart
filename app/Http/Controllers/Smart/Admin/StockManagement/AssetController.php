@@ -100,7 +100,7 @@ class AssetController extends Controller
         unset($validated['specification']);
 
         if ($needApproval) {
-            $validated['status'] = 'Pending:BoD/BoC';
+            $validated['status'] = 'Tersedia,Pending:DM';
         } else {
             $validated['status'] = 'Belum Diverifikasi';
         }
@@ -149,6 +149,10 @@ class AssetController extends Controller
                 'memo_url' => $memoUrl,
                 'lost_doc_url' => $lostDocUrl,
             ]);
+
+            dispatch(function () use ($asset) {
+                app(\App\Services\NotificationService::class)->notifyIfsManagerPendingDm($asset);
+            })->afterResponse();
         } elseif ($asset->status === 'Belum Diverifikasi') {
             $approval = AssetActivationApproval::create([
                 'asset_id' => $asset->id,
@@ -168,7 +172,7 @@ class AssetController extends Controller
      */
     public function update(Request $request, Asset $asset)
     {
-        if ($asset->status === 'Pending:BoD/BoC' && $request->hasFile('bod_boc_approval_file')) {
+        if ($asset->hasStatus('Pending:BoD/BoC') && $request->hasFile('bod_boc_approval_file')) {
             $request->validate([
                 'bod_boc_approval_file' => 'required|file|mimes:pdf,jpeg,jpg,png,webp|max:2048',
             ], [
@@ -181,7 +185,8 @@ class AssetController extends Controller
                 $bodBocUrl = app(\App\Services\ImageUploadService::class)->storeImageOrFile($request->file('bod_boc_approval_file'), 'bod_boc_approvals');
 
                 $approval = AssetStatusApproval::where('asset_id', $asset->id)
-                    ->where('decision', 'pending')
+                    ->where('decision', 'approved')
+                    ->latest('id')
                     ->first();
                 if ($approval) {
                     if ($approval->bod_boc_approval_url && Storage::disk('local')->exists($approval->bod_boc_approval_url)) {
@@ -190,9 +195,8 @@ class AssetController extends Controller
                     $approval->update(['bod_boc_approval_url' => $bodBocUrl]);
                 }
 
-                // Change status to Pending:DM
-                $asset->update(['status' => 'Pending:DM']);
-                app(\App\Services\NotificationService::class)->notifyIfsManagerPendingDm($asset);
+                // Change status to Dihapus without triggering duplicate Perubahan status lifecycle
+                Asset::withoutEvents(fn () => $asset->update(['status' => 'Dihapus']));
 
                 // Close active lifecycle
                 AssetLifecycle::where('asset_id', $asset->id)
@@ -203,7 +207,7 @@ class AssetController extends Controller
                 AssetLifecycle::create([
                     'asset_id' => $asset->id,
                     'action_type' => 'Approval',
-                    'status' => 'Pending:DM',
+                    'status' => 'Dihapus',
                     'condition' => $asset->condition,
                     'location_id' => $asset->location_id,
                     'start_date' => now(),
@@ -220,7 +224,7 @@ class AssetController extends Controller
         $arrNeedApproval = ['Rusak Total', 'Hilang'];
 
         $currentStatusLower = strtolower(trim($asset->status ?? ''));
-        $isRestricted = in_array($currentStatusLower, ['tidak aktif', 'pending', 'pending:bod/boc', 'belum diverifikasi', 'verifikasi ditolak']) || str_starts_with($currentStatusLower, 'pending') || in_array($asset->condition, $arrInactiveConditions);
+        $isRestricted = collect($asset->statuses)->contains(fn ($s) => in_array(strtolower($s), ['tidak aktif', 'dihapus', 'pending', 'pending:dm', 'pending:bod/boc', 'belum diverifikasi', 'verifikasi ditolak']) || str_starts_with(strtolower($s), 'pending')) || in_array($asset->condition, $arrInactiveConditions);
 
         $borrowingType = $request->input('borrowing_type', $request->input('type'));
         if ($borrowingType !== null) {
@@ -231,7 +235,23 @@ class AssetController extends Controller
             'number' => 'required|string|max:50|unique:assets,number,' . $asset->id,
             'lot_id' => 'required|exists:lots,id',
             'location_id' => 'required|exists:locations,id',
-            'status' => ['required', 'string', 'in:Tersedia,Dipinjam,Tidak Aktif,Pending,Pending:BoD/BoC,Belum Diverifikasi,Verifikasi Ditolak'],
+            'status' => [
+                'required',
+                'string',
+                Rule::in([
+                    'Tersedia',
+                    'Dipinjam',
+                    'Tidak Aktif',
+                    'Dihapus',
+                    'Pending',
+                    'Pending:DM',
+                    'Pending:BoD/BoC',
+                    'Tersedia,Pending:DM',
+                    'Tidak Aktif,Pending:BoD/BoC',
+                    'Belum Diverifikasi',
+                    'Verifikasi Ditolak',
+                ]),
+            ],
             'condition' => ['required', 'string', 'in:Bagus,Rusak,Rusak Total,Hilang'],
             'borrowing_type' => ['required', 'string', 'in:LT,ST'],
             'classification' => ['required', 'string', 'in:Aset,Inventaris'],
@@ -383,11 +403,11 @@ class AssetController extends Controller
             unset($validated['burden'], $validated['project_id']);
         }
 
-        $previousStatus = str_starts_with($asset->status ?? '', 'Pending') ? 'Tersedia' : $asset->status;
+        $previousStatus = $asset->base_status;
         $previousCondition = $asset->condition;
 
         if ($needApproval) {
-            $validated['status'] = 'Pending:BoD/BoC';
+            $validated['status'] = "{$previousStatus},Pending:DM";
         }
 
         $isComp = ($lot->model?->type?->category?->code === 'COMP');
@@ -425,6 +445,10 @@ class AssetController extends Controller
                     'memo_url' => $memoUrl,
                     'lost_doc_url' => $lostDocUrl,
                 ]);
+
+                dispatch(function () use ($asset) {
+                app(\App\Services\NotificationService::class)->notifyIfsManagerPendingDm($asset);
+            })->afterResponse();
             }
         }
 

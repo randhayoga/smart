@@ -32,11 +32,13 @@ class ManagerBulkAssetDeactivationApprovalController extends Controller
         $decision = $validated['decision'];
         $note = $validated['note'];
 
-        foreach ($ids as $id) {
-            $approval = AssetStatusApproval::with('asset')->find($id);
+        $approvals = AssetStatusApproval::with('asset.lot.model.brand')
+            ->whereIn('id', $ids)
+            ->where('decision', 'pending')
+            ->get();
 
-            // Skip if not found, decision is not pending, or asset status is Pending:BoD/BoC
-            if (!$approval || $approval->decision !== 'pending' || $approval->asset?->status === 'Pending:BoD/BoC') {
+        foreach ($approvals as $approval) {
+            if (!$approval->asset || !$approval->asset->hasStatus('Pending:DM')) {
                 continue;
             }
 

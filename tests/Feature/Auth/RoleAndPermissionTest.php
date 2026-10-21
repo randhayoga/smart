@@ -54,19 +54,27 @@ class RoleAndPermissionTest extends TestCase
             $this->assertTrue(Permission::where('group', $group)->exists());
         }
 
-        // Verify Superadmin has all permissions, Admin has all permissions except access.manage
+        // Verify Superadmin has all permissions, Admin has all permissions except access.manage and inventory.status_approval.decide
         $allPermissionsCount = Permission::count();
         $superadmin = Role::where('name', 'superadmin')->firstOrFail();
         $admin = Role::where('name', 'admin')->firstOrFail();
 
         $this->assertEquals($allPermissionsCount, $superadmin->permissions()->count());
-        $this->assertEquals($allPermissionsCount - 1, $admin->permissions()->count());
+        $this->assertEquals($allPermissionsCount - 2, $admin->permissions()->count());
         $this->assertTrue($superadmin->hasPermissionTo('access.manage'));
         $this->assertFalse($admin->hasPermissionTo('access.manage'));
+        $this->assertFalse($admin->hasPermissionTo('inventory.status_approval.decide'));
+        $this->assertTrue($admin->hasPermissionTo('inventory.status_approval.request'));
 
-        // Verify Manager has approval permissions but not master manage
+        // Verify IFS Manager has unit status decision permissions
+        $ifsManager = Role::where('name', 'ifs_manager')->firstOrFail();
+        $this->assertTrue($ifsManager->hasPermissionTo('inventory.status_approval.decide'));
+        $this->assertFalse($ifsManager->hasPermissionTo('inventory.status_approval.request'));
+
+        // Verify Manager has requisition approval permissions but not unit status decision or master manage
         $manager = Role::where('name', 'manager')->firstOrFail();
         $this->assertTrue($manager->hasPermissionTo('requests.approve'));
+        $this->assertFalse($manager->hasPermissionTo('inventory.status_approval.decide'));
         $this->assertFalse($manager->hasPermissionTo('master.manage'));
 
         // Verify Regular User has browse/create permissions

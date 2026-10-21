@@ -45,7 +45,6 @@ class AssetStatusApproval extends Model
 
     protected $fillable = [
         'asset_id',
-        'unit_id',
         'requester_id',
         'approver_id',
         'proposed_condition',
@@ -71,21 +70,6 @@ class AssetStatusApproval extends Model
     public function asset(): BelongsTo
     {
         return $this->belongsTo(Asset::class, 'asset_id');
-    }
-
-    public function unit(): BelongsTo
-    {
-        return $this->belongsTo(Asset::class, 'asset_id');
-    }
-
-    public function setUnitIdAttribute($value): void
-    {
-        $this->attributes['asset_id'] = $value;
-    }
-
-    public function getUnitIdAttribute()
-    {
-        return $this->attributes['asset_id'] ?? null;
     }
 
     /**

@@ -1,11 +1,16 @@
 <script setup lang="ts">
 /**
  * Status Badge component mapping entity lifecycle statuses and conditions to visual pill styles.
- * Supports reactive bilingual localization (Bahasa Indonesia & English).
+ * Supports multi-status comma-separated strings and reactive bilingual localization (Bahasa Indonesia & English).
  */
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { cn } from '@/lib/utils';
+import {
+  parseAssetStatuses,
+  getAssetStatusBadgeClass,
+  getAssetStatusLabel,
+} from '@/lib/assetStatus';
 
 const props = defineProps<{
   status?: string | null;
@@ -15,89 +20,42 @@ const props = defineProps<{
 
 const { t, te } = useI18n();
 
-const STATUS_KEY_MAP: Record<string, string> = {
-  'tersedia': 'status.tersedia',
-  'available': 'status.tersedia',
-  'dipinjam': 'status.dipinjam',
-  'tidak aktif': 'status.tidakAktif',
-  'pending': 'status.pending',
-  'pending:dm': 'status.pendingDm',
-  'pending: dm': 'status.pendingDm',
-  'bagus': 'status.bagus',
-  'rusak': 'status.rusak',
-  'rusak total': 'status.rusakTotal',
-  'hilang': 'status.hilang',
-  'dihapus': 'status.dihapus',
-  'ditolak': 'status.ditolak',
-  'rejected': 'status.ditolak',
-  'disetujui': 'status.disetujui',
-  'approved': 'status.disetujui',
-  'sukses': 'status.sukses',
-  'success': 'status.sukses',
-  'belum diverifikasi': 'status.belumDiverifikasi',
-  'unverified': 'status.belumDiverifikasi',
-  'verifikasi ditolak': 'status.verifikasiDitolak',
-  'verification rejected': 'status.verifikasiDitolak',
-  'menunggu approval': 'status.menungguApproval',
-  'menunggu persetujuan': 'status.menungguApproval',
-  'di-approve': 'status.diApprove',
-  'diapprove': 'status.diApprove',
-  'dikonfirmasi admin': 'status.dikonfirmasiAdmin',
-  'dikonfirmasi': 'status.dikonfirmasiAdmin',
-  'menunggu serah terima': 'status.menungguSerahTerima',
-  'menunggu_serah_terima': 'status.menungguSerahTerima',
-  'serah terima': 'status.serahTerima',
-  'handover': 'status.serahTerima',
-  'selesai': 'status.selesai',
-  'dibatalkan': 'status.dibatalkan',
-  'cancel': 'status.dibatalkan',
-  'parsial': 'status.parsial',
-  'partial': 'status.parsial',
-};
-
-const badgeClass = computed(() => {
-  const s = props.status?.trim();
-  if (!s) return 'bg-gray-100 text-gray-800';
-  const lower = s.toLowerCase();
-
-  if (s === 'Belum Diverifikasi' || lower === 'belum diverifikasi' || lower === 'unverified') {
-    return 'bg-amber-50 text-amber-900 border border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-700';
-  }
-  if (s === 'Verifikasi Ditolak' || lower === 'verifikasi ditolak' || lower === 'verification rejected') {
-    return 'bg-rose-50 text-rose-900 border border-rose-300 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-700';
-  }
-  if (s === 'Tersedia' || lower === 'tersedia' || lower === 'available') return 'bg-emerald-100 text-emerald-800';
-  if (s === 'Dipinjam' || lower === 'dipinjam') return 'bg-amber-100 text-amber-800';
-  if (s === 'Tidak Aktif' || lower === 'tidak aktif') return 'bg-gray-200 text-gray-800';
-  if (s === 'Pending' || lower === 'pending' || lower.startsWith('pending')) return 'bg-purple-100 text-purple-800';
-  if (s === 'Bagus' || lower === 'bagus') return 'bg-emerald-100 text-emerald-800';
-  if (s === 'Rusak' || lower === 'rusak') return 'bg-rose-100 text-rose-800';
-  if (s === 'Rusak Total' || lower === 'rusak total') return 'bg-red-100 text-red-800';
-  if (s === 'Hilang' || lower === 'hilang') return 'bg-rose-100 text-rose-800';
-  if (lower === 'dihapus' || lower === 'ditolak' || lower === 'rejected' || lower === 'cancel' || lower === 'dibatalkan') return 'bg-rose-100 text-rose-800';
-  if (lower === 'disetujui' || lower === 'approved' || lower === 'sukses' || lower === 'success') return 'bg-emerald-100 text-emerald-800';
-  return 'bg-gray-100 text-gray-800';
+const statusTokens = computed(() => {
+  const tokens = parseAssetStatuses(props.status);
+  return tokens.length > 0 ? tokens : [''];
 });
 
-const displayStatus = computed(() => {
-  if (!props.status) return '';
-  const s = props.status.trim().toLowerCase();
-  const key = STATUS_KEY_MAP[s];
-  if (key && te(key)) {
-    return t(key);
-  }
-  return props.status;
-});
+const badgeItems = computed(() =>
+  statusTokens.value.map((token) => ({
+    raw: token,
+    label: getAssetStatusLabel(token, t, te),
+    badgeClass: getAssetStatusBadgeClass(token),
+  }))
+);
 </script>
 
 <template>
   <span
+    v-if="badgeItems.length <= 1"
     :class="cn(
       'inline-flex items-center px-2 py-0.5 rounded-md font-semibold',
-      badgeClass,
+      badgeItems[0]?.badgeClass,
       props.class
     )"
   >
-    {{ displayStatus }}
+    {{ badgeItems[0]?.label }}
+  </span>
+  <span v-else class="inline-flex flex-wrap items-center gap-1.5">
+    <span
+      v-for="(item, idx) in badgeItems"
+      :key="`${item.raw}-${idx}`"
+      :class="cn(
+        'inline-flex items-center px-2 py-0.5 rounded-md font-semibold',
+        item.badgeClass,
+        props.class
+      )"
+    >
+      {{ item.label }}
+    </span>
   </span>
 </template>

@@ -66,7 +66,7 @@ describe('NonConsumableListTab.vue - statusScope Flag', () => {
     {
       id: 2,
       number: '00002-LP-PTRE-26',
-      status: 'Pending:BoD/BoC',
+      status: 'Tidak Aktif,Pending:BoD/BoC',
       condition: 'Rusak Total',
       price: 2000000,
       image_url: '',
@@ -82,7 +82,7 @@ describe('NonConsumableListTab.vue - statusScope Flag', () => {
     {
       id: 3,
       number: '00003-LP-PTRE-26',
-      status: 'Pending:DM',
+      status: 'Tersedia,Pending:DM',
       condition: 'Rusak',
       price: 3000000,
       image_url: '',
@@ -174,17 +174,17 @@ describe('NonConsumableListTab.vue - statusScope Flag', () => {
     });
   };
 
-  it('defaults to statusScope="standard" which excludes unverified and pending units', () => {
+  it('defaults to statusScope="standard" which excludes unverified units while keeping dual-status units visible', () => {
     const wrapper = mountTab();
     const vm = wrapper.vm as any;
 
     const numbers = vm.filteredUnits.map((u: any) => u.number);
+    expect(numbers).toContain('00002-LP-PTRE-26'); // Tidak Aktif,Pending:BoD/BoC
+    expect(numbers).toContain('00003-LP-PTRE-26'); // Tersedia,Pending:DM
     expect(numbers).toContain('00004-LP-PTRE-26'); // Tersedia
     expect(numbers).toContain('00005-LP-PTRE-26'); // Tidak Aktif
     expect(numbers).toContain('00006-LP-PTRE-26'); // Standby
     expect(numbers).not.toContain('00001-LP-PTRE-26'); // Belum Diverifikasi
-    expect(numbers).not.toContain('00002-LP-PTRE-26'); // Pending:BoD/BoC
-    expect(numbers).not.toContain('00003-LP-PTRE-26'); // Pending:DM
   });
 
   it('filters to only unverified units when statusScope="unverified"', () => {
@@ -229,7 +229,8 @@ describe('NonConsumableListTab.vue - statusScope Flag', () => {
     const standardWrapper = mountTab({ statusScope: 'standard' });
     const standardVm = standardWrapper.vm as any;
     expect(standardVm.availableStatuses).not.toContain('Belum Diverifikasi');
-    expect(standardVm.availableStatuses).not.toContain('Pending:BoD/BoC');
+    expect(standardVm.availableStatuses).toContain('Pending:BoD/BoC');
+    expect(standardVm.availableStatuses).toContain('Pending:DM');
     expect(standardVm.availableStatuses).toContain('Tersedia');
 
     const allWrapper = mountTab({ statusScope: 'all' });

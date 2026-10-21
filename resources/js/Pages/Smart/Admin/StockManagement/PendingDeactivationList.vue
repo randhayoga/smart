@@ -21,10 +21,10 @@ const props = defineProps<Props>();
 const { t } = useI18n();
 
 const computedTabs = computed(() => [
-  { id: 'Pending:BoD/BoC', label: 'Pending:BoD/BoC' },
-  { id: 'Pending:DM', label: 'Pending:DM' }
+  { id: 'Pending:DM', label: 'Pending:DM' },
+  { id: 'Pending:BoD/BoC', label: 'Pending:BoD/BoC' }
 ]);
-const activeTab = ref('Pending:BoD/BoC');
+const activeTab = ref('Pending:DM');
 
 const currentStatusScope = computed(() => {
   return activeTab.value === 'Pending:BoD/BoC' ? 'pending:bod/boc' : 'pending:manager';

@@ -72,8 +72,8 @@ class EmployeeLoanController extends Controller
             $location = $asset?->location?->full_name ?? '-';
 
             $pendingApproval = $asset?->statusApprovals?->firstWhere('decision', 'pending');
-            $approvedApproval = $asset?->status === 'Tidak Aktif' 
-                ? $asset?->statusApprovals?->where('decision', 'approved')->sortByDesc('updated_at')->first() 
+            $approvedApproval = ($asset && ($asset->hasStatus('Tidak Aktif') || $asset->hasStatus('Pending:BoD/BoC') || $asset->hasStatus('Dihapus')))
+                ? $asset->statusApprovals?->where('decision', 'approved')->sortByDesc('id')->first()
                 : null;
 
             $assetData = $asset ? [

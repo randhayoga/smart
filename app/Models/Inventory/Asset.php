@@ -23,7 +23,7 @@ class Asset extends Model
     {
         // 1. Log when an Asset is created
         static::created(function (Asset $asset) {
-            if (!str_starts_with($asset->status ?? '', 'Pending')) {
+            if (!$asset->hasStatus('Pending:DM') && !str_starts_with($asset->status ?? '', 'Pending')) {
                 AssetLifecycle::create([
                     'asset_id' => $asset->id,
                     'action_type' => 'Registrasi',
@@ -45,7 +45,7 @@ class Asset extends Model
             $changed = array_intersect(array_keys($dirty), $tracked);
 
             if (!empty($changed)) {
-                $isPendingStatus = ($asset->isDirty('status') && str_starts_with($asset->status ?? '', 'Pending'));
+                $isPendingStatus = ($asset->isDirty('status') && $asset->hasStatus('Pending:DM'));
 
                 $actions = [];
 
@@ -55,7 +55,7 @@ class Asset extends Model
                     $newStatus = $asset->status;
 
                     $approval = null;
-                    if (str_starts_with((string)$oldStatus, 'Pending')) {
+                    if (str_contains((string)$oldStatus, 'Pending')) {
                         $approval = AssetStatusApproval::where('asset_id', $asset->id)
                             ->whereIn('decision', ['approved', 'rejected'])
                             ->orderBy('updated_at', 'desc')
@@ -246,9 +246,51 @@ class Asset extends Model
         return $this->hasMany(AssetStatusApproval::class, 'asset_id');
     }
 
-    public function unitStatusApprovals(): HasMany
+    /**
+     * Get the array of active statuses for this asset.
+     */
+    public function getStatusesAttribute(): array
     {
-        return $this->hasMany(AssetStatusApproval::class, 'asset_id');
+        if (empty($this->status)) {
+            return [];
+        }
+
+        return array_values(array_filter(array_map('trim', explode(',', $this->status))));
+    }
+
+    /**
+     * Check if the asset currently has the given status.
+     */
+    public function hasStatus(string $status): bool
+    {
+        return in_array($status, $this->statuses, true);
+    }
+
+    /**
+     * Scope to filter assets that contain a specific status in their comma-separated status string.
+     */
+    public function scopeWhereHasStatus($query, string $status)
+    {
+        return $query->where(function ($q) use ($status) {
+            $q->where('status', $status)
+              ->orWhere('status', 'like', "{$status},%")
+              ->orWhere('status', 'like', "%,{$status},%")
+              ->orWhere('status', 'like', "%,{$status}");
+        });
+    }
+
+    /**
+     * Get the primary base status of the asset (excluding Pending:* tokens).
+     */
+    public function getBaseStatusAttribute(): string
+    {
+        foreach ($this->statuses as $s) {
+            if (!str_starts_with($s, 'Pending')) {
+                return $s;
+            }
+        }
+
+        return 'Tersedia';
     }
 
     /**
@@ -308,7 +350,7 @@ class Asset extends Model
      */
     public function getActiveBorrowingAttribute(): ?array
     {
-        if ($this->status !== 'Dipinjam') {
+        if (!$this->hasStatus('Dipinjam')) {
             return null;
         }
 

@@ -24,19 +24,18 @@ class NonConsumableController extends Controller
     public function index(Request $request): Response
     {
         $assets = Asset::with([
-            'location.parent', 'statusApprovals', 'project',
-            'lot.model.type.category', 'lot.model.brand',
+            'location.parent.parent', 'statusApprovals', 'project',
+            'lot.model.type.category', 'lot.model.brand', 'lot.model.uom',
             'lot.organizer', 'lot.vendor', 'lot.legacyVendor', 'legacyVendor', 'lifecycles.actor',
             'fulfillments' => fn($q) => $q->whereNull('completed_at')->with('requestItem.request.user')
         ])
-        ->where('status', 'not like', 'Pending%')
         ->where('status', '!=', 'Belum Diverifikasi')
         ->orderBy('created_at', 'desc')
         ->get()
         ->map(function ($asset) {
             $pendingApproval = $asset->statusApprovals->firstWhere('decision', 'pending');
-            $approvedApproval = $asset->status === 'Tidak Aktif' 
-                ? $asset->statusApprovals->where('decision', 'approved')->sortByDesc('updated_at')->first() 
+            $approvedApproval = ($asset->hasStatus('Tidak Aktif') || $asset->hasStatus('Pending:BoD/BoC') || $asset->hasStatus('Dihapus'))
+                ? $asset->statusApprovals->where('decision', 'approved')->sortByDesc('id')->first()
                 : null;
             $model = $asset->lot->model ?? null;
             return [

@@ -209,4 +209,17 @@ describe('EditAssetModal.vue - Single & Mass Edit Logic and Layout', () => {
     expect(vm.errors.condition).toBe('');
     expect(vm.form.burden).toBe('Tidak berubah');
   });
+
+  it('sets form.status to Tersedia,Pending:DM when condition is switched to Rusak Total or Hilang', async () => {
+    const wrapper = mountModal([
+      { id: 1, number: 'AST-001', status: 'Tersedia', condition: 'Bagus' },
+    ]);
+    const vm = wrapper.vm as any;
+    expect(vm.form.status).toBe('Tersedia');
+
+    vm.form.condition = 'Rusak Total';
+    await wrapper.vm.$nextTick();
+
+    expect(vm.form.status).toBe('Tersedia,Pending:DM');
+  });
 });

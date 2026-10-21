@@ -58,4 +58,21 @@ describe('StatusBadge.vue localization', () => {
     expect(getLocalizedRequestStatusLabel('Menunggu approval')).toBe('Pending Approval');
     expect(getLocalizedRequestStatusLabel('Serah Terima')).toBe('Handover');
   });
+
+  it('renders multiple badges when status is comma-separated (e.g. Tersedia,Pending:DM and Tidak Aktif,Pending:BoD/BoC)', () => {
+    setI18nLanguage('en');
+    const wrapper = mount(StatusBadge, {
+      props: {
+        status: 'Tidak Aktif,Pending:BoD/BoC',
+      },
+      global: {
+        plugins: [i18n],
+      },
+    });
+
+    const pills = wrapper.findAll('span > span');
+    expect(pills.length).toBe(2);
+    expect(pills[0].text()).toBe('Inactive');
+    expect(pills[1].text()).toBe('Pending: BoD/BoC');
+  });
 });

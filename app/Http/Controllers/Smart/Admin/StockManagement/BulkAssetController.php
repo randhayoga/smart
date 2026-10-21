@@ -92,7 +92,7 @@ class BulkAssetController extends Controller
         $finalCompSpec = $isComp ? $compSpec : null;
 
         if ($needApproval) {
-            $validated['status'] = 'Pending:BoD/BoC';
+            $validated['status'] = 'Tersedia,Pending:DM';
         } else {
             $validated['status'] = 'Belum Diverifikasi';
         }
@@ -199,11 +199,24 @@ class BulkAssetController extends Controller
             return $assets;
         });
 
-        if (!empty($createdAssets) && $validated['status'] === 'Belum Diverifikasi') {
-            $user = $request->user();
-            dispatch(function () use ($createdAssets, $lot, $user) {
-                app(\App\Services\NotificationService::class)->notifyManagerBulkAssetActivation($createdAssets, $lot, $user);
-            })->afterResponse();
+        if (!empty($createdAssets)) {
+            if ($needApproval) {
+                $user = $request->user();
+                $proposedCondition = $validated['condition'] ?? 'Rusak Total';
+                dispatch(function () use ($createdAssets, $proposedCondition, $user) {
+                    $notificationService = app(\App\Services\NotificationService::class);
+                    if (count($createdAssets) === 1) {
+                        $notificationService->notifyIfsManagerPendingDm($createdAssets[0]);
+                    } else {
+                        $notificationService->notifyIfsManagerBulkPendingDm($createdAssets, $proposedCondition, $user);
+                    }
+                })->afterResponse();
+            } elseif ($validated['status'] === 'Belum Diverifikasi') {
+                $user = $request->user();
+                dispatch(function () use ($createdAssets, $lot, $user) {
+                    app(\App\Services\NotificationService::class)->notifyManagerBulkAssetActivation($createdAssets, $lot, $user);
+                })->afterResponse();
+            }
         }
 
         return redirect()->back()->with('success', __('inventory.bulk_create_success', ['count' => $quantity]));
@@ -234,7 +247,21 @@ class BulkAssetController extends Controller
         $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
             'ids' => 'required|array',
             'ids.*' => 'exists:assets,id',
-            'status' => ['nullable', 'string', 'in:Tersedia,Dipinjam,Tidak Aktif,Pending,Pending:BoD/BoC'],
+            'status' => [
+                'nullable',
+                'string',
+                Rule::in([
+                    'Tersedia',
+                    'Dipinjam',
+                    'Tidak Aktif',
+                    'Dihapus',
+                    'Pending',
+                    'Pending:DM',
+                    'Pending:BoD/BoC',
+                    'Tersedia,Pending:DM',
+                    'Tidak Aktif,Pending:BoD/BoC',
+                ]),
+            ],
             'condition' => ['nullable', 'string', 'in:Bagus,Rusak,Rusak Total,Hilang'],
             'borrowing_type' => ['nullable', 'string', 'in:LT,ST'],
             'type' => ['nullable', 'string', 'in:LT,ST'],
@@ -262,7 +289,7 @@ class BulkAssetController extends Controller
             return redirect()->back()->withErrors(['ids' => 'Tidak ada aset yang ditemukan.']);
         }
 
-        $allPendingBodBoc = $assets->every(fn($u) => $u->status === 'Pending:BoD/BoC');
+        $allPendingBodBoc = $assets->every(fn($u) => $u->hasStatus('Pending:BoD/BoC'));
         if ($allPendingBodBoc && $request->hasFile('bod_boc_approval_file')) {
             $request->validate([
                 'bod_boc_approval_file' => 'required|file|mimes:pdf,jpeg,jpg,png,webp|max:2048',
@@ -272,48 +299,59 @@ class BulkAssetController extends Controller
                 'bod_boc_approval_file.max' => 'Gagal! Ukuran Formulir Approval BoD/BoC maksimal 2MB.',
             ]);
 
-            DB::transaction(function () use ($assets, $request) {
+            DB::transaction(function () use ($assets, $ids, $request) {
                 $bodBocUrl = app(\App\Services\ImageUploadService::class)->storeImageOrFile($request->file('bod_boc_approval_file'), 'bod_boc_approvals');
 
-                foreach ($assets as $asset) {
-                    $approval = AssetStatusApproval::where('asset_id', $asset->id)
-                        ->where('decision', 'pending')
-                        ->first();
-                    if ($approval) {
-                        if ($approval->bod_boc_approval_url && Storage::disk('local')->exists($approval->bod_boc_approval_url)) {
-                            Storage::disk('local')->delete($approval->bod_boc_approval_url);
-                        }
-                        $approval->update(['bod_boc_approval_url' => $bodBocUrl]);
+                $approvalsByAsset = AssetStatusApproval::whereIn('asset_id', $ids)
+                    ->where('decision', 'approved')
+                    ->orderBy('id', 'desc')
+                    ->get()
+                    ->unique('asset_id')
+                    ->keyBy('asset_id');
+
+                foreach ($approvalsByAsset as $approval) {
+                    if ($approval->bod_boc_approval_url && Storage::disk('local')->exists($approval->bod_boc_approval_url)) {
+                        Storage::disk('local')->delete($approval->bod_boc_approval_url);
                     }
-
-                    $asset->update(['status' => 'Pending:DM']);
-                    app(\App\Services\NotificationService::class)->notifyIfsManagerPendingDm($asset);
-
-                    AssetLifecycle::where('asset_id', $asset->id)
-                        ->whereNull('end_date')
-                        ->update(['end_date' => now()]);
-
-                    AssetLifecycle::create([
-                        'asset_id' => $asset->id,
-                        'action_type' => 'Approval',
-                        'status' => 'Pending:DM',
-                        'condition' => $asset->condition,
-                        'location_id' => $asset->location_id,
-                        'start_date' => now(),
-                        'end_date' => null,
-                        'actor_id' => $request->user()->id,
-                        'note' => 'BoD/BoC menyetujui penghapusan asset',
-                    ]);
                 }
+
+                if ($approvalsByAsset->isNotEmpty()) {
+                    AssetStatusApproval::whereIn('id', $approvalsByAsset->pluck('id')->all())
+                        ->update(['bod_boc_approval_url' => $bodBocUrl]);
+                }
+
+                Asset::whereIn('id', $ids)->update(['status' => 'Dihapus']);
+
+                $now = now();
+                AssetLifecycle::whereIn('asset_id', $ids)
+                    ->whereNull('end_date')
+                    ->update(['end_date' => $now]);
+
+                $actorId = $request->user()->id;
+                $lifecycleRows = $assets->map(fn (Asset $asset) => [
+                    'asset_id' => $asset->id,
+                    'action_type' => 'Approval',
+                    'status' => 'Dihapus',
+                    'condition' => $asset->condition,
+                    'location_id' => $asset->location_id,
+                    'start_date' => $now,
+                    'end_date' => null,
+                    'actor_id' => $actorId,
+                    'note' => 'BoD/BoC menyetujui penghapusan asset',
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ])->all();
+
+                AssetLifecycle::insert($lifecycleRows);
             });
 
             return redirect()->back()->with('success', __('inventory.bulk_bod_boc_approved', ['count' => count($assets)]));
         }
 
         $arrInactiveConditions = ['Rusak Total', 'Hilang'];
-        $hasRestrictedAssets = $assets->contains(function ($u) use ($arrInactiveConditions) {
-            $s = strtolower(trim($u->status ?? ''));
-            return in_array($s, ['tidak aktif', 'pending', 'pending:bod/boc']) || str_starts_with($s, 'pending') || in_array($u->condition, $arrInactiveConditions);
+        $hasRestrictedAssets = $assets->contains(function (Asset $u) use ($arrInactiveConditions) {
+            return collect($u->statuses)->contains(fn ($s) => in_array(strtolower($s), ['tidak aktif', 'dihapus', 'pending', 'pending:dm', 'pending:bod/boc']) || str_starts_with(strtolower($s), 'pending'))
+                || in_array($u->condition, $arrInactiveConditions);
         });
 
         if ($hasRestrictedAssets) {
@@ -363,7 +401,7 @@ class BulkAssetController extends Controller
 
         // 1. Status & Condition
         if ($needApproval) {
-            $updateData['status'] = 'Pending:BoD/BoC';
+            $updateData['status'] = 'Tersedia,Pending:DM';
         } else if ($request->filled('status')) {
             $updateData['status'] = $request->input('status');
         }
@@ -447,17 +485,22 @@ class BulkAssetController extends Controller
             if ($proposedCondition === 'Hilang' && $request->hasFile('lost_doc_file')) {
                 $lostDocUrl = app(\App\Services\ImageUploadService::class)->storeImageOrFile($request->file('lost_doc_file'), 'lost_docs');
             }
+            $existingPendingAssetIds = AssetStatusApproval::whereIn('asset_id', $ids)
+                ->where('decision', 'pending')
+                ->pluck('asset_id')
+                ->flip();
+
+            $pendingDmAssets = [];
             foreach ($assets as $asset) {
-                $existing = AssetStatusApproval::where('asset_id', $asset->id)
-                    ->where('decision', 'pending')
-                    ->first();
-                if (!$existing) {
+                if (!$existingPendingAssetIds->has($asset->id)) {
+                    $previousStatus = $asset->base_status;
+                    $asset->status = "{$previousStatus},Pending:DM";
                     AssetStatusApproval::create([
                         'asset_id' => $asset->id,
                         'requester_id' => $request->user()->id,
                         'proposed_condition' => $proposedCondition,
                         'previous_condition' => $asset->condition,
-                        'previous_status' => str_starts_with($asset->status ?? '', 'Pending') ? 'Tersedia' : $asset->status,
+                        'previous_status' => $previousStatus,
                         'decision' => 'pending',
                         'note' => null,
                         'approver_id' => null,
@@ -465,7 +508,21 @@ class BulkAssetController extends Controller
                         'memo_url' => $memoUrl,
                         'lost_doc_url' => $lostDocUrl,
                     ]);
+
+                    $pendingDmAssets[] = $asset;
                 }
+            }
+
+            if (!empty($pendingDmAssets)) {
+                $user = $request->user();
+                dispatch(function () use ($pendingDmAssets, $proposedCondition, $user) {
+                    $notificationService = app(\App\Services\NotificationService::class);
+                    if (count($pendingDmAssets) === 1) {
+                        $notificationService->notifyIfsManagerPendingDm($pendingDmAssets[0]);
+                    } else {
+                        $notificationService->notifyIfsManagerBulkPendingDm($pendingDmAssets, $proposedCondition, $user);
+                    }
+                })->afterResponse();
             }
         }
 

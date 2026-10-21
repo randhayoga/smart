@@ -79,6 +79,11 @@ class IfsManagerRoleTest extends TestCase
             'org_code' => User::getIfsOrgCode(),
         ]);
 
+        // Setup an Admin user
+        $adminUser = User::factory()->create(['employee_id' => '255578']);
+        $adminRole = \App\Models\Auth\Role::firstOrCreate(['name' => 'admin'], ['label' => 'Administrator']);
+        $adminUser->assignRole($adminRole);
+
         // Setup a standard user
         $standardUser = User::factory()->create();
 
@@ -106,11 +111,23 @@ class IfsManagerRoleTest extends TestCase
             route('smart.employees.index'),
             route('smart.audit'),
             route('smart.inventory-audit'),
-            route('smart.approve-deactivation'),
         ];
 
         foreach ($sharedRoutes as $sharedRoute) {
             $this->actingAs($ifsManagerUser)->get($sharedRoute)->assertStatus(200);
+        }
+
+        // 3. Test Approval routes (Exclusive to IFS Manager holding status_approval.decide)
+        $approvalRoutes = [
+            route('smart.approve-deactivation'),
+            route('smart.approve-activation'),
+        ];
+
+        foreach ($approvalRoutes as $approvalRoute) {
+            $this->actingAs($ifsManagerUser)->get($approvalRoute)->assertStatus(200);
+            $this->actingAs($adminUser)->get($approvalRoute)->assertStatus(403);
+            $this->actingAs($managerUser)->get($approvalRoute)->assertStatus(403);
+            $this->actingAs($standardUser)->get($approvalRoute)->assertStatus(403);
         }
 
         // 3. Test Audit Trail route returns proper component

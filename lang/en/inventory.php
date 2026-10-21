@@ -49,11 +49,17 @@ return [
     'unit_not_borrowable' => 'Only assets with "Available" or "Borrowed" status can be processed for borrowing.',
 
     // Approvals & Borrowing
-    'bod_boc_uploaded' => 'BoD/BoC Approval form successfully uploaded and status changed to Pending:DM.',
-    'bulk_bod_boc_approved' => ':count selected assets successfully approved by BoD/BoC and status changed to Pending:DM.',
+    'bod_boc_uploaded' => 'BoD/BoC Approval form successfully uploaded and status changed to Deleted.',
+    'bulk_bod_boc_approved' => ':count selected assets successfully approved by BoD/BoC and status changed to Deleted.',
     'borrow_saved' => 'Borrowing data successfully saved.',
     'borrow_completed' => 'Borrowing completed. Asset status returned to Available.',
     'manual_request_recorded' => 'Manual request successfully recorded.',
     'activation_approved' => 'Asset successfully activated.',
     'activation_rejected' => 'Asset activation successfully rejected.',
+
+    // Deactivation Notifications
+    'notification_deactivation_title' => 'Asset Deactivation :name: Requires Your Attention',
+    'notification_deactivation_message' => 'Asset deactivation request for :number has been submitted and requires your approval',
+    'notification_bulk_deactivation_title' => 'Asset Deactivation Approval: :count Units (:condition)',
+    'notification_bulk_deactivation_message' => ':count asset units have been submitted for deactivation (:condition) and require your approval.',
 ];

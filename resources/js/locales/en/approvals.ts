@@ -4,9 +4,9 @@
 export default {
   pendingTitle: 'Approval: Requires Your Attention',
   historyTitle: 'Approval: Processed',
-  statusPendingTitle: 'Status Approval: Requires Your Attention',
-  statusPendingTaskbarTitle: 'Status Approval: Pending',
-  statusHistoryTitle: 'Status Approval: Processed',
+  statusPendingTitle: 'Deactivation Approval: Requires Your Attention',
+  statusPendingTaskbarTitle: 'Deactivation Approval: Pending',
+  statusHistoryTitle: 'Deactivation Approval: Processed',
   activationPendingTitle: 'Activation Approval: Requires Your Attention',
   activationPendingTaskbarTitle: 'Activation Approval: Pending',
   activationHistoryTitle: 'Activation Approval: Processed',

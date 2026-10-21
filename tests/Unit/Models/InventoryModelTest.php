@@ -2,11 +2,12 @@
 
 namespace Tests\Unit\Models;
 
+use App\Models\Inventory\Asset;
+use App\Models\Inventory\AssetStatusApproval;
 use App\Models\Inventory\Barang;
 use App\Models\Inventory\Lot;
 use App\Models\Inventory\Unit;
 use App\Models\Inventory\UnitLifecycle;
-use App\Models\Inventory\UnitStatusApproval;
 use App\Models\Master\Brand;
 use App\Models\Master\Category;
 use App\Models\Master\Subcategory;
@@ -111,25 +112,32 @@ class InventoryModelTest extends TestCase
         $this->assertCount(2, $unit->lifecycles);
     }
 
-    public function test_unit_status_approval_relationships(): void
+    public function test_asset_status_approval_relationships_and_multi_status_helpers(): void
     {
         $user = User::factory()->create();
         $approver = User::factory()->create();
         $lot = Lot::factory()->create();
         $location = Location::factory()->create();
 
-        $unit = Unit::create([
+        $asset = Asset::create([
             'number' => 'AST-TEST-03',
             'lot_id' => $lot->id,
             'location_id' => $location->id,
-            'status' => 'Pending:BoD/BoC',
+            'status' => 'Tersedia,Pending:DM',
             'condition' => 'Rusak Total',
             'price' => 300000,
             'image_url' => 'inventory/placeholder.jpg',
         ]);
 
-        $approval = UnitStatusApproval::create([
-            'unit_id' => $unit->id,
+        $this->assertEquals(['Tersedia', 'Pending:DM'], $asset->statuses);
+        $this->assertTrue($asset->hasStatus('Tersedia'));
+        $this->assertTrue($asset->hasStatus('Pending:DM'));
+        $this->assertFalse($asset->hasStatus('Dihapus'));
+        $this->assertEquals('Tersedia', $asset->base_status);
+        $this->assertTrue(Asset::whereHasStatus('Pending:DM')->where('id', $asset->id)->exists());
+
+        $approval = AssetStatusApproval::create([
+            'asset_id' => $asset->id,
             'requester_id' => $user->id,
             'approver_id' => $approver->id,
             'proposed_condition' => 'Rusak Total',
@@ -141,10 +149,10 @@ class InventoryModelTest extends TestCase
             'requested_at' => now(),
         ]);
 
-        $this->assertTrue($approval->unit->is($unit));
+        $this->assertTrue($approval->asset->is($asset));
         $this->assertTrue($approval->requester->is($user));
         $this->assertTrue($approval->approver->is($approver));
-        $this->assertTrue($unit->statusApprovals->contains($approval));
+        $this->assertTrue($asset->statusApprovals->contains($approval));
     }
 
     public function test_barang_route_key_and_resolution(): void

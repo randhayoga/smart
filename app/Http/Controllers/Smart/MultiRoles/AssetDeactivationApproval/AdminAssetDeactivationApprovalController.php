@@ -17,15 +17,11 @@ class AdminAssetDeactivationApprovalController extends Controller
      */
     public function store(Request $request)
     {
-        $proposedCondition = $request->input('proposed_condition') ?? $request->input('proposed_status');
-
-        $assetId = $request->input('asset_id', $request->input('unit_id'));
-        $request->merge(['asset_id' => $assetId]);
+        $proposedCondition = $request->input('proposed_condition');
 
         $rules = [
             'asset_id' => 'required|exists:assets,id',
-            'proposed_condition' => 'required_without:proposed_status|string|max:255',
-            'proposed_status' => 'required_without:proposed_condition|string|max:255',
+            'proposed_condition' => 'required|string|max:255',
             'note' => 'nullable|string',
             'memo_file' => 'required|file|mimes:pdf,jpg,jpeg,png,webp|max:2048',
         ];
@@ -46,7 +42,6 @@ class AdminAssetDeactivationApprovalController extends Controller
         if ($existingPending) {
             return redirect()->back()->withErrors([
                 'asset_id' => 'Sudah ada pengajuan perubahan kondisi yang sedang ditinjau untuk aset ini.',
-                'unit_id' => 'Sudah ada pengajuan perubahan kondisi yang sedang ditinjau untuk aset ini.',
             ]);
         }
 
@@ -62,12 +57,20 @@ class AdminAssetDeactivationApprovalController extends Controller
             $lostDocUrl = $imageUploadService->storeImageOrFile($request->file('lost_doc_file'), 'lost_docs');
         }
 
+        $previousCondition = $asset->condition;
+        $previousStatus = $asset->base_status;
+
+        $asset->update([
+            'condition' => $proposedCondition,
+            'status' => "{$previousStatus},Pending:DM",
+        ]);
+
         AssetStatusApproval::create([
             'asset_id' => $validated['asset_id'],
             'requester_id' => $request->user()->id,
             'proposed_condition' => $proposedCondition,
-            'previous_condition' => $asset->condition,
-            'previous_status' => str_starts_with($asset->status ?? '', 'Pending') ? 'Tersedia' : $asset->status,
+            'previous_condition' => $previousCondition,
+            'previous_status' => $previousStatus,
             'decision' => 'pending',
             'note' => $validated['note'] ?? null,
             'requested_at' => now(),
@@ -75,7 +78,9 @@ class AdminAssetDeactivationApprovalController extends Controller
             'lost_doc_url' => $lostDocUrl,
         ]);
 
-        $asset->update(['status' => 'Pending:BoD/BoC']);
+        dispatch(function () use ($asset) {
+            app(\App\Services\NotificationService::class)->notifyIfsManagerPendingDm($asset);
+        })->afterResponse();
 
         return redirect()->back()->with('success', __('requests.unit_status_change_submitted'));
     }

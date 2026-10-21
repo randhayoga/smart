@@ -30,7 +30,8 @@ class ManagerAssetDeactivationApprovalController extends Controller
             'asset.lot.organizer',
             'asset.lot.vendor',
             'asset.lot.legacyVendor',
-            'asset.location.parent',
+            'asset.location.parent.parent',
+            'asset.lifecycles.actor',
             'requester',
             'approver'
         ]);
@@ -41,7 +42,7 @@ class ManagerAssetDeactivationApprovalController extends Controller
         } else {
             $query->where('decision', 'pending')
                   ->whereHas('asset', function ($q) {
-                      $q->where('status', 'Pending:DM');
+                      $q->whereHasStatus('Pending:DM');
                   });
             $view = 'Smart/Manager/PendingDeactivationApprovals';
         }

@@ -520,7 +520,7 @@ class LotController extends Controller
 
         // Retrieve asset items associated with this LOT
         $assets = Asset::with([
-            'location.parent', 'statusApprovals', 'project',
+            'location.parent.parent', 'statusApprovals', 'project',
             'lot.model.type.category', 'lot.model.brand', 'lot.model.uom',
             'lot.organizer', 'lot.vendor', 'lot.legacyVendor', 'legacyVendor', 'lifecycles.actor'
         ])
@@ -529,8 +529,8 @@ class LotController extends Controller
         ->get()
         ->map(function ($asset) {
             $pendingApproval = $asset->statusApprovals->firstWhere('decision', 'pending');
-            $approvedApproval = $asset->status === 'Tidak Aktif' 
-                ? $asset->statusApprovals->where('decision', 'approved')->sortByDesc('updated_at')->first() 
+            $approvedApproval = ($asset->hasStatus('Tidak Aktif') || $asset->hasStatus('Pending:BoD/BoC') || $asset->hasStatus('Dihapus'))
+                ? $asset->statusApprovals->where('decision', 'approved')->sortByDesc('id')->first()
                 : null;
             $model = $asset->lot->model ?? null;
             return [
@@ -550,6 +550,9 @@ class LotController extends Controller
                 'lost_doc_url' => $pendingApproval 
                     ? $pendingApproval->lost_doc_url 
                     : ($approvedApproval ? $approvedApproval->lost_doc_url : null),
+                'bod_boc_approval_url' => $pendingApproval 
+                    ? $pendingApproval->bod_boc_approval_url 
+                    : ($approvedApproval ? $approvedApproval->bod_boc_approval_url : null),
                 'condition' => $asset->condition,
                 'type' => $asset->borrowing_type,
                 'borrowing_type' => $asset->borrowing_type,

@@ -110,6 +110,35 @@ class UnitActivationApprovalControllerTest extends TestCase
         return $user;
     }
 
+    private function createDepartmentManager(): User
+    {
+        $managerUser = User::factory()->create();
+        $employee = HrdEmployee::where('employee_id', $managerUser->employee_id)->first();
+        if (!$employee) {
+            $org = HrdOrgchart::factory()->create(['employee_id' => $managerUser->employee_id]);
+            $employee = HrdEmployee::factory()->create([
+                'employee_id' => $managerUser->employee_id,
+                'orgchart_id' => $org->id,
+            ]);
+        } else {
+            $org = HrdOrgchart::find($employee->orgchart_id);
+            if ($org) {
+                $org->update(['employee_id' => $managerUser->employee_id]);
+            }
+        }
+
+        $role = Role::firstOrCreate(['name' => 'manager'], ['label' => 'Department / Project Manager']);
+        $permission = Permission::firstOrCreate(
+            ['name' => 'requests.approve'],
+            ['label' => 'Approve or Reject Subordinate Requisitions', 'group' => 'requests']
+        );
+        $role->permissions()->syncWithoutDetaching([$permission->id]);
+        $managerUser->assignRole($role);
+        $managerUser->refresh();
+
+        return $managerUser;
+    }
+
     private function createLot(): Lot
     {
         Storage::fake('local');
@@ -353,10 +382,29 @@ class UnitActivationApprovalControllerTest extends TestCase
     public function test_non_manager_cannot_access_activation_approval_page(): void
     {
         $standardUser = $this->createStandardUser();
+        $admin = $this->createAdmin();
+        $deptManager = $this->createDepartmentManager();
 
-        $response = $this->actingAs($standardUser)->get(route('smart.approve-activation'));
+        // Standard user forbidden
+        $this->actingAs($standardUser)->get(route('smart.approve-activation'))->assertForbidden();
+        $this->actingAs($standardUser)->post(route('smart.approve-activation.bulk-store'), [
+            'ids' => [1],
+            'decision' => 'approved',
+        ])->assertForbidden();
 
-        $response->assertForbidden();
+        // Admin forbidden (Admin cannot approve activation)
+        $this->actingAs($admin)->get(route('smart.approve-activation'))->assertForbidden();
+        $this->actingAs($admin)->post(route('smart.approve-activation.bulk-store'), [
+            'ids' => [1],
+            'decision' => 'approved',
+        ])->assertForbidden();
+
+        // Department Manager forbidden (General department manager cannot approve IFS activation)
+        $this->actingAs($deptManager)->get(route('smart.approve-activation'))->assertForbidden();
+        $this->actingAs($deptManager)->post(route('smart.approve-activation.bulk-store'), [
+            'ids' => [1],
+            'decision' => 'approved',
+        ])->assertForbidden();
     }
 
     public function test_ifs_manager_can_bulk_approve_activations_and_updates_unit_to_tersedia_preserving_condition(): void

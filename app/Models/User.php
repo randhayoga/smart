@@ -4,8 +4,8 @@ namespace App\Models;
 
 use App\Models\Cart\AssetBasket;
 use App\Models\Cart\ConsumableBasket;
+use App\Models\Inventory\AssetStatusApproval;
 use App\Models\Inventory\InventoryLog;
-use App\Models\Inventory\UnitStatusApproval;
 use App\Models\Request\Request;
 use App\Models\Request\RequestAdminConfirmation;
 use App\Models\Request\RequestApproval;
@@ -584,19 +584,19 @@ class User extends Authenticatable
     }
 
     /**
-     * Unit status change requests made by this user.
+     * Asset status change requests made by this user.
      */
-    public function unitStatusRequests(): HasMany
+    public function assetStatusRequests(): HasMany
     {
-        return $this->hasMany(UnitStatusApproval::class, 'requester_id', 'id');
+        return $this->hasMany(AssetStatusApproval::class, 'requester_id', 'id');
     }
 
     /**
-     * Unit status change decisions made by this user.
+     * Asset status change decisions made by this user.
      */
-    public function unitStatusDecisions(): HasMany
+    public function assetStatusDecisions(): HasMany
     {
-        return $this->hasMany(UnitStatusApproval::class, 'approver_id', 'id');
+        return $this->hasMany(AssetStatusApproval::class, 'approver_id', 'id');
     }
 
     /**

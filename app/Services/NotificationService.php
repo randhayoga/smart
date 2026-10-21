@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Mail\DMAssetActivationRequest;
 use App\Mail\DMBulkAssetActivationRequest;
 use App\Mail\DMAssetStatusRequest;
+use App\Mail\DMBulkAssetDeactivationRequest;
 use App\Mail\ManagerRequestApprovalMail;
 use App\Mail\RequesterRequestRejectedMail;
 use App\Models\Inventory\Model;
@@ -207,8 +208,8 @@ class NotificationService
         $assetName = $asset->lot?->model?->name ?? '';
         $brandAndName = trim("{$brand} {$assetName}") ?: $asset->number;
 
-        $title = "Penghapusan Aset {$brandAndName}: Perlu Perhatian Anda";
-        $message = "Penghapusan aset {$asset->number} telah disetujui oleh BoD/BoC dan sekarang memerlukan approval Anda";
+        $title = __('inventory.notification_deactivation_title', ['name' => $brandAndName]);
+        $message = __('inventory.notification_deactivation_message', ['number' => $asset->number]);
 
         // 1. In-app database + Mercure notification
         $this->sendToRole(
@@ -245,6 +246,91 @@ class NotificationService
     }
 
     /**
+     * Send a consolidated batch notification and email to IFS Manager(s) for multiple assets submitted for deactivation.
+     *
+     * @param iterable<Asset> $assets
+     * @param string $proposedCondition
+     * @param User|null $requester
+     */
+    public function notifyIfsManagerBulkPendingDm(iterable $assets, string $proposedCondition, ?User $requester = null): void
+    {
+        $assetsCollection = collect($assets);
+        $count = $assetsCollection->count();
+        if ($count === 0) {
+            return;
+        }
+
+        $title = __('inventory.notification_bulk_deactivation_title', [
+            'count' => $count,
+            'condition' => $proposedCondition,
+        ]);
+        $message = __('inventory.notification_bulk_deactivation_message', [
+            'count' => $count,
+            'condition' => $proposedCondition,
+        ]);
+
+        $firstAsset = $assetsCollection->first();
+        $firstNumber = $firstAsset instanceof Asset ? $firstAsset->number : '';
+
+        // 1. In-app database + Mercure notification
+        $this->sendToRole(
+            'ifs_manager',
+            $title,
+            $message,
+            'warning',
+            "/smart/approve-deactivation",
+            [
+                'count' => $count,
+                'proposed_condition' => $proposedCondition,
+                'first_number' => $firstNumber,
+                'type' => 'deactivation_approval_bulk',
+            ]
+        );
+
+        // 2. Email notification to IFS Manager(s)
+        try {
+            $sampleAssets = $assetsCollection->take(10)->map(function ($asset) {
+                if (!$asset instanceof Asset) {
+                    return null;
+                }
+                $asset->loadMissing(['lot.model.brand', 'location']);
+                $brand = $asset->lot?->model?->brand?->name ?? '';
+                $name = $asset->lot?->model?->name ?? '';
+                $brandAndName = trim("{$brand} {$name}") ?: $asset->number;
+
+                return [
+                    'number' => $asset->number,
+                    'name' => $brandAndName,
+                    'location' => $asset->location?->full_name ?? $asset->location?->name ?? '-',
+                ];
+            })->filter()->values()->all();
+
+            $ifsUsers = User::getUsersByRole('ifs_manager');
+            foreach ($ifsUsers as $ifsUser) {
+                if (!$this->isAllowedIfsRecipient($ifsUser)) {
+                    continue;
+                }
+
+                $email = $ifsUser->email;
+                if ($email && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    Mail::to($email)->send(new DMBulkAssetDeactivationRequest(
+                        $count,
+                        $proposedCondition,
+                        $sampleAssets,
+                        $requester,
+                        $ifsUser->name
+                    ));
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::error("Gagal mengirim email DMBulkAssetDeactivationRequest: " . $e->getMessage(), [
+                'exception' => $e,
+                'count' => $count,
+            ]);
+        }
+    }
+
+    /**
      * Send a notification to all Admins when an asset status approval is decided by DM IFS.
      *
      * @param AssetStatusApproval $approval
@@ -263,9 +349,8 @@ class NotificationService
         $brandAndName = trim("{$brand} {$name}") ?: $asset->number;
 
         if ($decision === 'approved') {
-            $currentCondition = $approval->proposed_condition;
             $title = "Penghapusan Aset {$brandAndName} Disetujui DM IFS";
-            $message = "Status aset {$asset->number} telah berubah menjadi Tidak Aktif dan kondisi berubah menjadi {$currentCondition}.";
+            $message = "Status aset {$asset->number} telah berubah menjadi Tidak Aktif, Pending:BoD/BoC.";
             $type = 'success';
         } else {
             $currentStatus = $approval->previous_status ?? 'Tersedia';

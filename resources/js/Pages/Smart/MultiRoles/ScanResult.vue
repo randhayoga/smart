@@ -19,6 +19,11 @@ import StatusBadge from '@/Components/StatusBadge.vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage } from '@/Components/ui/breadcrumb';
 import { compressImageIfNeeded } from '@/utils/imageCompressor';
+import {
+  hasAssetStatus,
+  getBaseAssetStatus,
+  isRestrictedAssetStatus,
+} from '@/lib/assetStatus';
 
 interface Props {
   asset: any;
@@ -59,9 +64,7 @@ const arrNeedApproval = ['Rusak Total', 'Hilang'];
 const arrInactiveConditions = ['Rusak Total', 'Hilang'];
 
 const isRestrictedStatus = (status: string | null | undefined) => {
-  if (!status) return false;
-  const s = String(status).trim().toLowerCase();
-  return s === 'tidak aktif' || s === 'pending' || s.startsWith('pending');
+  return isRestrictedAssetStatus(status);
 };
 
 const isRestrictedAsset = computed(() => {
@@ -82,7 +85,7 @@ const isDocumentDisabled = computed(() => {
 });
 
 const isBodBocFieldVisible = computed(() => {
-  return props.asset?.status === 'Pending:BoD/BoC';
+  return hasAssetStatus(props.asset?.status, 'Pending:BoD/BoC');
 });
 
 // Form setup for editing
@@ -111,8 +114,8 @@ watch(() => props.asset, (newAsset) => {
   form.location_id = newAsset.location_id || '';
   form.status = newAsset.status || '';
   form.condition = newAsset.condition || '';
-  if (arrInactiveConditions.includes(form.condition)) {
-    form.status = 'Pending:BoD/BoC';
+  if (!isRestrictedStatus(newAsset.status) && arrInactiveConditions.includes(form.condition)) {
+    form.status = `${getBaseAssetStatus(newAsset.status)},Pending:DM`;
   }
   form.price = newAsset.price || '';
   form.image_url = null;
@@ -165,8 +168,8 @@ watch(() => form.bod_boc_approval_file, v => { if (v && errors.value.bod_boc_app
 
 watch(() => form.condition, (newVal, oldVal) => {
   if (arrInactiveConditions.includes(newVal)) {
-    form.status = 'Pending:BoD/BoC';
-  } else if (oldVal && arrInactiveConditions.includes(oldVal) && (form.status === 'Pending' || form.status === 'Pending:BoD/BoC')) {
+    form.status = `${getBaseAssetStatus(props.asset?.status)},Pending:DM`;
+  } else if (oldVal && arrInactiveConditions.includes(oldVal) && hasAssetStatus(form.status, 'Pending:DM')) {
     if (props.asset?.status && !isRestrictedStatus(props.asset.status)) {
       form.status = props.asset.status;
     } else {

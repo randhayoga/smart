@@ -2,10 +2,10 @@
 
 namespace Tests\Feature;
 
-use App\Models\Inventory\Unit;
+use App\Models\Inventory\Asset;
 use App\Models\Inventory\Lot;
-use App\Models\Inventory\UnitStatusApproval;
-use App\Models\Inventory\UnitLifecycle;
+use App\Models\Inventory\AssetStatusApproval;
+use App\Models\Inventory\AssetLifecycle;
 use App\Models\User;
 use App\Models\HrdEmployee;
 use App\Models\HrdOrgchart;
@@ -56,7 +56,7 @@ class AssetDeactivationApprovalControllerTest extends TestCase
             $unitNumber = substr($unitNumber, 0, 25);
         }
 
-        return Unit::create([
+        return Asset::create([
             'number' => $unitNumber,
             'lot_id' => $lot->id,
             'location_id' => $location->id,
@@ -75,7 +75,7 @@ class AssetDeactivationApprovalControllerTest extends TestCase
         $unit = $this->createUnit();
 
         $response = $this->actingAs($user)->post(route('smart.inventory.asset-deactivation-approvals.store'), [
-            'unit_id' => $unit->id,
+            'asset_id' => $unit->id,
             'proposed_condition' => 'Rusak Total',
             'note' => 'Butuh penggantian unit',
             'memo_file' => \Illuminate\Http\UploadedFile::fake()->create('memo.pdf', 100),
@@ -95,7 +95,8 @@ class AssetDeactivationApprovalControllerTest extends TestCase
         ]);
 
         $unit->refresh();
-        $this->assertEquals('Pending:BoD/BoC', $unit->status);
+        $this->assertEquals('Tersedia,Pending:DM', $unit->status);
+        $this->assertEquals('Rusak Total', $unit->condition);
     }
 
     public function test_cannot_store_duplicate_pending_request(): void
@@ -103,8 +104,8 @@ class AssetDeactivationApprovalControllerTest extends TestCase
         $user = User::factory()->create();
         $unit = $this->createUnit();
 
-        UnitStatusApproval::create([
-            'unit_id' => $unit->id,
+        AssetStatusApproval::create([
+            'asset_id' => $unit->id,
             'requester_id' => $user->id,
             'proposed_condition' => 'Rusak Total',
             'previous_condition' => 'Bagus',
@@ -116,14 +117,14 @@ class AssetDeactivationApprovalControllerTest extends TestCase
         ]);
 
         $response = $this->actingAs($user)->post(route('smart.inventory.asset-deactivation-approvals.store'), [
-            'unit_id' => $unit->id,
+            'asset_id' => $unit->id,
             'proposed_condition' => 'Hilang',
             'memo_file' => \Illuminate\Http\UploadedFile::fake()->create('memo.pdf', 100),
             'lost_doc_file' => \Illuminate\Http\UploadedFile::fake()->create('lost.pdf', 100),
         ]);
 
-        $response->assertSessionHasErrors(['unit_id']);
-        $this->assertEquals(1, UnitStatusApproval::count());
+        $response->assertSessionHasErrors(['asset_id']);
+        $this->assertEquals(1, AssetStatusApproval::count());
     }
 
     public function test_storing_unit_with_status_rusak_creates_pending_approval(): void
@@ -160,8 +161,9 @@ class AssetDeactivationApprovalControllerTest extends TestCase
         $response->assertSessionHasNoErrors();
         $response->assertRedirect();
         
-        $unit = Unit::where('lot_id', $lot->id)->firstOrFail();
-        $this->assertEquals('Pending:BoD/BoC', $unit->status);
+        $unit = Asset::where('lot_id', $lot->id)->firstOrFail();
+        $this->assertEquals('Tersedia,Pending:DM', $unit->status);
+        $this->assertEquals('Rusak Total', $unit->condition);
 
         $this->assertDatabaseHas('asset_status_approvals', [
             'asset_id' => $unit->id,
@@ -195,7 +197,8 @@ class AssetDeactivationApprovalControllerTest extends TestCase
         $response->assertRedirect();
         
         $unit->refresh();
-        $this->assertEquals('Pending:BoD/BoC', $unit->status);
+        $this->assertEquals('Tersedia,Pending:DM', $unit->status);
+        $this->assertEquals('Rusak Total', $unit->condition);
 
         $this->assertDatabaseHas('asset_status_approvals', [
             'asset_id' => $unit->id,
@@ -220,7 +223,7 @@ class AssetDeactivationApprovalControllerTest extends TestCase
             'location_id' => $newLocation->id,
         ]);
 
-        $lifecycles = UnitLifecycle::where('unit_id', $unit->id)
+        $lifecycles = AssetLifecycle::where('asset_id', $unit->id)
             ->where('action_type', '!=', 'Registrasi')
             ->get();
 

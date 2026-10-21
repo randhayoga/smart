@@ -122,8 +122,9 @@ class RoleAndPermissionSeeder extends Seeder
             $roles['superadmin']->permissions()->sync($allPermissionIds);
 
             // Admin gets all permissions EXCEPT access management (exclusive to superadmin)
+            // and inventory status approval decisions (exclusive to IFS Manager / superadmin)
             $adminPermissionIds = collect($permissions)
-                ->filter(fn($p) => $p->group !== 'access')
+                ->filter(fn($p) => $p->group !== 'access' && $p->name !== 'inventory.status_approval.decide')
                 ->pluck('id')
                 ->all();
             $roles['admin']->permissions()->sync($adminPermissionIds);
@@ -151,7 +152,6 @@ class RoleAndPermissionSeeder extends Seeder
                 'requests.create',
                 'requests.view_own',
                 'requests.approve',
-                'inventory.status_approval.decide',
                 'notifications.manage',
             ];
             $roles['manager']->permissions()->sync(

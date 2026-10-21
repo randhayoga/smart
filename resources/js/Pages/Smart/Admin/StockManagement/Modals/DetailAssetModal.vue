@@ -10,6 +10,7 @@ import { toast } from 'vue-sonner';
 import { X, FileText, Upload } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
 import { formatDate } from '@/lib/utils';
+import { hasAssetStatus } from '@/lib/assetStatus';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import Tabs from '@/Components/Tabs.vue';
 import AssetBorrowFormTab from '@/Pages/Smart/Admin/StockManagement/Tabs/AssetBorrowFormTab.vue';
@@ -155,7 +156,7 @@ const handleBodBocUpload = (e: Event) => {
         target.value = '';
         if (props.asset) {
           props.asset.bod_boc_approval_url = props.asset.bod_boc_approval_url || 'bod_boc_approvals/' + file.name;
-          props.asset.status = 'Pending:DM';
+          props.asset.status = 'Dihapus';
         }
         emit('update:open', false);
       },
@@ -407,7 +408,7 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                 </Button>
 
                 <Button 
-                  v-else-if="(can('inventory.status_approval.request') || can('inventory.manage')) && asset && asset.memo_url"
+                  v-else-if="(can('inventory.status_approval.request') || can('inventory.manage')) && asset && hasAssetStatus(asset.status, 'Pending:BoD/BoC')"
                   @click="triggerBodBocUpload"
                   :disabled="isUploading"
                   variant="warning"

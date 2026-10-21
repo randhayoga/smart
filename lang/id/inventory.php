@@ -49,11 +49,17 @@ return [
     'unit_not_borrowable' => 'Hanya aset berstatus Tersedia atau sedang Dipinjam yang dapat diproses peminjamannya.',
 
     // Approval & Peminjaman
-    'bod_boc_uploaded' => 'Formulir Approval BoD/BoC berhasil diunggah dan status diubah menjadi Pending:DM.',
-    'bulk_bod_boc_approved' => ':count aset terpilih berhasil disetujui BoD/BoC dan status diubah menjadi Pending:DM.',
+    'bod_boc_uploaded' => 'Formulir Approval BoD/BoC berhasil diunggah dan status diubah menjadi Dihapus.',
+    'bulk_bod_boc_approved' => ':count aset terpilih berhasil disetujui BoD/BoC dan status diubah menjadi Dihapus.',
     'borrow_saved' => 'Data peminjaman berhasil disimpan.',
     'borrow_completed' => 'Peminjaman selesai. Status aset kembali Tersedia.',
     'manual_request_recorded' => 'Permintaan manual berhasil dicatat.',
     'activation_approved' => 'Aset berhasil diaktivasi.',
     'activation_rejected' => 'Aktivasi aset berhasil ditolak.',
+
+    // Deactivation Notifications
+    'notification_deactivation_title' => 'Penghapusan Aset :name: Perlu Perhatian Anda',
+    'notification_deactivation_message' => 'Pengajuan penghapusan aset :number telah diajukan dan memerlukan approval Anda',
+    'notification_bulk_deactivation_title' => 'Approval Deaktivasi Aset: :count Unit (:condition)',
+    'notification_bulk_deactivation_message' => 'Sebanyak :count unit aset diajukan untuk deaktivasi (:condition) dan memerlukan approval Anda.',
 ];

@@ -42,7 +42,7 @@ class HandleInertiaRequests extends Middleware
                     ? \App\Models\Request\Request::where('approver_id', $request->user()->id)->where('status', 'wait')->count()
                     : 0,
                 'pendingAssetStatusCount' => $request->user() && $request->user()->hasPermission('inventory.status_approval.decide')
-                    ? \App\Models\Inventory\UnitStatusApproval::where('decision', 'pending')->whereHas('unit', fn($q) => $q->where('status', 'Pending:DM'))->count()
+                    ? \App\Models\Inventory\AssetStatusApproval::where('decision', 'pending')->whereHas('asset', fn($q) => $q->whereHasStatus('Pending:DM'))->count()
                     : 0,
                 'pendingAssetActivationCount' => $request->user() && $request->user()->hasPermission('inventory.status_approval.decide')
                     ? \App\Models\Inventory\UnitActivationApproval::where('decision', 'pending')->count()
