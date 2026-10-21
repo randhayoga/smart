@@ -96,7 +96,7 @@ class NewStockControllerTest extends TestCase
 
     public function test_can_create_model_only(): void
     {
-        $response = $this->actingAs($this->admin)->post('/smart/inventory/new-stock', [
+        $response = $this->actingAs($this->admin)->post('/smart/stock-management/new-stock', [
             'category_id' => $this->otherCategory->id,
             'type_id' => $this->consumableType->id,
             'brand_id' => $this->brand->id,
@@ -112,7 +112,7 @@ class NewStockControllerTest extends TestCase
         $model = InventoryModel::where('name', 'Kertas A4 80gr')->firstOrFail();
         $modelParam = preg_replace('/[^a-zA-Z0-9]/', '', (string)$model->number) ?: $model->id;
         $response->assertSessionHas('new_stock_created', [
-            'target_url' => '/smart/inventory/' . $modelParam,
+            'target_url' => '/smart/stock-management/' . $modelParam,
             'model_id' => $model->id,
             'lot_id' => null,
             'is_consumable' => true,
@@ -129,7 +129,7 @@ class NewStockControllerTest extends TestCase
 
     public function test_comp_category_model_specification_is_forced_null(): void
     {
-        $response = $this->actingAs($this->admin)->post('/smart/inventory/new-stock', [
+        $response = $this->actingAs($this->admin)->post('/smart/stock-management/new-stock', [
             'category_id' => $this->compCategory->id,
             'type_id' => $this->compType->id,
             'brand_id' => $this->brand->id,
@@ -155,7 +155,7 @@ class NewStockControllerTest extends TestCase
             'name' => 'Existing Laptop',
         ]);
 
-        $response = $this->actingAs($this->admin)->post('/smart/inventory/new-stock', [
+        $response = $this->actingAs($this->admin)->post('/smart/stock-management/new-stock', [
             'category_id' => $this->compCategory->id,
             'type_id' => $this->compType->id,
             'brand_id' => $this->brand->id,
@@ -176,7 +176,7 @@ class NewStockControllerTest extends TestCase
         $lot = Lot::where('po_number', 'PO-2026-99')->firstOrFail();
         $lotParam = preg_replace('/[^a-zA-Z0-9]/', '', (string)$lot->number) ?: $lot->id;
         $response->assertSessionHas('new_stock_created', [
-            'target_url' => '/smart/inventory/lots/' . $lotParam,
+            'target_url' => '/smart/stock-management/lots/' . $lotParam,
             'model_id' => $model->id,
             'lot_id' => $lot->id,
             'is_consumable' => false,
@@ -202,7 +202,7 @@ class NewStockControllerTest extends TestCase
             'name' => 'Existing Laptop',
         ]);
 
-        $response = $this->actingAs($this->admin)->post('/smart/inventory/new-stock', [
+        $response = $this->actingAs($this->admin)->post('/smart/stock-management/new-stock', [
             'category_id' => $this->compCategory->id,
             'type_id' => $this->compType->id,
             'brand_id' => $this->brand->id,
@@ -233,7 +233,7 @@ class NewStockControllerTest extends TestCase
 
         $file = UploadedFile::fake()->create('grant_memo.pdf', 500, 'application/pdf');
 
-        $response = $this->actingAs($this->admin)->post('/smart/inventory/new-stock', [
+        $response = $this->actingAs($this->admin)->post('/smart/stock-management/new-stock', [
             'category_id' => $this->compCategory->id,
             'type_id' => $this->compType->id,
             'brand_id' => $this->brand->id,
@@ -260,7 +260,7 @@ class NewStockControllerTest extends TestCase
     {
         $photo = UploadedFile::fake()->image('laptop.png');
 
-        $response = $this->actingAs($this->admin)->post('/smart/inventory/new-stock', [
+        $response = $this->actingAs($this->admin)->post('/smart/stock-management/new-stock', [
             'category_id' => $this->compCategory->id,
             'type_id' => $this->compType->id,
             'brand_id' => $this->brand->id,
@@ -313,7 +313,7 @@ class NewStockControllerTest extends TestCase
 
     public function test_kendaraan_asset_requires_plate_number(): void
     {
-        $response = $this->actingAs($this->admin)->post('/smart/inventory/new-stock', [
+        $response = $this->actingAs($this->admin)->post('/smart/stock-management/new-stock', [
             'category_id' => $this->kendCategory->id,
             'type_id' => $this->kendType->id,
             'brand_id' => $this->brand->id,
@@ -342,7 +342,7 @@ class NewStockControllerTest extends TestCase
 
     public function test_kendaraan_asset_saves_plate_number_in_vehicle_registration(): void
     {
-        $response = $this->actingAs($this->admin)->post('/smart/inventory/new-stock', [
+        $response = $this->actingAs($this->admin)->post('/smart/stock-management/new-stock', [
             'category_id' => $this->kendCategory->id,
             'type_id' => $this->kendType->id,
             'brand_id' => $this->brand->id,
@@ -373,7 +373,7 @@ class NewStockControllerTest extends TestCase
 
     public function test_can_create_bulk_assets_atomically_when_is_bulk_is_true(): void
     {
-        $response = $this->actingAs($this->admin)->post('/smart/inventory/new-stock', [
+        $response = $this->actingAs($this->admin)->post('/smart/stock-management/new-stock', [
             'category_id' => $this->compCategory->id,
             'type_id' => $this->compType->id,
             'brand_id' => $this->brand->id,
@@ -421,7 +421,7 @@ class NewStockControllerTest extends TestCase
 
     public function test_kendaraan_category_disallows_bulk_asset_creation(): void
     {
-        $response = $this->actingAs($this->admin)->post('/smart/inventory/new-stock', [
+        $response = $this->actingAs($this->admin)->post('/smart/stock-management/new-stock', [
             'category_id' => $this->kendCategory->id,
             'type_id' => $this->kendType->id,
             'brand_id' => $this->brand->id,
@@ -461,7 +461,7 @@ class NewStockControllerTest extends TestCase
         Storage::fake('local');
         $photo = UploadedFile::fake()->image('lot-consumable.jpg', 300, 300);
 
-        $response = $this->actingAs($this->admin)->post('/smart/inventory/new-stock', [
+        $response = $this->actingAs($this->admin)->post('/smart/stock-management/new-stock', [
             'category_id' => $this->otherCategory->id,
             'type_id' => $this->consumableType->id,
             'brand_id' => $this->brand->id,
@@ -491,7 +491,7 @@ class NewStockControllerTest extends TestCase
         $model = InventoryModel::where('name', 'Kertas F4 70gr')->firstOrFail();
         $modelParam = preg_replace('/[^a-zA-Z0-9]/', '', (string)$model->number) ?: $model->id;
         $response->assertSessionHas('new_stock_created', [
-            'target_url' => '/smart/inventory/' . $modelParam . '?tab=lots&lot_id=' . $lot->id,
+            'target_url' => '/smart/stock-management/' . $modelParam . '?tab=lots&lot_id=' . $lot->id,
             'model_id' => $model->id,
             'lot_id' => $lot->id,
             'is_consumable' => true,
@@ -507,7 +507,7 @@ class NewStockControllerTest extends TestCase
 
     public function test_consumable_lot_creation_requires_initial_quantity(): void
     {
-        $response = $this->actingAs($this->admin)->post('/smart/inventory/new-stock', [
+        $response = $this->actingAs($this->admin)->post('/smart/stock-management/new-stock', [
             'category_id' => $this->otherCategory->id,
             'type_id' => $this->consumableType->id,
             'brand_id' => $this->brand->id,
@@ -540,7 +540,7 @@ class NewStockControllerTest extends TestCase
 
         $photo = UploadedFile::fake()->createWithContent('consumable-item.webp', $webpData);
 
-        $response = $this->actingAs($this->admin)->post('/smart/inventory/new-stock', [
+        $response = $this->actingAs($this->admin)->post('/smart/stock-management/new-stock', [
             'category_id' => $this->otherCategory->id,
             'type_id' => $this->consumableType->id,
             'brand_id' => $this->brand->id,

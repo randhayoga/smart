@@ -139,7 +139,10 @@ class NewStockController extends Controller
                         $assetNumbers = [app(AssetNumberService::class)->generateAssetNumber($lot)];
                     }
 
+                    $createdAssets = [];
+                    $lastApproval = null;
                     foreach ($assetNumbers as $assetNumber) {
+                        $assetBurden = $validated['burden'] ?? 'Corporate';
                         $asset = Asset::create([
                             'number' => $assetNumber,
                             'lot_id' => $lot->id,
@@ -152,16 +155,27 @@ class NewStockController extends Controller
                             'price' => $validated['price'] ?? null,
                             'image_url' => $photoUrl,
                             'vehicle_registration' => $isKend ? ($validated['plate_number'] ?? null) : null,
+                            'burden' => $assetBurden,
+                            'project_id' => $assetBurden === 'Project' ? ($validated['project_id'] ?? null) : null,
                         ]);
 
-                        $approval = AssetActivationApproval::create([
+                        $lastApproval = AssetActivationApproval::create([
                             'asset_id' => $asset->id,
                             'requester_id' => $request->user()->id,
                             'decision' => 'pending',
                             'requested_at' => now(),
                         ]);
 
-                        app(NotificationService::class)->notifyManagerNewAssetActivation($asset, $approval);
+                        $createdAssets[] = $asset;
+                    }
+
+                    if (count($createdAssets) === 1) {
+                        app(NotificationService::class)->notifyManagerNewAssetActivation($createdAssets[0], $lastApproval);
+                    } elseif (count($createdAssets) > 1) {
+                        $user = $request->user();
+                        dispatch(function () use ($createdAssets, $lot, $user) {
+                            app(NotificationService::class)->notifyManagerBulkAssetActivation($createdAssets, $lot, $user);
+                        })->afterResponse();
                     }
                 }
             }

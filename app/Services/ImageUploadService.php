@@ -3,9 +3,11 @@
 namespace App\Services;
 
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use RuntimeException;
+use Throwable;
 
 class ImageUploadService
 {
@@ -80,7 +82,17 @@ class ImageUploadService
         $mime = $file->getMimeType() ?? '';
 
         if (str_starts_with($mime, 'image/')) {
-            return $this->storeAsWebp($file, $directory, $disk, $quality);
+            if (!function_exists('imagewebp')) {
+                Log::warning('PHP GD extension does not have WebP support enabled. Falling back to original image storage.');
+                return $file->store($directory, $disk);
+            }
+
+            try {
+                return $this->storeAsWebp($file, $directory, $disk, $quality);
+            } catch (Throwable $e) {
+                Log::warning('Failed to convert image to WebP format: ' . $e->getMessage() . '. Storing original image directly.');
+                return $file->store($directory, $disk);
+            }
         }
 
         return $file->store($directory, $disk);

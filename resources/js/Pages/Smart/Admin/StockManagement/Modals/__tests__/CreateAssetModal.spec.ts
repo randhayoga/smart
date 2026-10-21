@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { mount } from '@vue/test-utils';
 import CreateAssetModal from '../CreateAssetModal.vue';
 import { i18n, setI18nLanguage } from '@/locales';
@@ -28,6 +28,9 @@ describe('CreateAssetModal.vue', () => {
     locations: [
       { id: 1, name: 'Gd. Menara' },
     ],
+    projects: [
+      { id: 10, no_project: 'PRJ-01', project_name: 'Alpha Project', client_id: 'CL-1' },
+    ],
     floors: [],
     rooms: [],
   };
@@ -47,7 +50,7 @@ describe('CreateAssetModal.vue', () => {
             template: '<div data-testid="location-combobox"></div>',
           },
           Combobox: {
-            template: '<div data-testid="combobox"></div>',
+            template: '<div data-testid="project-combobox"></div>',
           },
           DropdownMenu: {
             template: '<div><slot /></div>',
@@ -67,151 +70,138 @@ describe('CreateAssetModal.vue', () => {
     });
   };
 
-  it('renders with status forced to Belum Diverifikasi and input disabled', () => {
-    const wrapper = mountModal();
+  it('renders localized title Input Aset Baru (ID) and Input New Asset (EN)', () => {
+    setI18nLanguage('id');
+    const wrapperId = mountModal();
+    expect(wrapperId.find('h3').text()).toBe('Input Aset Baru');
 
-    // Find the status input
-    const statusInputs = wrapper.findAll('input[disabled]');
-    const statusInput = statusInputs.find(input => 
-      (input.element as HTMLInputElement).value === 'Belum Diverifikasi'
-    );
-
-    expect(statusInput).toBeDefined();
-    expect(statusInput?.attributes('disabled')).toBeDefined();
-  });
-
-  it('renders localized status Unverified when language is en', async () => {
     setI18nLanguage('en');
-    const wrapper = mountModal();
-
-    const statusInputs = wrapper.findAll('input[disabled]');
-    const statusInput = statusInputs.find(input => 
-      (input.element as HTMLInputElement).value === 'Unverified'
-    );
-
-    expect(statusInput).toBeDefined();
-    expect(statusInput?.attributes('disabled')).toBeDefined();
+    const wrapperEn = mountModal();
+    expect(wrapperEn.find('h3').text()).toBe('Input New Asset');
   });
 
-  it('initializes condition as empty and displays select placeholder', () => {
+  it('removes Asset Number input, Status input, and all Match Parent (Samakan) buttons', () => {
+    setI18nLanguage('id');
+    const wrapper = mountModal();
+
+    expect(wrapper.text()).not.toContain('Nomor Aset');
+    expect(wrapper.text()).not.toContain('Status');
+    const samakanBtns = wrapper.findAll('button').filter(b => b.text().trim() === 'Samakan');
+    expect(samakanBtns.length).toBe(0);
+  });
+
+  it('uses Price (Harga) label instead of Unit Price (Harga Satuan)', () => {
+    setI18nLanguage('id');
+    const wrapperId = mountModal();
+    expect(wrapperId.text()).toContain('Harga');
+    expect(wrapperId.text()).not.toContain('Harga Satuan');
+
+    setI18nLanguage('en');
+    const wrapperEn = mountModal();
+    expect(wrapperEn.text()).toContain('Price');
+    expect(wrapperEn.text()).not.toContain('Unit Price');
+  });
+
+  it('only displays Bagus and Rusak options for Condition matching AssetSection.vue', async () => {
     setI18nLanguage('id');
     const wrapper = mountModal();
 
     expect(wrapper.text()).toContain('Pilih kondisi');
-  });
-
-  it('contains available physical condition options in template and selecting one keeps status unchanged', async () => {
-    setI18nLanguage('id');
-    const wrapper = mountModal();
-
-    // Only initial valid condition options should be present: Bagus, Rusak, QC Passed
     expect(wrapper.text()).toContain('Bagus');
     expect(wrapper.text()).toContain('Rusak');
-    expect(wrapper.text()).toContain('QC Passed');
-
-    // Lelang/Hibah, Rusak Total, Hilang must NOT be present in creation modal
+    expect(wrapper.text()).not.toContain('QC Passed');
     expect(wrapper.text()).not.toContain('Lelang/Hibah');
     expect(wrapper.text()).not.toContain('Rusak Total');
     expect(wrapper.text()).not.toContain('Hilang');
 
-    // Find condition menu items
     const menuItems = wrapper.findAll('[role="menuitem"]');
     const goodItem = menuItems.find(item => item.text().trim() === 'Bagus');
     expect(goodItem).toBeDefined();
-
-    // Click to select 'Bagus'
     await goodItem?.trigger('click');
 
-    // Status input must still be 'Belum Diverifikasi'
-    const statusInputs = wrapper.findAll('input[disabled]');
-    const statusInput = statusInputs.find(input => 
-      (input.element as HTMLInputElement).value === 'Belum Diverifikasi'
-    );
-    expect(statusInput).toBeDefined();
+    const vm = wrapper.vm as any;
+    expect(vm.form.condition).toBe('Bagus');
+    expect(vm.form.status).toBe('Belum Diverifikasi');
   });
 
-  it('renders type and classification with required asterisk', () => {
+  it('renders Borrowing Type, Classification, Condition, Location, and Burden with required asterisk', () => {
     setI18nLanguage('id');
     const wrapper = mountModal();
 
     const labels = wrapper.findAll('label');
-    const typeLabel = labels.find(l => l.text().includes('Tipe'));
+    const typeLabel = labels.find(l => l.text().includes('Tipe Peminjaman'));
+    const conditionLabel = labels.find(l => l.text().includes('Kondisi'));
+    const locationLabel = labels.find(l => l.text().includes('Lokasi'));
     const classificationLabel = labels.find(l => l.text().includes('Klasifikasi'));
+    const burdenLabel = labels.find(l => l.text().includes('Pembebanan'));
 
     expect(typeLabel?.text()).toContain('*');
+    expect(conditionLabel?.text()).toContain('*');
+    expect(locationLabel?.text()).toContain('*');
     expect(classificationLabel?.text()).toContain('*');
+    expect(burdenLabel?.text()).toContain('*');
   });
 
-  it('validates type and classification as required on form submission', () => {
+  it('initializes Burden as Corporate, shows Project combobox when Project is selected, and validates Project', async () => {
     const wrapper = mountModal();
     const vm = wrapper.vm as any;
+
+    expect(vm.form.burden).toBe('Corporate');
+    expect(wrapper.find('[data-testid="project-combobox"]').exists()).toBe(false);
+
+    const menuItems = wrapper.findAll('[role="menuitem"]');
+    const projectItem = menuItems.find(item => item.text().trim() === 'Project');
+    await projectItem?.trigger('click');
+
+    expect(vm.form.burden).toBe('Project');
+    expect(wrapper.find('[data-testid="project-combobox"]').exists()).toBe(true);
 
     vm.form.location_id = 1;
     vm.form.condition = 'Bagus';
-    vm.form.type = '';
-    vm.form.classification = '';
+    vm.form.type = 'LT';
+    vm.form.classification = 'Aset';
+    vm.form.project_id = '';
 
     vm.handleSubmit();
-
-    expect(vm.errors.type).toBeTruthy();
-    expect(vm.errors.classification).toBeTruthy();
+    expect(vm.errors.project_id).toBeTruthy();
   });
 
-  it('matches LOT default location when clicking Samakan button for location', async () => {
-    setI18nLanguage('id');
+  it('shows Specification textarea and validates it as required when category is COMP', () => {
     const wrapper = mountModal({
-      lot: {
-        id: 1,
-        location_id: 1,
-      },
+      barang: { id: 1, category: 'Computer', category_code: 'COMP', subcategory_code: 'LP' },
     });
-
     const vm = wrapper.vm as any;
-    expect(vm.form.location_id).toBe('');
 
-    const sameAsParentButtons = wrapper.findAll('button').filter(b => b.text().trim() === 'Samakan');
-    const locationSameBtn = sameAsParentButtons[0];
-    await locationSameBtn.trigger('click');
+    expect(wrapper.find('textarea#create-unit-specification').exists()).toBe(true);
 
-    expect(vm.form.location_id).toBe(1);
+    vm.form.location_id = 1;
+    vm.form.condition = 'Bagus';
+    vm.form.type = 'LT';
+    vm.form.classification = 'Aset';
+    vm.form.specification = '';
+
+    vm.handleSubmit();
+    expect(vm.errors.specification).toBeTruthy();
   });
 
-  it('renders remove photo button and clicking it clears selected or inherited photo', async () => {
+  it('renders remove photo button and clicking it clears selected photo', async () => {
     setI18nLanguage('id');
-    const wrapper = mountModal({
-      lot: {
-        id: 1,
-        imageUrl: 'lots/sample-lot.jpg',
-      },
-    });
-
-    // Delete photo button exists
-    expect(wrapper.find('button[title="Hapus Foto"]').attributes('disabled')).toBeDefined();
-
-    // Click "Samakan" for photo (third Samakan button: location, price, photo)
-    const sameAsParentButtons = wrapper.findAll('button').filter(b => b.text().trim() === 'Samakan');
-    const photoSameAsParentBtn = sameAsParentButtons[2] || sameAsParentButtons[sameAsParentButtons.length - 1];
-    await photoSameAsParentBtn.trigger('click');
-
-    // Delete button should now be enabled
-    const enabledDeleteBtn = wrapper.find('button[title="Hapus Foto"]');
-    expect(enabledDeleteBtn.attributes('disabled')).toBeUndefined();
-    expect(wrapper.text()).toContain('sample-lot.jpg');
-
-    // Click delete photo
-    await enabledDeleteBtn.trigger('click');
-
-    // Photo should be cleared and delete button disabled again
-    expect(wrapper.text()).toContain('Belum ada foto yang dipilih');
-    expect(wrapper.find('button[title="Hapus Foto"]').attributes('disabled')).toBeDefined();
-  });
-
-  it('initializes specification and excludes legacy burden and project_id', () => {
     const wrapper = mountModal();
     const vm = wrapper.vm as any;
 
-    expect(vm.form.specification).toBe('');
-    expect(vm.form.burden).toBeUndefined();
-    expect(vm.form.project_id).toBeUndefined();
+    expect(wrapper.find('button[title="Hapus Foto"]').attributes('disabled')).toBeDefined();
+
+    vm.form.image_url = new File(['dummy'], 'photo.jpg', { type: 'image/jpeg' });
+    vm.form.image_url_name = 'photo.jpg';
+    await wrapper.vm.$nextTick();
+
+    const enabledDeleteBtn = wrapper.find('button[title="Hapus Foto"]');
+    expect(enabledDeleteBtn.attributes('disabled')).toBeUndefined();
+    expect(wrapper.text()).toContain('photo.jpg');
+
+    await enabledDeleteBtn.trigger('click');
+
+    expect(wrapper.text()).toContain('Belum ada foto yang dipilih');
+    expect(wrapper.find('button[title="Hapus Foto"]').attributes('disabled')).toBeDefined();
   });
 });

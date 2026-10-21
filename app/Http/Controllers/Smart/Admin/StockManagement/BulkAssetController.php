@@ -32,7 +32,7 @@ class BulkAssetController extends Controller
         }
 
         $rules = [
-            'number' => 'required|string|max:50',
+            'number' => 'nullable|string|max:50',
             'lot_id' => 'required|exists:lots,id',
             'location_id' => 'required|exists:locations,id',
             'status' => 'nullable|string|max:255',
@@ -46,7 +46,7 @@ class BulkAssetController extends Controller
             'use_lot_image' => 'nullable',
             'bulk_quantity' => 'required|integer|min:1|max:999',
             'burden' => 'nullable|string|in:Corporate,Project',
-            'project_id' => 'nullable',
+            'project_id' => 'required_if:burden,Project|nullable|integer',
         ];
 
         $lot = Lot::with('model.type.category')->findOrFail($request->input('lot_id'));
@@ -123,54 +123,87 @@ class BulkAssetController extends Controller
         }
 
         $classification = $validated['classification'];
+        $burden = $validated['burden'] ?? 'Corporate';
+        $projectId = $burden === 'Project' ? ($validated['project_id'] ?? null) : null;
 
-        foreach ($generatedNumbers as $num) {
-            $asset = Asset::create([
-                'number' => $num,
-                'lot_id' => $validated['lot_id'],
-                'location_id' => $validated['location_id'],
-                'status' => $validated['status'],
-                'condition' => $validated['condition'],
-                'borrowing_type' => $borrowingType,
-                'classification' => $classification,
-                'comp_specification' => $finalCompSpec,
-                'price' => $validated['price'] ?? null,
-                'image_url' => $finalImagePath,
-                'vehicle_registration' => $validated['vehicle_registration'] ?? null,
-            ]);
-
+        $createdAssets = DB::transaction(function () use (
+            $generatedNumbers,
+            $validated,
+            $borrowingType,
+            $classification,
+            $finalCompSpec,
+            $finalImagePath,
+            $burden,
+            $projectId,
+            $needApproval,
+            $proposedCondition,
+            $request,
+            $imageUploadService
+        ) {
+            $memoUrl = null;
+            $lostDocUrl = null;
             if ($needApproval) {
                 $memoUrl = 'memos/placeholder.pdf';
                 if ($request->hasFile('memo_file')) {
                     $memoUrl = $imageUploadService->storeImageOrFile($request->file('memo_file'), 'memos');
                 }
-                $lostDocUrl = null;
                 if ($proposedCondition === 'Hilang' && $request->hasFile('lost_doc_file')) {
                     $lostDocUrl = $imageUploadService->storeImageOrFile($request->file('lost_doc_file'), 'lost_docs');
                 }
-                AssetStatusApproval::create([
-                    'asset_id' => $asset->id,
-                    'requester_id' => $request->user()->id,
-                    'proposed_condition' => $proposedCondition,
-                    'previous_condition' => 'Bagus',
-                    'previous_status' => 'Tersedia',
-                    'decision' => 'pending',
-                    'note' => null,
-                    'approver_id' => null,
-                    'requested_at' => now(),
-                    'memo_url' => $memoUrl,
-                    'lost_doc_url' => $lostDocUrl,
-                ]);
-            } elseif ($asset->status === 'Belum Diverifikasi') {
-                $approval = AssetActivationApproval::create([
-                    'asset_id' => $asset->id,
-                    'requester_id' => $request->user()->id,
-                    'decision' => 'pending',
-                    'requested_at' => now(),
+            }
+
+            $assets = [];
+            foreach ($generatedNumbers as $num) {
+                $asset = Asset::create([
+                    'number' => $num,
+                    'lot_id' => $validated['lot_id'],
+                    'location_id' => $validated['location_id'],
+                    'status' => $validated['status'],
+                    'condition' => $validated['condition'],
+                    'borrowing_type' => $borrowingType,
+                    'classification' => $classification,
+                    'comp_specification' => $finalCompSpec,
+                    'price' => $validated['price'] ?? null,
+                    'image_url' => $finalImagePath,
+                    'vehicle_registration' => $validated['vehicle_registration'] ?? null,
+                    'burden' => $burden,
+                    'project_id' => $projectId,
                 ]);
 
-                app(\App\Services\NotificationService::class)->notifyManagerNewAssetActivation($asset, $approval);
+                if ($needApproval) {
+                    AssetStatusApproval::create([
+                        'asset_id' => $asset->id,
+                        'requester_id' => $request->user()->id,
+                        'proposed_condition' => $proposedCondition,
+                        'previous_condition' => 'Bagus',
+                        'previous_status' => 'Tersedia',
+                        'decision' => 'pending',
+                        'note' => null,
+                        'approver_id' => null,
+                        'requested_at' => now(),
+                        'memo_url' => $memoUrl,
+                        'lost_doc_url' => $lostDocUrl,
+                    ]);
+                } elseif ($asset->status === 'Belum Diverifikasi') {
+                    AssetActivationApproval::create([
+                        'asset_id' => $asset->id,
+                        'requester_id' => $request->user()->id,
+                        'decision' => 'pending',
+                        'requested_at' => now(),
+                    ]);
+                }
+
+                $assets[] = $asset;
             }
+
+            return $assets;
+        });
+
+        if (!empty($createdAssets) && $validated['status'] === 'Belum Diverifikasi') {
+            $user = $request->user();
+            dispatch(function () use ($createdAssets, $lot, $user) {
+                app(\App\Services\NotificationService::class)->notifyManagerBulkAssetActivation($createdAssets, $lot, $user);
+            })->afterResponse();
         }
 
         return redirect()->back()->with('success', __('inventory.bulk_create_success', ['count' => $quantity]));
@@ -201,8 +234,8 @@ class BulkAssetController extends Controller
         $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
             'ids' => 'required|array',
             'ids.*' => 'exists:assets,id',
-            'status' => ['nullable', 'string', 'in:Tersedia,Dipinjam,Standby,Tidak Aktif,Pending,Pending:BoD/BoC'],
-            'condition' => ['nullable', 'string', 'in:Bagus,Rusak,QC Passed,Lelang/Hibah,Rusak Total,Hilang'],
+            'status' => ['nullable', 'string', 'in:Tersedia,Dipinjam,Tidak Aktif,Pending,Pending:BoD/BoC'],
+            'condition' => ['nullable', 'string', 'in:Bagus,Rusak,Rusak Total,Hilang'],
             'borrowing_type' => ['nullable', 'string', 'in:LT,ST'],
             'type' => ['nullable', 'string', 'in:LT,ST'],
             'classification' => ['nullable', 'string', 'in:Aset,Inventaris'],
@@ -212,8 +245,8 @@ class BulkAssetController extends Controller
             'price' => 'nullable|numeric|min:0|max:999999999.99',
             'use_lot_image' => 'nullable',
             'image_url' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:1024',
-            'burden' => 'nullable',
-            'project_id' => 'nullable',
+            'burden' => 'nullable|string|in:Corporate,Project',
+            'project_id' => 'required_if:burden,Project|nullable|integer',
         ], $messages);
         if ($validator->fails()) {
             if ($validator->errors()->has('borrowing_type')) {
@@ -277,7 +310,7 @@ class BulkAssetController extends Controller
             return redirect()->back()->with('success', __('inventory.bulk_bod_boc_approved', ['count' => count($assets)]));
         }
 
-        $arrInactiveConditions = ['Rusak Total', 'Hilang', 'Lelang/Hibah'];
+        $arrInactiveConditions = ['Rusak Total', 'Hilang'];
         $hasRestrictedAssets = $assets->contains(function ($u) use ($arrInactiveConditions) {
             $s = strtolower(trim($u->status ?? ''));
             return in_array($s, ['tidak aktif', 'pending', 'pending:bod/boc']) || str_starts_with($s, 'pending') || in_array($u->condition, $arrInactiveConditions);
@@ -291,10 +324,10 @@ class BulkAssetController extends Controller
             if ($request->filled('status')) {
                 $hasDisallowedStatusAssets = $assets->contains(function ($u) {
                     $s = strtolower(trim($u->status ?? ''));
-                    return !in_array($s, ['tersedia', 'standby']);
+                    return $s !== 'tersedia';
                 });
                 if ($hasDisallowedStatusAssets) {
-                    return redirect()->back()->withErrors(['status' => 'Status hanya dapat diubah jika semua aset yang dipilih berstatus Tersedia atau Standby.']);
+                    return redirect()->back()->withErrors(['status' => 'Status hanya dapat diubah jika semua aset yang dipilih berstatus Tersedia.']);
                 }
             }
             $inputStatusLower = strtolower(trim($request->input('status', '')));
@@ -357,6 +390,10 @@ class BulkAssetController extends Controller
         if ($request->filled('classification')) {
             $updateData['classification'] = $request->input('classification');
         }
+        if ($request->filled('burden')) {
+            $updateData['burden'] = $request->input('burden');
+            $updateData['project_id'] = $request->input('burden') === 'Project' ? $request->input('project_id') : null;
+        }
 
         // 5. Image URL / Use LOT Image
         $finalImagePath = null;
@@ -379,11 +416,12 @@ class BulkAssetController extends Controller
             $updateData['image_url'] = $finalImagePath;
 
             // Delete old images for each asset if not shared
-            foreach ($assets as $asset) {
-                if ($asset->image_url && Storage::disk('local')->exists($asset->image_url)) {
-                    $isShared = Asset::where('image_url', $asset->image_url)->where('id', '!=', $asset->id)->exists();
+            $oldImages = $assets->pluck('image_url')->filter()->unique();
+            foreach ($oldImages as $oldImg) {
+                if (Storage::disk('local')->exists($oldImg)) {
+                    $isShared = Asset::where('image_url', $oldImg)->whereNotIn('id', $ids)->exists();
                     if (!$isShared) {
-                        Storage::disk('local')->delete($asset->image_url);
+                        Storage::disk('local')->delete($oldImg);
                     }
                 }
             }
@@ -397,9 +435,7 @@ class BulkAssetController extends Controller
         }
 
         if (!empty($updateData)) {
-            foreach ($assets as $asset) {
-                $asset->update($updateData);
-            }
+            Asset::whereIn('id', $ids)->update($updateData);
         }
 
         if ($needApproval) {

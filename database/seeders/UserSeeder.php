@@ -70,7 +70,7 @@ class UserSeeder extends Seeder
             [
                 'employee_id' => '999996',
                 'name' => 'Dep Manajer',
-                'email' => 'fefayo4603@caps7.com',
+                'email' => 'poxiho3795@iconcubic.com',
                 'password' => 'IfSerVicEs?25#!*',
             ],
             [

@@ -50,6 +50,7 @@ interface Props {
     barang_category_code?: string;
     barang_subcategory: string;
     barang_uom: string;
+    [key: string]: any;
   };
   units: {
     id: number;
@@ -196,6 +197,8 @@ const parentBarangUrl = computed(() => {
 });
 
 const handleConfirmDelete = () => {
+  if (processing.value) return;
+  processing.value = true;
   if (deleteMode.value === 'lot') {
     router.delete(`/smart/stock-management/lots/${props.lot.id}?redirect_to=${encodeURIComponent(parentBarangUrl.value)}`, {
       onStart: () => { processing.value = true; },

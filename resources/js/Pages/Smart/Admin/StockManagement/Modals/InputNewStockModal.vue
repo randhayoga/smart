@@ -163,15 +163,37 @@ const isKend = computed(() => {
 });
 
 const selectedType = computed(() => {
-  return effectiveTypes.value.find(t => t.id === form.type_id);
-});
-
-const isConsumable = computed(() => {
-  return Boolean(selectedType.value?.is_consumable);
+  if (form.type_id === null || form.type_id === undefined) return undefined;
+  return effectiveTypes.value.find(t => t.id == form.type_id);
 });
 
 const selectedModel = computed(() => {
-  return effectiveModels.value.find(m => m.id === form.model_id);
+  if (form.model_id === null || form.model_id === undefined) return undefined;
+  return effectiveModels.value.find(m => m.id == form.model_id);
+});
+
+const isConsumable = computed(() => {
+  if (selectedType.value) {
+    return Boolean(selectedType.value.is_consumable);
+  }
+  if (selectedModel.value) {
+    const m = selectedModel.value as any;
+    return Boolean(m.is_consumable ?? m.type?.is_consumable);
+  }
+  if (form.type_id !== null && form.type_id !== undefined) {
+    const t = effectiveTypes.value.find(x => x.id == form.type_id);
+    if (t) return Boolean(t.is_consumable);
+  }
+  if (form.category_id !== null && form.category_id !== undefined) {
+    const typesInCat = effectiveTypes.value.filter(t => t.category_id == form.category_id);
+    if (typesInCat.length > 0 && typesInCat.every(t => Boolean(t.is_consumable))) {
+      return true;
+    }
+  }
+  if (effectiveTypes.value.length > 0 && effectiveTypes.value.every(t => Boolean(t.is_consumable))) {
+    return true;
+  }
+  return false;
 });
 
 const activeUomName = computed(() => {
@@ -263,6 +285,18 @@ watch(() => form.vendor_id, (val) => {
   }
 });
 
+watch(isConsumable, (val) => {
+  if (val) {
+    form.input_asset = false;
+    form.asset_specification = '';
+    form.photo = null;
+    form.photo_name = '';
+    form.plate_number = '';
+    form.is_bulk = false;
+    form.bulk_quantity = '';
+  }
+}, { immediate: true });
+
 watch(() => props.open, (val) => {
   if (val) {
     openModal();
@@ -272,6 +306,7 @@ watch(() => props.open, (val) => {
 });
 
 const handleSubmit = () => {
+  if (form.processing) return;
   resetErrors();
   let isValid = true;
 
@@ -302,6 +337,10 @@ const handleSubmit = () => {
     }
   }
 
+  if (isConsumable.value) {
+    form.input_asset = false;
+  }
+
   if (form.input_lot) {
     if (!form.create_new_lot) {
       if (!form.lot_id) { errors.value.lot_id = t('inventory.lotNumberRequired'); isValid = false; }
@@ -325,10 +364,12 @@ const handleSubmit = () => {
       }
 
       if (!form.organizer_id) { errors.value.organizer_id = t('inventory.organizerRequired'); isValid = false; }
-      if (!form.burden) { errors.value.burden = t('inventory.burdenRequired'); isValid = false; }
-      if (form.burden === 'Project' && !form.project_id) {
-        errors.value.project_id = t('inventory.projectRequired');
-        isValid = false;
+      if (isConsumable.value) {
+        if (!form.burden) { errors.value.burden = t('inventory.burdenRequired'); isValid = false; }
+        if (form.burden === 'Project' && !form.project_id) {
+          errors.value.project_id = t('inventory.projectRequired');
+          isValid = false;
+        }
       }
 
       if (form.entry_type === 'Procurement') {
@@ -341,7 +382,7 @@ const handleSubmit = () => {
       }
     }
 
-    if (form.input_asset) {
+    if (!isConsumable.value && form.input_asset) {
       if (isComp.value && !form.asset_specification) {
         errors.value.asset_specification = t('inventory.requiredMarker');
         isValid = false;
@@ -350,6 +391,11 @@ const handleSubmit = () => {
       if (!form.condition) { errors.value.condition = t('inventory.conditionRequired'); isValid = false; }
       if (!form.location_id) { errors.value.location_id = t('inventory.locationRequired'); isValid = false; }
       if (!form.classification) { errors.value.classification = t('inventory.classificationRequired'); isValid = false; }
+      if (!form.burden) { errors.value.burden = t('inventory.burdenRequired'); isValid = false; }
+      if (form.burden === 'Project' && !form.project_id) {
+        errors.value.project_id = t('inventory.projectRequired');
+        isValid = false;
+      }
       if (isKend.value && !form.plate_number) {
         errors.value.plate_number = t('inventory.plateNumberRequired');
         isValid = false;
@@ -416,7 +462,7 @@ const handleSubmit = () => {
             <!-- Modal Header -->
             <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border shrink-0">
               <h3 class="text-lg font-bold text-foreground">{{ t('inventory.inputNewStock') }}</h3>
-              <button @click="closeModal" class="p-2 hover:bg-muted rounded-full transition-colors">
+              <button @click="closeModal" :disabled="form.processing" class="p-2 hover:bg-muted rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                 <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
               </button>
             </div>
@@ -449,14 +495,17 @@ const handleSubmit = () => {
                 :parent-image-url="parentImageUrl"
               />
 
-              <!-- Section 3: Asset Details -->
+              <!-- Section 3: Asset Details (Non-Consumable Only) -->
               <AssetSection
+                v-if="!isConsumable"
                 :form="form"
                 :errors="errors"
                 :locations="locations"
+                :projects="projects"
                 :is-comp="isComp"
                 :is-kend="isKend"
                 :lot-ready="lotReady"
+                :is-consumable="isConsumable"
               />
             </div>
 
@@ -466,6 +515,7 @@ const handleSubmit = () => {
               <div class="flex items-center gap-3">
                 <Button
                   @click="closeModal"
+                  :disabled="form.processing"
                   variant="white"
                   size="xl"
                 >

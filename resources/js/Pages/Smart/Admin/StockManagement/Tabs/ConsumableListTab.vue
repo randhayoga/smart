@@ -511,6 +511,7 @@ const openEditModal = () => {
 };
 
 const handleEditSuccess = () => {
+  selectedItemsForEdit.value = [];
   if (dataTableRef.value) {
     dataTableRef.value.table.resetRowSelection();
   }
@@ -535,7 +536,8 @@ const closeDeleteModal = () => {
 };
 
 const handleConfirmDelete = () => {
-  if (itemsToDelete.value.length === 0) return;
+  if (processing.value || itemsToDelete.value.length === 0) return;
+  processing.value = true;
 
   const ids = itemsToDelete.value.map(item => item.id);
   const isSelectedDeleted = selectedBarang.value && ids.includes(selectedBarang.value.id);

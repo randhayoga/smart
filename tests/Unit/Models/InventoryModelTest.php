@@ -106,7 +106,7 @@ class InventoryModelTest extends TestCase
         $this->assertEquals('Registrasi', $unit->lifecycles->first()->action_type);
 
         // Update status to trigger lifecycle logging
-        $unit->update(['status' => 'Standby']);
+        $unit->update(['status' => 'Tidak Aktif']);
         $unit->refresh();
         $this->assertCount(2, $unit->lifecycles);
     }

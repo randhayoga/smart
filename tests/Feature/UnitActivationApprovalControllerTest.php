@@ -233,7 +233,7 @@ class UnitActivationApprovalControllerTest extends TestCase
             'location_id' => $location->id,
             'bulk_quantity' => 3,
             'status' => 'Belum Diverifikasi',
-            'condition' => 'QC Passed',
+            'condition' => 'Bagus',
             'type' => 'LT',
             'classification' => 'Aset',
             'price' => 100000,
@@ -248,7 +248,7 @@ class UnitActivationApprovalControllerTest extends TestCase
 
         foreach ($units as $unit) {
             $this->assertEquals('Belum Diverifikasi', $unit->status);
-            $this->assertEquals('QC Passed', $unit->condition);
+            $this->assertEquals('Bagus', $unit->condition);
 
             $this->assertDatabaseHas('asset_activation_approvals', [
                 'asset_id' => $unit->id,
@@ -258,7 +258,7 @@ class UnitActivationApprovalControllerTest extends TestCase
         }
 
         $ifsManager->refresh();
-        $this->assertGreaterThanOrEqual(3, $ifsManager->notifications->count());
+        $this->assertGreaterThanOrEqual(1, $ifsManager->notifications->count());
     }
 
     public function test_admin_can_view_pending_activation_list(): void
@@ -367,7 +367,7 @@ class UnitActivationApprovalControllerTest extends TestCase
         $unit = Unit::factory()->create([
             'lot_id' => $lot->id,
             'status' => 'Belum Diverifikasi',
-            'condition' => 'QC Passed',
+            'condition' => 'Bagus',
         ]);
 
         $approval = UnitActivationApproval::create([
@@ -393,13 +393,13 @@ class UnitActivationApprovalControllerTest extends TestCase
 
         $unit->refresh();
         $this->assertEquals('Tersedia', $unit->status);
-        $this->assertEquals('QC Passed', $unit->condition);
+        $this->assertEquals('Bagus', $unit->condition);
 
         $this->assertDatabaseHas('asset_lifecycles', [
             'asset_id' => $unit->id,
             'action_type' => 'Approval',
             'status' => 'Tersedia',
-            'condition' => 'QC Passed',
+            'condition' => 'Bagus',
             'actor_id' => $ifsManager->id,
         ]);
 

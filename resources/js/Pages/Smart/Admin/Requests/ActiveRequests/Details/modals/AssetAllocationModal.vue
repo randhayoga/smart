@@ -668,8 +668,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
       cell: ({ row }) => {
         const cond = row.getValue('condition') as string || '';
         let textClass = 'text-foreground text-sm';
-        if (cond === 'Bagus' || cond === 'QC Passed') textClass = 'text-emerald-600 font-semibold text-sm';
-        else if (cond === 'Lelang/Hibah') textClass = 'text-purple-600 font-semibold text-sm';
+        if (cond === 'Bagus') textClass = 'text-emerald-600 font-semibold text-sm';
         else if (cond === 'Rusak' || cond === 'Rusak Total' || cond === 'Hilang') textClass = 'text-rose-600 font-semibold text-sm';
         return h('div', {
           class: 'select-none',

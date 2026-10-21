@@ -114,7 +114,7 @@ class AssetBorrowingTypeTest extends TestCase
             'number' => 'UNT-001',
             'lot_id' => $this->lot->id,
             'location_id' => $this->location->id,
-            'status' => 'Standby',
+            'status' => 'Tersedia',
             'condition' => 'Bagus',
             'borrowing_type' => 'ST',
             'classification' => 'Inventaris',
@@ -129,7 +129,7 @@ class AssetBorrowingTypeTest extends TestCase
             'id' => $asset->id,
             'borrowing_type' => 'ST',
             'classification' => 'Inventaris',
-            'status' => 'Standby',
+            'status' => 'Tersedia',
         ]);
     }
 
@@ -179,6 +179,81 @@ class AssetBorrowingTypeTest extends TestCase
             'borrowing_type' => 'ST',
             'classification' => 'Inventaris',
             'condition' => 'Rusak',
+        ]);
+    }
+
+    public function test_persists_burden_and_project_id_on_single_and_bulk_create_and_update(): void
+    {
+        // 1. Single create with Project burden
+        $response = $this->actingAs($this->user)->post(route('smart.inventory.assets.store'), [
+            'lot_id' => $this->lot->id,
+            'location_id' => $this->location->id,
+            'condition' => 'Bagus',
+            'borrowing_type' => 'LT',
+            'classification' => 'Aset',
+            'burden' => 'Project',
+            'project_id' => 42,
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('assets', [
+            'lot_id' => $this->lot->id,
+            'burden' => 'Project',
+            'project_id' => 42,
+        ]);
+
+        // 2. Bulk create without number input and with Corporate burden
+        $bulkResponse = $this->actingAs($this->user)->post(route('smart.inventory.assets.bulk-store'), [
+            'lot_id' => $this->lot->id,
+            'location_id' => $this->location->id,
+            'condition' => 'Bagus',
+            'borrowing_type' => 'ST',
+            'classification' => 'Inventaris',
+            'burden' => 'Corporate',
+            'bulk_quantity' => 2,
+        ]);
+
+        $bulkResponse->assertRedirect();
+        $assets = Asset::where('lot_id', $this->lot->id)->orderBy('id')->get();
+        $this->assertCount(3, $assets);
+        $this->assertEquals('Corporate', $assets[1]->burden);
+        $this->assertNull($assets[1]->project_id);
+
+        // 3. Single update switching from Project to Corporate clears project_id
+        $firstAsset = $assets[0];
+        $updateResponse = $this->actingAs($this->user)->put(route('smart.inventory.assets.update', $firstAsset->id), [
+            'number' => $firstAsset->number,
+            'lot_id' => $this->lot->id,
+            'location_id' => $this->location->id,
+            'status' => $firstAsset->status,
+            'condition' => 'Bagus',
+            'borrowing_type' => 'LT',
+            'classification' => 'Aset',
+            'burden' => 'Corporate',
+        ]);
+        $updateResponse->assertRedirect();
+        $this->assertDatabaseHas('assets', [
+            'id' => $firstAsset->id,
+            'burden' => 'Corporate',
+            'project_id' => null,
+        ]);
+
+        // 4. Bulk update setting burden to Project and project_id
+        $bulkUpdateResponse = $this->actingAs($this->user)->post(route('smart.inventory.assets.bulk-update'), [
+            'ids' => [$assets[1]->id, $assets[2]->id],
+            'burden' => 'Project',
+            'project_id' => 99,
+        ]);
+        $bulkUpdateResponse->assertRedirect();
+        $this->assertDatabaseHas('assets', [
+            'id' => $assets[1]->id,
+            'burden' => 'Project',
+            'project_id' => 99,
+        ]);
+        $this->assertDatabaseHas('assets', [
+            'id' => $assets[2]->id,
+            'burden' => 'Project',
+            'project_id' => 99,
         ]);
     }
 }

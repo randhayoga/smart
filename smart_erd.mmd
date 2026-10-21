@@ -188,8 +188,8 @@ erDiagram
         numeric price  "nullable"  
         varchar image_url  "nullable"  
         varchar vehicle_registration  "nullable"  
-        varchar legacy_burden  "nullable | legacy migration only"  
-        int legacy_project_id FK "nullable | RE_PORTALDB_TB_PROJECT's id (legacy migration only)"  
+        varchar_20 burden  "nullable | Corporate | Project"  
+        int project_id FK "nullable | RE_PORTALDB_TB_PROJECT's id"  
     }
 
     ASSET_STATUS_APPROVAL {

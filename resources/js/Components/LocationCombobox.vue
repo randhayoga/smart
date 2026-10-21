@@ -115,6 +115,7 @@ interface TreeNode extends LocationItem {
 }
 
 const treeHierarchy = computed<TreeNode[]>(() => {
+  if (!open.value) return [];
   const excludedSet = new Set(props.excludeIds.map(String));
   
   // Filter active or excluded
@@ -163,6 +164,7 @@ const treeHierarchy = computed<TreeNode[]>(() => {
 
 // Set of node IDs that match the search query (or are descendants/ancestors of matches)
 const matchingNodeIds = computed<Set<number | string>>(() => {
+  if (!open.value) return new Set();
   const q = searchQuery.value.trim().toLowerCase();
   if (!q) return new Set();
 
@@ -201,6 +203,7 @@ const matchingNodeIds = computed<Set<number | string>>(() => {
 
 // Flatten tree according to expanded/collapsed state and search filter
 const visibleFlattenedNodes = computed<TreeNode[]>(() => {
+  if (!open.value) return [];
   const q = searchQuery.value.trim().toLowerCase();
   const matched = matchingNodeIds.value;
   const result: TreeNode[] = [];

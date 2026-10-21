@@ -37,6 +37,43 @@ describe('DataTable.vue default sorting rules', () => {
     expect(rows[1].original.number).toBe('CODE-001');
   });
 
+  it('preserves pageIndex when selecting a row on page 2 and data array reference updates', async () => {
+    const columns: ColumnDef<any>[] = [
+      {
+        id: 'select',
+        cell: ({ row }) => (row as any).getToggleSelectedHandler(),
+      },
+      { accessorKey: 'number', header: 'Nomor' },
+    ];
+    const data = Array.from({ length: 20 }, (_, i) => ({ number: `NUM-${i + 1}` }));
+
+    const wrapper = mount(DataTable, {
+      props: {
+        columns: columns as any,
+        data,
+        pageSize: 5,
+      },
+      global: { plugins: [i18n] },
+    });
+
+    const vm = wrapper.vm as any;
+    vm.table.setPageIndex(1);
+    await nextTick();
+    expect(vm.table.getState().pagination.pageIndex).toBe(1);
+
+    // Select row on page 2
+    vm.table.getRowModel().rows[0].toggleSelected(true);
+    await nextTick();
+
+    expect(vm.table.getState().pagination.pageIndex).toBe(1);
+
+    // Simulate parent re-render passing a new array reference (e.g. from computed filter / rowSelection update)
+    await wrapper.setProps({ data: [...data] });
+    await nextTick();
+
+    expect(vm.table.getState().pagination.pageIndex).toBe(1);
+  });
+
   it('Rule 1 Exception: sorts by employee_id ascending for employee tables', () => {
     const columns: ColumnDef<any>[] = [
       { accessorKey: 'employee_id', header: 'NIK' },

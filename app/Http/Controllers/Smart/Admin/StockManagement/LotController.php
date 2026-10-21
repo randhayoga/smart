@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Inventory\Model as InventoryModel;
 use App\Models\Inventory\Lot;
 use App\Models\Inventory\Asset;
+use App\Models\Inventory\AssetActivationApproval;
 use App\Models\Master\Brand;
 use App\Models\Master\Location;
 use App\Models\Master\Organizer;
@@ -15,7 +16,9 @@ use App\Models\TbProject;
 use App\Services\InventoryLogService;
 use App\Services\Inventory\AssetNumberService;
 use App\Services\NotificationService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -33,9 +36,19 @@ class LotController extends Controller
         $modelId = $request->input('model_id', $request->input('barang_id'));
         $request->merge(['model_id' => $modelId]);
 
-        $model = InventoryModel::findOrFail($modelId);
+        $model = InventoryModel::with('type.category')->findOrFail($modelId);
         $isConsumable = (bool) $model->is_consumable;
-        $isHibah = ($request->input('entry_type') === 'Hibah');
+        $entryType = $request->input('entry_type', 'Procurement');
+        $isHibah = ($entryType === 'Hibah');
+
+        $rawDate = $request->input('purchase_grant_date', $request->input('purchase_date', $request->input('date_of_grant', $request->input('date_of_receipt'))));
+        if ($rawDate) {
+            $request->merge(['purchase_grant_date' => $rawDate]);
+        }
+
+        $date = $rawDate ? Carbon::parse($rawDate) : now();
+        $lotNumber = $request->filled('number') ? $request->input('number') : $this->generateLotNumber($model, $date);
+        $request->merge(['number' => $lotNumber]);
 
         $validated = $request->validate([
             'number' => 'required|string|max:50|unique:lots,number',
@@ -47,10 +60,10 @@ class LotController extends Controller
             'current_quantity' => 'nullable|integer|min:0|max:2147483647',
             'location_id' => 'nullable|exists:locations,id',
             'unit_price' => 'nullable|numeric|min:0',
-            'po_number' => 'nullable|string|max:255',
+            'po_number' => $isHibah ? 'nullable|string|max:255' : 'required|string|max:255',
             'purchase_grant_date' => 'required|date',
             'entry_type' => 'nullable|string|in:Procurement,Hibah',
-            'memo_number' => 'nullable|string|max:255',
+            'memo_number' => $isHibah ? 'required|string|max:255' : 'nullable|string|max:255',
             'memo_file' => 'nullable|file|mimes:pdf,jpeg,jpg,png,webp|max:2048',
             'image_url' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:1024',
             'burden' => 'nullable|string|in:Corporate,Project',
@@ -58,53 +71,167 @@ class LotController extends Controller
         ], [
             'vendor_id.required' => 'Vendor wajib dipilih.',
             'vendor_id.required_without' => 'Vendor wajib dipilih.',
+            'po_number.required' => 'Nomor PO wajib diisi.',
+            'memo_number.required' => 'Nomor memo wajib diisi.',
             'initial_quantity.required' => 'Jumlah stok awal wajib diisi.',
             'initial_quantity.integer' => 'Tidak boleh desimal.',
             'current_quantity.integer' => 'Tidak boleh desimal.',
             'purchase_grant_date.required' => 'Tanggal pembelian/hibah wajib diisi.',
         ]);
 
+        $category = $model->type?->category;
+        $isComp = ($category && ($category->code === 'COMP' || strtolower($category->name) === 'computer'));
+        $isKend = ($category && ($category->code === 'KEND'));
+
+        if (!$isConsumable && $request->boolean('input_asset')) {
+            $assetRules = [
+                'borrowing_type' => ['required', Rule::in(['LT', 'ST'])],
+                'condition' => ['required', Rule::in(['Bagus', 'Rusak', 'Good', 'Damaged'])],
+                'location_id' => ['required', Rule::exists(Location::class, 'id')],
+                'price' => ['nullable', 'numeric', 'min:0', 'max:999999999999.99'],
+                'classification' => ['required', Rule::in(['Aset', 'Inventaris'])],
+                'photo' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:1024'],
+                'burden' => ['required', Rule::in(['Corporate', 'Project'])],
+                'project_id' => ['required_if:burden,Project', 'nullable', Rule::exists(TbProject::class, 'id_project')],
+            ];
+
+            if ($isComp) {
+                $assetRules['asset_specification'] = ['required', 'string', 'max:1000'];
+            } else {
+                $assetRules['asset_specification'] = ['nullable', 'string', 'max:1000'];
+            }
+
+            if ($isKend) {
+                $assetRules['plate_number'] = ['required', 'string', 'max:20'];
+            } else {
+                $assetRules['plate_number'] = ['nullable', 'string', 'max:20'];
+            }
+
+            $assetRules['is_bulk'] = ['nullable', 'boolean'];
+            if (!$isKend && $request->boolean('is_bulk')) {
+                $assetRules['bulk_quantity'] = ['required', 'integer', 'min:1', 'max:999'];
+            } else {
+                $assetRules['bulk_quantity'] = ['nullable', 'integer', 'min:1', 'max:999'];
+            }
+
+            $request->validate($assetRules);
+        }
+
         $imageUploadService = app(\App\Services\ImageUploadService::class);
 
-        if ($request->hasFile('memo_file')) {
-            $validated['memo_url'] = $imageUploadService->storeImageOrFile($request->file('memo_file'), 'memos');
-        }
-
-        if ($request->boolean('use_parent_image')) {
-            if ($model->image_url && Storage::disk('local')->exists($model->image_url)) {
-                $validated['image_url'] = $model->image_url;
+        $lot = DB::transaction(function () use ($request, $validated, $model, $isConsumable, $isComp, $isKend, $imageUploadService) {
+            if ($request->hasFile('memo_file')) {
+                $validated['memo_url'] = $imageUploadService->storeImageOrFile($request->file('memo_file'), 'memos');
             }
-        } elseif ($request->hasFile('image_url')) {
-            $validated['image_url'] = $imageUploadService->storeAsWebp($request->file('image_url'), 'inventory');
-        }
 
-        if ($isConsumable) {
-            $validated['initial_quantity'] = $validated['initial_quantity'] ?? 0;
-            $validated['current_quantity'] = $validated['initial_quantity'];
-            $validated['burden'] = $validated['burden'] ?? 'Corporate';
-            $validated['project_id'] = ($validated['burden'] === 'Project') ? ($validated['project_id'] ?? null) : null;
-            $validated['location_id'] = !empty($validated['location_id']) ? (int) $validated['location_id'] : null;
-            $validated['unit_price'] = isset($validated['unit_price']) && $validated['unit_price'] !== '' ? $validated['unit_price'] : null;
-        } else {
-            $validated['initial_quantity'] = null;
-            $validated['current_quantity'] = null;
-            $validated['burden'] = null;
-            $validated['project_id'] = null;
-            $validated['location_id'] = null;
-            $validated['unit_price'] = null;
-        }
-        $validated['vendor_id'] = !empty($validated['vendor_id']) ? (int)$validated['vendor_id'] : null;
-        $validated['legacy_vendor_id'] = !empty($validated['legacy_vendor_id']) ? (int)$validated['legacy_vendor_id'] : null;
+            if ($request->boolean('use_parent_image')) {
+                if ($model->image_url && Storage::disk('local')->exists($model->image_url)) {
+                    $validated['image_url'] = $model->image_url;
+                }
+            } elseif ($request->hasFile('image_url')) {
+                $validated['image_url'] = $imageUploadService->storeAsWebp($request->file('image_url'), 'inventory');
+            }
 
-        $lot = Lot::create($validated);
+            if ($isConsumable) {
+                $validated['initial_quantity'] = $validated['initial_quantity'] ?? 0;
+                $validated['current_quantity'] = $validated['initial_quantity'];
+                $validated['burden'] = $validated['burden'] ?? 'Corporate';
+                $validated['project_id'] = ($validated['burden'] === 'Project') ? ($validated['project_id'] ?? null) : null;
+                $validated['location_id'] = !empty($validated['location_id']) ? (int) $validated['location_id'] : null;
+                $validated['unit_price'] = isset($validated['unit_price']) && $validated['unit_price'] !== '' ? $validated['unit_price'] : null;
+            } else {
+                $validated['initial_quantity'] = null;
+                $validated['current_quantity'] = null;
+                $validated['location_id'] = null;
+                $validated['unit_price'] = null;
 
-        if ($request->user()) {
-            app(InventoryLogService::class)->logLotCreated($lot, $request->user());
-        }
+                if ($request->boolean('input_asset')) {
+                    $validated['burden'] = $request->input('burden', 'Corporate');
+                    $validated['project_id'] = ($validated['burden'] === 'Project') ? ($request->input('project_id') ?? null) : null;
+                } else {
+                    $validated['burden'] = null;
+                    $validated['project_id'] = null;
+                }
+            }
+            $validated['vendor_id'] = !empty($validated['vendor_id']) ? (int)$validated['vendor_id'] : null;
+            $validated['legacy_vendor_id'] = !empty($validated['legacy_vendor_id']) ? (int)$validated['legacy_vendor_id'] : null;
 
-        if ($lot->model) {
-            app(NotificationService::class)->checkAndNotifyLowStock($lot->model);
-        }
+            $createdLot = Lot::create($validated);
+
+            if ($request->user()) {
+                app(InventoryLogService::class)->logLotCreated($createdLot, $request->user());
+            }
+
+            if ($isConsumable && $createdLot->model) {
+                app(NotificationService::class)->checkAndNotifyLowStock($createdLot->model);
+            }
+
+            if (!$isConsumable && $request->boolean('input_asset')) {
+                $createdLot->loadMissing(['model.type.category', 'organizer']);
+
+                $rawCondition = $request->input('condition');
+                $condition = match ($rawCondition) {
+                    'Good' => 'Bagus',
+                    'Damaged' => 'Rusak',
+                    default => $rawCondition,
+                };
+
+                $photoUrl = null;
+                if ($request->hasFile('photo')) {
+                    $photoUrl = $imageUploadService->storeAsWebp($request->file('photo'), 'inventory');
+                }
+
+                $isBulk = !$isKend && $request->boolean('is_bulk');
+                $quantity = $isBulk ? (int) ($request->input('bulk_quantity') ?? 1) : 1;
+
+                if ($isBulk) {
+                    $assetNumbers = app(AssetNumberService::class)->generateBulkAssetNumbers($createdLot, $quantity);
+                } else {
+                    $assetNumbers = [app(AssetNumberService::class)->generateAssetNumber($createdLot)];
+                }
+
+                $createdAssets = [];
+                $lastApproval = null;
+                foreach ($assetNumbers as $assetNumber) {
+                    $assetBurden = $request->input('burden', 'Corporate');
+                    $asset = Asset::create([
+                        'number' => $assetNumber,
+                        'lot_id' => $createdLot->id,
+                        'location_id' => $request->input('location_id'),
+                        'status' => 'Belum Diverifikasi',
+                        'condition' => $condition,
+                        'borrowing_type' => $request->input('borrowing_type'),
+                        'classification' => $request->input('classification'),
+                        'comp_specification' => $isComp ? ($request->input('asset_specification') ?? null) : null,
+                        'price' => $request->input('price') ?? null,
+                        'image_url' => $photoUrl,
+                        'vehicle_registration' => $isKend ? ($request->input('plate_number') ?? null) : null,
+                        'burden' => $assetBurden,
+                        'project_id' => $assetBurden === 'Project' ? ($request->input('project_id') ?? null) : null,
+                    ]);
+
+                    $lastApproval = AssetActivationApproval::create([
+                        'asset_id' => $asset->id,
+                        'requester_id' => $request->user()->id,
+                        'decision' => 'pending',
+                        'requested_at' => now(),
+                    ]);
+
+                    $createdAssets[] = $asset;
+                }
+
+                if (count($createdAssets) === 1) {
+                    app(NotificationService::class)->notifyManagerNewAssetActivation($createdAssets[0], $lastApproval);
+                } elseif (count($createdAssets) > 1) {
+                    $user = $request->user();
+                    dispatch(function () use ($createdAssets, $createdLot, $user) {
+                        app(NotificationService::class)->notifyManagerBulkAssetActivation($createdAssets, $createdLot, $user);
+                    })->afterResponse();
+                }
+            }
+
+            return $createdLot;
+        });
 
         return redirect()->back()
             ->with('success', __('inventory.lot_created'));
@@ -121,7 +248,13 @@ class LotController extends Controller
         $modelId = $request->input('model_id', $request->input('barang_id', $lot->model_id));
         $request->merge(['model_id' => $modelId]);
 
-        $isHibah = ($request->input('entry_type', $lot->entry_type) === 'Hibah');
+        $rawDate = $request->input('purchase_grant_date', $request->input('purchase_date', $request->input('date_of_grant', $request->input('date_of_receipt'))));
+        if ($rawDate) {
+            $request->merge(['purchase_grant_date' => $rawDate]);
+        }
+
+        $entryType = $request->input('entry_type', $lot->entry_type ?? 'Procurement');
+        $isHibah = ($entryType === 'Hibah');
         $vendorRule = ($isBeragam || $isHibah) ? 'nullable|integer' : 'required_without:legacy_vendor_id|nullable|integer';
 
         $rules = [
@@ -133,10 +266,10 @@ class LotController extends Controller
             'initial_quantity' => 'nullable|integer|min:0|max:2147483647',
             'location_id' => 'nullable|exists:locations,id',
             'unit_price' => 'nullable|numeric|min:0',
-            'po_number' => 'nullable|string|max:255',
+            'po_number' => $isHibah ? 'nullable|string|max:255' : 'required|string|max:255',
             'purchase_grant_date' => 'required|date',
             'entry_type' => 'nullable|string|in:Procurement,Hibah',
-            'memo_number' => 'nullable|string|max:255',
+            'memo_number' => $isHibah ? 'required|string|max:255' : 'nullable|string|max:255',
             'memo_file' => 'nullable|file|mimes:pdf,jpeg,jpg,png,webp|max:2048',
             'image_url' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:1024',
             'burden' => 'nullable|string|in:Corporate,Project',
@@ -146,13 +279,20 @@ class LotController extends Controller
         $validated = $request->validate($rules, [
             'vendor_id.required' => 'Vendor wajib dipilih.',
             'vendor_id.required_without' => 'Vendor wajib dipilih.',
+            'po_number.required' => 'Nomor PO wajib diisi.',
+            'memo_number.required' => 'Nomor memo wajib diisi.',
             'initial_quantity.integer' => 'Tidak boleh desimal.',
             'purchase_grant_date.required' => 'Tanggal pembelian/hibah wajib diisi.',
         ]);
 
         $imageUploadService = app(\App\Services\ImageUploadService::class);
 
-        if ($request->hasFile('memo_file')) {
+        if ($request->boolean('delete_memo')) {
+            if ($lot->memo_url && Storage::disk('local')->exists($lot->memo_url)) {
+                Storage::disk('local')->delete($lot->memo_url);
+            }
+            $validated['memo_url'] = null;
+        } elseif ($request->hasFile('memo_file')) {
             $validated['memo_url'] = $imageUploadService->storeImageOrFile($request->file('memo_file'), 'memos');
         }
 
@@ -224,6 +364,30 @@ class LotController extends Controller
         }
 
         return redirect()->back()->with('success', __('inventory.lot_updated'));
+    }
+
+    /**
+     * Generate unique LOT number: LOT-{0001}-{YY}-{MODEL_CODE}
+     */
+    private function generateLotNumber(InventoryModel $model, Carbon $date): string
+    {
+        $yy = $date->format('y');
+        $modelCode = trim($model->number);
+        $suffix = "-{$yy}-{$modelCode}";
+        $existing = Lot::where('number', 'like', "LOT-%{$suffix}")->pluck('number');
+
+        $max = 0;
+        foreach ($existing as $num) {
+            $parts = explode('-', $num);
+            if (isset($parts[1]) && is_numeric($parts[1])) {
+                $val = (int)$parts[1];
+                if ($val > $max) {
+                    $max = $val;
+                }
+            }
+        }
+
+        return sprintf('LOT-%04d-%s-%s', $max + 1, $yy, $modelCode);
     }
 
     /**
@@ -356,7 +520,7 @@ class LotController extends Controller
 
         // Retrieve asset items associated with this LOT
         $assets = Asset::with([
-            'location.parent', 'statusApprovals', 'legacyProject',
+            'location.parent', 'statusApprovals', 'project',
             'lot.model.type.category', 'lot.model.brand', 'lot.model.uom',
             'lot.organizer', 'lot.vendor', 'lot.legacyVendor', 'legacyVendor', 'lifecycles.actor'
         ])
@@ -395,12 +559,10 @@ class LotController extends Controller
                 'price' => $asset->price,
                 'image_url' => $asset->image_url,
                 'vehicle_registration' => $asset->vehicle_registration,
-                'legacy_burden' => $asset->legacy_burden,
-                'burden' => $asset->legacy_burden,
-                'legacy_project_id' => $asset->legacy_project_id,
-                'project_id' => $asset->legacy_project_id,
-                'project_name' => $asset->legacyProject ? $asset->legacyProject->project_name : null,
-                'project_no' => $asset->legacyProject ? $asset->legacyProject->no_project : null,
+                'burden' => $asset->burden,
+                'project_id' => $asset->project_id,
+                'project_name' => $asset->project ? $asset->project->project_name : null,
+                'project_no' => $asset->project ? $asset->project->no_project : null,
                 'created_at' => $asset->created_at?->toIso8601String(),
                 'updated_at' => $asset->updated_at ? $asset->updated_at->format('d-m-Y H:i') : '-',
                 

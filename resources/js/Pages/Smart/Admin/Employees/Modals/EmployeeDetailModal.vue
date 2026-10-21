@@ -117,8 +117,7 @@ const currentTabName = computed({
 const renderConditionBadge = (condition: string) => {
   const cond = condition || '';
   let textClass = 'text-foreground text-sm';
-  if (cond === 'Bagus' || cond === 'QC Passed') textClass = 'text-emerald-600 font-semibold text-sm';
-  else if (cond === 'Lelang/Hibah') textClass = 'text-purple-600 font-semibold text-sm';
+  if (cond === 'Bagus') textClass = 'text-emerald-600 font-semibold text-sm';
   else if (cond === 'Rusak' || cond === 'Rusak Total' || cond === 'Hilang') textClass = 'text-rose-600 font-semibold text-sm';
 
   return h('span', { class: textClass }, cond || '-');
@@ -230,7 +229,7 @@ const filteredHistoricalLoans = computed(() => {
   return list;
 });
 
-const conditionOptions = ['Bagus', 'QC Passed', 'Lelang/Hibah', 'Rusak', 'Rusak Total', 'Hilang'];
+const conditionOptions = ['Bagus', 'Rusak', 'Rusak Total', 'Hilang'];
 
 // Fetch employee loans from endpoint
 const fetchEmployeeLoans = async () => {

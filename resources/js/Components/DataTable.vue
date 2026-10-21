@@ -163,6 +163,7 @@ const table = useVueTable({
   getPaginationRowModel: getPaginationRowModel(),
   getSortedRowModel: getSortedRowModel(),
   getFilteredRowModel: getFilteredRowModel(),
+  autoResetPageIndex: false,
   onSortingChange: updaterOrValue => {
     sorting.value = typeof updaterOrValue === 'function' ? updaterOrValue(sorting.value) : updaterOrValue
   },
@@ -220,6 +221,13 @@ watch(() => props.pageSize, (newSize, oldSize) => {
   }
 
   table.setPageSize(newSize || 50)
+})
+
+// Ensure pageIndex does not exceed available pages when data shrinks
+watch(() => table.getPageCount(), (pageCount) => {
+  if (pageCount > 0 && pagination.value.pageIndex >= pageCount) {
+    table.setPageIndex(pageCount - 1)
+  }
 })
 
 // Update sorting when defaultSorting or columns change

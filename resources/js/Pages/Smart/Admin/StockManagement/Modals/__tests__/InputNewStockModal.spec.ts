@@ -106,9 +106,9 @@ describe('InputNewStockModal.vue', () => {
 
   it('renders cascading initial fields for category, type, and brand', () => {
     const wrapper = mountModal();
-    expect(wrapper.text()).toContain('Choose category');
-    expect(wrapper.text()).toContain('Choose type');
-    expect(wrapper.text()).toContain('Choose brand');
+    expect(wrapper.text()).toContain('Category');
+    expect(wrapper.text()).toContain('Type');
+    expect(wrapper.text()).toContain('Brand');
     expect(wrapper.text()).toContain('Choose existing model');
     expect(wrapper.text()).toContain('Create new model');
   });
@@ -260,8 +260,8 @@ describe('InputNewStockModal.vue', () => {
     await wrapper.find('#input-lot-check').trigger('click');
     await wrapper.find('#create-new-lot-check').trigger('click');
 
-    // Default entry_type is Procurement -> Choose Vendor label / combobox is present
-    expect(wrapper.text()).toContain('Choose Vendor');
+    // Default entry_type is Procurement -> Vendor label / combobox is present
+    expect(wrapper.text()).toContain('Vendor');
     expect(wrapper.find('#new-lot-vendor').exists()).toBe(true);
 
     // Switch entry_type to Hibah via the dropdown item
@@ -445,6 +445,7 @@ describe('InputNewStockModal.vue', () => {
           { id_project: 103, project_name: 'Enterprise Setup', no_project: 'PRJ-02' },
         ],
         activeModelId: 50,
+        isConsumable: true,
       },
       global: {
         plugins: [i18n],
@@ -457,5 +458,125 @@ describe('InputNewStockModal.vue', () => {
       { id: 99, name: '[PRJ-01] Smart Implementation' },
       { id: 103, name: '[PRJ-02] Enterprise Setup' },
     ]);
+  });
+
+  it('hides burden and project selection in LotSection when isConsumable is false', () => {
+    setI18nLanguage('en');
+    const wrapper = mount(LotSection, {
+      props: {
+        form: {
+          input_lot: true,
+          create_new_lot: true,
+          burden: 'Corporate',
+          project_id: null,
+        },
+        errors: {},
+        lots: [],
+        organizers: [],
+        vendors: [],
+        locations: [],
+        projects: [{ id_project: 1, project_name: 'PRJ', no_project: 'P1' }],
+        activeModelId: 50,
+        isConsumable: false,
+      },
+      global: {
+        plugins: [i18n],
+      },
+    });
+
+    expect(wrapper.text()).not.toContain('Burden');
+    expect(wrapper.text()).not.toContain('Corporate');
+  });
+
+  it('renders burden and project options in AssetSection between classification and photo', () => {
+    setI18nLanguage('en');
+    const wrapper = mount(AssetSection, {
+      props: {
+        form: {
+          input_asset: true,
+          classification: 'Aset',
+          burden: 'Project',
+          project_id: null,
+          photo: null,
+        },
+        errors: {},
+        locations: [],
+        projects: [
+          { id_project: 10, project_name: 'Asset Project', no_project: 'PRJ-A' },
+        ],
+        isComp: false,
+        isKend: false,
+        lotReady: true,
+      },
+      global: {
+        plugins: [i18n],
+      },
+    });
+
+    expect(wrapper.text()).toContain('Burden');
+    expect(wrapper.text()).toContain('Project');
+
+    const projectCombobox = wrapper.findComponent(Combobox);
+    expect(projectCombobox.exists()).toBe(true);
+    expect(projectCombobox.props('options')).toEqual([
+      { id: 10, name: '[PRJ-A] Asset Project' },
+    ]);
+  });
+
+  it('completely hides AssetSection and prevents asset input when consumable type is active', async () => {
+    setI18nLanguage('en');
+    const wrapper = mountModal();
+
+    // Select consumable category ATK (id 3) and type (id 30, is_consumable: true)
+    const modelSection = wrapper.findComponent(ModelSection);
+    modelSection.vm.form.category_id = 3;
+    modelSection.vm.form.type_id = 30;
+    await wrapper.vm.$nextTick();
+
+    // Check Input LOT and create new lot
+    await wrapper.find('#input-lot-check').trigger('click');
+    await wrapper.find('#create-new-lot-check').trigger('click');
+    await wrapper.vm.$nextTick();
+
+    // Verify AssetSection is NOT rendered at all
+    expect(wrapper.find('#input-asset-check').exists()).toBe(false);
+    expect(wrapper.findComponent(AssetSection).exists()).toBe(false);
+    expect(wrapper.text()).not.toContain('Input asset with LOT above');
+
+    // Verify LotSection displays consumable fields (Total Stock, Unit Price, Burden)
+    expect(wrapper.text()).toContain('Total Stock');
+    expect(wrapper.text()).toContain('Unit Price');
+    expect(wrapper.text()).toContain('Burden');
+  });
+
+  it('resets form.input_asset and removes AssetSection when switching from non-consumable to consumable', async () => {
+    setI18nLanguage('en');
+    const wrapper = mountModal();
+
+    // Start with non-consumable (category 1, type 10)
+    const modelSection = wrapper.findComponent(ModelSection);
+    modelSection.vm.form.category_id = 1;
+    modelSection.vm.form.type_id = 10;
+    await wrapper.vm.$nextTick();
+
+    // Activate LOT and Asset
+    await wrapper.find('#input-lot-check').trigger('click');
+    await wrapper.find('#create-new-lot-check').trigger('click');
+    await wrapper.find('#input-asset-check').trigger('click');
+    await wrapper.vm.$nextTick();
+
+    // Verify asset section is present
+    expect(wrapper.find('#input-asset-check').exists()).toBe(true);
+    expect(wrapper.find('#new-asset-price').exists()).toBe(true);
+    expect(wrapper.vm.form.input_asset).toBe(true);
+
+    // Switch type to consumable (type 30)
+    modelSection.vm.form.type_id = 30;
+    await wrapper.vm.$nextTick();
+
+    // Verify AssetSection is immediately removed and form.input_asset is forced to false
+    expect(wrapper.find('#input-asset-check').exists()).toBe(false);
+    expect(wrapper.findComponent(AssetSection).exists()).toBe(false);
+    expect(wrapper.vm.form.input_asset).toBe(false);
   });
 });

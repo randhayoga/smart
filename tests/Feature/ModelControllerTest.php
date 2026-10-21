@@ -128,36 +128,8 @@ class ModelControllerTest extends TestCase
         ]);
     }
 
-    public function test_can_update_model_and_delete_image(): void
-    {
-        Storage::fake('local');
-        $user = User::factory()->create();
-        Storage::disk('local')->put('inventory/sample.jpg', 'fake content');
-
-        $model = Model::factory()->create([
-            'image_url' => 'inventory/sample.jpg',
-        ]);
-
-        $response = $this->actingAs($user)->put(route('smart.inventory.models.update', $model), [
-            'number' => $model->number,
-            'type_id' => $model->type_id,
-            'brand_id' => $model->brand_id,
-            'uom_id' => $model->uom_id,
-            'name' => $model->name,
-            'delete_image' => true,
-        ]);
-
-        $response->assertRedirect();
-        $response->assertSessionHas('success', 'Model berhasil diperbarui.');
-
-        $model->refresh();
-        $this->assertNull($model->image_url);
-        Storage::disk('local')->assertMissing('inventory/sample.jpg');
-    }
-
     public function test_can_bulk_update_models(): void
     {
-        Storage::fake('local');
         $user = User::factory()->create();
         
         $model1 = Model::factory()->create([
@@ -171,7 +143,6 @@ class ModelControllerTest extends TestCase
 
         $newBrand = Brand::factory()->create();
         $newUom = Uom::factory()->create();
-        $file = UploadedFile::fake()->image('model.png');
 
         $response = $this->actingAs($user)->put(route('smart.inventory.models.bulk-update'), [
             'ids' => [$model1->id, $model2->id],
@@ -179,7 +150,6 @@ class ModelControllerTest extends TestCase
             'uom_id' => $newUom->id,
             'name' => 'Nama New Bulk',
             'specification' => 'Spec New Bulk',
-            'image_url' => $file,
         ]);
 
         $response->assertRedirect();
@@ -211,10 +181,6 @@ class ModelControllerTest extends TestCase
             'user_id' => $user->id,
             'action_type' => 'update',
         ]);
-
-        $model1->refresh();
-        $this->assertNotNull($model1->image_url);
-        Storage::disk('local')->assertExists($model1->image_url);
     }
 
     public function test_bulk_update_keeps_empty_inputs(): void

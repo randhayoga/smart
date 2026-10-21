@@ -3,10 +3,12 @@
 namespace App\Services;
 
 use App\Mail\DMAssetActivationRequest;
+use App\Mail\DMBulkAssetActivationRequest;
 use App\Mail\DMAssetStatusRequest;
 use App\Mail\ManagerRequestApprovalMail;
 use App\Mail\RequesterRequestRejectedMail;
 use App\Models\Inventory\Model;
+use App\Models\Inventory\Lot;
 use App\Models\Inventory\Asset;
 use App\Models\Inventory\AssetStatusApproval;
 use App\Models\Inventory\AssetActivationApproval;
@@ -335,6 +337,85 @@ class NotificationService
             Log::error("Gagal mengirim email DMAssetActivationRequest untuk aset {$asset->number}: " . $e->getMessage(), [
                 'exception' => $e,
                 'asset_id' => $asset->id,
+            ]);
+        }
+    }
+
+    /**
+     * Send a consolidated batch notification and email to IFS Manager(s) for multiple newly created assets.
+     *
+     * @param array|\Illuminate\Support\Collection $assets
+     * @param Lot $lot
+     * @param User|null $requester
+     */
+    public function notifyManagerBulkAssetActivation($assets, Lot $lot, ?User $requester = null): void
+    {
+        $assetsCollection = collect($assets);
+        $count = $assetsCollection->count();
+        if ($count === 0) {
+            return;
+        }
+
+        $lot->loadMissing(['model.brand', 'model.type.category']);
+        $brand = $lot->model?->brand?->name ?? '';
+        $assetName = $lot->model?->name ?? '';
+        $brandAndName = trim("{$brand} {$assetName}") ?: ($lot->number ?? 'Aset Baru');
+
+        $firstAsset = $assetsCollection->first();
+        $lastAsset = $assetsCollection->last();
+        $firstNumber = $firstAsset instanceof Asset ? $firstAsset->number : ($firstAsset['number'] ?? '');
+        $lastNumber = $lastAsset instanceof Asset ? $lastAsset->number : ($lastAsset['number'] ?? '');
+
+        $locationText = '-';
+        if ($firstAsset instanceof Asset && $firstAsset->location) {
+            $locationText = $firstAsset->location->full_name ?? $firstAsset->location->name ?? '-';
+        }
+
+        $title = "Approval Aset Baru: {$count} Unit {$brandAndName}";
+        $message = "Sebanyak {$count} unit aset baru untuk {$brandAndName} ({$firstNumber} - {$lastNumber}) memerlukan approval Anda.";
+
+        // 1. In-app database + Mercure notification
+        $this->sendToRole(
+            'ifs_manager',
+            $title,
+            $message,
+            'warning',
+            "/smart/approve-activation?search=" . urlencode($firstNumber),
+            [
+                'lot_id' => $lot->id,
+                'lot_number' => $lot->number,
+                'count' => $count,
+                'first_number' => $firstNumber,
+                'last_number' => $lastNumber,
+                'type' => 'activation_approval_bulk',
+            ]
+        );
+
+        // 2. Email notification to IFS Manager(s)
+        try {
+            $ifsUsers = User::getUsersByRole('ifs_manager');
+            foreach ($ifsUsers as $ifsUser) {
+                if (!$this->isAllowedIfsRecipient($ifsUser)) {
+                    continue;
+                }
+
+                $email = $ifsUser->email;
+                if ($email && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    Mail::to($email)->send(new DMBulkAssetActivationRequest(
+                        $lot,
+                        $count,
+                        $firstNumber,
+                        $lastNumber,
+                        $locationText,
+                        $requester,
+                        $ifsUser->name
+                    ));
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::error("Gagal mengirim email DMBulkAssetActivationRequest untuk batch aset {$firstNumber} - {$lastNumber}: " . $e->getMessage(), [
+                'exception' => $e,
+                'lot_id' => $lot->id,
             ]);
         }
     }

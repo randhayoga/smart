@@ -128,33 +128,6 @@ class BarangControllerTest extends TestCase
         ]);
     }
 
-    public function test_can_update_barang_and_delete_image(): void
-    {
-        Storage::fake('local');
-        $user = User::factory()->create();
-        Storage::disk('local')->put('inventory/sample.jpg', 'fake content');
-
-        $barang = Barang::factory()->create([
-            'image_url' => 'inventory/sample.jpg',
-        ]);
-
-        $response = $this->actingAs($user)->put(route('smart.inventory.models.update', $barang), [
-            'number' => $barang->number,
-            'subcategory_id' => $barang->subcategory_id,
-            'brand_id' => $barang->brand_id,
-            'uom_id' => $barang->uom_id,
-            'name' => $barang->name,
-            'delete_image' => true,
-        ]);
-
-        $response->assertRedirect();
-        $response->assertSessionHas('success', __('inventory.model_updated'));
-
-        $barang->refresh();
-        $this->assertNull($barang->image_url);
-        Storage::disk('local')->assertMissing('inventory/sample.jpg');
-    }
-
     public function test_can_bulk_update_barangs(): void
     {
         Storage::fake('local');
@@ -171,7 +144,6 @@ class BarangControllerTest extends TestCase
 
         $newBrand = Brand::factory()->create();
         $newUom = Uom::factory()->create();
-        $file = UploadedFile::fake()->image('barang.png');
 
         $response = $this->actingAs($user)->put(route('smart.inventory.models.bulk-update'), [
             'ids' => [$barang1->id, $barang2->id],
@@ -179,7 +151,6 @@ class BarangControllerTest extends TestCase
             'uom_id' => $newUom->id,
             'name' => 'Nama New Bulk',
             'specification' => 'Spec New Bulk',
-            'image_url' => $file,
         ]);
 
         $response->assertRedirect();
@@ -211,10 +182,6 @@ class BarangControllerTest extends TestCase
             'user_id' => $user->id,
             'action_type' => 'update',
         ]);
-
-        $barang1->refresh();
-        $this->assertNotNull($barang1->image_url);
-        Storage::disk('local')->assertExists($barang1->image_url);
     }
 
     public function test_bulk_update_keeps_empty_inputs(): void

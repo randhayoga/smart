@@ -57,8 +57,8 @@ return new class extends Migration {
             $table->decimal('price', 15, 2)->nullable();
             $table->string('image_url')->nullable();
             $table->string('vehicle_registration')->nullable();
-            $table->string('legacy_burden')->nullable()->comment('Legacy migration only');
-            $table->unsignedBigInteger('legacy_project_id')->nullable()->index()->comment('Refers to RE_PORTALDB:tb_project.id_project (legacy migration only)');
+            $table->string('burden', 20)->default('Corporate')->nullable()->comment('Corporate | Project');
+            $table->unsignedBigInteger('project_id')->nullable()->index()->comment('Refers to RE_PORTALDB:tb_project.id_project');
             $table->timestamps();
 
             $table->index('status');

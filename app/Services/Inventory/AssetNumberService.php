@@ -84,18 +84,26 @@ class AssetNumberService
             $currentSerial = $this->getNextSerial($organizerCode);
             $generatedNumbers = [];
 
-            for ($i = 0; $i < $quantity; $i++) {
-                do {
-                    $serialStr = str_pad((string)$currentSerial, 5, '0', STR_PAD_LEFT);
-                    $num = "{$serialStr}-{$combination}-{$yy}";
-                    $exists = Asset::where('number', $num)->exists() || in_array($num, $generatedNumbers, true);
-                    if ($exists) {
-                        $currentSerial++;
-                    }
-                } while ($exists);
+            while (count($generatedNumbers) < $quantity) {
+                $needed = $quantity - count($generatedNumbers);
+                $batchCandidates = [];
+                for ($i = 0; $i < $needed; $i++) {
+                    $serialStr = str_pad((string)($currentSerial + $i), 5, '0', STR_PAD_LEFT);
+                    $batchCandidates[] = "{$serialStr}-{$combination}-{$yy}";
+                }
 
-                $generatedNumbers[] = $num;
-                $currentSerial++;
+                $existing = Asset::whereIn('number', $batchCandidates)->pluck('number')->flip();
+
+                foreach ($batchCandidates as $num) {
+                    if (!isset($existing[$num]) && !in_array($num, $generatedNumbers, true)) {
+                        $generatedNumbers[] = $num;
+                        if (count($generatedNumbers) === $quantity) {
+                            break;
+                        }
+                    }
+                }
+
+                $currentSerial += $needed;
             }
 
             return $generatedNumbers;

@@ -72,11 +72,28 @@ const filteredTypes = computed(() => {
 });
 
 const selectedType = computed(() => {
-  return props.types.find(t => t.id === props.form.type_id);
+  if (props.form.type_id === null || props.form.type_id === undefined) return undefined;
+  return props.types.find(t => t.id == props.form.type_id);
 });
 
 const isConsumableSelected = computed(() => {
-  return Boolean(selectedType.value?.is_consumable);
+  if (selectedType.value) {
+    return Boolean(selectedType.value.is_consumable);
+  }
+  if (props.form.type_id !== null && props.form.type_id !== undefined) {
+    const t = props.types.find(x => x.id == props.form.type_id);
+    if (t) return Boolean(t.is_consumable);
+  }
+  if (props.form.category_id !== null && props.form.category_id !== undefined) {
+    const typesInCat = props.types.filter(t => t.category_id == props.form.category_id);
+    if (typesInCat.length > 0 && typesInCat.every(t => Boolean(t.is_consumable))) {
+      return true;
+    }
+  }
+  if (props.types.length > 0 && props.types.every(t => Boolean(t.is_consumable))) {
+    return true;
+  }
+  return false;
 });
 
 const filteredBrands = computed(() => {
@@ -149,16 +166,16 @@ const onToggleCreateNewType = (checked: boolean | 'indeterminate' | null | undef
   <div class="space-y-6">
     <!-- Initial Cascading Comboboxes: Category, Type, Brand, Existing Model -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
-      <!-- Choose category -->
+      <!-- Category -->
       <Field :data-invalid="!!errors.category_id || undefined">
-        <FieldLabel for="choose-category">
-          <span>{{ t('inventory.chooseCategory') }}<span class="text-rose-500">*</span></span>
+        <FieldLabel for="category">
+          <span>{{ t('inventory.category') }}<span class="text-rose-500">*</span></span>
         </FieldLabel>
         <FieldContent>
           <Combobox
             :model-value="form.category_id"
             :options="categories"
-            :placeholder="t('inventory.chooseCategory')"
+            :placeholder="t('inventory.selectCategory')"
             :error="!!errors.category_id"
             width-class="w-full"
             @update:model-value="onCategoryChange"
@@ -167,16 +184,16 @@ const onToggleCreateNewType = (checked: boolean | 'indeterminate' | null | undef
         <FieldError v-if="errors.category_id">{{ errors.category_id }}</FieldError>
       </Field>
 
-      <!-- Choose type -->
+      <!-- Type -->
       <Field :data-invalid="!!errors.type_id || undefined">
-        <FieldLabel for="choose-type">
-          <span>{{ t('inventory.chooseType') }}<span class="text-rose-500">*</span></span>
+        <FieldLabel for="type">
+          <span>{{ t('inventory.subcategory') }}<span class="text-rose-500">*</span></span>
         </FieldLabel>
         <FieldContent>
           <Combobox
             :model-value="form.type_id"
             :options="filteredTypes"
-            :placeholder="t('inventory.chooseType')"
+            :placeholder="t('inventory.selectSubcategory')"
             :disabled="!form.category_id"
             :error="!!errors.type_id"
             width-class="w-full"
@@ -186,16 +203,16 @@ const onToggleCreateNewType = (checked: boolean | 'indeterminate' | null | undef
         <FieldError v-if="errors.type_id">{{ errors.type_id }}</FieldError>
       </Field>
 
-      <!-- Choose brand -->
+      <!-- Brand -->
       <Field :data-invalid="!!errors.brand_id || undefined">
-        <FieldLabel for="choose-brand">
-          <span>{{ t('inventory.chooseBrand') }}<span class="text-rose-500">*</span></span>
+        <FieldLabel for="brand">
+          <span>{{ t('inventory.brand') }}<span class="text-rose-500">*</span></span>
         </FieldLabel>
         <FieldContent>
           <Combobox
             :model-value="form.brand_id"
             :options="filteredBrands"
-            :placeholder="t('inventory.chooseBrand')"
+            :placeholder="t('inventory.selectBrand')"
             :disabled="!form.category_id || !form.type_id"
             :error="!!errors.brand_id"
             width-class="w-full"

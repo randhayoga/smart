@@ -115,7 +115,7 @@ class LotControllerTest extends TestCase
         ]);
     }
 
-    public function test_can_store_lot_with_null_or_blank_po_number(): void
+    public function test_procurement_lot_requires_po_number(): void
     {
         Storage::fake('local');
         $user = User::factory()->create();
@@ -128,7 +128,29 @@ class LotControllerTest extends TestCase
             'barang_id' => $barang->id,
             'organizer_id' => $organizer->id,
             'vendor_id' => $vendor->id,
+            'entry_type' => 'Procurement',
             'po_number' => '', // blank input
+            'purchase_grant_date' => '2026-05-22',
+            'burden' => 'Corporate',
+        ]);
+
+        $response->assertSessionHasErrors('po_number');
+    }
+
+    public function test_can_store_hibah_lot_with_null_po_number(): void
+    {
+        Storage::fake('local');
+        $user = User::factory()->create();
+        $barang = Barang::factory()->create();
+        $organizer = Organizer::factory()->create();
+
+        $response = $this->actingAs($user)->post(route('smart.inventory.lots.store'), [
+            'number' => 'LOT-2026-ATK-KER-0002-0002',
+            'barang_id' => $barang->id,
+            'organizer_id' => $organizer->id,
+            'entry_type' => 'Hibah',
+            'memo_number' => 'MEMO-001',
+            'po_number' => '',
             'purchase_grant_date' => '2026-05-22',
             'burden' => 'Corporate',
         ]);
@@ -136,30 +158,53 @@ class LotControllerTest extends TestCase
         $response->assertRedirect();
 
         $this->assertDatabaseHas('lots', [
-            'number' => 'LOT-2026-ATK-KER-0002-0001',
+            'number' => 'LOT-2026-ATK-KER-0002-0002',
             'model_id' => $barang->id,
+            'entry_type' => 'Hibah',
+            'memo_number' => 'MEMO-001',
             'po_number' => null,
         ]);
     }
 
-    public function test_can_update_lot_with_null_or_blank_po_number(): void
+    public function test_updating_procurement_lot_requires_po_number(): void
     {
         Storage::fake('local');
         $user = User::factory()->create();
-        $lot = Lot::factory()->create(['po_number' => 'PO-INITIAL']);
+        $lot = Lot::factory()->create(['po_number' => 'PO-INITIAL', 'entry_type' => 'Procurement']);
 
         $response = $this->actingAs($user)->put(route('smart.inventory.lots.update', $lot), [
             'number' => $lot->number,
             'barang_id' => $lot->barang_id,
             'organizer_id' => $lot->organizer_id,
             'vendor_id' => $lot->vendor_id,
+            'entry_type' => 'Procurement',
             'po_number' => '', // cleared to blank
             'purchase_grant_date' => $lot->purchase_grant_date->format('Y-m-d'),
             'burden' => 'Corporate',
         ]);
 
+        $response->assertSessionHasErrors('po_number');
+    }
+
+    public function test_can_update_hibah_lot_with_null_po_number(): void
+    {
+        Storage::fake('local');
+        $user = User::factory()->create();
+        $lot = Lot::factory()->create(['po_number' => null, 'entry_type' => 'Hibah', 'memo_number' => 'MEMO-INITIAL']);
+
+        $response = $this->actingAs($user)->put(route('smart.inventory.lots.update', $lot), [
+            'number' => $lot->number,
+            'barang_id' => $lot->barang_id,
+            'organizer_id' => $lot->organizer_id,
+            'entry_type' => 'Hibah',
+            'memo_number' => 'MEMO-UPDATED',
+            'po_number' => '',
+            'purchase_grant_date' => $lot->purchase_grant_date->format('Y-m-d'),
+            'burden' => 'Corporate',
+        ]);
+
         $response->assertRedirect();
-        $this->assertNull($lot->fresh()->po_number);
+        $this->assertEquals('MEMO-UPDATED', $lot->fresh()->memo_number);
     }
 
     public function test_can_destroy_lot(): void
@@ -356,7 +401,7 @@ class LotControllerTest extends TestCase
 
         $response = $this->actingAs($user)->post(route('smart.inventory.assets.bulk-update'), [
             'ids' => $ids,
-            'status' => 'Standby',
+            'status' => 'Tersedia',
             'condition' => 'Rusak',
             'location_id' => (string) $location->id,
         ]);
@@ -367,7 +412,7 @@ class LotControllerTest extends TestCase
         foreach ($ids as $id) {
             $this->assertDatabaseHas('assets', [
                 'id' => $id,
-                'status' => 'Standby',
+                'status' => 'Tersedia',
                 'condition' => 'Rusak',
                 'location_id' => $location->id,
             ]);
@@ -389,6 +434,7 @@ class LotControllerTest extends TestCase
             'barang_id' => $barang->id,
             'organizer_id' => $organizer->id,
             'vendor_id' => $vendor->id,
+            'po_number' => 'PO-NONC-01',
             'purchase_grant_date' => '2026-10-06',
         ]);
 
@@ -397,5 +443,53 @@ class LotControllerTest extends TestCase
         $this->assertNotNull($lot);
         $this->assertNull($lot->initial_quantity);
         $this->assertNull($lot->current_quantity);
+    }
+
+    public function test_can_store_lot_with_asset_input_for_non_consumables(): void
+    {
+        $user = User::factory()->create();
+        $category = \App\Models\Master\Category::factory()->create(['code' => 'COMP']);
+        $subcategory = \App\Models\Master\Subcategory::factory()->create(['category_id' => $category->id, 'is_consumable' => false]);
+        $barang = Barang::factory()->create(['subcategory_id' => $subcategory->id]);
+        $organizer = Organizer::factory()->create();
+        $vendor = Vendor::factory()->create();
+        $location = Location::factory()->create();
+
+        $response = $this->actingAs($user)->post(route('smart.inventory.lots.store'), [
+            'barang_id' => $barang->id,
+            'organizer_id' => $organizer->id,
+            'vendor_id' => $vendor->id,
+            'po_number' => 'PO-COMP-01',
+            'purchase_date' => '2026-10-10',
+            'input_asset' => true,
+            'borrowing_type' => 'LT',
+            'condition' => 'Bagus',
+            'location_id' => $location->id,
+            'price' => 12500000,
+            'classification' => 'Aset',
+            'burden' => 'Corporate',
+            'asset_specification' => 'Core i7, 16GB RAM',
+            'is_bulk' => true,
+            'bulk_quantity' => 2,
+        ]);
+
+        $response->assertSessionHasNoErrors();
+        $response->assertRedirect();
+
+        $lot = Lot::where('model_id', $barang->id)->first();
+        $this->assertNotNull($lot);
+        $this->assertEquals('Corporate', $lot->burden);
+        $this->assertCount(2, $lot->assets);
+
+        $firstAsset = $lot->assets->first();
+        $this->assertEquals('Belum Diverifikasi', $firstAsset->status);
+        $this->assertEquals('Bagus', $firstAsset->condition);
+        $this->assertEquals('LT', $firstAsset->borrowing_type);
+        $this->assertEquals(12500000, $firstAsset->price);
+        $this->assertDatabaseHas('asset_activation_approvals', [
+            'asset_id' => $firstAsset->id,
+            'requester_id' => $user->id,
+            'decision' => 'pending',
+        ]);
     }
 }

@@ -28,7 +28,6 @@ class BulkModelController extends Controller
             'name' => 'nullable|string|max:255',
             'specification' => 'nullable|string|max:255',
             'min_stock_threshold' => 'nullable|integer|min:0',
-            'image_url' => 'nullable|image|max:1024',
         ]);
 
         $updateData = [];

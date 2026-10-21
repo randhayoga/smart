@@ -201,6 +201,7 @@ const handleEditTerpilih = () => {
 };
 
 const handleAssetSuccess = () => {
+  selectedAssetsForEdit.value = [];
   if (dataTableRef.value && dataTableRef.value.table) {
     dataTableRef.value.table.resetRowSelection();
   }
@@ -225,7 +226,8 @@ const activeBarangForEdit = computed(() => {
   if (selectedAssetsForEdit.value.length === 1) {
     const item = selectedAssetsForEdit.value[0];
     return {
-      category: item.barang_category
+      category: item.barang_category,
+      category_code: item.barang_category_code,
     };
   }
   return null;
@@ -484,15 +486,14 @@ const availableStatuses = computed(() => {
       .filter((s): s is string => !!s)
   ));
   if (dynamic.length > 0) return dynamic;
-  return ['Tersedia', 'Dipinjam', 'Standby', 'Tidak Aktif', 'Verifikasi Ditolak'];
+  return ['Tersedia', 'Dipinjam', 'Tidak Aktif', 'Verifikasi Ditolak'];
 });
-const availableConditions = ['Bagus', 'Rusak', 'QC Passed', 'Lelang/Hibah', 'Rusak Total', 'Hilang'];
+const availableConditions = ['Bagus', 'Rusak', 'Rusak Total', 'Hilang'];
 
 const STATUS_LABEL_MAP: Record<string, string> = {
   'tersedia': 'status.tersedia',
   'available': 'status.tersedia',
   'dipinjam': 'status.dipinjam',
-  'standby': 'status.standby',
   'tidak aktif': 'status.tidakAktif',
   'pending': 'status.pending',
   'pending:dm': 'status.pendingDm',
@@ -503,8 +504,6 @@ const STATUS_LABEL_MAP: Record<string, string> = {
   'pending: bod/boc': 'status.pendingBodBoc',
   'bagus': 'status.bagus',
   'rusak': 'status.rusak',
-  'qc passed': 'status.qcPassed',
-  'lelang/hibah': 'status.lelangHibah',
   'rusak total': 'status.rusakTotal',
   'hilang': 'status.hilang',
   'dihapus': 'status.dihapus',
@@ -526,8 +525,6 @@ const getStatusLabel = (status: string) => {
 const CONDITION_KEY_MAP: Record<string, string> = {
   'bagus': 'inventory.conditionGood',
   'rusak': 'inventory.conditionDamaged',
-  'qc passed': 'inventory.conditionQcPassed',
-  'lelang/hibah': 'inventory.conditionAuctionGrant',
   'rusak total': 'inventory.conditionTotalDamage',
   'hilang': 'inventory.conditionLost',
 };
@@ -688,8 +685,7 @@ const columns = computed<ColumnDef<any>[]>(() => {
       cell: ({ row }) => {
         const cond = row.getValue('condition') as string || '';
         let textClass = 'text-foreground';
-        if (cond === 'Bagus' || cond === 'QC Passed') textClass = 'text-emerald-600 font-semibold';
-        else if (cond === 'Lelang/Hibah') textClass = 'text-purple-600 font-semibold';
+        if (cond === 'Bagus') textClass = 'text-emerald-600 font-semibold';
         else if (cond === 'Rusak' || cond === 'Rusak Total' || cond === 'Hilang') textClass = 'text-rose-600 font-semibold';
         
         return h('span', { class: textClass }, getConditionLabel(cond));

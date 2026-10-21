@@ -19,15 +19,12 @@ const STATUS_KEY_MAP: Record<string, string> = {
   'tersedia': 'status.tersedia',
   'available': 'status.tersedia',
   'dipinjam': 'status.dipinjam',
-  'standby': 'status.standby',
   'tidak aktif': 'status.tidakAktif',
   'pending': 'status.pending',
   'pending:dm': 'status.pendingDm',
   'pending: dm': 'status.pendingDm',
   'bagus': 'status.bagus',
   'rusak': 'status.rusak',
-  'qc passed': 'status.qcPassed',
-  'lelang/hibah': 'status.lelangHibah',
   'rusak total': 'status.rusakTotal',
   'hilang': 'status.hilang',
   'dihapus': 'status.dihapus',
@@ -71,13 +68,10 @@ const badgeClass = computed(() => {
   }
   if (s === 'Tersedia' || lower === 'tersedia' || lower === 'available') return 'bg-emerald-100 text-emerald-800';
   if (s === 'Dipinjam' || lower === 'dipinjam') return 'bg-amber-100 text-amber-800';
-  if (s === 'Standby' || lower === 'standby') return 'bg-blue-100 text-blue-800';
   if (s === 'Tidak Aktif' || lower === 'tidak aktif') return 'bg-gray-200 text-gray-800';
   if (s === 'Pending' || lower === 'pending' || lower.startsWith('pending')) return 'bg-purple-100 text-purple-800';
   if (s === 'Bagus' || lower === 'bagus') return 'bg-emerald-100 text-emerald-800';
   if (s === 'Rusak' || lower === 'rusak') return 'bg-rose-100 text-rose-800';
-  if (s === 'QC Passed' || lower === 'qc passed') return 'bg-sky-100 text-sky-800';
-  if (s === 'Lelang/Hibah' || lower === 'lelang/hibah') return 'bg-indigo-100 text-indigo-800';
   if (s === 'Rusak Total' || lower === 'rusak total') return 'bg-red-100 text-red-800';
   if (s === 'Hilang' || lower === 'hilang') return 'bg-rose-100 text-rose-800';
   if (lower === 'dihapus' || lower === 'ditolak' || lower === 'rejected' || lower === 'cancel' || lower === 'dibatalkan') return 'bg-rose-100 text-rose-800';

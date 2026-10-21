@@ -91,8 +91,7 @@ const openMemoFile = (path?: string | null) => {
 
 const getConditionClass = (cond?: string | null) => {
   if (!cond) return 'text-foreground';
-  if (cond === 'Bagus' || cond === 'QC Passed') return 'text-emerald-600 font-semibold';
-  if (cond === 'Lelang/Hibah') return 'text-purple-600 font-semibold';
+  if (cond === 'Bagus') return 'text-emerald-600 font-semibold';
   if (cond === 'Rusak' || cond === 'Rusak Total' || cond === 'Hilang') return 'text-rose-600 font-semibold';
   return 'text-foreground';
 };
@@ -100,8 +99,6 @@ const getConditionClass = (cond?: string | null) => {
 const CONDITION_KEY_MAP: Record<string, string> = {
   'bagus': 'inventory.conditionGood',
   'rusak': 'inventory.conditionDamaged',
-  'qc passed': 'inventory.conditionQcPassed',
-  'lelang/hibah': 'inventory.conditionAuctionGrant',
   'rusak total': 'inventory.conditionTotalDamage',
   'hilang': 'inventory.conditionLost',
 };

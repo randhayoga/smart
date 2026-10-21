@@ -162,6 +162,7 @@ class Asset extends Model
         'status' => 'Belum Diverifikasi',
         'borrowing_type' => 'LT',
         'classification' => 'Aset',
+        'burden' => 'Corporate',
     ];
 
     protected $fillable = [
@@ -177,15 +178,15 @@ class Asset extends Model
         'price',
         'image_url',
         'vehicle_registration',
-        'legacy_burden',
-        'legacy_project_id',
+        'burden',
+        'project_id',
         'legacy_vendor_id',
         'comp_specification',
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
-        'legacy_project_id' => 'integer',
+        'project_id' => 'integer',
         'legacy_vendor_id' => 'integer',
     ];
 
@@ -198,11 +199,11 @@ class Asset extends Model
     }
 
     /**
-     * The legacy project associated with this asset during migration, if any.
+     * The project associated with this asset when burden is Project.
      */
-    public function legacyProject(): BelongsTo
+    public function project(): BelongsTo
     {
-        return $this->belongsTo(\App\Models\TbProject::class, 'legacy_project_id', 'id_project');
+        return $this->belongsTo(\App\Models\TbProject::class, 'project_id', 'id_project');
     }
 
     /**

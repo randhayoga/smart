@@ -113,7 +113,7 @@ class UnitTypeClassificationTest extends TestCase
             'number' => 'UNT-001',
             'lot_id' => $this->lot->id,
             'location_id' => $this->location->id,
-            'status' => 'Standby',
+            'status' => 'Tersedia',
             'condition' => 'Bagus',
             'type' => 'ST',
             'classification' => 'Inventaris',
@@ -128,7 +128,7 @@ class UnitTypeClassificationTest extends TestCase
             'id' => $unit->id,
             'borrowing_type' => 'ST',
             'classification' => 'Inventaris',
-            'status' => 'Standby',
+            'status' => 'Tersedia',
         ]);
     }
 
@@ -281,7 +281,7 @@ class UnitTypeClassificationTest extends TestCase
             'number' => 'UNT-REQ-001',
             'lot_id' => $this->lot->id,
             'location_id' => $this->location->id,
-            'status' => 'Standby',
+            'status' => 'Tersedia',
             'condition' => 'Bagus',
             'type' => null,
             'classification' => null,

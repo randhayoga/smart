@@ -83,21 +83,41 @@ describe('CreateLotModal.vue', () => {
     });
   };
 
-  it('submits lot creation form successfully and closes modal', async () => {
+  it('renders modal title as Input LOT Baru and does not display LOT Number input', () => {
+    const wrapper = mountModal();
+    expect(wrapper.text()).toContain('Input LOT Baru');
+    // Ensure no LOT Number / Code input
+    expect(wrapper.find('input[placeholder="Kode LOT digenerate otomatis"]').exists()).toBe(false);
+  });
+
+  it('submits procurement lot creation form successfully and closes modal', async () => {
     const wrapper = mountModal();
     const vm = wrapper.vm as any;
-    vm.lotForm.number = 'LOT-0001-26-LP';
+    vm.lotForm.entry_type = 'Procurement';
+    vm.lotForm.po_number = 'PO-0001';
+    vm.lotForm.purchase_date = '2026-10-02';
     vm.lotForm.organizer_id = 1;
     vm.lotForm.vendor_id = 1;
-    vm.lotForm.location_id = 1;
-    vm.lotForm.date_of_receipt = '2026-10-02';
-    vm.lotForm.unit_price = '7500000';
 
     vm.handleSubmit();
 
     expect(vm.lotForm.post).toHaveBeenCalledWith('/smart/stock-management/lots', expect.any(Object));
     expect(wrapper.emitted('update:open')?.[0]).toEqual([false]);
     expect(wrapper.emitted('success')).toHaveLength(1);
+  });
+
+  it('submits hibah lot creation form with memo fields successfully', async () => {
+    const wrapper = mountModal();
+    const vm = wrapper.vm as any;
+    vm.onSelectEntryType('Hibah');
+    vm.lotForm.memo_number = 'MEMO-999';
+    vm.lotForm.date_of_grant = '2026-10-03';
+    vm.lotForm.organizer_id = 1;
+
+    vm.handleSubmit();
+
+    expect(vm.lotForm.post).toHaveBeenCalledWith('/smart/stock-management/lots', expect.any(Object));
+    expect(wrapper.emitted('update:open')?.[0]).toEqual([false]);
   });
 
   it('blocks Escape key from closing modal while isProcessing is true', async () => {
@@ -118,106 +138,63 @@ describe('CreateLotModal.vue', () => {
     expect(wrapper.emitted('update:open')?.[0]).toEqual([false]);
   });
 
-  it('renders remove photo button and clicking it clears selected or inherited photo', async () => {
-    const wrapper = mountModal({
-      barang: {
-        id: 1,
-        code: 'LP',
-        image_url: 'items/sample-barang.jpg',
-      },
-    });
-
-    // Delete photo button exists
-    expect(wrapper.find('button[title="Hapus Foto"]').attributes('disabled')).toBeDefined();
-
-    // Click "Samakan"
-    const sameAsParentBtn = wrapper.findAll('button').find(b => b.text().trim() === 'Samakan');
-    expect(sameAsParentBtn).toBeDefined();
-    await sameAsParentBtn?.trigger('click');
-
-    // Delete button should now be enabled
-    const enabledDeleteBtn = wrapper.find('button[title="Hapus Foto"]');
-    expect(enabledDeleteBtn.attributes('disabled')).toBeUndefined();
-    expect(wrapper.text()).toContain('sample-barang.jpg');
-
-    // Click delete photo
-    await enabledDeleteBtn.trigger('click');
-
-    // Photo should be cleared and delete button disabled again
-    expect(wrapper.text()).toContain('Belum ada foto yang dipilih');
-    expect(wrapper.find('button[title="Hapus Foto"]').attributes('disabled')).toBeDefined();
-  });
-
-  it('hides burden fields when parent barang is not consumable', () => {
-    const wrapper = mountModal({
-      barang: {
-        is_consumable: false,
-      },
-    });
-
-    expect(wrapper.text()).not.toContain('Pembebanan');
-  });
-
-  it('shows burden fields when parent barang is consumable and validates project', async () => {
+  it('validates consumable lot fields correctly and does not render Match Parent button', async () => {
     const wrapper = mountModal({
       barang: {
         is_consumable: true,
+        image_url: 'items/parent.jpg',
       },
     });
 
-    expect(wrapper.text()).toContain('Pembebanan');
+    // Ensure Match Parent / Samakan button is not rendered
+    const buttons = wrapper.findAll('button').map(b => b.text());
+    expect(buttons).not.toContain('Samakan');
+
     const vm = wrapper.vm as any;
-    vm.lotForm.number = 'LOT-0001-26-CS';
+    vm.lotForm.entry_type = 'Procurement';
+    vm.lotForm.po_number = 'PO-CS-01';
+    vm.lotForm.purchase_date = '2026-10-02';
     vm.lotForm.organizer_id = 1;
-    vm.lotForm.location_id = 1;
-    vm.lotForm.date_of_receipt = '2026-10-02';
+    vm.lotForm.vendor_id = 1;
+    vm.lotForm.initial_quantity = '';
+    vm.lotForm.location_id = '';
     vm.lotForm.burden = 'Project';
     vm.lotForm.project_id = '';
 
     vm.handleSubmit();
 
+    expect(vm.errors.initial_quantity).toBeTruthy();
+    expect(vm.errors.location_id).toBeTruthy();
     expect(vm.errors.project_id).toBeTruthy();
     expect(vm.lotForm.post).not.toHaveBeenCalled();
   });
 
-  it('requires location_id when parent barang is consumable', async () => {
-    const wrapper = mountModal({
-      barang: {
-        is_consumable: true,
-      },
-    });
-
-    const vm = wrapper.vm as any;
-    vm.lotForm.number = 'LOT-0001-26-CS';
-    vm.lotForm.organizer_id = 1;
-    vm.lotForm.location_id = '';
-    vm.lotForm.date_of_receipt = '2026-10-02';
-    vm.lotForm.unit_price = '100000';
-
-    vm.handleSubmit();
-
-    expect(vm.errors.location_id).toBeTruthy();
-    expect(vm.lotForm.post).not.toHaveBeenCalled();
-  });
-
-  it('allows empty location_id when parent barang is not consumable', async () => {
+  it('renders AssetSection for non-consumable items and submits asset info', async () => {
     const wrapper = mountModal({
       barang: {
         is_consumable: false,
+        category: 'COMP',
       },
     });
 
     const vm = wrapper.vm as any;
-    vm.lotForm.number = 'LOT-0002-26-NC';
+    vm.lotForm.entry_type = 'Procurement';
+    vm.lotForm.po_number = 'PO-0002';
+    vm.lotForm.purchase_date = '2026-10-02';
     vm.lotForm.organizer_id = 1;
     vm.lotForm.vendor_id = 1;
-    vm.lotForm.location_id = '';
-    vm.lotForm.date_of_receipt = '2026-10-02';
-    vm.lotForm.unit_price = '7500000';
+
+    // Enable asset input
+    vm.lotForm.input_asset = true;
+    vm.lotForm.asset_specification = '16GB RAM';
+    vm.lotForm.borrowing_type = 'LT';
+    vm.lotForm.condition = 'Bagus';
+    vm.lotForm.location_id = 1;
+    vm.lotForm.classification = 'Aset';
+    vm.lotForm.burden = 'Corporate';
 
     vm.handleSubmit();
 
-    expect(vm.errors.location_id).toBeFalsy();
     expect(vm.lotForm.post).toHaveBeenCalledWith('/smart/stock-management/lots', expect.any(Object));
   });
 });

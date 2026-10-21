@@ -56,7 +56,7 @@ class AssetController extends Controller
             'image_url' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:1024',
             'use_lot_image' => 'nullable',
             'burden' => 'nullable|string|in:Corporate,Project',
-            'project_id' => 'nullable',
+            'project_id' => 'required_if:burden,Project|nullable|integer',
         ];
  
         $isVehicle = false;
@@ -122,8 +122,8 @@ class AssetController extends Controller
  
         unset($validated['use_lot_image']);
         unset($validated['type']);
-        unset($validated['burden']);
-        unset($validated['project_id']);
+        $validated['burden'] = $validated['burden'] ?? 'Corporate';
+        $validated['project_id'] = $validated['burden'] === 'Project' ? ($validated['project_id'] ?? null) : null;
 
         $asset = Asset::create($validated);
  
@@ -216,7 +216,7 @@ class AssetController extends Controller
             return redirect()->back()->with('success', __('inventory.bod_boc_uploaded'));
         }
 
-        $arrInactiveConditions = ['Rusak Total', 'Hilang', 'Lelang/Hibah'];
+        $arrInactiveConditions = ['Rusak Total', 'Hilang'];
         $arrNeedApproval = ['Rusak Total', 'Hilang'];
 
         $currentStatusLower = strtolower(trim($asset->status ?? ''));
@@ -231,8 +231,8 @@ class AssetController extends Controller
             'number' => 'required|string|max:50|unique:assets,number,' . $asset->id,
             'lot_id' => 'required|exists:lots,id',
             'location_id' => 'required|exists:locations,id',
-            'status' => ['required', 'string', 'in:Tersedia,Dipinjam,Standby,Tidak Aktif,Pending,Pending:BoD/BoC,Belum Diverifikasi,Verifikasi Ditolak'],
-            'condition' => ['required', 'string', 'in:Bagus,Rusak,QC Passed,Lelang/Hibah,Rusak Total,Hilang'],
+            'status' => ['required', 'string', 'in:Tersedia,Dipinjam,Tidak Aktif,Pending,Pending:BoD/BoC,Belum Diverifikasi,Verifikasi Ditolak'],
+            'condition' => ['required', 'string', 'in:Bagus,Rusak,Rusak Total,Hilang'],
             'borrowing_type' => ['required', 'string', 'in:LT,ST'],
             'classification' => ['required', 'string', 'in:Aset,Inventaris'],
             'comp_specification' => 'nullable|string|max:255',
@@ -242,7 +242,7 @@ class AssetController extends Controller
             'delete_image' => 'nullable|boolean',
             'use_lot_image' => 'nullable',
             'burden' => 'nullable|string|in:Corporate,Project',
-            'project_id' => 'nullable',
+            'project_id' => 'required_if:burden,Project|nullable|integer',
         ];
 
         $lot = Lot::with('model.type.category')->findOrFail($request->input('lot_id'));
@@ -269,7 +269,7 @@ class AssetController extends Controller
                 return redirect()->back()->withErrors(['status' => 'Status untuk aset yang sedang Dipinjam hanya dapat diubah melalui Tab Peminjaman.']);
             }
             if (in_array($proposedCondition, $arrInactiveConditions)) {
-                return redirect()->back()->withErrors(['condition' => 'Kondisi Lelang/Hibah, Rusak Total, atau Hilang tidak dapat dipilih saat aset berstatus Dipinjam.']);
+                return redirect()->back()->withErrors(['condition' => 'Kondisi Rusak Total atau Hilang tidak dapat dipilih saat aset berstatus Dipinjam.']);
             }
             $request->merge(['status' => 'Dipinjam']);
         } else if ($isRestricted) {
@@ -285,8 +285,8 @@ class AssetController extends Controller
             ]);
         } else {
             if ($request->filled('status') && strtolower(trim($request->input('status'))) !== $currentStatusLower) {
-                if (!in_array($currentStatusLower, ['tersedia', 'standby'])) {
-                    return redirect()->back()->withErrors(['status' => 'Status hanya dapat diubah jika aset berstatus Tersedia atau Standby.']);
+                if ($currentStatusLower !== 'tersedia') {
+                    return redirect()->back()->withErrors(['status' => 'Status hanya dapat diubah jika aset berstatus Tersedia.']);
                 }
             }
             $inputStatusLower = strtolower(trim($request->input('status', '')));
@@ -377,8 +377,11 @@ class AssetController extends Controller
         unset($validated['use_lot_image']);
         unset($validated['delete_image']);
         unset($validated['type']);
-        unset($validated['burden']);
-        unset($validated['project_id']);
+        if (!empty($validated['burden'])) {
+            $validated['project_id'] = $validated['burden'] === 'Project' ? ($validated['project_id'] ?? null) : null;
+        } else {
+            unset($validated['burden'], $validated['project_id']);
+        }
 
         $previousStatus = str_starts_with($asset->status ?? '', 'Pending') ? 'Tersedia' : $asset->status;
         $previousCondition = $asset->condition;

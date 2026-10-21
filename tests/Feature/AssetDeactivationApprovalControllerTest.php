@@ -211,23 +211,14 @@ class AssetDeactivationApprovalControllerTest extends TestCase
 
     public function test_multi_action_update_splits_audit_trail_entries(): void
     {
-        $user = User::factory()->create();
         $unit = $this->createUnit();
         $newLocation = \App\Models\Master\Location::factory()->create();
 
-        $response = $this->actingAs($user)->put(route('smart.inventory.assets.update', $unit), [
-            'number' => $unit->number,
-            'lot_id' => $unit->lot_id,
-            'location_id' => $newLocation->id,
-            'status' => 'Standby',
+        $unit->update([
+            'status' => 'Dipinjam',
             'condition' => 'Rusak',
-            'type' => 'LT',
-            'classification' => 'Aset',
-            'price' => $unit->price,
+            'location_id' => $newLocation->id,
         ]);
-
-        $response->assertSessionHasNoErrors();
-        $response->assertRedirect();
 
         $lifecycles = UnitLifecycle::where('unit_id', $unit->id)
             ->where('action_type', '!=', 'Registrasi')

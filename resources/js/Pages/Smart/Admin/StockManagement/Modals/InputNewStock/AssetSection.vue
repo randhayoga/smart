@@ -2,9 +2,10 @@
 /**
  * Asset section of the Input New Stock modal handling asset attributes, condition, location, and registration.
  */
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { ChevronDown, Trash2 } from 'lucide-vue-next';
+import Combobox from '@/Components/Combobox.vue';
 import Checkbox from '@/Components/ui/checkbox/Checkbox.vue';
 import { Button } from '@/Components/ui/button';
 import LocationCombobox from '@/Components/LocationCombobox.vue';
@@ -23,18 +24,42 @@ interface LocationItem {
   [key: string]: any;
 }
 
+interface ProjectItem {
+  id_project: number;
+  project_name: string;
+  no_project?: string;
+}
+
 const props = defineProps<{
   form: any;
   errors: Record<string, string>;
   locations: LocationItem[];
+  projects?: ProjectItem[];
   isComp: boolean;
   isKend: boolean;
   lotReady: boolean;
+  isConsumable?: boolean;
 }>();
 
 const { t } = useI18n();
 
 const photoFileInputRef = ref<HTMLInputElement | null>(null);
+
+const projectOptions = computed(() => {
+  return (props.projects || [])
+    .filter(p => Boolean(p.no_project?.trim() && p.project_name?.trim()))
+    .map(p => ({
+      id: p.id_project,
+      name: `[${p.no_project}] ${p.project_name}`,
+    }));
+});
+
+const onSelectBurden = (burden: 'Corporate' | 'Project') => {
+  props.form.burden = burden;
+  if (burden !== 'Project') {
+    props.form.project_id = null;
+  }
+};
 
 const onToggleInputAsset = (checked: boolean | 'indeterminate' | null | undefined) => {
   props.form.input_asset = checked === true;
@@ -45,6 +70,8 @@ const onToggleInputAsset = (checked: boolean | 'indeterminate' | null | undefine
     props.form.location_id = null;
     props.form.price = '';
     props.form.classification = 'Aset';
+    props.form.burden = 'Corporate';
+    props.form.project_id = null;
     props.form.photo = null;
     props.form.photo_name = '';
     props.form.plate_number = '';
@@ -110,7 +137,7 @@ const getClassificationLabel = (cls: string) => {
 </script>
 
 <template>
-  <div v-if="lotReady" class="space-y-6 pt-4 border-t border-border">
+  <div v-if="!isConsumable && lotReady" class="space-y-6 pt-4 border-t border-border">
     <!-- Input Aset dengan LOT di atas checkmark -->
     <div class="flex items-center space-x-2">
       <Checkbox
@@ -298,6 +325,51 @@ const getClassificationLabel = (cls: string) => {
               </DropdownMenu>
             </FieldContent>
             <FieldError v-if="errors.classification">{{ errors.classification }}</FieldError>
+          </Field>
+
+          <!-- Burden / Pembebanan (below Classification input and above Photo) -->
+          <Field :data-invalid="!!errors.burden || undefined">
+            <FieldLabel>
+              <span>{{ t('inventory.burden') }}<span class="text-rose-500">*</span></span>
+            </FieldLabel>
+            <FieldContent>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    class="w-full justify-between rounded-[14px] font-normal h-10 px-4"
+                    :class="[errors.burden ? 'border-destructive' : '']"
+                  >
+                    {{ form.burden === 'Project' ? t('inventory.project') : t('inventory.corporate') }}
+                    <ChevronDown class="w-4 h-4 opacity-50" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
+                  <DropdownMenuItem @select="onSelectBurden('Corporate')">{{ t('inventory.corporate') }}</DropdownMenuItem>
+                  <DropdownMenuItem @select="onSelectBurden('Project')">{{ t('inventory.project') }}</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </FieldContent>
+            <FieldError v-if="errors.burden">{{ errors.burden }}</FieldError>
+          </Field>
+
+          <!-- Project Combobox (if Burden = Project) -->
+          <Field v-if="form.burden === 'Project'" :data-invalid="!!errors.project_id || undefined">
+            <FieldLabel for="new-asset-project">
+              <span>{{ t('inventory.project') }}<span class="text-rose-500">*</span></span>
+            </FieldLabel>
+            <FieldContent>
+              <Combobox
+                id="new-asset-project"
+                :model-value="form.project_id"
+                :options="projectOptions"
+                :placeholder="t('inventory.selectProject')"
+                :error="!!errors.project_id"
+                width-class="w-full"
+                @update:model-value="(val) => { form.project_id = val ? Number(val) : null; }"
+              />
+            </FieldContent>
+            <FieldError v-if="errors.project_id">{{ errors.project_id }}</FieldError>
           </Field>
 
           <!-- Photo (file upload + deleteIconButton) -->

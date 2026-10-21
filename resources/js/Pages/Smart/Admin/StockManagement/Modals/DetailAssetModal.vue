@@ -92,8 +92,6 @@ const getConditionLabel = (cond: string) => {
   const map: Record<string, string> = {
     'Bagus': t('inventory.conditionGood'),
     'Rusak': t('inventory.conditionDamaged'),
-    'QC Passed': t('inventory.conditionQcPassed'),
-    'Lelang/Hibah': t('inventory.conditionAuctionGrant'),
     'Rusak Total': t('inventory.conditionTotalDamage'),
     'Hilang': t('inventory.conditionLost'),
   };
@@ -315,9 +313,7 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                         <span 
                           :class="[
                             'font-semibold',
-                            asset.condition === 'Bagus' || asset.condition === 'QC Passed' ? 'text-emerald-600' :
-                            asset.condition === 'Lelang/Hibah' ? 'text-purple-600' :
-                            'text-rose-600'
+                            asset.condition === 'Bagus' ? 'text-emerald-600' : 'text-rose-600'
                           ]"
                         >
                           {{ getConditionLabel(asset.condition) }}

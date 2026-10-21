@@ -7,7 +7,7 @@ import { useI18n } from 'vue-i18n';
 import { useModalLock } from '@/composables/useModalLock';
 import { useForm } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
-import { X, Loader2, Trash2 } from 'lucide-vue-next';
+import { X, Loader2 } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
 import Combobox from '@/Components/Combobox.vue';
 import { Field, FieldLabel, FieldContent, FieldError } from '@/Components/ui/field';
@@ -37,13 +37,14 @@ const isSingle = computed(() => props.items.length === 1);
 const selectedItem = computed(() => isSingle.value ? props.items[0] : null);
 
 const isCompCategory = computed(() => {
-  if (isSingle.value) {
-    if (!selectedItem.value) return false;
-    const code = selectedItem.value.category_code || selectedItem.value.barang_category_code;
-    const cat = selectedItem.value.category || selectedItem.value.barang_category;
-    return code === 'COMP' || cat === 'Computer' || cat === 'COMP';
-  }
-  return props.items.length > 0 && props.items.every(item => {
+  if (!selectedItem.value) return false;
+  const code = selectedItem.value.category_code || selectedItem.value.barang_category_code;
+  const cat = selectedItem.value.category || selectedItem.value.barang_category;
+  return code === 'COMP' || cat === 'Computer' || cat === 'COMP';
+});
+
+const hasCompCategoryInItems = computed(() => {
+  return props.items.some(item => {
     const code = item.category_code || item.barang_category_code;
     const cat = item.category || item.barang_category;
     return code === 'COMP' || cat === 'Computer' || cat === 'COMP';
@@ -76,8 +77,6 @@ const form = useForm({
   brand_id: null as number | null,
   name: '',
   specification: '',
-  photo: null as File | null,
-  photoName: '',
 });
 
 const errors = ref({
@@ -95,90 +94,41 @@ watch(() => form.uom_id, v => { if (v && errors.value.uom_id) errors.value.uom_i
 watch(() => form.brand_id, v => { if (v && errors.value.brand_id) errors.value.brand_id = ''; });
 watch(() => form.name, v => { if (v && errors.value.name) errors.value.name = ''; });
 
-const isImageDeleted = ref(false);
-
-const hasImage = computed(() => {
-  if (!isSingle.value) return false;
-  if (form.photo) return true;
-  if (isImageDeleted.value) return false;
-  return Boolean(selectedItem.value?.image_url);
-});
-
-// Initialize form when modal opens
-watch(() => props.open, (val) => {
-  if (!val) return;
+const resetModalState = () => {
   form.reset();
   form.clearErrors();
   resetErrors();
-  isImageDeleted.value = false;
-  form.ids = props.items.map(r => r.id);
-
-  // Explicitly reset
+  form.ids = [];
   form.uom_id = null;
   form.brand_id = null;
   form.name = '';
   form.specification = '';
-  form.photo = null;
-  form.photoName = '';
+};
+
+// Initialize form when modal opens
+watch(() => props.open, (val) => {
+  if (!val) {
+    resetModalState();
+    return;
+  }
+  resetModalState();
+  form.ids = props.items.map(r => r.id);
 
   if (isSingle.value && selectedItem.value) {
     form.uom_id = selectedItem.value.uom_id;
     form.brand_id = selectedItem.value.brand_id;
     form.name = selectedItem.value.name;
     form.specification = isCompCategory.value ? '' : (selectedItem.value.specification || '');
-    form.photo = null;
-    form.photoName = selectedItem.value.image_url ? selectedItem.value.image_url.split('/').pop() : '';
   }
 });
 
 const closeModal = () => {
   emit('update:open', false);
-  form.ids = [];
-  form.uom_id = null;
-  form.brand_id = null;
-  form.name = '';
-  form.specification = '';
-  form.photo = null;
-  form.photoName = '';
-  isImageDeleted.value = false;
-  form.clearErrors();
-  resetErrors();
-};
-
-const handleFileUpload = (e: any) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-  if (!allowedTypes.includes(file.type)) { alert(t('inventory.invalidFileFormat')); return; }
-  if (file.size > 1024 * 1024) { alert(t('inventory.fileTooLarge1Mb')); return; }
-  isImageDeleted.value = false;
-  form.photo = file;
-  form.photoName = file.name;
-};
-
-const handleDeletePhoto = () => {
-  isImageDeleted.value = true;
-  form.photo = null;
-  form.photoName = '';
-  const input = document.getElementById('edit-tipe-photo-upload') as HTMLInputElement;
-  if (input) input.value = '';
-};
-
-const triggerFileInput = () => {
-  const input = document.getElementById('edit-tipe-photo-upload') as HTMLInputElement;
-  input?.click();
-};
-
-const viewImageInNewTab = () => {
-  if (form.photo) {
-    const url = URL.createObjectURL(form.photo);
-    window.open(url, '_blank');
-  } else if (!isImageDeleted.value && selectedItem.value && selectedItem.value.image_url) {
-    window.open('/media/' + selectedItem.value.image_url, '_blank');
-  }
+  resetModalState();
 };
 
 const handleSubmit = () => {
+  if (form.processing) return;
   resetErrors();
 
   if (isSingle.value) {
@@ -190,7 +140,7 @@ const handleSubmit = () => {
     if (!isValid) return;
   } else {
     const hasAtLeastOneField = !!(
-      form.uom_id || form.brand_id || form.name || (!isCompCategory.value && form.specification) || form.photo
+      form.uom_id || form.brand_id || form.name || (!hasCompCategoryInItems.value && form.specification)
     );
     if (!hasAtLeastOneField) {
       toast.error(t('inventory.atLeastOneField'));
@@ -210,21 +160,16 @@ const handleSubmit = () => {
       formData.brand_id = data.brand_id;
       formData.name = data.name;
       formData.specification = isCompCategory.value ? null : data.specification;
-      if (data.photo) {
-        formData.image_url = data.photo;
-      } else if (isImageDeleted.value) {
-        formData.delete_image = true;
-      }
     } else {
       if (data.uom_id) formData.uom_id = data.uom_id;
       if (data.brand_id) formData.brand_id = data.brand_id;
       if (data.name) formData.name = data.name;
-      if (data.specification && !isCompCategory.value) formData.specification = data.specification;
-      if (data.photo) formData.image_url = data.photo;
+      if (data.specification && !hasCompCategoryInItems.value) formData.specification = data.specification;
     }
     return formData;
   }).post(isSingle.value && selectedItem.value ? `/smart/stock-management/models/${selectedItem.value.id}` : '/smart/stock-management/models/bulk', {
     onSuccess: () => {
+      resetModalState();
       closeModal();
       emit('success');
     },
@@ -261,7 +206,7 @@ const handleSubmit = () => {
               <h3 class="text-lg font-bold text-foreground">
                 {{ isSingle ? t('inventory.editTypeDetail') : t('inventory.editTypeSelected') }}
               </h3>
-              <button @click="closeModal" class="p-2 hover:bg-muted rounded-full transition-colors">
+              <button @click="closeModal" :disabled="form.processing" class="p-2 hover:bg-muted rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                 <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
               </button>
             </div>
@@ -306,23 +251,6 @@ const handleSubmit = () => {
                       />
                     </FieldContent>
                   </Field>
-
-                   <Field :data-invalid="(isSingle && !!errors.uom_id) || undefined">
-                    <FieldLabel>
-                      <span>{{ t('inventory.uom') }}<span v-if="isSingle" class="text-rose-500">*</span></span>
-                    </FieldLabel>
-                    <FieldContent>
-                      <Combobox
-                        v-model="form.uom_id"
-                        :options="uoms"
-                        :search-placeholder="t('inventory.searchUomPlaceholder')"
-                        :default-label="isSingle ? t('inventory.selectUom') : t('inventory.unchanged')"
-                        width-class="w-full h-10 px-4"
-                        :error="isSingle && !!errors.uom_id"
-                      />
-                    </FieldContent>
-                    <FieldError v-if="isSingle && errors.uom_id">{{ errors.uom_id }}</FieldError>
-                  </Field>
                 </div>
 
                 <!-- Right Column -->
@@ -361,7 +289,36 @@ const handleSubmit = () => {
                     <FieldError v-if="isSingle && errors.name">{{ errors.name }}</FieldError>
                   </Field>
 
-                  <Field v-if="!isCompCategory">
+                  <Field :data-invalid="(isSingle && !!errors.uom_id) || undefined">
+                    <FieldLabel>
+                      <span>{{ t('inventory.uom') }}<span v-if="isSingle" class="text-rose-500">*</span></span>
+                    </FieldLabel>
+                    <FieldContent>
+                      <Combobox
+                        v-model="form.uom_id"
+                        :options="uoms"
+                        :search-placeholder="t('inventory.searchUomPlaceholder')"
+                        :default-label="isSingle ? t('inventory.selectUom') : t('inventory.unchanged')"
+                        width-class="w-full h-10 px-4"
+                        :error="isSingle && !!errors.uom_id"
+                      />
+                    </FieldContent>
+                    <FieldError v-if="isSingle && errors.uom_id">{{ errors.uom_id }}</FieldError>
+                  </Field>
+
+                  <Field v-if="!isSingle && hasCompCategoryInItems" data-disabled>
+                    <FieldLabel>{{ t('inventory.specification') }}</FieldLabel>
+                    <FieldContent>
+                      <input 
+                        type="text" 
+                        :value="t('inventory.cannotBeChanged')"
+                        disabled
+                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
+                      />
+                    </FieldContent>
+                  </Field>
+
+                  <Field v-else-if="!isSingle || !isCompCategory">
                     <FieldLabel>{{ t('inventory.specification') }}</FieldLabel>
                     <FieldContent>
                       <input 
@@ -371,54 +328,6 @@ const handleSubmit = () => {
                         :placeholder="isSingle ? t('inventory.specificationPlaceholder') : t('inventory.unchanged')" 
                         class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
                       />
-                    </FieldContent>
-                  </Field>
-
-                  <Field>
-                    <FieldLabel>{{ t('inventory.defaultPhoto') }}</FieldLabel>
-                    <FieldContent>
-                      <div class="flex flex-col gap-1 w-full">
-                        <div class="flex gap-2 w-full">
-                          <div 
-                            class="flex-grow min-w-0 px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/10 truncate flex items-center h-10"
-                            :class="[
-                              hasImage 
-                                ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' 
-                                : 'text-muted-foreground cursor-default'
-                            ]"
-                            @click="hasImage && viewImageInNewTab()"
-                          >
-                            {{ form.photoName || (isSingle ? t('inventory.noPhotoSelected') : t('inventory.unchanged')) }}
-                          </div>
-                          <input 
-                            type="file" 
-                            id="edit-tipe-photo-upload" 
-                            class="hidden" 
-                            accept=".jpg,.jpeg,.png,.webp"
-                            @change="handleFileUpload"
-                          />
-                          <Button 
-                            @click="triggerFileInput"
-                            size="lg"
-                            class="shrink-0"
-                          >
-                            {{ t('inventory.chooseFile') }}
-                          </Button>
-                          <Button
-                            v-if="isSingle"
-                            type="button"
-                            variant="destructive"
-                            size="icon"
-                            class="w-9 shrink-0"
-                            :disabled="!hasImage"
-                            @click="handleDeletePhoto"
-                            :title="t('inventory.deletePhoto')"
-                          >
-                            <Trash2 class="w-4 h-4" />
-                          </Button>
-                        </div>
-                        <p class="text-[10px] text-muted-foreground ml-1">{{ t('inventory.maxFileSize1Mb') }}</p>
-                      </div>
                     </FieldContent>
                   </Field>
 
@@ -446,6 +355,7 @@ const handleSubmit = () => {
               <div class="flex items-center gap-3">
                 <Button 
                   @click="closeModal"
+                  :disabled="form.processing"
                   variant="white"
                   size="xl"
                 >

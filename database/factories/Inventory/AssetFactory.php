@@ -34,8 +34,8 @@ class AssetFactory extends Factory
             'borrowing_type' => 'LT',
             'classification' => 'Aset',
             'image_url' => 'assets/sample.jpg',
-            'legacy_burden' => null,
-            'legacy_project_id' => null,
+            'burden' => 'Corporate',
+            'project_id' => null,
             'legacy_vendor_id' => null,
             'comp_specification' => null,
         ];

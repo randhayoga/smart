@@ -25,8 +25,8 @@ export default {
   editAssetSelected: 'Edit Aset Terpilih',
   createNewType: 'Pembuatan Model Baru',
   createNewModel: 'Pembuatan Model Baru',
-  createNewLot: 'Tambah LOT Baru',
-  createNewAsset: 'Pembuatan Aset Baru',
+  createNewLot: 'Input LOT Baru',
+  createNewAsset: 'Input Aset Baru',
   activeBorrowInfo: 'Informasi Peminjaman Aktif',
   assetBorrowForm: 'Formulir Peminjaman Aset',
   activeBorrowSubtitle: 'Aset sedang dipinjam. Anda dapat memperbarui informasi atau menyelesaikan peminjaman.',
@@ -238,11 +238,10 @@ export default {
   // Conditions
   conditionGood: 'Bagus',
   conditionDamaged: 'Rusak',
-  conditionQcPassed: 'QC Passed',
-  conditionAuctionGrant: 'Lelang/Hibah',
   conditionTotalDamage: 'Rusak Total',
   conditionLost: 'Hilang',
   statusAndCondition: 'Status & Kondisi',
+  statusCannotBeChangedManually: 'Status tidak dapat diubah secara manual',
 
   // Validation Messages & Alerts
   codeRequired: 'Nomor Model belum diisi',
@@ -255,6 +254,7 @@ export default {
   brandRequired: 'Merek belum dipilih',
   nameRequired: 'Nama Model belum diisi',
   modelNameRequired: 'Nama Model belum diisi',
+  specificationRequired: 'Spesifikasi belum diisi',
   photoRequired: 'Foto default belum dipilih',
   thresholdInteger: 'Ambang batas notifikasi stok harus berupa angka bulat positif atau nol',
   atLeastOneField: 'Harap isi minimal satu input untuk melakukan perubahan massal.',
@@ -311,15 +311,11 @@ export default {
 
   // Input New Stock Form
   inputNewStock: 'Input Stok Baru',
-  chooseCategory: 'Pilih kategori',
-  chooseType: 'Pilih tipe',
-  chooseBrand: 'Pilih merek',
-  chooseVendor: 'Pilih Vendor',
   chooseExistingModel: 'Pilih model yang sudah ada',
+  chooseExistingLot: 'Pilih LOT yang sudah ada',
   createNewModelWithData: 'Buat model baru',
   minStockThresholdRequired: 'Batas minimum stok wajib diisi',
   inputLot: 'Input LOT',
-  selectLot: 'Pilih LOT',
   createNewLotOption: 'Buat LOT Baru',
   entryType: 'Jenis Entri',
   procurement: 'Pengadaan',

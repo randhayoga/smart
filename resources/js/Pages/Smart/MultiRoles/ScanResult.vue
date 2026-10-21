@@ -56,7 +56,7 @@ const isComp = computed(() => {
 });
 
 const arrNeedApproval = ['Rusak Total', 'Hilang'];
-const arrInactiveConditions = ['Rusak Total', 'Hilang', 'Lelang/Hibah'];
+const arrInactiveConditions = ['Rusak Total', 'Hilang'];
 
 const isRestrictedStatus = (status: string | null | undefined) => {
   if (!status) return false;
@@ -631,8 +631,6 @@ const handleSubmit = () => {
                     <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-xl z-[1001]">
                       <DropdownMenuItem @select="form.condition = 'Bagus'">Bagus</DropdownMenuItem>
                       <DropdownMenuItem @select="form.condition = 'Rusak'">Rusak</DropdownMenuItem>
-                      <DropdownMenuItem @select="form.condition = 'QC Passed'">QC Passed</DropdownMenuItem>
-                      <DropdownMenuItem @select="form.condition = 'Lelang/Hibah'">Lelang/Hibah</DropdownMenuItem>
                       <DropdownMenuItem @select="form.condition = 'Rusak Total'">Rusak Total</DropdownMenuItem>
                       <DropdownMenuItem @select="form.condition = 'Hilang'">Hilang</DropdownMenuItem>
                     </DropdownMenuContent>
@@ -676,7 +674,6 @@ const handleSubmit = () => {
                     <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-xl z-[1001]">
                       <DropdownMenuItem @select="form.status = 'Tersedia'">Tersedia</DropdownMenuItem>
                       <DropdownMenuItem @select="form.status = 'Dipinjam'">Dipinjam</DropdownMenuItem>
-                      <DropdownMenuItem @select="form.status = 'Standby'">Standby</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </FieldContent>

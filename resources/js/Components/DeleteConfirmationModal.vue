@@ -50,6 +50,7 @@ const { t } = useI18n();
 useModalLock(computed(() => props.isOpen));
 
 const handleConfirm = () => {
+  if (props.processing) return;
   emit('confirm');
 };
 
@@ -91,7 +92,6 @@ const getStatusLabel = (s: string) => {
     'Verifikasi Ditolak': t('status.verifikasiDitolak'),
     'Tersedia': t('status.tersedia'),
     'Dipinjam': t('status.dipinjam'),
-    'Standby': t('status.standby'),
     'Pending': t('status.pending'),
     'Pending:BoD/BoC': t('status.pending'),
     'Scrapped': t('status.scrapped'),
@@ -105,8 +105,6 @@ const getConditionLabel = (c: string) => {
   const map: Record<string, string> = {
     'Bagus': t('inventory.conditionGood'),
     'Rusak': t('inventory.conditionDamaged'),
-    'QC Passed': t('inventory.conditionQcPassed'),
-    'Lelang/Hibah': t('inventory.conditionAuctionGrant'),
     'Rusak Total': t('inventory.conditionTotalDamage'),
     'Hilang': t('inventory.conditionLost'),
   };
@@ -415,11 +413,14 @@ const displayFields = computed(() => {
 });
 
 const bulkItemsFields = computed(() => {
-  if (props.itemCount <= 1 || !props.itemData || !Array.isArray(props.itemData)) {
+  if (!props.isOpen || props.itemCount <= 1 || !props.itemData || !Array.isArray(props.itemData)) {
     return [];
   }
   
-  return props.itemData.map(data => {
+  const maxDisplay = 50;
+  const itemsToRender = props.itemData.slice(0, maxDisplay);
+
+  return itemsToRender.map(data => {
     const fields: { label: string; value: any }[] = [];
     if (!data) return fields;
 
@@ -487,6 +488,11 @@ const bulkItemsFields = computed(() => {
   });
 });
 
+const remainingBulkCount = computed(() => {
+  if (!props.isOpen || !props.itemData || !Array.isArray(props.itemData)) return 0;
+  return Math.max(0, props.itemData.length - 50);
+});
+
 const closeOnEscape = (e: KeyboardEvent) => {
   if (e.key === 'Escape' && props.isOpen) {
     emit('close');
@@ -530,7 +536,7 @@ onUnmounted(() => {
             <!-- Modal Header -->
             <div class="flex items-center p-1 justify-between border-b border-border">
               <h3 class="text-lg font-bold text-foreground p-2">{{ modalTitle }}</h3>
-              <button @click="emit('close')" class="p-2 hover:bg-muted rounded-full transition-colors">
+              <button @click="emit('close')" :disabled="processing" class="p-2 hover:bg-muted rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                 <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
               </button>
             </div>
@@ -568,6 +574,9 @@ onUnmounted(() => {
                       </span>
                     </div>
                   </div>
+                  <div v-if="remainingBulkCount > 0" class="text-xs text-center text-muted-foreground font-medium py-1">
+                    +{{ remainingBulkCount }} item lainnya
+                  </div>
                 </div>
 
                 <!-- Slot for additional content (e.g. textareas) -->
@@ -580,6 +589,7 @@ onUnmounted(() => {
               <div class="flex items-center justify-end gap-3">
                 <Button 
                   @click="emit('close')"
+                  :disabled="processing"
                   variant="white"
                   class="px-5"
                 >

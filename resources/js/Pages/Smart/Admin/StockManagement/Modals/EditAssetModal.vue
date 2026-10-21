@@ -2,7 +2,7 @@
 /**
  * Edit Asset Modal component supporting single asset updates and bulk edits with status/condition validation rules.
  */
-import { ref, watch, computed, nextTick } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useModalLock } from '@/composables/useModalLock';
 import { useForm, router } from '@inertiajs/vue3';
@@ -15,7 +15,6 @@ import {
 import Combobox from '@/Components/Combobox.vue';
 import LocationCombobox from '@/Components/LocationCombobox.vue';
 import { Field, FieldLabel, FieldContent, FieldError } from '@/Components/ui/field';
-import { RadioGroup, RadioGroupItem } from '@/Components/ui/radio-group';
 import { compressImageIfNeeded } from '@/utils/imageCompressor';
 
 interface Props {
@@ -29,7 +28,7 @@ interface Props {
   locations: any[];
   floors?: any[];
   rooms?: any[];
-  projects?: { id: number; no_project: string; project_name: string; client_id: string; }[];
+  projects?: { id?: number; id_project?: number; no_project: string; project_name: string; client_id?: string }[];
 }
 
 const props = defineProps<Props>();
@@ -44,7 +43,12 @@ useModalLock(computed(() => props.open));
 
 const isSingle = computed(() => props.items.length === 1);
 const selectedItem = computed(() => isSingle.value ? props.items[0] : null);
-const isVehicle = computed(() => props.barang?.category === 'Kendaraan');
+const isVehicle = computed(() => {
+  return props.barang?.category_code === 'KEND' ||
+    props.barang?.category === 'Kendaraan' ||
+    props.barang?.category === 'KEND' ||
+    props.lot?.barang_category_code === 'KEND';
+});
 const isComp = computed(() => {
   return props.barang?.category_code === 'COMP' ||
     props.barang?.category === 'Computer' ||
@@ -53,22 +57,19 @@ const isComp = computed(() => {
 });
 
 const arrNeedApproval = ['Rusak Total', 'Hilang'];
-const arrInactiveConditions = ['Rusak Total', 'Hilang', 'Lelang/Hibah'];
+const arrInactiveConditions = ['Rusak Total', 'Hilang'];
 
 const getStatusLabel = (s: string) => {
   if (!s) return '';
   const map: Record<string, string> = {
     'tersedia': t('status.tersedia'),
     'dipinjam': t('status.dipinjam'),
-    'standby': t('status.standby'),
     'tidak aktif': t('status.tidakAktif'),
     'pending': t('status.pending'),
     'pending:dm': t('status.pendingDm'),
     'pending: dm': t('status.pendingDm'),
     'pending:bod/boc': t('status.pendingBodBoc'),
     'pending: bod/boc': t('status.pendingBodBoc'),
-    'scrapped': t('status.scrapped'),
-    'lost': t('status.lost'),
     'belum diverifikasi': t('status.belumDiverifikasi'),
   };
   return map[s.toLowerCase()] || s;
@@ -79,8 +80,6 @@ const getConditionLabel = (c: string) => {
   const map: Record<string, string> = {
     'Bagus': t('inventory.conditionGood'),
     'Rusak': t('inventory.conditionDamaged'),
-    'QC Passed': t('inventory.conditionQcPassed'),
-    'Lelang/Hibah': t('inventory.conditionAuctionGrant'),
     'Rusak Total': t('inventory.conditionTotalDamage'),
     'Hilang': t('inventory.conditionLost'),
   };
@@ -94,10 +93,17 @@ const getClassificationLabel = (c: string) => {
   return c;
 };
 
-const allowedStatuses = ['tersedia', 'standby'];
+const getBurdenLabel = (b: string) => {
+  if (!b || b === 'Tidak berubah') return t('inventory.unchanged');
+  if (b === 'Project') return t('inventory.project');
+  if (b === 'Corporate') return t('inventory.corporate');
+  return b;
+};
+
+const allowedStatuses = ['tersedia'];
 
 const hasDisallowedStatus = computed(() => {
-  if (!props.items || props.items.length === 0) return true;
+  if (!props.open || !props.items || props.items.length === 0) return true;
   return props.items.some(item => {
     const s = String(item?.status || '').trim().toLowerCase();
     return !allowedStatuses.includes(s);
@@ -105,6 +111,7 @@ const hasDisallowedStatus = computed(() => {
 });
 
 const isBorrowedUnit = computed(() => {
+  if (!props.open) return false;
   return (props.items || []).some(item => String(item?.status).trim().toLowerCase() === 'dipinjam');
 });
 
@@ -115,6 +122,7 @@ const isRestrictedStatus = (status: string | null | undefined) => {
 };
 
 const hasRestrictedUnit = computed(() => {
+  if (!props.open) return false;
   return (props.items || []).some(item => isRestrictedStatus(item?.status) || arrInactiveConditions.includes(item?.condition));
 });
 
@@ -122,17 +130,14 @@ const isKondisiDisabled = computed(() => {
   return hasRestrictedUnit.value;
 });
 
-const isStatusDisabled = computed(() => {
-  if (hasDisallowedStatus.value) return true;
-  if (hasRestrictedUnit.value || isBorrowedUnit.value) return true;
-  return arrInactiveConditions.includes(form.condition);
-});
+const isStatusDisabled = computed(() => true);
 
 const isDocumentDisabled = computed(() => {
   return hasRestrictedUnit.value;
 });
 
 const isBodBocFieldVisible = computed(() => {
+  if (!props.open) return false;
   if (isSingle.value) {
     return selectedItem.value?.status === 'Pending:BoD/BoC';
   }
@@ -152,7 +157,6 @@ const form = useForm({
   specification: '',
   image_url: null as File | null,
   image_url_name: '',
-  use_lot_image: false,
   vehicle_registration: '',
   memo_file: null as File | null,
   memo_file_name: '',
@@ -165,6 +169,7 @@ const form = useForm({
 });
 
 const errors = ref({
+  specification: '',
   location_id: '',
   status: '',
   condition: '',
@@ -181,6 +186,7 @@ const errors = ref({
 
 const resetErrors = () => {
   errors.value = {
+    specification: '',
     location_id: '',
     status: '',
     condition: '',
@@ -196,16 +202,21 @@ const resetErrors = () => {
   };
 };
 
+const isSubmitting = ref(false);
+const isProcessing = computed(() => form.processing || isSubmitting.value);
+
 const projectOptions = computed(() => {
+  if (!props.open) return [];
   return (props.projects || [])
     .filter(p => Boolean(p.no_project?.trim() && p.project_name?.trim()))
     .map(p => ({
-      id: p.id,
-      name: `[${p.no_project}] ${p.project_name}`
+      id: (p.id ?? p.id_project) as number,
+      name: `[${p.no_project}] ${p.project_name}`,
     }));
 });
 
 // Reactive error clearing
+watch(() => form.specification, v => { if (v && errors.value.specification) errors.value.specification = ''; });
 watch(() => form.location_id, v => { if (v && errors.value.location_id) errors.value.location_id = ''; });
 watch(() => form.status, v => { if (v && errors.value.status) errors.value.status = ''; });
 watch(() => form.condition, v => { if (v && errors.value.condition) errors.value.condition = ''; });
@@ -256,30 +267,59 @@ watch(() => form.condition, (newVal, oldVal) => {
 const isImageDeleted = ref(false);
 
 const hasImage = computed(() => {
-  if (!isSingle.value) return false;
+  if (!isSingle.value) return Boolean(form.image_url);
   if (form.image_url) return true;
-  if (form.use_lot_image) return true;
   if (isImageDeleted.value) return false;
   return Boolean(selectedItem.value?.image_url);
 });
 
-// Init form when modal opens
-watch(() => props.open, (val) => {
-  if (!val) return;
+const resetModalState = () => {
   form.reset();
   form.clearErrors();
   resetErrors();
   isImageDeleted.value = false;
-  form.ids = props.items.map(r => r.id);
+  form.ids = [];
+  form.number = '';
+  form.legacy_number = '';
+  form.location_id = '';
+  form.status = '';
+  form.condition = '';
+  form.type = '';
+  form.classification = '';
+  form.price = '';
+  form.specification = '';
   form.image_url = null;
   form.image_url_name = '';
-  form.use_lot_image = false;
+  form.vehicle_registration = '';
   form.memo_file = null;
   form.memo_file_name = '';
   form.lost_doc_file = null;
   form.lost_doc_file_name = '';
   form.bod_boc_approval_file = null;
   form.bod_boc_approval_file_name = '';
+  form.burden = 'Tidak berubah';
+  form.project_id = '';
+
+  const inputIds = [
+    'edit-asset-photo-upload',
+    'edit-asset-memo-upload',
+    'edit-asset-lost-doc-upload',
+    'edit-asset-bod-boc-doc-upload',
+  ];
+  inputIds.forEach(id => {
+    const el = document.getElementById(id) as HTMLInputElement | null;
+    if (el) el.value = '';
+  });
+};
+
+// Init form when modal opens
+watch(() => props.open, (val) => {
+  if (!val) {
+    resetModalState();
+    return;
+  }
+  resetModalState();
+  form.ids = props.items.map(r => r.id);
 
   if (isSingle.value && selectedItem.value) {
     const item = selectedItem.value;
@@ -288,7 +328,7 @@ watch(() => props.open, (val) => {
     form.location_id = item.location_id || '';
     form.status = item.status || '';
     form.condition = item.condition || '';
-    form.type = item.type || '';
+    form.type = item.type || item.borrowing_type || '';
     form.classification = item.classification || '';
     if (!isRestrictedStatus(item.status) && arrInactiveConditions.includes(form.condition)) {
       form.status = 'Pending:BoD/BoC';
@@ -305,9 +345,7 @@ watch(() => props.open, (val) => {
   } else {
     form.number = '';
     form.legacy_number = '';
-    const firstLoc = props.items[0]?.location_id;
-    const sameLoc = props.items.every(i => i.location_id === firstLoc);
-    form.location_id = sameLoc ? (firstLoc || '') : '';
+    form.location_id = '';
     form.status = '';
     form.condition = '';
     form.type = '';
@@ -321,8 +359,7 @@ watch(() => props.open, (val) => {
 }, { immediate: true });
 
 const closeModal = () => {
-  isImageDeleted.value = false;
-  form.specification = '';
+  resetModalState();
   emit('update:open', false);
 };
 
@@ -348,7 +385,6 @@ const handleFileUpload = async (e: any) => {
     isImageDeleted.value = false;
     form.image_url = file;
     form.image_url_name = file.name;
-    form.use_lot_image = false;
   } catch (err) {
     console.error('Gagal memproses gambar:', err);
     toast.error(t('inventory.failedProcessImage'));
@@ -361,7 +397,6 @@ const handleDeletePhoto = () => {
   isImageDeleted.value = true;
   form.image_url = null;
   form.image_url_name = '';
-  form.use_lot_image = false;
   const input = document.getElementById('edit-asset-photo-upload') as HTMLInputElement;
   if (input) input.value = '';
 };
@@ -374,23 +409,8 @@ const triggerFileInput = () => {
 const viewImageInNewTab = () => {
   if (form.image_url) {
     window.open(URL.createObjectURL(form.image_url), '_blank');
-  } else if (form.use_lot_image && props.lot?.imageUrl) {
-    window.open('/media/' + props.lot.imageUrl, '_blank');
   } else if (!isImageDeleted.value && isSingle.value && selectedItem.value?.image_url) {
     window.open('/media/' + selectedItem.value.image_url, '_blank');
-  }
-};
-
-const handleSamakanPhoto = () => {
-  if (props.lot?.imageUrl) {
-    isImageDeleted.value = false;
-    form.use_lot_image = true;
-    form.image_url = null;
-    form.image_url_name = props.lot.imageUrl.split('/').pop() || '';
-    const input = document.getElementById('edit-asset-photo-upload') as HTMLInputElement;
-    if (input) input.value = '';
-  } else {
-    toast.error(t('inventory.lotNoPhoto'));
   }
 };
 
@@ -467,16 +487,6 @@ const viewBodBocDocInNewTab = () => {
   }
 };
 
-const handleSamakanPrice = () => {
-  if (props.lot?.unitPrice) {
-    form.price = props.lot.unitPrice;
-  } else if (props.lot?.unit_price) {
-    form.price = props.lot.unit_price;
-  } else {
-    toast.error(t('inventory.lotNoDefaultPrice'));
-  }
-};
-
 const parseCurrencyToNumber = (val: string | number) => {
   if (typeof val === 'number') return val;
   if (!val) return 0;
@@ -500,115 +510,133 @@ const parseCurrencyToNumber = (val: string | number) => {
 };
 
 const handleSubmit = () => {
+  if (isProcessing.value) return;
   resetErrors();
 
   if (isSingle.value) {
-      let isValid = true;
-      if (!form.location_id) { errors.value.location_id = t('inventory.locationRequired'); isValid = false; }
-      if (!form.type) { errors.value.type = t('inventory.typeRequired'); isValid = false; }
-      if (!form.classification) { errors.value.classification = t('inventory.classificationRequired'); isValid = false; }
-      if (!form.status) { errors.value.status = t('inventory.statusRequired'); isValid = false; }
-      if (!form.condition) { errors.value.condition = t('inventory.conditionRequired'); isValid = false; }
-      if (isVehicle.value && !form.vehicle_registration) { errors.value.vehicle_registration = t('inventory.nopolRequired'); isValid = false; }
-      if (arrNeedApproval.includes(form.condition) && !isDocumentDisabled.value && !form.memo_file_name) { errors.value.memo_file = t('inventory.memoRequired'); isValid = false; }
-      if (form.condition === 'Hilang' && !isDocumentDisabled.value && !form.lost_doc_file_name) { errors.value.lost_doc_file = t('inventory.lostDocRequired'); isValid = false; }
-      if (!form.burden) { errors.value.burden = t('inventory.burdenRequired'); isValid = false; }
-      if (form.burden === 'Project' && !form.project_id) { errors.value.project_id = t('inventory.projectRequired'); isValid = false; }
-      if (!isValid) return;
+    let isValid = true;
+    if (isComp.value && !form.specification?.trim()) { errors.value.specification = t('inventory.specificationRequired'); isValid = false; }
+    if (!form.location_id) { errors.value.location_id = t('inventory.locationRequired'); isValid = false; }
+    if (!form.type) { errors.value.type = t('inventory.typeRequired'); isValid = false; }
+    if (!form.classification) { errors.value.classification = t('inventory.classificationRequired'); isValid = false; }
+    if (!form.status) { errors.value.status = t('inventory.statusRequired'); isValid = false; }
+    if (!form.condition) { errors.value.condition = t('inventory.conditionRequired'); isValid = false; }
+    if (isVehicle.value && !form.vehicle_registration) { errors.value.vehicle_registration = t('inventory.nopolRequired'); isValid = false; }
+    if (arrNeedApproval.includes(form.condition) && !isDocumentDisabled.value && !form.memo_file_name) { errors.value.memo_file = t('inventory.memoRequired'); isValid = false; }
+    if (form.condition === 'Hilang' && !isDocumentDisabled.value && !form.lost_doc_file_name) { errors.value.lost_doc_file = t('inventory.lostDocRequired'); isValid = false; }
+    if (!form.burden) { errors.value.burden = t('inventory.burdenRequired'); isValid = false; }
+    if (form.burden === 'Project' && !form.project_id) { errors.value.project_id = t('inventory.projectRequired'); isValid = false; }
+    if (!isValid) return;
 
-      form.transform((data) => {
-        const fd: any = {
-          _method: 'PUT',
-          number: data.number,
-          lot_id: props.lot.id,
-          location_id: data.location_id,
-          status: data.status,
-          condition: data.condition,
-          type: data.type,
-          classification: data.classification,
-          price: data.price !== '' && data.price !== null ? parseCurrencyToNumber(data.price) : null,
-          burden: data.burden,
-          project_id: data.burden === 'Project' ? data.project_id : null,
-        };
-        if (isVehicle.value) fd.vehicle_registration = data.vehicle_registration;
-        if (isComp.value) {
-          fd.comp_specification = data.specification || null;
-          fd.specification = data.specification || null;
-        }
-        if (data.image_url) {
-          fd.image_url = data.image_url;
-        } else if (data.use_lot_image) {
-          fd.use_lot_image = data.use_lot_image;
-        } else if (isSingle.value && isImageDeleted.value) {
-          fd.delete_image = true;
-        }
-        if (data.memo_file) fd.memo_file = data.memo_file;
-        if (data.lost_doc_file) fd.lost_doc_file = data.lost_doc_file;
-        if (data.bod_boc_approval_file) fd.bod_boc_approval_file = data.bod_boc_approval_file;
-        return fd;
-      }).post(`/smart/stock-management/assets/${form.ids[0]}`, {
-        onSuccess: () => { closeModal(); emit('success'); },
-      });
-    } else {
-      // Bulk edit
-      if (form.burden === 'Project' && !form.project_id) {
-        errors.value.project_id = t('inventory.projectRequired');
-        return;
+    form.transform((data) => {
+      const fd: any = {
+        _method: 'PUT',
+        number: data.number,
+        lot_id: props.lot?.id || selectedItem.value?.lot_id,
+        location_id: data.location_id,
+        status: data.status,
+        condition: data.condition,
+        type: data.type,
+        borrowing_type: data.type,
+        classification: data.classification,
+        price: data.price !== '' && data.price !== null ? parseCurrencyToNumber(data.price) : null,
+        burden: data.burden,
+        project_id: data.burden === 'Project' ? data.project_id : null,
+      };
+      if (isVehicle.value) fd.vehicle_registration = data.vehicle_registration;
+      if (isComp.value) {
+        fd.comp_specification = data.specification || null;
+        fd.specification = data.specification || null;
       }
+      if (data.image_url) {
+        fd.image_url = data.image_url;
+      } else if (isSingle.value && isImageDeleted.value) {
+        fd.delete_image = true;
+      }
+      if (data.memo_file) fd.memo_file = data.memo_file;
+      if (data.lost_doc_file) fd.lost_doc_file = data.lost_doc_file;
+      if (data.bod_boc_approval_file) fd.bod_boc_approval_file = data.bod_boc_approval_file;
+      return fd;
+    }).post(`/smart/stock-management/assets/${form.ids[0]}`, {
+      onSuccess: () => {
+        resetModalState();
+        closeModal();
+        emit('success');
+      },
+    });
+  } else {
+    // Bulk edit
+    if (form.burden === 'Project' && !form.project_id) {
+      errors.value.project_id = t('inventory.projectRequired');
+      return;
+    }
 
-      const hasField = !!(
-        (form.status && !isStatusDisabled.value) ||
-        (form.condition && !isKondisiDisabled.value) ||
-        form.type ||
-        form.classification ||
-        form.location_id || form.price ||
-        (isComp.value && form.specification) ||
-        form.image_url || form.use_lot_image || form.memo_file || form.lost_doc_file || form.bod_boc_approval_file ||
-        (form.burden && form.burden !== 'Tidak berubah')
-      );
-      if (!hasField) {
-        toast.error(t('inventory.atLeastOneField'));
-        return;
-      }
+    const hasField = !!(
+      (form.status && !isStatusDisabled.value) ||
+      (form.condition && !isKondisiDisabled.value) ||
+      form.type ||
+      form.classification ||
+      form.location_id || form.price ||
+      (isComp.value && form.specification) ||
+      form.image_url || form.memo_file || form.lost_doc_file || form.bod_boc_approval_file ||
+      (form.burden && form.burden !== 'Tidak berubah')
+    );
+    if (!hasField) {
+      toast.error(t('inventory.atLeastOneField'));
+      return;
+    }
 
-      if (form.condition && !isKondisiDisabled.value && arrNeedApproval.includes(form.condition) && !isDocumentDisabled.value && !form.memo_file_name) {
-        errors.value.memo_file = t('inventory.memoRequired');
-        return;
-      }
-      if (form.condition && !isKondisiDisabled.value && form.condition === 'Hilang' && !isDocumentDisabled.value && !form.lost_doc_file_name) {
-        errors.value.lost_doc_file = t('inventory.lostDocRequired');
-        return;
-      }
+    if (form.condition && !isKondisiDisabled.value && arrNeedApproval.includes(form.condition) && !isDocumentDisabled.value && !form.memo_file_name) {
+      errors.value.memo_file = t('inventory.memoRequired');
+      return;
+    }
+    if (form.condition && !isKondisiDisabled.value && form.condition === 'Hilang' && !isDocumentDisabled.value && !form.lost_doc_file_name) {
+      errors.value.lost_doc_file = t('inventory.lostDocRequired');
+      return;
+    }
 
-      const payload: any = { ids: form.ids };
-      if (form.status && !isStatusDisabled.value) payload.status = form.status;
-      if (form.condition && !isKondisiDisabled.value) payload.condition = form.condition;
-      if (form.type) payload.type = form.type;
-      if (form.classification) payload.classification = form.classification;
-      if (isComp.value && form.specification) {
-        payload.comp_specification = form.specification;
-        payload.specification = form.specification;
+    const payload: any = { ids: form.ids };
+    if (form.status && !isStatusDisabled.value) payload.status = form.status;
+    if (form.condition && !isKondisiDisabled.value) payload.condition = form.condition;
+    if (form.type) {
+      payload.type = form.type;
+      payload.borrowing_type = form.type;
+    }
+    if (form.classification) payload.classification = form.classification;
+    if (isComp.value && form.specification) {
+      payload.comp_specification = form.specification;
+      payload.specification = form.specification;
+    }
+    if (form.location_id) {
+      payload.location_id = form.location_id;
+    }
+    if (form.price) payload.price = parseCurrencyToNumber(form.price).toString();
+    if (form.burden && form.burden !== 'Tidak berubah') {
+      payload.burden = form.burden;
+      if (form.burden === 'Project') {
+        payload.project_id = form.project_id;
       }
-      
-      if (form.location_id) {
-        payload.location_id = form.location_id;
-      }
-      
-      if (form.price) payload.price = parseCurrencyToNumber(form.price).toString();
-      if (form.burden && form.burden !== 'Tidak berubah') {
-        payload.burden = form.burden;
-        if (form.burden === 'Project') {
-          payload.project_id = form.project_id;
-        }
-      }
-      if (form.use_lot_image) payload.use_lot_image = true;
-      if (form.image_url instanceof File) payload.image_url = form.image_url;
-      if (form.memo_file instanceof File) payload.memo_file = form.memo_file;
-      if (form.lost_doc_file instanceof File) payload.lost_doc_file = form.lost_doc_file;
-      if (form.bod_boc_approval_file instanceof File) payload.bod_boc_approval_file = form.bod_boc_approval_file;
+    }
+    if (form.image_url instanceof File) payload.image_url = form.image_url;
+    if (form.memo_file instanceof File) payload.memo_file = form.memo_file;
+    if (form.lost_doc_file instanceof File) payload.lost_doc_file = form.lost_doc_file;
+    if (form.bod_boc_approval_file instanceof File) payload.bod_boc_approval_file = form.bod_boc_approval_file;
 
+    isSubmitting.value = true;
     router.post('/smart/stock-management/assets/bulk-update', payload, {
-      onSuccess: () => { closeModal(); emit('success'); },
+      onFinish: () => {
+        isSubmitting.value = false;
+      },
+      onSuccess: () => {
+        resetModalState();
+        closeModal();
+        emit('success');
+      },
+      onError: (errs) => {
+        isSubmitting.value = false;
+        console.error('Bulk update errors:', errs);
+        toast.error(t('inventory.bulkAssetFailed') || 'Failed to update assets');
+      },
     });
   }
 };
@@ -625,7 +653,7 @@ const handleSubmit = () => {
               <h3 class="text-lg font-bold text-foreground">
                 {{ isSingle ? (isVehicle ? t('inventory.editAssetVehicleDetail') : t('inventory.editAssetDetail')) : t('inventory.editAssetSelected') }}
               </h3>
-              <button @click="closeModal" class="p-2 hover:bg-muted rounded-full transition-colors">
+              <button @click="closeModal" :disabled="isProcessing" class="p-2 hover:bg-muted rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                 <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
               </button>
             </div>
@@ -635,6 +663,7 @@ const handleSubmit = () => {
               <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
                 <!-- Left Column -->
                 <div class="space-y-6">
+                  <!-- Asset Code -->
                   <Field>
                     <FieldLabel>{{ t('inventory.assetCode') }}</FieldLabel>
                     <FieldContent>
@@ -642,6 +671,7 @@ const handleSubmit = () => {
                     </FieldContent>
                   </Field>
 
+                  <!-- Legacy Number -->
                   <Field v-if="isSingle && form.legacy_number">
                     <FieldLabel>{{ t('inventory.legacyNumber') }}</FieldLabel>
                     <FieldContent>
@@ -649,32 +679,36 @@ const handleSubmit = () => {
                     </FieldContent>
                   </Field>
 
-                  <Field :data-invalid="(isSingle && !!errors.location_id) || undefined">
-                    <FieldLabel>
-                      <span>{{ t('inventory.location') }}<span v-if="isSingle" class="text-rose-500">*</span></span>
+                  <!-- Specification (Only for COMP category) -->
+                  <Field v-if="isComp" :data-invalid="(isSingle && !!errors.specification) || undefined">
+                    <FieldLabel for="edit-unit-specification">
+                      <span>{{ t('inventory.specification') }}<span v-if="isSingle" class="text-rose-500">*</span></span>
                     </FieldLabel>
                     <FieldContent>
-                      <LocationCombobox
-                        v-model="form.location_id"
-                        :locations="locations"
-                        :placeholder="isSingle ? t('inventory.selectLocation') : t('inventory.unchanged')"
-                        :error="isSingle && !!errors.location_id"
-                        :active-only="true"
-                        :clearable="!isSingle"
+                      <textarea
+                        id="edit-unit-specification"
+                        name="specification"
+                        v-model="form.specification"
+                        rows="3"
+                        maxlength="1000"
+                        :placeholder="isSingle ? t('inventory.specificationPlaceholder') : t('inventory.unchanged')"
+                        class="w-full px-4 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors resize-none"
+                        :class="[(isSingle && errors.specification) ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input']"
                       />
                     </FieldContent>
-                    <FieldError v-if="isSingle && errors.location_id">{{ errors.location_id }}</FieldError>
+                    <FieldError v-if="isSingle && errors.specification">{{ errors.specification }}</FieldError>
                   </Field>
 
+                  <!-- Borrowing Type -->
                   <Field :data-invalid="(isSingle && !!errors.type) || undefined">
                     <FieldLabel>
-                      <span>{{ t('inventory.type') }}<span v-if="isSingle" class="text-rose-500">*</span></span>
+                      <span>{{ t('inventory.borrowingType') }}<span v-if="isSingle" class="text-rose-500">*</span></span>
                     </FieldLabel>
                     <FieldContent>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !form.type ? 'text-muted-foreground' : 'text-foreground', (isSingle && errors.type) ? 'border-destructive' : '']">
-                            {{ form.type || (isSingle ? t('inventory.selectType') : t('inventory.unchanged')) }}
+                            {{ form.type || (isSingle ? t('inventory.selectBorrowingType') : t('inventory.unchanged')) }}
                             <ChevronDown class="w-4 h-4 opacity-50" />
                           </Button>
                         </DropdownMenuTrigger>
@@ -688,65 +722,25 @@ const handleSubmit = () => {
                     <FieldError v-if="isSingle && errors.type">{{ errors.type }}</FieldError>
                   </Field>
 
-                  <Field :data-invalid="(isSingle && !!errors.status) || undefined" :data-disabled="isStatusDisabled || undefined">
+                  <!-- Status (Disabled with informative tooltip) -->
+                  <Field data-disabled="true">
                     <FieldLabel>
                       <span>{{ t('inventory.status') }}<span v-if="isSingle" class="text-rose-500">*</span></span>
                     </FieldLabel>
                     <FieldContent>
-                      <div v-if="isStatusDisabled" class="w-full flex items-center justify-between px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10 select-none">
+                      <div 
+                        class="w-full flex items-center justify-between px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10 select-none"
+                        :title="t('inventory.statusCannotBeChangedManually')"
+                      >
                         <span>{{ getStatusLabel(form.status) || (isSingle ? t('inventory.selectStatus') : t('inventory.unchanged')) }}</span>
                         <ChevronDown class="w-4 h-4 opacity-50" />
                       </div>
-                      <DropdownMenu v-else>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !form.status ? 'text-muted-foreground' : 'text-foreground']">
-                            {{ getStatusLabel(form.status) || (isSingle ? t('inventory.selectStatus') : t('inventory.unchanged')) }}
-                            <ChevronDown class="w-4 h-4 opacity-50" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
-                          <DropdownMenuItem @select="form.status = 'Tersedia'">{{ t('status.tersedia') }}</DropdownMenuItem>
-                          <DropdownMenuItem @select="form.status = 'Standby'">{{ t('status.standby') }}</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
                     </FieldContent>
+                    <p class="text-[11px] text-muted-foreground mt-1 ml-0.5">{{ t('inventory.statusCannotBeChangedManually') }}</p>
                     <FieldError v-if="isSingle && errors.status">{{ errors.status }}</FieldError>
                   </Field>
 
-                  <Field :data-invalid="(isSingle && !!errors.burden) || undefined">
-                    <FieldLabel>
-                      <span>{{ t('inventory.burden') }}<span v-if="isSingle" class="text-rose-500">*</span></span>
-                    </FieldLabel>
-                    <FieldContent>
-                      <RadioGroup v-model="form.burden" class="flex items-center gap-6 h-10">
-                        <div v-if="!isSingle" class="flex items-center space-x-2">
-                          <RadioGroupItem id="edit-unit-burden-none" value="Tidak berubah" />
-                          <label for="edit-unit-burden-none" class="text-sm font-medium text-foreground cursor-pointer select-none">{{ t('inventory.unchanged') }}</label>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                          <RadioGroupItem id="edit-unit-burden-corporate" value="Corporate" />
-                          <label for="edit-unit-burden-corporate" class="text-sm font-medium text-foreground cursor-pointer select-none">Corporate</label>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                          <RadioGroupItem id="edit-unit-burden-project" value="Project" />
-                          <label for="edit-unit-burden-project" class="text-sm font-medium text-foreground cursor-pointer select-none">Project</label>
-                        </div>
-                      </RadioGroup>
-                    </FieldContent>
-                    <FieldError v-if="isSingle && errors.burden">{{ errors.burden }}</FieldError>
-                  </Field>
-
-                  <Field v-if="form.burden === 'Project'" :data-invalid="!!errors.project_id || undefined">
-                    <FieldLabel><span>{{ t('inventory.project') }}<span class="text-rose-500">*</span></span></FieldLabel>
-                    <FieldContent>
-                      <Combobox v-model="form.project_id" :options="projectOptions" :search-placeholder="t('inventory.searchProjectPlaceholder')" :default-label="t('inventory.selectProject')" width-class="w-full h-10 px-4" :error="!!errors.project_id" />
-                    </FieldContent>
-                    <FieldError v-if="errors.project_id">{{ errors.project_id }}</FieldError>
-                  </Field>
-                </div>
-
-                <!-- Right Column -->
-                <div class="space-y-6">
+                  <!-- Condition -->
                   <Field :data-invalid="(isSingle && !!errors.condition) || undefined" :data-disabled="isKondisiDisabled || undefined">
                     <FieldLabel>
                       <span>{{ t('inventory.condition') }}<span v-if="isSingle" class="text-rose-500">*</span></span>
@@ -766,9 +760,7 @@ const handleSubmit = () => {
                         <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
                           <DropdownMenuItem @select="form.condition = 'Bagus'">{{ t('inventory.conditionGood') }}</DropdownMenuItem>
                           <DropdownMenuItem @select="form.condition = 'Rusak'">{{ t('inventory.conditionDamaged') }}</DropdownMenuItem>
-                          <DropdownMenuItem @select="form.condition = 'QC Passed'">{{ t('inventory.conditionQcPassed') }}</DropdownMenuItem>
                           <template v-if="!isBorrowedUnit">
-                            <DropdownMenuItem @select="form.condition = 'Lelang/Hibah'">{{ t('inventory.conditionAuctionGrant') }}</DropdownMenuItem>
                             <DropdownMenuItem @select="form.condition = 'Rusak Total'">{{ t('inventory.conditionTotalDamage') }}</DropdownMenuItem>
                             <DropdownMenuItem @select="form.condition = 'Hilang'">{{ t('inventory.conditionLost') }}</DropdownMenuItem>
                           </template>
@@ -778,21 +770,41 @@ const handleSubmit = () => {
                     <FieldError v-if="isSingle && errors.condition">{{ errors.condition }}</FieldError>
                   </Field>
 
-                  <Field>
+                  <!-- Location -->
+                  <Field :data-invalid="(isSingle && !!errors.location_id) || undefined">
                     <FieldLabel>
-                      <span>{{ t('inventory.unitPrice') }}</span>
+                      <span>{{ t('inventory.location') }}<span v-if="isSingle" class="text-rose-500">*</span></span>
                     </FieldLabel>
                     <FieldContent>
-                      <div class="flex gap-2 w-full">
-                        <div class="flex flex-grow rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors h-10 overflow-hidden">
-                          <span class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-r border-input select-none font-medium">Rp</span>
-                          <input type="number" v-model="form.price" :placeholder="isSingle ? t('inventory.unitPricePlaceholder') : t('inventory.unchanged')" min="0" class="flex-1 min-w-0 px-4 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 transition-colors h-full" />
-                        </div>
-                        <Button type="button" @click="handleSamakanPrice" variant="warning" size="lg">{{ t('inventory.sameAsParent') }}</Button>
+                      <LocationCombobox
+                        v-model="form.location_id"
+                        :locations="locations"
+                        :placeholder="isSingle ? t('inventory.selectLocation') : t('inventory.unchanged')"
+                        :error="isSingle && !!errors.location_id"
+                        :active-only="true"
+                        :clearable="!isSingle"
+                      />
+                    </FieldContent>
+                    <FieldError v-if="isSingle && errors.location_id">{{ errors.location_id }}</FieldError>
+                  </Field>
+                </div>
+
+                <!-- Right Column -->
+                <div class="space-y-6">
+                  <!-- Price -->
+                  <Field>
+                    <FieldLabel>
+                      <span>{{ t('inventory.price') }}</span>
+                    </FieldLabel>
+                    <FieldContent>
+                      <div class="flex rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors h-10 overflow-hidden">
+                        <span class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-r border-input select-none font-medium">Rp</span>
+                        <input type="number" v-model="form.price" :placeholder="isSingle ? '0' : t('inventory.unchanged')" min="0" step="any" class="flex-1 min-w-0 px-4 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 transition-colors h-full" />
                       </div>
                     </FieldContent>
                   </Field>
 
+                  <!-- Classification -->
                   <Field :data-invalid="(isSingle && !!errors.classification) || undefined">
                     <FieldLabel>
                       <span>{{ t('inventory.classification') }}<span v-if="isSingle" class="text-rose-500">*</span></span>
@@ -815,22 +827,43 @@ const handleSubmit = () => {
                     <FieldError v-if="isSingle && errors.classification">{{ errors.classification }}</FieldError>
                   </Field>
 
-                  <!-- Specification (Only for COMP category) -->
-                  <Field v-if="isComp">
-                    <FieldLabel for="edit-unit-specification"><span>{{ t('inventory.specification') }}</span></FieldLabel>
+                  <!-- Burden -->
+                  <Field :data-invalid="(isSingle && !!errors.burden) || undefined">
+                    <FieldLabel>
+                      <span>{{ t('inventory.burden') }}<span v-if="isSingle" class="text-rose-500">*</span></span>
+                    </FieldLabel>
                     <FieldContent>
-                      <input 
-                        type="text" 
-                        id="edit-unit-specification"
-                        name="specification"
-                        v-model="form.specification" 
-                        maxlength="255"
-                        :placeholder="isSingle ? t('inventory.specificationPlaceholder') : t('inventory.unchanged')"
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
-                      />
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="outline"
+                            class="w-full justify-between rounded-[14px] font-normal h-10 px-4"
+                            :class="[(!form.burden || form.burden === 'Tidak berubah') ? 'text-muted-foreground' : 'text-foreground', (isSingle && errors.burden) ? 'border-destructive' : '']"
+                          >
+                            {{ getBurdenLabel(form.burden) }}
+                            <ChevronDown class="w-4 h-4 opacity-50" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
+                          <DropdownMenuItem v-if="!isSingle" @select="form.burden = 'Tidak berubah'">{{ t('inventory.unchanged') }}</DropdownMenuItem>
+                          <DropdownMenuItem @select="form.burden = 'Corporate'">{{ t('inventory.corporate') }}</DropdownMenuItem>
+                          <DropdownMenuItem @select="form.burden = 'Project'">{{ t('inventory.project') }}</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </FieldContent>
+                    <FieldError v-if="isSingle && errors.burden">{{ errors.burden }}</FieldError>
                   </Field>
 
+                  <!-- Project -->
+                  <Field v-if="form.burden === 'Project'" :data-invalid="!!errors.project_id || undefined">
+                    <FieldLabel><span>{{ t('inventory.project') }}<span class="text-rose-500">*</span></span></FieldLabel>
+                    <FieldContent>
+                      <Combobox v-model="form.project_id" :options="projectOptions" :search-placeholder="t('inventory.searchProjectPlaceholder')" :default-label="t('inventory.selectProject')" width-class="w-full h-10 px-4" :error="!!errors.project_id" />
+                    </FieldContent>
+                    <FieldError v-if="errors.project_id">{{ errors.project_id }}</FieldError>
+                  </Field>
+
+                  <!-- Photo -->
                   <Field :data-invalid="(isSingle && !!errors.image_url) || undefined">
                     <FieldLabel>
                       <span>{{ t('inventory.photo') }}</span>
@@ -844,7 +877,6 @@ const handleSubmit = () => {
                           {{ form.image_url_name || (isSingle ? t('inventory.noPhotoSelected') : t('inventory.unchanged')) }}
                         </div>
                         <input type="file" id="edit-asset-photo-upload" class="hidden" accept=".jpg,.jpeg,.png,.webp" @change="handleFileUpload" />
-                        <Button type="button" @click="handleSamakanPhoto" variant="warning" size="lg" class="shrink-0">{{ t('inventory.sameAsParent') }}</Button>
                         <Button type="button" @click="triggerFileInput" size="lg" class="shrink-0">{{ t('inventory.chooseFile') }}</Button>
                         <Button
                           v-if="isSingle"
@@ -864,12 +896,12 @@ const handleSubmit = () => {
                     <FieldError v-if="isSingle && errors.image_url">{{ errors.image_url }}</FieldError>
                   </Field>
 
-                  <!-- TNKB (Only for Vehicles) -->
+                  <!-- Plate Number / TNKB (Only for Vehicles) -->
                   <Field v-if="isVehicle" :data-invalid="(isSingle && !!errors.vehicle_registration) || undefined" :data-disabled="(!isSingle) || undefined">
-                    <FieldLabel><span>{{ t('inventory.tnkb') }}<span v-if="isSingle" class="text-rose-500">*</span></span></FieldLabel>
+                    <FieldLabel><span>{{ t('inventory.plateNumber') }}<span v-if="isSingle" class="text-rose-500">*</span></span></FieldLabel>
                     <FieldContent>
                       <input type="text" v-model="form.vehicle_registration" :disabled="!isSingle" :placeholder="!isSingle ? t('inventory.cannotBeChangedBulk') : t('inventory.nopolPlaceholder')"
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10 disabled:bg-muted/30 disabled:text-muted-foreground disabled:cursor-not-allowed"
+                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10 disabled:bg-muted/30 disabled:text-muted-foreground disabled:cursor-not-allowed uppercase"
                       />
                     </FieldContent>
                     <FieldError v-if="isSingle && errors.vehicle_registration">{{ errors.vehicle_registration }}</FieldError>
@@ -952,10 +984,10 @@ const handleSubmit = () => {
                 {{ isSingle ? t('inventory.requiredMarker') : t('inventory.bulkEmptyMarker') }}
               </p>
               <div class="flex items-center gap-3">
-                <Button @click="closeModal" variant="white" size="xl">{{ t('common.cancel') }}</Button>
-                <Button @click="handleSubmit" :disabled="form.processing" variant="primary" size="xl" class="relative">
-                  <Loader2 v-if="form.processing" class="absolute inset-0 m-auto h-5 w-5 animate-spin" />
-                  <span :class="{ 'opacity-0': form.processing }">
+                <Button @click="closeModal" :disabled="isProcessing" variant="white" size="xl">{{ t('common.cancel') }}</Button>
+                <Button @click="handleSubmit" :disabled="isProcessing" variant="primary" size="xl" class="relative">
+                  <Loader2 v-if="isProcessing" class="absolute inset-0 m-auto h-5 w-5 animate-spin" />
+                  <span :class="{ 'opacity-0': isProcessing }">
                     {{ isSingle ? t('inventory.saveChanges') : t('inventory.saveBulkChanges') }}
                   </span>
                 </Button>

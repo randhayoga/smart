@@ -24,7 +24,7 @@ class NonConsumableController extends Controller
     public function index(Request $request): Response
     {
         $assets = Asset::with([
-            'location.parent', 'statusApprovals', 'legacyProject',
+            'location.parent', 'statusApprovals', 'project',
             'lot.model.type.category', 'lot.model.brand',
             'lot.organizer', 'lot.vendor', 'lot.legacyVendor', 'legacyVendor', 'lifecycles.actor',
             'fulfillments' => fn($q) => $q->whereNull('completed_at')->with('requestItem.request.user')
@@ -68,12 +68,10 @@ class NonConsumableController extends Controller
                 'price' => $asset->price,
                 'image_url' => $asset->image_url,
                 'vehicle_registration' => $asset->vehicle_registration,
-                'legacy_burden' => $asset->legacy_burden,
-                'burden' => $asset->legacy_burden,
-                'legacy_project_id' => $asset->legacy_project_id,
-                'project_id' => $asset->legacy_project_id,
-                'project_name' => $asset->legacyProject ? $asset->legacyProject->project_name : null,
-                'project_no' => $asset->legacyProject ? $asset->legacyProject->no_project : null,
+                'burden' => $asset->burden,
+                'project_id' => $asset->project_id,
+                'project_name' => $asset->project ? $asset->project->project_name : null,
+                'project_no' => $asset->project ? $asset->project->no_project : null,
                 'created_at' => $asset->created_at?->toIso8601String(),
                 'updated_at' => $asset->updated_at ? $asset->updated_at->format('d-m-Y H:i') : '-',
                 

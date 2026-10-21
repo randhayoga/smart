@@ -2,7 +2,7 @@
 /**
  * Create Asset Modal component for registering new asset units (single or bulk batch creation) with photo compression.
  */
-import { ref, watch, computed, nextTick } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useModalLock } from '@/composables/useModalLock';
 import { useForm } from '@inertiajs/vue3';
@@ -16,7 +16,6 @@ import Combobox from '@/Components/Combobox.vue';
 import LocationCombobox from '@/Components/LocationCombobox.vue';
 import { Checkbox } from '@/Components/ui/checkbox';
 import { Field, FieldLabel, FieldContent, FieldError } from '@/Components/ui/field';
-import { RadioGroup, RadioGroupItem } from '@/Components/ui/radio-group';
 import { compressImageIfNeeded } from '@/utils/imageCompressor';
 
 interface Props {
@@ -27,7 +26,7 @@ interface Props {
   locations: any[];
   floors?: any[];
   rooms?: any[];
-  projects?: { id: number; no_project: string; project_name: string; client_id: string; }[];
+  projects?: { id?: number; id_project?: number; no_project: string; project_name: string; client_id?: string }[];
 }
 
 const props = defineProps<Props>();
@@ -40,40 +39,34 @@ const { t } = useI18n();
 
 useModalLock(computed(() => props.open));
 
-const isVehicle = computed(() => props.barang?.category === 'Kendaraan');
+const isVehicle = computed(() => {
+  return props.barang?.category_code === 'KEND' ||
+    props.barang?.category === 'Kendaraan' ||
+    props.barang?.category === 'KEND' ||
+    props.lot?.barang_category_code === 'KEND';
+});
+
 const isComp = computed(() => {
   return props.barang?.category_code === 'COMP' ||
     props.barang?.category === 'Computer' ||
     props.barang?.category === 'COMP' ||
     props.lot?.barang_category_code === 'COMP';
 });
-const arrNeedApproval = ['Rusak Total', 'Hilang'];
-const arrInactiveConditions = ['Rusak Total', 'Hilang', 'Lelang/Hibah'];
 
-const getStatusLabel = (s: string) => {
-  if (!s) return t('inventory.selectStatus');
-  const map: Record<string, string> = {
-    'Belum Diverifikasi': t('status.belumDiverifikasi'),
-    'Tersedia': t('status.tersedia'),
-    'Dipinjam': t('status.dipinjam'),
-    'Standby': t('status.standby'),
-    'Pending': t('status.pending'),
-    'Pending:BoD/BoC': t('status.pending'),
-    'Scrapped': t('status.scrapped'),
-    'Lost': t('status.lost'),
-  };
-  return map[s] || s;
-};
+const projectOptions = computed(() => {
+  return (props.projects || [])
+    .filter(p => Boolean(p.no_project?.trim() && p.project_name?.trim()))
+    .map(p => ({
+      id: (p.id ?? p.id_project) as number,
+      name: `[${p.no_project}] ${p.project_name}`,
+    }));
+});
 
 const getConditionLabel = (c: string) => {
   if (!c) return t('inventory.selectCondition');
   const map: Record<string, string> = {
     'Bagus': t('inventory.conditionGood'),
     'Rusak': t('inventory.conditionDamaged'),
-    'QC Passed': t('inventory.conditionQcPassed'),
-    'Lelang/Hibah': t('inventory.conditionAuctionGrant'),
-    'Rusak Total': t('inventory.conditionTotalDamage'),
-    'Hilang': t('inventory.conditionLost'),
   };
   return map[c] || c;
 };
@@ -87,110 +80,76 @@ const getClassificationLabel = (c: string) => {
 
 const form = useForm({
   _method: 'POST',
-  number: '',
   lot_id: props.lot?.id,
   location_id: '' as string | number,
   status: 'Belum Diverifikasi',
   condition: '',
   type: '',
   classification: '',
+  burden: 'Corporate' as 'Corporate' | 'Project',
+  project_id: '' as string | number,
   price: '' as string | number,
   specification: '',
   image_url: null as File | null,
   image_url_name: '',
-  use_lot_image: false,
   is_bulk: false,
   bulk_quantity: '' as string | number,
   vehicle_registration: '',
-  memo_file: null as File | null,
-  memo_file_name: '',
-  lost_doc_file: null as File | null,
-  lost_doc_file_name: '',
 });
 
 const errors = ref({
+  specification: '',
   location_id: '',
-  status: '',
   condition: '',
   type: '',
   classification: '',
+  burden: '',
+  project_id: '',
   image_url: '',
   vehicle_registration: '',
   bulk_quantity: '',
-  memo_file: '',
-  lost_doc_file: '',
 });
 
 const resetErrors = () => {
   errors.value = {
+    specification: '',
     location_id: '',
-    status: '',
     condition: '',
     type: '',
     classification: '',
+    burden: '',
+    project_id: '',
     image_url: '',
     vehicle_registration: '',
     bulk_quantity: '',
-    memo_file: '',
-    lost_doc_file: '',
   };
 };
 
 // Reactive error clearing
+watch(() => form.specification, v => { if (v && errors.value.specification) errors.value.specification = ''; });
 watch(() => form.location_id, v => { if (v && errors.value.location_id) errors.value.location_id = ''; });
-watch(() => form.status, v => { if (v && errors.value.status) errors.value.status = ''; });
 watch(() => form.condition, v => { if (v && errors.value.condition) errors.value.condition = ''; });
 watch(() => form.type, v => { if (v && errors.value.type) errors.value.type = ''; });
 watch(() => form.classification, v => { if (v && errors.value.classification) errors.value.classification = ''; });
+watch(() => form.burden, v => {
+  if (v && errors.value.burden) errors.value.burden = '';
+  if (v !== 'Project') {
+    form.project_id = '';
+    errors.value.project_id = '';
+  }
+});
+watch(() => form.project_id, v => { if (v && errors.value.project_id) errors.value.project_id = ''; });
 watch(() => form.image_url, v => { if (v && errors.value.image_url) errors.value.image_url = ''; });
 watch(() => form.image_url_name, v => { if (v && errors.value.image_url) errors.value.image_url = ''; });
 watch(() => form.vehicle_registration, v => { if (v && errors.value.vehicle_registration) errors.value.vehicle_registration = ''; });
 watch(() => form.bulk_quantity, v => { if (v !== '' && errors.value.bulk_quantity) errors.value.bulk_quantity = ''; });
-watch(() => form.memo_file, v => { if (v && errors.value.memo_file) errors.value.memo_file = ''; });
-watch(() => form.lost_doc_file, v => { if (v && errors.value.lost_doc_file) errors.value.lost_doc_file = ''; });
 
-watch(() => form.condition, (newVal) => {
-  if (!arrNeedApproval.includes(newVal)) {
-    form.memo_file = null;
-    form.memo_file_name = '';
+const onSelectBurden = (burden: 'Corporate' | 'Project') => {
+  form.burden = burden;
+  if (burden !== 'Project') {
+    form.project_id = '';
+    errors.value.project_id = '';
   }
-  if (newVal !== 'Hilang') {
-    form.lost_doc_file = null;
-    form.lost_doc_file_name = '';
-  }
-});
-
-const generateAssetCode = () => {
-  if (props.lot?.next_asset_code) {
-    return props.lot.next_asset_code;
-  }
-  const tipeCode = props.barang?.subcategory_code || '';
-  const organizerCode = props.lot?.organizer || '';
-  const combination = `${tipeCode}-${organizerCode}-PTRE`;
-  
-  let yy = String(new Date().getFullYear()).slice(-2);
-  if (props.lot?.date_of_receipt) {
-    const dateObj = new Date(props.lot.date_of_receipt);
-    if (!isNaN(dateObj.getTime())) {
-      yy = String(dateObj.getFullYear()).slice(-2);
-    }
-  }
-
-  const pattern = `-${organizerCode}-PTRE`;
-  const matchingUnits = (props.units || []).filter(unit => {
-    return unit.number?.includes(pattern);
-  });
-
-  let nextNum = 1;
-  if (matchingUnits.length > 0) {
-    const numbers = matchingUnits.map(unit => {
-      const firstPart = unit.number.split('-')[0];
-      return parseInt(firstPart, 10) || 0;
-    });
-    nextNum = Math.max(...numbers) + 1;
-  }
-  const paddedNum = String(nextNum).padStart(5, '0');
-  return `${paddedNum}-${combination}-${yy}`;
 };
 
 // Init form when modal opens
@@ -200,17 +159,15 @@ watch(() => props.open, (val) => {
   form.clearErrors();
   resetErrors();
   form.lot_id = props.lot?.id;
-  form.number = generateAssetCode();
   form.status = 'Belum Diverifikasi';
   form.condition = '';
+  form.type = '';
+  form.classification = '';
+  form.burden = 'Corporate';
+  form.project_id = '';
   form.specification = '';
   form.image_url = null;
   form.image_url_name = '';
-  form.use_lot_image = false;
-  form.memo_file = null;
-  form.memo_file_name = '';
-  form.lost_doc_file = null;
-  form.lost_doc_file_name = '';
 });
 
 const closeModal = () => { emit('update:open', false); };
@@ -236,7 +193,6 @@ const handleFileUpload = async (e: any) => {
     }
     form.image_url = file;
     form.image_url_name = file.name;
-    form.use_lot_image = false;
   } catch (err) {
     console.error('Gagal memproses gambar:', err);
     toast.error(t('inventory.failedProcessImage'));
@@ -253,90 +209,16 @@ const triggerFileInput = () => {
 const viewImageInNewTab = () => {
   if (form.image_url) {
     window.open(URL.createObjectURL(form.image_url), '_blank');
-  } else if (form.use_lot_image && props.lot?.imageUrl) {
-    window.open('/media/' + props.lot.imageUrl, '_blank');
   }
 };
 
-const handleSamakanPhoto = () => {
-  if (props.lot?.imageUrl) {
-    form.use_lot_image = true;
-    form.image_url = null;
-    form.image_url_name = props.lot.imageUrl.split('/').pop() || '';
-  } else {
-    toast.error(t('inventory.lotNoPhoto'));
-  }
-};
-
-const hasImage = computed(() => Boolean(form.image_url || form.use_lot_image || form.image_url_name));
+const hasImage = computed(() => Boolean(form.image_url || form.image_url_name));
 
 const handleDeletePhoto = () => {
   form.image_url = null;
   form.image_url_name = '';
-  form.use_lot_image = false;
   const input = document.getElementById('create-asset-photo-upload') as HTMLInputElement;
   if (input) input.value = '';
-};
-
-const handleMemoUpload = (e: any) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-  if (!allowedTypes.includes(file.type)) { toast.error(t('inventory.invalidDocFormat')); return; }
-  if (file.size > 2 * 1024 * 1024) { toast.error(t('inventory.fileTooLarge2Mb')); return; }
-  form.memo_file = file;
-  form.memo_file_name = file.name;
-};
-
-const triggerMemoFileInput = () => {
-  const input = document.getElementById('create-asset-memo-upload') as HTMLInputElement;
-  input?.click();
-};
-
-const viewMemoInNewTab = () => {
-  if (form.memo_file) {
-    window.open(URL.createObjectURL(form.memo_file), '_blank');
-  }
-};
-
-const handleLostDocUpload = (e: any) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-  if (!allowedTypes.includes(file.type)) { toast.error(t('inventory.invalidDocFormat')); return; }
-  if (file.size > 2 * 1024 * 1024) { toast.error(t('inventory.fileTooLarge2Mb')); return; }
-  form.lost_doc_file = file;
-  form.lost_doc_file_name = file.name;
-};
-
-const triggerLostDocFileInput = () => {
-  const input = document.getElementById('create-asset-lost-doc-upload') as HTMLInputElement;
-  input?.click();
-};
-
-const viewLostDocInNewTab = () => {
-  if (form.lost_doc_file) {
-    window.open(URL.createObjectURL(form.lost_doc_file), '_blank');
-  }
-};
-
-const handleSamakanPrice = () => {
-  if (props.lot?.unitPrice) {
-    form.price = props.lot.unitPrice;
-  } else if (props.lot?.unit_price) {
-    form.price = props.lot.unit_price;
-  } else {
-    toast.error(t('inventory.lotNoDefaultPrice'));
-  }
-};
-
-const handleSamakanLocation = () => {
-  const lotLocId = props.lot?.location_id || props.lot?.locationId;
-  if (lotLocId) {
-    form.location_id = lotLocId;
-  } else {
-    toast.error(t('inventory.lotNoDefaultLocation'));
-  }
 };
 
 const parseCurrencyToNumber = (val: string | number) => {
@@ -362,30 +244,33 @@ const parseCurrencyToNumber = (val: string | number) => {
 };
 
 const handleSubmit = () => {
+  if (form.processing) return;
   resetErrors();
 
   let isValid = true;
-  if (!form.location_id) { errors.value.location_id = t('inventory.locationRequired'); isValid = false; }
+  if (isComp.value && !form.specification?.trim()) { errors.value.specification = t('inventory.specificationRequired'); isValid = false; }
   if (!form.type) { errors.value.type = t('inventory.typeRequired'); isValid = false; }
-  if (!form.classification) { errors.value.classification = t('inventory.classificationRequired'); isValid = false; }
-  if (!form.status) { errors.value.status = t('inventory.statusRequired'); isValid = false; }
   if (!form.condition) { errors.value.condition = t('inventory.conditionRequired'); isValid = false; }
+  if (!form.location_id) { errors.value.location_id = t('inventory.locationRequired'); isValid = false; }
+  if (!form.classification) { errors.value.classification = t('inventory.classificationRequired'); isValid = false; }
+  if (!form.burden) { errors.value.burden = t('inventory.burdenRequired'); isValid = false; }
+  if (form.burden === 'Project' && !form.project_id) { errors.value.project_id = t('inventory.projectRequired'); isValid = false; }
   if (isVehicle.value && !form.vehicle_registration) { errors.value.vehicle_registration = t('inventory.nopolRequired'); isValid = false; }
-  if (arrNeedApproval.includes(form.status) && !form.memo_file_name) { errors.value.memo_file = t('inventory.memoRequired'); isValid = false; }
-  if (form.status === 'Hilang' && !form.lost_doc_file_name) { errors.value.lost_doc_file = t('inventory.lostDocRequired'); isValid = false; }
   if (form.is_bulk && (form.bulk_quantity === '' || form.bulk_quantity === null)) { errors.value.bulk_quantity = t('inventory.assetCountRequired'); isValid = false; }
   if (!isValid) return;
 
   form.transform((data) => {
     const fd: any = {
       _method: 'POST',
-      number: data.number,
       lot_id: data.lot_id,
       location_id: data.location_id,
       status: data.status,
       condition: data.condition,
       type: data.type,
+      borrowing_type: data.type,
       classification: data.classification,
+      burden: data.burden,
+      project_id: data.burden === 'Project' ? data.project_id : null,
       price: data.price !== '' && data.price !== null ? parseCurrencyToNumber(data.price) : null,
     };
     if (isVehicle.value) fd.vehicle_registration = data.vehicle_registration;
@@ -394,9 +279,6 @@ const handleSubmit = () => {
       fd.specification = data.specification || null;
     }
     if (data.image_url) fd.image_url = data.image_url;
-    if (data.use_lot_image) fd.use_lot_image = data.use_lot_image;
-    if (data.memo_file) fd.memo_file = data.memo_file;
-    if (data.lost_doc_file) fd.lost_doc_file = data.lost_doc_file;
     if (data.is_bulk) {
       fd.is_bulk = data.is_bulk;
       fd.bulk_quantity = data.bulk_quantity;
@@ -436,7 +318,7 @@ const handleSubmit = () => {
             <!-- Header -->
             <div class="flex items-center justify-between pt-3 pb-2 px-6 border-b border-border">
               <h3 class="text-lg font-bold text-foreground">{{ t('inventory.createNewAsset') }}</h3>
-              <button @click="closeModal" class="p-2 hover:bg-muted rounded-full transition-colors cursor-pointer">
+              <button @click="closeModal" :disabled="form.processing" class="p-2 hover:bg-muted rounded-full transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
                 <X class="w-5 h-5 text-muted-foreground" />
               </button>
             </div>
@@ -446,36 +328,27 @@ const handleSubmit = () => {
               <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
                 <!-- Left Column: Form Fields -->
                 <div class="space-y-6">
-                  <Field>
-                    <FieldLabel>
-                      <span>{{ t('inventory.assetCode') }}</span>
+                  <!-- Specification (Only for COMP category) -->
+                  <Field v-if="isComp" :data-invalid="!!errors.specification || undefined">
+                    <FieldLabel for="create-unit-specification">
+                      <span>{{ t('inventory.specification') }}<span class="text-rose-500">*</span></span>
                     </FieldLabel>
                     <FieldContent>
-                      <input type="text" :value="form.number" disabled class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10" />
+                      <textarea
+                        id="create-unit-specification"
+                        name="specification"
+                        v-model="form.specification"
+                        rows="3"
+                        maxlength="1000"
+                        :placeholder="t('inventory.specificationPlaceholder')"
+                        class="w-full px-4 py-2 border rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors text-sm resize-none"
+                        :class="[errors.specification ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input']"
+                      />
                     </FieldContent>
+                    <FieldError v-if="errors.specification">{{ errors.specification }}</FieldError>
                   </Field>
 
-                  <Field :data-invalid="!!errors.location_id || undefined">
-                    <FieldLabel>
-                      <span>{{ t('inventory.location') }}<span class="text-rose-500">*</span></span>
-                    </FieldLabel>
-                    <FieldContent>
-                      <div class="flex gap-2">
-                        <div class="flex-grow min-w-0">
-                          <LocationCombobox
-                            v-model="form.location_id"
-                            :locations="locations"
-                            :placeholder="t('inventory.selectLocation')"
-                            :error="!!errors.location_id"
-                            :active-only="true"
-                          />
-                        </div>
-                        <Button type="button" @click="handleSamakanLocation" variant="warning" size="lg" class="shrink-0">{{ t('inventory.sameAsParent') }}</Button>
-                      </div>
-                    </FieldContent>
-                    <FieldError v-if="errors.location_id">{{ errors.location_id }}</FieldError>
-                  </Field>
-
+                  <!-- Borrowing Type (LT, ST) -->
                   <Field :data-invalid="!!errors.type || undefined">
                     <FieldLabel>
                       <span>{{ t('inventory.borrowingType') }}<span class="text-rose-500">*</span></span>
@@ -497,19 +370,45 @@ const handleSubmit = () => {
                     <FieldError v-if="errors.type">{{ errors.type }}</FieldError>
                   </Field>
 
-                  <Field>
+                  <!-- Condition (Bagus, Rusak) -->
+                  <Field :data-invalid="!!errors.condition || undefined">
                     <FieldLabel>
-                      <span>{{ t('inventory.status') }}</span>
+                      <span>{{ t('inventory.condition') }}<span class="text-rose-500">*</span></span>
                     </FieldLabel>
                     <FieldContent>
-                      <input 
-                        type="text" 
-                        :value="getStatusLabel(form.status)" 
-                        disabled 
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10 select-none" 
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !form.condition ? 'text-muted-foreground' : 'text-foreground', errors.condition ? 'border-destructive' : '']">
+                            {{ getConditionLabel(form.condition) }}
+                            <ChevronDown class="w-4 h-4 opacity-50" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
+                          <DropdownMenuItem @select="form.condition = 'Bagus'">{{ t('inventory.conditionGood') }}</DropdownMenuItem>
+                          <DropdownMenuItem @select="form.condition = 'Rusak'">{{ t('inventory.conditionDamaged') }}</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </FieldContent>
+                    <FieldError v-if="errors.condition">{{ errors.condition }}</FieldError>
+                  </Field>
+
+                  <!-- Location -->
+                  <Field :data-invalid="!!errors.location_id || undefined">
+                    <FieldLabel>
+                      <span>{{ t('inventory.location') }}<span class="text-rose-500">*</span></span>
+                    </FieldLabel>
+                    <FieldContent>
+                      <LocationCombobox
+                        v-model="form.location_id"
+                        :locations="locations"
+                        :placeholder="t('inventory.selectLocation')"
+                        :error="!!errors.location_id"
+                        :active-only="true"
                       />
                     </FieldContent>
+                    <FieldError v-if="errors.location_id">{{ errors.location_id }}</FieldError>
                   </Field>
+
                   <!-- Bulk Creation (Only when not vehicle category) -->
                   <Field v-if="!isVehicle" :data-invalid="!!errors.bulk_quantity || undefined">
                     <FieldContent>
@@ -531,43 +430,20 @@ const handleSubmit = () => {
 
                 <!-- Right Column -->
                 <div class="space-y-6">
-                  <Field :data-invalid="!!errors.condition || undefined">
-                    <FieldLabel>
-                      <span>{{ t('inventory.condition') }}<span class="text-rose-500">*</span></span>
-                    </FieldLabel>
-                    <FieldContent>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !form.condition ? 'text-muted-foreground' : 'text-foreground', errors.condition ? 'border-destructive' : '']">
-                            {{ getConditionLabel(form.condition) }}
-                            <ChevronDown class="w-4 h-4 opacity-50" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
-                          <DropdownMenuItem @select="form.condition = 'Bagus'">{{ t('inventory.conditionGood') }}</DropdownMenuItem>
-                          <DropdownMenuItem @select="form.condition = 'Rusak'">{{ t('inventory.conditionDamaged') }}</DropdownMenuItem>
-                          <DropdownMenuItem @select="form.condition = 'QC Passed'">{{ t('inventory.conditionQcPassed') }}</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </FieldContent>
-                    <FieldError v-if="errors.condition">{{ errors.condition }}</FieldError>
-                  </Field>
-
+                  <!-- Price -->
                   <Field>
                     <FieldLabel>
-                      <span>{{ t('inventory.unitPrice') }}</span>
+                      <span>{{ t('inventory.price') }}</span>
                     </FieldLabel>
                     <FieldContent>
-                      <div class="flex gap-2 w-full">
-                        <div class="flex flex-grow rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors h-10 overflow-hidden">
-                          <span class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-r border-input select-none font-medium">Rp</span>
-                          <input type="number" v-model="form.price" :placeholder="t('inventory.unitPricePlaceholder')" min="0" class="flex-1 min-w-0 px-4 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 transition-colors h-full" />
-                        </div>
-                        <Button type="button" @click="handleSamakanPrice" variant="warning" size="lg">{{ t('inventory.sameAsParent') }}</Button>
+                      <div class="flex rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors h-10 overflow-hidden">
+                        <span class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-r border-input select-none font-medium">Rp</span>
+                        <input type="number" v-model="form.price" placeholder="0" min="0" step="any" class="flex-1 min-w-0 px-4 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 transition-colors h-full" />
                       </div>
                     </FieldContent>
                   </Field>
 
+                  <!-- Classification -->
                   <Field :data-invalid="!!errors.classification || undefined">
                     <FieldLabel>
                       <span>{{ t('inventory.classification') }}<span class="text-rose-500">*</span></span>
@@ -589,22 +465,51 @@ const handleSubmit = () => {
                     <FieldError v-if="errors.classification">{{ errors.classification }}</FieldError>
                   </Field>
 
-                  <!-- Specification (Only for COMP category) -->
-                  <Field v-if="isComp">
-                    <FieldLabel for="create-unit-specification"><span>{{ t('inventory.specification') }}</span></FieldLabel>
+                  <!-- Burden -->
+                  <Field :data-invalid="!!errors.burden || undefined">
+                    <FieldLabel>
+                      <span>{{ t('inventory.burden') }}<span class="text-rose-500">*</span></span>
+                    </FieldLabel>
                     <FieldContent>
-                      <input 
-                        type="text" 
-                        id="create-unit-specification"
-                        name="specification"
-                        v-model="form.specification" 
-                        maxlength="255"
-                        :placeholder="t('inventory.specificationPlaceholder')"
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
-                      />
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="outline"
+                            class="w-full justify-between rounded-[14px] font-normal h-10 px-4"
+                            :class="[errors.burden ? 'border-destructive' : '']"
+                          >
+                            {{ form.burden === 'Project' ? t('inventory.project') : t('inventory.corporate') }}
+                            <ChevronDown class="w-4 h-4 opacity-50" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
+                          <DropdownMenuItem @select="onSelectBurden('Corporate')">{{ t('inventory.corporate') }}</DropdownMenuItem>
+                          <DropdownMenuItem @select="onSelectBurden('Project')">{{ t('inventory.project') }}</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </FieldContent>
+                    <FieldError v-if="errors.burden">{{ errors.burden }}</FieldError>
                   </Field>
 
+                  <!-- Project Combobox (if Burden = Project) -->
+                  <Field v-if="form.burden === 'Project'" :data-invalid="!!errors.project_id || undefined">
+                    <FieldLabel>
+                      <span>{{ t('inventory.project') }}<span class="text-rose-500">*</span></span>
+                    </FieldLabel>
+                    <FieldContent>
+                      <Combobox
+                        v-model="form.project_id"
+                        :options="projectOptions"
+                        :search-placeholder="t('inventory.searchProjectPlaceholder')"
+                        :default-label="t('inventory.selectProject')"
+                        width-class="w-full h-10 px-4"
+                        :error="!!errors.project_id"
+                      />
+                    </FieldContent>
+                    <FieldError v-if="errors.project_id">{{ errors.project_id }}</FieldError>
+                  </Field>
+
+                  <!-- Photo -->
                   <Field :data-invalid="!!errors.image_url || undefined">
                     <FieldLabel>
                       <span>{{ t('inventory.photo') }}</span>
@@ -618,7 +523,6 @@ const handleSubmit = () => {
                           {{ form.image_url_name || t('inventory.noPhotoSelected') }}
                         </div>
                         <input type="file" id="create-asset-photo-upload" class="hidden" accept=".jpg,.jpeg,.png,.webp" @change="handleFileUpload" />
-                        <Button type="button" @click="handleSamakanPhoto" variant="warning" size="lg" class="shrink-0">{{ t('inventory.sameAsParent') }}</Button>
                         <Button type="button" @click="triggerFileInput" size="lg" class="shrink-0">{{ t('inventory.chooseFile') }}</Button>
                         <Button
                           type="button"
@@ -637,54 +541,16 @@ const handleSubmit = () => {
                     <FieldError v-if="errors.image_url">{{ errors.image_url }}</FieldError>
                   </Field>
 
-                  <!-- TNKB (Only for Vehicles) -->
+                  <!-- Plate Number / TNKB (Only for Vehicles) -->
                   <Field v-if="isVehicle" :data-invalid="!!errors.vehicle_registration || undefined">
-                    <FieldLabel><span>{{ t('inventory.tnkb') }}<span class="text-rose-500">*</span></span></FieldLabel>
+                    <FieldLabel><span>{{ t('inventory.plateNumber') }}<span class="text-rose-500">*</span></span></FieldLabel>
                     <FieldContent>
                       <input type="text" v-model="form.vehicle_registration" :placeholder="t('inventory.nopolPlaceholder')"
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
+                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10 uppercase"
                         :class="[errors.vehicle_registration ? 'border-destructive' : '']"
                       />
                     </FieldContent>
                     <FieldError v-if="errors.vehicle_registration">{{ errors.vehicle_registration }}</FieldError>
-                  </Field>
-
-                  <!-- Document Upload (Required for approval conditions) -->
-                  <Field v-if="arrNeedApproval.includes(form.condition)" :data-invalid="!!errors.memo_file || undefined">
-                    <FieldLabel><span>{{ t('inventory.memoDocument') }}<span class="text-rose-500">*</span></span></FieldLabel>
-                    <FieldContent>
-                      <div class="flex gap-2">
-                        <div class="flex-grow min-w-0 px-4 py-2 text-sm border rounded-[14px] bg-muted/10 truncate flex items-center h-10"
-                          :class="[form.memo_file_name ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' : 'text-muted-foreground cursor-default', errors.memo_file ? 'border-destructive' : 'border-input']"
-                          @click="form.memo_file_name && viewMemoInNewTab()"
-                        >
-                          {{ form.memo_file_name || t('inventory.noFileSelected') }}
-                        </div>
-                        <input type="file" id="create-asset-memo-upload" class="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp" @change="handleMemoUpload" />
-                        <Button type="button" @click="triggerMemoFileInput" size="lg">{{ t('inventory.chooseDoc') }}</Button>
-                      </div>
-                      <p class="text-[10px] text-muted-foreground ml-1 mt-1">{{ t('inventory.maxFileSize2Mb') }}</p>
-                    </FieldContent>
-                    <FieldError v-if="errors.memo_file">{{ errors.memo_file }}</FieldError>
-                  </Field>
-
-                  <!-- Lost Document Upload (Required only if condition is Hilang) -->
-                  <Field v-if="form.condition === 'Hilang'" :data-invalid="!!errors.lost_doc_file || undefined">
-                    <FieldLabel><span>{{ t('inventory.lostDocument') }}<span class="text-rose-500">*</span></span></FieldLabel>
-                    <FieldContent>
-                      <div class="flex gap-2">
-                        <div class="flex-grow min-w-0 px-4 py-2 text-sm border rounded-[14px] bg-muted/10 truncate flex items-center h-10"
-                          :class="[form.lost_doc_file_name ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' : 'text-muted-foreground cursor-default', errors.lost_doc_file ? 'border-destructive' : 'border-input']"
-                          @click="form.lost_doc_file_name && viewLostDocInNewTab()"
-                        >
-                          {{ form.lost_doc_file_name || t('inventory.noFileSelected') }}
-                        </div>
-                        <input type="file" id="create-asset-lost-doc-upload" class="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp" @change="handleLostDocUpload" />
-                        <Button type="button" @click="triggerLostDocFileInput" size="lg">{{ t('inventory.chooseDoc') }}</Button>
-                      </div>
-                      <p class="text-[10px] text-muted-foreground ml-1 mt-1">{{ t('inventory.maxFileSize2Mb') }}</p>
-                    </FieldContent>
-                    <FieldError v-if="errors.lost_doc_file">{{ errors.lost_doc_file }}</FieldError>
                   </Field>
                 </div>
               </div>
@@ -694,7 +560,7 @@ const handleSubmit = () => {
             <div class="py-3 px-4 border-t border-border flex items-center justify-between">
               <p class="text-sm text-rose-500 italic font-medium">{{ t('inventory.requiredMarker') }}</p>
               <div class="flex items-center gap-3">
-                <Button @click="closeModal" variant="white" size="xl">{{ t('common.cancel') }}</Button>
+                <Button @click="closeModal" :disabled="form.processing" variant="white" size="xl">{{ t('common.cancel') }}</Button>
                 <Button @click="handleSubmit" :disabled="form.processing" variant="primary" size="xl" class="relative">
                   <Loader2 v-if="form.processing" class="absolute inset-0 m-auto h-5 w-5 animate-spin" />
                   <span :class="{ 'opacity-0': form.processing }">{{ t('inventory.createAssetBtn') }}</span>

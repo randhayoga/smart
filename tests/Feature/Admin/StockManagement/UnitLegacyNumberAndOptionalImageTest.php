@@ -185,7 +185,7 @@ class UnitLegacyNumberAndOptionalImageTest extends TestCase
             'number' => $unit->number,
             'lot_id' => $this->lot->id,
             'location_id' => $this->location->id,
-            'status' => 'Standby',
+            'status' => 'Tersedia',
             'condition' => 'Bagus',
             'type' => 'ST',
             'classification' => 'Inventaris',
@@ -196,7 +196,7 @@ class UnitLegacyNumberAndOptionalImageTest extends TestCase
         $response->assertRedirect();
 
         $unit->refresh();
-        $this->assertEquals('Standby', $unit->status);
+        $this->assertEquals('Tersedia', $unit->status);
         $this->assertEquals('ST', $unit->type);
         $this->assertEquals('LEGACY-KEEP-ME', $unit->legacy_number);
         $this->assertNull($unit->image_url);
@@ -279,7 +279,7 @@ class UnitLegacyNumberAndOptionalImageTest extends TestCase
         $response->assertOk();
     }
 
-    public function test_unit_update_disallows_changing_status_when_current_status_is_not_tersedia_or_standby(): void
+    public function test_unit_update_disallows_changing_status_when_current_status_is_not_tersedia(): void
     {
         $unit = Unit::factory()->create([
             'lot_id' => $this->lot->id,
@@ -302,7 +302,7 @@ class UnitLegacyNumberAndOptionalImageTest extends TestCase
         $this->assertEquals('Belum Diverifikasi', $unit->status);
     }
 
-    public function test_bulk_unit_update_disallows_changing_status_when_at_least_one_unit_is_not_tersedia_or_standby(): void
+    public function test_bulk_unit_update_disallows_changing_status_when_at_least_one_unit_is_not_tersedia(): void
     {
         $unit1 = Unit::factory()->create([
             'lot_id' => $this->lot->id,
@@ -321,7 +321,7 @@ class UnitLegacyNumberAndOptionalImageTest extends TestCase
 
         $response = $this->actingAs($this->user)->post(route('smart.inventory.assets.bulk-update'), [
             'ids' => [$unit1->id, $unit2->id],
-            'status' => 'Standby',
+            'status' => 'Tersedia',
         ]);
 
         $response->assertSessionHasErrors(['status']);

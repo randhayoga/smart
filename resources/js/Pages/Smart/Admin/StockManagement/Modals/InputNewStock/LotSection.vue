@@ -247,13 +247,13 @@ const viewLotPhotoInNewTab = () => {
         <!-- Select LOT combobox -->
         <Field :data-invalid="(!form.create_new_lot && !!errors.lot_id) || undefined">
           <FieldLabel for="select-lot">
-            <span>{{ t('inventory.selectLot') }}<span v-if="!form.create_new_lot" class="text-rose-500">*</span></span>
+            <span>{{ t('inventory.chooseExistingLot') }}<span v-if="!form.create_new_lot" class="text-rose-500">*</span></span>
           </FieldLabel>
           <FieldContent>
             <Combobox
               :model-value="form.lot_id"
               :options="filteredLots"
-              :placeholder="t('inventory.selectLot')"
+              :placeholder="t('inventory.chooseExistingLot')"
               :disabled="form.create_new_lot || (!activeModelId && !form.create_new_type)"
               :error="!form.create_new_lot && !!errors.lot_id"
               width-class="w-full"
@@ -483,7 +483,7 @@ const viewLotPhotoInNewTab = () => {
             <!-- Vendor Selection (Procurement only) -->
             <Field v-if="form.entry_type === 'Procurement'" :data-invalid="!!errors.vendor_id || undefined">
               <FieldLabel for="new-lot-vendor">
-                <span>{{ t('inventory.chooseVendor') }}<span class="text-rose-500">*</span></span>
+                <span>{{ t('inventory.vendor') }}<span class="text-rose-500">*</span></span>
               </FieldLabel>
               <FieldContent>
                 <Combobox
@@ -531,49 +531,52 @@ const viewLotPhotoInNewTab = () => {
               <FieldError v-if="errors.organizer_id">{{ errors.organizer_id }}</FieldError>
             </Field>
 
-            <!-- Burden / Pembebanan -->
-            <Field :data-invalid="!!errors.burden || undefined">
-              <FieldLabel>
-                <span>{{ t('inventory.burden') }}<span class="text-rose-500">*</span></span>
-              </FieldLabel>
-              <FieldContent>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="outline"
-                      class="w-full justify-between rounded-[14px] font-normal h-10 px-4"
-                      :class="[errors.burden ? 'border-destructive' : '']"
-                    >
-                      {{ form.burden === 'Project' ? t('inventory.project') : t('inventory.corporate') }}
-                      <ChevronDown class="w-4 h-4 opacity-50" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
-                    <DropdownMenuItem @select="onSelectBurden('Corporate')">{{ t('inventory.corporate') }}</DropdownMenuItem>
-                    <DropdownMenuItem @select="onSelectBurden('Project')">{{ t('inventory.project') }}</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </FieldContent>
-              <FieldError v-if="errors.burden">{{ errors.burden }}</FieldError>
-            </Field>
+            <!-- Burden & Project (Only for Consumables in LOT section) -->
+            <template v-if="isConsumable">
+              <!-- Burden / Pembebanan -->
+              <Field :data-invalid="!!errors.burden || undefined">
+                <FieldLabel>
+                  <span>{{ t('inventory.burden') }}<span class="text-rose-500">*</span></span>
+                </FieldLabel>
+                <FieldContent>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="outline"
+                        class="w-full justify-between rounded-[14px] font-normal h-10 px-4"
+                        :class="[errors.burden ? 'border-destructive' : '']"
+                      >
+                        {{ form.burden === 'Project' ? t('inventory.project') : t('inventory.corporate') }}
+                        <ChevronDown class="w-4 h-4 opacity-50" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
+                      <DropdownMenuItem @select="onSelectBurden('Corporate')">{{ t('inventory.corporate') }}</DropdownMenuItem>
+                      <DropdownMenuItem @select="onSelectBurden('Project')">{{ t('inventory.project') }}</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </FieldContent>
+                <FieldError v-if="errors.burden">{{ errors.burden }}</FieldError>
+              </Field>
 
-            <!-- Project Combobox (if Burden = Project) -->
-            <Field v-if="form.burden === 'Project'" :data-invalid="!!errors.project_id || undefined">
-              <FieldLabel for="new-lot-project">
-                <span>{{ t('inventory.project') }}<span class="text-rose-500">*</span></span>
-              </FieldLabel>
-              <FieldContent>
-                <Combobox
-                  :model-value="form.project_id"
-                  :options="projectOptions"
-                  :placeholder="t('inventory.selectProject')"
-                  :error="!!errors.project_id"
-                  width-class="w-full"
-                  @update:model-value="(val) => { form.project_id = val ? Number(val) : null; }"
-                />
-              </FieldContent>
-              <FieldError v-if="errors.project_id">{{ errors.project_id }}</FieldError>
-            </Field>
+              <!-- Project Combobox (if Burden = Project) -->
+              <Field v-if="form.burden === 'Project'" :data-invalid="!!errors.project_id || undefined">
+                <FieldLabel for="new-lot-project">
+                  <span>{{ t('inventory.project') }}<span class="text-rose-500">*</span></span>
+                </FieldLabel>
+                <FieldContent>
+                  <Combobox
+                    :model-value="form.project_id"
+                    :options="projectOptions"
+                    :placeholder="t('inventory.selectProject')"
+                    :error="!!errors.project_id"
+                    width-class="w-full"
+                    @update:model-value="(val) => { form.project_id = val ? Number(val) : null; }"
+                  />
+                </FieldContent>
+                <FieldError v-if="errors.project_id">{{ errors.project_id }}</FieldError>
+              </Field>
+            </template>
 
             <!-- Consumable: Location Selection -->
             <Field v-if="isConsumable" :data-invalid="!!errors.location_id || undefined">

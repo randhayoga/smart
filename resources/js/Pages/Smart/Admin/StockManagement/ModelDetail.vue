@@ -136,7 +136,8 @@ const closeDeleteModal = () => {
 };
 
 const handleConfirmDelete = () => {
-  if (itemsToDelete.value.length === 0) return;
+  if (processing.value || itemsToDelete.value.length === 0) return;
+  processing.value = true;
 
   const ids = itemsToDelete.value.map(item => item.id);
   
