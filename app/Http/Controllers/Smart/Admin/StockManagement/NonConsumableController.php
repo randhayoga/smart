@@ -67,6 +67,7 @@ class NonConsumableController extends Controller
                 'price' => $asset->price,
                 'image_url' => $asset->image_url,
                 'vehicle_registration' => $asset->vehicle_registration,
+                'is_assigned_to_location' => (bool)$asset->is_assigned_to_location,
                 'burden' => $asset->burden,
                 'project_id' => $asset->project_id,
                 'project_name' => $asset->project ? $asset->project->project_name : null,

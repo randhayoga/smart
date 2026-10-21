@@ -1,4 +1,4 @@
-FROM dunglas/frankenphp:1.12.1-php8.4
+FROM dunglas/frankenphp:1-php8.4
 
 # Set the working directory in the container
 WORKDIR /var/www/smart

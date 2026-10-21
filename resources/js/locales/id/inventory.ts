@@ -334,4 +334,7 @@ export default {
   newStockSuccessPrefix: 'Input stok berhasil: ',
   seeHere: 'lihat di sini',
   newStockFailed: 'Gagal menyimpan data stok baru. Periksa kembali input Anda.',
+  isAssignedToLocation: 'Tetapkan ke Lokasi',
+  assignedToLocationYes: 'Ya',
+  assignedToLocationNo: 'Tidak',
 };

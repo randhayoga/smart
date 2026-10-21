@@ -41,7 +41,7 @@ class Asset extends Model
         // 2. Log when an Asset is updated
         static::updating(function (Asset $asset) {
             $dirty = $asset->getDirty();
-            $tracked = ['status', 'condition', 'location_id'];
+            $tracked = ['status', 'condition', 'location_id', 'is_assigned_to_location'];
             $changed = array_intersect(array_keys($dirty), $tracked);
 
             if (!empty($changed)) {
@@ -49,8 +49,27 @@ class Asset extends Model
 
                 $actions = [];
 
-                // 1. Status Change
-                if ($asset->isDirty('status') && !$isPendingStatus) {
+                // 1. Assignment Action (Preempts redundant status change log)
+                if ($asset->isDirty('is_assigned_to_location')) {
+                    $note = $asset->is_assigned_to_location
+                        ? 'Aset ditetapkan ke lokasi dengan status Di-assign (LT).'
+                        : 'Penetapan aset ke lokasi dibatalkan (status kembali Tersedia).';
+
+                    $actions[] = [
+                        'action_type' => 'assignment',
+                        'note' => $note,
+                        'previous_state' => [
+                            'is_assigned_to_location' => $asset->getOriginal('is_assigned_to_location'),
+                            'status' => $asset->getOriginal('status'),
+                        ],
+                        'new_state' => [
+                            'is_assigned_to_location' => $asset->is_assigned_to_location,
+                            'status' => $asset->status,
+                        ],
+                        'approval' => null,
+                    ];
+                } elseif ($asset->isDirty('status') && !$isPendingStatus) {
+                    // 2. Status Change
                     $oldStatus = $asset->getOriginal('status');
                     $newStatus = $asset->status;
 
@@ -163,6 +182,7 @@ class Asset extends Model
         'borrowing_type' => 'LT',
         'classification' => 'Aset',
         'burden' => 'Corporate',
+        'is_assigned_to_location' => false,
     ];
 
     protected $fillable = [
@@ -182,12 +202,14 @@ class Asset extends Model
         'project_id',
         'legacy_vendor_id',
         'comp_specification',
+        'is_assigned_to_location',
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
         'project_id' => 'integer',
         'legacy_vendor_id' => 'integer',
+        'is_assigned_to_location' => 'boolean',
     ];
 
     /**

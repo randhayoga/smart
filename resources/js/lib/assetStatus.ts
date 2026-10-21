@@ -5,6 +5,8 @@
 export const STATUS_KEY_MAP: Record<string, string> = {
   'tersedia': 'status.tersedia',
   'available': 'status.tersedia',
+  'di-assign (lt)': 'status.diAssignLt',
+  'di-assign': 'status.diAssignLt',
   'dipinjam': 'status.dipinjam',
   'tidak aktif': 'status.tidakAktif',
   'pending': 'status.pending',
@@ -113,6 +115,9 @@ export function getAssetStatusBadgeClass(status?: string | null): string {
     return 'bg-rose-50 text-rose-900 border border-rose-300 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-700';
   }
   if (s === 'Tersedia' || lower === 'tersedia' || lower === 'available') return 'bg-emerald-100 text-emerald-800';
+  if (s === 'Di-assign (LT)' || lower === 'di-assign (lt)' || lower === 'di-assign') {
+    return 'bg-sky-100 text-sky-800 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-700';
+  }
   if (s === 'Dipinjam' || lower === 'dipinjam') return 'bg-amber-100 text-amber-800';
   if (s === 'Tidak Aktif' || lower === 'tidak aktif') return 'bg-gray-200 text-gray-800';
   if (s === 'Pending' || lower === 'pending' || lower.startsWith('pending')) return 'bg-purple-100 text-purple-800';

@@ -250,6 +250,7 @@ class AssetController extends Controller
                     'Tidak Aktif,Pending:BoD/BoC',
                     'Belum Diverifikasi',
                     'Verifikasi Ditolak',
+                    'Di-assign (LT)',
                 ]),
             ],
             'condition' => ['required', 'string', 'in:Bagus,Rusak,Rusak Total,Hilang'],
@@ -263,7 +264,22 @@ class AssetController extends Controller
             'use_lot_image' => 'nullable',
             'burden' => 'nullable|string|in:Corporate,Project',
             'project_id' => 'required_if:burden,Project|nullable|integer',
+            'is_assigned_to_location' => 'nullable|boolean',
         ];
+
+        if ($request->has('is_assigned_to_location') && $request->input('is_assigned_to_location') !== null) {
+            $isAssigned = $request->boolean('is_assigned_to_location');
+            if ($isAssigned) {
+                if (!in_array($currentStatusLower, ['tersedia', 'di-assign (lt)'], true)) {
+                    return redirect()->back()->withErrors(['is_assigned_to_location' => 'Aset hanya dapat di-assign ke lokasi jika berstatus Tersedia.']);
+                }
+                $request->merge(['status' => 'Di-assign (LT)']);
+            } else {
+                if ($currentStatusLower === 'di-assign (lt)') {
+                    $request->merge(['status' => 'Tersedia']);
+                }
+            }
+        }
 
         $lot = Lot::with('model.type.category')->findOrFail($request->input('lot_id'));
         $isVehicle = false;
@@ -305,7 +321,7 @@ class AssetController extends Controller
             ]);
         } else {
             if ($request->filled('status') && strtolower(trim($request->input('status'))) !== $currentStatusLower) {
-                if ($currentStatusLower !== 'tersedia') {
+                if ($currentStatusLower !== 'tersedia' && $currentStatusLower !== 'di-assign (lt)') {
                     return redirect()->back()->withErrors(['status' => 'Status hanya dapat diubah jika aset berstatus Tersedia.']);
                 }
             }

@@ -209,7 +209,7 @@
                         </tr>
                         <tr>
                             <td class="info-label">Condition</td>
-                            <td class="info-value">{{ $asset->condition ?? '-' }}</td>
+                            <td class="info-value">{{ $conditionLabel ?? ($asset->condition ?? '-') }}</td>
                         </tr>
                         @if($approval && $approval->requester)
                         <tr>

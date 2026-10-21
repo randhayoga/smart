@@ -38,6 +38,9 @@ class AssetLifecycle extends Model
         'end_date' => 'datetime',
         'previous_state' => 'array',
         'new_state' => 'array',
+        'actor_id' => 'integer',
+        'asset_id' => 'integer',
+        'location_id' => 'integer',
     ];
 
     /**

@@ -56,6 +56,10 @@ return [
     'manual_request_recorded' => 'Manual request successfully recorded.',
     'activation_approved' => 'Asset successfully activated.',
     'activation_rejected' => 'Asset activation successfully rejected.',
+    'condition_good' => 'Good',
+    'condition_damaged' => 'Damaged',
+    'condition_total_damage' => 'Total Damage',
+    'condition_lost' => 'Lost',
 
     // Deactivation Notifications
     'notification_deactivation_title' => 'Asset Deactivation :name: Requires Your Attention',

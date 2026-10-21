@@ -43,12 +43,14 @@ describe('assetStatus utility', () => {
 
   it('resolves badge classes and localized labels', () => {
     expect(getAssetStatusBadgeClass('Tersedia')).toContain('bg-emerald-100');
+    expect(getAssetStatusBadgeClass('Di-assign (LT)')).toContain('bg-sky-100');
     expect(getAssetStatusBadgeClass('Pending:DM')).toContain('bg-purple-100');
     expect(getAssetStatusBadgeClass('Tidak Aktif')).toContain('bg-gray-200');
     expect(getAssetStatusBadgeClass('Dihapus')).toContain('bg-rose-100');
 
     const mockT = (k: string) => ({
       'status.tersedia': 'Available',
+      'status.diAssignLt': 'Di-assign (LT)',
       'status.pendingDm': 'Pending:DM',
       'status.tidakAktif': 'Inactive',
       'status.pendingBodBoc': 'Pending:BoD/BoC',
@@ -56,6 +58,7 @@ describe('assetStatus utility', () => {
     }[k] || k);
 
     expect(getAssetStatusLabel('Tersedia', mockT)).toBe('Available');
+    expect(getAssetStatusLabel('Di-assign (LT)', mockT)).toBe('Di-assign (LT)');
     expect(formatAssetStatusLabels('Tidak Aktif,Pending:BoD/BoC', mockT)).toBe('Inactive, Pending:BoD/BoC');
   });
 });

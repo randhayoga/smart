@@ -136,12 +136,36 @@ const isBodBocFieldVisible = computed(() => {
   return props.items.length > 0 && props.items.every((item: any) => hasAssetStatus(item.status, 'Pending:BoD/BoC'));
 });
 
+const canShowAssignToLocation = computed(() => {
+  if (!props.open || !props.items || props.items.length === 0) return false;
+  if (isSingle.value) {
+    const s = String(selectedItem.value?.status || '').trim().toLowerCase();
+    return s === 'tersedia' || (s === 'di-assign (lt)' && Boolean(selectedItem.value?.is_assigned_to_location));
+  }
+  return props.items.every(item => {
+    const s = String(item?.status || '').trim().toLowerCase();
+    return s === 'tersedia';
+  });
+});
+
+const handleAssignToLocationSelect = (value: boolean | null) => {
+  form.is_assigned_to_location = value;
+  if (value === true) {
+    form.status = 'Di-assign (LT)';
+  } else if (value === false) {
+    form.status = 'Tersedia';
+  } else {
+    form.status = '';
+  }
+};
+
 const form = useForm({
   ids: [] as number[],
   number: '',
   legacy_number: '',
   location_id: '' as string | number,
   status: '',
+  is_assigned_to_location: null as boolean | null,
   condition: '',
   type: '',
   classification: '',
@@ -276,6 +300,7 @@ const resetModalState = () => {
   form.legacy_number = '';
   form.location_id = '';
   form.status = '';
+  form.is_assigned_to_location = null;
   form.condition = '';
   form.type = '';
   form.classification = '';
@@ -320,6 +345,7 @@ watch(() => props.open, (val) => {
     form.legacy_number = item.legacy_number || '';
     form.location_id = item.location_id || '';
     form.status = item.status || '';
+    form.is_assigned_to_location = Boolean(item.is_assigned_to_location);
     form.condition = item.condition || '';
     form.type = item.type || item.borrowing_type || '';
     form.classification = item.classification || '';
@@ -340,6 +366,7 @@ watch(() => props.open, (val) => {
     form.legacy_number = '';
     form.location_id = '';
     form.status = '';
+    form.is_assigned_to_location = null;
     form.condition = '';
     form.type = '';
     form.classification = '';
@@ -536,6 +563,9 @@ const handleSubmit = () => {
         burden: data.burden,
         project_id: data.burden === 'Project' ? data.project_id : null,
       };
+      if (canShowAssignToLocation.value && data.is_assigned_to_location !== null) {
+        fd.is_assigned_to_location = data.is_assigned_to_location;
+      }
       if (isVehicle.value) fd.vehicle_registration = data.vehicle_registration;
       if (isComp.value) {
         fd.comp_specification = data.specification || null;
@@ -567,6 +597,7 @@ const handleSubmit = () => {
     const hasField = !!(
       (form.status && !isStatusDisabled.value) ||
       (form.condition && !isKondisiDisabled.value) ||
+      (canShowAssignToLocation.value && form.is_assigned_to_location !== null) ||
       form.type ||
       form.classification ||
       form.location_id || form.price ||
@@ -589,6 +620,9 @@ const handleSubmit = () => {
     }
 
     const payload: any = { ids: form.ids };
+    if (canShowAssignToLocation.value && form.is_assigned_to_location !== null) {
+      payload.is_assigned_to_location = form.is_assigned_to_location;
+    }
     if (form.status && !isStatusDisabled.value) payload.status = form.status;
     if (form.condition && !isKondisiDisabled.value) payload.condition = form.condition;
     if (form.type) {
@@ -713,6 +747,43 @@ const handleSubmit = () => {
                       </DropdownMenu>
                     </FieldContent>
                     <FieldError v-if="isSingle && errors.type">{{ errors.type }}</FieldError>
+                  </Field>
+
+                  <!-- Assign to Location (Only shown when canShowAssignToLocation is true) -->
+                  <Field v-if="canShowAssignToLocation">
+                    <FieldLabel>
+                      <span>{{ t('inventory.isAssignedToLocation') }}</span>
+                    </FieldLabel>
+                    <FieldContent>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="outline"
+                            class="w-full justify-between rounded-[14px] font-normal h-10 px-4 text-foreground"
+                          >
+                            {{
+                              form.is_assigned_to_location === true
+                                ? t('inventory.assignedToLocationYes')
+                                : (form.is_assigned_to_location === false
+                                    ? t('inventory.assignedToLocationNo')
+                                    : (isSingle ? t('inventory.assignedToLocationNo') : t('inventory.unchanged')))
+                            }}
+                            <ChevronDown class="w-4 h-4 opacity-50" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
+                          <DropdownMenuItem v-if="!isSingle" @select="handleAssignToLocationSelect(null)">
+                            {{ t('inventory.unchanged') }}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem @select="handleAssignToLocationSelect(false)">
+                            {{ t('inventory.assignedToLocationNo') }}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem @select="handleAssignToLocationSelect(true)">
+                            {{ t('inventory.assignedToLocationYes') }}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </FieldContent>
                   </Field>
 
                   <!-- Status (Disabled with informative tooltip) -->

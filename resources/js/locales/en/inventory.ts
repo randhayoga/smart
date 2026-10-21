@@ -334,4 +334,7 @@ export default {
   newStockSuccessPrefix: 'New stock recorded successfully: ',
   seeHere: 'see here',
   newStockFailed: 'Failed to record new stock. Please check your inputs.',
+  isAssignedToLocation: 'Assign to Location',
+  assignedToLocationYes: 'Yes',
+  assignedToLocationNo: 'No',
 };

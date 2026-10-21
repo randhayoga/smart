@@ -59,6 +59,7 @@ return new class extends Migration {
             $table->string('vehicle_registration')->nullable();
             $table->string('burden', 20)->default('Corporate')->nullable()->comment('Corporate | Project');
             $table->unsignedBigInteger('project_id')->nullable()->index()->comment('Refers to RE_PORTALDB:tb_project.id_project');
+            $table->boolean('is_assigned_to_location')->default(false);
             $table->timestamps();
 
             $table->index('status');

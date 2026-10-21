@@ -54,6 +54,11 @@ class DMUnitActivationRequest extends Mailable
     public ?string $recipientName;
 
     /**
+     * English localized condition label for display.
+     */
+    public string $conditionLabel;
+
+    /**
      * Create a new message instance.
      *
      * @param Asset $asset
@@ -86,6 +91,14 @@ class DMUnitActivationRequest extends Mailable
 
         $this->recipientName = $recipientName;
         $this->actionUrl = url('/smart/approve-activation?search=' . urlencode($this->asset->number));
+
+        $this->conditionLabel = match ($this->asset->condition) {
+            'Bagus', 'Good' => 'Good',
+            'Rusak', 'Damaged' => 'Damaged',
+            'Rusak Total', 'Total Damage' => 'Total Damage',
+            'Hilang', 'Lost' => 'Lost',
+            default => $this->asset->condition ?? '-',
+        };
     }
 
     /**

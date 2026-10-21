@@ -222,4 +222,77 @@ describe('EditAssetModal.vue - Single & Mass Edit Logic and Layout', () => {
 
     expect(vm.form.status).toBe('Tersedia,Pending:DM');
   });
+
+  describe('is_assigned_to_location behavior', () => {
+    it('shows the Assign to Location dropdown when unit status is Tersedia', () => {
+      setI18nLanguage('id');
+      const wrapper = mountModal([
+        { id: 1, number: 'AST-001', status: 'Tersedia', condition: 'Bagus', is_assigned_to_location: false },
+      ]);
+      expect(wrapper.text()).toContain('Tetapkan ke Lokasi');
+    });
+
+    it('shows the Assign to Location dropdown when unit status is Di-assign (LT) and is_assigned_to_location is true', () => {
+      setI18nLanguage('id');
+      const wrapper = mountModal([
+        { id: 1, number: 'AST-001', status: 'Di-assign (LT)', condition: 'Bagus', is_assigned_to_location: true },
+      ]);
+      expect(wrapper.text()).toContain('Tetapkan ke Lokasi');
+    });
+
+    it('hides the Assign to Location dropdown when unit status is not Tersedia (e.g. Dipinjam or Rusak Total)', () => {
+      setI18nLanguage('id');
+      const wrapper = mountModal([
+        { id: 1, number: 'AST-001', status: 'Dipinjam', condition: 'Bagus', is_assigned_to_location: false },
+      ]);
+      expect(wrapper.text()).not.toContain('Tetapkan ke Lokasi');
+    });
+
+    it('in mass edit, shows the Assign to Location dropdown only if all items are Tersedia', () => {
+      setI18nLanguage('id');
+      const wrapperAllTersedia = mountModal([
+        { id: 1, number: 'AST-001', status: 'Tersedia', condition: 'Bagus' },
+        { id: 2, number: 'AST-002', status: 'Tersedia', condition: 'Bagus' },
+      ]);
+      expect(wrapperAllTersedia.text()).toContain('Tetapkan ke Lokasi');
+
+      const wrapperMixed = mountModal([
+        { id: 1, number: 'AST-001', status: 'Tersedia', condition: 'Bagus' },
+        { id: 2, number: 'AST-002', status: 'Dipinjam', condition: 'Bagus' },
+      ]);
+      expect(wrapperMixed.text()).not.toContain('Tetapkan ke Lokasi');
+    });
+
+    it('automatically updates form.status to Di-assign (LT) and locks it when selecting true', async () => {
+      setI18nLanguage('id');
+      const wrapper = mountModal([
+        { id: 1, number: 'AST-001', status: 'Tersedia', condition: 'Bagus', is_assigned_to_location: false },
+      ]);
+      const vm = wrapper.vm as any;
+      expect(vm.form.status).toBe('Tersedia');
+
+      vm.handleAssignToLocationSelect(true);
+      await wrapper.vm.$nextTick();
+
+      expect(vm.form.is_assigned_to_location).toBe(true);
+      expect(vm.form.status).toBe('Di-assign (LT)');
+      expect(wrapper.text()).toContain('Di-assign (LT)');
+    });
+
+    it('restores form.status to Tersedia when selecting false', async () => {
+      setI18nLanguage('id');
+      const wrapper = mountModal([
+        { id: 1, number: 'AST-001', status: 'Di-assign (LT)', condition: 'Bagus', is_assigned_to_location: true },
+      ]);
+      const vm = wrapper.vm as any;
+      expect(vm.form.is_assigned_to_location).toBe(true);
+
+      vm.handleAssignToLocationSelect(false);
+      await wrapper.vm.$nextTick();
+
+      expect(vm.form.is_assigned_to_location).toBe(false);
+      expect(vm.form.status).toBe('Tersedia');
+      expect(wrapper.text()).toContain('Tersedia');
+    });
+  });
 });

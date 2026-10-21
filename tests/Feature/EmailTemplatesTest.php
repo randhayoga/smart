@@ -248,7 +248,8 @@ class EmailTemplatesTest extends TestCase
         $this->assertStringContainsString('Lenovo ThinkPad T14', $rendered);
         $this->assertStringContainsString('Asset Location', $rendered);
         $this->assertStringContainsString('Condition', $rendered);
-        $this->assertStringContainsString('Bagus', $rendered);
+        $this->assertStringContainsString('Good', $rendered);
+        $this->assertStringNotContainsString('Bagus', $rendered);
         $this->assertStringNotContainsString('Initial Condition', $rendered);
         $this->assertStringNotContainsString('Proposed Condition', $rendered);
         $this->assertStringContainsString('Created By', $rendered);

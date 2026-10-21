@@ -1,7 +1,7 @@
 # ------------------------------------------------------------------------------
 # Stage 1: Base Runtime with PHP Extensions & SQL Server ODBC
 # ------------------------------------------------------------------------------
-FROM dunglas/frankenphp:1.12.1-php8.4 AS base
+FROM dunglas/frankenphp:1-php8.4 AS base
 
 WORKDIR /var/www/smart
 

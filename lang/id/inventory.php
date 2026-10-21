@@ -56,6 +56,10 @@ return [
     'manual_request_recorded' => 'Permintaan manual berhasil dicatat.',
     'activation_approved' => 'Aset berhasil diaktivasi.',
     'activation_rejected' => 'Aktivasi aset berhasil ditolak.',
+    'condition_good' => 'Bagus',
+    'condition_damaged' => 'Rusak',
+    'condition_total_damage' => 'Rusak Total',
+    'condition_lost' => 'Hilang',
 
     // Deactivation Notifications
     'notification_deactivation_title' => 'Penghapusan Aset :name: Perlu Perhatian Anda',

@@ -4,6 +4,7 @@
 export default {
   // Asset & Unit statuses
   tersedia: 'Tersedia',
+  diAssignLt: 'Di-assign (LT)',
   dipinjam: 'Dipinjam',
   tidakAktif: 'Tidak Aktif',
   pending: 'Pending',

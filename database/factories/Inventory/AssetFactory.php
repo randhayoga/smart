@@ -38,6 +38,7 @@ class AssetFactory extends Factory
             'project_id' => null,
             'legacy_vendor_id' => null,
             'comp_specification' => null,
+            'is_assigned_to_location' => false,
         ];
     }
 

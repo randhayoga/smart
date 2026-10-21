@@ -260,6 +260,7 @@ class BulkAssetController extends Controller
                     'Pending:BoD/BoC',
                     'Tersedia,Pending:DM',
                     'Tidak Aktif,Pending:BoD/BoC',
+                    'Di-assign (LT)',
                 ]),
             ],
             'condition' => ['nullable', 'string', 'in:Bagus,Rusak,Rusak Total,Hilang'],
@@ -274,6 +275,7 @@ class BulkAssetController extends Controller
             'image_url' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:1024',
             'burden' => 'nullable|string|in:Corporate,Project',
             'project_id' => 'required_if:burden,Project|nullable|integer',
+            'is_assigned_to_location' => ['nullable', 'boolean'],
         ], $messages);
         if ($validator->fails()) {
             if ($validator->errors()->has('borrowing_type')) {
@@ -362,7 +364,7 @@ class BulkAssetController extends Controller
             if ($request->filled('status')) {
                 $hasDisallowedStatusAssets = $assets->contains(function ($u) {
                     $s = strtolower(trim($u->status ?? ''));
-                    return $s !== 'tersedia';
+                    return $s !== 'tersedia' && $s !== 'di-assign (lt)';
                 });
                 if ($hasDisallowedStatusAssets) {
                     return redirect()->back()->withErrors(['status' => 'Status hanya dapat diubah jika semua aset yang dipilih berstatus Tersedia.']);
@@ -472,8 +474,33 @@ class BulkAssetController extends Controller
             }
         }
 
+        if ($request->has('is_assigned_to_location') && $request->input('is_assigned_to_location') !== null) {
+            $isAssigned = $request->boolean('is_assigned_to_location');
+            if ($isAssigned) {
+                $hasInvalid = $assets->contains(function ($u) {
+                    $s = strtolower(trim($u->status ?? ''));
+                    return $s !== 'tersedia' && $s !== 'di-assign (lt)';
+                });
+                if ($hasInvalid) {
+                    return redirect()->back()->withErrors(['is_assigned_to_location' => 'Semua aset yang dipilih harus berstatus Tersedia untuk di-assign ke lokasi.']);
+                }
+                $updateData['is_assigned_to_location'] = true;
+                $updateData['status'] = 'Di-assign (LT)';
+            } else {
+                $updateData['is_assigned_to_location'] = false;
+            }
+        }
+
         if (!empty($updateData)) {
-            Asset::whereIn('id', $ids)->update($updateData);
+            foreach ($assets as $asset) {
+                $assetData = $updateData;
+                if (isset($updateData['is_assigned_to_location']) && !$updateData['is_assigned_to_location']) {
+                    if ($asset->status === 'Di-assign (LT)') {
+                        $assetData['status'] = 'Tersedia';
+                    }
+                }
+                $asset->update($assetData);
+            }
         }
 
         if ($needApproval) {
