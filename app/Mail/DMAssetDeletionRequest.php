@@ -3,7 +3,7 @@
 namespace App\Mail;
 
 use App\Models\Inventory\Asset;
-use App\Models\Inventory\AssetStatusApproval;
+use App\Models\Inventory\AssetDeletionApproval;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
@@ -11,9 +11,9 @@ use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
 /**
- * Mailable notification sent to IFS Department Manager to request approval for asset deactivation.
+ * Mailable notification sent to IFS Department Manager to request approval for asset deletion.
  */
-class DMAssetStatusRequest extends Mailable
+class DMAssetDeletionRequest extends Mailable
 {
     use Queueable, SerializesModels;
 
@@ -23,9 +23,9 @@ class DMAssetStatusRequest extends Mailable
     public Asset $asset;
 
     /**
-     * The deactivation approval request record.
+     * The deletion approval request record.
      */
-    public ?AssetStatusApproval $approval;
+    public ?AssetDeletionApproval $approval;
 
     /**
      * Direct URL link for the recipient to view/approve the request.
@@ -51,10 +51,10 @@ class DMAssetStatusRequest extends Mailable
      * Create a new message instance.
      *
      * @param Asset $asset
-     * @param AssetStatusApproval|null $approval
+     * @param AssetDeletionApproval|null $approval
      * @param string|null $recipientName
      */
-    public function __construct(Asset $asset, ?AssetStatusApproval $approval = null, ?string $recipientName = null)
+    public function __construct(Asset $asset, ?AssetDeletionApproval $approval = null, ?string $recipientName = null)
     {
         $this->asset = $asset->loadMissing([
             'lot.model.brand',
@@ -62,7 +62,7 @@ class DMAssetStatusRequest extends Mailable
             'location.parent',
         ]);
 
-        $this->approval = $approval ?? AssetStatusApproval::where('asset_id', $asset->id)
+        $this->approval = $approval ?? AssetDeletionApproval::where('asset_id', $asset->id)
             ->where('decision', 'pending')
             ->latest('id')
             ->first();
@@ -78,7 +78,7 @@ class DMAssetStatusRequest extends Mailable
         $this->locationText = $this->asset->location?->full_name ?? '-';
 
         $this->recipientName = $recipientName;
-        $this->actionUrl = url('/smart/approve-deactivation?search=' . urlencode($this->asset->number));
+        $this->actionUrl = url('/smart/approve-deletion?search=' . urlencode($this->asset->number));
     }
 
     /**
@@ -87,7 +87,7 @@ class DMAssetStatusRequest extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "[SMART] Asset Deactivation Approval Request: {$this->asset->number} ({$this->brandAndName})",
+            subject: "[SMART] Asset Deletion Approval Request: {$this->asset->number} ({$this->brandAndName})",
         );
     }
 
@@ -97,7 +97,7 @@ class DMAssetStatusRequest extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.dm_asset_status_request',
+            view: 'emails.dm_asset_deletion_request',
         );
     }
 

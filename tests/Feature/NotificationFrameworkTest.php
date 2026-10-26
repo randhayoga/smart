@@ -2,15 +2,15 @@
 
 namespace Tests\Feature;
 
-use App\Mail\DMBulkAssetDeactivationRequest;
-use App\Mail\DMAssetStatusRequest;
+use App\Mail\DMBulkAssetDeletionRequest;
+use App\Mail\DMAssetDeletionRequest;
 use App\Models\User;
 use App\Models\HrdEmployee;
 use App\Models\HrdOrgchart;
 use App\Models\Inventory\Barang;
 use App\Models\Inventory\Lot;
 use App\Models\Inventory\Unit;
-use App\Models\Inventory\AssetStatusApproval;
+use App\Models\Inventory\AssetDeletionApproval;
 use App\Models\Master\Brand;
 use App\Models\Master\Category;
 use App\Models\Master\Subcategory;
@@ -63,14 +63,14 @@ class NotificationFrameworkTest extends TestCase
             'Perlu Approval Status',
             'Aset LAPTOP-001 membutuhkan persetujuan',
             'warning',
-            '/smart/approve-deactivation'
+            '/smart/approve-deletion'
         );
 
         $this->assertCount(1, $user->notifications);
         $notification = $user->notifications->first();
         $this->assertEquals('Perlu Approval Status', $notification->data['title']);
         $this->assertEquals('warning', $notification->data['type']);
-        $this->assertEquals('/smart/approve-deactivation', $notification->data['url']);
+        $this->assertEquals('/smart/approve-deletion', $notification->data['url']);
         $this->assertNull($notification->read_at);
     }
 
@@ -345,7 +345,7 @@ class NotificationFrameworkTest extends TestCase
         $notif = $ifsManager->notifications->first();
         $this->assertEquals('Penghapusan Aset Dell Laptop Inspiron: Perlu Perhatian Anda', $notif->data['title']);
         $this->assertEquals('Pengajuan penghapusan aset AST-DEL-001 telah diajukan dan memerlukan approval Anda', $notif->data['message']);
-        $this->assertEquals('/smart/approve-deactivation?search=AST-DEL-001', $notif->data['url']);
+        $this->assertEquals('/smart/approve-deletion?search=AST-DEL-001', $notif->data['url']);
     }
 
     public function test_notify_admin_when_dm_ifs_approves_asset_status(): void
@@ -368,7 +368,7 @@ class NotificationFrameworkTest extends TestCase
         $lot = Lot::factory()->create(['barang_id' => $barang->id]);
         $unit = Unit::factory()->create(['lot_id' => $lot->id, 'number' => 'AST-XPS-001', 'status' => 'Tersedia,Pending:DM', 'condition' => 'Rusak Total']);
 
-        $approval = AssetStatusApproval::create([
+        $approval = AssetDeletionApproval::create([
             'asset_id' => $unit->id,
             'requester_id' => $admin->id,
             'proposed_condition' => 'Rusak Total',
@@ -379,10 +379,10 @@ class NotificationFrameworkTest extends TestCase
             'memo_url' => 'memos/test.pdf',
         ]);
 
-        $response = $this->actingAs($ifsManager)->post(route('smart.approve-deactivation.bulk-store'), [
+        $response = $this->actingAs($ifsManager)->post(route('smart.approve-deletion.bulk-store'), [
             'ids' => [$approval->id],
             'decision' => 'approved',
-            'note' => 'Disetujui untuk dihapus',
+            'dm_note' => 'Disetujui untuk dihapus',
         ]);
 
         $response->assertRedirect();
@@ -395,7 +395,7 @@ class NotificationFrameworkTest extends TestCase
         $this->assertEquals('Penghapusan Aset Dell Laptop XPS Disetujui DM IFS', $notif->data['title']);
         $this->assertEquals('Status aset AST-XPS-001 telah berubah menjadi Tidak Aktif, Pending:BoD/BoC.', $notif->data['message']);
         $this->assertEquals('success', $notif->data['type']);
-        $this->assertEquals('/smart/stock-management/non-consumables?search=AST-XPS-001', $notif->data['url']);
+        $this->assertEquals('/smart/stock-management/pending-deletion?tab=Pending:BoD/BoC&search=AST-XPS-001', $notif->data['url']);
     }
 
     public function test_notify_admin_when_dm_ifs_rejects_asset_status(): void
@@ -418,7 +418,7 @@ class NotificationFrameworkTest extends TestCase
         $lot = Lot::factory()->create(['barang_id' => $barang->id]);
         $unit = Unit::factory()->create(['lot_id' => $lot->id, 'number' => 'AST-LNV-002', 'status' => 'Tersedia,Pending:DM', 'condition' => 'Hilang']);
 
-        $approval = AssetStatusApproval::create([
+        $approval = AssetDeletionApproval::create([
             'asset_id' => $unit->id,
             'requester_id' => $admin->id,
             'proposed_condition' => 'Hilang',
@@ -429,10 +429,10 @@ class NotificationFrameworkTest extends TestCase
             'memo_url' => 'memos/test.pdf',
         ]);
 
-        $response = $this->actingAs($ifsManager)->post(route('smart.approve-deactivation.bulk-store'), [
+        $response = $this->actingAs($ifsManager)->post(route('smart.approve-deletion.bulk-store'), [
             'ids' => [$approval->id],
             'decision' => 'rejected',
-            'note' => 'Dokumen tidak lengkap',
+            'dm_note' => 'Dokumen tidak lengkap',
         ]);
 
         $response->assertRedirect();
@@ -450,6 +450,56 @@ class NotificationFrameworkTest extends TestCase
         $this->assertEquals('Status aset AST-LNV-002 telah dikembalikan menjadi Tersedia dan kondisi dikembalikan menjadi Bagus.', $notif->data['message']);
         $this->assertEquals('error', $notif->data['type']);
         $this->assertEquals('/smart/stock-management/non-consumables?search=AST-LNV-002', $notif->data['url']);
+    }
+
+    public function test_notify_admin_when_dm_ifs_approves_or_rejects_respects_english_locale(): void
+    {
+        /** @var User $admin */
+        $adminEmployee = HrdEmployee::factory()->create(['employee_id' => '255578']);
+        $admin = User::factory()->create(['employee_id' => $adminEmployee->employee_id]);
+
+        /** @var User $ifsManager */
+        $ifsManager = User::factory()->create();
+        $ifsEmployee = HrdEmployee::where('employee_id', $ifsManager->employee_id)->first();
+        $ifsOrg = HrdOrgchart::find($ifsEmployee->orgchart_id);
+        $ifsOrg->update([
+            'employee_id' => $ifsManager->employee_id,
+            'org_code' => User::getIfsOrgCode(),
+        ]);
+
+        $brand = Brand::factory()->create(['name' => 'Dell']);
+        $barang = Barang::factory()->create(['brand_id' => $brand->id, 'name' => 'Latitude 5420']);
+        $lot = Lot::factory()->create(['barang_id' => $barang->id]);
+        $unit = Unit::factory()->create(['lot_id' => $lot->id, 'number' => 'AST-EN-001', 'status' => 'Tersedia,Pending:DM', 'condition' => 'Rusak Total']);
+
+        $approval = AssetDeletionApproval::create([
+            'asset_id' => $unit->id,
+            'requester_id' => $admin->id,
+            'proposed_condition' => 'Rusak Total',
+            'previous_condition' => 'Bagus',
+            'previous_status' => 'Tersedia',
+            'decision' => 'pending',
+            'requested_at' => now(),
+            'memo_url' => 'memos/test.pdf',
+        ]);
+
+        $origLocale = app()->getLocale();
+        try {
+            app()->setLocale('en');
+
+            $this->actingAs($ifsManager)->post(route('smart.approve-deletion.bulk-store'), [
+                'ids' => [$approval->id],
+                'decision' => 'approved',
+                'dm_note' => 'Approved by DM',
+            ])->assertRedirect();
+
+            $admin->refresh();
+            $notif = $admin->notifications->first();
+            $this->assertEquals('Asset Deletion Dell Latitude 5420 Approved by DM IFS', $notif->data['title']);
+            $this->assertEquals('Asset AST-EN-001 status has changed to Inactive, Pending:BoD/BoC.', $notif->data['message']);
+        } finally {
+            app()->setLocale($origLocale);
+        }
     }
 
     public function test_bulk_updating_assets_to_damaged_or_lost_sends_single_consolidated_batch_email_to_ifs_manager(): void
@@ -493,13 +543,13 @@ class NotificationFrameworkTest extends TestCase
         $response->assertSessionHasNoErrors();
 
         // 1. Assert exactly ONE batch email was sent per IFS manager, NOT 3 separate emails
-        Mail::assertSent(DMBulkAssetDeactivationRequest::class, function ($mail) {
+        Mail::assertSent(DMBulkAssetDeletionRequest::class, function ($mail) {
             return $mail->hasTo('ifs.manager@example.com')
                 && $mail->count === 3
                 && $mail->proposedCondition === 'Rusak Total'
                 && count($mail->sampleAssets) === 3;
         });
-        Mail::assertNotSent(DMAssetStatusRequest::class);
+        Mail::assertNotSent(DMAssetDeletionRequest::class);
 
         // 2. Assert exactly ONE consolidated in-app notification was dispatched to IFS Manager
         $ifsManager->refresh();
@@ -507,12 +557,12 @@ class NotificationFrameworkTest extends TestCase
 
         $notif = $ifsManager->notifications->first();
         $this->assertEquals('warning', $notif->data['type']);
-        $this->assertEquals('deactivation_approval_bulk', $notif->data['extra']['type']);
+        $this->assertEquals('deletion_approval_bulk', $notif->data['extra']['type']);
         $this->assertEquals(3, $notif->data['extra']['count']);
-        $this->assertEquals('/smart/approve-deactivation', $notif->data['url']);
+        $this->assertEquals('/smart/approve-deletion', $notif->data['url']);
     }
 
-    public function test_bulk_deactivation_notification_supports_english_locale(): void
+    public function test_bulk_deletion_notification_supports_english_locale(): void
     {
         /** @var User $ifsManager */
         $ifsManager = User::factory()->create(['email' => 'ifs.manager@example.com']);
@@ -532,16 +582,66 @@ class NotificationFrameworkTest extends TestCase
         try {
             app()->setLocale('en');
 
-            app(NotificationService::class)->notifyIfsManagerBulkPendingDm($units, 'Rusak Total');
+            app(NotificationService::class)->notifyManagerBulkAssetDeletionChange($units, 'Rusak Total');
 
             $ifsManager->refresh();
             $this->assertCount(1, $ifsManager->notifications);
 
             $notif = $ifsManager->notifications->first();
-            $this->assertEquals('Asset Deactivation Approval: 2 Units (Rusak Total)', $notif->data['title']);
-            $this->assertEquals('2 asset units have been submitted for deactivation (Rusak Total) and require your approval.', $notif->data['message']);
+            $this->assertEquals('Asset Deletion Approval: 2 Units (Rusak Total)', $notif->data['title']);
+            $this->assertEquals('2 asset units have been submitted for deletion (Rusak Total) and require your approval.', $notif->data['message']);
         } finally {
             app()->setLocale($originalLocale);
         }
+    }
+
+    public function test_notifications_are_dynamically_localized_on_fetch(): void
+    {
+        $admin = User::factory()->create(['employee_id' => '255578']);
+        $role = \App\Models\Auth\Role::firstOrCreate(['name' => 'admin'], ['label' => 'Administrator']);
+        $permission = \App\Models\Auth\Permission::firstOrCreate(
+            ['name' => 'notifications.manage'],
+            ['label' => 'Manage notifications', 'group' => 'notifications']
+        );
+        $role->givePermissionTo($permission);
+        $admin->assignRole($role);
+
+        // 1. Send notification in ID
+        app()->setLocale('id');
+        $lot = Lot::factory()->create();
+        $asset = Unit::factory()->create(['lot_id' => $lot->id, 'number' => 'AST-DYN-001']);
+
+        $approval = AssetDeletionApproval::create([
+            'asset_id' => $asset->id,
+            'requester_id' => $admin->id,
+            'proposed_condition' => 'Rusak Total',
+            'previous_condition' => 'Bagus',
+            'previous_status' => 'Tersedia',
+            'decision' => 'approved',
+            'requested_at' => now(),
+        ]);
+        $approval->setRelation('asset', $asset);
+
+        app(NotificationService::class)->notifyAdminAssetDeletionDecision($approval, 'approved');
+
+        $admin->refresh();
+        $this->assertCount(1, $admin->notifications);
+
+        // Fetch in EN -> should be localized in English
+        app()->setLocale('en');
+        $response = $this->actingAs($admin)->getJson('/smart/notifications');
+        $response->assertOk();
+        $json = $response->json();
+        $this->assertStringContainsString('Approved by DM IFS', $json['notifications'][0]['title']);
+        $this->assertStringContainsString('status has changed to Inactive, Pending:BoD/BoC.', $json['notifications'][0]['message']);
+        $this->assertStringContainsString('tab=Pending:BoD/BoC', $json['notifications'][0]['url']);
+
+        // Fetch in ID -> should be localized in Indonesian
+        app()->setLocale('id');
+        $responseId = $this->actingAs($admin)->getJson('/smart/notifications');
+        $responseId->assertOk();
+        $jsonId = $responseId->json();
+        $this->assertStringContainsString('Disetujui DM IFS', $jsonId['notifications'][0]['title']);
+        $this->assertStringContainsString('telah berubah menjadi Tidak Aktif, Pending:BoD/BoC.', $jsonId['notifications'][0]['message']);
     }
 }

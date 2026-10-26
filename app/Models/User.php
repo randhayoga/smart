@@ -4,7 +4,7 @@ namespace App\Models;
 
 use App\Models\Cart\AssetBasket;
 use App\Models\Cart\ConsumableBasket;
-use App\Models\Inventory\AssetStatusApproval;
+use App\Models\Inventory\AssetDeletionApproval;
 use App\Models\Inventory\InventoryLog;
 use App\Models\Request\Request;
 use App\Models\Request\RequestAdminConfirmation;
@@ -584,19 +584,19 @@ class User extends Authenticatable
     }
 
     /**
-     * Asset status change requests made by this user.
+     * Asset deletion requests made by this user.
      */
-    public function assetStatusRequests(): HasMany
+    public function assetDeletionRequests(): HasMany
     {
-        return $this->hasMany(AssetStatusApproval::class, 'requester_id', 'id');
+        return $this->hasMany(AssetDeletionApproval::class, 'requester_id', 'id');
     }
 
     /**
-     * Asset status change decisions made by this user.
+     * Asset deletion decisions made by this user.
      */
-    public function assetStatusDecisions(): HasMany
+    public function assetDeletionDecisions(): HasMany
     {
-        return $this->hasMany(AssetStatusApproval::class, 'approver_id', 'id');
+        return $this->hasMany(AssetDeletionApproval::class, 'approver_id', 'id');
     }
 
     /**

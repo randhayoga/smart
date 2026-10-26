@@ -139,6 +139,7 @@ describe('DeleteConfirmationModal.vue', () => {
       proposed_condition: 'Rusak',
       previous_status: 'Tersedia',
       previous_condition: 'Bagus',
+      admin_note: 'LCD retak parah',
     };
 
     const statusApprovalItem2 = {
@@ -150,6 +151,7 @@ describe('DeleteConfirmationModal.vue', () => {
       proposed_condition: 'Hilang',
       previous_status: 'Tersedia',
       previous_condition: 'Bagus',
+      admin_note: 'Hilang saat dinas',
     };
 
     it('renders single approval confirmation when approving status change in Indonesian', () => {
@@ -167,6 +169,8 @@ describe('DeleteConfirmationModal.vue', () => {
       expect(wrapper.text()).toContain('AST-001');
       expect(wrapper.text()).toContain('Bagus');
       expect(wrapper.text()).toContain('Rusak');
+      expect(wrapper.text()).toContain('Catatan penghapusan');
+      expect(wrapper.text()).toContain('LCD retak parah');
     });
 
     it('renders single rejection confirmation when rejecting status change in Indonesian', () => {
@@ -193,7 +197,9 @@ describe('DeleteConfirmationModal.vue', () => {
       });
       expect(approveWrapper.text()).toContain('Apakah Anda yakin untuk meng-approve 2 penghapusan aset ini?');
       expect(approveWrapper.text()).toContain('AST-001');
+      expect(approveWrapper.text()).toContain('LCD retak parah');
       expect(approveWrapper.text()).toContain('AST-002');
+      expect(approveWrapper.text()).toContain('Hilang saat dinas');
 
       const rejectWrapper = mountModal({
         itemCount: 2,
@@ -212,7 +218,7 @@ describe('DeleteConfirmationModal.vue', () => {
         actionType: 'approved',
         itemData: [statusApprovalItem],
       });
-      expect(singleApprove.text()).toContain('Are you sure you want to approve this asset deactivation?');
+      expect(singleApprove.text()).toContain('Are you sure you want to approve this asset deletion?');
 
       const singleReject = mountModal({
         itemCount: 1,
@@ -220,7 +226,7 @@ describe('DeleteConfirmationModal.vue', () => {
         actionType: 'rejected',
         itemData: [statusApprovalItem],
       });
-      expect(singleReject.text()).toContain('Are you sure you want to reject this asset deactivation?');
+      expect(singleReject.text()).toContain('Are you sure you want to reject this asset deletion?');
 
       const bulkApprove = mountModal({
         itemCount: 2,
@@ -228,7 +234,7 @@ describe('DeleteConfirmationModal.vue', () => {
         actionType: 'approved',
         itemData: [statusApprovalItem, statusApprovalItem2],
       });
-      expect(bulkApprove.text()).toContain('Are you sure you want to approve 2 selected assets deactivation?');
+      expect(bulkApprove.text()).toContain('Are you sure you want to approve 2 selected assets deletion?');
 
       const bulkReject = mountModal({
         itemCount: 2,
@@ -236,7 +242,7 @@ describe('DeleteConfirmationModal.vue', () => {
         actionType: 'rejected',
         itemData: [statusApprovalItem, statusApprovalItem2],
       });
-      expect(bulkReject.text()).toContain('Are you sure you want to reject 2 selected assets deactivation?');
+      expect(bulkReject.text()).toContain('Are you sure you want to reject 2 selected assets deletion?');
     });
   });
 

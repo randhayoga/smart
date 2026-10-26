@@ -1,21 +1,21 @@
 <?php
 
-namespace App\Http\Controllers\Smart\MultiRoles\AssetDeactivationApproval;
+namespace App\Http\Controllers\Smart\MultiRoles\AssetDeletionApproval;
 
-use App\Actions\Inventory\ProcessAssetStatusApproval;
+use App\Actions\Inventory\ProcessAssetDeletionApproval;
 use App\Http\Controllers\Controller;
-use App\Models\Inventory\AssetStatusApproval;
+use App\Models\Inventory\AssetDeletionApproval;
 use Illuminate\Http\Request;
 
 /**
- * Manager Bulk Asset Deactivation Approval Controller processing batch decisions on asset deactivation requests.
+ * Manager Bulk Asset Deletion Approval Controller processing batch decisions on asset deletion requests.
  */
-class ManagerBulkAssetDeactivationApprovalController extends Controller
+class ManagerBulkAssetDeletionApprovalController extends Controller
 {
     /**
-     * Store a newly created bulk decision on asset deactivation approvals.
+     * Store a newly created bulk decision on asset deletion approvals.
      */
-    public function store(Request $request, ProcessAssetStatusApproval $processApproval)
+    public function store(Request $request, ProcessAssetDeletionApproval $processApproval)
     {
         if (!$request->user()->hasPermission('inventory.status_approval.decide')) {
             abort(403, 'Akses ditolak.');
@@ -23,16 +23,17 @@ class ManagerBulkAssetDeactivationApprovalController extends Controller
 
         $validated = $request->validate([
             'ids' => 'required|array',
-            'ids.*' => 'exists:asset_status_approvals,id',
+            'ids.*' => 'exists:asset_deletion_approvals,id',
             'decision' => 'required|string|in:approved,rejected',
+            'dm_note' => 'nullable|string',
             'note' => 'nullable|string',
         ]);
 
         $ids = $validated['ids'];
         $decision = $validated['decision'];
-        $note = $validated['note'];
+        $dmNote = $validated['dm_note'] ?? $validated['note'] ?? null;
 
-        $approvals = AssetStatusApproval::with('asset.lot.model.brand')
+        $approvals = AssetDeletionApproval::with('asset.lot.model.brand')
             ->whereIn('id', $ids)
             ->where('decision', 'pending')
             ->get();
@@ -45,7 +46,7 @@ class ManagerBulkAssetDeactivationApprovalController extends Controller
             $processApproval->execute(
                 $approval,
                 $decision,
-                $note,
+                $dmNote,
                 $request->user()->id
             );
         }

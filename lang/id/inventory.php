@@ -51,6 +51,8 @@ return [
     // Approval & Peminjaman
     'bod_boc_uploaded' => 'Formulir Approval BoD/BoC berhasil diunggah dan status diubah menjadi Dihapus.',
     'bulk_bod_boc_approved' => ':count aset terpilih berhasil disetujui BoD/BoC dan status diubah menjadi Dihapus.',
+    'bod_boc_disapproved' => 'Formulir Penolakan BoD/BoC berhasil diunggah dan status dikembalikan.',
+    'bulk_bod_boc_disapproved' => ':count aset terpilih ditolak oleh BoD/BoC dan status dikembalikan.',
     'borrow_saved' => 'Data peminjaman berhasil disimpan.',
     'borrow_completed' => 'Peminjaman selesai. Status aset kembali Tersedia.',
     'manual_request_recorded' => 'Permintaan manual berhasil dicatat.',
@@ -64,6 +66,10 @@ return [
     // Deactivation Notifications
     'notification_deactivation_title' => 'Penghapusan Aset :name: Perlu Perhatian Anda',
     'notification_deactivation_message' => 'Pengajuan penghapusan aset :number telah diajukan dan memerlukan approval Anda',
-    'notification_bulk_deactivation_title' => 'Approval Deaktivasi Aset: :count Unit (:condition)',
-    'notification_bulk_deactivation_message' => 'Sebanyak :count unit aset diajukan untuk deaktivasi (:condition) dan memerlukan approval Anda.',
+    'notification_bulk_deactivation_title' => 'Approval Penghapusan Aset: :count Unit (:condition)',
+    'notification_bulk_deactivation_message' => 'Sebanyak :count unit aset diajukan untuk penghapusan (:condition) dan memerlukan approval Anda.',
+    'notification_status_approved_title' => 'Penghapusan Aset :name Disetujui DM IFS',
+    'notification_status_approved_message' => 'Status aset :number telah berubah menjadi Tidak Aktif, Pending:BoD/BoC.',
+    'notification_status_rejected_title' => 'Penghapusan Aset :name Ditolak DM IFS',
+    'notification_status_rejected_message' => 'Status aset :number telah dikembalikan menjadi :status dan kondisi dikembalikan menjadi :condition.',
 ];

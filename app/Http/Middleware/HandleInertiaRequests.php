@@ -42,7 +42,7 @@ class HandleInertiaRequests extends Middleware
                     ? \App\Models\Request\Request::where('approver_id', $request->user()->id)->where('status', 'wait')->count()
                     : 0,
                 'pendingAssetStatusCount' => $request->user() && $request->user()->hasPermission('inventory.status_approval.decide')
-                    ? \App\Models\Inventory\AssetStatusApproval::where('decision', 'pending')->whereHas('asset', fn($q) => $q->whereHasStatus('Pending:DM'))->count()
+                    ? \App\Models\Inventory\AssetDeletionApproval::where('decision', 'pending')->whereHas('asset', fn($q) => $q->whereHasStatus('Pending:DM'))->count()
                     : 0,
                 'pendingAssetActivationCount' => $request->user() && $request->user()->hasPermission('inventory.status_approval.decide')
                     ? \App\Models\Inventory\UnitActivationApproval::where('decision', 'pending')->count()
@@ -72,15 +72,19 @@ class HandleInertiaRequests extends Middleware
                     return $unread->merge($read)
                         ->sortByDesc('created_at')
                         ->values()
-                        ->map(fn ($n) => [
-                            'id' => $n->id,
-                            'title' => $n->data['title'] ?? '',
-                            'message' => $n->data['message'] ?? '',
-                            'type' => $n->data['type'] ?? 'info',
-                            'url' => $n->data['url'] ?? null,
-                            'read' => $n->read_at !== null,
-                            'timestamp' => $n->created_at->toIso8601String(),
-                        ]);
+                        ->map(function ($n) {
+                            $payload = \App\Services\NotificationService::formatNotificationPayload($n->data ?? []);
+
+                            return [
+                                'id' => $n->id,
+                                'title' => $payload['title'] ?? '',
+                                'message' => $payload['message'] ?? '',
+                                'type' => $payload['type'] ?? 'info',
+                                'url' => $payload['url'] ?? null,
+                                'read' => $n->read_at !== null,
+                                'timestamp' => $n->created_at->toIso8601String(),
+                            ];
+                        });
                 },
                 'unreadNotificationCount' => fn () => $request->user()
                     ? $request->user()->unreadNotifications()->count()

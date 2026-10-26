@@ -27,12 +27,14 @@ class NotificationController extends Controller
             ->sortByDesc('created_at')
             ->values()
             ->map(function ($n) {
+                $payload = \App\Services\NotificationService::formatNotificationPayload($n->data ?? []);
+
                 return [
                     'id' => $n->id,
-                    'title' => $n->data['title'] ?? '',
-                    'message' => $n->data['message'] ?? '',
-                    'type' => $n->data['type'] ?? 'info',
-                    'url' => $n->data['url'] ?? null,
+                    'title' => $payload['title'] ?? '',
+                    'message' => $payload['message'] ?? '',
+                    'type' => $payload['type'] ?? 'info',
+                    'url' => $payload['url'] ?? null,
                     'read' => $n->read_at !== null,
                     'timestamp' => $n->created_at->toIso8601String(),
                 ];

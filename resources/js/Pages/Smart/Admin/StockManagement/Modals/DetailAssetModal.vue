@@ -38,6 +38,7 @@ useModalLock(computed(() => props.open));
 
 const detailActiveTab = ref('Detail Aset');
 const fileInputRef = ref<HTMLInputElement | null>(null);
+const disapprovalFileInputRef = ref<HTMLInputElement | null>(null);
 const isUploading = ref(false);
 
 const tabs = computed(() => {
@@ -57,6 +58,9 @@ watch(() => props.open, (newVal) => {
     isUploading.value = false;
     if (fileInputRef.value) {
       fileInputRef.value.value = '';
+    }
+    if (disapprovalFileInputRef.value) {
+      disapprovalFileInputRef.value.value = '';
     }
   }
 });
@@ -125,6 +129,11 @@ const triggerBodBocUpload = () => {
   fileInputRef.value?.click();
 };
 
+const triggerBodBocDisapprovalUpload = () => {
+  if (isUploading.value) return;
+  disapprovalFileInputRef.value?.click();
+};
+
 const handleBodBocUpload = (e: Event) => {
   const target = e.target as HTMLInputElement;
   const file = target.files?.[0];
@@ -155,7 +164,6 @@ const handleBodBocUpload = (e: Event) => {
         isUploading.value = false;
         target.value = '';
         if (props.asset) {
-          props.asset.bod_boc_approval_url = props.asset.bod_boc_approval_url || 'bod_boc_approvals/' + file.name;
           props.asset.status = 'Dihapus';
         }
         emit('update:open', false);
@@ -165,6 +173,57 @@ const handleBodBocUpload = (e: Event) => {
         target.value = '';
         if (errors.bod_boc_approval_file) {
           toast.error(errors.bod_boc_approval_file);
+        } else {
+          toast.error(t('inventory.uploadBodBocFailed'));
+        }
+      },
+      onFinish: () => {
+        isUploading.value = false;
+        target.value = '';
+      },
+    }
+  );
+};
+
+const handleBodBocDisapprovalUpload = (e: Event) => {
+  const target = e.target as HTMLInputElement;
+  const file = target.files?.[0];
+  if (!file || !props.asset) return;
+
+  const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+  if (!allowedTypes.includes(file.type)) {
+    toast.error(t('inventory.invalidDocFormat'));
+    target.value = '';
+    return;
+  }
+  if (file.size > 2 * 1024 * 1024) {
+    toast.error(t('inventory.fileTooLarge2Mb'));
+    target.value = '';
+    return;
+  }
+
+  isUploading.value = true;
+  router.post(
+    `/smart/stock-management/assets/${props.asset.id}`,
+    {
+      _method: 'PUT',
+      bod_boc_disapproval_file: file,
+    },
+    {
+      preserveScroll: true,
+      onSuccess: () => {
+        isUploading.value = false;
+        target.value = '';
+        if (props.asset) {
+          props.asset.status = 'Tersedia';
+        }
+        emit('update:open', false);
+      },
+      onError: (errors: any) => {
+        isUploading.value = false;
+        target.value = '';
+        if (errors.bod_boc_disapproval_file) {
+          toast.error(errors.bod_boc_disapproval_file);
         } else {
           toast.error(t('inventory.uploadBodBocFailed'));
         }
@@ -327,6 +386,12 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                       <p class="text-foreground">{{ t('inventory.burden') }}: {{ asset.burden || '-' }}</p>
                       <p v-if="asset.burden === 'Project'" class="text-foreground">{{ t('inventory.project') }}: {{ asset.project_no ? `[${asset.project_no}] ${asset.project_name || '-'}` : (asset.project_name || '-') }}</p>
                       <p class="text-foreground">{{ t('inventory.lastUpdate') }}: {{ asset.updated_at || '-' }}</p>
+                      <p v-if="asset.admin_note" class="text-foreground">
+                        {{ t('inventory.adminNote') }}: <span class="italic text-muted-foreground font-normal">"{{ asset.admin_note }}"</span>
+                      </p>
+                      <p v-if="asset.dm_note" class="text-foreground">
+                        {{ t('inventory.dmNote') }}: <span class="italic text-muted-foreground font-normal">"{{ asset.dm_note }}"</span>
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -387,7 +452,7 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                   {{ t('inventory.openLostDoc') }}
                 </Button>
 
-                <!-- Hidden BoD/BoC File Input -->
+                <!-- Hidden BoD/BoC File Inputs -->
                 <input 
                   ref="fileInputRef"
                   type="file"
@@ -395,11 +460,19 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                   accept=".pdf,.jpg,.jpeg,.png,.webp"
                   @change="handleBodBocUpload"
                 />
+                <input 
+                  ref="disapprovalFileInputRef"
+                  type="file"
+                  class="hidden"
+                  accept=".pdf,.jpg,.jpeg,.png,.webp"
+                  @change="handleBodBocDisapprovalUpload"
+                />
 
+                <!-- BoD/BoC Approval Document Button -->
                 <Button 
                   v-if="asset && asset.bod_boc_approval_url"
                   @click="openMemoFile(asset.bod_boc_approval_url)"
-                  variant="warning"
+                  variant="success"
                   size="lg"
                   class="inline-flex items-center gap-2"
                 >
@@ -408,15 +481,39 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                 </Button>
 
                 <Button 
-                  v-else-if="(can('inventory.status_approval.request') || can('inventory.manage')) && asset && hasAssetStatus(asset.status, 'Pending:BoD/BoC')"
+                  v-if="(can('inventory.status_approval.request') || can('inventory.manage')) && asset && hasAssetStatus(asset.status, 'Pending:BoD/BoC')"
                   @click="triggerBodBocUpload"
                   :disabled="isUploading"
-                  variant="warning"
+                  variant="success"
                   size="lg"
                   class="inline-flex items-center gap-2"
                 >
                   <Upload class="w-4 h-4" />
                   {{ isUploading ? t('inventory.uploading') : t('inventory.uploadBodBocDoc') }}
+                </Button>
+
+                <!-- BoD/BoC Disapproval Document Button -->
+                <Button 
+                  v-if="asset && asset.bod_boc_disapproval_url"
+                  @click="openMemoFile(asset.bod_boc_disapproval_url)"
+                  variant="destructive"
+                  size="lg"
+                  class="inline-flex items-center gap-2"
+                >
+                  <FileText class="w-4 h-4" />
+                  {{ t('inventory.openBodBocDisapprovalDoc') }}
+                </Button>
+
+                <Button 
+                  v-if="(can('inventory.status_approval.request') || can('inventory.manage')) && asset && hasAssetStatus(asset.status, 'Pending:BoD/BoC')"
+                  @click="triggerBodBocDisapprovalUpload"
+                  :disabled="isUploading"
+                  variant="destructive"
+                  size="lg"
+                  class="inline-flex items-center gap-2"
+                >
+                  <Upload class="w-4 h-4" />
+                  {{ isUploading ? t('inventory.uploading') : t('inventory.uploadBodBocDisapprovalDoc') }}
                 </Button>
 
                 <Button 

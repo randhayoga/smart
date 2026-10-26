@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * Sudah Approve Status Page (Manager)
- * Displays historical records of manager decisions regarding asset disposal, deactivation, and condition changes.
+ * Displays historical records of manager decisions regarding asset disposal, deletion, and condition changes.
  */
 import { ref, computed, watch, h, onMounted, onUnmounted } from 'vue';
 import { Head } from '@inertiajs/vue3';
@@ -26,7 +26,7 @@ import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
 
 import Combobox from '@/Components/Combobox.vue';
-import DeactivationApprovalModal from './Modals/DeactivationApprovalModal.vue';
+import DeletionApprovalModal from './Modals/DeletionApprovalModal.vue';
 
 // --- Data Types & Props ---
 interface AuditTrail {
@@ -63,19 +63,25 @@ interface UnitDetails {
 
 interface ApprovalItem {
   id: number;
-  unit_id: number;
-  asset_code: string;
-  category: string;
+  unit_id?: number;
+  asset_id?: number;
+  asset_code?: string;
+  asset_number?: string;
+  category?: string;
   subcategory: string;
   brand: string;
-  nama: string;
-  specification: string;
+  nama?: string;
+  name?: string;
+  specification?: string;
+  classification?: string;
   proposed_condition?: string;
   previous_condition?: string;
   proposed_status: string;
   previous_status: string;
   status_label: string;
   decision: string;
+  admin_note?: string | null;
+  dm_note?: string | null;
   note: string | null;
   requested_by: string;
   requested_at: string;
@@ -84,7 +90,9 @@ interface ApprovalItem {
   memo_url: string | null;
   lost_doc_url: string | null;
   bod_boc_approval_url?: string | null;
-  unit_details: UnitDetails;
+  bod_boc_disapproval_url?: string | null;
+  asset_details?: any;
+  unit_details?: any;
 }
 
 interface Props {
@@ -168,6 +176,16 @@ const closeDetailPopup = () => {
   }, 200);
 };
 
+const getConditionLabel = (cond?: string | null) => {
+  if (!cond) return '-';
+  const c = cond.trim().toLowerCase();
+  if (c === 'bagus' || c === 'good') return t('inventory.conditionGood');
+  if (c === 'rusak' || c === 'damaged') return t('inventory.conditionDamaged');
+  if (c === 'rusak total' || c === 'total damage') return t('inventory.conditionTotalDamage');
+  if (c === 'hilang' || c === 'lost') return t('inventory.conditionLost');
+  return cond;
+};
+
 const columns = computed<ColumnDef<ApprovalItem>[]>(() => [
   {
     accessorKey: 'asset_code',
@@ -181,22 +199,21 @@ const columns = computed<ColumnDef<ApprovalItem>[]>(() => [
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
-    cell: ({ row }) => h('div', { class: 'text-muted-foreground font-mono text-md truncate font-medium' }, row.getValue('asset_code')),
+    cell: ({ row }) => h('div', { class: 'text-muted-foreground font-mono text-md truncate font-medium' }, row.getValue('asset_code') || row.original.asset_number || '-'),
   },
   {
-    accessorKey: 'subcategory',
-    enableGlobalFilter: false,
+    accessorKey: 'nama',
     header: ({ column }) => {
       return h(Button, {
         variant: 'ghost',
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        t('approvals.subcategory'),
+        t('approvals.name'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
-    cell: ({ row }) => h('div', { class: 'text-foreground' }, row.getValue('subcategory')),
+    cell: ({ row }) => h('div', { class: 'text-foreground truncate', title: row.getValue('nama') || row.original.name }, row.getValue('nama') || row.original.name || '-'),
   },
   {
     accessorKey: 'brand',
@@ -211,21 +228,22 @@ const columns = computed<ColumnDef<ApprovalItem>[]>(() => [
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
-    cell: ({ row }) => h('div', { class: 'text-foreground' }, row.getValue('brand')),
+    cell: ({ row }) => h('div', { class: 'text-foreground' }, row.getValue('brand') || '-'),
   },
   {
-    accessorKey: 'nama',
+    accessorKey: 'subcategory',
+    enableGlobalFilter: false,
     header: ({ column }) => {
       return h(Button, {
         variant: 'ghost',
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
         class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
       }, () => [
-        t('approvals.name'),
+        t('approvals.subcategory'),
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
-    cell: ({ row }) => h('div', { class: 'text-foreground truncate', title: row.getValue('nama') }, row.getValue('nama')),
+    cell: ({ row }) => h('div', { class: 'text-foreground' }, row.getValue('subcategory') || '-'),
   },
   {
     accessorKey: 'status_label',
@@ -240,7 +258,7 @@ const columns = computed<ColumnDef<ApprovalItem>[]>(() => [
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
-    cell: ({ row }) => h('div', { class: 'text-foreground font-medium' }, row.getValue('status_label')),
+    cell: ({ row }) => h('div', { class: 'text-foreground font-medium' }, getConditionLabel(row.getValue('status_label')) || '-'),
   },
   {
     accessorKey: 'decision',
@@ -439,7 +457,7 @@ onUnmounted(() => {
       />
     </div>
     <!-- Detail Asset Modal -->
-    <DeactivationApprovalModal
+    <DeletionApprovalModal
       v-model:open="isDetailPopupOpen"
       :approval="activeApproval"
       mode="decided"

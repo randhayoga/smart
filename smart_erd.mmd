@@ -192,7 +192,7 @@ erDiagram
         int project_id FK "nullable | RE_PORTALDB_TB_PROJECT's id"  
     }
 
-    ASSET_STATUS_APPROVAL {
+    ASSET_DELETION_APPROVAL {
         int id PK ""  
         int asset_id FK ""  
         int requester_id FK "ADM_USER_NEW_PORTAL_USERS's id"  
@@ -200,11 +200,13 @@ erDiagram
         varchar proposed_condition  ""  
         varchar previous_condition  ""  
         varchar previous_status  "nullable"  
-        varchar memo_url  ""  
+        varchar memo_url  "nullable"  
         varchar lost_doc_url  "nullable"  
         varchar bod_boc_approval_url  "nullable"  
+        varchar bod_boc_disapproval_url  "nullable"  
         varchar decision  "default to pending | pending, approved, rejected"  
-        text note  "nullable | required if rejected"  
+        text admin_note  "nullable"  
+        text dm_note  "nullable | required if rejected"  
         datetime requested_at  ""  
         datetime decided_at  "nullable"  
     }
@@ -477,9 +479,9 @@ erDiagram
     ASSET||--o{ASSET_LIFECYCLE:"tracks lifecycle of"
     LOCATION||--o{ASSET_LIFECYCLE:"location during lifecycle"
     ADM_USER_NEW_PORTAL_USERS||--o{ASSET_LIFECYCLE:"actor"
-    ASSET||--o{ASSET_STATUS_APPROVAL:"has pending status changes"
-    ADM_USER_NEW_PORTAL_USERS||--o{ASSET_STATUS_APPROVAL:"requests status change"
-    ADM_USER_NEW_PORTAL_USERS||--o{ASSET_STATUS_APPROVAL:"decides status change"
+    ASSET||--o{ASSET_DELETION_APPROVAL:"has deletion approvals"
+    ADM_USER_NEW_PORTAL_USERS||--o{ASSET_DELETION_APPROVAL:"requests deletion"
+    ADM_USER_NEW_PORTAL_USERS||--o{ASSET_DELETION_APPROVAL:"decides deletion"
     ASSET||--o{ASSET_ACTIVATION_APPROVAL:"has activation approvals"
     ADM_USER_NEW_PORTAL_USERS||--o{ASSET_ACTIVATION_APPROVAL:"requests activation"
     ADM_USER_NEW_PORTAL_USERS||--o{ASSET_ACTIVATION_APPROVAL:"decides activation"

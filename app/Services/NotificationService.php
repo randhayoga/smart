@@ -4,14 +4,14 @@ namespace App\Services;
 
 use App\Mail\DMAssetActivationRequest;
 use App\Mail\DMBulkAssetActivationRequest;
-use App\Mail\DMAssetStatusRequest;
-use App\Mail\DMBulkAssetDeactivationRequest;
+use App\Mail\DMAssetDeletionRequest;
+use App\Mail\DMBulkAssetDeletionRequest;
 use App\Mail\ManagerRequestApprovalMail;
 use App\Mail\RequesterRequestRejectedMail;
 use App\Models\Inventory\Model;
 use App\Models\Inventory\Lot;
 use App\Models\Inventory\Asset;
-use App\Models\Inventory\AssetStatusApproval;
+use App\Models\Inventory\AssetDeletionApproval;
 use App\Models\Inventory\AssetActivationApproval;
 use App\Models\Request\Request as SmartRequest;
 use App\Models\User;
@@ -197,19 +197,74 @@ class NotificationService
     }
 
     /**
+     * Format a notification payload array into the active application locale.
+     * Supports both new key-based notifications and legacy static string notifications.
+     *
+     * @param array<string, mixed> $data
+     * @return array<string, mixed>
+     */
+    public static function formatNotificationPayload(array $data): array
+    {
+        $titleKey = $data['title_key'] ?? ($data['extra']['title_key'] ?? null);
+        $messageKey = $data['message_key'] ?? ($data['extra']['message_key'] ?? null);
+        $titleParams = $data['title_params'] ?? ($data['extra']['title_params'] ?? []);
+        $messageParams = $data['message_params'] ?? ($data['extra']['message_params'] ?? []);
+
+        $title = $titleKey
+            ? __($titleKey, $titleParams)
+            : ($data['title'] ?? '');
+
+        $message = $messageKey
+            ? __($messageKey, $messageParams)
+            : ($data['message'] ?? '');
+
+        // Fallback for legacy database notifications stored as raw strings
+        if (!$titleKey && isset($data['title'])) {
+            if (preg_match('/(?:Penghapusan|Deaktivasi|Deletion|Deactivation)\s+Aset\s+(.+?)(?:\s+Disetujui\s+DM\s+IFS|\s+Approved\s+by\s+DM\s+IFS)/iu', $data['title'], $m)) {
+                $title = __('inventory.notification_status_approved_title', ['name' => $m[1]]);
+            } elseif (preg_match('/(?:Penghapusan|Deaktivasi|Deletion|Deactivation)\s+Aset\s+(.+?)(?:\s+Ditolak\s+DM\s+IFS|\s+oleh\s+DM\s+IFS|\s+Rejected\s+by\s+DM\s+IFS)/iu', $data['title'], $m)) {
+                $title = __('inventory.notification_status_rejected_title', ['name' => $m[1]]);
+            }
+        }
+        if (!$messageKey && isset($data['message'])) {
+            if (preg_match('/(?:Status\s+aset|Asset)\s+(.+?)\s+(?:telah\s+berubah\s+menjadi|status\s+has\s+changed\s+to)\s+Tidak\s+Aktif,\s*Pending:BoD\/BoC/iu', $data['message'], $m)) {
+                $message = __('inventory.notification_status_approved_message', ['number' => $m[1]]);
+            } elseif (preg_match('/(?:Status\s+aset|Asset)\s+(.+?)\s+(?:telah\s+dikembalikan\s+menjadi|status\s+was\s+reverted\s+to)\s+(.+?)\s+(?:dan\s+kondisi\s+dikembalikan\s+menjadi|and\s+condition\s+reverted\s+to)\s+(.+?)\.?$/iu', $data['message'], $m)) {
+                $message = __('inventory.notification_status_rejected_message', [
+                    'number' => $m[1],
+                    'status' => $m[2],
+                    'condition' => $m[3],
+                ]);
+            }
+        }
+
+        return [
+            ...$data,
+            'title' => $title,
+            'message' => $message,
+        ];
+    }
+
+    /**
      * Send a notification to IFS Manager when an asset status is switched to Pending:DM.
      *
      * @param Asset $asset
+     * @param AssetDeletionApproval|null $approval
      */
-    public function notifyIfsManagerPendingDm(Asset $asset): void
+    public function notifyManagerAssetDeletionChange(Asset $asset, ?AssetDeletionApproval $approval = null): void
     {
         $asset->loadMissing('lot.model.brand');
         $brand = $asset->lot?->model?->brand?->name ?? '';
         $assetName = $asset->lot?->model?->name ?? '';
         $brandAndName = trim("{$brand} {$assetName}") ?: $asset->number;
 
-        $title = __('inventory.notification_deactivation_title', ['name' => $brandAndName]);
-        $message = __('inventory.notification_deactivation_message', ['number' => $asset->number]);
+        $titleKey = 'inventory.notification_deactivation_title';
+        $titleParams = ['name' => $brandAndName];
+        $messageKey = 'inventory.notification_deactivation_message';
+        $messageParams = ['number' => $asset->number];
+
+        $title = __($titleKey, $titleParams);
+        $message = __($messageKey, $messageParams);
 
         // 1. In-app database + Mercure notification
         $this->sendToRole(
@@ -217,10 +272,14 @@ class NotificationService
             $title,
             $message,
             'warning',
-            "/smart/approve-deactivation?search=" . urlencode($asset->number),
+            "/smart/approve-deletion?search=" . urlencode($asset->number),
             [
                 'asset_id' => $asset->id,
                 'asset_number' => $asset->number,
+                'title_key' => $titleKey,
+                'title_params' => $titleParams,
+                'message_key' => $messageKey,
+                'message_params' => $messageParams,
             ]
         );
 
@@ -234,11 +293,11 @@ class NotificationService
 
                 $email = $ifsUser->email;
                 if ($email && filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                    Mail::to($email)->send(new DMAssetStatusRequest($asset, null, $ifsUser->name));
+                    Mail::to($email)->send(new DMAssetDeletionRequest($asset, $approval, $ifsUser->name));
                 }
             }
         } catch (\Throwable $e) {
-            Log::error("Gagal mengirim email DMAssetStatusRequest untuk aset {$asset->number}: " . $e->getMessage(), [
+            Log::error("Gagal mengirim email DMAssetDeletionRequest untuk aset {$asset->number}: " . $e->getMessage(), [
                 'exception' => $e,
                 'asset_id' => $asset->id,
             ]);
@@ -246,13 +305,13 @@ class NotificationService
     }
 
     /**
-     * Send a consolidated batch notification and email to IFS Manager(s) for multiple assets submitted for deactivation.
+     * Send a consolidated batch notification and email to IFS Manager(s) for multiple assets submitted for deletion.
      *
      * @param iterable<Asset> $assets
      * @param string $proposedCondition
      * @param User|null $requester
      */
-    public function notifyIfsManagerBulkPendingDm(iterable $assets, string $proposedCondition, ?User $requester = null): void
+    public function notifyManagerBulkAssetDeletionChange(iterable $assets, string $proposedCondition, ?User $requester = null): void
     {
         $assetsCollection = collect($assets);
         $count = $assetsCollection->count();
@@ -260,14 +319,19 @@ class NotificationService
             return;
         }
 
-        $title = __('inventory.notification_bulk_deactivation_title', [
+        $titleKey = 'inventory.notification_bulk_deactivation_title';
+        $titleParams = [
             'count' => $count,
             'condition' => $proposedCondition,
-        ]);
-        $message = __('inventory.notification_bulk_deactivation_message', [
+        ];
+        $messageKey = 'inventory.notification_bulk_deactivation_message';
+        $messageParams = [
             'count' => $count,
             'condition' => $proposedCondition,
-        ]);
+        ];
+
+        $title = __($titleKey, $titleParams);
+        $message = __($messageKey, $messageParams);
 
         $firstAsset = $assetsCollection->first();
         $firstNumber = $firstAsset instanceof Asset ? $firstAsset->number : '';
@@ -278,12 +342,16 @@ class NotificationService
             $title,
             $message,
             'warning',
-            "/smart/approve-deactivation",
+            "/smart/approve-deletion",
             [
                 'count' => $count,
                 'proposed_condition' => $proposedCondition,
                 'first_number' => $firstNumber,
-                'type' => 'deactivation_approval_bulk',
+                'type' => 'deletion_approval_bulk',
+                'title_key' => $titleKey,
+                'title_params' => $titleParams,
+                'message_key' => $messageKey,
+                'message_params' => $messageParams,
             ]
         );
 
@@ -313,7 +381,7 @@ class NotificationService
 
                 $email = $ifsUser->email;
                 if ($email && filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                    Mail::to($email)->send(new DMBulkAssetDeactivationRequest(
+                    Mail::to($email)->send(new DMBulkAssetDeletionRequest(
                         $count,
                         $proposedCondition,
                         $sampleAssets,
@@ -323,7 +391,7 @@ class NotificationService
                 }
             }
         } catch (\Throwable $e) {
-            Log::error("Gagal mengirim email DMBulkAssetDeactivationRequest: " . $e->getMessage(), [
+            Log::error("Gagal mengirim email DMBulkAssetDeletionRequest: " . $e->getMessage(), [
                 'exception' => $e,
                 'count' => $count,
             ]);
@@ -331,12 +399,12 @@ class NotificationService
     }
 
     /**
-     * Send a notification to all Admins when an asset status approval is decided by DM IFS.
+     * Send a notification to all Admins when an asset deletion approval is decided by DM IFS.
      *
-     * @param AssetStatusApproval $approval
+     * @param AssetDeletionApproval $approval
      * @param string $decision 'approved' | 'rejected'
      */
-    public function notifyAdminAssetStatusDecision(AssetStatusApproval $approval, string $decision): void
+    public function notifyAdminAssetDeletionDecision(AssetDeletionApproval $approval, string $decision): void
     {
         $approval->loadMissing(['asset.lot.model.brand']);
         $asset = $approval->asset;
@@ -349,28 +417,45 @@ class NotificationService
         $brandAndName = trim("{$brand} {$name}") ?: $asset->number;
 
         if ($decision === 'approved') {
-            $title = "Penghapusan Aset {$brandAndName} Disetujui DM IFS";
-            $message = "Status aset {$asset->number} telah berubah menjadi Tidak Aktif, Pending:BoD/BoC.";
+            $titleKey = 'inventory.notification_status_approved_title';
+            $titleParams = ['name' => $brandAndName];
+            $messageKey = 'inventory.notification_status_approved_message';
+            $messageParams = ['number' => $asset->number];
             $type = 'success';
+            $url = "/smart/stock-management/pending-deletion?tab=Pending:BoD/BoC&search=" . urlencode($asset->number);
         } else {
             $currentStatus = $approval->previous_status ?? 'Tersedia';
             $currentCondition = $approval->previous_condition ?? $asset->condition;
-            $title = "Penghapusan Aset {$brandAndName} Ditolak DM IFS";
-            $message = "Status aset {$asset->number} telah dikembalikan menjadi {$currentStatus} dan kondisi dikembalikan menjadi {$currentCondition}.";
+            $titleKey = 'inventory.notification_status_rejected_title';
+            $titleParams = ['name' => $brandAndName];
+            $messageKey = 'inventory.notification_status_rejected_message';
+            $messageParams = [
+                'number' => $asset->number,
+                'status' => $currentStatus,
+                'condition' => $currentCondition,
+            ];
             $type = 'error';
+            $url = "/smart/stock-management/non-consumables?search=" . urlencode($asset->number);
         }
+
+        $title = __($titleKey, $titleParams);
+        $message = __($messageKey, $messageParams);
 
         $this->sendToRole(
             'admin',
             $title,
             $message,
             $type,
-            "/smart/stock-management/non-consumables?search=" . urlencode($asset->number),
+            $url,
             [
                 'asset_id' => $asset->id,
                 'asset_number' => $asset->number,
                 'approval_id' => $approval->id,
                 'decision' => $decision,
+                'title_key' => $titleKey,
+                'title_params' => $titleParams,
+                'message_key' => $messageKey,
+                'message_params' => $messageParams,
             ]
         );
     }

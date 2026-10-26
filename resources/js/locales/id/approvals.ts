@@ -4,9 +4,9 @@
 export default {
   pendingTitle: 'Approval: Perlu Perhatian Anda',
   historyTitle: 'Approval: Sudah Diproses',
-  statusPendingTitle: 'Approval Deaktivasi: Perlu Perhatian Anda',
-  statusPendingTaskbarTitle: 'Approval Deaktivasi: Pending',
-  statusHistoryTitle: 'Approval Deaktivasi: Sudah Diproses',
+  statusPendingTitle: 'Approval Penghapusan: Perlu Perhatian Anda',
+  statusPendingTaskbarTitle: 'Approval Penghapusan: Pending',
+  statusHistoryTitle: 'Approval Penghapusan: Sudah Diproses',
   activationPendingTitle: 'Approval Aktivasi: Perlu Perhatian Anda',
   activationPendingTaskbarTitle: 'Approval Aktivasi: Pending',
   activationHistoryTitle: 'Approval Aktivasi: Sudah Diproses',

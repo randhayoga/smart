@@ -6,17 +6,16 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-
 use App\Models\Inventory\AssetLifecycle;
 
 /**
- * Asset Status Approval model representing workflow approval requests for asset condition / disposal changes.
+ * Asset Deletion Approval model representing workflow approval requests for asset deletion / disposal.
  */
-class AssetStatusApproval extends Model
+class AssetDeletionApproval extends Model
 {
     use HasFactory;
 
-    protected $table = 'asset_status_approvals';
+    protected $table = 'asset_deletion_approvals';
 
     protected static function booted()
     {
@@ -38,7 +37,7 @@ class AssetStatusApproval extends Model
                 'start_date' => now(),
                 'end_date' => null,
                 'actor_id' => $approval->requester_id,
-                'note' => $approval->note ?? "Pengajuan perubahan kondisi aset dari '{$approval->previous_condition}' menjadi '{$approval->proposed_condition}'",
+                'note' => $approval->admin_note ?? "Pengajuan perubahan kondisi aset dari '{$approval->previous_condition}' menjadi '{$approval->proposed_condition}'",
             ]);
         });
     }
@@ -51,12 +50,14 @@ class AssetStatusApproval extends Model
         'previous_condition',
         'previous_status',
         'decision',
-        'note',
+        'admin_note',
+        'dm_note',
         'requested_at',
         'decided_at',
         'memo_url',
         'lost_doc_url',
         'bod_boc_approval_url',
+        'bod_boc_disapproval_url',
     ];
 
     protected $casts = [
@@ -65,7 +66,7 @@ class AssetStatusApproval extends Model
     ];
 
     /**
-     * The asset undergoing status/condition approval.
+     * The asset undergoing deletion approval.
      */
     public function asset(): BelongsTo
     {
@@ -73,7 +74,7 @@ class AssetStatusApproval extends Model
     }
 
     /**
-     * The user who requested the status/condition change.
+     * The user who requested the deletion.
      */
     public function requester(): BelongsTo
     {
@@ -81,7 +82,7 @@ class AssetStatusApproval extends Model
     }
 
     /**
-     * The user who approved or rejected the status/condition change.
+     * The user who approved or rejected the deletion.
      */
     public function approver(): BelongsTo
     {

@@ -10,9 +10,9 @@ use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
 /**
- * Mailable notification sent to IFS Department Manager to request approval for a batch of asset deactivations.
+ * Mailable notification sent to IFS Department Manager to request approval for a batch of asset deletions.
  */
-class DMBulkAssetDeactivationRequest extends Mailable
+class DMBulkAssetDeletionRequest extends Mailable
 {
     use Queueable, SerializesModels;
 
@@ -44,7 +44,7 @@ class DMBulkAssetDeactivationRequest extends Mailable
         $this->sampleAssets = $sampleAssets;
         $this->recipientName = $recipientName;
         $this->requesterName = $requester?->name ?? null;
-        $this->actionUrl = url('/smart/approve-deactivation');
+        $this->actionUrl = url('/smart/approve-deletion');
     }
 
     /**
@@ -53,7 +53,7 @@ class DMBulkAssetDeactivationRequest extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "[SMART] Asset Deactivation Batch Approval Request: {$this->count} Units ({$this->proposedCondition})",
+            subject: "[SMART] Asset Deletion Batch Approval Request: {$this->count} Units ({$this->proposedCondition})",
         );
     }
 
@@ -63,7 +63,7 @@ class DMBulkAssetDeactivationRequest extends Mailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.dm_bulk_asset_deactivation_request',
+            view: 'emails.dm_bulk_asset_deletion_request',
         );
     }
 

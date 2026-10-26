@@ -122,6 +122,7 @@ interface Props {
   lot?: any;
   barang?: {
     category: string;
+    category_code?: string;
   };
   filterVariant?: 'simple' | 'full';
   hideExport?: boolean;

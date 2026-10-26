@@ -54,8 +54,8 @@ const navigation = computed<NavSection[]>(() => {
     // Manager IFS:
     // Phase 1 views:
     // - Dashboard (/smart/dashboard)
-    // - Approval Deactivation (/smart/approve-deactivation)
-    // - History Approval Deactivation (/smart/approve-deactivation?history=true)
+    // - Approval Deletion (/smart/approve-deletion)
+    // - History Approval Deletion (/smart/approve-deletion?history=true)
     // - Pergerakan Aset (/smart/audit-trail)
     // - Audit Manajemen Stok (/smart/inventory-audit)
     sections = ifsNavigation;
@@ -109,7 +109,7 @@ const navigation = computed<NavSection[]>(() => {
     items: section.items.map(item => {
       let badge = item.badge;
       
-      if (item.href === '/smart/approve-deactivation') {
+      if (item.href === '/smart/approve-deletion') {
         badge = pendingAssetStatusCount > 0 ? pendingAssetStatusCount : undefined;
       } else if (item.href === '/smart/approve-activation') {
         badge = pendingAssetActivationCount > 0 ? pendingAssetActivationCount : undefined;
@@ -144,7 +144,7 @@ const isActive = (href: string): boolean => {
   }
 
   // If current URL has history=true but target does not specify history, it shouldn't match
-  // (differentiates "Perlu Approval" /smart/approve-deactivation from "Sudah Diproses" /smart/approve-deactivation?history=true)
+  // (differentiates "Perlu Approval" /smart/approve-deletion from "Sudah Diproses" /smart/approve-deletion?history=true)
   if (current.params.get('history') === 'true' && target.params.get('history') !== 'true') {
     return false;
   }
@@ -154,7 +154,7 @@ const isActive = (href: string): boolean => {
     current.pathname.startsWith('/smart/stock-management/non-consumables') ||
     current.pathname.startsWith('/smart/stock-management/consumables') ||
     current.pathname.startsWith('/smart/stock-management/pending-activation') ||
-    current.pathname.startsWith('/smart/stock-management/pending-deactivation')
+    current.pathname.startsWith('/smart/stock-management/pending-deletion')
   )) {
     return false;
   }

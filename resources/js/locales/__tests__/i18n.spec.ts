@@ -74,18 +74,18 @@ describe('i18n Configuration and Dictionaries', () => {
     expect(i18n.global.t('inventory.inventoryManagement')).toBe('Stock Management');
     expect(i18n.global.t('nav.items.consumableStock')).toBe('Consumable List');
     expect(i18n.global.t('inventory.consumableStockList')).toBe('Consumable List');
-    expect(i18n.global.t('nav.items.pendingInactive')).toBe('Deactivation Pending List');
-    expect(i18n.global.t('nav.sections.approvalDeletion')).toBe('DEACTIVATION APPROVAL');
+    expect(i18n.global.t('nav.items.pendingInactive')).toBe('Deletion Pending List');
+    expect(i18n.global.t('nav.sections.approvalDeletion')).toBe('DELETION APPROVAL');
   });
 
   it('should localize status pending taskbar title distinctly from page heading', () => {
     setI18nLanguage('en');
-    expect(i18n.global.t('approvals.statusPendingTaskbarTitle')).toBe('Deactivation Approval: Pending');
-    expect(i18n.global.t('approvals.statusPendingTitle')).toBe('Deactivation Approval: Requires Your Attention');
+    expect(i18n.global.t('approvals.statusPendingTaskbarTitle')).toBe('Deletion Approval: Pending');
+    expect(i18n.global.t('approvals.statusPendingTitle')).toBe('Deletion Approval: Requires Your Attention');
 
     setI18nLanguage('id');
-    expect(i18n.global.t('approvals.statusPendingTaskbarTitle')).toBe('Approval Deaktivasi: Pending');
-    expect(i18n.global.t('approvals.statusPendingTitle')).toBe('Approval Deaktivasi: Perlu Perhatian Anda');
+    expect(i18n.global.t('approvals.statusPendingTaskbarTitle')).toBe('Approval Penghapusan: Pending');
+    expect(i18n.global.t('approvals.statusPendingTitle')).toBe('Approval Penghapusan: Perlu Perhatian Anda');
   });
 
   it('should localize auditActionTypes properly in both languages', () => {

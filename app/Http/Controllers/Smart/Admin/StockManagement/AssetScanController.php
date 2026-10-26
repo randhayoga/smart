@@ -46,15 +46,19 @@ class AssetScanController extends Controller
     public function show(Asset $asset): Response
     {
         $asset->load([
-            'location.parent.parent', 'statusApprovals',
+            'location.parent.parent', 'deletionApprovals',
             'lot.model.type.category', 'lot.model.brand', 'lot.model.uom',
             'lot.organizer', 'lot.vendor', 'lot.legacyVendor', 'legacyVendor'
         ]);
 
-        $pendingApproval = $asset->statusApprovals->firstWhere('decision', 'pending');
+        $pendingApproval = $asset->deletionApprovals->firstWhere('decision', 'pending');
         $approvedApproval = ($asset->hasStatus('Tidak Aktif') || $asset->hasStatus('Pending:BoD/BoC') || $asset->hasStatus('Dihapus'))
-            ? $asset->statusApprovals->where('decision', 'approved')->sortByDesc('id')->first()
+            ? $asset->deletionApprovals->where('decision', 'approved')->sortByDesc('id')->first()
             : null;
+        $rejectedApproval = (!$pendingApproval && !$approvedApproval)
+            ? $asset->deletionApprovals->where('decision', 'rejected')->sortByDesc('id')->first()
+            : null;
+        $latestDisapproval = $asset->deletionApprovals->whereNotNull('bod_boc_disapproval_url')->sortByDesc('id')->first();
         $model = $asset->lot->model ?? null;
 
         $mappedAsset = [
@@ -77,6 +81,9 @@ class AssetScanController extends Controller
             'bod_boc_approval_url' => $pendingApproval 
                 ? $pendingApproval->bod_boc_approval_url 
                 : ($approvedApproval ? $approvedApproval->bod_boc_approval_url : null),
+            'bod_boc_disapproval_url' => $latestDisapproval?->bod_boc_disapproval_url,
+            'admin_note' => $pendingApproval ? $pendingApproval->admin_note : ($approvedApproval ? $approvedApproval->admin_note : ($rejectedApproval ? $rejectedApproval->admin_note : null)),
+            'dm_note' => $pendingApproval ? $pendingApproval->dm_note : ($approvedApproval ? $approvedApproval->dm_note : ($rejectedApproval ? $rejectedApproval->dm_note : null)),
             'condition' => $asset->condition,
             'type' => $asset->borrowing_type,
             'borrowing_type' => $asset->borrowing_type,

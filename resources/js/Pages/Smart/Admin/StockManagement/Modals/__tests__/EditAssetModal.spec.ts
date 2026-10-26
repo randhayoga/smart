@@ -295,4 +295,45 @@ describe('EditAssetModal.vue - Single & Mass Edit Logic and Layout', () => {
       expect(wrapper.text()).toContain('Tersedia');
     });
   });
+
+  describe('BoD/BoC Approval and Disapproval Mutual Exclusivity', () => {
+    it('allows toggling between BoD Approval and BoD Disapproval, clearing the other', async () => {
+      const wrapper = mountModal([
+        { id: 1, number: 'AST-001', status: 'Tidak Aktif,Pending:BoD/BoC', condition: 'Rusak Total' },
+      ]);
+      const vm = wrapper.vm as any;
+
+      expect(vm.isBodBocFieldVisible).toBe(true);
+      expect(vm.bodBocDecisionType).toBeNull();
+
+      // Check BoD Approval
+      vm.handleToggleBodBocDecision('approval', true);
+      vm.form.bod_boc_approval_file = new File(['dummy'], 'bod_approval.pdf', { type: 'application/pdf' });
+      vm.form.bod_boc_approval_file_name = 'bod_approval.pdf';
+      await wrapper.vm.$nextTick();
+
+      expect(vm.bodBocDecisionType).toBe('approval');
+      expect(vm.form.bod_boc_approval_file_name).toBe('bod_approval.pdf');
+      expect(vm.form.bod_boc_disapproval_file).toBeNull();
+
+      // Switch to BoD Disapproval -> should clear approval file immediately
+      vm.handleToggleBodBocDecision('disapproval', true);
+      vm.form.bod_boc_disapproval_file = new File(['dummy'], 'bod_disapproval.pdf', { type: 'application/pdf' });
+      vm.form.bod_boc_disapproval_file_name = 'bod_disapproval.pdf';
+      await wrapper.vm.$nextTick();
+
+      expect(vm.bodBocDecisionType).toBe('disapproval');
+      expect(vm.form.bod_boc_approval_file).toBeNull();
+      expect(vm.form.bod_boc_approval_file_name).toBe('');
+      expect(vm.form.bod_boc_disapproval_file_name).toBe('bod_disapproval.pdf');
+
+      // Uncheck BoD Disapproval -> should clear everything
+      vm.handleToggleBodBocDecision('disapproval', false);
+      await wrapper.vm.$nextTick();
+
+      expect(vm.bodBocDecisionType).toBeNull();
+      expect(vm.form.bod_boc_disapproval_file).toBeNull();
+      expect(vm.form.bod_boc_disapproval_file_name).toBe('');
+    });
+  });
 });

@@ -54,8 +54,8 @@ const skeletonType = computed<SkeletonType>(() => {
     return 'master-table';
   }
 
-  // 6. Manager Approval Deactivation (2 tabs: Perlu Approve & Sudah Approve)
-  if (cleanPath.includes('/approve-deactivation')) {
+  // 6. Manager Approval Deletion (2 tabs: Perlu Approve & Sudah Approve)
+  if (cleanPath.includes('/approve-deletion')) {
     return 'approval-table';
   }
 

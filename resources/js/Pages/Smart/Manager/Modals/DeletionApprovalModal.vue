@@ -91,11 +91,22 @@ const openMemoFile = (path?: string | null) => {
   if (!path) return;
   window.open('/media/' + path, '_blank');
 };
+const getConditionLabel = (cond?: string | null) => {
+  if (!cond) return '-';
+  const c = cond.trim().toLowerCase();
+  if (c === 'bagus' || c === 'good') return t('inventory.conditionGood');
+  if (c === 'rusak' || c === 'damaged') return t('inventory.conditionDamaged');
+  if (c === 'rusak total' || c === 'total damage') return t('inventory.conditionTotalDamage');
+  if (c === 'hilang' || c === 'lost') return t('inventory.conditionLost');
+  return cond;
+};
+
 const getConditionClass = (cond?: string | null) => {
   if (!cond) return 'text-foreground';
-  if (cond === 'Bagus' || cond === 'QC Passed') return 'text-emerald-600 font-semibold';
-  if (cond === 'Lelang/Hibah') return 'text-purple-600 font-semibold';
-  if (cond === 'Rusak' || cond === 'Rusak Total' || cond === 'Hilang') return 'text-rose-600 font-semibold';
+  const c = cond.trim().toLowerCase();
+  if (c === 'bagus' || c === 'qc passed' || c === 'good') return 'text-emerald-600 font-semibold';
+  if (c === 'lelang/hibah') return 'text-purple-600 font-semibold';
+  if (c === 'rusak' || c === 'rusak total' || c === 'hilang' || c === 'damaged' || c === 'total damage' || c === 'lost') return 'text-rose-600 font-semibold';
   return 'text-foreground';
 };
 </script>
@@ -144,8 +155,8 @@ const getConditionClass = (cond?: string | null) => {
                 <!-- Image Column -->
                 <div class="w-48 h-48 rounded-xl bg-muted shrink-0 flex items-center justify-center overflow-hidden border border-border">
                   <img 
-                    v-if="approval.unit_details.image_url" 
-                    :src="approval.unit_details.image_url.startsWith('http') || approval.unit_details.image_url.startsWith('/') ? approval.unit_details.image_url : '/media/' + approval.unit_details.image_url" 
+                    v-if="approval.asset_details?.image_url" 
+                    :src="approval.asset_details.image_url.startsWith('http') || approval.asset_details.image_url.startsWith('/') ? approval.asset_details.image_url : '/media/' + approval.asset_details.image_url" 
                     class="w-full h-full object-cover" 
                   />
                   <img 
@@ -159,38 +170,37 @@ const getConditionClass = (cond?: string | null) => {
                 <div class="flex-grow grid grid-cols-1 md:grid-cols-12 gap-4 text-foreground">
                   <!-- Column 1: Item Info -->
                   <div class="md:col-span-3">
-                    <p class="font-bold text-foreground"><span class="text-foreground">{{ $t('approvals.typeCode') }}</span> {{ approval.unit_details.barang_code }}</p>
+                    <p class="font-bold text-foreground"><span class="text-foreground">{{ $t('approvals.typeCode') }}</span> {{ approval.asset_details?.model_code ?? approval.asset_details?.barang_code }}</p>
                     <p class="font-bold text-foreground"><span class="text-foreground">{{ $t('approvals.brandLabel') }}</span> {{ approval.brand }}</p>
-                    <p class="font-bold text-foreground"><span class="text-foreground">{{ $t('approvals.nameLabel') }}</span> {{ approval.nama }}</p>
+                    <p class="font-bold text-foreground"><span class="text-foreground">{{ $t('approvals.nameLabel') }}</span> {{ approval.name ?? approval.nama }}</p>
                     <p class="font-bold text-foreground"><span class="text-foreground">{{ $t('approvals.specLabel') }}</span> {{ approval.specification }}</p>
                     <p class="text-foreground">{{ $t('approvals.categoryLabel') }} {{ approval.category }}</p>
                     <p class="text-foreground">{{ $t('approvals.subcategoryLabel') }} {{ approval.subcategory }}</p>
-                    <p class="text-foreground">{{ $t('approvals.unitLabel') }} {{ approval.unit_details.barang_unit }}</p>
                   </div>
 
                   <!-- Column 2: LOT Info -->
                   <div class="md:col-span-4">
-                    <p class="font-bold text-foreground"><span class="text-foreground">{{ $t('approvals.lotCodeLabel') }}</span> {{ approval.unit_details.lot_code }}</p>
-                    <p class="text-foreground">{{ $t('approvals.organizerLabel') }} {{ approval.unit_details.organizer }}</p>
-                    <p class="text-foreground">{{ $t('approvals.regDateLabel') }} {{ formatDate(approval.unit_details.date_of_receipt) }}</p>
-                    <p class="text-foreground">{{ $t('approvals.ageLabel') }} {{ approval.unit_details.age !== undefined && approval.unit_details.age !== null ? `${approval.unit_details.age} ${$t('approvals.years')}` : '-' }}</p>
-                    <p class="text-foreground">{{ $t('approvals.vendorLabel') }} {{ approval.unit_details.vendor }}</p>
-                    <p class="text-foreground">{{ $t('approvals.poNumberLabel') }} {{ approval.unit_details.po_number }}</p>
+                    <p class="font-bold text-foreground"><span class="text-foreground">{{ $t('approvals.lotCodeLabel') }}</span> {{ approval.asset_details?.lot_number ?? approval.asset_details?.lot_code }}</p>
+                    <p class="text-foreground">{{ $t('approvals.organizerLabel') }} {{ approval.asset_details?.organizer }}</p>
+                    <p class="text-foreground">{{ $t('approvals.regDateLabel') }} {{ formatDate(approval.asset_details?.purchase_grant_date) }}</p>
+                    <p class="text-foreground">{{ $t('approvals.ageLabel') }} {{ approval.asset_details?.age !== undefined && approval.asset_details?.age !== null ? `${approval.asset_details.age} ${$t('approvals.years')}` : '-' }}</p>
+                    <p class="text-foreground">{{ $t('approvals.vendorLabel') }} {{ approval.asset_details?.vendor }}</p>
+                    <p class="text-foreground">{{ $t('approvals.poNumberLabel') }} {{ approval.asset_details?.po_number }}</p>
                   </div>
 
                   <!-- Column 3: Asset Info -->
                   <div class="md:col-span-5">
-                    <p class="font-bold text-foreground"><span class="text-foreground">{{ $t('approvals.assetCodeLabel') }}</span> {{ approval.asset_code }}</p>
-                    <p v-if="approval.unit_details.legacy_number" class="text-foreground"><span class="text-foreground">{{ $t('inventory.legacyNumber') }}:</span> {{ approval.unit_details.legacy_number }}</p>
+                    <p class="font-bold text-foreground"><span class="text-foreground">{{ $t('approvals.assetCodeLabel') }}</span> {{ approval.asset_number ?? approval.asset_code }}</p>
+                    <p v-if="approval.asset_details?.legacy_number" class="text-foreground"><span class="text-foreground">{{ $t('inventory.legacyNumber') }}:</span> {{ approval.asset_details.legacy_number }}</p>
                     <!-- TNKB (Nopol) -->
                     <p v-if="isVehicle(approval)" class="font-bold text-foreground">
-                      <span class="text-foreground">{{ $t('approvals.plateLabel') }}</span> {{ approval.unit_details.vehicle_registration || '-' }}
+                      <span class="text-foreground">{{ $t('approvals.plateLabel') }}</span> {{ approval.asset_details?.vehicle_registration || '-' }}
                     </p>
 
                     <div class="flex items-center gap-1.5 flex-wrap">
                       <span>{{ $t('approvals.proposedConditionLabel') }}</span>
                       <span :class="getConditionClass(approval.proposed_condition || approval.proposed_status || approval.status_label)">
-                        {{ approval.proposed_condition || approval.proposed_status || approval.status_label }}
+                        {{ getConditionLabel(approval.proposed_condition || approval.proposed_status || approval.status_label) }}
                       </span>
                     </div>
                     
@@ -211,8 +221,8 @@ const getConditionClass = (cond?: string | null) => {
                       <div class="flex items-center gap-1.5 flex-wrap">
                         <span>{{ $t('approvals.prevStatusConditionLabel') }}</span>
                         <StatusBadge :status="approval.previous_status" />
-                        <span :class="getConditionClass(approval.previous_condition || approval.unit_details.condition)">
-                          {{ approval.previous_condition || approval.unit_details.condition }}
+                        <span :class="getConditionClass(approval.previous_condition || approval.asset_details?.condition)">
+                          {{ getConditionLabel(approval.previous_condition || approval.asset_details?.condition) }}
                         </span>
                       </div>
 
@@ -221,25 +231,30 @@ const getConditionClass = (cond?: string | null) => {
                         <template v-if="approval.decision === 'approved'">
                           <StatusBadge status="Tidak Aktif,Pending:BoD/BoC" />
                           <span :class="getConditionClass(approval.proposed_condition || approval.proposed_status)">
-                            {{ approval.proposed_condition || approval.proposed_status }}
+                            {{ getConditionLabel(approval.proposed_condition || approval.proposed_status) }}
                           </span>
                         </template>
                         <template v-else>
                           <StatusBadge :status="approval.previous_status" />
-                          <span :class="getConditionClass(approval.previous_condition || approval.unit_details.condition)">
-                            {{ approval.previous_condition || approval.unit_details.condition }}
+                          <span :class="getConditionClass(approval.previous_condition || approval.asset_details?.condition)">
+                            {{ getConditionLabel(approval.previous_condition || approval.asset_details?.condition) }}
                           </span>
                         </template>
                       </div>
                     </div>
 
-                    <!-- Decided mode fields -->
-                    <p class="text-foreground mt-1.5" v-if="mode === 'decided' && approval.note">
-                      {{ $t('approvals.managerNoteLabel') }} <span class="italic text-muted-foreground">"{{ approval.note }}"</span>
+                    <!-- Admin Note -->
+                    <p class="text-foreground mt-1.5" v-if="approval.admin_note">
+                      {{ $t('inventory.adminNote') }}: <span class="italic text-muted-foreground">"{{ approval.admin_note }}"</span>
                     </p>
 
-                    <p class="text-foreground mt-1.5">{{ $t('approvals.priceLabel') }} {{ formatRupiah(approval.unit_details.price) }}</p>
-                    <p class="text-foreground">{{ $t('approvals.storageLocationLabel') }} {{ formatLocation(approval.unit_details.location, approval.unit_details.floor, approval.unit_details.room) }}</p>
+                    <!-- Manager Note (Decided mode) -->
+                    <p class="text-foreground mt-1.5" v-if="mode === 'decided' && (approval.dm_note || approval.note)">
+                      {{ $t('approvals.managerNoteLabel') }} <span class="italic text-muted-foreground">"{{ approval.dm_note || approval.note }}"</span>
+                    </p>
+
+                    <p class="text-foreground mt-1.5">{{ $t('approvals.priceLabel') }} {{ formatRupiah(approval.asset_details?.price) }}</p>
+                    <p class="text-foreground">{{ $t('approvals.storageLocationLabel') }} {{ formatLocation(approval.asset_details?.location, approval.asset_details?.floor, approval.asset_details?.room) }}</p>
                     <p class="text-foreground" v-if="mode === 'pending'">{{ $t('approvals.lastUpdateLabel') }} {{ approval.requested_at }}</p>
                   </div>
                 </div>
@@ -248,7 +263,7 @@ const getConditionClass = (cond?: string | null) => {
               <!-- ── TAB 2: JEJAK AUDIT ── -->
               <AuditTrailTab 
                 v-if="activeTab === 'audit'"
-                :lifecycles="approval.unit_details.lifecycles" 
+                :lifecycles="approval.asset_details?.lifecycles" 
               />
             </div>
 

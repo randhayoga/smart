@@ -9,6 +9,7 @@ import { useForm, router } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 import { X, ChevronDown, Loader2, Trash2 } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
+import { Checkbox } from '@/Components/ui/checkbox';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/Components/ui/dropdown-menu';
@@ -178,11 +179,16 @@ const form = useForm({
   memo_file_name: '',
   lost_doc_file: null as File | null,
   lost_doc_file_name: '',
+  admin_note: '',
   bod_boc_approval_file: null as File | null,
   bod_boc_approval_file_name: '',
+  bod_boc_disapproval_file: null as File | null,
+  bod_boc_disapproval_file_name: '',
   burden: '',
   project_id: '' as string | number,
 });
+
+const bodBocDecisionType = ref<'approval' | 'disapproval' | null>(null);
 
 const errors = ref({
   specification: '',
@@ -195,7 +201,9 @@ const errors = ref({
   vehicle_registration: '',
   memo_file: '',
   lost_doc_file: '',
+  admin_note: '',
   bod_boc_approval_file: '',
+  bod_boc_disapproval_file: '',
   burden: '',
   project_id: '',
 });
@@ -212,7 +220,9 @@ const resetErrors = () => {
     vehicle_registration: '',
     memo_file: '',
     lost_doc_file: '',
+    admin_note: '',
     bod_boc_approval_file: '',
+    bod_boc_disapproval_file: '',
     burden: '',
     project_id: '',
   };
@@ -244,6 +254,7 @@ watch(() => form.vehicle_registration, v => { if (v && errors.value.vehicle_regi
 watch(() => form.memo_file, v => { if (v && errors.value.memo_file) errors.value.memo_file = ''; });
 watch(() => form.lost_doc_file, v => { if (v && errors.value.lost_doc_file) errors.value.lost_doc_file = ''; });
 watch(() => form.bod_boc_approval_file, v => { if (v && errors.value.bod_boc_approval_file) errors.value.bod_boc_approval_file = ''; });
+watch(() => form.bod_boc_disapproval_file, v => { if (v && errors.value.bod_boc_disapproval_file) errors.value.bod_boc_disapproval_file = ''; });
 watch(() => form.burden, v => {
   if (v && errors.value.burden) errors.value.burden = '';
   if (v !== 'Project') {
@@ -313,8 +324,12 @@ const resetModalState = () => {
   form.memo_file_name = '';
   form.lost_doc_file = null;
   form.lost_doc_file_name = '';
+  form.admin_note = '';
   form.bod_boc_approval_file = null;
   form.bod_boc_approval_file_name = '';
+  form.bod_boc_disapproval_file = null;
+  form.bod_boc_disapproval_file_name = '';
+  bodBocDecisionType.value = null;
   form.burden = 'Tidak berubah';
   form.project_id = '';
 
@@ -323,6 +338,7 @@ const resetModalState = () => {
     'edit-asset-memo-upload',
     'edit-asset-lost-doc-upload',
     'edit-asset-bod-boc-doc-upload',
+    'edit-asset-bod-boc-disapproval-doc-upload',
   ];
   inputIds.forEach(id => {
     const el = document.getElementById(id) as HTMLInputElement | null;
@@ -357,7 +373,16 @@ watch(() => props.open, (val) => {
     form.vehicle_registration = item.vehicle_registration || '';
     form.memo_file_name = item.memo_file_name || (item.memo_url ? item.memo_url.split('/').pop() || '' : '');
     form.lost_doc_file_name = item.lost_doc_file_name || (item.lost_doc_url ? item.lost_doc_url.split('/').pop() || '' : '');
+    form.admin_note = item.admin_note || '';
     form.bod_boc_approval_file_name = item.bod_boc_approval_file_name || (item.bod_boc_approval_url ? item.bod_boc_approval_url.split('/').pop() || '' : '');
+    form.bod_boc_disapproval_file_name = item.bod_boc_disapproval_file_name || (item.bod_boc_disapproval_url ? item.bod_boc_disapproval_url.split('/').pop() || '' : '');
+    if (form.bod_boc_approval_file_name) {
+      bodBocDecisionType.value = 'approval';
+    } else if (form.bod_boc_disapproval_file_name) {
+      bodBocDecisionType.value = 'disapproval';
+    } else {
+      bodBocDecisionType.value = null;
+    }
     form.burden = item.burden || 'Corporate';
     form.project_id = item.project_id || '';
     form.specification = isComp.value ? (item.comp_specification || item.specification || '') : '';
@@ -484,6 +509,38 @@ const viewLostDocInNewTab = () => {
   }
 };
 
+const handleToggleBodBocDecision = (type: 'approval' | 'disapproval', checked: boolean) => {
+  if (checked) {
+    bodBocDecisionType.value = type;
+    if (type === 'approval') {
+      form.bod_boc_disapproval_file = null;
+      form.bod_boc_disapproval_file_name = '';
+      errors.value.bod_boc_disapproval_file = '';
+      const input = document.getElementById('edit-asset-bod-boc-disapproval-doc-upload') as HTMLInputElement | null;
+      if (input) input.value = '';
+    } else {
+      form.bod_boc_approval_file = null;
+      form.bod_boc_approval_file_name = '';
+      errors.value.bod_boc_approval_file = '';
+      const input = document.getElementById('edit-asset-bod-boc-doc-upload') as HTMLInputElement | null;
+      if (input) input.value = '';
+    }
+  } else {
+    if (bodBocDecisionType.value === type) {
+      bodBocDecisionType.value = null;
+      if (type === 'approval') {
+        form.bod_boc_approval_file = null;
+        form.bod_boc_approval_file_name = '';
+        errors.value.bod_boc_approval_file = '';
+      } else {
+        form.bod_boc_disapproval_file = null;
+        form.bod_boc_disapproval_file_name = '';
+        errors.value.bod_boc_disapproval_file = '';
+      }
+    }
+  }
+};
+
 const handleBodBocDocUpload = (e: any) => {
   const file = e.target.files[0];
   if (!file) return;
@@ -492,6 +549,29 @@ const handleBodBocDocUpload = (e: any) => {
   if (file.size > 2 * 1024 * 1024) { toast.error(t('inventory.fileTooLarge2Mb')); return; }
   form.bod_boc_approval_file = file;
   form.bod_boc_approval_file_name = file.name;
+};
+
+const handleBodBocDisapprovalDocUpload = (e: any) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+  if (!allowedTypes.includes(file.type)) { toast.error(t('inventory.invalidDocFormat')); return; }
+  if (file.size > 2 * 1024 * 1024) { toast.error(t('inventory.fileTooLarge2Mb')); return; }
+  form.bod_boc_disapproval_file = file;
+  form.bod_boc_disapproval_file_name = file.name;
+};
+
+const triggerBodBocDisapprovalDocFileInput = () => {
+  const input = document.getElementById('edit-asset-bod-boc-disapproval-doc-upload') as HTMLInputElement;
+  input?.click();
+};
+
+const viewBodBocDisapprovalDocInNewTab = () => {
+  if (form.bod_boc_disapproval_file) {
+    window.open(URL.createObjectURL(form.bod_boc_disapproval_file), '_blank');
+  } else if (isSingle.value && selectedItem.value?.bod_boc_disapproval_url) {
+    window.open('/media/' + selectedItem.value.bod_boc_disapproval_url, '_blank');
+  }
 };
 
 const triggerBodBocDocFileInput = () => {
@@ -578,7 +658,12 @@ const handleSubmit = () => {
       }
       if (data.memo_file) fd.memo_file = data.memo_file;
       if (data.lost_doc_file) fd.lost_doc_file = data.lost_doc_file;
-      if (data.bod_boc_approval_file) fd.bod_boc_approval_file = data.bod_boc_approval_file;
+      if (arrNeedApproval.includes(form.condition)) fd.admin_note = data.admin_note || null;
+      if (bodBocDecisionType.value === 'approval' && data.bod_boc_approval_file) {
+        fd.bod_boc_approval_file = data.bod_boc_approval_file;
+      } else if (bodBocDecisionType.value === 'disapproval' && data.bod_boc_disapproval_file) {
+        fd.bod_boc_disapproval_file = data.bod_boc_disapproval_file;
+      }
       return fd;
     }).post(`/smart/stock-management/assets/${form.ids[0]}`, {
       onSuccess: () => {
@@ -602,7 +687,7 @@ const handleSubmit = () => {
       form.classification ||
       form.location_id || form.price ||
       (isComp.value && form.specification) ||
-      form.image_url || form.memo_file || form.lost_doc_file || form.bod_boc_approval_file ||
+      form.image_url || form.memo_file || form.lost_doc_file || form.bod_boc_approval_file || form.bod_boc_disapproval_file ||
       (form.burden && form.burden !== 'Tidak berubah')
     );
     if (!hasField) {
@@ -647,7 +732,12 @@ const handleSubmit = () => {
     if (form.image_url instanceof File) payload.image_url = form.image_url;
     if (form.memo_file instanceof File) payload.memo_file = form.memo_file;
     if (form.lost_doc_file instanceof File) payload.lost_doc_file = form.lost_doc_file;
-    if (form.bod_boc_approval_file instanceof File) payload.bod_boc_approval_file = form.bod_boc_approval_file;
+    if (arrNeedApproval.includes(form.condition) && form.admin_note) payload.admin_note = form.admin_note;
+    if (bodBocDecisionType.value === 'approval' && form.bod_boc_approval_file instanceof File) {
+      payload.bod_boc_approval_file = form.bod_boc_approval_file;
+    } else if (bodBocDecisionType.value === 'disapproval' && form.bod_boc_disapproval_file instanceof File) {
+      payload.bod_boc_disapproval_file = form.bod_boc_disapproval_file;
+    }
 
     isSubmitting.value = true;
     router.post('/smart/stock-management/assets/bulk-update', payload, {
@@ -1017,27 +1107,88 @@ const handleSubmit = () => {
                     <FieldError v-if="errors.lost_doc_file">{{ errors.lost_doc_file }}</FieldError>
                   </Field>
 
-                  <!-- Formulir Approval BoD/BoC (Only visible when existing status is Pending:BoD/BoC) -->
-                  <Field v-if="isBodBocFieldVisible" :data-invalid="!!errors.bod_boc_approval_file || undefined">
-                    <FieldLabel><span>{{ t('inventory.bodBocForm') }}</span></FieldLabel>
+                  <!-- Admin Note / Deletion Note (for Total Damage or Lost) -->
+                  <Field v-if="arrNeedApproval.includes(form.condition)" :data-disabled="isDocumentDisabled || undefined">
+                    <FieldLabel><span>{{ t('inventory.adminNote') }}</span></FieldLabel>
                     <FieldContent>
-                      <div class="flex gap-2">
-                        <div class="flex-grow min-w-0 px-4 py-2 text-sm border rounded-[14px] truncate flex items-center h-10 bg-muted/10"
-                          :class="[
-                            form.bod_boc_approval_file_name ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' : 'text-muted-foreground cursor-default',
-                            errors.bod_boc_approval_file ? 'border-destructive' : 'border-input'
-                          ]"
-                          @click="form.bod_boc_approval_file_name && viewBodBocDocInNewTab()"
-                        >
-                          {{ form.bod_boc_approval_file_name || t('inventory.noFileSelected') }}
-                        </div>
-                        <input type="file" id="edit-asset-bod-boc-doc-upload" class="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp" @change="handleBodBocDocUpload" />
-                        <Button type="button" @click="triggerBodBocDocFileInput" size="lg">{{ t('inventory.chooseDoc') }}</Button>
-                      </div>
-                      <p class="text-[10px] text-muted-foreground ml-1 mt-1">{{ t('inventory.maxFileSize2Mb') }}</p>
+                      <textarea
+                        id="edit-asset-admin-note"
+                        name="admin_note"
+                        v-model="form.admin_note"
+                        rows="2"
+                        maxlength="1000"
+                        :placeholder="t('inventory.adminNotePlaceholder')"
+                        :disabled="isDocumentDisabled"
+                        class="w-full px-4 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors resize-none border-input disabled:bg-muted/30 disabled:text-muted-foreground disabled:cursor-not-allowed"
+                      />
                     </FieldContent>
-                    <FieldError v-if="errors.bod_boc_approval_file">{{ errors.bod_boc_approval_file }}</FieldError>
                   </Field>
+
+                  <!-- BoD/BoC Decision & Document Upload (Only visible when existing status is Pending:BoD/BoC) -->
+                  <div v-if="isBodBocFieldVisible" class="space-y-4 pt-2 border-t border-border/60">
+                    <div class="flex items-center gap-6">
+                      <label class="flex items-center gap-2 cursor-pointer text-sm font-medium">
+                        <Checkbox 
+                          id="bod-approval-checkbox"
+                          :model-value="bodBocDecisionType === 'approval'" 
+                          @update:model-value="(val) => handleToggleBodBocDecision('approval', Boolean(val))" 
+                        />
+                        <span>{{ t('inventory.bodBocApproval') }}</span>
+                      </label>
+                      <label class="flex items-center gap-2 cursor-pointer text-sm font-medium">
+                        <Checkbox 
+                          id="bod-disapproval-checkbox"
+                          :model-value="bodBocDecisionType === 'disapproval'" 
+                          @update:model-value="(val) => handleToggleBodBocDecision('disapproval', Boolean(val))" 
+                        />
+                        <span>{{ t('inventory.bodBocDisapproval') }}</span>
+                      </label>
+                    </div>
+
+                    <!-- BoD/BoC Approval Document Upload -->
+                    <Field v-if="bodBocDecisionType === 'approval'" :data-invalid="!!errors.bod_boc_approval_file || undefined">
+                      <FieldLabel><span>{{ t('inventory.uploadBodBocDoc') }}</span></FieldLabel>
+                      <FieldContent>
+                        <div class="flex gap-2">
+                          <div class="flex-grow min-w-0 px-4 py-2 text-sm border rounded-[14px] truncate flex items-center h-10 bg-muted/10"
+                            :class="[
+                              form.bod_boc_approval_file_name ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' : 'text-muted-foreground cursor-default',
+                              errors.bod_boc_approval_file ? 'border-destructive' : 'border-input'
+                            ]"
+                            @click="form.bod_boc_approval_file_name && viewBodBocDocInNewTab()"
+                          >
+                            {{ form.bod_boc_approval_file_name || t('inventory.noFileSelected') }}
+                          </div>
+                          <input type="file" id="edit-asset-bod-boc-doc-upload" class="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp" @change="handleBodBocDocUpload" />
+                          <Button type="button" @click="triggerBodBocDocFileInput" size="lg">{{ t('inventory.chooseDoc') }}</Button>
+                        </div>
+                        <p class="text-[10px] text-muted-foreground ml-1 mt-1">{{ t('inventory.maxFileSize2Mb') }}</p>
+                      </FieldContent>
+                      <FieldError v-if="errors.bod_boc_approval_file">{{ errors.bod_boc_approval_file }}</FieldError>
+                    </Field>
+
+                    <!-- BoD/BoC Disapproval Document Upload -->
+                    <Field v-if="bodBocDecisionType === 'disapproval'" :data-invalid="!!errors.bod_boc_disapproval_file || undefined">
+                      <FieldLabel><span>{{ t('inventory.uploadBodBocDisapprovalDoc') }}</span></FieldLabel>
+                      <FieldContent>
+                        <div class="flex gap-2">
+                          <div class="flex-grow min-w-0 px-4 py-2 text-sm border rounded-[14px] truncate flex items-center h-10 bg-muted/10"
+                            :class="[
+                              form.bod_boc_disapproval_file_name ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' : 'text-muted-foreground cursor-default',
+                              errors.bod_boc_disapproval_file ? 'border-destructive' : 'border-input'
+                            ]"
+                            @click="form.bod_boc_disapproval_file_name && viewBodBocDisapprovalDocInNewTab()"
+                          >
+                            {{ form.bod_boc_disapproval_file_name || t('inventory.noFileSelected') }}
+                          </div>
+                          <input type="file" id="edit-asset-bod-boc-disapproval-doc-upload" class="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp" @change="handleBodBocDisapprovalDocUpload" />
+                          <Button type="button" @click="triggerBodBocDisapprovalDocFileInput" size="lg">{{ t('inventory.chooseDoc') }}</Button>
+                        </div>
+                        <p class="text-[10px] text-muted-foreground ml-1 mt-1">{{ t('inventory.maxFileSize2Mb') }}</p>
+                      </FieldContent>
+                      <FieldError v-if="errors.bod_boc_disapproval_file">{{ errors.bod_boc_disapproval_file }}</FieldError>
+                    </Field>
+                  </div>
                 </div>
               </div>
             </div>

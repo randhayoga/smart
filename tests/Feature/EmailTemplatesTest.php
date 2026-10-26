@@ -2,13 +2,13 @@
 
 namespace Tests\Feature;
 
-use App\Mail\DMBulkAssetDeactivationRequest;
+use App\Mail\DMBulkAssetDeletionRequest;
 use App\Mail\DMUnitActivationRequest;
-use App\Mail\DMAssetStatusRequest;
+use App\Mail\DMAssetDeletionRequest;
 use App\Mail\ManagerRequestApprovalMail;
 use App\Mail\RequesterRequestRejectedMail;
 use App\Models\HrdEmployee;
-use App\Models\Inventory\AssetStatusApproval;
+use App\Models\Inventory\AssetDeletionApproval;
 use App\Models\Inventory\Barang;
 use App\Models\Inventory\Lot;
 use App\Models\Inventory\Unit;
@@ -45,26 +45,26 @@ class EmailTemplatesTest extends TestCase
             'condition' => 'Good',
         ]);
 
-        $approval = AssetStatusApproval::create([
+        $approval = AssetDeletionApproval::create([
             'asset_id' => $unit->id,
             'requester_id' => $requester->id,
             'previous_condition' => 'Good',
             'proposed_condition' => 'Damaged',
-            'note' => 'Display cracked during relocation',
+            'admin_note' => 'Display cracked during relocation',
             'decision' => 'pending',
             'memo_url' => 'memos/test.pdf',
             'requested_at' => now(),
         ]);
 
-        $mail = new DMAssetStatusRequest($unit, $approval, 'Jane Manager');
-        $this->assertEquals('[SMART] Asset Deactivation Approval Request: AST-DEL-001 (Dell Monitor 27 inch)', $mail->envelope()->subject);
+        $mail = new DMAssetDeletionRequest($unit, $approval, 'Jane Manager');
+        $this->assertEquals('[SMART] Asset Deletion Approval Request: AST-DEL-001 (Dell Monitor 27 inch)', $mail->envelope()->subject);
         $rendered = $mail->render();
 
         $this->assertStringContainsString('lang="en"', $rendered);
-        $this->assertStringContainsString('Asset Deactivation Approval - SMART', $rendered);
+        $this->assertStringContainsString('Asset Deletion Approval - SMART', $rendered);
         $this->assertStringContainsString('Asset Management & Request Tracking System', $rendered);
         $this->assertStringContainsString('Dear Jane Manager', $rendered);
-        $this->assertStringContainsString('An asset deactivation request has been submitted below and requires your', $rendered);
+        $this->assertStringContainsString('An asset deletion request has been submitted below and requires your', $rendered);
         $this->assertStringContainsString('Asset Number', $rendered);
         $this->assertStringContainsString('AST-DEL-001', $rendered);
         $this->assertStringContainsString('Item Name', $rendered);
@@ -262,7 +262,7 @@ class EmailTemplatesTest extends TestCase
         $this->assertStringContainsString('Automated email from <strong>SMART</strong> &bull; Please do not reply to this email.', $rendered);
     }
 
-    public function test_dm_bulk_asset_deactivation_request_email_renders_in_english(): void
+    public function test_dm_bulk_asset_deletion_request_email_renders_in_english(): void
     {
         $requester = User::factory()->create(['name' => 'Alice Requester']);
         $sampleAssets = [
@@ -270,23 +270,23 @@ class EmailTemplatesTest extends TestCase
             ['number' => 'AST-DEL-002', 'name' => 'Dell Monitor 27 inch', 'location' => 'Main Office - Floor 2'],
         ];
 
-        $mail = new DMBulkAssetDeactivationRequest(5, 'Rusak Total', $sampleAssets, $requester, 'Jane Manager');
-        $this->assertEquals('[SMART] Asset Deactivation Batch Approval Request: 5 Units (Rusak Total)', $mail->envelope()->subject);
+        $mail = new DMBulkAssetDeletionRequest(5, 'Rusak Total', $sampleAssets, $requester, 'Jane Manager');
+        $this->assertEquals('[SMART] Asset Deletion Batch Approval Request: 5 Units (Rusak Total)', $mail->envelope()->subject);
         $rendered = $mail->render();
 
         $this->assertStringContainsString('lang="en"', $rendered);
-        $this->assertStringContainsString('Asset Deactivation Approval - SMART', $rendered);
+        $this->assertStringContainsString('Asset Deletion Approval - SMART', $rendered);
         $this->assertStringContainsString('Asset Management & Request Tracking System', $rendered);
         $this->assertStringContainsString('Dear Jane Manager', $rendered);
-        $this->assertStringContainsString('5 asset deactivation requests', $rendered);
+        $this->assertStringContainsString('5 asset deletion requests', $rendered);
         $this->assertStringContainsString('Rusak Total', $rendered);
         $this->assertStringContainsString('Submitted By', $rendered);
         $this->assertStringContainsString('Alice Requester', $rendered);
         $this->assertStringContainsString('AST-DEL-001', $rendered);
         $this->assertStringContainsString('AST-DEL-002', $rendered);
         $this->assertStringContainsString('+ 3 more asset units pending review.', $rendered);
-        $this->assertStringContainsString('Review Deactivation Approvals', $rendered);
-        $this->assertStringContainsString('/smart/approve-deactivation', $rendered);
+        $this->assertStringContainsString('Review Deletion Approvals', $rendered);
+        $this->assertStringContainsString('/smart/approve-deletion', $rendered);
         $this->assertStringContainsString('Automated email from <strong>SMART</strong> &bull; Please do not reply to this email.', $rendered);
     }
 }

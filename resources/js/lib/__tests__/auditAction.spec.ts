@@ -16,10 +16,14 @@ describe('auditAction utility', () => {
     expect(getLocalizedAuditAction('Peminjaman')).toBe('Peminjaman');
     expect(getLocalizedAuditAction('Pengembalian')).toBe('Pengembalian');
     expect(getLocalizedAuditAction('Pemeliharaan')).toBe('Pemeliharaan');
-    expect(getLocalizedAuditAction('Approval')).toBe('Approval');
+    expect(getLocalizedAuditAction('Approval')).toBe('Persetujuan');
+    expect(getLocalizedAuditAction('Persetujuan')).toBe('Persetujuan');
     expect(getLocalizedAuditAction('Penghapusan')).toBe('Penghapusan');
-    expect(getLocalizedAuditAction('Deaktivasi')).toBe('Deaktivasi');
+    expect(getLocalizedAuditAction('Deaktivasi')).toBe('Penghapusan');
     expect(getLocalizedAuditAction('Adjustment')).toBe('Penyesuaian');
+    expect(getLocalizedAuditAction('Assignment')).toBe('Assignment');
+    expect(getLocalizedAuditAction('Disapproval')).toBe('Penolakan');
+    expect(getLocalizedAuditAction('Penolakan')).toBe('Penolakan');
   });
 
   it('translates all core audit actions to English when active locale is en', () => {
@@ -32,9 +36,13 @@ describe('auditAction utility', () => {
     expect(getLocalizedAuditAction('Pengembalian')).toBe('Return');
     expect(getLocalizedAuditAction('Pemeliharaan')).toBe('Maintenance');
     expect(getLocalizedAuditAction('Approval')).toBe('Approval');
-    expect(getLocalizedAuditAction('Penghapusan')).toBe('Disposal');
-    expect(getLocalizedAuditAction('Deaktivasi')).toBe('Deactivation');
+    expect(getLocalizedAuditAction('Persetujuan')).toBe('Approval');
+    expect(getLocalizedAuditAction('Penghapusan')).toBe('Deletion');
+    expect(getLocalizedAuditAction('Deaktivasi')).toBe('Deletion');
     expect(getLocalizedAuditAction('Adjustment')).toBe('Adjustment');
+    expect(getLocalizedAuditAction('Assignment')).toBe('Assignment');
+    expect(getLocalizedAuditAction('Disapproval')).toBe('Disapproval');
+    expect(getLocalizedAuditAction('Penolakan')).toBe('Disapproval');
   });
 
   it('handles case insensitivity and underscore variations', () => {

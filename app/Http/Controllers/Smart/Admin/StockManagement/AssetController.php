@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Inventory\Model as InventoryModel;
 use App\Models\Inventory\Lot;
 use App\Models\Inventory\Asset;
-use App\Models\Inventory\AssetStatusApproval;
+use App\Models\Inventory\AssetDeletionApproval;
 use App\Models\Inventory\AssetActivationApproval;
 use App\Models\Inventory\AssetLifecycle;
 use App\Models\Master\Location;
@@ -80,6 +80,7 @@ class AssetController extends Controller
 
         if ($needApproval) {
             $rules['memo_file'] = 'required|file|mimes:pdf,jpeg,jpg,png,webp|max:2048';
+            $rules['admin_note'] = 'nullable|string';
             if ($proposedCondition === 'Hilang') {
                 $rules['lost_doc_file'] = 'required|file|mimes:pdf,jpeg,jpg,png,webp|max:2048';
             }
@@ -136,22 +137,23 @@ class AssetController extends Controller
             if ($proposedCondition === 'Hilang' && $request->hasFile('lost_doc_file')) {
                 $lostDocUrl = $imageUploadService->storeImageOrFile($request->file('lost_doc_file'), 'lost_docs');
             }
-            AssetStatusApproval::create([
+            $approval = AssetDeletionApproval::create([
                 'asset_id' => $asset->id,
                 'requester_id' => $request->user()->id,
                 'proposed_condition' => $proposedCondition,
                 'previous_condition' => 'Bagus',
                 'previous_status' => 'Tersedia',
                 'decision' => 'pending',
-                'note' => null,
+                'admin_note' => $request->input('admin_note'),
+                'dm_note' => null,
                 'approver_id' => null,
                 'requested_at' => now(),
                 'memo_url' => $memoUrl,
                 'lost_doc_url' => $lostDocUrl,
             ]);
 
-            dispatch(function () use ($asset) {
-                app(\App\Services\NotificationService::class)->notifyIfsManagerPendingDm($asset);
+            dispatch(function () use ($asset, $approval) {
+                app(\App\Services\NotificationService::class)->notifyManagerAssetDeletionChange($asset, $approval);
             })->afterResponse();
         } elseif ($asset->status === 'Belum Diverifikasi') {
             $approval = AssetActivationApproval::create([
@@ -172,52 +174,124 @@ class AssetController extends Controller
      */
     public function update(Request $request, Asset $asset)
     {
-        if ($asset->hasStatus('Pending:BoD/BoC') && $request->hasFile('bod_boc_approval_file')) {
+        if ($asset->hasStatus('Pending:BoD/BoC') && ($request->hasFile('bod_boc_approval_file') || $request->hasFile('bod_boc_disapproval_file'))) {
+            if ($request->hasFile('bod_boc_approval_file') && $request->hasFile('bod_boc_disapproval_file')) {
+                return redirect()->back()->withErrors([
+                    'bod_boc_approval_file' => 'Tidak dapat mengunggah dokumen approval dan disapproval secara bersamaan.',
+                    'bod_boc_disapproval_file' => 'Tidak dapat mengunggah dokumen approval dan disapproval secara bersamaan.',
+                ]);
+            }
+
+            $isDisapproval = $request->hasFile('bod_boc_disapproval_file');
+            $fieldName = $isDisapproval ? 'bod_boc_disapproval_file' : 'bod_boc_approval_file';
+            $fileLabel = $isDisapproval ? 'Formulir Penolakan BoD/BoC' : 'Formulir Approval BoD/BoC';
+
             $request->validate([
-                'bod_boc_approval_file' => 'required|file|mimes:pdf,jpeg,jpg,png,webp|max:2048',
+                $fieldName => 'required|file|mimes:pdf,jpeg,jpg,png,webp|max:2048',
             ], [
-                'bod_boc_approval_file.required' => 'Formulir Approval BoD/BoC belum dipilih.',
-                'bod_boc_approval_file.mimes' => 'Format Formulir Approval BoD/BoC salah! Hanya diperbolehkan file .pdf, .jpg, .jpeg, .png, atau .webp.',
-                'bod_boc_approval_file.max' => 'Gagal! Ukuran Formulir Approval BoD/BoC maksimal 2MB.',
+                "{$fieldName}.required" => "{$fileLabel} belum dipilih.",
+                "{$fieldName}.mimes" => "Format {$fileLabel} salah! Hanya diperbolehkan file .pdf, .jpg, .jpeg, .png, atau .webp.",
+                "{$fieldName}.max" => "Gagal! Ukuran {$fileLabel} maksimal 2MB.",
             ]);
 
-            DB::transaction(function () use ($asset, $request) {
-                $bodBocUrl = app(\App\Services\ImageUploadService::class)->storeImageOrFile($request->file('bod_boc_approval_file'), 'bod_boc_approvals');
-
-                $approval = AssetStatusApproval::where('asset_id', $asset->id)
+            DB::transaction(function () use ($asset, $request, $isDisapproval, $fieldName) {
+                $approval = AssetDeletionApproval::where('asset_id', $asset->id)
                     ->where('decision', 'approved')
                     ->latest('id')
                     ->first();
-                if ($approval) {
-                    if ($approval->bod_boc_approval_url && Storage::disk('local')->exists($approval->bod_boc_approval_url)) {
-                        Storage::disk('local')->delete($approval->bod_boc_approval_url);
+
+                $folder = $isDisapproval ? 'bod_boc_disapprovals' : 'bod_boc_approvals';
+                $bodBocUrl = app(\App\Services\ImageUploadService::class)->storeImageOrFile($request->file($fieldName), $folder);
+
+                if ($isDisapproval) {
+                    $pastDisapprovals = AssetDeletionApproval::where('asset_id', $asset->id)
+                        ->whereNotNull('bod_boc_disapproval_url')
+                        ->get();
+                    foreach ($pastDisapprovals as $past) {
+                        if ($past->bod_boc_disapproval_url && Storage::disk('local')->exists($past->bod_boc_disapproval_url)) {
+                            Storage::disk('local')->delete($past->bod_boc_disapproval_url);
+                        }
+                        if ($approval && $past->id !== $approval->id) {
+                            $past->update(['bod_boc_disapproval_url' => null]);
+                        }
                     }
-                    $approval->update(['bod_boc_approval_url' => $bodBocUrl]);
+                } else {
+                    $pastApprovals = AssetDeletionApproval::where('asset_id', $asset->id)
+                        ->whereNotNull('bod_boc_approval_url')
+                        ->get();
+                    foreach ($pastApprovals as $past) {
+                        if ($past->bod_boc_approval_url && Storage::disk('local')->exists($past->bod_boc_approval_url)) {
+                            Storage::disk('local')->delete($past->bod_boc_approval_url);
+                        }
+                        if ($approval && $past->id !== $approval->id) {
+                            $past->update(['bod_boc_approval_url' => null]);
+                        }
+                    }
                 }
 
-                // Change status to Dihapus without triggering duplicate Perubahan status lifecycle
-                Asset::withoutEvents(fn () => $asset->update(['status' => 'Dihapus']));
+                if ($approval) {
+                    if ($isDisapproval) {
+                        $approval->update([
+                            'bod_boc_disapproval_url' => $bodBocUrl,
+                            'decision' => 'rejected',
+                        ]);
+                    } else {
+                        $approval->update(['bod_boc_approval_url' => $bodBocUrl]);
+                    }
+                }
 
-                // Close active lifecycle
-                AssetLifecycle::where('asset_id', $asset->id)
-                    ->whereNull('end_date')
-                    ->update(['end_date' => now()]);
+                $proposedCondition = $approval?->proposed_condition ?? $asset->condition;
 
-                // Save audit log
-                AssetLifecycle::create([
-                    'asset_id' => $asset->id,
-                    'action_type' => 'Approval',
-                    'status' => 'Dihapus',
-                    'condition' => $asset->condition,
-                    'location_id' => $asset->location_id,
-                    'start_date' => now(),
-                    'end_date' => null,
-                    'actor_id' => $request->user()->id,
-                    'note' => 'BoD/BoC menyetujui penghapusan asset',
-                ]);
+                if ($isDisapproval) {
+                    $targetStatus = $approval?->previous_status ?? 'Tersedia';
+                    $targetCondition = $approval?->previous_condition ?? 'Bagus';
+
+                    Asset::withoutEvents(fn () => $asset->update([
+                        'status' => $targetStatus,
+                        'condition' => $targetCondition,
+                    ]));
+
+                    AssetLifecycle::where('asset_id', $asset->id)
+                        ->whereNull('end_date')
+                        ->update(['end_date' => now()]);
+
+                    AssetLifecycle::create([
+                        'asset_id' => $asset->id,
+                        'action_type' => 'Penolakan',
+                        'status' => $targetStatus,
+                        'condition' => $targetCondition,
+                        'location_id' => $asset->location_id,
+                        'start_date' => now(),
+                        'end_date' => null,
+                        'actor_id' => $request->user()->id,
+                        'note' => "BoD/BoC menolak penghapusan asset dengan kondisi {$proposedCondition}",
+                    ]);
+                } else {
+                    Asset::withoutEvents(fn () => $asset->update(['status' => 'Dihapus']));
+
+                    AssetLifecycle::where('asset_id', $asset->id)
+                        ->whereNull('end_date')
+                        ->update(['end_date' => now()]);
+
+                    AssetLifecycle::create([
+                        'asset_id' => $asset->id,
+                        'action_type' => 'Persetujuan',
+                        'status' => 'Dihapus',
+                        'condition' => $asset->condition,
+                        'location_id' => $asset->location_id,
+                        'start_date' => now(),
+                        'end_date' => null,
+                        'actor_id' => $request->user()->id,
+                        'note' => "BoD/BoC menyetujui penghapusan asset dengan kondisi {$proposedCondition}",
+                    ]);
+                }
             });
 
-            return redirect()->back()->with('success', __('inventory.bod_boc_uploaded'));
+            $successMsg = $isDisapproval
+                ? __('inventory.bod_boc_disapproved')
+                : __('inventory.bod_boc_uploaded');
+
+            return redirect()->back()->with('success', $successMsg);
         }
 
         $arrInactiveConditions = ['Rusak Total', 'Hilang'];
@@ -332,11 +406,12 @@ class AssetController extends Controller
         }
 
         if ($needApproval && !$isRestricted) {
-            $existing = AssetStatusApproval::where('asset_id', $asset->id)
+            $existing = AssetDeletionApproval::where('asset_id', $asset->id)
                 ->where('decision', 'pending')
                 ->first();
             if (!$existing) {
                 $rules['memo_file'] = 'required|file|mimes:pdf,jpeg,jpg,png,webp|max:2048';
+                $rules['admin_note'] = 'nullable|string';
                 if ($proposedCondition === 'Hilang') {
                     $rules['lost_doc_file'] = 'required|file|mimes:pdf,jpeg,jpg,png,webp|max:2048';
                 }
@@ -436,7 +511,7 @@ class AssetController extends Controller
         $asset->update($validated);
 
         if ($needApproval) {
-            $existing = AssetStatusApproval::where('asset_id', $asset->id)
+            $existing = AssetDeletionApproval::where('asset_id', $asset->id)
                 ->where('decision', 'pending')
                 ->first();
             if (!$existing) {
@@ -448,23 +523,24 @@ class AssetController extends Controller
                 if ($proposedCondition === 'Hilang' && $request->hasFile('lost_doc_file')) {
                     $lostDocUrl = app(\App\Services\ImageUploadService::class)->storeImageOrFile($request->file('lost_doc_file'), 'lost_docs');
                 }
-                AssetStatusApproval::create([
+                $approval = AssetDeletionApproval::create([
                     'asset_id' => $asset->id,
                     'requester_id' => $request->user()->id,
                     'proposed_condition' => $proposedCondition,
                     'previous_condition' => $previousCondition,
                     'previous_status' => $previousStatus,
                     'decision' => 'pending',
-                    'note' => null,
+                    'admin_note' => $request->input('admin_note'),
+                    'dm_note' => null,
                     'approver_id' => null,
                     'requested_at' => now(),
                     'memo_url' => $memoUrl,
                     'lost_doc_url' => $lostDocUrl,
                 ]);
 
-                dispatch(function () use ($asset) {
-                app(\App\Services\NotificationService::class)->notifyIfsManagerPendingDm($asset);
-            })->afterResponse();
+                dispatch(function () use ($asset, $approval) {
+                    app(\App\Services\NotificationService::class)->notifyManagerAssetDeletionChange($asset, $approval);
+                })->afterResponse();
             }
         }
 

@@ -4,7 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Inventory\Asset;
 use App\Models\Inventory\Lot;
-use App\Models\Inventory\AssetStatusApproval;
+use App\Models\Inventory\AssetDeletionApproval;
 use App\Models\Inventory\AssetLifecycle;
 use App\Models\User;
 use App\Models\HrdEmployee;
@@ -15,11 +15,11 @@ use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 /**
- * Unit Status Approval Controller Feature Tests
+ * Unit Status / Deletion Approval Controller Feature Tests
  *
- * Verifies submission of asset condition change/deactivation requests, duplicate prevention, and automated multi-action lifecycle splitting.
+ * Verifies submission of asset condition change/deletion requests, duplicate prevention, and automated multi-action lifecycle splitting.
  */
-class AssetDeactivationApprovalControllerTest extends TestCase
+class AssetDeletionApprovalControllerTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -74,24 +74,24 @@ class AssetDeactivationApprovalControllerTest extends TestCase
         $user = User::factory()->create();
         $unit = $this->createUnit();
 
-        $response = $this->actingAs($user)->post(route('smart.inventory.asset-deactivation-approvals.store'), [
+        $response = $this->actingAs($user)->post(route('smart.inventory.asset-deletion-approvals.store'), [
             'asset_id' => $unit->id,
             'proposed_condition' => 'Rusak Total',
-            'note' => 'Butuh penggantian unit',
+            'admin_note' => 'Butuh penggantian unit',
             'memo_file' => \Illuminate\Http\UploadedFile::fake()->create('memo.pdf', 100),
         ]);
 
         $response->assertRedirect();
         $response->assertSessionHas('success', __('requests.unit_status_change_submitted'));
 
-        $this->assertDatabaseHas('asset_status_approvals', [
+        $this->assertDatabaseHas('asset_deletion_approvals', [
             'asset_id' => $unit->id,
             'requester_id' => $user->id,
             'proposed_condition' => 'Rusak Total',
             'previous_condition' => 'Bagus',
             'previous_status' => 'Tersedia',
             'decision' => 'pending',
-            'note' => 'Butuh penggantian unit',
+            'admin_note' => 'Butuh penggantian unit',
         ]);
 
         $unit->refresh();
@@ -104,7 +104,7 @@ class AssetDeactivationApprovalControllerTest extends TestCase
         $user = User::factory()->create();
         $unit = $this->createUnit();
 
-        AssetStatusApproval::create([
+        AssetDeletionApproval::create([
             'asset_id' => $unit->id,
             'requester_id' => $user->id,
             'proposed_condition' => 'Rusak Total',
@@ -116,7 +116,7 @@ class AssetDeactivationApprovalControllerTest extends TestCase
             'lost_doc_url' => null,
         ]);
 
-        $response = $this->actingAs($user)->post(route('smart.inventory.asset-deactivation-approvals.store'), [
+        $response = $this->actingAs($user)->post(route('smart.inventory.asset-deletion-approvals.store'), [
             'asset_id' => $unit->id,
             'proposed_condition' => 'Hilang',
             'memo_file' => \Illuminate\Http\UploadedFile::fake()->create('memo.pdf', 100),
@@ -124,7 +124,7 @@ class AssetDeactivationApprovalControllerTest extends TestCase
         ]);
 
         $response->assertSessionHasErrors(['asset_id']);
-        $this->assertEquals(1, AssetStatusApproval::count());
+        $this->assertEquals(1, AssetDeletionApproval::count());
     }
 
     public function test_storing_unit_with_status_rusak_creates_pending_approval(): void
@@ -150,6 +150,7 @@ class AssetDeactivationApprovalControllerTest extends TestCase
             'location_id' => $location->id,
             'status' => 'Tersedia',
             'condition' => 'Rusak Total',
+            'admin_note' => 'Kerusakan fisik parah',
             'type' => 'LT',
             'classification' => 'Aset',
             'price' => 50000,
@@ -165,7 +166,7 @@ class AssetDeactivationApprovalControllerTest extends TestCase
         $this->assertEquals('Tersedia,Pending:DM', $unit->status);
         $this->assertEquals('Rusak Total', $unit->condition);
 
-        $this->assertDatabaseHas('asset_status_approvals', [
+        $this->assertDatabaseHas('asset_deletion_approvals', [
             'asset_id' => $unit->id,
             'requester_id' => $user->id,
             'proposed_condition' => 'Rusak Total',
@@ -173,7 +174,7 @@ class AssetDeactivationApprovalControllerTest extends TestCase
             'previous_status' => 'Tersedia',
             'decision' => 'pending',
             'approver_id' => null,
-            'note' => null,
+            'admin_note' => 'Kerusakan fisik parah',
         ]);
     }
 
@@ -188,6 +189,7 @@ class AssetDeactivationApprovalControllerTest extends TestCase
             'location_id' => $unit->location_id,
             'status' => 'Tersedia',
             'condition' => 'Rusak Total',
+            'admin_note' => 'Unit rusak terbakar',
             'type' => 'LT',
             'classification' => 'Aset',
             'price' => $unit->price,
@@ -200,7 +202,7 @@ class AssetDeactivationApprovalControllerTest extends TestCase
         $this->assertEquals('Tersedia,Pending:DM', $unit->status);
         $this->assertEquals('Rusak Total', $unit->condition);
 
-        $this->assertDatabaseHas('asset_status_approvals', [
+        $this->assertDatabaseHas('asset_deletion_approvals', [
             'asset_id' => $unit->id,
             'requester_id' => $user->id,
             'proposed_condition' => 'Rusak Total',
@@ -208,7 +210,7 @@ class AssetDeactivationApprovalControllerTest extends TestCase
             'previous_status' => 'Tersedia',
             'decision' => 'pending',
             'approver_id' => null,
-            'note' => null,
+            'admin_note' => 'Unit rusak terbakar',
         ]);
     }
 

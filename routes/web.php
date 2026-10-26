@@ -59,14 +59,14 @@ use App\Http\Controllers\Smart\Admin\StockManagement\LotController;
 use App\Http\Controllers\Smart\Admin\StockManagement\BulkLotController;
 use App\Http\Controllers\Smart\Admin\StockManagement\LotManualRequestController;
 use App\Http\Controllers\Smart\Admin\StockManagement\ConsumableRequestOptionController;
-use App\Http\Controllers\Smart\Admin\StockManagement\PendingDeactivationController;
+use App\Http\Controllers\Smart\Admin\StockManagement\PendingDeletionController;
 use App\Http\Controllers\Smart\Admin\StockManagement\PendingActivationController;
 use App\Http\Controllers\Smart\Admin\StockManagement\NewStockController;
 use App\Http\Controllers\Smart\Admin\Employees\EmployeeController;
 use App\Http\Controllers\Smart\Admin\Employees\EmployeeLoanController;
-use App\Http\Controllers\Smart\MultiRoles\AssetDeactivationApproval\AdminAssetDeactivationApprovalController;
-use App\Http\Controllers\Smart\MultiRoles\AssetDeactivationApproval\ManagerAssetDeactivationApprovalController;
-use App\Http\Controllers\Smart\MultiRoles\AssetDeactivationApproval\ManagerBulkAssetDeactivationApprovalController;
+use App\Http\Controllers\Smart\MultiRoles\AssetDeletionApproval\AdminAssetDeletionApprovalController;
+use App\Http\Controllers\Smart\MultiRoles\AssetDeletionApproval\ManagerAssetDeletionApprovalController;
+use App\Http\Controllers\Smart\MultiRoles\AssetDeletionApproval\ManagerBulkAssetDeletionApprovalController;
 use App\Http\Controllers\Smart\MultiRoles\AssetActivationApproval\ManagerAssetActivationApprovalController;
 use App\Http\Controllers\Smart\MultiRoles\AssetActivationApproval\ManagerBulkAssetActivationApprovalController;
 use App\Http\Controllers\LocaleController;
@@ -206,10 +206,10 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
             Route::get('request-options', [ConsumableRequestOptionController::class, 'index'])->name('request-options');
         });
 
-        // Asset Deactivation Submissions
+        // Asset Deletion Submissions
         Route::middleware(['permission:inventory.status_approval.request'])->group(function () {
-            Route::resource('asset-deactivation-approvals', AdminAssetDeactivationApprovalController::class)->only(['store']);
-            Route::get('pending-deactivation', [PendingDeactivationController::class, 'index'])->name('pending-deactivation');
+            Route::resource('asset-deletion-approvals', AdminAssetDeletionApprovalController::class)->only(['store']);
+            Route::get('pending-deletion', [PendingDeletionController::class, 'index'])->name('pending-deletion');
             Route::get('pending-activation', [PendingActivationController::class, 'index'])->name('pending-activation');
         });
 
@@ -218,10 +218,10 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
             ->name('show');
     });
 
-    // Asset Status Decisions
+    // Asset Deletion Decisions
     Route::middleware(['permission:inventory.status_approval.decide'])->group(function () {
-        Route::get('/approve-deactivation', [ManagerAssetDeactivationApprovalController::class, 'index'])->name('approve-deactivation');
-        Route::post('/approve-deactivation/bulk', [ManagerBulkAssetDeactivationApprovalController::class, 'store'])->name('approve-deactivation.bulk-store');
+        Route::get('/approve-deletion', [ManagerAssetDeletionApprovalController::class, 'index'])->name('approve-deletion');
+        Route::post('/approve-deletion/bulk', [ManagerBulkAssetDeletionApprovalController::class, 'store'])->name('approve-deletion.bulk-store');
         Route::get('/approve-activation', [ManagerAssetActivationApprovalController::class, 'index'])->name('approve-activation');
         Route::post('/approve-activation/bulk', [ManagerBulkAssetActivationApprovalController::class, 'store'])->name('approve-activation.bulk-store');
     });

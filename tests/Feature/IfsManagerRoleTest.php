@@ -92,7 +92,7 @@ class IfsManagerRoleTest extends TestCase
             route('smart.inventory'),
             route('smart.master'),
             route('smart.scan-barcode'),
-            route('smart.inventory.pending-deactivation'),
+            route('smart.inventory.pending-deletion'),
             route('smart.requests.index'),
             route('smart.archive'),
         ];
@@ -119,7 +119,7 @@ class IfsManagerRoleTest extends TestCase
 
         // 3. Test Approval routes (Exclusive to IFS Manager holding status_approval.decide)
         $approvalRoutes = [
-            route('smart.approve-deactivation'),
+            route('smart.approve-deletion'),
             route('smart.approve-activation'),
         ];
 

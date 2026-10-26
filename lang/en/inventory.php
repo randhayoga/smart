@@ -51,6 +51,8 @@ return [
     // Approvals & Borrowing
     'bod_boc_uploaded' => 'BoD/BoC Approval form successfully uploaded and status changed to Deleted.',
     'bulk_bod_boc_approved' => ':count selected assets successfully approved by BoD/BoC and status changed to Deleted.',
+    'bod_boc_disapproved' => 'BoD/BoC Disapproval form successfully uploaded and status reverted.',
+    'bulk_bod_boc_disapproved' => ':count selected assets rejected by BoD/BoC and status reverted.',
     'borrow_saved' => 'Borrowing data successfully saved.',
     'borrow_completed' => 'Borrowing completed. Asset status returned to Available.',
     'manual_request_recorded' => 'Manual request successfully recorded.',
@@ -62,8 +64,12 @@ return [
     'condition_lost' => 'Lost',
 
     // Deactivation Notifications
-    'notification_deactivation_title' => 'Asset Deactivation :name: Requires Your Attention',
-    'notification_deactivation_message' => 'Asset deactivation request for :number has been submitted and requires your approval',
-    'notification_bulk_deactivation_title' => 'Asset Deactivation Approval: :count Units (:condition)',
-    'notification_bulk_deactivation_message' => ':count asset units have been submitted for deactivation (:condition) and require your approval.',
+    'notification_deactivation_title' => 'Asset Deletion :name: Requires Your Attention',
+    'notification_deactivation_message' => 'Asset deletion request for :number has been submitted and requires your approval',
+    'notification_bulk_deactivation_title' => 'Asset Deletion Approval: :count Units (:condition)',
+    'notification_bulk_deactivation_message' => ':count asset units have been submitted for deletion (:condition) and require your approval.',
+    'notification_status_approved_title' => 'Asset Deletion :name Approved by DM IFS',
+    'notification_status_approved_message' => 'Asset :number status has changed to Inactive, Pending:BoD/BoC.',
+    'notification_status_rejected_title' => 'Asset Deletion :name Rejected by DM IFS',
+    'notification_status_rejected_message' => 'Asset :number status was reverted to :status and condition reverted to :condition.',
 ];

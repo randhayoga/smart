@@ -252,6 +252,12 @@ const displayFields = computed(() => {
           value: getConditionLabel(data.proposed_condition)
         });
       }
+      if (data.admin_note) {
+        fields.push({
+          label: t('inventory.adminNote'),
+          value: data.admin_note
+        });
+      }
     }
     if (data.unit_details?.lot_code) fields.push({ label: t('approvals.lotCodeLabel').replace(':', ''), value: data.unit_details.lot_code });
     if (data.category) fields.push({ label: t('approvals.category'), value: data.category });
@@ -450,6 +456,12 @@ const bulkItemsFields = computed(() => {
           fields.push({
             label: t('approvals.proposedCondition'),
             value: getConditionLabel(data.proposed_condition)
+          });
+        }
+        if (data.admin_note) {
+          fields.push({
+            label: t('inventory.adminNote'),
+            value: data.admin_note
           });
         }
       }

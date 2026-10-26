@@ -159,7 +159,7 @@ describe('Sidebar.vue', () => {
     expect(wrapper.find('a[href="/smart/stock-management"]').exists()).toBe(false);
     expect(wrapper.find('a[href="/smart/master"]').exists()).toBe(false);
     expect(wrapper.find('a[href="/smart/scan"]').exists()).toBe(false);
-    expect(wrapper.find('a[href="/smart/stock-management/pending-deactivation"]').exists()).toBe(false);
+    expect(wrapper.find('a[href="/smart/stock-management/pending-deletion"]').exists()).toBe(false);
     expect(wrapper.find('a[href="/smart/requests"]').exists()).toBe(false);
     expect(wrapper.find('a[href="/smart/archive"]').exists()).toBe(false);
   });
@@ -188,18 +188,18 @@ describe('Sidebar.vue', () => {
 
     expect(wrapper.text()).not.toContain('Audit Manajemen Stok');
     expect(wrapper.text()).not.toContain('Pergerakan Aset');
-    expect(wrapper.find('a[href="/smart/approve-deactivation"]').exists()).toBe(false);
+    expect(wrapper.find('a[href="/smart/approve-deletion"]').exists()).toBe(false);
     expect(wrapper.find('a[href="/smart/approve-activation"]').exists()).toBe(false);
   });
 
-  it('does NOT render approval deactivation or activation links for Admin', () => {
+  it('does NOT render approval deletion or activation links for Admin', () => {
     const wrapper = mountSidebar({
       open: true,
       isMobile: false,
       collapsed: false,
     });
 
-    expect(wrapper.find('a[href="/smart/approve-deactivation"]').exists()).toBe(false);
+    expect(wrapper.find('a[href="/smart/approve-deletion"]').exists()).toBe(false);
     expect(wrapper.find('a[href="/smart/approve-activation"]').exists()).toBe(false);
   });
 
@@ -336,9 +336,9 @@ describe('Sidebar.vue', () => {
       expect(inventoryLink.classes()).not.toContain('bg-gradient-primary');
     });
 
-    it('activates only Daftar Pending Nonaktif and NOT Manajemen Stok when viewing /smart/stock-management/pending-deactivation', () => {
+    it('activates only Daftar Pending Nonaktif and NOT Manajemen Stok when viewing /smart/stock-management/pending-deletion', () => {
       vi.mocked(usePage).mockReturnValue({
-        url: '/smart/stock-management/pending-deactivation',
+        url: '/smart/stock-management/pending-deletion',
         props: {
           auth: defaultAdminAuth,
         },
@@ -350,7 +350,7 @@ describe('Sidebar.vue', () => {
         collapsed: false,
       });
 
-      const pendingInactiveLink = wrapper.find('a[href="/smart/stock-management/pending-deactivation"]');
+      const pendingInactiveLink = wrapper.find('a[href="/smart/stock-management/pending-deletion"]');
       const inventoryLink = wrapper.find('a[href="/smart/stock-management"]');
 
       expect(pendingInactiveLink.classes()).toContain('bg-gradient-primary');

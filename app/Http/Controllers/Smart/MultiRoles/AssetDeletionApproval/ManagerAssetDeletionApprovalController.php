@@ -1,21 +1,21 @@
 <?php
 
-namespace App\Http\Controllers\Smart\MultiRoles\AssetDeactivationApproval;
+namespace App\Http\Controllers\Smart\MultiRoles\AssetDeletionApproval;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\ManagerAssetStatusApprovalResource;
-use App\Models\Inventory\AssetStatusApproval;
+use App\Http\Resources\ManagerAssetDeletionApprovalResource;
+use App\Models\Inventory\AssetDeletionApproval;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * Manager Asset Deactivation Approval Controller displaying pending and historical asset deactivation reviews.
+ * Manager Asset Deletion Approval Controller displaying pending and historical asset deletion reviews.
  */
-class ManagerAssetDeactivationApprovalController extends Controller
+class ManagerAssetDeletionApprovalController extends Controller
 {
     /**
-     * Display a listing of asset deactivation approvals for managers (pending or history).
+     * Display a listing of asset deletion approvals for managers (pending or history).
      */
     public function index(Request $request): Response
     {
@@ -23,7 +23,7 @@ class ManagerAssetDeactivationApprovalController extends Controller
             abort(403, 'Akses ditolak.');
         }
 
-        $query = AssetStatusApproval::with([
+        $query = AssetDeletionApproval::with([
             'asset.lot.model.type.category',
             'asset.lot.model.brand',
             'asset.lot.model.uom',
@@ -38,20 +38,20 @@ class ManagerAssetDeactivationApprovalController extends Controller
 
         if ($request->boolean('history')) {
             $query->where('decision', '!=', 'pending');
-            $view = 'Smart/Manager/ProcessedDeactivationApprovals';
+            $view = 'Smart/Manager/ProcessedDeletionApprovals';
         } else {
             $query->where('decision', 'pending')
                   ->whereHas('asset', function ($q) {
                       $q->whereHasStatus('Pending:DM');
                   });
-            $view = 'Smart/Manager/PendingDeactivationApprovals';
+            $view = 'Smart/Manager/PendingDeletionApprovals';
         }
 
         $approvals = $query->orderBy('id', 'desc')->get();
 
         return Inertia::render($view, [
             'user' => $request->user(),
-            'approvals' => ManagerAssetStatusApprovalResource::collection($approvals)->resolve(),
+            'approvals' => ManagerAssetDeletionApprovalResource::collection($approvals)->resolve(),
         ]);
     }
 }

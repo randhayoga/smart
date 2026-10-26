@@ -66,7 +66,7 @@ return new class extends Migration {
             $table->index('condition');
         });
 
-        Schema::create('asset_status_approvals', function (Blueprint $table) {
+        Schema::create('asset_deletion_approvals', function (Blueprint $table) {
             $table->id();
             $table->foreignId('asset_id')->constrained('assets')->noActionOnDelete();
             $table->unsignedBigInteger('requester_id')->index()->comment("Refers to new_portal:users.id");
@@ -74,11 +74,13 @@ return new class extends Migration {
             $table->string('proposed_condition');
             $table->string('previous_condition');
             $table->string('previous_status')->nullable();
-            $table->string('memo_url');
+            $table->string('memo_url')->nullable();
             $table->string('lost_doc_url')->nullable();
             $table->string('bod_boc_approval_url')->nullable();
+            $table->string('bod_boc_disapproval_url')->nullable();
             $table->string('decision')->default('pending')->comment('pending | approved | rejected');
-            $table->text('note')->nullable()->comment('nullable | required if rejected');
+            $table->text('admin_note')->nullable();
+            $table->text('dm_note')->nullable()->comment('nullable | required if rejected');
             $table->dateTime('requested_at');
             $table->dateTime('decided_at')->nullable();
             $table->timestamps();
@@ -137,7 +139,7 @@ return new class extends Migration {
         Schema::dropIfExists('asset_lifecycles');
         Schema::dropIfExists('inventory_logs');
         Schema::dropIfExists('asset_activation_approvals');
-        Schema::dropIfExists('asset_status_approvals');
+        Schema::dropIfExists('asset_deletion_approvals');
         Schema::dropIfExists('assets');
         Schema::dropIfExists('lots');
         Schema::dropIfExists('models');

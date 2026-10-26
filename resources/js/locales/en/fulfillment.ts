@@ -13,7 +13,8 @@ export default {
   archive: 'Archive',
   listPrefix: '{tab} List',
   archiveListTitle: 'List of Completed Requests',
-  pendingDeactivation: 'Deactivation Pending List',
+  pendingDeletion: 'Deletion Pending List',
+  pendingDeactivation: 'Deletion Pending List',
   pendingActivation: 'Activation Pending List',
 
   // Filters & Dropdowns

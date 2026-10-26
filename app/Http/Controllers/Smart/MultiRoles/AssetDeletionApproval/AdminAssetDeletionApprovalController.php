@@ -1,19 +1,19 @@
 <?php
 
-namespace App\Http\Controllers\Smart\MultiRoles\AssetDeactivationApproval;
+namespace App\Http\Controllers\Smart\MultiRoles\AssetDeletionApproval;
 
 use App\Http\Controllers\Controller;
 use App\Models\Inventory\Asset;
-use App\Models\Inventory\AssetStatusApproval;
+use App\Models\Inventory\AssetDeletionApproval;
 use Illuminate\Http\Request;
 
 /**
- * Admin Asset Deactivation Approval Controller handling submissions for asset condition changes, repairs, and disposals.
+ * Admin Asset Deletion Approval Controller handling submissions for asset condition changes and disposals.
  */
-class AdminAssetDeactivationApprovalController extends Controller
+class AdminAssetDeletionApprovalController extends Controller
 {
     /**
-     * Store a newly created asset deactivation approval request in storage.
+     * Store a newly created asset deletion approval request in storage.
      */
     public function store(Request $request)
     {
@@ -22,7 +22,7 @@ class AdminAssetDeactivationApprovalController extends Controller
         $rules = [
             'asset_id' => 'required|exists:assets,id',
             'proposed_condition' => 'required|string|max:255',
-            'note' => 'nullable|string',
+            'admin_note' => 'nullable|string',
             'memo_file' => 'required|file|mimes:pdf,jpg,jpeg,png,webp|max:2048',
         ];
 
@@ -35,7 +35,7 @@ class AdminAssetDeactivationApprovalController extends Controller
         $asset = Asset::findOrFail($validated['asset_id']);
 
         // Check if there is already a pending approval request for this asset
-        $existingPending = AssetStatusApproval::where('asset_id', $asset->id)
+        $existingPending = AssetDeletionApproval::where('asset_id', $asset->id)
             ->where('decision', 'pending')
             ->exists();
 
@@ -65,21 +65,21 @@ class AdminAssetDeactivationApprovalController extends Controller
             'status' => "{$previousStatus},Pending:DM",
         ]);
 
-        AssetStatusApproval::create([
+        $approval = AssetDeletionApproval::create([
             'asset_id' => $validated['asset_id'],
             'requester_id' => $request->user()->id,
             'proposed_condition' => $proposedCondition,
             'previous_condition' => $previousCondition,
             'previous_status' => $previousStatus,
             'decision' => 'pending',
-            'note' => $validated['note'] ?? null,
+            'admin_note' => $validated['admin_note'] ?? null,
             'requested_at' => now(),
             'memo_url' => $memoUrl,
             'lost_doc_url' => $lostDocUrl,
         ]);
 
-        dispatch(function () use ($asset) {
-            app(\App\Services\NotificationService::class)->notifyIfsManagerPendingDm($asset);
+        dispatch(function () use ($asset, $approval) {
+            app(\App\Services\NotificationService::class)->notifyManagerAssetDeletionChange($asset, $approval);
         })->afterResponse();
 
         return redirect()->back()->with('success', __('requests.unit_status_change_submitted'));

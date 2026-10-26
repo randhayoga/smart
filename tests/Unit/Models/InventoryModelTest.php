@@ -3,7 +3,7 @@
 namespace Tests\Unit\Models;
 
 use App\Models\Inventory\Asset;
-use App\Models\Inventory\AssetStatusApproval;
+use App\Models\Inventory\AssetDeletionApproval;
 use App\Models\Inventory\Barang;
 use App\Models\Inventory\Lot;
 use App\Models\Inventory\Unit;
@@ -136,7 +136,7 @@ class InventoryModelTest extends TestCase
         $this->assertEquals('Tersedia', $asset->base_status);
         $this->assertTrue(Asset::whereHasStatus('Pending:DM')->where('id', $asset->id)->exists());
 
-        $approval = AssetStatusApproval::create([
+        $approval = AssetDeletionApproval::create([
             'asset_id' => $asset->id,
             'requester_id' => $user->id,
             'approver_id' => $approver->id,
@@ -144,7 +144,7 @@ class InventoryModelTest extends TestCase
             'previous_condition' => 'Bagus',
             'previous_status' => 'Tersedia',
             'decision' => 'approved',
-            'note' => 'Disetujui',
+            'dm_note' => 'Disetujui',
             'memo_url' => 'memos/placeholder.pdf',
             'requested_at' => now(),
         ]);
@@ -152,7 +152,7 @@ class InventoryModelTest extends TestCase
         $this->assertTrue($approval->asset->is($asset));
         $this->assertTrue($approval->requester->is($user));
         $this->assertTrue($approval->approver->is($approver));
-        $this->assertTrue($asset->statusApprovals->contains($approval));
+        $this->assertTrue($asset->deletionApprovals->contains($approval));
     }
 
     public function test_barang_route_key_and_resolution(): void

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 /**
- * Admin Deactivation Pending List Page component tracking assets awaiting approval (BoD/BoC and DM stages).
+ * Admin Deletion Pending List Page component tracking assets awaiting approval (BoD/BoC and DM stages).
  */
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem } from '@/Components/ui/breadcrumb';
@@ -24,7 +24,27 @@ const computedTabs = computed(() => [
   { id: 'Pending:DM', label: 'Pending:DM' },
   { id: 'Pending:BoD/BoC', label: 'Pending:BoD/BoC' }
 ]);
-const activeTab = ref('Pending:DM');
+
+const getInitialTab = (): string => {
+  if (typeof window !== 'undefined') {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabParam = urlParams.get('tab');
+    if (tabParam === 'Pending:BoD/BoC') {
+      return 'Pending:BoD/BoC';
+    }
+  }
+  return 'Pending:DM';
+};
+
+const activeTab = ref(getInitialTab());
+
+watch(activeTab, (val) => {
+  if (typeof window !== 'undefined') {
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', val);
+    window.history.replaceState({}, '', url.toString());
+  }
+});
 
 const currentStatusScope = computed(() => {
   return activeTab.value === 'Pending:BoD/BoC' ? 'pending:bod/boc' : 'pending:manager';
@@ -36,11 +56,11 @@ const handleCustomPrint = (items: any[]) => {
 </script>
 
 <template>
-  <AppLayout :title="t('fulfillment.pendingDeactivation')">
+  <AppLayout :title="t('fulfillment.pendingDeletion')">
     <Breadcrumb>
       <BreadcrumbList class="pb-3">
         <BreadcrumbItem>
-          <BreadcrumbLink href="/smart/stock-management/pending-deactivation">{{ t('fulfillment.pendingDeactivation') }}</BreadcrumbLink>
+          <BreadcrumbLink href="/smart/stock-management/pending-deletion">{{ t('fulfillment.pendingDeletion') }}</BreadcrumbLink>
         </BreadcrumbItem>
       </BreadcrumbList>
     </Breadcrumb>

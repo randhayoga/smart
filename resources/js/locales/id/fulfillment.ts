@@ -13,6 +13,7 @@ export default {
   archive: 'Arsip',
   listPrefix: 'Daftar {tab}',
   archiveListTitle: 'Daftar Permintaan Yang Selesai Diurus',
+  pendingDeletion: 'Daftar Pending Penghapusan',
   pendingDeactivation: 'Daftar Pending Nonaktif',
   pendingActivation: 'Daftar Pending Aktivasi',
 

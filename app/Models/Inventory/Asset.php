@@ -51,12 +51,16 @@ class Asset extends Model
 
                 // 1. Assignment Action (Preempts redundant status change log)
                 if ($asset->isDirty('is_assigned_to_location')) {
+                    $locId = $asset->location_id ?? $asset->getOriginal('location_id');
+                    $location = $locId ? \App\Models\Master\Location::find($locId) : null;
+                    $locationName = $location?->name ?? $location?->full_name ?? '-';
+
                     $note = $asset->is_assigned_to_location
-                        ? 'Aset ditetapkan ke lokasi dengan status Di-assign (LT).'
-                        : 'Penetapan aset ke lokasi dibatalkan (status kembali Tersedia).';
+                        ? "Aset di-assign ke lokasi {$locationName}"
+                        : "Assignment asset ke lokasi {$locationName} selesai.";
 
                     $actions[] = [
-                        'action_type' => 'assignment',
+                        'action_type' => 'Assignment',
                         'note' => $note,
                         'previous_state' => [
                             'is_assigned_to_location' => $asset->getOriginal('is_assigned_to_location'),
@@ -74,15 +78,17 @@ class Asset extends Model
                     $newStatus = $asset->status;
 
                     $approval = null;
+                    $actionType = 'Perubahan status';
                     if (str_contains((string)$oldStatus, 'Pending')) {
-                        $approval = AssetStatusApproval::where('asset_id', $asset->id)
+                        $approval = AssetDeletionApproval::where('asset_id', $asset->id)
                             ->whereIn('decision', ['approved', 'rejected'])
                             ->orderBy('updated_at', 'desc')
                             ->first();
 
                         if ($approval) {
                             $decisionText = $approval->decision === 'approved' ? 'disetujui' : 'ditolak';
-                            $note = $approval->note ?? "Penghapusan aset dengan kondisi {$approval->proposed_condition} {$decisionText} oleh DM IFS.";
+                            $actionType = $approval->decision === 'approved' ? 'Persetujuan' : 'Penolakan';
+                            $note = $approval->dm_note ?? "Penghapusan aset dengan kondisi {$approval->proposed_condition} {$decisionText} oleh DM IFS.";
                         } else {
                             $note = "Status diubah dari '{$oldStatus}' menjadi '{$newStatus}'.";
                         }
@@ -91,7 +97,7 @@ class Asset extends Model
                     }
 
                     $actions[] = [
-                        'action_type' => 'Perubahan status',
+                        'action_type' => $actionType,
                         'note' => $note,
                         'previous_state' => ['status' => $oldStatus],
                         'new_state' => ['status' => $newStatus],
@@ -99,8 +105,9 @@ class Asset extends Model
                     ];
                 }
 
-                // 2. Condition Change
-                if ($asset->isDirty('condition') && !$isPendingStatus) {
+                // 2. Condition Change (Suppressed if status change was already handled as an approval/rejection)
+                $isHandledByApproval = isset($approval) && $approval !== null;
+                if ($asset->isDirty('condition') && !$isPendingStatus && !$isHandledByApproval) {
                     $oldCondition = $asset->getOriginal('condition');
                     $newCondition = $asset->condition;
                     $note = "Kondisi fisik diubah dari '{$oldCondition}' menjadi '{$newCondition}'.";
@@ -261,11 +268,11 @@ class Asset extends Model
     }
 
     /**
-     * Status and condition change approval requests for this asset.
+     * Deletion approval requests for this asset.
      */
-    public function statusApprovals(): HasMany
+    public function deletionApprovals(): HasMany
     {
-        return $this->hasMany(AssetStatusApproval::class, 'asset_id');
+        return $this->hasMany(AssetDeletionApproval::class, 'asset_id');
     }
 
     /**

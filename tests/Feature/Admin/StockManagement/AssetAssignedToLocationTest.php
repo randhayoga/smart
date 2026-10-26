@@ -93,14 +93,14 @@ class AssetAssignedToLocationTest extends TestCase
 
         // Verify lifecycle entry
         $lifecycles = AssetLifecycle::where('asset_id', $asset->id)
-            ->where('action_type', 'assignment')
+            ->where('action_type', 'Assignment')
             ->get();
         $this->assertCount(1, $lifecycles);
         $log = $lifecycles->first();
-        $this->assertSame('assignment', $log->action_type);
+        $this->assertSame('Assignment', $log->action_type);
         $this->assertSame('Di-assign (LT)', $log->status);
         $this->assertSame('Bagus', $log->condition);
-        $this->assertSame('Aset ditetapkan ke lokasi dengan status Di-assign (LT).', $log->note);
+        $this->assertSame("Aset di-assign ke lokasi {$this->location->name}", $log->note);
         $this->assertSame($this->user->id, $log->actor_id);
         $this->assertNull($log->end_date);
 
@@ -142,12 +142,12 @@ class AssetAssignedToLocationTest extends TestCase
 
         // Verify assignment unassign lifecycle entry
         $log = AssetLifecycle::where('asset_id', $asset->id)
-            ->where('action_type', 'assignment')
+            ->where('action_type', 'Assignment')
             ->latest('id')
             ->first();
         $this->assertNotNull($log);
         $this->assertSame('Tersedia', $log->status);
-        $this->assertSame('Penetapan aset ke lokasi dibatalkan (status kembali Tersedia).', $log->note);
+        $this->assertSame("Assignment asset ke lokasi {$this->location->name} selesai.", $log->note);
     }
 
     public function test_single_asset_update_fails_if_status_is_not_available_when_assigning(): void
@@ -205,8 +205,8 @@ class AssetAssignedToLocationTest extends TestCase
         $this->assertTrue($asset2->fresh()->is_assigned_to_location);
         $this->assertSame('Di-assign (LT)', $asset2->fresh()->status);
 
-        $this->assertSame(1, AssetLifecycle::where('asset_id', $asset1->id)->where('action_type', 'assignment')->count());
-        $this->assertSame(1, AssetLifecycle::where('asset_id', $asset2->id)->where('action_type', 'assignment')->count());
+        $this->assertSame(1, AssetLifecycle::where('asset_id', $asset1->id)->where('action_type', 'Assignment')->count());
+        $this->assertSame(1, AssetLifecycle::where('asset_id', $asset2->id)->where('action_type', 'Assignment')->count());
     }
 
     public function test_bulk_asset_update_fails_if_any_selected_asset_is_not_available(): void

@@ -1,12 +1,12 @@
 {{--
-    Email notification template sent to IFS Department Manager for bulk asset deactivation approval requests.
+    Email notification template sent to IFS Department Manager for bulk asset deletion approval requests.
 --}}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Asset Deactivation Approval - SMART</title>
+    <title>Asset Deletion Approval - SMART</title>
     <!--[if mso]>
     <style type="text/css">
         body, table, td, a { font-family: Arial, Helvetica, sans-serif !important; }
@@ -122,30 +122,25 @@
         }
         .preview-table {
             width: 100%;
-            border: 1px solid #e2e8f0;
-            border-radius: 6px;
-            margin-top: 12px;
+            border-collapse: collapse;
             font-size: 12px;
+            margin-top: 8px;
         }
         .preview-table th {
+            text-align: left;
+            padding: 6px 8px;
             background-color: #f1f5f9;
             color: #475569;
             font-weight: 600;
-            text-align: left;
-            padding: 8px 10px;
             border-bottom: 1px solid #e2e8f0;
         }
         .preview-table td {
-            padding: 7px 10px;
+            padding: 6px 8px;
             border-bottom: 1px solid #f1f5f9;
-            color: #1e293b;
-        }
-        .preview-table tr:last-child td {
-            border-bottom: none;
+            color: #334155;
         }
         .btn-container {
             text-align: center;
-            margin-top: 24px;
         }
         .btn-primary {
             display: inline-block;
@@ -194,7 +189,7 @@
                 <table style="border-collapse: collapse; border-spacing: 0;">
                     <tr>
                         <td style="vertical-align: middle; padding-right: 12px;">
-                            <img src="data:image/png;base64,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" width="38" height="38" alt="SMART Logo" style="display: block; width: 38px; height: 38px;">
+                            <img src="data:image/png;base64,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" width="38" height="38" alt="SMART Logo" style="display: block; width: 38px; height: 38px;">
                         </td>
                         <td style="vertical-align: middle;">
                             <h1 class="app-title">SMART</h1>
@@ -211,7 +206,7 @@
                 </div>
 
                 <p class="message">
-                    A batch of <strong>{{ $count }} asset deactivation requests</strong> has been submitted with proposed condition <strong class="info-highlight">{{ $proposedCondition }}</strong> (Inactive) and requires your <strong>approval</strong> before proceeding to BoD/BoC approval.
+                    A batch of <strong>{{ $count }} asset deletion requests</strong> has been submitted with proposed condition <strong class="info-highlight">{{ $proposedCondition }}</strong> (Inactive) and requires your <strong>approval</strong> before proceeding to BoD/BoC approval.
                 </p>
 
                 <!-- Batch Asset Info Table -->
@@ -266,7 +261,7 @@
                 <!-- CTA Button -->
                 <div class="btn-container">
                     <a href="{{ $actionUrl }}" class="btn-primary" target="_blank">
-                        Review Deactivation Approvals
+                        Review Deletion Approvals
                     </a>
                 </div>
 

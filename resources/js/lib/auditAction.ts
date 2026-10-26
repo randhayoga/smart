@@ -29,6 +29,7 @@ export const AUDIT_ACTION_KEY_MAP: Record<string, string> = {
   'disposal': 'admin.auditActionTypes.penghapusan',
   'deaktivasi': 'admin.auditActionTypes.deaktivasi',
   'deactivation': 'admin.auditActionTypes.deaktivasi',
+  'deletion': 'admin.auditActionTypes.deaktivasi',
   'penyesuaian': 'admin.auditActionTypes.adjustment',
   'adjustment': 'admin.auditActionTypes.adjustment',
   'stok masuk': 'admin.auditActionTypes.stockIn',
@@ -43,6 +44,10 @@ export const AUDIT_ACTION_KEY_MAP: Record<string, string> = {
   'ubah': 'admin.auditActionTypes.update',
   'delete': 'admin.auditActionTypes.delete',
   'hapus': 'admin.auditActionTypes.delete',
+  'assignment': 'admin.auditActionTypes.assignment',
+  'penetapan': 'admin.auditActionTypes.assignment',
+  'disapproval': 'admin.auditActionTypes.disapproval',
+  'penolakan': 'admin.auditActionTypes.disapproval',
 };
 
 /**
