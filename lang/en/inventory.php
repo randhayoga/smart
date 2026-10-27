@@ -63,6 +63,21 @@ return [
     'condition_total_damage' => 'Total Damage',
     'condition_lost' => 'Lost',
 
+    // Activation Notifications
+    'notification_activation_title' => 'New Asset Approval :name: Requires Your Attention',
+    'notification_activation_message' => 'New asset with number :number requires your approval.',
+    'notification_bulk_activation_title' => 'New Asset Approval: :count Units :name',
+    'notification_bulk_activation_message' => ':count new asset units for :name (:first to :last) require your approval.',
+    'notification_bulk_activation_single_message' => ':count new asset unit for :name (:number) requires your approval.',
+    'notification_activation_approved_title' => 'Asset Activation :name Approved by DM IFS',
+    'notification_activation_approved_message' => 'Asset :number status has changed to Available.',
+    'notification_activation_rejected_title' => 'Asset Activation :name Rejected by DM IFS',
+    'notification_activation_rejected_message' => 'Asset activation for :number was rejected by DM IFS. Status: Verification Rejected.',
+
+    // Low Stock Alert
+    'notification_low_stock_title' => 'Minimum Stock Alert: :name',
+    'notification_low_stock_message' => 'Stock for model :number is currently :current :uom, which has reached or fallen below the minimum threshold (:threshold :uom).',
+
     // Deactivation Notifications
     'notification_deactivation_title' => 'Asset Deletion :name: Requires Your Attention',
     'notification_deactivation_message' => 'Asset deletion request for :number has been submitted and requires your approval',

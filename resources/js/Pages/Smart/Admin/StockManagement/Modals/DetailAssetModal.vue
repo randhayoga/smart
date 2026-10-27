@@ -165,6 +165,7 @@ const handleBodBocUpload = (e: Event) => {
         target.value = '';
         if (props.asset) {
           props.asset.status = 'Dihapus';
+          props.asset.approval_status = null;
         }
         emit('update:open', false);
       },
@@ -216,6 +217,7 @@ const handleBodBocDisapprovalUpload = (e: Event) => {
         target.value = '';
         if (props.asset) {
           props.asset.status = 'Tersedia';
+          props.asset.approval_status = null;
         }
         emit('update:open', false);
       },
@@ -361,10 +363,11 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                       <p v-if="isVehicle" class="font-bold text-foreground">
                         <span class="text-foreground">{{ t('inventory.nopol') }}:</span> {{ asset.vehicle_registration || '-' }}
                       </p>
-                      <p class="text-foreground">
-                        {{ t('inventory.status') }}: 
+                      <p class="text-foreground flex items-center gap-1.5 flex-wrap">
+                        <span class="text-foreground">{{ t('inventory.status') }}:</span> 
                         <StatusBadge 
                           :status="asset.status" 
+                          :approval-status="asset.approval_status"
                           :proposed-status="asset.proposed_status" 
                         />
                       </p>
@@ -379,6 +382,12 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                           {{ getConditionLabel(asset.condition) }}
                         </span>
                       </p>
+                      <p v-if="asset.admin_note" class="text-foreground">
+                        {{ t('inventory.adminNote') }}: <span class="italic text-muted-foreground font-normal">"{{ asset.admin_note }}"</span>
+                      </p>
+                      <p v-if="asset.dm_note" class="text-foreground">
+                        {{ t('inventory.dmNote') }}: <span class="italic text-muted-foreground font-normal">"{{ asset.dm_note }}"</span>
+                      </p>
                       <p class="text-foreground">{{ t('inventory.value') }}: {{ formatRupiah(asset.price) }}</p>
                       <p class="text-foreground">{{ t('inventory.storageLocation') }}: {{ formatLocation(asset.location, asset.floor, asset.room) }}</p>
                       <p v-if="asset.type" class="text-foreground">{{ t('inventory.type') }}: {{ asset.type }}</p>
@@ -386,12 +395,6 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                       <p class="text-foreground">{{ t('inventory.burden') }}: {{ asset.burden || '-' }}</p>
                       <p v-if="asset.burden === 'Project'" class="text-foreground">{{ t('inventory.project') }}: {{ asset.project_no ? `[${asset.project_no}] ${asset.project_name || '-'}` : (asset.project_name || '-') }}</p>
                       <p class="text-foreground">{{ t('inventory.lastUpdate') }}: {{ asset.updated_at || '-' }}</p>
-                      <p v-if="asset.admin_note" class="text-foreground">
-                        {{ t('inventory.adminNote') }}: <span class="italic text-muted-foreground font-normal">"{{ asset.admin_note }}"</span>
-                      </p>
-                      <p v-if="asset.dm_note" class="text-foreground">
-                        {{ t('inventory.dmNote') }}: <span class="italic text-muted-foreground font-normal">"{{ asset.dm_note }}"</span>
-                      </p>
                     </div>
                   </div>
                 </div>
@@ -481,7 +484,7 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                 </Button>
 
                 <Button 
-                  v-if="(can('inventory.status_approval.request') || can('inventory.manage')) && asset && hasAssetStatus(asset.status, 'Pending:BoD/BoC')"
+                  v-if="(can('inventory.status_approval.request') || can('inventory.manage')) && asset && hasAssetStatus(asset.status, 'Pending:BoD/BoC', asset.approval_status)"
                   @click="triggerBodBocUpload"
                   :disabled="isUploading"
                   variant="success"
@@ -505,7 +508,7 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                 </Button>
 
                 <Button 
-                  v-if="(can('inventory.status_approval.request') || can('inventory.manage')) && asset && hasAssetStatus(asset.status, 'Pending:BoD/BoC')"
+                  v-if="(can('inventory.status_approval.request') || can('inventory.manage')) && asset && hasAssetStatus(asset.status, 'Pending:BoD/BoC', asset.approval_status)"
                   @click="triggerBodBocDisapprovalUpload"
                   :disabled="isUploading"
                   variant="destructive"

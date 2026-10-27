@@ -93,9 +93,11 @@ class BulkAssetController extends Controller
         $finalCompSpec = $isComp ? $compSpec : null;
 
         if ($needApproval) {
-            $validated['status'] = 'Tersedia,Pending:DM';
+            $validated['status'] = 'Tersedia';
+            $validated['approval_status'] = 'Pending:DM';
         } else {
             $validated['status'] = 'Belum Diverifikasi';
+            $validated['approval_status'] = null;
         }
 
         $quantity = (int)$validated['bulk_quantity'];
@@ -160,6 +162,7 @@ class BulkAssetController extends Controller
                     'lot_id' => $validated['lot_id'],
                     'location_id' => $validated['location_id'],
                     'status' => $validated['status'],
+                    'approval_status' => $validated['approval_status'],
                     'condition' => $validated['condition'],
                     'borrowing_type' => $borrowingType,
                     'classification' => $classification,
@@ -260,8 +263,6 @@ class BulkAssetController extends Controller
                     'Pending',
                     'Pending:DM',
                     'Pending:BoD/BoC',
-                    'Tersedia,Pending:DM',
-                    'Tidak Aktif,Pending:BoD/BoC',
                     'Di-assign (LT)',
                 ]),
             ],
@@ -375,6 +376,7 @@ class BulkAssetController extends Controller
                         Asset::where('id', $asset->id)->update([
                             'status' => $targetStatus,
                             'condition' => $targetCondition,
+                            'approval_status' => null,
                         ]);
 
                         AssetLifecycle::where('asset_id', $asset->id)
@@ -396,7 +398,10 @@ class BulkAssetController extends Controller
                         ]);
                     }
                 } else {
-                    Asset::whereIn('id', $ids)->update(['status' => 'Dihapus']);
+                    Asset::whereIn('id', $ids)->update([
+                        'status' => 'Dihapus',
+                        'approval_status' => null,
+                    ]);
 
                     AssetLifecycle::whereIn('asset_id', $ids)
                         ->whereNull('end_date')
@@ -486,7 +491,7 @@ class BulkAssetController extends Controller
 
         // 1. Status & Condition
         if ($needApproval) {
-            $updateData['status'] = 'Tersedia,Pending:DM';
+            $updateData['approval_status'] = 'Pending:DM';
         } else if ($request->filled('status')) {
             $updateData['status'] = $request->input('status');
         }
@@ -577,6 +582,9 @@ class BulkAssetController extends Controller
         if (!empty($updateData)) {
             foreach ($assets as $asset) {
                 $assetData = $updateData;
+                if ($needApproval) {
+                    $assetData['status'] = $asset->base_status;
+                }
                 if (isset($updateData['is_assigned_to_location']) && !$updateData['is_assigned_to_location']) {
                     if ($asset->status === 'Di-assign (LT)') {
                         $assetData['status'] = 'Tersedia';
@@ -604,7 +612,8 @@ class BulkAssetController extends Controller
             foreach ($assets as $asset) {
                 if (!$existingPendingAssetIds->has($asset->id)) {
                     $previousStatus = $asset->base_status;
-                    $asset->status = "{$previousStatus},Pending:DM";
+                    $asset->status = $previousStatus;
+                    $asset->approval_status = 'Pending:DM';
                     AssetDeletionApproval::create([
                         'asset_id' => $asset->id,
                         'requester_id' => $request->user()->id,

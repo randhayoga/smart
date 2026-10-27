@@ -204,6 +204,7 @@ class StockManagementController extends Controller
                     'number' => $asset->number,
                     'legacy_number' => $asset->legacy_number,
                     'status' => $asset->status,
+                    'approval_status' => $asset->approval_status,
                     'proposed_status' => $pendingApproval 
                         ? $pendingApproval->proposed_condition 
                         : ($approvedApproval ? $approvedApproval->proposed_condition : null),

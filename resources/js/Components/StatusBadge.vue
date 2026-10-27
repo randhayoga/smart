@@ -14,6 +14,7 @@ import {
 
 const props = defineProps<{
   status?: string | null;
+  approvalStatus?: string | null;
   proposedStatus?: string | null;
   class?: string;
 }>();
@@ -21,7 +22,7 @@ const props = defineProps<{
 const { t, te } = useI18n();
 
 const statusTokens = computed(() => {
-  const tokens = parseAssetStatuses(props.status);
+  const tokens = parseAssetStatuses(props.status, props.approvalStatus);
   return tokens.length > 0 ? tokens : [''];
 });
 

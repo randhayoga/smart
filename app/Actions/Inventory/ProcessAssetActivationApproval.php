@@ -2,6 +2,7 @@
 
 namespace App\Actions\Inventory;
 
+use App\Models\Inventory\Asset;
 use App\Models\Inventory\AssetActivationApproval;
 use App\Models\Inventory\AssetLifecycle;
 use App\Services\NotificationService;
@@ -41,15 +42,24 @@ class ProcessAssetActivationApproval
                 ->whereNull('end_date')
                 ->update(['end_date' => now()]);
 
+            $previousStatus = $asset->status;
+
+            // Suppress duplicate "Perubahan status" lifecycle created by Asset::updating hook
+            Asset::withoutLifecycleLogging(function () use ($asset, $decision) {
+                if ($decision === 'approved') {
+                    $asset->update([
+                        'status' => 'Tersedia',
+                    ]);
+                } else {
+                    $asset->update([
+                        'status' => 'Verifikasi Ditolak',
+                    ]);
+                }
+            });
+
             if ($decision === 'approved') {
-                $asset->update([
-                    'status' => 'Tersedia',
-                ]);
                 $lifecycleNote = 'Aktivasi aset disetujui oleh DM IFS.' . ($note ? " Catatan: {$note}" : '');
             } else {
-                $asset->update([
-                    'status' => 'Verifikasi Ditolak',
-                ]);
                 $lifecycleNote = 'Aktivasi aset ditolak oleh DM IFS.' . ($note ? " Catatan: {$note}" : '');
             }
 
@@ -63,6 +73,8 @@ class ProcessAssetActivationApproval
                 'end_date' => null,
                 'actor_id' => $approverId,
                 'note' => $lifecycleNote,
+                'previous_state' => ['status' => $previousStatus],
+                'new_state' => ['status' => $asset->status],
             ]);
 
             app(NotificationService::class)->notifyAdminAssetActivationDecision($approval, $decision);

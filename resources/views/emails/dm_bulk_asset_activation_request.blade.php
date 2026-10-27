@@ -204,7 +204,11 @@
                         <tr>
                             <td class="info-label">Asset Numbers Range</td>
                             <td class="info-value info-code" style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;">
-                                {{ $firstNumber }} &ndash; {{ $lastNumber }}
+                                @if($firstNumber === $lastNumber)
+                                    {{ $firstNumber }}
+                                @else
+                                    {{ $firstNumber }} to {{ $lastNumber }}
+                                @endif
                             </td>
                         </tr>
                         <tr>

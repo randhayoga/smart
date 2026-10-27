@@ -63,6 +63,21 @@ return [
     'condition_total_damage' => 'Rusak Total',
     'condition_lost' => 'Hilang',
 
+    // Activation Notifications
+    'notification_activation_title' => 'Approval Aset Baru :name: Perlu Perhatian Anda',
+    'notification_activation_message' => 'Aset baru dengan nomor :number memerlukan approval Anda.',
+    'notification_bulk_activation_title' => 'Approval Aset Baru: :count Unit :name',
+    'notification_bulk_activation_message' => 'Sebanyak :count unit aset baru untuk :name (:first s.d. :last) memerlukan approval Anda.',
+    'notification_bulk_activation_single_message' => 'Sebanyak :count unit aset baru untuk :name (:number) memerlukan approval Anda.',
+    'notification_activation_approved_title' => 'Aktivasi Aset :name Disetujui DM IFS',
+    'notification_activation_approved_message' => 'Status aset :number telah berubah menjadi Tersedia.',
+    'notification_activation_rejected_title' => 'Aktivasi Aset :name Ditolak DM IFS',
+    'notification_activation_rejected_message' => 'Aktivasi aset :number ditolak oleh DM IFS. Status: Verifikasi Ditolak.',
+
+    // Low Stock Alert
+    'notification_low_stock_title' => 'Peringatan Stok Minimum: :name',
+    'notification_low_stock_message' => 'Stok model :number saat ini :current :uom, telah mencapai atau di bawah batas minimum (:threshold :uom).',
+
     // Deactivation Notifications
     'notification_deactivation_title' => 'Penghapusan Aset :name: Perlu Perhatian Anda',
     'notification_deactivation_message' => 'Pengajuan penghapusan aset :number telah diajukan dan memerlukan approval Anda',

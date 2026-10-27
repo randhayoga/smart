@@ -49,23 +49,32 @@ export const STATUS_KEY_MAP: Record<string, string> = {
 };
 
 /**
- * Split a comma-separated status string into trimmed non-empty tokens.
+ * Split a comma-separated status string or resolve status + approvalStatus into trimmed non-empty tokens.
  */
-export function parseAssetStatuses(rawStatus?: string | null): string[] {
-  if (!rawStatus) return [];
-  return String(rawStatus)
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean);
+export function parseAssetStatuses(rawStatus?: string | null, approvalStatus?: string | null): string[] {
+  const tokens: string[] = [];
+  if (rawStatus) {
+    for (const s of String(rawStatus).split(',')) {
+      const trimmed = s.trim();
+      if (trimmed) tokens.push(trimmed);
+    }
+  }
+  if (approvalStatus) {
+    const trimmed = String(approvalStatus).trim();
+    if (trimmed && !tokens.includes(trimmed)) {
+      tokens.push(trimmed);
+    }
+  }
+  return tokens;
 }
 
 /**
- * Check if an asset status string contains a specific status token (case-insensitive).
+ * Check if an asset status string or approvalStatus contains a specific status token (case-insensitive).
  */
-export function hasAssetStatus(rawStatus?: string | null, target?: string | null): boolean {
-  if (!rawStatus || !target) return false;
+export function hasAssetStatus(rawStatus?: string | null, target?: string | null, approvalStatus?: string | null): boolean {
+  if (!target) return false;
   const targetLower = target.trim().toLowerCase();
-  return parseAssetStatuses(rawStatus).some((s) => s.toLowerCase() === targetLower);
+  return parseAssetStatuses(rawStatus, approvalStatus).some((s) => s.toLowerCase() === targetLower);
 }
 
 /**

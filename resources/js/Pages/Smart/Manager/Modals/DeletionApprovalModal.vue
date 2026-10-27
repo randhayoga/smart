@@ -229,7 +229,7 @@ const getConditionClass = (cond?: string | null) => {
                       <div v-if="mode === 'decided'" class="flex items-center gap-1.5 flex-wrap">
                         <span>{{ $t('approvals.postApprovalStatusConditionLabel') }}</span>
                         <template v-if="approval.decision === 'approved'">
-                          <StatusBadge status="Tidak Aktif,Pending:BoD/BoC" />
+                          <StatusBadge status="Tidak Aktif" approval-status="Pending:BoD/BoC" />
                           <span :class="getConditionClass(approval.proposed_condition || approval.proposed_status)">
                             {{ getConditionLabel(approval.proposed_condition || approval.proposed_status) }}
                           </span>

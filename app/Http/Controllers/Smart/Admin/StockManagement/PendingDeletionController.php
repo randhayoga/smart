@@ -27,7 +27,7 @@ class PendingDeletionController extends Controller
             'lot.model.type.category', 'lot.model.brand', 'lot.model.uom',
             'lot.organizer', 'lot.vendor', 'lot.legacyVendor', 'lifecycles.actor'
         ])
-        ->where('status', 'like', '%Pending%')
+        ->whereNotNull('approval_status')
         ->orderBy('created_at', 'desc')
         ->get()
         ->map(function ($asset) {
@@ -42,6 +42,7 @@ class PendingDeletionController extends Controller
                 'number' => $asset->number,
                 'legacy_number' => $asset->legacy_number,
                 'status' => $asset->status,
+                'approval_status' => $asset->approval_status,
                 'proposed_status' => $pendingApproval 
                     ? $pendingApproval->proposed_condition 
                     : ($approvedApproval ? $approvedApproval->proposed_condition : null),

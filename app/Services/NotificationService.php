@@ -151,8 +151,19 @@ class NotificationService
             $uomName = $model->uom->name ?? 'unit';
             $brandName = $model->brand->name ?? '';
             $fullName = trim(($brandName ? $brandName . ' ' : '') . $model->name);
-            $title = "Peringatan Stok Minimum: {$fullName}";
-            $message = "Stok model {$model->number} saat ini {$currentStock} {$uomName}, telah mencapai atau di bawah batas minimum ({$model->min_stock_threshold} {$uomName}).";
+
+            $titleKey = 'inventory.notification_low_stock_title';
+            $titleParams = ['name' => $fullName];
+            $messageKey = 'inventory.notification_low_stock_message';
+            $messageParams = [
+                'number' => $model->number,
+                'current' => $currentStock,
+                'threshold' => $model->min_stock_threshold,
+                'uom' => $uomName,
+            ];
+
+            $title = __($titleKey, $titleParams);
+            $message = __($messageKey, $messageParams);
 
             $modelRouteKey = preg_replace('/[^a-zA-Z0-9]/', '', (string)$model->number);
             $this->sendToRole(
@@ -166,6 +177,10 @@ class NotificationService
                     'barang_id' => $model->id,
                     'current_stock' => $currentStock,
                     'min_stock_threshold' => $model->min_stock_threshold,
+                    'title_key' => $titleKey,
+                    'title_params' => $titleParams,
+                    'message_key' => $messageKey,
+                    'message_params' => $messageParams,
                 ]
             );
 
@@ -198,7 +213,6 @@ class NotificationService
 
     /**
      * Format a notification payload array into the active application locale.
-     * Supports both new key-based notifications and legacy static string notifications.
      *
      * @param array<string, mixed> $data
      * @return array<string, mixed>
@@ -217,26 +231,6 @@ class NotificationService
         $message = $messageKey
             ? __($messageKey, $messageParams)
             : ($data['message'] ?? '');
-
-        // Fallback for legacy database notifications stored as raw strings
-        if (!$titleKey && isset($data['title'])) {
-            if (preg_match('/(?:Penghapusan|Deaktivasi|Deletion|Deactivation)\s+Aset\s+(.+?)(?:\s+Disetujui\s+DM\s+IFS|\s+Approved\s+by\s+DM\s+IFS)/iu', $data['title'], $m)) {
-                $title = __('inventory.notification_status_approved_title', ['name' => $m[1]]);
-            } elseif (preg_match('/(?:Penghapusan|Deaktivasi|Deletion|Deactivation)\s+Aset\s+(.+?)(?:\s+Ditolak\s+DM\s+IFS|\s+oleh\s+DM\s+IFS|\s+Rejected\s+by\s+DM\s+IFS)/iu', $data['title'], $m)) {
-                $title = __('inventory.notification_status_rejected_title', ['name' => $m[1]]);
-            }
-        }
-        if (!$messageKey && isset($data['message'])) {
-            if (preg_match('/(?:Status\s+aset|Asset)\s+(.+?)\s+(?:telah\s+berubah\s+menjadi|status\s+has\s+changed\s+to)\s+Tidak\s+Aktif,\s*Pending:BoD\/BoC/iu', $data['message'], $m)) {
-                $message = __('inventory.notification_status_approved_message', ['number' => $m[1]]);
-            } elseif (preg_match('/(?:Status\s+aset|Asset)\s+(.+?)\s+(?:telah\s+dikembalikan\s+menjadi|status\s+was\s+reverted\s+to)\s+(.+?)\s+(?:dan\s+kondisi\s+dikembalikan\s+menjadi|and\s+condition\s+reverted\s+to)\s+(.+?)\.?$/iu', $data['message'], $m)) {
-                $message = __('inventory.notification_status_rejected_message', [
-                    'number' => $m[1],
-                    'status' => $m[2],
-                    'condition' => $m[3],
-                ]);
-            }
-        }
 
         return [
             ...$data,
@@ -473,8 +467,13 @@ class NotificationService
         $assetName = $asset->lot?->model?->name ?? '';
         $brandAndName = trim("{$brand} {$assetName}") ?: $asset->number;
 
-        $title = "Approval Aset Baru {$brandAndName}: Perlu Perhatian Anda";
-        $message = "Aset baru dengan nomor {$asset->number} memerlukan approval Anda.";
+        $titleKey = 'inventory.notification_activation_title';
+        $titleParams = ['name' => $brandAndName];
+        $messageKey = 'inventory.notification_activation_message';
+        $messageParams = ['number' => $asset->number];
+
+        $title = __($titleKey, $titleParams);
+        $message = __($messageKey, $messageParams);
 
         // 1. In-app database + Mercure notification
         $this->sendToRole(
@@ -487,6 +486,10 @@ class NotificationService
                 'asset_id' => $asset->id,
                 'asset_number' => $asset->number,
                 'type' => 'activation_approval',
+                'title_key' => $titleKey,
+                'title_params' => $titleParams,
+                'message_key' => $messageKey,
+                'message_params' => $messageParams,
             ]
         );
 
@@ -541,8 +544,37 @@ class NotificationService
             $locationText = $firstAsset->location->full_name ?? $firstAsset->location->name ?? '-';
         }
 
-        $title = "Approval Aset Baru: {$count} Unit {$brandAndName}";
-        $message = "Sebanyak {$count} unit aset baru untuk {$brandAndName} ({$firstNumber} - {$lastNumber}) memerlukan approval Anda.";
+        if ($count > 1) {
+            $titleKey = 'inventory.notification_bulk_activation_title';
+            $titleParams = [
+                'count' => $count,
+                'name' => $brandAndName,
+            ];
+            $messageKey = 'inventory.notification_bulk_activation_message';
+            $messageParams = [
+                'count' => $count,
+                'name' => $brandAndName,
+                'first' => $firstNumber,
+                'last' => $lastNumber,
+            ];
+            $url = "/smart/approve-activation";
+        } else {
+            $titleKey = 'inventory.notification_bulk_activation_title';
+            $titleParams = [
+                'count' => 1,
+                'name' => $brandAndName,
+            ];
+            $messageKey = 'inventory.notification_bulk_activation_single_message';
+            $messageParams = [
+                'count' => 1,
+                'name' => $brandAndName,
+                'number' => $firstNumber,
+            ];
+            $url = "/smart/approve-activation?search=" . urlencode($firstNumber);
+        }
+
+        $title = __($titleKey, $titleParams);
+        $message = __($messageKey, $messageParams);
 
         // 1. In-app database + Mercure notification
         $this->sendToRole(
@@ -550,7 +582,7 @@ class NotificationService
             $title,
             $message,
             'warning',
-            "/smart/approve-activation?search=" . urlencode($firstNumber),
+            $url,
             [
                 'lot_id' => $lot->id,
                 'lot_number' => $lot->number,
@@ -558,6 +590,10 @@ class NotificationService
                 'first_number' => $firstNumber,
                 'last_number' => $lastNumber,
                 'type' => 'activation_approval_bulk',
+                'title_key' => $titleKey,
+                'title_params' => $titleParams,
+                'message_key' => $messageKey,
+                'message_params' => $messageParams,
             ]
         );
 
@@ -609,16 +645,23 @@ class NotificationService
         $brandAndName = trim("{$brand} {$name}") ?: $asset->number;
 
         if ($decision === 'approved') {
-            $title = "Aktivasi Aset {$brandAndName} Disetujui DM IFS";
-            $message = "Status aset {$asset->number} telah berubah menjadi Tersedia.";
+            $titleKey = 'inventory.notification_activation_approved_title';
+            $titleParams = ['name' => $brandAndName];
+            $messageKey = 'inventory.notification_activation_approved_message';
+            $messageParams = ['number' => $asset->number];
             $type = 'success';
             $url = "/smart/stock-management/non-consumables?search=" . urlencode($asset->number);
         } else {
-            $title = "Aktivasi Aset {$brandAndName} Ditolak DM IFS";
-            $message = "Aktivasi aset {$asset->number} ditolak oleh DM IFS. Status: Verifikasi Ditolak.";
+            $titleKey = 'inventory.notification_activation_rejected_title';
+            $titleParams = ['name' => $brandAndName];
+            $messageKey = 'inventory.notification_activation_rejected_message';
+            $messageParams = ['number' => $asset->number];
             $type = 'error';
             $url = "/smart/stock-management/pending-activation?search=" . urlencode($asset->number);
         }
+
+        $title = __($titleKey, $titleParams);
+        $message = __($messageKey, $messageParams);
 
         $this->sendToRole(
             'admin',
@@ -631,6 +674,10 @@ class NotificationService
                 'asset_number' => $asset->number,
                 'approval_id' => $approval->id,
                 'decision' => $decision,
+                'title_key' => $titleKey,
+                'title_params' => $titleParams,
+                'message_key' => $messageKey,
+                'message_params' => $messageParams,
             ]
         );
     }

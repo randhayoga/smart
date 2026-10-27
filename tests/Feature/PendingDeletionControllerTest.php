@@ -80,7 +80,8 @@ class PendingDeletionControllerTest extends TestCase
             'lot_id' => $lot->id,
             'location_id' => $location->id,
             'number' => 'AST-PC-001',
-            'status' => 'Tersedia,Pending:DM',
+            'status' => 'Tersedia',
+            'approval_status' => 'Pending:DM',
             'condition' => 'Rusak Total',
             'comp_specification' => 'Intel Core i5, 16GB RAM, 512GB SSD',
         ]);
@@ -114,7 +115,8 @@ class PendingDeletionControllerTest extends TestCase
         $this->assertEquals('COMP', $unit['barang_category_code']);
         $this->assertEquals('Personal Computer', $unit['barang_subcategory']);
         $this->assertEquals('Intel Core i5, 16GB RAM, 512GB SSD', $unit['comp_specification']);
-        $this->assertEquals('Tersedia,Pending:DM', $unit['status']);
+        $this->assertEquals('Tersedia', $unit['status']);
+        $this->assertEquals('Pending:DM', $unit['approval_status']);
         $this->assertEquals('Rusak Total', $unit['condition']);
         $this->assertStringContainsString('Main Office', $unit['location']);
 

@@ -62,7 +62,8 @@ class AdminAssetDeletionApprovalController extends Controller
 
         $asset->update([
             'condition' => $proposedCondition,
-            'status' => "{$previousStatus},Pending:DM",
+            'status' => $previousStatus,
+            'approval_status' => 'Pending:DM',
         ]);
 
         $approval = AssetDeletionApproval::create([

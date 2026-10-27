@@ -49,7 +49,8 @@ return new class extends Migration {
             $table->foreignId('lot_id')->constrained('lots')->cascadeOnDelete();
             $table->foreignId('legacy_vendor_id')->nullable()->constrained('vendors')->nullOnDelete()->comment('Refers to local vendors table (legacy migration only)');
             $table->foreignId('location_id')->nullable()->constrained('locations')->comment('current location');
-            $table->string('status')->default('Belum Diverifikasi');
+            $table->string('status', 50)->default('Belum Diverifikasi');
+            $table->string('approval_status', 50)->nullable()->comment('Pending:DM | Pending:BoD/BoC');
             $table->string('condition');
             $table->string('comp_specification')->nullable()->comment('Specification for computer category assets only');
             $table->string('borrowing_type', 2)->default('LT')->comment('LT | ST');
@@ -63,6 +64,7 @@ return new class extends Migration {
             $table->timestamps();
 
             $table->index('status');
+            $table->index('approval_status');
             $table->index('condition');
         });
 

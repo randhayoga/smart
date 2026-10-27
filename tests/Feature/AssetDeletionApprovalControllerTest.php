@@ -95,7 +95,8 @@ class AssetDeletionApprovalControllerTest extends TestCase
         ]);
 
         $unit->refresh();
-        $this->assertEquals('Tersedia,Pending:DM', $unit->status);
+        $this->assertEquals('Tersedia', $unit->status);
+        $this->assertEquals('Pending:DM', $unit->approval_status);
         $this->assertEquals('Rusak Total', $unit->condition);
     }
 
@@ -163,7 +164,8 @@ class AssetDeletionApprovalControllerTest extends TestCase
         $response->assertRedirect();
         
         $unit = Asset::where('lot_id', $lot->id)->firstOrFail();
-        $this->assertEquals('Tersedia,Pending:DM', $unit->status);
+        $this->assertEquals('Tersedia', $unit->status);
+        $this->assertEquals('Pending:DM', $unit->approval_status);
         $this->assertEquals('Rusak Total', $unit->condition);
 
         $this->assertDatabaseHas('asset_deletion_approvals', [
@@ -199,7 +201,8 @@ class AssetDeletionApprovalControllerTest extends TestCase
         $response->assertRedirect();
         
         $unit->refresh();
-        $this->assertEquals('Tersedia,Pending:DM', $unit->status);
+        $this->assertEquals('Tersedia', $unit->status);
+        $this->assertEquals('Pending:DM', $unit->approval_status);
         $this->assertEquals('Rusak Total', $unit->condition);
 
         $this->assertDatabaseHas('asset_deletion_approvals', [

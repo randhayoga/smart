@@ -16,6 +16,7 @@ import {
 import Combobox from '@/Components/Combobox.vue';
 import LocationCombobox from '@/Components/LocationCombobox.vue';
 import { Field, FieldLabel, FieldContent, FieldError } from '@/Components/ui/field';
+import StatusBadge from '@/Components/StatusBadge.vue';
 import { compressImageIfNeeded } from '@/utils/imageCompressor';
 import {
   hasAssetStatus,
@@ -110,13 +111,13 @@ const isBorrowedUnit = computed(() => {
   return (props.items || []).some(item => String(item?.status).trim().toLowerCase() === 'dipinjam');
 });
 
-const isRestrictedStatus = (status: string | null | undefined) => {
-  return isRestrictedAssetStatus(status);
+const isRestrictedStatus = (status: string | null | undefined, approvalStatus?: string | null | undefined) => {
+  return isRestrictedAssetStatus(status, approvalStatus);
 };
 
 const hasRestrictedUnit = computed(() => {
   if (!props.open) return false;
-  return (props.items || []).some(item => isRestrictedStatus(item?.status) || arrInactiveConditions.includes(item?.condition));
+  return (props.items || []).some(item => isRestrictedStatus(item?.status, item?.approval_status) || arrInactiveConditions.includes(item?.condition));
 });
 
 const isKondisiDisabled = computed(() => {
@@ -132,9 +133,9 @@ const isDocumentDisabled = computed(() => {
 const isBodBocFieldVisible = computed(() => {
   if (!props.open) return false;
   if (isSingle.value) {
-    return hasAssetStatus(selectedItem.value?.status, 'Pending:BoD/BoC');
+    return hasAssetStatus(selectedItem.value?.status, 'Pending:BoD/BoC', selectedItem.value?.approval_status);
   }
-  return props.items.length > 0 && props.items.every((item: any) => hasAssetStatus(item.status, 'Pending:BoD/BoC'));
+  return props.items.length > 0 && props.items.every((item: any) => hasAssetStatus(item.status, 'Pending:BoD/BoC', item.approval_status));
 });
 
 const canShowAssignToLocation = computed(() => {
@@ -166,6 +167,7 @@ const form = useForm({
   legacy_number: '',
   location_id: '' as string | number,
   status: '',
+  approval_status: '',
   is_assigned_to_location: null as boolean | null,
   condition: '',
   type: '',
@@ -266,19 +268,14 @@ watch(() => form.project_id, v => { if (v && errors.value.project_id) errors.val
 
 watch(() => form.condition, (newVal, oldVal) => {
   const isRestricted = isSingle.value 
-    ? isRestrictedStatus(selectedItem.value?.status)
+    ? isRestrictedStatus(selectedItem.value?.status, selectedItem.value?.approval_status)
     : hasRestrictedUnit.value;
 
   if (!isRestricted) {
     if (arrInactiveConditions.includes(newVal)) {
-      const baseStatus = isSingle.value ? getBaseAssetStatus(selectedItem.value?.status) : 'Tersedia';
-      form.status = `${baseStatus},Pending:DM`;
-    } else if (oldVal && arrInactiveConditions.includes(oldVal) && hasAssetStatus(form.status, 'Pending:DM')) {
-      if (isSingle.value && selectedItem.value?.status && !isRestrictedStatus(selectedItem.value.status)) {
-        form.status = selectedItem.value.status;
-      } else {
-        form.status = '';
-      }
+      form.approval_status = 'Pending:DM';
+    } else if (oldVal && arrInactiveConditions.includes(oldVal)) {
+      form.approval_status = isSingle.value ? (selectedItem.value?.approval_status || '') : '';
     }
   }
 
@@ -311,6 +308,7 @@ const resetModalState = () => {
   form.legacy_number = '';
   form.location_id = '';
   form.status = '';
+  form.approval_status = '';
   form.is_assigned_to_location = null;
   form.condition = '';
   form.type = '';
@@ -360,13 +358,14 @@ watch(() => props.open, (val) => {
     form.number = item.number || '';
     form.legacy_number = item.legacy_number || '';
     form.location_id = item.location_id || '';
-    form.status = item.status || '';
+    form.status = item.status || 'Tersedia';
+    form.approval_status = item.approval_status || '';
     form.is_assigned_to_location = Boolean(item.is_assigned_to_location);
     form.condition = item.condition || '';
     form.type = item.type || item.borrowing_type || '';
     form.classification = item.classification || '';
-    if (!isRestrictedStatus(item.status) && arrInactiveConditions.includes(form.condition)) {
-      form.status = `${getBaseAssetStatus(item.status)},Pending:DM`;
+    if (!isRestrictedStatus(item.status, item.approval_status) && arrInactiveConditions.includes(form.condition)) {
+      form.approval_status = 'Pending:DM';
     }
     form.price = item.price || '';
     form.image_url_name = item.image_url ? item.image_url.split('/').pop() || '' : '';
@@ -391,6 +390,7 @@ watch(() => props.open, (val) => {
     form.legacy_number = '';
     form.location_id = '';
     form.status = '';
+    form.approval_status = '';
     form.is_assigned_to_location = null;
     form.condition = '';
     form.type = '';
@@ -671,6 +671,18 @@ const handleSubmit = () => {
         closeModal();
         emit('success');
       },
+      onError: (errs) => {
+        const errorKeys = Object.keys(errs || {});
+        if (errorKeys.length > 0) {
+          errorKeys.forEach((key) => {
+            if (key in errors.value) {
+              (errors.value as any)[key] = errs[key];
+            }
+          });
+          const firstMsg = errs[errorKeys[0]];
+          toast.error(firstMsg || t('inventory.failedToUpdateAsset') || 'Failed to update asset');
+        }
+      },
     });
   } else {
     // Bulk edit
@@ -886,8 +898,15 @@ const handleSubmit = () => {
                         class="w-full flex items-center justify-between px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10 select-none"
                         :title="t('inventory.statusCannotBeChangedManually')"
                       >
-                        <span>{{ getStatusLabel(form.status) || (isSingle ? t('inventory.selectStatus') : t('inventory.unchanged')) }}</span>
-                        <ChevronDown class="w-4 h-4 opacity-50" />
+                        <div v-if="form.status" class="flex items-center gap-1.5 overflow-hidden">
+                          <StatusBadge 
+                            :status="form.status" 
+                            :approval-status="form.approval_status" 
+                            class="rounded-sm" 
+                          />
+                        </div>
+                        <span v-else>{{ isSingle ? t('inventory.selectStatus') : t('inventory.unchanged') }}</span>
+                        <ChevronDown class="w-4 h-4 opacity-50 ml-auto shrink-0" />
                       </div>
                     </FieldContent>
                     <p class="text-[11px] text-muted-foreground mt-1 ml-0.5">{{ t('inventory.statusCannotBeChangedManually') }}</p>

@@ -85,7 +85,7 @@ const isDocumentDisabled = computed(() => {
 });
 
 const isBodBocFieldVisible = computed(() => {
-  return hasAssetStatus(props.asset?.status, 'Pending:BoD/BoC');
+  return hasAssetStatus(props.asset?.status, 'Pending:BoD/BoC', props.asset?.approval_status);
 });
 
 // Form setup for editing
@@ -94,6 +94,7 @@ const form = useForm({
   lot_id: props.lot?.id || props.asset?.lot_id || '',
   location_id: props.asset?.location_id || '',
   status: props.asset?.status || '',
+  approval_status: props.asset?.approval_status || '',
   condition: props.asset?.condition || '',
   price: props.asset?.price || '',
   image_url: null as File | null,
@@ -113,9 +114,10 @@ watch(() => props.asset, (newAsset) => {
   form.number = newAsset.number || '';
   form.location_id = newAsset.location_id || '';
   form.status = newAsset.status || '';
+  form.approval_status = newAsset.approval_status || '';
   form.condition = newAsset.condition || '';
-  if (!isRestrictedStatus(newAsset.status) && arrInactiveConditions.includes(form.condition)) {
-    form.status = `${getBaseAssetStatus(newAsset.status)},Pending:DM`;
+  if (!isRestrictedStatus(newAsset.status, newAsset.approval_status) && arrInactiveConditions.includes(form.condition)) {
+    form.approval_status = 'Pending:DM';
   }
   form.price = newAsset.price || '';
   form.image_url = null;
@@ -168,13 +170,9 @@ watch(() => form.bod_boc_approval_file, v => { if (v && errors.value.bod_boc_app
 
 watch(() => form.condition, (newVal, oldVal) => {
   if (arrInactiveConditions.includes(newVal)) {
-    form.status = `${getBaseAssetStatus(props.asset?.status)},Pending:DM`;
-  } else if (oldVal && arrInactiveConditions.includes(oldVal) && hasAssetStatus(form.status, 'Pending:DM')) {
-    if (props.asset?.status && !isRestrictedStatus(props.asset.status)) {
-      form.status = props.asset.status;
-    } else {
-      form.status = '';
-    }
+    form.approval_status = 'Pending:DM';
+  } else if (oldVal && arrInactiveConditions.includes(oldVal)) {
+    form.approval_status = props.asset?.approval_status || '';
   }
 
   if (!arrNeedApproval.includes(newVal)) {
@@ -664,8 +662,9 @@ const handleSubmit = () => {
                 </FieldLabel>
                 <FieldContent>
                   <div v-if="isStatusDisabled" class="w-full flex items-center justify-between px-4 py-2 text-sm border border-input rounded-xl bg-muted/30 text-muted-foreground cursor-not-allowed h-10 select-none">
-                    <span>{{ form.status || t('scanner.selectStatus') }}</span>
-                    <ChevronDown class="w-4 h-4 opacity-50" />
+                    <StatusBadge v-if="form.status" :status="form.status" :approval-status="form.approval_status" class="rounded-sm" />
+                    <span v-else>{{ t('scanner.selectStatus') }}</span>
+                    <ChevronDown class="w-4 h-4 opacity-50 ml-auto shrink-0" />
                   </div>
                   <DropdownMenu v-else>
                     <DropdownMenuTrigger asChild>

@@ -336,7 +336,8 @@ class NotificationFrameworkTest extends TestCase
         $response->assertSessionHasNoErrors();
 
         $unit->refresh();
-        $this->assertEquals('Tersedia,Pending:DM', $unit->status);
+        $this->assertEquals('Tersedia', $unit->status);
+        $this->assertEquals('Pending:DM', $unit->approval_status);
         $this->assertEquals('Rusak Total', $unit->condition);
 
         $ifsManager->refresh();
@@ -366,7 +367,7 @@ class NotificationFrameworkTest extends TestCase
         $brand = Brand::factory()->create(['name' => 'Dell']);
         $barang = Barang::factory()->create(['brand_id' => $brand->id, 'name' => 'Laptop XPS']);
         $lot = Lot::factory()->create(['barang_id' => $barang->id]);
-        $unit = Unit::factory()->create(['lot_id' => $lot->id, 'number' => 'AST-XPS-001', 'status' => 'Tersedia,Pending:DM', 'condition' => 'Rusak Total']);
+        $unit = Unit::factory()->create(['lot_id' => $lot->id, 'number' => 'AST-XPS-001', 'status' => 'Tersedia', 'approval_status' => 'Pending:DM', 'condition' => 'Rusak Total']);
 
         $approval = AssetDeletionApproval::create([
             'asset_id' => $unit->id,
@@ -416,7 +417,7 @@ class NotificationFrameworkTest extends TestCase
         $brand = Brand::factory()->create(['name' => 'Lenovo']);
         $barang = Barang::factory()->create(['brand_id' => $brand->id, 'name' => 'ThinkPad']);
         $lot = Lot::factory()->create(['barang_id' => $barang->id]);
-        $unit = Unit::factory()->create(['lot_id' => $lot->id, 'number' => 'AST-LNV-002', 'status' => 'Tersedia,Pending:DM', 'condition' => 'Hilang']);
+        $unit = Unit::factory()->create(['lot_id' => $lot->id, 'number' => 'AST-LNV-002', 'status' => 'Tersedia', 'approval_status' => 'Pending:DM', 'condition' => 'Hilang']);
 
         $approval = AssetDeletionApproval::create([
             'asset_id' => $unit->id,
@@ -470,7 +471,7 @@ class NotificationFrameworkTest extends TestCase
         $brand = Brand::factory()->create(['name' => 'Dell']);
         $barang = Barang::factory()->create(['brand_id' => $brand->id, 'name' => 'Latitude 5420']);
         $lot = Lot::factory()->create(['barang_id' => $barang->id]);
-        $unit = Unit::factory()->create(['lot_id' => $lot->id, 'number' => 'AST-EN-001', 'status' => 'Tersedia,Pending:DM', 'condition' => 'Rusak Total']);
+        $unit = Unit::factory()->create(['lot_id' => $lot->id, 'number' => 'AST-EN-001', 'status' => 'Tersedia', 'approval_status' => 'Pending:DM', 'condition' => 'Rusak Total']);
 
         $approval = AssetDeletionApproval::create([
             'asset_id' => $unit->id,
@@ -643,5 +644,104 @@ class NotificationFrameworkTest extends TestCase
         $jsonId = $responseId->json();
         $this->assertStringContainsString('Disetujui DM IFS', $jsonId['notifications'][0]['title']);
         $this->assertStringContainsString('telah berubah menjadi Tidak Aktif, Pending:BoD/BoC.', $jsonId['notifications'][0]['message']);
+    }
+
+    public function test_bulk_activation_notification_uses_correct_range_separator_and_url_without_search_query(): void
+    {
+        // 1. Setup IFS Manager
+        /** @var User $ifsManager */
+        $ifsManager = User::factory()->create();
+        $ifsEmployee = HrdEmployee::where('employee_id', $ifsManager->employee_id)->first();
+        $ifsOrg = HrdOrgchart::find($ifsEmployee->orgchart_id);
+        $ifsOrg->update([
+            'employee_id' => $ifsManager->employee_id,
+            'org_code' => User::getIfsOrgCode(),
+        ]);
+        $ifsManager->refresh();
+
+        $lot = Lot::factory()->create();
+        $asset1 = Unit::factory()->create(['lot_id' => $lot->id, 'number' => '03163-COMP-SVR-ICT-PTRE-26']);
+        $asset2 = Unit::factory()->create(['lot_id' => $lot->id, 'number' => '03164-COMP-SVR-ICT-PTRE-26']);
+
+        app()->setLocale('id');
+        $service = app(NotificationService::class);
+        $service->notifyManagerBulkAssetActivation([$asset1, $asset2], $lot);
+
+        $ifsManager->refresh();
+        $this->assertCount(1, $ifsManager->notifications);
+        $notif = $ifsManager->notifications->first();
+
+        // Indonesian check
+        $this->assertStringContainsString('03163-COMP-SVR-ICT-PTRE-26 s.d. 03164-COMP-SVR-ICT-PTRE-26', $notif->data['message']);
+        $this->assertStringNotContainsString('03163-COMP-SVR-ICT-PTRE-26 - 03164-COMP-SVR-ICT-PTRE-26', $notif->data['message']);
+        $this->assertEquals('/smart/approve-activation', $notif->data['url']);
+        $this->assertStringNotContainsString('search=', $notif->data['url']);
+
+        // English localization check via formatNotificationPayload
+        app()->setLocale('en');
+        $payloadEn = NotificationService::formatNotificationPayload($notif->data);
+        $this->assertStringContainsString('03163-COMP-SVR-ICT-PTRE-26 to 03164-COMP-SVR-ICT-PTRE-26', $payloadEn['message']);
+        $this->assertStringContainsString('New Asset Approval: 2 Units', $payloadEn['title']);
+    }
+
+    public function test_single_unit_bulk_activation_notification_includes_search_url(): void
+    {
+        /** @var User $ifsManager */
+        $ifsManager = User::factory()->create();
+        $ifsEmployee = HrdEmployee::where('employee_id', $ifsManager->employee_id)->first();
+        $ifsOrg = HrdOrgchart::find($ifsEmployee->orgchart_id);
+        $ifsOrg->update([
+            'employee_id' => $ifsManager->employee_id,
+            'org_code' => User::getIfsOrgCode(),
+        ]);
+        $ifsManager->refresh();
+
+        $lot = Lot::factory()->create();
+        $asset = Unit::factory()->create(['lot_id' => $lot->id, 'number' => '03163-COMP-SVR-ICT-PTRE-26']);
+
+        $service = app(NotificationService::class);
+        $service->notifyManagerBulkAssetActivation([$asset], $lot);
+
+        $ifsManager->refresh();
+        $this->assertCount(1, $ifsManager->notifications);
+        $notif = $ifsManager->notifications->first();
+
+        $this->assertEquals('/smart/approve-activation?search=' . urlencode('03163-COMP-SVR-ICT-PTRE-26'), $notif->data['url']);
+    }
+
+    public function test_notify_admin_asset_activation_decision_supports_multilingual_localization(): void
+    {
+        $admin = User::factory()->create(['employee_id' => '255579']);
+        $role = \App\Models\Auth\Role::firstOrCreate(['name' => 'admin'], ['label' => 'Administrator']);
+        $admin->assignRole($role);
+
+        $lot = Lot::factory()->create();
+        $asset = Unit::factory()->create(['lot_id' => $lot->id, 'number' => 'AST-ACT-001']);
+        $approval = \App\Models\Inventory\AssetActivationApproval::create([
+            'asset_id' => $asset->id,
+            'requester_id' => $admin->id,
+            'decision' => 'approved',
+            'requested_at' => now(),
+        ]);
+        $approval->setRelation('asset', $asset);
+
+        $service = app(NotificationService::class);
+        $service->notifyAdminAssetActivationDecision($approval, 'approved');
+
+        $admin->refresh();
+        $this->assertCount(1, $admin->notifications);
+        $notif = $admin->notifications->first();
+
+        // 1. Fetch in English
+        app()->setLocale('en');
+        $payloadEn = NotificationService::formatNotificationPayload($notif->data);
+        $this->assertStringContainsString('Approved by DM IFS', $payloadEn['title']);
+        $this->assertStringContainsString('status has changed to Available.', $payloadEn['message']);
+
+        // 2. Fetch in Indonesian
+        app()->setLocale('id');
+        $payloadId = NotificationService::formatNotificationPayload($notif->data);
+        $this->assertStringContainsString('Disetujui DM IFS', $payloadId['title']);
+        $this->assertStringContainsString('telah berubah menjadi Tersedia.', $payloadId['message']);
     }
 }

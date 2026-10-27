@@ -101,9 +101,11 @@ class AssetController extends Controller
         unset($validated['specification']);
 
         if ($needApproval) {
-            $validated['status'] = 'Tersedia,Pending:DM';
+            $validated['status'] = 'Tersedia';
+            $validated['approval_status'] = 'Pending:DM';
         } else {
             $validated['status'] = 'Belum Diverifikasi';
+            $validated['approval_status'] = null;
         }
 
         $imageUploadService = app(\App\Services\ImageUploadService::class);
@@ -249,6 +251,7 @@ class AssetController extends Controller
                     Asset::withoutEvents(fn () => $asset->update([
                         'status' => $targetStatus,
                         'condition' => $targetCondition,
+                        'approval_status' => null,
                     ]));
 
                     AssetLifecycle::where('asset_id', $asset->id)
@@ -267,7 +270,10 @@ class AssetController extends Controller
                         'note' => "BoD/BoC menolak penghapusan asset dengan kondisi {$proposedCondition}",
                     ]);
                 } else {
-                    Asset::withoutEvents(fn () => $asset->update(['status' => 'Dihapus']));
+                    Asset::withoutEvents(fn () => $asset->update([
+                        'status' => 'Dihapus',
+                        'approval_status' => null,
+                    ]));
 
                     AssetLifecycle::where('asset_id', $asset->id)
                         ->whereNull('end_date')
@@ -320,8 +326,6 @@ class AssetController extends Controller
                     'Pending',
                     'Pending:DM',
                     'Pending:BoD/BoC',
-                    'Tersedia,Pending:DM',
-                    'Tidak Aktif,Pending:BoD/BoC',
                     'Belum Diverifikasi',
                     'Verifikasi Ditolak',
                     'Di-assign (LT)',
@@ -498,7 +502,8 @@ class AssetController extends Controller
         $previousCondition = $asset->condition;
 
         if ($needApproval) {
-            $validated['status'] = "{$previousStatus},Pending:DM";
+            $validated['status'] = $previousStatus;
+            $validated['approval_status'] = 'Pending:DM';
         }
 
         $isComp = ($lot->model?->type?->category?->code === 'COMP');

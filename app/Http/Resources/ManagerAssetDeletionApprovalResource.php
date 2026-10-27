@@ -71,6 +71,7 @@ class ManagerAssetDeletionApprovalResource extends JsonResource
             'number' => $asset?->number ?? '-',
             'legacy_number' => $asset?->legacy_number ?? null,
             'status' => $asset?->status ?? '-',
+            'approval_status' => $asset?->approval_status ?? null,
             'condition' => $asset?->condition ?? '-',
             'classification' => $asset?->classification ?? 'Aset',
             'type' => $asset?->borrowing_type ?? $typeName,

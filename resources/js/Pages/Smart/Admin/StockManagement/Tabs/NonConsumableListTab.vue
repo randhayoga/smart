@@ -349,20 +349,20 @@ const scopedUnits = computed(() => {
   const units = props.units || [];
   switch (props.statusScope) {
     case 'unverified':
-      return units.filter(u => hasAssetStatus(u?.status, 'Belum Diverifikasi'));
+      return units.filter(u => hasAssetStatus(u?.status, 'Belum Diverifikasi', u?.approval_status));
     case 'pending:bod/boc':
-      return units.filter(u => hasAssetStatus(u?.status, 'Pending:BoD/BoC') || String(u?.status || '').trim().toLowerCase() === 'pending');
+      return units.filter(u => hasAssetStatus(u?.status, 'Pending:BoD/BoC', u?.approval_status) || String(u?.status || '').trim().toLowerCase() === 'pending');
     case 'pending:manager':
-      return units.filter(u => hasAssetStatus(u?.status, 'Pending:DM') || hasAssetStatus(u?.status, 'Pending:Manager'));
+      return units.filter(u => hasAssetStatus(u?.status, 'Pending:DM', u?.approval_status) || hasAssetStatus(u?.status, 'Pending:Manager', u?.approval_status));
     case 'all':
       return units;
     case 'standard':
     default:
       return units.filter(u => {
-        const tokens = parseAssetStatuses(u?.status);
+        const tokens = parseAssetStatuses(u?.status, u?.approval_status);
         if (tokens.length === 0) return true;
         if (tokens.some(t => t.toLowerCase() === 'belum diverifikasi')) return false;
-        // Include any unit that has at least one non-pending status token (e.g. 'Tersedia,Pending:DM', 'Tidak Aktif,Pending:BoD/BoC', 'Dihapus')
+        // Include any unit that has at least one non-pending status token (e.g. status='Tersedia' with approval_status='Pending:DM')
         return tokens.some(t => !t.toLowerCase().startsWith('pending'));
       });
   }
@@ -394,7 +394,7 @@ const filteredUnits = computed(() => {
     list = list.filter(u => {
       const status = (u.status || '').toLowerCase();
       const proposed = (u.proposed_status || '').toLowerCase();
-      return hasAssetStatus(u.status, filterVal) || status === filterVal || (['pending', 'dihapus'].includes(status) && proposed === filterVal);
+      return hasAssetStatus(u.status, filterVal, u.approval_status) || status === filterVal || (['pending', 'dihapus'].includes(status) && proposed === filterVal);
     });
   }
 
@@ -491,7 +491,7 @@ watch(categoryFilter, () => {
 const availableStatuses = computed(() => {
   const dynamic = Array.from(new Set(
     scopedUnits.value
-      .flatMap((u: any) => parseAssetStatuses(u.status))
+      .flatMap((u: any) => parseAssetStatuses(u.status, u.approval_status))
       .filter((s): s is string => !!s)
   ));
   if (dynamic.length > 0) return dynamic;
@@ -645,9 +645,11 @@ const columns = computed<ColumnDef<any>[]>(() => {
       ]),
       cell: ({ row }) => {
         const status = row.getValue('status') as string || '';
+        const approvalStatus = row.original.approval_status;
         const proposedStatus = row.original.proposed_status;
         return h(StatusBadge, {
           status,
+          approvalStatus,
           proposedStatus,
           class: 'rounded-sm'
         });

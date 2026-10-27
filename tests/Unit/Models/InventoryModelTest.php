@@ -123,7 +123,8 @@ class InventoryModelTest extends TestCase
             'number' => 'AST-TEST-03',
             'lot_id' => $lot->id,
             'location_id' => $location->id,
-            'status' => 'Tersedia,Pending:DM',
+            'status' => 'Tersedia',
+            'approval_status' => 'Pending:DM',
             'condition' => 'Rusak Total',
             'price' => 300000,
             'image_url' => 'inventory/placeholder.jpg',
@@ -135,6 +136,7 @@ class InventoryModelTest extends TestCase
         $this->assertFalse($asset->hasStatus('Dihapus'));
         $this->assertEquals('Tersedia', $asset->base_status);
         $this->assertTrue(Asset::whereHasStatus('Pending:DM')->where('id', $asset->id)->exists());
+        $this->assertTrue(Asset::whereApprovalStatus('Pending:DM')->where('id', $asset->id)->exists());
 
         $approval = AssetDeletionApproval::create([
             'asset_id' => $asset->id,

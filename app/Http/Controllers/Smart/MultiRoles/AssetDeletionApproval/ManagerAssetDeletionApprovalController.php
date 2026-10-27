@@ -42,7 +42,7 @@ class ManagerAssetDeletionApprovalController extends Controller
         } else {
             $query->where('decision', 'pending')
                   ->whereHas('asset', function ($q) {
-                      $q->whereHasStatus('Pending:DM');
+                      $q->where('approval_status', 'Pending:DM');
                   });
             $view = 'Smart/Manager/PendingDeletionApprovals';
         }

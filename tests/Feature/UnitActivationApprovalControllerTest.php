@@ -10,6 +10,7 @@ use App\Models\Inventory\Lot;
 use App\Models\Inventory\Unit;
 use App\Models\Inventory\UnitActivationApproval;
 use App\Models\Inventory\UnitLifecycle;
+use App\Models\Inventory\AssetLifecycle;
 use App\Models\Master\Location;
 use App\Models\User;
 use App\Mail\DMUnitActivationRequest;
@@ -450,6 +451,11 @@ class UnitActivationApprovalControllerTest extends TestCase
             'condition' => 'Bagus',
             'actor_id' => $ifsManager->id,
         ]);
+        $this->assertDatabaseMissing('asset_lifecycles', [
+            'asset_id' => $unit->id,
+            'action_type' => 'Perubahan status',
+        ]);
+        $this->assertEquals(1, AssetLifecycle::where('asset_id', $unit->id)->where('action_type', 'Approval')->count());
 
         $admin->refresh();
         $adminNotif = $admin->notifications->first();
@@ -501,6 +507,11 @@ class UnitActivationApprovalControllerTest extends TestCase
             'condition' => 'Rusak',
             'actor_id' => $ifsManager->id,
         ]);
+        $this->assertDatabaseMissing('asset_lifecycles', [
+            'asset_id' => $unit->id,
+            'action_type' => 'Perubahan status',
+        ]);
+        $this->assertEquals(1, AssetLifecycle::where('asset_id', $unit->id)->where('action_type', 'Approval')->count());
 
         $admin->refresh();
         $adminNotif = $admin->notifications->first();

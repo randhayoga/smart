@@ -48,7 +48,8 @@ class ProcessAssetDeletionApproval
                     }
 
                     $asset->update([
-                        'status' => 'Tidak Aktif,Pending:BoD/BoC',
+                        'status' => 'Tidak Aktif',
+                        'approval_status' => 'Pending:BoD/BoC',
                     ]);
                 }
             } else {
@@ -56,6 +57,7 @@ class ProcessAssetDeletionApproval
                     $asset->update([
                         'status' => $approval->previous_status ?? 'Tersedia',
                         'condition' => $approval->previous_condition ?? $asset->condition,
+                        'approval_status' => null,
                     ]);
                 }
             }

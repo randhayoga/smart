@@ -19,11 +19,34 @@ class Asset extends Model
 
     protected $table = 'assets';
 
+    /**
+     * Global flag to suppress automatic lifecycle entry creation during specific operations.
+     */
+    public static bool $suppressLifecycleLogging = false;
+
+    /**
+     * Execute callback without triggering automatic lifecycle logging in model events.
+     *
+     * @template T
+     * @param callable(): T $callback
+     * @return T
+     */
+    public static function withoutLifecycleLogging(callable $callback)
+    {
+        $previous = static::$suppressLifecycleLogging;
+        static::$suppressLifecycleLogging = true;
+        try {
+            return $callback();
+        } finally {
+            static::$suppressLifecycleLogging = $previous;
+        }
+    }
+
     protected static function booted()
     {
         // 1. Log when an Asset is created
         static::created(function (Asset $asset) {
-            if (!$asset->hasStatus('Pending:DM') && !str_starts_with($asset->status ?? '', 'Pending')) {
+            if ($asset->approval_status !== 'Pending:DM' && !str_starts_with($asset->status ?? '', 'Pending')) {
                 AssetLifecycle::create([
                     'asset_id' => $asset->id,
                     'action_type' => 'Registrasi',
@@ -40,12 +63,16 @@ class Asset extends Model
 
         // 2. Log when an Asset is updated
         static::updating(function (Asset $asset) {
+            if (static::$suppressLifecycleLogging) {
+                return;
+            }
+
             $dirty = $asset->getDirty();
-            $tracked = ['status', 'condition', 'location_id', 'is_assigned_to_location'];
+            $tracked = ['status', 'approval_status', 'condition', 'location_id', 'is_assigned_to_location'];
             $changed = array_intersect(array_keys($dirty), $tracked);
 
             if (!empty($changed)) {
-                $isPendingStatus = ($asset->isDirty('status') && $asset->hasStatus('Pending:DM'));
+                $isPendingStatus = ($asset->isDirty('approval_status') && $asset->approval_status === 'Pending:DM');
 
                 $actions = [];
 
@@ -72,14 +99,15 @@ class Asset extends Model
                         ],
                         'approval' => null,
                     ];
-                } elseif ($asset->isDirty('status') && !$isPendingStatus) {
+                } elseif (($asset->isDirty('status') || $asset->isDirty('approval_status')) && !$isPendingStatus) {
                     // 2. Status Change
                     $oldStatus = $asset->getOriginal('status');
                     $newStatus = $asset->status;
+                    $oldApproval = $asset->getOriginal('approval_status');
 
                     $approval = null;
                     $actionType = 'Perubahan status';
-                    if (str_contains((string)$oldStatus, 'Pending')) {
+                    if (!empty($oldApproval) || str_contains((string)$oldStatus, 'Pending')) {
                         $approval = AssetDeletionApproval::where('asset_id', $asset->id)
                             ->whereIn('decision', ['approved', 'rejected'])
                             ->orderBy('updated_at', 'desc')
@@ -198,6 +226,7 @@ class Asset extends Model
         'lot_id',
         'location_id',
         'status',
+        'approval_status',
         'condition',
         'borrowing_type',
         'type',
@@ -280,46 +309,50 @@ class Asset extends Model
      */
     public function getStatusesAttribute(): array
     {
-        if (empty($this->status)) {
-            return [];
+        $statuses = [];
+        if (!empty($this->status)) {
+            $statuses[] = $this->status;
+        }
+        if (!empty($this->approval_status)) {
+            $statuses[] = $this->approval_status;
         }
 
-        return array_values(array_filter(array_map('trim', explode(',', $this->status))));
+        return $statuses;
     }
 
     /**
-     * Check if the asset currently has the given status.
+     * Check if the asset currently has the given status or approval status.
      */
     public function hasStatus(string $status): bool
     {
-        return in_array($status, $this->statuses, true);
+        return $this->status === $status || $this->approval_status === $status;
     }
 
     /**
-     * Scope to filter assets that contain a specific status in their comma-separated status string.
+     * Scope to filter assets that match a specific status or approval status.
      */
     public function scopeWhereHasStatus($query, string $status)
     {
         return $query->where(function ($q) use ($status) {
             $q->where('status', $status)
-              ->orWhere('status', 'like', "{$status},%")
-              ->orWhere('status', 'like', "%,{$status},%")
-              ->orWhere('status', 'like', "%,{$status}");
+              ->orWhere('approval_status', $status);
         });
     }
 
     /**
-     * Get the primary base status of the asset (excluding Pending:* tokens).
+     * Scope to filter assets strictly by approval status using direct index seek.
+     */
+    public function scopeWhereApprovalStatus($query, ?string $approvalStatus)
+    {
+        return $query->where('approval_status', $approvalStatus);
+    }
+
+    /**
+     * Get the primary base status of the asset.
      */
     public function getBaseStatusAttribute(): string
     {
-        foreach ($this->statuses as $s) {
-            if (!str_starts_with($s, 'Pending')) {
-                return $s;
-            }
-        }
-
-        return 'Tersedia';
+        return $this->status ?? 'Tersedia';
     }
 
     /**
