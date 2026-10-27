@@ -38,6 +38,7 @@ const props = withDefaults(defineProps<{
   clearable?: boolean;
   excludeIds?: (number | string)[];
   activeOnly?: boolean;
+  bgClass?: string;
 }>(), {
   placeholder: 'Pilih Lokasi...',
   searchPlaceholder: 'Cari lokasi...',
@@ -49,6 +50,7 @@ const props = withDefaults(defineProps<{
   clearable: false,
   excludeIds: () => [],
   activeOnly: false,
+  bgClass: '',
 });
 
 const emit = defineEmits<{
@@ -280,6 +282,7 @@ watch(open, (isOpen) => {
         :class="[
           widthClass,
           'justify-between rounded-[14px] font-normal',
+          props.bgClass,
           !modelValue && modelValue !== 0 ? 'text-muted-foreground' : 'text-foreground',
           error ? '!border-destructive focus:!ring-destructive/20 focus:!border-destructive' : ''
         ]"

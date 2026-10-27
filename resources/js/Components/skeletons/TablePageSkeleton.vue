@@ -23,6 +23,7 @@ interface Props {
   filterCount?: number;
   rowCount?: number;
   hasActionButtons?: boolean;
+  cardless?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -33,6 +34,7 @@ const props = withDefaults(defineProps<Props>(), {
   filterCount: 2,
   rowCount: 6,
   hasActionButtons: true,
+  cardless: false,
 });
 </script>
 
@@ -60,8 +62,8 @@ const props = withDefaults(defineProps<Props>(), {
       />
     </div>
 
-    <!-- Main Card Container -->
-    <div class="p-4 sm:p-6 bg-card rounded-xl border border-border shadow-sm space-y-4">
+    <!-- Carded Layout Container -->
+    <div v-if="!cardless" class="p-4 sm:p-6 bg-card rounded-xl border border-border shadow-sm space-y-4">
       <!-- Section Title / Subtitle -->
       <div class="space-y-1">
         <Skeleton class="h-5 sm:h-6 w-44 sm:w-56" />
@@ -85,6 +87,80 @@ const props = withDefaults(defineProps<Props>(), {
         <div v-if="hasActionButtons" class="flex items-center gap-2">
           <Skeleton class="h-10 w-24 rounded-xl hidden md:block" />
           <Skeleton class="h-10 w-32 rounded-xl" />
+        </div>
+      </div>
+
+      <!-- Table Frame -->
+      <div class="rounded-xl border border-border shadow-sm overflow-hidden bg-card">
+        <!-- Table Header Skeleton -->
+        <div class="bg-muted/50 px-4 py-3 border-b border-border flex items-center justify-between gap-4">
+          <Skeleton class="h-4 w-4 rounded shrink-0" />
+          <Skeleton class="h-4 w-20 shrink-0" />
+          <Skeleton class="h-4 w-36 flex-1 max-w-xs" />
+          <Skeleton class="h-4 w-24 hidden sm:block" />
+          <Skeleton class="h-4 w-24 hidden md:block" />
+          <Skeleton class="h-4 w-20 shrink-0" />
+          <Skeleton class="h-4 w-16 shrink-0" />
+        </div>
+
+        <!-- Table Rows Skeleton -->
+        <div 
+          v-for="r in rowCount" 
+          :key="r" 
+          class="px-4 py-3.5 border-b border-border last:border-none flex items-center justify-between gap-4"
+        >
+          <!-- Checkbox -->
+          <Skeleton class="h-4 w-4 rounded shrink-0" />
+          <!-- Code / Barcode -->
+          <Skeleton class="h-4 w-20 shrink-0" />
+          <!-- Name / Description -->
+          <div class="flex-1 max-w-xs space-y-1">
+            <Skeleton class="h-4 w-3/4" />
+            <Skeleton class="h-3 w-1/2 opacity-70" />
+          </div>
+          <!-- Category / Location -->
+          <Skeleton class="h-4 w-24 hidden sm:block" />
+          <!-- Badge / Status -->
+          <Skeleton class="h-6 w-20 rounded-full hidden md:block" />
+          <!-- Amount / Date -->
+          <Skeleton class="h-4 w-16 shrink-0" />
+          <!-- Action Icons -->
+          <div class="flex items-center gap-1.5 shrink-0">
+            <Skeleton class="h-8 w-8 rounded-lg" />
+            <Skeleton class="h-8 w-8 rounded-lg hidden sm:block" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Pagination Footer Skeleton -->
+      <div class="flex items-center justify-between pt-2 px-1">
+        <Skeleton class="h-4 w-32" />
+        <div class="flex items-center gap-2">
+          <Skeleton class="h-9 w-20 sm:w-24 rounded-[14px]" />
+          <Skeleton class="h-9 w-20 sm:w-24 rounded-[14px]" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Cardless Layout Container (matching /smart/approve-activation, /smart/stock-management/pending-activation, /smart/employee-list) -->
+    <div v-else class="space-y-6">
+      <!-- Toolbar Row: Search, Filters, & Action Buttons (white inputs) -->
+      <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
+        <div class="flex flex-wrap items-center gap-2.5 flex-1 min-w-[240px]">
+          <!-- Search Input with white background -->
+          <Skeleton class="h-10 w-full sm:w-64 rounded-xl bg-white border border-input/50" />
+          <!-- Dynamic Filter Dropdowns with white background -->
+          <Skeleton 
+            v-for="f in filterCount" 
+            :key="f" 
+            class="h-10 w-36 sm:w-44 rounded-xl hidden sm:block bg-white border border-input/50" 
+          />
+        </div>
+
+        <!-- Right Side Actions (e.g. Rows per page / Bulk actions with white background) -->
+        <div v-if="hasActionButtons" class="flex items-center gap-2">
+          <Skeleton class="h-10 w-24 rounded-xl hidden md:block bg-white border border-input/50" />
+          <Skeleton class="h-10 w-32 rounded-xl bg-white border border-input/50" />
         </div>
       </div>
 

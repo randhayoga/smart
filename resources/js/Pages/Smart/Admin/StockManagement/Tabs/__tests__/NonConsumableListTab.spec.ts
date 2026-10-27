@@ -259,4 +259,54 @@ describe('NonConsumableListTab.vue - statusScope Flag', () => {
       expect(wrapper.find('[data-testid="delete-error-modal"]').exists()).toBe(false);
     });
   });
+
+  describe('cardless, hideHeader, and title props', () => {
+    it('renders with card wrapper and default title when cardless and hideHeader are false', () => {
+      const wrapper = mountTab();
+      expect(wrapper.find('.bg-card').exists()).toBe(true);
+      expect(wrapper.find('h2').exists()).toBe(true);
+      expect(wrapper.find('h2').text()).toContain('Daftar Tidak Habis Pakai');
+    });
+
+    it('renders custom title when provided', () => {
+      const wrapper = mountTab({ title: 'Daftar Pending Penghapusan' });
+      expect(wrapper.find('h2').text()).toBe('Daftar Pending Penghapusan');
+    });
+
+    it('omits card wrapper when cardless is true', () => {
+      const wrapper = mountTab({ cardless: true });
+      expect(wrapper.find('.bg-card').exists()).toBe(false);
+    });
+
+    it('omits h2 heading when hideHeader is true', () => {
+      const wrapper = mountTab({ hideHeader: true });
+      expect(wrapper.find('h2').exists()).toBe(false);
+    });
+
+    it('applies bg-white to search and filter buttons when cardless is true', () => {
+      const wrapper = mountTab({ cardless: true });
+      const search = wrapper.findComponent({ name: 'TableSearch' });
+      expect(search.props('bgClass')).toBe('bg-white');
+
+      // Check rowsPerPage button has bg-white
+      const buttons = wrapper.findAll('button');
+      const whiteButtons = buttons.filter(b => b.classes().includes('bg-white'));
+      expect(whiteButtons.length).toBeGreaterThan(0);
+    });
+
+    it('renders selectedActions label above export buttons even when hideActions is true', () => {
+      const wrapper = mountTab({ hideActions: true, hideExport: false });
+      const labels = wrapper.findAll('label');
+      const actionLabel = labels.find(l => l.text() === 'Aksi Terpilih');
+      expect(actionLabel).toBeDefined();
+      expect(actionLabel?.exists()).toBe(true);
+    });
+
+    it('renders rowsPerPage selection in-line with the actions/export row at the right', () => {
+      const wrapper = mountTab();
+      const actionsRow = wrapper.find('.flex.flex-wrap.items-end.justify-between.gap-4.pt-2');
+      expect(actionsRow.exists()).toBe(true);
+      expect(actionsRow.text()).toContain('Baris per halaman');
+    });
+  });
 });

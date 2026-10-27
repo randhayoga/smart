@@ -25,6 +25,7 @@ import {
     ShieldCheck,
     Clock,
     FileCheck,
+    FilePlusCorner,
 } from 'lucide-vue-next';
 
 export interface NavItem {
@@ -106,7 +107,7 @@ export const mainNavigation: NavSection[] = [
                 title: 'Daftar Pending Aktivasi',
                 titleKey: 'nav.items.pendingActivation',
                 href: '/smart/stock-management/pending-activation',
-                icon: Clock,
+                icon: FilePlusCorner,
                 permission: 'inventory.status_approval.request',
             },
             {

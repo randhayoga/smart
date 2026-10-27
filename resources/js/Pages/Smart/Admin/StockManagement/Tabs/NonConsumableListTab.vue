@@ -128,6 +128,9 @@ interface Props {
   hideExport?: boolean;
   statusScope?: StatusScope;
   showErrorModal?: boolean;
+  title?: string;
+  cardless?: boolean;
+  hideHeader?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -139,6 +142,9 @@ const props = withDefaults(defineProps<Props>(), {
   hideExport: false,
   statusScope: 'standard',
   showErrorModal: true,
+  title: '',
+  cardless: false,
+  hideHeader: false,
 });
 
 const searchQuery = ref('');
@@ -824,13 +830,13 @@ const totalAsetTerpilihCount = computed(() => {
 
 <template>
   <div class="space-y-4">
-    <!-- Main Card -->
-    <div class="px-4 bg-card rounded-xl border border-border shadow-sm overflow-hidden">
-      <div class="py-3 no-print">
-        <h2 class="text-lg font-bold text-foreground">{{ t('inventory.nonConsumableList') }}</h2>
+    <!-- Main Card Container (Card frame omitted when cardless is true) -->
+    <div :class="props.cardless ? '' : 'px-4 bg-card rounded-xl border border-border shadow-sm overflow-hidden'">
+      <div :class="props.cardless ? 'mb-6 no-print' : 'py-3 no-print'">
+        <h2 v-if="!props.hideHeader" class="text-lg font-bold text-foreground">{{ props.title || t('inventory.nonConsumableList') }}</h2>
         
         <!-- Filters & Actions -->
-        <div class="mt-4 flex flex-col space-y-4">
+        <div :class="['flex flex-col space-y-4', props.hideHeader ? '' : 'mt-4']">
           <!-- Row 1: Filters & Rows Per Page -->
           <div class="flex flex-wrap items-end justify-between gap-4">
             <div class="flex flex-wrap items-end gap-3 flex-1">
@@ -842,13 +848,14 @@ const totalAsetTerpilihCount = computed(() => {
                   name="search"
                   v-model="searchQuery"
                   :placeholder="t('inventory.searchAssetPlaceholder')" 
+                  :bg-class="props.cardless ? 'bg-white' : ''"
                 />
               </div>
 
               <!-- Kategori Filter Dropdown -->
               <DropdownMenu v-if="props.filterVariant !== 'simple'">
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal', !categoryFilter ? 'text-muted-foreground' : 'text-foreground']">
+                  <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal', props.cardless ? 'bg-white' : '', !categoryFilter ? 'text-muted-foreground' : 'text-foreground']">
                     <span class="truncate">{{ categoryFilter || t('inventory.allCategories') }}</span>
                     <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                   </Button>
@@ -868,12 +875,13 @@ const totalAsetTerpilihCount = computed(() => {
                 :options="availableSubcategories"
                 :search-placeholder="t('inventory.searchSubcategoryPlaceholder')"
                 :default-label="t('inventory.allSubcategories')"
+                :bg-class="props.cardless ? 'bg-white' : ''"
               />
 
               <!-- Status Filter Dropdown -->
               <DropdownMenu v-if="!props.hideStatusFilter">
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal', !statusFilter ? 'text-muted-foreground' : 'text-foreground']">
+                  <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal', props.cardless ? 'bg-white' : '', !statusFilter ? 'text-muted-foreground' : 'text-foreground']">
                     <span class="truncate">{{ statusFilter ? getStatusLabel(statusFilter) : t('inventory.allStatuses') }}</span>
                     <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                   </Button>
@@ -889,7 +897,7 @@ const totalAsetTerpilihCount = computed(() => {
               <!-- Condition Filter Dropdown -->
               <DropdownMenu v-if="!props.hideConditionFilter">
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal', !conditionFilter ? 'text-muted-foreground' : 'text-foreground']">
+                  <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal', props.cardless ? 'bg-white' : '', !conditionFilter ? 'text-muted-foreground' : 'text-foreground']">
                     <span class="truncate">{{ conditionFilter ? getConditionLabel(conditionFilter) : t('inventory.allConditions') }}</span>
                     <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                   </Button>
@@ -910,6 +918,7 @@ const totalAsetTerpilihCount = computed(() => {
                   :placeholder="t('inventory.allLocations')"
                   :clearable="true"
                   width-class="w-full"
+                  :bg-class="props.cardless ? 'bg-white' : ''"
                 />
               </div>
 
@@ -918,7 +927,7 @@ const totalAsetTerpilihCount = computed(() => {
                 v-if="props.filterVariant !== 'simple'"
                 variant="outline" 
                 @click="showAdvancedFilters = !showAdvancedFilters" 
-                :class="['rounded-[14px] font-normal gap-2', showAdvancedFilters ? 'bg-muted border-primary/30 text-foreground' : 'text-muted-foreground']"
+                :class="['rounded-[14px] font-normal gap-2', props.cardless && !showAdvancedFilters ? 'bg-white' : '', showAdvancedFilters ? 'bg-muted border-primary/30 text-foreground' : 'text-muted-foreground']"
               >
                 <SlidersHorizontal class="w-4 h-4 opacity-70" />
                 <span>{{ t('inventory.advancedFilter') }}</span>
@@ -939,25 +948,6 @@ const totalAsetTerpilihCount = computed(() => {
                   @click="clearFilters"
                 />
               </Transition>
-            </div>
-
-            <!-- Rows Per Page -->
-            <div class="flex items-center gap-3 text-sm text-muted-foreground pb-0.5">
-              <span class="whitespace-nowrap text-right">{{ t('inventory.rowsPerPage') }}</span>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal', (rowsPerPage === 'all' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
-                    {{ rowsPerPage === 'all' ? t('inventory.allRows') : rowsPerPage }}
-                    <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px]" align="start" :side-offset="4">
-                  <DropdownMenuItem @select="rowsPerPage = 'all'">{{ t('inventory.allRows') }}</DropdownMenuItem>
-                  <DropdownMenuItem @select="rowsPerPage = '10'">10</DropdownMenuItem>
-                  <DropdownMenuItem @select="rowsPerPage = '25'">25</DropdownMenuItem>
-                  <DropdownMenuItem @select="rowsPerPage = '50'">50</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
             </div>
           </div>
 
@@ -982,7 +972,8 @@ const totalAsetTerpilihCount = computed(() => {
                   :options="availableBrands"
                   :search-placeholder="t('inventory.searchBrandPlaceholder')"
                   :default-label="t('inventory.allBrands')"
-                  width-class="w-full bg-background"
+                  width-class="w-full"
+                  :bg-class="props.cardless ? 'bg-white' : 'bg-background'"
                 />
               </div>
 
@@ -991,7 +982,7 @@ const totalAsetTerpilihCount = computed(() => {
                 <label class="text-xs text-muted-foreground font-medium block ml-0.5">{{ t('inventory.organizer') }}</label>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal bg-background', !organizerFilter ? 'text-muted-foreground' : 'text-foreground']">
+                    <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal', props.cardless ? 'bg-white' : 'bg-background', !organizerFilter ? 'text-muted-foreground' : 'text-foreground']">
                       <span class="truncate">{{ organizerFilter ? (props.organizers?.find(o => o.id.toString() === organizerFilter)?.name || t('inventory.allOrganizers')) : t('inventory.allOrganizers') }}</span>
                       <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                     </Button>
@@ -1013,16 +1004,17 @@ const totalAsetTerpilihCount = computed(() => {
                   :options="props.vendors || []"
                   :search-placeholder="t('inventory.searchVendorPlaceholder')"
                   :default-label="t('inventory.allVendors')"
-                  width-class="w-full bg-background"
+                  width-class="w-full"
+                  :bg-class="props.cardless ? 'bg-white' : 'bg-background'"
                 />
               </div>
             </div>
           </Transition>
 
-          <!-- Row 2: Bulk Actions -->
+          <!-- Row 2: Bulk Actions & Rows Per Page -->
           <div class="flex flex-wrap items-end justify-between gap-4 pt-2">
             <div class="space-y-2 flex-1 min-w-0">
-              <label v-if="can('inventory.manage') && !props.hideActions" class="text-xs text-muted-foreground font-medium block ml-0.5">{{ t('inventory.selectedActions') }}</label>
+              <label v-if="(can('inventory.manage') && !props.hideActions) || !props.hideExport" class="text-xs text-muted-foreground font-medium block ml-0.5">{{ t('inventory.selectedActions') }}</label>
               <div class="flex flex-wrap gap-2">
                 <!-- Edit Terpilih -->
                 <Button 
@@ -1044,7 +1036,27 @@ const totalAsetTerpilihCount = computed(() => {
               </div>
             </div>
 
-            <slot v-if="can('inventory.manage') && !props.hideActions" name="extra-actions"></slot>
+            <!-- Right side: Rows Per Page & Extra Actions -->
+            <div class="flex items-center gap-3 shrink-0 ml-auto pb-0.5">
+              <div class="flex items-center gap-3 text-sm text-muted-foreground">
+                <span class="whitespace-nowrap text-right">{{ t('inventory.rowsPerPage') }}</span>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal', props.cardless ? 'bg-white' : '', (rowsPerPage === 'all' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
+                      {{ rowsPerPage === 'all' ? t('inventory.allRows') : rowsPerPage }}
+                      <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px]" align="start" :side-offset="4">
+                    <DropdownMenuItem @select="rowsPerPage = 'all'">{{ t('inventory.allRows') }}</DropdownMenuItem>
+                    <DropdownMenuItem @select="rowsPerPage = '10'">10</DropdownMenuItem>
+                    <DropdownMenuItem @select="rowsPerPage = '25'">25</DropdownMenuItem>
+                    <DropdownMenuItem @select="rowsPerPage = '50'">50</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+              <slot v-if="can('inventory.manage') && !props.hideActions" name="extra-actions"></slot>
+            </div>
           </div>
         </div>
       </div>

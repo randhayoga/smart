@@ -5,7 +5,6 @@
 import { ref, computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem } from '@/Components/ui/breadcrumb';
 import Tabs from '@/Components/Tabs.vue';
 import NonConsumableListTab from './Tabs/NonConsumableListTab.vue';
 import { printFormulirPersetujuanPenghapusan } from '@/utils/printFormulirPersetujuanPenghapusan';
@@ -57,14 +56,6 @@ const handleCustomPrint = (items: any[]) => {
 
 <template>
   <AppLayout :title="t('fulfillment.pendingDeletion')">
-    <Breadcrumb>
-      <BreadcrumbList class="pb-3">
-        <BreadcrumbItem>
-          <BreadcrumbLink href="/smart/stock-management/pending-deletion">{{ t('fulfillment.pendingDeletion') }}</BreadcrumbLink>
-        </BreadcrumbItem>
-      </BreadcrumbList>
-    </Breadcrumb>
-
     <div class="space-y-1">
       <!-- Tabs header matching Master Data -->
       <Tabs v-model="activeTab" :tabs="computedTabs" />
@@ -72,6 +63,7 @@ const handleCustomPrint = (items: any[]) => {
       <!-- Content Tab (Table view matching Daftar Tidak Habis Pakai) -->
       <NonConsumableListTab
         :key="activeTab"
+        :title="t('fulfillment.pendingDeletion')"
         :units="props.units"
         :locations="props.locations"
         :organizers="props.organizers"

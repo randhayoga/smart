@@ -35,11 +35,13 @@ const props = withDefaults(defineProps<{
   disabled?: boolean;
   error?: boolean;
   limit?: number;
+  bgClass?: string;
 }>(), {
   widthClass: 'w-[200px]',
   disabled: false,
   error: false,
   limit: 20,
+  bgClass: '',
 });
 
 const emit = defineEmits<{
@@ -123,6 +125,7 @@ const handleSelect = (val: string | number | null) => {
         :class="[
           widthClass,
           'justify-between rounded-[14px] font-normal',
+          props.bgClass,
           !modelValue ? 'text-muted-foreground' : 'text-foreground',
           error ? '!border-destructive focus:!ring-destructive/20 focus:!border-destructive' : ''
         ]"

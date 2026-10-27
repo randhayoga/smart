@@ -162,100 +162,98 @@ const pageSizeNumber = computed(() => {
 
 <template>
   <AppLayout :title="t('admin.employeeTitle')">
-    <div class="space-y-4">
-      <!-- Main Card -->
-      <div class="px-4 bg-card rounded-xl border border-border shadow-sm overflow-hidden">
-        <div class="py-3 no-print">
-          <h2 class="text-lg font-bold text-foreground">{{ t('admin.employeeTitle') }}</h2>
+    <!-- ── Title Halaman ── -->
+    <div class="mb-6">
+      <h1 class="text-xl font-bold text-gray-900 leading-none">{{ t('admin.employeeTitle') }}</h1>
+    </div>
 
-          <!-- Filters & Actions -->
-          <div class="mt-4 flex flex-col space-y-4">
-            <!-- Row 1: Filters & Rows Per Page -->
-            <div class="flex flex-wrap items-end justify-between gap-4">
-              <div class="flex flex-wrap items-end gap-3 flex-1">
-                <!-- Search -->
-                <div class="space-y-1.5 flex-1 min-w-[220px] max-w-xs">
-                  <label for="search-karyawan" class="text-xs text-muted-foreground font-medium block">{{ t('admin.filter') }}</label>
-                  <TableSearch 
-                    id="search-karyawan"
-                    name="search"
-                    v-model="searchQuery"
-                    :placeholder="t('admin.employeeSearchPlaceholder')" 
-                  />
-                </div>
+    <!-- Filters & Actions -->
+    <div class="space-y-4 mb-6 no-print">
+      <!-- Row 1: Filters & Rows Per Page -->
+      <div class="flex flex-wrap items-end justify-between gap-4">
+        <div class="flex flex-wrap items-end gap-3 flex-1">
+          <!-- Search -->
+          <div class="space-y-1.5 flex-1 min-w-[220px] max-w-xs">
+            <label for="search-karyawan" class="text-xs text-muted-foreground font-medium block">{{ t('admin.filter') }}</label>
+            <TableSearch 
+              id="search-karyawan"
+              name="search"
+              v-model="searchQuery"
+              :placeholder="t('admin.employeeSearchPlaceholder')" 
+              bg-class="bg-white"
+            />
+          </div>
 
-                <!-- Departemen Combobox Filter -->
-                <div class="space-y-1.5 w-full sm:w-[360px] md:w-[400px]">
-                  <span class="text-xs text-muted-foreground font-medium block">{{ t('admin.employeeDepartment') }}</span>
-                  <Combobox 
-                    v-model="departmentFilter"
-                    :options="props.departments"
-                    :placeholder="t('admin.allDepartments')"
-                    :default-label="t('admin.allDepartments')"
-                    :search-placeholder="t('admin.searchDepartment')"
-                    width-class="w-full sm:w-[360px] md:w-[400px]"
-                  />
-                </div>
+          <!-- Departemen Combobox Filter -->
+          <div class="space-y-1.5 w-full sm:w-[360px] md:w-[400px]">
+            <span class="text-xs text-muted-foreground font-medium block">{{ t('admin.employeeDepartment') }}</span>
+            <Combobox 
+              v-model="departmentFilter"
+              :options="props.departments"
+              :placeholder="t('admin.allDepartments')"
+              :default-label="t('admin.allDepartments')"
+              :search-placeholder="t('admin.searchDepartment')"
+              width-class="w-full sm:w-[360px] md:w-[400px]"
+              bg-class="bg-white"
+            />
+          </div>
 
-                <!-- Reset Filters Button -->
-                <div class="pb-0.5">
-                  <Transition
-                    enter-active-class="transition ease-out duration-200"
-                    enter-from-class="transform scale-95 opacity-0"
-                    enter-to-class="transform scale-100 opacity-100"
-                    leave-active-class="transition ease-in duration-150"
-                    leave-from-class="transform scale-100 opacity-100"
-                    leave-to-class="transform scale-95 opacity-0"
-                  >
-                    <ResetFilterButton 
-                      v-if="hasActiveFilters"
-                      @click="clearFilters"
-                    />
-                  </Transition>
-                </div>
-              </div>
-
-              <!-- Right: Baris per Halaman -->
-              <div class="flex items-center gap-3 text-sm text-muted-foreground shrink-0 pb-1">
-                <span class="whitespace-nowrap">{{ t('admin.rowsPerPage') }}</span>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal', (rowsPerPage === 'Semua baris' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
-                      {{ rowsPerPageLabel }}
-                      <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent class="w-[140px] rounded-[14px]" align="end" :side-offset="4">
-                    <DropdownMenuItem @select="rowsPerPage = 'Semua baris'">{{ t('admin.allRows') }}</DropdownMenuItem>
-                    <DropdownMenuItem @select="rowsPerPage = '10'">10</DropdownMenuItem>
-                    <DropdownMenuItem @select="rowsPerPage = '25'">25</DropdownMenuItem>
-                    <DropdownMenuItem @select="rowsPerPage = '50'">50</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </div>
+          <!-- Reset Filters Button -->
+          <div class="pb-0.5">
+            <Transition
+              enter-active-class="transition ease-out duration-200"
+              enter-from-class="transform scale-95 opacity-0"
+              enter-to-class="transform scale-100 opacity-100"
+              leave-active-class="transition ease-in duration-150"
+              leave-from-class="transform scale-100 opacity-100"
+              leave-to-class="transform scale-95 opacity-0"
+            >
+              <ResetFilterButton 
+                v-if="hasActiveFilters"
+                @click="clearFilters"
+              />
+            </Transition>
           </div>
         </div>
 
-        <!-- DataTable: Default sort NPK small to large (asc) -->
-        <div class="pb-4">
-          <DataTable
-            ref="dataTableRef"
-            :columns="columns"
-            :data="filteredEmployees"
-            :page-size="pageSizeNumber"
-            :show-selection-count="false"
-            :default-sorting="[{ id: 'employee_id', desc: false }]"
-          />
+        <!-- Right: Baris per Halaman -->
+        <div class="flex items-center gap-3 text-sm text-muted-foreground shrink-0 pb-1">
+          <span class="whitespace-nowrap">{{ t('admin.rowsPerPage') }}</span>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal bg-white', (rowsPerPage === 'Semua baris' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
+                {{ rowsPerPageLabel }}
+                <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent class="w-[140px] rounded-[14px]" align="end" :side-offset="4">
+              <DropdownMenuItem @select="rowsPerPage = 'Semua baris'">{{ t('admin.allRows') }}</DropdownMenuItem>
+              <DropdownMenuItem @select="rowsPerPage = '10'">10</DropdownMenuItem>
+              <DropdownMenuItem @select="rowsPerPage = '25'">25</DropdownMenuItem>
+              <DropdownMenuItem @select="rowsPerPage = '50'">50</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
+    </div>
 
-      <!-- Employee Detail Modal -->
-      <EmployeeDetailModal
-        :open="isDetailModalOpen"
-        :employee="selectedEmployee"
-        @update:open="isDetailModalOpen = $event"
+    <!-- DataTable: Default sort NPK small to large (asc) -->
+    <div class="pb-4">
+      <DataTable
+        ref="dataTableRef"
+        :columns="columns"
+        :data="filteredEmployees"
+        :page-size="pageSizeNumber"
+        :show-selection-count="false"
+        :default-sorting="[{ id: 'employee_id', desc: false }]"
       />
     </div>
+
+    <!-- Employee Detail Modal -->
+    <EmployeeDetailModal
+      :open="isDetailModalOpen"
+      :employee="selectedEmployee"
+      @update:open="isDetailModalOpen = $event"
+    />
   </AppLayout>
 </template>

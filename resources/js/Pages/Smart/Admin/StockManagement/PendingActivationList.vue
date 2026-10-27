@@ -4,7 +4,6 @@
  */
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem } from '@/Components/ui/breadcrumb';
 import NonConsumableListTab from './Tabs/NonConsumableListTab.vue';
 
 interface Props {
@@ -20,26 +19,23 @@ const { t } = useI18n();
 
 <template>
   <AppLayout :title="t('fulfillment.pendingActivation')">
-    <Breadcrumb>
-      <BreadcrumbList class="pb-3">
-        <BreadcrumbItem>
-          <BreadcrumbLink href="/smart/stock-management/pending-activation">{{ t('fulfillment.pendingActivation') }}</BreadcrumbLink>
-        </BreadcrumbItem>
-      </BreadcrumbList>
-    </Breadcrumb>
-
-    <div class="space-y-1">
-      <NonConsumableListTab
-        :units="props.units"
-        :locations="props.locations"
-        :organizers="props.organizers"
-        :vendors="props.vendors"
-        status-scope="unverified"
-        :hide-status-filter="true"
-        :hide-condition-filter="true"
-        :hide-actions="true"
-        :hide-export="false"
-      />
+    <!-- ── Title Halaman ── -->
+    <div class="mb-6">
+      <h1 class="text-xl font-bold text-gray-900 leading-none">{{ t('fulfillment.pendingActivation') }}</h1>
     </div>
+
+    <NonConsumableListTab
+      :units="props.units"
+      :locations="props.locations"
+      :organizers="props.organizers"
+      :vendors="props.vendors"
+      status-scope="unverified"
+      :hide-status-filter="true"
+      :hide-condition-filter="true"
+      :hide-actions="true"
+      :hide-export="false"
+      :cardless="true"
+      :hide-header="true"
+    />
   </AppLayout>
 </template>

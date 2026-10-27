@@ -18,7 +18,19 @@ const props = withDefaults(defineProps<Props>(), {
   path: '',
 });
 
-type SkeletonType = 'dashboard' | 'scanner' | 'detail' | 'master-table' | 'approval-table' | 'requests-table' | 'inventory-table' | 'karyawan-table' | 'general-table';
+type SkeletonType = 
+  | 'dashboard' 
+  | 'scanner' 
+  | 'detail' 
+  | 'master-table' 
+  | 'approval-table' 
+  | 'approve-activation-table'
+  | 'requests-table' 
+  | 'pending-activation-table'
+  | 'pending-deletion-table'
+  | 'inventory-table' 
+  | 'karyawan-table' 
+  | 'general-table';
 
 const skeletonType = computed<SkeletonType>(() => {
   const cleanPath = (props.path || '').split('?')[0].replace(/\/$/, '');
@@ -49,27 +61,42 @@ const skeletonType = computed<SkeletonType>(() => {
     return 'karyawan-table';
   }
 
-  // 5. Master Data (7 tabs)
+  // 5. Pending Activation (Stock Management)
+  if (cleanPath.includes('/pending-activation')) {
+    return 'pending-activation-table';
+  }
+
+  // 6. Pending Deletion (Stock Management)
+  if (cleanPath.includes('/pending-deletion')) {
+    return 'pending-deletion-table';
+  }
+
+  // 7. Manager Approve Activation
+  if (cleanPath.includes('/approve-activation')) {
+    return 'approve-activation-table';
+  }
+
+  // 8. Master Data (7 tabs)
   if (cleanPath === '/smart/master') {
     return 'master-table';
   }
 
-  // 6. Manager Approval Deletion (2 tabs: Perlu Approve & Sudah Approve)
+  // 9. Manager Approval Deletion (2 tabs: Perlu Approve & Sudah Approve)
   if (cleanPath.includes('/approve-deletion')) {
     return 'approval-table';
   }
 
-  // 7. Active Requests (Lacak Peminjaman tab)
+  // 10. Active Requests (Lacak Peminjaman tab)
   if (cleanPath.includes('/requests') || cleanPath.includes('/borrowed')) {
     return 'requests-table';
   }
 
-  // 8. Inventory List Views (Multi-combobox filters)
+  // 11. Inventory List Views (Multi-combobox filters)
   if (cleanPath.includes('/inventory') || cleanPath.includes('/stock-management')) {
     return 'inventory-table';
   }
 
-  // 9. General Table fallback (Arsip, Jejak Audit, etc.)
+  // 12. General Table fallback (Arsip, Jejak Audit, etc.)
   return 'general-table';
 });
 </script>
@@ -85,12 +112,44 @@ const skeletonType = computed<SkeletonType>(() => {
     <!-- Detail Page Skeleton -->
     <DetailPageSkeleton v-else-if="skeletonType === 'detail'" />
 
-    <!-- Employee Table Skeleton (matches DaftarKaryawan: no breadcrumbs, 1 combobox filter) -->
+    <!-- Employee Table Skeleton (matches Daftar Karyawan: no breadcrumbs, title h1, cardless layout, 1 combobox filter) -->
     <TablePageSkeleton
       v-else-if="skeletonType === 'karyawan-table'"
       :has-breadcrumbs="false"
-      :has-title="false"
+      :has-title="true"
       :has-tabs="false"
+      :cardless="true"
+      :filter-count="1"
+    />
+
+    <!-- Pending Activation Skeleton (no breadcrumbs, title h1, cardless layout, 3 filters) -->
+    <TablePageSkeleton
+      v-else-if="skeletonType === 'pending-activation-table'"
+      :has-breadcrumbs="false"
+      :has-title="true"
+      :has-tabs="false"
+      :cardless="true"
+      :filter-count="3"
+    />
+
+    <!-- Pending Deletion Skeleton (no breadcrumbs, no top title, 2 tabs, carded layout, 3 filters) -->
+    <TablePageSkeleton
+      v-else-if="skeletonType === 'pending-deletion-table'"
+      :has-breadcrumbs="false"
+      :has-title="false"
+      :has-tabs="true"
+      :tab-count="2"
+      :cardless="false"
+      :filter-count="3"
+    />
+
+    <!-- Manager Approve Activation Skeleton (no breadcrumbs, title h1, cardless layout, 1 filter) -->
+    <TablePageSkeleton
+      v-else-if="skeletonType === 'approve-activation-table'"
+      :has-breadcrumbs="false"
+      :has-title="true"
+      :has-tabs="false"
+      :cardless="true"
       :filter-count="1"
     />
 

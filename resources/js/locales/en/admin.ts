@@ -73,7 +73,7 @@ export default {
   employeeTitle: 'Employee Directory',
   employeeSearchPlaceholder: 'Search ID or Employee Name',
   employeeName: 'Name',
-  employeeId: 'ID',
+  employeeId: 'NPK',
   employeeDepartment: 'Department',
   allDepartments: 'All Departments',
   searchDepartment: 'Search department...',
