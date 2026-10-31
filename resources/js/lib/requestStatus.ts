@@ -108,7 +108,7 @@ export function getRequestStatusBadgeClass(status: string | null | undefined): s
     case 'Serah Terima':
       return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-300';
     case 'Dipinjam':
-      return 'bg-rose-100 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300';
+      return 'bg-orange-100 text-orange-800 dark:bg-orange-950/40 dark:text-orange-300 dark:border-orange-700';
     case 'Dibatalkan':
       return 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300';
     case 'Pending':

@@ -37,6 +37,7 @@ import {
   Package
 } from 'lucide-vue-next';
 import { REQUEST_STATUS_PILL_BASE, getRequestStatusBadgeClass, getRequestStatusLabel, getRequestStatusBadges } from '@/lib/requestStatus';
+import { isAssignmentType, getTypeActionLabel } from '@/lib/requestTypeBadge';
 import AssetAllocationModal from './modals/AssetAllocationModal.vue';
 import FulfillmentConfirmationModal from './modals/FulfillmentConfirmationModal.vue';
 
@@ -168,9 +169,16 @@ const parentLabel = computed(() => t('fulfillment.title'));
 const parentRoute = computed(() => route('smart.requests.index', { tab: isFromPartial.value ? 'Parsial' : 'Perlu Alokasi' }));
 
 const request = computed(() => props.request);
+const isAssignment = computed(() => isAssignmentType(request.value.specific_type || request.value.type));
 const isPeminjaman = computed(() => request.value.type === 'peminjaman');
-const typeLabel = computed(() => isPeminjaman.value ? t('fulfillment.loan').toLowerCase() : t('fulfillment.request').toLowerCase());
-const typeLabelTitle = computed(() => isPeminjaman.value ? t('fulfillment.loan') : t('fulfillment.request'));
+const typeLabel = computed(() => {
+  if (isAssignment.value) return t('fulfillment.assignActionLower');
+  return isPeminjaman.value ? t('fulfillment.loan').toLowerCase() : t('fulfillment.request').toLowerCase();
+});
+const typeLabelTitle = computed(() => {
+  if (isAssignment.value) return t('fulfillment.assignAction');
+  return isPeminjaman.value ? t('fulfillment.loan') : t('fulfillment.request');
+});
 
 
 // ─────────────────────────────────────────────
@@ -245,8 +253,8 @@ const timelineSteps = computed((): TimelineStep[] => {
           description = t('fulfillment.confirmedByAdmin', { type: typeLabelTitle.value, user: `<span class="font-bold text-foreground">${adminName}</span>` });
         }
       } else if (log.status_to === 'borrow') {
-        title = t('fulfillment.handoverCompletedAndBorrowed');
-        description = description || t('fulfillment.assetDeliveredAndBorrowed');
+        title = isAssignment.value ? t('fulfillment.handoverCompletedAndAssigned') : t('fulfillment.handoverCompletedAndBorrowed');
+        description = description || (isAssignment.value ? t('fulfillment.assetDeliveredAndAssigned') : t('fulfillment.assetDeliveredAndBorrowed'));
       } else if (log.status_to === 'reject') {
         title = t('fulfillment.rejectedTimeline');
         status = 'rejected';

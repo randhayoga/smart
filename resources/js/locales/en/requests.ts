@@ -35,7 +35,8 @@ export default {
   borrowStart: 'Borrowing Start',
   borrowEnd: 'Borrowing End',
   notSpecified: 'Not specified',
-  requestedQty: 'Requested quantity:',
+  requestedQty: 'Item quantity:',
+  itemQuantity: 'Item quantity',
   requestDetails: 'Request Details',
   borrowDetails: 'Borrowing Details',
   detailsOf: '{type} Details',
@@ -180,6 +181,7 @@ export default {
   finished: 'Finished',
   timeline: {
     created: '{type} created',
+    createdDesc: '{type} requested by {user}.',
     approved: 'Approved',
     approvedByManager: '{type} approved by Manager: {name}',
     note: 'Note: {note}',

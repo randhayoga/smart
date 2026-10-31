@@ -9,9 +9,9 @@ import { router } from '@inertiajs/vue3';
 import { 
   ChevronDown, 
   ArrowUpDown,
+  Eye,
 } from 'lucide-vue-next';
 import TableSearch from '@/Components/TableSearch.vue';
-import ViewTableButton from '@/Components/ViewTableButton.vue';
 import { Button } from "@/Components/ui/button";
 import {
   DropdownMenu,
@@ -173,9 +173,15 @@ const columns = computed<ColumnDef<any>[]>(() => [
     size: 80,
     header: () => h('div', { class: 'text-center font-semibold text-foreground no-print' }, t('fulfillment.actions')),
     cell: ({ row }) => h('div', { class: 'flex items-center justify-center no-print' }, [
-      h(ViewTableButton, {
-        onClick: () => handleViewDetail(row.original)
-      })
+      h(Button, {
+        variant: 'table-view',
+        size: 'icon-sm',
+        title: t('fulfillment.viewDetail'),
+        onClick: () => handleViewDetail(row.original),
+      }, () => [
+        h(Eye, { class: 'w-4 h-4' }),
+        h('span', { class: 'sr-only' }, t('fulfillment.viewDetail')),
+      ]),
     ]),
   },
 ]);

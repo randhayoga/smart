@@ -27,6 +27,7 @@ class Request extends Model
         'org_id',
         'project_id',
         'reasoning',
+        'form_url',
         'status',
     ];
 
@@ -164,6 +165,63 @@ class Request extends Model
         }
 
         return $this->items()->whereNotNull('start_date')->exists();
+    }
+
+    /**
+     * Determine the granular request type key ('consumable', 'st', 'rent', 'lt').
+     */
+    public function getSpecificTypeKeyAttribute(): string
+    {
+        // 1. Check status logs note for explicit rent marker
+        if ($this->relationLoaded('statusLogs')) {
+            if ($this->statusLogs->contains(fn($l) => str_contains(strtolower((string) $l->note), 'sewa'))) {
+                return 'rent';
+            }
+        }
+
+        // 2. Check fulfillment assets and items
+        $hasRent = false;
+        $hasSt = false;
+        $hasLt = false;
+
+        $items = $this->relationLoaded('items') ? $this->items : $this->items()->with('fulfillments.asset')->get();
+
+        foreach ($items as $item) {
+            $fulfillments = $item->relationLoaded('fulfillments') ? $item->fulfillments : $item->fulfillments()->with('asset')->get();
+            foreach ($fulfillments as $f) {
+                if ($f->asset) {
+                    $astatus = strtolower((string) $f->asset->status);
+                    $btype = strtoupper((string) $f->asset->borrowing_type);
+                    if (str_contains($astatus, 'sewa')) {
+                        $hasRent = true;
+                    } elseif ($btype === 'ST') {
+                        $hasSt = true;
+                    } elseif ($btype === 'LT') {
+                        $hasLt = true;
+                    }
+                }
+            }
+
+            if ($item->start_date !== null) {
+                if ($item->end_date !== null) {
+                    $hasSt = true;
+                } else {
+                    $hasLt = true;
+                }
+            }
+        }
+
+        if ($hasRent) {
+            return 'rent';
+        }
+        if ($hasSt) {
+            return 'st';
+        }
+        if ($hasLt) {
+            return 'lt';
+        }
+
+        return 'consumable';
     }
 
     /**

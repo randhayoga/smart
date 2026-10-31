@@ -156,7 +156,7 @@ class AssetAssignedToLocationTest extends TestCase
             'number' => 'AST-ASSIGN-03',
             'lot_id' => $this->lot->id,
             'location_id' => $this->location->id,
-            'status' => 'Dipinjam',
+            'status' => 'Dipinjam (ST)',
             'condition' => 'Bagus',
             'borrowing_type' => 'LT',
             'classification' => 'Aset',
@@ -176,7 +176,7 @@ class AssetAssignedToLocationTest extends TestCase
 
         $response->assertSessionHasErrors(['is_assigned_to_location']);
         $this->assertFalse($asset->fresh()->is_assigned_to_location);
-        $this->assertSame('Dipinjam', $asset->fresh()->status);
+        $this->assertSame('Dipinjam (ST)', $asset->fresh()->status);
     }
 
     public function test_bulk_asset_update_assigns_all_selected_available_assets(): void
@@ -220,7 +220,7 @@ class AssetAssignedToLocationTest extends TestCase
         $asset2 = Asset::factory()->create([
             'lot_id' => $this->lot->id,
             'location_id' => $this->location->id,
-            'status' => 'Dipinjam',
+            'status' => 'Dipinjam (ST)',
             'is_assigned_to_location' => false,
         ]);
 
@@ -233,7 +233,7 @@ class AssetAssignedToLocationTest extends TestCase
         $this->assertFalse($asset1->fresh()->is_assigned_to_location);
         $this->assertSame('Tersedia', $asset1->fresh()->status);
         $this->assertFalse($asset2->fresh()->is_assigned_to_location);
-        $this->assertSame('Dipinjam', $asset2->fresh()->status);
+        $this->assertSame('Dipinjam (ST)', $asset2->fresh()->status);
     }
 
     public function test_bulk_asset_update_unassigns_assets_reverting_di_assign_lt_to_tersedia(): void

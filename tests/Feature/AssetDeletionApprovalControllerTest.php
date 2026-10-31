@@ -223,7 +223,7 @@ class AssetDeletionApprovalControllerTest extends TestCase
         $newLocation = \App\Models\Master\Location::factory()->create();
 
         $unit->update([
-            'status' => 'Dipinjam',
+            'status' => 'Dipinjam (ST)',
             'condition' => 'Rusak',
             'location_id' => $newLocation->id,
         ]);

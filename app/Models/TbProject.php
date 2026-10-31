@@ -93,9 +93,9 @@ class TbProject extends Model
      */
     public function scopeValidForSelection(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
     {
-        return $query->whereNotNull('no_project')
-            ->where('no_project', '!=', '')
-            ->whereNotNull('project_name')
-            ->where('project_name', '!=', '');
+        return $query->whereNotNull('tb_project.no_project')
+            ->where('tb_project.no_project', '!=', '')
+            ->whereNotNull('tb_project.project_name')
+            ->where('tb_project.project_name', '!=', '');
     }
 }

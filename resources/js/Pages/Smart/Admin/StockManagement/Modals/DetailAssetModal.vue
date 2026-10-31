@@ -13,7 +13,6 @@ import { formatDate } from '@/lib/utils';
 import { hasAssetStatus } from '@/lib/assetStatus';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import Tabs from '@/Components/Tabs.vue';
-import AssetBorrowFormTab from '@/Pages/Smart/Admin/StockManagement/Tabs/AssetBorrowFormTab.vue';
 import AuditTrailTab from '@/Pages/Smart/MultiRoles/Tabs/AuditTrailTab.vue';
 
 interface Props {
@@ -42,14 +41,10 @@ const disapprovalFileInputRef = ref<HTMLInputElement | null>(null);
 const isUploading = ref(false);
 
 const tabs = computed(() => {
-  const list = [
+  return [
     { id: 'Detail Aset', label: t('inventory.assetDetail') },
+    { id: 'Jejak Audit', label: t('inventory.auditTrail') },
   ];
-  if (can('inventory.borrow') && ['Tersedia', 'Dipinjam'].includes(props.asset?.status)) {
-    list.push({ id: 'Peminjaman', label: t('inventory.borrowHistory') });
-  }
-  list.push({ id: 'Jejak Audit', label: t('inventory.auditTrail') });
-  return list;
 });
 
 watch(() => props.open, (newVal) => {
@@ -400,14 +395,7 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                 </div>
               </div>
 
-              <!-- ── TAB 2: PEMINJAMAN ── -->
-              <AssetBorrowFormTab 
-                v-if="can('inventory.borrow') && detailActiveTab === 'Peminjaman'" 
-                :asset="props.asset" 
-                :users="props.users" 
-              />
-
-              <!-- ── TAB 3: JEJAK AUDIT ── -->
+              <!-- ── TAB 2: JEJAK AUDIT ── -->
               <AuditTrailTab 
                 v-if="detailActiveTab === 'Jejak Audit'"
                 :lifecycles="asset ? (asset.lifecycles || []) : []" 

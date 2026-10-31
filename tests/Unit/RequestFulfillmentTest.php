@@ -59,6 +59,7 @@ class RequestFulfillmentTest extends TestCase
             'method' => 'pickup',
             'scheduled_date' => now()->addDays(7),
             'location' => 'Ruang IFS',
+            'proof_url' => 'returns/test.jpg',
             'is_auto_set' => true,
         ]);
 

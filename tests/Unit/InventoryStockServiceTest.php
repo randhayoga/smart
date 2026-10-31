@@ -41,7 +41,7 @@ class InventoryStockServiceTest extends TestCase
 
         Unit::factory()->create(['lot_id' => $lot->id, 'status' => 'Tersedia']);
         Unit::factory()->create(['lot_id' => $lot->id, 'status' => 'Tersedia']);
-        Unit::factory()->create(['lot_id' => $lot->id, 'status' => 'Dipinjam']);
+        Unit::factory()->create(['lot_id' => $lot->id, 'status' => 'Dipinjam (ST)']);
 
         $stock = $this->service->getAvailableStockForBarang($barang->id);
         $this->assertEquals(2, $stock);

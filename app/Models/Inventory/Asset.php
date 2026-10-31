@@ -412,7 +412,7 @@ class Asset extends Model
      */
     public function getActiveBorrowingAttribute(): ?array
     {
-        if (!$this->hasStatus('Dipinjam')) {
+        if (!$this->hasStatus('Dipinjam (ST)') && !$this->hasStatus('Di-assign (LT)') && !$this->hasStatus('Dipinjam (sewa)')) {
             return null;
         }
 

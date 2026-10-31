@@ -18,6 +18,8 @@ return new class extends Migration {
             $table->integer('min_stock_threshold')->default(0)->nullable()->comment('Threshold minimum stock untuk notifikasi barang consumable');
             $table->dateTime('last_restock_at')->nullable();
             $table->timestamps();
+
+            $table->index('name');
         });
 
         Schema::create('lots', function (Blueprint $table) {
@@ -40,6 +42,8 @@ return new class extends Migration {
             $table->string('burden')->nullable()->comment('for consumables');
             $table->unsignedBigInteger('project_id')->nullable()->index()->comment('Refers to RE_PORTALDB:tb_project.id_project (for consumables)');
             $table->timestamps();
+
+            $table->index(['model_id', 'current_quantity', 'purchase_grant_date'], 'lots_model_qty_date_idx');
         });
 
         Schema::create('assets', function (Blueprint $table) {
@@ -66,6 +70,7 @@ return new class extends Migration {
             $table->index('status');
             $table->index('approval_status');
             $table->index('condition');
+            $table->index(['borrowing_type', 'status', 'approval_status'], 'assets_borrow_type_status_approval_idx');
         });
 
         Schema::create('asset_deletion_approvals', function (Blueprint $table) {

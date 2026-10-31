@@ -179,7 +179,14 @@ class AdminActiveRequestController extends Controller
      */
     public function getBorrowedList(): array
     {
-        return SmartRequest::with(['user', 'handover', 'items'])
+        return SmartRequest::with([
+            'user:id,employee_name,employee_id',
+            'handover:id,request_id,user_confirmed_at',
+            'statusLogs:id,request_id,status_from,status_to,note',
+            'items' => fn($q) => $q->select('id', 'request_id', 'start_date', 'end_date'),
+            'items.fulfillments' => fn($q) => $q->select('id', 'request_item_id', 'asset_id'),
+            'items.fulfillments.asset:id,borrowing_type,status',
+        ])
             ->where('status', 'borrow')
             ->orderBy('id', 'desc')
             ->get()
@@ -203,6 +210,7 @@ class AdminActiveRequestController extends Controller
                 return [
                     'id' => $req->id,
                     'number' => $req->request_number,
+                    'type' => $req->specific_type_key,
                     'borrower' => $req->user->name ?? '-',
                     'dueDate' => $dueDateStr,
                     'daysLeft' => $daysLeft,
@@ -218,7 +226,7 @@ class AdminActiveRequestController extends Controller
      */
     public function getReturnsList(): array
     {
-        return SmartRequest::with(['user', 'return', 'items'])
+        return SmartRequest::with(['user', 'return'])
             ->where('status', 'return')
             ->orderBy('id', 'desc')
             ->get()

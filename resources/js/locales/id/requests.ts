@@ -35,7 +35,8 @@ export default {
   borrowStart: 'Mulai Peminjaman',
   borrowEnd: 'Selesai Peminjaman',
   notSpecified: 'Tidak ditentukan',
-  requestedQty: 'Jumlah diminta:',
+  requestedQty: 'Jumlah barang:',
+  itemQuantity: 'Jumlah barang',
   requestDetails: 'Detail Permintaan',
   borrowDetails: 'Detail Peminjaman',
   detailsOf: 'Detail {type}',
@@ -180,6 +181,7 @@ export default {
   finished: 'Selesai',
   timeline: {
     created: '{type} dibuat',
+    createdDesc: '{type} diajukan oleh {user}.',
     approved: 'Di-approve',
     approvedByManager: '{type} disetujui Manager: {name}',
     note: 'Catatan: {note}',

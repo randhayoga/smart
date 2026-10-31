@@ -80,6 +80,7 @@ class SmartRequestResource extends JsonResource
             'pemanfaatanDetail' => $pemanfaatanDetail,
             'destination' => $this->destination_name,
             'reasoning' => $this->reasoning,
+            'form_url' => $this->form_url ? '/media/' . ltrim($this->form_url, '/') : null,
             'durationStart' => $startDate ? $startDate->format('d-m-Y H:i') : null,
             'durationEnd' => $endDate ? $endDate->format('d-m-Y H:i') : null,
             'durationDays' => $durationDays,

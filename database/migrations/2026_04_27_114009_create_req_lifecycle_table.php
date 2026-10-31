@@ -44,9 +44,10 @@ return new class extends Migration {
         Schema::create('request_returns', function (Blueprint $table) {
             $table->id();
             $table->foreignId('request_id')->constrained('requests')->cascadeOnDelete();
-            $table->string('method')->comment('pickup (active) | delivery (inactive)');
-            $table->dateTime('scheduled_date');
-            $table->string('location')->comment("default to Ruang IFS & can't be changed");
+            $table->string('method')->comment('pickup | delivery | manual');
+            $table->dateTime('scheduled_date')->nullable();
+            $table->string('location');
+            $table->string('proof_url');
             $table->boolean('is_auto_set');
             $table->dateTime('completed_at')->nullable();
             $table->timestamps();

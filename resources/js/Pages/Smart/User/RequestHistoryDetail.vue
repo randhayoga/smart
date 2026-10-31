@@ -53,6 +53,7 @@ import {
   Trash2
 } from 'lucide-vue-next';
 import { type RequestStatus, type RawRequestStatus } from '@/lib/requestStatus';
+import { parseAndLocalizeTimelineNote } from '@/lib/timelineNoteLocalization';
 
 // --- Data Types & Props ---
 interface RequestItem {
@@ -395,7 +396,13 @@ const timelineSteps = computed((): TimelineStep[] => {
       let status: 'done' | 'rejected' | 'pending' = 'done';
       let description = log.note || '';
 
-      if (log.status_to === 'approve') {
+      const isAssignment = request.value?.type_key === 'lt' || (request.value as any)?.specific_type === 'lt';
+      const localizedLog = parseAndLocalizeTimelineNote(log.note, t, isAssignment);
+
+      if (localizedLog) {
+        title = localizedLog.title || '';
+        description = localizedLog.description;
+      } else if (log.status_to === 'approve') {
         const approverName = log.user || r.approval_by || r.approver_name || '-';
         title = t('requests.timeline.approved');
         const approvedText = t('requests.timeline.approvedByManager', {

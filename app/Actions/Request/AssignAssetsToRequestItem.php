@@ -43,7 +43,7 @@ class AssignAssetsToRequestItem
                       ->orWhereNotNull('assigned_at')
                       ->orWhereNotNull('confirmed_at')
                       ->orWhereNotNull('completed_at')
-                      ->orWhereHas('asset', fn($uq) => $uq->where('status', 'Dipinjam'));
+                      ->orWhereHas('asset', fn($uq) => $uq->whereIn('status', ['Dipinjam (ST)', 'Di-assign (LT)', 'Dipinjam (sewa)']));
                 })
                 ->get();
 

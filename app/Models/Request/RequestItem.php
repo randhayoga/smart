@@ -19,6 +19,7 @@ class RequestItem extends EloquentModel
         'quantity_requested',
         'start_date',
         'end_date',
+        'reasoning',
         'status',
         'subcategory_id',
         'barang_id',

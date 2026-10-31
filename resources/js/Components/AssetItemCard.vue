@@ -19,8 +19,19 @@
  * @slot footer - Optional action or button bar rendered at the bottom of the card.
  */
 import { ref, computed, useSlots, Comment, Fragment, type VNode } from 'vue';
-import { ChevronDown, ChevronUp } from 'lucide-vue-next';
+import { ChevronDown, ChevronUp, ExternalLink } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
+import { getRequestTypeBadgeClass, getActiveStatusBadge } from '@/lib/requestTypeBadge';
+
+export interface AllocatedAssetItem {
+  fulfillment_id: number;
+  asset_id: number;
+  number?: string;
+  asset_number?: string;
+  is_returned: boolean;
+  returned_at?: string | null;
+  proof_url?: string | null;
+}
 
 export interface AllocationSlot {
   slot_number: number;
@@ -56,7 +67,7 @@ export interface Props {
   subcategory?: string;
   /** Quantity requested or allocated. */
   quantity?: string | number;
-  /** Display label for the quantity row. Defaults to 'Jumlah diminta'. */
+  /** Display label for the quantity row. Defaults to localized 'requests.itemQuantity'. */
   quantityLabel?: string;
   /** URL or relative storage path for the product image thumbnail. */
   imageUrl?: string | null;
@@ -73,6 +84,13 @@ export interface Props {
 
   /** Simple array of asset serial numbers or identification codes (legacy / fallback). */
   assets?: string[];
+
+  /** Structured allocated assets with return status and fulfillment IDs */
+  allocatedAssets?: AllocatedAssetItem[];
+  /** Whether the user can finish individual assets (manual request & active borrow status) */
+  canFinishAsset?: boolean;
+  /** Type key for dynamic badge coloring and terminology (st, rent, lt) */
+  typeKey?: string | null;
 
   /** Non-consumable allocation slots for interactive fulfillment view. */
   allocationSlots?: AllocationSlot[];
@@ -97,7 +115,6 @@ const props = withDefaults(defineProps<Props>(), {
   category: '',
   subcategory: '',
   quantity: 1,
-  quantityLabel: 'Jumlah diminta',
   imageUrl: null,
   uom: 'satuan',
   status: undefined,
@@ -105,6 +122,9 @@ const props = withDefaults(defineProps<Props>(), {
   isAdmin: false,
   isConsumable: false,
   assets: () => [],
+  allocatedAssets: () => [],
+  canFinishAsset: false,
+  typeKey: null,
   allocationSlots: undefined,
   showAllocationAction: false,
   allocationActionLabel: 'Pilih Alokasi Aset',
@@ -115,6 +135,8 @@ const props = withDefaults(defineProps<Props>(), {
 
 defineEmits<{
   (e: 'selectAllocation'): void;
+  (e: 'viewAsset', assetNumber: string): void;
+  (e: 'finishAsset', asset: AllocatedAssetItem): void;
 }>();
 
 const slots = useSlots();
@@ -153,13 +175,19 @@ const hasFooter = computed(() => {
  * Formats the product display title based on available brand, name, spec, or subcategory.
  */
 const displayTitle = computed(() => {
-  if (props.brand && !props.name && !props.spec) {
-    return props.brand;
+  const brand = props.brand && props.brand !== '-' ? props.brand.trim() : '';
+  const name = props.name && props.name !== 'Tidak Spesifik' ? props.name.trim() : '';
+  const spec = props.spec && props.spec !== '-' ? props.spec.trim() : '';
+
+  const parts: string[] = [];
+  if (brand) parts.push(brand);
+  if (name && !parts.some(p => p.toLowerCase().includes(name.toLowerCase()))) {
+    parts.push(name);
   }
-  const brand = props.brand && props.brand !== '-' ? props.brand : '';
-  const name = props.name && props.name !== 'Tidak Spesifik' ? props.name : '';
-  const spec = props.spec && props.spec !== '-' ? props.spec : '';
-  const parts = [brand, name, spec].filter(Boolean);
+  if (spec && !parts.some(p => p.toLowerCase().includes(spec.toLowerCase()))) {
+    parts.push(spec);
+  }
+
   if (parts.length > 0) return parts.join(' ');
   return props.subcategory || 'Barang';
 });
@@ -222,10 +250,10 @@ const activeAssets = computed(() => {
         </div>
 
         <!-- Quantity & Unit of Measurement -->
-        <p class="text-xs text-foreground font-semibold">{{ quantityLabel ? quantityLabel : $t('requests.requestedQuantity') }}: {{ quantity }} {{ uom }}</p>
+        <p class="text-xs text-foreground font-semibold">{{ quantityLabel || $t('requests.itemQuantity') }}: {{ quantity }} {{ uom }}</p>
         
-        <!-- Legacy / Simple Collapsible Allocated Asset Serial Numbers -->
-        <div v-if="!allocationSlots && activeAssets.length > 0" class="pt-1.5">
+        <!-- Collapsible Allocated Asset Serial Numbers / Items -->
+        <div v-if="!allocationSlots && ((allocatedAssets && allocatedAssets.length > 0) || activeAssets.length > 0)" class="pt-1.5">
           <button 
             type="button"
             @click="showAssets = !showAssets"
@@ -239,13 +267,78 @@ const activeAssets = computed(() => {
           <!-- Expanded Asset List -->
           <div 
             v-if="showAssets" 
-            class="mt-2 pl-3 py-1 space-y-1 animate-in fade-in slide-in-from-top-1 duration-200"
+            class="mt-2 pl-1 py-1 space-y-1.5 animate-in fade-in slide-in-from-top-1 duration-200"
           >
             <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">{{ $t('requests.assetsLabel') }}</p>
-            <ul class="space-y-1">
+
+            <!-- Structured Allocated Assets with Status and Finish Action -->
+            <div v-if="allocatedAssets && allocatedAssets.length > 0" class="space-y-1.5">
+              <div 
+                v-for="asset in allocatedAssets" 
+                :key="asset.fulfillment_id || asset.asset_id"
+                class="flex items-center justify-between p-2 rounded-lg border text-xs transition-colors"
+                :class="asset.is_returned ? 'bg-muted/30 border-border/50 text-muted-foreground' : 'bg-card border-border'"
+              >
+                <div class="flex items-center gap-2">
+                  <span class="w-1.5 h-1.5 rounded-full shrink-0" :class="asset.is_returned ? 'bg-muted-foreground/40' : 'bg-primary'"></span>
+                  <button
+                    type="button"
+                    class="font-semibold font-mono text-primary hover:underline hover:text-primary/80 transition-colors cursor-pointer text-left focus:outline-none"
+                    @click.stop="$emit('viewAsset', asset.number || asset.asset_number || '')"
+                  >
+                    {{ asset.number || asset.asset_number }}
+                  </button>
+                </div>
+                
+                <div class="flex items-center gap-2">
+                  <!-- View Proof link if returned with proof -->
+                  <a
+                    v-if="asset.is_returned && asset.proof_url"
+                    :href="asset.proof_url"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-[11px] font-semibold text-primary hover:underline inline-flex items-center gap-1"
+                    @click.stop
+                  >
+                    <span>{{ $t('fulfillment.viewProof') }}</span>
+                    <ExternalLink class="w-3 h-3" />
+                  </a>
+
+                  <!-- Status Badge -->
+                  <span 
+                    class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded"
+                    :class="asset.is_returned 
+                      ? 'bg-muted text-muted-foreground ring-1 ring-inset ring-border' 
+                      : getRequestTypeBadgeClass(typeKey)"
+                  >
+                    {{ asset.is_returned ? $t('fulfillment.returnedBadge') : getActiveStatusBadge(typeKey, $t) }}
+                  </span>
+
+                  <!-- Action Button if canFinishAsset & !asset.is_returned -->
+                  <Button
+                    v-if="canFinishAsset && !asset.is_returned"
+                    type="button"
+                    size="sm"
+                    class="text-xs h-6 px-2.5 bg-primary text-primary-foreground hover:bg-primary/90 font-medium"
+                    @click.stop="$emit('finishAsset', asset)"
+                  >
+                    {{ $t('fulfillment.finish') }}
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Legacy Simple Array List Fallback -->
+            <ul v-else class="space-y-1">
               <li v-for="(asset, idx) in activeAssets" :key="idx" class="text-xs text-foreground font-semibold flex items-center gap-1.5">
                 <span class="w-1 h-1 rounded-full bg-foreground shrink-0"></span>
-                <span>{{ asset }}</span>
+                <button
+                  type="button"
+                  class="font-semibold font-mono text-primary hover:underline hover:text-primary/80 transition-colors cursor-pointer text-left focus:outline-none"
+                  @click.stop="$emit('viewAsset', asset)"
+                >
+                  {{ asset }}
+                </button>
               </li>
             </ul>
           </div>
@@ -301,7 +394,14 @@ const activeAssets = computed(() => {
           >
             <div class="flex items-center gap-2">
               <span class="font-bold font-mono">{{ slot.slot_number }}.</span>
-              <span v-if="slot.asset_number" class="font-semibold font-mono">{{ slot.asset_number }}</span>
+              <button
+                v-if="slot.asset_number"
+                type="button"
+                class="font-semibold font-mono text-primary hover:underline hover:text-primary/80 transition-colors cursor-pointer text-left focus:outline-none"
+                @click.stop="$emit('viewAsset', slot.asset_number)"
+              >
+                {{ slot.asset_number }}
+              </button>
               <span v-else class="italic font-medium">{{ $t('requests.notYetAllocated') }}</span>
             </div>
             <span 

@@ -7,6 +7,7 @@ import { toast } from 'vue-sonner';
 import { addNotification } from '@/stores/notificationStore';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import AssetItemCard from '@/Components/AssetItemCard.vue';
+import { isAssignmentType } from '@/lib/requestTypeBadge';
 import { 
   ChevronDown, 
   ChevronUp,
@@ -49,10 +50,20 @@ interface Props {
 const props = defineProps<Props>();
 const { t } = useI18n();
 
+const isAssignment = computed(() => isAssignmentType(props.handover?.specific_type || props.handover?.type));
 const isPeminjaman = computed(() => props.handover?.type === 'peminjaman' || Boolean(props.handover?.durationStart));
-const typeLabel = computed(() => isPeminjaman.value ? t('fulfillment.loan') : t('fulfillment.request'));
-const typeLabelLower = computed(() => isPeminjaman.value ? t('fulfillment.loan').toLowerCase() : t('fulfillment.request').toLowerCase());
-const actionLabel = computed(() => isPeminjaman.value ? 'dipinjam' : 'diminta');
+const typeLabel = computed(() => {
+  if (isAssignment.value) return t('fulfillment.assignAction');
+  return isPeminjaman.value ? t('fulfillment.loan') : t('fulfillment.request');
+});
+const typeLabelLower = computed(() => {
+  if (isAssignment.value) return t('fulfillment.assignActionLower');
+  return isPeminjaman.value ? t('fulfillment.loan').toLowerCase() : t('fulfillment.request').toLowerCase();
+});
+const actionLabel = computed(() => {
+  if (isAssignment.value) return 'di-assign';
+  return isPeminjaman.value ? 'dipinjam' : 'diminta';
+});
 
 // If items is passed from props, use it, otherwise fallback to the mock/default
 const items = computed(() => props.items || [
@@ -139,7 +150,7 @@ const timeline = computed((): TimelineStep[] => {
           }
         }
       } else if (log.status_to === 'borrow') {
-        statusName = t('fulfillment.handoverCompletedAndBorrowed');
+        statusName = isAssignment.value ? t('fulfillment.handoverCompletedAndAssigned') : t('fulfillment.handoverCompletedAndBorrowed');
       } else if (log.status_to === 'return') {
         statusName = t('fulfillment.returnSubmitted');
       } else if (log.status_to === 'success') {

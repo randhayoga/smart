@@ -11,7 +11,6 @@ import { X } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
 import { formatDate } from '@/lib/utils';
 import Tabs from '@/Components/Tabs.vue';
-import ConsumableRequestFormTab from './Tabs/ConsumableRequestFormTab.vue';
 
 interface Props {
   isOpen: boolean;
@@ -34,15 +33,9 @@ const { can } = usePermissions();
 useModalLock(computed(() => props.isOpen));
 
 const detailActiveTab = ref('Detail LOT');
-const tabs = computed(() => {
-  const items = [
-    { id: 'Detail LOT', label: t('inventory.lotDetail') },
-  ];
-  if (can('inventory.manual_request')) {
-    items.push({ id: 'Permintaan', label: t('inventory.manualRequest') });
-  }
-  return items;
-});
+const tabs = computed(() => [
+  { id: 'Detail LOT', label: t('inventory.lotDetail') },
+]);
 
 const lotDetails = ref<any>(null);
 const isLoading = ref(false);
@@ -212,16 +205,6 @@ onUnmounted(() => {
                     <p class="text-foreground">{{ t('inventory.lastUpdate') }}: {{ lotDetails.updated_at }}</p>
                   </div>
                 </div>
-              </div>
-
-              <div v-else-if="lotDetails && detailActiveTab === 'Permintaan'" class="py-1">
-                <ConsumableRequestFormTab
-                  mode="lot"
-                  :lot="lotDetails"
-                  :available-stock="lotDetails.current_quantity ?? 0"
-                  @success="handleRequestSuccess"
-                  @cancel="emit('close')"
-                />
               </div>
             </div>
 

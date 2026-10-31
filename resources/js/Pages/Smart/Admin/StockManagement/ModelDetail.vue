@@ -14,7 +14,6 @@ import Tabs from '@/Components/Tabs.vue';
 import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal.vue';
 import DeleteErrorModal from '@/Components/DeleteErrorModal.vue';
 import EditModelModal from './Modals/EditModelModal.vue';
-import ManualRequestModelModal from './Modals/ManualRequestModelModal.vue';
 import ModelDetailTab from './Tabs/ModelDetailTab.vue';
 import NonConsumableListTab from './Tabs/NonConsumableListTab.vue';
 import LotListTab from './Tabs/LotListTab.vue';
@@ -101,11 +100,6 @@ const openEditModal = () => {
   isEditModalOpen.value = true;
 };
 
-const isManualRequestModalOpen = ref(false);
-const openManualRequestModal = () => {
-  isManualRequestModalOpen.value = true;
-};
-
 // Delete Modal Logic
 const isDeleteModalOpen = ref(false);
 const deleteMode = ref<'barang' | 'lot'>('barang');
@@ -188,9 +182,7 @@ const closeErrorModal = () => {
 
 const closeOnEscape = (e: KeyboardEvent) => {
   if (e.key === 'Escape') {
-    if (isManualRequestModalOpen.value) {
-      isManualRequestModalOpen.value = false;
-    } else if (isEditModalOpen.value) {
+    if (isEditModalOpen.value) {
       isEditModalOpen.value = false;
     } else if (isDeleteModalOpen.value) {
       closeDeleteModal();
@@ -241,16 +233,7 @@ onUnmounted(() => {
     <div class="flex flex-wrap items-center justify-between gap-4 mb-2 no-print">
       <Tabs v-model="activeTab" :tabs="tabs" />
 
-      <div v-if="can('inventory.manage') || can('inventory.manual_request')" class="flex items-center gap-3">
-        <Button
-          v-if="can('inventory.manual_request') && props.barang.is_consumable"
-          @click="openManualRequestModal"
-          variant="warning"
-          size="lg"
-        >
-          <ClipboardList class="w-4 h-4" />
-          {{ t('inventory.manualRequest') }}
-        </Button>
+      <div v-if="can('inventory.manage')" class="flex items-center gap-3">
         <Button v-if="can('inventory.manage')" @click="openEditModal" variant="primary" size="lg">
           {{ t('inventory.editTypeDetail') }}
         </Button>
@@ -299,13 +282,6 @@ onUnmounted(() => {
       :uoms="props.uoms"
       :brands="props.brands"
       :lots="props.lots"
-    />
-
-    <ManualRequestModelModal
-      v-if="props.barang.is_consumable"
-      v-model:open="isManualRequestModalOpen"
-      :barang="props.barang"
-      :available-stock="totalStok"
     />
 
     <DeleteConfirmationModal 

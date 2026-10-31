@@ -15,6 +15,7 @@ class RequestReturn extends Model
         'method',
         'scheduled_date',
         'location',
+        'proof_url',
         'is_auto_set',
         'completed_at',
     ];

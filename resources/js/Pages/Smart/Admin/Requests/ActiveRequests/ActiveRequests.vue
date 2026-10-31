@@ -7,9 +7,11 @@
 import { ref, computed, watch, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { Head, router, usePage } from '@inertiajs/vue3';
+import { Plus } from 'lucide-vue-next';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Heading from '@/Components/Heading.vue';
 import Tabs from '@/Components/Tabs.vue';
+import { Button } from '@/Components/ui/button';
 import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem } from '@/Components/ui/breadcrumb';
 
 // Tab Components
@@ -19,6 +21,7 @@ import PartialListTab from './Tabs/PartialListTab.vue';
 import HandoverTab from './Tabs/HandoverTab.vue';
 import BorrowedTab from './Tabs/BorrowedTab.vue';
 import ReturnsTab from './Tabs/ReturnsTab.vue';
+import InputManualRequestModal from './Modals/ManualRequest/InputManualRequestModal.vue';
 
 import type { SmartRequestData } from '@/types/request';
 
@@ -90,6 +93,11 @@ const resolveTab = (tabName?: string | null): string => {
 };
 
 const activeTab = ref(resolveTab(props.activeTab));
+const isManualRequestModalOpen = ref(false);
+
+const handleManualRequestSuccess = () => {
+  router.reload({ only: ['borrowedList'] });
+};
 
 const activeTabLabel = computed(() => {
   const current = computedTabs.value.find(tab => tab.id === activeTab.value);
@@ -158,7 +166,21 @@ watch(activeTab, (newTab) => {
       <!-- Main Card Enclosure (matching MasterData.vue) -->
       <div class="px-4 bg-card rounded-xl border border-border shadow-sm overflow-hidden">
         <div class="py-3">
-          <Heading as="h2">{{ t('fulfillment.listPrefix', { tab: activeTabLabel }) }}</Heading>
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <Heading as="h2">{{ t('fulfillment.listPrefix', { tab: activeTabLabel }) }}</Heading>
+
+            <Button
+              v-if="activeTab === 'Lacak Peminjaman'"
+              variant="primary"
+              size="lg"
+              data-testid="open-manual-request-modal-btn"
+              class="shrink-0"
+              @click="isManualRequestModalOpen = true"
+            >
+              <Plus class="w-4 h-4 mr-1.5" />
+              {{ t('fulfillment.manualRequest.triggerButton') }}
+            </Button>
+          </div>
 
           <div class="mt-4">
             <!-- ==========================================
@@ -209,5 +231,10 @@ watch(activeTab, (newTab) => {
         </div>
       </div>
     </div>
+
+    <InputManualRequestModal
+      v-model:open="isManualRequestModalOpen"
+      @success="handleManualRequestSuccess"
+    />
   </AppLayout>
 </template>

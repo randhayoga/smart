@@ -257,7 +257,8 @@ class BulkAssetController extends Controller
                 'string',
                 Rule::in([
                     'Tersedia',
-                    'Dipinjam',
+                    'Dipinjam (ST)',
+                    'Dipinjam (sewa)',
                     'Tidak Aktif',
                     'Dihapus',
                     'Pending',

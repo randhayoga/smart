@@ -5,7 +5,8 @@ import { useI18n } from 'vue-i18n';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { 
   ChevronDown, 
-  ArrowUpDown
+  ArrowUpDown,
+  Eye,
 } from 'lucide-vue-next';
 import { Button } from "@/Components/ui/button";
 import {
@@ -18,7 +19,7 @@ import TableSearch from '@/Components/TableSearch.vue';
 import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem } from '@/Components/ui/breadcrumb';
 import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
-import ViewTableButton from '@/Components/ViewTableButton.vue';
+import { getRequestTypeBadgeClass, getRequestTypeLabel } from '@/lib/requestTypeBadge';
 
 const { t } = useI18n();
 
@@ -51,8 +52,10 @@ const dummyArsip = computed(() => {
 });
 
 const typeFilterLabel = computed(() => {
-  if (typeFilter.value === 'Permintaan') return t('fulfillment.request');
-  if (typeFilter.value === 'Peminjaman') return t('fulfillment.loan');
+  if (typeFilter.value === 'consumable') return t('fulfillment.request');
+  if (typeFilter.value === 'st') return t('fulfillment.manualRequest.typeSt');
+  if (typeFilter.value === 'rent') return t('fulfillment.manualRequest.typeRent');
+  if (typeFilter.value === 'lt') return t('fulfillment.manualRequest.typeLt');
   return t('fulfillment.allTypes');
 });
 
@@ -128,10 +131,11 @@ const columns = computed<ColumnDef<any>[]>(() => [
     ]),
     cell: ({ row }) => {
       const val = row.getValue('type') as string;
-      let label = val;
-      if (val === 'Permintaan') label = t('fulfillment.request');
-      else if (val === 'Peminjaman') label = t('fulfillment.loan');
-      return h('div', { class: 'pl-0' }, label);
+      const label = getRequestTypeLabel(val, t);
+      const badgeClass = getRequestTypeBadgeClass(val);
+      return h('span', {
+        class: ['inline-flex items-center px-2.5 py-0.5 rounded-md text-sm font-semibold', badgeClass]
+      }, label);
     },
   },
   {
@@ -151,7 +155,15 @@ const columns = computed<ColumnDef<any>[]>(() => [
       else if (val === 'Ditolak') label = t('fulfillment.rejected');
       else if (val === 'Dibatalkan') label = t('fulfillment.cancelled');
       else if (val === 'Pending') label = t('fulfillment.pending');
-      return h('div', { class: 'pl-0' }, label);
+
+      const isSuccess = val === 'Sukses' || val === 'success';
+      const statusBadgeClass = isSuccess
+        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-700'
+        : 'bg-rose-100 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-700';
+
+      return h('span', {
+        class: ['inline-flex items-center px-2.5 py-0.5 rounded-md text-sm font-semibold', statusBadgeClass]
+      }, label);
     },
   },
   {
@@ -161,7 +173,7 @@ const columns = computed<ColumnDef<any>[]>(() => [
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
       class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
     }, () => [
-      t('fulfillment.requesterName'),
+      t('fulfillment.employeeName'),
       h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
     ]),
     cell: ({ row }) => h('div', { class: 'pl-0' }, row.getValue('requester')),
@@ -195,9 +207,15 @@ const columns = computed<ColumnDef<any>[]>(() => [
     size: 80,
     header: () => h('div', { class: 'text-center font-semibold text-foreground no-print' }, t('fulfillment.actions')),
     cell: ({ row }) => h('div', { class: 'flex items-center justify-center no-print' }, [
-      h(ViewTableButton, {
-        onClick: () => handleViewDetail(row.original)
-      })
+      h(Button, {
+        variant: 'table-view',
+        size: 'icon-sm',
+        title: t('fulfillment.viewDetail'),
+        onClick: () => handleViewDetail(row.original),
+      }, () => [
+        h(Eye, { class: 'w-4 h-4' }),
+        h('span', { class: 'sr-only' }, t('fulfillment.viewDetail')),
+      ]),
     ]),
   },
 ]);
@@ -227,9 +245,9 @@ const handleExportCSV = () => alert('Exporting to CSV...');
         <div class="py-5 no-print">
           <h2 class="text-lg font-bold text-foreground">{{ t('fulfillment.archiveListTitle') }}</h2>
           
-          <!-- Filters Row -->
+          <!-- Filters & Actions Row (In-line) -->
           <div class="mt-4 flex flex-wrap items-end gap-4">
-            <div class="space-y-1.5 flex-1 min-w-[300px] max-w-md">
+            <div class="space-y-1.5 flex-1 min-w-[280px] max-w-md">
               <label class="text-xs text-muted-foreground font-medium block ml-0.5">{{ t('fulfillment.filter') }}</label>
               <TableSearch 
                 v-model="searchQuery"
@@ -239,26 +257,28 @@ const handleExportCSV = () => alert('Exporting to CSV...');
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal', !typeFilter ? 'text-muted-foreground' : 'text-foreground']">
+                <Button variant="outline" :class="['w-[180px] justify-between rounded-[14px] font-normal', !typeFilter ? 'text-muted-foreground' : 'text-foreground']">
                   <span class="truncate">{{ typeFilterLabel }}</span>
                   <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
+              <DropdownMenuContent class="w-[180px] rounded-[14px]" align="start" :side-offset="4">
                 <DropdownMenuItem @select="typeFilter = ''">{{ t('fulfillment.allTypes') }}</DropdownMenuItem>
-                <DropdownMenuItem @select="typeFilter = 'Permintaan'">{{ t('fulfillment.request') }}</DropdownMenuItem>
-                <DropdownMenuItem @select="typeFilter = 'Peminjaman'">{{ t('fulfillment.loan') }}</DropdownMenuItem>
+                <DropdownMenuItem @select="typeFilter = 'consumable'">{{ t('fulfillment.request') }}</DropdownMenuItem>
+                <DropdownMenuItem @select="typeFilter = 'st'">{{ t('fulfillment.manualRequest.typeSt') }}</DropdownMenuItem>
+                <DropdownMenuItem @select="typeFilter = 'rent'">{{ t('fulfillment.manualRequest.typeRent') }}</DropdownMenuItem>
+                <DropdownMenuItem @select="typeFilter = 'lt'">{{ t('fulfillment.manualRequest.typeLt') }}</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal', !statusFilter ? 'text-muted-foreground' : 'text-foreground']">
+                <Button variant="outline" :class="['w-[180px] justify-between rounded-[14px] font-normal', !statusFilter ? 'text-muted-foreground' : 'text-foreground']">
                   <span class="truncate">{{ statusFilterLabel }}</span>
                   <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
+              <DropdownMenuContent class="w-[180px] rounded-[14px]" align="start" :side-offset="4">
                 <DropdownMenuItem @select="statusFilter = ''">{{ t('fulfillment.allFinalStatuses') }}</DropdownMenuItem>
                 <DropdownMenuItem @select="statusFilter = 'Sukses'">{{ t('fulfillment.success') }}</DropdownMenuItem>
                 <DropdownMenuItem @select="statusFilter = 'Ditolak'">{{ t('fulfillment.rejected') }}</DropdownMenuItem>
@@ -269,32 +289,29 @@ const handleExportCSV = () => alert('Exporting to CSV...');
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal', !timeFilter ? 'text-muted-foreground' : 'text-foreground']">
+                <Button variant="outline" :class="['w-[180px] justify-between rounded-[14px] font-normal', !timeFilter ? 'text-muted-foreground' : 'text-foreground']">
                   <span class="truncate">{{ timeFilterLabel }}</span>
                   <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
+              <DropdownMenuContent class="w-[180px] rounded-[14px]" align="start" :side-offset="4">
                 <DropdownMenuItem @select="timeFilter = ''">{{ t('fulfillment.allTimeRanges') }}</DropdownMenuItem>
                 <DropdownMenuItem @select="timeFilter = 'Hari ini'">{{ t('fulfillment.today') }}</DropdownMenuItem>
                 <DropdownMenuItem @select="timeFilter = 'Minggu ini'">{{ t('fulfillment.thisWeek') }}</DropdownMenuItem>
                 <DropdownMenuItem @select="timeFilter = 'Bulan ini'">{{ t('fulfillment.thisMonth') }}</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          </div>
 
-          <!-- Actions Row -->
-          <div class="mt-4 flex flex-wrap items-end justify-between gap-4">
             <div class="flex items-center gap-3 text-sm text-muted-foreground ml-auto">
               <span>{{ t('fulfillment.rowsPerPage') }}</span>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" :class="['w-[160px] justify-between rounded-[14px] font-normal', (rowsPerPage === 'Semua baris' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
+                  <Button variant="outline" :class="['w-[150px] justify-between rounded-[14px] font-normal', (rowsPerPage === 'Semua baris' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
                     {{ rowsPerPageLabel }}
                     <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent class="w-[160px] rounded-[14px]" align="start" :side-offset="4">
+                <DropdownMenuContent class="w-[150px] rounded-[14px]" align="start" :side-offset="4">
                   <DropdownMenuItem @select="rowsPerPage = 'Semua baris'">{{ t('fulfillment.allRows') }}</DropdownMenuItem>
                   <DropdownMenuItem @select="rowsPerPage = '10'">10</DropdownMenuItem>
                   <DropdownMenuItem @select="rowsPerPage = '25'">25</DropdownMenuItem>

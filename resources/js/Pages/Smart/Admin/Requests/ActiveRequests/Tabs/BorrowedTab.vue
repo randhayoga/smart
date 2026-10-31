@@ -8,10 +8,10 @@ import { useI18n } from 'vue-i18n';
 import { router } from '@inertiajs/vue3';
 import { 
   ChevronDown, 
-  ArrowUpDown, 
+  ArrowUpDown,
+  Eye,
 } from 'lucide-vue-next';
 import TableSearch from '@/Components/TableSearch.vue';
-import ViewTableButton from '@/Components/ViewTableButton.vue';
 import { Button } from "@/Components/ui/button";
 import {
   DropdownMenu,
@@ -22,6 +22,7 @@ import {
 import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
 import ResetFilterButton from '@/Components/ResetFilterButton.vue';
+import { getRequestTypeBadgeClass, getRequestTypeLabel } from '@/lib/requestTypeBadge';
 
 interface Props {
   borrowedList: any[];
@@ -30,11 +31,26 @@ interface Props {
 const props = defineProps<Props>();
 const { t } = useI18n();
 
-const dummyBorrowed = computed(() => props.borrowedList);
+const dummyBorrowed = computed(() => {
+  let list = props.borrowedList || [];
+  if (typeFilter.value) {
+    list = list.filter((item: any) => item.type === typeFilter.value);
+  }
+  return list;
+});
 
 const searchQuery = ref('');
+const typeFilter = ref('');
 const timeFilter = ref('');
 const rowsPerPage = ref('50');
+
+const typeFilterLabel = computed(() => {
+  if (typeFilter.value === 'consumable') return t('fulfillment.request');
+  if (typeFilter.value === 'st') return t('fulfillment.manualRequest.typeSt');
+  if (typeFilter.value === 'rent') return t('fulfillment.manualRequest.typeRent');
+  if (typeFilter.value === 'lt') return t('fulfillment.manualRequest.typeLt');
+  return t('fulfillment.allTypes');
+});
 
 const timeFilterLabel = computed(() => {
   if (timeFilter.value === 'Hari ini') return t('fulfillment.today');
@@ -58,12 +74,14 @@ const pageSizeNumber = computed(() => {
 const hasActiveFilters = computed(() => {
   return !!(
     searchQuery.value ||
+    typeFilter.value ||
     timeFilter.value
   );
 });
 
 const clearFilters = () => {
   searchQuery.value = '';
+  typeFilter.value = '';
   timeFilter.value = '';
 };
 
@@ -108,13 +126,32 @@ const columns = computed<ColumnDef<any>[]>(() => [
     cell: ({ row }) => h('div', { class: 'text-muted-foreground font-mono text-sm truncate' }, row.getValue('number')),
   },
   {
+    accessorKey: 'type',
+    header: ({ column }) => h(Button, {
+      variant: 'ghost',
+      onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+      class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+    }, () => [
+      t('fulfillment.type'),
+      h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+    ]),
+    cell: ({ row }) => {
+      const val = row.getValue('type') as string;
+      const label = getRequestTypeLabel(val, t);
+      const badgeClass = getRequestTypeBadgeClass(val);
+      return h('span', {
+        class: ['inline-flex items-center px-2.5 py-0.5 rounded-md text-sm font-semibold', badgeClass]
+      }, label);
+    },
+  },
+  {
     accessorKey: 'borrower',
     header: ({ column }) => h(Button, {
       variant: 'ghost',
       onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
       class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
     }, () => [
-      t('fulfillment.borrowerName'),
+      t('fulfillment.employeeName'),
       h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
     ]),
     cell: ({ row }) => h('div', { class: 'pl-0' }, row.getValue('borrower')),
@@ -160,9 +197,15 @@ const columns = computed<ColumnDef<any>[]>(() => [
     size: 80,
     header: () => h('div', { class: 'text-center font-semibold text-foreground no-print' }, t('fulfillment.actions')),
     cell: ({ row }) => h('div', { class: 'flex items-center justify-center no-print' }, [
-      h(ViewTableButton, {
-        onClick: () => handleViewDetail(row.original)
-      })
+      h(Button, {
+        variant: 'table-view',
+        size: 'icon-sm',
+        title: t('fulfillment.viewDetail'),
+        onClick: () => handleViewDetail(row.original),
+      }, () => [
+        h(Eye, { class: 'w-4 h-4' }),
+        h('span', { class: 'sr-only' }, t('fulfillment.viewDetail')),
+      ]),
     ]),
   },
 ]);
@@ -184,7 +227,22 @@ const columns = computed<ColumnDef<any>[]>(() => [
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" :class="['w-[220px] justify-between rounded-[14px] font-normal', !timeFilter ? 'text-muted-foreground' : 'text-foreground']">
+            <Button variant="outline" :class="['w-[180px] justify-between rounded-[14px] font-normal', !typeFilter ? 'text-muted-foreground' : 'text-foreground']">
+              <span class="truncate">{{ typeFilterLabel }}</span>
+              <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent class="w-[180px] rounded-[14px]" align="start" :side-offset="4">
+            <DropdownMenuItem @select="typeFilter = ''">{{ t('fulfillment.allTypes') }}</DropdownMenuItem>
+            <DropdownMenuItem @select="typeFilter = 'st'">{{ t('fulfillment.manualRequest.typeSt') }}</DropdownMenuItem>
+            <DropdownMenuItem @select="typeFilter = 'rent'">{{ t('fulfillment.manualRequest.typeRent') }}</DropdownMenuItem>
+            <DropdownMenuItem @select="typeFilter = 'lt'">{{ t('fulfillment.manualRequest.typeLt') }}</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal', !timeFilter ? 'text-muted-foreground' : 'text-foreground']">
               <span class="truncate">{{ timeFilterLabel }}</span>
               <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
             </Button>

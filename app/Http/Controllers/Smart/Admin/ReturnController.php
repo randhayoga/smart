@@ -10,6 +10,7 @@ use App\Models\Request\RequestReturn;
 use App\Models\Request\RequestStatusLog;
 use App\Models\Request\RequestFulfillment;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 /**
@@ -22,7 +23,7 @@ class ReturnController extends Controller
      */
     public function index()
     {
-        $returnsList = SmartRequest::with(['user', 'return', 'items'])
+        $returnsList = SmartRequest::with(['user', 'return'])
             ->where('status', 'return')
             ->orderBy('id', 'desc')
             ->get()
@@ -73,6 +74,8 @@ class ReturnController extends Controller
     {
         $req = SmartRequest::with([
             'user',
+            'department',
+            'project',
             'return',
             'approver',
             'approval.approver',
@@ -82,8 +85,8 @@ class ReturnController extends Controller
             'items.model.brand',
             'items.type.category',
             'items.type.models',
-        ])
-            ->findOrFail($id);
+            'items.fulfillments.asset',
+        ])->findOrFail($id);
 
         $ret = $req->return;
         
@@ -96,35 +99,47 @@ class ReturnController extends Controller
         }
 
         $items = $req->items->map(function ($item) {
-            $assets = RequestFulfillment::where('request_item_id', $item->id)
-                ->with('asset')
-                ->get()
+            $assets = $item->fulfillments
                 ->pluck('asset.number')
                 ->filter()
                 ->values()
                 ->toArray();
 
-            $typeName = $item->model?->type?->name ?? $item->type?->name ?? '-';
+            $catCode = $item->model?->type?->category?->code ?? $item->type?->category?->code ?? '';
             $catName = $item->model?->type?->category?->name ?? $item->type?->category?->name ?? '-';
+            $typeName = $item->model?->type?->name ?? $item->type?->name ?? '-';
             $isConsumable = (bool) $item->is_consumable;
             $imageUrl = $item->model?->image_url
                 ? '/media/' . $item->model->image_url
                 : (($firstModel = $item->type?->models?->first()) && $firstModel->image_url ? '/media/' . $firstModel->image_url : null);
-            $brandSpec = trim(($item->model?->brand?->name ?? '') . ' ' . ($item->model?->specification ?? ''));
+            $brandName = $item->model?->brand?->name ?? '-';
+
+            $isComp = $catCode === 'COMP' || strtolower($catName) === 'computer' || strtolower($catName) === 'komputer';
+            $compSpec = null;
+            if ($isComp) {
+                $compSpec = $item->fulfillments
+                    ->pluck('asset.comp_specification')
+                    ->filter()
+                    ->first();
+            }
+            $spec = $compSpec ?: ($item->model?->specification ?? '');
 
             return [
                 'id' => $item->id,
                 'model_id' => $item->model_id,
                 'barang_id' => $item->model_id,
-                'brand' => $brandSpec ?: '-',
+                'brand' => $brandName,
                 'name' => $item->model?->name ?? 'Tidak Spesifik',
+                'spec' => $spec,
                 'category' => $catName,
+                'category_code' => $catCode,
                 'type' => $typeName,
                 'subcategory' => $typeName,
-                'quantity' => $item->quantity_requested,
+                'quantity' => (int) $item->quantity_requested,
                 'assets' => $assets,
                 'imageUrl' => $imageUrl,
                 'is_consumable' => $isConsumable,
+                'reasoning' => $item->reasoning,
             ];
         });
 
@@ -160,10 +175,14 @@ class ReturnController extends Controller
         $returnData = [
             'id' => $req->id,
             'number' => $req->request_number,
+            'form_url' => $req->form_url ? '/media/' . ltrim($req->form_url, '/') : null,
+            'is_manual' => !empty($req->form_url),
             'requester' => $req->user->name ?? '-',
+            'requester_department' => $req->department?->org_name ?? $req->department?->name ?? null,
             'approver' => $req->approver->name ?? '-',
             'approval_by' => $req->approval?->approver?->name,
             'confirmation_by' => $req->adminConfirmation?->admin?->name,
+            'created_by_admin' => $req->adminConfirmation?->admin?->name,
             'return_confirmed_by' => $returnConfirmation?->changer?->name,
             'createdAt' => $req->created_at ? $req->created_at->format('d-m-Y H:i') : '-',
             'pemanfaatan' => $req->utilization,
@@ -175,7 +194,9 @@ class ReturnController extends Controller
             'durationDays' => $durationDays,
             'durationHours' => $durationHours,
             'status' => $req->status,
+            'raw_status' => $req->status,
             'type' => $req->type_key,
+            'specific_type' => $req->specific_type_key,
             'items' => $items,
             'returnTime' => $returnTimeStr,
             'location' => $returnLocationStr,
@@ -195,40 +216,48 @@ class ReturnController extends Controller
 
     /**
      * Mengonfirmasi pengembalian aset dan mengubah status asset kembali tersedia.
+     * Menggunakan batch update dan database transaction untuk performa optimal.
      */
     public function confirm(Request $request, $id)
     {
-        $req = SmartRequest::findOrFail($id);
-        $oldStatus = $req->status;
-        $req->update(['status' => 'success']);
+        DB::transaction(function () use ($request, $id) {
+            $req = SmartRequest::findOrFail($id);
+            $oldStatus = $req->status;
+            $now = now();
 
-        // Return assets status back to 'tersedia'
-        $requestItems = RequestItem::where('request_id', $req->id)->get();
-        foreach ($requestItems as $reqItem) {
-            $assignments = RequestFulfillment::where('request_item_id', $reqItem->id)->get();
-            foreach ($assignments as $asn) {
-                if ($asn->asset) {
-                    $asn->asset->update([
+            $req->update(['status' => 'success']);
+
+            $itemIds = RequestItem::where('request_id', $req->id)->pluck('id');
+
+            if ($itemIds->isNotEmpty()) {
+                $assetIds = RequestFulfillment::whereIn('request_item_id', $itemIds)
+                    ->whereNotNull('asset_id')
+                    ->pluck('asset_id')
+                    ->unique();
+
+                if ($assetIds->isNotEmpty()) {
+                    Asset::whereIn('id', $assetIds)->update([
                         'status' => 'Tersedia',
                     ]);
                 }
-                $asn->update(['completed_at' => now()]);
+
+                RequestFulfillment::whereIn('request_item_id', $itemIds)->update([
+                    'completed_at' => $now,
+                ]);
             }
-        }
 
-        // Set return completed_at
-        $ret = RequestReturn::where('request_id', $req->id)->first();
-        if ($ret) {
-            $ret->update(['completed_at' => now()]);
-        }
+            RequestReturn::where('request_id', $req->id)->update([
+                'completed_at' => $now,
+            ]);
 
-        RequestStatusLog::create([
-            'request_id' => $req->id,
-            'status_from' => $oldStatus,
-            'status_to' => 'success',
-            'changed_by' => $request->user()->id,
-            'note' => 'Pengembalian aset dikonfirmasi oleh Admin. Aset telah kembali di gudang.',
-        ]);
+            RequestStatusLog::create([
+                'request_id' => $req->id,
+                'status_from' => $oldStatus,
+                'status_to' => 'success',
+                'changed_by' => $request->user()->id,
+                'note' => 'Pengembalian aset dikonfirmasi oleh Admin. Aset telah kembali di gudang.',
+            ]);
+        });
 
         return redirect()->route('smart.returns')->with('success', __('requests.return_confirmed'));
     }

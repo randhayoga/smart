@@ -18,6 +18,7 @@ import {
 } from 'lucide-vue-next';
 import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem, BreadcrumbSeparator } from '@/Components/ui/breadcrumb';
 import { usePermissions } from '@/composables/usePermissions';
+import { isAssignmentType } from '@/lib/requestTypeBadge';
 
 interface RequestItem {
   id: number;
@@ -144,7 +145,7 @@ const timeline = computed((): TimelineStep[] => {
           }
         }
       } else if (log.status_to === 'borrow') {
-        statusName = t('fulfillment.handoverCompletedAndBorrowed');
+        statusName = isAssignmentType(r.specific_type || r.type) ? t('fulfillment.handoverCompletedAndAssigned') : t('fulfillment.handoverCompletedAndBorrowed');
       } else if (log.status_to === 'return') {
         statusName = t('fulfillment.returnSubmitted');
       } else if (log.status_to === 'success') {
@@ -208,7 +209,7 @@ const timeline = computed((): TimelineStep[] => {
       });
     } else if (r.status === 'borrow') {
       steps.push({
-        status: t('fulfillment.assetBorrowedTimeline'),
+        status: isAssignmentType(r.specific_type || r.type) ? t('fulfillment.assetAssignedTimeline') : t('fulfillment.assetBorrowedTimeline'),
         completed: false,
         active: true,
       });

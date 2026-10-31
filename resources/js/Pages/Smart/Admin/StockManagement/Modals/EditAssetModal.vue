@@ -108,7 +108,7 @@ const hasDisallowedStatus = computed(() => {
 
 const isBorrowedUnit = computed(() => {
   if (!props.open) return false;
-  return (props.items || []).some(item => String(item?.status).trim().toLowerCase() === 'dipinjam');
+  return (props.items || []).some(item => String(item?.status).trim().toLowerCase() === 'dipinjam (st)');
 });
 
 const isRestrictedStatus = (status: string | null | undefined, approvalStatus?: string | null | undefined) => {

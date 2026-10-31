@@ -51,6 +51,17 @@ class SmartRequestItemResource extends JsonResource
         $modelId = $this->model_id ?? $this->barang_id;
         $typeId = $this->type_id ?? $this->subcategory_id;
 
+        $catCode = strtoupper((string) ($model?->type?->category?->code ?? $type?->category?->code ?? ''));
+        $isComp = $catCode === 'COMP' || strtolower($catName) === 'computer' || strtolower($catName) === 'komputer';
+        $compSpec = null;
+        if ($isComp && $this->relationLoaded('fulfillments')) {
+            $compSpec = $this->fulfillments
+                ->map(fn($f) => $f->asset?->comp_specification ?? $f->unit?->comp_specification)
+                ->filter()
+                ->first();
+        }
+        $spec = $compSpec ?: ($model?->specification ?? '');
+
         $data = [
             'id' => $this->id,
             'model_id' => $modelId,
@@ -61,13 +72,15 @@ class SmartRequestItemResource extends JsonResource
             'subcategory' => $typeName,
             'brand' => $model?->brand?->name ?? '-',
             'name' => $model?->name ?? 'Tidak Spesifik',
-            'spec' => $model?->specification ?? '',
+            'spec' => $spec,
+            'category_code' => $catCode,
             'quantity' => $this->quantity_requested,
             'category' => $catName,
             'is_consumable' => $isConsumable,
             'imageUrl' => $imageUrl,
             'uom' => $uomName,
             'status' => $this->status,
+            'reasoning' => $this->reasoning,
         ];
 
         $isAdminContext = ($request->user()?->isAdmin && (

@@ -7,7 +7,10 @@ export const STATUS_KEY_MAP: Record<string, string> = {
   'available': 'status.tersedia',
   'di-assign (lt)': 'status.diAssignLt',
   'di-assign': 'status.diAssignLt',
-  'dipinjam': 'status.dipinjam',
+  'dipinjam (st)': 'status.dipinjamSt',
+  'borrowed (st)': 'status.dipinjamSt',
+  'dipinjam (sewa)': 'status.dipinjamSewa',
+  'borrowed (rent)': 'status.dipinjamSewa',
   'tidak aktif': 'status.tidakAktif',
   'pending': 'status.pending',
   'pending:dm': 'status.pendingDm',
@@ -127,7 +130,10 @@ export function getAssetStatusBadgeClass(status?: string | null): string {
   if (s === 'Di-assign (LT)' || lower === 'di-assign (lt)' || lower === 'di-assign') {
     return 'bg-sky-100 text-sky-800 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-700';
   }
-  if (s === 'Dipinjam' || lower === 'dipinjam') return 'bg-amber-100 text-amber-800';
+  if (s === 'Dipinjam (ST)' || lower === 'dipinjam (st)' || lower === 'borrowed (st)') return 'bg-amber-100 text-amber-800';
+  if (s === 'Dipinjam (sewa)' || lower === 'dipinjam (sewa)' || lower === 'borrowed (rent)') {
+    return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-700';
+  }
   if (s === 'Tidak Aktif' || lower === 'tidak aktif') return 'bg-gray-200 text-gray-800';
   if (s === 'Pending' || lower === 'pending' || lower.startsWith('pending')) return 'bg-purple-100 text-purple-800';
   if (s === 'Bagus' || lower === 'bagus') return 'bg-emerald-100 text-emerald-800';

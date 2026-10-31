@@ -18,6 +18,7 @@ return new class extends Migration {
             $table->unsignedBigInteger('org_id')->nullable()->index()->comment('Refers to USER_HRIS:hrd_orgchart.id');
             $table->unsignedBigInteger('project_id')->nullable()->index()->comment('Refers to RE_PORTALDB:tb_project.id_project');
             $table->text('reasoning')->nullable();
+            $table->string('form_url')->nullable();
             $table->string('status')->comment('overall status e.g., pending | partial | completed');
             $table->timestamps();
         });
@@ -39,6 +40,7 @@ return new class extends Migration {
             $table->integer('quantity_requested');
             $table->dateTime('start_date')->nullable()->comment('nullable; assets only');
             $table->dateTime('end_date')->nullable()->comment('nullable; assets only');
+            $table->text('reasoning')->nullable();
             $table->string('status')->default('pending')->comment('pending | partially_fulfilled | fulfilled | cancelled');
             $table->timestamps();
         });

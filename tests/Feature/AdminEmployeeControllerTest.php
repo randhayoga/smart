@@ -112,7 +112,7 @@ class AdminEmployeeControllerTest extends TestCase
         return Unit::factory()->create([
             'lot_id' => $lot->id,
             'location_id' => $location->id,
-            'status' => 'Dipinjam',
+            'status' => 'Dipinjam (ST)',
             'condition' => 'Bagus',
             'number' => $number,
         ]);

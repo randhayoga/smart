@@ -320,7 +320,8 @@ class AssetController extends Controller
                 'string',
                 Rule::in([
                     'Tersedia',
-                    'Dipinjam',
+                    'Dipinjam (ST)',
+                    'Dipinjam (sewa)',
                     'Tidak Aktif',
                     'Dihapus',
                     'Pending',
@@ -378,14 +379,15 @@ class AssetController extends Controller
         $proposedCondition = $request->input('condition');
         $needApproval = in_array($proposedCondition, $arrNeedApproval);
 
-        if ($currentStatusLower === 'dipinjam') {
-            if ($request->filled('status') && strtolower(trim($request->input('status'))) !== 'dipinjam') {
-                return redirect()->back()->withErrors(['status' => 'Status untuk aset yang sedang Dipinjam hanya dapat diubah melalui Tab Peminjaman.']);
+        if (in_array($currentStatusLower, ['dipinjam (st)', 'dipinjam (sewa)'], true)) {
+            $statusLabel = $currentStatusLower === 'dipinjam (sewa)' ? 'Dipinjam (sewa)' : 'Dipinjam (ST)';
+            if ($request->filled('status') && strtolower(trim($request->input('status'))) !== $currentStatusLower) {
+                return redirect()->back()->withErrors(['status' => "Status untuk aset yang sedang {$statusLabel} hanya dapat diubah melalui peminjaman."]);
             }
             if (in_array($proposedCondition, $arrInactiveConditions)) {
-                return redirect()->back()->withErrors(['condition' => 'Kondisi Rusak Total atau Hilang tidak dapat dipilih saat aset berstatus Dipinjam.']);
+                return redirect()->back()->withErrors(['condition' => "Kondisi Rusak Total atau Hilang tidak dapat dipilih saat aset berstatus {$statusLabel}."]);
             }
-            $request->merge(['status' => 'Dipinjam']);
+            $request->merge(['status' => $statusLabel]);
         } else if ($isRestricted) {
             if ($request->filled('status') && strtolower(trim($request->input('status'))) !== $currentStatusLower) {
                 return redirect()->back()->withErrors(['status' => 'Status untuk aset yang Tidak Aktif atau Pending tidak dapat diubah.']);
@@ -550,5 +552,158 @@ class AssetController extends Controller
         }
 
         return redirect()->back()->with('success', __('inventory.asset_updated', [], null) ?: __('inventory.unit_updated'));
+    }
+
+    /**
+     * Display the specified asset as JSON for modal inspection.
+     */
+    public function show(Asset $asset): \Illuminate\Http\JsonResponse
+    {
+        return response()->json($this->formatAssetDetail($asset));
+    }
+
+    /**
+     * Look up and display asset by its unique number or code.
+     */
+    public function showByCode(string $code): \Illuminate\Http\JsonResponse
+    {
+        $asset = (new Asset())->resolveRouteBinding($code);
+
+        if (!$asset) {
+            abort(404, 'Asset not found.');
+        }
+
+        return response()->json($this->formatAssetDetail($asset));
+    }
+
+    /**
+     * Map complete asset relations into formatted DetailAssetModal payload.
+     *
+     * @param Asset $asset
+     * @return array<string, mixed>
+     */
+    protected function formatAssetDetail(Asset $asset): array
+    {
+        $asset->loadMissing([
+            'location.parent.parent',
+            'deletionApprovals',
+            'lot.model.type.category',
+            'lot.model.brand',
+            'lot.model.uom',
+            'lot.organizer',
+            'lot.vendor',
+            'lot.legacyVendor',
+            'legacyVendor',
+            'lifecycles.actor',
+        ]);
+
+        $pendingApproval = $asset->deletionApprovals->firstWhere('decision', 'pending');
+        $approvedApproval = ($asset->hasStatus('Tidak Aktif') || $asset->hasStatus('Pending:BoD/BoC') || $asset->hasStatus('Dihapus'))
+            ? $asset->deletionApprovals->where('decision', 'approved')->sortByDesc('id')->first()
+            : null;
+        $rejectedApproval = (!$pendingApproval && !$approvedApproval)
+            ? $asset->deletionApprovals->where('decision', 'rejected')->sortByDesc('id')->first()
+            : null;
+        $latestDisapproval = $asset->deletionApprovals->whereNotNull('bod_boc_disapproval_url')->sortByDesc('id')->first();
+
+        $lot = $asset->lot;
+        $model = $lot?->model;
+        $brand = $model?->brand?->name ?? '-';
+        $location = $asset->location ? $asset->location->full_name : '-';
+
+        return [
+            'id' => $asset->id,
+            'number' => $asset->number,
+            'legacy_number' => $asset->legacy_number,
+            'status' => $asset->status,
+            'proposed_status' => $pendingApproval 
+                ? $pendingApproval->proposed_condition 
+                : ($approvedApproval ? $approvedApproval->proposed_condition : null),
+            'proposed_condition' => $pendingApproval 
+                ? $pendingApproval->proposed_condition 
+                : ($approvedApproval ? $approvedApproval->proposed_condition : null),
+            'memo_url' => $pendingApproval 
+                ? $pendingApproval->memo_url 
+                : ($approvedApproval ? $approvedApproval->memo_url : null),
+            'lost_doc_url' => $pendingApproval 
+                ? $pendingApproval->lost_doc_url 
+                : ($approvedApproval ? $approvedApproval->lost_doc_url : null),
+            'bod_boc_approval_url' => $pendingApproval 
+                ? $pendingApproval->bod_boc_approval_url 
+                : ($approvedApproval ? $approvedApproval->bod_boc_approval_url : null),
+            'bod_boc_disapproval_url' => $latestDisapproval?->bod_boc_disapproval_url,
+            'admin_note' => $pendingApproval ? $pendingApproval->admin_note : ($approvedApproval ? $approvedApproval->admin_note : ($rejectedApproval ? $rejectedApproval->admin_note : null)),
+            'dm_note' => $pendingApproval ? $pendingApproval->dm_note : ($approvedApproval ? $approvedApproval->dm_note : ($rejectedApproval ? $rejectedApproval->dm_note : null)),
+            'condition' => $asset->condition,
+            'price' => $asset->price,
+            'type' => $asset->borrowing_type,
+            'borrowing_type' => $asset->borrowing_type,
+            'classification' => $asset->classification,
+            'comp_specification' => $asset->comp_specification,
+            'specification' => $asset->comp_specification ?: ($asset->specification ?: ($model?->specification ?? '-')),
+            'image_url' => $asset->image_url,
+            'vehicle_registration' => $asset->vehicle_registration,
+            'burden' => $asset->burden,
+            'created_at' => $asset->created_at?->toIso8601String(),
+            'updated_at' => $asset->updated_at ? $asset->updated_at->format('d-m-Y H:i') : '-',
+            
+            // Location
+            'location' => $location,
+            'location_id' => $asset->location_id,
+
+            // Lot
+            'lot_id' => $lot?->id,
+            'lot_number' => $lot?->number ?? '-',
+            'lot_imageUrl' => $lot?->image_url,
+            'lot_unitPrice' => $lot?->unit_price,
+            'organizer' => $lot?->organizer?->name ?? '-',
+            'organizer_id' => $lot?->organizer_id,
+            'vendor' => $lot?->vendor_name ?? '-',
+            'vendor_id' => $lot?->vendor_id,
+            'lot_organizer' => $lot?->organizer?->name ?? '-',
+            'lot_vendor' => $lot?->vendor_name ?? '-',
+            'lot_po_number' => $lot?->po_number ?? '-',
+            'lot_purchase_grant_date' => $lot?->purchase_grant_date ? $lot->purchase_grant_date->format('Y-m-d') : null,
+            'lot_age' => $lot?->age,
+
+            // Model
+            'model_id' => $model?->id,
+            'model_number' => $model?->number ?? '-',
+            'model_code' => $model?->number ?? '-',
+            'model_name' => $model?->name ?? '-',
+            'model_brand' => $brand,
+            'model_specification' => $model?->specification ?? '-',
+            'model_category' => $model?->type?->category?->name ?? '-',
+            'model_category_code' => $model?->type?->category?->code ?? null,
+            'model_type' => $model?->type?->name ?? '-',
+            'type_name' => $model?->type?->name ?? '-',
+            'model_uom' => $model?->uom?->name ?? '-',
+
+            // Compatibility aliases for DetailAssetModal
+            'barang_id' => $model?->id,
+            'barang_code' => $model?->number ?? '-',
+            'barang_nama' => $model?->name ?? '-',
+            'barang_brand' => $brand,
+            'barang_specification' => $model?->specification ?? '-',
+            'barang_category' => $model?->type?->category?->name ?? '-',
+            'barang_subcategory' => $model?->type?->name ?? '-',
+            'barang_uom' => $model?->uom?->name ?? '-',
+
+            // Lifecycle history for AuditTrailTab
+            'lifecycles' => $asset->lifecycles->map(function ($log) {
+                return [
+                    'waktu' => $log->start_date ? $log->start_date->format('d-m-Y H:i:s') : '-',
+                    'status' => $log->status,
+                    'action_type' => $log->action_type,
+                    'aktor' => ($log->action_type === 'Approval' && str_contains($log->note ?? '', 'BoD/BoC')) ? 'BoD/BoC' : ($log->actor->name ?? '-'),
+                    'kondisi_awal' => $log->initial_condition ?? '-',
+                    'kondisi_terakhir' => $log->final_condition ?? '-',
+                    'status_awal' => $log->initial_status ?? '-',
+                    'status_terakhir' => $log->final_status ?? '-',
+                    'alasan' => $log->note ?? '-',
+                    'durasi' => $log->formatted_duration,
+                ];
+            })->values()->toArray(),
+        ];
     }
 }

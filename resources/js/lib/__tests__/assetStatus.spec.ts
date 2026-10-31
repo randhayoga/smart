@@ -34,7 +34,7 @@ describe('assetStatus utility', () => {
 
   it('identifies restricted asset statuses accurately', () => {
     expect(isRestrictedAssetStatus('Tersedia')).toBe(false);
-    expect(isRestrictedAssetStatus('Dipinjam')).toBe(false);
+    expect(isRestrictedAssetStatus('Dipinjam (ST)')).toBe(false);
     expect(isRestrictedAssetStatus('Tersedia,Pending:DM')).toBe(true);
     expect(isRestrictedAssetStatus('Tidak Aktif,Pending:BoD/BoC')).toBe(true);
     expect(isRestrictedAssetStatus('Dihapus')).toBe(true);
@@ -44,6 +44,9 @@ describe('assetStatus utility', () => {
   it('resolves badge classes and localized labels', () => {
     expect(getAssetStatusBadgeClass('Tersedia')).toContain('bg-emerald-100');
     expect(getAssetStatusBadgeClass('Di-assign (LT)')).toContain('bg-sky-100');
+    expect(getAssetStatusBadgeClass('Dipinjam (ST)')).toContain('bg-amber-100');
+    expect(getAssetStatusBadgeClass('Dipinjam (sewa)')).toContain('bg-indigo-100');
+    expect(getAssetStatusBadgeClass('borrowed (rent)')).toContain('bg-indigo-100');
     expect(getAssetStatusBadgeClass('Pending:DM')).toContain('bg-purple-100');
     expect(getAssetStatusBadgeClass('Tidak Aktif')).toContain('bg-gray-200');
     expect(getAssetStatusBadgeClass('Dihapus')).toContain('bg-rose-100');
@@ -51,6 +54,7 @@ describe('assetStatus utility', () => {
     const mockT = (k: string) => ({
       'status.tersedia': 'Available',
       'status.diAssignLt': 'Di-assign (LT)',
+      'status.dipinjamSt': 'Borrowed (ST)',
       'status.pendingDm': 'Pending:DM',
       'status.tidakAktif': 'Inactive',
       'status.pendingBodBoc': 'Pending:BoD/BoC',
@@ -59,6 +63,7 @@ describe('assetStatus utility', () => {
 
     expect(getAssetStatusLabel('Tersedia', mockT)).toBe('Available');
     expect(getAssetStatusLabel('Di-assign (LT)', mockT)).toBe('Di-assign (LT)');
+    expect(getAssetStatusLabel('Dipinjam (ST)', mockT)).toBe('Borrowed (ST)');
     expect(formatAssetStatusLabels('Tidak Aktif,Pending:BoD/BoC', mockT)).toBe('Inactive, Pending:BoD/BoC');
   });
 });

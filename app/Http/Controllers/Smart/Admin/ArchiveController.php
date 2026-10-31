@@ -19,12 +19,18 @@ class ArchiveController extends Controller
      */
     public function index()
     {
-        $archiveList = SmartRequest::with(['user', 'items'])
+        $archiveList = SmartRequest::with([
+            'user:id,employee_name,employee_id',
+            'statusLogs:id,request_id,status_from,status_to,note',
+            'items' => fn($q) => $q->select('id', 'request_id', 'start_date', 'end_date'),
+            'items.fulfillments' => fn($q) => $q->select('id', 'request_item_id', 'asset_id'),
+            'items.fulfillments.asset:id,borrowing_type,status',
+        ])
             ->whereIn('status', ['success', 'reject', 'cancel'])
             ->orderBy('id', 'desc')
             ->get()
             ->map(function ($req) {
-                $type = $req->type_name;
+                $type = $req->specific_type_key;
                 
                 $statusStr = 'Sukses';
                 if ($req->status === 'reject') {
@@ -71,6 +77,7 @@ class ArchiveController extends Controller
             'items.model.brand',
             'items.type.category',
             'items.type.models',
+            'items.fulfillments.asset',
             'project',
             'department'
         ])
@@ -85,35 +92,47 @@ class ArchiveController extends Controller
         }
 
         $items = $req->items->map(function ($item) {
-            $assets = RequestFulfillment::where('request_item_id', $item->id)
-                ->with('asset')
-                ->get()
+            $assets = $item->fulfillments
                 ->pluck('asset.number')
                 ->filter()
                 ->values()
                 ->toArray();
 
-            $typeName = $item->model?->type?->name ?? $item->type?->name ?? '-';
+            $catCode = $item->model?->type?->category?->code ?? $item->type?->category?->code ?? '';
             $catName = $item->model?->type?->category?->name ?? $item->type?->category?->name ?? '-';
+            $typeName = $item->model?->type?->name ?? $item->type?->name ?? '-';
             $isConsumable = (bool) $item->is_consumable;
             $imageUrl = $item->model?->image_url
                 ? '/media/' . $item->model->image_url
                 : (($firstModel = $item->type?->models?->first()) && $firstModel->image_url ? '/media/' . $firstModel->image_url : null);
-            $brandSpec = trim(($item->model?->brand?->name ?? '') . ' ' . ($item->model?->specification ?? ''));
+            $brandName = $item->model?->brand?->name ?? '-';
+
+            $isComp = $catCode === 'COMP' || strtolower($catName) === 'computer' || strtolower($catName) === 'komputer';
+            $compSpec = null;
+            if ($isComp) {
+                $compSpec = $item->fulfillments
+                    ->pluck('asset.comp_specification')
+                    ->filter()
+                    ->first();
+            }
+            $spec = $compSpec ?: ($item->model?->specification ?? '');
 
             return [
                 'id' => $item->id,
                 'model_id' => $item->model_id,
                 'barang_id' => $item->model_id,
-                'brand' => $brandSpec ?: '-',
+                'brand' => $brandName,
                 'name' => $item->model?->name ?? 'Tidak Spesifik',
+                'spec' => $spec,
                 'category' => $catName,
+                'category_code' => $catCode,
                 'type' => $typeName,
                 'subcategory' => $typeName,
-                'quantity' => $item->quantity_requested,
+                'quantity' => (int) $item->quantity_requested,
                 'assets' => $assets,
                 'imageUrl' => $imageUrl,
                 'is_consumable' => $isConsumable,
+                'reasoning' => $item->reasoning,
             ];
         });
 
@@ -145,10 +164,14 @@ class ArchiveController extends Controller
         $mappedRequest = [
             'id' => $req->id,
             'number' => $req->request_number,
+            'form_url' => $req->form_url ? '/media/' . ltrim($req->form_url, '/') : null,
+            'is_manual' => !empty($req->form_url),
             'requester' => $req->user->name ?? '-',
+            'requester_department' => $req->department?->org_name ?? $req->department?->name ?? null,
             'approver' => $req->approver->name ?? '-',
             'approval_by' => $req->approval?->approver?->name,
             'confirmation_by' => $req->adminConfirmation?->admin?->name,
+            'created_by_admin' => $req->adminConfirmation?->admin?->name,
             'return_confirmed_by' => $returnConfirmation?->changer?->name,
             'createdAt' => $req->created_at ? $req->created_at->format('d-m-Y H:i') : '-',
             'updatedAt' => $req->updated_at ? $req->updated_at->format('d-m-Y H:i') : '-',
@@ -161,7 +184,9 @@ class ArchiveController extends Controller
             'durationDays' => $durationDays,
             'durationHours' => $durationHours,
             'status' => $req->status,
+            'raw_status' => $req->status,
             'type' => $req->type_key,
+            'specific_type' => $req->specific_type_key,
             'items' => $items,
             'logs' => $logs,
         ];

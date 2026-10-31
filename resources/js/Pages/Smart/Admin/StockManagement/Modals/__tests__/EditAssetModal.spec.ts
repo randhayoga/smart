@@ -96,11 +96,11 @@ describe('EditAssetModal.vue - Single & Mass Edit Logic and Layout', () => {
     expect(wrapper.text()).not.toContain('Lelang/Hibah');
   });
 
-  it('disallows edit of status when unit status is Dipinjam and displays localized status', () => {
-    const wrapper = mountModal([{ id: 1, number: 'AST-001', status: 'Dipinjam', condition: 'Bagus' }]);
+  it('disallows edit of status when unit status is Dipinjam (ST) and displays localized status', () => {
+    const wrapper = mountModal([{ id: 1, number: 'AST-001', status: 'Dipinjam (ST)', condition: 'Bagus' }]);
     const disabledDiv = wrapper.find('.cursor-not-allowed.select-none');
     expect(disabledDiv.exists()).toBe(true);
-    expect(disabledDiv.text()).toContain('Dipinjam');
+    expect(disabledDiv.text()).toContain('Dipinjam (ST)');
   });
 
   it('disallows edit of status when unit status is Belum Diverifikasi', () => {
@@ -242,10 +242,10 @@ describe('EditAssetModal.vue - Single & Mass Edit Logic and Layout', () => {
       expect(wrapper.text()).toContain('Tetapkan ke Lokasi');
     });
 
-    it('hides the Assign to Location dropdown when unit status is not Tersedia (e.g. Dipinjam or Rusak Total)', () => {
+    it('hides the Assign to Location dropdown when unit status is not Tersedia (e.g. Dipinjam (ST) or Rusak Total)', () => {
       setI18nLanguage('id');
       const wrapper = mountModal([
-        { id: 1, number: 'AST-001', status: 'Dipinjam', condition: 'Bagus', is_assigned_to_location: false },
+        { id: 1, number: 'AST-001', status: 'Dipinjam (ST)', condition: 'Bagus', is_assigned_to_location: false },
       ]);
       expect(wrapper.text()).not.toContain('Tetapkan ke Lokasi');
     });
@@ -260,7 +260,7 @@ describe('EditAssetModal.vue - Single & Mass Edit Logic and Layout', () => {
 
       const wrapperMixed = mountModal([
         { id: 1, number: 'AST-001', status: 'Tersedia', condition: 'Bagus' },
-        { id: 2, number: 'AST-002', status: 'Dipinjam', condition: 'Bagus' },
+        { id: 2, number: 'AST-002', status: 'Dipinjam (ST)', condition: 'Bagus' },
       ]);
       expect(wrapperMixed.text()).not.toContain('Tetapkan ke Lokasi');
     });

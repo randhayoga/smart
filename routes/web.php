@@ -47,21 +47,20 @@ use App\Http\Controllers\Smart\Admin\Master\VendorController;
 use App\Http\Controllers\Smart\Admin\Master\LocationController;
 use App\Http\Controllers\Smart\Admin\StockManagement\AssetController;
 use App\Http\Controllers\Smart\Admin\StockManagement\BulkAssetController;
-use App\Http\Controllers\Smart\Admin\StockManagement\AssetBorrowController;
 use App\Http\Controllers\Smart\Admin\StockManagement\AssetScanController;
 use App\Http\Controllers\Smart\Admin\StockManagement\AssetQrCodeController;
 use App\Http\Controllers\Smart\Admin\StockManagement\ModelController;
 use App\Http\Controllers\Smart\Admin\StockManagement\BulkModelController;
-use App\Http\Controllers\Smart\Admin\StockManagement\ModelManualRequestController;
 use App\Http\Controllers\Smart\Admin\StockManagement\ConsumableController;
 use App\Http\Controllers\Smart\Admin\StockManagement\NonConsumableController;
 use App\Http\Controllers\Smart\Admin\StockManagement\LotController;
 use App\Http\Controllers\Smart\Admin\StockManagement\BulkLotController;
-use App\Http\Controllers\Smart\Admin\StockManagement\LotManualRequestController;
-use App\Http\Controllers\Smart\Admin\StockManagement\ConsumableRequestOptionController;
 use App\Http\Controllers\Smart\Admin\StockManagement\PendingDeletionController;
 use App\Http\Controllers\Smart\Admin\StockManagement\PendingActivationController;
 use App\Http\Controllers\Smart\Admin\StockManagement\NewStockController;
+use App\Http\Controllers\Smart\Admin\ManualRequest\ManualRequestController;
+use App\Http\Controllers\Smart\Admin\ManualRequest\ManualRequestCatalogController;
+use App\Http\Controllers\Smart\Admin\ManualRequest\ManualRequestOptionController;
 use App\Http\Controllers\Smart\Admin\Employees\EmployeeController;
 use App\Http\Controllers\Smart\Admin\Employees\EmployeeLoanController;
 use App\Http\Controllers\Smart\MultiRoles\AssetDeletionApproval\AdminAssetDeletionApprovalController;
@@ -165,7 +164,6 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
         // Read-only Inventory Views (Assets, Consumable Lots, Asset QR)
         Route::middleware(['permission:inventory.view'])->group(function () {
             Route::get('non-consumables', [NonConsumableController::class, 'index'])->name('non-consumables');
-            Route::get('consumables/request-options', [ConsumableRequestOptionController::class, 'index'])->name('consumables.request-options');
             Route::get('consumables/{model?}', [ConsumableController::class, 'index'])->name('consumables');
             Route::get('lots/{lot}', [LotController::class, 'show'])->name('lots.show');
             Route::get('assets/{asset}/qr-code', [AssetQrCodeController::class, 'show'])->name('assets.qr-code');
@@ -186,24 +184,11 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
             // Assets
             Route::post('assets/bulk-update', [BulkAssetController::class, 'update'])->name('assets.bulk-update');
             Route::post('assets/bulk', [BulkAssetController::class, 'store'])->name('assets.bulk-store');
-            Route::resource('assets', AssetController::class)->only(['store', 'update']);
+            Route::get('assets/by-code/{code}', [AssetController::class, 'showByCode'])->name('assets.by-code');
+            Route::resource('assets', AssetController::class)->only(['store', 'update', 'show']);
 
             // New Stock Unified Input
             Route::post('new-stock', [NewStockController::class, 'store'])->name('new-stock.store');
-        });
-
-        // Direct Borrowing Actions
-        Route::middleware(['permission:inventory.borrow'])->group(function () {
-            Route::post('assets/{asset}/borrow', [AssetBorrowController::class, 'borrow'])->name('assets.borrow');
-            Route::post('assets/{asset}/finish-borrow', [AssetBorrowController::class, 'finish'])->name('assets.finish-borrow');
-            Route::get('users', [AssetBorrowController::class, 'users'])->name('users');
-        });
-
-        // Manual Stock Request Actions
-        Route::middleware(['permission:inventory.manual_request'])->group(function () {
-            Route::post('models/{model}/manual-request', [ModelManualRequestController::class, 'store'])->name('models.manual-request');
-            Route::post('lots/{lot}/manual-request', [LotManualRequestController::class, 'store'])->name('lots.manual-request');
-            Route::get('request-options', [ConsumableRequestOptionController::class, 'index'])->name('request-options');
         });
 
         // Asset Deletion Submissions
@@ -241,6 +226,9 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
     // Active Requisitions Management
     Route::middleware(['permission:requests.inbox.view'])->group(function () {
         Route::get('/requests', [AdminActiveRequestController::class, 'index'])->name('requests.index');
+        Route::get('/requests/manual-options', [ManualRequestOptionController::class, 'index'])->name('requests.manual-options');
+        Route::get('/requests/manual-catalog', [ManualRequestCatalogController::class, 'index'])->name('requests.manual-catalog');
+        Route::post('/requests/manual', [ManualRequestController::class, 'store'])->name('requests.manual.store');
         Route::get('/inbox', function (\Illuminate\Http\Request $request, \App\Services\InventoryStockService $stockService) {
             if ($request->wantsJson()) {
                 return app(AdminApprovedRequestController::class)->index($request, $stockService);
@@ -302,6 +290,8 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
             return app(AdminActiveRequestController::class)->index($request, $stockService);
         })->name('borrowed');
         Route::get('/borrowed/{id}', [BorrowedController::class, 'show'])->name('borrowed.show');
+        Route::post('/borrowed/{id}/finish-all', [BorrowedController::class, 'finishAll'])->name('borrowed.finishAll');
+        Route::post('/borrowed/{id}/finish-asset/{fulfillmentId}', [BorrowedController::class, 'finishAsset'])->name('borrowed.finishAsset');
     });
 
     Route::middleware(['permission:requests.returns'])->group(function () {

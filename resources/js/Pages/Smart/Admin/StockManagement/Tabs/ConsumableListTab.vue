@@ -38,7 +38,6 @@ import DeleteErrorModal from '@/Components/DeleteErrorModal.vue';
 import Combobox from '@/Components/Combobox.vue';
 import InputNewStockModal from '../Modals/InputNewStockModal.vue';
 import EditModelModal from '../Modals/EditModelModal.vue';
-import ManualRequestModelModal from '../Modals/ManualRequestModelModal.vue';
 import Tabs from '@/Components/Tabs.vue';
 import ModelDetailTab from './ModelDetailTab.vue';
 import LotListTab from './LotListTab.vue';
@@ -94,11 +93,6 @@ const lotsForActiveBarang = computed(() => {
 const totalStockActiveBarang = computed(() => {
   return lotsForActiveBarang.value.reduce((acc, lot) => acc + Number(lot.current_quantity ?? 0), 0);
 });
-
-const isManualRequestModalOpen = ref(false);
-const openManualRequestModal = () => {
-  isManualRequestModalOpen.value = true;
-};
 
 const page = usePage();
 import { usePermissions } from '@/composables/usePermissions';
@@ -627,9 +621,7 @@ watch(flashError, (newVal) => {
 
 const closeOnEscape = (e: KeyboardEvent) => {
   if (e.key === 'Escape') {
-    if (isManualRequestModalOpen.value) {
-      isManualRequestModalOpen.value = false;
-    } else if (isCreateModalOpen.value) {
+    if (isCreateModalOpen.value) {
       isCreateModalOpen.value = false;
     } else if (isBulkEditModalOpen.value) {
       isBulkEditModalOpen.value = false;
@@ -670,17 +662,7 @@ const closeOnEscape = (e: KeyboardEvent) => {
       <div class="flex flex-wrap items-center justify-between gap-4 mb-2 no-print">
         <Tabs v-model="activeDetailTab" :tabs="detailTabs" />
 
-        <div v-if="can('inventory.manage') || can('inventory.manual_request')" class="flex items-center gap-3">
-          <Button
-            v-if="can('inventory.manual_request')"
-            @click="openManualRequestModal"
-            variant="warning"
-            size="lg"
-            class="gap-2"
-          >
-            <ClipboardList class="w-4 h-4" />
-            {{ t('inventory.manualRequest') }}
-          </Button>
+        <div v-if="can('inventory.manage')" class="flex items-center gap-3">
           <Button v-if="can('inventory.manage')" @click="openEditModal" variant="primary" size="lg">
             {{ t('inventory.editTypeDetail') }}
           </Button>
@@ -888,13 +870,6 @@ const closeOnEscape = (e: KeyboardEvent) => {
       :brands="props.brands"
       :lots="props.lots"
       @success="handleEditSuccess"
-    />
-
-    <ManualRequestModelModal
-      v-if="selectedBarang && activeBarang"
-      v-model:open="isManualRequestModalOpen"
-      :barang="activeBarang"
-      :available-stock="totalStockActiveBarang"
     />
 
     <DeleteConfirmationModal 

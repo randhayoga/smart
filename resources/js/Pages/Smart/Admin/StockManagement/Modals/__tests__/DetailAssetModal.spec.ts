@@ -52,7 +52,6 @@ describe('DetailAssetModal.vue - Status, BoD/BoC Buttons, and Deletion Note', ()
           Teleport: true,
           Transition: false,
           Tabs: { template: '<div><slot /></div>' },
-          AssetBorrowFormTab: { template: '<div></div>' },
           AuditTrailTab: { template: '<div></div>' },
         },
       },

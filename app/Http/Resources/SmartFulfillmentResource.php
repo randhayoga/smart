@@ -105,6 +105,7 @@ class SmartFulfillmentResource extends JsonResource
                 'imageUrl' => $imageUrl,
                 'uom' => $uomName,
                 'status' => $item->status,
+                'reasoning' => $item->reasoning,
             ];
 
             if ($isConsumable) {

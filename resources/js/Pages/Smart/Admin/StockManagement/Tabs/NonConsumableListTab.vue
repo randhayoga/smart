@@ -501,7 +501,7 @@ const availableStatuses = computed(() => {
       .filter((s): s is string => !!s)
   ));
   if (dynamic.length > 0) return dynamic;
-  return ['Tersedia', 'Dipinjam', 'Tidak Aktif', 'Dihapus', 'Verifikasi Ditolak'];
+  return ['Tersedia', 'Dipinjam (ST)', 'Di-assign (LT)', 'Tidak Aktif', 'Dihapus', 'Verifikasi Ditolak'];
 });
 const availableConditions = ['Bagus', 'Rusak', 'Rusak Total', 'Hilang'];
 
