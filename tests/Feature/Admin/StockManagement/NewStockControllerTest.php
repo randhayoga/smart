@@ -570,4 +570,34 @@ class NewStockControllerTest extends TestCase
         $this->assertStringEndsWith('.webp', $lot->image_url);
         Storage::disk('local')->assertExists($lot->image_url);
     }
+
+    public function test_can_handle_formatted_price_and_unit_price(): void
+    {
+        $response = $this->actingAs($this->admin)->post('/smart/stock-management/new-stock', [
+            'category_id' => $this->otherCategory->id,
+            'type_id' => $this->consumableType->id,
+            'brand_id' => $this->brand->id,
+            'create_new_type' => true,
+            'model_name' => 'Kertas A4 Berharga',
+            'model_specification' => '70 GSM Putih',
+            'uom_id' => $this->uom->id,
+            'min_stock_threshold' => 10,
+            'input_lot' => true,
+            'create_new_lot' => true,
+            'entry_type' => 'Procurement',
+            'vendor_id' => $this->vendor->id,
+            'organizer_id' => $this->organizer->id,
+            'burden' => 'Corporate',
+            'po_number' => 'PO-FORMAT-001',
+            'purchase_date' => '2026-10-20',
+            'initial_quantity' => 100,
+            'location_id' => $this->location->id,
+            'unit_price' => '1.500.000',
+            'input_asset' => false,
+        ]);
+
+        $response->assertSessionHasNoErrors();
+        $lot = Lot::where('po_number', 'PO-FORMAT-001')->firstOrFail();
+        $this->assertEquals(1500000, (float) $lot->unit_price);
+    }
 }

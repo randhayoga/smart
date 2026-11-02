@@ -52,7 +52,10 @@ class ModelControllerTest extends TestCase
             'user_id' => $user->id,
             'action_type' => 'create',
             'quantity_change' => 0,
+            'note' => 'Menambahkan model baru: Spidol Papan Tulis',
         ]);
+        $log = InventoryLog::where('model_id', $model->id)->where('action_type', 'create')->first();
+        $this->assertStringNotContainsString($model->number, $log->note);
     }
 
     public function test_can_destroy_model_without_lots(): void
@@ -72,7 +75,10 @@ class ModelControllerTest extends TestCase
             'user_id' => $user->id,
             'action_type' => 'delete',
             'quantity_change' => 0,
+            'note' => 'Menghapus model: ' . $model->name,
         ]);
+        $log = InventoryLog::where('user_id', $user->id)->where('action_type', 'delete')->first();
+        $this->assertStringNotContainsString($model->number, $log->note);
     }
 
     public function test_cannot_destroy_model_with_lots(): void
@@ -126,6 +132,27 @@ class ModelControllerTest extends TestCase
             'user_id' => $user->id,
             'action_type' => 'update',
         ]);
+
+        $updateLogs = InventoryLog::where('model_id', $model->id)->where('action_type', 'update')->get();
+        // Expect separate logs for name, brand, uom, and specification
+        $this->assertCount(4, $updateLogs);
+
+        $nameLog = $updateLogs->first(fn ($l) => str_contains($l->note, 'nama model'));
+        $this->assertNotNull($nameLog);
+        $this->assertSame("Mengubah nama model dari 'Nama Old' menjadi 'Nama New'", $nameLog->note);
+        $this->assertStringNotContainsString($model->number, $nameLog->note);
+
+        $specLog = $updateLogs->first(fn ($l) => str_contains($l->note, 'spesifikasi'));
+        $this->assertNotNull($specLog);
+        $this->assertSame("Mengubah spesifikasi dari 'Spec Old' menjadi 'Spec New'", $specLog->note);
+
+        $brandLog = $updateLogs->first(fn ($l) => str_contains($l->note, 'merek'));
+        $this->assertNotNull($brandLog);
+        $this->assertStringContainsString($newBrand->name, $brandLog->note);
+
+        $uomLog = $updateLogs->first(fn ($l) => str_contains($l->note, 'satuan (UoM)'));
+        $this->assertNotNull($uomLog);
+        $this->assertStringContainsString($newUom->name, $uomLog->note);
     }
 
     public function test_can_bulk_update_models(): void

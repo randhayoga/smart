@@ -15,6 +15,7 @@ import {
 } from '@/Components/ui/dropdown-menu';
 import Combobox from '@/Components/Combobox.vue';
 import LocationCombobox from '@/Components/LocationCombobox.vue';
+import CurrencyInput from '@/Components/CurrencyInput.vue';
 import { Field, FieldLabel, FieldContent, FieldError } from '@/Components/ui/field';
 import AssetSection from './InputNewStock/AssetSection.vue';
 
@@ -694,22 +695,19 @@ const handleSubmit = () => {
                       <FieldError v-if="errors.initial_quantity">{{ errors.initial_quantity }}</FieldError>
                     </Field>
 
-                    <Field>
-                      <FieldLabel>
+                    <Field :data-invalid="!!errors.unit_price || undefined">
+                      <FieldLabel for="new-lot-unit-price">
                         <span>{{ t('inventory.unitPrice') }}</span>
                       </FieldLabel>
                       <FieldContent>
-                        <div class="flex w-full rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors h-10 overflow-hidden">
-                          <span class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-r border-input select-none font-medium">Rp</span>
-                          <input
-                            type="number"
-                            v-model="lotForm.unit_price"
-                            :placeholder="t('inventory.unitPricePlaceholder')"
-                            min="0"
-                            class="flex-1 min-w-0 px-4 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 transition-colors h-full"
-                          />
-                        </div>
+                        <CurrencyInput
+                          id="new-lot-unit-price"
+                          v-model="lotForm.unit_price"
+                          :error="!!errors.unit_price"
+                          :placeholder="t('inventory.unitPricePlaceholder')"
+                        />
                       </FieldContent>
+                      <FieldError v-if="errors.unit_price">{{ errors.unit_price }}</FieldError>
                     </Field>
                   </template>
                 </div>

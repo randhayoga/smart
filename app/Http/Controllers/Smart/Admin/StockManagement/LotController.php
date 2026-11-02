@@ -158,14 +158,11 @@ class LotController extends Controller
 
             $createdLot = Lot::create($validated);
 
-            if ($request->user()) {
-                app(InventoryLogService::class)->logLotCreated($createdLot, $request->user());
-            }
-
             if ($isConsumable && $createdLot->model) {
                 app(NotificationService::class)->checkAndNotifyLowStock($createdLot->model);
             }
 
+            $assetCountForLog = null;
             if (!$isConsumable && $request->boolean('input_asset')) {
                 $createdLot->loadMissing(['model.type.category', 'organizer']);
 
@@ -183,6 +180,7 @@ class LotController extends Controller
 
                 $isBulk = !$isKend && $request->boolean('is_bulk');
                 $quantity = $isBulk ? (int) ($request->input('bulk_quantity') ?? 1) : 1;
+                $assetCountForLog = $quantity;
 
                 if ($isBulk) {
                     $assetNumbers = app(AssetNumberService::class)->generateBulkAssetNumbers($createdLot, $quantity);
@@ -228,6 +226,10 @@ class LotController extends Controller
                         app(NotificationService::class)->notifyManagerBulkAssetActivation($createdAssets, $createdLot, $user);
                     })->afterResponse();
                 }
+            }
+
+            if ($request->user()) {
+                app(InventoryLogService::class)->logLotCreated($createdLot, $request->user(), null, $assetCountForLog);
             }
 
             return $createdLot;

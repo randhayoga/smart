@@ -100,7 +100,7 @@ class AssetAssignedToLocationTest extends TestCase
         $this->assertSame('Assignment', $log->action_type);
         $this->assertSame('Di-assign (LT)', $log->status);
         $this->assertSame('Bagus', $log->condition);
-        $this->assertSame("Aset di-assign ke lokasi {$this->location->name}", $log->note);
+        $this->assertSame("Di-assign ke lokasi {$this->location->name}", $log->note);
         $this->assertSame($this->user->id, $log->actor_id);
         $this->assertNull($log->end_date);
 
@@ -147,7 +147,7 @@ class AssetAssignedToLocationTest extends TestCase
             ->first();
         $this->assertNotNull($log);
         $this->assertSame('Tersedia', $log->status);
-        $this->assertSame("Assignment asset ke lokasi {$this->location->name} selesai.", $log->note);
+        $this->assertSame("Assignment ke lokasi {$this->location->name} selesai.", $log->note);
     }
 
     public function test_single_asset_update_fails_if_status_is_not_available_when_assigning(): void
@@ -261,5 +261,90 @@ class AssetAssignedToLocationTest extends TestCase
         $this->assertSame('Tersedia', $asset1->fresh()->status);
         $this->assertFalse($asset2->fresh()->is_assigned_to_location);
         $this->assertSame('Tersedia', $asset2->fresh()->status);
+    }
+
+    public function test_unassign_and_location_change_simultaneously_logs_in_order(): void
+    {
+        $oldLocation = $this->location;
+        $newLocation = Location::factory()->create(['name' => 'Lokasi Baru']);
+
+        $asset = Asset::factory()->create([
+            'number' => 'AST-ORDER-01',
+            'lot_id' => $this->lot->id,
+            'location_id' => $oldLocation->id,
+            'status' => 'Di-assign (LT)',
+            'condition' => 'Bagus',
+            'borrowing_type' => 'LT',
+            'classification' => 'Aset',
+            'is_assigned_to_location' => true,
+        ]);
+
+        $response = $this->actingAs($this->user)->put("/smart/stock-management/assets/{$asset->id}", [
+            'number' => $asset->number,
+            'lot_id' => $this->lot->id,
+            'location_id' => $newLocation->id,
+            'status' => 'Tersedia',
+            'condition' => 'Bagus',
+            'type' => 'LT',
+            'classification' => 'Aset',
+            'is_assigned_to_location' => false,
+        ]);
+
+        $response->assertSessionHasNoErrors();
+        $fresh = $asset->fresh();
+        $this->assertFalse($fresh->is_assigned_to_location);
+        $this->assertEquals($newLocation->id, $fresh->location_id);
+        $this->assertSame('Tersedia', $fresh->status);
+
+        $lifecycles = AssetLifecycle::where('asset_id', $asset->id)
+            ->where('action_type', '!=', 'Registrasi')
+            ->orderBy('id', 'asc')
+            ->get();
+        // Expect Assignment completion first (at old location), then Pemindahan (to new location)
+        $this->assertCount(2, $lifecycles);
+        $this->assertSame('Assignment', $lifecycles[0]->action_type);
+        $this->assertStringContainsString('selesai', $lifecycles[0]->note);
+        $this->assertEquals($oldLocation->id, $lifecycles[0]->location_id);
+
+        $this->assertSame('Pemindahan', $lifecycles[1]->action_type);
+        $this->assertEquals($newLocation->id, $lifecycles[1]->location_id);
+    }
+
+    public function test_assign_to_location_and_rusak_total_simultaneously_keeps_di_assign_and_pending_dm(): void
+    {
+        $asset = Asset::factory()->create([
+            'number' => 'AST-ASSIGN-DM-01',
+            'lot_id' => $this->lot->id,
+            'location_id' => $this->location->id,
+            'status' => 'Tersedia',
+            'condition' => 'Bagus',
+            'borrowing_type' => 'LT',
+            'classification' => 'Aset',
+            'is_assigned_to_location' => false,
+        ]);
+
+        $file = \Illuminate\Http\UploadedFile::fake()->create('memo.pdf', 100, 'application/pdf');
+
+        $response = $this->actingAs($this->user)->put("/smart/stock-management/assets/{$asset->id}", [
+            'number' => $asset->number,
+            'lot_id' => $this->lot->id,
+            'location_id' => $this->location->id,
+            'status' => 'Di-assign (LT)',
+            'condition' => 'Rusak Total',
+            'type' => 'LT',
+            'classification' => 'Aset',
+            'is_assigned_to_location' => true,
+            'memo_file' => $file,
+        ]);
+
+        $response->assertSessionHasNoErrors();
+        $fresh = $asset->fresh();
+        $this->assertTrue($fresh->is_assigned_to_location);
+        $this->assertSame('Di-assign (LT)', $fresh->status);
+        $this->assertSame('Pending:DM', $fresh->approval_status);
+
+        // Verify assignment lifecycle logged
+        $lifecycles = AssetLifecycle::where('asset_id', $asset->id)->get();
+        $this->assertTrue($lifecycles->contains('action_type', 'Assignment'));
     }
 }

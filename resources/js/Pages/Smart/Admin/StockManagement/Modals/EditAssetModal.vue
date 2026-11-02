@@ -1,29 +1,23 @@
 <script setup lang="ts">
 /**
  * Edit Asset Modal component supporting single asset updates and bulk edits with status/condition validation rules.
+ * Componentized into AssetMainSection and AssetDocumentsSection (<500 LOC).
  */
 import { ref, watch, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useModalLock } from '@/composables/useModalLock';
 import { useForm, router } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
-import { X, ChevronDown, Loader2, Trash2 } from 'lucide-vue-next';
+import { X, Loader2 } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
-import { Checkbox } from '@/Components/ui/checkbox';
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
-} from '@/Components/ui/dropdown-menu';
-import Combobox from '@/Components/Combobox.vue';
-import LocationCombobox from '@/Components/LocationCombobox.vue';
-import { Field, FieldLabel, FieldContent, FieldError } from '@/Components/ui/field';
-import StatusBadge from '@/Components/StatusBadge.vue';
 import { compressImageIfNeeded } from '@/utils/imageCompressor';
 import {
   hasAssetStatus,
-  getBaseAssetStatus,
   isRestrictedAssetStatus,
   formatAssetStatusLabels,
 } from '@/lib/assetStatus';
+import AssetMainSection from './EditAsset/AssetMainSection.vue';
+import AssetDocumentsSection from './EditAsset/AssetDocumentsSection.vue';
 
 interface Props {
   open: boolean;
@@ -49,15 +43,27 @@ const { t, te } = useI18n();
 
 useModalLock(computed(() => props.open));
 
-const isSingle = computed(() => props.items.length === 1);
-const selectedItem = computed(() => isSingle.value ? props.items[0] : null);
+// Gated Computeds for Performance Optimization
+const isSingle = computed(() => {
+  if (!props.open) return true;
+  return props.items.length === 1;
+});
+
+const selectedItem = computed(() => {
+  if (!props.open) return null;
+  return isSingle.value && props.items.length > 0 ? props.items[0] : null;
+});
+
 const isVehicle = computed(() => {
+  if (!props.open) return false;
   return props.barang?.category_code === 'KEND' ||
     props.barang?.category === 'Kendaraan' ||
     props.barang?.category === 'KEND' ||
     props.lot?.barang_category_code === 'KEND';
 });
+
 const isComp = computed(() => {
+  if (!props.open) return false;
   return props.barang?.category_code === 'COMP' ||
     props.barang?.category === 'Computer' ||
     props.barang?.category === 'COMP' ||
@@ -96,24 +102,14 @@ const getBurdenLabel = (b: string) => {
   return b;
 };
 
-const allowedStatuses = ['tersedia'];
-
-const hasDisallowedStatus = computed(() => {
-  if (!props.open || !props.items || props.items.length === 0) return true;
-  return props.items.some(item => {
-    const s = String(item?.status || '').trim().toLowerCase();
-    return !allowedStatuses.includes(s);
-  });
-});
+const isRestrictedStatus = (status: string | null | undefined, approvalStatus?: string | null | undefined) => {
+  return isRestrictedAssetStatus(status);
+};
 
 const isBorrowedUnit = computed(() => {
   if (!props.open) return false;
   return (props.items || []).some(item => String(item?.status).trim().toLowerCase() === 'dipinjam (st)');
 });
-
-const isRestrictedStatus = (status: string | null | undefined, approvalStatus?: string | null | undefined) => {
-  return isRestrictedAssetStatus(status, approvalStatus);
-};
 
 const hasRestrictedUnit = computed(() => {
   if (!props.open) return false;
@@ -149,17 +145,6 @@ const canShowAssignToLocation = computed(() => {
     return s === 'tersedia';
   });
 });
-
-const handleAssignToLocationSelect = (value: boolean | null) => {
-  form.is_assigned_to_location = value;
-  if (value === true) {
-    form.status = 'Di-assign (LT)';
-  } else if (value === false) {
-    form.status = 'Tersedia';
-  } else {
-    form.status = '';
-  }
-};
 
 const form = useForm({
   ids: [] as number[],
@@ -297,6 +282,20 @@ const hasImage = computed(() => {
   if (isImageDeleted.value) return false;
   return Boolean(selectedItem.value?.image_url);
 });
+
+const handleAssignToLocationSelect = (value: boolean | null) => {
+  form.is_assigned_to_location = value;
+  if (value === true) {
+    form.status = 'Di-assign (LT)';
+    if (isSingle.value && selectedItem.value) {
+      form.location_id = selectedItem.value.location_id || form.location_id;
+    }
+  } else if (value === false) {
+    form.status = 'Tersedia';
+  } else {
+    form.status = '';
+  }
+};
 
 const resetModalState = () => {
   form.reset();
@@ -451,29 +450,124 @@ const triggerFileInput = () => {
   input?.click();
 };
 
+const triggerMemoFileInput = () => {
+  const input = document.getElementById('edit-asset-memo-upload') as HTMLInputElement;
+  input?.click();
+};
+
+const triggerLostDocFileInput = () => {
+  const input = document.getElementById('edit-asset-lost-doc-upload') as HTMLInputElement;
+  input?.click();
+};
+
+const triggerBodBocFileInput = () => {
+  const input = document.getElementById('edit-asset-bod-boc-doc-upload') as HTMLInputElement;
+  input?.click();
+};
+
+const triggerBodBocDisapprovalFileInput = () => {
+  const input = document.getElementById('edit-asset-bod-boc-disapproval-doc-upload') as HTMLInputElement;
+  input?.click();
+};
+
+const handleMemoUpload = (e: any) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const allowed = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+  if (!allowed.includes(file.type)) {
+    toast.error(t('inventory.invalidDocFormat'));
+    return;
+  }
+  if (file.size > 2 * 1024 * 1024) {
+    toast.error(t('inventory.fileTooLarge2Mb'));
+    return;
+  }
+  form.memo_file = file;
+  form.memo_file_name = file.name;
+};
+
+const handleLostDocUpload = (e: any) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const allowed = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+  if (!allowed.includes(file.type)) {
+    toast.error(t('inventory.invalidDocFormat'));
+    return;
+  }
+  if (file.size > 2 * 1024 * 1024) {
+    toast.error(t('inventory.fileTooLarge2Mb'));
+    return;
+  }
+  form.lost_doc_file = file;
+  form.lost_doc_file_name = file.name;
+};
+
+const handleBodBocFileUpload = (e: any) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const allowed = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+  if (!allowed.includes(file.type)) {
+    toast.error(t('inventory.invalidDocFormat'));
+    return;
+  }
+  if (file.size > 2 * 1024 * 1024) {
+    toast.error(t('inventory.fileTooLarge2Mb'));
+    return;
+  }
+  form.bod_boc_approval_file = file;
+  form.bod_boc_approval_file_name = file.name;
+};
+
+const handleBodBocDisapprovalFileUpload = (e: any) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const allowed = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+  if (!allowed.includes(file.type)) {
+    toast.error(t('inventory.invalidDocFormat'));
+    return;
+  }
+  if (file.size > 2 * 1024 * 1024) {
+    toast.error(t('inventory.fileTooLarge2Mb'));
+    return;
+  }
+  form.bod_boc_disapproval_file = file;
+  form.bod_boc_disapproval_file_name = file.name;
+};
+
+const handleToggleBodBocDecision = (type: 'approval' | 'disapproval', checked: boolean) => {
+  if (!checked) {
+    if (bodBocDecisionType.value === type) {
+      bodBocDecisionType.value = null;
+      if (type === 'approval') {
+        form.bod_boc_approval_file = null;
+        form.bod_boc_approval_file_name = '';
+      } else {
+        form.bod_boc_disapproval_file = null;
+        form.bod_boc_disapproval_file_name = '';
+      }
+    }
+  } else {
+    bodBocDecisionType.value = type;
+    if (type === 'approval') {
+      form.bod_boc_disapproval_file = null;
+      form.bod_boc_disapproval_file_name = '';
+      const disapprovalInput = document.getElementById('edit-asset-bod-boc-disapproval-doc-upload') as HTMLInputElement | null;
+      if (disapprovalInput) disapprovalInput.value = '';
+    } else {
+      form.bod_boc_approval_file = null;
+      form.bod_boc_approval_file_name = '';
+      const approvalInput = document.getElementById('edit-asset-bod-boc-doc-upload') as HTMLInputElement | null;
+      if (approvalInput) approvalInput.value = '';
+    }
+  }
+};
+
 const viewImageInNewTab = () => {
   if (form.image_url) {
     window.open(URL.createObjectURL(form.image_url), '_blank');
   } else if (!isImageDeleted.value && isSingle.value && selectedItem.value?.image_url) {
     window.open('/media/' + selectedItem.value.image_url, '_blank');
   }
-};
-
-const handleMemoUpload = (e: any) => {
-  if (isDocumentDisabled.value) return;
-  const file = e.target.files[0];
-  if (!file) return;
-  const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-  if (!allowedTypes.includes(file.type)) { toast.error(t('inventory.invalidDocFormat')); return; }
-  if (file.size > 2 * 1024 * 1024) { toast.error(t('inventory.fileTooLarge2Mb')); return; }
-  form.memo_file = file;
-  form.memo_file_name = file.name;
-};
-
-const triggerMemoFileInput = () => {
-  if (isDocumentDisabled.value) return;
-  const input = document.getElementById('edit-asset-memo-upload') as HTMLInputElement;
-  input?.click();
 };
 
 const viewMemoInNewTab = () => {
@@ -484,23 +578,6 @@ const viewMemoInNewTab = () => {
   }
 };
 
-const handleLostDocUpload = (e: any) => {
-  if (isDocumentDisabled.value) return;
-  const file = e.target.files[0];
-  if (!file) return;
-  const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-  if (!allowedTypes.includes(file.type)) { toast.error(t('inventory.invalidDocFormat')); return; }
-  if (file.size > 2 * 1024 * 1024) { toast.error(t('inventory.fileTooLarge2Mb')); return; }
-  form.lost_doc_file = file;
-  form.lost_doc_file_name = file.name;
-};
-
-const triggerLostDocFileInput = () => {
-  if (isDocumentDisabled.value) return;
-  const input = document.getElementById('edit-asset-lost-doc-upload') as HTMLInputElement;
-  input?.click();
-};
-
 const viewLostDocInNewTab = () => {
   if (form.lost_doc_file) {
     window.open(URL.createObjectURL(form.lost_doc_file), '_blank');
@@ -509,77 +586,7 @@ const viewLostDocInNewTab = () => {
   }
 };
 
-const handleToggleBodBocDecision = (type: 'approval' | 'disapproval', checked: boolean) => {
-  if (checked) {
-    bodBocDecisionType.value = type;
-    if (type === 'approval') {
-      form.bod_boc_disapproval_file = null;
-      form.bod_boc_disapproval_file_name = '';
-      errors.value.bod_boc_disapproval_file = '';
-      const input = document.getElementById('edit-asset-bod-boc-disapproval-doc-upload') as HTMLInputElement | null;
-      if (input) input.value = '';
-    } else {
-      form.bod_boc_approval_file = null;
-      form.bod_boc_approval_file_name = '';
-      errors.value.bod_boc_approval_file = '';
-      const input = document.getElementById('edit-asset-bod-boc-doc-upload') as HTMLInputElement | null;
-      if (input) input.value = '';
-    }
-  } else {
-    if (bodBocDecisionType.value === type) {
-      bodBocDecisionType.value = null;
-      if (type === 'approval') {
-        form.bod_boc_approval_file = null;
-        form.bod_boc_approval_file_name = '';
-        errors.value.bod_boc_approval_file = '';
-      } else {
-        form.bod_boc_disapproval_file = null;
-        form.bod_boc_disapproval_file_name = '';
-        errors.value.bod_boc_disapproval_file = '';
-      }
-    }
-  }
-};
-
-const handleBodBocDocUpload = (e: any) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-  if (!allowedTypes.includes(file.type)) { toast.error(t('inventory.invalidDocFormat')); return; }
-  if (file.size > 2 * 1024 * 1024) { toast.error(t('inventory.fileTooLarge2Mb')); return; }
-  form.bod_boc_approval_file = file;
-  form.bod_boc_approval_file_name = file.name;
-};
-
-const handleBodBocDisapprovalDocUpload = (e: any) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-  if (!allowedTypes.includes(file.type)) { toast.error(t('inventory.invalidDocFormat')); return; }
-  if (file.size > 2 * 1024 * 1024) { toast.error(t('inventory.fileTooLarge2Mb')); return; }
-  form.bod_boc_disapproval_file = file;
-  form.bod_boc_disapproval_file_name = file.name;
-};
-
-const triggerBodBocDisapprovalDocFileInput = () => {
-  const input = document.getElementById('edit-asset-bod-boc-disapproval-doc-upload') as HTMLInputElement;
-  input?.click();
-};
-
-const viewBodBocDisapprovalDocInNewTab = () => {
-  if (form.bod_boc_disapproval_file) {
-    window.open(URL.createObjectURL(form.bod_boc_disapproval_file), '_blank');
-  } else if (isSingle.value && selectedItem.value?.bod_boc_disapproval_url) {
-    window.open('/media/' + selectedItem.value.bod_boc_disapproval_url, '_blank');
-  }
-};
-
-const triggerBodBocDocFileInput = () => {
-  const input = document.getElementById('edit-asset-bod-boc-doc-upload') as HTMLInputElement;
-  input?.click();
-};
-
-const viewBodBocDocInNewTab = () => {
+const viewBodBocInNewTab = () => {
   if (form.bod_boc_approval_file) {
     window.open(URL.createObjectURL(form.bod_boc_approval_file), '_blank');
   } else if (isSingle.value && selectedItem.value?.bod_boc_approval_url) {
@@ -587,15 +594,24 @@ const viewBodBocDocInNewTab = () => {
   }
 };
 
-const parseCurrencyToNumber = (val: string | number) => {
+const viewBodBocDisapprovalInNewTab = () => {
+  if (form.bod_boc_disapproval_file) {
+    window.open(URL.createObjectURL(form.bod_boc_disapproval_file), '_blank');
+  } else if (isSingle.value && selectedItem.value?.bod_boc_disapproval_url) {
+    window.open('/media/' + selectedItem.value.bod_boc_disapproval_url, '_blank');
+  }
+};
+
+const parseCurrencyToNumber = (val: any): number => {
   if (typeof val === 'number') return val;
   if (!val) return 0;
-  let clean = val.toString().trim();
+  let clean = val.toString().replace(/[^0-9.,]/g, '');
   if (clean.includes('.') && clean.includes(',')) {
-    if (clean.lastIndexOf('.') > clean.lastIndexOf(',')) {
-      clean = clean.replace(/,/g, '');
-    } else {
-      clean = clean.replace(/\./g, '').replace(/,/g, '.');
+    clean = clean.replace(/\./g, '').replace(',', '.');
+  } else if (clean.includes('.')) {
+    const parts = clean.split('.');
+    if (parts[parts.length - 1].length === 3) {
+      clean = clean.replace(/\./g, '');
     }
   } else if (clean.includes(',')) {
     const parts = clean.split(',');
@@ -776,9 +792,9 @@ const handleSubmit = () => {
     <Transition enter-active-class="ease-out duration-200" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="ease-in duration-150" leave-from-class="opacity-100" leave-to-class="opacity-0">
       <div v-if="open" @click="closeModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 overscroll-contain">
         <Transition enter-active-class="ease-out duration-200" enter-from-class="opacity-0 scale-95" enter-to-class="opacity-100 scale-100" leave-active-class="ease-in duration-150" leave-from-class="opacity-100 scale-100" leave-to-class="opacity-0 scale-95">
-          <div v-if="open" class="bg-card w-full max-w-[1100px] rounded-[14px] shadow-2xl overflow-hidden flex flex-col" @click.stop>
+          <div v-if="open" class="bg-card w-full max-w-[1100px] rounded-[14px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]" @click.stop>
             <!-- Header -->
-            <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
+            <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border shrink-0">
               <h3 class="text-lg font-bold text-foreground">
                 {{ isSingle ? (isVehicle ? t('inventory.editAssetVehicleDetail') : t('inventory.editAssetDetail')) : t('inventory.editAssetSelected') }}
               </h3>
@@ -787,439 +803,78 @@ const handleSubmit = () => {
               </button>
             </div>
 
-            <!-- Body -->
-            <div class="p-6 overflow-y-auto max-h-[70vh] overscroll-contain">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
-                <!-- Left Column -->
-                <div class="space-y-6">
-                  <!-- Asset Code -->
-                  <Field>
-                    <FieldLabel>{{ t('inventory.assetCode') }}</FieldLabel>
-                    <FieldContent>
-                      <input type="text" :value="isSingle ? form.number : t('inventory.cannotBeChangedBulk')" disabled class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10" />
-                    </FieldContent>
-                  </Field>
+            <!-- Body (Scrollable) -->
+            <div class="p-6 overflow-y-auto flex-1 space-y-6">
+              <!-- Main Asset Attributes Section -->
+              <AssetMainSection
+                :form="form"
+                :errors="errors"
+                :is-single="isSingle"
+                :selected-item="selectedItem"
+                :is-comp="isComp"
+                :is-vehicle="isVehicle"
+                :can-show-assign-to-location="canShowAssignToLocation"
+                :is-kondisi-disabled="isKondisiDisabled"
+                :is-borrowed-unit="isBorrowedUnit"
+                :locations="locations"
+                :project-options="projectOptions"
+                :has-image="hasImage"
+                :get-status-label="getStatusLabel"
+                :get-condition-label="getConditionLabel"
+                :get-classification-label="getClassificationLabel"
+                :get-burden-label="getBurdenLabel"
+                :handle-assign-to-location-select="handleAssignToLocationSelect"
+                :handle-file-upload="handleFileUpload"
+                :handle-delete-photo="handleDeletePhoto"
+                :view-image-in-new-tab="viewImageInNewTab"
+                :trigger-file-input="triggerFileInput"
+              />
 
-                  <!-- Legacy Number -->
-                  <Field v-if="isSingle && form.legacy_number">
-                    <FieldLabel>{{ t('inventory.legacyNumber') }}</FieldLabel>
-                    <FieldContent>
-                      <input type="text" :value="form.legacy_number" disabled class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10" />
-                    </FieldContent>
-                  </Field>
-
-                  <!-- Specification (Only for COMP category) -->
-                  <Field v-if="isComp" :data-invalid="(isSingle && !!errors.specification) || undefined">
-                    <FieldLabel for="edit-unit-specification">
-                      <span>{{ t('inventory.specification') }}<span v-if="isSingle" class="text-rose-500">*</span></span>
-                    </FieldLabel>
-                    <FieldContent>
-                      <textarea
-                        id="edit-unit-specification"
-                        name="specification"
-                        v-model="form.specification"
-                        rows="3"
-                        maxlength="1000"
-                        :placeholder="isSingle ? t('inventory.specificationPlaceholder') : t('inventory.unchanged')"
-                        class="w-full px-4 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors resize-none"
-                        :class="[(isSingle && errors.specification) ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input']"
-                      />
-                    </FieldContent>
-                    <FieldError v-if="isSingle && errors.specification">{{ errors.specification }}</FieldError>
-                  </Field>
-
-                  <!-- Borrowing Type -->
-                  <Field :data-invalid="(isSingle && !!errors.type) || undefined">
-                    <FieldLabel>
-                      <span>{{ t('inventory.borrowingType') }}<span v-if="isSingle" class="text-rose-500">*</span></span>
-                    </FieldLabel>
-                    <FieldContent>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !form.type ? 'text-muted-foreground' : 'text-foreground', (isSingle && errors.type) ? 'border-destructive' : '']">
-                            {{ form.type || (isSingle ? t('inventory.selectBorrowingType') : t('inventory.unchanged')) }}
-                            <ChevronDown class="w-4 h-4 opacity-50" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
-                          <DropdownMenuItem @select="form.type = 'LT'">LT</DropdownMenuItem>
-                          <DropdownMenuItem @select="form.type = 'ST'">ST</DropdownMenuItem>
-                          <DropdownMenuItem v-if="!isSingle" @select="form.type = ''">{{ t('inventory.unchanged') }}</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </FieldContent>
-                    <FieldError v-if="isSingle && errors.type">{{ errors.type }}</FieldError>
-                  </Field>
-
-                  <!-- Assign to Location (Only shown when canShowAssignToLocation is true) -->
-                  <Field v-if="canShowAssignToLocation">
-                    <FieldLabel>
-                      <span>{{ t('inventory.isAssignedToLocation') }}</span>
-                    </FieldLabel>
-                    <FieldContent>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="outline"
-                            class="w-full justify-between rounded-[14px] font-normal h-10 px-4 text-foreground"
-                          >
-                            {{
-                              form.is_assigned_to_location === true
-                                ? t('inventory.assignedToLocationYes')
-                                : (form.is_assigned_to_location === false
-                                    ? t('inventory.assignedToLocationNo')
-                                    : (isSingle ? t('inventory.assignedToLocationNo') : t('inventory.unchanged')))
-                            }}
-                            <ChevronDown class="w-4 h-4 opacity-50" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
-                          <DropdownMenuItem v-if="!isSingle" @select="handleAssignToLocationSelect(null)">
-                            {{ t('inventory.unchanged') }}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem @select="handleAssignToLocationSelect(false)">
-                            {{ t('inventory.assignedToLocationNo') }}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem @select="handleAssignToLocationSelect(true)">
-                            {{ t('inventory.assignedToLocationYes') }}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </FieldContent>
-                  </Field>
-
-                  <!-- Status (Disabled with informative tooltip) -->
-                  <Field data-disabled="true">
-                    <FieldLabel>
-                      <span>{{ t('inventory.status') }}<span v-if="isSingle" class="text-rose-500">*</span></span>
-                    </FieldLabel>
-                    <FieldContent>
-                      <div 
-                        class="w-full flex items-center justify-between px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10 select-none"
-                        :title="t('inventory.statusCannotBeChangedManually')"
-                      >
-                        <div v-if="form.status" class="flex items-center gap-1.5 overflow-hidden">
-                          <StatusBadge 
-                            :status="form.status" 
-                            :approval-status="form.approval_status" 
-                            class="rounded-sm" 
-                          />
-                        </div>
-                        <span v-else>{{ isSingle ? t('inventory.selectStatus') : t('inventory.unchanged') }}</span>
-                        <ChevronDown class="w-4 h-4 opacity-50 ml-auto shrink-0" />
-                      </div>
-                    </FieldContent>
-                    <p class="text-[11px] text-muted-foreground mt-1 ml-0.5">{{ t('inventory.statusCannotBeChangedManually') }}</p>
-                    <FieldError v-if="isSingle && errors.status">{{ errors.status }}</FieldError>
-                  </Field>
-
-                  <!-- Condition -->
-                  <Field :data-invalid="(isSingle && !!errors.condition) || undefined" :data-disabled="isKondisiDisabled || undefined">
-                    <FieldLabel>
-                      <span>{{ t('inventory.condition') }}<span v-if="isSingle" class="text-rose-500">*</span></span>
-                    </FieldLabel>
-                    <FieldContent>
-                      <div v-if="isKondisiDisabled" class="w-full flex items-center justify-between px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10 select-none">
-                        <span>{{ getConditionLabel(form.condition) || (isSingle ? t('inventory.selectCondition') : t('inventory.unchanged')) }}</span>
-                        <ChevronDown class="w-4 h-4 opacity-50" />
-                      </div>
-                      <DropdownMenu v-else>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !form.condition ? 'text-muted-foreground' : 'text-foreground']">
-                            {{ getConditionLabel(form.condition) || (isSingle ? t('inventory.selectCondition') : t('inventory.unchanged')) }}
-                            <ChevronDown class="w-4 h-4 opacity-50" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
-                          <DropdownMenuItem @select="form.condition = 'Bagus'">{{ t('inventory.conditionGood') }}</DropdownMenuItem>
-                          <DropdownMenuItem @select="form.condition = 'Rusak'">{{ t('inventory.conditionDamaged') }}</DropdownMenuItem>
-                          <template v-if="!isBorrowedUnit">
-                            <DropdownMenuItem @select="form.condition = 'Rusak Total'">{{ t('inventory.conditionTotalDamage') }}</DropdownMenuItem>
-                            <DropdownMenuItem @select="form.condition = 'Hilang'">{{ t('inventory.conditionLost') }}</DropdownMenuItem>
-                          </template>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </FieldContent>
-                    <FieldError v-if="isSingle && errors.condition">{{ errors.condition }}</FieldError>
-                  </Field>
-
-                  <!-- Location -->
-                  <Field :data-invalid="(isSingle && !!errors.location_id) || undefined">
-                    <FieldLabel>
-                      <span>{{ t('inventory.location') }}<span v-if="isSingle" class="text-rose-500">*</span></span>
-                    </FieldLabel>
-                    <FieldContent>
-                      <LocationCombobox
-                        v-model="form.location_id"
-                        :locations="locations"
-                        :placeholder="isSingle ? t('inventory.selectLocation') : t('inventory.unchanged')"
-                        :error="isSingle && !!errors.location_id"
-                        :active-only="true"
-                        :clearable="!isSingle"
-                      />
-                    </FieldContent>
-                    <FieldError v-if="isSingle && errors.location_id">{{ errors.location_id }}</FieldError>
-                  </Field>
-                </div>
-
-                <!-- Right Column -->
-                <div class="space-y-6">
-                  <!-- Price -->
-                  <Field>
-                    <FieldLabel>
-                      <span>{{ t('inventory.price') }}</span>
-                    </FieldLabel>
-                    <FieldContent>
-                      <div class="flex rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors h-10 overflow-hidden">
-                        <span class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-r border-input select-none font-medium">Rp</span>
-                        <input type="number" v-model="form.price" :placeholder="isSingle ? '0' : t('inventory.unchanged')" min="0" step="any" class="flex-1 min-w-0 px-4 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 transition-colors h-full" />
-                      </div>
-                    </FieldContent>
-                  </Field>
-
-                  <!-- Classification -->
-                  <Field :data-invalid="(isSingle && !!errors.classification) || undefined">
-                    <FieldLabel>
-                      <span>{{ t('inventory.classification') }}<span v-if="isSingle" class="text-rose-500">*</span></span>
-                    </FieldLabel>
-                    <FieldContent>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline" :class="['w-full justify-between rounded-[14px] font-normal h-10 px-4', !form.classification ? 'text-muted-foreground' : 'text-foreground', (isSingle && errors.classification) ? 'border-destructive' : '']">
-                            {{ getClassificationLabel(form.classification) || (isSingle ? t('inventory.selectClassification') : t('inventory.unchanged')) }}
-                            <ChevronDown class="w-4 h-4 opacity-50" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
-                          <DropdownMenuItem @select="form.classification = 'Aset'">{{ t('inventory.classificationAsset') }}</DropdownMenuItem>
-                          <DropdownMenuItem @select="form.classification = 'Inventaris'">{{ t('inventory.classificationInventory') }}</DropdownMenuItem>
-                          <DropdownMenuItem v-if="!isSingle" @select="form.classification = ''">{{ t('inventory.unchanged') }}</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </FieldContent>
-                    <FieldError v-if="isSingle && errors.classification">{{ errors.classification }}</FieldError>
-                  </Field>
-
-                  <!-- Burden -->
-                  <Field :data-invalid="(isSingle && !!errors.burden) || undefined">
-                    <FieldLabel>
-                      <span>{{ t('inventory.burden') }}<span v-if="isSingle" class="text-rose-500">*</span></span>
-                    </FieldLabel>
-                    <FieldContent>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="outline"
-                            class="w-full justify-between rounded-[14px] font-normal h-10 px-4"
-                            :class="[(!form.burden || form.burden === 'Tidak berubah') ? 'text-muted-foreground' : 'text-foreground', (isSingle && errors.burden) ? 'border-destructive' : '']"
-                          >
-                            {{ getBurdenLabel(form.burden) }}
-                            <ChevronDown class="w-4 h-4 opacity-50" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
-                          <DropdownMenuItem v-if="!isSingle" @select="form.burden = 'Tidak berubah'">{{ t('inventory.unchanged') }}</DropdownMenuItem>
-                          <DropdownMenuItem @select="form.burden = 'Corporate'">{{ t('inventory.corporate') }}</DropdownMenuItem>
-                          <DropdownMenuItem @select="form.burden = 'Project'">{{ t('inventory.project') }}</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </FieldContent>
-                    <FieldError v-if="isSingle && errors.burden">{{ errors.burden }}</FieldError>
-                  </Field>
-
-                  <!-- Project -->
-                  <Field v-if="form.burden === 'Project'" :data-invalid="!!errors.project_id || undefined">
-                    <FieldLabel><span>{{ t('inventory.project') }}<span class="text-rose-500">*</span></span></FieldLabel>
-                    <FieldContent>
-                      <Combobox v-model="form.project_id" :options="projectOptions" :search-placeholder="t('inventory.searchProjectPlaceholder')" :default-label="t('inventory.selectProject')" width-class="w-full h-10 px-4" :error="!!errors.project_id" />
-                    </FieldContent>
-                    <FieldError v-if="errors.project_id">{{ errors.project_id }}</FieldError>
-                  </Field>
-
-                  <!-- Photo -->
-                  <Field :data-invalid="(isSingle && !!errors.image_url) || undefined">
-                    <FieldLabel>
-                      <span>{{ t('inventory.photo') }}</span>
-                    </FieldLabel>
-                    <FieldContent>
-                      <div class="flex gap-2">
-                        <div class="flex-grow min-w-0 px-4 py-2 text-sm border rounded-[14px] bg-muted/10 truncate flex items-center h-10"
-                          :class="[hasImage ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' : 'text-muted-foreground cursor-default', (isSingle && errors.image_url) ? 'border-destructive' : 'border-input']"
-                          @click="hasImage && viewImageInNewTab()"
-                        >
-                          {{ form.image_url_name || (isSingle ? t('inventory.noPhotoSelected') : t('inventory.unchanged')) }}
-                        </div>
-                        <input type="file" id="edit-asset-photo-upload" class="hidden" accept=".jpg,.jpeg,.png,.webp" @change="handleFileUpload" />
-                        <Button type="button" @click="triggerFileInput" size="lg" class="shrink-0">{{ t('inventory.chooseFile') }}</Button>
-                        <Button
-                          v-if="isSingle"
-                          type="button"
-                          variant="destructive"
-                          size="icon"
-                          class="w-9 shrink-0"
-                          :disabled="!hasImage"
-                          @click="handleDeletePhoto"
-                          :title="t('inventory.deletePhoto')"
-                        >
-                          <Trash2 class="w-4 h-4" />
-                        </Button>
-                      </div>
-                      <p class="text-[10px] text-muted-foreground ml-1 mt-1">{{ t('inventory.maxFileSize1Mb') }}</p>
-                    </FieldContent>
-                    <FieldError v-if="isSingle && errors.image_url">{{ errors.image_url }}</FieldError>
-                  </Field>
-
-                  <!-- Plate Number / TNKB (Only for Vehicles) -->
-                  <Field v-if="isVehicle" :data-invalid="(isSingle && !!errors.vehicle_registration) || undefined" :data-disabled="(!isSingle) || undefined">
-                    <FieldLabel><span>{{ t('inventory.plateNumber') }}<span v-if="isSingle" class="text-rose-500">*</span></span></FieldLabel>
-                    <FieldContent>
-                      <input type="text" v-model="form.vehicle_registration" :disabled="!isSingle" :placeholder="!isSingle ? t('inventory.cannotBeChangedBulk') : t('inventory.nopolPlaceholder')"
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10 disabled:bg-muted/30 disabled:text-muted-foreground disabled:cursor-not-allowed uppercase"
-                      />
-                    </FieldContent>
-                    <FieldError v-if="isSingle && errors.vehicle_registration">{{ errors.vehicle_registration }}</FieldError>
-                  </Field>
-
-                  <!-- Document Upload (Required for approval conditions) -->
-                  <Field v-if="arrNeedApproval.includes(form.condition)" :data-invalid="!!errors.memo_file || undefined" :data-disabled="isDocumentDisabled || undefined">
-                    <FieldLabel><span>{{ t('inventory.memoDocument') }}<span v-if="!isDocumentDisabled" class="text-rose-500">*</span></span></FieldLabel>
-                    <FieldContent>
-                      <div class="flex gap-2">
-                        <div class="flex-grow min-w-0 px-4 py-2 text-sm border rounded-[14px] truncate flex items-center h-10"
-                          :class="[
-                            form.memo_file_name ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' : 'text-muted-foreground cursor-default',
-                            errors.memo_file ? 'border-destructive' : 'border-input',
-                            isDocumentDisabled ? 'bg-muted/30 text-muted-foreground cursor-not-allowed' : 'bg-muted/10'
-                          ]"
-                          @click="form.memo_file_name && viewMemoInNewTab()"
-                        >
-                          {{ form.memo_file_name || t('inventory.noFileSelected') }}
-                        </div>
-                        <input type="file" id="edit-asset-memo-upload" class="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp" @change="handleMemoUpload" :disabled="isDocumentDisabled" />
-                        <Button type="button" @click="triggerMemoFileInput" size="lg" :disabled="isDocumentDisabled">{{ t('inventory.chooseDoc') }}</Button>
-                      </div>
-                      <p class="text-[10px] text-muted-foreground ml-1 mt-1">{{ t('inventory.maxFileSize2Mb') }}</p>
-                    </FieldContent>
-                    <FieldError v-if="errors.memo_file">{{ errors.memo_file }}</FieldError>
-                  </Field>
-
-                  <!-- Lost Document Upload (Required only if condition is Hilang) -->
-                  <Field v-if="form.condition === 'Hilang'" :data-invalid="!!errors.lost_doc_file || undefined" :data-disabled="isDocumentDisabled || undefined">
-                    <FieldLabel><span>{{ t('inventory.lostDocument') }}<span v-if="!isDocumentDisabled" class="text-rose-500">*</span></span></FieldLabel>
-                    <FieldContent>
-                      <div class="flex gap-2">
-                        <div class="flex-grow min-w-0 px-4 py-2 text-sm border rounded-[14px] truncate flex items-center h-10"
-                          :class="[
-                            form.lost_doc_file_name ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' : 'text-muted-foreground cursor-default',
-                            errors.lost_doc_file ? 'border-destructive' : 'border-input',
-                            isDocumentDisabled ? 'bg-muted/30 text-muted-foreground cursor-not-allowed' : 'bg-muted/10'
-                          ]"
-                          @click="form.lost_doc_file_name && viewLostDocInNewTab()"
-                        >
-                          {{ form.lost_doc_file_name || t('inventory.noFileSelected') }}
-                        </div>
-                        <input type="file" id="edit-asset-lost-doc-upload" class="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp" @change="handleLostDocUpload" :disabled="isDocumentDisabled" />
-                        <Button type="button" @click="triggerLostDocFileInput" size="lg" :disabled="isDocumentDisabled">{{ t('inventory.chooseDoc') }}</Button>
-                      </div>
-                      <p class="text-[10px] text-muted-foreground ml-1 mt-1">{{ t('inventory.maxFileSize2Mb') }}</p>
-                    </FieldContent>
-                    <FieldError v-if="errors.lost_doc_file">{{ errors.lost_doc_file }}</FieldError>
-                  </Field>
-
-                  <!-- Admin Note / Deletion Note (for Total Damage or Lost) -->
-                  <Field v-if="arrNeedApproval.includes(form.condition)" :data-disabled="isDocumentDisabled || undefined">
-                    <FieldLabel><span>{{ t('inventory.adminNote') }}</span></FieldLabel>
-                    <FieldContent>
-                      <textarea
-                        id="edit-asset-admin-note"
-                        name="admin_note"
-                        v-model="form.admin_note"
-                        rows="2"
-                        maxlength="1000"
-                        :placeholder="t('inventory.adminNotePlaceholder')"
-                        :disabled="isDocumentDisabled"
-                        class="w-full px-4 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors resize-none border-input disabled:bg-muted/30 disabled:text-muted-foreground disabled:cursor-not-allowed"
-                      />
-                    </FieldContent>
-                  </Field>
-
-                  <!-- BoD/BoC Decision & Document Upload (Only visible when existing status is Pending:BoD/BoC) -->
-                  <div v-if="isBodBocFieldVisible" class="space-y-4 pt-2 border-t border-border/60">
-                    <div class="flex items-center gap-6">
-                      <label class="flex items-center gap-2 cursor-pointer text-sm font-medium">
-                        <Checkbox 
-                          id="bod-approval-checkbox"
-                          :model-value="bodBocDecisionType === 'approval'" 
-                          @update:model-value="(val) => handleToggleBodBocDecision('approval', Boolean(val))" 
-                        />
-                        <span>{{ t('inventory.bodBocApproval') }}</span>
-                      </label>
-                      <label class="flex items-center gap-2 cursor-pointer text-sm font-medium">
-                        <Checkbox 
-                          id="bod-disapproval-checkbox"
-                          :model-value="bodBocDecisionType === 'disapproval'" 
-                          @update:model-value="(val) => handleToggleBodBocDecision('disapproval', Boolean(val))" 
-                        />
-                        <span>{{ t('inventory.bodBocDisapproval') }}</span>
-                      </label>
-                    </div>
-
-                    <!-- BoD/BoC Approval Document Upload -->
-                    <Field v-if="bodBocDecisionType === 'approval'" :data-invalid="!!errors.bod_boc_approval_file || undefined">
-                      <FieldLabel><span>{{ t('inventory.uploadBodBocDoc') }}</span></FieldLabel>
-                      <FieldContent>
-                        <div class="flex gap-2">
-                          <div class="flex-grow min-w-0 px-4 py-2 text-sm border rounded-[14px] truncate flex items-center h-10 bg-muted/10"
-                            :class="[
-                              form.bod_boc_approval_file_name ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' : 'text-muted-foreground cursor-default',
-                              errors.bod_boc_approval_file ? 'border-destructive' : 'border-input'
-                            ]"
-                            @click="form.bod_boc_approval_file_name && viewBodBocDocInNewTab()"
-                          >
-                            {{ form.bod_boc_approval_file_name || t('inventory.noFileSelected') }}
-                          </div>
-                          <input type="file" id="edit-asset-bod-boc-doc-upload" class="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp" @change="handleBodBocDocUpload" />
-                          <Button type="button" @click="triggerBodBocDocFileInput" size="lg">{{ t('inventory.chooseDoc') }}</Button>
-                        </div>
-                        <p class="text-[10px] text-muted-foreground ml-1 mt-1">{{ t('inventory.maxFileSize2Mb') }}</p>
-                      </FieldContent>
-                      <FieldError v-if="errors.bod_boc_approval_file">{{ errors.bod_boc_approval_file }}</FieldError>
-                    </Field>
-
-                    <!-- BoD/BoC Disapproval Document Upload -->
-                    <Field v-if="bodBocDecisionType === 'disapproval'" :data-invalid="!!errors.bod_boc_disapproval_file || undefined">
-                      <FieldLabel><span>{{ t('inventory.uploadBodBocDisapprovalDoc') }}</span></FieldLabel>
-                      <FieldContent>
-                        <div class="flex gap-2">
-                          <div class="flex-grow min-w-0 px-4 py-2 text-sm border rounded-[14px] truncate flex items-center h-10 bg-muted/10"
-                            :class="[
-                              form.bod_boc_disapproval_file_name ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' : 'text-muted-foreground cursor-default',
-                              errors.bod_boc_disapproval_file ? 'border-destructive' : 'border-input'
-                            ]"
-                            @click="form.bod_boc_disapproval_file_name && viewBodBocDisapprovalDocInNewTab()"
-                          >
-                            {{ form.bod_boc_disapproval_file_name || t('inventory.noFileSelected') }}
-                          </div>
-                          <input type="file" id="edit-asset-bod-boc-disapproval-doc-upload" class="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp" @change="handleBodBocDisapprovalDocUpload" />
-                          <Button type="button" @click="triggerBodBocDisapprovalDocFileInput" size="lg">{{ t('inventory.chooseDoc') }}</Button>
-                        </div>
-                        <p class="text-[10px] text-muted-foreground ml-1 mt-1">{{ t('inventory.maxFileSize2Mb') }}</p>
-                      </FieldContent>
-                      <FieldError v-if="errors.bod_boc_disapproval_file">{{ errors.bod_boc_disapproval_file }}</FieldError>
-                    </Field>
-                  </div>
-                </div>
-              </div>
+              <!-- Disposal & BoD/BoC Documents Section -->
+              <AssetDocumentsSection
+                :form="form"
+                :errors="errors"
+                :is-document-disabled="isDocumentDisabled"
+                :is-bod-boc-field-visible="isBodBocFieldVisible"
+                :bod-boc-decision-type="bodBocDecisionType"
+                :arr-need-approval="arrNeedApproval"
+                :trigger-memo-file-input="triggerMemoFileInput"
+                :trigger-lost-doc-file-input="triggerLostDocFileInput"
+                :trigger-bod-boc-file-input="triggerBodBocFileInput"
+                :trigger-bod-boc-disapproval-file-input="triggerBodBocDisapprovalFileInput"
+                :handle-memo-upload="handleMemoUpload"
+                :handle-lost-doc-upload="handleLostDocUpload"
+                :handle-bod-boc-file-upload="handleBodBocFileUpload"
+                :handle-bod-boc-disapproval-file-upload="handleBodBocDisapprovalFileUpload"
+                :handle-toggle-bod-boc-decision="handleToggleBodBocDecision"
+                :view-memo-in-new-tab="viewMemoInNewTab"
+                :view-lost-doc-in-new-tab="viewLostDocInNewTab"
+                :view-bod-boc-in-new-tab="viewBodBocInNewTab"
+                :view-bod-boc-disapproval-in-new-tab="viewBodBocDisapprovalInNewTab"
+              />
             </div>
 
             <!-- Footer -->
-            <div class="py-3 px-4 border-t border-border flex items-center justify-between">
+            <div class="py-3 px-4 border-t border-border flex items-center justify-between shrink-0">
               <p class="text-sm text-rose-500 italic font-medium">
                 {{ isSingle ? t('inventory.requiredMarker') : t('inventory.bulkEmptyMarker') }}
               </p>
               <div class="flex items-center gap-3">
-                <Button @click="closeModal" :disabled="isProcessing" variant="white" size="xl">{{ t('common.cancel') }}</Button>
-                <Button @click="handleSubmit" :disabled="isProcessing" variant="primary" size="xl" class="relative">
+                <Button
+                  @click="closeModal"
+                  :disabled="isProcessing"
+                  variant="white"
+                  size="xl"
+                >
+                  {{ t('common.cancel') }}
+                </Button>
+                <Button
+                  @click="handleSubmit"
+                  :disabled="isProcessing"
+                  variant="primary"
+                  size="xl"
+                  class="relative"
+                >
                   <Loader2 v-if="isProcessing" class="absolute inset-0 m-auto h-5 w-5 animate-spin" />
                   <span :class="{ 'opacity-0': isProcessing }">
                     {{ isSingle ? t('inventory.saveChanges') : t('inventory.saveBulkChanges') }}

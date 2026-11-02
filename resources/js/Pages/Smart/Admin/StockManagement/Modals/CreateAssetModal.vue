@@ -14,6 +14,7 @@ import {
 } from '@/Components/ui/dropdown-menu';
 import Combobox from '@/Components/Combobox.vue';
 import LocationCombobox from '@/Components/LocationCombobox.vue';
+import CurrencyInput from '@/Components/CurrencyInput.vue';
 import { Checkbox } from '@/Components/ui/checkbox';
 import { Field, FieldLabel, FieldContent, FieldError } from '@/Components/ui/field';
 import { compressImageIfNeeded } from '@/utils/imageCompressor';
@@ -431,16 +432,19 @@ const handleSubmit = () => {
                 <!-- Right Column -->
                 <div class="space-y-6">
                   <!-- Price -->
-                  <Field>
-                    <FieldLabel>
+                  <Field :data-invalid="!!errors.price || undefined">
+                    <FieldLabel for="create-asset-price">
                       <span>{{ t('inventory.price') }}</span>
                     </FieldLabel>
                     <FieldContent>
-                      <div class="flex rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors h-10 overflow-hidden">
-                        <span class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-r border-input select-none font-medium">Rp</span>
-                        <input type="number" v-model="form.price" placeholder="0" min="0" step="any" class="flex-1 min-w-0 px-4 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 transition-colors h-full" />
-                      </div>
+                      <CurrencyInput
+                        id="create-asset-price"
+                        v-model="form.price"
+                        :error="!!errors.price"
+                        placeholder="0"
+                      />
                     </FieldContent>
+                    <FieldError v-if="errors.price">{{ errors.price }}</FieldError>
                   </Field>
 
                   <!-- Classification -->

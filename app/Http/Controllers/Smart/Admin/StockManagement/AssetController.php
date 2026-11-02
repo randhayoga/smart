@@ -503,6 +503,21 @@ class AssetController extends Controller
         $previousStatus = $asset->base_status;
         $previousCondition = $asset->condition;
 
+        if ($request->has('is_assigned_to_location') && $request->input('is_assigned_to_location') !== null) {
+            $isAssigned = $request->boolean('is_assigned_to_location');
+            if ($isAssigned) {
+                $previousStatus = 'Di-assign (LT)';
+                $validated['status'] = 'Di-assign (LT)';
+                $validated['is_assigned_to_location'] = true;
+            } else {
+                if ($asset->is_assigned_to_location || $asset->status === 'Di-assign (LT)') {
+                    $previousStatus = 'Tersedia';
+                    $validated['status'] = 'Tersedia';
+                }
+                $validated['is_assigned_to_location'] = false;
+            }
+        }
+
         if ($needApproval) {
             $validated['status'] = $previousStatus;
             $validated['approval_status'] = 'Pending:DM';

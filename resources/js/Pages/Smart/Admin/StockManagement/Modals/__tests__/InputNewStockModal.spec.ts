@@ -579,4 +579,43 @@ describe('InputNewStockModal.vue', () => {
     expect(wrapper.findComponent(AssetSection).exists()).toBe(false);
     expect(wrapper.vm.form.input_asset).toBe(false);
   });
+
+  it('activates photo preview hyperlink when an asset photo is uploaded in AssetSection', async () => {
+    setI18nLanguage('en');
+    const wrapper = mountModal();
+    const modelSection = wrapper.findComponent(ModelSection);
+    modelSection.vm.form.category_id = 1;
+    modelSection.vm.form.type_id = 10;
+    await wrapper.vm.$nextTick();
+
+    await wrapper.find('#input-lot-check').trigger('click');
+    await wrapper.find('#create-new-lot-check').trigger('click');
+    await wrapper.find('#input-asset-check').trigger('click');
+    await wrapper.vm.$nextTick();
+
+    const assetSection = wrapper.findComponent(AssetSection);
+    expect(assetSection.exists()).toBe(true);
+
+    const windowOpenSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+    const mockFile = new File(['dummy content'], 'asset_test.png', { type: 'image/png' });
+    global.URL.createObjectURL = vi.fn().mockReturnValue('blob:http://localhost/dummy-uuid');
+
+    const inputEl = assetSection.find('input[type="file"]').element as HTMLInputElement;
+    Object.defineProperty(inputEl, 'files', { value: [mockFile] });
+    await assetSection.find('input[type="file"]').trigger('change');
+
+    expect(wrapper.vm.form.photo?.name).toBe('asset_test.png');
+    expect(wrapper.vm.form.photo_name).toBe('asset_test.png');
+
+    const previewEl = assetSection.find('[data-testid="asset-photo-preview"]');
+    expect(previewEl.exists()).toBe(true);
+    expect(previewEl.classes()).toContain('cursor-pointer');
+    expect(previewEl.text()).toContain('asset_test.png');
+
+    await previewEl.trigger('click');
+    expect(global.URL.createObjectURL).toHaveBeenCalledWith(mockFile);
+    expect(windowOpenSpy).toHaveBeenCalledWith('blob:http://localhost/dummy-uuid', '_blank');
+
+    windowOpenSpy.mockRestore();
+  });
 });

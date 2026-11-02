@@ -51,7 +51,10 @@ describe('EditAssetModal.vue - Single & Mass Edit Logic and Layout', () => {
         stubs: {
           Teleport: true,
           Transition: false,
-          LocationCombobox: { template: '<div data-testid="location-combobox"></div>' },
+          LocationCombobox: {
+            props: ['disabled', 'modelValue'],
+            template: '<div data-testid="location-combobox" :data-disabled="disabled"></div>',
+          },
           Combobox: { template: '<div data-testid="project-combobox"></div>' },
           DropdownMenu: { template: '<div><slot /></div>' },
           DropdownMenuTrigger: { template: '<div><slot /></div>' },
@@ -295,6 +298,28 @@ describe('EditAssetModal.vue - Single & Mass Edit Logic and Layout', () => {
       expect(vm.form.is_assigned_to_location).toBe(false);
       expect(vm.form.status).toBe('Tersedia');
       expect(wrapper.text()).toContain('Tersedia');
+    });
+
+    it('disables location input when is_assigned_to_location is true, and enables it when false', async () => {
+      const wrapper = mountModal([
+        { id: 1, number: 'AST-001', status: 'Tersedia', condition: 'Bagus', location_id: 10, is_assigned_to_location: false },
+      ]);
+      const vm = wrapper.vm as any;
+
+      // Initially false -> location combobox is enabled
+      const locationCombobox = wrapper.find('[data-testid="location-combobox"]');
+      expect(locationCombobox.exists()).toBe(true);
+      expect(locationCombobox.attributes('data-disabled')).toBe('false');
+
+      // Assign to location -> disabled
+      vm.handleAssignToLocationSelect(true);
+      await wrapper.vm.$nextTick();
+      expect(locationCombobox.attributes('data-disabled')).toBe('true');
+
+      // Unassign -> enabled again
+      vm.handleAssignToLocationSelect(false);
+      await wrapper.vm.$nextTick();
+      expect(locationCombobox.attributes('data-disabled')).toBe('false');
     });
   });
 

@@ -100,8 +100,8 @@ describe('EditModelModal.vue', () => {
 
     expect(wrapper.text()).toContain('Edit Detail Model');
 
-    const inputs = wrapper.findAll('input');
-    const inputValues = inputs.map(i => (i.element as HTMLInputElement).value);
+    const inputs = wrapper.findAll('input, textarea');
+    const inputValues = inputs.map(i => (i.element as HTMLInputElement | HTMLTextAreaElement).value);
 
     // Disabled classification fields
     expect(inputValues).toContain('MDL-001');
@@ -127,7 +127,7 @@ describe('EditModelModal.vue', () => {
     expect(wrapper.find('button[title="Hapus Foto"]').exists()).toBe(false);
   });
 
-  it('places the unit (UoM) combobox in the second column alongside brand and name', async () => {
+  it('places the brand combobox in the first column and uom in the second column to balance fields', async () => {
     const wrapper = mountModal({ open: true, items: [sampleSingleItem] });
     await wrapper.vm.$nextTick();
 
@@ -137,17 +137,17 @@ describe('EditModelModal.vue', () => {
     const leftColumn = columns[0];
     const rightColumn = columns[1];
 
-    // Left column contains only the 3 classification items
+    // Left column contains classification items and brand combobox
     expect(leftColumn.text()).toContain('Nomor Model');
     expect(leftColumn.text()).toContain('Kategori');
     expect(leftColumn.text()).toContain('Jenis');
-    expect(leftColumn.find('.stubbed-combobox').exists()).toBe(false);
+    expect(leftColumn.text()).toContain('Merek');
+    expect(leftColumn.findAll('.stubbed-combobox').length).toBe(1); // Brand combobox
 
-    // Right column contains Brand, Type Name, and UoM
-    expect(rightColumn.text()).toContain('Merek');
+    // Right column contains Type Name, UoM, and Specs
     expect(rightColumn.text()).toContain('Nama Model');
     expect(rightColumn.text()).toContain('Satuan');
-    expect(rightColumn.findAll('.stubbed-combobox').length).toBe(2); // Brand combobox + UoM combobox
+    expect(rightColumn.findAll('.stubbed-combobox').length).toBe(1); // UoM combobox
   });
 
   it('submits update payload without any photo-related fields', async () => {
@@ -250,7 +250,7 @@ describe('EditModelModal.vue', () => {
     const wrapper = mountModal({ open: true, items: [nonComp1, nonComp2] });
     await wrapper.vm.$nextTick();
 
-    const specInput = wrapper.findAll('input').find(i => (i.element as HTMLInputElement).placeholder.toLowerCase() === 'tidak berubah');
+    const specInput = wrapper.findAll('textarea, input').find(i => (i.element as HTMLInputElement | HTMLTextAreaElement).placeholder.toLowerCase() === 'tidak berubah');
     expect(specInput).toBeDefined();
     expect((specInput!.element as HTMLInputElement).disabled).toBe(false);
 
@@ -301,5 +301,27 @@ describe('EditModelModal.vue', () => {
     expect(currentFormState.name).toBe('');
     expect(currentFormState.uom_id).toBeNull();
     expect(currentFormState.reset).toHaveBeenCalled();
+  });
+
+  it('renders and submits min_stock_threshold for consumable model', async () => {
+    const consumableItem = {
+      ...sampleSingleItem,
+      id: 501,
+      is_consumable: true,
+      min_stock_threshold: 15,
+    };
+
+    const wrapper = mountModal({ open: true, items: [consumableItem] });
+    await wrapper.vm.$nextTick();
+
+    const vm = wrapper.vm as any;
+    expect(vm.form.min_stock_threshold).toBe(15);
+
+    vm.form.min_stock_threshold = 25;
+    vm.handleSubmit();
+
+    expect(mockPost).toHaveBeenCalledTimes(1);
+    const [, payload] = mockPost.mock.calls[0];
+    expect(payload.min_stock_threshold).toBe(25);
   });
 });

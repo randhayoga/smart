@@ -1,6 +1,7 @@
 <script setup lang="ts">
 /**
- * Edit Tipe Modal component for updating item definitions, UOM, brand, specifications, and default images.
+ * Edit Model Modal component for updating catalog model definitions, UOM, brand, specifications, and min stock threshold.
+ * Matches InputNewStock ModelSection.vue styling, fields, and performance standards.
  */
 import { ref, watch, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -33,17 +34,26 @@ const { t } = useI18n();
 
 useModalLock(computed(() => props.open));
 
-const isSingle = computed(() => props.items.length === 1);
-const selectedItem = computed(() => isSingle.value ? props.items[0] : null);
+// Gated Computeds for Performance Optimization
+const isSingle = computed(() => {
+  if (!props.open) return true;
+  return props.items.length === 1;
+});
+
+const selectedItem = computed(() => {
+  if (!props.open) return null;
+  return isSingle.value && props.items.length > 0 ? props.items[0] : null;
+});
 
 const isCompCategory = computed(() => {
-  if (!selectedItem.value) return false;
+  if (!props.open || !selectedItem.value) return false;
   const code = selectedItem.value.category_code || selectedItem.value.barang_category_code;
   const cat = selectedItem.value.category || selectedItem.value.barang_category;
   return code === 'COMP' || cat === 'Computer' || cat === 'COMP';
 });
 
 const hasCompCategoryInItems = computed(() => {
+  if (!props.open || !props.items || props.items.length === 0) return false;
   return props.items.some(item => {
     const code = item.category_code || item.barang_category_code;
     const cat = item.category || item.barang_category;
@@ -52,23 +62,20 @@ const hasCompCategoryInItems = computed(() => {
 });
 
 const isConsumable = computed(() => {
-  if (!selectedItem.value) return false;
-  return Boolean(
-    selectedItem.value.is_consumable ??
-    selectedItem.value.subcategory?.is_consumable ??
-    false
-  );
-});
-
-const initialStock = computed(() => {
-  if (!isSingle.value || !selectedItem.value) return 0;
-  if (props.lots && props.lots.length > 0) {
-    const itemLots = props.lots.filter(l => String(l.barang_id) === String(selectedItem.value.id));
-    if (itemLots.length > 0) {
-      return itemLots.reduce((sum, l) => sum + Number(l.initial_quantity || 0), 0);
-    }
+  if (!props.open) return false;
+  if (isSingle.value) {
+    if (!selectedItem.value) return false;
+    return Boolean(
+      selectedItem.value.is_consumable ??
+      selectedItem.value.subcategory?.is_consumable ??
+      false
+    );
   }
-  return Number(selectedItem.value.initial_stock ?? 0);
+  return props.items.every(item => Boolean(
+    item.is_consumable ??
+    item.subcategory?.is_consumable ??
+    false
+  ));
 });
 
 const form = useForm({
@@ -77,22 +84,32 @@ const form = useForm({
   brand_id: null as number | null,
   name: '',
   specification: '',
+  min_stock_threshold: null as number | string | null,
 });
 
 const errors = ref({
   uom_id: '',
   brand_id: '',
   name: '',
+  specification: '',
+  min_stock_threshold: '',
 });
 
 const resetErrors = () => {
-  errors.value = { uom_id: '', brand_id: '', name: '' };
+  errors.value = {
+    uom_id: '',
+    brand_id: '',
+    name: '',
+    specification: '',
+    min_stock_threshold: '',
+  };
 };
 
 // Reactive error clearing
 watch(() => form.uom_id, v => { if (v && errors.value.uom_id) errors.value.uom_id = ''; });
 watch(() => form.brand_id, v => { if (v && errors.value.brand_id) errors.value.brand_id = ''; });
 watch(() => form.name, v => { if (v && errors.value.name) errors.value.name = ''; });
+watch(() => form.min_stock_threshold, v => { if (v !== null && errors.value.min_stock_threshold) errors.value.min_stock_threshold = ''; });
 
 const resetModalState = () => {
   form.reset();
@@ -103,6 +120,7 @@ const resetModalState = () => {
   form.brand_id = null;
   form.name = '';
   form.specification = '';
+  form.min_stock_threshold = null;
 };
 
 // Initialize form when modal opens
@@ -119,6 +137,7 @@ watch(() => props.open, (val) => {
     form.brand_id = selectedItem.value.brand_id;
     form.name = selectedItem.value.name;
     form.specification = isCompCategory.value ? '' : (selectedItem.value.specification || '');
+    form.min_stock_threshold = selectedItem.value.min_stock_threshold ?? null;
   }
 });
 
@@ -137,10 +156,18 @@ const handleSubmit = () => {
     if (!form.brand_id) { errors.value.brand_id = t('inventory.brandRequired'); isValid = false; }
     if (!form.name) { errors.value.name = t('inventory.nameRequired'); isValid = false; }
 
+    if (isConsumable.value && form.min_stock_threshold !== null && form.min_stock_threshold !== '') {
+      const thresholdNum = Number(form.min_stock_threshold);
+      if (isNaN(thresholdNum) || !Number.isInteger(thresholdNum) || thresholdNum < 0) {
+        errors.value.min_stock_threshold = t('inventory.thresholdInteger');
+        isValid = false;
+      }
+    }
+
     if (!isValid) return;
   } else {
     const hasAtLeastOneField = !!(
-      form.uom_id || form.brand_id || form.name || (!hasCompCategoryInItems.value && form.specification)
+      form.uom_id || form.brand_id || form.name || (!hasCompCategoryInItems.value && form.specification) || (form.min_stock_threshold !== null && form.min_stock_threshold !== '')
     );
     if (!hasAtLeastOneField) {
       toast.error(t('inventory.atLeastOneField'));
@@ -160,11 +187,17 @@ const handleSubmit = () => {
       formData.brand_id = data.brand_id;
       formData.name = data.name;
       formData.specification = isCompCategory.value ? null : data.specification;
+      if (isConsumable.value && data.min_stock_threshold !== null && data.min_stock_threshold !== '') {
+        formData.min_stock_threshold = data.min_stock_threshold;
+      }
     } else {
       if (data.uom_id) formData.uom_id = data.uom_id;
       if (data.brand_id) formData.brand_id = data.brand_id;
       if (data.name) formData.name = data.name;
       if (data.specification && !hasCompCategoryInItems.value) formData.specification = data.specification;
+      if (isConsumable.value && data.min_stock_threshold !== null && data.min_stock_threshold !== '') {
+        formData.min_stock_threshold = data.min_stock_threshold;
+      }
     }
     return formData;
   }).post(isSingle.value && selectedItem.value ? `/smart/stock-management/models/${selectedItem.value.id}` : '/smart/stock-management/models/bulk', {
@@ -198,11 +231,11 @@ const handleSubmit = () => {
         >
           <div 
             v-if="open" 
-            class="bg-card w-full max-w-[1100px] rounded-[14px] shadow-2xl overflow-hidden flex flex-col" 
+            class="bg-card w-full max-w-[1100px] rounded-[14px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]" 
             @click.stop
           >
             <!-- Modal Header -->
-            <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
+            <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border shrink-0">
               <h3 class="text-lg font-bold text-foreground">
                 {{ isSingle ? t('inventory.editTypeDetail') : t('inventory.editTypeSelected') }}
               </h3>
@@ -211,10 +244,10 @@ const handleSubmit = () => {
               </button>
             </div>
 
-            <!-- Modal Body -->
-            <div class="p-6">
+            <!-- Modal Body (Scrollable) -->
+            <div class="p-6 overflow-y-auto flex-1">
               <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
-                <!-- Left Column -->
+                <!-- Left Column: Master Reference Properties & Brand -->
                 <div class="space-y-6">
                   <Field data-disabled>
                     <FieldLabel>{{ t('inventory.typeCode') }}</FieldLabel>
@@ -251,10 +284,8 @@ const handleSubmit = () => {
                       />
                     </FieldContent>
                   </Field>
-                </div>
 
-                <!-- Right Column -->
-                <div class="space-y-6">
+                  <!-- Brand -->
                   <Field :data-invalid="(isSingle && !!errors.brand_id) || undefined">
                     <FieldLabel>
                       <span>{{ t('inventory.brand') }}<span v-if="isSingle" class="text-rose-500">*</span></span>
@@ -271,17 +302,21 @@ const handleSubmit = () => {
                     </FieldContent>
                     <FieldError v-if="isSingle && errors.brand_id">{{ errors.brand_id }}</FieldError>
                   </Field>
+                </div>
 
+                <!-- Right Column: Model Name, UoM, Specification, and Min Stock Threshold -->
+                <div class="space-y-6">
+                  <!-- Model Name -->
                   <Field :data-invalid="(isSingle && !!errors.name) || undefined">
                     <FieldLabel>
-                      <span>{{ t('inventory.typeName') }}<span v-if="isSingle" class="text-rose-500">*</span></span>
+                      <span>{{ t('inventory.modelName') }}<span v-if="isSingle" class="text-rose-500">*</span></span>
                     </FieldLabel>
                     <FieldContent>
                       <input 
                         type="text" 
                         v-model="form.name"
                         maxlength="255"
-                        :placeholder="isSingle ? t('inventory.typeNamePlaceholder') : t('inventory.unchanged')" 
+                        :placeholder="isSingle ? t('inventory.modelNamePlaceholder') : t('inventory.unchanged')" 
                         class="w-full px-4 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 transition-colors h-10"
                         :class="[isSingle && errors.name ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input focus:ring-primary/20 focus:border-primary']"
                       />
@@ -289,6 +324,7 @@ const handleSubmit = () => {
                     <FieldError v-if="isSingle && errors.name">{{ errors.name }}</FieldError>
                   </Field>
 
+                  <!-- UoM -->
                   <Field :data-invalid="(isSingle && !!errors.uom_id) || undefined">
                     <FieldLabel>
                       <span>{{ t('inventory.uom') }}<span v-if="isSingle" class="text-rose-500">*</span></span>
@@ -306,6 +342,7 @@ const handleSubmit = () => {
                     <FieldError v-if="isSingle && errors.uom_id">{{ errors.uom_id }}</FieldError>
                   </Field>
 
+                  <!-- Specification -->
                   <Field v-if="!isSingle && hasCompCategoryInItems" data-disabled>
                     <FieldLabel>{{ t('inventory.specification') }}</FieldLabel>
                     <FieldContent>
@@ -321,51 +358,57 @@ const handleSubmit = () => {
                   <Field v-else-if="!isSingle || !isCompCategory">
                     <FieldLabel>{{ t('inventory.specification') }}</FieldLabel>
                     <FieldContent>
-                      <input 
-                        type="text" 
+                      <textarea 
                         v-model="form.specification"
-                        maxlength="255"
+                        rows="3"
+                        maxlength="1000"
                         :placeholder="isSingle ? t('inventory.specificationPlaceholder') : t('inventory.unchanged')" 
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
+                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors resize-none"
                       />
                     </FieldContent>
                   </Field>
 
-                  <!-- Stock input (Disabled in Edit, only for consumables) -->
-                  <Field v-if="isConsumable" data-disabled>
-                    <FieldLabel><span>{{ t('inventory.stockCount') }}</span></FieldLabel>
+                  <!-- Minimum Stock Threshold (Consumables only) -->
+                  <Field v-if="isConsumable" :data-invalid="!!errors.min_stock_threshold || undefined">
+                    <FieldLabel>
+                      <span>{{ t('inventory.minStockThreshold') }}</span>
+                    </FieldLabel>
                     <FieldContent>
                       <input 
-                        type="text" 
-                        :value="isSingle && selectedItem ? initialStock : t('inventory.cannotBeChanged')" 
-                        disabled
-                        class="w-full px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10"
+                        type="number"
+                        min="0"
+                        step="1"
+                        v-model="form.min_stock_threshold"
+                        :placeholder="isSingle ? '0' : t('inventory.unchanged')"
+                        class="w-full px-4 py-2 text-sm border rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
+                        :class="[errors.min_stock_threshold ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input']"
                       />
                     </FieldContent>
+                    <FieldError v-if="errors.min_stock_threshold">{{ errors.min_stock_threshold }}</FieldError>
                   </Field>
                 </div>
               </div>
             </div>
 
             <!-- Modal Footer -->
-            <div class="py-3 px-4 border-t border-border flex items-center justify-between">
+            <div class="py-3 px-4 border-t border-border flex items-center justify-between shrink-0">
               <p class="text-sm text-rose-500 italic font-medium">
                 {{ isSingle ? t('inventory.requiredMarker') : t('inventory.bulkEmptyMarker') }}
               </p>
               <div class="flex items-center gap-3">
                 <Button 
-                  @click="closeModal"
-                  :disabled="form.processing"
-                  variant="white"
+                  @click="closeModal" 
+                  :disabled="form.processing" 
+                  variant="white" 
                   size="xl"
                 >
                   {{ t('common.cancel') }}
                 </Button>
                 <Button 
-                  @click="handleSubmit"
-                  :disabled="form.processing"
-                  variant="primary"
-                  size="xl"
+                  @click="handleSubmit" 
+                  :disabled="form.processing" 
+                  variant="primary" 
+                  size="xl" 
                   class="relative"
                 >
                   <Loader2 v-if="form.processing" class="absolute inset-0 m-auto h-5 w-5 animate-spin" />

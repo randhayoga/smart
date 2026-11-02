@@ -9,6 +9,7 @@ import Combobox from '@/Components/Combobox.vue';
 import Checkbox from '@/Components/ui/checkbox/Checkbox.vue';
 import { Button } from '@/Components/ui/button';
 import LocationCombobox from '@/Components/LocationCombobox.vue';
+import CurrencyInput from '@/Components/CurrencyInput.vue';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -120,6 +121,14 @@ const handleDeletePhoto = () => {
   props.form.photo_name = '';
   if (photoFileInputRef.value) {
     photoFileInputRef.value.value = '';
+  }
+};
+
+const hasPhoto = computed(() => Boolean(props.form.photo || props.form.photo_name));
+
+const viewPhotoInNewTab = () => {
+  if (props.form.photo) {
+    window.open(URL.createObjectURL(props.form.photo), '_blank');
   }
 };
 
@@ -276,27 +285,18 @@ const getClassificationLabel = (cls: string) => {
 
         <!-- Right Column -->
         <div class="space-y-6">
-          <!-- Price / Harga (freetext, numeric only) -->
+          <!-- Price / Harga (freetext, formatted currency) -->
           <Field :data-invalid="!!errors.price || undefined">
             <FieldLabel for="new-asset-price">
               <span>{{ t('inventory.price') }}</span>
             </FieldLabel>
             <FieldContent>
-              <div
-                class="flex rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors h-10 overflow-hidden"
-                :class="[errors.price ? 'border-destructive focus-within:ring-destructive/20 focus-within:border-destructive' : '']"
-              >
-                <span class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-r border-input select-none font-medium">Rp</span>
-                <input
-                  id="new-asset-price"
-                  v-model="form.price"
-                  type="number"
-                  min="0"
-                  step="any"
-                  placeholder="0"
-                  class="flex-1 min-w-0 px-4 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 transition-colors h-full"
-                />
-              </div>
+              <CurrencyInput
+                id="new-asset-price"
+                v-model="form.price"
+                :error="!!errors.price"
+                placeholder="0"
+              />
             </FieldContent>
             <FieldError v-if="errors.price">{{ errors.price }}</FieldError>
           </Field>
@@ -380,7 +380,17 @@ const getClassificationLabel = (cls: string) => {
             <FieldContent>
               <div class="space-y-1">
                 <div class="flex items-center gap-2">
-                  <div class="flex-1 px-3 py-2 text-sm border rounded-[10px] bg-muted/40 text-muted-foreground truncate h-10 flex items-center">
+                  <div
+                    data-testid="asset-photo-preview"
+                    class="flex-1 px-3 py-2 text-sm border rounded-[10px] bg-muted/40 truncate h-10 flex items-center"
+                    :class="[
+                      hasPhoto
+                        ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted'
+                        : 'text-muted-foreground cursor-default',
+                      errors.photo ? 'border-destructive' : 'border-input',
+                    ]"
+                    @click="hasPhoto && viewPhotoInNewTab()"
+                  >
                     {{ form.photo_name || t('inventory.noPhotoSelected') }}
                   </div>
                   <input
@@ -403,7 +413,7 @@ const getClassificationLabel = (cls: string) => {
                     variant="destructive"
                     size="icon"
                     class="w-9 shrink-0"
-                    :disabled="!form.photo"
+                    :disabled="!hasPhoto"
                     @click="handleDeletePhoto"
                   >
                     <Trash2 class="w-4 h-4" />

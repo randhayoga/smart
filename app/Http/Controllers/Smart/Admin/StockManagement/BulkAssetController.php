@@ -583,13 +583,22 @@ class BulkAssetController extends Controller
         if (!empty($updateData)) {
             foreach ($assets as $asset) {
                 $assetData = $updateData;
-                if ($needApproval) {
-                    $assetData['status'] = $asset->base_status;
-                }
-                if (isset($updateData['is_assigned_to_location']) && !$updateData['is_assigned_to_location']) {
-                    if ($asset->status === 'Di-assign (LT)') {
-                        $assetData['status'] = 'Tersedia';
+
+                $targetBaseStatus = $asset->base_status;
+                if (isset($updateData['is_assigned_to_location'])) {
+                    if ($updateData['is_assigned_to_location']) {
+                        $targetBaseStatus = 'Di-assign (LT)';
+                        $assetData['status'] = 'Di-assign (LT)';
+                    } else {
+                        if ($asset->is_assigned_to_location || $asset->status === 'Di-assign (LT)') {
+                            $targetBaseStatus = 'Tersedia';
+                            $assetData['status'] = 'Tersedia';
+                        }
                     }
+                }
+
+                if ($needApproval) {
+                    $assetData['status'] = $targetBaseStatus;
                 }
                 $asset->update($assetData);
             }
@@ -612,8 +621,7 @@ class BulkAssetController extends Controller
             $pendingDmAssets = [];
             foreach ($assets as $asset) {
                 if (!$existingPendingAssetIds->has($asset->id)) {
-                    $previousStatus = $asset->base_status;
-                    $asset->status = $previousStatus;
+                    $previousStatus = $asset->status;
                     $asset->approval_status = 'Pending:DM';
                     AssetDeletionApproval::create([
                         'asset_id' => $asset->id,

@@ -78,17 +78,19 @@ class Asset extends Model
 
                 // 1. Assignment Action (Preempts redundant status change log)
                 if ($asset->isDirty('is_assigned_to_location')) {
-                    $locId = $asset->location_id ?? $asset->getOriginal('location_id');
+                    // When unassigning or assigning, the assignment event happened at the original location
+                    $locId = $asset->getOriginal('location_id') ?? $asset->location_id;
                     $location = $locId ? \App\Models\Master\Location::find($locId) : null;
                     $locationName = $location?->name ?? $location?->full_name ?? '-';
 
                     $note = $asset->is_assigned_to_location
-                        ? "Aset di-assign ke lokasi {$locationName}"
-                        : "Assignment asset ke lokasi {$locationName} selesai.";
+                        ? "Di-assign ke lokasi {$locationName}"
+                        : "Assignment ke lokasi {$locationName} selesai.";
 
                     $actions[] = [
                         'action_type' => 'Assignment',
                         'note' => $note,
+                        'location_id' => $locId,
                         'previous_state' => [
                             'is_assigned_to_location' => $asset->getOriginal('is_assigned_to_location'),
                             'status' => $asset->getOriginal('status'),
@@ -127,6 +129,7 @@ class Asset extends Model
                     $actions[] = [
                         'action_type' => $actionType,
                         'note' => $note,
+                        'location_id' => $asset->location_id,
                         'previous_state' => ['status' => $oldStatus],
                         'new_state' => ['status' => $newStatus],
                         'approval' => $approval,
@@ -143,6 +146,7 @@ class Asset extends Model
                     $actions[] = [
                         'action_type' => 'Perubahan kondisi',
                         'note' => $note,
+                        'location_id' => $asset->location_id,
                         'previous_state' => ['condition' => $oldCondition],
                         'new_state' => ['condition' => $newCondition],
                         'approval' => null,
@@ -158,6 +162,7 @@ class Asset extends Model
                     $actions[] = [
                         'action_type' => 'Pemindahan',
                         'note' => $note,
+                        'location_id' => $asset->location_id,
                         'previous_state' => [
                             'location_id' => $asset->getOriginal('location_id'),
                         ],
@@ -189,7 +194,7 @@ class Asset extends Model
                             'action_type' => $act['action_type'],
                             'status' => $asset->status,
                             'condition' => $asset->condition,
-                            'location_id' => $asset->location_id,
+                            'location_id' => $act['location_id'] ?? $asset->location_id,
                             'start_date' => now(),
                             'end_date' => $isLast ? null : now(),
                             'actor_id' => $actorId,

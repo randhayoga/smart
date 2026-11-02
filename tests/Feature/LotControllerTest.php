@@ -113,6 +113,20 @@ class LotControllerTest extends TestCase
             'user_id' => $user->id,
             'action_type' => 'update',
         ]);
+
+        // Verify individual verbose notes were recorded for each changed attribute
+        $logs = InventoryLog::where('lot_id', $lot->id)->where('action_type', 'update')->get();
+        $this->assertCount(2, $logs); // organizer_id changed and po_number changed
+
+        $organizerLog = $logs->first(fn ($l) => str_contains($l->note, 'pengelola'));
+        $this->assertNotNull($organizerLog);
+        $this->assertStringContainsString($newOrganizer->name, $organizerLog->note);
+        $this->assertStringNotContainsString($lot->number, $organizerLog->note);
+
+        $poLog = $logs->first(fn ($l) => str_contains($l->note, 'nomor PO'));
+        $this->assertNotNull($poLog);
+        $this->assertStringContainsString('PO-UPDATED', $poLog->note);
+        $this->assertStringNotContainsString($lot->number, $poLog->note);
     }
 
     public function test_procurement_lot_requires_po_number(): void
@@ -491,5 +505,11 @@ class LotControllerTest extends TestCase
             'requester_id' => $user->id,
             'decision' => 'pending',
         ]);
+
+        // Verify inventory log for LOT creation reflects actual asset count (2) instead of 0
+        $log = InventoryLog::where('lot_id', $lot->id)->where('action_type', 'stock_in')->first();
+        $this->assertNotNull($log);
+        $this->assertEquals(2, $log->quantity_change);
+        $this->assertStringContainsString('sebanyak 2', $log->note);
     }
 }

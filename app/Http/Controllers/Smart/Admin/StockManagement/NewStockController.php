@@ -36,8 +36,10 @@ class NewStockController extends Controller
         $isConsumable = (bool) $type->is_consumable;
 
         $result = DB::transaction(function () use ($request, $validated, $category, $type, $isComp, $isKend, $isConsumable) {
+            $isNewModel = $request->boolean('create_new_type');
+
             // 1. Model Resolution
-            if ($request->boolean('create_new_type')) {
+            if ($isNewModel) {
                 $modelNumber = $validated['model_number'] ?? $this->generateModelNumber($category, $type);
                 $model = InventoryModel::create([
                     'number' => $modelNumber,
@@ -107,9 +109,7 @@ class NewStockController extends Controller
                         app(NotificationService::class)->checkAndNotifyLowStock($lot->model);
                     }
 
-                    if ($request->user()) {
-                        app(InventoryLogService::class)->logLotCreated($lot, $request->user());
-                    }
+                    $assetCountForLog = null;
                 } else {
                     $lot = Lot::with(['model.type.category', 'organizer'])->findOrFail($validated['lot_id']);
                 }
@@ -132,6 +132,7 @@ class NewStockController extends Controller
 
                     $isBulk = !$isKend && $request->boolean('is_bulk');
                     $quantity = $isBulk ? (int) ($validated['bulk_quantity'] ?? 1) : 1;
+                    $assetCountForLog = $quantity;
 
                     if ($isBulk) {
                         $assetNumbers = app(AssetNumberService::class)->generateBulkAssetNumbers($lot, $quantity);
@@ -177,6 +178,10 @@ class NewStockController extends Controller
                             app(NotificationService::class)->notifyManagerBulkAssetActivation($createdAssets, $lot, $user);
                         })->afterResponse();
                     }
+                }
+
+                if ($lot && $request->user() && ($isNewModel || $request->boolean('create_new_lot'))) {
+                    app(InventoryLogService::class)->logLotCreated($lot, $request->user(), null, $assetCountForLog ?? null);
                 }
             }
 

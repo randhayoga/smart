@@ -7,6 +7,7 @@ import { useI18n } from 'vue-i18n';
 import { ChevronDown, Trash2 } from 'lucide-vue-next';
 import Combobox from '@/Components/Combobox.vue';
 import LocationCombobox from '@/Components/LocationCombobox.vue';
+import CurrencyInput from '@/Components/CurrencyInput.vue';
 import Checkbox from '@/Components/ui/checkbox/Checkbox.vue';
 import { Button } from '@/Components/ui/button';
 import {
@@ -222,6 +223,16 @@ const viewLotPhotoInNewTab = () => {
     window.open('/media/' + props.parentImageUrl, '_blank');
   }
 };
+
+const hasMemoFile = computed(() => {
+  return Boolean(props.form.memo_file || props.form.memo_file_name);
+});
+
+const viewMemoFileInNewTab = () => {
+  if (props.form.memo_file) {
+    window.open(URL.createObjectURL(props.form.memo_file), '_blank');
+  }
+};
 </script>
 
 <template>
@@ -396,7 +407,17 @@ const viewLotPhotoInNewTab = () => {
                 <FieldContent>
                   <div class="space-y-1">
                     <div class="flex items-center gap-2">
-                      <div class="flex-1 px-3 py-2 text-sm border rounded-[10px] bg-muted/40 text-muted-foreground truncate h-10 flex items-center">
+                      <div
+                        data-testid="memo-file-preview"
+                        class="flex-1 px-3 py-2 text-sm border rounded-[10px] bg-muted/40 truncate h-10 flex items-center"
+                        :class="[
+                          hasMemoFile
+                            ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted'
+                            : 'text-muted-foreground cursor-default',
+                          errors.memo_file ? 'border-destructive' : 'border-input',
+                        ]"
+                        @click="hasMemoFile && viewMemoFileInNewTab()"
+                      >
                         {{ form.memo_file_name || t('inventory.noFileSelected') }}
                       </div>
                       <input
@@ -419,7 +440,7 @@ const viewLotPhotoInNewTab = () => {
                         variant="destructive"
                         size="icon"
                         class="w-9 shrink-0"
-                        :disabled="!form.memo_file"
+                        :disabled="!hasMemoFile"
                         @click="handleDeleteMemoFile"
                       >
                         <Trash2 class="w-4 h-4" />
@@ -459,22 +480,19 @@ const viewLotPhotoInNewTab = () => {
             </Field>
 
             <!-- Consumable: Unit Price Input -->
-            <Field v-if="isConsumable">
-              <FieldLabel>
+            <Field v-if="isConsumable" :data-invalid="!!errors.unit_price || undefined">
+              <FieldLabel for="new-lot-unit-price">
                 <span>{{ t('inventory.unitPrice') }}</span>
               </FieldLabel>
               <FieldContent>
-                <div class="flex w-full rounded-[14px] border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors h-10 overflow-hidden">
-                  <span class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-r border-input select-none font-medium">Rp</span>
-                  <input
-                    type="number"
-                    v-model="form.unit_price"
-                    :placeholder="t('inventory.unitPricePlaceholder')"
-                    min="0"
-                    class="flex-1 min-w-0 px-4 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 transition-colors h-full"
-                  />
-                </div>
+                <CurrencyInput
+                  id="new-lot-unit-price"
+                  v-model="form.unit_price"
+                  :error="!!errors.unit_price"
+                  :placeholder="t('inventory.unitPricePlaceholder')"
+                />
               </FieldContent>
+              <FieldError v-if="errors.unit_price">{{ errors.unit_price }}</FieldError>
             </Field>
           </div>
 

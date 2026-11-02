@@ -25,6 +25,63 @@ class NewStockRequest extends FormRequest
         return $this->user() !== null;
     }
 
+    protected function prepareForValidation(): void
+    {
+        $merge = [];
+        if ($this->has('price') && is_string($this->input('price'))) {
+            $merge['price'] = $this->cleanCurrency($this->input('price'));
+        }
+        if ($this->has('unit_price') && is_string($this->input('unit_price'))) {
+            $merge['unit_price'] = $this->cleanCurrency($this->input('unit_price'));
+        }
+        if (!empty($merge)) {
+            $this->merge($merge);
+        }
+    }
+
+    private function cleanCurrency(?string $val): ?string
+    {
+        if ($val === null || trim($val) === '') {
+            return null;
+        }
+
+        $clean = preg_replace('/[^\d.,]/', '', $val);
+        if ($clean === '') {
+            return null;
+        }
+
+        if (str_contains($clean, '.') && str_contains($clean, ',')) {
+            if (strrpos($clean, '.') > strrpos($clean, ',')) {
+                $clean = str_replace(',', '', $clean);
+            } else {
+                $clean = str_replace('.', '', $clean);
+                $clean = str_replace(',', '.', $clean);
+            }
+        } elseif (str_contains($clean, '.')) {
+            if (substr_count($clean, '.') > 1) {
+                $clean = str_replace('.', '', $clean);
+            } else {
+                $parts = explode('.', $clean);
+                if (strlen(end($parts)) === 3) {
+                    $clean = str_replace('.', '', $clean);
+                }
+            }
+        } elseif (str_contains($clean, ',')) {
+            if (substr_count($clean, ',') > 1) {
+                $clean = str_replace(',', '', $clean);
+            } else {
+                $parts = explode(',', $clean);
+                if (strlen(end($parts)) === 3) {
+                    $clean = str_replace(',', '', $clean);
+                } else {
+                    $clean = str_replace(',', '.', $clean);
+                }
+            }
+        }
+
+        return is_numeric($clean) ? $clean : null;
+    }
+
     public function rules(): array
     {
         $rules = [

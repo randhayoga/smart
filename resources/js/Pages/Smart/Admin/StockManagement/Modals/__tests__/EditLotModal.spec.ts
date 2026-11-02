@@ -156,29 +156,32 @@ describe('EditLotModal.vue', () => {
       { id: 11, number: 'LOT-0002' },
     ];
 
-    it('renders mass edit title and LOT Code as disabled with "Tidak dapat diubah secara massal"', () => {
+    it('renders disabled Entry Type and LOT Code with "Tidak dapat diubah secara massal" in mass edit', () => {
       const wrapper = mountModal({ items: sampleBulkItems });
       expect(wrapper.text()).toContain('Edit LOT Terpilih');
+      expect(wrapper.text()).toContain('Jenis Entri');
 
-      const topLotInput = wrapper.findAll('input[disabled]')[0];
-      expect((topLotInput.element as HTMLInputElement).value).toBe('Tidak dapat diubah secara massal');
+      const disabledInputs = wrapper.findAll('input[disabled]');
+      expect((disabledInputs[0].element as HTMLInputElement).value).toBe('Tidak dapat diubah secara massal');
+      expect((disabledInputs[1].element as HTMLInputElement).value).toBe('Tidak dapat diubah secara massal');
     });
 
-    it('does not display Entry Type, PO Number, or Memo fields in mass edit', () => {
-      const wrapper = mountModal({ items: sampleBulkItems });
-      expect(wrapper.text()).not.toContain('Jenis Pemasukan');
-      expect(wrapper.find('#edit-lot-po-number').exists()).toBe(false);
-      expect(wrapper.find('#edit-lot-memo-number').exists()).toBe(false);
-    });
-
-    it('removes red asterisk from Purchase Date in mass edit', () => {
+    it('displays Purchase Date / Date of Grant label without red asterisk in mass edit', () => {
       const wrapper = mountModal({ items: sampleBulkItems });
       const dateField = wrapper.find('#edit-lot-purchase-date');
       expect(dateField.exists()).toBe(true);
 
+      expect(wrapper.text()).toContain('Tanggal Pembelian/Tanggal Dihibahkan');
+
       // Verify label has no red asterisk
       const label = dateField.element.closest('div')?.parentElement?.querySelector('label');
       expect(label?.textContent).not.toContain('*');
+    });
+
+    it('does not display PO Number or Memo fields in mass edit', () => {
+      const wrapper = mountModal({ items: sampleBulkItems });
+      expect(wrapper.find('#edit-lot-po-number').exists()).toBe(false);
+      expect(wrapper.find('#edit-lot-memo-number').exists()).toBe(false);
     });
 
     it('submits bulk lot updates to /smart/stock-management/lots/bulk', async () => {
