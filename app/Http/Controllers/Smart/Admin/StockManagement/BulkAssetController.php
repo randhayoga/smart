@@ -276,6 +276,7 @@ class BulkAssetController extends Controller
                     'Pending:DM',
                     'Pending:BoD/BoC',
                     'Di-assign (LT)',
+                    'Lisensi Kedaluwarsa',
                 ]),
             ],
             'condition' => ['nullable', 'string', 'in:Bagus,Rusak,Rusak Total,Hilang'],
@@ -465,7 +466,7 @@ class BulkAssetController extends Controller
             if ($request->filled('status')) {
                 $hasDisallowedStatusAssets = $assets->contains(function ($u) {
                     $s = strtolower(trim($u->status ?? ''));
-                    return $s !== 'tersedia' && $s !== 'di-assign (lt)';
+                    return $s !== 'tersedia' && $s !== 'di-assign (lt)' && $s !== 'lisensi kedaluwarsa';
                 });
                 if ($hasDisallowedStatusAssets) {
                     return redirect()->back()->withErrors(['status' => 'Status hanya dapat diubah jika semua aset yang dipilih berstatus Tersedia.']);
@@ -595,7 +596,7 @@ class BulkAssetController extends Controller
             if ($isAssigned) {
                 $hasInvalid = $assets->contains(function ($u) {
                     $s = strtolower(trim($u->status ?? ''));
-                    return $s !== 'tersedia' && $s !== 'di-assign (lt)';
+                    return $s !== 'tersedia' && $s !== 'di-assign (lt)' && $s !== 'lisensi kedaluwarsa';
                 });
                 if ($hasInvalid) {
                     return redirect()->back()->withErrors(['is_assigned_to_location' => 'Semua aset yang dipilih harus berstatus Tersedia untuk di-assign ke lokasi.']);
@@ -624,8 +625,17 @@ class BulkAssetController extends Controller
                     }
                 }
 
-                if ($isSoft && !empty($assetData['license_exp_date']) && Carbon::parse($assetData['license_exp_date'])->startOfDay()->lt(Carbon::today())) {
-                    if ($asset->status === 'Tersedia') {
+                if ($isSoft && !empty($assetData['license_exp_date'])) {
+                    $newExp = Carbon::parse($assetData['license_exp_date'])->startOfDay();
+                    $oldExp = $asset->license_exp_date ? Carbon::parse($asset->license_exp_date)->startOfDay() : null;
+
+                    if ($oldExp && $newExp->gt($oldExp)) {
+                        $assetData['status'] = 'Tersedia';
+                        $targetBaseStatus = 'Tersedia';
+                    } elseif (!$oldExp && $newExp->gte(Carbon::today())) {
+                        $assetData['status'] = 'Tersedia';
+                        $targetBaseStatus = 'Tersedia';
+                    } elseif ($newExp->lt(Carbon::today()) && $asset->status === 'Tersedia') {
                         $assetData['status'] = 'Lisensi Kedaluwarsa';
                         $targetBaseStatus = 'Lisensi Kedaluwarsa';
                     }

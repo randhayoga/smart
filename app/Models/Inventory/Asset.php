@@ -71,11 +71,24 @@ class Asset extends Model
             }
 
             $dirty = $asset->getDirty();
-            $tracked = ['status', 'approval_status', 'condition', 'location_id', 'is_assigned_to_location'];
+            $tracked = ['status', 'approval_status', 'condition', 'location_id', 'is_assigned_to_location', 'license_exp_date'];
             $changed = array_intersect(array_keys($dirty), $tracked);
 
             if (!empty($changed)) {
                 $isPendingStatus = ($asset->isDirty('approval_status') && $asset->approval_status === 'Pending:DM');
+
+                $isLicenseExtended = false;
+                $formattedNewDate = null;
+                if ($asset->is_software && $asset->isDirty('license_exp_date')) {
+                    $oldExpDate = $asset->getOriginal('license_exp_date') ? Carbon::parse($asset->getOriginal('license_exp_date'))->startOfDay() : null;
+                    $newExpDate = $asset->license_exp_date ? Carbon::parse($asset->license_exp_date)->startOfDay() : null;
+
+                    if ($newExpDate && (!$oldExpDate || $newExpDate->gt($oldExpDate))) {
+                        $isLicenseExtended = true;
+                        $formattedNewDate = $newExpDate->format('d-m-Y');
+                        $asset->status = 'Tersedia';
+                    }
+                }
 
                 $actions = [];
 
@@ -104,7 +117,7 @@ class Asset extends Model
                         ],
                         'approval' => null,
                     ];
-                } elseif (($asset->isDirty('status') || $asset->isDirty('approval_status')) && !$isPendingStatus) {
+                } elseif (($asset->isDirty('status') || $asset->isDirty('approval_status') || $isLicenseExtended) && !$isPendingStatus) {
                     // 2. Status Change
                     $oldStatus = $asset->getOriginal('status');
                     $newStatus = $asset->status;
@@ -126,7 +139,9 @@ class Asset extends Model
                             $note = "Status diubah dari '{$oldStatus}' menjadi '{$newStatus}'.";
                         }
                     } else {
-                        if ($newStatus === 'Lisensi Kedaluwarsa') {
+                        if ($isLicenseExtended) {
+                            $note = "Lisensi software telah diperpanjang hingga {$formattedNewDate}.";
+                        } elseif ($newStatus === 'Lisensi Kedaluwarsa') {
                             $expDate = $asset->license_exp_date ? Carbon::parse($asset->license_exp_date)->format('d-m-Y') : null;
                             $note = $expDate ? "Lisensi software telah kedaluwarsa pada {$expDate}." : "Lisensi software telah kedaluwarsa.";
                         } else {
@@ -144,9 +159,9 @@ class Asset extends Model
                     ];
                 }
 
-                // 2. Condition Change (Suppressed if status change was already handled as an approval/rejection)
+                // 2. Condition Change (Suppressed if status change was already handled as an approval/rejection, or if software asset)
                 $isHandledByApproval = isset($approval) && $approval !== null;
-                if ($asset->isDirty('condition') && !$isPendingStatus && !$isHandledByApproval) {
+                if (!$asset->is_software && $asset->isDirty('condition') && !$isPendingStatus && !$isHandledByApproval) {
                     $oldCondition = $asset->getOriginal('condition');
                     $newCondition = $asset->condition;
                     $note = "Kondisi fisik diubah dari '{$oldCondition}' menjadi '{$newCondition}'.";
@@ -161,8 +176,8 @@ class Asset extends Model
                     ];
                 }
 
-                // 3. Location Change (Pemindahan)
-                if ($asset->isDirty('location_id')) {
+                // 3. Location Change (Pemindahan - suppressed for software assets)
+                if (!$asset->is_software && $asset->isDirty('location_id')) {
                     $oldLoc = Location::find($asset->getOriginal('location_id'))?->full_name ?? '-';
                     $newLoc = Location::find($asset->location_id)?->full_name ?? '-';
                     $note = "Lokasi dipindahkan dari '{$oldLoc}' ke '{$newLoc}.'";

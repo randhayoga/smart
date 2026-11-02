@@ -347,6 +347,7 @@ class AssetController extends Controller
                     'Belum Diverifikasi',
                     'Verifikasi Ditolak',
                     'Di-assign (LT)',
+                    'Lisensi Kedaluwarsa',
                 ]),
             ],
             'condition' => ['required', 'string', 'in:Bagus,Rusak,Rusak Total,Hilang'],
@@ -426,7 +427,7 @@ class AssetController extends Controller
             ]);
         } else {
             if ($request->filled('status') && strtolower(trim($request->input('status'))) !== $currentStatusLower) {
-                if ($currentStatusLower !== 'tersedia' && $currentStatusLower !== 'di-assign (lt)') {
+                if ($currentStatusLower !== 'tersedia' && $currentStatusLower !== 'di-assign (lt)' && $currentStatusLower !== 'lisensi kedaluwarsa') {
                     return redirect()->back()->withErrors(['status' => 'Status hanya dapat diubah jika aset berstatus Tersedia.']);
                 }
             }
@@ -564,8 +565,15 @@ class AssetController extends Controller
             if ($request->has('renewal_reminder')) {
                 $validated['renewal_reminder'] = ($request->input('renewal_reminder') !== null && $request->input('renewal_reminder') !== '') ? (int)$request->input('renewal_reminder') : null;
             }
-            if ($asset->status === 'Tersedia' && !empty($validated['license_exp_date'])) {
-                if (Carbon::parse($validated['license_exp_date'])->startOfDay()->lt(Carbon::today())) {
+            if (!empty($validated['license_exp_date'])) {
+                $newExp = Carbon::parse($validated['license_exp_date'])->startOfDay();
+                $oldExp = $asset->license_exp_date ? Carbon::parse($asset->license_exp_date)->startOfDay() : null;
+
+                if ($oldExp && $newExp->gt($oldExp)) {
+                    $validated['status'] = 'Tersedia';
+                } elseif (!$oldExp && $newExp->gte(Carbon::today())) {
+                    $validated['status'] = 'Tersedia';
+                } elseif ($newExp->lt(Carbon::today()) && $asset->status === 'Tersedia') {
                     $validated['status'] = 'Lisensi Kedaluwarsa';
                 }
             }

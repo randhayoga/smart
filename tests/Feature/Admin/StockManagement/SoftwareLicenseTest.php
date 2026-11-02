@@ -637,4 +637,127 @@ class SoftwareLicenseTest extends TestCase
         $asset->refresh();
         $this->assertEquals('Lisensi Kedaluwarsa', $asset->status);
     }
+
+    public function test_extending_expired_software_asset_transitions_to_tersedia_and_logs_single_status_change(): void
+    {
+        $model = InventoryModel::factory()->create([
+            'type_id' => $this->softType->id,
+            'brand_id' => $this->brand->id,
+            'uom_id' => $this->uom->id,
+            'name' => 'Extended Suite Pro',
+        ]);
+        $lot = Lot::factory()->create([
+            'model_id' => $model->id,
+            'organizer_id' => $this->organizer->id,
+            'vendor_id' => $this->vendor->id,
+        ]);
+
+        $yesterday = Carbon::yesterday();
+        $asset = Asset::factory()->create([
+            'lot_id' => $lot->id,
+            'status' => 'Lisensi Kedaluwarsa',
+            'license_exp_date' => $yesterday->format('Y-m-d'),
+            'condition' => null,
+            'location_id' => null,
+        ]);
+
+        $initialLifecycleCount = AssetLifecycle::where('asset_id', $asset->id)->count();
+
+        $nextYear = Carbon::today()->addYear();
+        $response = $this->actingAs($this->admin)->put(route('smart.inventory.assets.update', $asset->number), [
+            'number' => $asset->number,
+            'lot_id' => $lot->id,
+            'borrowing_type' => 'LT',
+            'classification' => 'Aset',
+            'license_exp_date' => $nextYear->format('Y-m-d'),
+            'renewal_reminder' => 30,
+            'status' => 'Lisensi Kedaluwarsa',
+            'condition' => 'Bagus',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHasNoErrors();
+
+        $asset->refresh();
+        $this->assertEquals('Tersedia', $asset->status);
+        $this->assertEquals($nextYear->format('Y-m-d'), $asset->license_exp_date->format('Y-m-d'));
+
+        // Assert exactly one new lifecycle record was created
+        $newLifecycles = AssetLifecycle::where('asset_id', $asset->id)
+            ->orderBy('id', 'desc')
+            ->take(AssetLifecycle::where('asset_id', $asset->id)->count() - $initialLifecycleCount)
+            ->get();
+
+        $this->assertCount(1, $newLifecycles);
+        $log = $newLifecycles->first();
+
+        $expectedDate = $nextYear->format('d-m-Y');
+        $this->assertEquals('Perubahan status', $log->action_type);
+        $this->assertEquals("Lisensi software telah diperpanjang hingga {$expectedDate}.", $log->note);
+        $this->assertEquals('Tersedia', $log->status);
+        $this->assertEquals(['status' => 'Lisensi Kedaluwarsa'], $log->previous_state);
+        $this->assertEquals(['status' => 'Tersedia'], $log->new_state);
+
+        // Ensure generic status change note was suppressed (not created)
+        $genericLogCount = AssetLifecycle::where('asset_id', $asset->id)
+            ->where('note', 'like', "%Status diubah dari 'Lisensi Kedaluwarsa' menjadi 'Tersedia'%")
+            ->count();
+        $this->assertEquals(0, $genericLogCount);
+    }
+
+    public function test_extending_valid_software_asset_before_expiry_logs_single_status_change(): void
+    {
+        $model = InventoryModel::factory()->create([
+            'type_id' => $this->softType->id,
+            'brand_id' => $this->brand->id,
+            'uom_id' => $this->uom->id,
+            'name' => 'Continuous Suite',
+        ]);
+        $lot = Lot::factory()->create([
+            'model_id' => $model->id,
+            'organizer_id' => $this->organizer->id,
+            'vendor_id' => $this->vendor->id,
+        ]);
+
+        $currentExp = Carbon::today()->addMonth();
+        $asset = Asset::factory()->create([
+            'lot_id' => $lot->id,
+            'status' => 'Tersedia',
+            'license_exp_date' => $currentExp->format('Y-m-d'),
+            'condition' => null,
+            'location_id' => null,
+        ]);
+
+        $initialLifecycleCount = AssetLifecycle::where('asset_id', $asset->id)->count();
+
+        $extendedExp = Carbon::today()->addYears(2);
+        $response = $this->actingAs($this->admin)->put(route('smart.inventory.assets.update', $asset->number), [
+            'number' => $asset->number,
+            'lot_id' => $lot->id,
+            'borrowing_type' => 'LT',
+            'classification' => 'Aset',
+            'license_exp_date' => $extendedExp->format('Y-m-d'),
+            'renewal_reminder' => 30,
+            'status' => 'Tersedia',
+            'condition' => 'Bagus',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHasNoErrors();
+
+        $asset->refresh();
+        $this->assertEquals('Tersedia', $asset->status);
+
+        $newLifecycles = AssetLifecycle::where('asset_id', $asset->id)
+            ->orderBy('id', 'desc')
+            ->take(AssetLifecycle::where('asset_id', $asset->id)->count() - $initialLifecycleCount)
+            ->get();
+
+        $this->assertCount(1, $newLifecycles);
+        $log = $newLifecycles->first();
+
+        $expectedDate = $extendedExp->format('d-m-Y');
+        $this->assertEquals('Perubahan status', $log->action_type);
+        $this->assertEquals("Lisensi software telah diperpanjang hingga {$expectedDate}.", $log->note);
+    }
 }
