@@ -249,6 +249,12 @@ const isComp = computed(() => {
   return catCode === 'COMP' || cat === 'computer' || cat === 'comp';
 });
 
+const isSoft = computed(() => {
+  const catCode = props.asset?.barang_category_code || props.lot?.barang_category_code || props.asset?.model_category_code || props.lot?.model_category_code || '';
+  const cat = (finalBarangCategory.value || '').toLowerCase();
+  return catCode === 'SOFT' || cat === 'software' || cat === 'soft';
+});
+
 const finalLotVendor = computed(() => {
   const vId = props.lot?.vendor_id ?? props.asset?.lot_vendor_id;
   const vName = props.lot?.vendor || props.asset?.lot_vendor;
@@ -358,6 +364,15 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                       <p v-if="isVehicle" class="font-bold text-foreground">
                         <span class="text-foreground">{{ t('inventory.nopol') }}:</span> {{ asset.vehicle_registration || '-' }}
                       </p>
+                      <!-- Software License Information -->
+                      <p v-if="isSoft" class="text-foreground">
+                        <span class="text-foreground">{{ t('inventory.licenseExpDate') }}:</span>
+                        {{ asset.license_exp_date ? formatDate(asset.license_exp_date) : t('inventory.perpetual') }}
+                      </p>
+                      <p v-if="isSoft && asset.license_exp_date" class="text-foreground">
+                        <span class="text-foreground">{{ t('inventory.renewalReminder') }}:</span>
+                        {{ asset.renewal_reminder === 0 ? t('inventory.renewalReminderDisabled') : (asset.renewal_reminder !== null && asset.renewal_reminder !== undefined ? `${asset.renewal_reminder} ${t('inventory.renewalReminderSuffix')}` : '-') }}
+                      </p>
                       <p class="text-foreground flex items-center gap-1.5 flex-wrap">
                         <span class="text-foreground">{{ t('inventory.status') }}:</span> 
                         <StatusBadge 
@@ -366,7 +381,7 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                           :proposed-status="asset.proposed_status" 
                         />
                       </p>
-                      <p class="text-foreground">
+                      <p v-if="!isSoft" class="text-foreground">
                         {{ t('inventory.condition') }}: 
                         <span 
                           :class="[
@@ -384,7 +399,7 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                         {{ t('inventory.dmNote') }}: <span class="italic text-muted-foreground font-normal">"{{ asset.dm_note }}"</span>
                       </p>
                       <p class="text-foreground">{{ t('inventory.value') }}: {{ formatRupiah(asset.price) }}</p>
-                      <p class="text-foreground">{{ t('inventory.storageLocation') }}: {{ formatLocation(asset.location, asset.floor, asset.room) }}</p>
+                      <p v-if="!isSoft" class="text-foreground">{{ t('inventory.storageLocation') }}: {{ formatLocation(asset.location, asset.floor, asset.room) }}</p>
                       <p v-if="asset.type" class="text-foreground">{{ t('inventory.type') }}: {{ asset.type }}</p>
                       <p v-if="asset.classification" class="text-foreground">{{ t('inventory.classification') }}: {{ getClassificationLabel(asset.classification) }}</p>
                       <p class="text-foreground">{{ t('inventory.burden') }}: {{ asset.burden || '-' }}</p>

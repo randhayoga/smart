@@ -33,5 +33,8 @@ chmod -R 775 storage bootstrap/cache || true
 echo "Running database migrations..."
 php artisan migrate --force
 
+echo "Starting Laravel Scheduler daemon..."
+php artisan schedule:work > /dev/null 2>&1 &
+
 echo "Starting Laravel Octane with FrankenPHP..."
 exec php artisan octane:start --server=frankenphp --host=0.0.0.0 --workers=auto --max-requests=auto --port=80 --admin-port=2019 --caddyfile=Caddyfile

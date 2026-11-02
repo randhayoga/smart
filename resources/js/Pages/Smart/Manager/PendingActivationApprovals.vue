@@ -509,12 +509,12 @@ onUnmounted(() => {
     >
       <!-- Catatan text area (passed to slot) -->
       <div class="space-y-1.5 text-left w-full max-w-[90%] mx-auto">
-        <label class="text-base font-semibold text-foreground block">{{ $t('approvals.notesLabel') }}</label>
+        <label class="text-sm font-medium text-foreground block">{{ $t('approvals.notesLabel') }}</label>
         <textarea
           v-model="confirmNote"
           :placeholder="t('approvals.notesPlaceholder')"
           rows="3"
-          class="w-full text-base border border-input rounded-[14px] bg-background text-foreground p-3 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary shadow-sm"
+          class="w-full text-sm border border-input rounded-[14px] bg-background text-foreground p-3 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary shadow-sm resize-none"
         ></textarea>
       </div>
     </DeleteConfirmationModal>

@@ -82,18 +82,24 @@ class LotController extends Controller
         $category = $model->type?->category;
         $isComp = ($category && ($category->code === 'COMP' || strtolower($category->name) === 'computer'));
         $isKend = ($category && ($category->code === 'KEND'));
+        $isSoft = ($category && ($category->code === 'SOFT' || strtolower($category->name) === 'software'));
 
         if (!$isConsumable && $request->boolean('input_asset')) {
             $assetRules = [
                 'borrowing_type' => ['required', Rule::in(['LT', 'ST'])],
-                'condition' => ['required', Rule::in(['Bagus', 'Rusak', 'Good', 'Damaged'])],
-                'location_id' => ['required', Rule::exists(Location::class, 'id')],
+                'condition' => $isSoft ? ['nullable', Rule::in(['Bagus', 'Rusak', 'Good', 'Damaged'])] : ['required', Rule::in(['Bagus', 'Rusak', 'Good', 'Damaged'])],
+                'location_id' => $isSoft ? ['nullable', Rule::exists(Location::class, 'id')] : ['required', Rule::exists(Location::class, 'id')],
                 'price' => ['nullable', 'numeric', 'min:0', 'max:999999999999.99'],
                 'classification' => ['required', Rule::in(['Aset', 'Inventaris'])],
                 'photo' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:1024'],
                 'burden' => ['required', Rule::in(['Corporate', 'Project'])],
                 'project_id' => ['required_if:burden,Project', 'nullable', Rule::exists(TbProject::class, 'id_project')],
             ];
+
+            if ($isSoft) {
+                $assetRules['license_exp_date'] = ['nullable', 'date'];
+                $assetRules['renewal_reminder'] = ['nullable', 'integer', 'min:0'];
+            }
 
             if ($isComp) {
                 $assetRules['asset_specification'] = ['required', 'string', 'max:1000'];
@@ -119,7 +125,7 @@ class LotController extends Controller
 
         $imageUploadService = app(\App\Services\ImageUploadService::class);
 
-        $lot = DB::transaction(function () use ($request, $validated, $model, $isConsumable, $isComp, $isKend, $imageUploadService) {
+        $lot = DB::transaction(function () use ($request, $validated, $model, $isConsumable, $isComp, $isKend, $isSoft, $imageUploadService) {
             if ($request->hasFile('memo_file')) {
                 $validated['memo_url'] = $imageUploadService->storeImageOrFile($request->file('memo_file'), 'memos');
             }
@@ -195,9 +201,9 @@ class LotController extends Controller
                     $asset = Asset::create([
                         'number' => $assetNumber,
                         'lot_id' => $createdLot->id,
-                        'location_id' => $request->input('location_id'),
+                        'location_id' => $isSoft ? null : $request->input('location_id'),
                         'status' => 'Belum Diverifikasi',
-                        'condition' => $condition,
+                        'condition' => $isSoft ? null : $condition,
                         'borrowing_type' => $request->input('borrowing_type'),
                         'classification' => $request->input('classification'),
                         'comp_specification' => $isComp ? ($request->input('asset_specification') ?? null) : null,
@@ -206,6 +212,8 @@ class LotController extends Controller
                         'vehicle_registration' => $isKend ? ($request->input('plate_number') ?? null) : null,
                         'burden' => $assetBurden,
                         'project_id' => $assetBurden === 'Project' ? ($request->input('project_id') ?? null) : null,
+                        'license_exp_date' => $isSoft ? ($request->input('license_exp_date') ?: null) : null,
+                        'renewal_reminder' => $isSoft ? ($request->input('renewal_reminder') !== null && $request->input('renewal_reminder') !== '' ? (int)$request->input('renewal_reminder') : null) : null,
                     ]);
 
                     $lastApproval = AssetActivationApproval::create([
@@ -219,7 +227,10 @@ class LotController extends Controller
                 }
 
                 if (count($createdAssets) === 1) {
-                    app(NotificationService::class)->notifyManagerNewAssetActivation($createdAssets[0], $lastApproval);
+                    $singleAsset = $createdAssets[0];
+                    dispatch(function () use ($singleAsset, $lastApproval) {
+                        app(NotificationService::class)->notifyManagerNewAssetActivation($singleAsset, $lastApproval);
+                    })->afterResponse();
                 } elseif (count($createdAssets) > 1) {
                     $user = $request->user();
                     dispatch(function () use ($createdAssets, $createdLot, $user) {
@@ -573,6 +584,8 @@ class LotController extends Controller
                 'image_url' => $asset->image_url,
                 'vehicle_registration' => $asset->vehicle_registration,
                 'is_assigned_to_location' => (bool)$asset->is_assigned_to_location,
+                'license_exp_date' => $asset->license_exp_date ? $asset->license_exp_date->format('Y-m-d') : null,
+                'renewal_reminder' => $asset->renewal_reminder,
                 'burden' => $asset->burden,
                 'project_id' => $asset->project_id,
                 'project_name' => $asset->project ? $asset->project->project_name : null,

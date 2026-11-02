@@ -66,6 +66,12 @@ const isKend = computed(() => {
   return catCode === 'KEND' || cat.toLowerCase().includes('kendaraan') || cat.toLowerCase().includes('vehicle');
 });
 
+const isSoft = computed(() => {
+  const cat = props.barang.category || '';
+  const catCode = props.barang.category_code || '';
+  return catCode === 'SOFT' || cat.toLowerCase().includes('software');
+});
+
 const lotForm = useForm({
   _method: 'POST',
   barang_id: props.barang.id,
@@ -101,6 +107,9 @@ const lotForm = useForm({
   plate_number: '',
   is_bulk: false,
   bulk_quantity: '' as string | number,
+  license_exp_date: null as string | null,
+  renewal_reminder: null as number | string | null,
+  license_type: 'Subscription' as 'Subscription' | 'Perpetual',
 });
 
 const errors = ref<Record<string, string>>({
@@ -123,6 +132,8 @@ const errors = ref<Record<string, string>>({
   classification: '',
   bulk_quantity: '',
   plate_number: '',
+  license_exp_date: '',
+  renewal_reminder: '',
 });
 
 const resetErrors = () => {
@@ -146,6 +157,8 @@ const resetErrors = () => {
     classification: '',
     bulk_quantity: '',
     plate_number: '',
+    license_exp_date: '',
+    renewal_reminder: '',
   };
 };
 
@@ -335,6 +348,9 @@ watch(() => props.open, (val) => {
   lotForm.plate_number = '';
   lotForm.is_bulk = false;
   lotForm.bulk_quantity = '';
+  lotForm.license_exp_date = null;
+  lotForm.renewal_reminder = null;
+  lotForm.license_type = 'Subscription';
   lotForm.clearErrors();
   resetErrors();
 }, { immediate: true });
@@ -402,13 +418,18 @@ const handleSubmit = () => {
       errors.value.borrowing_type = t('inventory.borrowingTypeRequired');
       isValid = false;
     }
-    if (!lotForm.condition) {
-      errors.value.condition = t('inventory.conditionRequired');
-      isValid = false;
-    }
-    if (!lotForm.location_id) {
-      errors.value.location_id = t('inventory.locationRequired');
-      isValid = false;
+    if (!isSoft.value) {
+      if (!lotForm.condition) {
+        errors.value.condition = t('inventory.conditionRequired');
+        isValid = false;
+      }
+      if (!lotForm.location_id) {
+        errors.value.location_id = t('inventory.locationRequired');
+        isValid = false;
+      }
+    } else {
+      lotForm.condition = null as any;
+      lotForm.location_id = null as any;
     }
     if (!lotForm.classification) {
       errors.value.classification = t('inventory.classificationRequired');
@@ -429,6 +450,17 @@ const handleSubmit = () => {
       if (!lotForm.bulk_quantity || Number(lotForm.bulk_quantity) < 1) {
         errors.value.bulk_quantity = t('inventory.bulkQuantityRequired');
         isValid = false;
+      }
+    }
+    if (isSoft.value) {
+      if (lotForm.license_type === 'Subscription') {
+        if (!lotForm.license_exp_date) {
+          errors.value.license_exp_date = t('inventory.expDateRequiredForSubscription');
+          isValid = false;
+        }
+      } else {
+        lotForm.license_exp_date = null;
+        lotForm.renewal_reminder = null;
       }
     }
   }
@@ -468,9 +500,9 @@ const handleSubmit = () => {
       if (data.input_asset) {
         fd.burden = data.burden;
         fd.project_id = data.burden === 'Project' ? data.project_id : null;
-        fd.location_id = data.location_id ? Number(data.location_id) : null;
+        fd.location_id = isSoft.value ? null : (data.location_id ? Number(data.location_id) : null);
         fd.borrowing_type = data.borrowing_type;
-        fd.condition = data.condition;
+        fd.condition = isSoft.value ? null : data.condition;
         fd.classification = data.classification;
         fd.price = data.price || null;
         if (data.asset_specification) fd.asset_specification = data.asset_specification;
@@ -478,6 +510,10 @@ const handleSubmit = () => {
         fd.is_bulk = data.is_bulk;
         if (data.is_bulk) fd.bulk_quantity = data.bulk_quantity;
         if (data.photo) fd.photo = data.photo;
+        if (isSoft.value) {
+          fd.license_exp_date = data.license_type === 'Subscription' ? data.license_exp_date : null;
+          fd.renewal_reminder = data.license_type === 'Subscription' ? data.renewal_reminder : null;
+        }
       }
     }
 
@@ -894,6 +930,7 @@ const handleSubmit = () => {
                 :projects="projects || []"
                 :is-comp="isComp"
                 :is-kend="isKend"
+                :is-soft="isSoft"
                 :lot-ready="true"
                 :is-consumable="props.barang.is_consumable"
               />

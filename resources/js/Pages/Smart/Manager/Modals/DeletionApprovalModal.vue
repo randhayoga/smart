@@ -64,6 +64,16 @@ const isVehicle = (item: any) => {
          category.includes('motor') || subcategory.includes('motor');
 };
 
+/** Determines whether the given asset belongs to software category */
+const isSoft = (item: any) => {
+  if (!item) return false;
+  const catCode = item.category_code || item.asset_details?.category_code || item.asset_details?.model_category_code || item.asset_details?.barang_category_code || '';
+  const cat = (item.category || item.asset_details?.category || '').toLowerCase();
+  return catCode === 'SOFT' || cat === 'software' || cat === 'soft';
+};
+
+const hasCondition = (cond?: string | null) => Boolean(cond && cond !== '-' && cond.trim() !== '');
+
 const formatRupiah = (val: number | string | null | undefined) => {
   if (val === null || val === undefined || val === '') return '-';
   let num: number;
@@ -92,7 +102,7 @@ const openMemoFile = (path?: string | null) => {
   window.open('/media/' + path, '_blank');
 };
 const getConditionLabel = (cond?: string | null) => {
-  if (!cond) return '-';
+  if (!cond || cond === '-') return '';
   const c = cond.trim().toLowerCase();
   if (c === 'bagus' || c === 'good') return t('inventory.conditionGood');
   if (c === 'rusak' || c === 'damaged') return t('inventory.conditionDamaged');
@@ -197,7 +207,19 @@ const getConditionClass = (cond?: string | null) => {
                       <span class="text-foreground">{{ $t('approvals.plateLabel') }}</span> {{ approval.asset_details?.vehicle_registration || '-' }}
                     </p>
 
-                    <div class="flex items-center gap-1.5 flex-wrap">
+                    <!-- Software License Information -->
+                    <template v-if="isSoft(approval)">
+                      <p class="text-foreground">
+                        <span class="text-foreground">{{ $t('inventory.licenseExpDate') }}:</span>
+                        {{ approval.asset_details?.license_exp_date ? formatDate(approval.asset_details.license_exp_date) : $t('inventory.perpetual') }}
+                      </p>
+                      <p v-if="approval.asset_details?.license_exp_date" class="text-foreground">
+                        <span class="text-foreground">{{ $t('inventory.renewalReminder') }}:</span>
+                        {{ approval.asset_details?.renewal_reminder === 0 ? $t('inventory.renewalReminderDisabled') : (approval.asset_details?.renewal_reminder !== null && approval.asset_details?.renewal_reminder !== undefined ? `${approval.asset_details.renewal_reminder} ${$t('inventory.renewalReminderSuffix')}` : '-') }}
+                      </p>
+                    </template>
+
+                    <div v-if="!isSoft(approval) && hasCondition(approval.proposed_condition || approval.proposed_status || approval.status_label)" class="flex items-center gap-1.5 flex-wrap">
                       <span>{{ $t('approvals.proposedConditionLabel') }}</span>
                       <span :class="getConditionClass(approval.proposed_condition || approval.proposed_status || approval.status_label)">
                         {{ getConditionLabel(approval.proposed_condition || approval.proposed_status || approval.status_label) }}
@@ -219,24 +241,24 @@ const getConditionClass = (cond?: string | null) => {
 
                     <div class="text-foreground flex flex-col gap-1.5">
                       <div class="flex items-center gap-1.5 flex-wrap">
-                        <span>{{ $t('approvals.prevStatusConditionLabel') }}</span>
+                        <span>{{ hasCondition(approval.previous_condition || approval.asset_details?.condition) && !isSoft(approval) ? $t('approvals.prevStatusConditionLabel') : $t('inventory.status') + ':' }}</span>
                         <StatusBadge :status="approval.previous_status" />
-                        <span :class="getConditionClass(approval.previous_condition || approval.asset_details?.condition)">
+                        <span v-if="hasCondition(approval.previous_condition || approval.asset_details?.condition) && !isSoft(approval)" :class="getConditionClass(approval.previous_condition || approval.asset_details?.condition)">
                           {{ getConditionLabel(approval.previous_condition || approval.asset_details?.condition) }}
                         </span>
                       </div>
 
                       <div v-if="mode === 'decided'" class="flex items-center gap-1.5 flex-wrap">
-                        <span>{{ $t('approvals.postApprovalStatusConditionLabel') }}</span>
+                        <span>{{ hasCondition(approval.previous_condition || approval.asset_details?.condition) && !isSoft(approval) ? $t('approvals.postApprovalStatusConditionLabel') : $t('inventory.status') + ':' }}</span>
                         <template v-if="approval.decision === 'approved'">
                           <StatusBadge status="Tidak Aktif" approval-status="Pending:BoD/BoC" />
-                          <span :class="getConditionClass(approval.proposed_condition || approval.proposed_status)">
+                          <span v-if="hasCondition(approval.proposed_condition || approval.proposed_status) && !isSoft(approval)" :class="getConditionClass(approval.proposed_condition || approval.proposed_status)">
                             {{ getConditionLabel(approval.proposed_condition || approval.proposed_status) }}
                           </span>
                         </template>
                         <template v-else>
                           <StatusBadge :status="approval.previous_status" />
-                          <span :class="getConditionClass(approval.previous_condition || approval.asset_details?.condition)">
+                          <span v-if="hasCondition(approval.previous_condition || approval.asset_details?.condition) && !isSoft(approval)" :class="getConditionClass(approval.previous_condition || approval.asset_details?.condition)">
                             {{ getConditionLabel(approval.previous_condition || approval.asset_details?.condition) }}
                           </span>
                         </template>
@@ -254,7 +276,7 @@ const getConditionClass = (cond?: string | null) => {
                     </p>
 
                     <p class="text-foreground mt-1.5">{{ $t('approvals.priceLabel') }} {{ formatRupiah(approval.asset_details?.price) }}</p>
-                    <p class="text-foreground">{{ $t('approvals.storageLocationLabel') }} {{ formatLocation(approval.asset_details?.location, approval.asset_details?.floor, approval.asset_details?.room) }}</p>
+                    <p v-if="!isSoft(approval)" class="text-foreground">{{ $t('approvals.storageLocationLabel') }} {{ formatLocation(approval.asset_details?.location, approval.asset_details?.floor, approval.asset_details?.room) }}</p>
                     <p class="text-foreground" v-if="mode === 'pending'">{{ $t('approvals.lastUpdateLabel') }} {{ approval.requested_at }}</p>
                   </div>
                 </div>

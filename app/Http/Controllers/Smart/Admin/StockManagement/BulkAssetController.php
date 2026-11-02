@@ -11,6 +11,7 @@ use App\Models\Inventory\AssetActivationApproval;
 use App\Models\Inventory\AssetLifecycle;
 use App\Services\Inventory\AssetNumberService;
 use App\Models\TbProject;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
@@ -50,6 +51,13 @@ class BulkAssetController extends Controller
         ];
 
         $lot = Lot::with('model.type.category')->findOrFail($request->input('lot_id'));
+        $isSoft = ($lot->model?->type?->category?->code === 'SOFT' || strtolower($lot->model?->type?->category?->name ?? '') === 'software');
+        if ($isSoft) {
+            $rules['license_exp_date'] = 'nullable|date';
+            $rules['renewal_reminder'] = 'nullable|integer|min:0';
+            $rules['location_id'] = 'nullable|exists:locations,id';
+            $rules['condition'] = 'nullable|string|max:255';
+        }
         $isVehicle = false;
         if ($lot->model && $lot->model->type && $lot->model->type->category) {
             $catName = strtolower($lot->model->type->category->name);
@@ -140,6 +148,7 @@ class BulkAssetController extends Controller
             $projectId,
             $needApproval,
             $proposedCondition,
+            $isSoft,
             $request,
             $imageUploadService
         ) {
@@ -160,10 +169,10 @@ class BulkAssetController extends Controller
                 $asset = Asset::create([
                     'number' => $num,
                     'lot_id' => $validated['lot_id'],
-                    'location_id' => $validated['location_id'],
+                    'location_id' => $isSoft ? null : ($validated['location_id'] ?? null),
                     'status' => $validated['status'],
                     'approval_status' => $validated['approval_status'],
-                    'condition' => $validated['condition'],
+                    'condition' => $isSoft ? null : ($validated['condition'] ?? null),
                     'borrowing_type' => $borrowingType,
                     'classification' => $classification,
                     'comp_specification' => $finalCompSpec,
@@ -172,6 +181,8 @@ class BulkAssetController extends Controller
                     'vehicle_registration' => $validated['vehicle_registration'] ?? null,
                     'burden' => $burden,
                     'project_id' => $projectId,
+                    'license_exp_date' => $isSoft ? ($request->input('license_exp_date') ?: null) : null,
+                    'renewal_reminder' => $isSoft ? ($request->input('renewal_reminder') !== null && $request->input('renewal_reminder') !== '' ? (int)$request->input('renewal_reminder') : null) : null,
                 ]);
 
                 if ($needApproval) {
@@ -280,6 +291,8 @@ class BulkAssetController extends Controller
             'burden' => 'nullable|string|in:Corporate,Project',
             'project_id' => 'required_if:burden,Project|nullable|integer',
             'is_assigned_to_location' => ['nullable', 'boolean'],
+            'license_exp_date' => ['nullable', 'date'],
+            'renewal_reminder' => ['nullable', 'integer', 'min:0'],
         ], $messages);
         if ($validator->fails()) {
             if ($validator->errors()->has('borrowing_type')) {
@@ -563,6 +576,20 @@ class BulkAssetController extends Controller
             }
         }
 
+        $firstLot = Lot::with('model.type.category')->find($assets->first()?->lot_id);
+        $isSoft = ($firstLot?->model?->type?->category?->code === 'SOFT' || strtolower($firstLot?->model?->type?->category?->name ?? '') === 'software');
+        if ($isSoft) {
+            $updateData['location_id'] = null;
+            $updateData['condition'] = null;
+        }
+
+        if ($request->has('license_exp_date')) {
+            $updateData['license_exp_date'] = $isSoft ? ($request->input('license_exp_date') ?: null) : null;
+        }
+        if ($request->has('renewal_reminder')) {
+            $updateData['renewal_reminder'] = $isSoft ? (($request->input('renewal_reminder') !== null && $request->input('renewal_reminder') !== '') ? (int)$request->input('renewal_reminder') : null) : null;
+        }
+
         if ($request->has('is_assigned_to_location') && $request->input('is_assigned_to_location') !== null) {
             $isAssigned = $request->boolean('is_assigned_to_location');
             if ($isAssigned) {
@@ -594,6 +621,13 @@ class BulkAssetController extends Controller
                             $targetBaseStatus = 'Tersedia';
                             $assetData['status'] = 'Tersedia';
                         }
+                    }
+                }
+
+                if ($isSoft && !empty($assetData['license_exp_date']) && Carbon::parse($assetData['license_exp_date'])->startOfDay()->lt(Carbon::today())) {
+                    if ($asset->status === 'Tersedia') {
+                        $assetData['status'] = 'Lisensi Kedaluwarsa';
+                        $targetBaseStatus = 'Lisensi Kedaluwarsa';
                     }
                 }
 

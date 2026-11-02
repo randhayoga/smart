@@ -263,23 +263,35 @@ const getExportPayload = () => {
     t('inventory.category'),
     t('inventory.subcategory'),
     t('inventory.status'),
-    t('inventory.condition'),
-    t('inventory.value'),
-    t('inventory.storageLocation'),
-    t('inventory.tnkbShort')
   ];
-  const rows = data.map((item: any) => [
-    item.number,
-    item.barang_nama,
-    item.barang_brand,
-    item.barang_category,
-    item.barang_subcategory,
-    item.status,
-    item.condition,
-    item.price,
-    formatLocation(item.location, item.floor, item.room),
-    item.vehicle_registration || '-'
-  ]);
+  if (!isAllSoft.value) {
+    headers.push(t('inventory.condition'));
+  }
+  headers.push(t('inventory.value'));
+  if (!isAllSoft.value) {
+    headers.push(t('inventory.storageLocation'));
+  }
+  headers.push(t('inventory.tnkbShort'));
+
+  const rows = data.map((item: any) => {
+    const row = [
+      item.number,
+      item.barang_nama,
+      item.barang_brand,
+      item.barang_category,
+      item.barang_subcategory,
+      item.status,
+    ];
+    if (!isAllSoft.value) {
+      row.push(item.condition);
+    }
+    row.push(item.price);
+    if (!isAllSoft.value) {
+      row.push(formatLocation(item.location, item.floor, item.room));
+    }
+    row.push(item.vehicle_registration || '-');
+    return row;
+  });
   return { headers, rows };
 };
 
@@ -429,6 +441,43 @@ const filteredUnits = computed(() => {
   return list;
 });
 
+/** Determines whether an individual asset unit belongs to Software category */
+const isUnitSoft = (u: any): boolean => {
+  if (!u) return false;
+  const code = (u.barang_category_code || '').trim().toUpperCase();
+  const cat = (u.barang_category || '').trim().toLowerCase();
+  return code === 'SOFT' || cat === 'software' || cat === 'soft';
+};
+
+/** Determines whether all assets to be shown across all pagination are Software assets */
+const isAllSoft = computed(() => {
+  const parentCatCode = (props.barang?.category_code || props.lot?.barang_category_code || '').trim().toUpperCase();
+  const parentCat = (props.barang?.category || props.lot?.barang_category || '').trim().toLowerCase();
+  const isParentSoft = parentCatCode === 'SOFT' || parentCat === 'software' || parentCat === 'soft';
+
+  if (isParentSoft) {
+    return true;
+  }
+
+  if (categoryFilter.value && categoryFilter.value.trim().toLowerCase() === 'software') {
+    return true;
+  }
+
+  const list = filteredUnits.value;
+  if (list.length === 0) {
+    return false;
+  }
+
+  return list.every(u => isUnitSoft(u));
+});
+
+watch(isAllSoft, (allSoft) => {
+  if (allSoft) {
+    if (conditionFilter.value) conditionFilter.value = '';
+    if (locationFilter.value) locationFilter.value = '';
+  }
+});
+
 const getDescendantIds = (parentId: number): number[] => {
   const result: number[] = [];
   const findChildren = (pid: number) => {
@@ -517,7 +566,7 @@ const CONDITION_KEY_MAP: Record<string, string> = {
 };
 
 const getConditionLabel = (cond: string) => {
-  if (!cond) return '';
+  if (!cond || cond === '-') return '';
   const key = CONDITION_KEY_MAP[cond.toLowerCase()];
   return key && te(key) ? t(key) : cond;
 };
@@ -638,30 +687,31 @@ const columns = computed<ColumnDef<any>[]>(() => {
     );
   }
 
-  list.push(
-    {
-      accessorKey: 'status',
-      header: ({ column }) => h(Button, {
-        variant: 'ghost',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
-      }, () => [
-        t('inventory.status'),
-        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-      ]),
-      cell: ({ row }) => {
-        const status = row.getValue('status') as string || '';
-        const approvalStatus = row.original.approval_status;
-        const proposedStatus = row.original.proposed_status;
-        return h(StatusBadge, {
-          status,
-          approvalStatus,
-          proposedStatus,
-          class: 'rounded-sm'
-        });
-      }
-    },
-    {
+  list.push({
+    accessorKey: 'status',
+    header: ({ column }) => h(Button, {
+      variant: 'ghost',
+      onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+      class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+    }, () => [
+      t('inventory.status'),
+      h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+    ]),
+    cell: ({ row }) => {
+      const status = row.getValue('status') as string || '';
+      const approvalStatus = row.original.approval_status;
+      const proposedStatus = row.original.proposed_status;
+      return h(StatusBadge, {
+        status,
+        approvalStatus,
+        proposedStatus,
+        class: 'rounded-sm'
+      });
+    }
+  });
+
+  if (!isAllSoft.value) {
+    list.push({
       accessorKey: 'condition',
       header: ({ column }) => h(Button, {
         variant: 'ghost',
@@ -679,8 +729,8 @@ const columns = computed<ColumnDef<any>[]>(() => {
         
         return h('span', { class: textClass }, getConditionLabel(cond));
       }
-    }
-  );
+    });
+  }
 
   if (props.hideBarangColumns && isComp.value) {
     list.push({
@@ -703,28 +753,30 @@ const columns = computed<ColumnDef<any>[]>(() => {
     });
   }
 
-  list.push({
-    accessorKey: 'location',
-    header: ({ column }) => h(Button, {
-      variant: 'ghost',
-      onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-      class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
-    }, () => [
-      t('inventory.location'),
-      h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-    ]),
-    cell: ({ row }) => {
-      const r = row.original;
-      const formattedLoc = formatLocation(r.location, r.floor, r.room);
-      return h('div', { 
-        class: cn(
-          'text-muted-foreground text-sm',
-          (props.hideBarangColumns && isComp.value) ? 'truncate' : ''
-        ),
-        title: formattedLoc
-      }, formattedLoc);
-    }
-  });
+  if (!isAllSoft.value) {
+    list.push({
+      accessorKey: 'location',
+      header: ({ column }) => h(Button, {
+        variant: 'ghost',
+        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+      }, () => [
+        t('inventory.location'),
+        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+      ]),
+      cell: ({ row }) => {
+        const r = row.original;
+        const formattedLoc = formatLocation(r.location, r.floor, r.room);
+        return h('div', { 
+          class: cn(
+            'text-muted-foreground text-sm',
+            (props.hideBarangColumns && isComp.value) ? 'truncate' : ''
+          ),
+          title: formattedLoc
+        }, formattedLoc);
+      }
+    });
+  }
 
   if (props.hideBarangColumns && !isComp.value) {
     list.push({
@@ -895,7 +947,7 @@ const totalAsetTerpilihCount = computed(() => {
               </DropdownMenu>
 
               <!-- Condition Filter Dropdown -->
-              <DropdownMenu v-if="!props.hideConditionFilter">
+              <DropdownMenu v-if="!props.hideConditionFilter && !isAllSoft">
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal', props.cardless ? 'bg-white' : '', !conditionFilter ? 'text-muted-foreground' : 'text-foreground']">
                     <span class="truncate">{{ conditionFilter ? getConditionLabel(conditionFilter) : t('inventory.allConditions') }}</span>
@@ -911,7 +963,7 @@ const totalAsetTerpilihCount = computed(() => {
               </DropdownMenu>
 
               <!-- Location Filter -->
-              <div class="w-[280px]">
+              <div v-if="!isAllSoft" class="w-[280px]">
                 <LocationCombobox
                   v-model="locationFilter"
                   :locations="props.locations"

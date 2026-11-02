@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { reactive } from 'vue';
 import { mount } from '@vue/test-utils';
 import InputNewStockModal from '../InputNewStockModal.vue';
 import ModelSection from '../InputNewStock/ModelSection.vue';
@@ -617,5 +618,65 @@ describe('InputNewStockModal.vue', () => {
     expect(windowOpenSpy).toHaveBeenCalledWith('blob:http://localhost/dummy-uuid', '_blank');
 
     windowOpenSpy.mockRestore();
+  });
+
+  it('renders software license expiration and renewal reminder when isSoft is true and handles Perpetual toggle', async () => {
+    setI18nLanguage('en');
+    const form = reactive({
+      input_asset: true,
+      borrowing_type: 'LT',
+      condition: 'Bagus',
+      location_id: 1,
+      classification: 'Aset',
+      burden: 'Corporate',
+      project_id: null,
+      price: '',
+      photo: null,
+      photo_name: '',
+      is_bulk: false,
+      bulk_quantity: '',
+      license_type: 'Subscription',
+      license_exp_date: '2027-06-30',
+      renewal_reminder: 30,
+    });
+
+    const wrapper = mount(AssetSection, {
+      props: {
+        form,
+        errors: {},
+        locations: [{ id: 1, name: 'HQ' }],
+        projects: [],
+        isComp: false,
+        isKend: false,
+        isSoft: true,
+        lotReady: true,
+        isConsumable: false,
+      },
+      global: {
+        plugins: [i18n],
+      },
+    });
+
+    // Condition and Location should be hidden for software assets
+    const labels = wrapper.findAll('label').map(l => l.text());
+    expect(labels.some(l => l.includes('Condition') || l.includes('Kondisi'))).toBe(false);
+    expect(labels.some(l => l.includes('Location') || l.includes('Lokasi'))).toBe(false);
+
+    const expInput = wrapper.find('#new-asset-exp-date');
+    const reminderInput = wrapper.find('#new-asset-renewal-reminder');
+    expect(expInput.exists()).toBe(true);
+    expect(reminderInput.exists()).toBe(true);
+    expect(wrapper.text()).toContain('Day(s)');
+    expect((expInput.element as HTMLInputElement).disabled).toBe(false);
+    expect((reminderInput.element as HTMLInputElement).disabled).toBe(false);
+
+    // Toggle to Perpetual
+    form.license_type = 'Perpetual';
+    await wrapper.vm.$nextTick();
+
+    expect((expInput.element as HTMLInputElement).disabled).toBe(true);
+    expect((reminderInput.element as HTMLInputElement).disabled).toBe(true);
+    expect(form.license_exp_date).toBeNull();
+    expect(form.renewal_reminder).toBeNull();
   });
 });

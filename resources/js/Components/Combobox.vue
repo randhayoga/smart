@@ -59,10 +59,10 @@ watch(open, (isOpen) => {
   }
 });
 
-const effectivePlaceholder = computed(() => props.placeholder ?? `${t('common.select')}...`);
+const effectivePlaceholder = computed(() => props.placeholder ?? t('common.choose'));
 const effectiveSearchPlaceholder = computed(() => props.searchPlaceholder ?? `${t('common.search')}...`);
 const effectiveEmptyText = computed(() => props.emptyText ?? t('common.noData'));
-const effectiveDefaultLabel = computed(() => props.defaultLabel ?? t('common.all'));
+const effectiveDefaultLabel = computed(() => props.defaultLabel ?? effectivePlaceholder.value);
 
 // Normalize options to object format internally
 const normalizedOptions = computed(() => {

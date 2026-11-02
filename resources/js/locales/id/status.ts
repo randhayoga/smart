@@ -22,6 +22,7 @@ export default {
   sukses: 'Sukses',
   belumDiverifikasi: 'Belum Diverifikasi',
   verifikasiDitolak: 'Verifikasi Ditolak',
+  lisensiKedaluwarsa: 'Lisensi Kedaluwarsa',
 
   // Request statuses
   menungguApproval: 'Menunggu approval',

@@ -54,6 +54,14 @@ const isComp = computed(() => {
     props.lot?.barang_category_code === 'COMP';
 });
 
+const isSoft = computed(() => {
+  return props.barang?.category_code === 'SOFT' ||
+    props.barang?.category === 'Software' ||
+    props.barang?.category === 'SOFT' ||
+    props.lot?.barang_category_code === 'SOFT' ||
+    props.lot?.model_category_code === 'SOFT';
+});
+
 const projectOptions = computed(() => {
   return (props.projects || [])
     .filter(p => Boolean(p.no_project?.trim() && p.project_name?.trim()))
@@ -96,6 +104,21 @@ const form = useForm({
   is_bulk: false,
   bulk_quantity: '' as string | number,
   vehicle_registration: '',
+  license_exp_date: null as string | null,
+  renewal_reminder: null as number | string | null,
+  license_type: 'Subscription' as 'Subscription' | 'Perpetual',
+});
+
+const licenseType = computed({
+  get: () => form.license_type || (form.license_exp_date ? 'Subscription' : 'Subscription'),
+  set: (val: 'Subscription' | 'Perpetual') => {
+    form.license_type = val;
+    if (val === 'Perpetual') {
+      form.license_exp_date = null;
+      form.renewal_reminder = null;
+      errors.value.license_exp_date = '';
+    }
+  }
 });
 
 const errors = ref({
@@ -103,12 +126,15 @@ const errors = ref({
   location_id: '',
   condition: '',
   type: '',
+  price: '',
   classification: '',
   burden: '',
   project_id: '',
   image_url: '',
   vehicle_registration: '',
   bulk_quantity: '',
+  license_exp_date: '',
+  renewal_reminder: '',
 });
 
 const resetErrors = () => {
@@ -117,12 +143,15 @@ const resetErrors = () => {
     location_id: '',
     condition: '',
     type: '',
+    price: '',
     classification: '',
     burden: '',
     project_id: '',
     image_url: '',
     vehicle_registration: '',
     bulk_quantity: '',
+    license_exp_date: '',
+    renewal_reminder: '',
   };
 };
 
@@ -169,6 +198,9 @@ watch(() => props.open, (val) => {
   form.specification = '';
   form.image_url = null;
   form.image_url_name = '';
+  form.license_exp_date = null;
+  form.renewal_reminder = null;
+  form.license_type = 'Subscription';
 });
 
 const closeModal = () => { emit('update:open', false); };
@@ -251,22 +283,38 @@ const handleSubmit = () => {
   let isValid = true;
   if (isComp.value && !form.specification?.trim()) { errors.value.specification = t('inventory.specificationRequired'); isValid = false; }
   if (!form.type) { errors.value.type = t('inventory.typeRequired'); isValid = false; }
-  if (!form.condition) { errors.value.condition = t('inventory.conditionRequired'); isValid = false; }
-  if (!form.location_id) { errors.value.location_id = t('inventory.locationRequired'); isValid = false; }
+  if (!isSoft.value) {
+    if (!form.condition) { errors.value.condition = t('inventory.conditionRequired'); isValid = false; }
+    if (!form.location_id) { errors.value.location_id = t('inventory.locationRequired'); isValid = false; }
+  } else {
+    form.condition = '';
+    form.location_id = '';
+  }
   if (!form.classification) { errors.value.classification = t('inventory.classificationRequired'); isValid = false; }
   if (!form.burden) { errors.value.burden = t('inventory.burdenRequired'); isValid = false; }
   if (form.burden === 'Project' && !form.project_id) { errors.value.project_id = t('inventory.projectRequired'); isValid = false; }
   if (isVehicle.value && !form.vehicle_registration) { errors.value.vehicle_registration = t('inventory.nopolRequired'); isValid = false; }
   if (form.is_bulk && (form.bulk_quantity === '' || form.bulk_quantity === null)) { errors.value.bulk_quantity = t('inventory.assetCountRequired'); isValid = false; }
+  if (isSoft.value) {
+    if (form.license_type === 'Subscription') {
+      if (!form.license_exp_date) {
+        errors.value.license_exp_date = t('inventory.expDateRequiredForSubscription');
+        isValid = false;
+      }
+    } else {
+      form.license_exp_date = null;
+      form.renewal_reminder = null;
+    }
+  }
   if (!isValid) return;
 
   form.transform((data) => {
     const fd: any = {
       _method: 'POST',
       lot_id: data.lot_id,
-      location_id: data.location_id,
+      location_id: isSoft.value ? null : data.location_id,
       status: data.status,
-      condition: data.condition,
+      condition: isSoft.value ? null : data.condition,
       type: data.type,
       borrowing_type: data.type,
       classification: data.classification,
@@ -278,6 +326,10 @@ const handleSubmit = () => {
     if (isComp.value) {
       fd.comp_specification = data.specification || null;
       fd.specification = data.specification || null;
+    }
+    if (isSoft.value) {
+      fd.license_exp_date = data.license_type === 'Subscription' ? data.license_exp_date : null;
+      fd.renewal_reminder = data.license_type === 'Subscription' ? (data.renewal_reminder !== null && data.renewal_reminder !== '' ? Number(data.renewal_reminder) : null) : null;
     }
     if (data.image_url) fd.image_url = data.image_url;
     if (data.is_bulk) {
@@ -372,7 +424,7 @@ const handleSubmit = () => {
                   </Field>
 
                   <!-- Condition (Bagus, Rusak) -->
-                  <Field :data-invalid="!!errors.condition || undefined">
+                  <Field v-if="!isSoft" :data-invalid="!!errors.condition || undefined">
                     <FieldLabel>
                       <span>{{ t('inventory.condition') }}<span class="text-rose-500">*</span></span>
                     </FieldLabel>
@@ -394,7 +446,7 @@ const handleSubmit = () => {
                   </Field>
 
                   <!-- Location -->
-                  <Field :data-invalid="!!errors.location_id || undefined">
+                  <Field v-if="!isSoft" :data-invalid="!!errors.location_id || undefined">
                     <FieldLabel>
                       <span>{{ t('inventory.location') }}<span class="text-rose-500">*</span></span>
                     </FieldLabel>
@@ -408,6 +460,86 @@ const handleSubmit = () => {
                       />
                     </FieldContent>
                     <FieldError v-if="errors.location_id">{{ errors.location_id }}</FieldError>
+                  </Field>
+
+                  <!-- Software License Expiration Date (with integrated License Type Dropdown) -->
+                  <Field v-if="isSoft" :data-invalid="!!errors.license_exp_date || undefined">
+                    <FieldLabel for="create-asset-exp-date">
+                      <span>
+                        {{ t('inventory.licenseExpDate') }}
+                        <span v-if="licenseType === 'Subscription'" class="text-rose-500">*</span>
+                      </span>
+                    </FieldLabel>
+                    <FieldContent>
+                      <div class="flex items-center gap-2">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="outline"
+                              class="w-36 shrink-0 justify-between rounded-[14px] font-normal h-10 px-3 text-sm"
+                            >
+                              {{ licenseType === 'Subscription' ? t('inventory.subscription') : t('inventory.perpetual') }}
+                              <ChevronDown class="w-4 h-4 opacity-50 ml-1 shrink-0" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start" class="w-36 rounded-[14px] z-[1001]">
+                            <DropdownMenuItem @select="licenseType = 'Subscription'">
+                              {{ t('inventory.subscription') }}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem @select="licenseType = 'Perpetual'">
+                              {{ t('inventory.perpetual') }}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+
+                        <input
+                          id="create-asset-exp-date"
+                          type="date"
+                          v-model="form.license_exp_date"
+                          :disabled="licenseType === 'Perpetual'"
+                          class="w-full px-4 py-2 border rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10 text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-muted/30"
+                          :class="[errors.license_exp_date ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input']"
+                        />
+                      </div>
+                    </FieldContent>
+                    <FieldError v-if="errors.license_exp_date">{{ errors.license_exp_date }}</FieldError>
+                  </Field>
+
+                  <!-- Renewal Reminder (Software only, disabled and erased if Perpetual) -->
+                  <Field v-if="isSoft" :data-invalid="!!errors.renewal_reminder || undefined">
+                    <FieldLabel for="create-asset-renewal-reminder">
+                      <span>{{ t('inventory.renewalReminder') }}</span>
+                    </FieldLabel>
+                    <FieldContent>
+                      <div class="space-y-1">
+                        <div
+                          class="flex rounded-[14px] border bg-background focus-within:ring-2 transition-colors h-10 overflow-hidden"
+                          :class="[
+                            errors.renewal_reminder
+                              ? 'border-destructive focus-within:ring-destructive/20 focus-within:border-destructive'
+                              : 'border-input focus-within:ring-primary/20 focus-within:border-primary',
+                            licenseType === 'Perpetual' ? 'opacity-50 cursor-not-allowed bg-muted/20' : '',
+                          ]"
+                        >
+                          <input
+                            id="create-asset-renewal-reminder"
+                            type="number"
+                            min="0"
+                            v-model.number="form.renewal_reminder"
+                            :disabled="licenseType === 'Perpetual'"
+                            :placeholder="licenseType === 'Perpetual' ? t('inventory.renewalReminderDisabledPerpetual') : t('inventory.renewalReminderPlaceholder')"
+                            class="flex-1 min-w-0 px-4 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 transition-colors h-full disabled:cursor-not-allowed"
+                          />
+                          <span
+                            class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-l border-input select-none font-medium shrink-0"
+                          >
+                            {{ t('inventory.renewalReminderSuffix') }}
+                          </span>
+                        </div>
+                        <p class="text-[10px] text-muted-foreground ml-1">{{ t('inventory.renewalReminderHint') }}</p>
+                      </div>
+                    </FieldContent>
+                    <FieldError v-if="errors.renewal_reminder">{{ errors.renewal_reminder }}</FieldError>
                   </Field>
 
                   <!-- Bulk Creation (Only when not vehicle category) -->

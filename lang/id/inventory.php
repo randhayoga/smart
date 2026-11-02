@@ -71,6 +71,7 @@ return [
     'notification_bulk_activation_single_message' => 'Sebanyak :count unit aset baru untuk :name (:number) memerlukan approval Anda.',
     'notification_activation_approved_title' => 'Aktivasi Aset :name Disetujui DM IFS',
     'notification_activation_approved_message' => 'Status aset :number telah berubah menjadi Tersedia.',
+    'notification_activation_approved_expired_message' => 'Status aset :number telah berubah menjadi Lisensi Kedaluwarsa.',
     'notification_activation_rejected_title' => 'Aktivasi Aset :name Ditolak DM IFS',
     'notification_activation_rejected_message' => 'Aktivasi aset :number ditolak oleh DM IFS. Status: Verifikasi Ditolak.',
 
@@ -87,4 +88,14 @@ return [
     'notification_status_approved_message' => 'Status aset :number telah berubah menjadi Tidak Aktif, Pending:BoD/BoC.',
     'notification_status_rejected_title' => 'Penghapusan Aset :name Ditolak DM IFS',
     'notification_status_rejected_message' => 'Status aset :number telah dikembalikan menjadi :status dan kondisi dikembalikan menjadi :condition.',
+
+    // Notifikasi Kedaluwarsa Lisensi Software
+    'renewal_reminder_suffix' => 'Hari',
+    'renewal_reminder_disabled' => 'Tidak ada pengingat',
+    'notification_license_expiring_title' => 'Lisensi Software Kedaluwarsa dalam :days Hari: :asset_number',
+    'notification_license_expiring_message' => 'Lisensi untuk software :software (:asset_number) akan kedaluwarsa dalam :days hari. Silakan koordinasikan perpanjangan.',
+    'notification_license_expiring_today_title' => 'Lisensi Software Kedaluwarsa Hari Ini: :asset_number',
+    'notification_license_expiring_today_message' => 'Lisensi untuk software :software (:asset_number) kedaluwarsa hari ini. Silakan koordinasikan perpanjangan.',
+    'notification_license_expired_title' => 'Lisensi Software Kedaluwarsa: :asset_number',
+    'notification_license_expired_message' => 'Lisensi untuk software :software (:asset_number) telah kedaluwarsa. Status telah diubah menjadi Lisensi Kedaluwarsa.',
 ];

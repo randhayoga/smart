@@ -156,10 +156,11 @@ describe('NonConsumableListTab.vue - statusScope Flag', () => {
         plugins: [i18n],
         stubs: {
           DataTable: {
+            name: 'DataTable',
             props: ['data', 'columns'],
             template: '<div data-testid="data-table"><div v-for="item in data" :key="item.id" class="row">{{ item.number }} - {{ item.status }}</div></div>',
           },
-          LocationCombobox: { template: '<div></div>' },
+          LocationCombobox: { name: 'LocationCombobox', template: '<div data-testid="location-combobox"></div>' },
           Combobox: { template: '<div></div>' },
           DropdownMenu: { template: '<div><slot /></div>' },
           DropdownMenuTrigger: { template: '<div><slot /></div>' },
@@ -307,6 +308,115 @@ describe('NonConsumableListTab.vue - statusScope Flag', () => {
       const actionsRow = wrapper.find('.flex.flex-wrap.items-end.justify-between.gap-4.pt-2');
       expect(actionsRow.exists()).toBe(true);
       expect(actionsRow.text()).toContain('Baris per halaman');
+    });
+  });
+
+  describe('Software assets condition and location columns and filters', () => {
+    const softUnits = [
+      {
+        id: 101,
+        number: '00101-SF-PTRE-26',
+        barang_nama: 'JetBrains IntelliJ IDEA',
+        barang_brand: 'JetBrains',
+        barang_category_code: 'SOFT',
+        barang_category: 'Software',
+        barang_subcategory: 'IDE',
+        status: 'Tersedia',
+        condition: null,
+        location: null,
+        price: 5000000,
+        vehicle_registration: null,
+      },
+      {
+        id: 102,
+        number: '00102-SF-PTRE-26',
+        barang_nama: 'Docker Desktop Pro',
+        barang_brand: 'Docker',
+        barang_category_code: 'SOFT',
+        barang_category: 'Software',
+        barang_subcategory: 'DevOps',
+        status: 'Tersedia',
+        condition: null,
+        location: null,
+        price: 2000000,
+        vehicle_registration: null,
+      },
+    ];
+
+    it('hides condition and location columns when all units are software', () => {
+      const wrapper = mountTab({ units: softUnits });
+      const dataTable = wrapper.findComponent({ name: 'DataTable' });
+      const columns = dataTable.props('columns') as any[];
+      const accessorKeys = columns.map(c => c.accessorKey).filter(Boolean);
+
+      expect(accessorKeys).not.toContain('condition');
+      expect(accessorKeys).not.toContain('location');
+      expect(accessorKeys).toContain('status');
+      expect(accessorKeys).toContain('number');
+    });
+
+    it('hides condition dropdown and location combobox filter when all units are software', () => {
+      const wrapper = mountTab({ units: softUnits });
+      expect(wrapper.find('[data-testid="location-combobox"]').exists()).toBe(false);
+      expect(wrapper.text().toLowerCase()).not.toContain('kondisi');
+    });
+
+    it('includes condition and location columns when units have non-software items', () => {
+      const wrapper = mountTab({ units: sampleUnits });
+      const dataTable = wrapper.findComponent({ name: 'DataTable' });
+      const columns = dataTable.props('columns') as any[];
+      const accessorKeys = columns.map(c => c.accessorKey).filter(Boolean);
+
+      expect(accessorKeys).toContain('condition');
+      expect(accessorKeys).toContain('location');
+      expect(wrapper.find('[data-testid="location-combobox"]').exists()).toBe(true);
+      expect(wrapper.text().toLowerCase()).toContain('semua kondisi');
+    });
+
+    it('hides condition and location columns when parent barang category is SOFT', () => {
+      const wrapper = mountTab({
+        units: [],
+        barang: { id: 1, name: 'OS License', category_code: 'SOFT', category: 'Software' },
+      });
+      const dataTable = wrapper.findComponent({ name: 'DataTable' });
+      const columns = dataTable.props('columns') as any[];
+      const accessorKeys = columns.map(c => c.accessorKey).filter(Boolean);
+
+      expect(accessorKeys).not.toContain('condition');
+      expect(accessorKeys).not.toContain('location');
+    });
+
+    it('hides condition and location columns when parent lot barang_category_code is SOFT', () => {
+      const wrapper = mountTab({
+        units: [],
+        lot: { id: 1, barang_category_code: 'SOFT', barang_category: 'Software' },
+      });
+      const dataTable = wrapper.findComponent({ name: 'DataTable' });
+      const columns = dataTable.props('columns') as any[];
+      const accessorKeys = columns.map(c => c.accessorKey).filter(Boolean);
+
+      expect(accessorKeys).not.toContain('condition');
+      expect(accessorKeys).not.toContain('location');
+    });
+
+    it('omits condition and location in export payload when all units are software', () => {
+      const wrapper = mountTab({ units: softUnits });
+      const vm = wrapper.vm as any;
+      const { headers, rows } = vm.getExportPayload();
+
+      expect(headers).not.toContain('Kondisi');
+      expect(headers).not.toContain('Lokasi Penyimpanan');
+      expect(rows[0]).not.toContain('Bagus');
+    });
+
+    it('includes condition and location in export payload when units are standard non-software', () => {
+      const wrapper = mountTab({ units: sampleUnits });
+      const vm = wrapper.vm as any;
+      const { headers, rows } = vm.getExportPayload();
+
+      expect(headers).toContain('Kondisi');
+      expect(headers).toContain('Lokasi Penyimpanan');
+      expect(rows.length).toBeGreaterThan(0);
     });
   });
 });

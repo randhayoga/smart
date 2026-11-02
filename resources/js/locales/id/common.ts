@@ -27,6 +27,7 @@ export default {
   yes: 'Ya',
   no: 'Tidak',
   select: 'Pilih',
+  choose: 'Pilih',
   selectLanguage: 'Pilih Bahasa',
   notifications: {
     title: 'Notifikasi',

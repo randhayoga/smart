@@ -70,6 +70,19 @@ const isComp = computed(() => {
     props.lot?.barang_category_code === 'COMP';
 });
 
+const isSoft = computed(() => {
+  if (!props.open) return false;
+  return props.barang?.category_code === 'SOFT' ||
+    props.barang?.category === 'Software' ||
+    props.barang?.category === 'SOFT' ||
+    props.lot?.barang_category_code === 'SOFT' ||
+    props.lot?.model_category_code === 'SOFT' ||
+    (isSingle.value && (
+      selectedItem.value?.lot?.model?.type?.category?.code === 'SOFT' ||
+      selectedItem.value?.model_category_code === 'SOFT'
+    ));
+});
+
 const arrNeedApproval = ['Rusak Total', 'Hilang'];
 const arrInactiveConditions = ['Rusak Total', 'Hilang'];
 
@@ -135,6 +148,7 @@ const isBodBocFieldVisible = computed(() => {
 });
 
 const canShowAssignToLocation = computed(() => {
+  if (isSoft.value) return false;
   if (!props.open || !props.items || props.items.length === 0) return false;
   if (isSingle.value) {
     const s = String(selectedItem.value?.status || '').trim().toLowerCase();
@@ -173,6 +187,9 @@ const form = useForm({
   bod_boc_disapproval_file_name: '',
   burden: '',
   project_id: '' as string | number,
+  license_exp_date: null as string | null,
+  renewal_reminder: null as number | string | null,
+  license_type: 'Subscription' as 'Subscription' | 'Perpetual',
 });
 
 const bodBocDecisionType = ref<'approval' | 'disapproval' | null>(null);
@@ -193,6 +210,8 @@ const errors = ref({
   bod_boc_disapproval_file: '',
   burden: '',
   project_id: '',
+  license_exp_date: '',
+  renewal_reminder: '',
 });
 
 const resetErrors = () => {
@@ -212,6 +231,8 @@ const resetErrors = () => {
     bod_boc_disapproval_file: '',
     burden: '',
     project_id: '',
+    license_exp_date: '',
+    renewal_reminder: '',
   };
 };
 
@@ -329,6 +350,9 @@ const resetModalState = () => {
   bodBocDecisionType.value = null;
   form.burden = 'Tidak berubah';
   form.project_id = '';
+  form.license_exp_date = null;
+  form.renewal_reminder = null;
+  form.license_type = 'Subscription';
 
   const inputIds = [
     'edit-asset-photo-upload',
@@ -384,6 +408,10 @@ watch(() => props.open, (val) => {
     form.burden = item.burden || 'Corporate';
     form.project_id = item.project_id || '';
     form.specification = isComp.value ? (item.comp_specification || item.specification || '') : '';
+    const hasExpDate = item.license_exp_date !== null && item.license_exp_date !== undefined && item.license_exp_date !== '';
+    form.license_type = hasExpDate ? 'Subscription' : 'Perpetual';
+    form.license_exp_date = hasExpDate ? item.license_exp_date : null;
+    form.renewal_reminder = item.renewal_reminder !== null && item.renewal_reminder !== undefined ? item.renewal_reminder : null;
   } else {
     form.number = '';
     form.legacy_number = '';
@@ -399,6 +427,9 @@ watch(() => props.open, (val) => {
     form.vehicle_registration = '';
     form.burden = 'Tidak berubah';
     form.project_id = '';
+    form.license_exp_date = null;
+    form.renewal_reminder = null;
+    form.license_type = 'Subscription';
   }
 }, { immediate: true });
 
@@ -632,16 +663,32 @@ const handleSubmit = () => {
   if (isSingle.value) {
     let isValid = true;
     if (isComp.value && !form.specification?.trim()) { errors.value.specification = t('inventory.specificationRequired'); isValid = false; }
-    if (!form.location_id) { errors.value.location_id = t('inventory.locationRequired'); isValid = false; }
+    if (!isSoft.value) {
+      if (!form.location_id) { errors.value.location_id = t('inventory.locationRequired'); isValid = false; }
+      if (!form.condition) { errors.value.condition = t('inventory.conditionRequired'); isValid = false; }
+    } else {
+      form.location_id = '' as any;
+      form.condition = '';
+    }
     if (!form.type) { errors.value.type = t('inventory.typeRequired'); isValid = false; }
     if (!form.classification) { errors.value.classification = t('inventory.classificationRequired'); isValid = false; }
     if (!form.status) { errors.value.status = t('inventory.statusRequired'); isValid = false; }
-    if (!form.condition) { errors.value.condition = t('inventory.conditionRequired'); isValid = false; }
     if (isVehicle.value && !form.vehicle_registration) { errors.value.vehicle_registration = t('inventory.nopolRequired'); isValid = false; }
     if (arrNeedApproval.includes(form.condition) && !isDocumentDisabled.value && !form.memo_file_name) { errors.value.memo_file = t('inventory.memoRequired'); isValid = false; }
     if (form.condition === 'Hilang' && !isDocumentDisabled.value && !form.lost_doc_file_name) { errors.value.lost_doc_file = t('inventory.lostDocRequired'); isValid = false; }
     if (!form.burden) { errors.value.burden = t('inventory.burdenRequired'); isValid = false; }
     if (form.burden === 'Project' && !form.project_id) { errors.value.project_id = t('inventory.projectRequired'); isValid = false; }
+    if (isSoft.value) {
+      if (form.license_type === 'Subscription') {
+        if (!form.license_exp_date) {
+          errors.value.license_exp_date = t('inventory.expDateRequiredForSubscription');
+          isValid = false;
+        }
+      } else {
+        form.license_exp_date = null;
+        form.renewal_reminder = null;
+      }
+    }
     if (!isValid) return;
 
     form.transform((data) => {
@@ -649,9 +696,9 @@ const handleSubmit = () => {
         _method: 'PUT',
         number: data.number,
         lot_id: props.lot?.id || selectedItem.value?.lot_id,
-        location_id: data.location_id,
+        location_id: isSoft.value ? null : data.location_id,
         status: data.status,
-        condition: data.condition,
+        condition: isSoft.value ? null : data.condition,
         type: data.type,
         borrowing_type: data.type,
         classification: data.classification,
@@ -666,6 +713,10 @@ const handleSubmit = () => {
       if (isComp.value) {
         fd.comp_specification = data.specification || null;
         fd.specification = data.specification || null;
+      }
+      if (isSoft.value) {
+        fd.license_exp_date = data.license_type === 'Subscription' ? data.license_exp_date : null;
+        fd.renewal_reminder = data.license_type === 'Subscription' ? (data.renewal_reminder !== null && data.renewal_reminder !== '' ? Number(data.renewal_reminder) : null) : null;
       }
       if (data.image_url) {
         fd.image_url = data.image_url;
@@ -715,6 +766,7 @@ const handleSubmit = () => {
       form.classification ||
       form.location_id || form.price ||
       (isComp.value && form.specification) ||
+      (isSoft.value && (form.license_exp_date || form.renewal_reminder !== null || form.license_type === 'Perpetual')) ||
       form.image_url || form.memo_file || form.lost_doc_file || form.bod_boc_approval_file || form.bod_boc_disapproval_file ||
       (form.burden && form.burden !== 'Tidak berubah')
     );
@@ -737,7 +789,11 @@ const handleSubmit = () => {
       payload.is_assigned_to_location = form.is_assigned_to_location;
     }
     if (form.status && !isStatusDisabled.value) payload.status = form.status;
-    if (form.condition && !isKondisiDisabled.value) payload.condition = form.condition;
+    if (isSoft.value) {
+      payload.condition = null;
+    } else if (form.condition && !isKondisiDisabled.value) {
+      payload.condition = form.condition;
+    }
     if (form.type) {
       payload.type = form.type;
       payload.borrowing_type = form.type;
@@ -747,7 +803,18 @@ const handleSubmit = () => {
       payload.comp_specification = form.specification;
       payload.specification = form.specification;
     }
-    if (form.location_id) {
+    if (isSoft.value) {
+      if (form.license_type === 'Subscription') {
+        if (form.license_exp_date) payload.license_exp_date = form.license_exp_date;
+        if (form.renewal_reminder !== null && form.renewal_reminder !== '') payload.renewal_reminder = Number(form.renewal_reminder);
+      } else if (form.license_type === 'Perpetual') {
+        payload.license_exp_date = null;
+        payload.renewal_reminder = null;
+      }
+    }
+    if (isSoft.value) {
+      payload.location_id = null;
+    } else if (form.location_id) {
       payload.location_id = form.location_id;
     }
     if (form.price) payload.price = parseCurrencyToNumber(form.price).toString();
@@ -813,6 +880,7 @@ const handleSubmit = () => {
                 :selected-item="selectedItem"
                 :is-comp="isComp"
                 :is-vehicle="isVehicle"
+                :is-soft="isSoft"
                 :can-show-assign-to-location="canShowAssignToLocation"
                 :is-kondisi-disabled="isKondisiDisabled"
                 :is-borrowed-unit="isBorrowedUnit"

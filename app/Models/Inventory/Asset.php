@@ -3,12 +3,15 @@
 namespace App\Models\Inventory;
 
 use App\Models\Master\Location;
+use App\Services\NotificationService;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Asset model representing individual physical items and tracking their state/location lifecycle.
@@ -123,7 +126,12 @@ class Asset extends Model
                             $note = "Status diubah dari '{$oldStatus}' menjadi '{$newStatus}'.";
                         }
                     } else {
-                        $note = "Status diubah dari '{$oldStatus}' menjadi '{$newStatus}'.";
+                        if ($newStatus === 'Lisensi Kedaluwarsa') {
+                            $expDate = $asset->license_exp_date ? Carbon::parse($asset->license_exp_date)->format('d-m-Y') : null;
+                            $note = $expDate ? "Lisensi software telah kedaluwarsa pada {$expDate}." : "Lisensi software telah kedaluwarsa.";
+                        } else {
+                            $note = "Status diubah dari '{$oldStatus}' menjadi '{$newStatus}'.";
+                        }
                     }
 
                     $actions[] = [
@@ -244,6 +252,8 @@ class Asset extends Model
         'legacy_vendor_id',
         'comp_specification',
         'is_assigned_to_location',
+        'license_exp_date',
+        'renewal_reminder',
     ];
 
     protected $casts = [
@@ -251,6 +261,8 @@ class Asset extends Model
         'project_id' => 'integer',
         'legacy_vendor_id' => 'integer',
         'is_assigned_to_location' => 'boolean',
+        'license_exp_date' => 'date',
+        'renewal_reminder' => 'integer',
     ];
 
     /**
@@ -475,6 +487,28 @@ class Asset extends Model
     }
 
     /**
+     * Accessor to determine if this asset belongs to the software category.
+     */
+    public function getIsSoftwareAttribute(): bool
+    {
+        $this->loadMissing('lot.model.type.category');
+        $category = $this->lot?->model?->type?->category;
+        return $category ? ($category->code === 'SOFT' || strtolower($category->name ?? '') === 'software') : false;
+    }
+
+    /**
+     * Determine if this asset is a software asset past its license expiration date.
+     */
+    public function isLicenseExpired(): bool
+    {
+        if (!$this->is_software || !$this->license_exp_date) {
+            return false;
+        }
+
+        return Carbon::parse($this->license_exp_date)->startOfDay()->lt(Carbon::today());
+    }
+
+    /**
      * Get the route key for implicit route model binding.
      */
     public function getRouteKeyName(): string
@@ -560,5 +594,58 @@ class Asset extends Model
         }
 
         return null;
+    }
+
+    /**
+     * Automatically transition software assets whose license expiration date has passed to 'Lisensi Kedaluwarsa'.
+     *
+     * @return int Number of assets transitioned
+     */
+    public static function expireOverdueLicenses(): int
+    {
+        $today = Carbon::today();
+        $overdueAssets = static::with(['lot.model.brand', 'lot.model.type.category'])
+            ->whereNotNull('license_exp_date')
+            ->whereDate('license_exp_date', '<', $today)
+            ->whereNotIn('status', ['Dihapus', 'Lisensi Kedaluwarsa', 'Belum Diverifikasi'])
+            ->whereHas('lot.model.type.category', function ($query) {
+                $query->where('code', 'SOFT')
+                    ->orWhereRaw('LOWER(name) = ?', ['software']);
+            })
+            ->get();
+
+        $count = 0;
+        $notificationService = app(NotificationService::class);
+
+        foreach ($overdueAssets as $asset) {
+            $asset->status = 'Lisensi Kedaluwarsa';
+            $asset->save();
+            $count++;
+
+            try {
+                $notificationService->notifySoftwareLicenseExpired($asset);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error("Failed to notify license expiration for asset {$asset->number}: " . $e->getMessage());
+            }
+        }
+
+        return $count;
+    }
+
+    /**
+     * Execute overdue license expiration check cached once per calendar day to ensure 0ms DB cost on subsequent requests.
+     *
+     * @return int
+     */
+    public static function expireOverdueLicensesCached(): int
+    {
+        $cacheKey = 'software_licenses_overdue_checked_' . now()->toDateString();
+        if (Cache::has($cacheKey)) {
+            return 0;
+        }
+
+        $count = static::expireOverdueLicenses();
+        Cache::put($cacheKey, true, now()->endOfDay());
+        return $count;
     }
 }

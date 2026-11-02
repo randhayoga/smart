@@ -61,6 +61,7 @@ class ManagerAssetDeletionApprovalResource extends JsonResource
         });
 
         $catName = $model?->type?->category?->name ?? '-';
+        $catCode = $model?->type?->category?->code ?? $model?->subcategory?->category?->code ?? null;
         $typeName = $model?->type?->name ?? '-';
         $brandName = $model?->brand?->name ?? '-';
         $modelName = $model?->name ?? '-';
@@ -72,7 +73,11 @@ class ManagerAssetDeletionApprovalResource extends JsonResource
             'legacy_number' => $asset?->legacy_number ?? null,
             'status' => $asset?->status ?? '-',
             'approval_status' => $asset?->approval_status ?? null,
-            'condition' => $asset?->condition ?? '-',
+            'condition' => $asset?->condition,
+            'license_exp_date' => $asset?->license_exp_date?->format('Y-m-d'),
+            'renewal_reminder' => $asset?->renewal_reminder,
+            'category_code' => $catCode,
+            'model_category_code' => $catCode,
             'classification' => $asset?->classification ?? 'Aset',
             'type' => $asset?->borrowing_type ?? $typeName,
             'price' => $asset?->price ? number_format($asset->price, 0, ',', '.') : '-',
@@ -108,6 +113,8 @@ class ManagerAssetDeletionApprovalResource extends JsonResource
             'asset_code' => $asset->number ?? '-',
             'asset_number' => $asset->number ?? '-',
             'category' => $catName,
+            'category_code' => $catCode,
+            'model_category_code' => $catCode,
             'type' => $typeName,
             'subcategory' => $typeName,
             'brand' => $brandName,
@@ -118,7 +125,9 @@ class ManagerAssetDeletionApprovalResource extends JsonResource
             'previous_condition' => $this->previous_condition,
             'proposed_status' => $this->proposed_condition,
             'previous_status' => $this->previous_status,
-            'status_label' => $this->proposed_condition ?? '-',
+            'status_label' => $this->proposed_condition,
+            'license_exp_date' => $asset?->license_exp_date?->format('Y-m-d'),
+            'renewal_reminder' => $asset?->renewal_reminder,
             'decision' => $this->decision,
             'classification' => $asset?->classification ?? 'Aset',
             'admin_note' => $this->admin_note,

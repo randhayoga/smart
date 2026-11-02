@@ -2,7 +2,7 @@
 /**
  * Asset section of the Input New Stock modal handling asset attributes, condition, location, and registration.
  */
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { ChevronDown, Trash2 } from 'lucide-vue-next';
 import Combobox from '@/Components/Combobox.vue';
@@ -38,6 +38,7 @@ const props = defineProps<{
   projects?: ProjectItem[];
   isComp: boolean;
   isKend: boolean;
+  isSoft?: boolean;
   lotReady: boolean;
   isConsumable?: boolean;
 }>();
@@ -53,6 +54,34 @@ const projectOptions = computed(() => {
       id: p.id_project,
       name: `[${p.no_project}] ${p.project_name}`,
     }));
+});
+
+const licenseType = computed({
+  get: () => props.form.license_type || (props.form.license_exp_date ? 'Subscription' : 'Subscription'),
+  set: (val: 'Subscription' | 'Perpetual') => {
+    props.form.license_type = val;
+    if (val === 'Perpetual') {
+      props.form.license_exp_date = null;
+      props.form.renewal_reminder = null;
+      if (props.errors.license_exp_date) {
+        delete props.errors.license_exp_date;
+      }
+    }
+  }
+});
+
+watch(() => props.form.license_type, (val) => {
+  if (val === 'Perpetual') {
+    props.form.license_exp_date = null;
+    props.form.renewal_reminder = null;
+    if (props.errors.license_exp_date) {
+      delete props.errors.license_exp_date;
+    }
+  }
+});
+
+defineExpose({
+  licenseType,
 });
 
 const onSelectBurden = (burden: 'Corporate' | 'Project') => {
@@ -78,6 +107,9 @@ const onToggleInputAsset = (checked: boolean | 'indeterminate' | null | undefine
     props.form.plate_number = '';
     props.form.is_bulk = false;
     props.form.bulk_quantity = '';
+    props.form.license_exp_date = null;
+    props.form.renewal_reminder = null;
+    props.form.license_type = 'Subscription';
   }
 };
 
@@ -213,7 +245,7 @@ const getClassificationLabel = (cls: string) => {
           </Field>
 
           <!-- Condition (Good/Bagus, Damaged/Rusak) -->
-          <Field :data-invalid="!!errors.condition || undefined">
+          <Field v-if="!isSoft" :data-invalid="!!errors.condition || undefined">
             <FieldLabel>
               <span>{{ t('inventory.condition') }}<span class="text-rose-500">*</span></span>
             </FieldLabel>
@@ -239,7 +271,7 @@ const getClassificationLabel = (cls: string) => {
           </Field>
 
           <!-- Location (combobox list all active location) -->
-          <Field :data-invalid="!!errors.location_id || undefined">
+          <Field v-if="!isSoft" :data-invalid="!!errors.location_id || undefined">
             <FieldLabel for="new-asset-location">
               <span>{{ t('inventory.location') }}<span class="text-rose-500">*</span></span>
             </FieldLabel>
@@ -253,6 +285,86 @@ const getClassificationLabel = (cls: string) => {
               />
             </FieldContent>
             <FieldError v-if="errors.location_id">{{ errors.location_id }}</FieldError>
+          </Field>
+
+          <!-- Software License Expiration Date (with integrated License Type Dropdown) -->
+          <Field v-if="isSoft" :data-invalid="!!errors.license_exp_date || undefined">
+            <FieldLabel for="new-asset-exp-date">
+              <span>
+                {{ t('inventory.licenseExpDate') }}
+                <span v-if="licenseType === 'Subscription'" class="text-rose-500">*</span>
+              </span>
+            </FieldLabel>
+            <FieldContent>
+              <div class="flex items-center gap-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      class="w-36 shrink-0 justify-between rounded-[14px] font-normal h-10 px-3 text-sm"
+                    >
+                      {{ licenseType === 'Subscription' ? t('inventory.subscription') : t('inventory.perpetual') }}
+                      <ChevronDown class="w-4 h-4 opacity-50 ml-1 shrink-0" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" class="w-36 rounded-[14px] z-[1001]">
+                    <DropdownMenuItem @select="licenseType = 'Subscription'">
+                      {{ t('inventory.subscription') }}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem @select="licenseType = 'Perpetual'">
+                      {{ t('inventory.perpetual') }}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <input
+                  id="new-asset-exp-date"
+                  type="date"
+                  v-model="form.license_exp_date"
+                  :disabled="licenseType === 'Perpetual'"
+                  class="w-full px-4 py-2 border rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10 text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-muted/30"
+                  :class="[errors.license_exp_date ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input']"
+                />
+              </div>
+            </FieldContent>
+            <FieldError v-if="errors.license_exp_date">{{ errors.license_exp_date }}</FieldError>
+          </Field>
+
+          <!-- Renewal Reminder (Software only, disabled and erased if Perpetual) -->
+          <Field v-if="isSoft" :data-invalid="!!errors.renewal_reminder || undefined">
+            <FieldLabel for="new-asset-renewal-reminder">
+              <span>{{ t('inventory.renewalReminder') }}</span>
+            </FieldLabel>
+            <FieldContent>
+              <div class="space-y-1">
+                <div
+                  class="flex rounded-[14px] border bg-background focus-within:ring-2 transition-colors h-10 overflow-hidden"
+                  :class="[
+                    errors.renewal_reminder
+                      ? 'border-destructive focus-within:ring-destructive/20 focus-within:border-destructive'
+                      : 'border-input focus-within:ring-primary/20 focus-within:border-primary',
+                    licenseType === 'Perpetual' ? 'opacity-50 cursor-not-allowed bg-muted/20' : '',
+                  ]"
+                >
+                  <input
+                    id="new-asset-renewal-reminder"
+                    type="number"
+                    min="0"
+                    v-model.number="form.renewal_reminder"
+                    :disabled="licenseType === 'Perpetual'"
+                    :placeholder="licenseType === 'Perpetual' ? t('inventory.renewalReminderDisabledPerpetual') : t('inventory.renewalReminderPlaceholder')"
+                    class="flex-1 min-w-0 px-4 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 transition-colors h-full disabled:cursor-not-allowed"
+                  />
+                  <span
+                    class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-l border-input select-none font-medium shrink-0"
+                  >
+                    {{ t('inventory.renewalReminderSuffix') }}
+                  </span>
+                </div>
+                <p class="text-[10px] text-muted-foreground ml-1">{{ t('inventory.renewalReminderHint') }}</p>
+              </div>
+            </FieldContent>
+            <FieldError v-if="errors.renewal_reminder">{{ errors.renewal_reminder }}</FieldError>
           </Field>
 
           <!-- Bulk Creation (Only when not vehicle category) -->

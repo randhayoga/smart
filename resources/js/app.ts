@@ -21,7 +21,7 @@ createInertiaApp({
             import.meta.glob<DefineComponent>('./Pages/**/*.vue'),
         ),
     setup({ el, App, props, plugin }) {
-        const initialLocale = (props.initialPage.props as any)?.locale || 'id';
+        const initialLocale = (props.initialPage.props as any)?.locale || 'en';
         setI18nLanguage(initialLocale);
 
         const app = createApp({ render: () => h(App, props) });

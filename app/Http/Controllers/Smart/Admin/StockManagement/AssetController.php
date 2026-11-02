@@ -15,6 +15,7 @@ use App\Models\Master\Vendor;
 use App\Models\Request\RequestFulfillment;
 use App\Models\TbProject;
 use App\Services\Inventory\AssetNumberService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
@@ -59,6 +60,14 @@ class AssetController extends Controller
             'project_id' => 'required_if:burden,Project|nullable|integer',
         ];
  
+        $isSoft = ($lot->model?->type?->category?->code === 'SOFT' || strtolower($lot->model?->type?->category?->name ?? '') === 'software');
+        if ($isSoft) {
+            $rules['license_exp_date'] = 'nullable|date';
+            $rules['renewal_reminder'] = 'nullable|integer|min:0';
+            $rules['location_id'] = 'nullable|exists:locations,id';
+            $rules['condition'] = 'nullable|string|max:255';
+        }
+
         $isVehicle = false;
         if ($lot->model && $lot->model->type && $lot->model->type->category) {
             $catName = strtolower($lot->model->type->category->name);
@@ -125,8 +134,14 @@ class AssetController extends Controller
  
         unset($validated['use_lot_image']);
         unset($validated['type']);
+        if ($isSoft) {
+            $validated['location_id'] = null;
+            $validated['condition'] = null;
+        }
         $validated['burden'] = $validated['burden'] ?? 'Corporate';
         $validated['project_id'] = $validated['burden'] === 'Project' ? ($validated['project_id'] ?? null) : null;
+        $validated['license_exp_date'] = $isSoft ? ($request->input('license_exp_date') ?: null) : null;
+        $validated['renewal_reminder'] = $isSoft ? ($request->input('renewal_reminder') !== null && $request->input('renewal_reminder') !== '' ? (int)$request->input('renewal_reminder') : null) : null;
 
         $asset = Asset::create($validated);
  
@@ -165,7 +180,9 @@ class AssetController extends Controller
                 'requested_at' => now(),
             ]);
 
-            app(\App\Services\NotificationService::class)->notifyManagerNewAssetActivation($asset, $approval);
+            dispatch(function () use ($asset, $approval) {
+                app(\App\Services\NotificationService::class)->notifyManagerNewAssetActivation($asset, $approval);
+            })->afterResponse();
         }
  
         return redirect()->back()->with('success', __('inventory.asset_created', [], null) ?: __('inventory.unit_created'));
@@ -361,6 +378,14 @@ class AssetController extends Controller
         }
 
         $lot = Lot::with('model.type.category')->findOrFail($request->input('lot_id'));
+        $isSoft = ($lot->model?->type?->category?->code === 'SOFT' || strtolower($lot->model?->type?->category?->name ?? '') === 'software');
+        if ($isSoft) {
+            $rules['license_exp_date'] = 'nullable|date';
+            $rules['renewal_reminder'] = 'nullable|integer|min:0';
+            $rules['location_id'] = 'nullable|exists:locations,id';
+            $rules['condition'] = 'nullable|string|max:255';
+        }
+
         $isVehicle = false;
         if ($lot->model && $lot->model->type && $lot->model->type->category) {
             $catName = strtolower($lot->model->type->category->name);
@@ -530,6 +555,25 @@ class AssetController extends Controller
         }
         unset($validated['specification']);
 
+        if ($isSoft) {
+            $validated['location_id'] = null;
+            $validated['condition'] = null;
+            if ($request->has('license_exp_date')) {
+                $validated['license_exp_date'] = $request->input('license_exp_date') ?: null;
+            }
+            if ($request->has('renewal_reminder')) {
+                $validated['renewal_reminder'] = ($request->input('renewal_reminder') !== null && $request->input('renewal_reminder') !== '') ? (int)$request->input('renewal_reminder') : null;
+            }
+            if ($asset->status === 'Tersedia' && !empty($validated['license_exp_date'])) {
+                if (Carbon::parse($validated['license_exp_date'])->startOfDay()->lt(Carbon::today())) {
+                    $validated['status'] = 'Lisensi Kedaluwarsa';
+                }
+            }
+        } else {
+            $validated['license_exp_date'] = null;
+            $validated['renewal_reminder'] = null;
+        }
+
         $asset->update($validated);
 
         if ($needApproval) {
@@ -658,6 +702,9 @@ class AssetController extends Controller
             'specification' => $asset->comp_specification ?: ($asset->specification ?: ($model?->specification ?? '-')),
             'image_url' => $asset->image_url,
             'vehicle_registration' => $asset->vehicle_registration,
+            'is_assigned_to_location' => (bool)$asset->is_assigned_to_location,
+            'license_exp_date' => $asset->license_exp_date ? $asset->license_exp_date->format('Y-m-d') : null,
+            'renewal_reminder' => $asset->renewal_reminder,
             'burden' => $asset->burden,
             'created_at' => $asset->created_at?->toIso8601String(),
             'updated_at' => $asset->updated_at ? $asset->updated_at->format('d-m-Y H:i') : '-',

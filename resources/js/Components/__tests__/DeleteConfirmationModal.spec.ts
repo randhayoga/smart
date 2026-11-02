@@ -129,6 +129,55 @@ describe('DeleteConfirmationModal.vue', () => {
     });
   });
 
+  describe('Asset Deletion Mode', () => {
+    const sampleAsset = {
+      number: 'AST-001',
+      type: 'Asset',
+      classification: 'Aset',
+      status: 'Tersedia',
+      condition: 'Bagus',
+      location: 'Warehouse A',
+      price: 15000000,
+      lot_id: 1,
+    };
+
+    it('renders condition and location for physical assets', () => {
+      setI18nLanguage('en');
+      const wrapper = mountModal({
+        itemCount: 1,
+        itemName: 'Asset',
+        itemData: sampleAsset,
+      });
+
+      const text = wrapper.text();
+      expect(text).toContain('AST-001');
+      expect(text).toContain('Condition');
+      expect(text).toContain('Location');
+    });
+
+    it('hides condition and location for software assets', () => {
+      setI18nLanguage('en');
+      const softwareAsset = {
+        ...sampleAsset,
+        category: 'Software',
+        category_code: 'SOFT',
+        condition: null,
+        location: null,
+      };
+
+      const wrapper = mountModal({
+        itemCount: 1,
+        itemName: 'Asset',
+        itemData: softwareAsset,
+      });
+
+      const text = wrapper.text();
+      expect(text).toContain('AST-001');
+      expect(text).not.toContain('Condition');
+      expect(text).not.toContain('Location');
+    });
+  });
+
   describe('Asset Status Change Approval Mode', () => {
     const statusApprovalItem = {
       id: 10,
@@ -244,6 +293,31 @@ describe('DeleteConfirmationModal.vue', () => {
       });
       expect(bulkReject.text()).toContain('Are you sure you want to reject 2 selected assets deletion?');
     });
+
+    it('hides condition and storage location for software assets in status change approval', () => {
+      setI18nLanguage('en');
+      const softwareStatusItem = {
+        ...statusApprovalItem,
+        category: 'Software',
+        category_code: 'SOFT',
+        unit_details: {
+          location: 'HQ Server Room',
+        },
+      };
+
+      const wrapper = mountModal({
+        itemCount: 1,
+        itemName: 'Perubahan Status Aset',
+        actionType: 'approved',
+        itemData: [softwareStatusItem],
+      });
+
+      const text = wrapper.text();
+      expect(text).toContain('AST-001');
+      expect(text).not.toContain('Condition');
+      expect(text).not.toContain('Proposed Condition');
+      expect(text).not.toContain('Storage Location');
+    });
   });
 
   describe('Asset Activation Approval Mode', () => {
@@ -354,6 +428,173 @@ describe('DeleteConfirmationModal.vue', () => {
       expect(wrapper.text()).toContain('Apakah Anda yakin untuk meng-approve 2 aktivasi aset yang Anda pilih?');
       expect(wrapper.text()).toContain('AST-AKT-001');
       expect(wrapper.text()).toContain('AST-AKT-002');
+    });
+
+    const softwareActivationItem1 = {
+      id: 10,
+      asset_code: 'AST-SOFT-001',
+      brand: 'JetBrains',
+      nama: 'IntelliJ IDEA Ultimate',
+      category: 'Software',
+      category_code: 'SOFT',
+      subcategory: 'IDE',
+      unit_details: {
+        type: 'LT',
+        classification: 'Aset',
+        status: 'Belum Diverifikasi',
+        condition: null,
+        lot_code: 'LOT-SOFT-01',
+        location: null,
+        license_exp_date: '2027-06-30',
+        renewal_reminder: 14,
+      },
+    };
+
+    const softwareActivationItem2 = {
+      id: 11,
+      asset_code: 'AST-SOFT-002',
+      brand: 'Microsoft',
+      nama: 'Windows 11 Pro',
+      category: 'Software',
+      category_code: 'SOFT',
+      subcategory: 'Operating System',
+      unit_details: {
+        type: 'LT',
+        classification: 'Aset',
+        status: 'Belum Diverifikasi',
+        condition: null,
+        lot_code: 'LOT-SOFT-02',
+        location: null,
+        license_exp_date: null,
+        renewal_reminder: null,
+      },
+    };
+
+    const softwareActivationItem3 = {
+      id: 12,
+      asset_code: 'AST-SOFT-003',
+      brand: 'Oracle',
+      nama: 'Java SE Subscription',
+      category: 'Software',
+      category_code: 'SOFT',
+      subcategory: 'Runtime',
+      unit_details: {
+        type: 'LT',
+        classification: 'Aset',
+        status: 'Belum Diverifikasi',
+        condition: null,
+        lot_code: 'LOT-SOFT-03',
+        location: null,
+        license_exp_date: '2027-12-31',
+        renewal_reminder: 0,
+      },
+    };
+
+    it('renders license expiration date and renewal reminder for software asset in single activation approval', () => {
+      setI18nLanguage('id');
+      const wrapper = mountModal({
+        itemCount: 1,
+        itemName: 'Aktivasi Aset Baru',
+        actionType: 'approved',
+        itemData: [softwareActivationItem1],
+      });
+
+      const text = wrapper.text();
+      expect(text).toContain('AST-SOFT-001');
+      expect(text).toContain('Tanggal Kedaluwarsa Lisensi');
+      expect(text).toContain('30-06-2027');
+      expect(text).toContain('Pengingat Perpanjangan');
+      expect(text).toContain('14 Hari');
+      expect(text).not.toContain('Kondisi');
+      expect(text).not.toContain('Lokasi Penyimpanan');
+    });
+
+    it('renders Perpetual when license_exp_date is null for software asset in single activation approval', () => {
+      setI18nLanguage('id');
+      const wrapper = mountModal({
+        itemCount: 1,
+        itemName: 'Aktivasi Aset Baru',
+        actionType: 'approved',
+        itemData: [softwareActivationItem2],
+      });
+
+      const text = wrapper.text();
+      expect(text).toContain('AST-SOFT-002');
+      expect(text).toContain('Tanggal Kedaluwarsa Lisensi');
+      expect(text).toContain('Perpetual');
+      expect(text).not.toContain('Pengingat Perpanjangan');
+    });
+
+    it('renders "Tidak ada pengingat" when renewal_reminder is 0 for software asset', () => {
+      setI18nLanguage('id');
+      const wrapper = mountModal({
+        itemCount: 1,
+        itemName: 'Aktivasi Aset Baru',
+        actionType: 'approved',
+        itemData: [softwareActivationItem3],
+      });
+
+      const text = wrapper.text();
+      expect(text).toContain('AST-SOFT-003');
+      expect(text).toContain('Tanggal Kedaluwarsa Lisensi');
+      expect(text).toContain('31-12-2027');
+      expect(text).toContain('Pengingat Perpanjangan');
+      expect(text).toContain('Tidak ada pengingat');
+    });
+
+    it('renders "No reminder" in English when renewal_reminder is 0 for software asset', () => {
+      setI18nLanguage('en');
+      const wrapper = mountModal({
+        itemCount: 1,
+        itemName: 'New Asset Activation',
+        actionType: 'approved',
+        itemData: [softwareActivationItem3],
+      });
+
+      const text = wrapper.text();
+      expect(text).toContain('AST-SOFT-003');
+      expect(text).toContain('License Expiration Date');
+      expect(text).toContain('31-12-2027');
+      expect(text).toContain('Renewal Reminder');
+      expect(text).toContain('No reminder');
+    });
+
+    it('renders license expiration date and renewal reminder in bulk activation approval for software assets', () => {
+      setI18nLanguage('id');
+      const wrapper = mountModal({
+        itemCount: 2,
+        itemName: 'Aktivasi Aset Baru',
+        actionType: 'approved',
+        itemData: [softwareActivationItem1, softwareActivationItem2],
+      });
+
+      const text = wrapper.text();
+      expect(text).toContain('AST-SOFT-001');
+      expect(text).toContain('AST-SOFT-002');
+      expect(text).toContain('Tanggal Kedaluwarsa Lisensi');
+      expect(text).toContain('30-06-2027');
+      expect(text).toContain('14 Hari');
+      expect(text).toContain('Perpetual');
+      expect(text).not.toContain('Kondisi');
+    });
+
+    it('renders software license details in English in activation approval', () => {
+      setI18nLanguage('en');
+      const wrapper = mountModal({
+        itemCount: 1,
+        itemName: 'New Asset Activation',
+        actionType: 'approved',
+        itemData: [softwareActivationItem1],
+      });
+
+      const text = wrapper.text();
+      expect(text).toContain('AST-SOFT-001');
+      expect(text).toContain('License Expiration Date');
+      expect(text).toContain('30-06-2027');
+      expect(text).toContain('Renewal Reminder');
+      expect(text).toContain('14 Day(s)');
+      expect(text).not.toContain('Condition');
+      expect(text).not.toContain('Storage Location');
     });
   });
 

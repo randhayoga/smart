@@ -348,4 +348,21 @@ export default {
   isAssignedToLocation: 'Assign to Location',
   assignedToLocationYes: 'Yes',
   assignedToLocationNo: 'No',
+
+  // Software License & Renewal
+  licenseExpDate: 'License Expiration Date',
+  licenseType: 'License Type',
+  subscription: 'Subscription',
+  perpetual: 'Perpetual',
+  expDateRequiredForSubscription: 'License expiration date is required for subscription',
+  renewalReminder: 'Renewal Reminder',
+  renewalReminderSuffix: 'Day(s)',
+  renewalReminderDisabled: 'No reminder',
+  renewalReminderPlaceholder: '0 to disable reminders',
+  renewalReminderDisabledPerpetual: 'Not applicable for perpetual',
+  renewalReminderHint: 'Set to 0 to disable renewal reminders',
+  notification_license_expiring_title: 'Software License Expiring in {days} Days: {asset_number}',
+  notification_license_expiring_today_title: 'Software License Expiring Today: {asset_number}',
+  notification_license_expiring_message: 'The license for software {software} ({asset_number}) will expire in {days} days. Please coordinate renewal.',
+  notification_license_expiring_today_message: 'The license for software {software} ({asset_number}) expires today. Please coordinate renewal.',
 };

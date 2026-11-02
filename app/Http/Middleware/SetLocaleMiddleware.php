@@ -20,7 +20,7 @@ class SetLocaleMiddleware
     public function handle(Request $request, Closure $next): Response
     {
         $supported = LocaleController::SUPPORTED_LOCALES;
-        $locale = $request->session()->get('locale', $request->cookie('app_locale', config('app.locale', 'id')));
+        $locale = $request->session()->get('locale', $request->cookie('app_locale', config('app.locale', 'en')));
 
         if (in_array($locale, $supported, true)) {
             app()->setLocale($locale);

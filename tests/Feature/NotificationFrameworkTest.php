@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Mail\DMBulkAssetDeletionRequest;
 use App\Mail\DMAssetDeletionRequest;
 use App\Models\User;
+use App\Models\Auth\Role;
 use App\Models\HrdEmployee;
 use App\Models\HrdOrgchart;
 use App\Models\Inventory\Barang;
@@ -743,5 +744,41 @@ class NotificationFrameworkTest extends TestCase
         $payloadId = NotificationService::formatNotificationPayload($notif->data);
         $this->assertStringContainsString('Disetujui DM IFS', $payloadId['title']);
         $this->assertStringContainsString('telah berubah menjadi Tersedia.', $payloadId['message']);
+    }
+
+    public function test_notify_admin_asset_activation_decision_supports_license_expired_status(): void
+    {
+        $admin = User::factory()->create(['email' => 'admin_act_exp@example.com']);
+        $adminRole = Role::firstOrCreate(['name' => 'admin'], ['label' => 'Administrator']);
+        $admin->roles()->attach($adminRole);
+
+        $asset = Unit::factory()->create(['status' => 'Lisensi Kedaluwarsa']);
+        $approval = \App\Models\Inventory\AssetActivationApproval::create([
+            'asset_id' => $asset->id,
+            'requester_id' => $admin->id,
+            'decision' => 'approved',
+            'requested_at' => now(),
+        ]);
+        $approval->setRelation('asset', $asset);
+
+        $service = app(NotificationService::class);
+        $service->notifyAdminAssetActivationDecision($approval, 'approved');
+
+        $admin->refresh();
+        $this->assertCount(1, $admin->notifications);
+        $notif = $admin->notifications->first();
+
+        // 1. Fetch in English
+        app()->setLocale('en');
+        $payloadEn = NotificationService::formatNotificationPayload($notif->data);
+        $this->assertStringContainsString('Approved by DM IFS', $payloadEn['title']);
+        $this->assertStringContainsString('status has changed to License Expired.', $payloadEn['message']);
+        $this->assertStringContainsString('/smart/stock-management/non-consumables?search=', $notif->data['url']);
+
+        // 2. Fetch in Indonesian
+        app()->setLocale('id');
+        $payloadId = NotificationService::formatNotificationPayload($notif->data);
+        $this->assertStringContainsString('Disetujui DM IFS', $payloadId['title']);
+        $this->assertStringContainsString('telah berubah menjadi Lisensi Kedaluwarsa.', $payloadId['message']);
     }
 }

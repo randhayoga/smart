@@ -92,4 +92,29 @@ describe('DeletionApprovalModal.vue', () => {
     expect(text).toContain('Lost');
     expect(text).not.toContain('inventory.conditionLost');
   });
+
+  it('hides condition and storage location when asset is software category', () => {
+    setI18nLanguage('en');
+    const softwareApproval = {
+      ...sampleApproval,
+      category: 'Software',
+      category_code: 'SOFT',
+      asset_details: {
+        ...sampleApproval.asset_details,
+        model_category_code: 'SOFT',
+        location: 'Server Room',
+      },
+    };
+
+    const wrapper = mountModal({ approval: softwareApproval });
+    const text = wrapper.text();
+
+    expect(text).toContain('AST-2026-001');
+    expect(text).toContain('Software');
+    expect(text).toContain('Status:');
+    expect(text).toContain('Available');
+    expect(text).not.toContain('Proposed Condition:');
+    expect(text).not.toContain('Previous Status & Condition:');
+    expect(text).not.toContain('Storage Location:');
+  });
 });

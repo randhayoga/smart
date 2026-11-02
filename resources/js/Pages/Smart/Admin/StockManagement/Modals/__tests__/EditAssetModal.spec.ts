@@ -363,4 +363,33 @@ describe('EditAssetModal.vue - Single & Mass Edit Logic and Layout', () => {
       expect(vm.form.bod_boc_disapproval_file_name).toBe('');
     });
   });
+
+  describe('Software Asset Modal Adjustments', () => {
+    it('hides condition and location, and renders license exp date and renewal reminder in Left Column', () => {
+      setI18nLanguage('en');
+      const softwareItem = {
+        id: 1,
+        number: 'SOFT-001',
+        status: 'Tersedia',
+        condition: null,
+        location_id: null,
+        model_category_code: 'SOFT',
+        license_exp_date: '2027-12-31',
+        renewal_reminder: 30,
+      };
+
+      const wrapper = mountModal([softwareItem], {
+        barang: { id: 10, category: 'Software', category_code: 'SOFT' },
+        lot: { id: 5, barang_category_code: 'SOFT' },
+      });
+
+      const labels = wrapper.findAll('label').map(l => l.text());
+      expect(labels.some(l => l.includes('Condition'))).toBe(false);
+      expect(labels.some(l => l.includes('Location'))).toBe(false);
+
+      expect(wrapper.find('#edit-asset-exp-date').exists()).toBe(true);
+      expect(wrapper.find('#edit-asset-renewal-reminder').exists()).toBe(true);
+      expect(wrapper.text()).toContain('Day(s)');
+    });
+  });
 });

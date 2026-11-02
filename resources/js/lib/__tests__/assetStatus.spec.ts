@@ -39,6 +39,8 @@ describe('assetStatus utility', () => {
     expect(isRestrictedAssetStatus('Tidak Aktif,Pending:BoD/BoC')).toBe(true);
     expect(isRestrictedAssetStatus('Dihapus')).toBe(true);
     expect(isRestrictedAssetStatus('Belum Diverifikasi')).toBe(true);
+    expect(isRestrictedAssetStatus('Lisensi Kedaluwarsa')).toBe(true);
+    expect(isRestrictedAssetStatus('License Expired')).toBe(true);
   });
 
   it('resolves badge classes and localized labels', () => {
@@ -50,6 +52,8 @@ describe('assetStatus utility', () => {
     expect(getAssetStatusBadgeClass('Pending:DM')).toContain('bg-purple-100');
     expect(getAssetStatusBadgeClass('Tidak Aktif')).toContain('bg-gray-200');
     expect(getAssetStatusBadgeClass('Dihapus')).toContain('bg-rose-100');
+    expect(getAssetStatusBadgeClass('Lisensi Kedaluwarsa')).toContain('bg-rose-100');
+    expect(getAssetStatusBadgeClass('License Expired')).toContain('bg-rose-100');
 
     const mockT = (k: string) => ({
       'status.tersedia': 'Available',
@@ -59,11 +63,13 @@ describe('assetStatus utility', () => {
       'status.tidakAktif': 'Inactive',
       'status.pendingBodBoc': 'Pending:BoD/BoC',
       'status.dihapus': 'Deleted',
+      'status.lisensiKedaluwarsa': 'License Expired',
     }[k] || k);
 
     expect(getAssetStatusLabel('Tersedia', mockT)).toBe('Available');
     expect(getAssetStatusLabel('Di-assign (LT)', mockT)).toBe('Di-assign (LT)');
     expect(getAssetStatusLabel('Dipinjam (ST)', mockT)).toBe('Borrowed (ST)');
+    expect(getAssetStatusLabel('Lisensi Kedaluwarsa', mockT)).toBe('License Expired');
     expect(formatAssetStatusLabels('Tidak Aktif,Pending:BoD/BoC', mockT)).toBe('Inactive, Pending:BoD/BoC');
   });
 });

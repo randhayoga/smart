@@ -58,6 +58,7 @@ class ManagerAssetActivationApprovalResource extends JsonResource
             });
 
         $catName = $model?->type?->category?->name ?? $model?->subcategory?->category?->name ?? '-';
+        $catCode = $model?->type?->category?->code ?? $model?->subcategory?->category?->code ?? null;
         $typeName = $model?->type?->name ?? $model?->subcategory?->name ?? '-';
 
         return [
@@ -67,6 +68,8 @@ class ManagerAssetActivationApprovalResource extends JsonResource
             'asset_code' => $asset->number ?? '-',
             'asset_number' => $asset->number ?? '-',
             'category' => $catName,
+            'category_code' => $catCode,
+            'model_category_code' => $catCode,
             'type' => $typeName,
             'subcategory' => $typeName,
             'brand' => $model?->brand?->name ?? '-',
@@ -84,7 +87,11 @@ class ManagerAssetActivationApprovalResource extends JsonResource
                 'number' => $asset?->number ?? '-',
                 'legacy_number' => $asset?->legacy_number ?? null,
                 'status' => $asset?->status ?? '-',
-                'condition' => $asset?->condition ?? '-',
+                'condition' => $asset?->condition,
+                'license_exp_date' => $asset?->license_exp_date?->format('Y-m-d'),
+                'renewal_reminder' => $asset?->renewal_reminder,
+                'category_code' => $catCode,
+                'model_category_code' => $catCode,
                 'price' => $asset?->price ? number_format($asset->price, 0, ',', '.') : '-',
                 'image_url' => $asset?->image_url ? '/media/' . $asset->image_url : ($lot?->image_url ? '/media/' . $lot->image_url : null),
                 'vehicle_registration' => $asset?->vehicle_registration ?? '-',
@@ -113,7 +120,11 @@ class ManagerAssetActivationApprovalResource extends JsonResource
                 'number' => $asset?->number ?? '-',
                 'legacy_number' => $asset?->legacy_number ?? null,
                 'status' => $asset?->status ?? '-',
-                'condition' => $asset?->condition ?? '-',
+                'condition' => $asset?->condition,
+                'license_exp_date' => $asset?->license_exp_date?->format('Y-m-d'),
+                'renewal_reminder' => $asset?->renewal_reminder,
+                'category_code' => $catCode,
+                'model_category_code' => $catCode,
                 'price' => $asset?->price ? number_format($asset->price, 0, ',', '.') : '-',
                 'image_url' => $asset?->image_url ? '/media/' . $asset->image_url : ($lot?->image_url ? '/media/' . $lot->image_url : null),
                 'vehicle_registration' => $asset?->vehicle_registration ?? '-',

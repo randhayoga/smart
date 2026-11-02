@@ -8,6 +8,7 @@ use App\Mail\DMAssetDeletionRequest;
 use App\Mail\DMBulkAssetDeletionRequest;
 use App\Mail\ManagerRequestApprovalMail;
 use App\Mail\RequesterRequestRejectedMail;
+use App\Mail\SoftwareLicenseExpiringMail;
 use App\Models\Inventory\Model;
 use App\Models\Inventory\Lot;
 use App\Models\Inventory\Asset;
@@ -647,7 +648,9 @@ class NotificationService
         if ($decision === 'approved') {
             $titleKey = 'inventory.notification_activation_approved_title';
             $titleParams = ['name' => $brandAndName];
-            $messageKey = 'inventory.notification_activation_approved_message';
+            $messageKey = ($asset->status === 'Lisensi Kedaluwarsa')
+                ? 'inventory.notification_activation_approved_expired_message'
+                : 'inventory.notification_activation_approved_message';
             $messageParams = ['number' => $asset->number];
             $type = 'success';
             $url = "/smart/stock-management/non-consumables?search=" . urlencode($asset->number);
@@ -867,6 +870,106 @@ class NotificationService
                 Log::error("Failed to send rejection email for request {$request->id} to {$requester->email}: " . $e->getMessage());
             }
         }
+    }
+
+    /**
+     * Send expiration warning notification (in-app and optional email) to Administrators for an expiring software license.
+     */
+    public function notifySoftwareLicenseExpiring(Asset $asset, int $daysRemaining, bool $sendEmail = false): void
+    {
+        $asset->loadMissing(['lot.model.brand']);
+        $brand = $asset->lot?->model?->brand?->name ?? '';
+        $modelName = $asset->lot?->model?->name ?? '';
+        $softwareName = trim("{$brand} {$modelName}") ?: $asset->number;
+
+        if ($daysRemaining === 0) {
+            $titleKey = 'inventory.notification_license_expiring_today_title';
+            $messageKey = 'inventory.notification_license_expiring_today_message';
+            $titleParams = ['asset_number' => $asset->number];
+            $messageParams = ['asset_number' => $asset->number, 'software' => $softwareName];
+        } else {
+            $titleKey = 'inventory.notification_license_expiring_title';
+            $messageKey = 'inventory.notification_license_expiring_message';
+            $titleParams = ['days' => $daysRemaining, 'asset_number' => $asset->number];
+            $messageParams = ['days' => $daysRemaining, 'asset_number' => $asset->number, 'software' => $softwareName];
+        }
+
+        $title = __($titleKey, $titleParams);
+        $message = __($messageKey, $messageParams);
+
+        // 1. In-app database + Mercure notification to all Admins
+        $this->sendToRole(
+            'admin',
+            $title,
+            $message,
+            $daysRemaining <= 7 ? 'warning' : 'info',
+            '/smart/stock-management/non-consumables?search=' . urlencode($asset->number),
+            [
+                'asset_id' => $asset->id,
+                'asset_number' => $asset->number,
+                'days_remaining' => $daysRemaining,
+                'title_key' => $titleKey,
+                'title_params' => $titleParams,
+                'message_key' => $messageKey,
+                'message_params' => $messageParams,
+            ]
+        );
+
+        // 2. Email notification to all Admins (when requested, e.g. at 7 days)
+        if ($sendEmail) {
+            try {
+                $admins = User::getUsersByRole('admin');
+                foreach ($admins as $admin) {
+                    if (!$this->isAllowedRecipient($admin, $admin->email)) {
+                        continue;
+                    }
+
+                    Mail::to($admin->email)->send(
+                        new SoftwareLicenseExpiringMail($asset, $daysRemaining, $admin->name)
+                    );
+                }
+            } catch (\Throwable $e) {
+                Log::error("Failed to send SoftwareLicenseExpiringMail for asset {$asset->number}: " . $e->getMessage(), [
+                    'exception' => $e,
+                    'asset_id' => $asset->id,
+                ]);
+            }
+        }
+    }
+
+    /**
+     * Notify administrators that a software license has expired and transitioned to 'Lisensi Kedaluwarsa'.
+     */
+    public function notifySoftwareLicenseExpired(Asset $asset, bool $sendEmail = false): void
+    {
+        $asset->loadMissing(['lot.model.brand']);
+        $brand = $asset->lot?->model?->brand?->name ?? '';
+        $modelName = $asset->lot?->model?->name ?? '';
+        $softwareName = trim("{$brand} {$modelName}") ?: $asset->number;
+
+        $titleKey = 'inventory.notification_license_expired_title';
+        $messageKey = 'inventory.notification_license_expired_message';
+        $titleParams = ['asset_number' => $asset->number];
+        $messageParams = ['asset_number' => $asset->number, 'software' => $softwareName];
+
+        $title = __($titleKey, $titleParams);
+        $message = __($messageKey, $messageParams);
+
+        $this->sendToRole(
+            'admin',
+            $title,
+            $message,
+            'danger',
+            '/smart/stock-management/non-consumables?search=' . urlencode($asset->number),
+            [
+                'asset_id' => $asset->id,
+                'asset_number' => $asset->number,
+                'title_key' => $titleKey,
+                'title_params' => $titleParams,
+                'message_key' => $messageKey,
+                'message_params' => $messageParams,
+            ]
+        );
     }
 
     /**

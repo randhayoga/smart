@@ -6,7 +6,9 @@ use App\Models\Inventory\Asset;
 use App\Models\Inventory\AssetActivationApproval;
 use App\Models\Inventory\AssetLifecycle;
 use App\Services\NotificationService;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Process Asset Activation Approval Action handling manager decisions on new asset registration.
@@ -43,12 +45,13 @@ class ProcessAssetActivationApproval
                 ->update(['end_date' => now()]);
 
             $previousStatus = $asset->status;
+            $isLicenseExpired = $asset->isLicenseExpired();
 
             // Suppress duplicate "Perubahan status" lifecycle created by Asset::updating hook
-            Asset::withoutLifecycleLogging(function () use ($asset, $decision) {
+            Asset::withoutLifecycleLogging(function () use ($asset, $decision, $isLicenseExpired) {
                 if ($decision === 'approved') {
                     $asset->update([
-                        'status' => 'Tersedia',
+                        'status' => $isLicenseExpired ? 'Lisensi Kedaluwarsa' : 'Tersedia',
                     ]);
                 } else {
                     $asset->update([
@@ -59,6 +62,10 @@ class ProcessAssetActivationApproval
 
             if ($decision === 'approved') {
                 $lifecycleNote = 'Aktivasi aset disetujui oleh DM IFS.' . ($note ? " Catatan: {$note}" : '');
+                if ($isLicenseExpired) {
+                    $expDate = $asset->license_exp_date ? Carbon::parse($asset->license_exp_date)->format('d-m-Y') : null;
+                    $lifecycleNote .= ' (Lisensi software telah kedaluwarsa' . ($expDate ? " pada {$expDate}." : ').');
+                }
             } else {
                 $lifecycleNote = 'Aktivasi aset ditolak oleh DM IFS.' . ($note ? " Catatan: {$note}" : '');
             }
@@ -78,6 +85,14 @@ class ProcessAssetActivationApproval
             ]);
 
             app(NotificationService::class)->notifyAdminAssetActivationDecision($approval, $decision);
+
+            if ($isLicenseExpired && $decision === 'approved') {
+                try {
+                    app(NotificationService::class)->notifySoftwareLicenseExpired($asset);
+                } catch (\Throwable $e) {
+                    Log::error("Failed to notify expired license on activation approval for asset {$asset->number}: " . $e->getMessage());
+                }
+            }
         });
     }
 }

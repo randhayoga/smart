@@ -8,15 +8,10 @@
 
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-// ==========================================
-// [PHASE 2 - TASK SCHEDULER]
-// Uncomment and register scheduled recurring commands below when transitioning to Phase 2:
-// use Illuminate\Support\Facades\Schedule;
-//
-// Schedule::command('model:prune')->daily();
-// ==========================================
+Schedule::command('licenses:check-expirations')->dailyAt('08:00');

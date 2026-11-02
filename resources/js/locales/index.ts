@@ -6,8 +6,8 @@ export type MessageSchema = typeof id;
 
 export const i18n = createI18n<[MessageSchema], 'id' | 'en'>({
   legacy: false,
-  locale: 'id',
-  fallbackLocale: 'id',
+  locale: 'en',
+  fallbackLocale: 'en',
   messages: {
     id,
     en,

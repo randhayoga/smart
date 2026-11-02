@@ -61,6 +61,16 @@ const isVehicle = (item: any) => {
          category.includes('motor') || subcategory.includes('motor');
 };
 
+/** Determines whether the given asset belongs to software category */
+const isSoft = (item: any) => {
+  if (!item) return false;
+  const catCode = item.category_code || item.unit_details?.category_code || item.unit_details?.model_category_code || '';
+  const cat = (item.category || item.unit_details?.category || '').toLowerCase();
+  return catCode === 'SOFT' || cat === 'software' || cat === 'soft';
+};
+
+const hasCondition = (cond?: string | null) => Boolean(cond && cond !== '-' && cond.trim() !== '');
+
 const formatRupiah = (val: number | string | null | undefined) => {
   if (val === null || val === undefined || val === '') return '-';
   let num: number;
@@ -104,7 +114,7 @@ const CONDITION_KEY_MAP: Record<string, string> = {
 };
 
 const getConditionLabel = (cond?: string | null) => {
-  if (!cond) return '';
+  if (!cond || cond === '-') return '';
   const key = CONDITION_KEY_MAP[cond.toLowerCase()];
   return key && te(key) ? t(key) : cond;
 };
@@ -197,11 +207,23 @@ const getConditionLabel = (cond?: string | null) => {
                       <span class="text-foreground">{{ $t('approvals.plateLabel') }}</span> {{ approval.unit_details.vehicle_registration || '-' }}
                     </p>
 
+                    <!-- Software License Information -->
+                    <template v-if="isSoft(approval)">
+                      <p class="text-foreground">
+                        <span class="text-foreground">{{ $t('inventory.licenseExpDate') }}:</span>
+                        {{ approval.unit_details?.license_exp_date ? formatDate(approval.unit_details.license_exp_date) : $t('inventory.perpetual') }}
+                      </p>
+                      <p v-if="approval.unit_details?.license_exp_date" class="text-foreground">
+                        <span class="text-foreground">{{ $t('inventory.renewalReminder') }}:</span>
+                        {{ approval.unit_details?.renewal_reminder === 0 ? $t('inventory.renewalReminderDisabled') : (approval.unit_details?.renewal_reminder !== null && approval.unit_details?.renewal_reminder !== undefined ? `${approval.unit_details.renewal_reminder} ${$t('inventory.renewalReminderSuffix')}` : '-') }}
+                      </p>
+                    </template>
+
                     <!-- Status & Kondisi for Pending Mode -->
                     <div v-if="mode === 'pending'" class="flex items-center gap-1.5 flex-wrap">
-                      <span>{{ $t('inventory.statusAndCondition') }}:</span>
+                      <span>{{ hasCondition(approval.unit_details.condition) && !isSoft(approval) ? $t('inventory.statusAndCondition') : $t('inventory.status') }}:</span>
                       <StatusBadge :status="approval.unit_details.status" />
-                      <span :class="getConditionClass(approval.unit_details.condition)">
+                      <span v-if="hasCondition(approval.unit_details.condition) && !isSoft(approval)" :class="getConditionClass(approval.unit_details.condition)">
                         {{ getConditionLabel(approval.unit_details.condition) }}
                       </span>
                     </div>
@@ -222,9 +244,9 @@ const getConditionLabel = (cond?: string | null) => {
 
                       <!-- Single Status & Kondisi showing current unit status and condition -->
                       <div class="flex items-center gap-1.5 flex-wrap">
-                        <span>{{ $t('inventory.statusAndCondition') }}:</span>
+                        <span>{{ hasCondition(approval.unit_details.condition) && !isSoft(approval) ? $t('inventory.statusAndCondition') : $t('inventory.status') }}:</span>
                         <StatusBadge :status="approval.unit_details.status" />
-                        <span :class="getConditionClass(approval.unit_details.condition)">
+                        <span v-if="hasCondition(approval.unit_details.condition) && !isSoft(approval)" :class="getConditionClass(approval.unit_details.condition)">
                           {{ getConditionLabel(approval.unit_details.condition) }}
                         </span>
                       </div>
@@ -235,7 +257,7 @@ const getConditionLabel = (cond?: string | null) => {
                     </template>
 
                     <p class="text-foreground mt-1.5">{{ $t('approvals.priceLabel') }} {{ formatRupiah(approval.unit_details.price) }}</p>
-                    <p class="text-foreground">{{ $t('approvals.storageLocationLabel') }} {{ formatLocation(approval.unit_details.location, approval.unit_details.floor, approval.unit_details.room) }}</p>
+                    <p v-if="!isSoft(approval)" class="text-foreground">{{ $t('approvals.storageLocationLabel') }} {{ formatLocation(approval.unit_details.location, approval.unit_details.floor, approval.unit_details.room) }}</p>
                     <p class="text-foreground" v-if="mode === 'pending'">{{ $t('approvals.lastUpdateLabel') }} {{ approval.requested_at }}</p>
                   </div>
                 </div>

@@ -70,7 +70,7 @@ describe('Sidebar.vue', () => {
     expect(aside.exists()).toBe(true);
     expect(aside.classes()).toContain('lg:w-64');
     expect(aside.classes()).not.toContain('lg:w-[4.5rem]');
-    expect(wrapper.text()).toContain('MENU UTAMA');
+    expect(wrapper.text()).toMatch(/MENU UTAMA|MAIN MENU/);
     expect(wrapper.text()).toContain('Dashboard');
   });
 
@@ -118,8 +118,8 @@ describe('Sidebar.vue', () => {
       collapsed: false,
     });
 
-    expect(wrapper.text()).toContain('Audit Manajemen Stok');
-    expect(wrapper.text()).toContain('Pergerakan Aset');
+    expect(wrapper.text()).toMatch(/Audit Manajemen Stok|Stock Management Audit/);
+    expect(wrapper.text()).toMatch(/Pergerakan Aset|Asset Movement/);
   });
 
   it('renders inventory_audit, audit_trail, and stock items in sidebar for IFS Manager, but no admin-exclusive items', () => {
@@ -148,12 +148,12 @@ describe('Sidebar.vue', () => {
 
     // Allowed items for IFS Manager
     expect(wrapper.text()).toContain('Dashboard');
-    expect(wrapper.text()).toContain('Daftar Habis Pakai');
-    expect(wrapper.text()).toContain('Daftar Tidak Habis Pakai');
-    expect(wrapper.text()).toContain('Daftar Karyawan');
-    expect(wrapper.text()).toContain('Perlu Approval');
-    expect(wrapper.text()).toContain('Audit Manajemen Stok');
-    expect(wrapper.text()).toContain('Pergerakan Aset');
+    expect(wrapper.text()).toMatch(/Daftar Habis Pakai|Consumable List/);
+    expect(wrapper.text()).toMatch(/Daftar Tidak Habis Pakai|Non-Consumable List/);
+    expect(wrapper.text()).toMatch(/Daftar Karyawan|Employee List/);
+    expect(wrapper.text()).toMatch(/Perlu Approval|Pending Approval/);
+    expect(wrapper.text()).toMatch(/Audit Manajemen Stok|Stock Management Audit/);
+    expect(wrapper.text()).toMatch(/Pergerakan Aset|Asset Movement/);
 
     // Forbidden / Hidden items for IFS Manager
     expect(wrapper.find('a[href="/smart/stock-management"]').exists()).toBe(false);
@@ -186,8 +186,8 @@ describe('Sidebar.vue', () => {
       collapsed: false,
     });
 
-    expect(wrapper.text()).not.toContain('Audit Manajemen Stok');
-    expect(wrapper.text()).not.toContain('Pergerakan Aset');
+    expect(wrapper.text()).not.toMatch(/Audit Manajemen Stok|Stock Management Audit/);
+    expect(wrapper.text()).not.toMatch(/Pergerakan Aset|Asset Movement/);
     expect(wrapper.find('a[href="/smart/approve-deletion"]').exists()).toBe(false);
     expect(wrapper.find('a[href="/smart/approve-activation"]').exists()).toBe(false);
   });

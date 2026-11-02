@@ -27,6 +27,7 @@ export default {
   yes: 'Yes',
   no: 'No',
   select: 'Select',
+  choose: 'Choose',
   selectLanguage: 'Select Language',
   notifications: {
     title: 'Notifications',

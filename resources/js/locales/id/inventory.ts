@@ -348,4 +348,21 @@ export default {
   isAssignedToLocation: 'Tetapkan ke Lokasi',
   assignedToLocationYes: 'Ya',
   assignedToLocationNo: 'Tidak',
+
+  // Lisensi Software & Pengingat Perpanjangan
+  licenseExpDate: 'Tanggal Kedaluwarsa Lisensi',
+  licenseType: 'Jenis Lisensi',
+  subscription: 'Berlangganan',
+  perpetual: 'Perpetual',
+  expDateRequiredForSubscription: 'Tanggal kedaluwarsa lisensi wajib diisi untuk jenis berlangganan',
+  renewalReminder: 'Pengingat Perpanjangan',
+  renewalReminderSuffix: 'Hari',
+  renewalReminderDisabled: 'Tidak ada pengingat',
+  renewalReminderPlaceholder: '0 untuk menonaktifkan pengingat',
+  renewalReminderDisabledPerpetual: 'Tidak berlaku untuk perpetual',
+  renewalReminderHint: 'Atur ke 0 untuk menonaktifkan pengingat',
+  notification_license_expiring_title: 'Lisensi Software Kedaluwarsa dalam {days} Hari: {asset_number}',
+  notification_license_expiring_today_title: 'Lisensi Software Kedaluwarsa Hari Ini: {asset_number}',
+  notification_license_expiring_message: 'Lisensi untuk software {software} ({asset_number}) akan kedaluwarsa dalam {days} hari. Silakan koordinasikan perpanjangan.',
+  notification_license_expiring_today_message: 'Lisensi untuk software {software} ({asset_number}) kedaluwarsa hari ini. Silakan koordinasikan perpanjangan.',
 };

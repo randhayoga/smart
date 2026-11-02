@@ -5,11 +5,11 @@ import en from '../en';
 
 describe('i18n Configuration and Dictionaries', () => {
   beforeEach(() => {
-    setI18nLanguage('id');
+    setI18nLanguage('en');
   });
 
-  it('should initialize with default locale id', () => {
-    expect((i18n.global.locale as any).value).toBe('id');
+  it('should initialize with default locale en', () => {
+    expect((i18n.global.locale as any).value).toBe('en');
   });
 
   it('should update active locale when setI18nLanguage is called', () => {

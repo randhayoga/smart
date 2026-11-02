@@ -39,6 +39,8 @@ class AssetFactory extends Factory
             'legacy_vendor_id' => null,
             'comp_specification' => null,
             'is_assigned_to_location' => false,
+            'license_exp_date' => null,
+            'renewal_reminder' => null,
         ];
     }
 

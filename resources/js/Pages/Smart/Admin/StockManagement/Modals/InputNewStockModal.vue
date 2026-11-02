@@ -141,6 +141,9 @@ const form = useForm({
   plate_number: '',
   is_bulk: false,
   bulk_quantity: '' as string | number,
+  license_exp_date: null as string | null,
+  renewal_reminder: null as number | null,
+  license_type: 'Subscription' as 'Subscription' | 'Perpetual',
 });
 
 const errors = ref<Record<string, string>>({});
@@ -160,6 +163,11 @@ const isComp = computed(() => {
 
 const isKend = computed(() => {
   return selectedCategory.value?.code === 'KEND';
+});
+
+const isSoft = computed(() => {
+  if (!selectedCategory.value) return false;
+  return selectedCategory.value.code === 'SOFT' || selectedCategory.value.name?.toLowerCase() === 'software';
 });
 
 const selectedType = computed(() => {
@@ -236,6 +244,9 @@ const resetFormState = () => {
   form.lot_photo = null;
   form.lot_photo_name = '';
   form.use_parent_image = false;
+  form.license_exp_date = null;
+  form.renewal_reminder = null;
+  form.license_type = 'Subscription';
 };
 
 const closeModal = () => {
@@ -388,8 +399,13 @@ const handleSubmit = () => {
         isValid = false;
       }
       if (!form.borrowing_type) { errors.value.borrowing_type = t('inventory.borrowingTypeRequired'); isValid = false; }
-      if (!form.condition) { errors.value.condition = t('inventory.conditionRequired'); isValid = false; }
-      if (!form.location_id) { errors.value.location_id = t('inventory.locationRequired'); isValid = false; }
+      if (!isSoft.value) {
+        if (!form.condition) { errors.value.condition = t('inventory.conditionRequired'); isValid = false; }
+        if (!form.location_id) { errors.value.location_id = t('inventory.locationRequired'); isValid = false; }
+      } else {
+        form.condition = null;
+        form.location_id = null;
+      }
       if (!form.classification) { errors.value.classification = t('inventory.classificationRequired'); isValid = false; }
       if (!form.burden) { errors.value.burden = t('inventory.burdenRequired'); isValid = false; }
       if (form.burden === 'Project' && !form.project_id) {
@@ -411,6 +427,18 @@ const handleSubmit = () => {
             errors.value.bulk_quantity = t('inventory.assetCountRequired');
             isValid = false;
           }
+        }
+      }
+
+      if (isSoft.value) {
+        if (form.license_type === 'Subscription') {
+          if (!form.license_exp_date) {
+            errors.value.license_exp_date = t('inventory.expDateRequiredForSubscription');
+            isValid = false;
+          }
+        } else {
+          form.license_exp_date = null;
+          form.renewal_reminder = null;
         }
       }
     }
@@ -504,6 +532,7 @@ const handleSubmit = () => {
                 :projects="projects"
                 :is-comp="isComp"
                 :is-kend="isKend"
+                :is-soft="isSoft"
                 :lot-ready="lotReady"
                 :is-consumable="isConsumable"
               />

@@ -5,6 +5,7 @@
  * collapsible/expandable branches (default expanded), and full path display.
  */
 import { ref, computed, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { Check, ChevronsUpDown, ChevronDown, ChevronRight, X } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/Components/ui/popover';
@@ -40,10 +41,6 @@ const props = withDefaults(defineProps<{
   activeOnly?: boolean;
   bgClass?: string;
 }>(), {
-  placeholder: 'Pilih Lokasi...',
-  searchPlaceholder: 'Cari lokasi...',
-  emptyText: 'Lokasi tidak ditemukan.',
-  defaultLabel: '',
   widthClass: 'w-full',
   disabled: false,
   error: false,
@@ -57,6 +54,13 @@ const emit = defineEmits<{
   (e: 'update:modelValue', value: string | number | null): void;
   (e: 'change', location: LocationItem | null): void;
 }>();
+
+const { t } = useI18n();
+
+const effectivePlaceholder = computed(() => props.placeholder ?? t('common.choose'));
+const effectiveSearchPlaceholder = computed(() => props.searchPlaceholder ?? `${t('common.search')}...`);
+const effectiveEmptyText = computed(() => props.emptyText ?? t('common.noData'));
+const effectiveDefaultLabel = computed(() => props.defaultLabel || effectivePlaceholder.value);
 
 const open = ref(false);
 const searchQuery = ref('');
@@ -99,13 +103,13 @@ const fullNameMap = computed(() => {
 // Label for currently selected value
 const selectedLabel = computed(() => {
   if (props.modelValue === null || props.modelValue === '' || props.modelValue === undefined) {
-    return props.defaultLabel || props.placeholder;
+    return effectiveDefaultLabel.value;
   }
   if (fullNameMap.value.has(props.modelValue)) {
     return fullNameMap.value.get(props.modelValue)!;
   }
   const found = props.locations.find(l => String(l.id) === String(props.modelValue));
-  return found ? getFullName(found) : (props.defaultLabel || props.placeholder);
+  return found ? getFullName(found) : effectiveDefaultLabel.value;
 });
 
 // Build tree hierarchy
@@ -302,11 +306,11 @@ watch(open, (isOpen) => {
       <Command :highlight-on-hover="true">
         <CommandInput
           v-model="searchQuery"
-          :placeholder="searchPlaceholder"
+          :placeholder="effectiveSearchPlaceholder"
         />
         <CommandList class="p-1">
           <div v-if="visibleFlattenedNodes.length === 0 && !defaultLabel" class="py-6 text-center text-sm text-muted-foreground">
-            {{ emptyText }}
+            {{ effectiveEmptyText }}
           </div>
           <template v-else>
             <!-- Optional Default / Clear Option -->

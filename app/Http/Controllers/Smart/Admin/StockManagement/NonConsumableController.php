@@ -23,6 +23,8 @@ class NonConsumableController extends Controller
      */
     public function index(Request $request): Response
     {
+        Asset::expireOverdueLicensesCached();
+
         $assets = Asset::with([
             'location.parent.parent', 'deletionApprovals', 'project',
             'lot.model.type.category', 'lot.model.brand', 'lot.model.uom',

@@ -97,12 +97,14 @@ const getStatusLabel = (s: string) => {
     'Pending:BoD/BoC': t('status.pending'),
     'Scrapped': t('status.scrapped'),
     'Lost': t('status.lost'),
+    'Lisensi Kedaluwarsa': t('status.lisensiKedaluwarsa'),
+    'License Expired': t('status.lisensiKedaluwarsa'),
   };
   return map[s] || s;
 };
 
 const getConditionLabel = (c: string) => {
-  if (!c) return '';
+  if (!c || c === '-') return '';
   const map: Record<string, string> = {
     'Bagus': t('inventory.conditionGood'),
     'Rusak': t('inventory.conditionDamaged'),
@@ -117,6 +119,39 @@ const getClassificationLabel = (c: string) => {
   if (c === 'Aset') return t('inventory.classificationAsset');
   if (c === 'Inventaris') return t('inventory.classificationInventory');
   return c;
+};
+
+const isSoftItem = (data: any) => {
+  if (!data) return false;
+  const catCode = data.category_code || data.barang_category_code || data.model_category_code || data.unit_details?.model_category_code || data.unit_details?.barang_category_code || data.unit_details?.category_code || data.asset_details?.model_category_code || data.asset_details?.category_code || '';
+  const cat = (data.category || data.barang_category || data.unit_details?.category || data.asset_details?.category || '').toLowerCase();
+  return catCode === 'SOFT' || cat === 'software' || cat === 'soft';
+};
+
+const formatRenewalReminder = (reminder: number | null | undefined) => {
+  if (reminder === 0) return t('inventory.renewalReminderDisabled');
+  if (reminder !== null && reminder !== undefined && reminder !== '') return `${reminder} ${t('inventory.renewalReminderSuffix')}`;
+  return '-';
+};
+
+const getSoftLicenseFields = (data: any) => {
+  const fields: { label: string; value: any }[] = [];
+  const expDate = data.license_exp_date || data.unit_details?.license_exp_date || data.asset_details?.license_exp_date;
+  const reminder = data.renewal_reminder ?? data.unit_details?.renewal_reminder ?? data.asset_details?.renewal_reminder;
+
+  fields.push({
+    label: t('inventory.licenseExpDate'),
+    value: expDate ? formatDate(expDate) : t('inventory.perpetual'),
+  });
+
+  if (expDate) {
+    fields.push({
+      label: t('inventory.renewalReminder'),
+      value: formatRenewalReminder(reminder),
+    });
+  }
+
+  return fields;
 };
 
 const isApprovalAction = computed(() => {
@@ -233,25 +268,31 @@ const displayFields = computed(() => {
     if (data.classification || data.unit_details?.classification) fields.push({ label: t('inventory.classification'), value: getClassificationLabel(data.classification || data.unit_details?.classification || 'Aset') });
     if (isActivationApproval.value) {
       if (data.unit_details?.status || data.status) fields.push({ label: t('inventory.status'), value: getStatusLabel(data.unit_details?.status || data.status) });
-      if (data.unit_details?.condition || data.condition) {
+      const cond = data.unit_details?.condition || data.condition;
+      if (!isSoftItem(data) && cond && cond !== '-') {
         fields.push({
           label: t('inventory.condition'),
-          value: getConditionLabel(data.unit_details?.condition || data.condition)
+          value: getConditionLabel(cond)
         });
+      }
+      if (isSoftItem(data)) {
+        fields.push(...getSoftLicenseFields(data));
       }
     } else {
-      const actualCondition = data.previous_condition || data.unit_details?.condition || data.condition;
-      if (actualCondition) {
-        fields.push({
-          label: t('inventory.condition'),
-          value: getConditionLabel(actualCondition)
-        });
-      }
-      if (data.proposed_condition) {
-        fields.push({
-          label: t('approvals.proposedCondition'),
-          value: getConditionLabel(data.proposed_condition)
-        });
+      if (!isSoftItem(data)) {
+        const actualCondition = data.previous_condition || data.unit_details?.condition || data.condition;
+        if (actualCondition && actualCondition !== '-') {
+          fields.push({
+            label: t('inventory.condition'),
+            value: getConditionLabel(actualCondition)
+          });
+        }
+        if (data.proposed_condition && data.proposed_condition !== '-') {
+          fields.push({
+            label: t('approvals.proposedCondition'),
+            value: getConditionLabel(data.proposed_condition)
+          });
+        }
       }
       if (data.admin_note) {
         fields.push({
@@ -267,11 +308,13 @@ const displayFields = computed(() => {
     if (data.name || data.nama) fields.push({ label: t('approvals.name'), value: data.name || data.nama });
     if (data.specification) fields.push({ label: t('approvals.specification'), value: data.specification });
     if (data.unit_details) {
-      const locParts = [];
-      if (data.unit_details.location) locParts.push(data.unit_details.location);
-      if (data.unit_details.floor) locParts.push(data.unit_details.floor);
-      if (data.unit_details.room) locParts.push(data.unit_details.room);
-      fields.push({ label: t('approvals.storageLocationLabel').replace(':', ''), value: locParts.join(', ') || '-' });
+      if (!isSoftItem(data)) {
+        const locParts = [];
+        if (data.unit_details.location) locParts.push(data.unit_details.location);
+        if (data.unit_details.floor) locParts.push(data.unit_details.floor);
+        if (data.unit_details.room) locParts.push(data.unit_details.room);
+        fields.push({ label: t('approvals.storageLocationLabel').replace(':', ''), value: locParts.join(', ') || '-' });
+      }
       
       fields.push({ label: t('approvals.poNumberLabel').replace(':', ''), value: data.unit_details.po_number || '-' });
       if (data.unit_details.date_of_receipt) {
@@ -326,8 +369,13 @@ const displayFields = computed(() => {
     if (data.type) fields.push({ label: t('inventory.type'), value: data.type });
     if (data.classification) fields.push({ label: t('inventory.classification'), value: getClassificationLabel(data.classification) });
     if (data.status) fields.push({ label: t('inventory.status'), value: getStatusLabel(data.status) });
-    if (data.condition) fields.push({ label: t('inventory.condition'), value: getConditionLabel(data.condition) });
-    if (data.location) fields.push({ label: t('inventory.location'), value: typeof data.location === 'string' ? data.location : formatLocation(data.location) });
+    if (!isSoftItem(data)) {
+      if (data.condition && data.condition !== '-') fields.push({ label: t('inventory.condition'), value: getConditionLabel(data.condition) });
+      if (data.location) fields.push({ label: t('inventory.location'), value: typeof data.location === 'string' ? data.location : formatLocation(data.location) });
+    }
+    if (isSoftItem(data)) {
+      fields.push(...getSoftLicenseFields(data));
+    }
     if (data.price !== undefined && data.price !== null) fields.push({ label: t('inventory.unitPrice'), value: formatRupiah(data.price) });
     if (data.burden) fields.push({ label: t('inventory.burden'), value: data.burden });
     if (data.burden === 'Project') {
@@ -439,25 +487,31 @@ const bulkItemsFields = computed(() => {
       if (data.type || data.unit_details?.type) fields.push({ label: t('inventory.type'), value: data.type || data.unit_details?.type });
       if (isActivationApproval.value) {
         if (data.unit_details?.status || data.status) fields.push({ label: t('inventory.status'), value: getStatusLabel(data.unit_details?.status || data.status) });
-        if (data.unit_details?.condition || data.condition) {
+        const cond = data.unit_details?.condition || data.condition;
+        if (!isSoftItem(data) && cond && cond !== '-') {
           fields.push({
             label: t('inventory.condition'),
-            value: getConditionLabel(data.unit_details?.condition || data.condition)
+            value: getConditionLabel(cond)
           });
+        }
+        if (isSoftItem(data)) {
+          fields.push(...getSoftLicenseFields(data));
         }
       } else {
-        const actualCondition = data.previous_condition || data.unit_details?.condition || data.condition;
-        if (actualCondition) {
-          fields.push({
-            label: t('inventory.condition'),
-            value: getConditionLabel(actualCondition)
-          });
-        }
-        if (data.proposed_condition) {
-          fields.push({
-            label: t('approvals.proposedCondition'),
-            value: getConditionLabel(data.proposed_condition)
-          });
+        if (!isSoftItem(data)) {
+          const actualCondition = data.previous_condition || data.unit_details?.condition || data.condition;
+          if (actualCondition && actualCondition !== '-') {
+            fields.push({
+              label: t('inventory.condition'),
+              value: getConditionLabel(actualCondition)
+            });
+          }
+          if (data.proposed_condition && data.proposed_condition !== '-') {
+            fields.push({
+              label: t('approvals.proposedCondition'),
+              value: getConditionLabel(data.proposed_condition)
+            });
+          }
         }
         if (data.admin_note) {
           fields.push({
@@ -478,7 +532,10 @@ const bulkItemsFields = computed(() => {
       if (data.type) fields.push({ label: t('inventory.type'), value: data.type });
       if (data.classification) fields.push({ label: t('inventory.classification'), value: getClassificationLabel(data.classification) });
       if (data.status) fields.push({ label: t('inventory.status'), value: getStatusLabel(data.status) });
-      if (data.condition) fields.push({ label: t('inventory.condition'), value: getConditionLabel(data.condition) });
+      if (!isSoftItem(data) && data.condition && data.condition !== '-') fields.push({ label: t('inventory.condition'), value: getConditionLabel(data.condition) });
+      if (isSoftItem(data)) {
+        fields.push(...getSoftLicenseFields(data));
+      }
       return fields;
     }
 

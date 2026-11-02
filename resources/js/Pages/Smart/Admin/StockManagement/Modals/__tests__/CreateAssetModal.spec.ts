@@ -204,4 +204,37 @@ describe('CreateAssetModal.vue', () => {
     expect(wrapper.text()).toContain('Belum ada foto yang dipilih');
     expect(wrapper.find('button[title="Hapus Foto"]').attributes('disabled')).toBeDefined();
   });
+
+  it('renders software license expiration and renewal reminder fields for software category, hides condition and location, and handles Perpetual toggle', async () => {
+    setI18nLanguage('en');
+    const wrapper = mountModal({
+      barang: {
+        id: 10,
+        category: 'Software',
+        category_code: 'SOFT',
+        name: 'IDE License',
+      },
+    });
+    const vm = wrapper.vm as any;
+
+    // Condition and Location should be completely hidden for software assets
+    const labels = wrapper.findAll('label').map(l => l.text());
+    expect(labels.some(l => l.includes('Condition'))).toBe(false);
+    expect(labels.some(l => l.includes('Location'))).toBe(false);
+
+    const expInput = wrapper.find('#create-asset-exp-date');
+    const reminderInput = wrapper.find('#create-asset-renewal-reminder');
+    expect(expInput.exists()).toBe(true);
+    expect(reminderInput.exists()).toBe(true);
+    expect(wrapper.text()).toContain('Day(s)');
+    expect((expInput.element as HTMLInputElement).disabled).toBe(false);
+
+    vm.licenseType = 'Perpetual';
+    await wrapper.vm.$nextTick();
+
+    expect((expInput.element as HTMLInputElement).disabled).toBe(true);
+    expect((reminderInput.element as HTMLInputElement).disabled).toBe(true);
+    expect(vm.form.license_exp_date).toBeNull();
+    expect(vm.form.renewal_reminder).toBeNull();
+  });
 });

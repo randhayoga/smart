@@ -190,4 +190,81 @@ describe('ActivationApprovalModal.vue', () => {
       expect(wrapper.text()).toContain('B 1234 XYZ');
     });
   });
+
+  describe('Software Asset and Null Condition Display', () => {
+    it('renders only Status (not Status & Kondisi) and no condition or dash for software assets', () => {
+      const softwareApproval = {
+        ...sampleApproval,
+        category: 'Software',
+        category_code: 'SOFT',
+        subcategory: 'OS',
+        unit_details: {
+          ...sampleApproval.unit_details,
+          condition: null,
+          license_exp_date: '2027-01-01',
+          renewal_reminder: 30,
+        },
+      };
+
+      const wrapper = mountModal({
+        approval: softwareApproval,
+        mode: 'pending',
+      });
+
+      expect(wrapper.text()).not.toContain('Status & Kondisi');
+      expect(wrapper.text()).toContain('Status:');
+      expect(wrapper.text()).toContain('Belum Diverifikasi');
+      expect(wrapper.text()).not.toContain('Lokasi Penyimpanan:');
+      expect(wrapper.text()).toContain('Tanggal Kedaluwarsa Lisensi:');
+      expect(wrapper.text()).toContain('Pengingat Perpanjangan:');
+      expect(wrapper.text()).toContain('30 Hari');
+    });
+
+    it('renders Perpetual when license_exp_date is null for software assets', () => {
+      const softwarePerpetual = {
+        ...sampleApproval,
+        category: 'Software',
+        category_code: 'SOFT',
+        subcategory: 'Antivirus',
+        unit_details: {
+          ...sampleApproval.unit_details,
+          condition: null,
+          license_exp_date: null,
+          renewal_reminder: null,
+        },
+      };
+
+      const wrapper = mountModal({
+        approval: softwarePerpetual,
+        mode: 'pending',
+      });
+
+      expect(wrapper.text()).not.toContain('Status & Kondisi');
+      expect(wrapper.text()).toContain('Status:');
+      expect(wrapper.text()).toContain('Perpetual');
+    });
+
+    it('renders "Tidak ada pengingat" when renewal_reminder is 0 for software assets', () => {
+      const softwareNoReminder = {
+        ...sampleApproval,
+        category: 'Software',
+        category_code: 'SOFT',
+        subcategory: 'IDE',
+        unit_details: {
+          ...sampleApproval.unit_details,
+          condition: null,
+          license_exp_date: '2027-01-01',
+          renewal_reminder: 0,
+        },
+      };
+
+      const wrapper = mountModal({
+        approval: softwareNoReminder,
+        mode: 'pending',
+      });
+
+      expect(wrapper.text()).toContain('Pengingat Perpanjangan:');
+      expect(wrapper.text()).toContain('Tidak ada pengingat');
+    });
+  });
 });

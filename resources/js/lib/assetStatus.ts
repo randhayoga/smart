@@ -24,6 +24,8 @@ export const STATUS_KEY_MAP: Record<string, string> = {
   'rusak total': 'status.rusakTotal',
   'hilang': 'status.hilang',
   'dihapus': 'status.dihapus',
+  'lisensi kedaluwarsa': 'status.lisensiKedaluwarsa',
+  'license expired': 'status.lisensiKedaluwarsa',
   'ditolak': 'status.ditolak',
   'rejected': 'status.ditolak',
   'disetujui': 'status.disetujui',
@@ -104,6 +106,8 @@ export function isRestrictedAssetStatus(rawStatus?: string | null): boolean {
     return (
       s === 'tidak aktif' ||
       s === 'dihapus' ||
+      s === 'lisensi kedaluwarsa' ||
+      s === 'license expired' ||
       s === 'pending' ||
       s.startsWith('pending') ||
       s === 'belum diverifikasi' ||
@@ -140,7 +144,7 @@ export function getAssetStatusBadgeClass(status?: string | null): string {
   if (s === 'Rusak' || lower === 'rusak') return 'bg-rose-100 text-rose-800';
   if (s === 'Rusak Total' || lower === 'rusak total') return 'bg-red-100 text-red-800';
   if (s === 'Hilang' || lower === 'hilang') return 'bg-rose-100 text-rose-800';
-  if (lower === 'dihapus' || lower === 'ditolak' || lower === 'rejected' || lower === 'cancel' || lower === 'dibatalkan') return 'bg-rose-100 text-rose-800';
+  if (lower === 'dihapus' || lower === 'lisensi kedaluwarsa' || lower === 'license expired' || lower === 'ditolak' || lower === 'rejected' || lower === 'cancel' || lower === 'dibatalkan') return 'bg-rose-100 text-rose-800';
   if (lower === 'disetujui' || lower === 'approved' || lower === 'sukses' || lower === 'success') return 'bg-emerald-100 text-emerald-800';
   return 'bg-gray-100 text-gray-800';
 }

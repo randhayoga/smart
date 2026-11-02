@@ -3,6 +3,7 @@
  * Main Asset attributes section for EditAssetModal.
  * Matches InputNewStock AssetSection.vue layout, shadcn-vue Field styling, and reactive inputs.
  */
+import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { ChevronDown, Trash2 } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
@@ -25,6 +26,7 @@ interface Props {
   selectedItem?: any;
   isComp: boolean;
   isVehicle: boolean;
+  isSoft?: boolean;
   canShowAssignToLocation: boolean;
   isKondisiDisabled: boolean;
   isBorrowedUnit: boolean;
@@ -45,6 +47,20 @@ interface Props {
 const props = defineProps<Props>();
 
 const { t } = useI18n();
+
+const licenseType = computed({
+  get: () => props.form.license_type || (props.form.license_exp_date ? 'Subscription' : 'Perpetual'),
+  set: (val: 'Subscription' | 'Perpetual') => {
+    props.form.license_type = val;
+    if (val === 'Perpetual') {
+      props.form.license_exp_date = null;
+      props.form.renewal_reminder = null;
+      if (props.errors.license_exp_date) {
+        delete props.errors.license_exp_date;
+      }
+    }
+  }
+});
 </script>
 
 <template>
@@ -186,7 +202,7 @@ const { t } = useI18n();
       </Field>
 
       <!-- Condition -->
-      <Field :data-invalid="(isSingle && !!errors.condition) || undefined" :data-disabled="isKondisiDisabled || undefined">
+      <Field v-if="!isSoft" :data-invalid="(isSingle && !!errors.condition) || undefined" :data-disabled="isKondisiDisabled || undefined">
         <FieldLabel>
           <span>{{ t('inventory.condition') }}<span v-if="isSingle" class="text-rose-500">*</span></span>
         </FieldLabel>
@@ -220,12 +236,92 @@ const { t } = useI18n();
         </FieldContent>
         <FieldError v-if="isSingle && errors.condition">{{ errors.condition }}</FieldError>
       </Field>
+
+      <!-- Software License Expiration Date (with integrated License Type Dropdown) -->
+      <Field v-if="isSoft" :data-invalid="(isSingle && !!errors.license_exp_date) || undefined">
+        <FieldLabel for="edit-asset-exp-date">
+          <span>
+            {{ t('inventory.licenseExpDate') }}
+            <span v-if="isSingle && licenseType === 'Subscription'" class="text-rose-500">*</span>
+          </span>
+        </FieldLabel>
+        <FieldContent>
+          <div class="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  class="w-36 shrink-0 justify-between rounded-[14px] font-normal h-10 px-3 text-sm"
+                >
+                  {{ licenseType === 'Subscription' ? t('inventory.subscription') : t('inventory.perpetual') }}
+                  <ChevronDown class="w-4 h-4 opacity-50 ml-1 shrink-0" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" class="w-36 rounded-[14px] z-[1001]">
+                <DropdownMenuItem @select="licenseType = 'Subscription'">
+                  {{ t('inventory.subscription') }}
+                </DropdownMenuItem>
+                <DropdownMenuItem @select="licenseType = 'Perpetual'">
+                  {{ t('inventory.perpetual') }}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <input
+              id="edit-asset-exp-date"
+              type="date"
+              v-model="form.license_exp_date"
+              :disabled="licenseType === 'Perpetual'"
+              class="w-full px-4 py-2 border rounded-[14px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10 text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-muted/30"
+              :class="[(isSingle && errors.license_exp_date) ? 'border-destructive focus:ring-destructive/20 focus:border-destructive' : 'border-input']"
+            />
+          </div>
+        </FieldContent>
+        <FieldError v-if="isSingle && errors.license_exp_date">{{ errors.license_exp_date }}</FieldError>
+      </Field>
+
+      <!-- Renewal Reminder (Software only, disabled and erased if Perpetual) -->
+      <Field v-if="isSoft" :data-invalid="(isSingle && !!errors.renewal_reminder) || undefined">
+        <FieldLabel for="edit-asset-renewal-reminder">
+          <span>{{ t('inventory.renewalReminder') }}</span>
+        </FieldLabel>
+        <FieldContent>
+          <div class="space-y-1">
+            <div
+              class="flex rounded-[14px] border bg-background focus-within:ring-2 transition-colors h-10 overflow-hidden"
+              :class="[
+                (isSingle && errors.renewal_reminder)
+                  ? 'border-destructive focus-within:ring-destructive/20 focus-within:border-destructive'
+                  : 'border-input focus-within:ring-primary/20 focus-within:border-primary',
+                licenseType === 'Perpetual' ? 'opacity-50 cursor-not-allowed bg-muted/20' : '',
+              ]"
+            >
+              <input
+                id="edit-asset-renewal-reminder"
+                type="number"
+                min="0"
+                v-model.number="form.renewal_reminder"
+                :disabled="licenseType === 'Perpetual'"
+                :placeholder="licenseType === 'Perpetual' ? t('inventory.renewalReminderDisabledPerpetual') : (isSingle ? t('inventory.renewalReminderPlaceholder') : t('inventory.unchanged'))"
+                class="flex-1 min-w-0 px-4 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 transition-colors h-full disabled:cursor-not-allowed"
+              />
+              <span
+                class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-l border-input select-none font-medium shrink-0"
+              >
+                {{ t('inventory.renewalReminderSuffix') }}
+              </span>
+            </div>
+            <p class="text-[10px] text-muted-foreground ml-1">{{ t('inventory.renewalReminderHint') }}</p>
+          </div>
+        </FieldContent>
+        <FieldError v-if="isSingle && errors.renewal_reminder">{{ errors.renewal_reminder }}</FieldError>
+      </Field>
     </div>
 
     <!-- Right Column: Location, Price, Classification, Burden, Project, Photo, Plate Number -->
     <div class="space-y-6">
       <!-- Location -->
-      <Field :data-invalid="(isSingle && !!errors.location_id) || undefined" :data-disabled="form.is_assigned_to_location === true || undefined">
+      <Field v-if="!isSoft" :data-invalid="(isSingle && !!errors.location_id) || undefined" :data-disabled="form.is_assigned_to_location === true || undefined">
         <FieldLabel>
           <span>{{ t('inventory.location') }}<span v-if="isSingle" class="text-rose-500">*</span></span>
         </FieldLabel>

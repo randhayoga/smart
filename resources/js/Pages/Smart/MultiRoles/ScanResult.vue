@@ -60,6 +60,12 @@ const isComp = computed(() => {
   return catCode === 'COMP' || cat === 'computer' || cat === 'comp';
 });
 
+const isSoft = computed(() => {
+  const catCode = props.asset?.barang_category_code || props.barang?.category_code || props.asset?.model_category_code || props.asset?.category_code || '';
+  const cat = (props.asset?.barang_category || props.barang?.category || props.asset?.category || '').toLowerCase();
+  return catCode === 'SOFT' || cat === 'software' || cat === 'soft';
+});
+
 const arrNeedApproval = ['Rusak Total', 'Hilang'];
 const arrInactiveConditions = ['Rusak Total', 'Hilang'];
 
@@ -375,12 +381,14 @@ const handleSubmit = () => {
   resetErrors();
 
   let isValid = true;
-  if (!form.location_id) { errors.value.location_id = t('scanner.locationRequired'); isValid = false; }
+  if (!isSoft.value) {
+    if (!form.location_id) { errors.value.location_id = t('scanner.locationRequired'); isValid = false; }
+    if (!form.condition) { errors.value.condition = t('scanner.conditionRequired'); isValid = false; }
+  }
   if (!form.status) { errors.value.status = t('scanner.statusRequired'); isValid = false; }
-  if (!form.condition) { errors.value.condition = t('scanner.conditionRequired'); isValid = false; }
   if (isVehicle.value && !form.vehicle_registration) { errors.value.vehicle_registration = t('scanner.tnkbRequired'); isValid = false; }
-  if (arrNeedApproval.includes(form.condition) && !isDocumentDisabled.value && !form.memo_file_name) { errors.value.memo_file = t('scanner.memoRequired'); isValid = false; }
-  if (form.condition === 'Hilang' && !isDocumentDisabled.value && !form.lost_doc_file_name) { errors.value.lost_doc_file = t('scanner.lostDocRequired'); isValid = false; }
+  if (!isSoft.value && arrNeedApproval.includes(form.condition) && !isDocumentDisabled.value && !form.memo_file_name) { errors.value.memo_file = t('scanner.memoRequired'); isValid = false; }
+  if (!isSoft.value && form.condition === 'Hilang' && !isDocumentDisabled.value && !form.lost_doc_file_name) { errors.value.lost_doc_file = t('scanner.lostDocRequired'); isValid = false; }
 
   if (!isValid) {
     toast.error(t('scanner.fillRequiredFields'));
@@ -392,9 +400,9 @@ const handleSubmit = () => {
       _method: 'PUT',
       number: data.number,
       lot_id: props.lot?.id || props.asset?.lot_id,
-      location_id: data.location_id,
+      location_id: isSoft.value ? null : data.location_id,
       status: data.status,
-      condition: data.condition,
+      condition: isSoft.value ? null : data.condition,
       price: data.price !== '' && data.price !== null ? parseCurrencyToNumber(data.price) : null,
     };
     if (isVehicle.value) fd.vehicle_registration = data.vehicle_registration;
@@ -488,14 +496,29 @@ const handleSubmit = () => {
           <div class="bg-card rounded-2xl border border-border overflow-hidden shadow-sm">
             <div class="px-4 py-3 border-b border-border bg-muted/20 flex items-center gap-2">
               <Info class="w-4 h-4 text-primary" />
-              <h3 class="text-xs font-bold text-foreground uppercase tracking-wider">{{ t('scanner.statusAndLocation') }}</h3>
+              <h3 class="text-xs font-bold text-foreground uppercase tracking-wider">{{ isSoft ? t('scanner.status') : t('scanner.statusAndLocation') }}</h3>
             </div>
             <div class="p-4 space-y-3.5 text-sm">
               <div class="flex justify-between items-start">
                 <span class="text-muted-foreground font-medium">{{ t('scanner.status') }}</span>
                 <StatusBadge :status="props.asset.status" :proposed-status="props.asset.proposed_status" />
               </div>
-              <div class="flex justify-between items-start">
+              <!-- Software License Information -->
+              <template v-if="isSoft">
+                <div class="flex justify-between items-start">
+                  <span class="text-muted-foreground font-medium">{{ t('inventory.licenseExpDate') }}</span>
+                  <span class="text-foreground font-semibold">
+                    {{ props.asset.license_exp_date ? formatDate(props.asset.license_exp_date) : t('inventory.perpetual') }}
+                  </span>
+                </div>
+                <div v-if="props.asset.license_exp_date" class="flex justify-between items-start">
+                  <span class="text-muted-foreground font-medium">{{ t('inventory.renewalReminder') }}</span>
+                  <span class="text-foreground font-semibold">
+                    {{ props.asset.renewal_reminder === 0 ? t('inventory.renewalReminderDisabled') : (props.asset.renewal_reminder !== null && props.asset.renewal_reminder !== undefined ? `${props.asset.renewal_reminder} ${t('inventory.renewalReminderSuffix')}` : '-') }}
+                  </span>
+                </div>
+              </template>
+              <div v-if="!isSoft && props.asset.condition" class="flex justify-between items-start">
                 <span class="text-muted-foreground font-medium">{{ t('scanner.condition') }}</span>
                 <span 
                   :class="[
@@ -508,7 +531,7 @@ const handleSubmit = () => {
                   {{ props.asset.condition }}
                 </span>
               </div>
-              <div class="flex justify-between items-start">
+              <div v-if="!isSoft" class="flex justify-between items-start">
                 <span class="text-muted-foreground font-medium">{{ t('scanner.location') }}</span>
                 <span class="text-foreground font-semibold text-right max-w-[200px]">
                   {{ formatLocation(props.asset.location, props.asset.floor, props.asset.room) }}
@@ -613,7 +636,7 @@ const handleSubmit = () => {
                 </FieldContent>
               </Field>
 
-              <Field :data-invalid="!!errors.condition || undefined" :data-disabled="isKondisiDisabled || undefined">
+              <Field v-if="!isSoft" :data-invalid="!!errors.condition || undefined" :data-disabled="isKondisiDisabled || undefined">
                 <FieldLabel>
                   <span>{{ t('scanner.condition') }}<span class="text-rose-500">*</span></span>
                 </FieldLabel>
@@ -640,7 +663,7 @@ const handleSubmit = () => {
                 <FieldError v-if="errors.condition">{{ errors.condition }}</FieldError>
               </Field>
 
-              <Field :data-invalid="!!errors.location_id || undefined">
+              <Field v-if="!isSoft" :data-invalid="!!errors.location_id || undefined">
                 <FieldLabel>
                   <span>{{ t('scanner.location') }}<span class="text-rose-500">*</span></span>
                 </FieldLabel>

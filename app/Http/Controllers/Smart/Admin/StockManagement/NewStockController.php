@@ -33,9 +33,10 @@ class NewStockController extends Controller
         $type = Type::findOrFail($validated['type_id']);
         $isComp = ($category->code === 'COMP' || strtolower($category->name) === 'computer');
         $isKend = ($category->code === 'KEND');
+        $isSoft = ($category->code === 'SOFT' || strtolower($category->name) === 'software');
         $isConsumable = (bool) $type->is_consumable;
 
-        $result = DB::transaction(function () use ($request, $validated, $category, $type, $isComp, $isKend, $isConsumable) {
+        $result = DB::transaction(function () use ($request, $validated, $category, $type, $isComp, $isKend, $isSoft, $isConsumable) {
             $isNewModel = $request->boolean('create_new_type');
 
             // 1. Model Resolution
@@ -147,9 +148,9 @@ class NewStockController extends Controller
                         $asset = Asset::create([
                             'number' => $assetNumber,
                             'lot_id' => $lot->id,
-                            'location_id' => $validated['location_id'],
+                            'location_id' => $isSoft ? null : ($validated['location_id'] ?? null),
                             'status' => 'Belum Diverifikasi',
-                            'condition' => $condition,
+                            'condition' => $isSoft ? null : $condition,
                             'borrowing_type' => $validated['borrowing_type'],
                             'classification' => $validated['classification'],
                             'comp_specification' => $isComp ? ($validated['asset_specification'] ?? null) : null,
@@ -158,6 +159,8 @@ class NewStockController extends Controller
                             'vehicle_registration' => $isKend ? ($validated['plate_number'] ?? null) : null,
                             'burden' => $assetBurden,
                             'project_id' => $assetBurden === 'Project' ? ($validated['project_id'] ?? null) : null,
+                            'license_exp_date' => $isSoft ? ($validated['license_exp_date'] ?? null) : null,
+                            'renewal_reminder' => $isSoft ? ($validated['renewal_reminder'] ?? null) : null,
                         ]);
 
                         $lastApproval = AssetActivationApproval::create([
@@ -171,7 +174,10 @@ class NewStockController extends Controller
                     }
 
                     if (count($createdAssets) === 1) {
-                        app(NotificationService::class)->notifyManagerNewAssetActivation($createdAssets[0], $lastApproval);
+                        $singleAsset = $createdAssets[0];
+                        dispatch(function () use ($singleAsset, $lastApproval) {
+                            app(NotificationService::class)->notifyManagerNewAssetActivation($singleAsset, $lastApproval);
+                        })->afterResponse();
                     } elseif (count($createdAssets) > 1) {
                         $user = $request->user();
                         dispatch(function () use ($createdAssets, $lot, $user) {

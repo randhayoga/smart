@@ -95,6 +95,7 @@ class NewStockRequest extends FormRequest
         $type = Type::find($this->input('type_id'));
         $isComp = $category && ($category->code === 'COMP' || strtolower($category->name) === 'computer');
         $isKend = $category && ($category->code === 'KEND');
+        $isSoft = $category && ($category->code === 'SOFT' || strtolower($category->name) === 'software');
         $isConsumable = $type ? (bool) $type->is_consumable : false;
 
         // Model validation
@@ -159,8 +160,13 @@ class NewStockRequest extends FormRequest
             $rules['input_asset'] = ['required', 'boolean'];
             if ($this->boolean('input_asset')) {
                 $rules['borrowing_type'] = ['required', Rule::in(['LT', 'ST'])];
-                $rules['condition'] = ['required', Rule::in(['Bagus', 'Rusak', 'Good', 'Damaged'])];
-                $rules['location_id'] = ['required', Rule::exists(Location::class, 'id')];
+                if ($isSoft) {
+                    $rules['condition'] = ['nullable', Rule::in(['Bagus', 'Rusak', 'Good', 'Damaged'])];
+                    $rules['location_id'] = ['nullable', Rule::exists(Location::class, 'id')];
+                } else {
+                    $rules['condition'] = ['required', Rule::in(['Bagus', 'Rusak', 'Good', 'Damaged'])];
+                    $rules['location_id'] = ['required', Rule::exists(Location::class, 'id')];
+                }
                 $rules['price'] = ['nullable', 'numeric', 'min:0', 'max:999999999999.99'];
                 $rules['classification'] = ['required', Rule::in(['Aset', 'Inventaris'])];
                 $rules['photo'] = ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:1024'];
@@ -175,6 +181,11 @@ class NewStockRequest extends FormRequest
                     $rules['plate_number'] = ['required', 'string', 'max:20'];
                 } else {
                     $rules['plate_number'] = ['nullable', 'string', 'max:20'];
+                }
+
+                if ($isSoft) {
+                    $rules['license_exp_date'] = ['nullable', 'date'];
+                    $rules['renewal_reminder'] = ['nullable', 'integer', 'min:0'];
                 }
 
                 $rules['is_bulk'] = ['nullable', 'boolean'];

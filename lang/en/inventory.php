@@ -71,6 +71,7 @@ return [
     'notification_bulk_activation_single_message' => ':count new asset unit for :name (:number) requires your approval.',
     'notification_activation_approved_title' => 'Asset Activation :name Approved by DM IFS',
     'notification_activation_approved_message' => 'Asset :number status has changed to Available.',
+    'notification_activation_approved_expired_message' => 'Asset :number status has changed to License Expired.',
     'notification_activation_rejected_title' => 'Asset Activation :name Rejected by DM IFS',
     'notification_activation_rejected_message' => 'Asset activation for :number was rejected by DM IFS. Status: Verification Rejected.',
 
@@ -87,4 +88,14 @@ return [
     'notification_status_approved_message' => 'Asset :number status has changed to Inactive, Pending:BoD/BoC.',
     'notification_status_rejected_title' => 'Asset Deletion :name Rejected by DM IFS',
     'notification_status_rejected_message' => 'Asset :number status was reverted to :status and condition reverted to :condition.',
+
+    // Software License Expiration Notifications
+    'renewal_reminder_suffix' => 'Day(s)',
+    'renewal_reminder_disabled' => 'No reminder',
+    'notification_license_expiring_title' => 'Software License Expiring in :days Days: :asset_number',
+    'notification_license_expiring_message' => 'The license for software :software (:asset_number) will expire in :days days. Please coordinate renewal.',
+    'notification_license_expiring_today_title' => 'Software License Expiring Today: :asset_number',
+    'notification_license_expiring_today_message' => 'The license for software :software (:asset_number) expires today. Please coordinate renewal.',
+    'notification_license_expired_title' => 'Software License Expired: :asset_number',
+    'notification_license_expired_message' => 'The license for software :software (:asset_number) has expired. Status has been changed to License Expired.',
 ];

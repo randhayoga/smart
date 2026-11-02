@@ -52,10 +52,10 @@ return new class extends Migration {
             $table->string('legacy_number', 50)->nullable()->comment('legacy asset code/number');
             $table->foreignId('lot_id')->constrained('lots')->cascadeOnDelete();
             $table->foreignId('legacy_vendor_id')->nullable()->constrained('vendors')->nullOnDelete()->comment('Refers to local vendors table (legacy migration only)');
-            $table->foreignId('location_id')->nullable()->constrained('locations')->comment('current location');
+            $table->foreignId('location_id')->nullable()->constrained('locations')->nullOnDelete()->comment('current location');
             $table->string('status', 50)->default('Belum Diverifikasi');
             $table->string('approval_status', 50)->nullable()->comment('Pending:DM | Pending:BoD/BoC');
-            $table->string('condition');
+            $table->string('condition')->nullable();
             $table->string('comp_specification')->nullable()->comment('Specification for computer category assets only');
             $table->string('borrowing_type', 2)->default('LT')->comment('LT | ST');
             $table->string('classification', 255)->default('Aset')->comment('Aset | Inventaris');
@@ -65,6 +65,8 @@ return new class extends Migration {
             $table->string('burden', 20)->default('Corporate')->nullable()->comment('Corporate | Project');
             $table->unsignedBigInteger('project_id')->nullable()->index()->comment('Refers to RE_PORTALDB:tb_project.id_project');
             $table->boolean('is_assigned_to_location')->default(false);
+            $table->date('license_exp_date')->nullable();
+            $table->integer('renewal_reminder')->nullable();
             $table->timestamps();
 
             $table->index('status');
@@ -127,7 +129,7 @@ return new class extends Migration {
             $table->foreignId('asset_id')->constrained('assets')->cascadeOnDelete();
             $table->string('action_type')->comment('registrasi, perubahan_status, perubahan_kondisi, pemindahan, peminjaman, pengembalian, pemeliharaan');
             $table->string('status');
-            $table->string('condition');
+            $table->string('condition')->nullable();
             $table->foreignId('location_id')->nullable()->constrained('locations')->noActionOnDelete();
             $table->dateTime('start_date');
             $table->dateTime('end_date')->nullable();
