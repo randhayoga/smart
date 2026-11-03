@@ -41,8 +41,6 @@ class AssignAssetsToRequestItem
                 ->where(function ($q) {
                     $q->whereNotNull('handover_id')
                       ->orWhereNotNull('assigned_at')
-                      ->orWhereNotNull('confirmed_at')
-                      ->orWhereNotNull('completed_at')
                       ->orWhereHas('asset', fn($uq) => $uq->whereIn('status', ['Dipinjam (ST)', 'Di-assign (LT)', 'Dipinjam (sewa)']));
                 })
                 ->get();
@@ -104,10 +102,9 @@ class AssignAssetsToRequestItem
                     // Check that asset is not locked by another confirmed active request
                     $isAssignedElsewhere = RequestFulfillment::where('asset_id', $asset->id)
                         ->where('request_item_id', '!=', $item->id)
+                        ->whereNull('return_id')
                         ->where(function ($q) {
                             $q->whereNotNull('assigned_at')
-                              ->orWhereNotNull('confirmed_at')
-                              ->orWhereNotNull('completed_at')
                               ->orWhereNotNull('handover_id');
                         })
                         ->lockForUpdate()

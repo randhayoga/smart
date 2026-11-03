@@ -449,10 +449,10 @@ class Asset extends Model
         }
 
         $assignment = $this->relationLoaded('fulfillments')
-            ? $this->fulfillments->whereNull('completed_at')->sortByDesc('id')->first()
+            ? $this->fulfillments->whereNull('return_id')->sortByDesc('id')->first()
             : \App\Models\Request\RequestFulfillment::with(['requestItem.request.user'])
                 ->where('asset_id', $this->id)
-                ->whereNull('completed_at')
+                ->whereNull('return_id')
                 ->latest('id')
                 ->first();
 

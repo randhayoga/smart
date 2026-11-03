@@ -17,7 +17,8 @@ class ManualRequestController extends Controller
         $smartRequest = $processAction->execute(
             $request->validated(),
             $request->file('form_file'),
-            (int) $request->user()->id
+            (int) $request->user()->id,
+            $request->file('handover_proof')
         );
 
         $successMessage = "Peminjaman/Permintaan manual ({$smartRequest->request_number}) berhasil disimpan.";

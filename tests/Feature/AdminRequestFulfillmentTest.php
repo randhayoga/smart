@@ -400,7 +400,7 @@ class AdminRequestFulfillmentTest extends TestCase
 
         $rf = RequestFulfillment::where('request_item_id', $item->id)->first();
         $this->assertNotNull($rf->assigned_at);
-        $this->assertNull($rf->confirmed_at);
+        $this->assertNull($rf->handover_id);
 
         $this->assertDatabaseHas('request_status_logs', [
             'request_id' => $req->id,
@@ -517,7 +517,6 @@ class AdminRequestFulfillmentTest extends TestCase
             'lot_id' => $lot->id,
             'quantity_fulfilled' => 1,
             'assigned_at' => now(),
-            'confirmed_at' => null,
         ]);
 
         // Assign 2nd unit (now 2/2 fulfilled)
@@ -597,7 +596,6 @@ class AdminRequestFulfillmentTest extends TestCase
             'lot_id' => $lot->id,
             'quantity_fulfilled' => 1,
             'assigned_at' => now(),
-            'confirmed_at' => null,
         ]);
 
         // 3. Fully fulfilled request -> Serah Terima tab ONLY
@@ -934,7 +932,7 @@ class AdminRequestFulfillmentTest extends TestCase
             'request_item_id' => $item1->id,
             'asset_id' => $unit->id,
             'assigned_at' => null,
-            'confirmed_at' => null,
+            'handover_id' => null,
         ]);
 
         // 2. Request 2 can also see and assign Unit (staged concurrently)
@@ -947,7 +945,7 @@ class AdminRequestFulfillmentTest extends TestCase
             'request_item_id' => $item2->id,
             'asset_id' => $unit->id,
             'assigned_at' => null,
-            'confirmed_at' => null,
+            'handover_id' => null,
         ]);
     }
 
@@ -1009,11 +1007,11 @@ class AdminRequestFulfillmentTest extends TestCase
         ]);
         $confirmRes->assertStatus(200);
 
-        // Request 2 now has assigned_at set, confirmed_at remains null
+        // Request 2 now has assigned_at set, handover_id remains null
         $rf2 = RequestFulfillment::where('request_item_id', $item2->id)->where('unit_id', $unit->id)->first();
         $this->assertNotNull($rf2);
         $this->assertNotNull($rf2->assigned_at);
-        $this->assertNull($rf2->confirmed_at);
+        $this->assertNull($rf2->handover_id);
 
         // Request 1's duplicate fulfillment must be completely evicted (deleted)
         $this->assertDatabaseMissing('request_fulfillments', [
@@ -1169,7 +1167,7 @@ class AdminRequestFulfillmentTest extends TestCase
             'lot_id' => $lot->id,
             'quantity_fulfilled' => 4,
             'assigned_at' => null,
-            'confirmed_at' => null,
+            'handover_id' => null,
         ]);
     }
 }

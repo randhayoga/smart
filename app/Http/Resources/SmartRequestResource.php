@@ -81,6 +81,7 @@ class SmartRequestResource extends JsonResource
             'destination' => $this->destination_name,
             'reasoning' => $this->reasoning,
             'form_url' => $this->form_url ? '/media/' . ltrim($this->form_url, '/') : null,
+            'is_manual' => ! empty($this->form_url),
             'durationStart' => $startDate ? $startDate->format('d-m-Y H:i') : null,
             'durationEnd' => $endDate ? $endDate->format('d-m-Y H:i') : null,
             'durationDays' => $durationDays,
@@ -123,6 +124,7 @@ class SmartRequestResource extends JsonResource
             $data['handover_time'] = $this->handover?->scheduled_date?->format('d-m-Y H:i');
             $data['handover_location'] = $this->handover?->location;
             $data['handover_note'] = $this->handover?->note;
+            $data['handover_proof_url'] = $this->handover?->proof_url ? '/media/' . ltrim($this->handover->proof_url, '/') : null;
         }
 
         if ($this->relationLoaded('statusLogs')) {

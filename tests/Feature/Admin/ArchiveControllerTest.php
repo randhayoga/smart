@@ -206,13 +206,22 @@ class ArchiveControllerTest extends TestCase
             'status' => 'fulfilled',
         ]);
 
+        $handover = \App\Models\Request\RequestHandover::create([
+            'request_id' => $req->id,
+            'method' => 'pickup',
+            'scheduled_date' => now(),
+            'location' => 'HQ',
+            'proof_url' => 'handovers/archive_proof.pdf',
+            'user_confirmed_at' => now(),
+            'auto_confirmed' => true,
+        ]);
+
         \App\Models\Request\RequestFulfillment::create([
             'request_item_id' => $item->id,
             'asset_id' => $asset->id,
+            'handover_id' => $handover->id,
             'quantity_fulfilled' => 1,
             'assigned_at' => now(),
-            'confirmed_at' => now(),
-            'completed_at' => now(),
         ]);
 
         RequestStatusLog::create([
@@ -236,6 +245,7 @@ class ArchiveControllerTest extends TestCase
         $this->assertEquals('Engineering Department', $requestData['requester_department']);
         $this->assertTrue($requestData['is_manual']);
         $this->assertStringContainsString('archive_sample.pdf', $requestData['form_url']);
+        $this->assertStringContainsString('archive_proof.pdf', $requestData['handover_proof_url']);
 
         $this->assertCount(1, $requestData['items']);
         $this->assertEquals('Dell', $requestData['items'][0]['brand']);

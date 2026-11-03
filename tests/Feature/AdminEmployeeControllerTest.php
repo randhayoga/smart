@@ -158,26 +158,50 @@ class AdminEmployeeControllerTest extends TestCase
 
         // 1. Manual active loan for $userActive
         $req1 = $this->createRequest($userActive, 'borrow');
+        $handover1 = RequestHandover::create([
+            'request_id' => $req1->id,
+            'method' => 'pickup',
+            'scheduled_date' => Carbon::yesterday(),
+            'location' => 'Ruang IFS',
+            'user_confirmed_at' => Carbon::yesterday(),
+            'auto_confirmed' => true,
+        ]);
         $item1 = $this->createRequestItem($req1);
         RequestFulfillment::create([
             'request_item_id' => $item1->id,
             'unit_id' => $unit1->id,
+            'handover_id' => $handover1->id,
             'quantity_fulfilled' => 1,
             'assigned_at' => Carbon::yesterday(),
-            'confirmed_at' => Carbon::yesterday(),
-            'completed_at' => null,
         ]);
 
         // 2. Completed loan for $userHistorical
         $req2 = $this->createRequest($userHistorical, 'success');
+        $handover2 = RequestHandover::create([
+            'request_id' => $req2->id,
+            'method' => 'pickup',
+            'scheduled_date' => Carbon::now()->subDays(5),
+            'location' => 'Ruang IFS',
+            'user_confirmed_at' => Carbon::now()->subDays(5),
+            'auto_confirmed' => true,
+        ]);
+        $return2 = RequestReturn::create([
+            'request_id' => $req2->id,
+            'method' => 'manual',
+            'scheduled_date' => null,
+            'location' => 'Ruang IFS',
+            'proof_url' => 'returns/proof.jpg',
+            'is_auto_set' => false,
+            'completed_at' => Carbon::yesterday(),
+        ]);
         $item2 = $this->createRequestItem($req2);
         RequestFulfillment::create([
             'request_item_id' => $item2->id,
             'unit_id' => $unit2->id,
+            'handover_id' => $handover2->id,
+            'return_id' => $return2->id,
             'quantity_fulfilled' => 1,
             'assigned_at' => Carbon::now()->subDays(5),
-            'confirmed_at' => Carbon::now()->subDays(5),
-            'completed_at' => Carbon::yesterday(),
         ]);
 
         // 3. Natural active loan for $userNatural (confirmed via handover)
@@ -187,7 +211,6 @@ class AdminEmployeeControllerTest extends TestCase
             'method' => 'pickup',
             'scheduled_date' => Carbon::yesterday(),
             'location' => 'Ruang IFS',
-            'is_auto_set' => false,
             'user_confirmed_at' => Carbon::yesterday(),
         ]);
         $item3 = $this->createRequestItem($req3);
@@ -197,8 +220,6 @@ class AdminEmployeeControllerTest extends TestCase
             'handover_id' => $handover->id,
             'quantity_fulfilled' => 1,
             'assigned_at' => Carbon::yesterday(),
-            'confirmed_at' => null, // Left null in natural flow
-            'completed_at' => null,
         ]);
 
         $response = $this->actingAs($admin)->get(route('smart.employees.index'));
@@ -232,26 +253,50 @@ class AdminEmployeeControllerTest extends TestCase
 
         // Active loan with due date
         $req1 = $this->createRequest($employee, 'borrow');
+        $handover1 = RequestHandover::create([
+            'request_id' => $req1->id,
+            'method' => 'pickup',
+            'scheduled_date' => Carbon::now()->subDays(2),
+            'location' => 'Ruang IFS',
+            'user_confirmed_at' => Carbon::now()->subDays(2),
+            'auto_confirmed' => true,
+        ]);
         $item1 = $this->createRequestItem($req1, Carbon::now()->subDays(2), Carbon::now()->addDays(5));
         RequestFulfillment::create([
             'request_item_id' => $item1->id,
             'unit_id' => $unitActive->id,
+            'handover_id' => $handover1->id,
             'quantity_fulfilled' => 1,
             'assigned_at' => Carbon::now()->subDays(2),
-            'confirmed_at' => Carbon::now()->subDays(2),
-            'completed_at' => null,
         ]);
 
         // Historical loan
         $req2 = $this->createRequest($employee, 'success');
+        $handover2 = RequestHandover::create([
+            'request_id' => $req2->id,
+            'method' => 'pickup',
+            'scheduled_date' => Carbon::now()->subDays(10),
+            'location' => 'Ruang IFS',
+            'user_confirmed_at' => Carbon::now()->subDays(10),
+            'auto_confirmed' => true,
+        ]);
+        $return2 = RequestReturn::create([
+            'request_id' => $req2->id,
+            'method' => 'manual',
+            'scheduled_date' => null,
+            'location' => 'Ruang IFS',
+            'proof_url' => 'returns/proof.jpg',
+            'is_auto_set' => false,
+            'completed_at' => Carbon::yesterday(),
+        ]);
         $item2 = $this->createRequestItem($req2, Carbon::now()->subDays(10), Carbon::now()->subDays(2));
         RequestFulfillment::create([
             'request_item_id' => $item2->id,
             'unit_id' => $unitHist->id,
+            'handover_id' => $handover2->id,
+            'return_id' => $return2->id,
             'quantity_fulfilled' => 1,
             'assigned_at' => Carbon::now()->subDays(10),
-            'confirmed_at' => Carbon::now()->subDays(10),
-            'completed_at' => Carbon::yesterday(),
         ]);
 
         $hrdEmployee = HrdEmployee::where('employee_id', $employee->employee_id)->firstOrFail();

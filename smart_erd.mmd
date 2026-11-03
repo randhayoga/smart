@@ -180,8 +180,9 @@ erDiagram
         int lot_id FK ""  
         int legacy_vendor_id FK "nullable | Refers to vendors.id (legacy migration only)"  
         int location_id FK "nullable | current location"  
-        varchar status  "default to Belum Diverifikasi"  
-        varchar condition  ""  
+        varchar_50 status  "default to Belum Diverifikasi"  
+        varchar_50 approval_status  "nullable | Pending:DM | Pending:BoD/BoC"  
+        varchar condition  "nullable"  
         varchar comp_specification  "nullable | specification for computer category"  
         varchar_2 borrowing_type  "LT | ST"  
         varchar_255 classification  "Aset | Inventaris"  
@@ -190,6 +191,9 @@ erDiagram
         varchar vehicle_registration  "nullable"  
         varchar_20 burden  "nullable | Corporate | Project"  
         int project_id FK "nullable | RE_PORTALDB_TB_PROJECT's id"  
+        boolean is_assigned_to_location  "default to false"  
+        date license_exp_date  "nullable"  
+        int renewal_reminder  "nullable"  
     }
 
     ASSET_DELETION_APPROVAL {
@@ -242,7 +246,7 @@ erDiagram
         int asset_id FK ""  
         varchar action_type  "registrasi, perubahan_status, perubahan_kondisi, pemindahan, peminjaman, pengembalian, pemeliharaan"  
         varchar status  ""  
-        varchar condition  ""  
+        varchar condition  "nullable"  
         int location_id FK "nullable"  
         datetime start_date  ""  
         datetime end_date  "nullable"  
@@ -280,6 +284,7 @@ erDiagram
         int org_id FK "nullable | USER_HRIS_HRD_ORGCHART's id"  
         int project_id FK "nullable | RE_PORTALDB_TB_PROJECT's id"  
         text reasoning  "nullable"  
+        varchar form_url  "nullable"  
         varchar status  "wait | approve | confirm | handover | borrow | return | success | reject | cancel | pending"  
     }
 
@@ -291,6 +296,7 @@ erDiagram
         int quantity_requested  ""  
         datetime start_date  "nullable | assets only"  
         datetime end_date  "nullable | assets only"  
+        text reasoning  "nullable"  
         varchar status  "default to pending"  
     }
 
@@ -303,8 +309,6 @@ erDiagram
         int return_id FK "nullable | links to return schedule"  
         int quantity_fulfilled  "defaults to 1 for assets"  
         datetime assigned_at  "nullable | manual & natural"  
-        datetime confirmed_at  "nullable | manual"  
-        datetime completed_at  "nullable | manual"  
     }
 
     REQUEST_APPROVAL {
@@ -331,7 +335,7 @@ erDiagram
         varchar method  "delivery | pickup"  
         datetime scheduled_date  ""  
         varchar location  ""  
-        boolean is_auto_set  ""  
+        varchar proof_url  "nullable"  
         datetime user_confirmed_at  "nullable"  
         boolean auto_confirmed  "default to false"  
         datetime admin_cancelled_at  "nullable"  
@@ -341,9 +345,10 @@ erDiagram
     REQUEST_RETURN {
         int id PK ""  
         int request_id FK ""  
-        varchar method  "pickup | delivery"  
-        datetime scheduled_date  ""  
-        varchar location  "default to Ruang IFS"  
+        varchar method  "pickup | delivery | manual"  
+        datetime scheduled_date  "nullable"  
+        varchar location  ""  
+        varchar proof_url  ""  
         boolean is_auto_set  ""  
         datetime completed_at  "nullable"  
     }

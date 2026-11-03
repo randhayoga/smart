@@ -33,7 +33,7 @@ return new class extends Migration {
             $table->string('method')->comment('delivery | pickup');
             $table->dateTime('scheduled_date');
             $table->string('location');
-            $table->boolean('is_auto_set');
+            $table->string('proof_url')->nullable();
             $table->dateTime('user_confirmed_at')->nullable();
             $table->boolean('auto_confirmed')->default(false);
             $table->dateTime('admin_cancelled_at')->nullable();
@@ -72,12 +72,10 @@ return new class extends Migration {
             $table->foreignId('return_id')->nullable()->constrained('request_returns')->comment('nullable | links to return schedule');
             $table->integer('quantity_fulfilled')->default(1)->comment('defaults to 1 for assets');
             $table->dateTime('assigned_at')->nullable();
-            $table->dateTime('confirmed_at')->nullable();
-            $table->dateTime('completed_at')->nullable();
             $table->timestamps();
 
-            $table->index(['asset_id', 'confirmed_at'], 'rf_asset_confirmed_idx');
-            $table->index(['lot_id', 'confirmed_at'], 'rf_lot_confirmed_idx');
+            $table->index(['asset_id', 'assigned_at', 'handover_id', 'return_id'], 'rf_asset_status_idx');
+            $table->index(['lot_id', 'assigned_at', 'handover_id'], 'rf_lot_status_idx');
         });
     }
 

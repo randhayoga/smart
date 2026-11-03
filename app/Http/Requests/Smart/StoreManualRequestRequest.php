@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Smart;
 
 use App\Models\HrdOrgchart;
+use App\Models\Master\Location;
 use App\Models\TbProject;
 use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
@@ -67,6 +68,17 @@ class StoreManualRequestRequest extends FormRequest
                 },
             ],
             'form_file' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:2048'],
+            'handover_method' => ['required', 'string', 'in:pickup,delivery'],
+            'handover_location_id' => [
+                'required',
+                'integer',
+                function ($attribute, $value, $fail) {
+                    if (!Location::query()->toBase()->where('id', $value)->where('is_active', true)->exists()) {
+                        $fail('Lokasi serah terima yang dipilih tidak valid atau sudah tidak aktif.');
+                    }
+                },
+            ],
+            'handover_proof' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:5120'],
             'reasoning' => ['nullable', 'string', 'max:2000'],
             'date' => ['nullable', 'required_if:request_type,consumable', 'date'],
             'start_date' => ['nullable', 'required_if:request_type,st,lt,rent', 'date'],

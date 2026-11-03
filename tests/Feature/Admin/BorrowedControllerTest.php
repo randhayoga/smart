@@ -103,7 +103,6 @@ class BorrowedControllerTest extends TestCase
             'asset_id' => $stAsset->id,
             'quantity_fulfilled' => 1,
             'assigned_at' => now(),
-            'confirmed_at' => now(),
         ]);
 
         // 2. Rent borrow
@@ -126,7 +125,6 @@ class BorrowedControllerTest extends TestCase
             'asset_id' => $rentAsset->id,
             'quantity_fulfilled' => 1,
             'assigned_at' => now(),
-            'confirmed_at' => now(),
         ]);
         RequestStatusLog::create([
             'request_id' => $reqRent->id,
@@ -211,7 +209,6 @@ class BorrowedControllerTest extends TestCase
             'asset_id' => $compAsset->id,
             'quantity_fulfilled' => 1,
             'assigned_at' => now(),
-            'confirmed_at' => now(),
         ]);
 
         $response = $this->actingAs($this->admin)->get(route('smart.borrowed.show', $req->id));

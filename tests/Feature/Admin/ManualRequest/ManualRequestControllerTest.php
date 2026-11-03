@@ -107,6 +107,9 @@ class ManualRequestControllerTest extends TestCase
                 'start_date' => '2026-10-27',
                 'end_date' => '2026-11-01',
                 'form_file' => UploadedFile::fake()->create('form.pdf', 200, 'application/pdf'),
+                'handover_method' => 'pickup',
+                'handover_location_id' => $location->id,
+                'handover_proof' => UploadedFile::fake()->create('handover.pdf', 200, 'application/pdf'),
                 'items' => [
                     [
                         'asset_id' => $stAsset->id,
@@ -124,6 +127,11 @@ class ManualRequestControllerTest extends TestCase
             'model_id' => $model->id,
             'reasoning' => 'With charger',
             'status' => 'fulfilled',
+        ]);
+        $this->assertDatabaseHas('request_handovers', [
+            'method' => 'pickup',
+            'location' => 'HQ',
+            'auto_confirmed' => true,
         ]);
     }
 }

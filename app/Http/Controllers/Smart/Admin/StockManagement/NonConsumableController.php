@@ -29,7 +29,7 @@ class NonConsumableController extends Controller
             'location.parent.parent', 'deletionApprovals', 'project',
             'lot.model.type.category', 'lot.model.brand', 'lot.model.uom',
             'lot.organizer', 'lot.vendor', 'lot.legacyVendor', 'legacyVendor', 'lifecycles.actor',
-            'fulfillments' => fn($q) => $q->whereNull('completed_at')->with('requestItem.request.user')
+            'fulfillments' => fn($q) => $q->whereNull('return_id')->with('requestItem.request.user')
         ])
         ->where('status', '!=', 'Belum Diverifikasi')
         ->orderBy('created_at', 'desc')

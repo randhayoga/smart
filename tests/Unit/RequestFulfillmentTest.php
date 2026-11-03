@@ -51,7 +51,7 @@ class RequestFulfillmentTest extends TestCase
             'method' => 'pickup',
             'scheduled_date' => now(),
             'location' => 'Ruang IFS',
-            'is_auto_set' => true,
+            'proof_url' => 'handovers/test_proof.jpg',
         ]);
 
         $return = RequestReturn::create([
@@ -71,7 +71,6 @@ class RequestFulfillmentTest extends TestCase
             'return_id' => $return->id,
             'quantity_fulfilled' => 1,
             'assigned_at' => now(),
-            'completed_at' => null,
         ]);
 
         $this->assertDatabaseHas('request_fulfillments', [

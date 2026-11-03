@@ -69,9 +69,7 @@ class AssignLotsToRequestItem
                 ->whereNotNull('lot_id')
                 ->where(function ($q) {
                     $q->whereNotNull('assigned_at')
-                      ->orWhereNotNull('confirmed_at')
-                      ->orWhereNotNull('handover_id')
-                      ->orWhereNotNull('completed_at');
+                      ->orWhereNotNull('handover_id');
                 })
                 ->get();
 
@@ -144,7 +142,7 @@ class AssignLotsToRequestItem
                     ->first();
 
                 if ($existing) {
-                    if (!$existing->handover_id && !$existing->completed_at && !$existing->assigned_at) {
+                    if (!$existing->handover_id && !$existing->assigned_at) {
                         $existing->update([
                             'quantity_fulfilled' => $qty,
                             'assigned_at' => null,

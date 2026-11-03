@@ -43,12 +43,11 @@ class RequestFulfillmentService
 
         // Ensure asset is not locked by a confirmed fulfillment or already handed over
         $query->whereDoesntHave('fulfillments', function ($fq) use ($item, $includeCurrentItemAssignments) {
-            $fq->where(function ($q) {
-                $q->whereNotNull('assigned_at')
-                  ->orWhereNotNull('confirmed_at')
-                  ->orWhereNotNull('completed_at')
-                  ->orWhereNotNull('handover_id');
-            });
+            $fq->whereNull('return_id')
+               ->where(function ($q) {
+                   $q->whereNotNull('assigned_at')
+                     ->orWhereNotNull('handover_id');
+               });
             if ($includeCurrentItemAssignments) {
                 $fq->where('request_item_id', '!=', $item->id);
             }
@@ -134,10 +133,9 @@ class RequestFulfillmentService
             foreach ($assets as $asset) {
                 // Ensure asset is not locked by a confirmed fulfillment
                 $alreadyTaken = RequestFulfillment::where('asset_id', $asset->id)
+                    ->whereNull('return_id')
                     ->where(function ($q) {
                         $q->whereNotNull('assigned_at')
-                          ->orWhereNotNull('confirmed_at')
-                          ->orWhereNotNull('completed_at')
                           ->orWhereNotNull('handover_id');
                     })
                     ->lockForUpdate()

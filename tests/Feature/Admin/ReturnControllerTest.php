@@ -109,7 +109,6 @@ class ReturnControllerTest extends TestCase
             'asset_id' => $asset->id,
             'quantity_fulfilled' => 1,
             'assigned_at' => now(),
-            'confirmed_at' => now(),
         ]);
 
         RequestStatusLog::create([
@@ -186,9 +185,9 @@ class ReturnControllerTest extends TestCase
         $this->assertEquals('Tersedia', $asset1->fresh()->status);
         $this->assertEquals('Tersedia', $asset2->fresh()->status);
 
-        // Verify fulfillment assignments completed
-        $this->assertNotNull($ful1->fresh()->completed_at);
-        $this->assertNotNull($ful2->fresh()->completed_at);
+        // Verify fulfillment assignments linked to return
+        $this->assertEquals($ret->id, $ful1->fresh()->return_id);
+        $this->assertEquals($ret->id, $ful2->fresh()->return_id);
 
         // Verify request return completed
         $this->assertNotNull($ret->fresh()->completed_at);

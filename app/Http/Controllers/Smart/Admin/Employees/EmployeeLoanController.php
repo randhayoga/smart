@@ -53,16 +53,14 @@ class EmployeeLoanController extends Controller
         $history = [];
 
         foreach ($fulfillments as $f) {
-            $startDate = $f->confirmed_at
-                ?? $f->handover?->user_confirmed_at
+            $startDate = $f->handover?->user_confirmed_at
                 ?? $f->requestItem?->request?->handover?->user_confirmed_at;
 
             if (!$startDate) {
                 continue;
             }
 
-            $completedDate = $f->completed_at
-                ?? $f->return?->completed_at
+            $completedDate = $f->return?->completed_at
                 ?? $f->requestItem?->request?->return?->completed_at;
 
             $asset = $f->asset;

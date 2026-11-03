@@ -15,7 +15,7 @@ class RequestHandover extends Model
         'method',
         'scheduled_date',
         'location',
-        'is_auto_set',
+        'proof_url',
         'user_confirmed_at',
         'auto_confirmed',
         'admin_cancelled_at',
@@ -27,7 +27,6 @@ class RequestHandover extends Model
         'user_confirmed_at' => 'datetime',
         'admin_cancelled_at' => 'datetime',
         'auto_confirmed' => 'boolean',
-        'is_auto_set' => 'boolean',
     ];
 
     public function request(): BelongsTo

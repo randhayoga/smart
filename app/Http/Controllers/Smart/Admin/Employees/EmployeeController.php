@@ -38,11 +38,7 @@ class EmployeeController extends Controller
                     });
             })
             ->whereNotNull('rf.asset_id')
-            ->where(function ($q) {
-                $q->whereNotNull('rf.confirmed_at')
-                    ->orWhereNotNull('rh.user_confirmed_at');
-            })
-            ->whereNull('rf.completed_at')
+            ->whereNotNull('rh.user_confirmed_at')
             ->where(function ($q) {
                 $q->whereNull('rr.id')
                     ->orWhereNull('rr.completed_at');

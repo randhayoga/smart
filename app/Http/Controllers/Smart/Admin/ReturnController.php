@@ -76,6 +76,7 @@ class ReturnController extends Controller
             'user',
             'department',
             'project',
+            'handover',
             'return',
             'approver',
             'approval.approver',
@@ -176,6 +177,7 @@ class ReturnController extends Controller
             'id' => $req->id,
             'number' => $req->request_number,
             'form_url' => $req->form_url ? '/media/' . ltrim($req->form_url, '/') : null,
+            'handover_proof_url' => $req->handover?->proof_url ? '/media/' . ltrim($req->handover->proof_url, '/') : null,
             'is_manual' => !empty($req->form_url),
             'requester' => $req->user->name ?? '-',
             'requester_department' => $req->department?->org_name ?? $req->department?->name ?? null,
@@ -228,6 +230,11 @@ class ReturnController extends Controller
             $req->update(['status' => 'success']);
 
             $itemIds = RequestItem::where('request_id', $req->id)->pluck('id');
+            $ret = RequestReturn::where('request_id', $req->id)->latest('id')->first();
+
+            if ($ret) {
+                $ret->update(['completed_at' => $now]);
+            }
 
             if ($itemIds->isNotEmpty()) {
                 $assetIds = RequestFulfillment::whereIn('request_item_id', $itemIds)
@@ -241,14 +248,14 @@ class ReturnController extends Controller
                     ]);
                 }
 
-                RequestFulfillment::whereIn('request_item_id', $itemIds)->update([
-                    'completed_at' => $now,
-                ]);
+                if ($ret) {
+                    RequestFulfillment::whereIn('request_item_id', $itemIds)
+                        ->whereNull('return_id')
+                        ->update([
+                            'return_id' => $ret->id,
+                        ]);
+                }
             }
-
-            RequestReturn::where('request_id', $req->id)->update([
-                'completed_at' => $now,
-            ]);
 
             RequestStatusLog::create([
                 'request_id' => $req->id,

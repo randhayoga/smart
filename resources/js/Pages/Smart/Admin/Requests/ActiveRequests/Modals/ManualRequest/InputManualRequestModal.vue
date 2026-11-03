@@ -2,7 +2,7 @@
 /**
  * Unified Input Manual Borrowing / Request Modal (95vw width).
  * Integrates Section 1 (Request/Borrowing Info), Section 2 (Item/Asset Selection),
- * and Section 3 (Added Items List) into a single high-performance scrollable modal.
+ * Section 3 (Added Items List), and Section 4 (Handover Info) into a single high-performance modal.
  */
 import { ref, reactive, computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -11,6 +11,7 @@ import { toast } from 'vue-sonner';
 import { X, Loader2 } from 'lucide-vue-next';
 import { useModalLock } from '@/composables/useModalLock';
 import { Button } from '@/Components/ui/button';
+import type { LocationItem } from '@/Components/LocationCombobox.vue';
 import RequestInfoSection, {
   type OptionItem,
   type ManualRequestFormState,
@@ -21,6 +22,7 @@ import ItemSelectionSection, {
   type AddedManualItem,
 } from './ItemSelectionSection.vue';
 import AddedItemsListSection from './AddedItemsListSection.vue';
+import HandoverInfoSection from './HandoverInfoSection.vue';
 
 const props = defineProps<{
   open: boolean;
@@ -37,10 +39,7 @@ useModalLock(computed(() => props.open));
 
 const getTodayIsoDate = (): string => {
   const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 };
 
 const form = reactive<ManualRequestFormState>({
@@ -56,12 +55,17 @@ const form = reactive<ManualRequestFormState>({
   date: getTodayIsoDate(),
   start_date: getTodayIsoDate(),
   end_date: '',
+  handover_method: 'pickup',
+  handover_location_id: null,
+  handover_proof: null,
+  handover_proof_name: '',
 });
 
 const errors = ref<Record<string, string>>({});
 const isSubmitting = ref(false);
 
 const employees = ref<OptionItem[]>([]);
+const locations = ref<LocationItem[]>([]);
 const departments = ref<OptionItem[]>([]);
 const projects = ref<OptionItem[]>([]);
 const approverCandidates = ref<OptionItem[]>([]);
@@ -109,6 +113,10 @@ const resetState = () => {
   form.date = today;
   form.start_date = today;
   form.end_date = '';
+  form.handover_method = 'pickup';
+  form.handover_location_id = null;
+  form.handover_proof = null;
+  form.handover_proof_name = '';
   errors.value = {};
   departments.value = [];
   projects.value = [];
@@ -123,7 +131,7 @@ const closeModal = () => {
 };
 
 const fetchEmployeesIfNeeded = async () => {
-  if (employees.value.length > 0) return;
+  if (employees.value.length > 0 && locations.value.length > 0) return;
   try {
     const res = await fetch('/smart/requests/manual-options', {
       headers: { Accept: 'application/json' },
@@ -131,9 +139,12 @@ const fetchEmployeesIfNeeded = async () => {
     if (res.ok) {
       const data = await res.json();
       employees.value = data.employees || [];
+      if (data.locations) {
+        locations.value = data.locations;
+      }
     }
   } catch (err) {
-    console.error('Failed to fetch manual request employees:', err);
+    console.error('Failed to fetch manual request options:', err);
   }
 };
 
@@ -180,10 +191,10 @@ watch(
   { immediate: true }
 );
 
-const fetchDepartmentApprovers = async (orgId: number) => {
+const fetchApproversByParam = async (queryParam: string) => {
   loadingApproverOptions.value = true;
   try {
-    const res = await fetch(`/smart/requests/manual-options?org_id=${orgId}`, {
+    const res = await fetch(`/smart/requests/manual-options?${queryParam}`, {
       headers: { Accept: 'application/json' },
     });
     if (res.ok) {
@@ -192,25 +203,7 @@ const fetchDepartmentApprovers = async (orgId: number) => {
       form.approver_id = data.auto_approver_id ?? null;
     }
   } catch (err) {
-    console.error('Failed to fetch department approvers:', err);
-  } finally {
-    loadingApproverOptions.value = false;
-  }
-};
-
-const fetchProjectApprovers = async (projectId: number) => {
-  loadingApproverOptions.value = true;
-  try {
-    const res = await fetch(`/smart/requests/manual-options?project_id=${projectId}`, {
-      headers: { Accept: 'application/json' },
-    });
-    if (res.ok) {
-      const data = await res.json();
-      approverCandidates.value = data.approver_candidates || [];
-      form.approver_id = data.auto_approver_id ?? null;
-    }
-  } catch (err) {
-    console.error('Failed to fetch project approvers:', err);
+    console.error('Failed to fetch approvers:', err);
   } finally {
     loadingApproverOptions.value = false;
   }
@@ -254,19 +247,15 @@ const handleUserChange = async (userId: number | null) => {
         approver_candidates: data.approver_candidates || [],
       };
 
-      if (form.utilization === 'corporate') {
-        if (departments.value.length === 1) {
-          form.org_id = departments.value[0].id;
-          delete errors.value.org_id;
-          approverCandidates.value = cachedCorporateApprover.value.approver_candidates;
-          form.approver_id = cachedCorporateApprover.value.auto_approver_id;
-        }
-      } else {
-        if (projects.value.length === 1) {
-          form.project_id = projects.value[0].id;
-          delete errors.value.project_id;
-          await fetchProjectApprovers(projects.value[0].id);
-        }
+      if (form.utilization === 'corporate' && departments.value.length === 1) {
+        form.org_id = departments.value[0].id;
+        delete errors.value.org_id;
+        approverCandidates.value = cachedCorporateApprover.value.approver_candidates;
+        form.approver_id = cachedCorporateApprover.value.auto_approver_id;
+      } else if (form.utilization === 'project' && projects.value.length === 1) {
+        form.project_id = projects.value[0].id;
+        delete errors.value.project_id;
+        await fetchApproversByParam(`project_id=${projects.value[0].id}`);
       }
     }
   } catch (err) {
@@ -287,17 +276,13 @@ const handleUtilizationChange = (newUtil: 'corporate' | 'project') => {
   delete errors.value.project_id;
   delete errors.value.approver_id;
 
-  if (newUtil === 'corporate') {
-    if (departments.value.length === 1) {
-      form.org_id = departments.value[0].id;
-      approverCandidates.value = cachedCorporateApprover.value.approver_candidates;
-      form.approver_id = cachedCorporateApprover.value.auto_approver_id;
-    }
-  } else {
-    if (projects.value.length === 1) {
-      form.project_id = projects.value[0].id;
-      fetchProjectApprovers(projects.value[0].id);
-    }
+  if (newUtil === 'corporate' && departments.value.length === 1) {
+    form.org_id = departments.value[0].id;
+    approverCandidates.value = cachedCorporateApprover.value.approver_candidates;
+    form.approver_id = cachedCorporateApprover.value.auto_approver_id;
+  } else if (newUtil === 'project' && projects.value.length === 1) {
+    form.project_id = projects.value[0].id;
+    fetchApproversByParam(`project_id=${projects.value[0].id}`);
   }
 };
 
@@ -320,7 +305,7 @@ const handleDepartmentChange = (orgId: number | null) => {
     return;
   }
 
-  fetchDepartmentApprovers(orgId);
+  fetchApproversByParam(`org_id=${orgId}`);
 };
 
 const handleProjectChange = (projectId: number | null) => {
@@ -331,7 +316,7 @@ const handleProjectChange = (projectId: number | null) => {
   delete errors.value.approver_id;
 
   if (!projectId) return;
-  fetchProjectApprovers(projectId);
+  fetchApproversByParam(`project_id=${projectId}`);
 };
 
 const handleApproverChange = (approverId: number | null) => {
@@ -345,33 +330,39 @@ const handleFileChange = (file: File | null) => {
   delete errors.value.form_file;
 };
 
+const handleHandoverMethodChange = (method: 'pickup' | 'delivery') => {
+  form.handover_method = method;
+  delete errors.value.handover_method;
+};
+
+const handleHandoverLocationChange = (locationId: number | string | null) => {
+  form.handover_location_id = locationId;
+  delete errors.value.handover_location_id;
+};
+
+const handleHandoverProofChange = (file: File | null) => {
+  form.handover_proof = file;
+  form.handover_proof_name = file ? file.name : '';
+  delete errors.value.handover_proof;
+};
+
 watch(() => form.date, (val) => {
-  if (val && errors.value.date) {
-    delete errors.value.date;
-  }
+  if (val && errors.value.date) delete errors.value.date;
 });
 
 watch(() => form.start_date, (val) => {
-  if (val && errors.value.start_date) {
-    delete errors.value.start_date;
-  }
-  if (errors.value.end_date && form.end_date && form.end_date >= val) {
+  if (val && errors.value.start_date) delete errors.value.start_date;
+  if (errors.value.end_date && form.end_date && form.end_date >= val) delete errors.value.end_date;
+});
+
+watch(() => form.end_date, (val) => {
+  if (val && errors.value.end_date && (!form.start_date || val >= form.start_date)) {
     delete errors.value.end_date;
   }
 });
 
-watch(() => form.end_date, (val) => {
-  if (val && errors.value.end_date) {
-    if (!form.start_date || val >= form.start_date) {
-      delete errors.value.end_date;
-    }
-  }
-});
-
 watch(() => form.reasoning, () => {
-  if (errors.value.reasoning) {
-    delete errors.value.reasoning;
-  }
+  if (errors.value.reasoning) delete errors.value.reasoning;
 });
 
 const handleAddItem = (item: AddedManualItem) => {
@@ -381,9 +372,7 @@ const handleAddItem = (item: AddedManualItem) => {
 
 const handleUpdateQuantity = (payload: { key: string; quantity: number }) => {
   const target = addedItems.value.find(i => i.key === payload.key);
-  if (target) {
-    target.quantity = payload.quantity;
-  }
+  if (target) target.quantity = payload.quantity;
 };
 
 const handleRemoveItem = (key: string) => {
@@ -393,9 +382,7 @@ const handleRemoveItem = (key: string) => {
 const validateForm = (): boolean => {
   const nextErrors: Record<string, string> = {};
 
-  if (!form.user_id) {
-    nextErrors.user_id = t('fulfillment.manualRequest.requesterRequired');
-  }
+  if (!form.user_id) nextErrors.user_id = t('fulfillment.manualRequest.requesterRequired');
   if (form.utilization === 'corporate' && !form.org_id) {
     nextErrors.org_id = t('fulfillment.manualRequest.departmentRequired');
   }
@@ -408,31 +395,27 @@ const validateForm = (): boolean => {
         ? t('fulfillment.manualRequest.pmRequired')
         : t('fulfillment.manualRequest.dmRequired');
   }
-  if (!form.form_file) {
-    nextErrors.form_file = t('fulfillment.manualRequest.formFileRequired');
-  }
+  if (!form.form_file) nextErrors.form_file = t('fulfillment.manualRequest.formFileRequired');
 
   if (form.request_type === 'consumable') {
-    if (!form.date) {
-      nextErrors.date = t('fulfillment.manualRequest.dateRequired');
-    }
+    if (!form.date) nextErrors.date = t('fulfillment.manualRequest.dateRequired');
   } else if (form.request_type === 'st' || form.request_type === 'rent') {
-    if (!form.start_date) {
-      nextErrors.start_date = t('fulfillment.manualRequest.startDateRequired');
-    }
+    if (!form.start_date) nextErrors.start_date = t('fulfillment.manualRequest.startDateRequired');
     if (!form.end_date) {
       nextErrors.end_date = t('fulfillment.manualRequest.endDateRequired');
     } else if (form.start_date && form.end_date < form.start_date) {
       nextErrors.end_date = t('fulfillment.manualRequest.endDateAfterStart');
     }
-  } else if (form.request_type === 'lt') {
-    if (!form.start_date) {
-      nextErrors.start_date = t('fulfillment.manualRequest.startDateRequired');
-    }
+  } else if (form.request_type === 'lt' && !form.start_date) {
+    nextErrors.start_date = t('fulfillment.manualRequest.startDateRequired');
   }
 
   if (addedItems.value.length === 0) {
     nextErrors.items = t('fulfillment.manualRequest.itemsRequired');
+  }
+
+  if (!form.handover_location_id) {
+    nextErrors.handover_location_id = t('fulfillment.manualRequest.handoverLocationRequired');
   }
 
   errors.value = nextErrors;
@@ -440,8 +423,7 @@ const validateForm = (): boolean => {
 };
 
 const handleSubmit = () => {
-  if (isSubmitting.value) return;
-  if (!validateForm()) return;
+  if (isSubmitting.value || !validateForm()) return;
 
   const payload: Record<string, any> = {
     request_type: form.request_type,
@@ -452,19 +434,18 @@ const handleSubmit = () => {
     project_id: form.utilization === 'project' ? form.project_id : null,
     reasoning: form.reasoning.trim() || null,
     form_file: form.form_file,
+    handover_method: form.handover_method,
+    handover_location_id: form.handover_location_id,
     items: addedItems.value.map(item =>
       form.request_type === 'consumable'
-        ? {
-            model_id: item.model_id,
-            quantity: item.quantity,
-            reasoning: item.reasoning || null,
-          }
-        : {
-            asset_id: item.asset_id,
-            reasoning: item.reasoning || null,
-          }
+        ? { model_id: item.model_id, quantity: item.quantity, reasoning: item.reasoning || null }
+        : { asset_id: item.asset_id, reasoning: item.reasoning || null }
     ),
   };
+
+  if (form.handover_proof) {
+    payload.handover_proof = form.handover_proof;
+  }
 
   if (form.request_type === 'consumable') {
     payload.date = form.date;
@@ -578,6 +559,16 @@ const handleSubmit = () => {
                 :disabled="isSubmitting"
                 @update-quantity="handleUpdateQuantity"
                 @remove-item="handleRemoveItem"
+              />
+
+              <!-- Section 4: Handover Information -->
+              <HandoverInfoSection
+                :form="form"
+                :errors="errors"
+                :locations="locations"
+                @change-handover-method="handleHandoverMethodChange"
+                @change-handover-location="handleHandoverLocationChange"
+                @change-handover-proof="handleHandoverProofChange"
               />
             </div>
 

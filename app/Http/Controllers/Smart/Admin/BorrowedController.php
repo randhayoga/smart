@@ -87,8 +87,9 @@ class BorrowedController extends Controller
             'approval.approver:id,employee_name',
             'adminConfirmation',
             'adminConfirmation.admin:id,employee_name',
+            'handover:id,request_id,method,location,proof_url,scheduled_date,user_confirmed_at',
             'items' => fn($q) => $q->select('id', 'request_id', 'model_id', 'type_id', 'quantity_requested', 'reasoning', 'start_date', 'end_date', 'status'),
-            'items.fulfillments:id,request_item_id,asset_id,return_id,completed_at',
+            'items.fulfillments:id,request_item_id,asset_id,handover_id,return_id',
             'items.fulfillments.return:id,method,scheduled_date,location,proof_url,completed_at',
             'items.fulfillments.asset:id,number,comp_specification',
             'items.model' => fn($q) => $q->select('id', 'type_id', 'brand_id', 'name', 'specification')->with('lots:id,model_id,image_url'),
@@ -153,9 +154,9 @@ class BorrowedController extends Controller
                 ->filter(fn($f) => $f->asset !== null)
                 ->map(function ($f) {
                     $isReturned = !empty($f->return_id);
-                    $returnedAt = $f->return?->completed_at 
-                        ? $f->return->completed_at->format('d-m-Y H:i') 
-                        : ($f->completed_at ? $f->completed_at->format('d-m-Y H:i') : null);
+                    $returnedAt = $f->return?->completed_at
+                        ? $f->return->completed_at->format('d-m-Y H:i')
+                        : null;
                     $proofUrl = $f->return?->proof_url ? '/media/' . ltrim($f->return->proof_url, '/') : null;
 
                     return [
@@ -218,6 +219,7 @@ class BorrowedController extends Controller
             'id' => $req->id,
             'number' => $req->request_number,
             'form_url' => $req->form_url ? '/media/' . ltrim($req->form_url, '/') : null,
+            'handover_proof_url' => $req->handover?->proof_url ? '/media/' . ltrim($req->handover->proof_url, '/') : null,
             'is_manual' => !empty($req->form_url),
             'has_active_assets' => $hasActiveAssets,
             'requester' => $req->user->name ?? '-',
@@ -309,7 +311,6 @@ class BorrowedController extends Controller
                 ->whereNull('return_id')
                 ->update([
                     'return_id' => $requestReturn->id,
-                    'completed_at' => $now,
                 ]);
 
             $req->update(['status' => 'success']);
@@ -372,7 +373,6 @@ class BorrowedController extends Controller
 
             $fulfillment->update([
                 'return_id' => $requestReturn->id,
-                'completed_at' => $now,
             ]);
 
             $assetNumber = 'Aset';

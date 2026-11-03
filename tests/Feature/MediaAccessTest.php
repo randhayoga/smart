@@ -42,6 +42,18 @@ class MediaAccessTest extends TestCase
         $this->assertEquals('proof image content', $response->streamedContent());
     }
 
+    public function test_authenticated_user_can_access_handovers_media(): void
+    {
+        Storage::fake('local');
+        Storage::disk('local')->put('handovers/proof.jpg', 'handover proof image content');
+
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->get('/media/handovers/proof.jpg');
+        $response->assertOk();
+        $this->assertEquals('handover proof image content', $response->streamedContent());
+    }
+
     public function test_unauthorized_media_directory_is_forbidden(): void
     {
         Storage::fake('local');

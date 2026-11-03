@@ -5,6 +5,7 @@ import InputManualRequestModal from '../InputManualRequestModal.vue';
 import RequestInfoSection from '../RequestInfoSection.vue';
 import ItemSelectionSection from '../ItemSelectionSection.vue';
 import AddedItemsListSection from '../AddedItemsListSection.vue';
+import HandoverInfoSection from '../HandoverInfoSection.vue';
 import { i18n, setI18nLanguage } from '@/locales';
 
 vi.mock('@inertiajs/vue3', async (importOriginal) => {
@@ -32,6 +33,9 @@ describe('InputManualRequestModal.vue', () => {
               employees: [
                 { id: 101, employee_id: 'NPK-101', name: 'NPK-101 - Andi Peminjam', orgchart_id: 10 },
                 { id: 102, employee_id: 'NPK-102', name: 'NPK-102 - Budi DM', orgchart_id: 10 },
+              ],
+              locations: [
+                { id: 50, name: 'Ruang IFS', parent_id: null, is_active: true },
               ],
             }),
           };
@@ -153,13 +157,17 @@ describe('InputManualRequestModal.vue', () => {
 
     const uploadIdx = html.indexOf('Unggah Form');
     const notesIdx = html.indexOf('Catatan/Keperluan');
+    const listIdx = html.indexOf('Daftar:');
+    const handoverIdx = html.indexOf('Metode Serah Terima');
 
     expect(uploadIdx).toBeGreaterThan(-1);
     expect(notesIdx).toBeGreaterThan(-1);
     expect(uploadIdx).toBeLessThan(notesIdx);
+    expect(listIdx).toBeGreaterThan(-1);
+    expect(handoverIdx).toBeGreaterThan(listIdx);
   });
 
-  it('shows validation errors including required form_file and items when submitting empty', async () => {
+  it('shows validation errors including required form_file, items, and handover_location_id when submitting empty', async () => {
     const wrapper = mountModal();
     await flushPromises();
 
@@ -167,10 +175,11 @@ describe('InputManualRequestModal.vue', () => {
 
     expect(wrapper.text()).toContain('File form wajib diunggah.');
     expect(wrapper.text()).toContain('Tambahkan minimal 1 barang atau aset ke daftar.');
+    expect(wrapper.text()).toContain('Lokasi serah terima wajib dipilih.');
     expect(router.post).not.toHaveBeenCalled();
   });
 
-  it('auto-hydrates department and DM on user selection, adds consumable item, and submits via router.post', async () => {
+  it('auto-hydrates department and DM on user selection, adds consumable item, sets handover fields, and submits via router.post', async () => {
     const wrapper = mountModal();
     await flushPromises();
 
@@ -202,6 +211,12 @@ describe('InputManualRequestModal.vue', () => {
     });
     await flushPromises();
 
+    const handoverSection = wrapper.findComponent(HandoverInfoSection);
+    const proofFile = new File(['dummy proof'], 'bukti-serah-terima.jpg', { type: 'image/jpeg' });
+    handoverSection.vm.$emit('change-handover-location', 50);
+    handoverSection.vm.$emit('change-handover-proof', proofFile);
+    await flushPromises();
+
     const addedSection = wrapper.findComponent(AddedItemsListSection);
     expect(addedSection.text()).toContain('Kabel LAN Cat6');
     expect(addedSection.text()).toContain('Instalasi ruang rapat');
@@ -218,6 +233,9 @@ describe('InputManualRequestModal.vue', () => {
         utilization: 'corporate',
         org_id: 10,
         form_file: file,
+        handover_method: 'pickup',
+        handover_location_id: 50,
+        handover_proof: proofFile,
         items: [
           {
             model_id: 201,
@@ -377,6 +395,12 @@ describe('InputManualRequestModal.vue', () => {
     });
     await flushPromises();
 
+    // Set handover method and location
+    const handoverSection = wrapper.findComponent(HandoverInfoSection);
+    handoverSection.vm.$emit('change-handover-method', 'delivery');
+    handoverSection.vm.$emit('change-handover-location', 50);
+    await flushPromises();
+
     // Submit
     await wrapper.find('[data-testid="submit-manual-request-btn"]').trigger('click');
     await flushPromises();
@@ -387,6 +411,8 @@ describe('InputManualRequestModal.vue', () => {
     expect(payload.request_type).toBe('rent');
     expect(payload.start_date).toBe('2026-11-01');
     expect(payload.end_date).toBe('2026-11-15');
+    expect(payload.handover_method).toBe('delivery');
+    expect(payload.handover_location_id).toBe(50);
     expect(payload.items).toHaveLength(1);
     expect(payload.items[0].asset_id).toBe(201);
   });

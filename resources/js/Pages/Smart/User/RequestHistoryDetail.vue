@@ -105,6 +105,9 @@ interface RequestHistory {
   handover_time?: string | null;
   handover_location?: string | null;
   handover_note?: string | null;
+  handover_proof_url?: string | null;
+  form_url?: string | null;
+  is_manual?: boolean;
   logs?: any[];
 }
 
@@ -373,17 +376,22 @@ interface TimelineStep {
   status: 'done' | 'active' | 'pending' | 'rejected' | 'action-required';
   description?: string;
   user?: string;
+  proofUrl?: string | null;
 }
 const timelineSteps = computed((): TimelineStep[] => {
   const r = request.value;
   if (!r) return [];
   const steps: TimelineStep[] = [];
+  const isManual = Boolean(r.is_manual || r.form_url);
 
   // Step 1: Created
   steps.push({
-    title: t('requests.timeline.created', { type: typeLabelTitle.value }),
+    title: isManual
+      ? t('fulfillment.manualTimelineTitle', { type: typeLabelTitle.value })
+      : t('requests.timeline.created', { type: typeLabelTitle.value }),
     time: r.created_at ? `${formatDate(r.created_at)} 08:30` : '',
-    status: 'done'
+    status: 'done',
+    proofUrl: isManual ? (r.handover_proof_url || null) : null,
   });
 
   // Step 2: Historical Logs
@@ -805,6 +813,20 @@ const activeStepIndex = computed(() => {
                   >
                     <span v-html="step.description"></span>
                   </StepperDescription>
+
+                  <!-- Bukti Serah Terima / Proof of Handover Button for manual requests -->
+                  <div v-if="step.proofUrl" class="mt-3">
+                    <Button
+                      as="a"
+                      :href="step.proofUrl"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      size="sm"
+                      class="text-xs h-8 px-3.5 font-semibold bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center"
+                    >
+                      {{ $t('fulfillment.handoverProof') }}
+                    </Button>
+                  </div>
                 </div>
 
                 <!-- Scheduled Handover Details -->

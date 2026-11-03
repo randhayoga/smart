@@ -6,8 +6,10 @@ use App\Models\Inventory\Asset;
 use App\Models\Inventory\AssetLifecycle;
 use App\Models\Inventory\Lot;
 use App\Models\Inventory\Model as InventoryModel;
+use App\Models\Master\Location;
 use App\Models\Request\Request as SmartRequest;
 use App\Models\Request\RequestFulfillment;
+use App\Models\Request\RequestHandover;
 use App\Models\Request\RequestItem;
 use App\Models\Request\RequestStatusLog;
 use App\Services\ImageUploadService;
@@ -37,11 +39,16 @@ class ProcessManualRequest
      * @param array<string, mixed> $data Validated request payload
      * @param UploadedFile $formFile Uploaded physical/signed request form
      * @param int $adminUserId Authenticated admin user ID
+     * @param UploadedFile|null $handoverProofFile Optional uploaded handover proof
      * @return SmartRequest
      * @throws ValidationException
      */
-    public function execute(array $data, UploadedFile $formFile, int $adminUserId): SmartRequest
-    {
+    public function execute(
+        array $data,
+        UploadedFile $formFile,
+        int $adminUserId,
+        ?UploadedFile $handoverProofFile = null
+    ): SmartRequest {
         $requestType = strtolower((string) $data['request_type']);
         $utilization = (string) $data['utilization'];
         $orgId = $utilization === 'corporate' ? ($data['org_id'] ?? null) : null;
@@ -49,7 +56,9 @@ class ProcessManualRequest
         $userId = (int) $data['user_id'];
         $approverId = (int) $data['approver_id'];
         $requestReasoning = !empty($data['reasoning']) ? trim((string) $data['reasoning']) : null;
+        $handoverMethod = strtolower((string) ($data['handover_method'] ?? 'pickup'));
         $itemsPayload = $data['items'] ?? [];
+        $effectiveProofFile = $handoverProofFile ?? (($data['handover_proof'] ?? null) instanceof UploadedFile ? $data['handover_proof'] : null);
 
         return DB::transaction(function () use (
             $requestType,
@@ -59,12 +68,26 @@ class ProcessManualRequest
             $userId,
             $approverId,
             $requestReasoning,
+            $handoverMethod,
             $itemsPayload,
             $data,
             $formFile,
+            $effectiveProofFile,
             $adminUserId
         ) {
             $formUrl = $this->imageUploadService->storeImageOrFile($formFile, 'request_forms');
+            $handoverProofUrl = $effectiveProofFile
+                ? $this->imageUploadService->storeImageOrFile($effectiveProofFile, 'handovers')
+                : null;
+
+            $handoverLocationName = '-';
+            if (!empty($data['handover_location_id'])) {
+                $loc = Location::with('parent.parent')->find((int) $data['handover_location_id']);
+                $handoverLocationName = $loc?->full_name ?? $loc?->name ?? '-';
+            } elseif (!empty($data['handover_location'])) {
+                $handoverLocationName = trim((string) $data['handover_location']);
+            }
+
             $requestNumber = $this->generateRequestNumber();
 
             if ($requestType === 'consumable') {
@@ -77,6 +100,9 @@ class ProcessManualRequest
                     $projectId,
                     $requestReasoning,
                     $formUrl,
+                    $handoverMethod,
+                    $handoverLocationName,
+                    $handoverProofUrl,
                     Carbon::parse($data['date'])->startOfDay(),
                     $itemsPayload,
                     $adminUserId
@@ -93,6 +119,9 @@ class ProcessManualRequest
                 $projectId,
                 $requestReasoning,
                 $formUrl,
+                $handoverMethod,
+                $handoverLocationName,
+                $handoverProofUrl,
                 Carbon::parse($data['start_date'])->startOfDay(),
                 in_array($requestType, ['st', 'rent'], true) && !empty($data['end_date']) ? Carbon::parse($data['end_date'])->setTime(23, 59, 59) : null,
                 $itemsPayload,
@@ -113,6 +142,9 @@ class ProcessManualRequest
         ?int $projectId,
         ?string $requestReasoning,
         string $formUrl,
+        string $handoverMethod,
+        string $handoverLocationName,
+        ?string $handoverProofUrl,
         Carbon $date,
         array $itemsPayload,
         int $adminUserId
@@ -168,6 +200,19 @@ class ProcessManualRequest
             'status' => 'success',
         ]);
 
+        $now = now();
+        $handover = RequestHandover::create([
+            'request_id' => $smartRequest->id,
+            'method' => $handoverMethod,
+            'scheduled_date' => $now,
+            'location' => $handoverLocationName,
+            'proof_url' => $handoverProofUrl,
+            'user_confirmed_at' => $now,
+            'auto_confirmed' => true,
+            'admin_cancelled_at' => null,
+            'note' => null,
+        ]);
+
         $destinationName = null;
         if ($utilization === 'corporate' && $orgId !== null) {
             $destinationName = \App\Models\HrdOrgchart::where('id', $orgId)->value('org_name');
@@ -221,10 +266,9 @@ class ProcessManualRequest
                     'request_item_id' => $requestItem->id,
                     'lot_id' => $lot->id,
                     'asset_id' => null,
+                    'handover_id' => $handover->id,
                     'quantity_fulfilled' => $takeQty,
                     'assigned_at' => $date,
-                    'confirmed_at' => $date,
-                    'completed_at' => $date,
                 ]);
 
                 $this->inventoryLogService->logConsumableStockOut(
@@ -294,6 +338,9 @@ class ProcessManualRequest
         ?int $projectId,
         ?string $requestReasoning,
         string $formUrl,
+        string $handoverMethod,
+        string $handoverLocationName,
+        ?string $handoverProofUrl,
         Carbon $startDate,
         ?Carbon $endDate,
         array $itemsPayload,
@@ -345,8 +392,8 @@ class ProcessManualRequest
 
         // Evict any competing unconfirmed fulfillments referencing these assets
         RequestFulfillment::whereIn('asset_id', $assetIds)
-            ->whereNull('confirmed_at')
-            ->whereNull('completed_at')
+            ->whereNull('assigned_at')
+            ->whereNull('handover_id')
             ->delete();
 
         $smartRequest = SmartRequest::create([
@@ -359,6 +406,19 @@ class ProcessManualRequest
             'reasoning' => $requestReasoning,
             'form_url' => $formUrl,
             'status' => 'borrow',
+        ]);
+
+        $now = now();
+        $handover = RequestHandover::create([
+            'request_id' => $smartRequest->id,
+            'method' => $handoverMethod,
+            'scheduled_date' => $now,
+            'location' => $handoverLocationName,
+            'proof_url' => $handoverProofUrl,
+            'user_confirmed_at' => $now,
+            'auto_confirmed' => true,
+            'admin_cancelled_at' => null,
+            'note' => null,
         ]);
 
         foreach ($itemsPayload as $itemInput) {
@@ -383,10 +443,9 @@ class ProcessManualRequest
                 'request_item_id' => $requestItem->id,
                 'asset_id' => $asset->id,
                 'lot_id' => null,
+                'handover_id' => $handover->id,
                 'quantity_fulfilled' => 1,
                 'assigned_at' => $startDate,
-                'confirmed_at' => $startDate,
-                'completed_at' => null,
             ]);
 
             // Close open lifecycle entries for this asset and insert immediate Peminjaman / Assignment lifecycle
@@ -450,8 +509,8 @@ class ProcessManualRequest
     {
         $unconfirmed = RequestFulfillment::where('lot_id', $lotId)
             ->whereNull('asset_id')
-            ->whereNull('confirmed_at')
-            ->whereNull('completed_at')
+            ->whereNull('assigned_at')
+            ->whereNull('handover_id')
             ->get();
 
         foreach ($unconfirmed as $competing) {

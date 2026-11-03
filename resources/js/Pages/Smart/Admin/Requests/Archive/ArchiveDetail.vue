@@ -63,6 +63,7 @@ interface RequestDetail {
   id: number;
   number: string;
   form_url?: string | null;
+  handover_proof_url?: string | null;
   is_manual?: boolean;
   requester: string;
   requester_department?: string | null;
@@ -135,6 +136,7 @@ interface TimelineStep {
   status: 'done' | 'rejected' | 'pending';
   user?: string;
   description?: string;
+  proofUrl?: string | null;
 }
 
 const timelineSteps = computed((): TimelineStep[] => {
@@ -155,7 +157,8 @@ const timelineSteps = computed((): TimelineStep[] => {
         type: typeLabelTitle.value,
         requester: `<span class="font-bold text-foreground">${r.requester}</span>`,
         admin: `<span class="font-bold text-foreground">${adminName}</span>`
-      })
+      }),
+      proofUrl: r.handover_proof_url || null,
     });
   } else {
     // Step 1: Initial creation (User-driven requests)
@@ -478,6 +481,20 @@ const activeStepIndex = computed(() => {
                   >
                     <span v-html="step.description"></span>
                   </StepperDescription>
+
+                  <!-- Bukti Serah Terima / Proof of Handover Button for manual requests -->
+                  <div v-if="step.proofUrl" class="pt-2">
+                    <Button
+                      as="a"
+                      :href="step.proofUrl"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      size="sm"
+                      class="text-xs h-8 px-3 font-semibold bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center"
+                    >
+                      {{ t('fulfillment.handoverProof') }}
+                    </Button>
+                  </div>
                 </div>
               </div>
             </StepperItem>

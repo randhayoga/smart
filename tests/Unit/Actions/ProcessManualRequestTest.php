@@ -17,6 +17,7 @@ use App\Models\Master\Type;
 use App\Models\Master\Uom;
 use App\Models\Request\Request as SmartRequest;
 use App\Models\Request\RequestFulfillment;
+use App\Models\Request\RequestHandover;
 use App\Models\Request\RequestItem;
 use App\Models\Request\RequestStatusLog;
 use App\Models\TbProject;
@@ -119,6 +120,7 @@ class ProcessManualRequestTest extends TestCase
         ]);
 
         $formFile = UploadedFile::fake()->create('signed-form.pdf', 120, 'application/pdf');
+        $proofFile = UploadedFile::fake()->create('handover-proof.jpg', 100, 'image/jpeg');
 
         $smartRequest = $this->action->execute([
             'request_type' => 'consumable',
@@ -128,6 +130,8 @@ class ProcessManualRequestTest extends TestCase
             'org_id' => $this->orgchart->id,
             'project_id' => null,
             'reasoning' => 'Need cables for server rack',
+            'handover_method' => 'delivery',
+            'handover_location_id' => $this->location->id,
             'date' => '2026-10-27',
             'items' => [
                 [
@@ -136,11 +140,22 @@ class ProcessManualRequestTest extends TestCase
                     'reasoning' => 'Rack A & Rack B patching',
                 ],
             ],
-        ], $formFile, $this->admin->id);
+        ], $formFile, $this->admin->id, $proofFile);
 
         $this->assertEquals('success', $smartRequest->status);
         $this->assertNotNull($smartRequest->form_url);
         Storage::disk('local')->assertExists($smartRequest->form_url);
+
+        $handover = RequestHandover::where('request_id', $smartRequest->id)->firstOrFail();
+        $this->assertEquals('delivery', $handover->method);
+        $this->assertEquals('Main Warehouse', $handover->location);
+        $this->assertNotNull($handover->proof_url);
+        Storage::disk('local')->assertExists($handover->proof_url);
+        $this->assertNotNull($handover->scheduled_date);
+        $this->assertNotNull($handover->user_confirmed_at);
+        $this->assertTrue($handover->auto_confirmed);
+        $this->assertNull($handover->admin_cancelled_at);
+        $this->assertNull($handover->note);
 
         $olderLot->refresh();
         $newerLot->refresh();
@@ -157,12 +172,12 @@ class ProcessManualRequestTest extends TestCase
         $fulfillments = RequestFulfillment::where('request_item_id', $item->id)->orderBy('id')->get();
         $this->assertCount(2, $fulfillments);
         $this->assertEquals($olderLot->id, $fulfillments[0]->lot_id);
+        $this->assertEquals($handover->id, $fulfillments[0]->handover_id);
         $this->assertEquals(5, $fulfillments[0]->quantity_fulfilled);
         $this->assertNotNull($fulfillments[0]->assigned_at);
-        $this->assertNotNull($fulfillments[0]->confirmed_at);
-        $this->assertNotNull($fulfillments[0]->completed_at);
 
         $this->assertEquals($newerLot->id, $fulfillments[1]->lot_id);
+        $this->assertEquals($handover->id, $fulfillments[1]->handover_id);
         $this->assertEquals(3, $fulfillments[1]->quantity_fulfilled);
 
         $logs = InventoryLog::where('action_type', 'stock_out')->get();
@@ -259,8 +274,13 @@ class ProcessManualRequestTest extends TestCase
         $fulfillment = RequestFulfillment::where('request_item_id', $items[0]->id)->firstOrFail();
         $this->assertEquals($asset1->id, $fulfillment->asset_id);
         $this->assertEquals('2026-10-27', $fulfillment->assigned_at->format('Y-m-d'));
-        $this->assertEquals('2026-10-27', $fulfillment->confirmed_at->format('Y-m-d'));
-        $this->assertNull($fulfillment->completed_at);
+        $this->assertNotNull($fulfillment->handover_id);
+
+        $handover = RequestHandover::findOrFail($fulfillment->handover_id);
+        $this->assertEquals($smartRequest->id, $handover->request_id);
+        $this->assertEquals('pickup', $handover->method);
+        $this->assertTrue($handover->auto_confirmed);
+        $this->assertNotNull($handover->user_confirmed_at);
 
         $openLifecycle = AssetLifecycle::where('asset_id', $asset1->id)->whereNull('end_date')->first();
         $this->assertNotNull($openLifecycle);
@@ -341,8 +361,7 @@ class ProcessManualRequestTest extends TestCase
         $fulfillment = RequestFulfillment::where('request_item_id', $item->id)->firstOrFail();
         $this->assertEquals($asset->id, $fulfillment->asset_id);
         $this->assertEquals('2026-10-27', $fulfillment->assigned_at->format('Y-m-d'));
-        $this->assertEquals('2026-10-27', $fulfillment->confirmed_at->format('Y-m-d'));
-        $this->assertNull($fulfillment->completed_at);
+        $this->assertNotNull($fulfillment->handover_id);
 
         $openLifecycle = AssetLifecycle::where('asset_id', $asset->id)->whereNull('end_date')->first();
         $this->assertNotNull($openLifecycle);

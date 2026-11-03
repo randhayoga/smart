@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Smart\Admin\ManualRequest;
 
 use App\Http\Controllers\Controller;
 use App\Models\HrdOrgchart;
+use App\Models\Master\Location;
 use App\Models\TbAssignProject;
 use App\Models\TbProject;
 use App\Models\User;
@@ -50,8 +51,23 @@ class ManualRequestOptionController extends Controller
             ])
             ->values();
 
+        $locations = Location::query()
+            ->toBase()
+            ->select('id', 'name', 'parent_id', 'is_active')
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get()
+            ->map(fn($loc) => [
+                'id' => (int) $loc->id,
+                'name' => $loc->name,
+                'parent_id' => $loc->parent_id ? (int) $loc->parent_id : null,
+                'is_active' => (bool) $loc->is_active,
+            ])
+            ->values();
+
         return response()->json([
             'employees' => $employees,
+            'locations' => $locations,
         ]);
     }
 

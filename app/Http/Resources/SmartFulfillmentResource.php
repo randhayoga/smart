@@ -267,7 +267,8 @@ class SmartFulfillmentResource extends JsonResource
                 $stagedElsewhereAssetIds = RequestFulfillment::whereIn('asset_id', $availableAssetModels->pluck('id'))
                     ->where('request_item_id', '!=', $item->id)
                     ->whereNull('assigned_at')
-                    ->whereNull('completed_at')
+                    ->whereNull('handover_id')
+                    ->whereNull('return_id')
                     ->pluck('asset_id')
                     ->all();
 

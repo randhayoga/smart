@@ -37,6 +37,10 @@ export interface ManualRequestFormState {
   date: string;
   start_date: string;
   end_date: string;
+  handover_method: 'pickup' | 'delivery';
+  handover_location_id: number | string | null;
+  handover_proof: File | null;
+  handover_proof_name: string;
 }
 
 const props = defineProps<{

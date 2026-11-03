@@ -3,6 +3,7 @@
 namespace Tests\Feature\Admin\ManualRequest;
 
 use App\Models\HrdOrgchart;
+use App\Models\Master\Location;
 use App\Models\TbAssignProject;
 use App\Models\TbProject;
 use App\Models\User;
@@ -86,16 +87,24 @@ class ManualRequestOptionControllerTest extends TestCase
 
     public function test_returns_active_employees_formatted_with_employee_id_and_name(): void
     {
+        $activeLoc = Location::factory()->create(['name' => 'Ruang IFS', 'is_active' => true]);
+        Location::factory()->create(['name' => 'Gudang Lama', 'is_active' => false]);
+
         $response = $this->actingAs($this->admin)
             ->getJson(route('smart.requests.manual-options'));
 
         $response->assertOk()
-            ->assertJsonStructure(['employees']);
+            ->assertJsonStructure(['employees', 'locations']);
 
         $employees = collect($response->json('employees'));
         $emp = $employees->firstWhere('id', $this->employee->id);
         $this->assertNotNull($emp);
         $this->assertEquals('NPK-EMP01 - Andi Staff', $emp['name']);
+
+        $locations = collect($response->json('locations'));
+        $this->assertCount(1, $locations);
+        $this->assertEquals($activeLoc->id, $locations->first()['id']);
+        $this->assertEquals('Ruang IFS', $locations->first()['name']);
     }
 
     public function test_hydrates_department_projects_and_corporate_dm_for_selected_user(): void
