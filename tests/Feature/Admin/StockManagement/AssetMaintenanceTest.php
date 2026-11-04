@@ -334,4 +334,44 @@ class AssetMaintenanceTest extends TestCase
         $users = $response->json('users');
         $this->assertIsArray($users);
     }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('disallowedStatusesProvider')]
+    public function test_cannot_submit_maintenance_for_disallowed_asset_statuses(string $status): void
+    {
+        $this->asset->update(['status' => $status]);
+
+        $payload = [
+            'source' => 'SMART',
+            'type' => 'Preventive',
+            'user_id' => $this->regularUser->id,
+            'date' => '2026-11-04',
+            'cost' => 150000,
+            'problem' => 'Kipas berisik',
+            'solution' => 'Bersihkan kipas',
+            'condition' => 'Tidak Berubah',
+        ];
+
+        $response = $this->actingAs($this->adminUser)->postJson(
+            route('smart.inventory.assets.maintenances.store', $this->asset->id),
+            $payload
+        );
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['asset']);
+        $this->assertDatabaseMissing('asset_maintenances', [
+            'asset_id' => $this->asset->id,
+            'problem' => 'Kipas berisik',
+        ]);
+    }
+
+    public static function disallowedStatusesProvider(): array
+    {
+        return [
+            'Tidak Aktif' => ['Tidak Aktif'],
+            'Belum Diverifikasi' => ['Belum Diverifikasi'],
+            'Verifikasi Ditolak' => ['Verifikasi Ditolak'],
+            'Lisensi Kedaluwarsa' => ['Lisensi Kedaluwarsa'],
+            'Comma-separated with disallowed status' => ['Tidak Aktif, Pending:DM'],
+        ];
+    }
 }

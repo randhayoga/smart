@@ -11,7 +11,7 @@ import { X, FileText, Upload, Loader2 } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
 import { formatDate, formatLocation } from '@/lib/utils';
 import { formatQcStatus, getQcColorClass } from '@/lib/qualityControl';
-import { hasAssetStatus } from '@/lib/assetStatus';
+import { hasAssetStatus, isMaintenanceAllowed } from '@/lib/assetStatus';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import Tabs from '@/Components/Tabs.vue';
 import AuditTrailTab from '@/Pages/Smart/MultiRoles/Tabs/AuditTrailTab.vue';
@@ -92,7 +92,7 @@ const tabs = computed(() => {
     { id: 'Detail Aset', label: t('inventory.assetDetail') },
   ];
 
-  if (can('inventory.maintenance')) {
+  if (can('inventory.maintenance') && isMaintenanceAllowed(props.asset?.status, props.asset?.approval_status)) {
     list.push({ id: 'Perawatan', label: t('inventory.maintenanceTab') });
   }
 

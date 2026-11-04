@@ -186,4 +186,29 @@ describe('DetailAssetModal.vue - Status, BoD/BoC Buttons, and Deletion Note', ()
 
     fetchSpy.mockRestore();
   });
+
+  it('hides Perawatan tab if asset status is Tidak Aktif, Belum Diverifikasi, Verifikasi Ditolak, or Lisensi Kedaluwarsa', () => {
+    const disallowed = ['Tidak Aktif', 'Belum Diverifikasi', 'Verifikasi Ditolak', 'Lisensi Kedaluwarsa'];
+
+    for (const status of disallowed) {
+      const wrapper = mountModal({
+        id: 1,
+        number: 'AST-001',
+        status,
+        condition: 'Bagus',
+      });
+      const tabIds = (wrapper.vm as any).tabs.map((t: any) => t.id);
+      expect(tabIds).not.toContain('Perawatan');
+    }
+
+    // When status is allowed, Perawatan tab is present
+    const allowedWrapper = mountModal({
+      id: 2,
+      number: 'AST-002',
+      status: 'Tersedia',
+      condition: 'Bagus',
+    });
+    const allowedTabIds = (allowedWrapper.vm as any).tabs.map((t: any) => t.id);
+    expect(allowedTabIds).toContain('Perawatan');
+  });
 });

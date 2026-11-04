@@ -282,6 +282,32 @@ class Asset extends Model
         });
     }
 
+    public const DISALLOWED_MAINTENANCE_STATUSES = [
+        'Tidak Aktif',
+        'Belum Diverifikasi',
+        'Verifikasi Ditolak',
+        'Lisensi Kedaluwarsa',
+    ];
+
+    /**
+     * Determine if maintenance can be performed on this asset based on its current statuses.
+     */
+    public function allowsMaintenance(): bool
+    {
+        $statuses = array_map('trim', explode(',', (string) $this->status));
+        if ($this->approval_status) {
+            $statuses[] = trim($this->approval_status);
+        }
+
+        foreach (self::DISALLOWED_MAINTENANCE_STATUSES as $disallowed) {
+            if (in_array($disallowed, $statuses, true)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     protected $attributes = [
         'status' => 'Belum Diverifikasi',
         'borrowing_type' => 'LT',

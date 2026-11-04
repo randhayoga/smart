@@ -6,6 +6,7 @@ import {
   isRestrictedAssetStatus,
   getAssetStatusBadgeClass,
   getAssetStatusLabel,
+  isMaintenanceAllowed,
   formatAssetStatusLabels,
 } from '../assetStatus';
 
@@ -41,6 +42,28 @@ describe('assetStatus utility', () => {
     expect(isRestrictedAssetStatus('Belum Diverifikasi')).toBe(true);
     expect(isRestrictedAssetStatus('Lisensi Kedaluwarsa')).toBe(true);
     expect(isRestrictedAssetStatus('License Expired')).toBe(true);
+  });
+
+  it('determines whether maintenance is allowed accurately based on status', () => {
+    // Allowed statuses
+    expect(isMaintenanceAllowed('Tersedia')).toBe(true);
+    expect(isMaintenanceAllowed('Dipinjam (ST)')).toBe(true);
+    expect(isMaintenanceAllowed('Di-assign (LT)')).toBe(true);
+    expect(isMaintenanceAllowed('Rusak')).toBe(true);
+
+    // Disallowed statuses
+    expect(isMaintenanceAllowed('Tidak Aktif')).toBe(false);
+    expect(isMaintenanceAllowed('Belum Diverifikasi')).toBe(false);
+    expect(isMaintenanceAllowed('unverified')).toBe(false);
+    expect(isMaintenanceAllowed('Verifikasi Ditolak')).toBe(false);
+    expect(isMaintenanceAllowed('verification rejected')).toBe(false);
+    expect(isMaintenanceAllowed('Lisensi Kedaluwarsa')).toBe(false);
+    expect(isMaintenanceAllowed('License Expired')).toBe(false);
+
+    // Multi-status checks
+    expect(isMaintenanceAllowed('Tersedia, Pending:DM')).toBe(true);
+    expect(isMaintenanceAllowed('Tidak Aktif, Pending:DM')).toBe(false);
+    expect(isMaintenanceAllowed('Tersedia', 'Belum Diverifikasi')).toBe(false);
   });
 
   it('resolves badge classes and localized labels', () => {

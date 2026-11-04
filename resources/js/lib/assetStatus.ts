@@ -117,6 +117,27 @@ export function isRestrictedAssetStatus(rawStatus?: string | null): boolean {
 }
 
 /**
+ * Check if maintenance can be performed on an asset given its status/approvalStatus.
+ * Maintenance is disallowed for: 'Tidak Aktif', 'Belum Diverifikasi', 'Verifikasi Ditolak', 'Lisensi Kedaluwarsa'.
+ */
+export function isMaintenanceAllowed(rawStatus?: string | null, approvalStatus?: string | null): boolean {
+  const tokens = parseAssetStatuses(rawStatus, approvalStatus);
+  if (tokens.length === 0) return true;
+  return !tokens.some((token) => {
+    const s = token.toLowerCase();
+    return (
+      s === 'tidak aktif' ||
+      s === 'belum diverifikasi' ||
+      s === 'unverified' ||
+      s === 'verifikasi ditolak' ||
+      s === 'verification rejected' ||
+      s === 'lisensi kedaluwarsa' ||
+      s === 'license expired'
+    );
+  });
+}
+
+/**
  * Resolve visual pill badge classes for a single status token.
  */
 export function getAssetStatusBadgeClass(status?: string | null): string {

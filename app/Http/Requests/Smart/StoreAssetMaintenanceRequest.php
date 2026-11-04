@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Smart;
 
+use App\Models\Inventory\Asset;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreAssetMaintenanceRequest extends FormRequest
@@ -33,6 +34,23 @@ class StoreAssetMaintenanceRequest extends FormRequest
             'condition' => 'required|string|in:Tidak Berubah,Bagus,Rusak',
             'proof_file' => 'nullable|file|mimes:jpeg,jpg,png,webp,pdf|max:2048',
         ];
+    }
+
+    /**
+     * Configure additional validation checks.
+     */
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            /** @var Asset|null $asset */
+            $asset = $this->route('asset');
+            if ($asset && ! $asset->allowsMaintenance()) {
+                $validator->errors()->add(
+                    'asset',
+                    "Perawatan tidak dapat dilakukan untuk aset dengan status {$asset->status}."
+                );
+            }
+        });
     }
 
     /**
