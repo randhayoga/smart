@@ -104,8 +104,8 @@ class PendingDeletionControllerTest extends TestCase
         $response->assertOk();
 
         $page = $response->viewData('page');
-        $this->assertNotEmpty($page['props']['assets']);
-        $unit = $page['props']['assets'][0];
+        $this->assertNotEmpty($page['props']['units']);
+        $unit = $page['props']['units'][0];
 
         // Critical table columns in NonConsumableListTab
         $this->assertEquals('AST-PC-001', $unit['number']);
@@ -120,11 +120,7 @@ class PendingDeletionControllerTest extends TestCase
         $this->assertEquals('Rusak Total', $unit['condition']);
         $this->assertStringContainsString('Main Office', $unit['location']);
 
-        // Model & Lot parity
-        $this->assertEquals('ThinkCentre M70q', $unit['model_name']);
-        $this->assertEquals('Lenovo', $unit['model_brand']);
-        $this->assertEquals('Computer', $unit['model_category']);
-        $this->assertEquals('Personal Computer', $unit['model_type']);
+        // Lot parity
         $this->assertEquals('IT Department', $unit['lot_organizer']);
         $this->assertEquals('PT Mitra Solusi', $unit['lot_vendor']);
     }

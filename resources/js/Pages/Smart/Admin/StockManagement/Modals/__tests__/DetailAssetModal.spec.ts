@@ -153,4 +153,37 @@ describe('DetailAssetModal.vue - Status, BoD/BoC Buttons, and Deletion Note', ()
     expect(text).toContain('Buka Form Persetujuan BoD/BoC');
     expect(text).toContain('Buka Form Penolakan BoD/BoC');
   });
+
+  it('fetches lifecycles on-demand when switching to Jejak Audit tab with an asset missing lifecycles array', async () => {
+    const mockLifecycles = [
+      { id: 101, action_type: 'Pendaftaran', actor_name: 'Admin', created_at: '01/01/2026' },
+    ];
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        id: 42,
+        lifecycles: mockLifecycles,
+      }),
+    } as Response);
+
+    const asset: any = {
+      id: 42,
+      number: 'AST-042',
+      status: 'Tersedia',
+      condition: 'Bagus',
+    };
+
+    const wrapper = mountModal(asset);
+    expect(fetchSpy).not.toHaveBeenCalled();
+
+    (wrapper.vm as any).detailActiveTab = 'Jejak Audit';
+    await new Promise((r) => setTimeout(r, 10));
+
+    expect(fetchSpy).toHaveBeenCalledWith('/smart/stock-management/assets/42', {
+      headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+    });
+    expect(asset.lifecycles).toEqual(mockLifecycles);
+
+    fetchSpy.mockRestore();
+  });
 });

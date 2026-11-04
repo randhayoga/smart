@@ -9,7 +9,7 @@ import { router, usePage } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 import { X, FileText, Upload } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
-import { formatDate } from '@/lib/utils';
+import { formatDate, formatLocation } from '@/lib/utils';
 import { hasAssetStatus } from '@/lib/assetStatus';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import Tabs from '@/Components/Tabs.vue';
@@ -39,6 +39,43 @@ const detailActiveTab = ref('Detail Aset');
 const fileInputRef = ref<HTMLInputElement | null>(null);
 const disapprovalFileInputRef = ref<HTMLInputElement | null>(null);
 const isUploading = ref(false);
+const fetchedLifecycles = ref<any[]>([]);
+
+const effectiveLifecycles = computed(() => {
+  if (Array.isArray(props.asset?.lifecycles)) {
+    return props.asset.lifecycles;
+  }
+  return fetchedLifecycles.value;
+});
+
+const fetchAssetDetailsIfNeeded = async () => {
+  if (!props.open || detailActiveTab.value !== 'Jejak Audit' || !props.asset?.id) return;
+  if (Array.isArray(props.asset.lifecycles)) {
+    fetchedLifecycles.value = props.asset.lifecycles;
+    return;
+  }
+  if (typeof fetch !== 'function') return;
+
+  try {
+    const res = await fetch(`/smart/stock-management/assets/${props.asset.id}`, {
+      headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+    });
+    if (res && res.ok) {
+      const data = await res.json();
+      if (data && Array.isArray(data.lifecycles)) {
+        fetchedLifecycles.value = data.lifecycles;
+        if (props.asset) {
+          props.asset.lifecycles = data.lifecycles;
+        }
+      }
+      if (data && data.active_borrowing !== undefined && props.asset) {
+        props.asset.active_borrowing = data.active_borrowing;
+      }
+    }
+  } catch {
+    // Gracefully ignore background detail fetch errors in tests/offline
+  }
+};
 
 const tabs = computed(() => {
   return [
@@ -47,16 +84,27 @@ const tabs = computed(() => {
   ];
 });
 
-watch(() => props.open, (newVal) => {
-  if (newVal) {
-    detailActiveTab.value = 'Detail Aset';
-    isUploading.value = false;
-    if (fileInputRef.value) {
-      fileInputRef.value.value = '';
+watch(
+  () => [props.open, props.asset?.id] as const,
+  ([newOpen]) => {
+    if (newOpen) {
+      detailActiveTab.value = 'Detail Aset';
+      isUploading.value = false;
+      fetchedLifecycles.value = Array.isArray(props.asset?.lifecycles) ? props.asset.lifecycles : [];
+      if (fileInputRef.value) {
+        fileInputRef.value.value = '';
+      }
+      if (disapprovalFileInputRef.value) {
+        disapprovalFileInputRef.value.value = '';
+      }
     }
-    if (disapprovalFileInputRef.value) {
-      disapprovalFileInputRef.value.value = '';
-    }
+  },
+  { immediate: true }
+);
+
+watch(detailActiveTab, (tab) => {
+  if (tab === 'Jejak Audit') {
+    void fetchAssetDetailsIfNeeded();
   }
 });
 
@@ -77,14 +125,6 @@ const formatRupiah = (val: number | string | null | undefined) => {
   const loc = locale.value === 'en' ? 'en-US' : 'id-ID';
   const formatted = Math.floor(num).toLocaleString(loc);
   return `Rp${formatted}`;
-};
-
-const formatLocation = (loc: string | null, floor: string | null, room: string | null) => {
-  let parts: string[] = [];
-  if (loc) parts.push(loc);
-  if (floor) parts.push(floor);
-  if (room) parts.push(room);
-  return parts.join(' - ');
 };
 
 const getConditionLabel = (cond: string) => {
@@ -413,7 +453,7 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
               <!-- ── TAB 2: JEJAK AUDIT ── -->
               <AuditTrailTab 
                 v-if="detailActiveTab === 'Jejak Audit'"
-                :lifecycles="asset ? (asset.lifecycles || []) : []" 
+                :lifecycles="effectiveLifecycles" 
               />
             </div>
 

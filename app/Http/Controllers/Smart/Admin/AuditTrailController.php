@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Smart\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Inventory\AssetLifecycle;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -23,24 +25,52 @@ class AuditTrailController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        $lifecycles = AssetLifecycle::with(['asset.lot.model', 'actor'])
-            ->orderBy('start_date', 'desc')
-            ->orderBy('id', 'desc')
-            ->get()
-            ->map(function ($log) {
-                return [
-                    'id' => $log->id,
-                    'nomor_aset' => $log->asset->number ?? '-',
-                    'kode_aset' => $log->asset->number ?? '-',
-                    'nama_aset' => $log->asset->lot->model->name ?? '-',
-                    'waktu' => $log->start_date ? $log->start_date->format('d-m-Y H:i:s') : '-',
-                    'status' => $log->status ?? '-',
-                    'action_type' => $log->action_type ?? '-',
-                    'aktor' => ($log->action_type === 'Approval' && str_contains($log->note ?? '', 'BoD/BoC')) ? 'BoD/BoC' : ($log->actor->name ?? '-'),
-                    'durasi' => $log->formatted_duration,
-                    'catatan' => $log->note ?? '-',
-                ];
-            });
+        $rows = DB::table('asset_lifecycles as al')
+            ->leftJoin('assets as a', 'a.id', '=', 'al.asset_id')
+            ->leftJoin('lots as l', 'l.id', '=', 'a.lot_id')
+            ->leftJoin('models as m', 'm.id', '=', 'l.model_id')
+            ->select([
+                'al.id',
+                'al.action_type',
+                'al.status',
+                'al.start_date',
+                'al.end_date',
+                'al.actor_id',
+                'al.note',
+                'a.number as asset_number',
+                'm.name as model_name',
+            ])
+            ->orderByDesc('al.start_date')
+            ->orderByDesc('al.id')
+            ->get();
+
+        $actorIds = $rows->pluck('actor_id')->filter()->unique()->values()->all();
+        $actorNames = !empty($actorIds)
+            ? DB::connection('user_hris')
+                ->table('hrd_employee')
+                ->whereIn('id', $actorIds)
+                ->pluck('employee_name', 'id')
+                ->all()
+            : [];
+
+        $lifecycles = $rows->map(function ($row) use ($actorNames) {
+            $actorName = ($row->action_type === 'Approval' && str_contains($row->note ?? '', 'BoD/BoC'))
+                ? 'BoD/BoC'
+                : ($row->actor_id && isset($actorNames[(int) $row->actor_id]) ? $actorNames[(int) $row->actor_id] : '-');
+
+            return [
+                'id' => (int) $row->id,
+                'nomor_aset' => $row->asset_number ?? '-',
+                'kode_aset' => $row->asset_number ?? '-',
+                'nama_aset' => $row->model_name ?? '-',
+                'waktu' => $row->start_date ? Carbon::parse($row->start_date)->format('d-m-Y H:i:s') : '-',
+                'status' => $row->status ?? '-',
+                'action_type' => $row->action_type ?? '-',
+                'aktor' => $actorName,
+                'durasi' => AssetLifecycle::formatDurationRange($row->start_date, $row->end_date),
+                'catatan' => $row->note ?? '-',
+            ];
+        });
 
         return Inertia::render('Smart/Admin/AuditTrail', [
             'lifecycles' => $lifecycles,

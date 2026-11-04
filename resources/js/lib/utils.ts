@@ -133,6 +133,35 @@ export function formatImageUrl(url?: string | null): string {
   return `/media/${url}`;
 }
 
+/**
+ * Formats location hierarchy strings into the canonical comma-separated path
+ * (e.g. "Graha RE 1, Lantai Mezzanine, Ruang IFS") without duplicating floor/room layers.
+ */
+export function formatLocation(
+  loc?: string | null,
+  floor?: string | null,
+  room?: string | null
+): string {
+  const raw = typeof loc === 'string' ? loc.trim() : '';
+  const base = raw ? raw.replace(/\s+-\s+/g, ', ') : '';
+  if (!floor && !room) {
+    return base || '-';
+  }
+  if (
+    base &&
+    (base.includes(', ') ||
+      (floor && base.includes(floor.trim())) ||
+      (room && base.includes(room.trim())))
+  ) {
+    return base;
+  }
+  const parts: string[] = [];
+  if (base && base !== '-') parts.push(base);
+  if (floor && floor.trim() && floor.trim() !== '-') parts.push(floor.trim());
+  if (room && room.trim() && room.trim() !== '-') parts.push(room.trim());
+  return parts.length > 0 ? parts.join(', ') : '-';
+}
+
 export * from './requestStatus';
 
 

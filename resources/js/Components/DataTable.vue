@@ -41,6 +41,11 @@ const props = withDefaults(defineProps<{
   showSelectionCount?: boolean
   defaultSorting?: SortingState
   defaultColumnVisibility?: VisibilityState
+  /**
+   * When true, skips automatic fallback sorting on mount so pre-sorted server arrays
+   * render in O(1) without running 80,000+ comparator calls, while keeping header sorting interactive.
+   */
+  preserveInitialOrder?: boolean
   cellClass?: string
   rowClass?: string | ((row: TData) => string)
   /**
@@ -69,6 +74,7 @@ const props = withDefaults(defineProps<{
   showSelectionCount: true,
   defaultSorting: () => [],
   defaultColumnVisibility: () => ({}),
+  preserveInitialOrder: false,
   tableContainerClass: '',
   loading: false,
   skeletonRows: 5,
@@ -107,6 +113,10 @@ const getColId = (col: any): string => {
 const resolveDefaultSorting = (): SortingState => {
   if (props.defaultSorting && props.defaultSorting.length > 0) {
     return props.defaultSorting
+  }
+
+  if (props.preserveInitialOrder) {
+    return []
   }
 
   // 1. Code (if exists): descending (exception: employee_id is sorted ascending)
@@ -243,7 +253,7 @@ watch(() => props.columns, () => {
   if (!props.defaultSorting || props.defaultSorting.length === 0) {
     sorting.value = resolveDefaultSorting()
   }
-}, { deep: true })
+})
 
 // Expose internal table for external filter control if needed
 defineExpose({
@@ -252,39 +262,72 @@ defineExpose({
 
 // Coordinate with TableSearch and internal filtering
 const { isTableSearching } = useTableSearch()
-const isInternalSearching = ref(false)
-let filterDebounceTimer: ReturnType<typeof setTimeout> | null = null
 
 // Determine if this is a large dataset exceeding the threshold (e.g. > 50 rows)
 const isLargeDataset = computed(() => (props.data?.length || 0) > (props.skeletonThreshold ?? 50))
 
-// Brief skeleton on initial mount of large tables so the browser renders smoothly without freeze
-const isInitialLoading = ref((props.data?.length || 0) > (props.skeletonThreshold ?? 50))
+// Progressive row rendering cap when "all rows" (999999) is active on large datasets
+const INITIAL_ALL_ROWS_LIMIT = 100
+const ALL_ROWS_BATCH_SIZE = 150
+const visibleRowLimit = ref(INITIAL_ALL_ROWS_LIMIT)
+const loadMoreSentinelRef = ref<HTMLElement | null>(null)
+let sentinelObserver: IntersectionObserver | null = null
 
-onMounted(() => {
-  if (isInitialLoading.value) {
-    setTimeout(() => {
-      isInitialLoading.value = false
-    }, 250)
+const setupSentinelObserver = () => {
+  if (sentinelObserver) {
+    sentinelObserver.disconnect()
+    sentinelObserver = null
+  }
+  if (typeof IntersectionObserver === 'undefined' || !loadMoreSentinelRef.value) return
+
+  sentinelObserver = new IntersectionObserver(
+    (entries) => {
+      if (entries.some((e) => e.isIntersecting)) {
+        const totalRows = table.getRowModel().rows.length
+        if (visibleRowLimit.value < totalRows) {
+          visibleRowLimit.value = Math.min(totalRows, visibleRowLimit.value + ALL_ROWS_BATCH_SIZE)
+        }
+      }
+    },
+    { rootMargin: '300px' }
+  )
+  sentinelObserver.observe(loadMoreSentinelRef.value)
+}
+
+watch(
+  () => [pagination.value.pageSize, props.data?.length, sorting.value] as const,
+  () => {
+    visibleRowLimit.value = INITIAL_ALL_ROWS_LIMIT
+  }
+)
+
+watch(loadMoreSentinelRef, (el) => {
+  if (el) {
+    setupSentinelObserver()
+  } else if (sentinelObserver) {
+    sentinelObserver.disconnect()
+    sentinelObserver = null
   }
 })
 
-// Watch data changes if data loads asynchronously
-watch(() => props.data?.length, (newLen) => {
-  if (!isInitialLoading.value && (newLen || 0) > (props.skeletonThreshold ?? 50) && !props.filterValue) {
-    isInitialLoading.value = true
-    setTimeout(() => {
-      isInitialLoading.value = false
-    }, 200)
+const renderedRows = computed(() => {
+  const rows = table.getRowModel().rows
+  if (isAllRowsSize(pagination.value.pageSize) && rows.length > visibleRowLimit.value) {
+    return rows.slice(0, visibleRowLimit.value)
   }
+  return rows
 })
 
-// Show skeleton when explicitly loading, on initial mount of large tables, when actively searching, or when switching to/from allRows
+const hasMoreUnrenderedRows = computed(() => {
+  const rows = table.getRowModel().rows
+  return isAllRowsSize(pagination.value.pageSize) && rows.length > visibleRowLimit.value
+})
+
+// Show skeleton when explicitly loading or when switching to/from allRows
 const showSkeleton = computed(() => {
-  return props.loading || 
-         isInitialLoading.value || 
-         isPageSizeChanging.value || 
-         (isLargeDataset.value && (isTableSearching.value || isInternalSearching.value))
+  return props.loading ||
+         isPageSizeChanging.value ||
+         (isLargeDataset.value && isTableSearching.value && (props.data?.length || 0) > 5000)
 })
 
 // Watch for filter changes from parent
@@ -294,33 +337,19 @@ watch(() => props.filterValue, (val) => {
     table.setPageIndex(0)
   }
 
-  if (isLargeDataset.value) {
-    isInternalSearching.value = true
-    if (filterDebounceTimer) clearTimeout(filterDebounceTimer)
-
-    filterDebounceTimer = setTimeout(() => {
-      if (props.filterKey) {
-        table.getColumn(props.filterKey)?.setFilterValue(val)
-      } else {
-        table.setGlobalFilter(val)
-      }
-      setTimeout(() => {
-        isInternalSearching.value = false
-      }, 50)
-    }, 150)
+  if (props.filterKey) {
+    table.getColumn(props.filterKey)?.setFilterValue(val)
   } else {
-    // For smaller datasets (<= 50 rows), filter immediately
-    if (props.filterKey) {
-      table.getColumn(props.filterKey)?.setFilterValue(val)
-    } else {
-      table.setGlobalFilter(val)
-    }
+    table.setGlobalFilter(val)
   }
 })
 
 onUnmounted(() => {
   if (pageSizeTimeout) clearTimeout(pageSizeTimeout)
-  if (filterDebounceTimer) clearTimeout(filterDebounceTimer)
+  if (sentinelObserver) {
+    sentinelObserver.disconnect()
+    sentinelObserver = null
+  }
 })
 </script>
 
@@ -366,9 +395,9 @@ onUnmounted(() => {
             </TableCell>
           </TableRow>
         </template>
-        <template v-else-if="table.getRowModel().rows?.length">
+        <template v-else-if="renderedRows?.length">
           <TableRow
-            v-for="row in table.getRowModel().rows"
+            v-for="row in renderedRows"
             :key="row.id"
             :data-state="row.getIsSelected() ? 'selected' : undefined"
             :class="['border-b border-border hover:bg-muted/30 transition-colors last:border-none', getRowClass(row)]"
@@ -382,6 +411,9 @@ onUnmounted(() => {
               <FlexRender :render="cell.column.columnDef.cell" :props="cell.getContext()" />
             </TableCell>
           </TableRow>
+          <tr v-if="hasMoreUnrenderedRows" ref="loadMoreSentinelRef" class="h-1">
+            <td :colspan="columns.length" class="p-0" />
+          </tr>
         </template>
         <template v-else>
           <TableRow>

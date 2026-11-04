@@ -9,7 +9,7 @@ import { useI18n } from 'vue-i18n';
 import { useModalLock } from '@/composables/useModalLock';
 import { X, ThumbsUp, Ban, FileText } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
-import { formatDate } from '@/lib/utils';
+import { formatDate, formatLocation } from '@/lib/utils';
 import Tabs from '@/Components/Tabs.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import AuditTrailTab from '@/Pages/Smart/MultiRoles/Tabs/AuditTrailTab.vue';
@@ -84,14 +84,6 @@ const formatRupiah = (val: number | string | null | undefined) => {
   if (isNaN(num)) return '-';
   const formatted = Math.floor(num).toLocaleString('id-ID');
   return `Rp${formatted}`;
-};
-
-const formatLocation = (loc: string | null | undefined, floor: string | null, room: string | null) => {
-  const parts = [];
-  if (loc && loc !== '-') parts.push(loc);
-  if (floor && floor !== '-') parts.push(floor);
-  if (room && room !== '-') parts.push(room);
-  return parts.join(', ') || '-';
 };
 
 const openMemoFile = (path?: string | null) => {

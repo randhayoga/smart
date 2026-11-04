@@ -41,6 +41,9 @@ class HrdOrgchart extends Model
                 $model->id = ((int) static::max('id')) + 1;
             }
         });
+
+        static::saved(fn () => User::clearRoleLookupCache());
+        static::deleted(fn () => User::clearRoleLookupCache());
     }
 
     /**

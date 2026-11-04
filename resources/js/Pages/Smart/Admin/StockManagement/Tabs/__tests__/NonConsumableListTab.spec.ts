@@ -419,4 +419,68 @@ describe('NonConsumableListTab.vue - statusScope Flag', () => {
       expect(rows.length).toBeGreaterThan(0);
     });
   });
+
+  describe('Hierarchical location filtering (Building, Floor, Room)', () => {
+    const hierarchyLocations = [
+      { id: 36, name: 'Graha RE 1', parent_id: null },
+      { id: 38, name: 'Lantai Mezzanine', parent_id: 36 },
+      { id: 42, name: 'Lantai 3', parent_id: 36 },
+      { id: 223, name: 'Ruang IFS', parent_id: 38 },
+      { id: 232, name: 'Departemen Civil', parent_id: 42 },
+      { id: 37, name: 'Graha RE 2', parent_id: null },
+      { id: 47, name: 'Lantai 2', parent_id: 37 },
+      { id: 205, name: 'Area Kerja Barat', parent_id: 47 },
+    ];
+
+    const locatedUnits = [
+      {
+        id: 201,
+        number: '00201-LP-PTRE-26',
+        status: 'Tersedia',
+        condition: 'Bagus',
+        location: 'Graha RE 1, Lantai Mezzanine, Ruang IFS',
+        location_id: 223,
+      },
+      {
+        id: 202,
+        number: '00202-LP-PTRE-26',
+        status: 'Tersedia',
+        condition: 'Bagus',
+        location: 'Graha RE 1, Lantai 3, Departemen Civil',
+        location_id: 232,
+      },
+      {
+        id: 203,
+        number: '00203-LP-PTRE-26',
+        status: 'Tersedia',
+        condition: 'Bagus',
+        location: 'Graha RE 2, Lantai 2, Area Kerja Barat',
+        location_id: 205,
+      },
+    ];
+
+    it('filters units accurately when selecting a Building, a Floor, or a specific Room', () => {
+      const wrapper = mountTab({
+        units: locatedUnits,
+        locations: hierarchyLocations,
+      });
+      const vm = wrapper.vm as any;
+
+      // 1. Filter by Building Graha RE 1 (id=36) -> matches both Ruang IFS (223) and Departemen Civil (232)
+      vm.locationFilter = '36';
+      expect(vm.filteredUnits.map((u: any) => u.id)).toEqual([201, 202]);
+
+      // 2. Filter by Floor Lantai 3 (id=42) -> matches only Departemen Civil (232)
+      vm.locationFilter = '42';
+      expect(vm.filteredUnits.map((u: any) => u.id)).toEqual([202]);
+
+      // 3. Filter by Room Ruang IFS (id=223) -> matches only Ruang IFS (223)
+      vm.locationFilter = '223';
+      expect(vm.filteredUnits.map((u: any) => u.id)).toEqual([201]);
+
+      // 4. Filter by Building Graha RE 2 (id=37) -> matches only Area Kerja Barat (205)
+      vm.locationFilter = '37';
+      expect(vm.filteredUnits.map((u: any) => u.id)).toEqual([203]);
+    });
+  });
 });

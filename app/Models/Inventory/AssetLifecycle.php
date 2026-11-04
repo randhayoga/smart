@@ -87,11 +87,22 @@ class AssetLifecycle extends Model
      */
     public function getFormattedDurationAttribute(): string
     {
-        if (!$this->start_date || !$this->end_date) {
+        return static::formatDurationRange($this->start_date, $this->end_date);
+    }
+
+    /**
+     * Format duration between two dates into human-readable Indonesian string.
+     */
+    public static function formatDurationRange(mixed $startDate, mixed $endDate): string
+    {
+        if (!$startDate || !$endDate) {
             return '-';
         }
 
-        $days = (int) floor($this->start_date->diffInDays($this->end_date));
+        $start = $startDate instanceof \Carbon\CarbonInterface ? $startDate : \Carbon\Carbon::parse($startDate);
+        $end = $endDate instanceof \Carbon\CarbonInterface ? $endDate : \Carbon\Carbon::parse($endDate);
+
+        $days = (int) floor($start->diffInDays($end));
         if ($days < 30) {
             return "{$days} hari";
         }

@@ -49,6 +49,11 @@ class ManagerAssetDeletionApprovalController extends Controller
 
         $approvals = $query->orderBy('id', 'desc')->get();
 
+        $actors = $approvals
+            ->flatMap(fn ($a) => $a->asset?->lifecycles?->pluck('actor') ?? [])
+            ->filter();
+        \App\Models\User::preloadRolesFor($actors);
+
         return Inertia::render($view, [
             'user' => $request->user(),
             'approvals' => ManagerAssetDeletionApprovalResource::collection($approvals)->resolve(),

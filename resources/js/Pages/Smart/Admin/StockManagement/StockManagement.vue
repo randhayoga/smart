@@ -1,21 +1,13 @@
 <script setup lang="ts">
 /**
  * Admin Inventory Management Page component for high-level stock overview, category filtering, and item CRUD operations.
+ * Componentized with useModelCatalogTable (<500 LOC).
  */
-import { ref, watch, h, onMounted, onUnmounted, computed } from 'vue';
+import { ref, watch, onMounted, onUnmounted, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import { router, usePage } from '@inertiajs/vue3';
-import { toast } from 'vue-sonner';
-import { 
-  ChevronDown, 
-  ArrowUpDown, 
-  Plus, 
-  Trash2,
-  X,
-  Pencil,
-  Eye
-} from 'lucide-vue-next';
+import { router } from '@inertiajs/vue3';
+import { ChevronDown, Plus, Trash2, Pencil } from 'lucide-vue-next';
 import TableSearch from '@/Components/TableSearch.vue';
 import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal.vue';
 import ResetFilterButton from '@/Components/ResetFilterButton.vue';
@@ -24,58 +16,69 @@ import DeleteErrorModal from '@/Components/DeleteErrorModal.vue';
 import { printManajemenStok } from '@/utils/printManajemenStok';
 import { exportCSV } from '@/utils/exportCSV';
 import { exportExcel } from '@/utils/exportExcel';
-
-import { Button } from "@/Components/ui/button";
+import { Button } from '@/Components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/Components/ui/dropdown-menu";
+} from '@/Components/ui/dropdown-menu';
 import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem } from '@/Components/ui/breadcrumb';
-
-import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
+import InputNewStockModal from './Modals/InputNewStockModal.vue';
+import EditModelModal from './Modals/EditModelModal.vue';
+import { useModelCatalogTable } from './composables/useModelCatalogTable';
 
-interface Category    { id: number; code: string; name: string; }
-interface Subcategory { id: number; code: string; name: string; category_id: number; is_consumable: boolean; category: Category; }
-interface SimpleItem  { id: number; name: string; }
+interface Category {
+  id: number;
+  code: string;
+  name: string;
+}
+interface Subcategory {
+  id: number;
+  code: string;
+  name: string;
+  category_id: number;
+  is_consumable: boolean;
+  category: Category;
+}
+interface SimpleItem {
+  id: number;
+  name: string;
+}
 
 interface Props {
-  user: { name: string; email: string; };
-  categories:    Category[];
+  user: { name: string; email: string };
+  categories: Category[];
   subcategories?: Subcategory[];
-  types?:        Subcategory[];
-  uoms:          SimpleItem[];
-  brands:        SimpleItem[];
-  barangs?:      any[];
-  models?:       any[];
-  organizers?:   SimpleItem[];
-  vendors?:      SimpleItem[];
-  locations?:    any[];
-  projects?:     any[];
-  lots?:         any[];
+  types?: Subcategory[];
+  uoms: SimpleItem[];
+  brands: SimpleItem[];
+  barangs?: any[];
+  models?: any[];
+  organizers?: SimpleItem[];
+  vendors?: SimpleItem[];
+  locations?: any[];
+  projects?: any[];
+  lots?: any[];
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  categories:    () => [],
+  categories: () => [],
   subcategories: () => [],
-  types:         () => [],
-  uoms:          () => [],
-  brands:        () => [],
-  barangs:       () => [],
-  models:        () => [],
-  organizers:    () => [],
-  vendors:       () => [],
-  locations:     () => [],
-  projects:      () => [],
-  lots:          () => [],
+  types: () => [],
+  uoms: () => [],
+  brands: () => [],
+  barangs: () => [],
+  models: () => [],
+  organizers: () => [],
+  vendors: () => [],
+  locations: () => [],
+  projects: () => [],
+  lots: () => [],
 });
 
 const { t } = useI18n();
-
-import InputNewStockModal from './Modals/InputNewStockModal.vue';
-import EditModelModal from './Modals/EditModelModal.vue';
 
 const searchQuery = ref('');
 const categoryFilter = ref('');
@@ -83,6 +86,7 @@ const subcategoryFilter = ref('');
 const brandFilter = ref('');
 const typeFilter = ref('');
 const rowsPerPage = ref<'all' | '10' | '25' | '50'>('50');
+const dataTableRef = ref<any>(null);
 
 const pageSizeNumber = computed(() => {
   if (rowsPerPage.value === 'all' || !rowsPerPage.value) {
@@ -103,207 +107,41 @@ const clearFilters = () => {
   searchQuery.value = '';
 };
 
-const dataTableRef = ref<any>(null);
+const handleViewDetail = (item: any) => {
+  const rawCode = item.code || item.number || '';
+  const cleanCode = String(rawCode).replace(/[^a-zA-Z0-9]/g, '');
+  const identifier = cleanCode || item.id;
+  router.get(`/smart/stock-management/${identifier}`);
+};
 
-const columns = computed<ColumnDef<any>[]>(() => [
-  {
-    id: 'select',
-    size: 40,
-    header: ({ table }) => h('div', { class: 'text-center no-print flex items-center justify-center' }, [
-      h('input', {
-        type: 'checkbox',
-        class: 'rounded border-input text-primary focus:ring-primary/20 w-4 h-4 cursor-pointer',
-        checked: table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate'),
-        onChange: table.getToggleAllPageRowsSelectedHandler(),
-        'aria-label': 'Select all',
-      })
-    ]),
-    cell: ({ row }) => h('div', { class: 'text-center no-print flex items-center justify-center' }, [
-      h('input', {
-        type: 'checkbox',
-        class: 'rounded border-input text-primary focus:ring-primary/20 w-4 h-4 cursor-pointer',
-        checked: row.getIsSelected(),
-        onChange: row.getToggleSelectedHandler(),
-        'aria-label': 'Select row',
-      })
-    ]),
-    enableSorting: false,
-    enableHiding: false,
-  },
-  {
-    accessorKey: 'name',
-    size: 225,
-    header: ({ column }) => {
-      return h(Button, {
-        variant: 'ghost',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
-      }, () => [
-        t('inventory.name'),
-        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-      ])
-    },
-    cell: ({ row }) => h('div', { class: 'text-foreground truncate', title: row.getValue('name') }, row.getValue('name')),
-  },
-  {
-    accessorKey: 'specification',
-    size: 225,
-    header: ({ column }) => {
-      return h(Button, {
-        variant: 'ghost',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
-      }, () => [
-        t('inventory.specification'),
-        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-      ])
-    },
-    cell: ({ row }) => {
-      const spec = row.getValue('specification') as string | null | undefined;
-      return h('div', {
-        class: `${spec ? 'text-foreground' : 'text-muted-foreground'} truncate`,
-        title: spec || '-'
-      }, spec || '-');
-    },
-  },
-  {
-    accessorKey: 'brand',
-    size: 225,
-    enableGlobalFilter: false,
-    header: ({ column }) => {
-      return h(Button, {
-        variant: 'ghost',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
-      }, () => [
-        t('inventory.brand'),
-        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-      ])
-    },
-    cell: ({ row }) => h('div', { class: 'text-foreground truncate' }, row.getValue('brand')),
-    filterFn: (row, id, value) => {
-      if (!value) return true;
-      return row.getValue(id) === value;
-    }
-  },
-  {
-    accessorKey: 'category',
-    enableGlobalFilter: false,
-    header: ({ column }) => {
-      return h(Button, {
-        variant: 'ghost',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
-      }, () => [
-        t('inventory.category'),
-        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-      ])
-    },
-    cell: ({ row }) => h('div', { class: 'text-foreground truncate' }, row.getValue('category')),
-    filterFn: (row, id, value) => {
-      if (!value) return true;
-      return row.getValue(id) === value;
-    }
-  },
-  {
-    accessorKey: 'subcategory',
-    enableGlobalFilter: false,
-    header: ({ column }) => {
-      return h(Button, {
-        variant: 'ghost',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
-      }, () => [
-        t('inventory.subcategory'),
-        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-      ])
-    },
-    cell: ({ row }) => h('div', { class: 'text-foreground truncate' }, row.getValue('subcategory')),
-    filterFn: (row, id, value) => {
-      if (!value) return true;
-      return row.getValue(id) === value;
-    }
-  },
-  {
-    accessorKey: 'amount',
-    size: 95,
-    enableGlobalFilter: false,
-    header: ({ column }) => {
-      return h(Button, {
-        variant: 'ghost',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
-      }, () => [
-        t('inventory.total'),
-        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-      ])
-    },
-    cell: ({ row }) => h('div', { class: 'font-medium text-foreground' }, row.getValue('amount')),
-  },
-  {
-    accessorKey: 'lastUpdate',
-    size: 181,
-    enableGlobalFilter: false,
-    header: ({ column }) => {
-      return h(Button, {
-        variant: 'ghost',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
-      }, () => [
-        t('inventory.lastUpdate'),
-        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-      ])
-    },
-    cell: ({ row }) => h('div', { class: 'text-muted-foreground truncate' }, row.getValue('lastUpdate')),
-    sortingFn: (rowA, rowB, columnId) => {
-      const parseDate = (str: string) => {
-        if (!str || str === '-') return 0;
-        const parts = str.trim().split(/\s+/);
-        const dateParts = parts[0].split('/').map(Number);
-        if (dateParts.length !== 3) return 0;
-        const [d, m, y] = dateParts;
-        let hour = 0, minute = 0;
-        if (parts[1]) {
-          const timeParts = parts[1].split(':').map(Number);
-          hour = timeParts[0] || 0;
-          minute = timeParts[1] || 0;
-        }
-        return new Date(y, m - 1, d, hour, minute).getTime();
-      };
-      return parseDate(rowA.getValue(columnId)) - parseDate(rowB.getValue(columnId));
-    }
-  },
-  {
-    id: 'actions',
-    size: 84,
-    enableGlobalFilter: false,
-    header: () => h('div', { class: 'no-print' }, t('common.actions')),
-    cell: ({ row }) => {
-      return h('div', { class: 'flex items-center justify-end gap-2 no-print' }, [
-        h(Button, {
-          variant: 'table-view',
-          size: 'icon-sm',
-          title: t('inventory.viewDetails'),
-          onClick: () => handleViewDetail(row.original),
-        }, () => [
-          h(Eye),
-          h('span', { class: 'sr-only' }, t('inventory.viewDetails'))
-        ]),
-        h(Button, {
-          variant: 'table-destructive',
-          size: 'icon-sm',
-          title: t('inventory.delete'),
-          onClick: () => openDeleteModal(row.original),
-        }, () => [
-          h(Trash2),
-          h('span', { class: 'sr-only' }, t('inventory.delete'))
-        ])
-      ]);
-    },
-  },
-]);
+const {
+  columns,
+  isCreateModalOpen,
+  openCreateModal,
+  isBulkEditModalOpen,
+  selectedItemsForEdit,
+  openBulkEditModal,
+  handleEditSuccess,
+  isDeleteModalOpen,
+  itemsToDelete,
+  processing,
+  openDeleteModal,
+  closeDeleteModal,
+  handleConfirmDelete,
+  isErrorModalOpen,
+  errorModalMessage,
+  closeErrorModal,
+  closeOnEscape,
+} = useModelCatalogTable({
+  mode: 'hierarchical',
+  lots: () => props.lots,
+  dataTableRef,
+  t,
+  canManage: () => true,
+  onViewDetail: handleViewDetail,
+  onDeleteRequest: (item) => openDeleteModal(item),
+});
 
-// Watchers for custom filters
 watch(categoryFilter, (val) => {
   if (dataTableRef.value) {
     dataTableRef.value.table.getColumn('category')?.setFilterValue(val);
@@ -327,15 +165,6 @@ const getExportData = () => {
   return dataTableRef.value.table.getFilteredRowModel().rows.map((row: any) => row.original);
 };
 
-const handleViewDetail = (item: any) => {
-  const rawCode = item.code || item.number || '';
-  const cleanCode = String(rawCode).replace(/[^a-zA-Z0-9]/g, '');
-  const identifier = cleanCode || item.id;
-  router.get(`/smart/stock-management/${identifier}`);
-};
-
-// Export & Print Logic
-
 const getExportPayload = () => {
   const data = getExportData();
   const headers = [
@@ -346,7 +175,7 @@ const getExportPayload = () => {
     t('inventory.name'),
     t('inventory.specification'),
     t('inventory.lastUpdate'),
-    t('inventory.total')
+    t('inventory.total'),
   ];
   const rows = data.map((item: any) => [
     item.code,
@@ -356,7 +185,7 @@ const getExportPayload = () => {
     item.name,
     item.specification,
     item.lastUpdate,
-    item.amount
+    item.amount,
   ]);
   return { headers, rows };
 };
@@ -379,30 +208,24 @@ const handlePrint = () => {
   printManajemenStok(data, {});
 };
 
-// Create Modal Logic
-const isCreateModalOpen = ref(false);
-const openCreateModal = () => {
-  isCreateModalOpen.value = true;
-};
-
 const filteredBarangs = computed(() => {
   let list = props.barangs || [];
   if (typeFilter.value === 'Habis pakai') {
-    list = list.filter(item => item.is_consumable === true);
+    list = list.filter((item) => item.is_consumable === true);
   } else if (typeFilter.value === 'Aset') {
-    list = list.filter(item => item.is_consumable === false);
+    list = list.filter((item) => item.is_consumable === false);
   }
   return list;
 });
 
 const filteredCategories = computed(() => {
-  let list = props.categories || [];
+  const list = props.categories || [];
   if (typeFilter.value === 'Habis pakai') {
-    const consumableCatIds = new Set(props.subcategories.filter(s => s.is_consumable).map(s => s.category_id));
-    return list.filter(c => consumableCatIds.has(c.id));
+    const consumableCatIds = new Set(props.subcategories.filter((s) => s.is_consumable).map((s) => s.category_id));
+    return list.filter((c) => consumableCatIds.has(c.id));
   } else if (typeFilter.value === 'Aset') {
-    const assetCatIds = new Set(props.subcategories.filter(s => !s.is_consumable).map(s => s.category_id));
-    return list.filter(c => assetCatIds.has(c.id));
+    const assetCatIds = new Set(props.subcategories.filter((s) => !s.is_consumable).map((s) => s.category_id));
+    return list.filter((c) => assetCatIds.has(c.id));
   }
   return list;
 });
@@ -410,22 +233,17 @@ const filteredCategories = computed(() => {
 const mainFilteredSubcategories = computed(() => {
   let subs = props.subcategories || [];
   if (typeFilter.value === 'Habis pakai') {
-    subs = subs.filter(s => s.is_consumable);
+    subs = subs.filter((s) => s.is_consumable);
   } else if (typeFilter.value === 'Aset') {
-    subs = subs.filter(s => !s.is_consumable);
+    subs = subs.filter((s) => !s.is_consumable);
   }
-  const cat = filteredCategories.value.find(c => c.name === categoryFilter.value);
-  if (!cat) return subs.map(s => s.name);
-  return subs.filter(s => s.category_id == cat.id).map(s => s.name);
+  const cat = filteredCategories.value.find((c) => c.name === categoryFilter.value);
+  if (!cat) return subs.map((s) => s.name);
+  return subs.filter((s) => s.category_id == cat.id).map((s) => s.name);
 });
 
 const mainFilteredBrands = computed(() => {
-  return props.brands.map(b => b.name);
-});
-
-// Update filters on mount and when category changes
-onMounted(() => {
-  // Filters updated via computed
+  return props.brands.map((b) => b.name);
 });
 
 watch(typeFilter, () => {
@@ -440,140 +258,6 @@ watch(categoryFilter, () => {
 watch(subcategoryFilter, () => {
   brandFilter.value = '';
 });
-
-// Bulk Edit Modal Logic
-const isBulkEditModalOpen = ref(false);
-const selectedItemsForEdit = ref<any[]>([]);
-
-const openBulkEditModal = () => {
-  if (!dataTableRef.value) return;
-  const selectedRows = dataTableRef.value.table.getFilteredRowModel().rows
-    .filter((r: any) => r.getIsSelected())
-    .map((r: any) => r.original);
-  
-  if (selectedRows.length === 0) return;
-  selectedItemsForEdit.value = selectedRows;
-  isBulkEditModalOpen.value = true;
-};
-
-const handleEditSuccess = () => {
-  selectedItemsForEdit.value = [];
-  if (dataTableRef.value) {
-    dataTableRef.value.table.resetRowSelection();
-  }
-};
-
-// Delete Modal Logic
-const isDeleteModalOpen = ref(false);
-const itemsToDelete = ref<any[]>([]);
-const processing = ref(false);
-
-const openDeleteModal = (items: any | any[]) => {
-  itemsToDelete.value = Array.isArray(items) ? items : [items];
-  isDeleteModalOpen.value = true;
-};
-
-const closeDeleteModal = () => {
-  isDeleteModalOpen.value = false;
-  itemsToDelete.value = [];
-};
-
-const handleConfirmDelete = () => {
-  if (processing.value || itemsToDelete.value.length === 0) return;
-  processing.value = true;
-
-  const ids = itemsToDelete.value.map(item => item.id);
-  
-  if (ids.length === 1) {
-    router.delete(`/smart/stock-management/models/${ids[0]}`, {
-      onStart: () => { processing.value = true; },
-      onFinish: () => { processing.value = false; },
-      onSuccess: () => {
-        if (dataTableRef.value) {
-          dataTableRef.value.table.resetRowSelection();
-        }
-        closeDeleteModal();
-      }
-    });
-  } else {
-    router.delete('/smart/stock-management/models/bulk', {
-      data: { ids },
-      onStart: () => { processing.value = true; },
-      onFinish: () => { processing.value = false; },
-      onSuccess: () => {
-        if (dataTableRef.value) {
-          dataTableRef.value.table.resetRowSelection();
-        }
-        closeDeleteModal();
-      }
-    });
-  }
-};
-
-// Flash Notifications
-const page = usePage();
-const flashSuccess = computed(() => (page.props as any).flash?.success);
-const flashNewStockCreated = computed(() => (page.props as any).flash?.new_stock_created);
-
-watch(flashSuccess, (newVal) => {
-  if (newVal && (page.props as any).flash?.success) {
-    const newStock = flashNewStockCreated.value;
-    if (newStock && newStock.target_url) {
-      toast.success(
-        h('span', [
-          t('inventory.newStockSuccessPrefix'),
-          h('a', {
-            href: newStock.target_url,
-            class: 'underline font-semibold text-primary hover:text-primary/80 transition-colors cursor-pointer',
-            onClick: (e: MouseEvent) => {
-              e.preventDefault();
-              router.visit(newStock.target_url);
-            }
-          }, t('inventory.seeHere'))
-        ])
-      );
-    } else {
-      toast.success(newVal);
-    }
-
-    if ((page.props as any).flash) {
-      (page.props as any).flash.success = null;
-      (page.props as any).flash.new_stock_created = null;
-    }
-  }
-}, { immediate: true });
-
-const flashError = computed(() => (page.props as any).flash?.error);
-const isErrorModalOpen = ref(false);
-const errorModalMessage = ref('');
-
-watch(flashError, (newVal) => {
-  if (newVal) {
-    errorModalMessage.value = newVal;
-    isErrorModalOpen.value = true;
-  }
-}, { immediate: true });
-
-const closeErrorModal = () => {
-  isErrorModalOpen.value = false;
-  if ((page.props as any).flash) {
-    (page.props as any).flash.error = null;
-  }
-};
-
-const closeOnEscape = (e: KeyboardEvent) => {
-  if (e.key === 'Escape') {
-    if (isCreateModalOpen.value) {
-      isCreateModalOpen.value = false;
-    } else if (isBulkEditModalOpen.value) {
-      isBulkEditModalOpen.value = false;
-    } else if (isDeleteModalOpen.value) {
-      closeDeleteModal();
-    } else if (isErrorModalOpen.value) {
-      closeErrorModal();
-    }
-  }
-};
 
 onMounted(() => {
   document.addEventListener('keydown', closeOnEscape);
@@ -599,7 +283,7 @@ onUnmounted(() => {
       <div class="px-4 bg-card rounded-xl border border-border shadow-sm overflow-hidden">
         <div class="py-3 no-print">
           <h2 class="text-lg font-bold text-foreground">{{ t('inventory.hierarchicalManagement') }}</h2>
-          
+
           <!-- Filters & Actions -->
           <div class="mt-4 flex flex-col space-y-4">
             <!-- Row 1: Filters & Rows Per Page -->
@@ -608,15 +292,15 @@ onUnmounted(() => {
                 <!-- Search -->
                 <div class="space-y-1.5 flex-1 min-w-[200px] max-w-xs">
                   <label for="search-barang" class="text-xs text-muted-foreground font-medium block">{{ t('inventory.filter') }}</label>
-                  <TableSearch 
+                  <TableSearch
                     id="search-barang"
                     name="search"
                     v-model="searchQuery"
-                    :placeholder="t('inventory.searchItemPlaceholder')" 
+                    :placeholder="t('inventory.searchItemPlaceholder')"
                   />
                 </div>
 
-                <!-- Brand Combobox (searchable/scrollable) -->
+                <!-- Brand Combobox -->
                 <Combobox
                   v-model="brandFilter"
                   :options="mainFilteredBrands"
@@ -624,7 +308,7 @@ onUnmounted(() => {
                   :default-label="t('inventory.allBrands')"
                 />
 
-                <!-- Type Dropdown (regular) -->
+                <!-- Type Dropdown -->
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal', !typeFilter ? 'text-muted-foreground' : 'text-foreground']">
@@ -639,7 +323,7 @@ onUnmounted(() => {
                   </DropdownMenuContent>
                 </DropdownMenu>
 
-                <!-- Category Dropdown (regular) -->
+                <!-- Category Dropdown -->
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal', !categoryFilter ? 'text-muted-foreground' : 'text-foreground']">
@@ -655,13 +339,13 @@ onUnmounted(() => {
                   </DropdownMenuContent>
                 </DropdownMenu>
 
-                <!-- Subcategory Combobox (searchable/scrollable) -->
+                <!-- Subcategory Combobox -->
                 <Combobox
                   v-model="subcategoryFilter"
                   :options="mainFilteredSubcategories"
                   :search-placeholder="t('inventory.searchSubcategoryPlaceholder')"
                   :default-label="t('inventory.allSubcategories')"
-                /> 
+                />
 
                 <Transition
                   enter-active-class="transition ease-out duration-200"
@@ -671,7 +355,7 @@ onUnmounted(() => {
                   leave-from-class="transform scale-100 opacity-100"
                   leave-to-class="transform scale-95 opacity-0"
                 >
-                  <ResetFilterButton 
+                  <ResetFilterButton
                     v-if="hasActiveFilters"
                     @click="clearFilters"
                   />
@@ -703,7 +387,7 @@ onUnmounted(() => {
               <div class="space-y-2 flex-1 min-w-0">
                 <label class="text-xs text-muted-foreground font-medium block ml-0.5">{{ t('inventory.selectedActions') }}</label>
                 <div class="flex flex-wrap gap-2">
-                  <Button 
+                  <Button
                     @click="openBulkEditModal"
                     :disabled="!dataTableRef || Object.keys(dataTableRef.table.getState().rowSelection).length === 0"
                     variant="more-round-warning"
@@ -711,7 +395,7 @@ onUnmounted(() => {
                     <Pencil class="w-4 h-4" />
                     <span class="hidden sm:inline">{{ t('inventory.editSelected') }}</span>
                   </Button>
-                  <Button 
+                  <Button
                     @click="openDeleteModal(dataTableRef.table.getFilteredRowModel().rows.filter((r: any) => r.getIsSelected()).map((r: any) => r.original))"
                     :disabled="!dataTableRef || Object.keys(dataTableRef.table.getState().rowSelection).length === 0"
                     variant="destructive"
@@ -721,14 +405,14 @@ onUnmounted(() => {
                   </Button>
                 </div>
               </div>
-              
+
               <Button
                 @click="openCreateModal"
                 variant="primary"
                 size="lg"
               >
                 <Plus class="w-4 h-4" />
-                <span>{{ t('inventory.inputNewStock') }}</span>               
+                <span>{{ t('inventory.inputNewStock') }}</span>
               </Button>
             </div>
           </div>
@@ -736,12 +420,10 @@ onUnmounted(() => {
 
         <!-- Table -->
         <div class="pb-4">
-
-
-          <DataTable 
+          <DataTable
             ref="dataTableRef"
-            :columns="columns" 
-            :data="filteredBarangs" 
+            :columns="columns"
+            :data="filteredBarangs"
             :filter-value="searchQuery"
             :page-size="pageSizeNumber"
             :default-sorting="[{ id: 'lastUpdate', desc: true }]"
@@ -773,7 +455,7 @@ onUnmounted(() => {
       :brands="props.brands"
       @success="handleEditSuccess"
     />
-    <DeleteConfirmationModal 
+    <DeleteConfirmationModal
       :is-open="isDeleteModalOpen"
       :item-count="itemsToDelete.length"
       :item-name="t('inventory.itemType')"
@@ -781,9 +463,9 @@ onUnmounted(() => {
       :max-width-class="itemsToDelete.length === 1 ? 'max-w-2xl' : undefined"
       :processing="processing"
       @close="closeDeleteModal"
-      @confirm="handleConfirmDelete"
+      @confirm="handleConfirmDelete()"
     />
-    <DeleteErrorModal 
+    <DeleteErrorModal
       :is-open="isErrorModalOpen"
       :error-message="errorModalMessage"
       @close="closeErrorModal"

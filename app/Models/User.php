@@ -146,6 +146,192 @@ class User extends Authenticatable
     protected ?string $cachedRoleName = null;
 
     /**
+     * Request-level memoized lookup sets for O(1) dynamic role & org resolution without N+1 queries.
+     */
+    protected static ?array $memoizedIfsManagerIds = null;
+    protected static ?array $memoizedDeptManagerIds = null;
+    protected static ?array $memoizedLatestPmNpks = null;
+    protected static ?array $memoizedOrgNamesById = null;
+    protected static ?string $memoizedIfsOrgCode = null;
+
+    /**
+     * Clear memoized role and orgchart lookup caches.
+     */
+    public static function clearRoleLookupCache(): void
+    {
+        static::$memoizedIfsManagerIds = null;
+        static::$memoizedDeptManagerIds = null;
+        static::$memoizedLatestPmNpks = null;
+        static::$memoizedOrgNamesById = null;
+        static::$memoizedIfsOrgCode = null;
+    }
+
+    /**
+     * Ensure HRD orgchart lookup maps (IFS manager IDs, Department manager IDs, and Org names) are loaded once.
+     */
+    protected static function ensureOrgchartLookupLoaded(): void
+    {
+        $ifsOrgCode = static::getIfsOrgCode();
+        if (static::$memoizedIfsManagerIds !== null && static::$memoizedDeptManagerIds !== null && static::$memoizedIfsOrgCode === $ifsOrgCode) {
+            return;
+        }
+
+        static::$memoizedIfsOrgCode = $ifsOrgCode;
+        static::$memoizedIfsManagerIds = [];
+        static::$memoizedDeptManagerIds = [];
+        static::$memoizedOrgNamesById = [];
+
+        $rows = HrdOrgchart::query()
+            ->toBase()
+            ->select(['id', 'employee_id', 'org_code', 'org_name'])
+            ->get();
+
+        foreach ($rows as $row) {
+            if ($row->id !== null) {
+                static::$memoizedOrgNamesById[(int) $row->id] = $row->org_name;
+            }
+            if ($row->employee_id !== null && $row->employee_id !== '') {
+                $empKey = trim((string) $row->employee_id);
+                static::$memoizedDeptManagerIds[$empKey] = true;
+                if (is_numeric($empKey)) {
+                    static::$memoizedDeptManagerIds[(string) (int) $empKey] = true;
+                }
+                if ((string) $row->org_code === $ifsOrgCode) {
+                    static::$memoizedIfsManagerIds[$empKey] = true;
+                    if (is_numeric($empKey)) {
+                        static::$memoizedIfsManagerIds[(string) (int) $empKey] = true;
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Ensure active Project Manager (P2211) NPK lookup set is loaded once.
+     */
+    protected static function ensureLatestPmLookupLoaded(): void
+    {
+        if (static::$memoizedLatestPmNpks !== null) {
+            return;
+        }
+
+        static::$memoizedLatestPmNpks = [];
+
+        // Fetch the newest P2211 assignment per project in a single SQL query using ROW_NUMBER()
+        $rows = \Illuminate\Support\Facades\DB::connection('reportal')
+            ->table('tb_assign_project')
+            ->selectRaw('no_project, npk, ROW_NUMBER() OVER (PARTITION BY no_project ORDER BY start_date DESC, id_assign DESC) as rn')
+            ->where('id_rbs', 'P2211')
+            ->whereNotNull('no_project')
+            ->get();
+
+        foreach ($rows as $row) {
+            if ((int) $row->rn === 1 && !empty($row->npk)) {
+                static::$memoizedLatestPmNpks[trim((string) $row->npk)] = true;
+            }
+        }
+    }
+
+    /**
+     * Preload assigned roles and dynamic role lookup sets for a collection of users in bulk.
+     */
+    public static function preloadRolesFor(iterable $users): void
+    {
+        $userList = [];
+        $userIds = [];
+        foreach ($users as $user) {
+            if ($user instanceof self) {
+                $userList[] = $user;
+                if ($user->id !== null) {
+                    $userIds[] = (int) $user->id;
+                }
+            }
+        }
+
+        if (empty($userList)) {
+            return;
+        }
+
+        static::ensureOrgchartLookupLoaded();
+        static::ensureLatestPmLookupLoaded();
+
+        $rolesByUserId = [];
+        if (!empty($userIds)) {
+            try {
+                $assignedRows = \Illuminate\Support\Facades\DB::connection(config('database.default', 'SMART'))
+                    ->table('user_roles')
+                    ->join('roles', 'user_roles.role_id', '=', 'roles.id')
+                    ->whereIn('user_roles.user_id', array_values(array_unique($userIds)))
+                    ->select(['user_roles.user_id', 'roles.name'])
+                    ->get();
+
+                foreach ($assignedRows as $row) {
+                    $rolesByUserId[(int) $row->user_id][] = $row->name;
+                }
+            } catch (\Throwable $e) {
+                // Ignore if user_roles table not migrated
+            }
+        }
+
+        foreach ($userList as $user) {
+            if ($user->cachedRoleName !== null) {
+                continue;
+            }
+            $uid = (int) $user->id;
+            if (!empty($rolesByUserId[$uid])) {
+                $roleNames = $rolesByUserId[$uid];
+                foreach (['superadmin', 'admin', 'ifs_manager', 'manager', 'user'] as $priorityRole) {
+                    if (in_array($priorityRole, $roleNames, true)) {
+                        $user->cachedRoleName = $priorityRole;
+                        break;
+                    }
+                }
+                if ($user->cachedRoleName === null) {
+                    $user->cachedRoleName = $roleNames[0];
+                }
+                continue;
+            }
+
+            // Compute fallback role in O(1) memory without hitting user_roles per user
+            $user->cachedRoleName = $user->resolveDynamicFallbackRole();
+        }
+    }
+
+    /**
+     * Resolve fallback role from hardcoded admin IDs and memoized HRIS/Reportal manager sets in O(1) time.
+     */
+    public function resolveDynamicFallbackRole(): string
+    {
+        $empId = trim((string) ($this->employee_id ?? ''));
+        if ($empId === '265656') {
+            return 'superadmin';
+        }
+
+        $admins = ['255578'];
+        if (in_array($empId, $admins, true) || ((app()->runningUnitTests() || app()->environment('testing')) && !config('app.disable_test_admin_bypass'))) {
+            return 'admin';
+        }
+
+        static::ensureOrgchartLookupLoaded();
+
+        $idStr = (string) ($this->id ?? '');
+        if (($idStr !== '' && isset(static::$memoizedIfsManagerIds[$idStr])) || ($empId !== '' && isset(static::$memoizedIfsManagerIds[$empId]))) {
+            return 'ifs_manager';
+        }
+
+        if (($idStr !== '' && isset(static::$memoizedDeptManagerIds[$idStr])) || ($empId !== '' && isset(static::$memoizedDeptManagerIds[$empId]))) {
+            return 'manager';
+        }
+
+        static::ensureLatestPmLookupLoaded();
+        if ($empId !== '' && isset(static::$memoizedLatestPmNpks[$empId])) {
+            return 'manager';
+        }
+
+        return 'user';
+    }
+
+    /**
      * Refresh the model and clear cached attributes.
      */
     public function refresh()
@@ -189,8 +375,8 @@ class User extends Authenticatable
             return $this->cachedRoleName = 'admin';
         }
 
-        // 3. Query assigned roles from SMART database if model is persisted
-        if ($this->exists && !empty($this->id)) {
+        // 3. Query assigned roles from SMART database if model is persisted and roles were not preloaded
+        if ($this->exists && !empty($this->id) && !$this->relationLoaded('roles')) {
             try {
                 $roleNames = $this->roles()->pluck('name')->all();
                 if (!empty($roleNames)) {
@@ -206,40 +392,8 @@ class User extends Authenticatable
             }
         }
 
-        // 4. Legacy dynamic fallback calculation
-        $ifsOrgCode = static::getIfsOrgCode();
-        $ifsOrgs = HrdOrgchart::where('org_code', $ifsOrgCode)->get();
-        foreach ($ifsOrgs as $ifsOrg) {
-            $ifsManagerId = (string) $ifsOrg->employee_id;
-            if ($ifsManagerId === (string) $this->id || $ifsManagerId === (string) $this->employee_id) {
-                return $this->cachedRoleName = 'ifs_manager';
-            }
-        }
-
-        $numericIds = array_values(array_unique(array_filter([(string) $this->id, (string) $this->employee_id], 'is_numeric')));
-        $isDeptManager = !empty($numericIds) && HrdOrgchart::whereIn('employee_id', array_map('intval', $numericIds))->exists();
-        if ($isDeptManager) {
-            return $this->cachedRoleName = 'manager';
-        }
-
-        // Check if user is the newest Project Manager (P2211) for any project
-        $userProjects = TbAssignProject::where('npk', $empId)
-            ->where('id_rbs', 'P2211')
-            ->pluck('no_project');
-
-        foreach ($userProjects as $noProject) {
-            $latestPmNpk = TbAssignProject::where('no_project', $noProject)
-                ->where('id_rbs', 'P2211')
-                ->orderByDesc('start_date')
-                ->orderByDesc('id_assign')
-                ->value('npk');
-
-            if ($latestPmNpk === $empId) {
-                return $this->cachedRoleName = 'manager';
-            }
-        }
-
-        return $this->cachedRoleName = 'user';
+        // 4. Dynamic fallback calculation using memoized O(1) lookup sets
+        return $this->cachedRoleName = $this->resolveDynamicFallbackRole();
     }
 
     /**
@@ -480,11 +634,26 @@ class User extends Authenticatable
     }
 
     /**
-     * Get the organization name of the user.
+     * Get the organization name of the user without triggering N+1 lazy loads.
      */
     public function getOrgNameAttribute(): ?string
     {
-        return $this->orgchart?->org_name;
+        if (array_key_exists('org_name', $this->attributes)) {
+            return $this->attributes['org_name'];
+        }
+
+        if ($this->relationLoaded('orgchart')) {
+            return $this->orgchart?->org_name;
+        }
+
+        $orgchartId = $this->attributes['orgchart_id'] ?? null;
+        if ($orgchartId === null || $orgchartId === '') {
+            return null;
+        }
+
+        static::ensureOrgchartLookupLoaded();
+
+        return static::$memoizedOrgNamesById[(int) $orgchartId] ?? null;
     }
 
     /**

@@ -19,8 +19,6 @@ class Model extends EloquentModel
 
     protected $table = 'models';
 
-    protected $with = ['type', 'brand', 'uom'];
-
     protected $fillable = [
         'number',
         'type_id',

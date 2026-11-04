@@ -662,6 +662,7 @@ class AssetController extends Controller
             'lot.legacyVendor',
             'legacyVendor',
             'lifecycles.actor',
+            'fulfillments' => fn ($q) => $q->whereNull('return_id')->with('requestItem.request.user'),
         ]);
 
         $pendingApproval = $asset->deletionApprovals->firstWhere('decision', 'pending');
@@ -683,6 +684,7 @@ class AssetController extends Controller
             'number' => $asset->number,
             'legacy_number' => $asset->legacy_number,
             'status' => $asset->status,
+            'approval_status' => $asset->approval_status,
             'proposed_status' => $pendingApproval 
                 ? $pendingApproval->proposed_condition 
                 : ($approvedApproval ? $approvedApproval->proposed_condition : null),
@@ -759,6 +761,9 @@ class AssetController extends Controller
             'barang_subcategory' => $model?->type?->name ?? '-',
             'barang_uom' => $model?->uom?->name ?? '-',
 
+            // Active borrowing info
+            'active_borrowing' => $asset->active_borrowing,
+
             // Lifecycle history for AuditTrailTab
             'lifecycles' => $asset->lifecycles->map(function ($log) {
                 return [
@@ -771,6 +776,7 @@ class AssetController extends Controller
                     'status_awal' => $log->initial_status ?? '-',
                     'status_terakhir' => $log->final_status ?? '-',
                     'alasan' => $log->note ?? '-',
+                    'catatan' => $log->note ?? '-',
                     'durasi' => $log->formatted_duration,
                 ];
             })->values()->toArray(),

@@ -26,12 +26,15 @@ class ManagerAssetActivationApprovalResource extends JsonResource
 
         $assetId = $this->asset_id ?? $this->unit_id;
 
-        // Fetch lifecycles for audit trail
-        $lifecycles = AssetLifecycle::with(['actor'])
-            ->where('asset_id', $assetId)
-            ->orderBy('id', 'desc')
-            ->get()
-            ->map(function ($lc) {
+        // Use eager-loaded lifecycles if available to avoid N+1 queries
+        $rawLifecycles = ($asset && $asset->relationLoaded('lifecycles'))
+            ? $asset->lifecycles->sortByDesc('id')->values()
+            : AssetLifecycle::with(['actor'])
+                ->where('asset_id', $assetId)
+                ->orderBy('id', 'desc')
+                ->get();
+
+        $lifecycles = $rawLifecycles->map(function ($lc) {
                 $duration = $lc->formatted_duration;
 
                 $actorRole = 'System';

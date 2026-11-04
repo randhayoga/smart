@@ -1,36 +1,27 @@
 <script setup lang="ts">
 /**
  * Daftar Habis Pakai Tab component managing consumable inventory catalog, low stock notifications, and nested lot views.
+ * Componentized with useModelCatalogTable (<500 LOC).
  */
-import { ref, watch, onMounted, onUnmounted, computed, h } from 'vue';
+import { ref, watch, onMounted, onUnmounted, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { router, usePage } from '@inertiajs/vue3';
-import { toast } from 'vue-sonner';
-import { 
-  ChevronDown, 
-  ArrowUpDown, 
-  Plus, 
-  Pencil, 
-  Trash2, 
-  Eye,
-  ClipboardList
-} from 'lucide-vue-next';
-import { Button } from "@/Components/ui/button";
+import { ChevronDown, Plus, Pencil, Trash2 } from 'lucide-vue-next';
+import { Button } from '@/Components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/Components/ui/dropdown-menu";
-import { 
-  Breadcrumb, 
-  BreadcrumbLink, 
-  BreadcrumbList, 
-  BreadcrumbItem, 
-  BreadcrumbSeparator 
+} from '@/Components/ui/dropdown-menu';
+import {
+  Breadcrumb,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbSeparator,
 } from '@/Components/ui/breadcrumb';
 import TableSearch from '@/Components/TableSearch.vue';
-import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
 import ResetFilterButton from '@/Components/ResetFilterButton.vue';
 import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal.vue';
@@ -41,6 +32,8 @@ import EditModelModal from '../Modals/EditModelModal.vue';
 import Tabs from '@/Components/Tabs.vue';
 import ModelDetailTab from './ModelDetailTab.vue';
 import LotListTab from './LotListTab.vue';
+import { usePermissions } from '@/composables/usePermissions';
+import { useModelCatalogTable } from '../composables/useModelCatalogTable';
 
 interface Props {
   barangs?: any[];
@@ -71,109 +64,25 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const { t } = useI18n();
+const page = usePage();
+const { can } = usePermissions();
 
 // Selected Barang for LOT view
 const selectedBarang = ref<any | null>(null);
 const detailTabs = computed(() => [
   { id: 'Detail', label: t('inventory.typeDetail') },
-  { id: 'Daftar LOT', label: t('inventory.lotList') }
+  { id: 'Daftar LOT', label: t('inventory.lotList') },
 ]);
 const activeDetailTab = ref('Detail');
 
 const activeBarang = computed(() => {
   if (!selectedBarang.value) return null;
-  return props.barangs.find(b => String(b.id) === String(selectedBarang.value.id)) || selectedBarang.value;
+  return props.barangs.find((b) => String(b.id) === String(selectedBarang.value.id)) || selectedBarang.value;
 });
 
 const lotsForActiveBarang = computed(() => {
   if (!activeBarang.value) return [];
-  return props.lots.filter(lot => String(lot.barang_id) === String(activeBarang.value.id));
-});
-
-const totalStockActiveBarang = computed(() => {
-  return lotsForActiveBarang.value.reduce((acc, lot) => acc + Number(lot.current_quantity ?? 0), 0);
-});
-
-const page = usePage();
-import { usePermissions } from '@/composables/usePermissions';
-
-const { can } = usePermissions();
-
-const syncFromPropsOrUrl = () => {
-  const url = new URL(page.url, window.location.origin);
-  const searchParam = url.searchParams.get('search');
-  if (searchParam) {
-    searchQuery.value = searchParam;
-  }
-
-  const normalizeCode = (val: any) => String(val ?? '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-
-  // 1. If props.selectedBarangCode is provided from server
-  if (props.selectedBarangCode) {
-    const targetNorm = normalizeCode(props.selectedBarangCode);
-    const found = props.barangs.find(b => 
-      String(b.id) === String(props.selectedBarangCode) || 
-      normalizeCode(b.code) === targetNorm ||
-      normalizeCode(b.number) === targetNorm
-    );
-    if (found) {
-      selectedBarang.value = found;
-      return;
-    }
-  }
-
-  // 2. Check path segment from page.url (e.g. /smart/stock-management/consumables/BRGHP001)
-  const pathMatch = url.pathname.match(/\/smart\/stock-management\/consumables\/([^/?#]+)/);
-  if (pathMatch && pathMatch[1]) {
-    const codeParam = decodeURIComponent(pathMatch[1]);
-    const targetNorm = normalizeCode(codeParam);
-    const found = props.barangs.find(b => 
-      String(b.id) === codeParam || 
-      normalizeCode(b.code) === targetNorm ||
-      normalizeCode(b.number) === targetNorm
-    );
-    if (found) {
-      selectedBarang.value = found;
-      return;
-    }
-  }
-
-  // 3. Fallback to query params (?barang_id=... or ?code=...)
-  const barangIdParam = url.searchParams.get('barang_id') || url.searchParams.get('code');
-  if (barangIdParam) {
-    const targetNorm = normalizeCode(barangIdParam);
-    const found = props.barangs.find(b => 
-      String(b.id) === String(barangIdParam) || 
-      normalizeCode(b.code) === targetNorm ||
-      normalizeCode(b.number) === targetNorm
-    );
-    if (found) {
-      selectedBarang.value = found;
-      return;
-    }
-  }
-
-  // If no barang code in props or URL, reset selectedBarang
-  selectedBarang.value = null;
-};
-
-onMounted(() => {
-  syncFromPropsOrUrl();
-  document.addEventListener('keydown', closeOnEscape);
-});
-
-watch(() => [props.barangs, props.selectedBarangCode, page.url], () => {
-  syncFromPropsOrUrl();
-}, { immediate: true });
-
-onUnmounted(() => {
-  document.removeEventListener('keydown', closeOnEscape);
-});
-
-watch(selectedBarang, (newVal) => {
-  if (newVal) {
-    activeDetailTab.value = 'Detail';
-  }
+  return props.lots.filter((lot) => String(lot.barang_id) === String(activeBarang.value.id));
 });
 
 // Filters for Barang list
@@ -184,6 +93,63 @@ const brandFilter = ref('');
 const stockStatusFilter = ref('');
 const rowsPerPage = ref<'all' | '10' | '25' | '50'>('50');
 const dataTableRef = ref<any>(null);
+
+const syncFromPropsOrUrl = () => {
+  const url = new URL(page.url, window.location.origin);
+  const searchParam = url.searchParams.get('search');
+  if (searchParam) {
+    searchQuery.value = searchParam;
+  }
+
+  const normalizeCode = (val: any) =>
+    String(val ?? '')
+      .replace(/[^a-zA-Z0-9]/g, '')
+      .toUpperCase();
+
+  const findBarangByCode = (rawVal: string) => {
+    const targetNorm = normalizeCode(rawVal);
+    return props.barangs.find(
+      (b) =>
+        String(b.id) === String(rawVal) ||
+        normalizeCode(b.code) === targetNorm ||
+        normalizeCode(b.number) === targetNorm
+    );
+  };
+
+  if (props.selectedBarangCode) {
+    const found = findBarangByCode(String(props.selectedBarangCode));
+    if (found) {
+      selectedBarang.value = found;
+      return;
+    }
+  }
+
+  const pathMatch = url.pathname.match(/\/smart\/stock-management\/consumables\/([^/?#]+)/);
+  if (pathMatch && pathMatch[1]) {
+    const found = findBarangByCode(decodeURIComponent(pathMatch[1]));
+    if (found) {
+      selectedBarang.value = found;
+      return;
+    }
+  }
+
+  const barangIdParam = url.searchParams.get('barang_id') || url.searchParams.get('code');
+  if (barangIdParam) {
+    const found = findBarangByCode(barangIdParam);
+    if (found) {
+      selectedBarang.value = found;
+      return;
+    }
+  }
+
+  selectedBarang.value = null;
+};
+
+watch(selectedBarang, (newVal) => {
+  if (newVal) {
+    activeDetailTab.value = 'Detail';
+  }
+});
 
 const getStockStatusLabel = (val: string) => {
   if (val === 'tipis') return t('inventory.lowStock');
@@ -208,33 +174,35 @@ const filteredBarangs = computed(() => {
 
   if (searchQuery.value) {
     const q = searchQuery.value.toLowerCase();
-    list = list.filter(item => 
-      (item.name && item.name.toLowerCase().includes(q)) || 
-      (item.code && item.code.toLowerCase().includes(q)) ||
-      (item.specification && item.specification.toLowerCase().includes(q))
+    list = list.filter(
+      (item) =>
+        (item.name && item.name.toLowerCase().includes(q)) ||
+        (item.code && item.code.toLowerCase().includes(q)) ||
+        (item.specification && item.specification.toLowerCase().includes(q))
     );
   }
 
   if (categoryFilter.value) {
-    list = list.filter(item => item.category === categoryFilter.value);
+    list = list.filter((item) => item.category === categoryFilter.value);
   }
 
   if (subcategoryFilter.value) {
-    list = list.filter(item => item.subcategory === subcategoryFilter.value);
+    list = list.filter((item) => item.subcategory === subcategoryFilter.value);
   }
 
   if (brandFilter.value) {
-    list = list.filter(item => item.brand === brandFilter.value);
+    list = list.filter((item) => item.brand === brandFilter.value);
   }
 
   if (stockStatusFilter.value === 'habis') {
-    list = list.filter(item => Number(item.amount ?? 0) === 0);
+    list = list.filter((item) => Number(item.amount ?? 0) === 0);
   } else if (stockStatusFilter.value === 'tipis') {
-    list = list.filter(item => {
+    list = list.filter((item) => {
       const remainingStock = Number(item.amount ?? 0);
-      const threshold = item.min_stock_threshold !== null && item.min_stock_threshold !== undefined
-        ? Number(item.min_stock_threshold)
-        : null;
+      const threshold =
+        item.min_stock_threshold !== null && item.min_stock_threshold !== undefined
+          ? Number(item.min_stock_threshold)
+          : null;
       return remainingStock > 0 && threshold !== null && remainingStock <= threshold;
     });
   }
@@ -242,19 +210,15 @@ const filteredBarangs = computed(() => {
   return list;
 });
 
-const filteredCategories = computed(() => {
-  return props.categories || [];
-});
+const filteredCategories = computed(() => props.categories || []);
 
 const filteredSubcategories = computed(() => {
-  const cat = filteredCategories.value.find(c => c.name === categoryFilter.value);
-  if (!cat) return props.subcategories.map(s => s.name);
-  return props.subcategories.filter(s => s.category_id == cat.id).map(s => s.name);
+  const cat = filteredCategories.value.find((c) => c.name === categoryFilter.value);
+  if (!cat) return props.subcategories.map((s) => s.name);
+  return props.subcategories.filter((s) => s.category_id == cat.id).map((s) => s.name);
 });
 
-const filteredBrands = computed(() => {
-  return props.brands.map(b => b.name);
-});
+const filteredBrands = computed(() => props.brands.map((b) => b.name));
 
 watch(categoryFilter, () => {
   subcategoryFilter.value = '';
@@ -267,207 +231,50 @@ const pageSizeNumber = computed(() => {
   return parseInt(rowsPerPage.value, 10) || 50;
 });
 
-// Table columns for Consumable Barang
-const columns = computed<ColumnDef<any>[]>(() => [
-  {
-    id: 'select',
-    size: 40,
-    header: ({ table }) => h('div', { class: 'text-center no-print flex items-center justify-center' }, [
-      h('input', {
-        type: 'checkbox',
-        class: 'rounded border-input text-primary focus:ring-primary/20 w-4 h-4 cursor-pointer',
-        checked: table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate'),
-        onChange: table.getToggleAllPageRowsSelectedHandler(),
-        'aria-label': 'Select all',
-      })
-    ]),
-    cell: ({ row }) => h('div', { class: 'text-center no-print flex items-center justify-center' }, [
-      h('input', {
-        type: 'checkbox',
-        class: 'rounded border-input text-primary focus:ring-primary/20 w-4 h-4 cursor-pointer',
-        checked: row.getIsSelected(),
-        onChange: row.getToggleSelectedHandler(),
-        'aria-label': 'Select row',
-      })
-    ]),
-    enableSorting: false,
-    enableHiding: false,
-  },
-  {
-    accessorKey: 'name',
-    size: 225,
-    header: ({ column }) => h(Button, {
-      variant: 'ghost',
-      onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-      class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
-    }, () => [
-      t('inventory.name'),
-      h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-    ]),
-    cell: ({ row }) => h('div', { class: 'text-foreground truncate font-medium', title: row.getValue('name') }, row.getValue('name')),
-  },
-  {
-    accessorKey: 'specification',
-    size: 225,
-    header: ({ column }) => h(Button, {
-      variant: 'ghost',
-      onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-      class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
-    }, () => [
-      t('inventory.specification'),
-      h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-    ]),
-    cell: ({ row }) => {
-      const spec = row.getValue('specification') as string | null | undefined;
-      return h('div', {
-        class: `${spec ? 'text-foreground' : 'text-muted-foreground'} truncate`,
-        title: spec || '-'
-      }, spec || '-');
-    },
-  },
-  {
-    accessorKey: 'brand',
-    size: 225,
-    header: ({ column }) => h(Button, {
-      variant: 'ghost',
-      onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-      class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
-    }, () => [
-      t('inventory.brand'),
-      h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-    ]),
-    cell: ({ row }) => h('div', { class: 'text-foreground truncate' }, row.getValue('brand')),
-  },
-  {
-    accessorKey: 'category',
-    header: ({ column }) => h(Button, {
-      variant: 'ghost',
-      onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-      class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
-    }, () => [
-      t('inventory.category'),
-      h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-    ]),
-    cell: ({ row }) => h('div', { class: 'text-foreground truncate' }, row.getValue('category')),
-  },
-  {
-    accessorKey: 'subcategory',
-    header: ({ column }) => h(Button, {
-      variant: 'ghost',
-      onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-      class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
-    }, () => [
-      t('inventory.subcategory'),
-      h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-    ]),
-    cell: ({ row }) => h('div', { class: 'text-foreground truncate' }, row.getValue('subcategory')),
-  },
-  {
-    accessorKey: 'amount',
-    size: 110,
-    header: ({ column }) => h(Button, {
-      variant: 'ghost',
-      onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-      class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
-    }, () => [
-      t('inventory.totalStock'),
-      h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-    ]),
-    cell: ({ row }) => {
-      const item = row.original;
-      const remainingStock = Number(item.amount ?? 0);
-      const totalStock = (props.lots || [])
-        .filter(l => String(l.barang_id) === String(item.id))
-        .reduce((sum, l) => sum + Number(l.initial_quantity ?? 0), 0);
+const handleViewDetail = (item: any) => {
+  const rawCode = item.code || item.number || '';
+  const cleanCode = String(rawCode).replace(/[^a-zA-Z0-9]/g, '');
+  const identifier = cleanCode || item.id;
+  router.get(`/smart/stock-management/consumables/${identifier}`);
+};
 
-      const threshold = item.min_stock_threshold !== null && item.min_stock_threshold !== undefined
-        ? Number(item.min_stock_threshold)
-        : null;
-
-      let textColorClass = 'text-foreground';
-      if (threshold !== null && remainingStock <= threshold) {
-        textColorClass = 'text-rose-600 font-semibold';
-      }
-
-      return h('div', { class: `font-medium ${textColorClass}` }, `${remainingStock}/${totalStock}`);
-    },
-  },
-  {
-    accessorKey: 'lastUpdate',
-    size: 181,
-    header: ({ column }) => h(Button, {
-      variant: 'ghost',
-      onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-      class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
-    }, () => [
-      t('inventory.lastUpdate'),
-      h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-    ]),
-    cell: ({ row }) => h('div', { class: 'text-muted-foreground truncate' }, row.getValue('lastUpdate')),
-    sortingFn: (rowA, rowB, columnId) => {
-      const parseDate = (str: string) => {
-        if (!str || str === '-') return 0;
-        const parts = str.trim().split(/\s+/);
-        const dateParts = parts[0].split('/').map(Number);
-        if (dateParts.length !== 3) return 0;
-        const [d, m, y] = dateParts;
-        let hour = 0, minute = 0;
-        if (parts[1]) {
-          const timeParts = parts[1].split(':').map(Number);
-          hour = timeParts[0] || 0;
-          minute = timeParts[1] || 0;
-        }
-        return new Date(y, m - 1, d, hour, minute).getTime();
-      };
-      return parseDate(rowA.getValue(columnId)) - parseDate(rowB.getValue(columnId));
-    }
-  },
-  {
-    id: 'actions',
-    size: 84,
-    header: () => h('div', { class: 'text-center font-semibold text-foreground no-print' }, t('common.actions')),
-    cell: ({ row }) => {
-      const buttons = [
-        h(Button, {
-          variant: 'table-view',
-          size: 'icon-sm',
-          title: t('inventory.viewDetails'),
-          onClick: () => {
-            const rawCode = row.original.code || row.original.number || '';
-            const cleanCode = String(rawCode).replace(/[^a-zA-Z0-9]/g, '');
-            const identifier = cleanCode || row.original.id;
-            router.get(`/smart/stock-management/consumables/${identifier}`);
-          },
-        }, () => [
-          h(Eye),
-          h('span', { class: 'sr-only' }, t('inventory.viewDetails'))
-        ])
-      ];
-
-      if (can('inventory.manage')) {
-        buttons.push(
-          h(Button, {
-            variant: 'table-destructive',
-            size: 'icon-sm',
-            title: t('common.delete'),
-            onClick: () => openDeleteModal(row.original),
-          }, () => [
-            h(Trash2),
-            h('span', { class: 'sr-only' }, t('common.delete'))
-          ])
-        );
-      }
-
-      return h('div', { class: 'flex items-center justify-end gap-2 no-print' }, buttons);
-    },
-  },
-]);
+const {
+  columns,
+  isCreateModalOpen,
+  openCreateModal,
+  isBulkEditModalOpen,
+  selectedItemsForEdit,
+  openBulkEditModal,
+  openEditModal,
+  handleEditSuccess,
+  isDeleteModalOpen,
+  itemsToDelete,
+  processing,
+  openDeleteModal,
+  closeDeleteModal,
+  handleConfirmDelete,
+  isErrorModalOpen,
+  errorModalMessage,
+  closeErrorModal,
+  closeOnEscape,
+} = useModelCatalogTable({
+  mode: 'consumable',
+  lots: () => props.lots,
+  dataTableRef,
+  t,
+  canManage: () => can('inventory.manage'),
+  onViewDetail: handleViewDetail,
+  onDeleteRequest: (item) => openDeleteModal(item),
+  selectedBarang,
+  activeBarang,
+});
 
 const getRowClass = (item: any) => {
   const remainingStock = Number(item.amount ?? 0);
-  const threshold = item.min_stock_threshold !== null && item.min_stock_threshold !== undefined
-    ? Number(item.min_stock_threshold)
-    : null;
+  const threshold =
+    item.min_stock_threshold !== null && item.min_stock_threshold !== undefined
+      ? Number(item.min_stock_threshold)
+      : null;
 
   if (remainingStock === 0) {
     return 'bg-red-100 hover:bg-red-200 text-black font-medium border-red-200';
@@ -477,161 +284,22 @@ const getRowClass = (item: any) => {
   return '';
 };
 
-// Create Tipe Modal Logic
-const isCreateModalOpen = ref(false);
-const openCreateModal = () => {
-  isCreateModalOpen.value = true;
-};
+onMounted(() => {
+  syncFromPropsOrUrl();
+  document.addEventListener('keydown', closeOnEscape);
+});
 
-// Bulk Edit Tipe Modal Logic
-const isBulkEditModalOpen = ref(false);
-const selectedItemsForEdit = ref<any[]>([]);
+watch(
+  () => [props.barangs, props.selectedBarangCode, page.url],
+  () => {
+    syncFromPropsOrUrl();
+  },
+  { immediate: true }
+);
 
-const openBulkEditModal = () => {
-  if (!dataTableRef.value) return;
-  const selectedRows = dataTableRef.value.table.getFilteredRowModel().rows
-    .filter((r: any) => r.getIsSelected())
-    .map((r: any) => r.original);
-  
-  if (selectedRows.length === 0) return;
-  selectedItemsForEdit.value = selectedRows;
-  isBulkEditModalOpen.value = true;
-};
-
-const openEditModal = () => {
-  if (!activeBarang.value) return;
-  selectedItemsForEdit.value = [activeBarang.value];
-  isBulkEditModalOpen.value = true;
-};
-
-const handleEditSuccess = () => {
-  selectedItemsForEdit.value = [];
-  if (dataTableRef.value) {
-    dataTableRef.value.table.resetRowSelection();
-  }
-};
-
-// Delete Barang Modal Logic
-const isDeleteModalOpen = ref(false);
-const itemsToDelete = ref<any[]>([]);
-const processing = ref(false);
-
-const openDeleteModal = (items?: any | any[]) => {
-  if (!items || items instanceof Event) {
-    items = activeBarang.value ? [activeBarang.value] : [];
-  }
-  itemsToDelete.value = Array.isArray(items) ? items : [items];
-  isDeleteModalOpen.value = true;
-};
-
-const closeDeleteModal = () => {
-  isDeleteModalOpen.value = false;
-  itemsToDelete.value = [];
-};
-
-const handleConfirmDelete = () => {
-  if (processing.value || itemsToDelete.value.length === 0) return;
-  processing.value = true;
-
-  const ids = itemsToDelete.value.map(item => item.id);
-  const isSelectedDeleted = selectedBarang.value && ids.includes(selectedBarang.value.id);
-  
-  if (ids.length === 1) {
-    router.delete(`/smart/stock-management/models/${ids[0]}`, {
-      onStart: () => { processing.value = true; },
-      onFinish: () => { processing.value = false; },
-      onSuccess: () => {
-        if (dataTableRef.value) {
-          dataTableRef.value.table.resetRowSelection();
-        }
-        closeDeleteModal();
-        if (isSelectedDeleted) {
-          router.get('/smart/stock-management/consumables');
-        }
-      }
-    });
-  } else {
-    router.delete('/smart/stock-management/models/bulk', {
-      data: { ids },
-      onStart: () => { processing.value = true; },
-      onFinish: () => { processing.value = false; },
-      onSuccess: () => {
-        if (dataTableRef.value) {
-          dataTableRef.value.table.resetRowSelection();
-        }
-        closeDeleteModal();
-        if (isSelectedDeleted) {
-          router.get('/smart/stock-management/consumables');
-        }
-      }
-    });
-  }
-};
-
-// Error Modal
-const isErrorModalOpen = ref(false);
-const errorModalMessage = ref('');
-
-const closeErrorModal = () => {
-  isErrorModalOpen.value = false;
-  if ((page.props as any).flash) {
-    (page.props as any).flash.error = null;
-  }
-};
-
-// Flash Notifications
-const flashSuccess = computed(() => (page.props as any).flash?.success);
-const flashNewStockCreated = computed(() => (page.props as any).flash?.new_stock_created);
-const flashError = computed(() => (page.props as any).flash?.error);
-
-watch(flashSuccess, (newVal) => {
-  if (newVal && (page.props as any).flash?.success) {
-    const newStock = flashNewStockCreated.value;
-    if (newStock && newStock.target_url) {
-      toast.success(
-        h('span', [
-          t('inventory.newStockSuccessPrefix'),
-          h('a', {
-            href: newStock.target_url,
-            class: 'underline font-semibold text-primary hover:text-primary/80 transition-colors cursor-pointer',
-            onClick: (e: MouseEvent) => {
-              e.preventDefault();
-              router.visit(newStock.target_url);
-            }
-          }, t('inventory.seeHere'))
-        ])
-      );
-    } else {
-      toast.success(newVal);
-    }
-
-    if ((page.props as any).flash) {
-      (page.props as any).flash.success = null;
-      (page.props as any).flash.new_stock_created = null;
-    }
-  }
-}, { immediate: true });
-
-watch(flashError, (newVal) => {
-  if (newVal) {
-    errorModalMessage.value = newVal;
-    isErrorModalOpen.value = true;
-  }
-}, { immediate: true });
-
-const closeOnEscape = (e: KeyboardEvent) => {
-  if (e.key === 'Escape') {
-    if (isCreateModalOpen.value) {
-      isCreateModalOpen.value = false;
-    } else if (isBulkEditModalOpen.value) {
-      isBulkEditModalOpen.value = false;
-    } else if (isDeleteModalOpen.value) {
-      closeDeleteModal();
-    } else if (isErrorModalOpen.value) {
-      closeErrorModal();
-    }
-  }
-};
+onUnmounted(() => {
+  document.removeEventListener('keydown', closeOnEscape);
+});
 </script>
 
 <template>
@@ -640,7 +308,7 @@ const closeOnEscape = (e: KeyboardEvent) => {
     <Breadcrumb class="no-print mb-3">
       <BreadcrumbList>
         <BreadcrumbItem>
-          <BreadcrumbLink 
+          <BreadcrumbLink
             :href="selectedBarang ? '/smart/stock-management/consumables' : undefined"
             :class="selectedBarang ? 'cursor-pointer hover:text-foreground' : ''"
           >
@@ -707,11 +375,11 @@ const closeOnEscape = (e: KeyboardEvent) => {
                 <!-- Search -->
                 <div class="space-y-1.5 flex-1 min-w-[200px] max-w-xs">
                   <label for="search-habis-pakai" class="text-xs text-muted-foreground font-medium block">{{ t('inventory.filter') }}</label>
-                  <TableSearch 
+                  <TableSearch
                     id="search-habis-pakai"
                     name="search"
                     v-model="searchQuery"
-                    :placeholder="t('inventory.searchItemPlaceholder')" 
+                    :placeholder="t('inventory.searchItemPlaceholder')"
                   />
                 </div>
 
@@ -770,7 +438,7 @@ const closeOnEscape = (e: KeyboardEvent) => {
                   leave-from-class="transform scale-100 opacity-100"
                   leave-to-class="transform scale-95 opacity-0"
                 >
-                  <ResetFilterButton 
+                  <ResetFilterButton
                     v-if="hasActiveFilters"
                     @click="clearFilters"
                   />
@@ -802,7 +470,7 @@ const closeOnEscape = (e: KeyboardEvent) => {
               <div class="space-y-2 flex-1 min-w-0">
                 <label class="text-xs text-muted-foreground font-medium block ml-0.5">{{ t('inventory.selectedActions') }}</label>
                 <div class="flex flex-wrap gap-2">
-                  <Button 
+                  <Button
                     @click="openBulkEditModal"
                     :disabled="!dataTableRef || Object.keys(dataTableRef.table.getState().rowSelection).length === 0"
                     variant="more-round-warning"
@@ -810,7 +478,7 @@ const closeOnEscape = (e: KeyboardEvent) => {
                     <Pencil class="w-4 h-4" />
                     <span class="hidden sm:inline">{{ t('inventory.editSelected') }}</span>
                   </Button>
-                  <Button 
+                  <Button
                     @click="openDeleteModal(dataTableRef.table.getFilteredRowModel().rows.filter((r: any) => r.getIsSelected()).map((r: any) => r.original))"
                     :disabled="!dataTableRef || Object.keys(dataTableRef.table.getState().rowSelection).length === 0"
                     variant="destructive"
@@ -820,14 +488,14 @@ const closeOnEscape = (e: KeyboardEvent) => {
                   </Button>
                 </div>
               </div>
-              
+
               <Button
                 @click="openCreateModal"
                 variant="primary"
                 size="lg"
               >
                 <Plus class="w-4 h-4" />
-                <span>{{ t('inventory.inputNewStock') }}</span>               
+                <span>{{ t('inventory.inputNewStock') }}</span>
               </Button>
             </div>
           </div>
@@ -835,10 +503,10 @@ const closeOnEscape = (e: KeyboardEvent) => {
 
         <!-- Table -->
         <div class="pb-4">
-          <DataTable 
+          <DataTable
             ref="dataTableRef"
-            :columns="columns" 
-            :data="filteredBarangs" 
+            :columns="columns"
+            :data="filteredBarangs"
             :page-size="pageSizeNumber"
             :default-sorting="[{ id: 'lastUpdate', desc: true }]"
             :row-class="getRowClass"
@@ -872,7 +540,7 @@ const closeOnEscape = (e: KeyboardEvent) => {
       @success="handleEditSuccess"
     />
 
-    <DeleteConfirmationModal 
+    <DeleteConfirmationModal
       :is-open="isDeleteModalOpen"
       :item-count="itemsToDelete.length"
       :item-name="t('inventory.itemType')"
@@ -880,10 +548,10 @@ const closeOnEscape = (e: KeyboardEvent) => {
       :max-width-class="itemsToDelete.length === 1 ? 'max-w-2xl' : undefined"
       :processing="processing"
       @close="closeDeleteModal"
-      @confirm="handleConfirmDelete"
+      @confirm="handleConfirmDelete('/smart/stock-management/consumables')"
     />
 
-    <DeleteErrorModal 
+    <DeleteErrorModal
       :is-open="isErrorModalOpen"
       :error-message="errorModalMessage"
       @close="closeErrorModal"

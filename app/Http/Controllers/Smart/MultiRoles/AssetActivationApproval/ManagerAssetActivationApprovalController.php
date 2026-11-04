@@ -30,7 +30,8 @@ class ManagerAssetActivationApprovalController extends Controller
             'asset.lot.organizer',
             'asset.lot.vendor',
             'asset.lot.legacyVendor',
-            'asset.location.parent',
+            'asset.location.parent.parent',
+            'asset.lifecycles.actor',
             'requester',
             'approver'
         ]);
@@ -44,6 +45,11 @@ class ManagerAssetActivationApprovalController extends Controller
         }
 
         $approvals = $query->orderBy('id', 'desc')->get();
+
+        $actors = $approvals
+            ->flatMap(fn ($a) => $a->asset?->lifecycles?->pluck('actor') ?? [])
+            ->filter();
+        \App\Models\User::preloadRolesFor($actors);
 
         return Inertia::render($view, [
             'user' => $request->user(),

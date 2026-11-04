@@ -32,38 +32,74 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $user = $request->user();
+
+        // Compute request sidebar badge counts in at most 1 combined SQL query per request
+        $requestBadgeCounts = null;
+        $getRequestBadgeCounts = function () use ($user, &$requestBadgeCounts): array {
+            if ($requestBadgeCounts !== null) {
+                return $requestBadgeCounts;
+            }
+            if (!$user) {
+                return $requestBadgeCounts = ['pendingRequest' => 0, 'pendingAdminApproved' => 0, 'activeRequests' => 0];
+            }
+
+            $canApprove = $user->hasPermission('requests.approve');
+            $canConfirm = $user->hasPermission('requests.confirm');
+            $canViewInbox = $user->hasPermission('requests.inbox.view');
+
+            if (!$canApprove && !$canConfirm && !$canViewInbox) {
+                return $requestBadgeCounts = ['pendingRequest' => 0, 'pendingAdminApproved' => 0, 'activeRequests' => 0];
+            }
+
+            $row = \Illuminate\Support\Facades\DB::table('requests')
+                ->selectRaw("
+                    SUM(CASE WHEN approver_id = ? AND status = 'wait' THEN 1 ELSE 0 END) as pending_request_count,
+                    SUM(CASE WHEN status = 'approve' THEN 1 ELSE 0 END) as pending_admin_approved_count,
+                    SUM(CASE WHEN status IN ('approve', 'confirm', 'partial', 'handover', 'return')
+                              OR status LIKE '%menunggu_serah_terima%'
+                              OR status LIKE '%partial%' THEN 1 ELSE 0 END) as active_requests_count
+                ", [(int) $user->id])
+                ->first();
+
+            return $requestBadgeCounts = [
+                'pendingRequest' => $canApprove ? (int) ($row->pending_request_count ?? 0) : 0,
+                'pendingAdminApproved' => $canConfirm ? (int) ($row->pending_admin_approved_count ?? 0) : 0,
+                'activeRequests' => $canViewInbox ? (int) ($row->active_requests_count ?? 0) : 0,
+            ];
+        };
+
+        $cachedUnreadNotifications = null;
+        $getUnreadNotifications = function () use ($user, &$cachedUnreadNotifications) {
+            if ($cachedUnreadNotifications === null) {
+                $cachedUnreadNotifications = $user ? $user->unreadNotifications()->limit(51)->get() : collect();
+            }
+            return $cachedUnreadNotifications;
+        };
+
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => $request->user()?->loadMissing('orgchart'),
-                'roles' => fn () => $request->user() ? $request->user()->getRoleNames() : [],
-                'permissions' => fn () => $request->user() ? $request->user()->getAllPermissionNames() : [],
-                'pendingRequestCount' => $request->user() && $request->user()->hasPermission('requests.approve')
-                    ? \App\Models\Request\Request::where('approver_id', $request->user()->id)->where('status', 'wait')->count()
+                'user' => $user,
+                'roles' => fn () => $user ? $user->getRoleNames() : [],
+                'permissions' => fn () => $user ? $user->getAllPermissionNames() : [],
+                'pendingRequestCount' => fn () => $getRequestBadgeCounts()['pendingRequest'],
+                'pendingAssetStatusCount' => fn () => $user && $user->hasPermission('inventory.status_approval.decide')
+                    ? \App\Models\Inventory\AssetDeletionApproval::where('decision', 'pending')
+                        ->whereHas('asset', fn ($q) => $q->where('approval_status', 'Pending:DM'))
+                        ->count()
                     : 0,
-                'pendingAssetStatusCount' => $request->user() && $request->user()->hasPermission('inventory.status_approval.decide')
-                    ? \App\Models\Inventory\AssetDeletionApproval::where('decision', 'pending')->whereHas('asset', fn($q) => $q->where('approval_status', 'Pending:DM'))->count()
-                    : 0,
-                'pendingAssetActivationCount' => $request->user() && $request->user()->hasPermission('inventory.status_approval.decide')
+                'pendingAssetActivationCount' => fn () => $user && $user->hasPermission('inventory.status_approval.decide')
                     ? \App\Models\Inventory\UnitActivationApproval::where('decision', 'pending')->count()
                     : 0,
-                'pendingAdminApprovedCount' => $request->user() && $request->user()->hasPermission('requests.confirm')
-                    ? \App\Models\Request\Request::where('status', 'approve')->count()
-                    : 0,
-                'activeRequestsCount' => $request->user() && $request->user()->hasPermission('requests.inbox.view')
-                    ? \App\Models\Request\Request::where(function ($q) {
-                        $q->whereIn('status', ['approve', 'confirm', 'partial', 'handover', 'return'])
-                          ->orWhere('status', 'like', '%menunggu_serah_terima%')
-                          ->orWhere('status', 'like', '%partial%');
-                    })->count()
-                    : 0,
-                'notifications' => function () use ($request) {
-                    if (! $request->user()) {
+                'pendingAdminApprovedCount' => fn () => $getRequestBadgeCounts()['pendingAdminApproved'],
+                'activeRequestsCount' => fn () => $getRequestBadgeCounts()['activeRequests'],
+                'notifications' => function () use ($user, $getUnreadNotifications) {
+                    if (!$user) {
                         return [];
                     }
 
-                    $user = $request->user();
-                    $unread = $user->unreadNotifications()->limit(50)->get();
+                    $unread = $getUnreadNotifications()->take(50);
                     $remaining = max(0, 15 - $unread->count());
                     $read = $remaining > 0
                         ? $user->readNotifications()->limit($remaining)->get()
@@ -86,9 +122,15 @@ class HandleInertiaRequests extends Middleware
                             ];
                         });
                 },
-                'unreadNotificationCount' => fn () => $request->user()
-                    ? $request->user()->unreadNotifications()->count()
-                    : 0,
+                'unreadNotificationCount' => function () use ($user, $getUnreadNotifications) {
+                    if (!$user) {
+                        return 0;
+                    }
+                    $unread = $getUnreadNotifications();
+                    return $unread->count() <= 50
+                        ? $unread->count()
+                        : $user->unreadNotifications()->count();
+                },
                 'mercure' => fn () => $request->user() ? [
                     'hubUrl' => config('mercure.public_url'),
                     'topic' => app(\App\Services\Mercure\MercurePublisher::class)->getUserTopic($request->user()->id),

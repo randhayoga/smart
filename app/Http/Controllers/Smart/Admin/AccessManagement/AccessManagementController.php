@@ -19,16 +19,19 @@ class AccessManagementController extends Controller
     {
         // 1. Fetch active employees with their assigned database roles
         $users = User::query()
+            ->select(['id', 'employee_id', 'employee_name'])
             ->where('active', 1)
-            ->with('roles')
+            ->with('roles:id,name')
             ->orderBy('employee_name')
             ->get()
             ->map(function (User $u) {
+                $empId = trim((string) $u->employee_id);
+                $empName = $u->employee_name ?? $u->name;
                 return [
                     'id' => $u->id,
-                    'employee_id' => $u->employee_id,
-                    'employee_name' => $u->employee_name ?? $u->name,
-                    'display_name' => "{$u->employee_id} - " . ($u->employee_name ?? $u->name),
+                    'employee_id' => $empId,
+                    'employee_name' => $empName,
+                    'display_name' => "{$empId} - {$empName}",
                     'role' => $u->role,
                     'roles' => $u->roles->pluck('name'),
                 ];

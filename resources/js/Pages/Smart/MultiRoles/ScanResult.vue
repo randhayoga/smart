@@ -8,7 +8,7 @@ import { Head, useForm } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 import { ChevronLeft, ChevronDown, Loader2, Save, Info, FileText, Camera } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
-import { formatDate } from '@/lib/utils';
+import { formatDate, formatLocation } from '@/lib/utils';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/Components/ui/dropdown-menu';
@@ -198,15 +198,6 @@ const formatRupiah = (val: number | string | null | undefined) => {
   if (isNaN(num)) return '-';
   const formatted = Math.floor(num).toLocaleString('id-ID');
   return `Rp${formatted}`;
-};
-
-const formatLocation = (loc: string | null, floor?: string | null, room?: string | null) => {
-  if (loc && (!floor && !room)) return loc;
-  let parts: string[] = [];
-  if (loc) parts.push(loc);
-  if (floor) parts.push(floor);
-  if (room) parts.push(room);
-  return parts.length > 0 ? parts.join(' - ') : '-';
 };
 
 const handleFileUpload = async (e: any) => {

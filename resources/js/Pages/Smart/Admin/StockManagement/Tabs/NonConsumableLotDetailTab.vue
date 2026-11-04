@@ -6,7 +6,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { Plus } from 'lucide-vue-next';
 import { Button } from "@/Components/ui/button";
-import { formatDate } from '@/lib/utils';
+import { formatDate, formatLocation } from '@/lib/utils';
 import CreateAssetModal from '../Modals/CreateAssetModal.vue';
 import NonConsumableListTab from './NonConsumableListTab.vue';
 
@@ -100,14 +100,6 @@ const formatRupiah = (val: number | string | null | undefined) => {
   const loc = locale.value === 'en' ? 'en-US' : 'id-ID';
   const formatted = Math.floor(num).toLocaleString(loc);
   return `Rp${formatted}`;
-};
-
-const formatLocation = (loc: string | null, floor: string | null, room: string | null) => {
-  let parts: string[] = [];
-  if (loc) parts.push(loc);
-  if (floor) parts.push(floor);
-  if (room) parts.push(room);
-  return parts.join(' - ');
 };
 
 const closeOnEscape = (e: KeyboardEvent) => {

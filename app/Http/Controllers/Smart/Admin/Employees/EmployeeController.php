@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Smart\Admin\Employees;
 
 use App\Http\Controllers\Controller;
-use App\Models\HrdEmployee;
 use App\Models\HrdOrgchart;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -47,18 +46,26 @@ class EmployeeController extends Controller
             ->select('r.user_id', DB::raw('COUNT(DISTINCT rf.asset_id) as total_assets'))
             ->pluck('total_assets', 'r.user_id');
 
-        $employees = HrdEmployee::with(['orgchart'])
-            ->orderBy('employee_id', 'asc')
+        $employees = DB::connection('user_hris')
+            ->table('hrd_employee as e')
+            ->leftJoin('hrd_orgchart as o', 'o.id', '=', 'e.orgchart_id')
+            ->select([
+                'e.id',
+                'e.employee_id',
+                'e.employee_name',
+                'o.org_name',
+            ])
+            ->orderBy('e.employee_id', 'asc')
             ->get()
             ->map(function ($emp) use ($activeAssetCounts) {
-                $npk = $emp->employee_id ?? '-';
-                $userId = $emp->id;
+                $userId = (int) $emp->id;
+                $npk = $emp->employee_id !== null ? trim((string) $emp->employee_id) : '-';
                 return [
-                    'id' => $emp->id,
+                    'id' => $userId,
                     'user_id' => $userId,
                     'employee_id' => $npk,
                     'name' => $emp->employee_name ?? '-',
-                    'department' => $emp->orgchart?->org_name ?? '-',
+                    'department' => $emp->org_name ?? '-',
                     'active_assets_count' => (int) ($activeAssetCounts[$userId] ?? 0),
                 ];
             });

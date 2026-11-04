@@ -108,10 +108,20 @@ class Location extends Model
      */
     public function getFullNameAttribute(): string
     {
+        if (isset($this->attributes['full_name']) && is_string($this->attributes['full_name']) && $this->attributes['full_name'] !== '') {
+            return $this->attributes['full_name'];
+        }
+
         $parts = [$this->name];
         $current = $this;
+        $visited = [$this->id => true];
 
         while ($current->parent_id) {
+            if (isset($visited[$current->parent_id])) {
+                break;
+            }
+            $visited[$current->parent_id] = true;
+
             $parent = $current->relationLoaded('parent') ? $current->parent : $current->parent()->first();
             if (!$parent || $parent->id === $current->id) {
                 break;
@@ -120,7 +130,133 @@ class Location extends Model
             $current = $parent;
         }
 
-        return implode(', ', $parts);
+        return $this->attributes['full_name'] = implode(', ', $parts);
+    }
+
+    /**
+     * Automatically wire in-memory parent relationships and precompute full_name
+     * whenever a collection of locations is hydrated, preventing N+1 queries during json_encode.
+     */
+    public function newCollection(array $models = []): \Illuminate\Database\Eloquent\Collection
+    {
+        $collection = parent::newCollection($models);
+
+        if (count($models) > 1) {
+            static::hydrateHierarchyInMemory($collection);
+        }
+
+        return $collection;
+    }
+
+    /**
+     * Wire parent references and precompute full_name in memory for a collection of locations.
+     */
+    public static function hydrateHierarchyInMemory(iterable $locations): void
+    {
+        $byId = [];
+        foreach ($locations as $loc) {
+            if ($loc instanceof self && $loc->id !== null) {
+                $byId[(int) $loc->id] = $loc;
+            }
+        }
+
+        if (empty($byId)) {
+            return;
+        }
+
+        foreach ($byId as $loc) {
+            if ($loc->parent_id && isset($byId[(int) $loc->parent_id]) && !$loc->relationLoaded('parent')) {
+                $loc->setRelation('parent', $byId[(int) $loc->parent_id]);
+            }
+        }
+
+        foreach ($byId as $loc) {
+            $parts = [$loc->name];
+            $curr = $loc;
+            $visited = [(int) $loc->id => true];
+            $missingExternalParent = false;
+
+            while ($curr->parent_id) {
+                $pid = (int) $curr->parent_id;
+                if (isset($visited[$pid])) {
+                    break;
+                }
+                $visited[$pid] = true;
+
+                $parent = $byId[$pid] ?? ($curr->relationLoaded('parent') ? $curr->parent : null);
+                if (!$parent) {
+                    $missingExternalParent = true;
+                    break;
+                }
+                array_unshift($parts, $parent->name);
+                $curr = $parent;
+            }
+
+            if (!$missingExternalParent) {
+                $loc->attributes['full_name'] = implode(', ', $parts);
+            }
+        }
+    }
+
+    /**
+     * Fetch all locations ordered by name in a single SQL query with full_name precomputed in memory.
+     */
+    public static function allWithFullName(): \Illuminate\Database\Eloquent\Collection
+    {
+        return static::query()->orderBy('name')->get();
+    }
+
+    /**
+     * Build an O(1) lookup map of [location_id => ['building_id', 'building_name', 'floor_id', 'floor_name', 'room_id', 'room_name', 'full_name']].
+     */
+    public static function hierarchyMap(?iterable $locations = null): array
+    {
+        $locations = $locations ?? static::allWithFullName();
+        $byId = [];
+
+        foreach ($locations as $loc) {
+            $id = (int) (is_array($loc) ? $loc['id'] : $loc->id);
+            $byId[$id] = [
+                'id' => $id,
+                'name' => is_array($loc) ? ($loc['name'] ?? '') : ($loc->name ?? ''),
+                'parent_id' => is_array($loc) ? ($loc['parent_id'] ?? null) : ($loc->parent_id ?? null),
+            ];
+        }
+
+        $map = [];
+        foreach ($byId as $id => $node) {
+            $chain = [$node];
+            $curr = $node;
+            $visited = [$id => true];
+
+            while (!empty($curr['parent_id']) && isset($byId[(int) $curr['parent_id']])) {
+                $pid = (int) $curr['parent_id'];
+                if (isset($visited[$pid])) {
+                    break;
+                }
+                $visited[$pid] = true;
+                $parent = $byId[$pid];
+                array_unshift($chain, $parent);
+                $curr = $parent;
+            }
+
+            $names = array_column($chain, 'name');
+            $building = $chain[0] ?? null;
+            $floor = $chain[1] ?? null;
+            $room = $chain[2] ?? null;
+
+            $map[$id] = [
+                'building_id' => $building ? (int) $building['id'] : null,
+                'building_name' => $building ? $building['name'] : null,
+                'floor_id' => $floor ? (int) $floor['id'] : null,
+                'floor_name' => $floor ? $floor['name'] : null,
+                'room_id' => $room ? (int) $room['id'] : null,
+                'room_name' => $room ? $room['name'] : null,
+                'full_name' => implode(', ', $names),
+            ];
+        }
+
+        return $map;
     }
 
     /**

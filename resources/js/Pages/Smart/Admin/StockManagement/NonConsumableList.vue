@@ -5,57 +5,16 @@
 import { useI18n } from 'vue-i18n';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import NonConsumableListTab from './Tabs/NonConsumableListTab.vue';
+import type { CompactUnitsPayload } from './utils/hydrateCompactUnits';
 
 interface Props {
-  units: {
-    id: number;
-    number: string;
-    status: string;
-    proposed_status: string | null;
-    doc_url: string | null;
-    condition: string;
-    price: number | string;
-    image_url: string;
-    vehicle_registration: string | null;
-    created_at?: string | null;
-    updated_at: string;
-    
-    // Location info
-    location: string;
-    location_id: number;
-    floor: string | null;
-    floor_id: number | null;
-    room: string | null;
-    room_id: number | null;
-
-    // Parent lot info
-    lot_id: number;
-    lot_number: string;
-    lot_imageUrl: string | null;
-    lot_unitPrice: number | string | null;
-    organizer: string;
-    organizer_id: number | null;
-    vendor: string;
-    vendor_id: number | null;
-    lot_organizer: string;
-    lot_date_of_receipt: string | null;
-    lot_vendor: string;
-    lot_po_number: string;
-
-    // Parent barang info
-    barang_id: number;
-    barang_code: string;
-    barang_nama: string;
-    barang_brand: string;
-    barang_specification: string;
-    barang_category: string;
-    barang_subcategory: string;
-    barang_uom: string;
-  }[];
+  units?: any[];
+  units_compact?: CompactUnitsPayload;
   locations: any[];
-  organizers: { id: number; name: string; }[];
-  vendors: { id: number; name: string; }[];
-  users?: { id: number; name: string; }[];
+  organizers: { id: number; name: string }[];
+  vendors: { id: number; name: string }[];
+  projects?: { id: number; no_project: string; project_name: string; client_id?: string }[];
+  users?: { id: number; name: string }[];
 }
 
 const props = defineProps<Props>();
@@ -66,9 +25,11 @@ const { t } = useI18n();
   <AppLayout :title="t('inventory.nonConsumableList')">
     <NonConsumableListTab
       :units="props.units"
+      :units-compact="props.units_compact"
       :locations="props.locations"
       :organizers="props.organizers"
       :vendors="props.vendors"
+      :projects="props.projects"
       :users="props.users"
       status-scope="standard"
     />

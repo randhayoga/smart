@@ -218,8 +218,34 @@ trait HasRolesAndPermissions
         }
 
         $roleNames = $this->getRoleNames();
-        $rolesQuery = Role::whereIn('name', $roleNames);
-        if (!$rolesQuery->exists()) {
+        if (empty($roleNames)) {
+            return $this->cachedPermissionNames = [];
+        }
+
+        if ($this->relationLoaded('roles') && $this->roles->every(fn (Role $r) => $r->relationLoaded('permissions'))) {
+            $loadedRoleNames = $this->roles->pluck('name')->all();
+            if (empty(array_diff($roleNames, $loadedRoleNames))) {
+                return $this->cachedPermissionNames = $this->roles
+                    ->flatMap(fn (Role $r) => $r->permissions->pluck('name'))
+                    ->unique()
+                    ->values()
+                    ->all();
+            }
+        }
+
+        $permissionNames = \Illuminate\Support\Facades\DB::table('role_permissions')
+            ->join('roles', 'role_permissions.role_id', '=', 'roles.id')
+            ->join('permissions', 'role_permissions.permission_id', '=', 'permissions.id')
+            ->whereIn('roles.name', $roleNames)
+            ->distinct()
+            ->pluck('permissions.name')
+            ->all();
+
+        if (!empty($permissionNames)) {
+            return $this->cachedPermissionNames = array_values($permissionNames);
+        }
+
+        if (!Role::whereIn('name', $roleNames)->exists()) {
             // Unseeded fallback (e.g. tests using RefreshDatabase without running seeders)
             $fallbackPerms = [];
             if (in_array('admin', $roleNames, true)) {

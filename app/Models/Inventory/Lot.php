@@ -20,8 +20,6 @@ class Lot extends EloquentModel
 {
     use HasFactory;
 
-    protected $with = ['model'];
-
     protected $appends = ['age'];
 
     protected $fillable = [

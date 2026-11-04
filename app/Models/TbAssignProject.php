@@ -21,6 +21,12 @@ class TbAssignProject extends Model
 
     public $incrementing = true;
 
+    protected static function booted(): void
+    {
+        static::saved(fn () => User::clearRoleLookupCache());
+        static::deleted(fn () => User::clearRoleLookupCache());
+    }
+
     protected $fillable = [
         'ID_ASSIGN',
         'id_assign',

@@ -412,5 +412,55 @@ describe('DataTable.vue pageSize allRows skeleton transition', () => {
 
     vi.useRealTimers();
   });
+
+  it('caps initial DOM rendered rows to 100 when pageSize is allRows (999999) on a 500-row dataset while preserving full table row model', () => {
+    const largeData = Array.from({ length: 500 }, (_, i) => ({ id: `ID-${i + 1}`, name: `Item ${i + 1}` }));
+
+    const wrapper = mount(DataTable, {
+      props: {
+        columns: columns as any,
+        data: largeData,
+        pageSize: 999999,
+      },
+      global: {
+        plugins: [i18n],
+      },
+    });
+
+    const vm = wrapper.vm as any;
+    expect(vm.table.getRowModel().rows.length).toBe(500);
+    // Rendered DOM rows are capped at 100 (+1 sentinel row) to prevent main-thread freeze
+    const bodyRows = wrapper.findAll('tbody tr');
+    expect(bodyRows.length).toBeLessThanOrEqual(101);
+  });
+
+  it('preserves server/initial row order without auto-sorting by code column when preserveInitialOrder is true', () => {
+    const codeCols: ColumnDef<any>[] = [
+      { accessorKey: 'number', header: 'Kode Aset' },
+      { accessorKey: 'name', header: 'Nama' },
+    ];
+    const preSortedData = [
+      { number: 'AST-001', name: 'Newest Item' },
+      { number: 'AST-099', name: 'Older Item' },
+      { number: 'AST-050', name: 'Oldest Item' },
+    ];
+
+    const wrapper = mount(DataTable, {
+      props: {
+        columns: codeCols as any,
+        data: preSortedData,
+        preserveInitialOrder: true,
+      },
+      global: {
+        plugins: [i18n],
+      },
+    });
+
+    const vm = wrapper.vm as any;
+    expect(vm.table.getState().sorting).toEqual([]);
+    const rows = vm.table.getRowModel().rows;
+    expect(rows.map((r: any) => r.original.number)).toEqual(['AST-001', 'AST-099', 'AST-050']);
+  });
 });
+
 

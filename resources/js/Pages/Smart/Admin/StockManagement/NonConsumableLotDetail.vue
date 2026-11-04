@@ -8,7 +8,7 @@ import { router, usePage } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { Button } from "@/Components/ui/button";
-import { formatDate } from '@/lib/utils';
+import { formatDate, formatLocation } from '@/lib/utils';
 import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem, BreadcrumbSeparator } from '@/Components/ui/breadcrumb';
 import Tabs from '@/Components/Tabs.vue';
 import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal.vue';
@@ -132,14 +132,6 @@ const formatRupiah = (val: number | string | null | undefined) => {
   const loc = locale.value === 'en' ? 'en-US' : 'id-ID';
   const formatted = Math.floor(num).toLocaleString(loc);
   return `Rp${formatted}`;
-};
-
-const formatLocation = (loc: string | null, floor: string | null, room: string | null) => {
-  let parts: string[] = [];
-  if (loc) parts.push(loc);
-  if (floor) parts.push(floor);
-  if (room) parts.push(room);
-  return parts.join(' - ');
 };
 
 // Deletion Modals Logic

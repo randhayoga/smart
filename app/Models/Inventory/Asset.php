@@ -238,8 +238,6 @@ class Asset extends Model
         });
     }
 
-    protected $with = ['lot', 'location'];
-
     protected $attributes = [
         'status' => 'Belum Diverifikasi',
         'borrowing_type' => 'LT',

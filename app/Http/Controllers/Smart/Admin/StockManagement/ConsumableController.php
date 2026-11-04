@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Smart\Admin\StockManagement;
 
 use App\Http\Controllers\Controller;
-use App\Models\Inventory\Model as InventoryModel;
 use App\Models\Inventory\Lot;
+use App\Models\Inventory\Model as InventoryModel;
 use App\Models\Master\Brand;
 use App\Models\Master\Category;
 use App\Models\Master\Location;
@@ -13,6 +13,7 @@ use App\Models\Master\Type;
 use App\Models\Master\Uom;
 use App\Models\Master\Vendor;
 use App\Models\TbProject;
+use App\Services\Inventory\StockInventoryQueryService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -22,6 +23,10 @@ use Inertia\Response;
  */
 class ConsumableController extends Controller
 {
+    public function __construct(
+        private readonly StockInventoryQueryService $queryService
+    ) {}
+
     /**
      * Display the consumable listing page (Daftar Habis Pakai).
      */
@@ -45,124 +50,87 @@ class ConsumableController extends Controller
         $brands = Brand::orderBy('name')->get();
         $uoms = Uom::orderBy('name')->get();
 
-        $models = InventoryModel::with(['type.category', 'brand', 'uom', 'lots'])
-            ->whereHas('type', function ($query) {
+        $models = $this->queryService->getCatalogModels(true);
+        $modelsById = $models->keyBy('id');
+
+        $locations = Location::allWithFullName();
+        $locationHierarchyMap = Location::hierarchyMap($locations);
+
+        $projects = TbProject::optionsForSelection();
+        $projectNoMap = TbProject::projectNumberMap($projects);
+
+        $lots = Lot::with(['organizer', 'vendor', 'legacyVendor'])
+            ->whereHas('model.type', function ($query) {
                 $query->where('is_consumable', true);
             })
             ->get()
-            ->map(function ($m) {
-                $amount = (int) $m->lots->sum('current_quantity');
+            ->map(function ($lot) use ($modelsById, $locationHierarchyMap, $projectNoMap) {
+                $m = $modelsById->get((int) $lot->model_id);
+                $locId = $lot->location_id ? (int) $lot->location_id : null;
+                $locInfo = ($locId && isset($locationHierarchyMap[$locId])) ? $locationHierarchyMap[$locId] : null;
+                $projId = $lot->project_id ? (int) $lot->project_id : null;
+
                 return [
-                    'id' => (int) $m->id,
-                    'code' => $m->number,
-                    'number' => $m->number,
-                    'category' => $m->type->category->name ?? '-',
-                    'type' => $m->type->name ?? '-',
-                    'type_id' => $m->type_id,
-                    'subcategory' => $m->type->name ?? '-',
-                    'subcategory_id' => $m->type_id,
-                    'category_id' => $m->type->category_id ?? null,
-                    'brand' => $m->brand->name ?? '-',
-                    'name' => $m->name,
-                    'specification' => $m->specification,
-                    'lastUpdate' => $m->updated_at ? $m->updated_at->format('d-m-Y H:i') : '-',
-                    'amount' => $amount,
-                    'initial_stock' => (int) $m->lots->sum('initial_quantity'),
-                    'available_stock' => $amount,
-                    'image_url' => $m->image_url,
-                    'uom' => $m->uom->name ?? '-',
-                    'is_consumable' => true,
-                    'brand_id' => $m->brand_id,
-                    'uom_id' => $m->uom_id,
-                    'min_stock_threshold' => $m->min_stock_threshold,
+                    'id' => (int) $lot->id,
+                    'number' => $lot->number,
+                    'model_id' => (int) $lot->model_id,
+                    'barang_id' => (int) $lot->model_id,
+                    'po_number' => $lot->po_number,
+                    'date_of_receipt' => $lot->purchase_grant_date ? $lot->purchase_grant_date->format('Y-m-d') : null,
+                    'purchase_grant_date' => $lot->purchase_grant_date ? $lot->purchase_grant_date->format('Y-m-d') : null,
+                    'organizer' => $lot->organizer->name ?? '-',
+                    'organizer_id' => $lot->organizer_id,
+                    'vendor' => $lot->vendor_name,
+                    'vendor_id' => $lot->vendor_id,
+                    'legacy_vendor_id' => $lot->legacy_vendor_id,
+                    'location' => $locInfo ? $locInfo['full_name'] : '-',
+                    'location_id' => $locId,
+                    'unitPrice' => $lot->unit_price ?? 0,
+                    'entry_type' => $lot->entry_type ?? 'Procurement',
+                    'memo_number' => $lot->memo_number,
+                    'memo_url' => $lot->memo_url,
+                    'image_url' => $lot->image_url,
+                    'imageUrl' => $lot->image_url,
+                    'assetCount' => 0,
+                    'availableAssetCount' => 0,
+                    'initial_quantity' => $lot->initial_quantity,
+                    'current_quantity' => $lot->current_quantity,
+                    'age' => $lot->age,
+                    'burden' => $lot->burden,
+                    'project_id' => $projId,
+                    'project_no' => ($projId && isset($projectNoMap[$projId])) ? $projectNoMap[$projId] : null,
+                    'updated_at' => $lot->updated_at ? $lot->updated_at->format('d-m-Y H:i') : '-',
+                    'model_code' => $m['number'] ?? '-',
+                    'model_number' => $m['number'] ?? '-',
+                    'model_brand' => $m['brand'] ?? '-',
+                    'model_name' => $m['name'] ?? '-',
+                    'model_specification' => $m['specification'] ?? '-',
+                    'model_category' => $m['category'] ?? '-',
+                    'model_type' => $m['type'] ?? '-',
+                    'model_uom' => $m['uom'] ?? '-',
+                    'barang_code' => $m['number'] ?? '-',
+                    'barang_brand' => $m['brand'] ?? '-',
+                    'barang_nama' => $m['name'] ?? '-',
+                    'barang_specification' => $m['specification'] ?? '-',
+                    'barang_category' => $m['category'] ?? '-',
+                    'barang_subcategory' => $m['type'] ?? '-',
+                    'barang_uom' => $m['uom'] ?? '-',
                 ];
             });
-
-        $lots = Lot::with([
-            'model.type.category',
-            'model.brand',
-            'model.uom',
-            'organizer',
-            'vendor',
-            'legacyVendor',
-            'location.parent',
-            'project',
-        ])
-        ->whereHas('model.type', function ($query) {
-            $query->where('is_consumable', true);
-        })
-        ->get()
-        ->map(function ($lot) {
-            return [
-                'id' => (int) $lot->id,
-                'number' => $lot->number,
-                'model_id' => (int) $lot->model_id,
-                'barang_id' => (int) $lot->model_id,
-                'po_number' => $lot->po_number,
-                'purchase_grant_date' => $lot->purchase_grant_date ? $lot->purchase_grant_date->format('Y-m-d') : null,
-                'organizer' => $lot->organizer->name ?? '-',
-                'organizer_id' => $lot->organizer_id,
-                'vendor' => $lot->vendor_name,
-                'vendor_id' => $lot->vendor_id,
-                'legacy_vendor_id' => $lot->legacy_vendor_id,
-                'entry_type' => $lot->entry_type ?? 'Procurement',
-                'memo_number' => $lot->memo_number,
-                'memo_url' => $lot->memo_url,
-                'image_url' => $lot->image_url,
-                'imageUrl' => $lot->image_url,
-                'assetCount' => 0,
-                'availableAssetCount' => 0,
-                'initial_quantity' => $lot->initial_quantity,
-                'current_quantity' => $lot->current_quantity,
-                'age' => $lot->age,
-                'burden' => $lot->burden,
-                'project_id' => $lot->project_id,
-                'project_name' => $lot->project ? $lot->project->project_name : null,
-                'project_no' => $lot->project ? $lot->project->no_project : null,
-                'updated_at' => $lot->updated_at ? $lot->updated_at->format('d-m-Y H:i') : '-',
-                
-                // Parent model info
-                'model_code' => $lot->model->number ?? '-',
-                'model_number' => $lot->model->number ?? '-',
-                'model_brand' => $lot->model->brand->name ?? '-',
-                'model_name' => $lot->model->name ?? '-',
-                'model_specification' => $lot->model->specification ?? '-',
-                'model_category' => $lot->model->type->category->name ?? '-',
-                'model_type' => $lot->model->type->name ?? '-',
-                'model_uom' => $lot->model->uom->name ?? '-',
-
-                // Backwards compat with legacy keys
-                'barang_code' => $lot->model->number ?? '-',
-                'barang_brand' => $lot->model->brand->name ?? '-',
-                'barang_nama' => $lot->model->name ?? '-',
-                'barang_specification' => $lot->model->specification ?? '-',
-                'barang_category' => $lot->model->type->category->name ?? '-',
-                'barang_subcategory' => $lot->model->type->name ?? '-',
-                'barang_uom' => $lot->model->uom->name ?? '-',
-            ];
-        });
-
-        $organizers = Organizer::orderBy('name')->get();
-        $vendors = Vendor::orderBy('name')->get(['id', 'name']);
-        $locations = Location::with('parent')->active()->orderBy('name')->get();
-        $projects = TbProject::validForSelection()->orderBy('project_name')->get();
 
         return Inertia::render('Smart/Admin/StockManagement/ConsumableList', [
             'user' => $request->user(),
             'categories' => $categories,
-            'types' => $types,
             'subcategories' => $types,
             'brands' => $brands,
             'uoms' => $uoms,
-            'models' => $models,
             'barangs' => $models,
             'lots' => $lots,
-            'organizers' => $organizers,
-            'vendors' => $vendors,
+            'organizers' => Organizer::query()->toBase()->orderBy('name')->get(['id', 'name']),
+            'vendors' => Vendor::query()->toBase()->orderBy('name')->get(['id', 'name']),
             'locations' => $locations,
             'projects' => $projects,
-            'selectedModelNumber' => $model?->number ?? null,
-            'selectedBarangCode' => $model?->number ?? null,
+            'selectedBarangCode' => $model ? $model->number : null,
         ]);
     }
 }

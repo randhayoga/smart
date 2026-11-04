@@ -14,6 +14,7 @@ interface Props {
   locations: any[];
   organizers?: { id: number; name: string; }[];
   vendors?: { id: number; name: string; }[];
+  projects?: { id: number; no_project: string; project_name: string; client_id?: string; }[];
 }
 
 const props = defineProps<Props>();
@@ -68,6 +69,7 @@ const handleCustomPrint = (items: any[]) => {
         :locations="props.locations"
         :organizers="props.organizers"
         :vendors="props.vendors"
+        :projects="props.projects"
         :status-scope="currentStatusScope"
         :hide-status-filter="true"
         :hide-export="activeTab === 'Pending:DM'"
