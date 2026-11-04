@@ -68,6 +68,7 @@ export default {
           request: 'Submit Unit Status Change Requests',
           decide: 'Approve or Reject Unit Status Changes',
         },
+        maintenance: 'Record and Manage Asset Maintenance History',
       },
       requests: {
         create: 'Create and Submit Requisitions (Cart)',

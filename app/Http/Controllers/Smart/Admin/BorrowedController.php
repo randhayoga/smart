@@ -9,6 +9,7 @@ use App\Models\Request\Request as SmartRequest;
 use App\Models\Request\RequestFulfillment;
 use App\Models\Request\RequestReturn;
 use App\Models\Request\RequestStatusLog;
+use App\Models\TbProject;
 use App\Services\ImageUploadService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -250,6 +251,7 @@ class BorrowedController extends Controller
             'borrowedId' => $req->id,
             'request' => $borrowedData,
             'locations' => $locations,
+            'projects' => Inertia::lazy(fn () => TbProject::optionsForSelection()),
             'user' => [
                 'name' => auth()->user()->name,
                 'email' => auth()->user()->email,

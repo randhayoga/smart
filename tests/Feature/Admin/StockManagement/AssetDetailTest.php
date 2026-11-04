@@ -79,6 +79,8 @@ class AssetDetailTest extends TestCase
         $codeResponse->assertJson([
             'id' => $asset->id,
             'number' => 'AST-00001-2026',
+            'project_id' => null,
+            'barang_category_code' => $category->code,
         ]);
     }
 }

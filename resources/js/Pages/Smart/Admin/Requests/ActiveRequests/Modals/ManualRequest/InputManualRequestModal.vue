@@ -375,6 +375,11 @@ const handleUpdateQuantity = (payload: { key: string; quantity: number }) => {
   if (target) target.quantity = payload.quantity;
 };
 
+const handleUpdateNote = (payload: { key: string; reasoning: string }) => {
+  const target = addedItems.value.find(i => i.key === payload.key);
+  if (target) target.reasoning = payload.reasoning;
+};
+
 const handleRemoveItem = (key: string) => {
   addedItems.value = addedItems.value.filter(i => i.key !== key);
 };
@@ -558,6 +563,7 @@ const handleSubmit = () => {
                 :items="addedItems"
                 :disabled="isSubmitting"
                 @update-quantity="handleUpdateQuantity"
+                @update-note="handleUpdateNote"
                 @remove-item="handleRemoveItem"
               />
 

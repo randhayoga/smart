@@ -489,8 +489,8 @@ const activeStepIndex = computed(() => {
                       :href="step.proofUrl"
                       target="_blank"
                       rel="noopener noreferrer"
+                      variant="primary-outline"
                       size="sm"
-                      class="text-xs h-8 px-3 font-semibold bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center"
                     >
                       {{ t('fulfillment.handoverProof') }}
                     </Button>

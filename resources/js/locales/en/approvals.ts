@@ -42,6 +42,7 @@ export default {
   auditActor: 'Actor',
   auditDuration: 'Duration',
   auditNotes: 'Notes',
+  auditLink: 'Link',
   auditSearchPlaceholder: 'Search Actor Name...',
   allStatus: 'All statuses',
   allAction: 'All actions',

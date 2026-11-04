@@ -6,6 +6,7 @@ use App\Models\Master\Location;
 use App\Models\TbProject;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -732,22 +733,25 @@ class StockInventoryQueryService
 
     /**
      * Fetch lightweight active employee options without hydrating Eloquent User models.
+     * Aggressively cached in Redis/Cache for 10 minutes to ensure instant sub-millisecond retrieval.
      */
     public function getActiveUsersForSelection(): Collection
     {
-        return DB::connection('user_hris')
-            ->table('hrd_employee')
-            ->select(['id', 'employee_name', 'employee_id'])
-            ->where('active', 1)
-            ->orderBy('employee_name')
-            ->get()
-            ->map(function ($u) {
-                $empId = trim((string) ($u->employee_id ?? ''));
-                return [
-                    'id' => (int) $u->id,
-                    'name' => "{$u->employee_name} ({$empId})",
-                    'employee_id' => $empId,
-                ];
-            });
+        return Cache::remember('active_users_for_selection', 600, function () {
+            return DB::connection('user_hris')
+                ->table('hrd_employee')
+                ->select(['id', 'employee_name', 'employee_id'])
+                ->where('active', 1)
+                ->orderBy('employee_name')
+                ->get()
+                ->map(function ($u) {
+                    $empId = trim((string) ($u->employee_id ?? ''));
+                    return [
+                        'id' => (int) $u->id,
+                        'name' => "{$u->employee_name} ({$empId})",
+                        'employee_id' => $empId,
+                    ];
+                });
+        });
     }
 }

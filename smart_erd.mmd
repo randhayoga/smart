@@ -256,6 +256,21 @@ erDiagram
         json new_state  "nullable"  
     }
 
+    ASSET_MAINTENANCE {
+        int id PK ""  
+        int asset_id FK ""  
+        int maintainer_id FK "ADM_USER_NEW_PORTAL_USERS's id"  
+        int user_id FK "nullable | ADM_USER_NEW_PORTAL_USERS's id"  
+        varchar_50 type  "Preventive | Corrective"  
+        varchar_50 source  "SMART | TiSu"  
+        varchar reference  "nullable"  
+        text problem  ""  
+        text solution  ""  
+        numeric cost  "default to 0"  
+        date date  ""  
+        varchar image_url  "nullable"  
+    }
+
     CONSUMABLE_BASKET {
         int id PK ""  
         int user_id FK "ADM_USER_NEW_PORTAL_USERS's id"  
@@ -484,6 +499,9 @@ erDiagram
     ASSET||--o{ASSET_LIFECYCLE:"tracks lifecycle of"
     LOCATION||--o{ASSET_LIFECYCLE:"location during lifecycle"
     ADM_USER_NEW_PORTAL_USERS||--o{ASSET_LIFECYCLE:"actor"
+    ASSET||--o{ASSET_MAINTENANCE:"has maintenance history"
+    ADM_USER_NEW_PORTAL_USERS||--o{ASSET_MAINTENANCE:"performed by maintainer"
+    ADM_USER_NEW_PORTAL_USERS||--o{ASSET_MAINTENANCE:"requested by user"
     ASSET||--o{ASSET_DELETION_APPROVAL:"has deletion approvals"
     ADM_USER_NEW_PORTAL_USERS||--o{ASSET_DELETION_APPROVAL:"requests deletion"
     ADM_USER_NEW_PORTAL_USERS||--o{ASSET_DELETION_APPROVAL:"decides deletion"

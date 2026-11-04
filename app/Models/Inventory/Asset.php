@@ -430,6 +430,14 @@ class Asset extends Model
     }
 
     /**
+     * Maintenance history records for this asset.
+     */
+    public function maintenances(): HasMany
+    {
+        return $this->hasMany(AssetMaintenance::class, 'asset_id')->orderByDesc('date')->orderByDesc('id');
+    }
+
+    /**
      * Fulfillments associated with this asset.
      */
     public function fulfillments(): HasMany

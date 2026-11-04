@@ -252,7 +252,7 @@ trait HasRolesAndPermissions
                 $fallbackPerms = array_merge($fallbackPerms, [
                     'dashboard.admin.view', 'dashboard.user.view', 'master.view', 'master.manage',
                     'inventory.view', 'inventory.manage', 'inventory.borrow', 'inventory.manual_request',
-                    'inventory.status_approval.request',
+                    'inventory.status_approval.request', 'inventory.maintenance',
                     'requests.create', 'requests.view_own', 'requests.approve', 'requests.inbox.view',
                     'requests.confirm', 'requests.fulfill', 'requests.handover', 'requests.returns',
                     'requests.archive.view', 'karyawan.view', 'audit.view', 'notifications.manage'

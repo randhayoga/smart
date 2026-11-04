@@ -66,6 +66,7 @@ class RoleAndPermissionSeeder extends Seeder
             ['name' => 'inventory.manual_request', 'label' => 'Create Manual Stock Requests', 'group' => 'inventory'],
             ['name' => 'inventory.status_approval.request', 'label' => 'Submit Unit Status Change Requests', 'group' => 'inventory'],
             ['name' => 'inventory.status_approval.decide', 'label' => 'Approve or Reject Unit Status Changes', 'group' => 'inventory'],
+            ['name' => 'inventory.maintenance', 'label' => 'Record and Manage Asset Maintenance History', 'group' => 'inventory'],
 
             // Requests / Requisitions
             ['name' => 'requests.create', 'label' => 'Create and Submit Requisitions (Cart)', 'group' => 'requests'],

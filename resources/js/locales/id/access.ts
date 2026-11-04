@@ -68,6 +68,7 @@ export default {
           request: 'Ajukan Permintaan Perubahan Status Unit',
           decide: 'Setujui atau Tolak Perubahan Status Unit',
         },
+        maintenance: 'Catat dan Kelola Riwayat Perawatan Aset',
       },
       requests: {
         create: 'Buat dan Ajukan Permintaan (Keranjang)',

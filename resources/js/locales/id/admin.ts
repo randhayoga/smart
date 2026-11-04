@@ -56,6 +56,7 @@ export default {
   auditActor: 'Aktor',
   auditDuration: 'Durasi',
   auditNotes: 'Catatan',
+  auditLink: 'Tautan',
   filter: 'Filter',
   allStatuses: 'Semua status',
   allActions: 'Semua aksi',

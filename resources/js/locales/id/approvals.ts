@@ -42,6 +42,7 @@ export default {
   auditActor: 'Aktor',
   auditDuration: 'Durasi',
   auditNotes: 'Catatan',
+  auditLink: 'Tautan',
   auditSearchPlaceholder: 'Cari Nama Aktor...',
   allStatus: 'Semua status',
   allAction: 'Semua aksi',

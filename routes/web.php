@@ -46,6 +46,7 @@ use App\Http\Controllers\Smart\Admin\Master\OrganizerController;
 use App\Http\Controllers\Smart\Admin\Master\VendorController;
 use App\Http\Controllers\Smart\Admin\Master\LocationController;
 use App\Http\Controllers\Smart\Admin\StockManagement\AssetController;
+use App\Http\Controllers\Smart\Admin\StockManagement\AssetMaintenanceController;
 use App\Http\Controllers\Smart\Admin\StockManagement\BulkAssetController;
 use App\Http\Controllers\Smart\Admin\StockManagement\AssetScanController;
 use App\Http\Controllers\Smart\Admin\StockManagement\AssetQrCodeController;
@@ -189,6 +190,12 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
 
             // New Stock Unified Input
             Route::post('new-stock', [NewStockController::class, 'store'])->name('new-stock.store');
+        });
+
+        // Asset Maintenance History & Form
+        Route::middleware(['permission:inventory.maintenance'])->group(function () {
+            Route::get('assets/{asset}/maintenances', [AssetMaintenanceController::class, 'index'])->name('assets.maintenances.index');
+            Route::post('assets/{asset}/maintenances', [AssetMaintenanceController::class, 'store'])->name('assets.maintenances.store');
         });
 
         // Asset Deletion Submissions

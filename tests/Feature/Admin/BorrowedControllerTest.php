@@ -155,6 +155,11 @@ class BorrowedControllerTest extends TestCase
         $this->assertEquals('borrow', $showRequest['raw_status']);
         $this->assertCount(1, $showRequest['items']);
         $this->assertEquals([$stAsset->number], $showRequest['items'][0]['assets']);
+        $showResponse->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+            ->component('Smart/Admin/Requests/ActiveRequests/Details/BorrowedDetail')
+            ->has('locations')
+            ->has('request')
+        );
     }
 
     public function test_show_endpoint_resolves_comp_category_specification_from_asset(): void

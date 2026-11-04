@@ -6,7 +6,7 @@
  */
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { Button } from '@/Components/ui/button';
 import { ScrollArea } from "@/Components/ui/scroll-area";
@@ -27,6 +27,7 @@ import {
 } from '@/Components/ui/breadcrumb';
 import AssetItemCard from '@/Components/AssetItemCard.vue';
 import DetailAssetModal from '@/Pages/Smart/Admin/StockManagement/Modals/DetailAssetModal.vue';
+import EditAssetModal from '@/Pages/Smart/Admin/StockManagement/Modals/EditAssetModal.vue';
 import axios from 'axios';
 import { toast } from 'vue-sonner';
 import { 
@@ -99,6 +100,7 @@ interface Props {
   borrowedId: string | number;
   request: RequestDetail;
   locations?: any[];
+  projects?: { id?: number; id_project?: number; no_project: string; project_name: string; client_id?: string }[];
   user?: {
     name?: string;
     email?: string;
@@ -153,6 +155,54 @@ const openAssetDetail = async (assetNumber: string) => {
   } finally {
     isLoadingAsset.value = false;
   }
+};
+
+// Edit Asset Modal Setup
+const isEditAssetModalOpen = ref(false);
+const selectedAssetsForEdit = ref<any[]>([]);
+
+const ensureProjectsLoaded = () => {
+  if ((!props.projects || props.projects.length === 0) && typeof router?.reload === 'function') {
+    router.reload({ only: ['projects'] });
+  }
+};
+
+const openEditAssetModal = (asset: any) => {
+  if (!asset) return;
+  selectedAssetsForEdit.value = [asset];
+  isEditAssetModalOpen.value = true;
+  ensureProjectsLoaded();
+};
+
+const activeLotForEdit = computed(() => {
+  if (selectedAssetsForEdit.value.length === 1) {
+    const item = selectedAssetsForEdit.value[0];
+    return {
+      id: item.lot_id,
+      imageUrl: item.lot_imageUrl,
+      unitPrice: item.lot_unitPrice,
+      barang_category_code: item.model_category_code || item.barang_category_code,
+    };
+  }
+  return null;
+});
+
+const activeBarangForEdit = computed(() => {
+  if (selectedAssetsForEdit.value.length === 1) {
+    const item = selectedAssetsForEdit.value[0];
+    return {
+      id: item.barang_id || item.model_id,
+      name: item.barang_nama || item.model_name,
+      category: item.barang_category || item.model_category,
+      category_code: item.barang_category_code || item.model_category_code,
+    };
+  }
+  return null;
+});
+
+const handleAssetEditSuccess = () => {
+  selectedAssetsForEdit.value = [];
+  selectedAssetData.value = null;
 };
 
 interface TimelineStep {
@@ -524,8 +574,8 @@ const activeStepIndex = computed(() => {
                       :href="step.proofUrl"
                       target="_blank"
                       rel="noopener noreferrer"
+                      variant="primary-outline"
                       size="sm"
-                      class="text-xs h-8 px-3 font-semibold bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center"
                     >
                       {{ t('fulfillment.handoverProof') }}
                     </Button>
@@ -566,6 +616,18 @@ const activeStepIndex = computed(() => {
     <DetailAssetModal
       v-model:open="isAssetModalOpen"
       :asset="selectedAssetData"
+      @edit="openEditAssetModal"
+    />
+
+    <!-- Edit Asset Modal -->
+    <EditAssetModal
+      v-model:open="isEditAssetModalOpen"
+      :items="selectedAssetsForEdit"
+      :lot="activeLotForEdit"
+      :barang="activeBarangForEdit"
+      :locations="locations || []"
+      :projects="projects"
+      @success="handleAssetEditSuccess"
     />
   </AppLayout>
 </template>

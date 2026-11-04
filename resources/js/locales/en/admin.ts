@@ -56,6 +56,7 @@ export default {
   auditActor: 'Actor',
   auditDuration: 'Duration',
   auditNotes: 'Notes',
+  auditLink: 'Link',
   filter: 'Filter',
   allStatuses: 'All statuses',
   allActions: 'All actions',

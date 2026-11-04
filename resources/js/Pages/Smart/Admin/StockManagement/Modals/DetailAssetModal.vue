@@ -7,13 +7,14 @@ import { useI18n } from 'vue-i18n';
 import { useModalLock } from '@/composables/useModalLock';
 import { router, usePage } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
-import { X, FileText, Upload } from 'lucide-vue-next';
+import { X, FileText, Upload, Loader2 } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
 import { formatDate, formatLocation } from '@/lib/utils';
 import { hasAssetStatus } from '@/lib/assetStatus';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import Tabs from '@/Components/Tabs.vue';
 import AuditTrailTab from '@/Pages/Smart/MultiRoles/Tabs/AuditTrailTab.vue';
+import MaintenanceTab from './MaintenanceTab.vue';
 
 interface Props {
   open: boolean;
@@ -49,11 +50,19 @@ const effectiveLifecycles = computed(() => {
 });
 
 const fetchAssetDetailsIfNeeded = async () => {
-  if (!props.open || detailActiveTab.value !== 'Jejak Audit' || !props.asset?.id) return;
-  if (Array.isArray(props.asset.lifecycles)) {
-    fetchedLifecycles.value = props.asset.lifecycles;
+  if (!props.open || !props.asset?.id) return;
+  // If Jejak Audit is open and lifecycles already exists, no need to fetch
+  const needsLifecycles = detailActiveTab.value === 'Jejak Audit' && !Array.isArray(props.asset.lifecycles);
+  // If Perawatan is open and active_borrowing is not yet loaded on the asset
+  const needsBorrowing = detailActiveTab.value === 'Perawatan' && props.asset.active_borrowing === undefined;
+
+  if (!needsLifecycles && !needsBorrowing) {
+    if (detailActiveTab.value === 'Jejak Audit' && Array.isArray(props.asset.lifecycles)) {
+      fetchedLifecycles.value = props.asset.lifecycles;
+    }
     return;
   }
+
   if (typeof fetch !== 'function') return;
 
   try {
@@ -78,10 +87,17 @@ const fetchAssetDetailsIfNeeded = async () => {
 };
 
 const tabs = computed(() => {
-  return [
+  const list = [
     { id: 'Detail Aset', label: t('inventory.assetDetail') },
-    { id: 'Jejak Audit', label: t('inventory.auditTrail') },
   ];
+
+  if (can('inventory.maintenance')) {
+    list.push({ id: 'Perawatan', label: t('inventory.maintenanceTab') });
+  }
+
+  list.push({ id: 'Jejak Audit', label: t('inventory.auditTrail') });
+
+  return list;
 });
 
 watch(
@@ -103,7 +119,7 @@ watch(
 );
 
 watch(detailActiveTab, (tab) => {
-  if (tab === 'Jejak Audit') {
+  if (tab === 'Jejak Audit' || tab === 'Perawatan') {
     void fetchAssetDetailsIfNeeded();
   }
 });
@@ -271,6 +287,25 @@ const handleBodBocDisapprovalUpload = (e: Event) => {
       },
     }
   );
+};
+
+const maintenanceTabRef = ref<any>(null);
+const isMaintenanceSubmitting = ref(false);
+
+const handleMaintenanceSaved = (payload: { maintenance: any; assetCondition: string }) => {
+  if (props.asset && payload.assetCondition) {
+    props.asset.condition = payload.assetCondition;
+  }
+  // Re-fetch lifecycles so that Jejak Audit is up to date
+  void fetchAssetDetailsIfNeeded();
+  // Close modal immediately after successful maintenance submission
+  emit('update:open', false);
+};
+
+const triggerMaintenanceSubmit = async () => {
+  if (maintenanceTabRef.value?.submitForm) {
+    await maintenanceTabRef.value.submitForm();
+  }
 };
 
 // Dynamic attribute resolution
@@ -450,7 +485,17 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                 </div>
               </div>
 
-              <!-- ── TAB 2: JEJAK AUDIT ── -->
+              <!-- ── TAB 2: PERAWATAN / MAINTENANCE ── -->
+              <MaintenanceTab
+                ref="maintenanceTabRef"
+                v-if="detailActiveTab === 'Perawatan'"
+                :asset="props.asset"
+                :users="props.users"
+                @saved="handleMaintenanceSaved"
+                @submitting="isMaintenanceSubmitting = $event"
+              />
+
+              <!-- ── TAB 3: JEJAK AUDIT ── -->
               <AuditTrailTab 
                 v-if="detailActiveTab === 'Jejak Audit'"
                 :lifecycles="effectiveLifecycles" 
@@ -458,8 +503,44 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
             </div>
 
             <!-- Modal Footer -->
-            <div class="py-3 px-4 border-t border-border flex items-center justify-end gap-3 bg-muted/10">
-              <template v-if="detailActiveTab === 'Detail Aset'">
+            <div 
+              class="py-3 px-4 border-t border-border flex items-center shrink-0 bg-muted/10"
+              :class="detailActiveTab === 'Perawatan' ? 'justify-between' : 'justify-end gap-3'"
+            >
+              <!-- Left side required marker on Perawatan tab -->
+              <p v-if="detailActiveTab === 'Perawatan'" class="text-sm text-rose-500 italic font-medium">
+                {{ t('inventory.requiredMarker') }}
+              </p>
+
+              <!-- Perawatan Tab Footer Buttons -->
+              <div v-if="detailActiveTab === 'Perawatan'" class="flex items-center gap-3">
+                <Button 
+                  type="button"
+                  @click="emit('update:open', false)"
+                  :disabled="isMaintenanceSubmitting"
+                  variant="white"
+                  size="xl"
+                >
+                  {{ t('common.cancel') }}
+                </Button>
+                <Button 
+                  type="button"
+                  @click="triggerMaintenanceSubmit"
+                  :disabled="isMaintenanceSubmitting"
+                  variant="primary"
+                  size="xl"
+                  class="relative inline-flex items-center gap-2"
+                >
+                  <Loader2 v-if="isMaintenanceSubmitting" class="h-5 w-5 animate-spin" />
+                  <span :class="{ 'opacity-0': isMaintenanceSubmitting }">
+                    {{ t('inventory.saveMaintenance') }}
+                  </span>
+                </Button>
+              </div>
+
+              <!-- Other Tabs Footer Buttons -->
+              <template v-else>
+                <template v-if="detailActiveTab === 'Detail Aset'">
                 <Button 
                   v-if="can('inventory.view') && asset"
                   as="a"
@@ -582,6 +663,7 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
               >
                 {{ t('common.back') }}
               </Button>
+              </template>
             </div>
           </div>
         </Transition>

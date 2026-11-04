@@ -416,4 +416,73 @@ describe('InputManualRequestModal.vue', () => {
     expect(payload.items).toHaveLength(1);
     expect(payload.items[0].asset_id).toBe(201);
   });
+
+  it('allows inline note editing inside AddedItemsListSection cards', async () => {
+    const wrapper = mountModal();
+    await flushPromises();
+
+    const itemSection = wrapper.findComponent(ItemSelectionSection);
+    // 1. Add item with no initial reasoning
+    itemSection.vm.$emit('add-item', {
+      key: 'consumable-201',
+      request_type: 'consumable',
+      model_id: 201,
+      asset_id: null,
+      number: 'MDL-201',
+      brand_name: 'Belden',
+      name: 'Kabel LAN Cat6',
+      specification: '',
+      category_name: 'Consumable',
+      type_name: 'Network Cable',
+      uom_name: 'Meter',
+      image_url: null,
+      available_stock: 50,
+      quantity: 5,
+      reasoning: '',
+    });
+    await flushPromises();
+
+    const addedSection = wrapper.findComponent(AddedItemsListSection);
+    expect(addedSection.find('[data-testid="add-note-btn"]').exists()).toBe(true);
+
+    // 2. Click Add Note button
+    await addedSection.find('[data-testid="add-note-btn"]').trigger('click');
+    await flushPromises();
+
+    expect(addedSection.find('[data-testid="edit-note-container"]').exists()).toBe(true);
+
+    // 3. Type new note and save
+    const noteInput = addedSection.find('[data-testid="edit-note-container"] input');
+    await noteInput.setValue('Catatan tambahan setelah add');
+    await addedSection.find('[data-testid="save-note-btn"]').trigger('click');
+    await flushPromises();
+
+    // Verify note is saved and displayed
+    expect(addedSection.find('[data-testid="edit-note-container"]').exists()).toBe(false);
+    expect(addedSection.text()).toContain('Catatan tambahan setelah add');
+    expect(addedSection.find('[data-testid="edit-note-btn"]').exists()).toBe(true);
+
+    // 4. Edit existing note
+    await addedSection.find('[data-testid="edit-note-btn"]').trigger('click');
+    await flushPromises();
+
+    const editInput = addedSection.find('[data-testid="edit-note-container"] input');
+    expect((editInput.element as HTMLInputElement).value).toBe('Catatan tambahan setelah add');
+
+    await editInput.setValue('Catatan revisi');
+    await addedSection.find('[data-testid="save-note-btn"]').trigger('click');
+    await flushPromises();
+
+    expect(addedSection.text()).toContain('Catatan revisi');
+
+    // 5. Test cancel editing
+    await addedSection.find('[data-testid="edit-note-btn"]').trigger('click');
+    await flushPromises();
+    await addedSection.find('[data-testid="edit-note-container"] input').setValue('Will cancel this');
+    await addedSection.find('[data-testid="cancel-note-btn"]').trigger('click');
+    await flushPromises();
+
+    expect(addedSection.find('[data-testid="edit-note-container"]').exists()).toBe(false);
+    expect(addedSection.text()).toContain('Catatan revisi');
+  });
 });

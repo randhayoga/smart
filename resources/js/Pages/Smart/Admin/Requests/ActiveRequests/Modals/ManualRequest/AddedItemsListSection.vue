@@ -2,9 +2,11 @@
 /**
  * Section 3 of InputManualRequestModal: Added Items / Assets List.
  * Renders CartItemCard-styled horizontal cards for added consumable models or ST/LT physical assets.
+ * Supports inline note editing directly on the cards.
  */
+import { ref, nextTick } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { Trash2, MapPin, FileText } from 'lucide-vue-next';
+import { Trash2, MapPin, FileText, Pencil, Check, X } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
 import { formatImageUrl } from '@/lib/utils';
 import type { AddedManualItem } from './ItemSelectionSection.vue';
@@ -16,10 +18,36 @@ defineProps<{
 
 const emit = defineEmits<{
   (e: 'update-quantity', payload: { key: string; quantity: number }): void;
+  (e: 'update-note', payload: { key: string; reasoning: string }): void;
   (e: 'remove-item', key: string): void;
 }>();
 
 const { t } = useI18n();
+
+const editingKey = ref<string | null>(null);
+const editingNote = ref<string>('');
+const noteInputRef = ref<HTMLInputElement | HTMLInputElement[] | null>(null);
+
+const startEditNote = (item: AddedManualItem) => {
+  editingKey.value = item.key;
+  editingNote.value = item.reasoning || '';
+  nextTick(() => {
+    const el = Array.isArray(noteInputRef.value) ? noteInputRef.value[0] : noteInputRef.value;
+    if (el && typeof el.focus === 'function') {
+      el.focus();
+    }
+  });
+};
+
+const saveNote = (key: string) => {
+  emit('update-note', { key, reasoning: editingNote.value.trim() });
+  editingKey.value = null;
+};
+
+const cancelEditNote = () => {
+  editingKey.value = null;
+  editingNote.value = '';
+};
 
 const formatItemTitle = (item: AddedManualItem) => {
   const parts: string[] = [];
@@ -111,11 +139,80 @@ const handleQuantityInput = (item: AddedManualItem, event: Event) => {
                 <span>{{ item.location_name }}</span>
               </p>
 
-              <!-- Per-Item Reasoning / Note -->
-              <p v-if="item.reasoning" class="text-xs text-foreground/80 italic flex items-center gap-1 truncate pt-0.5">
-                <FileText class="w-3 h-3 shrink-0 text-muted-foreground" />
-                <span>"{{ item.reasoning }}"</span>
-              </p>
+              <!-- Per-Item Reasoning / Note Inline View & Edit -->
+              <div class="pt-1">
+                <!-- Edit mode -->
+                <div
+                  v-if="editingKey === item.key"
+                  class="flex items-center gap-1.5 max-w-sm w-full"
+                  data-testid="edit-note-container"
+                >
+                  <input
+                    ref="noteInputRef"
+                    v-model="editingNote"
+                    type="text"
+                    :disabled="disabled"
+                    class="h-7 px-2.5 text-xs rounded-md bg-background border border-input focus:outline-none focus:ring-1 focus:ring-primary w-full text-foreground placeholder:text-muted-foreground"
+                    :placeholder="t('fulfillment.manualRequest.itemNotesPlaceholder')"
+                    @keydown.enter.prevent="saveNote(item.key)"
+                    @keydown.esc.prevent="cancelEditNote"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    data-testid="save-note-btn"
+                    class="h-7 w-7 text-primary hover:bg-primary/10 hover:text-primary shrink-0"
+                    :title="t('common.save', 'Simpan')"
+                    @click="saveNote(item.key)"
+                  >
+                    <Check class="w-3.5 h-3.5" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    data-testid="cancel-note-btn"
+                    class="h-7 w-7 text-muted-foreground hover:bg-muted shrink-0"
+                    :title="t('common.cancel', 'Batal')"
+                    @click="cancelEditNote"
+                  >
+                    <X class="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+
+                <!-- Display mode with Note present -->
+                <div
+                  v-else-if="item.reasoning"
+                  class="flex items-center gap-1.5 max-w-full group"
+                >
+                  <FileText class="w-3 h-3 shrink-0 text-muted-foreground" />
+                  <span class="text-xs text-foreground/85 italic truncate">"{{ item.reasoning }}"</span>
+                  <button
+                    v-if="!disabled"
+                    type="button"
+                    data-testid="edit-note-btn"
+                    class="text-muted-foreground hover:text-primary transition-colors p-0.5 rounded shrink-0 cursor-pointer"
+                    :title="t('fulfillment.manualRequest.editNote', 'Ubah Catatan')"
+                    @click="startEditNote(item)"
+                  >
+                    <Pencil class="w-3 h-3" />
+                  </button>
+                </div>
+
+                <!-- Display mode with No Note -->
+                <div v-else-if="!disabled">
+                  <button
+                    type="button"
+                    data-testid="add-note-btn"
+                    class="text-xs text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1 cursor-pointer font-medium"
+                    @click="startEditNote(item)"
+                  >
+                    <FileText class="w-3 h-3" />
+                    <span>+ {{ t('fulfillment.manualRequest.addNote', 'Tambah Catatan') }}</span>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 

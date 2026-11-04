@@ -358,6 +358,8 @@ export default {
     availableStock: 'Stok Tersedia',
     itemNotes: 'Catatan Barang/Aset',
     itemNotesPlaceholder: 'Masukkan catatan untuk item ini (opsional)...',
+    addNote: 'Tambah Catatan',
+    editNote: 'Ubah Catatan',
     addButton: 'Tambah',
     listLabel: 'Daftar:',
     emptyAddedItems: 'Belum ada barang atau aset yang ditambahkan ke daftar.',

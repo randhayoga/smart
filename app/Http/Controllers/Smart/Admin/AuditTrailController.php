@@ -37,6 +37,7 @@ class AuditTrailController extends Controller
                 'al.end_date',
                 'al.actor_id',
                 'al.note',
+                'al.previous_state',
                 'a.number as asset_number',
                 'm.name as model_name',
             ])
@@ -58,6 +59,9 @@ class AuditTrailController extends Controller
                 ? 'BoD/BoC'
                 : ($row->actor_id && isset($actorNames[(int) $row->actor_id]) ? $actorNames[(int) $row->actor_id] : '-');
 
+            $previousState = is_string($row->previous_state) ? json_decode($row->previous_state, true) : (is_array($row->previous_state) ? $row->previous_state : null);
+            $proofUrl = $previousState['proof_url'] ?? null;
+
             return [
                 'id' => (int) $row->id,
                 'nomor_aset' => $row->asset_number ?? '-',
@@ -69,6 +73,7 @@ class AuditTrailController extends Controller
                 'aktor' => $actorName,
                 'durasi' => AssetLifecycle::formatDurationRange($row->start_date, $row->end_date),
                 'catatan' => $row->note ?? '-',
+                'proof_url' => $proofUrl,
             ];
         });
 

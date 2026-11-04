@@ -358,6 +358,8 @@ export default {
     availableStock: 'Available Stock',
     itemNotes: 'Item/Asset Notes',
     itemNotesPlaceholder: 'Enter notes for this item (optional)...',
+    addNote: 'Add Note',
+    editNote: 'Edit Note',
     addButton: 'Add',
     listLabel: 'List:',
     emptyAddedItems: 'No items or assets have been added to the list yet.',

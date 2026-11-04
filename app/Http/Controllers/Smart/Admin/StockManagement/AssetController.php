@@ -716,6 +716,7 @@ class AssetController extends Controller
             'license_exp_date' => $asset->license_exp_date ? $asset->license_exp_date->format('Y-m-d') : null,
             'renewal_reminder' => $asset->renewal_reminder,
             'burden' => $asset->burden,
+            'project_id' => $asset->project_id,
             'created_at' => $asset->created_at?->toIso8601String(),
             'updated_at' => $asset->updated_at ? $asset->updated_at->format('d-m-Y H:i') : '-',
             
@@ -758,6 +759,7 @@ class AssetController extends Controller
             'barang_brand' => $brand,
             'barang_specification' => $model?->specification ?? '-',
             'barang_category' => $model?->type?->category?->name ?? '-',
+            'barang_category_code' => $model?->type?->category?->code ?? null,
             'barang_subcategory' => $model?->type?->name ?? '-',
             'barang_uom' => $model?->uom?->name ?? '-',
 
@@ -778,8 +780,12 @@ class AssetController extends Controller
                     'alasan' => $log->note ?? '-',
                     'catatan' => $log->note ?? '-',
                     'durasi' => $log->formatted_duration,
+                    'proof_url' => is_array($log->previous_state) ? ($log->previous_state['proof_url'] ?? null) : null,
                 ];
             })->values()->toArray(),
+
+            // Maintenance history count
+            'maintenances_count' => $asset->maintenances()->count(),
         ];
     }
 }

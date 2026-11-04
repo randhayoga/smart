@@ -4,7 +4,7 @@
  */
 import { ref, computed, h } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { ArrowUpDown, ChevronDown } from 'lucide-vue-next';
+import { ArrowUpDown, ChevronDown, ExternalLink } from 'lucide-vue-next';
 import { Button } from "@/Components/ui/button";
 import {
   DropdownMenu,
@@ -25,6 +25,7 @@ interface AuditTrail {
   aktor: string;
   durasi: string | number;
   catatan: string;
+  proof_url?: string | null;
 }
 
 const props = defineProps<{
@@ -165,108 +166,148 @@ const auditActionOptions = computed(() => {
   return Array.from(actions);
 });
 
-const auditColumns = computed<ColumnDef<AuditTrail>[]>(() => [
-  {
-    accessorKey: 'waktu',
-    size: 160,
-    header: ({ column }) => {
-      return h(Button, {
-        variant: 'ghost',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
-      }, () => [
-        t('approvals.auditTime'),
-        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-      ])
-    },
-    cell: ({ row }) => h('div', { class: 'text-foreground truncate' }, row.getValue('waktu')),
-    sortingFn: (rowA, rowB, columnId) => {
-      const valA = rowA.getValue(columnId) as string;
-      const valB = rowB.getValue(columnId) as string;
-      return parseDateTime(valA) - parseDateTime(valB);
-    }
-  },
-  {
-    accessorKey: 'status',
-    size: 144,
-    header: ({ column }) => {
-      return h(Button, {
-        variant: 'ghost',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
-      }, () => [
-        t('approvals.auditStatus'),
-        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-      ])
-    },
-    cell: ({ row }) => {
-      const status = row.getValue('status') as string || '';
-      return h(StatusBadge, {
-        status,
-        class: 'rounded-sm'
-      });
-    }
-  },
-  {
-    accessorKey: 'action_type',
-    size: 144,
-    header: ({ column }) => {
-      return h(Button, {
-        variant: 'ghost',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
-      }, () => [
-        t('approvals.auditAction'),
-        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-      ])
-    },
-    cell: ({ row }) => h('div', { class: 'text-muted-foreground truncate' }, formatAction(row.getValue('action_type'))),
-  },
-  {
-    accessorKey: 'aktor',
-    size: 160,
-    header: ({ column }) => {
-      return h(Button, {
-        variant: 'ghost',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
-      }, () => [
-        t('approvals.auditActor'),
-        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-      ])
-    },
-    cell: ({ row }) => h('div', { class: 'text-foreground truncate' }, row.getValue('aktor')),
-  },
-  {
-    accessorKey: 'durasi',
-    size: 112,
-    header: ({ column }) => {
-      return h(Button, {
-        variant: 'ghost',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-center w-full'
-      }, () => [
-        t('approvals.auditDuration'),
-        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-      ])
-    },
-    cell: ({ row }) => h('div', { class: 'text-center text-foreground truncate' }, formatDurasi(row.getValue('durasi'))),
-  },
-  {
-    accessorKey: 'catatan',
-    header: () => h('div', { class: 'font-semibold text-foreground justify-start' }, t('approvals.auditNotes')),
-    cell: ({ row }) => {
-      const note = String(row.getValue('catatan') || '');
-      if (note.includes(' | ')) {
-        const lines = note.split(' | ');
-        return h('ul', { class: 'list-disc pl-4 space-y-0.5 text-muted-foreground whitespace-normal text-left min-w-[200px]' }, 
-          lines.map(line => h('li', {}, line))
-        );
+const auditColumns = computed<ColumnDef<AuditTrail>[]>(() => {
+  const cols: ColumnDef<AuditTrail>[] = [
+    {
+      accessorKey: 'waktu',
+      size: 160,
+      header: ({ column }) => {
+        return h(Button, {
+          variant: 'ghost',
+          onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+          class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+        }, () => [
+          t('approvals.auditTime'),
+          h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+        ])
+      },
+      cell: ({ row }) => h('div', { class: 'text-foreground truncate' }, row.getValue('waktu')),
+      sortingFn: (rowA, rowB, columnId) => {
+        const valA = rowA.getValue(columnId) as string;
+        const valB = rowB.getValue(columnId) as string;
+        return parseDateTime(valA) - parseDateTime(valB);
       }
-      return h('div', { class: 'text-muted-foreground whitespace-normal text-left min-w-[200px]' }, note);
     },
+    {
+      accessorKey: 'status',
+      size: 144,
+      header: ({ column }) => {
+        return h(Button, {
+          variant: 'ghost',
+          onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+          class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+        }, () => [
+          t('approvals.auditStatus'),
+          h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+        ])
+      },
+      cell: ({ row }) => {
+        const status = row.getValue('status') as string || '';
+        return h(StatusBadge, {
+          status,
+          class: 'rounded-sm'
+        });
+      }
+    },
+    {
+      accessorKey: 'action_type',
+      size: 144,
+      header: ({ column }) => {
+        return h(Button, {
+          variant: 'ghost',
+          onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+          class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+        }, () => [
+          t('approvals.auditAction'),
+          h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+        ])
+      },
+      cell: ({ row }) => h('div', { class: 'text-muted-foreground truncate' }, formatAction(row.getValue('action_type'))),
+    },
+    {
+      accessorKey: 'aktor',
+      size: 160,
+      header: ({ column }) => {
+        return h(Button, {
+          variant: 'ghost',
+          onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+          class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+        }, () => [
+          t('approvals.auditActor'),
+          h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+        ])
+      },
+      cell: ({ row }) => h('div', { class: 'text-foreground truncate' }, row.getValue('aktor')),
+    },
+    {
+      accessorKey: 'durasi',
+      size: 112,
+      header: ({ column }) => {
+        return h(Button, {
+          variant: 'ghost',
+          onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+          class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-center w-full'
+        }, () => [
+          t('approvals.auditDuration'),
+          h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+        ])
+      },
+      cell: ({ row }) => h('div', { class: 'text-center text-foreground truncate' }, formatDurasi(row.getValue('durasi'))),
+    },
+    {
+      accessorKey: 'catatan',
+      header: () => h('div', { class: 'font-semibold text-foreground justify-start' }, t('approvals.auditNotes')),
+      cell: ({ row }) => {
+        const note = String(row.getValue('catatan') || '');
+        if (note.includes(' | ')) {
+          const lines = note.split(' | ');
+          return h('ul', { class: 'list-disc pl-4 space-y-0.5 text-muted-foreground whitespace-normal text-left min-w-[200px]' }, 
+            lines.map(line => h('li', {}, line))
+          );
+        }
+        return h('div', { class: 'text-muted-foreground whitespace-normal text-left min-w-[200px]' }, note);
+      },
+    }
+  ];
+
+  // Only show the Link column if at least one row has a proof_url
+  const hasAnyLink = (props.lifecycles || []).some(l => !!l.proof_url);
+  if (hasAnyLink) {
+    cols.push({
+      id: 'link',
+      size: 64,
+      header: () => h('div', { class: 'font-semibold text-foreground text-center w-full' }, t('approvals.auditLink')),
+      cell: ({ row }) => {
+        const proofUrl = row.original.proof_url;
+        if (proofUrl) {
+          return h('div', { class: 'flex items-center justify-center' }, [
+            h('a', {
+              href: `/media/${proofUrl.replace(/^\/+/, '')}`,
+              target: '_blank',
+              rel: 'noopener noreferrer',
+              class: 'inline-flex items-center justify-center h-8 w-8 rounded-lg text-primary hover:bg-primary/10 transition-colors',
+              title: t('approvals.auditLink')
+            }, [
+              h(ExternalLink, { class: 'h-4 w-4' })
+            ])
+          ]);
+        }
+        return h('div', { class: 'flex items-center justify-center' }, [
+          h('button', {
+            type: 'button',
+            disabled: true,
+            class: 'inline-flex items-center justify-center h-8 w-8 rounded-lg text-muted-foreground/30 cursor-not-allowed',
+            tabindex: -1,
+          }, [
+            h(ExternalLink, { class: 'h-4 w-4' })
+          ])
+        ]);
+      }
+    });
   }
-]);
+
+  return cols;
+});
 </script>
 
 <template>

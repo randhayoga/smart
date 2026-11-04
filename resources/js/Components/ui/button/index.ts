@@ -19,6 +19,7 @@ export const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
         primary: "bg-gradient-primary hover:opacity-90 text-primary-foreground shadow-sm rounded-[14px] font-semibold",
         "primary-border": "border border-primary text-primary bg-primary/5 hover:bg-primary/10 rounded-[14px] font-semibold",
+        "primary-outline": "border border-primary text-primary bg-background shadow-sm hover:bg-primary/10 font-semibold",
         white: "border border-input bg-background hover:bg-muted hover:text-foreground shadow-sm rounded-[14px]",
         "table-destructive": "bg-destructive hover:opacity-70 text-white rounded-[13px] shadow-sm focus:outline-none focus:ring-2 focus:ring-rose-500/50",
         "table-edit": "bg-amber-400 hover:opacity-70 text-white rounded-[13px] shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-400/50",
