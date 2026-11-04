@@ -266,5 +266,75 @@ describe('ActivationApprovalModal.vue', () => {
       expect(wrapper.text()).toContain('Pengingat Perpanjangan:');
       expect(wrapper.text()).toContain('Tidak ada pengingat');
     });
+
+    it('renders Quality Control and applies condition coloring correctly in pending mode', () => {
+      const qcApproval = {
+        ...sampleApproval,
+        unit_details: {
+          ...sampleApproval.unit_details,
+          condition: 'Bagus',
+          qc_pass: true,
+          last_qc: '2026-11-04 10:00:00',
+        },
+      };
+
+      const wrapper = mountModal({
+        approval: qcApproval,
+        mode: 'pending',
+      });
+
+      expect(wrapper.text()).toContain('Quality Control:');
+      expect(wrapper.text()).toContain('QC Pass (pada: 04-11-2026)');
+      const conditionSpan = wrapper.find('.text-emerald-600.font-semibold');
+      expect(conditionSpan.exists()).toBe(true);
+      expect(conditionSpan.text()).toBe('Bagus');
+    });
+
+    it('does not render Quality Control for software assets', () => {
+      const softwareApproval = {
+        ...sampleApproval,
+        category: 'Software',
+        category_code: 'SOFT',
+        unit_details: {
+          ...sampleApproval.unit_details,
+          condition: null,
+          qc_pass: true,
+          last_qc: '2026-11-04 10:00:00',
+        },
+      };
+
+      const wrapper = mountModal({
+        approval: softwareApproval,
+        mode: 'pending',
+      });
+
+      expect(wrapper.text()).not.toContain('Quality Control:');
+    });
+  });
+
+  describe('Decided Mode Quality Control', () => {
+    it('renders Quality Control in decided mode', () => {
+      const qcApproval = {
+        ...sampleApproval,
+        decision: 'approved',
+        unit_details: {
+          ...sampleApproval.unit_details,
+          condition: 'Rusak',
+          qc_pass: false,
+          last_qc: '2026-11-04 10:00:00',
+        },
+      };
+
+      const wrapper = mountModal({
+        approval: qcApproval,
+        mode: 'decided',
+      });
+
+      expect(wrapper.text()).toContain('Quality Control:');
+      expect(wrapper.text()).toContain('QC Fail (pada: 04-11-2026)');
+      const conditionSpan = wrapper.find('.text-rose-600.font-semibold');
+      expect(conditionSpan.exists()).toBe(true);
+      expect(conditionSpan.text()).toBe('Rusak');
+    });
   });
 });

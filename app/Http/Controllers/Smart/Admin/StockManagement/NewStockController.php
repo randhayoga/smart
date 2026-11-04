@@ -161,6 +161,8 @@ class NewStockController extends Controller
                             'project_id' => $assetBurden === 'Project' ? ($validated['project_id'] ?? null) : null,
                             'license_exp_date' => $isSoft ? ($validated['license_exp_date'] ?? null) : null,
                             'renewal_reminder' => $isSoft ? ($validated['renewal_reminder'] ?? null) : null,
+                            'qc_pass' => $request->has('qc_pass') && $request->input('qc_pass') !== null && $request->input('qc_pass') !== '' ? $request->boolean('qc_pass') : null,
+                            'last_qc' => $request->has('qc_pass') && $request->input('qc_pass') !== null && $request->input('qc_pass') !== '' ? now() : null,
                         ]);
 
                         $lastApproval = AssetActivationApproval::create([

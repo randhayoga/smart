@@ -250,6 +250,13 @@ export default {
   conditionDamaged: 'Rusak',
   conditionTotalDamage: 'Rusak Total',
   conditionLost: 'Hilang',
+  qualityControl: 'Quality Control',
+  qualityControlWithDate: 'Quality Control (terakhir: {date})',
+  selectQualityControl: 'Pilih Quality Control',
+  qcPass: 'QC Pass',
+  qcFail: 'QC Fail',
+  qcPassWithDate: 'QC Pass (pada: {date})',
+  qcFailWithDate: 'QC Fail (pada: {date})',
   statusAndCondition: 'Status & Kondisi',
   statusCannotBeChangedManually: 'Status tidak dapat diubah secara manual',
 

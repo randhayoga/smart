@@ -47,6 +47,7 @@ export default {
     delete: 'Delete',
     assignment: 'Assignment',
     disapproval: 'Disapproval',
+    qualityControl: 'Quality Control',
   },
   inventoryAuditTitle: 'Stock Management Audit',
   inventoryAuditSearchPlaceholder: 'Search model number, model name, LOT, or actor...',

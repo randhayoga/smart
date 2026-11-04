@@ -56,6 +56,8 @@ return new class extends Migration {
             $table->string('status', 50)->default('Belum Diverifikasi');
             $table->string('approval_status', 50)->nullable()->comment('Pending:DM | Pending:BoD/BoC');
             $table->string('condition')->nullable();
+            $table->boolean('qc_pass')->nullable();
+            $table->dateTime('last_qc')->nullable();
             $table->string('comp_specification')->nullable()->comment('Specification for computer category assets only');
             $table->string('borrowing_type', 2)->default('LT')->comment('LT | ST');
             $table->string('classification', 255)->default('Aset')->comment('Aset | Inventaris');
@@ -72,6 +74,7 @@ return new class extends Migration {
             $table->index('status');
             $table->index('approval_status');
             $table->index('condition');
+            $table->index('qc_pass');
             $table->index(['borrowing_type', 'status', 'approval_status'], 'assets_borrow_type_status_approval_idx');
         });
 
@@ -127,7 +130,7 @@ return new class extends Migration {
         Schema::create('asset_lifecycles', function (Blueprint $table) {
             $table->id();
             $table->foreignId('asset_id')->constrained('assets')->cascadeOnDelete();
-            $table->string('action_type')->comment('registrasi, perubahan_status, perubahan_kondisi, pemindahan, peminjaman, pengembalian, pemeliharaan');
+            $table->string('action_type')->comment('registrasi, perubahan_status, perubahan_kondisi, quality_control, pemindahan, peminjaman, pengembalian, pemeliharaan');
             $table->string('status');
             $table->string('condition')->nullable();
             $table->foreignId('location_id')->nullable()->constrained('locations')->noActionOnDelete();

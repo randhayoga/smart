@@ -48,6 +48,7 @@ class BulkAssetController extends Controller
             'bulk_quantity' => 'required|integer|min:1|max:999',
             'burden' => 'nullable|string|in:Corporate,Project',
             'project_id' => 'required_if:burden,Project|nullable|integer',
+            'qc_pass' => 'nullable|boolean',
         ];
 
         $lot = Lot::with('model.type.category')->findOrFail($request->input('lot_id'));
@@ -136,6 +137,12 @@ class BulkAssetController extends Controller
         $classification = $validated['classification'];
         $burden = $validated['burden'] ?? 'Corporate';
         $projectId = $burden === 'Project' ? ($validated['project_id'] ?? null) : null;
+        $assetQcPass = null;
+        $assetLastQc = null;
+        if ($request->has('qc_pass') && $request->input('qc_pass') !== null && $request->input('qc_pass') !== '') {
+            $assetQcPass = $request->boolean('qc_pass');
+            $assetLastQc = now();
+        }
 
         $createdAssets = DB::transaction(function () use (
             $generatedNumbers,
@@ -150,7 +157,9 @@ class BulkAssetController extends Controller
             $proposedCondition,
             $isSoft,
             $request,
-            $imageUploadService
+            $imageUploadService,
+            $assetQcPass,
+            $assetLastQc
         ) {
             $memoUrl = null;
             $lostDocUrl = null;
@@ -183,6 +192,8 @@ class BulkAssetController extends Controller
                     'project_id' => $projectId,
                     'license_exp_date' => $isSoft ? ($request->input('license_exp_date') ?: null) : null,
                     'renewal_reminder' => $isSoft ? ($request->input('renewal_reminder') !== null && $request->input('renewal_reminder') !== '' ? (int)$request->input('renewal_reminder') : null) : null,
+                    'qc_pass' => $assetQcPass,
+                    'last_qc' => $assetLastQc,
                 ]);
 
                 if ($needApproval) {
@@ -589,6 +600,11 @@ class BulkAssetController extends Controller
         }
         if ($request->has('renewal_reminder')) {
             $updateData['renewal_reminder'] = $isSoft ? (($request->input('renewal_reminder') !== null && $request->input('renewal_reminder') !== '') ? (int)$request->input('renewal_reminder') : null) : null;
+        }
+
+        if ($request->has('qc_pass') && $request->input('qc_pass') !== null && $request->input('qc_pass') !== '' && $request->input('qc_pass') !== 'unchanged') {
+            $updateData['qc_pass'] = $request->boolean('qc_pass');
+            $updateData['last_qc'] = now();
         }
 
         if ($request->has('is_assigned_to_location') && $request->input('is_assigned_to_location') !== null) {

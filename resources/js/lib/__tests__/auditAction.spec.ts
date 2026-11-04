@@ -24,6 +24,9 @@ describe('auditAction utility', () => {
     expect(getLocalizedAuditAction('Assignment')).toBe('Assignment');
     expect(getLocalizedAuditAction('Disapproval')).toBe('Penolakan');
     expect(getLocalizedAuditAction('Penolakan')).toBe('Penolakan');
+    expect(getLocalizedAuditAction('Quality Control')).toBe('Quality Control');
+    expect(getLocalizedAuditAction('Pemeriksaan QC')).toBe('Quality Control');
+    expect(getLocalizedAuditAction('Perubahan QC')).toBe('Quality Control');
   });
 
   it('translates all core audit actions to English when active locale is en', () => {
@@ -43,6 +46,9 @@ describe('auditAction utility', () => {
     expect(getLocalizedAuditAction('Assignment')).toBe('Assignment');
     expect(getLocalizedAuditAction('Disapproval')).toBe('Disapproval');
     expect(getLocalizedAuditAction('Penolakan')).toBe('Disapproval');
+    expect(getLocalizedAuditAction('Quality Control')).toBe('Quality Control');
+    expect(getLocalizedAuditAction('Pemeriksaan QC')).toBe('Quality Control');
+    expect(getLocalizedAuditAction('Perubahan QC')).toBe('Quality Control');
   });
 
   it('handles case insensitivity and underscore variations', () => {

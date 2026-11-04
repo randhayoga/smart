@@ -13,6 +13,7 @@ import { formatDate, formatLocation } from '@/lib/utils';
 import Tabs from '@/Components/Tabs.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import AuditTrailTab from '@/Pages/Smart/MultiRoles/Tabs/AuditTrailTab.vue';
+import { formatQcStatus, getQcColorClass } from '@/lib/qualityControl';
 
 // --- Props & Emits ---
 interface Props {
@@ -106,9 +107,11 @@ const getConditionLabel = (cond?: string | null) => {
 const getConditionClass = (cond?: string | null) => {
   if (!cond) return 'text-foreground';
   const c = cond.trim().toLowerCase();
-  if (c === 'bagus' || c === 'qc passed' || c === 'good') return 'text-emerald-600 font-semibold';
+  if (c === 'bagus' || c === 'good') return 'text-emerald-600 font-semibold';
   if (c === 'lelang/hibah') return 'text-purple-600 font-semibold';
-  if (c === 'rusak' || c === 'rusak total' || c === 'hilang' || c === 'damaged' || c === 'total damage' || c === 'lost') return 'text-rose-600 font-semibold';
+  if (c === 'rusak' || c === 'rusak total' || c === 'hilang' || c === 'damaged' || c === 'total damage' || c === 'lost') {
+    return 'text-rose-600 font-semibold';
+  }
   return 'text-foreground';
 };
 </script>
@@ -234,7 +237,10 @@ const getConditionClass = (cond?: string | null) => {
                     <div class="text-foreground flex flex-col gap-1.5">
                       <div class="flex items-center gap-1.5 flex-wrap">
                         <span>{{ hasCondition(approval.previous_condition || approval.asset_details?.condition) && !isSoft(approval) ? $t('approvals.prevStatusConditionLabel') : $t('inventory.status') + ':' }}</span>
-                        <StatusBadge :status="approval.previous_status" />
+                        <StatusBadge 
+                          :status="approval.previous_status ?? approval.asset_details?.status ?? approval.status" 
+                          :approval-status="mode === 'pending' ? (approval.approval_status ?? approval.asset_details?.approval_status ?? 'Pending:DM') : undefined" 
+                        />
                         <span v-if="hasCondition(approval.previous_condition || approval.asset_details?.condition) && !isSoft(approval)" :class="getConditionClass(approval.previous_condition || approval.asset_details?.condition)">
                           {{ getConditionLabel(approval.previous_condition || approval.asset_details?.condition) }}
                         </span>
@@ -249,13 +255,24 @@ const getConditionClass = (cond?: string | null) => {
                           </span>
                         </template>
                         <template v-else>
-                          <StatusBadge :status="approval.previous_status" />
+                          <StatusBadge 
+                            :status="approval.previous_status ?? approval.asset_details?.status ?? approval.status" 
+                            :approval-status="approval.asset_details?.approval_status" 
+                          />
                           <span v-if="hasCondition(approval.previous_condition || approval.asset_details?.condition) && !isSoft(approval)" :class="getConditionClass(approval.previous_condition || approval.asset_details?.condition)">
                             {{ getConditionLabel(approval.previous_condition || approval.asset_details?.condition) }}
                           </span>
                         </template>
                       </div>
                     </div>
+
+                    <!-- Quality Control -->
+                    <p v-if="!isSoft(approval)" class="text-foreground">
+                      {{ $t('inventory.qualityControl') }}:
+                      <span :class="getQcColorClass(approval.asset_details?.qc_pass ?? approval.qc_pass)">
+                        {{ formatQcStatus(approval.asset_details?.qc_pass ?? approval.qc_pass, approval.asset_details?.last_qc ?? approval.asset_details?.last_qc_formatted ?? approval.last_qc, t) }}
+                      </span>
+                    </p>
 
                     <!-- Admin Note -->
                     <p class="text-foreground mt-1.5" v-if="approval.admin_note">

@@ -116,5 +116,36 @@ describe('DeletionApprovalModal.vue', () => {
     expect(text).not.toContain('Proposed Condition:');
     expect(text).not.toContain('Previous Status & Condition:');
     expect(text).not.toContain('Storage Location:');
+    expect(text).not.toContain('Quality Control:');
+  });
+
+  it('renders Quality Control line and condition styling classes', () => {
+    setI18nLanguage('id');
+    const qcApproval = {
+      ...sampleApproval,
+      previous_condition: 'Bagus',
+      qc_pass: true,
+      last_qc: '2026-11-04 10:00:00',
+      asset_details: {
+        ...sampleApproval.asset_details,
+        qc_pass: true,
+        last_qc: '2026-11-04 10:00:00',
+      },
+    };
+
+    const wrapper = mountModal({ approval: qcApproval, mode: 'pending' });
+    const text = wrapper.text();
+
+    expect(text).toContain('Quality Control:');
+    expect(text).toContain('QC Pass (pada: 04-11-2026)');
+
+    // Condition styling
+    const emeraldCondition = wrapper.find('.text-emerald-600.font-semibold');
+    expect(emeraldCondition.exists()).toBe(true);
+    expect(emeraldCondition.text()).toBe('Bagus');
+
+    const roseCondition = wrapper.find('.text-rose-600.font-semibold');
+    expect(roseCondition.exists()).toBe(true);
+    expect(roseCondition.text()).toBe('Rusak Total');
   });
 });

@@ -50,6 +50,20 @@ class Asset extends Model
         // 1. Log when an Asset is created
         static::created(function (Asset $asset) {
             if ($asset->approval_status !== 'Pending:DM' && !str_starts_with($asset->status ?? '', 'Pending')) {
+                $note = 'Aset berhasil diregistrasi ke dalam sistem.';
+                $newState = null;
+
+                if ($asset->qc_pass !== null) {
+                    $qcText = $asset->qc_pass ? 'QC Pass.' : 'QC Fail.';
+                    $note .= ' QC Dilakukan, hasil: ' . $qcText;
+                    $newState = [
+                        'status' => $asset->status,
+                        'condition' => $asset->condition,
+                        'qc_pass' => $asset->qc_pass,
+                        'last_qc' => $asset->last_qc,
+                    ];
+                }
+
                 AssetLifecycle::create([
                     'asset_id' => $asset->id,
                     'action_type' => 'Registrasi',
@@ -59,7 +73,8 @@ class Asset extends Model
                     'start_date' => now(),
                     'end_date' => null,
                     'actor_id' => Auth::id(),
-                    'note' => 'Aset berhasil diregistrasi ke dalam sistem.',
+                    'note' => $note,
+                    'new_state' => $newState,
                 ]);
             }
         });
@@ -71,7 +86,7 @@ class Asset extends Model
             }
 
             $dirty = $asset->getDirty();
-            $tracked = ['status', 'approval_status', 'condition', 'location_id', 'is_assigned_to_location', 'license_exp_date'];
+            $tracked = ['status', 'approval_status', 'condition', 'location_id', 'is_assigned_to_location', 'license_exp_date', 'last_qc', 'qc_pass'];
             $changed = array_intersect(array_keys($dirty), $tracked);
 
             if (!empty($changed)) {
@@ -176,7 +191,35 @@ class Asset extends Model
                     ];
                 }
 
-                // 3. Location Change (Pemindahan - suppressed for software assets)
+                // 3. Quality Control (QC execution on non-software assets)
+                if (!$asset->is_software && ($asset->isDirty('last_qc') || $asset->isDirty('qc_pass')) && !$isPendingStatus) {
+                    $newQcText = $asset->qc_pass ? 'QC Pass' : 'QC Fail';
+                    $oldQc = $asset->getOriginal('qc_pass');
+
+                    if ($oldQc === null) {
+                        $note = "QC Dilakukan, hasil: {$newQcText}";
+                    } else {
+                        $oldQcText = $oldQc ? 'QC Pass' : 'QC Fail';
+                        $note = "QC Dilakukan, sebelum: {$oldQcText}, sesudah: {$newQcText}";
+                    }
+
+                    $actions[] = [
+                        'action_type' => 'Quality Control',
+                        'note' => $note,
+                        'location_id' => $asset->location_id,
+                        'previous_state' => [
+                            'qc_pass' => $oldQc,
+                            'last_qc' => $asset->getOriginal('last_qc'),
+                        ],
+                        'new_state' => [
+                            'qc_pass' => $asset->qc_pass,
+                            'last_qc' => $asset->last_qc,
+                        ],
+                        'approval' => null,
+                    ];
+                }
+
+                // 4. Location Change (Pemindahan - suppressed for software assets)
                 if (!$asset->is_software && $asset->isDirty('location_id')) {
                     $oldLoc = Location::find($asset->getOriginal('location_id'))?->full_name ?? '-';
                     $newLoc = Location::find($asset->location_id)?->full_name ?? '-';
@@ -197,16 +240,17 @@ class Asset extends Model
                 }
 
                 if (!empty($actions)) {
+                    $now = now();
                     AssetLifecycle::where('asset_id', $asset->id)
                         ->whereNull('end_date')
-                        ->update(['end_date' => now()]);
+                        ->update(['end_date' => $now]);
 
                     $totalActions = count($actions);
                     foreach ($actions as $index => $act) {
                         if ($index > 0) {
                             AssetLifecycle::where('asset_id', $asset->id)
                                 ->whereNull('end_date')
-                                ->update(['end_date' => now()]);
+                                ->update(['end_date' => $now]);
                         }
 
                         $actorId = Auth::id() ?? ($act['approval'] ? $act['approval']->approver_id : null);
@@ -218,8 +262,8 @@ class Asset extends Model
                             'status' => $asset->status,
                             'condition' => $asset->condition,
                             'location_id' => $act['location_id'] ?? $asset->location_id,
-                            'start_date' => now(),
-                            'end_date' => $isLast ? null : now(),
+                            'start_date' => $now,
+                            'end_date' => $isLast ? null : $now,
                             'actor_id' => $actorId,
                             'note' => $act['note'],
                             'previous_state' => $act['previous_state'],
@@ -267,6 +311,8 @@ class Asset extends Model
         'is_assigned_to_location',
         'license_exp_date',
         'renewal_reminder',
+        'qc_pass',
+        'last_qc',
     ];
 
     protected $casts = [
@@ -276,6 +322,8 @@ class Asset extends Model
         'is_assigned_to_location' => 'boolean',
         'license_exp_date' => 'date',
         'renewal_reminder' => 'integer',
+        'qc_pass' => 'boolean',
+        'last_qc' => 'datetime',
     ];
 
     /**

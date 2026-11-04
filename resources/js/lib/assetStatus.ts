@@ -181,3 +181,42 @@ export function formatAssetStatusLabels(
   if (tokens.length === 0) return '';
   return tokens.map((token) => getAssetStatusLabel(token, t, te)).join(', ');
 }
+
+export const CONDITION_KEY_MAP: Record<string, string> = {
+  'bagus': 'inventory.conditionGood',
+  'good': 'inventory.conditionGood',
+  'rusak': 'inventory.conditionDamaged',
+  'damaged': 'inventory.conditionDamaged',
+  'rusak total': 'inventory.conditionTotalDamage',
+  'total damage': 'inventory.conditionTotalDamage',
+  'hilang': 'inventory.conditionLost',
+  'lost': 'inventory.conditionLost',
+};
+
+export function getConditionLabel(
+  cond?: string | null,
+  t?: (key: string) => string,
+  te?: (key: string) => boolean,
+): string {
+  if (!cond || cond === '-') return '';
+  const trimmed = cond.trim();
+  const key = CONDITION_KEY_MAP[trimmed.toLowerCase()];
+  if (key && t && (!te || te(key))) {
+    const translated = t(key);
+    if (translated && translated !== key) {
+      return translated;
+    }
+  }
+  return trimmed;
+}
+
+export function getConditionColorClass(cond?: string | null): string {
+  if (!cond) return 'text-foreground';
+  const c = cond.trim().toLowerCase();
+  if (c === 'bagus' || c === 'good') return 'text-emerald-600 dark:text-emerald-500 font-semibold';
+  if (c === 'lelang/hibah') return 'text-purple-600 dark:text-purple-500 font-semibold';
+  if (c === 'rusak' || c === 'rusak total' || c === 'hilang' || c === 'damaged' || c === 'total damage' || c === 'lost') {
+    return 'text-rose-600 dark:text-rose-500 font-semibold';
+  }
+  return 'text-foreground';
+}

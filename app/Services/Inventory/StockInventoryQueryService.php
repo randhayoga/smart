@@ -243,6 +243,8 @@ class StockInventoryQueryService
             'a.burden',
             'a.project_id',
             'a.legacy_vendor_id as asset_legacy_vendor_id',
+            'a.qc_pass',
+            'a.last_qc',
             'a.created_at',
             'a.updated_at',
         ]);
@@ -341,6 +343,8 @@ class StockInventoryQueryService
                 'status' => $row->status,
                 'approval_status' => $row->approval_status,
                 'condition' => $row->condition,
+                'qc_pass' => $row->qc_pass !== null ? (bool) $row->qc_pass : null,
+                'last_qc' => $row->last_qc ? substr((string) $row->last_qc, 0, 10) : null,
                 'type' => $borrowingType,
                 'borrowing_type' => $borrowingType,
                 'classification' => $row->classification ?? 'Aset',
@@ -590,6 +594,8 @@ class StockInventoryQueryService
             'a.project_id',             // 18
             'a.legacy_vendor_id',       // 19
             'a.updated_at',             // 20
+            'a.qc_pass',                // 21
+            'a.last_qc',                // 22
         ]);
 
         if (!empty($filters['exclude_unverified'])) {
@@ -677,6 +683,12 @@ class StockInventoryQueryService
             }
             if ($r[19] !== null) {
                 $sparse['lv'] = (int) $r[19];
+            }
+            if ($r[21] !== null) {
+                $sparse['qp'] = (bool) $r[21];
+            }
+            if ($r[22] !== null) {
+                $sparse['lq'] = substr((string) $r[22], 0, 10);
             }
 
             $tuple = [

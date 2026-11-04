@@ -94,6 +94,7 @@ class LotController extends Controller
                 'photo' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:1024'],
                 'burden' => ['required', Rule::in(['Corporate', 'Project'])],
                 'project_id' => ['required_if:burden,Project', 'nullable', Rule::exists(TbProject::class, 'id_project')],
+                'qc_pass' => ['nullable', 'boolean'],
             ];
 
             if ($isSoft) {
@@ -214,6 +215,8 @@ class LotController extends Controller
                         'project_id' => $assetBurden === 'Project' ? ($request->input('project_id') ?? null) : null,
                         'license_exp_date' => $isSoft ? ($request->input('license_exp_date') ?: null) : null,
                         'renewal_reminder' => $isSoft ? ($request->input('renewal_reminder') !== null && $request->input('renewal_reminder') !== '' ? (int)$request->input('renewal_reminder') : null) : null,
+                        'qc_pass' => $request->has('qc_pass') && $request->input('qc_pass') !== null && $request->input('qc_pass') !== '' ? $request->boolean('qc_pass') : null,
+                        'last_qc' => $request->has('qc_pass') && $request->input('qc_pass') !== null && $request->input('qc_pass') !== '' ? now() : null,
                     ]);
 
                     $lastApproval = AssetActivationApproval::create([

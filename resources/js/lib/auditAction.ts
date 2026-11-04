@@ -48,6 +48,11 @@ export const AUDIT_ACTION_KEY_MAP: Record<string, string> = {
   'penetapan': 'admin.auditActionTypes.assignment',
   'disapproval': 'admin.auditActionTypes.disapproval',
   'penolakan': 'admin.auditActionTypes.disapproval',
+  'quality control': 'admin.auditActionTypes.qualityControl',
+  'quality_control': 'admin.auditActionTypes.qualityControl',
+  'qc': 'admin.auditActionTypes.qualityControl',
+  'pemeriksaan qc': 'admin.auditActionTypes.qualityControl',
+  'perubahan qc': 'admin.auditActionTypes.qualityControl',
 };
 
 /**

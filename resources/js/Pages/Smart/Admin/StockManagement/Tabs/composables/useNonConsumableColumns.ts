@@ -5,6 +5,7 @@ import { Button } from '@/Components/ui/button';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import { cn, formatLocation } from '@/lib/utils';
 import { getAssetStatusLabel } from '@/lib/assetStatus';
+import { formatQcStatus, getQcColorClass } from '@/lib/qualityControl';
 
 export { formatLocation };
 
@@ -263,6 +264,32 @@ export function useNonConsumableColumns(options: {
           else if (cond === 'Rusak' || cond === 'Rusak Total' || cond === 'Hilang') textClass = 'text-rose-600 font-semibold';
 
           return h('span', { class: textClass }, getConditionLabel(cond));
+        },
+      });
+
+      list.push({
+        accessorKey: 'qc_pass',
+        header: ({ column }) =>
+          h(
+            Button,
+            {
+              variant: 'ghost',
+              onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+              class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start',
+            },
+            () => [
+              t('inventory.qualityControl'),
+              h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+            ]
+          ),
+        cell: ({ row }) => {
+          const qcPass = row.original.qc_pass;
+          const lastQc = row.original.last_qc ?? row.original.lq;
+          if (qcPass === null || qcPass === undefined) {
+            return h('span', { class: 'text-muted-foreground' }, '-');
+          }
+          const textClass = getQcColorClass(qcPass);
+          return h('span', { class: textClass }, formatQcStatus(qcPass, lastQc, t));
         },
       });
     }

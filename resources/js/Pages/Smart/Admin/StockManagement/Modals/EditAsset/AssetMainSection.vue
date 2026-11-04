@@ -18,6 +18,7 @@ import LocationCombobox from '@/Components/LocationCombobox.vue';
 import CurrencyInput from '@/Components/CurrencyInput.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import { Field, FieldLabel, FieldContent, FieldError } from '@/Components/ui/field';
+import { getQcEditTitle } from '@/lib/qualityControl';
 
 interface Props {
   form: any;
@@ -60,6 +61,11 @@ const licenseType = computed({
       }
     }
   }
+});
+
+const qcLabel = computed(() => {
+  const lastQc = props.isSingle ? (props.selectedItem?.last_qc ?? props.selectedItem?.lq) : null;
+  return getQcEditTitle(lastQc, t);
 });
 </script>
 
@@ -235,6 +241,40 @@ const licenseType = computed({
           </DropdownMenu>
         </FieldContent>
         <FieldError v-if="isSingle && errors.condition">{{ errors.condition }}</FieldError>
+      </Field>
+
+      <!-- Quality Control -->
+      <Field v-if="!isSoft">
+        <FieldLabel>
+          <span>{{ qcLabel }}</span>
+        </FieldLabel>
+        <FieldContent>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                :class="[
+                  'w-full justify-between rounded-[14px] font-normal h-10 px-4',
+                  form.qc_pass === null || form.qc_pass === 'unchanged'
+                    ? 'text-muted-foreground'
+                    : (form.qc_pass ? 'text-emerald-600 dark:text-emerald-500 font-semibold' : 'text-rose-600 dark:text-rose-500 font-semibold')
+                ]"
+              >
+                {{
+                  form.qc_pass === null || form.qc_pass === 'unchanged'
+                    ? t('inventory.unchanged')
+                    : (form.qc_pass ? t('inventory.qcPass') : t('inventory.qcFail'))
+                }}
+                <ChevronDown class="w-4 h-4 opacity-50" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px] z-[1001]">
+              <DropdownMenuItem @select="form.qc_pass = null">{{ t('inventory.unchanged') }}</DropdownMenuItem>
+              <DropdownMenuItem class="text-emerald-600 dark:text-emerald-500 font-semibold" @select="form.qc_pass = true">{{ t('inventory.qcPass') }}</DropdownMenuItem>
+              <DropdownMenuItem class="text-rose-600 dark:text-rose-500 font-semibold" @select="form.qc_pass = false">{{ t('inventory.qcFail') }}</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </FieldContent>
       </Field>
 
       <!-- Software License Expiration Date (with integrated License Type Dropdown) -->

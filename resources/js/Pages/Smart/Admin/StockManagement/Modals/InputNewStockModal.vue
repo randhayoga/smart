@@ -133,6 +133,7 @@ const form = useForm({
   asset_specification: '',
   borrowing_type: 'LT' as 'LT' | 'ST',
   condition: 'Bagus' as 'Bagus' | 'Rusak',
+  qc_pass: null as boolean | null,
   location_id: null as number | null,
   price: '' as string | number,
   classification: 'Aset' as 'Aset' | 'Inventaris',
@@ -244,6 +245,7 @@ const resetFormState = () => {
   form.lot_photo = null;
   form.lot_photo_name = '';
   form.use_parent_image = false;
+  form.qc_pass = null;
   form.license_exp_date = null;
   form.renewal_reminder = null;
   form.license_type = 'Subscription';

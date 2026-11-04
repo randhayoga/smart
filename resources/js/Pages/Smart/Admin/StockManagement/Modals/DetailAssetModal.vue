@@ -10,6 +10,7 @@ import { toast } from 'vue-sonner';
 import { X, FileText, Upload, Loader2 } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
 import { formatDate, formatLocation } from '@/lib/utils';
+import { formatQcStatus, getQcColorClass } from '@/lib/qualityControl';
 import { hasAssetStatus } from '@/lib/assetStatus';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import Tabs from '@/Components/Tabs.vue';
@@ -465,6 +466,12 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                           ]"
                         >
                           {{ getConditionLabel(asset.condition) }}
+                        </span>
+                      </p>
+                      <p v-if="!isSoft" class="text-foreground">
+                        {{ t('inventory.qualityControl') }}: 
+                        <span :class="getQcColorClass(asset.qc_pass)">
+                          {{ formatQcStatus(asset.qc_pass, asset.last_qc ?? asset.lq, t) }}
                         </span>
                       </p>
                       <p v-if="asset.admin_note" class="text-foreground">

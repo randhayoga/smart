@@ -62,6 +62,8 @@ export interface CompactUnitSparse {
   bu?: string;
   pi?: number;
   lv?: number;
+  qp?: boolean;
+  lq?: string;
 }
 
 export type CompactUnitTuple = [
@@ -275,6 +277,8 @@ export function prepareUnitsBundle(
         lot_id: lotId || null,
         lot_number: lotInfo?.number || '-',
         lot_po_number: lotInfo?.po_number || '-',
+        qc_pass: sparse?.qp ?? null,
+        last_qc: sparse?.lq ?? null,
       };
 
       if (daEntry) {

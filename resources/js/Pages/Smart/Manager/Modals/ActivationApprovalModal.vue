@@ -13,6 +13,7 @@ import { formatDate, formatLocation } from '@/lib/utils';
 import Tabs from '@/Components/Tabs.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import AuditTrailTab from '@/Pages/Smart/MultiRoles/Tabs/AuditTrailTab.vue';
+import { formatQcStatus, getQcColorClass } from '@/lib/qualityControl';
 
 interface Props {
   open: boolean;
@@ -93,8 +94,11 @@ const openMemoFile = (path?: string | null) => {
 
 const getConditionClass = (cond?: string | null) => {
   if (!cond) return 'text-foreground';
-  if (cond === 'Bagus') return 'text-emerald-600 font-semibold';
-  if (cond === 'Rusak' || cond === 'Rusak Total' || cond === 'Hilang') return 'text-rose-600 font-semibold';
+  const c = cond.trim().toLowerCase();
+  if (c === 'bagus' || c === 'good') return 'text-emerald-600 font-semibold';
+  if (c === 'rusak' || c === 'rusak total' || c === 'hilang' || c === 'damaged' || c === 'total damage' || c === 'lost') {
+    return 'text-rose-600 font-semibold';
+  }
   return 'text-foreground';
 };
 
@@ -213,12 +217,23 @@ const getConditionLabel = (cond?: string | null) => {
 
                     <!-- Status & Kondisi for Pending Mode -->
                     <div v-if="mode === 'pending'" class="flex items-center gap-1.5 flex-wrap">
-                      <span>{{ hasCondition(approval.unit_details.condition) && !isSoft(approval) ? $t('inventory.statusAndCondition') : $t('inventory.status') }}:</span>
-                      <StatusBadge :status="approval.unit_details.status" />
-                      <span v-if="hasCondition(approval.unit_details.condition) && !isSoft(approval)" :class="getConditionClass(approval.unit_details.condition)">
-                        {{ getConditionLabel(approval.unit_details.condition) }}
+                      <span>{{ hasCondition(approval.unit_details?.condition ?? approval.condition) && !isSoft(approval) ? $t('inventory.statusAndCondition') : $t('inventory.status') }}:</span>
+                      <StatusBadge 
+                        :status="approval.unit_details?.status ?? approval.status" 
+                        :approval-status="approval.unit_details?.approval_status ?? approval.approval_status ?? 'Pending:DM'" 
+                      />
+                      <span v-if="hasCondition(approval.unit_details?.condition ?? approval.condition) && !isSoft(approval)" :class="getConditionClass(approval.unit_details?.condition ?? approval.condition)">
+                        {{ getConditionLabel(approval.unit_details?.condition ?? approval.condition) }}
                       </span>
                     </div>
+
+                    <!-- Quality Control for Pending Mode -->
+                    <p v-if="mode === 'pending' && !isSoft(approval)" class="text-foreground">
+                      {{ $t('inventory.qualityControl') }}:
+                      <span :class="getQcColorClass(approval.unit_details?.qc_pass ?? approval.qc_pass)">
+                        {{ formatQcStatus(approval.unit_details?.qc_pass ?? approval.qc_pass, approval.unit_details?.last_qc ?? approval.unit_details?.last_qc_formatted ?? approval.last_qc, t) }}
+                      </span>
+                    </p>
 
                     <!-- Decided mode fields -->
                     <template v-if="mode === 'decided'">
@@ -236,12 +251,23 @@ const getConditionLabel = (cond?: string | null) => {
 
                       <!-- Single Status & Kondisi showing current unit status and condition -->
                       <div class="flex items-center gap-1.5 flex-wrap">
-                        <span>{{ hasCondition(approval.unit_details.condition) && !isSoft(approval) ? $t('inventory.statusAndCondition') : $t('inventory.status') }}:</span>
-                        <StatusBadge :status="approval.unit_details.status" />
-                        <span v-if="hasCondition(approval.unit_details.condition) && !isSoft(approval)" :class="getConditionClass(approval.unit_details.condition)">
-                          {{ getConditionLabel(approval.unit_details.condition) }}
+                        <span>{{ hasCondition(approval.unit_details?.condition ?? approval.condition) && !isSoft(approval) ? $t('inventory.statusAndCondition') : $t('inventory.status') }}:</span>
+                        <StatusBadge 
+                          :status="approval.unit_details?.status ?? approval.status" 
+                          :approval-status="approval.unit_details?.approval_status ?? approval.approval_status" 
+                        />
+                        <span v-if="hasCondition(approval.unit_details?.condition ?? approval.condition) && !isSoft(approval)" :class="getConditionClass(approval.unit_details?.condition ?? approval.condition)">
+                          {{ getConditionLabel(approval.unit_details?.condition ?? approval.condition) }}
                         </span>
                       </div>
+
+                      <!-- Quality Control for Decided Mode -->
+                      <p v-if="!isSoft(approval)" class="text-foreground">
+                        {{ $t('inventory.qualityControl') }}:
+                        <span :class="getQcColorClass(approval.unit_details?.qc_pass ?? approval.qc_pass)">
+                          {{ formatQcStatus(approval.unit_details?.qc_pass ?? approval.qc_pass, approval.unit_details?.last_qc ?? approval.unit_details?.last_qc_formatted ?? approval.last_qc, t) }}
+                        </span>
+                      </p>
 
                       <p class="text-foreground mt-1.5" v-if="approval.note">
                         {{ $t('approvals.managerNoteLabel') }} <span class="italic text-muted-foreground">"{{ approval.note }}"</span>

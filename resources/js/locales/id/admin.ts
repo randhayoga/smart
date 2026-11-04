@@ -47,6 +47,7 @@ export default {
     delete: 'Hapus',
     assignment: 'Assignment',
     disapproval: 'Penolakan',
+    qualityControl: 'Quality Control',
   },
   inventoryAuditTitle: 'Audit Manajemen Stok',
   inventoryAuditSearchPlaceholder: 'Cari nomor model, nama model, LOT, atau aktor...',

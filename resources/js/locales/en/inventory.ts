@@ -250,6 +250,13 @@ export default {
   conditionDamaged: 'Damaged',
   conditionTotalDamage: 'Total Damage',
   conditionLost: 'Lost',
+  qualityControl: 'Quality Control',
+  qualityControlWithDate: 'Quality Control (last: {date})',
+  selectQualityControl: 'Select Quality Control',
+  qcPass: 'QC Pass',
+  qcFail: 'QC Fail',
+  qcPassWithDate: 'QC Pass (at: {date})',
+  qcFailWithDate: 'QC Fail (at: {date})',
   statusAndCondition: 'Status & Condition',
   statusCannotBeChangedManually: "Status cannot be changed manually",
 

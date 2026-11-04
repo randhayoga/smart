@@ -169,6 +169,7 @@ const form = useForm({
   approval_status: '',
   is_assigned_to_location: null as boolean | null,
   condition: '',
+  qc_pass: null as boolean | string | null,
   type: '',
   classification: '',
   price: '' as string | number,
@@ -385,6 +386,7 @@ watch(() => props.open, (val) => {
     form.approval_status = item.approval_status || '';
     form.is_assigned_to_location = Boolean(item.is_assigned_to_location);
     form.condition = item.condition || '';
+    form.qc_pass = null;
     form.type = item.type || item.borrowing_type || '';
     form.classification = item.classification || '';
     if (!isRestrictedStatus(item.status, item.approval_status) && arrInactiveConditions.includes(form.condition)) {
@@ -420,6 +422,7 @@ watch(() => props.open, (val) => {
     form.approval_status = '';
     form.is_assigned_to_location = null;
     form.condition = '';
+    form.qc_pass = null;
     form.type = '';
     form.classification = '';
     form.price = '';
@@ -706,6 +709,9 @@ const handleSubmit = () => {
         burden: data.burden,
         project_id: data.burden === 'Project' ? data.project_id : null,
       };
+      if (!isSoft.value && data.qc_pass !== null && data.qc_pass !== 'unchanged') {
+        fd.qc_pass = data.qc_pass;
+      }
       if (canShowAssignToLocation.value && data.is_assigned_to_location !== null) {
         fd.is_assigned_to_location = data.is_assigned_to_location;
       }
@@ -761,6 +767,7 @@ const handleSubmit = () => {
     const hasField = !!(
       (form.status && !isStatusDisabled.value) ||
       (form.condition && !isKondisiDisabled.value) ||
+      (!isSoft.value && form.qc_pass !== 'unchanged' && form.qc_pass !== null) ||
       (canShowAssignToLocation.value && form.is_assigned_to_location !== null) ||
       form.type ||
       form.classification ||
@@ -793,6 +800,9 @@ const handleSubmit = () => {
       payload.condition = null;
     } else if (form.condition && !isKondisiDisabled.value) {
       payload.condition = form.condition;
+    }
+    if (!isSoft.value && form.qc_pass !== 'unchanged' && form.qc_pass !== null) {
+      payload.qc_pass = form.qc_pass;
     }
     if (form.type) {
       payload.type = form.type;

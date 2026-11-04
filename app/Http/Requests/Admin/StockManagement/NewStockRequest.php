@@ -170,6 +170,7 @@ class NewStockRequest extends FormRequest
                 $rules['price'] = ['nullable', 'numeric', 'min:0', 'max:999999999999.99'];
                 $rules['classification'] = ['required', Rule::in(['Aset', 'Inventaris'])];
                 $rules['photo'] = ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:1024'];
+                $rules['qc_pass'] = ['nullable', 'boolean'];
 
                 if ($isComp) {
                     $rules['asset_specification'] = ['required', 'string', 'max:1000'];

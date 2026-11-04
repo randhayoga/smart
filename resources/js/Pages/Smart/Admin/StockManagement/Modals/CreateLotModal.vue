@@ -100,6 +100,7 @@ const lotForm = useForm({
   asset_specification: '',
   borrowing_type: 'LT' as 'LT' | 'ST',
   condition: 'Bagus' as 'Bagus' | 'Rusak',
+  qc_pass: null as boolean | null,
   price: '' as string | number,
   classification: 'Aset' as 'Aset' | 'Inventaris',
   photo: null as File | null,
@@ -341,6 +342,7 @@ watch(() => props.open, (val) => {
   lotForm.asset_specification = '';
   lotForm.borrowing_type = 'LT';
   lotForm.condition = 'Bagus';
+  lotForm.qc_pass = null;
   lotForm.price = '';
   lotForm.classification = 'Aset';
   lotForm.photo = null;
@@ -503,6 +505,7 @@ const handleSubmit = () => {
         fd.location_id = isSoft.value ? null : (data.location_id ? Number(data.location_id) : null);
         fd.borrowing_type = data.borrowing_type;
         fd.condition = isSoft.value ? null : data.condition;
+        fd.qc_pass = isSoft.value ? null : data.qc_pass;
         fd.classification = data.classification;
         fd.price = data.price || null;
         if (data.asset_specification) fd.asset_specification = data.asset_specification;

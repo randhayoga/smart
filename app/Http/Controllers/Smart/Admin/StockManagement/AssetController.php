@@ -58,6 +58,7 @@ class AssetController extends Controller
             'use_lot_image' => 'nullable',
             'burden' => 'nullable|string|in:Corporate,Project',
             'project_id' => 'required_if:burden,Project|nullable|integer',
+            'qc_pass' => 'nullable|boolean',
         ];
  
         $isSoft = ($lot->model?->type?->category?->code === 'SOFT' || strtolower($lot->model?->type?->category?->name ?? '') === 'software');
@@ -142,6 +143,13 @@ class AssetController extends Controller
         $validated['project_id'] = $validated['burden'] === 'Project' ? ($validated['project_id'] ?? null) : null;
         $validated['license_exp_date'] = $isSoft ? ($request->input('license_exp_date') ?: null) : null;
         $validated['renewal_reminder'] = $isSoft ? ($request->input('renewal_reminder') !== null && $request->input('renewal_reminder') !== '' ? (int)$request->input('renewal_reminder') : null) : null;
+        if ($request->has('qc_pass') && $request->input('qc_pass') !== null && $request->input('qc_pass') !== '') {
+            $validated['qc_pass'] = $request->boolean('qc_pass');
+            $validated['last_qc'] = now();
+        } else {
+            $validated['qc_pass'] = null;
+            $validated['last_qc'] = null;
+        }
 
         $asset = Asset::create($validated);
  
@@ -362,6 +370,7 @@ class AssetController extends Controller
             'burden' => 'nullable|string|in:Corporate,Project',
             'project_id' => 'required_if:burden,Project|nullable|integer',
             'is_assigned_to_location' => 'nullable|boolean',
+            'qc_pass' => 'nullable|boolean',
         ];
 
         if ($request->has('is_assigned_to_location') && $request->input('is_assigned_to_location') !== null) {
@@ -582,6 +591,11 @@ class AssetController extends Controller
             $validated['renewal_reminder'] = null;
         }
 
+        if ($request->has('qc_pass') && $request->input('qc_pass') !== null && $request->input('qc_pass') !== '') {
+            $validated['qc_pass'] = $request->boolean('qc_pass');
+            $validated['last_qc'] = now();
+        }
+
         $asset->update($validated);
 
         if ($needApproval) {
@@ -704,6 +718,9 @@ class AssetController extends Controller
             'admin_note' => $pendingApproval ? $pendingApproval->admin_note : ($approvedApproval ? $approvedApproval->admin_note : ($rejectedApproval ? $rejectedApproval->admin_note : null)),
             'dm_note' => $pendingApproval ? $pendingApproval->dm_note : ($approvedApproval ? $approvedApproval->dm_note : ($rejectedApproval ? $rejectedApproval->dm_note : null)),
             'condition' => $asset->condition,
+            'qc_pass' => $asset->qc_pass,
+            'last_qc' => $asset->last_qc ? $asset->last_qc->format('Y-m-d H:i:s') : null,
+            'last_qc_formatted' => $asset->last_qc ? $asset->last_qc->format('d-m-Y') : null,
             'price' => $asset->price,
             'type' => $asset->borrowing_type,
             'borrowing_type' => $asset->borrowing_type,

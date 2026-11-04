@@ -8,6 +8,9 @@ import { useModalLock } from '@/composables/useModalLock';
 import { X, AlertTriangle, Loader2, ThumbsUp, Ban } from 'lucide-vue-next';
 import { Button } from "@/Components/ui/button";
 import { formatDate } from '@/lib/utils';
+import { formatQcStatus, getQcColorClass } from '@/lib/qualityControl';
+import { getConditionColorClass } from '@/lib/assetStatus';
+import StatusBadge from '@/Components/StatusBadge.vue';
 
 interface Props {
   isOpen: boolean;
@@ -267,12 +270,30 @@ const displayFields = computed(() => {
     if (data.type || data.unit_details?.type) fields.push({ label: t('inventory.type'), value: data.type || data.unit_details?.type });
     if (data.classification || data.unit_details?.classification) fields.push({ label: t('inventory.classification'), value: getClassificationLabel(data.classification || data.unit_details?.classification || 'Aset') });
     if (isActivationApproval.value) {
-      if (data.unit_details?.status || data.status) fields.push({ label: t('inventory.status'), value: getStatusLabel(data.unit_details?.status || data.status) });
+      if (data.unit_details?.status || data.status) {
+        fields.push({
+          label: t('inventory.status'),
+          value: getStatusLabel(data.unit_details?.status || data.status),
+          isStatus: true,
+          statusValue: data.unit_details?.status || data.status,
+          approvalStatusValue: data.unit_details?.approval_status || data.approval_status || 'Pending:DM',
+        });
+      }
       const cond = data.unit_details?.condition || data.condition;
       if (!isSoftItem(data) && cond && cond !== '-') {
         fields.push({
           label: t('inventory.condition'),
-          value: getConditionLabel(cond)
+          value: getConditionLabel(cond),
+          colorClass: getConditionColorClass(cond),
+        });
+      }
+      const qcPass = data.qc_pass ?? data.unit_details?.qc_pass;
+      const lastQc = data.last_qc ?? data.lq ?? data.unit_details?.last_qc;
+      if (!isSoftItem(data) && qcPass !== undefined && qcPass !== null) {
+        fields.push({
+          label: t('inventory.qualityControl'),
+          value: formatQcStatus(qcPass, lastQc, t),
+          colorClass: getQcColorClass(qcPass),
         });
       }
       if (isSoftItem(data)) {
@@ -284,13 +305,24 @@ const displayFields = computed(() => {
         if (actualCondition && actualCondition !== '-') {
           fields.push({
             label: t('inventory.condition'),
-            value: getConditionLabel(actualCondition)
+            value: getConditionLabel(actualCondition),
+            colorClass: getConditionColorClass(actualCondition),
+          });
+        }
+        const qcPass = data.qc_pass ?? data.unit_details?.qc_pass;
+        const lastQc = data.last_qc ?? data.lq ?? data.unit_details?.last_qc;
+        if (qcPass !== undefined && qcPass !== null) {
+          fields.push({
+            label: t('inventory.qualityControl'),
+            value: formatQcStatus(qcPass, lastQc, t),
+            colorClass: getQcColorClass(qcPass),
           });
         }
         if (data.proposed_condition && data.proposed_condition !== '-') {
           fields.push({
             label: t('approvals.proposedCondition'),
-            value: getConditionLabel(data.proposed_condition)
+            value: getConditionLabel(data.proposed_condition),
+            colorClass: getConditionColorClass(data.proposed_condition),
           });
         }
       }
@@ -368,9 +400,32 @@ const displayFields = computed(() => {
     if (data.number || data.asset_code) fields.push({ label: t('inventory.assetCode'), value: data.number || data.asset_code });
     if (data.type) fields.push({ label: t('inventory.type'), value: data.type });
     if (data.classification) fields.push({ label: t('inventory.classification'), value: getClassificationLabel(data.classification) });
-    if (data.status) fields.push({ label: t('inventory.status'), value: getStatusLabel(data.status) });
+    if (data.status) {
+      fields.push({
+        label: t('inventory.status'),
+        value: getStatusLabel(data.status),
+        isStatus: true,
+        statusValue: data.status,
+        approvalStatusValue: data.approval_status,
+      });
+    }
     if (!isSoftItem(data)) {
-      if (data.condition && data.condition !== '-') fields.push({ label: t('inventory.condition'), value: getConditionLabel(data.condition) });
+      if (data.condition && data.condition !== '-') {
+        fields.push({
+          label: t('inventory.condition'),
+          value: getConditionLabel(data.condition),
+          colorClass: getConditionColorClass(data.condition),
+        });
+      }
+      const qcPass = data.qc_pass ?? data.unit_details?.qc_pass;
+      const lastQc = data.last_qc ?? data.lq ?? data.unit_details?.last_qc;
+      if (qcPass !== undefined && qcPass !== null) {
+        fields.push({
+          label: t('inventory.qualityControl'),
+          value: formatQcStatus(qcPass, lastQc, t),
+          colorClass: getQcColorClass(qcPass),
+        });
+      }
       if (data.location) fields.push({ label: t('inventory.location'), value: typeof data.location === 'string' ? data.location : formatLocation(data.location) });
     }
     if (isSoftItem(data)) {
@@ -486,12 +541,30 @@ const bulkItemsFields = computed(() => {
       if (data.name || data.nama) fields.push({ label: t('approvals.name'), value: data.name || data.nama });
       if (data.type || data.unit_details?.type) fields.push({ label: t('inventory.type'), value: data.type || data.unit_details?.type });
       if (isActivationApproval.value) {
-        if (data.unit_details?.status || data.status) fields.push({ label: t('inventory.status'), value: getStatusLabel(data.unit_details?.status || data.status) });
+        if (data.unit_details?.status || data.status) {
+          fields.push({
+            label: t('inventory.status'),
+            value: getStatusLabel(data.unit_details?.status || data.status),
+            isStatus: true,
+            statusValue: data.unit_details?.status || data.status,
+            approvalStatusValue: data.unit_details?.approval_status || data.approval_status || 'Pending:DM',
+          });
+        }
         const cond = data.unit_details?.condition || data.condition;
         if (!isSoftItem(data) && cond && cond !== '-') {
           fields.push({
             label: t('inventory.condition'),
-            value: getConditionLabel(cond)
+            value: getConditionLabel(cond),
+            colorClass: getConditionColorClass(cond),
+          });
+        }
+        const qcPass = data.qc_pass ?? data.unit_details?.qc_pass;
+        const lastQc = data.last_qc ?? data.lq ?? data.unit_details?.last_qc;
+        if (!isSoftItem(data) && qcPass !== undefined && qcPass !== null) {
+          fields.push({
+            label: t('inventory.qualityControl'),
+            value: formatQcStatus(qcPass, lastQc, t),
+            colorClass: getQcColorClass(qcPass),
           });
         }
         if (isSoftItem(data)) {
@@ -503,13 +576,24 @@ const bulkItemsFields = computed(() => {
           if (actualCondition && actualCondition !== '-') {
             fields.push({
               label: t('inventory.condition'),
-              value: getConditionLabel(actualCondition)
+              value: getConditionLabel(actualCondition),
+              colorClass: getConditionColorClass(actualCondition),
+            });
+          }
+          const qcPass = data.qc_pass ?? data.unit_details?.qc_pass;
+          const lastQc = data.last_qc ?? data.lq ?? data.unit_details?.last_qc;
+          if (qcPass !== undefined && qcPass !== null) {
+            fields.push({
+              label: t('inventory.qualityControl'),
+              value: formatQcStatus(qcPass, lastQc, t),
+              colorClass: getQcColorClass(qcPass),
             });
           }
           if (data.proposed_condition && data.proposed_condition !== '-') {
             fields.push({
               label: t('approvals.proposedCondition'),
-              value: getConditionLabel(data.proposed_condition)
+              value: getConditionLabel(data.proposed_condition),
+              colorClass: getConditionColorClass(data.proposed_condition),
             });
           }
         }
@@ -531,8 +615,31 @@ const bulkItemsFields = computed(() => {
       if (data.number || data.asset_code) fields.push({ label: t('inventory.assetCode'), value: data.number || data.asset_code });
       if (data.type) fields.push({ label: t('inventory.type'), value: data.type });
       if (data.classification) fields.push({ label: t('inventory.classification'), value: getClassificationLabel(data.classification) });
-      if (data.status) fields.push({ label: t('inventory.status'), value: getStatusLabel(data.status) });
-      if (!isSoftItem(data) && data.condition && data.condition !== '-') fields.push({ label: t('inventory.condition'), value: getConditionLabel(data.condition) });
+      if (data.status) {
+        fields.push({
+          label: t('inventory.status'),
+          value: getStatusLabel(data.status),
+          isStatus: true,
+          statusValue: data.status,
+          approvalStatusValue: data.approval_status,
+        });
+      }
+      if (!isSoftItem(data) && data.condition && data.condition !== '-') {
+        fields.push({
+          label: t('inventory.condition'),
+          value: getConditionLabel(data.condition),
+          colorClass: getConditionColorClass(data.condition),
+        });
+      }
+      const qcPass = data.qc_pass ?? data.unit_details?.qc_pass;
+      const lastQc = data.last_qc ?? data.lq ?? data.unit_details?.last_qc;
+      if (!isSoftItem(data) && qcPass !== undefined && qcPass !== null) {
+        fields.push({
+          label: t('inventory.qualityControl'),
+          value: formatQcStatus(qcPass, lastQc, t),
+          colorClass: getQcColorClass(qcPass),
+        });
+      }
       if (isSoftItem(data)) {
         fields.push(...getSoftLicenseFields(data));
       }
@@ -626,10 +733,11 @@ onUnmounted(() => {
 
                 <!-- Single Item Info Details -->
                 <div v-if="displayFields.length > 0 && itemCount <= 1" class="p-3 rounded-[14px] bg-muted/40 border border-border text-left space-y-2.5 w-full max-w-[90%] mx-auto max-h-[40vh] overflow-y-auto overscroll-contain">
-                  <div v-for="field in displayFields" :key="field.label" class="grid grid-cols-12 gap-2 text-sm border-b border-border/50 last:border-0 pb-2 last:pb-0">
+                  <div v-for="field in displayFields" :key="field.label" class="grid grid-cols-12 gap-2 text-sm border-b border-border/50 last:border-0 pb-2 last:pb-0 items-center">
                     <span class="col-span-4 text-muted-foreground font-medium">{{ field.label }}</span>
-                    <span class="col-span-8 text-foreground font-semibold text-right break-words">
-                      {{ field.value }}
+                    <span class="col-span-8 font-semibold text-right break-words flex justify-end items-center" :class="field.colorClass || 'text-foreground'">
+                      <StatusBadge v-if="field.isStatus" :status="field.statusValue" :approval-status="field.approvalStatusValue" />
+                      <template v-else>{{ field.value }}</template>
                     </span>
                   </div>
                 </div>
@@ -637,10 +745,11 @@ onUnmounted(() => {
                 <!-- Bulk Items Info Details -->
                 <div v-else-if="itemCount > 1 && bulkItemsFields.length > 0" class="p-3 rounded-[14px] bg-muted/40 border border-border text-left w-full max-w-[90%] mx-auto max-h-[45vh] overflow-y-auto overscroll-contain space-y-3">
                   <div v-for="(itemFields, idx) in bulkItemsFields" :key="idx" class="p-3 rounded-[12px] bg-background border border-border space-y-2.5">
-                    <div v-for="field in itemFields" :key="field.label" class="grid grid-cols-12 gap-2 text-sm border-b border-border/50 last:border-0 pb-2 last:pb-0">
+                    <div v-for="field in itemFields" :key="field.label" class="grid grid-cols-12 gap-2 text-sm border-b border-border/50 last:border-0 pb-2 last:pb-0 items-center">
                       <span class="col-span-4 text-muted-foreground font-medium">{{ field.label }}</span>
-                      <span class="col-span-8 text-foreground font-semibold text-right break-words">
-                        {{ field.value }}
+                      <span class="col-span-8 font-semibold text-right break-words flex justify-end items-center" :class="field.colorClass || 'text-foreground'">
+                        <StatusBadge v-if="field.isStatus" :status="field.statusValue" :approval-status="field.approvalStatusValue" />
+                        <template v-else>{{ field.value }}</template>
                       </span>
                     </div>
                   </div>

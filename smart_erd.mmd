@@ -194,6 +194,8 @@ erDiagram
         boolean is_assigned_to_location  "default to false"  
         date license_exp_date  "nullable"  
         int renewal_reminder  "nullable"  
+        boolean qc_pass  "nullable | Quality control pass status"  
+        datetime last_qc  "nullable | Quality control timestamp"  
     }
 
     ASSET_DELETION_APPROVAL {
