@@ -285,6 +285,13 @@ class BorrowedControllerTest extends TestCase
             'changed_by' => $this->admin->id,
             'note' => "Seluruh peminjaman diselesaikan secara manual oleh Admin {$this->admin->name} di Ruang IFS.",
         ]);
+
+        $returnLifecycle = \App\Models\Inventory\AssetLifecycle::where('asset_id', $asset1->id)->latest('id')->first();
+        $this->assertNotNull($returnLifecycle);
+        $this->assertEquals('Pengembalian', $returnLifecycle->action_type);
+        $this->assertEquals('Tersedia', $returnLifecycle->status);
+        $this->assertEquals($req->id, $returnLifecycle->request_id);
+        $this->assertEquals($ful1->id, $returnLifecycle->fulfillment_id);
     }
 
     public function test_finish_single_asset_completes_target_fulfillment_and_keeps_borrow_status_when_others_remain(): void

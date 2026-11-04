@@ -172,7 +172,7 @@ class Lot extends EloquentModel
     }
 
     /**
-     * Get the lot's age in days.
+     * Get the lot's age in years, clamped to at least 0.
      */
     protected function age(): Attribute
     {
@@ -180,7 +180,8 @@ class Lot extends EloquentModel
             if (!$this->purchase_grant_date) {
                 return 0;
             }
-            return (int) floor($this->purchase_grant_date->diffInYears(now()));
+            $diff = (int) floor($this->purchase_grant_date->diffInYears(now(), false));
+            return max(0, $diff);
         });
     }
 

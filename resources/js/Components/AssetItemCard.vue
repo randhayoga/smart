@@ -19,7 +19,7 @@
  * @slot footer - Optional action or button bar rendered at the bottom of the card.
  */
 import { ref, computed, useSlots, Comment, Fragment, type VNode } from 'vue';
-import { ChevronDown, ChevronUp, ExternalLink } from 'lucide-vue-next';
+import { ChevronDown, ExternalLink } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
 import { getRequestTypeBadgeClass, getActiveStatusBadge } from '@/lib/requestTypeBadge';
 
@@ -259,9 +259,11 @@ const activeAssets = computed(() => {
             @click="showAssets = !showAssets"
             class="text-xs font-bold text-[#6366F1] hover:text-[#5558EB] flex items-center gap-1 transition-colors focus:outline-none"
           >
-            <span>{{ showAssets ? $t('requests.hideAssetAllocation') : $t('requests.viewAssetAllocation') }}</span>
-            <ChevronUp v-if="showAssets" class="w-3.5 h-3.5" />
-            <ChevronDown v-else class="w-3.5 h-3.5" />
+            <span>{{ $t('requests.viewAssetAllocation') }}</span>
+            <ChevronDown 
+              class="w-3.5 h-3.5 transition-transform duration-200 transform" 
+              :class="{ 'rotate-180': showAssets }"
+            />
           </button>
 
           <!-- Expanded Asset List -->
@@ -356,9 +358,11 @@ const activeAssets = computed(() => {
           @click="showAssetAllocation = !showAssetAllocation"
           class="text-xs font-bold text-[#6366F1] hover:text-[#5558EB] flex items-center gap-1.5 transition-colors focus:outline-none"
         >
-          <span>{{ showAssetAllocation ? $t('requests.hideAssetAllocation') : $t('requests.viewAssetAllocation') }}</span>
-          <ChevronUp v-if="showAssetAllocation" class="w-3.5 h-3.5" />
-          <ChevronDown v-else class="w-3.5 h-3.5" />
+          <span>{{ $t('requests.viewAssetAllocation') }}</span>
+          <ChevronDown 
+            class="w-3.5 h-3.5 transition-transform duration-200 transform" 
+            :class="{ 'rotate-180': showAssetAllocation }"
+          />
         </button>
 
         <!-- Action Button: e.g. "Pilih Alokasi Aset" -->
@@ -441,9 +445,11 @@ const activeAssets = computed(() => {
             @click="showConsumableAllocation = !showConsumableAllocation"
             class="text-xs font-bold text-[#6366F1] hover:text-[#5558EB] flex items-center gap-1.5 transition-colors focus:outline-none"
           >
-            <span>{{ showConsumableAllocation ? $t('requests.hideStockAllocation') : $t('requests.viewStockAllocation') }}</span>
-            <ChevronUp v-if="showConsumableAllocation" class="w-3.5 h-3.5" />
-            <ChevronDown v-else class="w-3.5 h-3.5" />
+            <span>{{ $t('requests.viewStockAllocation') }}</span>
+            <ChevronDown 
+              class="w-3.5 h-3.5 transition-transform duration-200 transform" 
+              :class="{ 'rotate-180': showConsumableAllocation }"
+            />
           </button>
         </div>
 

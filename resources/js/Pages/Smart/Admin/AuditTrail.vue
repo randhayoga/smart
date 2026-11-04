@@ -18,7 +18,7 @@ import ResetFilterButton from '@/Components/ResetFilterButton.vue';
 import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
-import { getLocalizedAuditAction } from '@/lib/auditAction';
+import { getLocalizedAuditAction, renderAuditNote } from '@/lib/auditAction';
 
 const { t, te } = useI18n();
 
@@ -33,6 +33,8 @@ interface AuditTrail {
   durasi: string | number;
   catatan: string;
   proof_url?: string | null;
+  request_id?: number | null;
+  request_number?: string | null;
 }
 
 const props = defineProps<{
@@ -321,16 +323,7 @@ const auditColumns = computed<ColumnDef<AuditTrail>[]>(() => {
     {
       accessorKey: 'catatan',
       header: () => h('div', { class: 'font-semibold text-foreground justify-start' }, t('admin.auditNotes')),
-      cell: ({ row }) => {
-        const note = String(row.getValue('catatan') || '');
-        if (note.includes(' | ')) {
-          const lines = note.split(' | ');
-          return h('ul', { class: 'list-disc pl-4 space-y-0.5 text-muted-foreground whitespace-normal text-left min-w-[200px]' }, 
-            lines.map(line => h('li', {}, line))
-          );
-        }
-        return h('div', { class: 'text-muted-foreground whitespace-normal text-left min-w-[200px]' }, note);
-      },
+      cell: ({ row }) => renderAuditNote(row.getValue('catatan'), row.original.request_id, row.original.request_number),
     }
   ];
 

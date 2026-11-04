@@ -7,10 +7,11 @@ import { useI18n } from 'vue-i18n';
 import { usePage } from '@inertiajs/vue3';
 import { useModalLock } from '@/composables/useModalLock';
 import axios from 'axios';
-import { X } from 'lucide-vue-next';
+import { X, ExternalLink } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
 import { formatDate } from '@/lib/utils';
 import Tabs from '@/Components/Tabs.vue';
+import AssetPhotoGrid from '@/Components/AssetPhotoGrid.vue';
 
 interface Props {
   isOpen: boolean;
@@ -64,7 +65,7 @@ watch(() => props.isOpen, (newVal) => {
   } else {
     lotDetails.value = null;
   }
-});
+}, { immediate: true });
 
 const handleRequestSuccess = () => {
   if (props.lotId) {
@@ -91,6 +92,51 @@ const formatLocation = (lot: any) => {
   if (lot.room) parts.push(lot.room);
   return parts.join(', ') || '-';
 };
+
+const lotCategoryWithSubcategory = computed(() => {
+  if (!lotDetails.value) return '-';
+  const cat = lotDetails.value.barang_category;
+  const sub = lotDetails.value.barang_subcategory;
+  if (cat && sub && cat !== '-' && sub !== '-') {
+    return `${cat} (${sub})`;
+  }
+  return cat || sub || '-';
+});
+
+const lotModelDisplay = computed(() => {
+  if (!lotDetails.value) return '-';
+  const brand = lotDetails.value.barang_brand && lotDetails.value.barang_brand !== '-' ? lotDetails.value.barang_brand : '';
+  const name = lotDetails.value.barang_nama && lotDetails.value.barang_nama !== '-' ? lotDetails.value.barang_nama : '';
+  const spec = lotDetails.value.barang_specification && lotDetails.value.barang_specification !== '-' ? lotDetails.value.barang_specification : '';
+  return [brand, name, spec].filter(Boolean).join(' ') || '-';
+});
+
+const lotBurdenDisplay = computed(() => {
+  if (!lotDetails.value?.burden) return '-';
+  if (lotDetails.value.burden === 'Project') {
+    const prjNo = lotDetails.value.project_no;
+    const prjName = lotDetails.value.project_name;
+    if (prjNo && prjName) {
+      return `Project [${prjNo}] ${prjName}`;
+    }
+    if (prjNo) {
+      return `Project [${prjNo}]`;
+    }
+    if (prjName) {
+      return `Project ${prjName}`;
+    }
+    return 'Project';
+  }
+  return lotDetails.value.burden;
+});
+
+const lotVendorDisplay = computed(() => {
+  if (!lotDetails.value) return '-';
+  if (!lotDetails.value.vendor_id || lotDetails.value.vendor === '-' || !lotDetails.value.vendor || String(lotDetails.value.vendor).trim().toLowerCase() === 'beragam') {
+    return t('inventory.vendorMultiple');
+  }
+  return lotDetails.value.vendor;
+});
 
 const handleEdit = () => {
   if (lotDetails.value) {
@@ -169,41 +215,80 @@ onUnmounted(() => {
 
               <div v-else-if="lotDetails && detailActiveTab === 'Detail LOT'" class="flex flex-col md:flex-row gap-4">
                 <!-- Left Column: Photo -->
-                <div class="w-48 h-48 rounded-xl bg-muted shrink-0 flex items-center justify-center overflow-hidden border border-border">
-                  <img v-if="lotDetails.imageUrl" :src="'/media/' + lotDetails.imageUrl" class="w-full h-full object-cover" />
-                  <img v-else src="/media/inventory/placeholder.jpg" class="w-full h-full object-cover opacity-50" />
-                </div>
+                <AssetPhotoGrid :photos="lotDetails.imageUrl ? [lotDetails.imageUrl] : []" />
 
-                <!-- Right Column: Details Grid -->
-                <div class="flex-grow grid grid-cols-1 md:grid-cols-12 gap-4">
-                  <!-- Left Details Column -->
-                  <div class="md:col-span-4">
-                    <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.typeCode') }}:</span> {{ lotDetails.barang_code }}</p>
-                    <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.brand') }}:</span> {{ lotDetails.barang_brand }}</p>
-                    <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.name') }}:</span> {{ lotDetails.barang_nama }}</p>
-                    <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.specification') }}:</span> {{ lotDetails.barang_specification }}</p>
-                    <p class="text-foreground">{{ t('inventory.category') }}: {{ lotDetails.barang_category }}</p>
-                    <p class="text-foreground">{{ t('inventory.subcategory') }}: {{ lotDetails.barang_subcategory }}</p>
-                    <p class="text-foreground">{{ t('inventory.uom') }}: {{ lotDetails.barang_uom }}</p>
-                  </div>
+                <!-- Details Single Column (takes full horizontal space) -->
+                <div class="flex-grow flex flex-col gap-1.5 text-foreground">
+                  <!-- 1. Nomor LOT -->
+                  <p class="font-bold text-foreground">
+                    <span class="text-foreground">{{ t('inventory.lotCode') }}:</span> {{ lotDetails.number }}
+                  </p>
 
-                  <!-- Right Details Column -->
-                  <div class="md:col-span-8">
-                    <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.lotCode') }}:</span> {{ lotDetails.number }}</p>
-                    <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.availableStock') }}:</span> {{ lotDetails.current_quantity ?? 0 }}</p>
-                    <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.initialStock') }}:</span> {{ lotDetails.initial_quantity ?? 0 }}</p>
-                    <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.minStockThreshold') }}:</span> {{ lotDetails.barang_min_stock_threshold !== null && lotDetails.barang_min_stock_threshold !== undefined ? `${lotDetails.barang_min_stock_threshold} ${lotDetails.barang_uom || ''}`.trim() : '-' }}</p>
-                    <p class="text-foreground">{{ t('inventory.location') }}: {{ formatLocation(lotDetails) }}</p>
-                    <p class="text-foreground">{{ t('inventory.poNumber') }}: {{ lotDetails.po_number || '-' }}</p>
-                    <p class="text-foreground">{{ t('inventory.registrationDate') }}: {{ formatDate(lotDetails.date_of_receipt) }}</p>
-                    <p class="text-foreground">{{ t('inventory.age') }}: {{ lotDetails.age !== undefined && lotDetails.age !== null ? `${lotDetails.age} ${t('inventory.yearUnit')}` : '-' }}</p>
-                    <p class="text-foreground">{{ t('inventory.unitPrice') }}: {{ formatRupiah(lotDetails.unitPrice) }}</p>
-                    <p class="text-foreground">{{ t('inventory.burden') }}: {{ lotDetails.burden || '-' }}</p>
-                    <p v-if="lotDetails.burden === 'Project'" class="text-foreground">{{ t('inventory.project') }}: {{ lotDetails.project_no ? `[${lotDetails.project_no}] ${lotDetails.project_name || '-'}` : (lotDetails.project_name || '-') }}</p>
-                    <p class="text-foreground">{{ t('inventory.organizer') }}: {{ lotDetails.organizer }}</p>
-                    <p class="text-foreground">{{ t('inventory.vendor') }}: {{ (lotDetails.vendor_id && lotDetails.vendor !== '-') ? lotDetails.vendor : t('inventory.vendorMultiple') }}</p>
-                    <p class="text-foreground">{{ t('inventory.lastUpdate') }}: {{ lotDetails.updated_at }}</p>
-                  </div>
+                  <!-- 2. Kategori (shows category + type) -->
+                  <p class="font-bold text-foreground">
+                    <span class="text-foreground">{{ t('inventory.category') }}:</span> {{ lotCategoryWithSubcategory }}
+                  </p>
+
+                  <!-- 3. Model (shows brand + name + spec) -->
+                  <p class="font-bold text-foreground">
+                    <span class="text-foreground">{{ t('inventory.modelLabel') }}:</span> {{ lotModelDisplay }}
+                  </p>
+
+                  <!-- 4. Jumlah stok (shows current_stock <uom> / initial_stock <uom>) -->
+                  <p class="font-bold text-foreground">
+                    <span class="text-foreground">{{ t('inventory.stockQuantity') }}:</span> 
+                    {{ lotDetails.current_quantity ?? 0 }} {{ lotDetails.barang_uom || '' }} / {{ lotDetails.initial_quantity ?? 0 }} {{ lotDetails.barang_uom || '' }}
+                  </p>
+
+                  <!-- 5. *Lokasi (not "Lokasi Penyimpanan") -->
+                  <p class="text-foreground">
+                    <span class="text-foreground">{{ t('inventory.location') }}:</span> {{ formatLocation(lotDetails) }}
+                  </p>
+
+                  <!-- 6. Nomor PO/Nomor Memo (dynamic, if hibah make the nomor memo a hyperlink that opens the memo_url in new tab) -->
+                  <p class="text-foreground">
+                    <span class="text-foreground">{{ lotDetails.entry_type === 'Hibah' ? t('inventory.memoNumber') : t('inventory.poNumber') }}:</span>
+                    <template v-if="lotDetails.entry_type === 'Hibah'">
+                      <a 
+                        v-if="lotDetails.memo_url"
+                        :href="'/media/' + lotDetails.memo_url"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="text-primary hover:underline font-semibold inline-flex items-center gap-1 ml-1"
+                      >
+                        <span>{{ lotDetails.memo_number || '-' }}</span>
+                        <ExternalLink class="w-3.5 h-3.5" />
+                      </a>
+                      <span v-else class="ml-1">{{ lotDetails.memo_number || '-' }}</span>
+                    </template>
+                    <span v-else class="ml-1">{{ lotDetails.po_number || '-' }}</span>
+                  </p>
+
+                  <!-- 7. Tanggal Registrasi/Tanggal Hibah (dynamic) -->
+                  <p class="text-foreground">
+                    <span class="text-foreground">{{ lotDetails.entry_type === 'Hibah' ? t('inventory.grantDate') : t('inventory.registrationDate') }}:</span>
+                    {{ formatDate(lotDetails.entry_type === 'Hibah' ? (lotDetails.date_of_grant || lotDetails.date_of_receipt) : lotDetails.date_of_receipt) }}
+                  </p>
+
+                  <!-- 8. Organizer -->
+                  <p class="text-foreground">
+                    <span class="text-foreground">{{ t('inventory.organizer') }}:</span> {{ lotDetails.organizer || '-' }}
+                  </p>
+
+                  <!-- 9. *Vendor -->
+                  <p class="text-foreground">
+                    <span class="text-foreground">{{ t('inventory.vendor') }}:</span> {{ lotVendorDisplay }}
+                  </p>
+
+                  <!-- 10. *Pembebanan (also shows the project number if project) -->
+                  <p class="text-foreground">
+                    <span class="text-foreground">{{ t('inventory.burden') }}:</span> {{ lotBurdenDisplay }}
+                  </p>
+
+                  <!-- 11. Pembaruan Terakhir -->
+                  <p class="text-foreground">
+                    <span class="text-foreground">{{ t('inventory.lastUpdate') }}:</span> {{ lotDetails.updated_at || '-' }}
+                  </p>
                 </div>
               </div>
             </div>

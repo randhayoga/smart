@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Smart\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Inventory\Asset;
+use App\Models\Inventory\AssetLifecycle;
 use App\Models\Master\Location;
 use App\Models\Request\Request as SmartRequest;
 use App\Models\Request\RequestFulfillment;
@@ -260,7 +261,7 @@ class BorrowedController extends Controller
     }
 
     /**
-     * Selesaikan seluruh peminjaman/penugasan manual (admin-driven) sekaligus.
+     * Selesaikan seluruh peminjaman/assignment manual (admin-driven) sekaligus.
      * Menggunakan batch update dan transaksi database untuk performa maksimal.
      */
     public function finishAll(Request $request, $id, ImageUploadService $imageUploadService)
@@ -268,7 +269,7 @@ class BorrowedController extends Controller
         $req = SmartRequest::findOrFail($id);
 
         if (empty($req->form_url)) {
-            abort(403, 'Aksi ini hanya dapat dilakukan untuk peminjaman/penugasan manual.');
+            abort(403, 'Aksi ini hanya dapat dilakukan untuk peminjaman/assignment manual.');
         }
 
         $validated = $request->validate([
@@ -307,6 +308,41 @@ class BorrowedController extends Controller
                     'status' => 'Tersedia',
                     'location_id' => $location->id,
                 ]);
+
+                // Close active lifecycles
+                AssetLifecycle::whereIn('asset_id', $assetIds)
+                    ->whereNull('end_date')
+                    ->update(['end_date' => $now]);
+
+                $borrowerUser = $req->user;
+                $userName = $borrowerUser?->name ?? '-';
+                $userNpk = $borrowerUser?->employee_id ?? '-';
+                $actionLabel = match ($req->specific_type_key) {
+                    'st' => 'Peminjaman (ST)',
+                    'rent' => 'Peminjaman (Sewa)',
+                    default => 'Assignment (LT)',
+                };
+                $lifecycleActionType = in_array($req->specific_type_key, ['st', 'rent'], true) ? 'Pengembalian' : 'Pengembalian Assignment';
+
+                foreach ($fulfillments as $f) {
+                    if (!$f->asset_id) continue;
+                    $asset = Asset::find($f->asset_id);
+                    AssetLifecycle::create([
+                        'asset_id' => $f->asset_id,
+                        'request_id' => $req->id,
+                        'fulfillment_id' => $f->id,
+                        'action_type' => $lifecycleActionType,
+                        'status' => 'Tersedia',
+                        'condition' => $asset?->condition ?? 'Bagus',
+                        'location_id' => $location->id,
+                        'start_date' => $now,
+                        'end_date' => null,
+                        'actor_id' => $request->user()->id,
+                        'note' => "Pengembalian {$actionLabel} {$req->request_number} dari {$userName} ({$userNpk}).",
+                        'previous_state' => ['status' => $asset?->status ?? 'Dipinjam'],
+                        'new_state' => ['status' => 'Tersedia'],
+                    ]);
+                }
             }
 
             RequestFulfillment::whereIn('request_item_id', $itemIds)
@@ -317,7 +353,7 @@ class BorrowedController extends Controller
 
             $req->update(['status' => 'success']);
 
-            $actionName = ($req->specific_type_key === 'lt') ? 'penugasan' : 'peminjaman';
+            $actionName = ($req->specific_type_key === 'lt') ? 'assignment' : 'peminjaman';
             $adminName = $request->user()->name;
 
             RequestStatusLog::create([
@@ -329,11 +365,11 @@ class BorrowedController extends Controller
             ]);
         });
 
-        return redirect()->back()->with('success', 'Seluruh peminjaman/penugasan berhasil diselesaikan.');
+        return redirect()->back()->with('success', 'Seluruh peminjaman/assignment berhasil diselesaikan.');
     }
 
     /**
-     * Selesaikan peminjaman/penugasan aset spesifik secara manual.
+     * Selesaikan peminjaman/assignment aset spesifik secara manual.
      * Jika semua aset telah selesai, permintaan otomatis berstatus 'success'.
      */
     public function finishAsset(Request $request, $id, $fulfillmentId, ImageUploadService $imageUploadService)
@@ -341,7 +377,7 @@ class BorrowedController extends Controller
         $req = SmartRequest::findOrFail($id);
 
         if (empty($req->form_url)) {
-            abort(403, 'Aksi ini hanya dapat dilakukan untuk peminjaman/penugasan manual.');
+            abort(403, 'Aksi ini hanya dapat dilakukan untuk peminjaman/assignment manual.');
         }
 
         $validated = $request->validate([
@@ -386,6 +422,36 @@ class BorrowedController extends Controller
                         'location_id' => $location->id,
                     ]);
                     $assetNumber = $asset->number;
+
+                    AssetLifecycle::where('asset_id', $asset->id)
+                        ->whereNull('end_date')
+                        ->update(['end_date' => $now]);
+
+                    $borrowerUser = $req->user;
+                    $userName = $borrowerUser?->name ?? '-';
+                    $userNpk = $borrowerUser?->employee_id ?? '-';
+                    $actionLabel = match ($req->specific_type_key) {
+                        'st' => 'Peminjaman (ST)',
+                        'rent' => 'Peminjaman (Sewa)',
+                        default => 'Assignment (LT)',
+                    };
+                    $lifecycleActionType = in_array($req->specific_type_key, ['st', 'rent'], true) ? 'Pengembalian' : 'Pengembalian Assignment';
+
+                    AssetLifecycle::create([
+                        'asset_id' => $asset->id,
+                        'request_id' => $req->id,
+                        'fulfillment_id' => $fulfillment->id,
+                        'action_type' => $lifecycleActionType,
+                        'status' => 'Tersedia',
+                        'condition' => $asset->condition ?? 'Bagus',
+                        'location_id' => $location->id,
+                        'start_date' => $now,
+                        'end_date' => null,
+                        'actor_id' => $request->user()->id,
+                        'note' => "Pengembalian {$actionLabel} {$req->request_number} dari {$userName} ({$userNpk}).",
+                        'previous_state' => ['status' => $asset->status],
+                        'new_state' => ['status' => 'Tersedia'],
+                    ]);
                 }
             }
 
@@ -393,7 +459,7 @@ class BorrowedController extends Controller
                 ->whereNull('return_id')
                 ->exists();
 
-            $actionPrefix = ($req->specific_type_key === 'lt') ? 'Penugasan' : 'Peminjaman';
+            $actionPrefix = ($req->specific_type_key === 'lt') ? 'Assignment' : 'Peminjaman';
             $adminName = $request->user()->name;
             $oldStatus = $req->status;
 
@@ -410,7 +476,7 @@ class BorrowedController extends Controller
                 // 2. Advance whole request status to success and log complete finish
                 $req->update(['status' => 'success']);
 
-                $actionName = ($req->specific_type_key === 'lt') ? 'penugasan' : 'peminjaman';
+                $actionName = ($req->specific_type_key === 'lt') ? 'assignment' : 'peminjaman';
 
                 RequestStatusLog::create([
                     'request_id' => $req->id,
@@ -430,6 +496,6 @@ class BorrowedController extends Controller
             }
         });
 
-        return redirect()->back()->with('success', 'Peminjaman/penugasan aset berhasil diselesaikan.');
+        return redirect()->back()->with('success', 'Peminjaman/assignment aset berhasil diselesaikan.');
     }
 }

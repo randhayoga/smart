@@ -77,10 +77,31 @@ return new class extends Migration {
             $table->index(['asset_id', 'assigned_at', 'handover_id', 'return_id'], 'rf_asset_status_idx');
             $table->index(['lot_id', 'assigned_at', 'handover_id'], 'rf_lot_status_idx');
         });
+
+        Schema::table('asset_lifecycles', function (Blueprint $table) {
+            $table->unsignedBigInteger('request_id')->nullable()->index();
+            $table->unsignedBigInteger('fulfillment_id')->nullable()->index();
+
+            $table->foreign('request_id', 'fk_asset_lifecycles_request_id')
+                ->references('id')
+                ->on('requests')
+                ->noActionOnDelete();
+
+            $table->foreign('fulfillment_id', 'fk_asset_lifecycles_fulfillment_id')
+                ->references('id')
+                ->on('request_fulfillments')
+                ->noActionOnDelete();
+        });
     }
 
     public function down(): void
     {
+        Schema::table('asset_lifecycles', function (Blueprint $table) {
+            $table->dropForeign('fk_asset_lifecycles_request_id');
+            $table->dropForeign('fk_asset_lifecycles_fulfillment_id');
+            $table->dropColumn(['request_id', 'fulfillment_id']);
+        });
+
         Schema::dropIfExists('request_fulfillments');
         Schema::dropIfExists('request_status_logs');
         Schema::dropIfExists('request_returns');

@@ -421,6 +421,15 @@ class ProcessManualRequest
             'note' => null,
         ]);
 
+        $borrowerUser = \App\Models\User::find($userId);
+        $userName = $borrowerUser?->name ?? '-';
+        $userNpk = $borrowerUser?->employee_id ?? '-';
+        $actionTypeLabel = match ($requestType) {
+            'st' => 'Peminjaman (ST)',
+            'rent' => 'Peminjaman (Sewa)',
+            default => 'Assignment (LT)',
+        };
+
         foreach ($itemsPayload as $itemInput) {
             $assetId = (int) $itemInput['asset_id'];
             $itemReasoning = !empty($itemInput['reasoning']) ? trim((string) $itemInput['reasoning']) : null;
@@ -439,7 +448,7 @@ class ProcessManualRequest
                 'status' => 'fulfilled',
             ]);
 
-            RequestFulfillment::create([
+            $fulfillment = RequestFulfillment::create([
                 'request_item_id' => $requestItem->id,
                 'asset_id' => $asset->id,
                 'lot_id' => null,
@@ -453,8 +462,14 @@ class ProcessManualRequest
                 ->whereNull('end_date')
                 ->update(['end_date' => $startDate]);
 
+            $reasoning = $itemReasoning ?? $requestReasoning;
+            $catatanPart = !empty($reasoning) ? ' Catatan: ' . rtrim($reasoning, '.') . '.' : '';
+            $lifecycleNote = "{$actionTypeLabel} {$requestNumber} untuk {$userName} ({$userNpk}).{$catatanPart}";
+
             AssetLifecycle::create([
                 'asset_id' => $asset->id,
+                'request_id' => $smartRequest->id,
+                'fulfillment_id' => $fulfillment->id,
                 'action_type' => $lifecycleActionType,
                 'status' => $newAssetStatus,
                 'condition' => $asset->condition ?? 'Bagus',
@@ -462,7 +477,7 @@ class ProcessManualRequest
                 'start_date' => $startDate,
                 'end_date' => null,
                 'actor_id' => $userId,
-                'note' => $itemReasoning ?? $requestReasoning ?? "{$lifecycleActionType} manual [{$requestNumber}]",
+                'note' => $lifecycleNote,
                 'previous_state' => ['status' => 'Tersedia'],
                 'new_state' => [
                     'status' => $newAssetStatus,

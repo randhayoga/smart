@@ -349,6 +349,45 @@ class UnitActivationApprovalControllerTest extends TestCase
         );
     }
 
+    public function test_activation_approval_resource_resolves_comp_specification(): void
+    {
+        $admin = $this->createAdmin();
+        $ifsManager = $this->createIfsManager();
+
+        $compCategory = \App\Models\Master\Category::factory()->create(['code' => 'COMP', 'name' => 'Computer']);
+        $compType = \App\Models\Master\Type::factory()->create(['category_id' => $compCategory->id, 'name' => 'Laptop']);
+        $model = \App\Models\Inventory\Model::factory()->create([
+            'type_id' => $compType->id,
+            'name' => 'ThinkPad T14',
+            'specification' => 'Generic Spec',
+        ]);
+        $lot = Lot::factory()->create(['model_id' => $model->id]);
+        $unit = Unit::factory()->create([
+            'lot_id' => $lot->id,
+            'status' => 'Belum Diverifikasi',
+            'condition' => 'Bagus',
+            'comp_specification' => 'Intel Core i7 32GB 1TB SSD Custom',
+        ]);
+
+        $approval = UnitActivationApproval::create([
+            'unit_id' => $unit->id,
+            'requester_id' => $admin->id,
+            'decision' => 'pending',
+            'requested_at' => now(),
+        ]);
+
+        $response = $this->actingAs($ifsManager)->get(route('smart.approve-activation'));
+
+        $response->assertOk();
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('Smart/Manager/PendingActivationApprovals')
+            ->where('approvals.0.id', $approval->id)
+            ->where('approvals.0.comp_specification', 'Intel Core i7 32GB 1TB SSD Custom')
+            ->where('approvals.0.specification', 'Intel Core i7 32GB 1TB SSD Custom')
+            ->where('approvals.0.unit_details.comp_specification', 'Intel Core i7 32GB 1TB SSD Custom')
+        );
+    }
+
     public function test_ifs_manager_can_view_sudah_diproses_activation(): void
     {
         $admin = $this->createAdmin();

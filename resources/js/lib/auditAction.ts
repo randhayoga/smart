@@ -2,6 +2,9 @@
  * Audit Action standardization and localization utilities.
  * Single source of truth for audit trail actions across the application.
  */
+import { h, type VNode } from 'vue';
+import { router } from '@inertiajs/vue3';
+import { ExternalLink } from 'lucide-vue-next';
 import { i18n } from '@/locales';
 
 export const AUDIT_ACTION_KEY_MAP: Record<string, string> = {
@@ -77,4 +80,63 @@ export function getLocalizedAuditAction(
     }
   }
   return action;
+}
+
+/**
+ * Renders an audit log note, automatically turning any associated request number
+ * into an interactive, clickable SPA link to the request detail page.
+ */
+export function renderAuditNote(
+  note: string | null | undefined,
+  requestId?: number | null,
+  requestNumber?: string | null
+): VNode | string {
+  if (!note || note === '-') return '-';
+
+  const formatLine = (line: string): (string | VNode)[] => {
+    if (!requestId) return [line];
+
+    const targetNumber = requestNumber || line.match(/\b\d{6}-\d{4}\b/)?.[0];
+    if (!targetNumber || !line.includes(targetNumber)) {
+      return [line];
+    }
+
+    const idx = line.indexOf(targetNumber);
+    const before = line.substring(0, idx);
+    const after = line.substring(idx + targetNumber.length);
+
+    const linkVNode = h(
+      'a',
+      {
+        href: `/smart/borrowed/${requestId}`,
+        class: 'text-primary font-semibold hover:underline inline-flex items-center gap-1 cursor-pointer no-underline',
+        onClick: (e: MouseEvent) => {
+          e.preventDefault();
+          e.stopPropagation();
+          router.visit(`/smart/borrowed/${requestId}`);
+        },
+      },
+      [
+        targetNumber,
+        h(ExternalLink, { class: 'inline-block h-3 w-3 text-primary/70 shrink-0' }),
+      ]
+    );
+
+    return [before, linkVNode, after];
+  };
+
+  if (note.includes(' | ')) {
+    const lines = note.split(' | ');
+    return h(
+      'ul',
+      { class: 'list-disc pl-4 space-y-0.5 text-muted-foreground whitespace-normal text-left min-w-[200px]' },
+      lines.map((line) => h('li', {}, formatLine(line)))
+    );
+  }
+
+  return h(
+    'div',
+    { class: 'text-muted-foreground whitespace-normal text-left min-w-[200px]' },
+    formatLine(note)
+  );
 }

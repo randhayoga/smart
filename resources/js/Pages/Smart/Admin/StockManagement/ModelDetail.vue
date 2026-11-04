@@ -252,6 +252,7 @@ onUnmounted(() => {
         :vendors="props.vendors"
         :locations="props.locations"
         :projects="props.projects"
+        :units="props.units"
       />
 
       <LotListTab

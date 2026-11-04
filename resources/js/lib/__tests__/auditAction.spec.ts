@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { getLocalizedAuditAction, AUDIT_ACTION_KEY_MAP } from '../auditAction';
+import { getLocalizedAuditAction, AUDIT_ACTION_KEY_MAP, renderAuditNote } from '../auditAction';
 import { setI18nLanguage } from '@/locales';
+import { isVNode } from 'vue';
 
 describe('auditAction utility', () => {
   beforeEach(() => {
@@ -68,5 +69,42 @@ describe('auditAction utility', () => {
     expect(getLocalizedAuditAction(undefined)).toBe('-');
     expect(getLocalizedAuditAction('-')).toBe('-');
     expect(getLocalizedAuditAction('UnknownAction123')).toBe('UnknownAction123');
+  });
+
+  describe('renderAuditNote', () => {
+    it('returns dash for null, undefined or empty notes', () => {
+      expect(renderAuditNote(null)).toBe('-');
+      expect(renderAuditNote(undefined)).toBe('-');
+      expect(renderAuditNote('')).toBe('-');
+      expect(renderAuditNote('-')).toBe('-');
+    });
+
+    it('returns plain text when no requestId is provided', () => {
+      const vnode = renderAuditNote('Peminjaman (ST) 112026-0002 untuk Yoga (265656).');
+      expect(isVNode(vnode)).toBe(true);
+      expect((vnode as any).children[0]).toBe('Peminjaman (ST) 112026-0002 untuk Yoga (265656).');
+    });
+
+    it('renders interactive link when requestId and request number are present in note', () => {
+      const vnode = renderAuditNote(
+        'Peminjaman (ST) 112026-0002 untuk Yoga (265656). Catatan: Keperluan site.',
+        42,
+        '112026-0002'
+      );
+      expect(isVNode(vnode)).toBe(true);
+      const children = (vnode as any).children;
+      expect(children).toHaveLength(3);
+      expect(children[0]).toBe('Peminjaman (ST) ');
+      expect(isVNode(children[1])).toBe(true);
+      expect(children[1].props.href).toBe('/smart/borrowed/42');
+      expect(children[2]).toBe(' untuk Yoga (265656). Catatan: Keperluan site.');
+    });
+
+    it('renders list items when note contains pipeline delimiter', () => {
+      const vnode = renderAuditNote('Line 1 | Line 2', null);
+      expect(isVNode(vnode)).toBe(true);
+      expect((vnode as any).type).toBe('ul');
+      expect((vnode as any).children).toHaveLength(2);
+    });
   });
 });

@@ -204,7 +204,7 @@ const handleConfirm = () => {
       onError: (errs) => {
         isSubmitting.value = false;
         errors.value = errs;
-        const msg = Object.values(errs).join(', ') || 'Gagal menyelesaikan peminjaman/penugasan.';
+        const msg = Object.values(errs).join(', ') || 'Gagal menyelesaikan peminjaman/assignment.';
         toast.error(msg);
       },
     }

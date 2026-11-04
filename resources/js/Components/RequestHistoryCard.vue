@@ -23,7 +23,7 @@
 import { ref } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import { Button } from '@/Components/ui/button';
-import { ChevronDown, ChevronUp, Trash2, Calendar } from 'lucide-vue-next';
+import { ChevronDown, Trash2, Calendar } from 'lucide-vue-next';
 import { formatDate } from '@/lib/utils';
 import { 
   getRequestStatusLabel, 
@@ -239,9 +239,11 @@ const toggleExpanded = () => {
             @click="toggleExpanded"
             class="text-xs font-semibold text-primary hover:underline flex items-center gap-1 transition-all cursor-pointer"
           >
-            <span>{{ isExpanded ? $t('requests.hideItems') : $t('requests.viewItems') }} ({{ request.items.length }})</span>
-            <ChevronUp v-if="isExpanded" class="w-3.5 h-3.5" />
-            <ChevronDown v-else class="w-3.5 h-3.5" />
+            <span>{{ $t('requests.viewItems') }} ({{ request.items.length }})</span>
+            <ChevronDown 
+              class="w-3.5 h-3.5 transition-transform duration-200 transform" 
+              :class="{ 'rotate-180': isExpanded }"
+            />
           </button>
 
           <!-- Collapsible Items List Drawer -->

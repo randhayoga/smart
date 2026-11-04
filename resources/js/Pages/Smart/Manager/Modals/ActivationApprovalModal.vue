@@ -7,7 +7,7 @@
 import { ref, computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useModalLock } from '@/composables/useModalLock';
-import { X, ThumbsUp, Ban, FileText } from 'lucide-vue-next';
+import { X, ThumbsUp, Ban, FileText, ChevronDown } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
 import { formatDate, formatLocation } from '@/lib/utils';
 import Tabs from '@/Components/Tabs.vue';
@@ -33,6 +33,7 @@ const { t, te } = useI18n();
 useModalLock(computed(() => props.open && !!props.approval));
 
 const activeTab = ref<'detail' | 'audit'>('detail');
+const showMoreInfo = ref(false);
 
 const tabList = computed(() => [t('approvals.assetDetail'), t('approvals.auditTrail')]);
 
@@ -50,6 +51,7 @@ const currentTabLabel = computed({
 watch(() => props.open, (newVal) => {
   if (newVal) {
     activeTab.value = 'detail';
+    showMoreInfo.value = false;
   }
 });
 
@@ -114,6 +116,59 @@ const getConditionLabel = (cond?: string | null) => {
   const key = CONDITION_KEY_MAP[cond.toLowerCase()];
   return key && te(key) ? t(key) : cond;
 };
+
+const isComp = computed(() => {
+  const catCode = props.approval?.unit_details?.category_code || 
+                  props.approval?.unit_details?.barang_category_code || 
+                  props.approval?.category_code || 
+                  props.approval?.model_category_code || '';
+  if (catCode === 'COMP') return true;
+  const cat = props.approval?.category || props.approval?.unit_details?.category || '';
+  return cat === 'Computer' || cat === 'Komputer' || cat === 'computer' || cat === 'komputer' || cat === 'comp';
+});
+
+const modelDisplay = computed(() => {
+  if (!props.approval) return '-';
+  const brand = props.approval.brand && props.approval.brand !== '-' ? props.approval.brand : '';
+  const nama = (props.approval.name || props.approval.nama) && (props.approval.name || props.approval.nama) !== '-' ? (props.approval.name || props.approval.nama) : '';
+  const spec = isComp.value
+    ? (props.approval.unit_details?.comp_specification || props.approval.comp_specification || props.approval.unit_details?.specification || props.approval.specification || '')
+    : (props.approval.specification && props.approval.specification !== '-' ? props.approval.specification : (props.approval.unit_details?.specification || ''));
+
+  return [brand, nama, spec].filter(s => Boolean(s && String(s).trim() !== '' && String(s).trim() !== '-')).join(' ') || '-';
+});
+
+const categoryWithSubcategory = computed(() => {
+  if (!props.approval) return '-';
+  const cat = props.approval.category;
+  const sub = props.approval.subcategory;
+  if (cat && sub && cat !== '-' && sub !== '-') {
+    return `${cat} (${sub})`;
+  }
+  return cat || sub || '-';
+});
+
+const burdenDisplay = computed(() => {
+  const unit = props.approval?.unit_details;
+  const burden = unit?.burden || props.approval?.burden;
+  if (!burden) return '-';
+  if (burden === 'Project') {
+    const prjNo = unit?.project_no || props.approval?.project_no;
+    const prjName = unit?.project_name || props.approval?.project_name;
+    if (prjNo && prjName) return `Project [${prjNo}] ${prjName}`;
+    if (prjNo) return `Project [${prjNo}]`;
+    if (prjName) return `Project ${prjName}`;
+    return 'Project';
+  }
+  return burden;
+});
+
+const getClassificationLabel = (c?: string | null) => {
+  if (!c) return '';
+  if (c === 'Aset') return t('inventory.classificationAsset');
+  if (c === 'Inventaris') return t('inventory.classificationInventory');
+  return c;
+};
 </script>
 
 <template>
@@ -171,113 +226,170 @@ const getConditionLabel = (cond?: string | null) => {
                   />
                 </div>
 
-                <!-- Details Columns -->
-                <div class="flex-grow grid grid-cols-1 md:grid-cols-12 gap-4 text-foreground">
-                  <!-- Column 1: Item Info -->
-                  <div class="md:col-span-3">
-                    <p class="font-bold text-foreground"><span class="text-foreground">{{ $t('approvals.typeCode') }}</span> {{ approval.unit_details.barang_code }}</p>
-                    <p class="font-bold text-foreground"><span class="text-foreground">{{ $t('approvals.brandLabel') }}</span> {{ approval.brand }}</p>
-                    <p class="font-bold text-foreground"><span class="text-foreground">{{ $t('approvals.nameLabel') }}</span> {{ approval.nama }}</p>
-                    <p class="font-bold text-foreground"><span class="text-foreground">{{ $t('approvals.specLabel') }}</span> {{ approval.specification }}</p>
-                    <p class="text-foreground">{{ $t('approvals.categoryLabel') }} {{ approval.category }}</p>
-                    <p class="text-foreground">{{ $t('approvals.subcategoryLabel') }} {{ approval.subcategory }}</p>
-                    <p class="text-foreground">{{ $t('approvals.unitLabel') }} {{ approval.unit_details.barang_unit }}</p>
+                <!-- Details Single Column (takes full horizontal space) -->
+                <div class="flex-grow flex flex-col gap-1.5 text-foreground">
+                  <!-- 1. Nomor Aset -->
+                  <p class="font-bold text-foreground">
+                    <span class="text-foreground">{{ t('inventory.assetCode') }}:</span> {{ approval.asset_code }}
+                  </p>
+
+                  <!-- 2. Nomor Aset Lama (only shown when legacy_number is different than number) -->
+                  <p v-if="approval.unit_details?.legacy_number && String(approval.unit_details.legacy_number).trim() !== String(approval.asset_code).trim()" class="text-foreground">
+                    <span class="text-foreground">{{ t('inventory.legacyNumber') }}:</span> {{ approval.unit_details.legacy_number }}
+                  </p>
+
+                  <!-- 3. Kategori (shows category + type) -->
+                  <p class="font-bold text-foreground">
+                    <span class="text-foreground">{{ t('inventory.category') }}:</span> {{ categoryWithSubcategory }}
+                  </p>
+
+                  <!-- 4. Model (shows brand + name + spec) [dynamic, shows asset's spec for COMP, model's spec for anything else] -->
+                  <p class="font-bold text-foreground">
+                    <span class="text-foreground">{{ t('inventory.modelLabel') }}:</span> {{ modelDisplay }}
+                  </p>
+
+                  <!-- 5. Nopol (only for vehicle category) -->
+                  <p v-if="isVehicle(approval)" class="font-bold text-foreground">
+                    <span class="text-foreground">{{ t('inventory.nopol') }}:</span> {{ approval.unit_details?.vehicle_registration || '-' }}
+                  </p>
+
+                  <!-- 6. Tanggal Kedaluwarsa Lisensi (only for Software) -->
+                  <p v-if="isSoft(approval)" class="text-foreground">
+                    <span class="text-foreground">{{ t('inventory.licenseExpDate') }}:</span>
+                    {{ approval.unit_details?.license_exp_date ? formatDate(approval.unit_details.license_exp_date) : t('inventory.perpetual') }}
+                  </p>
+
+                  <!-- 7. Pengingat Perpanjangan (only for Software) -->
+                  <p v-if="isSoft(approval) && approval.unit_details?.license_exp_date" class="text-foreground">
+                    <span class="text-foreground">{{ t('inventory.renewalReminder') }}:</span>
+                    {{ approval.unit_details?.renewal_reminder === 0 ? t('inventory.renewalReminderDisabled') : (approval.unit_details?.renewal_reminder !== null && approval.unit_details?.renewal_reminder !== undefined ? `${approval.unit_details.renewal_reminder} ${t('inventory.renewalReminderSuffix')}` : '-') }}
+                  </p>
+
+                  <!-- 8. Status & Decision flow entries -->
+                  <!-- Pending Mode: Status & Kondisi -->
+                  <div v-if="mode === 'pending'" class="flex items-center gap-1.5 flex-wrap">
+                    <span>{{ hasCondition(approval.unit_details?.condition ?? approval.condition) && !isSoft(approval) ? t('inventory.statusAndCondition') : t('inventory.status') }}:</span>
+                    <StatusBadge 
+                      :status="approval.unit_details?.status ?? approval.status" 
+                      :approval-status="approval.unit_details?.approval_status ?? approval.approval_status ?? 'Pending:DM'" 
+                    />
+                    <span v-if="hasCondition(approval.unit_details?.condition ?? approval.condition) && !isSoft(approval)" :class="getConditionClass(approval.unit_details?.condition ?? approval.condition)">
+                      {{ getConditionLabel(approval.unit_details?.condition ?? approval.condition) }}
+                    </span>
                   </div>
 
-                  <!-- Column 2: LOT Info -->
-                  <div class="md:col-span-4">
-                    <p class="font-bold text-foreground"><span class="text-foreground">{{ $t('approvals.lotCodeLabel') }}</span> {{ approval.unit_details.lot_code }}</p>
-                    <p class="text-foreground">{{ $t('approvals.organizerLabel') }} {{ approval.unit_details.organizer }}</p>
-                    <p class="text-foreground">{{ $t('approvals.regDateLabel') }} {{ formatDate(approval.unit_details.date_of_receipt) }}</p>
-                    <p class="text-foreground">{{ $t('approvals.ageLabel') }} {{ approval.unit_details.age !== undefined && approval.unit_details.age !== null ? `${approval.unit_details.age} ${$t('approvals.years')}` : '-' }}</p>
-                    <p class="text-foreground">{{ $t('approvals.vendorLabel') }} {{ approval.unit_details.vendor }}</p>
-                    <p class="text-foreground">{{ $t('approvals.poNumberLabel') }} {{ approval.unit_details.po_number }}</p>
-                  </div>
-
-                  <!-- Column 3: Asset Info -->
-                  <div class="md:col-span-5">
-                    <p class="font-bold text-foreground"><span class="text-foreground">{{ $t('approvals.assetCodeLabel') }}</span> {{ approval.asset_code }}</p>
-                    <p v-if="approval.unit_details.legacy_number" class="text-foreground"><span class="text-foreground">{{ $t('inventory.legacyNumber') }}:</span> {{ approval.unit_details.legacy_number }}</p>
-                    <!-- TNKB (Nopol) -->
-                    <p v-if="isVehicle(approval)" class="font-bold text-foreground">
-                      <span class="text-foreground">{{ $t('approvals.plateLabel') }}</span> {{ approval.unit_details.vehicle_registration || '-' }}
+                  <!-- Decided Mode: Keputusan, Status & Kondisi, Catatan Manager -->
+                  <template v-if="mode === 'decided'">
+                    <p class="text-foreground">
+                      {{ t('approvals.decisionLabel') }} 
+                      <span 
+                        :class="[
+                          'font-semibold',
+                          approval.decision === 'approved' ? 'text-emerald-600' : 'text-rose-600'
+                        ]"
+                      >
+                        {{ approval.decision === 'approved' ? t('approvals.approved') : t('approvals.rejected') }}
+                      </span>
                     </p>
 
-                    <!-- Software License Information -->
-                    <template v-if="isSoft(approval)">
-                      <p class="text-foreground">
-                        <span class="text-foreground">{{ $t('inventory.licenseExpDate') }}:</span>
-                        {{ approval.unit_details?.license_exp_date ? formatDate(approval.unit_details.license_exp_date) : $t('inventory.perpetual') }}
-                      </p>
-                      <p v-if="approval.unit_details?.license_exp_date" class="text-foreground">
-                        <span class="text-foreground">{{ $t('inventory.renewalReminder') }}:</span>
-                        {{ approval.unit_details?.renewal_reminder === 0 ? $t('inventory.renewalReminderDisabled') : (approval.unit_details?.renewal_reminder !== null && approval.unit_details?.renewal_reminder !== undefined ? `${approval.unit_details.renewal_reminder} ${$t('inventory.renewalReminderSuffix')}` : '-') }}
-                      </p>
-                    </template>
-
-                    <!-- Status & Kondisi for Pending Mode -->
-                    <div v-if="mode === 'pending'" class="flex items-center gap-1.5 flex-wrap">
-                      <span>{{ hasCondition(approval.unit_details?.condition ?? approval.condition) && !isSoft(approval) ? $t('inventory.statusAndCondition') : $t('inventory.status') }}:</span>
+                    <div class="flex items-center gap-1.5 flex-wrap">
+                      <span>{{ hasCondition(approval.unit_details?.condition ?? approval.condition) && !isSoft(approval) ? t('inventory.statusAndCondition') : t('inventory.status') }}:</span>
                       <StatusBadge 
                         :status="approval.unit_details?.status ?? approval.status" 
-                        :approval-status="approval.unit_details?.approval_status ?? approval.approval_status ?? 'Pending:DM'" 
+                        :approval-status="approval.unit_details?.approval_status ?? approval.approval_status" 
                       />
                       <span v-if="hasCondition(approval.unit_details?.condition ?? approval.condition) && !isSoft(approval)" :class="getConditionClass(approval.unit_details?.condition ?? approval.condition)">
                         {{ getConditionLabel(approval.unit_details?.condition ?? approval.condition) }}
                       </span>
                     </div>
 
-                    <!-- Quality Control for Pending Mode -->
-                    <p v-if="mode === 'pending' && !isSoft(approval)" class="text-foreground">
-                      {{ $t('inventory.qualityControl') }}:
-                      <span :class="getQcColorClass(approval.unit_details?.qc_pass ?? approval.qc_pass)">
-                        {{ formatQcStatus(approval.unit_details?.qc_pass ?? approval.qc_pass, approval.unit_details?.last_qc ?? approval.unit_details?.last_qc_formatted ?? approval.last_qc, t) }}
-                      </span>
+                    <p class="text-foreground" v-if="approval.note">
+                      {{ t('approvals.managerNoteLabel') }} <span class="italic text-muted-foreground">"{{ approval.note }}"</span>
                     </p>
+                  </template>
 
-                    <!-- Decided mode fields -->
-                    <template v-if="mode === 'decided'">
-                      <p class="text-foreground">
-                        {{ $t('approvals.decisionLabel') }} 
-                        <span 
-                          :class="[
-                            'font-semibold',
-                            approval.decision === 'approved' ? 'text-emerald-600' : 'text-rose-600'
-                          ]"
-                        >
-                          {{ approval.decision === 'approved' ? $t('approvals.approved') : $t('approvals.rejected') }}
-                        </span>
-                      </p>
+                  <!-- 9. Kondisi (when decided or standalone) -->
+                  <p v-if="!isSoft(approval) && hasCondition(approval.unit_details?.condition ?? approval.condition) && mode !== 'pending' && mode !== 'decided'" class="text-foreground">
+                    {{ t('inventory.condition') }}:
+                    <span :class="getConditionClass(approval.unit_details?.condition ?? approval.condition)">
+                      {{ getConditionLabel(approval.unit_details?.condition ?? approval.condition) }}
+                    </span>
+                  </p>
 
-                      <!-- Single Status & Kondisi showing current unit status and condition -->
-                      <div class="flex items-center gap-1.5 flex-wrap">
-                        <span>{{ hasCondition(approval.unit_details?.condition ?? approval.condition) && !isSoft(approval) ? $t('inventory.statusAndCondition') : $t('inventory.status') }}:</span>
-                        <StatusBadge 
-                          :status="approval.unit_details?.status ?? approval.status" 
-                          :approval-status="approval.unit_details?.approval_status ?? approval.approval_status" 
-                        />
-                        <span v-if="hasCondition(approval.unit_details?.condition ?? approval.condition) && !isSoft(approval)" :class="getConditionClass(approval.unit_details?.condition ?? approval.condition)">
-                          {{ getConditionLabel(approval.unit_details?.condition ?? approval.condition) }}
-                        </span>
-                      </div>
+                  <!-- 10. Quality Control -->
+                  <p v-if="!isSoft(approval)" class="text-foreground">
+                    {{ t('inventory.qualityControl') }}:
+                    <span :class="getQcColorClass(approval.unit_details?.qc_pass ?? approval.qc_pass)">
+                      {{ formatQcStatus(approval.unit_details?.qc_pass ?? approval.qc_pass, approval.unit_details?.last_qc ?? approval.unit_details?.last_qc_formatted ?? approval.last_qc, t) }}
+                    </span>
+                  </p>
 
-                      <!-- Quality Control for Decided Mode -->
-                      <p v-if="!isSoft(approval)" class="text-foreground">
-                        {{ $t('inventory.qualityControl') }}:
-                        <span :class="getQcColorClass(approval.unit_details?.qc_pass ?? approval.qc_pass)">
-                          {{ formatQcStatus(approval.unit_details?.qc_pass ?? approval.qc_pass, approval.unit_details?.last_qc ?? approval.unit_details?.last_qc_formatted ?? approval.last_qc, t) }}
-                        </span>
-                      </p>
+                  <!-- 11. Lokasi (not "Lokasi Penyimpanan") -->
+                  <p v-if="!isSoft(approval)" class="text-foreground">
+                    {{ t('inventory.location') }}: {{ formatLocation(approval.unit_details?.location, approval.unit_details?.floor, approval.unit_details?.room) }}
+                  </p>
 
-                      <p class="text-foreground mt-1.5" v-if="approval.note">
-                        {{ $t('approvals.managerNoteLabel') }} <span class="italic text-muted-foreground">"{{ approval.note }}"</span>
-                      </p>
-                    </template>
+                  <!-- 12. Umur (calculate from lot's date, clamped >= 0) -->
+                  <p class="text-foreground">
+                    {{ t('inventory.age') }}: {{ (approval.unit_details?.age !== undefined && approval.unit_details?.age !== null) || (approval.age !== undefined && approval.age !== null) ? `${Math.max(0, Number(approval.unit_details?.age ?? approval.age ?? 0))} ${t('inventory.yearUnit')}` : '-' }}
+                  </p>
 
-                    <p class="text-foreground mt-1.5">{{ $t('approvals.priceLabel') }} {{ formatRupiah(approval.unit_details.price) }}</p>
-                    <p v-if="!isSoft(approval)" class="text-foreground">{{ $t('approvals.storageLocationLabel') }} {{ formatLocation(approval.unit_details.location, approval.unit_details.floor, approval.unit_details.room) }}</p>
-                    <p class="text-foreground" v-if="mode === 'pending'">{{ $t('approvals.lastUpdateLabel') }} {{ approval.requested_at }}</p>
+                  <!-- Collapsible Toggle: Info Lebih Lanjut (Option B) -->
+                  <div class="pt-1">
+                    <button
+                      type="button"
+                      @click="showMoreInfo = !showMoreInfo"
+                      class="text-xs font-semibold text-primary hover:underline flex items-center gap-1 transition-all cursor-pointer focus:outline-none"
+                    >
+                      <span>{{ t('inventory.moreInfo') }}</span>
+                      <ChevronDown 
+                        class="w-3.5 h-3.5 transition-transform duration-200 transform" 
+                        :class="{ 'rotate-180': showMoreInfo }"
+                      />
+                    </button>
                   </div>
+
+                  <!-- Collapsible Content with GPU-accelerated animation -->
+                  <Transition
+                    enter-active-class="transition-all duration-200 ease-out"
+                    enter-from-class="opacity-0 -translate-y-1"
+                    enter-to-class="opacity-100 translate-y-0"
+                    leave-active-class="transition-all duration-150 ease-in"
+                    leave-from-class="opacity-100 translate-y-0"
+                    leave-to-class="opacity-0 -translate-y-1"
+                  >
+                    <div v-if="showMoreInfo" class="flex flex-col gap-1.5 pt-0.5">
+                      <!-- 13. Nilai -->
+                      <p class="text-foreground">
+                        {{ t('inventory.value') }}: {{ formatRupiah(approval.unit_details?.price ?? approval.price) }}
+                      </p>
+
+                      <!-- 14. Jenis peminjaman (from "Jenis") -->
+                      <p v-if="approval.unit_details?.borrowing_type || approval.unit_details?.type || approval.borrowing_type || approval.type" class="text-foreground">
+                        {{ t('inventory.borrowingType') }}: {{ approval.unit_details?.borrowing_type || approval.unit_details?.type || approval.borrowing_type || approval.type }}
+                      </p>
+
+                      <!-- 15. Klasifikasi -->
+                      <p v-if="approval.unit_details?.classification || approval.classification" class="text-foreground">
+                        {{ t('inventory.classification') }}: {{ getClassificationLabel(approval.unit_details?.classification || approval.classification) }}
+                      </p>
+
+                      <!-- 16. Organizer -->
+                      <p class="text-foreground">
+                        {{ t('inventory.organizer') }}: {{ approval.unit_details?.organizer || approval.organizer || '-' }}
+                      </p>
+
+                      <!-- 17. Pembebanan (also shows the project number if project) -->
+                      <p class="text-foreground">
+                        {{ t('inventory.burden') }}: {{ burdenDisplay }}
+                      </p>
+
+                      <!-- 18. Pembaruan Terakhir / Tanggal Pengajuan -->
+                      <p class="text-foreground">
+                        {{ t('inventory.lastUpdate') }}: {{ approval.unit_details?.updated_at || approval.updated_at || approval.requested_at || '-' }}
+                      </p>
+                    </div>
+                  </Transition>
                 </div>
               </div>
 

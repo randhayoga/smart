@@ -239,4 +239,55 @@ class AssetDeletionApprovalControllerTest extends TestCase
         $this->assertContains('Perubahan kondisi', $actionTypes);
         $this->assertContains('Pemindahan', $actionTypes);
     }
+
+    public function test_deletion_approval_resource_resolves_comp_specification(): void
+    {
+        $admin = User::factory()->create();
+        $manager = $this->createManager();
+        $role = \App\Models\Auth\Role::firstOrCreate(['name' => 'ifs_manager'], ['label' => 'IFS Manager']);
+        $permission = \App\Models\Auth\Permission::firstOrCreate(
+            ['name' => 'inventory.status_approval.decide'],
+            ['label' => 'Approve or Reject Unit Status Changes', 'group' => 'inventory']
+        );
+        $role->permissions()->syncWithoutDetaching([$permission->id]);
+        $manager->assignRole($role);
+        $manager->refresh();
+
+        $compCategory = \App\Models\Master\Category::factory()->create(['code' => 'COMP', 'name' => 'Computer']);
+        $compType = \App\Models\Master\Type::factory()->create(['category_id' => $compCategory->id, 'name' => 'PC Desktop']);
+        $model = \App\Models\Inventory\Model::factory()->create([
+            'type_id' => $compType->id,
+            'name' => 'OptiPlex 7090',
+            'specification' => 'Default Model Spec',
+        ]);
+        $lot = Lot::factory()->create(['model_id' => $model->id]);
+        $asset = Asset::factory()->create([
+            'lot_id' => $lot->id,
+            'status' => 'Rusak',
+            'approval_status' => 'Pending:DM',
+            'comp_specification' => 'Intel i9-13900 64GB RAM 2TB NVMe',
+        ]);
+
+        $approval = AssetDeletionApproval::create([
+            'asset_id' => $asset->id,
+            'requester_id' => $admin->id,
+            'decision' => 'pending',
+            'previous_status' => 'Tersedia',
+            'proposed_status' => 'Rusak',
+            'previous_condition' => 'Bagus',
+            'proposed_condition' => 'Rusak',
+            'requested_at' => now(),
+        ]);
+
+        $response = $this->actingAs($manager)->get(route('smart.approve-deletion'));
+
+        $response->assertOk();
+        $response->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+            ->component('Smart/Manager/PendingDeletionApprovals')
+            ->where('approvals.0.id', $approval->id)
+            ->where('approvals.0.comp_specification', 'Intel i9-13900 64GB RAM 2TB NVMe')
+            ->where('approvals.0.specification', 'Intel i9-13900 64GB RAM 2TB NVMe')
+            ->where('approvals.0.asset_details.comp_specification', 'Intel i9-13900 64GB RAM 2TB NVMe')
+        );
+    }
 }

@@ -25,13 +25,13 @@ export function parseAndLocalizeTimelineNote(
   // 1. Finish All Manual Borrowing / Assignment
   // Examples:
   // - "Seluruh peminjaman diselesaikan secara manual oleh Admin Alice di Ruang IFS."
-  // - "Seluruh penugasan diselesaikan secara manual oleh Admin Alice di Ruang IFS."
+  // - "Seluruh assignment diselesaikan secara manual oleh Admin Alice di Ruang IFS."
   // - "Seluruh peminjaman diselesaikan secara manual oleh Admin di Ruang IFS. Seluruh aset berstatus Tersedia."
-  const finishAllRegex = /^Seluruh\s+(peminjaman|penugasan)\s+diselesaikan\s+secara\s+manual\s+oleh\s+Admin(?:\s+([^.\n]+?))?\s+di\s+([^.\n]+?)(?:\.\s*Seluruh aset berstatus Tersedia|\.|$)/i;
+  const finishAllRegex = /^Seluruh\s+(peminjaman|penugasan|assignment)\s+diselesaikan\s+secara\s+manual\s+oleh\s+Admin(?:\s+([^.\n]+?))?\s+di\s+([^.\n]+?)(?:\.\s*Seluruh aset berstatus Tersedia|\.|$)/i;
   const matchAll = trimmed.match(finishAllRegex);
   if (matchAll) {
     const actionWord = matchAll[1].toLowerCase();
-    const isAssign = isAssignment || actionWord === 'penugasan';
+    const isAssign = isAssignment || actionWord === 'penugasan' || actionWord === 'assignment';
     const adminRaw = (matchAll[2] || '').trim() || 'Admin';
     const locationRaw = (matchAll[3] || '').trim();
 
@@ -51,13 +51,13 @@ export function parseAndLocalizeTimelineNote(
   // 2. Finish Single Asset Manual Borrowing / Assignment
   // Examples:
   // - "Peminjaman aset AST-FIN-1 diselesaikan oleh Admin Alice di Ruang Server."
-  // - "Penugasan aset AST-FIN-1 diselesaikan oleh Admin Alice di Ruang Server."
+  // - "Assignment aset AST-FIN-1 diselesaikan oleh Admin Alice di Ruang Server."
   // - "Peminjaman aset AST-FIN-1 diselesaikan oleh Admin di Ruang Server. Aset berstatus Tersedia."
-  const finishAssetRegex = /^(Peminjaman|Penugasan)\s+aset\s+([^.\n]+?)\s+diselesaikan\s+oleh\s+Admin(?:\s+([^.\n]+?))?\s+di\s+([^.\n]+?)(?:\.\s*(?:Seluruh\s+)?aset\s+(?:telah\s+)?berstatus Tersedia|\.|$)/i;
+  const finishAssetRegex = /^(Peminjaman|Penugasan|Assignment)\s+aset\s+([^.\n]+?)\s+diselesaikan\s+oleh\s+Admin(?:\s+([^.\n]+?))?\s+di\s+([^.\n]+?)(?:\.\s*(?:Seluruh\s+)?aset\s+(?:telah\s+)?berstatus Tersedia|\.|$)/i;
   const matchAsset = trimmed.match(finishAssetRegex);
   if (matchAsset) {
     const actionWord = matchAsset[1].toLowerCase();
-    const isAssign = isAssignment || actionWord === 'penugasan';
+    const isAssign = isAssignment || actionWord === 'penugasan' || actionWord === 'assignment';
     const assetCode = matchAsset[2].trim();
     const adminRaw = (matchAsset[3] || '').trim() || 'Admin';
     const locationRaw = (matchAsset[4] || '').trim();

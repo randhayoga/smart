@@ -29,6 +29,7 @@ class AuditTrailController extends Controller
             ->leftJoin('assets as a', 'a.id', '=', 'al.asset_id')
             ->leftJoin('lots as l', 'l.id', '=', 'a.lot_id')
             ->leftJoin('models as m', 'm.id', '=', 'l.model_id')
+            ->leftJoin('requests as r', 'r.id', '=', 'al.request_id')
             ->select([
                 'al.id',
                 'al.action_type',
@@ -38,6 +39,8 @@ class AuditTrailController extends Controller
                 'al.actor_id',
                 'al.note',
                 'al.previous_state',
+                'al.request_id',
+                'r.request_number',
                 'a.number as asset_number',
                 'm.name as model_name',
             ])
@@ -74,6 +77,8 @@ class AuditTrailController extends Controller
                 'durasi' => AssetLifecycle::formatDurationRange($row->start_date, $row->end_date),
                 'catatan' => $row->note ?? '-',
                 'proof_url' => $proofUrl,
+                'request_id' => $row->request_id ? (int) $row->request_id : null,
+                'request_number' => $row->request_number ?? null,
             ];
         });
 

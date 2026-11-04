@@ -4,7 +4,7 @@
  */
 import { ref } from 'vue';
 import { Link } from '@inertiajs/vue3';
-import { ChevronDown, ChevronUp } from 'lucide-vue-next';
+import { ChevronDown } from 'lucide-vue-next';
 import { formatDate } from '@/lib/utils';
 import { 
   getRequestStatusLabel, 
@@ -149,9 +149,11 @@ const toggleExpanded = () => {
             @click="toggleExpanded"
             class="text-xs font-bold text-[#6366F1] hover:opacity-85 flex items-center gap-1 transition-all"
           >
-            <span>{{ isExpanded ? $t('requests.hideItems') : $t('requests.viewItems') }}</span>
-            <ChevronUp v-if="isExpanded" class="w-3.5 h-3.5" />
-            <ChevronDown v-else class="w-3.5 h-3.5" />
+            <span>{{ $t('requests.viewItems') }}</span>
+            <ChevronDown 
+              class="w-3.5 h-3.5 transition-transform duration-200 transform" 
+              :class="{ 'rotate-180': isExpanded }"
+            />
           </button>
 
           <!-- Collapsible Content -->

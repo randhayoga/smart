@@ -42,7 +42,7 @@ describe('timelineNoteLocalization utility', () => {
     });
 
     it('localizes finish all assignment note in English and Indonesian', () => {
-      const note = 'Seluruh penugasan diselesaikan secara manual oleh Admin Bob di Ruang Server.';
+      const note = 'Seluruh assignment diselesaikan secara manual oleh Admin Bob di Ruang Server.';
 
       const enRes = parseAndLocalizeTimelineNote(note, tEn, true);
       expect(enRes).not.toBeNull();
@@ -51,8 +51,8 @@ describe('timelineNoteLocalization utility', () => {
 
       const idRes = parseAndLocalizeTimelineNote(note, tId, true);
       expect(idRes).not.toBeNull();
-      expect(idRes?.title).toBe('Penugasan Selesai');
-      expect(idRes?.description).toContain('Seluruh penugasan diselesaikan secara manual oleh Admin <span class="font-bold text-foreground">Bob</span> di <span class="font-bold text-foreground">Ruang Server</span>.');
+      expect(idRes?.title).toBe('Assignment Selesai');
+      expect(idRes?.description).toContain('Seluruh assignment diselesaikan secara manual oleh Admin <span class="font-bold text-foreground">Bob</span> di <span class="font-bold text-foreground">Ruang Server</span>.');
     });
 
     it('handles legacy finish all note format with status description suffix', () => {
@@ -81,7 +81,7 @@ describe('timelineNoteLocalization utility', () => {
     });
 
     it('localizes single asset assignment completion in English and Indonesian', () => {
-      const note = 'Penugasan aset AST-LT-99 diselesaikan oleh Admin Bob di Ruang IT.';
+      const note = 'Assignment aset AST-LT-99 diselesaikan oleh Admin Bob di Ruang IT.';
 
       const enRes = parseAndLocalizeTimelineNote(note, tEn, true);
       expect(enRes).not.toBeNull();
@@ -91,7 +91,7 @@ describe('timelineNoteLocalization utility', () => {
       const idRes = parseAndLocalizeTimelineNote(note, tId, true);
       expect(idRes).not.toBeNull();
       expect(idRes?.title).toBe('Pengembalian Aset');
-      expect(idRes?.description).toContain('Penugasan aset <span class="font-bold text-foreground">AST-LT-99</span> diselesaikan oleh Admin <span class="font-bold text-foreground">Bob</span> di <span class="font-bold text-foreground">Ruang IT</span>.');
+      expect(idRes?.description).toContain('Assignment aset <span class="font-bold text-foreground">AST-LT-99</span> diselesaikan oleh Admin <span class="font-bold text-foreground">Bob</span> di <span class="font-bold text-foreground">Ruang IT</span>.');
     });
 
     it('handles legacy single asset note format with status description suffix', () => {

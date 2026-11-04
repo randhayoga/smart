@@ -38,6 +38,7 @@ class EmployeeLoanController extends Controller
                 'asset.lot.organizer',
                 'asset.lot.vendor',
                 'asset.lifecycles.actor',
+                'asset.lifecycles.request:id,request_number',
                 'requestItem.request.handover',
                 'requestItem.request.return',
                 'handover',
@@ -143,6 +144,8 @@ class EmployeeLoanController extends Controller
                         'aktor' => ($log->action_type === 'Approval' && str_contains($log->note ?? '', 'BoD/BoC')) ? 'BoD/BoC' : ($log->actor->name ?? '-'),
                         'durasi' => $log->formatted_duration,
                         'catatan' => $log->note ?? '-',
+                        'request_id' => $log->request_id,
+                        'request_number' => $log->request?->request_number,
                     ];
                 })->toArray(),
             ] : null;

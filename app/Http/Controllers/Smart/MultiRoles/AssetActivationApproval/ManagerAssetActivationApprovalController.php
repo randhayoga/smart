@@ -31,6 +31,7 @@ class ManagerAssetActivationApprovalController extends Controller
             'asset.lot.vendor',
             'asset.lot.legacyVendor',
             'asset.location.parent.parent',
+            'asset.project:id_project,no_project,project_name',
             'asset.lifecycles.actor',
             'requester',
             'approver'

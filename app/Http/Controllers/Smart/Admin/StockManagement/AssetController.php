@@ -676,6 +676,7 @@ class AssetController extends Controller
             'lot.legacyVendor',
             'legacyVendor',
             'lifecycles.actor',
+            'lifecycles.request:id,request_number',
             'fulfillments' => fn ($q) => $q->whereNull('return_id')->with('requestItem.request.user'),
         ]);
 
@@ -782,6 +783,7 @@ class AssetController extends Controller
 
             // Active borrowing info
             'active_borrowing' => $asset->active_borrowing,
+            'request_id' => $asset->active_borrowing['request_id'] ?? $asset->lifecycles->whereNull('end_date')->firstWhere('request_id', '!==', null)?->request_id,
 
             // Lifecycle history for AuditTrailTab
             'lifecycles' => $asset->lifecycles->map(function ($log) {
@@ -798,6 +800,8 @@ class AssetController extends Controller
                     'catatan' => $log->note ?? '-',
                     'durasi' => $log->formatted_duration,
                     'proof_url' => is_array($log->previous_state) ? ($log->previous_state['proof_url'] ?? null) : null,
+                    'request_id' => $log->request_id,
+                    'request_number' => $log->request?->request_number,
                 ];
             })->values()->toArray(),
 

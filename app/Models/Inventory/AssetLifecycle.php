@@ -21,6 +21,8 @@ class AssetLifecycle extends Model
     protected $fillable = [
         'asset_id',
         'unit_id',
+        'request_id',
+        'fulfillment_id',
         'action_type',
         'status',
         'condition',
@@ -41,7 +43,25 @@ class AssetLifecycle extends Model
         'actor_id' => 'integer',
         'asset_id' => 'integer',
         'location_id' => 'integer',
+        'request_id' => 'integer',
+        'fulfillment_id' => 'integer',
     ];
+
+    /**
+     * The request associated with this lifecycle entry (if created by a request).
+     */
+    public function request(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\Request\Request::class, 'request_id');
+    }
+
+    /**
+     * The item fulfillment associated with this lifecycle entry.
+     */
+    public function fulfillment(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\Request\RequestFulfillment::class, 'fulfillment_id');
+    }
 
     /**
      * The asset associated with this lifecycle entry.

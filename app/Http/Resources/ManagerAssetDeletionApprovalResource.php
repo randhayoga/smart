@@ -65,7 +65,12 @@ class ManagerAssetDeletionApprovalResource extends JsonResource
         $typeName = $model?->type?->name ?? '-';
         $brandName = $model?->brand?->name ?? '-';
         $modelName = $model?->name ?? '-';
-        $specName = $model?->specification ?? '-';
+
+        $isComp = ($catCode === 'COMP') || ($catName === 'Computer') || ($catName === 'Komputer');
+        $compSpec = $asset?->comp_specification;
+        $effectiveSpec = ($isComp && $compSpec !== null && $compSpec !== '')
+            ? $compSpec
+            : ($model?->specification ?? '-');
 
         $assetDetails = [
             'id' => $asset?->id,
@@ -82,7 +87,15 @@ class ManagerAssetDeletionApprovalResource extends JsonResource
             'category_code' => $catCode,
             'model_category_code' => $catCode,
             'classification' => $asset?->classification ?? 'Aset',
+            'borrowing_type' => $asset?->borrowing_type,
             'type' => $asset?->borrowing_type ?? $typeName,
+            'organizer' => $asset?->organizer ?? ($lot?->organizer->name ?? '-'),
+            'burden' => $asset?->burden,
+            'project_no' => $asset?->project?->no_project,
+            'project_name' => $asset?->project?->project_name,
+            'updated_at' => $asset?->updated_at ? $asset->updated_at->format('d M Y, H:i') : null,
+            'floor' => $asset?->floor,
+            'room' => $asset?->room,
             'price' => $asset?->price ? number_format($asset->price, 0, ',', '.') : '-',
             'image_url' => $asset?->image_url ? '/media/' . $asset->image_url : ($lot?->image_url ? '/media/' . $lot->image_url : null),
             'vehicle_registration' => $asset?->vehicle_registration ?? '-',
@@ -90,21 +103,21 @@ class ManagerAssetDeletionApprovalResource extends JsonResource
 
             'lot_number' => $lot?->number ?? '-',
             'lot_code' => $lot?->number ?? '-',
-            'organizer' => $lot?->organizer->name ?? '-',
             'purchase_grant_date' => $lot?->purchase_grant_date ? $lot->purchase_grant_date->format('d-m-Y') : '-',
-            'age' => $lot ? $lot->age : null,
+            'age' => $lot?->age !== null ? max(0, (int) $lot->age) : 0,
             'vendor' => $lot?->vendor_name ?? '-',
             'po_number' => $lot?->po_number ?? '-',
             'model_code' => $model?->number ?? '-',
             'model_number' => $model?->number ?? '-',
             'model_name' => $modelName,
-            'model_spec' => $specName,
+            'model_spec' => $model?->specification ?? '-',
             'name' => $modelName,
             'nama' => $modelName,
             'brand' => $brandName,
             'category' => $catName,
             'subcategory' => $typeName,
-            'specification' => $specName,
+            'specification' => $effectiveSpec,
+            'comp_specification' => $compSpec,
             'uom' => $model?->uom?->name ?? '-',
             'lifecycles' => $lifecycles,
         ];
@@ -123,7 +136,8 @@ class ManagerAssetDeletionApprovalResource extends JsonResource
             'brand' => $brandName,
             'name' => $modelName,
             'nama' => $modelName,
-            'specification' => $specName,
+            'specification' => $effectiveSpec,
+            'comp_specification' => $compSpec,
             'qc_pass' => $asset?->qc_pass,
             'last_qc' => $asset?->last_qc?->format('Y-m-d H:i:s'),
             'last_qc_formatted' => $asset?->last_qc?->format('d-m-Y'),
@@ -136,6 +150,15 @@ class ManagerAssetDeletionApprovalResource extends JsonResource
             'renewal_reminder' => $asset?->renewal_reminder,
             'decision' => $this->decision,
             'classification' => $asset?->classification ?? 'Aset',
+            'borrowing_type' => $asset?->borrowing_type,
+            'organizer' => $asset?->organizer ?? ($lot?->organizer->name ?? '-'),
+            'burden' => $asset?->burden,
+            'project_no' => $asset?->project?->no_project,
+            'project_name' => $asset?->project?->project_name,
+            'updated_at' => $asset?->updated_at ? $asset->updated_at->format('d M Y, H:i') : null,
+            'floor' => $asset?->floor,
+            'room' => $asset?->room,
+            'age' => $lot?->age !== null ? max(0, (int) $lot->age) : 0,
             'admin_note' => $this->admin_note,
             'dm_note' => $this->dm_note,
             'note' => $this->dm_note,

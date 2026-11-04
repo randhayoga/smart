@@ -4,9 +4,10 @@
  */
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { Plus } from 'lucide-vue-next';
+import { Plus, ExternalLink } from 'lucide-vue-next';
 import { Button } from "@/Components/ui/button";
 import { formatDate, formatLocation } from '@/lib/utils';
+import AssetPhotoGrid from '@/Components/AssetPhotoGrid.vue';
 import CreateAssetModal from '../Modals/CreateAssetModal.vue';
 import NonConsumableListTab from './NonConsumableListTab.vue';
 
@@ -102,6 +103,44 @@ const formatRupiah = (val: number | string | null | undefined) => {
   return `Rp${formatted}`;
 };
 
+const distinctPhotos = computed(() => {
+  if (props.lot?.imageUrl) return [props.lot.imageUrl];
+  const photos: string[] = [];
+  const seen = new Set<string>();
+  for (const u of props.units || []) {
+    if (u.image_url && !seen.has(u.image_url)) {
+      seen.add(u.image_url);
+      photos.push(u.image_url);
+      if (photos.length === 4) break;
+    }
+  }
+  return photos;
+});
+
+const lotCategoryWithSubcategory = computed(() => {
+  const cat = props.lot?.barang_category;
+  const sub = props.lot?.barang_subcategory;
+  if (cat && sub && cat !== '-' && sub !== '-') {
+    return `${cat} (${sub})`;
+  }
+  return cat || sub || '-';
+});
+
+const lotModelDisplay = computed(() => {
+  const brand = props.lot?.barang_brand && props.lot?.barang_brand !== '-' ? props.lot.barang_brand : '';
+  const name = props.lot?.barang_nama && props.lot?.barang_nama !== '-' ? props.lot.barang_nama : '';
+  const spec = props.lot?.barang_specification && props.lot?.barang_specification !== '-' ? props.lot.barang_specification : '';
+  return [brand, name, spec].filter(Boolean).join(' ') || '-';
+});
+
+const availableUnitsCount = computed(() => {
+  return (props.units || []).filter(u => u.status === 'Tersedia').length;
+});
+
+const totalUnitsCount = computed(() => {
+  return (props.units || []).length;
+});
+
 const closeOnEscape = (e: KeyboardEvent) => {
   if (e.key === 'Escape') {
     if (isCreateAssetModalOpen.value) {
@@ -126,34 +165,66 @@ onUnmounted(() => {
       <h2 class="text-lg font-bold text-foreground mb-4">{{ t('inventory.lotDetail') }}</h2>
       
       <div class="flex flex-col md:flex-row gap-6">
-        <div class="w-48 h-48 rounded-xl bg-muted shrink-0 flex items-center justify-center overflow-hidden border border-border">
-          <img v-if="props.lot.imageUrl" :src="'/media/' + props.lot.imageUrl" class="w-full h-full object-cover" />
-          <img v-else src="/media/inventory/placeholder.jpg" class="w-full h-full object-cover opacity-50" />
-        </div>
+        <!-- Photo Grid (1, 2, or 4 images from in-memory units) -->
+        <AssetPhotoGrid :photos="distinctPhotos" />
 
-        <div class="flex-grow grid grid-cols-1 md:grid-cols-12 gap-4">
-          <div class="md:col-span-4">
-            <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.typeCode') }}:</span> {{ props.lot.barang_code }}</p>
-            <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.brand') }}:</span> {{ props.lot.barang_brand }}</p>
-            <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.name') }}:</span> {{ props.lot.barang_nama }}</p>
-            <p v-if="!isComp" class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.specification') }}:</span> {{ props.lot.barang_specification || '-' }}</p>
-            <p class="text-foreground">{{ t('inventory.category') }}: {{ props.lot.barang_category }}</p>
-            <p class="text-foreground">{{ t('inventory.subcategory') }}: {{ props.lot.barang_subcategory }}</p>
-            <p class="text-foreground">{{ t('inventory.uom') }}: {{ props.lot.barang_uom }}</p>
-          </div>
-          <div class="md:col-span-8">
-            <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.lotCode') }}:</span> {{ props.lot.number }}</p>
-            <p class="text-foreground">{{ t('inventory.availableStock') }}: {{ props.units.filter(u => u.status === 'Tersedia').length }}</p>
-            <p class="text-foreground">{{ t('inventory.initialStock') }}: {{ props.units.length }}</p>
-            <p class="text-foreground">{{ t('inventory.defaultLocation') }}: {{ formatLocation(props.lot.location, props.lot.floor, props.lot.room) }}</p>
-            <p class="text-foreground">{{ t('inventory.poNumber') }}: {{ props.lot.po_number || '-' }}</p>
-            <p class="text-foreground">{{ t('inventory.registrationDate') }}: {{ formatDate(props.lot.date_of_receipt) }}</p>
-            <p class="text-foreground">{{ t('inventory.age') }}: {{ props.lot.age !== undefined && props.lot.age !== null ? `${props.lot.age} ${t('inventory.yearUnit')}` : '-' }}</p>
-            <p class="text-foreground">{{ t('inventory.defaultUnitPrice') }}: {{ formatRupiah(props.lot.unitPrice) }}</p>
-            <p class="text-foreground">{{ t('inventory.organizer') }}: {{ props.lot.organizer }}</p>
-            <p class="text-foreground">{{ t('inventory.vendor') }}: {{ (props.lot.vendor_id && props.lot.vendor !== '-') ? props.lot.vendor : t('inventory.vendorMultiple') }}</p>
-            <p class="text-foreground">{{ t('inventory.lastUpdate') }}: {{ props.lot.updated_at }}</p>
-          </div>
+        <!-- Details Single Column (takes full horizontal space) -->
+        <div class="flex-grow flex flex-col gap-1.5 text-foreground">
+          <!-- 1. Nomor LOT -->
+          <p class="font-bold text-foreground">
+            <span class="text-foreground">{{ t('inventory.lotCode') }}:</span> {{ props.lot.number }}
+          </p>
+
+          <!-- 2. Kategori (shows category + type) -->
+          <p class="font-bold text-foreground">
+            <span class="text-foreground">{{ t('inventory.category') }}:</span> {{ lotCategoryWithSubcategory }}
+          </p>
+
+          <!-- 3. Model (shows brand + name + spec) -->
+          <p class="font-bold text-foreground">
+            <span class="text-foreground">{{ t('inventory.modelLabel') }}:</span> {{ lotModelDisplay }}
+          </p>
+
+          <!-- 4. Jumlah stok (shows current_stock <uom> / initial_stock <uom>) -->
+          <p class="font-bold text-foreground">
+            <span class="text-foreground">{{ t('inventory.stockQuantity') }}:</span> 
+            {{ availableUnitsCount }} {{ props.lot.barang_uom || '' }} / {{ totalUnitsCount }} {{ props.lot.barang_uom || '' }}
+          </p>
+
+          <!-- 6. Nomor PO/Nomor Memo (dynamic) -->
+          <p class="text-foreground">
+            <span class="text-foreground">{{ props.lot.entry_type === 'Hibah' ? t('inventory.memoNumber') : t('inventory.poNumber') }}:</span>
+            <template v-if="props.lot.entry_type === 'Hibah'">
+              <a 
+                v-if="props.lot.memo_url"
+                :href="'/media/' + props.lot.memo_url"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-primary hover:underline font-semibold inline-flex items-center gap-1 ml-1"
+              >
+                <span>{{ props.lot.memo_number || '-' }}</span>
+                <ExternalLink class="w-3.5 h-3.5" />
+              </a>
+              <span v-else class="ml-1">{{ props.lot.memo_number || '-' }}</span>
+            </template>
+            <span v-else class="ml-1">{{ props.lot.po_number || '-' }}</span>
+          </p>
+
+          <!-- 7. Tanggal Registrasi/Tanggal Hibah (dynamic) -->
+          <p class="text-foreground">
+            <span class="text-foreground">{{ props.lot.entry_type === 'Hibah' ? t('inventory.grantDate') : t('inventory.registrationDate') }}:</span>
+            {{ formatDate(props.lot.entry_type === 'Hibah' ? (props.lot.date_of_grant || props.lot.date_of_receipt) : props.lot.date_of_receipt) }}
+          </p>
+
+          <!-- 8. Organizer -->
+          <p class="text-foreground">
+            <span class="text-foreground">{{ t('inventory.organizer') }}:</span> {{ props.lot.organizer || '-' }}
+          </p>
+
+          <!-- 11. Pembaruan Terakhir -->
+          <p class="text-foreground">
+            <span class="text-foreground">{{ t('inventory.lastUpdate') }}:</span> {{ props.lot.updated_at || '-' }}
+          </p>
         </div>
       </div>
     </div>

@@ -4,6 +4,7 @@
  */
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import AssetPhotoGrid from '@/Components/AssetPhotoGrid.vue';
 import LotListTab from './LotListTab.vue';
 
 interface Props {
@@ -56,6 +57,7 @@ interface Props {
   floors?: any[];
   rooms?: any[];
   projects: { id: number; no_project: string; project_name: string; client_id: string; }[];
+  units?: any[];
 }
 
 const props = defineProps<Props>();
@@ -88,6 +90,20 @@ const isCompCategory = computed(() => {
     props.barang.category === 'Computer' ||
     props.barang.category === 'COMP';
 });
+
+const distinctPhotos = computed(() => {
+  if (props.barang?.image_url) return [props.barang.image_url];
+  const photos: string[] = [];
+  const seen = new Set<string>();
+  for (const u of props.units || []) {
+    if (u.image_url && !seen.has(u.image_url)) {
+      seen.add(u.image_url);
+      photos.push(u.image_url);
+      if (photos.length === 4) break;
+    }
+  }
+  return photos;
+});
 </script>
 
 <template>
@@ -97,17 +113,14 @@ const isCompCategory = computed(() => {
       <h2 class="text-lg font-bold text-foreground mb-4">{{ t('inventory.typeDetail') }}</h2>
       
       <div class="flex flex-col md:flex-row gap-6">
-        <div class="w-48 h-48 rounded-xl bg-muted shrink-0 flex items-center justify-center overflow-hidden border border-border">
-          <img v-if="props.barang.image_url" :src="'/media/' + props.barang.image_url" class="w-full h-full object-cover" />
-          <img v-else src="/media/inventory/placeholder.jpg" class="w-full h-full object-cover opacity-50" />
-        </div>
+        <AssetPhotoGrid :photos="distinctPhotos" />
 
         <div class="flex-grow">
           <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.typeCode') }}:</span> {{ props.barang.code }}</p>
           <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.brand') }}:</span> {{ props.barang.brand }}</p>
           <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.name') }}:</span> {{ props.barang.name }}</p>
           <p v-if="!isCompCategory" class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.specification') }}:</span> {{ props.barang.specification || '-' }}</p>
-          <p class="text-foreground">{{ t('inventory.category') }}: {{ props.barang.category }}</p>
+          <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.category') }}:</span> {{ props.barang.category }}</p>
           <p class="text-foreground">{{ t('inventory.subcategory') }}: {{ props.barang.subcategory }}</p>
           <p class="text-foreground">{{ t('inventory.lotCount') }}: {{ props.lots.length }}</p>
           <p :class="stockColorClass">{{ t('inventory.totalStock') }}: {{ totalStok }} {{ props.barang.uom }}</p>

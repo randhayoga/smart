@@ -287,6 +287,10 @@ class ProcessManualRequestTest extends TestCase
         $this->assertEquals('Peminjaman', $openLifecycle->action_type);
         $this->assertEquals('Dipinjam (ST)', $openLifecycle->status);
         $this->assertEquals($this->borrower->id, $openLifecycle->actor_id);
+        $this->assertEquals($smartRequest->id, $openLifecycle->request_id);
+        $this->assertEquals($fulfillment->id, $openLifecycle->fulfillment_id);
+        $expectedNote = "Peminjaman (ST) {$smartRequest->request_number} untuk {$this->borrower->name} ({$this->borrower->employee_id}). Catatan: Primary unit.";
+        $this->assertEquals($expectedNote, $openLifecycle->note);
 
         $statusLog = RequestStatusLog::where('request_id', $smartRequest->id)->first();
         $this->assertNotNull($statusLog);
@@ -368,6 +372,9 @@ class ProcessManualRequestTest extends TestCase
         $this->assertEquals('Assignment', $openLifecycle->action_type);
         $this->assertEquals('Di-assign (LT)', $openLifecycle->status);
         $this->assertEquals($this->borrower->id, $openLifecycle->actor_id);
+        $this->assertEquals($smartRequest->id, $openLifecycle->request_id);
+        $this->assertEquals($fulfillment->id, $openLifecycle->fulfillment_id);
+        $this->assertEquals("Assignment (LT) {$smartRequest->request_number} untuk {$this->borrower->name} ({$this->borrower->employee_id}). Catatan: Dedicated desk monitor.", $openLifecycle->note);
 
         $statusLog = RequestStatusLog::where('request_id', $smartRequest->id)->first();
         $this->assertNotNull($statusLog);

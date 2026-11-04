@@ -10,7 +10,6 @@ import AssetItemCard from '@/Components/AssetItemCard.vue';
 import { isAssignmentType } from '@/lib/requestTypeBadge';
 import { 
   ChevronDown, 
-  ChevronUp,
   CheckCircle2,
   Clock,
   ArrowLeft,

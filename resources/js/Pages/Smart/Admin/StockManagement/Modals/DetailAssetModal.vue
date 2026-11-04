@@ -7,7 +7,7 @@ import { useI18n } from 'vue-i18n';
 import { useModalLock } from '@/composables/useModalLock';
 import { router, usePage } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
-import { X, FileText, Upload, Loader2 } from 'lucide-vue-next';
+import { X, FileText, Upload, Loader2, ExternalLink, ChevronDown } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
 import { formatDate, formatLocation } from '@/lib/utils';
 import { formatQcStatus, getQcColorClass } from '@/lib/qualityControl';
@@ -42,6 +42,7 @@ const fileInputRef = ref<HTMLInputElement | null>(null);
 const disapprovalFileInputRef = ref<HTMLInputElement | null>(null);
 const isUploading = ref(false);
 const fetchedLifecycles = ref<any[]>([]);
+const showMoreInfo = ref(false);
 
 const effectiveLifecycles = computed(() => {
   if (Array.isArray(props.asset?.lifecycles)) {
@@ -50,12 +51,45 @@ const effectiveLifecycles = computed(() => {
   return fetchedLifecycles.value;
 });
 
+const isBorrowing = computed(() => {
+  const s = props.asset?.status || '';
+  return s === 'Dipinjam (ST)' || s === 'Dipinjam (sewa)' || s.toLowerCase().startsWith('dipinjam');
+});
+
+const isAssignment = computed(() => {
+  const s = props.asset?.status || '';
+  return s === 'Di-assign (LT)' || s.toLowerCase().startsWith('di-assign');
+});
+
+const isAssignmentOrBorrowing = computed(() => isBorrowing.value || isAssignment.value);
+
+const activeRequestId = computed<number | null>(() => {
+  if (props.asset?.active_borrowing?.request_id) {
+    return Number(props.asset.active_borrowing.request_id);
+  }
+  if (props.asset?.request_id) {
+    return Number(props.asset.request_id);
+  }
+  const lifecycleWithReq = effectiveLifecycles.value?.find((l: any) => l.request_id);
+  if (lifecycleWithReq?.request_id) {
+    return Number(lifecycleWithReq.request_id);
+  }
+  return null;
+});
+
+const assignmentOrBorrowingUrl = computed<string | null>(() => {
+  if (!isAssignmentOrBorrowing.value) return null;
+  const reqId = activeRequestId.value;
+  if (!reqId) return null;
+  return `/smart/borrowed/${reqId}`;
+});
+
 const fetchAssetDetailsIfNeeded = async () => {
   if (!props.open || !props.asset?.id) return;
   // If Jejak Audit is open and lifecycles already exists, no need to fetch
   const needsLifecycles = detailActiveTab.value === 'Jejak Audit' && !Array.isArray(props.asset.lifecycles);
-  // If Perawatan is open and active_borrowing is not yet loaded on the asset
-  const needsBorrowing = detailActiveTab.value === 'Perawatan' && props.asset.active_borrowing === undefined;
+  // If Perawatan is open or asset is borrowed/assigned, and active_borrowing is not yet loaded on the asset
+  const needsBorrowing = (detailActiveTab.value === 'Perawatan' || isAssignmentOrBorrowing.value) && props.asset.active_borrowing === undefined;
 
   if (!needsLifecycles && !needsBorrowing) {
     if (detailActiveTab.value === 'Jejak Audit' && Array.isArray(props.asset.lifecycles)) {
@@ -106,6 +140,7 @@ watch(
   ([newOpen]) => {
     if (newOpen) {
       detailActiveTab.value = 'Detail Aset';
+      showMoreInfo.value = false;
       isUploading.value = false;
       fetchedLifecycles.value = Array.isArray(props.asset?.lifecycles) ? props.asset.lifecycles : [];
       if (fileInputRef.value) {
@@ -113,6 +148,9 @@ watch(
       }
       if (disapprovalFileInputRef.value) {
         disapprovalFileInputRef.value.value = '';
+      }
+      if (isAssignmentOrBorrowing.value && props.asset?.active_borrowing === undefined) {
+        void fetchAssetDetailsIfNeeded();
       }
     }
   },
@@ -352,6 +390,44 @@ const finalBarangSpecification = computed(() => props.lot?.barang_specification 
 const finalBarangCategory = computed(() => props.lot?.barang_category || props.asset?.barang_category || '');
 const finalBarangSubcategory = computed(() => props.lot?.barang_subcategory || props.asset?.barang_subcategory || '');
 const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.barang_uom || '');
+
+const modelDisplay = computed(() => {
+  const brand = finalBarangBrand.value && finalBarangBrand.value !== '-' ? finalBarangBrand.value : '';
+  const nama = finalBarangNama.value && finalBarangNama.value !== '-' ? finalBarangNama.value : '';
+  const spec = isComp.value
+    ? (props.asset?.comp_specification || props.asset?.specification || '')
+    : (finalBarangSpecification.value && finalBarangSpecification.value !== '-' ? finalBarangSpecification.value : '');
+  
+  return [brand, nama, spec].filter(s => Boolean(s && String(s).trim() !== '' && String(s).trim() !== '-')).join(' ') || '-';
+});
+
+const categoryWithSubcategory = computed(() => {
+  const cat = finalBarangCategory.value;
+  const sub = finalBarangSubcategory.value;
+  if (cat && sub && cat !== '-' && sub !== '-') {
+    return `${cat} (${sub})`;
+  }
+  return cat || sub || '-';
+});
+
+const burdenDisplay = computed(() => {
+  if (!props.asset?.burden) return '-';
+  if (props.asset.burden === 'Project') {
+    const prjNo = props.asset.project_no;
+    const prjName = props.asset.project_name;
+    if (prjNo && prjName) {
+      return `Project [${prjNo}] ${prjName}`;
+    }
+    if (prjNo) {
+      return `Project [${prjNo}]`;
+    }
+    if (prjName) {
+      return `Project ${prjName}`;
+    }
+    return 'Project';
+  }
+  return props.asset.burden;
+});
 </script>
 
 <template>
@@ -405,89 +481,160 @@ const finalBarangUom = computed(() => props.lot?.barang_uom || props.asset?.bara
                     />
                   </div>
 
-                  <!-- Details Columns -->
-                  <div v-if="asset" class="flex-grow grid grid-cols-1 md:grid-cols-12 gap-4 text-foreground">
-                    <!-- Column 1: Item Info -->
-                    <div class="md:col-span-3">
-                      <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.typeCode') }}:</span> {{ finalBarangCode }}</p>
-                      <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.brand') }}:</span> {{ finalBarangBrand }}</p>
-                      <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.name') }}:</span> {{ finalBarangNama }}</p>
-                      <p v-if="!isComp" class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.specification') }}:</span> {{ finalBarangSpecification }}</p>
-                      <p class="text-foreground">{{ t('inventory.category') }}: {{ finalBarangCategory }}</p>
-                      <p class="text-foreground">{{ t('inventory.subcategory') }}: {{ finalBarangSubcategory }}</p>
-                      <p class="text-foreground">{{ t('inventory.uom') }}: {{ finalBarangUom }}</p>
+                  <!-- Details Single Column (takes full horizontal space) -->
+                  <div v-if="asset" class="flex-grow flex flex-col gap-1.5 text-foreground">
+                    <!-- 1. Nomor Aset -->
+                    <p class="font-bold text-foreground">
+                      <span class="text-foreground">{{ t('inventory.assetCode') }}:</span> {{ asset.number }}
+                    </p>
+
+                    <!-- 2. Nomor Aset Lama (only shown when legacy_number is different than number) -->
+                    <p v-if="asset.legacy_number && asset.legacy_number !== asset.number" class="text-foreground">
+                      <span class="text-foreground">{{ t('inventory.legacyNumber') }}:</span> {{ asset.legacy_number }}
+                    </p>
+
+                    <!-- 3. Kategori (shows category + type) -->
+                    <p class="font-bold text-foreground">
+                      <span class="text-foreground">{{ t('inventory.category') }}:</span> {{ categoryWithSubcategory }}
+                    </p>
+
+                    <!-- 4. Model (shows brand + name + spec) [dynamic, shows asset's spec for COMP, model's spec for anything else] -->
+                    <p class="font-bold text-foreground">
+                      <span class="text-foreground">{{ t('inventory.modelLabel') }}:</span> {{ modelDisplay }}
+                    </p>
+
+                    <!-- 5. Nopol (only for vehicle category) -->
+                    <p v-if="isVehicle" class="font-bold text-foreground">
+                      <span class="text-foreground">{{ t('inventory.nopol') }}:</span> {{ asset.vehicle_registration || '-' }}
+                    </p>
+
+                    <!-- 6. Tanggal Kedaluwarsa Lisensi (only for Software) -->
+                    <p v-if="isSoft" class="text-foreground">
+                      <span class="text-foreground">{{ t('inventory.licenseExpDate') }}:</span>
+                      {{ asset.license_exp_date ? formatDate(asset.license_exp_date) : t('inventory.perpetual') }}
+                    </p>
+
+                    <!-- 7. Pengingat Perpanjangan (only for Software) -->
+                    <p v-if="isSoft && asset.license_exp_date" class="text-foreground">
+                      <span class="text-foreground">{{ t('inventory.renewalReminder') }}:</span>
+                      {{ asset.renewal_reminder === 0 ? t('inventory.renewalReminderDisabled') : (asset.renewal_reminder !== null && asset.renewal_reminder !== undefined ? `${asset.renewal_reminder} ${t('inventory.renewalReminderSuffix')}` : '-') }}
+                    </p>
+
+                    <!-- 8. Status (if assignment or borrowing add a primary new tab icon on the right of the status badge) -->
+                    <div class="text-foreground flex items-center gap-1.5 flex-wrap">
+                      <span class="text-foreground">{{ t('inventory.status') }}:</span> 
+                      <StatusBadge 
+                        :status="asset.status" 
+                        :approval-status="asset.approval_status"
+                        :proposed-status="asset.proposed_status" 
+                      />
+                      <a 
+                        v-if="isAssignmentOrBorrowing && assignmentOrBorrowingUrl"
+                        :href="assignmentOrBorrowingUrl"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="inline-flex items-center justify-center text-primary hover:text-primary/80 transition-colors p-0.5 rounded cursor-pointer"
+                        :title="t('inventory.openAssignmentOrBorrowing')"
+                      >
+                        <ExternalLink class="w-4 h-4" />
+                      </a>
                     </div>
 
-                    <!-- Column 2: LOT Info -->
-                    <div class="md:col-span-4">
-                      <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.lotCode') }}:</span> {{ finalLotNumber }}</p>
-                      <p class="text-foreground">{{ t('inventory.organizer') }}: {{ finalLotOrganizer }}</p>
-                      <p class="text-foreground">{{ t('inventory.registrationDate') }}: {{ formatDate(finalLotDateOfReceipt) }}</p>
-                      <p class="text-foreground">{{ t('inventory.age') }}: {{ finalLotAge !== null && finalLotAge !== undefined ? `${finalLotAge} ${t('inventory.yearUnit')}` : '-' }}</p>
-                      <p class="text-foreground">{{ t('inventory.vendor') }}: {{ finalLotVendor }}</p>
-                      <p class="text-foreground">{{ t('inventory.poNumber') }}: {{ finalLotPoNumber }}</p>
-                    </div>
+                    <!-- 9. Kondisi -->
+                    <p v-if="!isSoft" class="text-foreground">
+                      {{ t('inventory.condition') }}: 
+                      <span 
+                        :class="[
+                          'font-semibold',
+                          asset.condition === 'Bagus' ? 'text-emerald-600' : 'text-rose-600'
+                        ]"
+                      >
+                        {{ getConditionLabel(asset.condition) }}
+                      </span>
+                    </p>
 
-                    <!-- Column 3: Asset Info -->
-                    <div class="md:col-span-5">
-                      <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.assetCode') }}:</span> {{ asset.number }}</p>
-                      <p v-if="asset.legacy_number" class="text-foreground"><span class="text-foreground">{{ t('inventory.legacyNumber') }}:</span> {{ asset.legacy_number }}</p>
-                      <p v-if="isComp" class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.specification') }}:</span> {{ asset.specification || '-' }}</p>
-                      <p v-if="isLotVendorMultiple || asset.unit_vendor" class="text-foreground">
-                        <span class="text-foreground">{{ t('inventory.vendor') }}:</span> {{ asset.unit_vendor || (String(asset.vendor || '').trim().toLowerCase() !== 'beragam' ? asset.vendor : null) || '-' }}
-                      </p>
-                      <!-- TNKB (Nopol) -->
-                      <p v-if="isVehicle" class="font-bold text-foreground">
-                        <span class="text-foreground">{{ t('inventory.nopol') }}:</span> {{ asset.vehicle_registration || '-' }}
-                      </p>
-                      <!-- Software License Information -->
-                      <p v-if="isSoft" class="text-foreground">
-                        <span class="text-foreground">{{ t('inventory.licenseExpDate') }}:</span>
-                        {{ asset.license_exp_date ? formatDate(asset.license_exp_date) : t('inventory.perpetual') }}
-                      </p>
-                      <p v-if="isSoft && asset.license_exp_date" class="text-foreground">
-                        <span class="text-foreground">{{ t('inventory.renewalReminder') }}:</span>
-                        {{ asset.renewal_reminder === 0 ? t('inventory.renewalReminderDisabled') : (asset.renewal_reminder !== null && asset.renewal_reminder !== undefined ? `${asset.renewal_reminder} ${t('inventory.renewalReminderSuffix')}` : '-') }}
-                      </p>
-                      <p class="text-foreground flex items-center gap-1.5 flex-wrap">
-                        <span class="text-foreground">{{ t('inventory.status') }}:</span> 
-                        <StatusBadge 
-                          :status="asset.status" 
-                          :approval-status="asset.approval_status"
-                          :proposed-status="asset.proposed_status" 
+                    <!-- 10. Quality Control -->
+                    <p v-if="!isSoft" class="text-foreground">
+                      {{ t('inventory.qualityControl') }}: 
+                      <span :class="getQcColorClass(asset.qc_pass)">
+                        {{ formatQcStatus(asset.qc_pass, asset.last_qc ?? asset.lq, t) }}
+                      </span>
+                    </p>
+
+                    <!-- Admin & DM Notes (kept between Condition/QC and Value for test contracts) -->
+                    <p v-if="asset.admin_note" class="text-foreground">
+                      {{ t('inventory.adminNote') }}: <span class="italic text-muted-foreground font-normal">"{{ asset.admin_note }}"</span>
+                    </p>
+                    <p v-if="asset.dm_note" class="text-foreground">
+                      {{ t('inventory.dmNote') }}: <span class="italic text-muted-foreground font-normal">"{{ asset.dm_note }}"</span>
+                    </p>
+
+                    <!-- 11. Lokasi (not "Lokasi Penyimpanan") -->
+                    <p v-if="!isSoft" class="text-foreground">
+                      {{ t('inventory.location') }}: {{ formatLocation(asset.location, asset.floor, asset.room) }}
+                    </p>
+
+                    <!-- 12. Umur (calculate from lot's date) -->
+                    <p class="text-foreground">
+                      {{ t('inventory.age') }}: {{ finalLotAge !== null && finalLotAge !== undefined ? `${finalLotAge} ${t('inventory.yearUnit')}` : '-' }}
+                    </p>
+
+                    <!-- Collapsible Toggle: Info Lebih Lanjut (Option B: Static label + GPU-accelerated rotating chevron) -->
+                    <div class="pt-1">
+                      <button
+                        type="button"
+                        @click="showMoreInfo = !showMoreInfo"
+                        class="text-xs font-semibold text-primary hover:underline flex items-center gap-1 transition-all cursor-pointer focus:outline-none"
+                      >
+                        <span>{{ t('inventory.moreInfo') }}</span>
+                        <ChevronDown 
+                          class="w-3.5 h-3.5 transition-transform duration-200 transform" 
+                          :class="{ 'rotate-180': showMoreInfo }"
                         />
-                      </p>
-                      <p v-if="!isSoft" class="text-foreground">
-                        {{ t('inventory.condition') }}: 
-                        <span 
-                          :class="[
-                            'font-semibold',
-                            asset.condition === 'Bagus' ? 'text-emerald-600' : 'text-rose-600'
-                          ]"
-                        >
-                          {{ getConditionLabel(asset.condition) }}
-                        </span>
-                      </p>
-                      <p v-if="!isSoft" class="text-foreground">
-                        {{ t('inventory.qualityControl') }}: 
-                        <span :class="getQcColorClass(asset.qc_pass)">
-                          {{ formatQcStatus(asset.qc_pass, asset.last_qc ?? asset.lq, t) }}
-                        </span>
-                      </p>
-                      <p v-if="asset.admin_note" class="text-foreground">
-                        {{ t('inventory.adminNote') }}: <span class="italic text-muted-foreground font-normal">"{{ asset.admin_note }}"</span>
-                      </p>
-                      <p v-if="asset.dm_note" class="text-foreground">
-                        {{ t('inventory.dmNote') }}: <span class="italic text-muted-foreground font-normal">"{{ asset.dm_note }}"</span>
-                      </p>
-                      <p class="text-foreground">{{ t('inventory.value') }}: {{ formatRupiah(asset.price) }}</p>
-                      <p v-if="!isSoft" class="text-foreground">{{ t('inventory.storageLocation') }}: {{ formatLocation(asset.location, asset.floor, asset.room) }}</p>
-                      <p v-if="asset.type" class="text-foreground">{{ t('inventory.type') }}: {{ asset.type }}</p>
-                      <p v-if="asset.classification" class="text-foreground">{{ t('inventory.classification') }}: {{ getClassificationLabel(asset.classification) }}</p>
-                      <p class="text-foreground">{{ t('inventory.burden') }}: {{ asset.burden || '-' }}</p>
-                      <p v-if="asset.burden === 'Project'" class="text-foreground">{{ t('inventory.project') }}: {{ asset.project_no ? `[${asset.project_no}] ${asset.project_name || '-'}` : (asset.project_name || '-') }}</p>
-                      <p class="text-foreground">{{ t('inventory.lastUpdate') }}: {{ asset.updated_at || '-' }}</p>
+                      </button>
                     </div>
+
+                    <!-- Collapsible Content with GPU-accelerated animation -->
+                    <Transition
+                      enter-active-class="transition-all duration-200 ease-out"
+                      enter-from-class="opacity-0 -translate-y-1"
+                      enter-to-class="opacity-100 translate-y-0"
+                      leave-active-class="transition-all duration-150 ease-in"
+                      leave-from-class="opacity-100 translate-y-0"
+                      leave-to-class="opacity-0 -translate-y-1"
+                    >
+                      <div v-if="showMoreInfo" class="flex flex-col gap-1.5 pt-0.5">
+                        <!-- 13. Nilai -->
+                        <p class="text-foreground">
+                          {{ t('inventory.value') }}: {{ formatRupiah(asset.price) }}
+                        </p>
+
+                        <!-- 14. Jenis peminjaman (from "Jenis") -->
+                        <p v-if="asset.borrowing_type || asset.type" class="text-foreground">
+                          {{ t('inventory.borrowingType') }}: {{ asset.borrowing_type || asset.type }}
+                        </p>
+
+                        <!-- 15. Klasifikasi -->
+                        <p v-if="asset.classification" class="text-foreground">
+                          {{ t('inventory.classification') }}: {{ getClassificationLabel(asset.classification) }}
+                        </p>
+
+                        <!-- 16. Organizer -->
+                        <p class="text-foreground">
+                          {{ t('inventory.organizer') }}: {{ finalLotOrganizer || '-' }}
+                        </p>
+
+                        <!-- 17. Pembebanan (also shows the project number if project) -->
+                        <p class="text-foreground">
+                          {{ t('inventory.burden') }}: {{ burdenDisplay }}
+                        </p>
+
+                        <!-- 18. Pembaruan Terakhir -->
+                        <p class="text-foreground">
+                          {{ t('inventory.lastUpdate') }}: {{ asset.updated_at || '-' }}
+                        </p>
+                      </div>
+                    </Transition>
                   </div>
                 </div>
               </div>

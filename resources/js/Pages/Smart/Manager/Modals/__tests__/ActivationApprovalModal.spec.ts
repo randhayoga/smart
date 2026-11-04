@@ -72,14 +72,14 @@ describe('ActivationApprovalModal.vue', () => {
   };
 
   describe('Pending Mode', () => {
-    it('renders asset specifications and LOT information', () => {
+    it('renders asset specifications and details in single-column layout', () => {
       const wrapper = mountModal({ mode: 'pending' });
 
-      expect(wrapper.text()).toContain('BRG-001');
+      expect(wrapper.text()).toContain('AST-2026-001');
+      expect(wrapper.text()).toContain('Elektronik (Laptop)');
       expect(wrapper.text()).toContain('Lenovo');
       expect(wrapper.text()).toContain('ThinkPad X1 Carbon');
-      expect(wrapper.text()).toContain('LOT-2026-01');
-      expect(wrapper.text()).toContain('PO-2026-0901');
+      expect(wrapper.text()).toContain('PT Mitra Inti');
       expect(wrapper.text()).toContain('Rp25.000.000');
     });
 
@@ -335,6 +335,32 @@ describe('ActivationApprovalModal.vue', () => {
       const conditionSpan = wrapper.find('.text-rose-600.font-semibold');
       expect(conditionSpan.exists()).toBe(true);
       expect(conditionSpan.text()).toBe('Rusak');
+    });
+  });
+
+  describe('COMP Specification Display', () => {
+    it('uses asset comp_specification for COMP category code', () => {
+      setI18nLanguage('id');
+      const compApproval = {
+        ...sampleApproval,
+        category: 'Komputer',
+        category_code: 'COMP',
+        specification: 'Generic Model Spec',
+        comp_specification: 'Intel i7 32GB 1TB SSD',
+        unit_details: {
+          ...sampleApproval.unit_details,
+          category_code: 'COMP',
+          comp_specification: 'Intel i7 32GB 1TB SSD',
+        },
+      };
+
+      const wrapper = mountModal({
+        approval: compApproval,
+        mode: 'pending',
+      });
+
+      expect(wrapper.text()).toContain('Intel i7 32GB 1TB SSD');
+      expect(wrapper.text()).not.toContain('Generic Model Spec');
     });
   });
 });

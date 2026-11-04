@@ -536,24 +536,51 @@ class Asset extends Model
                 ->latest('id')
                 ->first();
 
-        if (!$assignment || !$assignment->requestItem || !$assignment->requestItem->request) {
-            return null;
+        if ($assignment && $assignment->requestItem && $assignment->requestItem->request) {
+            $req = $assignment->requestItem->request;
+
+            return [
+                'assignment_id' => $assignment->id,
+                'request_id' => $req->id,
+                'request_number' => $req->request_number,
+                'user_id' => $req->user_id,
+                'user_name' => $req->user?->name ?? '-',
+                'utilization' => $req->utilization,
+                'org_id' => $req->org_id,
+                'project_id' => $req->project_id,
+                'start_date' => $assignment->requestItem->start_date ? $assignment->requestItem->start_date->format('Y-m-d') : ($req->created_at ? $req->created_at->format('Y-m-d') : null),
+                'note' => $req->reasoning ?? '',
+            ];
         }
 
-        $req = $assignment->requestItem->request;
+        // Fallback to active AssetLifecycle with request_id FK
+        $activeLifecycle = $this->relationLoaded('lifecycles')
+            ? $this->lifecycles->whereNull('end_date')->whereNotNull('request_id')->first()
+            : AssetLifecycle::with('request.user')
+                ->where('asset_id', $this->id)
+                ->whereNull('end_date')
+                ->whereNotNull('request_id')
+                ->latest('id')
+                ->first();
 
-        return [
-            'assignment_id' => $assignment->id,
-            'request_id' => $req->id,
-            'request_number' => $req->request_number,
-            'user_id' => $req->user_id,
-            'user_name' => $req->user?->name ?? '-',
-            'utilization' => $req->utilization,
-            'org_id' => $req->org_id,
-            'project_id' => $req->project_id,
-            'start_date' => $assignment->requestItem->start_date ? $assignment->requestItem->start_date->format('Y-m-d') : ($req->created_at ? $req->created_at->format('Y-m-d') : null),
-            'note' => $req->reasoning ?? '',
-        ];
+        if ($activeLifecycle && $activeLifecycle->request) {
+            $req = $activeLifecycle->request;
+
+            return [
+                'assignment_id' => $activeLifecycle->fulfillment_id,
+                'request_id' => $req->id,
+                'request_number' => $req->request_number,
+                'user_id' => $req->user_id,
+                'user_name' => $req->user?->name ?? '-',
+                'utilization' => $req->utilization,
+                'org_id' => $req->org_id,
+                'project_id' => $req->project_id,
+                'start_date' => $activeLifecycle->start_date ? $activeLifecycle->start_date->format('Y-m-d') : null,
+                'note' => $activeLifecycle->note ?? '',
+            ];
+        }
+
+        return null;
     }
 
     /**
