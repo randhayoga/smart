@@ -150,6 +150,7 @@ class HandleInertiaRequests extends Middleware
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),
                 'new_stock_created' => fn () => $request->session()->get('new_stock_created'),
+                'created_request' => fn () => $request->session()->get('created_request'),
             ],
             'locale' => fn () => app()->getLocale(),
             'supportedLocales' => [

@@ -96,7 +96,7 @@ describe('auditAction utility', () => {
       expect(children).toHaveLength(3);
       expect(children[0]).toBe('Peminjaman (ST) ');
       expect(isVNode(children[1])).toBe(true);
-      expect(children[1].props.href).toBe('/smart/borrowed/42');
+      expect(children[1].props.href).toBe('/smart/requests/42');
       expect(children[2]).toBe(' untuk Yoga (265656). Catatan: Keperluan site.');
     });
 

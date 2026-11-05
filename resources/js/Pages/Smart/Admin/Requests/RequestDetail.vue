@@ -1,8 +1,9 @@
 <script setup lang="ts">
 /**
- * Borrowed Request Detail Page (Admin)
+ * Unified Request Detail Page (Admin)
  * Displays detailed information, status/type badges, allocated assets,
  * scrollable item cards, and shadcn-vue vertical stepper timeline.
+ * 100% matches previous BorrowedDetail & ArchiveDetail page layouts.
  */
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -41,7 +42,7 @@ import {
 import { getRequestStatusBadges } from '@/lib/requestStatus';
 import { getRequestTypeBadgeClass, getRequestTypeLabel, isAssignmentType, getTypeActionLabel } from '@/lib/requestTypeBadge';
 import { parseAndLocalizeTimelineNote } from '@/lib/timelineNoteLocalization';
-import FinishManualBorrowModal, { type TargetAsset } from './modals/FinishManualBorrowModal.vue';
+import FinishManualBorrowModal, { type TargetAsset } from './ActiveRequests/Details/modals/FinishManualBorrowModal.vue';
 
 interface RequestItem {
   id: number;
@@ -68,18 +69,22 @@ interface RequestItem {
 }
 
 interface RequestDetail {
-  id: number;
+  id: number | string;
   number: string;
   form_url?: string | null;
   handover_proof_url?: string | null;
+  handover_location?: string | null;
   is_manual?: boolean;
   has_active_assets?: boolean;
   requester: string;
+  requester_department?: string | null;
   approver: string;
   approval_by?: string;
   confirmation_by?: string;
+  return_confirmed_by?: string;
   created_by_admin?: string;
   createdAt: string;
+  updatedAt?: string;
   pemanfaatan: 'corporate' | 'project';
   pemanfaatanDetail: string;
   durationStart?: string | null;
@@ -97,7 +102,7 @@ interface RequestDetail {
 }
 
 interface Props {
-  borrowedId: string | number;
+  requestId: string | number;
   request: RequestDetail;
   locations?: any[];
   projects?: { id?: number; id_project?: number; no_project: string; project_name: string; client_id?: string }[];
@@ -119,6 +124,13 @@ const typeKey = computed(() => {
 const typeLabelTitle = computed(() => getRequestTypeLabel(typeKey.value, t));
 const typeBadgeClass = computed(() => getRequestTypeBadgeClass(typeKey.value));
 const isAssignment = computed(() => isAssignmentType(typeKey.value));
+const isFinalStatus = computed(() => ['success', 'reject', 'cancel'].includes(props.request.raw_status || props.request.status));
+const pageTitle = computed(() => {
+  if (isFinalStatus.value) {
+    return t('fulfillment.archiveDetailTitle');
+  }
+  return isAssignment.value ? t('fulfillment.assignmentDetailTitle') : t('fulfillment.loanDetailTitle');
+});
 
 // Finish Manual Borrowing / Assignment Modal
 const isFinishModalOpen = ref(false);
@@ -211,6 +223,7 @@ interface TimelineStep {
   status: 'done' | 'active' | 'rejected' | 'pending';
   user?: string;
   description?: string;
+  location?: string | null;
   proofUrl?: string | null;
 }
 
@@ -233,6 +246,7 @@ const timelineSteps = computed((): TimelineStep[] => {
         requester: `<span class="font-bold text-foreground">${r.requester}</span>`,
         admin: `<span class="font-bold text-foreground">${adminName}</span>`
       }),
+      location: r.handover_location || null,
       proofUrl: r.handover_proof_url || null,
     });
   } else {
@@ -277,7 +291,7 @@ const timelineSteps = computed((): TimelineStep[] => {
       } else if (log.status_to === 'partial') {
         title = t('fulfillment.partiallyApproved');
       } else if (log.status_to === 'confirm') {
-        const adminName = log.user || r.confirmation_by || 'Admin';
+        const adminActor = log.user || r.confirmation_by || 'Admin';
         title = log.status_from?.includes('partial')
           ? t('fulfillment.additionalAllocationConfirmed')
           : (log.note && log.note.includes('diatur oleh pengguna')
@@ -288,7 +302,7 @@ const timelineSteps = computed((): TimelineStep[] => {
         } else {
           description = t('fulfillment.confirmedByAdmin', {
             type: typeLabelTitle.value,
-            user: `<span class="font-bold text-foreground">${adminName}</span>`
+            user: `<span class="font-bold text-foreground">${adminActor}</span>`
           });
         }
       } else if (log.status_to === 'borrow') {
@@ -298,6 +312,13 @@ const timelineSteps = computed((): TimelineStep[] => {
         title = t('fulfillment.returnSubmitted');
       } else if (log.status_to === 'success') {
         title = log.status_from === 'return' ? t('fulfillment.returnCompleted') : t('fulfillment.handoverCompleted');
+        if (log.status_from === 'return') {
+          const changerName = log.user || r.return_confirmed_by || 'Admin';
+          description = description || t('fulfillment.confirmedByAdmin', {
+            type: typeLabelTitle.value,
+            user: `<span class="font-bold text-foreground">${changerName}</span>`
+          });
+        }
       } else if (log.status_to === 'reject') {
         title = t('fulfillment.rejectedTimeline');
         status = 'rejected';
@@ -321,15 +342,15 @@ const timelineSteps = computed((): TimelineStep[] => {
           time: log.time,
           status,
           user: log.user || undefined,
-          description
+          description,
+          proofUrl: log.proof_url || null,
         });
       }
     });
   }
 
   // Step 3: Active step if not final
-  const isFinalStatus = ['success', 'reject', 'cancel'].includes(r.raw_status || r.status);
-  if (!isFinalStatus) {
+  if (!isFinalStatus.value) {
     if ((r.raw_status || r.status) === 'borrow') {
       steps.push({ 
         title: isAssignment.value ? t('fulfillment.assetAssignedTimeline') : t('fulfillment.assetBorrowedTimeline'), 
@@ -350,16 +371,16 @@ const activeStepIndex = computed(() => {
 </script>
 
 <template>
-  <Head :title="(isAssignment ? t('fulfillment.assignmentDetailTitle') : t('fulfillment.loanDetailTitle')) + ' - ' + request.number" />
+  <Head :title="pageTitle + ' - ' + request.number" />
 
-  <AppLayout :title="isAssignment ? t('fulfillment.assignmentDetailTitle') : t('fulfillment.loanDetailTitle')">
+  <AppLayout :title="pageTitle">
     <!-- ── In-line Breadcrumb & Back Navigation ── -->
     <div class="flex items-center justify-between gap-4 mb-6">
       <Breadcrumb>
         <BreadcrumbList class="text-xs md:text-sm">
           <BreadcrumbItem>
-            <Link :href="route('smart.borrowed')" class="text-muted-foreground hover:text-foreground transition-colors font-medium">
-              {{ t('fulfillment.trackBorrowing') }}
+            <Link :href="route('smart.requests.index')" class="text-muted-foreground hover:text-foreground transition-colors font-medium">
+              {{ t('nav.requestsList') }}
             </Link>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
@@ -369,22 +390,25 @@ const activeStepIndex = computed(() => {
         </BreadcrumbList>
       </Breadcrumb>
 
-      <Link :href="route('smart.borrowed')">
+      <Link :href="route('smart.requests.index')">
         <Button variant="outline" size="sm" class="flex items-center gap-1.5 h-8 px-3 text-xs font-semibold rounded-[0.875rem]">
           <ArrowLeft class="w-3.5 h-3.5" />
-          {{ t('fulfillment.trackBorrowing') }}
+          {{ t('nav.requestsList') }}
         </Button>
       </Link>
     </div>
 
     <!-- ── Grid Layout Dua Kolom ── -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <!-- Kolom Kiri (Detail Peminjaman & Daftar Barang) -->
+      <!-- Kolom Kiri (Detail Peminjaman/Permintaan & Daftar Barang) -->
       <div class="lg:col-span-2 space-y-6">
         <!-- Main Detail Card -->
         <div class="bg-card border border-border rounded-[0.875rem] p-5 space-y-2">
           <div class="space-y-1">
             <div class="flex items-center justify-between flex-wrap gap-2 pb-1">
+              <h2 class="text-base font-bold text-foreground">
+                <span class="font-normal text-muted-foreground">{{ t('fulfillment.number') }}: </span>{{ request.number }}
+              </h2>
               <div class="flex flex-wrap items-center gap-1.5">
                 <span 
                   class="inline-flex items-center px-2.5 py-0.5 rounded-md text-sm font-semibold"
@@ -393,7 +417,7 @@ const activeStepIndex = computed(() => {
                   {{ typeLabelTitle }}
                 </span>
                 <span 
-                  v-for="badge in getRequestStatusBadges(request.raw_status || request.status)" 
+                  v-for="badge in getRequestStatusBadges(request.raw_status || request.status, t)" 
                   :key="badge.label" 
                   class="inline-flex items-center px-2.5 py-0.5 rounded-md text-sm font-semibold"
                   :class="badge.class"
@@ -406,6 +430,9 @@ const activeStepIndex = computed(() => {
             <p class="text-sm text-foreground">
               <span class="text-muted-foreground">{{ t('fulfillment.employeeName') }}:</span> 
               <span class="font-semibold ml-1 text-foreground">{{ request.requester }}</span>
+              <span v-if="request.requester_department" class="text-muted-foreground text-xs ml-1">
+                ({{ request.requester_department }})
+              </span>
             </p>
 
             <p class="text-sm text-foreground">
@@ -517,7 +544,7 @@ const activeStepIndex = computed(() => {
                 ]"
               />
 
-              <!-- Stepper Indicator -->
+              <!-- Stepper Trigger & Indicator -->
               <StepperTrigger as-child class="cursor-default pointer-events-none">
                 <StepperIndicator
                   class="z-10 w-8 h-8 rounded-full text-xs font-semibold shrink-0 border transition-all"
@@ -532,7 +559,7 @@ const activeStepIndex = computed(() => {
                   ]"
                 >
                   <Check v-if="step.status === 'done' || state === 'completed'" class="w-4 h-4 text-white" />
-                  <X v-else-if="step.status === 'rejected'" class="w-4 h-4" />
+                  <X v-else-if="step.status === 'rejected'" class="w-4 h-4 text-destructive" />
                   <Clock v-else-if="state === 'active'" class="w-4 h-4 text-amber-600 dark:text-amber-400" />
                   <span v-else>{{ idx + 1 }}</span>
                 </StepperIndicator>
@@ -566,6 +593,14 @@ const activeStepIndex = computed(() => {
                   >
                     <span v-html="step.description"></span>
                   </StepperDescription>
+
+                  <!-- Lokasi Serah Terima -->
+                  <div
+                    v-if="step.location"
+                    class="text-xs text-muted-foreground leading-relaxed"
+                  >
+                    {{ t('fulfillment.handoverLocation') }}: {{ step.location }}
+                  </div>
 
                   <!-- Bukti Serah Terima / Proof of Handover Button for manual requests -->
                   <div v-if="step.proofUrl" class="pt-2">

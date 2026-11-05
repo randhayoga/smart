@@ -317,11 +317,11 @@ describe('DetailAssetModal.vue - Status, BoD/BoC Buttons, and Deletion Note', ()
         condition: 'Bagus',
         active_borrowing: { request_id: 123 },
       });
-      const borrowLink = borrowedWrapper.find('a[href="/smart/borrowed/123"]');
+      const borrowLink = borrowedWrapper.find('a[href="/smart/requests/123"]');
       expect(borrowLink.exists()).toBe(true);
       expect(borrowLink.attributes('target')).toBe('_blank');
 
-      // Di-assign with request_id -> now correctly routes to /smart/borrowed/200
+      // Di-assign with request_id -> now correctly routes to /smart/requests/200
       const assignedWrapper = mountModal({
         id: 2,
         number: 'AST-002',
@@ -329,7 +329,7 @@ describe('DetailAssetModal.vue - Status, BoD/BoC Buttons, and Deletion Note', ()
         condition: 'Bagus',
         active_borrowing: { user_id: 45, request_id: 200 },
       });
-      const assignLink = assignedWrapper.find('a[href="/smart/borrowed/200"]');
+      const assignLink = assignedWrapper.find('a[href="/smart/requests/200"]');
       expect(assignLink.exists()).toBe(true);
       expect(assignLink.attributes('target')).toBe('_blank');
 
@@ -343,7 +343,7 @@ describe('DetailAssetModal.vue - Status, BoD/BoC Buttons, and Deletion Note', ()
           { id: 10, request_id: 300, action_type: 'Assignment', status: 'Di-assign (LT)' }
         ],
       });
-      const lifecycleLink = assignedWithLifecycleWrapper.find('a[href="/smart/borrowed/300"]');
+      const lifecycleLink = assignedWithLifecycleWrapper.find('a[href="/smart/requests/300"]');
       expect(lifecycleLink.exists()).toBe(true);
       expect(lifecycleLink.attributes('target')).toBe('_blank');
 

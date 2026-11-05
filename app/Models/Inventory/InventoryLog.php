@@ -20,6 +20,8 @@ class InventoryLog extends EloquentModel
         'model_id',
         'lot_id',
         'asset_id',
+        'request_id',
+        'fulfillment_id',
         'user_id',
         'action_type',
         'quantity_change',
@@ -33,7 +35,29 @@ class InventoryLog extends EloquentModel
     protected $casts = [
         'previous_state' => 'array',
         'new_state' => 'array',
+        'request_id' => 'integer',
+        'fulfillment_id' => 'integer',
+        'user_id' => 'integer',
+        'model_id' => 'integer',
+        'lot_id' => 'integer',
+        'asset_id' => 'integer',
     ];
+
+    /**
+     * The request associated with this inventory log (if triggered by a requisition).
+     */
+    public function request(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\Request\Request::class, 'request_id');
+    }
+
+    /**
+     * The request fulfillment item associated with this log entry.
+     */
+    public function fulfillment(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\Request\RequestFulfillment::class, 'fulfillment_id');
+    }
 
     /**
      * The catalog model associated with this log entry.

@@ -88,7 +88,7 @@ const clearFilters = () => {
 const dataTableRef = ref<any>(null);
 
 const handleViewDetail = (item: any) => {
-  const url = `/smart/borrowed/${item.id}`;
+  const url = `/smart/requests/${item.id}`;
   router.get(url);
 };
 
@@ -273,7 +273,7 @@ const columns = computed<ColumnDef<any>[]>(() => [
           <span>{{ t('fulfillment.rowsPerPage') }}</span>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" :class="['w-[160px] justify-between rounded-[14px] font-normal', (rowsPerPage === 'Semua baris' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
+              <Button variant="outline" :class="['w-[100px] justify-between rounded-[14px] font-normal', (rowsPerPage === 'Semua baris' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
                 {{ rowsPerPageLabel }}
                 <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
               </Button>

@@ -81,7 +81,7 @@ const assignmentOrBorrowingUrl = computed<string | null>(() => {
   if (!isAssignmentOrBorrowing.value) return null;
   const reqId = activeRequestId.value;
   if (!reqId) return null;
-  return `/smart/borrowed/${reqId}`;
+  return `/smart/requests/${reqId}`;
 });
 
 const fetchAssetDetailsIfNeeded = async () => {

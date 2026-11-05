@@ -65,7 +65,7 @@ export default {
   allSubcategories: 'All types',
   selectType: 'Select Type',
   selectSubcategory: 'Select Type',
-  allRows: 'All rows',
+  allRows: 'All',
   rowsPerPage: 'Rows per page',
   selectedActions: 'Selected Actions',
   processedBy: 'Processed By',

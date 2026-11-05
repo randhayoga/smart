@@ -182,8 +182,8 @@ const handleConfirm = () => {
   isSubmitting.value = true;
 
   const url = props.mode === 'all'
-    ? route('smart.borrowed.finishAll', props.request.id)
-    : route('smart.borrowed.finishAsset', [props.request.id, props.targetAsset?.fulfillment_id]);
+    ? route('smart.requests.finishAll', props.request.id)
+    : route('smart.requests.finishAsset', [props.request.id, props.targetAsset?.fulfillment_id]);
 
   const formData = new FormData();
   formData.append('proof', proofFile.value as File);

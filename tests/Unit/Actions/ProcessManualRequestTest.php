@@ -24,6 +24,7 @@ use App\Models\TbProject;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
@@ -46,6 +47,7 @@ class ProcessManualRequestTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        Carbon::setTestNow(Carbon::now());
         Storage::fake('local');
 
         $this->action = app(ProcessManualRequest::class);
@@ -81,6 +83,12 @@ class ProcessManualRequestTest extends TestCase
         $this->uom = Uom::factory()->create(['name' => 'Pcs']);
         $this->organizer = Organizer::factory()->create(['name' => 'IT']);
         $this->location = Location::factory()->create(['name' => 'Main Warehouse']);
+    }
+
+    protected function tearDown(): void
+    {
+        Carbon::setTestNow();
+        parent::tearDown();
     }
 
     public function test_executes_consumable_manual_request_with_fifo_deduction_and_logs(): void
@@ -184,6 +192,11 @@ class ProcessManualRequestTest extends TestCase
         $this->assertCount(2, $logs);
         $this->assertEquals($this->borrower->id, $logs[0]->user_id);
         $this->assertEquals($this->borrower->id, $logs[1]->user_id);
+        $this->assertEquals($smartRequest->id, $logs[0]->request_id);
+        $this->assertEquals($fulfillments[0]->id, $logs[0]->fulfillment_id);
+        $this->assertEquals($smartRequest->id, $logs[1]->request_id);
+        $this->assertEquals($fulfillments[1]->id, $logs[1]->fulfillment_id);
+        $this->assertStringContainsString($smartRequest->request_number, $logs[0]->note);
         $this->assertEquals(now()->format('H:i:s'), $logs[0]->created_at->format('H:i:s'));
         $this->assertEquals(now()->format('H:i:s'), $fulfillments[0]->assigned_at->format('H:i:s'));
 

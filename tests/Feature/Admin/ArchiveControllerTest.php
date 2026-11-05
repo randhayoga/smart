@@ -138,7 +138,10 @@ class ArchiveControllerTest extends TestCase
             'status' => 'fulfilled',
         ]);
 
-        $response = $this->actingAs($this->admin)->get(route('smart.archive'));
+        $redirectResponse = $this->actingAs($this->admin)->get(route('smart.archive'));
+        $redirectResponse->assertRedirect(route('smart.requests.index', ['tab' => 'Arsip']));
+
+        $response = $this->actingAs($this->admin)->get(route('smart.requests.index', ['tab' => 'Arsip']));
         $response->assertOk();
 
         $archiveList = $response->viewData('page')['props']['archiveList'] ?? [];
@@ -149,109 +152,5 @@ class ArchiveControllerTest extends TestCase
         $this->assertEquals('rent', $byNumber['REQ-RENT-01']['type']);
         $this->assertEquals('lt', $byNumber['REQ-LT-01']['type']);
         $this->assertEquals('John Doe', $byNumber['REQ-CON-01']['requester']);
-    }
-
-    public function test_archive_show_loads_optimized_data_and_attributes(): void
-    {
-        $category = Category::factory()->create(['code' => 'COMP', 'name' => 'Computer']);
-        $assetType = Type::factory()->create([
-            'category_id' => $category->id,
-            'code' => 'LAPT',
-            'name' => 'Laptop',
-            'is_consumable' => false,
-        ]);
-
-        $brand = Brand::factory()->create(['name' => 'Dell']);
-        $uom = Uom::factory()->create();
-
-        $assetModel = InventoryModel::factory()->create([
-            'type_id' => $assetType->id,
-            'brand_id' => $brand->id,
-            'uom_id' => $uom->id,
-            'name' => 'Latitude 5420',
-            'specification' => 'Intel Core i5',
-        ]);
-
-        $lot = Lot::factory()->create(['model_id' => $assetModel->id]);
-
-        $asset = Asset::factory()->create([
-            'lot_id' => $lot->id,
-            'number' => 'AST-ARC-001',
-            'status' => 'Tersedia',
-            'borrowing_type' => 'ST',
-            'comp_specification' => 'Intel Core i7-1185G7, 16GB RAM, 512GB SSD',
-        ]);
-
-        $department = \App\Models\HrdOrgchart::create([
-            'org_name' => 'Engineering Department',
-            'org_code' => 'ENG-DEPT',
-            'employee_id' => 1,
-        ]);
-
-        $req = SmartRequest::create([
-            'request_number' => 'ARC-0001',
-            'user_id' => $this->employee->id,
-            'approver_id' => $this->admin->id,
-            'org_id' => $department->id,
-            'utilization' => 'corporate',
-            'status' => 'success',
-            'form_url' => 'request_forms/archive_sample.pdf',
-        ]);
-
-        $item = RequestItem::create([
-            'request_id' => $req->id,
-            'model_id' => $assetModel->id,
-            'type_id' => $assetType->id,
-            'quantity_requested' => 1,
-            'status' => 'fulfilled',
-        ]);
-
-        $handover = \App\Models\Request\RequestHandover::create([
-            'request_id' => $req->id,
-            'method' => 'pickup',
-            'scheduled_date' => now(),
-            'location' => 'HQ',
-            'proof_url' => 'handovers/archive_proof.pdf',
-            'user_confirmed_at' => now(),
-            'auto_confirmed' => true,
-        ]);
-
-        \App\Models\Request\RequestFulfillment::create([
-            'request_item_id' => $item->id,
-            'asset_id' => $asset->id,
-            'handover_id' => $handover->id,
-            'quantity_fulfilled' => 1,
-            'assigned_at' => now(),
-        ]);
-
-        RequestStatusLog::create([
-            'request_id' => $req->id,
-            'status_from' => 'return',
-            'status_to' => 'success',
-            'changed_by' => $this->admin->id,
-            'note' => 'Pengembalian aset selesai.',
-        ]);
-
-        $response = $this->actingAs($this->admin)->get(route('smart.archive.show', $req->id));
-        $response->assertOk();
-
-        $pageProps = $response->viewData('page')['props'] ?? [];
-        $requestData = $pageProps['request'] ?? [];
-
-        $this->assertEquals('ARC-0001', $requestData['number']);
-        $this->assertEquals('success', $requestData['status']);
-        $this->assertEquals('success', $requestData['raw_status']);
-        $this->assertEquals('st', $requestData['specific_type']);
-        $this->assertEquals('Engineering Department', $requestData['requester_department']);
-        $this->assertTrue($requestData['is_manual']);
-        $this->assertStringContainsString('archive_sample.pdf', $requestData['form_url']);
-        $this->assertStringContainsString('archive_proof.pdf', $requestData['handover_proof_url']);
-
-        $this->assertCount(1, $requestData['items']);
-        $this->assertEquals('Dell', $requestData['items'][0]['brand']);
-        $this->assertEquals('Latitude 5420', $requestData['items'][0]['name']);
-        $this->assertEquals('Intel Core i7-1185G7, 16GB RAM, 512GB SSD', $requestData['items'][0]['spec']);
-        $this->assertEquals('COMP', $requestData['items'][0]['category_code']);
-        $this->assertEquals(['AST-ARC-001'], $requestData['items'][0]['assets']);
     }
 }

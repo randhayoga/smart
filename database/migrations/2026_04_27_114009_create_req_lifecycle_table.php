@@ -92,10 +92,31 @@ return new class extends Migration {
                 ->on('request_fulfillments')
                 ->noActionOnDelete();
         });
+
+        Schema::table('inventory_logs', function (Blueprint $table) {
+            $table->unsignedBigInteger('request_id')->nullable()->index()->after('asset_id');
+            $table->unsignedBigInteger('fulfillment_id')->nullable()->index()->after('request_id');
+
+            $table->foreign('request_id', 'fk_inventory_logs_request_id')
+                ->references('id')
+                ->on('requests')
+                ->noActionOnDelete();
+
+            $table->foreign('fulfillment_id', 'fk_inventory_logs_fulfillment_id')
+                ->references('id')
+                ->on('request_fulfillments')
+                ->noActionOnDelete();
+        });
     }
 
     public function down(): void
     {
+        Schema::table('inventory_logs', function (Blueprint $table) {
+            $table->dropForeign('fk_inventory_logs_request_id');
+            $table->dropForeign('fk_inventory_logs_fulfillment_id');
+            $table->dropColumn(['request_id', 'fulfillment_id']);
+        });
+
         Schema::table('asset_lifecycles', function (Blueprint $table) {
             $table->dropForeign('fk_asset_lifecycles_request_id');
             $table->dropForeign('fk_asset_lifecycles_fulfillment_id');

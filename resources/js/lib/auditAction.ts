@@ -108,12 +108,12 @@ export function renderAuditNote(
     const linkVNode = h(
       'a',
       {
-        href: `/smart/borrowed/${requestId}`,
+        href: `/smart/requests/${requestId}`,
         class: 'text-primary font-semibold hover:underline inline-flex items-center gap-1 cursor-pointer no-underline',
         onClick: (e: MouseEvent) => {
           e.preventDefault();
           e.stopPropagation();
-          router.visit(`/smart/borrowed/${requestId}`);
+          router.visit(`/smart/requests/${requestId}`);
         },
       },
       [

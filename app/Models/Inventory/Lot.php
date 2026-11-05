@@ -164,6 +164,75 @@ class Lot extends EloquentModel
     }
 
     /**
+     * Get the active borrowing / request attribute for feature parity with Asset.
+     */
+    public function getActiveBorrowingAttribute(): ?array
+    {
+        return $this->getLatestRequestAttribute();
+    }
+
+    /**
+     * Get the latest request information linked to this lot via inventory logs or fulfillments.
+     */
+    public function getLatestRequestAttribute(): ?array
+    {
+        // 1. Check inventory logs with request_id FK first
+        $latestLog = $this->relationLoaded('inventoryLogs')
+            ? $this->inventoryLogs->whereNotNull('request_id')->sortByDesc('id')->first()
+            : InventoryLog::with('request.user')
+                ->where('lot_id', $this->id)
+                ->whereNotNull('request_id')
+                ->latest('id')
+                ->first();
+
+        if ($latestLog && $latestLog->request) {
+            $req = $latestLog->request;
+            return [
+                'assignment_id' => $latestLog->fulfillment_id,
+                'fulfillment_id' => $latestLog->fulfillment_id,
+                'request_id' => $req->id,
+                'request_number' => $req->request_number,
+                'user_id' => $req->user_id,
+                'user_name' => $req->user?->name ?? '-',
+                'utilization' => $req->utilization,
+                'org_id' => $req->org_id,
+                'project_id' => $req->project_id,
+                'start_date' => $latestLog->created_at ? $latestLog->created_at->format('Y-m-d') : null,
+                'date' => $latestLog->created_at ? $latestLog->created_at->format('Y-m-d') : null,
+                'note' => $latestLog->note ?? '',
+            ];
+        }
+
+        // 2. Fallback to fulfillments
+        $fulfillment = $this->relationLoaded('fulfillments')
+            ? $this->fulfillments->whereNotNull('assigned_at')->sortByDesc('id')->first()
+            : \App\Models\Request\RequestFulfillment::with('requestItem.request.user')
+                ->where('lot_id', $this->id)
+                ->latest('id')
+                ->first();
+
+        if ($fulfillment && $fulfillment->requestItem && $fulfillment->requestItem->request) {
+            $req = $fulfillment->requestItem->request;
+            return [
+                'assignment_id' => $fulfillment->id,
+                'fulfillment_id' => $fulfillment->id,
+                'request_id' => $req->id,
+                'request_number' => $req->request_number,
+                'user_id' => $req->user_id,
+                'user_name' => $req->user?->name ?? '-',
+                'utilization' => $req->utilization,
+                'org_id' => $req->org_id,
+                'project_id' => $req->project_id,
+                'start_date' => $fulfillment->assigned_at ? $fulfillment->assigned_at->format('Y-m-d') : null,
+                'date' => $fulfillment->assigned_at ? $fulfillment->assigned_at->format('Y-m-d') : null,
+                'note' => $req->reasoning ?? '',
+            ];
+        }
+
+        return null;
+    }
+
+    /**
      * Accessor to ensure number attribute is properly trimmed.
      */
     public function getNumberAttribute(?string $value): ?string

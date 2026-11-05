@@ -180,7 +180,7 @@ const userColumns = computed<ColumnDef<UserItem>[]>(() => [
             <span class="text-right">{{ $t('access.users.rowsPerPage') }}</span>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" class="w-[120px] justify-between rounded-[14px] font-normal">
+                <Button variant="outline" class="w-[100px] justify-between rounded-[14px] font-normal">
                   {{ userRowsPerPage === 'all' ? $t('access.users.allRows') : userRowsPerPage }}
                   <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                 </Button>

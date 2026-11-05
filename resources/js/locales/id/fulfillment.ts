@@ -3,7 +3,7 @@
  */
 export default {
   // Navigation & Tabs
-  title: 'Permintaan Aktif',
+  title: 'Daftar Permintaan',
   inbox: 'Inbox',
   needsAllocation: 'Perlu Alokasi',
   partial: 'Parsial',
@@ -38,7 +38,7 @@ export default {
   cancelled: 'Dibatalkan',
   pending: 'Pending',
   rowsPerPage: 'Baris per halaman',
-  allRows: 'Semua baris',
+  allRows: 'Semua',
   searchInboxPlaceholder: 'Cari Nomor atau Nama Pemohon...',
   searchConfirmedPlaceholder: 'Cari Nomor atau Nama Pemohon...',
   searchHandoverPlaceholder: 'Cari nomor permintaan atau nama karyawan...',
@@ -138,6 +138,7 @@ export default {
   saveAllocation: 'Simpan Alokasi',
   autoAllocate: 'Alokasi Otomatis',
   clearSelection: 'Hapus Pilihan',
+  handoverLocation: 'Lokasi Serah Terima',
   confirmFullButton: 'Konfirmasi Alokasi Penuh',
   confirmPartialButton: 'Konfirmasi Parsial',
 
@@ -364,7 +365,8 @@ export default {
     listLabel: 'Daftar:',
     emptyAddedItems: 'Belum ada barang atau aset yang ditambahkan ke daftar.',
     submitButton: 'Simpan Permintaan/Peminjaman',
-    submitSuccess: 'Peminjaman/Permintaan manual berhasil disimpan.',
+    submitSuccess: 'Peminjaman/Permintaan manual berhasil disimpan, ',
+    seeHere: 'lihat di sini',
     submitFailed: 'Gagal menyimpan peminjaman/permintaan manual.',
     requesterRequired: 'Peminta/Peminjam wajib dipilih.',
     departmentRequired: 'Departemen wajib dipilih.',

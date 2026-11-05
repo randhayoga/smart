@@ -22,6 +22,7 @@ use App\Http\Controllers\Smart\Admin\RequestItemLotAssignmentController;
 use App\Http\Controllers\Smart\Admin\RequestFulfillmentConfirmationController;
 use App\Http\Controllers\Smart\Admin\HandoverController;
 use App\Http\Controllers\Smart\Admin\BorrowedController;
+use App\Http\Controllers\Smart\Admin\Requests\RequestDetailController;
 use App\Http\Controllers\Smart\Admin\ReturnController;
 use App\Http\Controllers\Smart\User\UserDashboardController;
 use App\Http\Controllers\Smart\User\BrowseController;
@@ -230,12 +231,15 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
         Route::get('/inventory-audit', [InventoryAuditController::class, 'index'])->name('inventory-audit');
     });
 
-    // Active Requisitions Management
-    Route::middleware(['permission:requests.inbox.view'])->group(function () {
+    // Requests List Management
+    Route::middleware(['permission:requests.inbox.view,requests.archive.view,requests.returns'])->group(function () {
         Route::get('/requests', [AdminActiveRequestController::class, 'index'])->name('requests.index');
         Route::get('/requests/manual-options', [ManualRequestOptionController::class, 'index'])->name('requests.manual-options');
         Route::get('/requests/manual-catalog', [ManualRequestCatalogController::class, 'index'])->name('requests.manual-catalog');
         Route::post('/requests/manual', [ManualRequestController::class, 'store'])->name('requests.manual.store');
+        Route::get('/requests/{id}', [RequestDetailController::class, 'show'])->name('requests.show');
+        Route::post('/requests/{id}/finish-all', [RequestDetailController::class, 'finishAll'])->name('requests.finishAll');
+        Route::post('/requests/{id}/finish-asset/{fulfillmentId}', [RequestDetailController::class, 'finishAsset'])->name('requests.finishAsset');
         Route::get('/inbox', function (\Illuminate\Http\Request $request, \App\Services\InventoryStockService $stockService) {
             if ($request->wantsJson()) {
                 return app(AdminApprovedRequestController::class)->index($request, $stockService);
@@ -296,9 +300,6 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
             $request->merge(['tab' => 'Lacak Peminjaman']);
             return app(AdminActiveRequestController::class)->index($request, $stockService);
         })->name('borrowed');
-        Route::get('/borrowed/{id}', [BorrowedController::class, 'show'])->name('borrowed.show');
-        Route::post('/borrowed/{id}/finish-all', [BorrowedController::class, 'finishAll'])->name('borrowed.finishAll');
-        Route::post('/borrowed/{id}/finish-asset/{fulfillmentId}', [BorrowedController::class, 'finishAsset'])->name('borrowed.finishAsset');
     });
 
     Route::middleware(['permission:requests.returns'])->group(function () {
@@ -316,7 +317,6 @@ Route::middleware(['auth'])->prefix('smart')->name('smart.')->group(function () 
     // Requisition Archive
     Route::middleware(['permission:requests.archive.view'])->group(function () {
         Route::get('/archive', [ArchiveController::class, 'index'])->name('archive');
-        Route::get('/archive/{id}', [ArchiveController::class, 'show'])->name('archive.show');
     });
 
     // Manager Approvals

@@ -65,7 +65,7 @@ export default {
   last7Days: 'Last 7 days',
   last30Days: 'Last 30 days',
   rowsPerPage: 'Rows per page',
-  allRows: 'All rows',
+  allRows: 'All',
   days: 'days',
   months: 'months',
   years: 'years',

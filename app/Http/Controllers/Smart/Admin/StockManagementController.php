@@ -184,6 +184,7 @@ class StockManagementController extends Controller
                 ->leftJoin('models as m', 'm.id', '=', 'il.model_id')
                 ->leftJoin('lots as l', 'l.id', '=', 'il.lot_id')
                 ->leftJoin('models as lm', 'lm.id', '=', 'l.model_id')
+                ->leftJoin('requests as r', 'r.id', '=', 'il.request_id')
                 ->where(function ($q) use ($model) {
                     $q->where('il.model_id', $model->id)
                       ->orWhere('l.model_id', $model->id);
@@ -196,6 +197,9 @@ class StockManagementController extends Controller
                     'il.previous_state',
                     'il.note',
                     'il.created_at',
+                    'il.request_id',
+                    'il.fulfillment_id',
+                    'r.request_number',
                     'm.number as model_number',
                     'm.name as model_name',
                     'l.number as lot_number',
@@ -248,6 +252,9 @@ class StockManagementController extends Controller
                     'quantity_change' => (int) $row->quantity_change,
                     'actor' => $actor,
                     'note' => $row->note ?? '-',
+                    'request_id' => $row->request_id ? (int) $row->request_id : null,
+                    'fulfillment_id' => $row->fulfillment_id ? (int) $row->fulfillment_id : null,
+                    'request_number' => $row->request_number ?? null,
                     'waktu' => $createdAt ? $createdAt->format('d-m-Y H:i:s') : '-',
                     'created_at_raw' => $createdAt ? $createdAt->toISOString() : null,
                 ];

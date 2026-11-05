@@ -65,7 +65,7 @@ export default {
   last7Days: '7 hari terakhir',
   last30Days: '30 hari terakhir',
   rowsPerPage: 'Baris per halaman',
-  allRows: 'Semua baris',
+  allRows: 'Semua',
   days: 'hari',
   months: 'bulan',
   years: 'tahun',

@@ -2,6 +2,8 @@
  * Indonesian navigation translation dictionary.
  */
 export default {
+  requestsList: 'Daftar Permintaan',
+  requestList: 'Daftar Permintaan',
   sections: {
     mainMenu: 'MENU UTAMA',
     stock: 'STOK',
@@ -24,6 +26,8 @@ export default {
     masterData: 'Master Data',
     scanBarcode: 'Pindai Barcode',
     activeRequests: 'Permintaan Aktif',
+    requestsList: 'Daftar Permintaan',
+    requestList: 'Daftar Permintaan',
     archive: 'Arsip',
     auditTrail: 'Pergerakan Aset',
     inventoryAudit: 'Audit Manajemen Stok',

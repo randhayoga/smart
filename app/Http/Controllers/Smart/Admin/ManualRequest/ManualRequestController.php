@@ -31,6 +31,13 @@ class ManualRequestController extends Controller
             ], 201);
         }
 
-        return redirect()->back()->with('success', $successMessage);
+        return redirect()->back()->with([
+            'success' => $successMessage,
+            'created_request' => [
+                'id' => $smartRequest->id,
+                'number' => $smartRequest->request_number,
+                'target_url' => "/smart/requests/{$smartRequest->id}",
+            ],
+        ]);
     }
 }

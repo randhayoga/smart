@@ -44,10 +44,10 @@ class LotSeederTest extends TestCase
             $parts = explode('-', $lot->number);
             $this->assertEquals('LOT', $parts[0]);
             $this->assertEquals(4, strlen($parts[1])); // 4-digit serial
-            $this->assertEquals($lot->date_of_receipt->format('y'), $parts[2]); // 2-digit year
+            $this->assertEquals($lot->purchase_grant_date->format('y'), $parts[2]); // 2-digit year
 
             // Suffix must match parent barang number
-            $expectedSuffix = "-{$lot->date_of_receipt->format('y')}-{$lot->barang->number}";
+            $expectedSuffix = "-{$lot->purchase_grant_date->format('y')}-{$lot->barang->number}";
             $this->assertStringEndsWith($expectedSuffix, $lot->number);
         }
 

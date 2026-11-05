@@ -34,7 +34,7 @@ export default {
   searchPlaceholder: 'Cari {tab}...',
   allParentCategories: 'Semua Kategori Induk',
   rowsPerPage: 'Baris per halaman',
-  allRows: 'Semua baris',
+  allRows: 'Semua',
   columns: {
     codeWithTab: 'Nomor {tab}',
     classification: 'Klasifikasi',

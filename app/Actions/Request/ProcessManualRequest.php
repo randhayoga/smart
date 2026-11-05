@@ -262,7 +262,7 @@ class ProcessManualRequest
 
                 $this->clampCompetingLotFulfillments($lot->id, $newLotBalance);
 
-                RequestFulfillment::create([
+                $fulfillment = RequestFulfillment::create([
                     'request_item_id' => $requestItem->id,
                     'lot_id' => $lot->id,
                     'asset_id' => null,
@@ -281,7 +281,10 @@ class ProcessManualRequest
                     $utilization,
                     $destinationName,
                     $itemReasoning ?? $requestReasoning,
-                    $date
+                    $date,
+                    $smartRequest->id,
+                    $fulfillment->id,
+                    $requestNumber
                 );
 
                 $remainingToDeduct -= $takeQty;

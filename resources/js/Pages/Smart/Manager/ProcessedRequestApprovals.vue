@@ -293,12 +293,12 @@ const columns = computed<ColumnDef<SmartRequestData>[]>(() => [
           <span>{{ $t('approvals.rowsPerPage') }}</span>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal bg-white', (rowsPerPage === 'all' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
+              <Button variant="outline" :class="['w-[100px] justify-between rounded-[14px] font-normal bg-white', (rowsPerPage === 'all' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
                 {{ rowsPerPageLabel }}
                 <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent class="w-[140px] rounded-[14px]" align="start" :side-offset="4">
+            <DropdownMenuContent class="w-[100px] rounded-[14px]" align="start" :side-offset="4">
               <DropdownMenuItem @select="rowsPerPage = 'all'">{{ $t('approvals.allRows') }}</DropdownMenuItem>
               <DropdownMenuItem @select="rowsPerPage = '10'">10</DropdownMenuItem>
               <DropdownMenuItem @select="rowsPerPage = '25'">25</DropdownMenuItem>

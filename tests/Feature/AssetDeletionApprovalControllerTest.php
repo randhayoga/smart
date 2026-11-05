@@ -50,7 +50,7 @@ class AssetDeletionApprovalControllerTest extends TestCase
         $tipeCode = $lot->barang->subcategory->code ?? 'SUB';
         $organizerCode = $lot->organizer->name ?? 'ORG';
         $combination = "{$tipeCode}-{$organizerCode}-PTRE";
-        $yy = $lot->date_of_receipt ? $lot->date_of_receipt->format('y') : date('y');
+        $yy = $lot->purchase_grant_date ? $lot->purchase_grant_date->format('y') : date('y');
         $unitNumber = "00001-{$combination}-{$yy}";
         if (strlen($unitNumber) > 25) {
             $unitNumber = substr($unitNumber, 0, 25);
@@ -139,7 +139,7 @@ class AssetDeletionApprovalControllerTest extends TestCase
         $tipeCode = $lot->barang->subcategory->code ?? 'SUB';
         $organizerCode = $lot->organizer->name ?? 'ORG';
         $combination = "{$tipeCode}-{$organizerCode}-PTRE";
-        $yy = $lot->date_of_receipt ? $lot->date_of_receipt->format('y') : date('y');
+        $yy = $lot->purchase_grant_date ? $lot->purchase_grant_date->format('y') : date('y');
         $unitNumber = "00099-{$combination}-{$yy}";
         if (strlen($unitNumber) > 25) {
             $unitNumber = substr($unitNumber, 0, 25);

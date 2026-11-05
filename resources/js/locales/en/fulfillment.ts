@@ -3,7 +3,7 @@
  */
 export default {
   // Navigation & Tabs
-  title: 'Active Requests',
+  title: 'Requests List',
   inbox: 'Inbox',
   needsAllocation: 'Needs Allocation',
   partial: 'Partial',
@@ -38,7 +38,7 @@ export default {
   cancelled: 'Cancelled',
   pending: 'Pending',
   rowsPerPage: 'Rows per page',
-  allRows: 'All rows',
+  allRows: 'All',
   searchInboxPlaceholder: 'Search Number or Requester Name...',
   searchConfirmedPlaceholder: 'Search Number or Requester Name...',
   searchHandoverPlaceholder: 'Search request number or employee name...',
@@ -138,6 +138,7 @@ export default {
   saveAllocation: 'Save Allocation',
   autoAllocate: 'Auto Allocate',
   clearSelection: 'Clear Selection',
+  handoverLocation: 'Handover Location',
   confirmFullButton: 'Confirm Full Allocation',
   confirmPartialButton: 'Confirm Partial',
 
@@ -364,7 +365,8 @@ export default {
     listLabel: 'List:',
     emptyAddedItems: 'No items or assets have been added to the list yet.',
     submitButton: 'Save Request/Borrowing',
-    submitSuccess: 'Manual borrowing/request saved successfully.',
+    submitSuccess: 'Manual borrowing/request saved successfully, ',
+    seeHere: 'see here',
     submitFailed: 'Failed to save manual borrowing/request.',
     requesterRequired: 'Requestor/Borrower is required.',
     departmentRequired: 'Department is required.',

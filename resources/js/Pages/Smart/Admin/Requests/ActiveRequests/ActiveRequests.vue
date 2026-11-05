@@ -21,6 +21,7 @@ import PartialListTab from './Tabs/PartialListTab.vue';
 import HandoverTab from './Tabs/HandoverTab.vue';
 import BorrowedTab from './Tabs/BorrowedTab.vue';
 import ReturnsTab from './Tabs/ReturnsTab.vue';
+import ArchiveTab from './Tabs/ArchiveTab.vue';
 import InputManualRequestModal from './Modals/ManualRequest/InputManualRequestModal.vue';
 
 import type { SmartRequestData } from '@/types/request';
@@ -34,6 +35,7 @@ interface Props {
   handovers: any[];
   borrowedList: any[];
   returnsList: any[];
+  archiveList?: any[];
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -48,6 +50,7 @@ const props = withDefaults(defineProps<Props>(), {
   handovers: () => [],
   borrowedList: () => [],
   returnsList: () => [],
+  archiveList: () => [],
 });
 
 const { t } = useI18n();
@@ -78,11 +81,13 @@ const tabIds = [
 // ==========================================
 
 const computedTabs = computed(() => [
-  { id: 'Lacak Peminjaman', label: t('fulfillment.trackBorrowing') }
+  { id: 'Lacak Peminjaman', label: t('fulfillment.trackBorrowing') },
+  { id: 'Arsip', label: t('fulfillment.archive') },
 ]);
 
 const tabIds = [
-  'Lacak Peminjaman'
+  'Lacak Peminjaman',
+  'Arsip',
 ];
 
 // Mapping helper to resolve tabs from URL query case-insensitively
@@ -129,7 +134,8 @@ const tabPropMap: Record<string, string> = {
   'Parsial': 'partialRequests',
   'Serah Terima': 'handovers',
   'Lacak Peminjaman': 'borrowedList',
-  'Pengembalian': 'returnsList'
+  'Pengembalian': 'returnsList',
+  'Arsip': 'archiveList',
 };
 
 watch(activeTab, (newTab) => {
@@ -214,6 +220,12 @@ watch(activeTab, (newTab) => {
             <BorrowedTab 
               v-if="activeTab === 'Lacak Peminjaman'" 
               :borrowed-list="props.borrowedList" 
+            />
+
+            <!-- Arsip Tab -->
+            <ArchiveTab
+              v-else-if="activeTab === 'Arsip'"
+              :archive-list="props.archiveList || []"
             />
 
             <!-- ==========================================

@@ -140,6 +140,20 @@ const lotVendorDisplay = computed(() => {
   return lotDetails.value.vendor;
 });
 
+const linkedRequestId = computed<number | null>(() => {
+  if (lotDetails.value?.request_id) return Number(lotDetails.value.request_id);
+  if (lotDetails.value?.active_borrowing?.request_id) return Number(lotDetails.value.active_borrowing.request_id);
+  if (lotDetails.value?.latest_request?.request_id) return Number(lotDetails.value.latest_request.request_id);
+  return null;
+});
+
+const linkedRequestNumber = computed<string>(() => {
+  return lotDetails.value?.request_number || 
+    lotDetails.value?.active_borrowing?.request_number || 
+    lotDetails.value?.latest_request?.request_number || 
+    (linkedRequestId.value ? `REQ-${linkedRequestId.value}` : '-');
+});
+
 const handleEdit = () => {
   if (lotDetails.value) {
     emit('close');
@@ -287,7 +301,21 @@ onUnmounted(() => {
                     <span class="text-foreground">{{ t('inventory.burden') }}:</span> {{ lotBurdenDisplay }}
                   </p>
 
-                  <!-- 11. Pembaruan Terakhir -->
+                  <!-- 11. Permintaan Terkait (if linked to a request) -->
+                  <p v-if="linkedRequestId" class="text-foreground">
+                    <span class="text-foreground">{{ t('fulfillment.request') }}:</span>
+                    <a 
+                      :href="`/smart/requests/${linkedRequestId}`"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="text-primary hover:underline font-semibold inline-flex items-center gap-1 ml-1"
+                    >
+                      <span>{{ linkedRequestNumber }}</span>
+                      <ExternalLink class="w-3.5 h-3.5" />
+                    </a>
+                  </p>
+
+                  <!-- 12. Pembaruan Terakhir -->
                   <p class="text-foreground">
                     <span class="text-foreground">{{ t('inventory.lastUpdate') }}:</span> {{ lotDetails.updated_at || '-' }}
                   </p>

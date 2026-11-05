@@ -417,20 +417,26 @@ class InventoryLogService
         string $utilization,
         ?string $destinationName,
         ?string $reasonNote,
-        \Carbon\CarbonInterface|\DateTimeInterface|string|null $createdAt = null
+        \Carbon\CarbonInterface|\DateTimeInterface|string|null $createdAt = null,
+        ?int $requestId = null,
+        ?int $fulfillmentId = null,
+        ?string $requestNumber = null
     ): InventoryLog {
         $userId = $user instanceof User ? $user->id : $user;
         $utilizationLabel = ucfirst(strtolower($utilization));
         $trimmedReason = trim($reasonNote ?? '');
         $catatan = !empty($trimmedReason) ? "\"{$trimmedReason}\"" : '"-"';
         $destPart = !empty($destinationName) ? " {$destinationName}" : '';
+        $reqCodePart = !empty($requestNumber) ? " {$requestNumber}" : '';
 
-        $note = "Permintaan untuk {$utilizationLabel}{$destPart}, dengan catatan {$catatan}";
+        $note = "Permintaan{$reqCodePart} untuk {$utilizationLabel}{$destPart}, dengan catatan {$catatan}";
 
         return InventoryLog::create([
             'model_id' => $model->id,
             'lot_id' => $lot->id,
             'asset_id' => null,
+            'request_id' => $requestId,
+            'fulfillment_id' => $fulfillmentId,
             'user_id' => $userId,
             'action_type' => 'stock_out',
             'quantity_change' => -$deductQty,

@@ -121,7 +121,7 @@ const formatGroupName = (group: string) => {
             <span class="text-right">{{ $t('access.roles.rowsPerPage') }}</span>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" class="w-[120px] justify-between rounded-[14px] font-normal">
+                <Button variant="outline" class="w-[100px] justify-between rounded-[14px] font-normal">
                   {{ roleRowsPerPage === 'all' ? $t('access.roles.allRows') : roleRowsPerPage }}
                   <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                 </Button>

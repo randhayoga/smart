@@ -60,7 +60,7 @@ class InventoryLogServiceTest extends TestCase
         $this->assertNull($log->previous_state);
         $this->assertIsArray($log->new_state);
         $this->assertEquals('Spidol Hitam', $log->new_state['name']);
-        $this->assertStringContainsString('Menambahkan model baru: Spidol Hitam (BRG-001)', $log->note);
+        $this->assertStringContainsString('Menambahkan model baru: Spidol Hitam', $log->note);
     }
 
     public function test_log_model_updated_records_diff_when_changed(): void
@@ -124,7 +124,7 @@ class InventoryLogServiceTest extends TestCase
         $this->assertEquals(50, $log->quantity_change);
         $this->assertNull($log->previous_state);
         $this->assertEquals(50, $log->new_state['initial_quantity']);
-        $this->assertStringContainsString('Penerimaan LOT baru LOT-2026-001 sebanyak 50 Pcs (PO: PO-999)', $log->note);
+        $this->assertStringContainsString('Penerimaan LOT baru sebanyak 50 Pcs (PO: PO-999)', $log->note);
     }
 
     public function test_log_lot_created_with_null_po_number(): void
@@ -141,7 +141,7 @@ class InventoryLogServiceTest extends TestCase
 
         $this->assertInstanceOf(InventoryLog::class, $log);
         $this->assertNull($log->new_state['po_number']);
-        $this->assertEquals('Penerimaan LOT baru LOT-2026-002 sebanyak 20 Pcs', $log->note);
+        $this->assertEquals('Penerimaan LOT baru sebanyak 20 Pcs', $log->note);
     }
 
     public function test_log_lot_updated(): void
@@ -235,5 +235,46 @@ class InventoryLogServiceTest extends TestCase
         );
 
         $this->assertEquals('Permintaan untuk Project MRT Phase 2, dengan catatan "Kebutuhan site"', $log3->note);
+
+        // Scenario 4: Request with request code and foreign keys
+        $request = \App\Models\Request\Request::create([
+            'request_number' => '112026-0009',
+            'user_id' => $this->user->id,
+            'approver_id' => $this->user->id,
+            'utilization' => 'corporate',
+            'status' => 'success',
+        ]);
+        $requestItem = \App\Models\Request\RequestItem::create([
+            'request_id' => $request->id,
+            'type_id' => $this->model->type_id,
+            'model_id' => $this->model->id,
+            'quantity_requested' => 2,
+            'status' => 'fulfilled',
+        ]);
+        $fulfillment = \App\Models\Request\RequestFulfillment::create([
+            'request_item_id' => $requestItem->id,
+            'lot_id' => $lot->id,
+            'quantity_fulfilled' => 2,
+        ]);
+
+        $log4 = $this->service->logConsumableStockOut(
+            model: $this->model,
+            lot: $lot,
+            deductQty: 2,
+            prevQty: 2,
+            newQty: 0,
+            user: $this->user,
+            utilization: 'corporate',
+            destinationName: 'HRD',
+            reasonNote: 'Untuk onboarding',
+            createdAt: now(),
+            requestId: $request->id,
+            fulfillmentId: $fulfillment->id,
+            requestNumber: $request->request_number
+        );
+
+        $this->assertEquals('Permintaan 112026-0009 untuk Corporate HRD, dengan catatan "Untuk onboarding"', $log4->note);
+        $this->assertEquals($request->id, $log4->request_id);
+        $this->assertEquals($fulfillment->id, $log4->fulfillment_id);
     }
 }

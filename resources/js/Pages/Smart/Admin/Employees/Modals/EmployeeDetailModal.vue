@@ -669,12 +669,12 @@ const historyColumns = computed<ColumnDef<LoanItem>[]>(() => [
                     <span class="whitespace-nowrap">{{ t('admin.rowsPerPage') }}</span>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="outline" :class="['w-[130px] justify-between rounded-[14px] font-normal', (activeRowsPerPage === 'Semua baris' || !activeRowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
+                        <Button variant="outline" :class="['w-[100px] justify-between rounded-[14px] font-normal', (activeRowsPerPage === 'Semua baris' || !activeRowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
                           {{ activeRowsPerPageLabel }}
                           <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent class="w-[130px] rounded-[14px]" align="end" :side-offset="4">
+                      <DropdownMenuContent class="w-[100px] rounded-[14px]" align="end" :side-offset="4">
                         <DropdownMenuItem @select="activeRowsPerPage = 'Semua baris'">{{ t('admin.allRows') }}</DropdownMenuItem>
                         <DropdownMenuItem @select="activeRowsPerPage = '10'">10</DropdownMenuItem>
                         <DropdownMenuItem @select="activeRowsPerPage = '25'">25</DropdownMenuItem>
@@ -772,12 +772,12 @@ const historyColumns = computed<ColumnDef<LoanItem>[]>(() => [
                     <span class="whitespace-nowrap">{{ t('admin.rowsPerPage') }}</span>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="outline" :class="['w-[130px] justify-between rounded-[14px] font-normal', (historyRowsPerPage === 'Semua baris' || !historyRowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
+                        <Button variant="outline" :class="['w-[100px] justify-between rounded-[14px] font-normal', (historyRowsPerPage === 'Semua baris' || !historyRowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
                           {{ historyRowsPerPageLabel }}
                           <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent class="w-[130px] rounded-[14px]" align="end" :side-offset="4">
+                      <DropdownMenuContent class="w-[100px] rounded-[14px]" align="end" :side-offset="4">
                         <DropdownMenuItem @select="historyRowsPerPage = 'Semua baris'">{{ t('admin.allRows') }}</DropdownMenuItem>
                         <DropdownMenuItem @select="historyRowsPerPage = '10'">10</DropdownMenuItem>
                         <DropdownMenuItem @select="historyRowsPerPage = '25'">25</DropdownMenuItem>

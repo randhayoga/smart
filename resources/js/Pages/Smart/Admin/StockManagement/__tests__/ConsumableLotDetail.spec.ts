@@ -117,4 +117,35 @@ describe('ConsumableLotDetail.vue', () => {
     expect(memoLink.exists()).toBe(true);
     expect(memoLink.attributes('target')).toBe('_blank');
   });
+
+  it('renders linked request code with link to request detail page when lot has linked request', async () => {
+    const lotWithRequest = {
+      ...sampleLot,
+      request_id: 105,
+      request_number: '112026-0005',
+    };
+
+    (axios.get as any).mockResolvedValueOnce({ data: lotWithRequest });
+
+    const wrapper = mount(ConsumableLotDetail, {
+      props: {
+        isOpen: true,
+        lotId: 10,
+      },
+      global: {
+        plugins: [i18n],
+        stubs: {
+          Teleport: true,
+          Transition: false,
+          Tabs: { template: '<div><slot /></div>' },
+        },
+      },
+    });
+
+    await new Promise((r) => setTimeout(r, 20));
+
+    const reqLink = wrapper.find('a[href="/smart/requests/105"]');
+    expect(reqLink.exists()).toBe(true);
+    expect(reqLink.text()).toContain('112026-0005');
+  });
 });

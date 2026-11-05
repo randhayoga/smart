@@ -4,7 +4,7 @@
  * Integrates Section 1 (Request/Borrowing Info), Section 2 (Item/Asset Selection),
  * Section 3 (Added Items List), and Section 4 (Handover Info) into a single high-performance modal.
  */
-import { ref, reactive, computed, watch } from 'vue';
+import { ref, reactive, computed, watch, h } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { router } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
@@ -468,8 +468,30 @@ const handleSubmit = () => {
     onFinish: () => {
       isSubmitting.value = false;
     },
-    onSuccess: () => {
-      toast.success(t('fulfillment.manualRequest.submitSuccess'));
+    onSuccess: (page: any) => {
+      const createdRequest = page?.props?.flash?.created_request;
+      if (createdRequest?.target_url || createdRequest?.id) {
+        const targetUrl = createdRequest.target_url || `/smart/requests/${createdRequest.id}`;
+        toast.success(
+          h('span', [
+            t('fulfillment.manualRequest.submitSuccess'),
+            h(
+              'a',
+              {
+                href: targetUrl,
+                class: 'underline font-semibold text-primary hover:text-primary/80 transition-colors cursor-pointer',
+                onClick: (e: MouseEvent) => {
+                  e.preventDefault();
+                  router.visit(targetUrl);
+                },
+              },
+              t('fulfillment.manualRequest.seeHere')
+            ),
+          ])
+        );
+      } else {
+        toast.success(t('fulfillment.manualRequest.submitSuccess'));
+      }
       emit('update:open', false);
       emit('success');
     },

@@ -8,6 +8,15 @@ import AddedItemsListSection from '../AddedItemsListSection.vue';
 import HandoverInfoSection from '../HandoverInfoSection.vue';
 import { i18n, setI18nLanguage } from '@/locales';
 
+import { toast } from 'vue-sonner';
+
+vi.mock('vue-sonner', () => ({
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
+}));
+
 vi.mock('@inertiajs/vue3', async (importOriginal) => {
   const actual: any = await importOriginal();
   return {
@@ -484,5 +493,61 @@ describe('InputManualRequestModal.vue', () => {
 
     expect(addedSection.find('[data-testid="edit-note-container"]').exists()).toBe(false);
     expect(addedSection.text()).toContain('Catatan revisi');
+  });
+
+  it('triggers seeHere toast link on successful submission with created_request flash data', async () => {
+    const wrapper = mountModal();
+    await flushPromises();
+
+    // Fill valid form
+    const reqSection = wrapper.findComponent(RequestInfoSection);
+    const formState = reqSection.props('form');
+    formState.request_type = 'consumable';
+    formState.user_id = 101;
+    formState.approver_id = 102;
+    formState.utilization = 'corporate';
+    formState.org_id = 10;
+    formState.form_file = new File(['dummy'], 'form.pdf', { type: 'application/pdf' });
+    formState.date = '2026-11-05';
+
+    const itemSection = wrapper.findComponent(ItemSelectionSection);
+    itemSection.vm.$emit('add-item', {
+      model_id: 1,
+      type_id: 2,
+      model_name: 'Pulpen Gel',
+      brand_name: 'Pilot',
+      category_name: 'ATK',
+      type_name: 'Alat Tulis',
+      is_consumable: true,
+      quantity: 2,
+      reasoning: 'Keperluan kantor',
+    });
+
+    const handoverSection = wrapper.findComponent(HandoverInfoSection);
+    const handoverForm = handoverSection.props('form');
+    handoverForm.handover_method = 'pickup';
+    handoverForm.handover_location_id = 50;
+    await flushPromises();
+
+    // Mock router.post to execute onSuccess with flash created_request
+    (router.post as any).mockImplementation((_url: string, _data: any, options: any) => {
+      options.onSuccess({
+        props: {
+          flash: {
+            created_request: {
+              id: 99,
+              number: 'REQ-MAN-99',
+              target_url: '/smart/requests/99',
+            },
+          },
+        },
+      });
+      options.onFinish();
+    });
+
+    await wrapper.find('[data-testid="submit-manual-request-btn"]').trigger('click');
+    await flushPromises();
+
+    expect(toast.success).toHaveBeenCalled();
   });
 });

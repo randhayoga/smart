@@ -150,6 +150,11 @@ class Request extends Model
         return $this->hasOne(RequestReturn::class, 'request_id');
     }
 
+    public function inventoryLogs(): HasMany
+    {
+        return $this->hasMany(\App\Models\Inventory\InventoryLog::class, 'request_id');
+    }
+
     public function returns(): HasMany
     {
         return $this->hasMany(RequestReturn::class, 'request_id');
@@ -208,6 +213,14 @@ class Request extends Model
                 } else {
                     $hasLt = true;
                 }
+            }
+        }
+
+        if ($this->start_date !== null) {
+            if ($this->end_date !== null) {
+                $hasSt = true;
+            } else {
+                $hasLt = true;
             }
         }
 

@@ -65,7 +65,7 @@ export default {
   allSubcategories: 'Semua jenis',
   selectType: 'Pilih Jenis',
   selectSubcategory: 'Pilih Jenis',
-  allRows: 'Semua baris',
+  allRows: 'Semua',
   rowsPerPage: 'Baris per halaman',
   selectedActions: 'Aksi Terpilih',
   processedBy: 'Diproses Oleh',

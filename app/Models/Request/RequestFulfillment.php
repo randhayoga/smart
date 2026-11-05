@@ -94,4 +94,9 @@ class RequestFulfillment extends Model
     {
         return $this->belongsTo(RequestReturn::class, 'return_id');
     }
+
+    public function inventoryLogs(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(\App\Models\Inventory\InventoryLog::class, 'fulfillment_id');
+    }
 }

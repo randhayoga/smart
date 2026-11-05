@@ -513,6 +513,10 @@ class LotController extends Controller
                 'project_no' => $lot->project ? $lot->project->no_project : null,
                 'updated_at' => $lot->updated_at ? $lot->updated_at->format('d-m-Y H:i') : '-',
                 'age' => $lot->age,
+                'request_id' => $lot->latest_request['request_id'] ?? null,
+                'request_number' => $lot->latest_request['request_number'] ?? null,
+                'latest_request' => $lot->latest_request,
+                'active_borrowing' => $lot->active_borrowing,
                 
                 // Parent model info
                 'model_code' => $lot->model->number ?? '-',
@@ -591,6 +595,10 @@ class LotController extends Controller
                 'project_no' => $lot->project ? $lot->project->no_project : null,
                 'updated_at' => $lot->updated_at ? $lot->updated_at->format('d-m-Y H:i') : '-',
                 'age' => $lot->age,
+                'request_id' => $lot->latest_request['request_id'] ?? null,
+                'request_number' => $lot->latest_request['request_number'] ?? null,
+                'latest_request' => $lot->latest_request,
+                'active_borrowing' => $lot->active_borrowing,
                 'model_code' => $lot->model->number ?? '-',
                 'model_number' => $lot->model->number ?? '-',
                 'model_brand' => $lot->model->brand->name ?? '-',

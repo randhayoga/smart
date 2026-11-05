@@ -119,8 +119,36 @@ class ProcessFulfillmentConfirmation
                     }
 
                     $deductQty = (int) $lf->quantity_fulfilled;
-                    $newStock = max(0, (int) $lot->current_quantity - $deductQty);
+                    $prevStock = (int) $lot->current_quantity;
+                    $newStock = max(0, $prevStock - $deductQty);
                     $lot->update(['current_quantity' => $newStock]);
+
+                    $item = $lockedRequest->items->firstWhere('id', $lf->request_item_id);
+                    $model = $item?->model ?? $lot->model;
+                    if ($model) {
+                        $destinationName = null;
+                        if ($lockedRequest->utilization === 'corporate' && $lockedRequest->org_id !== null) {
+                            $destinationName = \App\Models\HrdOrgchart::where('id', $lockedRequest->org_id)->value('org_name');
+                        } elseif ($lockedRequest->utilization === 'project' && $lockedRequest->project_id !== null) {
+                            $destinationName = \App\Models\TbProject::where('id_project', $lockedRequest->project_id)->value('project_name');
+                        }
+
+                        app(\App\Services\InventoryLogService::class)->logConsumableStockOut(
+                            $model,
+                            $lot,
+                            $deductQty,
+                            $prevStock,
+                            $newStock,
+                            $lockedRequest->user_id,
+                            $lockedRequest->utilization ?? 'corporate',
+                            $destinationName,
+                            $item?->reasoning ?? $lockedRequest->reasoning,
+                            $now,
+                            $lockedRequest->id,
+                            $lf->id,
+                            $lockedRequest->request_number
+                        );
+                    }
 
                     // Competing unconfirmed fulfillments on OTHER requests
                     $competingFulfillments = RequestFulfillment::where('lot_id', $lot->id)

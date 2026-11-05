@@ -1,13 +1,18 @@
 <script setup lang="ts">
-import { ref, computed, watch, h, onMounted } from 'vue';
-import { router } from '@inertiajs/vue3';
+/**
+ * Archive Tab Component for Requests List (Daftar Permintaan)
+ * Displays completed, rejected, and cancelled requests history.
+ * Card structure and filters match the original standalone Archive page and BorrowedTab.
+ */
+import { ref, computed, h } from 'vue';
 import { useI18n } from 'vue-i18n';
-import AppLayout from '@/Layouts/AppLayout.vue';
+import { router } from '@inertiajs/vue3';
 import { 
   ChevronDown, 
   ArrowUpDown,
   Eye,
 } from 'lucide-vue-next';
+import TableSearch from '@/Components/TableSearch.vue';
 import { Button } from "@/Components/ui/button";
 import {
   DropdownMenu,
@@ -15,23 +20,20 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/Components/ui/dropdown-menu";
-import TableSearch from '@/Components/TableSearch.vue';
-import { Breadcrumb, BreadcrumbLink, BreadcrumbList, BreadcrumbItem } from '@/Components/ui/breadcrumb';
 import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
+import ResetFilterButton from '@/Components/ResetFilterButton.vue';
 import { getRequestTypeBadgeClass, getRequestTypeLabel } from '@/lib/requestTypeBadge';
 
-const { t } = useI18n();
-
 interface Props {
-  user: {
-    name: string;
-    email: string;
-  };
   archiveList: any[];
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+  archiveList: () => [],
+});
+
+const { t } = useI18n();
 
 const searchQuery = ref('');
 const typeFilter = ref('');
@@ -85,6 +87,22 @@ const pageSizeNumber = computed(() => {
   }
   return parseInt(rowsPerPage.value, 10) || 50;
 });
+
+const hasActiveFilters = computed(() => {
+  return !!(searchQuery.value || typeFilter.value || statusFilter.value || timeFilter.value);
+});
+
+const clearFilters = () => {
+  searchQuery.value = '';
+  typeFilter.value = '';
+  statusFilter.value = '';
+  timeFilter.value = '';
+};
+
+const handleViewDetail = (item: any) => {
+  const url = `/smart/requests/${item.id}`;
+  router.get(url);
+};
 
 const columns = computed<ColumnDef<any>[]>(() => [
   {
@@ -219,121 +237,111 @@ const columns = computed<ColumnDef<any>[]>(() => [
     ]),
   },
 ]);
-
-const handleViewDetail = (item: any) => {
-  const url = `/smart/archive/${item.id}`;
-  router.get(url);
-};
-
-const handleExportExcel = () => alert('Exporting to Excel...');
-const handleExportCSV = () => alert('Exporting to CSV...');
-
 </script>
 
 <template>
-  <AppLayout :title="t('fulfillment.archive')">
-    <Breadcrumb>
-      <BreadcrumbList class="pb-3">
-        <BreadcrumbItem>
-          <BreadcrumbLink href="/smart/archive">{{ t('fulfillment.archive') }}</BreadcrumbLink>
-        </BreadcrumbItem>
-      </BreadcrumbList>
-    </Breadcrumb>
-
-    <div class="space-y-4">
-      <div class="px-4 bg-card rounded-xl border border-border shadow-sm overflow-hidden">
-        <div class="py-5 no-print">
-          <h2 class="text-lg font-bold text-foreground">{{ t('fulfillment.archiveListTitle') }}</h2>
-          
-          <!-- Filters & Actions Row (In-line) -->
-          <div class="mt-4 flex flex-wrap items-end gap-4">
-            <div class="space-y-1.5 flex-1 min-w-[280px] max-w-md">
-              <label class="text-xs text-muted-foreground font-medium block ml-0.5">{{ t('fulfillment.filter') }}</label>
-              <TableSearch 
-                v-model="searchQuery"
-                :placeholder="t('fulfillment.searchArchivePlaceholder')" 
-              />
-            </div>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" :class="['w-[180px] justify-between rounded-[14px] font-normal', !typeFilter ? 'text-muted-foreground' : 'text-foreground']">
-                  <span class="truncate">{{ typeFilterLabel }}</span>
-                  <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent class="w-[180px] rounded-[14px]" align="start" :side-offset="4">
-                <DropdownMenuItem @select="typeFilter = ''">{{ t('fulfillment.allTypes') }}</DropdownMenuItem>
-                <DropdownMenuItem @select="typeFilter = 'consumable'">{{ t('fulfillment.request') }}</DropdownMenuItem>
-                <DropdownMenuItem @select="typeFilter = 'st'">{{ t('fulfillment.manualRequest.typeSt') }}</DropdownMenuItem>
-                <DropdownMenuItem @select="typeFilter = 'rent'">{{ t('fulfillment.manualRequest.typeRent') }}</DropdownMenuItem>
-                <DropdownMenuItem @select="typeFilter = 'lt'">{{ t('fulfillment.manualRequest.typeLt') }}</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" :class="['w-[180px] justify-between rounded-[14px] font-normal', !statusFilter ? 'text-muted-foreground' : 'text-foreground']">
-                  <span class="truncate">{{ statusFilterLabel }}</span>
-                  <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent class="w-[180px] rounded-[14px]" align="start" :side-offset="4">
-                <DropdownMenuItem @select="statusFilter = ''">{{ t('fulfillment.allFinalStatuses') }}</DropdownMenuItem>
-                <DropdownMenuItem @select="statusFilter = 'Sukses'">{{ t('fulfillment.success') }}</DropdownMenuItem>
-                <DropdownMenuItem @select="statusFilter = 'Ditolak'">{{ t('fulfillment.rejected') }}</DropdownMenuItem>
-                <DropdownMenuItem @select="statusFilter = 'Dibatalkan'">{{ t('fulfillment.cancelled') }}</DropdownMenuItem>
-                <DropdownMenuItem @select="statusFilter = 'Pending'">{{ t('fulfillment.pending') }}</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" :class="['w-[180px] justify-between rounded-[14px] font-normal', !timeFilter ? 'text-muted-foreground' : 'text-foreground']">
-                  <span class="truncate">{{ timeFilterLabel }}</span>
-                  <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent class="w-[180px] rounded-[14px]" align="start" :side-offset="4">
-                <DropdownMenuItem @select="timeFilter = ''">{{ t('fulfillment.allTimeRanges') }}</DropdownMenuItem>
-                <DropdownMenuItem @select="timeFilter = 'Hari ini'">{{ t('fulfillment.today') }}</DropdownMenuItem>
-                <DropdownMenuItem @select="timeFilter = 'Minggu ini'">{{ t('fulfillment.thisWeek') }}</DropdownMenuItem>
-                <DropdownMenuItem @select="timeFilter = 'Bulan ini'">{{ t('fulfillment.thisMonth') }}</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <div class="flex items-center gap-3 text-sm text-muted-foreground ml-auto">
-              <span>{{ t('fulfillment.rowsPerPage') }}</span>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" :class="['w-[150px] justify-between rounded-[14px] font-normal', (rowsPerPage === 'Semua baris' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
-                    {{ rowsPerPageLabel }}
-                    <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent class="w-[150px] rounded-[14px]" align="start" :side-offset="4">
-                  <DropdownMenuItem @select="rowsPerPage = 'Semua baris'">{{ t('fulfillment.allRows') }}</DropdownMenuItem>
-                  <DropdownMenuItem @select="rowsPerPage = '10'">10</DropdownMenuItem>
-                  <DropdownMenuItem @select="rowsPerPage = '25'">25</DropdownMenuItem>
-                  <DropdownMenuItem @select="rowsPerPage = '50'">50</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
+  <div>
+    <!-- Filters Row -->
+    <div class="space-y-4 mb-6">
+      <div class="flex flex-wrap items-end gap-4">
+        <div class="space-y-1.5 flex-1 min-w-[280px] max-w-md">
+          <label class="text-xs text-muted-foreground font-medium block ml-0.5">{{ t('fulfillment.filter') }}</label>
+          <TableSearch 
+            v-model="searchQuery"
+            :placeholder="t('fulfillment.searchArchivePlaceholder')" 
+          />
         </div>
 
-        <!-- Table -->
-        <div class="pb-4">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" :class="['w-[180px] justify-between rounded-[14px] font-normal', !typeFilter ? 'text-muted-foreground' : 'text-foreground']">
+              <span class="truncate">{{ typeFilterLabel }}</span>
+              <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent class="w-[180px] rounded-[14px]" align="start" :side-offset="4">
+            <DropdownMenuItem @select="typeFilter = ''">{{ t('fulfillment.allTypes') }}</DropdownMenuItem>
+            <DropdownMenuItem @select="typeFilter = 'consumable'">{{ t('fulfillment.request') }}</DropdownMenuItem>
+            <DropdownMenuItem @select="typeFilter = 'st'">{{ t('fulfillment.manualRequest.typeSt') }}</DropdownMenuItem>
+            <DropdownMenuItem @select="typeFilter = 'rent'">{{ t('fulfillment.manualRequest.typeRent') }}</DropdownMenuItem>
+            <DropdownMenuItem @select="typeFilter = 'lt'">{{ t('fulfillment.manualRequest.typeLt') }}</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
-          <DataTable 
-            ref="dataTableRef"
-            :columns="columns" 
-            :data="dummyArsip" 
-            :filter-value="searchQuery"
-            :page-size="pageSizeNumber"
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" :class="['w-[180px] justify-between rounded-[14px] font-normal', !statusFilter ? 'text-muted-foreground' : 'text-foreground']">
+              <span class="truncate">{{ statusFilterLabel }}</span>
+              <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent class="w-[180px] rounded-[14px]" align="start" :side-offset="4">
+            <DropdownMenuItem @select="statusFilter = ''">{{ t('fulfillment.allFinalStatuses') }}</DropdownMenuItem>
+            <DropdownMenuItem @select="statusFilter = 'Sukses'">{{ t('fulfillment.success') }}</DropdownMenuItem>
+            <DropdownMenuItem @select="statusFilter = 'Ditolak'">{{ t('fulfillment.rejected') }}</DropdownMenuItem>
+            <DropdownMenuItem @select="statusFilter = 'Dibatalkan'">{{ t('fulfillment.cancelled') }}</DropdownMenuItem>
+            <DropdownMenuItem @select="statusFilter = 'Pending'">{{ t('fulfillment.pending') }}</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" :class="['w-[180px] justify-between rounded-[14px] font-normal', !timeFilter ? 'text-muted-foreground' : 'text-foreground']">
+              <span class="truncate">{{ timeFilterLabel }}</span>
+              <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent class="w-[180px] rounded-[14px]" align="start" :side-offset="4">
+            <DropdownMenuItem @select="timeFilter = ''">{{ t('fulfillment.allTimeRanges') }}</DropdownMenuItem>
+            <DropdownMenuItem @select="timeFilter = 'Hari ini'">{{ t('fulfillment.today') }}</DropdownMenuItem>
+            <DropdownMenuItem @select="timeFilter = 'Minggu ini'">{{ t('fulfillment.thisWeek') }}</DropdownMenuItem>
+            <DropdownMenuItem @select="timeFilter = 'Bulan ini'">{{ t('fulfillment.thisMonth') }}</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <Transition
+          enter-active-class="transition ease-out duration-200"
+          enter-from-class="transform scale-95 opacity-0"
+          enter-to-class="transform scale-100 opacity-100"
+          leave-active-class="transition ease-in duration-150"
+          leave-from-class="transform scale-100 opacity-100"
+          leave-to-class="transform scale-95 opacity-0"
+        >
+          <ResetFilterButton 
+            v-if="hasActiveFilters"
+            @click="clearFilters"
           />
+        </Transition>
+
+        <div class="flex items-center gap-3 text-sm text-muted-foreground ml-auto">
+          <span>{{ t('fulfillment.rowsPerPage') }}</span>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" :class="['w-[100px] justify-between rounded-[14px] font-normal', (rowsPerPage === 'Semua baris' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
+                {{ rowsPerPageLabel }}
+                <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent class="w-[100px] rounded-[14px]" align="start" :side-offset="4">
+              <DropdownMenuItem @select="rowsPerPage = 'Semua baris'">{{ t('fulfillment.allRows') }}</DropdownMenuItem>
+              <DropdownMenuItem @select="rowsPerPage = '10'">10</DropdownMenuItem>
+              <DropdownMenuItem @select="rowsPerPage = '25'">25</DropdownMenuItem>
+              <DropdownMenuItem @select="rowsPerPage = '50'">50</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </div>
-  </AppLayout>
+
+    <!-- Table -->
+    <div class="pb-4">
+      <DataTable 
+        ref="dataTableRef"
+        :columns="columns" 
+        :data="dummyArsip" 
+        :filter-value="searchQuery"
+        :page-size="pageSizeNumber"
+      />
+    </div>
+  </div>
 </template>

@@ -255,7 +255,7 @@ watch(methodFilter, (val) => {
           <span>{{ t('fulfillment.rowsPerPage') }}</span>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" :class="['w-[160px] justify-between rounded-[14px] font-normal', (rowsPerPage === 'Semua baris' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
+              <Button variant="outline" :class="['w-[100px] justify-between rounded-[14px] font-normal', (rowsPerPage === 'Semua baris' || !rowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
                 {{ rowsPerPageLabel }}
                 <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
               </Button>

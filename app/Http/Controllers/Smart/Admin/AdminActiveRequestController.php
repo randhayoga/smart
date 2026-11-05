@@ -67,6 +67,7 @@ class AdminActiveRequestController extends Controller
                 'handovers' => $this->getHandovers(),
                 'borrowedList' => $this->getBorrowedList(),
                 'returnsList' => $this->getReturnsList(),
+                'archiveList' => $this->getArchiveList(),
             ]);
         }
 
@@ -79,6 +80,7 @@ class AdminActiveRequestController extends Controller
             'handovers' => ($activeTab === 'Serah Terima') ? fn() => $this->getHandovers() : Inertia::lazy(fn() => $this->getHandovers()),
             'borrowedList' => ($activeTab === 'Lacak Peminjaman') ? fn() => $this->getBorrowedList() : Inertia::lazy(fn() => $this->getBorrowedList()),
             'returnsList' => ($activeTab === 'Pengembalian') ? fn() => $this->getReturnsList() : Inertia::lazy(fn() => $this->getReturnsList()),
+            'archiveList' => (in_array(strtolower($activeTab), ['arsip', 'archive'], true)) ? fn() => $this->getArchiveList() : Inertia::lazy(fn() => $this->getArchiveList()),
         ]);
     }
 
@@ -361,5 +363,13 @@ class AdminActiveRequestController extends Controller
             'durationStart' => $req->start_date ? $req->start_date->format('d-m-Y H:i') : null,
             'durationEnd' => $req->end_date ? $req->end_date->format('d-m-Y H:i') : null,
         ];
+    }
+
+    /**
+     * Retrieve completed/archived requests for the Arsip tab.
+     */
+    protected function getArchiveList(): \Illuminate\Support\Collection
+    {
+        return ArchiveController::getArchiveData();
     }
 }

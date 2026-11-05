@@ -156,9 +156,9 @@ class AdminRequestFulfillmentTest extends TestCase
         $barang = Barang::factory()->create(['subcategory_id' => $sub->id]);
 
         // Create 3 lots with different receipt dates
-        $oldLot = Lot::factory()->create(['barang_id' => $barang->id, 'date_of_receipt' => now()->subDays(20)]);
-        $midLot = Lot::factory()->create(['barang_id' => $barang->id, 'date_of_receipt' => now()->subDays(10)]);
-        $newLot = Lot::factory()->create(['barang_id' => $barang->id, 'date_of_receipt' => now()->subDays(2)]);
+        $oldLot = Lot::factory()->create(['barang_id' => $barang->id, 'purchase_grant_date' => now()->subDays(20)]);
+        $midLot = Lot::factory()->create(['barang_id' => $barang->id, 'purchase_grant_date' => now()->subDays(10)]);
+        $newLot = Lot::factory()->create(['barang_id' => $barang->id, 'purchase_grant_date' => now()->subDays(2)]);
 
         $oldUnit = Unit::factory()->create(['lot_id' => $oldLot->id, 'status' => 'Tersedia', 'number' => 'AST-OLD-01']);
         $midUnit = Unit::factory()->create(['lot_id' => $midLot->id, 'status' => 'Tersedia', 'number' => 'AST-MID-02']);
@@ -235,7 +235,7 @@ class AdminRequestFulfillmentTest extends TestCase
             'barang_id' => $barang->id,
             'number' => 'LOT-OLD-01',
             'current_quantity' => 10,
-            'date_of_receipt' => now()->subDays(30),
+            'purchase_grant_date' => now()->subDays(30),
             'location_id' => $loc->id,
         ]);
 
@@ -243,7 +243,7 @@ class AdminRequestFulfillmentTest extends TestCase
             'barang_id' => $barang->id,
             'number' => 'LOT-NEW-02',
             'current_quantity' => 20,
-            'date_of_receipt' => now()->subDays(5),
+            'purchase_grant_date' => now()->subDays(5),
             'location_id' => $loc->id,
         ]);
 

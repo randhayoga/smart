@@ -443,12 +443,12 @@ const auditColumns = computed<ColumnDef<AuditTrail>[]>(() => {
                 <span>{{ t('admin.rowsPerPage') }}</span>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal', (auditRowsPerPage === 'Semua baris' || !auditRowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
+                    <Button variant="outline" :class="['w-[100px] justify-between rounded-[14px] font-normal', (auditRowsPerPage === 'Semua baris' || !auditRowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
                       {{ auditRowsPerPageLabel }}
                       <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent class="w-[140px] rounded-[14px] z-[110]" align="start" :side-offset="4">
+                  <DropdownMenuContent class="w-[100px] rounded-[14px] z-[110]" align="start" :side-offset="4">
                     <DropdownMenuItem @select="auditRowsPerPage = 'Semua baris'">{{ t('admin.allRows') }}</DropdownMenuItem>
                     <DropdownMenuItem @select="auditRowsPerPage = '10'">10</DropdownMenuItem>
                     <DropdownMenuItem @select="auditRowsPerPage = '25'">25</DropdownMenuItem>

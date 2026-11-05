@@ -95,7 +95,7 @@ export default {
   thisMonth: 'Bulan ini',
   advancedFilter: 'Filter Lanjutan',
   rowsPerPage: 'Baris per halaman',
-  allRows: 'Semua baris',
+  allRows: 'Semua',
 
   // Table Columns & Labels
   code: 'Nomor',

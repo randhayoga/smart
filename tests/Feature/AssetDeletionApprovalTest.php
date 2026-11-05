@@ -120,7 +120,7 @@ class AssetDeletionApprovalTest extends TestCase
         $tipeCode = $lot->barang->subcategory->code ?? 'SUB';
         $organizerCode = $lot->organizer->name ?? 'ORG';
         $combination = "{$tipeCode}-{$organizerCode}-PTRE";
-        $yy = $lot->date_of_receipt ? $lot->date_of_receipt->format('y') : date('y');
+        $yy = $lot->purchase_grant_date ? $lot->purchase_grant_date->format('y') : date('y');
         $seq = str_pad((string) (self::$unitCounter++), 5, '0', STR_PAD_LEFT);
         $unitNumber = "{$seq}-{$combination}-{$yy}";
         if (strlen($unitNumber) > 25) {

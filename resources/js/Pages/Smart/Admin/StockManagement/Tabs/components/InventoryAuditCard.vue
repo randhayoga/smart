@@ -17,7 +17,7 @@ import TableSearch from '@/Components/TableSearch.vue';
 import ResetFilterButton from '@/Components/ResetFilterButton.vue';
 import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
-import { getLocalizedAuditAction } from '@/lib/auditAction';
+import { getLocalizedAuditAction, renderAuditNote } from '@/lib/auditAction';
 
 export interface InventoryLogItem {
   id: number;
@@ -30,6 +30,9 @@ export interface InventoryLogItem {
   note: string;
   waktu: string;
   created_at_raw: string | null;
+  request_id?: number | null;
+  request_number?: string | null;
+  fulfillment_id?: number | null;
 }
 
 const props = withDefaults(defineProps<{
@@ -292,16 +295,11 @@ const auditColumns = computed<ColumnDef<InventoryLogItem>[]>(() => {
     {
       accessorKey: 'catatan',
       header: () => h('div', { class: 'font-semibold text-foreground justify-start' }, t('admin.auditNotes')),
-      cell: ({ row }) => {
-        const note = String(row.original.note || row.getValue('catatan') || '');
-        if (note.includes(' | ')) {
-          const lines = note.split(' | ');
-          return h('ul', { class: 'list-disc pl-4 space-y-0.5 text-muted-foreground whitespace-normal text-left min-w-[200px]' }, 
-            lines.map(line => h('li', {}, line))
-          );
-        }
-        return h('div', { class: 'text-muted-foreground whitespace-normal text-left min-w-[200px]' }, note);
-      },
+      cell: ({ row }) => renderAuditNote(
+        row.getValue('catatan') || row.original.note,
+        row.original.request_id,
+        row.original.request_number
+      ),
     }
   );
 
@@ -367,12 +365,12 @@ const auditColumns = computed<ColumnDef<InventoryLogItem>[]>(() => {
             <span>{{ t('admin.rowsPerPage') }}</span>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" :class="['w-[140px] justify-between rounded-[14px] font-normal', (auditRowsPerPage === 'Semua baris' || !auditRowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
+                <Button variant="outline" :class="['w-[100px] justify-between rounded-[14px] font-normal', (auditRowsPerPage === 'Semua baris' || !auditRowsPerPage) ? 'text-muted-foreground' : 'text-foreground']">
                   {{ auditRowsPerPageLabel }}
                   <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent class="w-[140px] rounded-[14px] z-[110]" align="start" :side-offset="4">
+              <DropdownMenuContent class="w-[100px] rounded-[14px] z-[110]" align="start" :side-offset="4">
                 <DropdownMenuItem @select="auditRowsPerPage = 'Semua baris'">{{ t('admin.allRows') }}</DropdownMenuItem>
                 <DropdownMenuItem @select="auditRowsPerPage = '10'">10</DropdownMenuItem>
                 <DropdownMenuItem @select="auditRowsPerPage = '25'">25</DropdownMenuItem>

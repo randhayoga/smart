@@ -95,7 +95,7 @@ export default {
   thisMonth: 'This month',
   advancedFilter: 'Advanced Filters',
   rowsPerPage: 'Rows per page',
-  allRows: 'All rows',
+  allRows: 'All',
 
   // Table Columns & Labels
   code: 'Number',

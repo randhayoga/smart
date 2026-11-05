@@ -34,7 +34,7 @@ export default {
   searchPlaceholder: 'Search {tab}...',
   allParentCategories: 'All Parent Categories',
   rowsPerPage: 'Rows per page',
-  allRows: 'All rows',
+  allRows: 'All',
   columns: {
     codeWithTab: '{tab} Number',
     classification: 'Classification',

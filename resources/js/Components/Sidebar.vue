@@ -190,6 +190,7 @@ const isActive = (href: string): boolean => {
       // '/smart/returns',
       // ==========================================
       '/smart/borrowed',
+      '/smart/archive',
     ];
     if (activeRequestPrefixes.some(prefix => current.pathname === prefix || current.pathname.startsWith(prefix + '/'))) {
       return true;

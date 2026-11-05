@@ -2,6 +2,8 @@
  * English navigation translation dictionary.
  */
 export default {
+  requestsList: 'Request List',
+  requestList: 'Request List',
   sections: {
     mainMenu: 'MAIN MENU',
     stock: 'STOCK',
@@ -24,6 +26,8 @@ export default {
     masterData: 'Master Data',
     scanBarcode: 'Scan Barcode',
     activeRequests: 'Active Requests',
+    requestsList: 'Request List',
+    requestList: 'Request List',
     archive: 'Archive',
     auditTrail: 'Asset Movement',
     inventoryAudit: 'Stock Management Audit',
