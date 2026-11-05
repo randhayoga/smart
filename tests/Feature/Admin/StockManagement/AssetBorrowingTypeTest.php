@@ -256,4 +256,49 @@ class AssetBorrowingTypeTest extends TestCase
             'project_id' => 99,
         ]);
     }
+
+    public function test_cannot_update_borrowing_type_if_status_is_borrowed_or_assigned(): void
+    {
+        $borrowedAsset = Asset::create([
+            'number' => 'UNT-BRW-01',
+            'lot_id' => $this->lot->id,
+            'location_id' => $this->location->id,
+            'status' => 'Dipinjam (ST)',
+            'condition' => 'Bagus',
+            'borrowing_type' => 'ST',
+            'classification' => 'Aset',
+            'price' => 5000000,
+        ]);
+
+        $response = $this->actingAs($this->user)->put(route('smart.inventory.assets.update', $borrowedAsset->id), [
+            'lot_id' => $this->lot->id,
+            'location_id' => $this->location->id,
+            'status' => 'Dipinjam (ST)',
+            'condition' => 'Bagus',
+            'borrowing_type' => 'LT',
+            'classification' => 'Aset',
+        ]);
+
+        $response->assertSessionHasErrors(['borrowing_type']);
+        $this->assertEquals('ST', $borrowedAsset->fresh()->borrowing_type);
+
+        $assignedAsset = Asset::create([
+            'number' => 'UNT-ASN-01',
+            'lot_id' => $this->lot->id,
+            'location_id' => $this->location->id,
+            'status' => 'Di-assign (LT)',
+            'condition' => 'Bagus',
+            'borrowing_type' => 'LT',
+            'classification' => 'Aset',
+            'price' => 5000000,
+        ]);
+
+        $responseBulk = $this->actingAs($this->user)->post(route('smart.inventory.assets.bulk-update'), [
+            'ids' => [$assignedAsset->id],
+            'borrowing_type' => 'ST',
+        ]);
+
+        $responseBulk->assertSessionHasErrors(['borrowing_type']);
+        $this->assertEquals('LT', $assignedAsset->fresh()->borrowing_type);
+    }
 }

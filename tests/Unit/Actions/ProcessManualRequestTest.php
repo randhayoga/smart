@@ -184,6 +184,8 @@ class ProcessManualRequestTest extends TestCase
         $this->assertCount(2, $logs);
         $this->assertEquals($this->borrower->id, $logs[0]->user_id);
         $this->assertEquals($this->borrower->id, $logs[1]->user_id);
+        $this->assertEquals(now()->format('H:i:s'), $logs[0]->created_at->format('H:i:s'));
+        $this->assertEquals(now()->format('H:i:s'), $fulfillments[0]->assigned_at->format('H:i:s'));
 
         $statusLog = RequestStatusLog::where('request_id', $smartRequest->id)->first();
         $this->assertNotNull($statusLog);
@@ -267,13 +269,14 @@ class ProcessManualRequestTest extends TestCase
         $items = RequestItem::where('request_id', $smartRequest->id)->orderBy('id')->get();
         $this->assertCount(2, $items);
         $this->assertEquals('fulfilled', $items[0]->status);
-        $this->assertEquals('2026-10-27 00:00:00', $items[0]->start_date->format('Y-m-d H:i:s'));
+        $this->assertEquals('2026-10-27 ' . now()->format('H:i:s'), $items[0]->start_date->format('Y-m-d H:i:s'));
         $this->assertEquals('2026-11-05 23:59:59', $items[0]->end_date->format('Y-m-d H:i:s'));
         $this->assertEquals('Primary unit', $items[0]->reasoning);
 
         $fulfillment = RequestFulfillment::where('request_item_id', $items[0]->id)->firstOrFail();
         $this->assertEquals($asset1->id, $fulfillment->asset_id);
         $this->assertEquals('2026-10-27', $fulfillment->assigned_at->format('Y-m-d'));
+        $this->assertEquals(now()->format('H:i:s'), $fulfillment->assigned_at->format('H:i:s'));
         $this->assertNotNull($fulfillment->handover_id);
 
         $handover = RequestHandover::findOrFail($fulfillment->handover_id);
@@ -287,6 +290,7 @@ class ProcessManualRequestTest extends TestCase
         $this->assertEquals('Peminjaman', $openLifecycle->action_type);
         $this->assertEquals('Dipinjam (ST)', $openLifecycle->status);
         $this->assertEquals($this->borrower->id, $openLifecycle->actor_id);
+        $this->assertEquals('2026-10-27 ' . now()->format('H:i:s'), $openLifecycle->start_date->format('Y-m-d H:i:s'));
         $this->assertEquals($smartRequest->id, $openLifecycle->request_id);
         $this->assertEquals($fulfillment->id, $openLifecycle->fulfillment_id);
         $expectedNote = "Peminjaman (ST) {$smartRequest->request_number} untuk {$this->borrower->name} ({$this->borrower->employee_id}). Catatan: Primary unit.";
@@ -358,13 +362,14 @@ class ProcessManualRequestTest extends TestCase
 
         $item = RequestItem::where('request_id', $smartRequest->id)->firstOrFail();
         $this->assertEquals('fulfilled', $item->status);
-        $this->assertEquals('2026-10-27', $item->start_date->format('Y-m-d'));
+        $this->assertEquals('2026-10-27 ' . now()->format('H:i:s'), $item->start_date->format('Y-m-d H:i:s'));
         $this->assertNull($item->end_date);
         $this->assertEquals('Dedicated desk monitor', $item->reasoning);
 
         $fulfillment = RequestFulfillment::where('request_item_id', $item->id)->firstOrFail();
         $this->assertEquals($asset->id, $fulfillment->asset_id);
         $this->assertEquals('2026-10-27', $fulfillment->assigned_at->format('Y-m-d'));
+        $this->assertEquals(now()->format('H:i:s'), $fulfillment->assigned_at->format('H:i:s'));
         $this->assertNotNull($fulfillment->handover_id);
 
         $openLifecycle = AssetLifecycle::where('asset_id', $asset->id)->whereNull('end_date')->first();
@@ -372,6 +377,7 @@ class ProcessManualRequestTest extends TestCase
         $this->assertEquals('Assignment', $openLifecycle->action_type);
         $this->assertEquals('Di-assign (LT)', $openLifecycle->status);
         $this->assertEquals($this->borrower->id, $openLifecycle->actor_id);
+        $this->assertEquals('2026-10-27 ' . now()->format('H:i:s'), $openLifecycle->start_date->format('Y-m-d H:i:s'));
         $this->assertEquals($smartRequest->id, $openLifecycle->request_id);
         $this->assertEquals($fulfillment->id, $openLifecycle->fulfillment_id);
         $this->assertEquals("Assignment (LT) {$smartRequest->request_number} untuk {$this->borrower->name} ({$this->borrower->employee_id}). Catatan: Dedicated desk monitor.", $openLifecycle->note);
@@ -455,7 +461,7 @@ class ProcessManualRequestTest extends TestCase
         $items = RequestItem::where('request_id', $smartRequest->id)->orderBy('id')->get();
         $this->assertCount(2, $items);
         $this->assertEquals('fulfilled', $items[0]->status);
-        $this->assertEquals('2026-11-01 00:00:00', $items[0]->start_date->format('Y-m-d H:i:s'));
+        $this->assertEquals('2026-11-01 ' . now()->format('H:i:s'), $items[0]->start_date->format('Y-m-d H:i:s'));
         $this->assertEquals('2026-11-10 23:59:59', $items[0]->end_date->format('Y-m-d H:i:s'));
 
         $lifecycles = AssetLifecycle::whereIn('asset_id', [$stAsset->id, $ltAsset->id])
@@ -466,6 +472,7 @@ class ProcessManualRequestTest extends TestCase
             $this->assertEquals('Peminjaman', $lc->action_type);
             $this->assertEquals('Dipinjam (sewa)', $lc->status);
             $this->assertEquals($this->borrower->id, $lc->actor_id);
+            $this->assertEquals('2026-11-01 ' . now()->format('H:i:s'), $lc->start_date->format('Y-m-d H:i:s'));
         }
 
         $statusLog = RequestStatusLog::where('request_id', $smartRequest->id)->first();

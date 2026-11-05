@@ -262,6 +262,7 @@ export default {
   qcFailWithDate: 'QC Fail (at: {date})',
   statusAndCondition: 'Status & Condition',
   statusCannotBeChangedManually: "Status cannot be changed manually",
+  borrowingTypeCannotBeChanged: 'Borrowing type cannot be changed while asset is borrowed or assigned',
 
   // Validation Messages & Alerts
   codeRequired: 'Model number is required',

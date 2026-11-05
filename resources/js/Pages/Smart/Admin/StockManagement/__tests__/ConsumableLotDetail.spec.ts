@@ -67,7 +67,7 @@ describe('ConsumableLotDetail.vue', () => {
     await new Promise((r) => setTimeout(r, 20));
 
     const text = wrapper.text();
-    expect(text).toContain('LOT-CONS-001');
+    expect(text).toContain('Nomor LOT: LOT-CONS-001');
     expect(text).toContain('ATK (Kertas)');
     expect(text).toContain('PaperOne A4 80gsm 500 lembar');
     expect(text).toContain('45 Rim / 100 Rim');

@@ -103,7 +103,7 @@ class ProcessManualRequest
                     $handoverMethod,
                     $handoverLocationName,
                     $handoverProofUrl,
-                    Carbon::parse($data['date'])->startOfDay(),
+                    Carbon::parse($data['date'])->setTimeFrom(now()),
                     $itemsPayload,
                     $adminUserId
                 );
@@ -122,7 +122,7 @@ class ProcessManualRequest
                 $handoverMethod,
                 $handoverLocationName,
                 $handoverProofUrl,
-                Carbon::parse($data['start_date'])->startOfDay(),
+                Carbon::parse($data['start_date'])->setTimeFrom(now()),
                 in_array($requestType, ['st', 'rent'], true) && !empty($data['end_date']) ? Carbon::parse($data['end_date'])->setTime(23, 59, 59) : null,
                 $itemsPayload,
                 $adminUserId

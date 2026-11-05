@@ -475,6 +475,11 @@ class LotController extends Controller
 
         $nextAssetNumber = app(AssetNumberService::class)->generateAssetNumber($lot);
 
+        $locations = Location::allWithFullName();
+        $locationHierarchyMap = Location::hierarchyMap($locations);
+        $locId = $lot->location_id ? (int) $lot->location_id : null;
+        $locInfo = ($locId && isset($locationHierarchyMap[$locId])) ? $locationHierarchyMap[$locId] : null;
+
         if ($request->wantsJson() && !$request->headers->has('X-Inertia')) {
             return response()->json([
                 'id' => $lot->id,
@@ -483,13 +488,17 @@ class LotController extends Controller
                 'barang_id' => $lot->model_id,
                 'po_number' => $lot->po_number,
                 'purchase_grant_date' => $lot->purchase_grant_date ? $lot->purchase_grant_date->format('Y-m-d') : null,
+                'date_of_receipt' => $lot->purchase_grant_date ? $lot->purchase_grant_date->format('Y-m-d') : null,
                 'entry_type' => $lot->entry_type ?? 'Procurement',
                 'memo_number' => $lot->memo_number,
                 'memo_url' => $lot->memo_url,
                 'image_url' => $lot->image_url,
                 'imageUrl' => $lot->image_url,
                 'location_id' => $lot->location_id,
-                'location_name' => $lot->location?->name ?? '-',
+                'location' => $locInfo ? $locInfo['full_name'] : ($lot->location?->name ?? '-'),
+                'location_name' => $locInfo ? $locInfo['full_name'] : ($lot->location?->name ?? '-'),
+                'floor' => $locInfo['floor_name'] ?? null,
+                'room' => $locInfo['room_name'] ?? null,
                 'unit_price' => $lot->unit_price,
                 'organizer' => $lot->organizer->name ?? '-',
                 'organizer_id' => $lot->organizer_id,
@@ -534,8 +543,6 @@ class LotController extends Controller
             ]);
         }
 
-        $locations = Location::allWithFullName();
-        $locationHierarchyMap = Location::hierarchyMap($locations);
         $projects = TbProject::optionsForSelection();
         $projectNoMap = TbProject::projectNumberMap($projects);
 

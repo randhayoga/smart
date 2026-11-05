@@ -246,6 +246,8 @@ erDiagram
     ASSET_LIFECYCLE {
         int id PK ""  
         int asset_id FK ""  
+        int request_id FK "nullable | REQUEST's id"  
+        int fulfillment_id FK "nullable | REQUEST_FULFILLMENT's id"  
         varchar action_type  "registrasi, perubahan_status, perubahan_kondisi, quality_control, pemindahan, peminjaman, pengembalian, pemeliharaan"  
         varchar status  ""  
         varchar condition  "nullable"  
@@ -499,6 +501,8 @@ erDiagram
     LOT||--o{INVENTORY_LOG:"logged"
     ASSET||--o{INVENTORY_LOG:"logged"
     ASSET||--o{ASSET_LIFECYCLE:"tracks lifecycle of"
+    REQUEST||--o{ASSET_LIFECYCLE:"triggers lifecycle event"
+    REQUEST_FULFILLMENT||--o{ASSET_LIFECYCLE:"recorded in lifecycle"
     LOCATION||--o{ASSET_LIFECYCLE:"location during lifecycle"
     ADM_USER_NEW_PORTAL_USERS||--o{ASSET_LIFECYCLE:"actor"
     ASSET||--o{ASSET_MAINTENANCE:"has maintenance history"

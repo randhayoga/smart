@@ -31,6 +31,7 @@ interface Props {
   canShowAssignToLocation: boolean;
   isKondisiDisabled: boolean;
   isBorrowedUnit: boolean;
+  isBorrowingTypeDisabled?: boolean;
   locations: any[];
   projectOptions: { id: number; name: string }[];
   hasImage: boolean;
@@ -120,12 +121,20 @@ const qcLabel = computed(() => {
       </Field>
 
       <!-- Borrowing Type -->
-      <Field :data-invalid="(isSingle && !!errors.type) || undefined">
+      <Field :data-disabled="isBorrowingTypeDisabled" :data-invalid="(isSingle && !!errors.type) || undefined">
         <FieldLabel>
-          <span>{{ t('inventory.borrowingType') }}<span v-if="isSingle" class="text-rose-500">*</span></span>
+          <span>{{ t('inventory.borrowingType') }}<span v-if="isSingle && !isBorrowingTypeDisabled" class="text-rose-500">*</span></span>
         </FieldLabel>
         <FieldContent>
-          <DropdownMenu>
+          <div
+            v-if="isBorrowingTypeDisabled"
+            class="w-full flex items-center justify-between px-4 py-2 text-sm border border-input rounded-[14px] bg-muted/30 text-muted-foreground cursor-not-allowed h-10 select-none"
+            :title="t('inventory.borrowingTypeCannotBeChanged')"
+          >
+            <span>{{ form.type || (isSingle ? t('inventory.selectBorrowingType') : t('inventory.unchanged')) }}</span>
+            <ChevronDown class="w-4 h-4 opacity-50 ml-auto shrink-0" />
+          </div>
+          <DropdownMenu v-else>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"
@@ -142,6 +151,7 @@ const qcLabel = computed(() => {
             </DropdownMenuContent>
           </DropdownMenu>
         </FieldContent>
+        <p v-if="isBorrowingTypeDisabled" class="text-[11px] text-muted-foreground mt-1 ml-0.5">{{ t('inventory.borrowingTypeCannotBeChanged') }}</p>
         <FieldError v-if="isSingle && errors.type">{{ errors.type }}</FieldError>
       </Field>
 

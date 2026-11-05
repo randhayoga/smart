@@ -124,6 +124,14 @@ const isBorrowedUnit = computed(() => {
   return (props.items || []).some(item => String(item?.status).trim().toLowerCase() === 'dipinjam (st)');
 });
 
+const isBorrowingTypeDisabled = computed(() => {
+  if (!props.open) return false;
+  return (props.items || []).some(item => {
+    const s = String(item?.status || '').trim().toLowerCase();
+    return s === 'dipinjam (st)' || s === 'dipinjam (sewa)' || s === 'di-assign (lt)' || s.startsWith('dipinjam') || s.startsWith('di-assign');
+  });
+});
+
 const hasRestrictedUnit = computed(() => {
   if (!props.open) return false;
   return (props.items || []).some(item => isRestrictedStatus(item?.status, item?.approval_status) || arrInactiveConditions.includes(item?.condition));
@@ -894,6 +902,7 @@ const handleSubmit = () => {
                 :can-show-assign-to-location="canShowAssignToLocation"
                 :is-kondisi-disabled="isKondisiDisabled"
                 :is-borrowed-unit="isBorrowedUnit"
+                :is-borrowing-type-disabled="isBorrowingTypeDisabled"
                 :locations="locations"
                 :project-options="projectOptions"
                 :has-image="hasImage"

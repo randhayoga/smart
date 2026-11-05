@@ -32,6 +32,7 @@ import EditModelModal from '../Modals/EditModelModal.vue';
 import Tabs from '@/Components/Tabs.vue';
 import ModelDetailTab from './ModelDetailTab.vue';
 import LotListTab from './LotListTab.vue';
+import InventoryAuditCard from './components/InventoryAuditCard.vue';
 import { usePermissions } from '@/composables/usePermissions';
 import { useModelCatalogTable } from '../composables/useModelCatalogTable';
 
@@ -46,6 +47,7 @@ interface Props {
   vendors?: any[];
   locations?: any[];
   projects?: any[];
+  inventoryLogs?: any[];
   selectedBarangCode?: string | null;
 }
 
@@ -60,6 +62,7 @@ const props = withDefaults(defineProps<Props>(), {
   vendors: () => [],
   locations: () => [],
   projects: () => [],
+  inventoryLogs: () => [],
   selectedBarangCode: null,
 });
 
@@ -72,6 +75,7 @@ const selectedBarang = ref<any | null>(null);
 const detailTabs = computed(() => [
   { id: 'Detail', label: t('inventory.typeDetail') },
   { id: 'Daftar LOT', label: t('inventory.lotList') },
+  { id: 'Audit Manajemen Stok', label: t('admin.inventoryAuditTitle') },
 ]);
 const activeDetailTab = ref('Detail');
 
@@ -358,6 +362,12 @@ onUnmounted(() => {
         :vendors="props.vendors"
         :locations="props.locations"
         :projects="props.projects"
+      />
+
+      <InventoryAuditCard
+        v-else-if="activeDetailTab === 'Audit Manajemen Stok'"
+        :logs="props.inventoryLogs"
+        :hide-barang-column="true"
       />
     </div>
 

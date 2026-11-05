@@ -354,7 +354,6 @@ const finalLotAge = computed(() => {
   return getAge(finalLotDateOfReceipt.value);
 });
 
-const finalLotNumber = computed(() => props.lot?.number || props.asset?.lot_number || '');
 const finalLotOrganizer = computed(() => props.lot?.organizer || props.asset?.lot_organizer || '');
 const finalLotDateOfReceipt = computed(() => props.lot?.date_of_receipt || props.asset?.lot_date_of_receipt || '');
 const isComp = computed(() => {
@@ -383,7 +382,6 @@ const isLotVendorMultiple = computed(() => {
 });
 const finalLotPoNumber = computed(() => props.lot?.po_number || props.asset?.lot_po_number || '');
 
-const finalBarangCode = computed(() => props.lot?.barang_code || props.asset?.barang_code || '');
 const finalBarangBrand = computed(() => props.lot?.barang_brand || props.asset?.barang_brand || '');
 const finalBarangNama = computed(() => props.lot?.barang_nama || props.asset?.barang_nama || '');
 const finalBarangSpecification = computed(() => props.lot?.barang_specification || props.asset?.barang_specification || '');

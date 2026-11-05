@@ -539,6 +539,13 @@ class BulkAssetController extends Controller
         // 4. Borrowing Type & Classification
         $bType = $request->input('borrowing_type', $request->input('type'));
         if (!empty($bType)) {
+            $hasBorrowedOrAssigned = $assets->contains(function ($u) {
+                $s = strtolower(trim($u->status ?? ''));
+                return in_array($s, ['dipinjam (st)', 'dipinjam (sewa)', 'di-assign (lt)'], true);
+            });
+            if ($hasBorrowedOrAssigned) {
+                return redirect()->back()->withErrors(['borrowing_type' => 'Tipe peminjaman tidak dapat diubah pada aset yang sedang dipinjam atau di-assign.']);
+            }
             $updateData['borrowing_type'] = $bType;
         }
         if ($request->filled('classification')) {

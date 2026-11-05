@@ -414,6 +414,11 @@ class AssetController extends Controller
         $proposedCondition = $request->input('condition');
         $needApproval = in_array($proposedCondition, $arrNeedApproval);
 
+        $isBorrowedOrAssigned = in_array($currentStatusLower, ['dipinjam (st)', 'dipinjam (sewa)', 'di-assign (lt)'], true);
+        if ($isBorrowedOrAssigned && $request->filled('borrowing_type') && $request->input('borrowing_type') !== $asset->borrowing_type) {
+            return redirect()->back()->withErrors(['borrowing_type' => 'Tipe peminjaman tidak dapat diubah saat aset sedang dipinjam atau di-assign.']);
+        }
+
         if (in_array($currentStatusLower, ['dipinjam (st)', 'dipinjam (sewa)'], true)) {
             $statusLabel = $currentStatusLower === 'dipinjam (sewa)' ? 'Dipinjam (sewa)' : 'Dipinjam (ST)';
             if ($request->filled('status') && strtolower(trim($request->input('status'))) !== $currentStatusLower) {

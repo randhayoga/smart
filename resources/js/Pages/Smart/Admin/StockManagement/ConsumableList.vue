@@ -17,6 +17,7 @@ interface Props {
   vendors?: any[];
   locations?: any[];
   projects?: any[];
+  inventoryLogs?: any[];
   selectedBarangCode?: string | null;
 }
 
@@ -31,6 +32,7 @@ const props = withDefaults(defineProps<Props>(), {
   vendors: () => [],
   locations: () => [],
   projects: () => [],
+  inventoryLogs: () => [],
   selectedBarangCode: null,
 });
 
@@ -50,6 +52,7 @@ const { t } = useI18n();
       :vendors="props.vendors"
       :locations="props.locations"
       :projects="props.projects"
+      :inventory-logs="props.inventoryLogs"
       :selected-barang-code="props.selectedBarangCode"
     />
   </AppLayout>

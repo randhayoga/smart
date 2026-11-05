@@ -262,6 +262,7 @@ export default {
   qcFailWithDate: 'QC Fail (pada: {date})',
   statusAndCondition: 'Status & Kondisi',
   statusCannotBeChangedManually: 'Status tidak dapat diubah secara manual',
+  borrowingTypeCannotBeChanged: 'Tipe peminjaman tidak dapat diubah saat aset sedang dipinjam atau di-assign',
 
   // Validation Messages & Alerts
   codeRequired: 'Nomor Model belum diisi',

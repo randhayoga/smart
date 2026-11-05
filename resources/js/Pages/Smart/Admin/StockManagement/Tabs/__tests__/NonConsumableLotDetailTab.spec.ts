@@ -61,7 +61,8 @@ describe('NonConsumableLotDetailTab.vue', () => {
     });
 
     const text = wrapper.text();
-    expect(text).toContain('LOT-NC-2026-01');
+    expect(text).not.toContain('Nomor LOT');
+    expect(text).not.toContain('LOT-NC-2026-01');
     expect(text).toContain('Komputer (Laptop)');
     expect(text).toContain('Dell Latitude 5420 Intel Core i5, 16GB, 512GB SSD');
     expect(text).toContain('3 Unit / 4 Unit');

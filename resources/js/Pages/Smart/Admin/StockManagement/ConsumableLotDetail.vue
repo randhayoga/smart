@@ -86,11 +86,13 @@ const formatRupiah = (val: number | string | null | undefined) => {
 
 const formatLocation = (lot: any) => {
   if (!lot) return '-';
-  const parts = [];
-  if (lot.location) parts.push(lot.location);
-  if (lot.floor) parts.push(lot.floor);
-  if (lot.room) parts.push(lot.room);
-  return parts.join(', ') || '-';
+  if (lot.location && (lot.floor || lot.room)) {
+    const parts = [lot.location];
+    if (lot.floor) parts.push(lot.floor);
+    if (lot.room) parts.push(lot.room);
+    return parts.join(', ');
+  }
+  return lot.location || lot.location_name || '-';
 };
 
 const lotCategoryWithSubcategory = computed(() => {
@@ -219,12 +221,12 @@ onUnmounted(() => {
 
                 <!-- Details Single Column (takes full horizontal space) -->
                 <div class="flex-grow flex flex-col gap-1.5 text-foreground">
-                  <!-- 1. Nomor LOT -->
+                  <!-- 0. Nomor LOT (Only for consumables) -->
                   <p class="font-bold text-foreground">
                     <span class="text-foreground">{{ t('inventory.lotCode') }}:</span> {{ lotDetails.number }}
                   </p>
 
-                  <!-- 2. Kategori (shows category + type) -->
+                  <!-- 1. Kategori (shows category + type) -->
                   <p class="font-bold text-foreground">
                     <span class="text-foreground">{{ t('inventory.category') }}:</span> {{ lotCategoryWithSubcategory }}
                   </p>

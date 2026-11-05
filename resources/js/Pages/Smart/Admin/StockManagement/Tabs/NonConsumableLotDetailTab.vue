@@ -170,12 +170,7 @@ onUnmounted(() => {
 
         <!-- Details Single Column (takes full horizontal space) -->
         <div class="flex-grow flex flex-col gap-1.5 text-foreground">
-          <!-- 1. Nomor LOT -->
-          <p class="font-bold text-foreground">
-            <span class="text-foreground">{{ t('inventory.lotCode') }}:</span> {{ props.lot.number }}
-          </p>
-
-          <!-- 2. Kategori (shows category + type) -->
+          <!-- 1. Kategori (shows category + type) -->
           <p class="font-bold text-foreground">
             <span class="text-foreground">{{ t('inventory.category') }}:</span> {{ lotCategoryWithSubcategory }}
           </p>

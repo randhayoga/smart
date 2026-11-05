@@ -76,7 +76,7 @@ describe('EditAssetModal.vue - Single & Mass Edit Logic and Layout', () => {
     expect(samakanBtns.length).toBe(0);
     expect(wrapper.text()).toContain('Harga');
     expect(wrapper.text()).not.toContain('Harga Satuan');
-    expect(wrapper.text()).toContain('Tipe Peminjaman');
+    expect(wrapper.text()).toContain('Jenis Peminjaman');
   });
 
   it('renders status field as disabled with informative helper text and tooltip', () => {
@@ -101,9 +101,9 @@ describe('EditAssetModal.vue - Single & Mass Edit Logic and Layout', () => {
 
   it('disallows edit of status when unit status is Dipinjam (ST) and displays localized status', () => {
     const wrapper = mountModal([{ id: 1, number: 'AST-001', status: 'Dipinjam (ST)', condition: 'Bagus' }]);
-    const disabledDiv = wrapper.find('.cursor-not-allowed.select-none');
-    expect(disabledDiv.exists()).toBe(true);
-    expect(disabledDiv.text()).toContain('Dipinjam (ST)');
+    const disabledDivs = wrapper.findAll('.cursor-not-allowed.select-none');
+    const statusDiv = disabledDivs.find(d => d.text().includes('Dipinjam (ST)'));
+    expect(statusDiv?.exists()).toBe(true);
   });
 
   it('disallows edit of status when unit status is Belum Diverifikasi', () => {
@@ -390,6 +390,20 @@ describe('EditAssetModal.vue - Single & Mass Edit Logic and Layout', () => {
       expect(wrapper.find('#edit-asset-exp-date').exists()).toBe(true);
       expect(wrapper.find('#edit-asset-renewal-reminder').exists()).toBe(true);
       expect(wrapper.text()).toContain('Day(s)');
+    });
+  });
+
+  describe('Borrowing Type Disabled when Borrowed or Assigned', () => {
+    it('disables borrowing type when status is Dipinjam (ST) or Di-assign (LT)', () => {
+      setI18nLanguage('id');
+      const borrowedWrapper = mountModal([{ id: 1, number: 'AST-001', status: 'Dipinjam (ST)', condition: 'Bagus', type: 'ST' }]);
+      expect(borrowedWrapper.text()).toContain('Tipe peminjaman tidak dapat diubah saat aset sedang dipinjam atau di-assign');
+
+      const assignedWrapper = mountModal([{ id: 2, number: 'AST-002', status: 'Di-assign (LT)', condition: 'Bagus', type: 'LT' }]);
+      expect(assignedWrapper.text()).toContain('Tipe peminjaman tidak dapat diubah saat aset sedang dipinjam atau di-assign');
+
+      const availableWrapper = mountModal([{ id: 3, number: 'AST-003', status: 'Tersedia', condition: 'Bagus', type: 'LT' }]);
+      expect(availableWrapper.text()).not.toContain('Tipe peminjaman tidak dapat diubah saat aset sedang dipinjam atau di-assign');
     });
   });
 });

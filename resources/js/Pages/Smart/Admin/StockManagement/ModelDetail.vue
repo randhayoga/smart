@@ -17,6 +17,7 @@ import EditModelModal from './Modals/EditModelModal.vue';
 import ModelDetailTab from './Tabs/ModelDetailTab.vue';
 import NonConsumableListTab from './Tabs/NonConsumableListTab.vue';
 import LotListTab from './Tabs/LotListTab.vue';
+import InventoryAuditCard, { type InventoryLogItem } from './Tabs/components/InventoryAuditCard.vue';
 
 interface Props {
   itemId: string | number;
@@ -70,22 +71,38 @@ interface Props {
   rooms?: any[];
   projects: { id: number; no_project: string; project_name: string; client_id: string; }[];
   units?: any[];
+  inventoryLogs?: InventoryLogItem[];
 }
 
 const props = withDefaults(defineProps<Props>(), {
   units: () => [],
+  inventoryLogs: () => [],
 });
 
 const { t } = useI18n();
 
-const tabs = computed(() => [
-  { id: 'Detail', label: t('inventory.typeDetail') },
-  { 
-    id: props.barang.is_consumable ? 'Daftar LOT' : 'Daftar Tidak Habis Pakai', 
-    label: props.barang.is_consumable ? t('inventory.lotList') : t('inventory.nonConsumableList') 
+const tabs = computed(() => {
+  const list = [
+    { id: 'Detail', label: t('inventory.typeDetail') },
+    { 
+      id: props.barang.is_consumable ? 'Daftar LOT' : 'Daftar Tidak Habis Pakai', 
+      label: props.barang.is_consumable ? t('inventory.lotList') : t('inventory.nonConsumableList') 
+    },
+  ];
+
+  if (props.barang.is_consumable) {
+    list.push({ id: 'Audit Manajemen Stok', label: t('admin.inventoryAuditTitle') });
   }
-]);
+
+  return list;
+});
 const activeTab = ref('Detail');
+
+watch(() => props.barang.is_consumable, (isConsumable) => {
+  if (!isConsumable && activeTab.value === 'Audit Manajemen Stok') {
+    activeTab.value = 'Detail';
+  }
+});
 
 const totalStok = computed(() => {
   const isConsumable = props.barang.is_consumable;
@@ -274,6 +291,12 @@ onUnmounted(() => {
         :hide-barang-columns="true"
         :show-error-modal="false"
         status-scope="all"
+      />
+
+      <InventoryAuditCard
+        v-else-if="activeTab === 'Audit Manajemen Stok' && props.barang.is_consumable"
+        :logs="props.inventoryLogs"
+        :hide-barang-column="true"
       />
     </div>
 

@@ -115,8 +115,7 @@ const distinctPhotos = computed(() => {
       <div class="flex flex-col md:flex-row gap-6">
         <AssetPhotoGrid :photos="distinctPhotos" />
 
-        <div class="flex-grow">
-          <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.typeCode') }}:</span> {{ props.barang.code }}</p>
+        <div class="flex-grow flex flex-col gap-1.5 text-foreground">
           <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.brand') }}:</span> {{ props.barang.brand }}</p>
           <p class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.name') }}:</span> {{ props.barang.name }}</p>
           <p v-if="!isCompCategory" class="font-bold text-foreground"><span class="text-foreground">{{ t('inventory.specification') }}:</span> {{ props.barang.specification || '-' }}</p>

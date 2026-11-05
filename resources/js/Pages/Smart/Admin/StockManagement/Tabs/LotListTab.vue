@@ -15,6 +15,8 @@ import {
   DropdownMenuTrigger,
 } from '@/Components/ui/dropdown-menu';
 import TableSearch from '@/Components/TableSearch.vue';
+import LocationCombobox from '@/Components/LocationCombobox.vue';
+import ResetFilterButton from '@/Components/ResetFilterButton.vue';
 import DataTable from '@/Components/DataTable.vue';
 import { formatDate } from '@/lib/utils';
 import DeleteConfirmationModal from '@/Components/DeleteConfirmationModal.vue';
@@ -26,6 +28,7 @@ import { exportCSV } from '@/utils/exportCSV';
 import { exportExcel } from '@/utils/exportExcel';
 import { usePermissions } from '@/composables/usePermissions';
 import { useLotTableColumns } from './composables/useLotTableColumns';
+import { buildLocationTargetSetMap } from './composables/useNonConsumableColumns';
 
 interface Props {
   barang: {
@@ -89,8 +92,27 @@ const { can } = usePermissions();
 const searchQuery = ref('');
 const timeFilter = ref('');
 const organizerFilter = ref('');
+const locationFilter = ref('');
 const rowsPerPage = ref<'all' | '10' | '25' | '50'>('50');
 const dataTableRef = ref<any>(null);
+
+const locationTargetSetMap = computed<Map<number, Set<number>>>(() =>
+  buildLocationTargetSetMap(props.locations || [])
+);
+
+const isAnyFilterActive = computed(() => {
+  return searchQuery.value !== '' ||
+    timeFilter.value !== '' ||
+    organizerFilter.value !== '' ||
+    locationFilter.value !== '';
+});
+
+const resetFilters = () => {
+  searchQuery.value = '';
+  timeFilter.value = '';
+  organizerFilter.value = '';
+  locationFilter.value = '';
+};
 
 // Lot Modal Setup
 const isCreateLotModalOpen = ref(false);
@@ -178,6 +200,12 @@ const filteredLots = computed(() => {
 
   if (organizerFilter.value) {
     list = list.filter((lot) => lot.organizer === organizerFilter.value);
+  }
+
+  if (props.barang.is_consumable && locationFilter.value) {
+    const locId = Number(locationFilter.value);
+    const targetSet = locationTargetSetMap.value.get(locId) || new Set([locId]);
+    list = list.filter((lot: any) => lot.location_id != null && targetSet.has(Number(lot.location_id)));
   }
 
   if (timeFilter.value) {
@@ -331,45 +359,62 @@ onUnmounted(() => {
       <h2 class="text-lg font-bold text-foreground mb-4">{{ t('inventory.lotList') }}</h2>
 
       <!-- Filters Row -->
-      <div class="mb-4 flex flex-wrap items-end gap-4">
-        <div class="space-y-1.5 flex-1 min-w-[300px] max-w-sm">
-          <label class="text-xs text-muted-foreground font-medium block ml-0.5">{{ t('inventory.filter') }}</label>
-          <TableSearch
-            v-model="searchQuery"
-            :placeholder="t('inventory.searchLotPlaceholder')"
-          />
+      <div class="mb-4 flex flex-wrap items-end justify-between gap-4">
+        <div class="flex flex-1 flex-wrap items-end gap-3 min-w-0">
+          <div class="space-y-1.5 flex-1 min-w-[260px] max-w-sm">
+            <label class="text-xs text-muted-foreground font-medium block ml-0.5">{{ t('inventory.filter') }}</label>
+            <TableSearch
+              v-model="searchQuery"
+              :placeholder="t('inventory.searchLotPlaceholder')"
+            />
+          </div>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal', !timeFilter ? 'text-muted-foreground' : 'text-foreground']">
+                <span class="truncate">{{ timeFilter === 'today' ? t('inventory.today') : (timeFilter === 'thisMonth' ? t('inventory.thisMonth') : t('inventory.allTimeRanges')) }}</span>
+                <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
+              <DropdownMenuItem @select="timeFilter = ''">{{ t('inventory.allTimeRanges') }}</DropdownMenuItem>
+              <DropdownMenuItem @select="timeFilter = 'today'">{{ t('inventory.today') }}</DropdownMenuItem>
+              <DropdownMenuItem @select="timeFilter = 'thisMonth'">{{ t('inventory.thisMonth') }}</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal', !organizerFilter ? 'text-muted-foreground' : 'text-foreground']">
+                <span class="truncate">{{ organizerFilter || t('inventory.allOrganizers') }}</span>
+                <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
+              <DropdownMenuItem @select="organizerFilter = ''">{{ t('inventory.allOrganizers') }}</DropdownMenuItem>
+              <DropdownMenuItem v-for="org in uniqueOrganizers" :key="org" @select="organizerFilter = org">
+                {{ org }}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <!-- Location Filter (Only for Consumables) -->
+          <div v-if="props.barang.is_consumable" class="w-[320px]">
+            <LocationCombobox
+              :model-value="locationFilter"
+              @update:model-value="locationFilter = String($event ?? '')"
+              :locations="props.locations"
+              :placeholder="t('inventory.allLocations')"
+              :clearable="true"
+              width-class="w-full"
+            />
+          </div>
+
+          <!-- Reset Filter Button -->
+          <ResetFilterButton v-if="isAnyFilterActive" @click="resetFilters" />
         </div>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal', !timeFilter ? 'text-muted-foreground' : 'text-foreground']">
-              <span class="truncate">{{ timeFilter === 'today' ? t('inventory.today') : (timeFilter === 'thisMonth' ? t('inventory.thisMonth') : t('inventory.allTimeRanges')) }}</span>
-              <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
-            <DropdownMenuItem @select="timeFilter = ''">{{ t('inventory.allTimeRanges') }}</DropdownMenuItem>
-            <DropdownMenuItem @select="timeFilter = 'today'">{{ t('inventory.today') }}</DropdownMenuItem>
-            <DropdownMenuItem @select="timeFilter = 'thisMonth'">{{ t('inventory.thisMonth') }}</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal', !organizerFilter ? 'text-muted-foreground' : 'text-foreground']">
-              <span class="truncate">{{ organizerFilter || t('inventory.allOrganizers') }}</span>
-              <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
-            <DropdownMenuItem @select="organizerFilter = ''">{{ t('inventory.allOrganizers') }}</DropdownMenuItem>
-            <DropdownMenuItem v-for="org in uniqueOrganizers" :key="org" @select="organizerFilter = org">
-              {{ org }}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        <div class="flex items-center gap-3 text-sm text-muted-foreground ml-auto">
+        <div class="flex items-center gap-3 text-sm text-muted-foreground shrink-0 ml-auto pb-0.5">
           <span>{{ t('inventory.rowsPerPage') }}</span>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

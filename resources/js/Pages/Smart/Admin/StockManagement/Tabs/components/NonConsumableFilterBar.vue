@@ -139,7 +139,7 @@ const { t } = useI18n();
       </DropdownMenu>
 
       <!-- Location Filter -->
-      <div v-if="!isAllSoft" class="w-[280px]">
+      <div v-if="!isAllSoft" class="w-[320px]">
         <LocationCombobox
           :model-value="locationFilter"
           @update:model-value="emit('update:locationFilter', String($event ?? ''))"
