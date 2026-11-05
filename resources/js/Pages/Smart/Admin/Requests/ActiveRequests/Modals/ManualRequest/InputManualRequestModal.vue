@@ -428,7 +428,11 @@ const validateForm = (): boolean => {
 };
 
 const handleSubmit = () => {
-  if (isSubmitting.value || !validateForm()) return;
+  if (isSubmitting.value) return;
+  if (!validateForm()) {
+    toast.error(t('common.modals.formInvalid'));
+    return;
+  }
 
   const payload: Record<string, any> = {
     request_type: form.request_type,

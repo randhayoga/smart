@@ -90,5 +90,6 @@ export default {
     borrowSuccessDesc: 'Peminjaman Anda telah berhasil dikirimkan dan sedang menunggu approval. Anda akan mendapat notifikasi ketika peminjaman diproses.',
     errorSubmitTitle: 'Gagal Mengajukan Permintaan',
     errorSubmitDefault: 'Terjadi kesalahan saat memproses permintaan Anda. Silakan periksa kembali formulir atau hubungi administrator.',
+    formInvalid: 'Data wajib belum lengkap atau tidak valid',
   },
 };

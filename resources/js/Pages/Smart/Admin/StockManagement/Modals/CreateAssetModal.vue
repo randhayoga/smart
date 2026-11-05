@@ -308,7 +308,10 @@ const handleSubmit = () => {
       form.renewal_reminder = null;
     }
   }
-  if (!isValid) return;
+  if (!isValid) {
+    toast.error(t('common.modals.formInvalid'));
+    return;
+  }
 
   form.transform((data) => {
     const fd: any = {
@@ -352,7 +355,7 @@ const handleSubmit = () => {
     },
     onError: (errs) => {
       console.error('Validation errors:', errs);
-      toast.error(t('inventory.createAssetFailed'));
+      toast.error(t('common.modals.formInvalid'));
     },
   });
 };

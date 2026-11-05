@@ -467,7 +467,10 @@ const handleSubmit = () => {
     }
   }
 
-  if (!isValid) return;
+  if (!isValid) {
+    toast.error(t('common.modals.formInvalid'));
+    return;
+  }
 
   lotForm.transform((data) => {
     const fd: any = {
@@ -534,7 +537,7 @@ const handleSubmit = () => {
           (errors.value as any)[k] = errs[k];
         }
       });
-      toast.error(t('inventory.createLotFailed') || 'Failed to create lot');
+      toast.error(t('common.modals.formInvalid'));
     }
   });
 };
@@ -545,9 +548,9 @@ const handleSubmit = () => {
     <Transition enter-active-class="ease-out duration-200" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="ease-in duration-150" leave-from-class="opacity-100" leave-to-class="opacity-0">
       <div v-if="open" @click="closeModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 overscroll-contain">
         <Transition enter-active-class="ease-out duration-200" enter-from-class="opacity-0 scale-95" enter-to-class="opacity-100 scale-100" leave-active-class="ease-in duration-150" leave-from-class="opacity-100 scale-100" leave-to-class="opacity-0 scale-95">
-          <div v-if="open" class="bg-card w-full max-w-[1100px] rounded-[14px] shadow-2xl overflow-hidden flex flex-col" @click.stop>
+          <div v-if="open" class="bg-card w-full max-w-[1100px] rounded-[14px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]" @click.stop>
             <!-- Header -->
-            <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border">
+            <div class="flex items-center justify-between pt-3 pb-2 px-4 border-b border-border shrink-0">
               <h3 class="text-lg font-bold text-foreground">{{ t('inventory.createNewLot') }}</h3>
               <button @click="closeModal" :disabled="isProcessing" class="p-2 hover:bg-muted rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                 <X class="w-5 h-5 text-muted-foreground cursor-pointer" />
@@ -555,7 +558,7 @@ const handleSubmit = () => {
             </div>
 
             <!-- Body -->
-            <div class="p-6 overflow-y-auto max-h-[85vh] overscroll-contain space-y-6">
+            <div class="p-6 overflow-y-auto flex-1 space-y-6">
               <!-- Lot Section Form -->
               <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
                 <!-- Left Column -->

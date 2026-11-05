@@ -90,5 +90,6 @@ export default {
     borrowSuccessDesc: 'Your borrowing request has been successfully submitted and is awaiting approval. You will receive a notification when it is processed.',
     errorSubmitTitle: 'Failed to Submit Request',
     errorSubmitDefault: 'An error occurred while processing your request. Please check your form or contact an administrator.',
+    formInvalid: 'Required data missing or invalid',
   },
 };

@@ -7,6 +7,7 @@ import { ref, computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useModalLock } from '@/composables/useModalLock';
 import { useForm } from '@inertiajs/vue3';
+import { toast } from 'vue-sonner';
 import { X, Loader2 } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
 import ModelSection from './InputNewStock/ModelSection.vue';
@@ -446,7 +447,10 @@ const handleSubmit = () => {
     }
   }
 
-  if (!isValid) return;
+  if (!isValid) {
+    toast.error(t('common.modals.formInvalid'));
+    return;
+  }
 
   form.post('/smart/stock-management/new-stock', {
     onSuccess: () => {
@@ -456,6 +460,7 @@ const handleSubmit = () => {
     },
     onError: (backendErrors: Record<string, string>) => {
       Object.assign(errors.value, backendErrors);
+      toast.error(t('common.modals.formInvalid'));
     },
   });
 };

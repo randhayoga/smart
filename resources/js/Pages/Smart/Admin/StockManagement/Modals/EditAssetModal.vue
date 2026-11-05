@@ -700,7 +700,10 @@ const handleSubmit = () => {
         form.renewal_reminder = null;
       }
     }
-    if (!isValid) return;
+    if (!isValid) {
+      toast.error(t('common.modals.formInvalid'));
+      return;
+    }
 
     form.transform((data) => {
       const fd: any = {
@@ -760,8 +763,7 @@ const handleSubmit = () => {
               (errors.value as any)[key] = errs[key];
             }
           });
-          const firstMsg = errs[errorKeys[0]];
-          toast.error(firstMsg || t('inventory.failedToUpdateAsset') || 'Failed to update asset');
+          toast.error(t('common.modals.formInvalid'));
         }
       },
     });
@@ -769,6 +771,7 @@ const handleSubmit = () => {
     // Bulk edit
     if (form.burden === 'Project' && !form.project_id) {
       errors.value.project_id = t('inventory.projectRequired');
+      toast.error(t('common.modals.formInvalid'));
       return;
     }
 
@@ -792,10 +795,12 @@ const handleSubmit = () => {
 
     if (form.condition && !isKondisiDisabled.value && arrNeedApproval.includes(form.condition) && !isDocumentDisabled.value && !form.memo_file_name) {
       errors.value.memo_file = t('inventory.memoRequired');
+      toast.error(t('common.modals.formInvalid'));
       return;
     }
     if (form.condition && !isKondisiDisabled.value && form.condition === 'Hilang' && !isDocumentDisabled.value && !form.lost_doc_file_name) {
       errors.value.lost_doc_file = t('inventory.lostDocRequired');
+      toast.error(t('common.modals.formInvalid'));
       return;
     }
 

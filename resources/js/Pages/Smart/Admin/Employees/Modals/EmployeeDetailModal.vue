@@ -34,6 +34,7 @@ export interface EmployeeData {
   name: string;
   department: string;
   active_assets_count?: number;
+  is_active?: boolean;
 }
 
 export interface LoanItem {
@@ -576,6 +577,7 @@ const historyColumns = computed<ColumnDef<LoanItem>[]>(() => [
                   <p class="font-bold text-foreground"><span class="text-foreground">{{ t('admin.employeeName') }}:</span> {{ props.employee?.name || '-' }}</p>
                   <p class="font-bold text-foreground"><span class="text-foreground">{{ t('admin.employeeId') }}:</span> {{ props.employee?.employee_id || '-' }}</p>
                   <p class="text-foreground">{{ t('admin.employeeDepartment') }}: {{ props.employee?.department || '-' }}</p>
+                  <p class="text-foreground">{{ t('admin.employeeWorkStatus') }}: {{ props.employee?.is_active ? t('admin.statusActive') : t('status.tidakAktif') }}</p>
                 </div>
               </div>
 

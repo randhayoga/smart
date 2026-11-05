@@ -99,4 +99,46 @@ describe('EmployeeList Layout Tests', () => {
     const combobox = wrapper.find('[data-testid="combobox"]');
     expect(combobox.attributes('data-bg-class')).toBe('bg-white');
   });
+
+  it('filters active employees by default and allows switching to all employees', async () => {
+    const wrapper = mount(EmployeeList, {
+      props: {
+        employees: [
+          { id: 1, employee_id: '001', name: 'Active User', department: 'IT', is_active: true },
+          { id: 2, employee_id: '002', name: 'Inactive User', department: 'HR', is_active: false },
+        ] as any,
+        departments: ['IT', 'HR'],
+      },
+      global: {
+        plugins: [i18n],
+      },
+    });
+
+    const dataTable = wrapper.findComponent({ name: 'DataTable' });
+    expect(dataTable.props('data')).toHaveLength(1);
+    expect((dataTable.props('data') as any)[0].name).toBe('Active User');
+
+    // Switch statusFilter to 'all'
+    const vm = wrapper.vm as any;
+    vm.statusFilter = 'all';
+    await wrapper.vm.$nextTick();
+
+    expect(dataTable.props('data')).toHaveLength(2);
+  });
+
+  it('applies red row class to inactive employees', () => {
+    const wrapper = mount(EmployeeList, {
+      props: {
+        employees: [],
+        departments: [],
+      },
+      global: {
+        plugins: [i18n],
+      },
+    });
+
+    const vm = wrapper.vm as any;
+    expect(vm.getRowClass({ is_active: false })).toContain('bg-red-50');
+    expect(vm.getRowClass({ is_active: true })).toBe('');
+  });
 });

@@ -104,4 +104,7 @@ export default {
   employeeRole: 'Peran',
   employeeOrg: 'Organisasi',
   employeeStatus: 'Status Akun',
+  employeeWorkStatus: 'Status Karyawan',
+  statusActive: 'Aktif',
+  statusAll: 'Semua',
 };

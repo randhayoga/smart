@@ -33,6 +33,7 @@ const props = defineProps<Props>();
 
 const searchQuery = ref('');
 const departmentFilter = ref<string | number | null>('');
+const statusFilter = ref<'active' | 'all'>('active');
 const rowsPerPage = ref('50');
 const dataTableRef = ref<any>(null);
 
@@ -48,6 +49,10 @@ const openDetailModal = (emp: EmployeeData) => {
 // Filtered Employees computed
 const filteredEmployees = computed(() => {
   let list = props.employees || [];
+
+  if (statusFilter.value === 'active') {
+    list = list.filter(emp => emp.is_active !== false);
+  }
 
   if (searchQuery.value) {
     const q = searchQuery.value.toLowerCase();
@@ -65,12 +70,28 @@ const filteredEmployees = computed(() => {
 });
 
 const hasActiveFilters = computed(() => {
-  return !!(searchQuery.value || (departmentFilter.value !== '' && departmentFilter.value !== null));
+  return !!(
+    searchQuery.value ||
+    (departmentFilter.value !== '' && departmentFilter.value !== null) ||
+    statusFilter.value !== 'active'
+  );
 });
 
 const clearFilters = () => {
   searchQuery.value = '';
   departmentFilter.value = '';
+  statusFilter.value = 'active';
+};
+
+const statusFilterLabel = computed(() => {
+  return statusFilter.value === 'all' ? t('admin.statusAll') : t('admin.statusActive');
+});
+
+const getRowClass = (emp: EmployeeData) => {
+  if (emp.is_active === false) {
+    return 'bg-red-50/80 hover:bg-red-100/80 dark:bg-red-950/20 dark:hover:bg-red-950/30';
+  }
+  return '';
 };
 
 const rowsPerPageLabel = computed(() => {
@@ -185,7 +206,7 @@ const pageSizeNumber = computed(() => {
           </div>
 
           <!-- Departemen Combobox Filter -->
-          <div class="space-y-1.5 w-full sm:w-[360px] md:w-[400px]">
+          <div class="space-y-1.5 w-full sm:w-[320px] md:w-[360px]">
             <span class="text-xs text-muted-foreground font-medium block">{{ t('admin.employeeDepartment') }}</span>
             <Combobox 
               v-model="departmentFilter"
@@ -193,9 +214,29 @@ const pageSizeNumber = computed(() => {
               :placeholder="t('admin.allDepartments')"
               :default-label="t('admin.allDepartments')"
               :search-placeholder="t('admin.searchDepartment')"
-              width-class="w-full sm:w-[360px] md:w-[400px]"
+              width-class="w-full sm:w-[320px] md:w-[360px]"
               bg-class="bg-white"
             />
+          </div>
+
+          <!-- Status Karyawan Dropdown Filter -->
+          <div class="space-y-1.5 w-full sm:w-[160px]">
+            <span class="text-xs text-muted-foreground font-medium block">{{ t('admin.employeeWorkStatus') }}</span>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  class="w-full justify-between rounded-[14px] font-normal bg-white text-foreground"
+                >
+                  <span class="truncate">{{ statusFilterLabel }}</span>
+                  <ChevronDown class="w-4 h-4 opacity-50 shrink-0 ml-2" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent class="w-[160px] rounded-[14px]" align="start" :side-offset="4">
+                <DropdownMenuItem @select="statusFilter = 'active'">{{ t('admin.statusActive') }}</DropdownMenuItem>
+                <DropdownMenuItem @select="statusFilter = 'all'">{{ t('admin.statusAll') }}</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           <!-- Reset Filters Button -->
@@ -246,6 +287,7 @@ const pageSizeNumber = computed(() => {
         :page-size="pageSizeNumber"
         :show-selection-count="false"
         :default-sorting="[{ id: 'employee_id', desc: false }]"
+        :row-class="getRowClass"
       />
     </div>
 

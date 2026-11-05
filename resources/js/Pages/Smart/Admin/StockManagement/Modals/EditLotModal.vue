@@ -330,7 +330,10 @@ const handleSubmit = () => {
       }
     }
 
-    if (!isValid) return;
+    if (!isValid) {
+      toast.error(t('common.modals.formInvalid'));
+      return;
+    }
 
     // Single edit
     form.transform((data) => {
@@ -382,7 +385,7 @@ const handleSubmit = () => {
             (errors.value as any)[key] = errs[key];
           }
         });
-        toast.error(t('inventory.editLotFailed') || 'Failed to update lot');
+        toast.error(t('common.modals.formInvalid'));
       }
     });
   } else {
@@ -392,7 +395,10 @@ const handleSubmit = () => {
       errors.value.project_id = t('inventory.projectRequired');
       isValid = false;
     }
-    if (!isValid) return;
+    if (!isValid) {
+      toast.error(t('common.modals.formInvalid'));
+      return;
+    }
 
     const hasField = Boolean(
       form.organizer_id || form.vendor_id || form.purchase_date ||

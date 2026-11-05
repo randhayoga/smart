@@ -176,6 +176,7 @@ const handleConfirm = () => {
   }
 
   if (Object.keys(errors.value).length > 0) {
+    toast.error(t('common.modals.formInvalid'));
     return;
   }
 

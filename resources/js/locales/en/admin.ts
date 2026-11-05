@@ -104,4 +104,7 @@ export default {
   employeeRole: 'Role',
   employeeOrg: 'Organization',
   employeeStatus: 'Account Status',
+  employeeWorkStatus: 'Employee Status',
+  statusActive: 'Active',
+  statusAll: 'All',
 };

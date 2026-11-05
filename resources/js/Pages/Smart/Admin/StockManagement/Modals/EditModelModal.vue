@@ -164,7 +164,10 @@ const handleSubmit = () => {
       }
     }
 
-    if (!isValid) return;
+    if (!isValid) {
+      toast.error(t('common.modals.formInvalid'));
+      return;
+    }
   } else {
     const hasAtLeastOneField = !!(
       form.uom_id || form.brand_id || form.name || (!hasCompCategoryInItems.value && form.specification) || (form.min_stock_threshold !== null && form.min_stock_threshold !== '')
@@ -205,6 +208,10 @@ const handleSubmit = () => {
       resetModalState();
       closeModal();
       emit('success');
+    },
+    onError: (backendErrors: Record<string, string>) => {
+      Object.assign(errors.value, backendErrors);
+      toast.error(t('common.modals.formInvalid'));
     },
   });
 };

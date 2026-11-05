@@ -129,7 +129,7 @@ describe('CreateAssetModal.vue', () => {
     const wrapper = mountModal();
 
     const labels = wrapper.findAll('label');
-    const typeLabel = labels.find(l => l.text().includes('Tipe Peminjaman'));
+    const typeLabel = labels.find(l => l.text().includes('Jenis Peminjaman') || l.text().includes('Tipe Peminjaman'));
     const conditionLabel = labels.find(l => l.text().includes('Kondisi'));
     const locationLabel = labels.find(l => l.text().includes('Lokasi'));
     const classificationLabel = labels.find(l => l.text().includes('Klasifikasi'));

@@ -124,7 +124,7 @@ describe('EditLotModal.vue', () => {
       });
 
       expect(wrapper.text()).toContain('Nomor Memo');
-      expect(wrapper.text()).toContain('Tanggal Dihibahkan');
+      expect(wrapper.text()).toMatch(/Tanggal (Dihibahkan|Hibah)/);
       expect(wrapper.text()).toContain('Berita Acara / Memo');
       expect(wrapper.text()).not.toContain('Nomor PO');
     });

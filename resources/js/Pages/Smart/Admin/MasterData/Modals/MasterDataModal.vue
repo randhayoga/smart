@@ -394,6 +394,8 @@ const handleErrors = (errors: Record<string, string>) => {
   });
   if (!matched && Object.values(errors).length > 0) {
     toast.error(Object.values(errors)[0]);
+  } else if (matched) {
+    toast.error(t('common.modals.formInvalid'));
   }
 };
 
@@ -465,7 +467,10 @@ const submit = () => {
     }
   }
 
-  if (hasError) return;
+  if (hasError) {
+    toast.error(t('common.modals.formInvalid'));
+    return;
+  }
 
   const submitForm = form.transform(() => getPayload());
 
