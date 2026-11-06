@@ -62,6 +62,7 @@ return [
     'condition_damaged' => 'Damaged',
     'condition_total_damage' => 'Total Damage',
     'condition_lost' => 'Lost',
+    'lostDocFile' => 'Lost Document Report',
 
     // Activation Notifications
     'notification_activation_title' => 'New Asset Approval :name: Requires Your Attention',

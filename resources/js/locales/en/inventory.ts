@@ -120,6 +120,7 @@ export default {
   subcategory: 'Type',
   type: 'Type',
   borrowingType: 'Borrowing Type',
+  primaryInfo: 'Primary Information',
   moreInfo: 'More Info',
   modelLabel: 'Model',
   uom: 'Unit',
@@ -160,6 +161,7 @@ export default {
   defaultPhoto: 'Default photo',
   memoDocument: 'Official Report / Memo',
   lostDocument: 'Loss Report Document',
+  lostDocFile: 'Lost Document Report',
   bodBocForm: 'BoD/BoC Approval Form',
 
   // Actions, Buttons & Tooltips

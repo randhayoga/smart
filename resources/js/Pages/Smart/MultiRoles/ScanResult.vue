@@ -1,425 +1,52 @@
 <script setup lang="ts">
 /**
- * Hasil Pindai page component displaying barcode scan details and mobile-friendly inline asset editing.
+ * Hasil Pindai page component displaying barcode scan details, mobile-friendly inline editing,
+ * and asset maintenance recording.
+ * Responsive tab bar switches between shortened text titles and Lucide icons on ultra-small screens.
  */
-import { ref, computed, watch } from 'vue';
+import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { Head, useForm } from '@inertiajs/vue3';
-import { toast } from 'vue-sonner';
-import { ChevronLeft, ChevronDown, Loader2, Save, Info, FileText, Camera } from 'lucide-vue-next';
-import { Button } from '@/Components/ui/button';
-import { formatDate, formatLocation } from '@/lib/utils';
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
-} from '@/Components/ui/dropdown-menu';
-import Combobox from '@/Components/Combobox.vue';
-import LocationCombobox from '@/Components/LocationCombobox.vue';
-import { Field, FieldLabel, FieldContent, FieldError } from '@/Components/ui/field';
-import StatusBadge from '@/Components/StatusBadge.vue';
+import { Info, SquarePen, Wrench } from 'lucide-vue-next';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage } from '@/Components/ui/breadcrumb';
-import { compressImageIfNeeded } from '@/utils/imageCompressor';
-import {
-  hasAssetStatus,
-  getBaseAssetStatus,
-  isRestrictedAssetStatus,
-} from '@/lib/assetStatus';
+import { usePermissions } from '@/composables/usePermissions';
+import { hasAssetStatus } from '@/lib/assetStatus';
+import ScanAssetDetailTab from './ScanResult/ScanAssetDetailTab.vue';
+import ScanEditAssetTab from './ScanResult/ScanEditAssetTab.vue';
+import ScanMaintenanceTab from './ScanResult/ScanMaintenanceTab.vue';
 
 interface Props {
   asset: any;
-  locations: any[];
+  locations?: any[];
+  projects?: any[];
   floors?: any[];
   rooms?: any[];
-  lot: any;
-  barang: any;
+  lot?: any;
+  barang?: any;
 }
 
 const props = defineProps<Props>();
 
 const { t } = useI18n();
+const { can } = usePermissions();
 
-const activeTab = ref<'detail' | 'edit'>('detail');
+const activeTab = ref<'detail' | 'edit' | 'maintain'>('detail');
 
-const photoInput = ref<HTMLInputElement | null>(null);
-const cameraInput = ref<HTMLInputElement | null>(null);
-const memoFileInput = ref<HTMLInputElement | null>(null);
-const lostDocFileInput = ref<HTMLInputElement | null>(null);
-const bodBocFileInput = ref<HTMLInputElement | null>(null);
-
-const isVehicle = computed(() => {
-  const category = (props.asset?.barang_category || props.barang?.category || '').toLowerCase();
-  const subcategory = (props.asset?.barang_subcategory || '').toLowerCase();
-  return category.includes('kendaraan') || subcategory.includes('kendaraan') ||
-         category.includes('mobil') || subcategory.includes('mobil') ||
-         category.includes('motor') || subcategory.includes('motor');
+const isMaintenanceAllowed = computed(() => {
+  if (!props.asset?.status) return true;
+  return !hasAssetStatus(props.asset.status, 'Tidak Aktif', props.asset.approval_status) &&
+         !hasAssetStatus(props.asset.status, 'Dihapus', props.asset.approval_status);
 });
 
-const isComp = computed(() => {
-  const catCode = props.asset?.barang_category_code || props.barang?.category_code || '';
-  const cat = (props.asset?.barang_category || props.barang?.category || '').toLowerCase();
-  return catCode === 'COMP' || cat === 'computer' || cat === 'comp';
+const canMaintain = computed(() => {
+  return can('inventory.maintenance') && isMaintenanceAllowed.value;
 });
 
-const isSoft = computed(() => {
-  const catCode = props.asset?.barang_category_code || props.barang?.category_code || props.asset?.model_category_code || props.asset?.category_code || '';
-  const cat = (props.asset?.barang_category || props.barang?.category || props.asset?.category || '').toLowerCase();
-  return catCode === 'SOFT' || cat === 'software' || cat === 'soft';
-});
-
-const arrNeedApproval = ['Rusak Total', 'Hilang'];
-const arrInactiveConditions = ['Rusak Total', 'Hilang'];
-
-const isRestrictedStatus = (status: string | null | undefined) => {
-  return isRestrictedAssetStatus(status);
-};
-
-const isRestrictedAsset = computed(() => {
-  return isRestrictedStatus(props.asset?.status) || arrInactiveConditions.includes(props.asset?.condition);
-});
-
-const isKondisiDisabled = computed(() => {
-  return isRestrictedAsset.value;
-});
-
-const isStatusDisabled = computed(() => {
-  if (isRestrictedAsset.value) return true;
-  return arrInactiveConditions.includes(form.condition);
-});
-
-const isDocumentDisabled = computed(() => {
-  return isRestrictedAsset.value;
-});
-
-const isBodBocFieldVisible = computed(() => {
-  return hasAssetStatus(props.asset?.status, 'Pending:BoD/BoC', props.asset?.approval_status);
-});
-
-// Form setup for editing
-const form = useForm({
-  number: props.asset?.number || '',
-  lot_id: props.lot?.id || props.asset?.lot_id || '',
-  location_id: props.asset?.location_id || '',
-  status: props.asset?.status || '',
-  approval_status: props.asset?.approval_status || '',
-  condition: props.asset?.condition || '',
-  price: props.asset?.price || '',
-  image_url: null as File | null,
-  image_url_name: props.asset?.image_url ? props.asset.image_url.split('/').pop() || '' : '',
-  use_lot_image: false,
-  vehicle_registration: props.asset?.vehicle_registration || '',
-  memo_file: null as File | null,
-  memo_file_name: props.asset?.memo_file_name || (props.asset?.memo_url ? props.asset.memo_url.split('/').pop() || '' : ''),
-  lost_doc_file: null as File | null,
-  lost_doc_file_name: props.asset?.lost_doc_file_name || (props.asset?.lost_doc_url ? props.asset.lost_doc_url.split('/').pop() || '' : ''),
-  bod_boc_approval_file: null as File | null,
-  bod_boc_approval_file_name: props.asset?.bod_boc_approval_file_name || (props.asset?.bod_boc_approval_url ? props.asset.bod_boc_approval_url.split('/').pop() || '' : ''),
-});
-
-watch(() => props.asset, (newAsset) => {
-  if (!newAsset) return;
-  form.number = newAsset.number || '';
-  form.location_id = newAsset.location_id || '';
-  form.status = newAsset.status || '';
-  form.approval_status = newAsset.approval_status || '';
-  form.condition = newAsset.condition || '';
-  if (!isRestrictedStatus(newAsset.status, newAsset.approval_status) && arrInactiveConditions.includes(form.condition)) {
-    form.approval_status = 'Pending:DM';
+const handleMaintenanceSaved = (payload: { maintenance: any; assetCondition: string }) => {
+  if (payload.assetCondition && props.asset) {
+    props.asset.condition = payload.assetCondition;
   }
-  form.price = newAsset.price || '';
-  form.image_url = null;
-  form.image_url_name = newAsset.image_url ? newAsset.image_url.split('/').pop() || '' : '';
-  form.use_lot_image = false;
-  form.vehicle_registration = newAsset.vehicle_registration || '';
-  form.memo_file = null;
-  form.memo_file_name = newAsset.memo_file_name || (newAsset.memo_url ? newAsset.memo_url.split('/').pop() || '' : '');
-  form.lost_doc_file = null;
-  form.lost_doc_file_name = newAsset.lost_doc_file_name || (newAsset.lost_doc_url ? newAsset.lost_doc_url.split('/').pop() || '' : '');
-  form.bod_boc_approval_file = null;
-  form.bod_boc_approval_file_name = newAsset.bod_boc_approval_file_name || (newAsset.bod_boc_approval_url ? newAsset.bod_boc_approval_url.split('/').pop() || '' : '');
-}, { deep: true, immediate: true });
-
-const errors = ref({
-  location_id: '',
-  status: '',
-  condition: '',
-  image_url: '',
-  vehicle_registration: '',
-  memo_file: '',
-  lost_doc_file: '',
-  bod_boc_approval_file: '',
-});
-
-const resetErrors = () => {
-  errors.value = {
-    location_id: '',
-    status: '',
-    condition: '',
-    image_url: '',
-    vehicle_registration: '',
-    memo_file: '',
-    lost_doc_file: '',
-    bod_boc_approval_file: '',
-  };
-};
-
-// Clear errors reactively
-watch(() => form.location_id, v => { if (v && errors.value.location_id) errors.value.location_id = ''; });
-watch(() => form.status, v => { if (v && errors.value.status) errors.value.status = ''; });
-watch(() => form.condition, v => { if (v && errors.value.condition) errors.value.condition = ''; });
-watch(() => form.image_url, v => { if (v && errors.value.image_url) errors.value.image_url = ''; });
-watch(() => form.image_url_name, v => { if (v && errors.value.image_url) errors.value.image_url = ''; });
-watch(() => form.vehicle_registration, v => { if (v && errors.value.vehicle_registration) errors.value.vehicle_registration = ''; });
-watch(() => form.memo_file, v => { if (v && errors.value.memo_file) errors.value.memo_file = ''; });
-watch(() => form.lost_doc_file, v => { if (v && errors.value.lost_doc_file) errors.value.lost_doc_file = ''; });
-watch(() => form.bod_boc_approval_file, v => { if (v && errors.value.bod_boc_approval_file) errors.value.bod_boc_approval_file = ''; });
-
-
-watch(() => form.condition, (newVal, oldVal) => {
-  if (arrInactiveConditions.includes(newVal)) {
-    form.approval_status = 'Pending:DM';
-  } else if (oldVal && arrInactiveConditions.includes(oldVal)) {
-    form.approval_status = props.asset?.approval_status || '';
-  }
-
-  if (!arrNeedApproval.includes(newVal)) {
-    form.memo_file = null;
-    form.memo_file_name = '';
-  }
-  if (newVal !== 'Hilang') {
-    form.lost_doc_file = null;
-    form.lost_doc_file_name = '';
-  }
-});
-
-// Helper Functions
-const formatRupiah = (val: number | string | null | undefined) => {
-  if (val === null || val === undefined) return '-';
-  const num = typeof val === 'string' ? parseFloat(val) : val;
-  if (isNaN(num)) return '-';
-  const formatted = Math.floor(num).toLocaleString('id-ID');
-  return `Rp${formatted}`;
-};
-
-const handleFileUpload = async (e: any) => {
-  const target = e.target as HTMLInputElement;
-  const rawFile = target.files?.[0];
-  if (!rawFile) return;
-
-  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-  if (!allowedTypes.includes(rawFile.type) && !rawFile.type.startsWith('image/')) {
-    toast.error(t('scanner.invalidImageFormat'));
-    target.value = '';
-    return;
-  }
-
-  try {
-    const file = await compressImageIfNeeded(rawFile);
-    if (file.size > 1024 * 1024) {
-      toast.error(t('scanner.photoMaxSize1MB'));
-      target.value = '';
-      return;
-    }
-    form.image_url = file;
-    form.image_url_name = file.name;
-    form.use_lot_image = false;
-  } catch (err) {
-    console.error('Gagal memproses gambar:', err);
-    toast.error(t('scanner.processImageFailed'));
-  } finally {
-    target.value = '';
-  }
-};
-
-const triggerFileInput = () => {
-  photoInput.value?.click();
-};
-
-const triggerCameraInput = () => {
-  cameraInput.value?.click();
-};
-
-const viewImageInNewTab = () => {
-  if (form.image_url) {
-    const objectUrl = URL.createObjectURL(form.image_url);
-    window.open(objectUrl, '_blank');
-    setTimeout(() => URL.revokeObjectURL(objectUrl), 10000);
-  } else if (form.use_lot_image && (props.lot?.image_url || props.lot?.imageUrl)) {
-    window.open('/media/' + (props.lot.image_url || props.lot.imageUrl), '_blank');
-  } else if (props.asset?.image_url) {
-    window.open('/media/' + props.asset.image_url, '_blank');
-  }
-};
-
-const handleSamakanPhoto = () => {
-  const lotImg = props.lot?.image_url || props.lot?.imageUrl;
-  if (lotImg) {
-    form.use_lot_image = true;
-    form.image_url = null;
-    form.image_url_name = lotImg.split('/').pop() || '';
-  } else {
-    toast.error(t('scanner.lotNoPhoto'));
-  }
-};
-
-const handleMemoUpload = (e: any) => {
-  if (isDocumentDisabled.value) return;
-  const file = e.target.files[0];
-  if (!file) return;
-  const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-  if (!allowedTypes.includes(file.type)) { toast.error(t('scanner.invalidDocFormat')); return; }
-  if (file.size > 2 * 1024 * 1024) { toast.error(t('scanner.docMaxSize2MB')); return; }
-  form.memo_file = file;
-  form.memo_file_name = file.name;
-};
-
-const triggerMemoFileInput = () => {
-  if (isDocumentDisabled.value) return;
-  memoFileInput.value?.click();
-};
-
-const viewMemoInNewTab = () => {
-  if (form.memo_file) {
-    const objectUrl = URL.createObjectURL(form.memo_file);
-    window.open(objectUrl, '_blank');
-    setTimeout(() => URL.revokeObjectURL(objectUrl), 10000);
-  } else if (props.asset?.memo_url) {
-    window.open('/media/' + props.asset.memo_url, '_blank');
-  }
-};
-
-const handleLostDocUpload = (e: any) => {
-  if (isDocumentDisabled.value) return;
-  const file = e.target.files[0];
-  if (!file) return;
-  const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-  if (!allowedTypes.includes(file.type)) { toast.error(t('scanner.invalidDocFormat')); return; }
-  if (file.size > 2 * 1024 * 1024) { toast.error(t('scanner.docMaxSize2MB')); return; }
-  form.lost_doc_file = file;
-  form.lost_doc_file_name = file.name;
-};
-
-const triggerLostDocFileInput = () => {
-  if (isDocumentDisabled.value) return;
-  lostDocFileInput.value?.click();
-};
-
-const viewLostDocInNewTab = () => {
-  if (form.lost_doc_file) {
-    const objectUrl = URL.createObjectURL(form.lost_doc_file);
-    window.open(objectUrl, '_blank');
-    setTimeout(() => URL.revokeObjectURL(objectUrl), 10000);
-  } else if (props.asset?.lost_doc_url) {
-    window.open('/media/' + props.asset.lost_doc_url, '_blank');
-  }
-};
-
-const handleBodBocDocUpload = (e: any) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-  if (!allowedTypes.includes(file.type)) { toast.error(t('scanner.invalidDocFormat')); return; }
-  if (file.size > 2 * 1024 * 1024) { toast.error(t('scanner.docMaxSize2MB')); return; }
-  form.bod_boc_approval_file = file;
-  form.bod_boc_approval_file_name = file.name;
-};
-
-const triggerBodBocDocFileInput = () => {
-  bodBocFileInput.value?.click();
-};
-
-const viewBodBocDocInNewTab = () => {
-  if (form.bod_boc_approval_file) {
-    const objectUrl = URL.createObjectURL(form.bod_boc_approval_file);
-    window.open(objectUrl, '_blank');
-    setTimeout(() => URL.revokeObjectURL(objectUrl), 10000);
-  } else if (props.asset?.bod_boc_approval_url) {
-    window.open('/media/' + props.asset.bod_boc_approval_url, '_blank');
-  }
-};
-
-const handleSamakanPrice = () => {
-  const unitPrice = props.lot?.unit_price ?? props.lot?.unitPrice;
-  if (unitPrice !== undefined && unitPrice !== null && unitPrice !== '') {
-    form.price = unitPrice;
-  } else {
-    toast.error(t('scanner.lotNoDefaultPrice'));
-  }
-};
-
-const parseCurrencyToNumber = (val: string | number) => {
-  if (typeof val === 'number') return Math.max(0, val);
-  if (!val) return 0;
-  let clean = val.toString().trim();
-  if (clean.includes('.') && clean.includes(',')) {
-    if (clean.lastIndexOf('.') > clean.lastIndexOf(',')) {
-      clean = clean.replace(/,/g, '');
-    } else {
-      clean = clean.replace(/\./g, '').replace(/,/g, '.');
-    }
-  } else if (clean.includes(',')) {
-    const parts = clean.split(',');
-    if (parts[parts.length - 1].length === 3) {
-      clean = clean.replace(/,/g, '');
-    } else {
-      clean = clean.replace(/,/g, '.');
-    }
-  }
-  const parsed = parseFloat(clean);
-  return isNaN(parsed) ? 0 : Math.max(0, parsed);
-};
-
-const handleSubmit = () => {
-  resetErrors();
-
-  let isValid = true;
-  if (!isSoft.value) {
-    if (!form.location_id) { errors.value.location_id = t('scanner.locationRequired'); isValid = false; }
-    if (!form.condition) { errors.value.condition = t('scanner.conditionRequired'); isValid = false; }
-  }
-  if (!form.status) { errors.value.status = t('scanner.statusRequired'); isValid = false; }
-  if (isVehicle.value && !form.vehicle_registration) { errors.value.vehicle_registration = t('scanner.tnkbRequired'); isValid = false; }
-  if (!isSoft.value && arrNeedApproval.includes(form.condition) && !isDocumentDisabled.value && !form.memo_file_name) { errors.value.memo_file = t('scanner.memoRequired'); isValid = false; }
-  if (!isSoft.value && form.condition === 'Hilang' && !isDocumentDisabled.value && !form.lost_doc_file_name) { errors.value.lost_doc_file = t('scanner.lostDocRequired'); isValid = false; }
-
-  if (!isValid) {
-    toast.error(t('scanner.fillRequiredFields'));
-    return;
-  }
-
-  form.transform((data) => {
-    const fd: any = {
-      _method: 'PUT',
-      number: data.number,
-      lot_id: props.lot?.id || props.asset?.lot_id,
-      location_id: isSoft.value ? null : data.location_id,
-      status: data.status,
-      condition: isSoft.value ? null : data.condition,
-      price: data.price !== '' && data.price !== null ? parseCurrencyToNumber(data.price) : null,
-    };
-    if (isVehicle.value) fd.vehicle_registration = data.vehicle_registration;
-    if (data.image_url) fd.image_url = data.image_url;
-    if (data.use_lot_image) fd.use_lot_image = data.use_lot_image;
-    if (data.memo_file) fd.memo_file = data.memo_file;
-    if (data.lost_doc_file) fd.lost_doc_file = data.lost_doc_file;
-    if (data.bod_boc_approval_file) fd.bod_boc_approval_file = data.bod_boc_approval_file;
-    return fd;
-  }).post(`/smart/stock-management/assets/${props.asset.id}`, {
-    onSuccess: () => {
-      toast.success(t('scanner.assetUpdatedSuccess'));
-      activeTab.value = 'detail';
-    },
-    onError: (err) => {
-      if (err.location_id) errors.value.location_id = err.location_id;
-      if (err.status) errors.value.status = err.status;
-      if (err.condition) errors.value.condition = err.condition;
-      if (err.image_url) errors.value.image_url = err.image_url;
-      if (err.vehicle_registration) errors.value.vehicle_registration = err.vehicle_registration;
-      if (err.memo_file) errors.value.memo_file = err.memo_file;
-      if (err.lost_doc_file) errors.value.lost_doc_file = err.lost_doc_file;
-      if (err.bod_boc_approval_file) errors.value.bod_boc_approval_file = err.bod_boc_approval_file;
-      toast.error(t('scanner.assetUpdateError'));
-    }
-  });
+  activeTab.value = 'detail';
 };
 </script>
 
@@ -439,433 +66,79 @@ const handleSubmit = () => {
       </Breadcrumb>
 
       <div class="space-y-4">
-        <!-- Tab Navigation -->
+        <!-- Tab Navigation (CSS-only breakpoint: >= 380px text, < 380px icons) -->
         <div class="flex rounded-xl bg-muted p-1 mb-4 border border-border">
-          <button 
+          <!-- Detail Tab -->
+          <button
+            type="button"
             @click="activeTab = 'detail'"
-            class="flex-1 py-1.5 rounded-lg text-center text-sm font-bold transition-all duration-200"
+            class="flex-1 py-1.5 rounded-lg text-center text-sm font-bold transition-all duration-200 cursor-pointer flex items-center justify-center gap-1.5"
             :class="activeTab === 'detail' ? 'bg-card text-primary shadow-sm border border-primary' : 'text-muted-foreground hover:text-foreground'"
+            :title="t('scanner.tabDetail')"
+            :aria-label="t('scanner.tabDetail')"
           >
-            {{ t('scanner.assetDetail') }}
+            <Info class="w-4 h-4 min-[380px]:hidden shrink-0" />
+            <span class="max-[380px]:hidden">{{ t('scanner.tabDetail') }}</span>
           </button>
-          <button 
+
+          <!-- Edit Tab -->
+          <button
+            type="button"
             @click="activeTab = 'edit'"
-            class="flex-1 py-1.5 rounded-lg text-center text-sm font-bold transition-all duration-200"
+            class="flex-1 py-1.5 rounded-lg text-center text-sm font-bold transition-all duration-200 cursor-pointer flex items-center justify-center gap-1.5"
             :class="activeTab === 'edit' ? 'bg-card text-primary shadow-sm border border-primary' : 'text-muted-foreground hover:text-foreground'"
+            :title="t('scanner.tabEdit')"
+            :aria-label="t('scanner.tabEdit')"
           >
-            {{ t('scanner.editAsset') }}
+            <SquarePen class="w-4 h-4 min-[380px]:hidden shrink-0" />
+            <span class="max-[380px]:hidden">{{ t('scanner.tabEdit') }}</span>
+          </button>
+
+          <!-- Maintain Tab (Conditional based on permissions & asset status) -->
+          <button
+            v-if="canMaintain"
+            type="button"
+            @click="activeTab = 'maintain'"
+            class="flex-1 py-1.5 rounded-lg text-center text-sm font-bold transition-all duration-200 cursor-pointer flex items-center justify-center gap-1.5"
+            :class="activeTab === 'maintain' ? 'bg-card text-primary shadow-sm border border-primary' : 'text-muted-foreground hover:text-foreground'"
+            :title="t('scanner.tabMaintain')"
+            :aria-label="t('scanner.tabMaintain')"
+          >
+            <Wrench class="w-4 h-4 min-[380px]:hidden shrink-0" />
+            <span class="max-[380px]:hidden">{{ t('scanner.tabMaintain') }}</span>
           </button>
         </div>
 
         <!-- Tab: Detail -->
-        <div v-if="activeTab === 'detail'" class="space-y-4">
-          <!-- Image Card -->
-          <div class="bg-card rounded-2xl p-4 border border-border shadow-sm flex flex-col items-center">
-            <div class="w-full aspect-square rounded-xl bg-muted flex items-center justify-center overflow-hidden border border-border shadow-inner">
-              <img 
-                v-if="props.asset.image_url" 
-                :src="'/media/' + props.asset.image_url" 
-                class="w-full h-full object-cover" 
-              />
-              <img 
-                v-else 
-                :src="'/media/inventory/placeholder.jpg'" 
-                class="w-full h-full object-cover opacity-60" 
-              />
-            </div>
-            <div class="mt-4 text-center">
-              <p v-if="props.asset.legacy_number" class="text-xs text-muted-foreground font-mono"><span class="font-medium">{{ t('inventory.legacyNumber') }}:</span> {{ props.asset.legacy_number }}</p>
-              <h1 class="text-base font-bold text-foreground uppercase tracking-wider">{{ props.asset.number }}</h1>
-              <h2 class="text-lg font-extrabold text-foreground leading-tight">{{ props.asset.barang_nama }}</h2>
-              <p class="text-sm text-foreground mt-1">
-                {{ props.asset.barang_brand }} &bull; {{ props.asset.barang_category }} &bull; {{ props.asset.barang_subcategory }}
-              </p>
-            </div>
-          </div>
-
-          <!-- Info Cards -->
-          <div class="bg-card rounded-2xl border border-border overflow-hidden shadow-sm">
-            <div class="px-4 py-3 border-b border-border bg-muted/20 flex items-center gap-2">
-              <Info class="w-4 h-4 text-primary" />
-              <h3 class="text-xs font-bold text-foreground uppercase tracking-wider">{{ isSoft ? t('scanner.status') : t('scanner.statusAndLocation') }}</h3>
-            </div>
-            <div class="p-4 space-y-3.5 text-sm">
-              <div class="flex justify-between items-start">
-                <span class="text-muted-foreground font-medium">{{ t('scanner.status') }}</span>
-                <StatusBadge :status="props.asset.status" :proposed-status="props.asset.proposed_status" />
-              </div>
-              <!-- Software License Information -->
-              <template v-if="isSoft">
-                <div class="flex justify-between items-start">
-                  <span class="text-muted-foreground font-medium">{{ t('inventory.licenseExpDate') }}</span>
-                  <span class="text-foreground font-semibold">
-                    {{ props.asset.license_exp_date ? formatDate(props.asset.license_exp_date) : t('inventory.perpetual') }}
-                  </span>
-                </div>
-                <div v-if="props.asset.license_exp_date" class="flex justify-between items-start">
-                  <span class="text-muted-foreground font-medium">{{ t('inventory.renewalReminder') }}</span>
-                  <span class="text-foreground font-semibold">
-                    {{ props.asset.renewal_reminder === 0 ? t('inventory.renewalReminderDisabled') : (props.asset.renewal_reminder !== null && props.asset.renewal_reminder !== undefined ? `${props.asset.renewal_reminder} ${t('inventory.renewalReminderSuffix')}` : '-') }}
-                  </span>
-                </div>
-              </template>
-              <div v-if="!isSoft && props.asset.condition" class="flex justify-between items-start">
-                <span class="text-muted-foreground font-medium">{{ t('scanner.condition') }}</span>
-                <span 
-                  :class="[
-                    'font-semibold',
-                    props.asset.condition === 'Bagus' || props.asset.condition === 'QC Passed' ? 'text-emerald-600' :
-                    props.asset.condition === 'Lelang/Hibah' ? 'text-purple-600' :
-                    'text-rose-600'
-                  ]"
-                >
-                  {{ props.asset.condition }}
-                </span>
-              </div>
-              <div v-if="!isSoft" class="flex justify-between items-start">
-                <span class="text-muted-foreground font-medium">{{ t('scanner.location') }}</span>
-                <span class="text-foreground font-semibold text-right max-w-[200px]">
-                  {{ formatLocation(props.asset.location, props.asset.floor, props.asset.room) }}
-                </span>
-              </div>
-              <div v-if="isComp" class="flex justify-between items-start">
-                <span class="text-muted-foreground font-medium">{{ t('inventory.specification') }}</span>
-                <span class="text-foreground font-semibold text-right max-w-[200px]">{{ props.asset.comp_specification || props.asset.specification || '-' }}</span>
-              </div>
-              <div v-if="isVehicle" class="flex justify-between items-start">
-                <span class="text-muted-foreground font-medium">{{ t('scanner.licensePlate') }}</span>
-                <span class="text-foreground font-semibold">{{ props.asset.vehicle_registration || '-' }}</span>
-              </div>
-              <div v-if="!props.asset.lot_vendor_id || props.asset.lot_vendor === '-' || props.asset.lot_vendor?.toLowerCase() === 'beragam' || props.asset.unit_vendor" class="flex justify-between items-start">
-                <span class="text-muted-foreground font-medium">{{ t('inventory.vendor') }}</span>
-                <span class="text-foreground font-semibold text-right max-w-[200px]">{{ props.asset.unit_vendor || (props.asset.lot_vendor?.toLowerCase() !== 'beragam' ? props.asset.lot_vendor : '-') }}</span>
-              </div>
-              <div class="flex justify-between items-start">
-                <span class="text-muted-foreground font-medium">{{ t('scanner.assetValue') }}</span>
-                <span class="text-foreground font-semibold">{{ formatRupiah(props.asset.price) }}</span>
-              </div>
-              <div class="flex justify-between items-start">
-                <span class="text-muted-foreground font-medium">{{ t('scanner.lastUpdated') }}</span>
-                <span class="text-foreground font-semibold">{{ props.asset.updated_at }}</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="bg-card rounded-2xl border border-border overflow-hidden shadow-sm">
-            <div class="px-4 py-3 border-b border-border bg-muted/20 flex items-center gap-2">
-              <FileText class="w-4 h-4 text-primary" />
-              <h3 class="text-xs font-bold text-foreground uppercase tracking-wider">{{ t('scanner.typeAndLotDetail') }}</h3>
-            </div>
-            <div class="p-4 space-y-3.5 text-sm">
-              <div v-if="!isComp" class="flex justify-between items-start">
-                <span class="text-muted-foreground font-medium">{{ t('scanner.specification') }}</span>
-                <span class="text-foreground font-semibold text-right max-w-[200px]">{{ props.asset.barang_specification || '-' }}</span>
-              </div>
-              <div class="flex justify-between items-start">
-                <span class="text-muted-foreground font-medium">{{ t('scanner.lotCode') }}</span>
-                <span class="text-foreground font-semibold">{{ props.asset.lot_number }}</span>
-              </div>
-              <div class="flex justify-between items-start">
-                <span class="text-muted-foreground font-medium">{{ t('scanner.organizer') }}</span>
-                <span class="text-foreground font-semibold text-right">{{ props.asset.lot_organizer }}</span>
-              </div>
-              <div class="flex justify-between items-start">
-                <span class="text-muted-foreground font-medium">{{ t('scanner.vendor') }}</span>
-                <span class="text-foreground font-semibold text-right max-w-[200px]">{{ (props.asset.lot_vendor_id && props.asset.lot_vendor !== '-') ? props.asset.lot_vendor : t('inventory.vendorMultiple') }}</span>
-              </div>
-              <div class="flex justify-between items-start">
-                <span class="text-muted-foreground font-medium">{{ t('scanner.registrationDate') }}</span>
-                <span class="text-foreground font-semibold">{{ formatDate(props.asset.lot_date_of_receipt) }}</span>
-              </div>
-              <div class="flex justify-between items-start">
-                <span class="text-muted-foreground font-medium">{{ t('scanner.age') }}</span>
-                <span class="text-foreground font-semibold">{{ props.asset.lot_age !== null ? t('scanner.yearsOld', { years: props.asset.lot_age }) : '-' }}</span>
-              </div>
-              <div class="flex justify-between items-start">
-                <span class="text-muted-foreground font-medium">{{ t('scanner.poNumber') }}</span>
-                <span class="text-foreground font-semibold">{{ props.asset.lot_po_number }}</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Edit Button trigger -->
-          <Button 
-            @click="activeTab = 'edit'"
-            variant="primary" 
-            size="lg" 
-            class="w-full h-12 rounded-xl flex items-center justify-center gap-2 text-sm font-bold shadow-md"
-          >
-            {{ t('scanner.editLocationAndDetail') }}
-          </Button>
-        </div>
+        <ScanAssetDetailTab
+          v-if="activeTab === 'detail'"
+          :asset="props.asset"
+          :locations="props.locations"
+          :lot="props.lot"
+          :barang="props.barang"
+          @edit="activeTab = 'edit'"
+        />
 
         <!-- Tab: Edit -->
-        <div v-else-if="activeTab === 'edit'" class="space-y-6">
-          <div class="bg-card rounded-2xl p-5 border border-border shadow-sm space-y-5">
-            <div class="space-y-4">
-              <Field>
-                <FieldLabel>{{ t('scanner.assetCode') }}</FieldLabel>
-                <FieldContent>
-                  <input 
-                    type="text" 
-                    :value="form.number" 
-                    disabled 
-                    class="w-full px-4 py-2.5 text-sm border border-input rounded-xl bg-muted/30 text-muted-foreground cursor-not-allowed h-10" 
-                  />
-                </FieldContent>
-              </Field>
+        <ScanEditAssetTab
+          v-else-if="activeTab === 'edit'"
+          :asset="props.asset"
+          :locations="props.locations"
+          :projects="props.projects"
+          :lot="props.lot"
+          :barang="props.barang"
+          @cancel="activeTab = 'detail'"
+          @success="activeTab = 'detail'"
+        />
 
-              <Field v-if="props.asset.legacy_number">
-                <FieldLabel>{{ t('inventory.legacyNumber') }}</FieldLabel>
-                <FieldContent>
-                  <input 
-                    type="text" 
-                    :value="props.asset.legacy_number" 
-                    disabled 
-                    class="w-full px-4 py-2.5 text-sm border border-input rounded-xl bg-muted/30 text-muted-foreground cursor-not-allowed h-10" 
-                  />
-                </FieldContent>
-              </Field>
-
-              <Field v-if="!isSoft" :data-invalid="!!errors.condition || undefined" :data-disabled="isKondisiDisabled || undefined">
-                <FieldLabel>
-                  <span>{{ t('scanner.condition') }}<span class="text-rose-500">*</span></span>
-                </FieldLabel>
-                <FieldContent>
-                  <div v-if="isKondisiDisabled" class="w-full flex items-center justify-between px-4 py-2 text-sm border border-input rounded-xl bg-muted/30 text-muted-foreground cursor-not-allowed h-10 select-none">
-                    <span>{{ form.condition || t('scanner.selectCondition') }}</span>
-                    <ChevronDown class="w-4 h-4 opacity-50" />
-                  </div>
-                  <DropdownMenu v-else>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" :class="['w-full justify-between rounded-xl font-normal h-10 px-4', !form.condition ? 'text-muted-foreground' : 'text-foreground']">
-                        {{ form.condition || t('scanner.selectCondition') }}
-                        <ChevronDown class="w-4 h-4 opacity-50" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-xl z-[1001]">
-                      <DropdownMenuItem @select="form.condition = 'Bagus'">Bagus</DropdownMenuItem>
-                      <DropdownMenuItem @select="form.condition = 'Rusak'">Rusak</DropdownMenuItem>
-                      <DropdownMenuItem @select="form.condition = 'Rusak Total'">Rusak Total</DropdownMenuItem>
-                      <DropdownMenuItem @select="form.condition = 'Hilang'">Hilang</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </FieldContent>
-                <FieldError v-if="errors.condition">{{ errors.condition }}</FieldError>
-              </Field>
-
-              <Field v-if="!isSoft" :data-invalid="!!errors.location_id || undefined">
-                <FieldLabel>
-                  <span>{{ t('scanner.location') }}<span class="text-rose-500">*</span></span>
-                </FieldLabel>
-                <FieldContent>
-                  <LocationCombobox 
-                    v-model="form.location_id" 
-                    :locations="locations" 
-                    :placeholder="t('scanner.selectLocation')"
-                    :error="!!errors.location_id"
-                    :active-only="true"
-                  />
-                </FieldContent>
-                <FieldError v-if="errors.location_id">{{ errors.location_id }}</FieldError>
-              </Field>
-
-              <Field :data-invalid="!!errors.status || undefined" :data-disabled="isStatusDisabled || undefined">
-                <FieldLabel>
-                  <span>{{ t('scanner.status') }}<span class="text-rose-500">*</span></span>
-                </FieldLabel>
-                <FieldContent>
-                  <div v-if="isStatusDisabled" class="w-full flex items-center justify-between px-4 py-2 text-sm border border-input rounded-xl bg-muted/30 text-muted-foreground cursor-not-allowed h-10 select-none">
-                    <StatusBadge v-if="form.status" :status="form.status" :approval-status="form.approval_status" class="rounded-sm" />
-                    <span v-else>{{ t('scanner.selectStatus') }}</span>
-                    <ChevronDown class="w-4 h-4 opacity-50 ml-auto shrink-0" />
-                  </div>
-                  <DropdownMenu v-else>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" :class="['w-full justify-between rounded-xl font-normal h-10 px-4', !form.status ? 'text-muted-foreground' : 'text-foreground']">
-                        {{ form.status || t('scanner.selectStatus') }}
-                        <ChevronDown class="w-4 h-4 opacity-50" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-xl z-[1001]">
-                      <DropdownMenuItem @select="form.status = 'Tersedia'">Tersedia</DropdownMenuItem>
-                      <DropdownMenuItem @select="form.status = 'Dipinjam (ST)'">Dipinjam (ST)</DropdownMenuItem>
-                      <DropdownMenuItem @select="form.status = 'Di-assign (LT)'">Di-assign (LT)</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </FieldContent>
-                <FieldError v-if="errors.status">{{ errors.status }}</FieldError>
-              </Field>
-   
-              <Field>
-                <FieldLabel>
-                  <span>{{ t('scanner.unitPrice') }}</span>
-                </FieldLabel>
-                <FieldContent>
-                  <div class="flex gap-2 w-full">
-                    <div class="flex flex-grow rounded-xl border border-input bg-background focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors h-10 overflow-hidden">
-                      <span class="inline-flex items-center px-3 bg-muted/10 text-muted-foreground text-sm border-r border-input select-none font-medium">Rp</span>
-                      <input 
-                        type="number" 
-                        v-model="form.price" 
-                        :placeholder="t('scanner.unitPricePlaceholder')" 
-                        min="0" 
-                        class="flex-1 min-w-0 px-4 py-2 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 transition-colors h-full" 
-                      />
-                    </div>
-                    <Button type="button" @click="handleSamakanPrice" variant="warning" size="lg" class="rounded-xl h-10">{{ t('scanner.equalize') }}</Button>
-                  </div>
-                </FieldContent>
-              </Field>
-
-              <Field :data-invalid="!!errors.image_url || undefined">
-                <FieldLabel>
-                  <span>{{ t('scanner.photo') }}</span>
-                </FieldLabel>
-                <FieldContent>
-                  <div class="flex gap-2 flex-col xs:flex-row">
-                    <div 
-                      class="flex-grow min-w-0 px-4 py-2 text-sm border rounded-xl bg-muted/10 truncate flex items-center h-10"
-                      :class="[(form.image_url || form.image_url_name) ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' : 'text-muted-foreground cursor-default', errors.image_url ? 'border-destructive' : 'border-input']"
-                      @click="(form.image_url || form.image_url_name) && viewImageInNewTab()"
-                    >
-                      {{ form.image_url_name || t('scanner.noPhotoSelected') }}
-                    </div>
-                    <div class="flex gap-2 shrink-0">
-                      <input ref="cameraInput" type="file" id="edit-asset-camera-upload" class="hidden" accept="image/*" capture="environment" @change="handleFileUpload" />
-                      <input ref="photoInput" type="file" id="edit-asset-photo-upload" class="hidden" accept=".jpg,.jpeg,.png,.webp" @change="handleFileUpload" />
-                      <Button type="button" @click="handleSamakanPhoto" variant="warning" size="lg" class="rounded-xl h-10 flex-1 xs:flex-none">{{ t('scanner.equalize') }}</Button>
-                      <Button type="button" @click="triggerFileInput" size="lg" class="rounded-xl h-10 flex-1 xs:flex-none">{{ t('scanner.upload') }}</Button>
-                      <Button type="button" @click="triggerCameraInput" variant="success" size="lg" class="rounded-xl h-10 px-3 bg-emerald-600 hover:bg-emerald-700 text-white shrink-0" :title="t('scanner.takePhoto')">
-                        <Camera class="w-5 h-5" />
-                      </Button>
-                    </div>
-                  </div>
-                  <p class="text-[10px] text-muted-foreground ml-1 mt-1">{{ t('scanner.maxPhotoSize') }}</p>
-                </FieldContent>
-                <FieldError v-if="errors.image_url">{{ errors.image_url }}</FieldError>
-              </Field>
-
-              <!-- TNKB (Only for Vehicles) -->
-              <Field v-if="isVehicle" :data-invalid="!!errors.vehicle_registration || undefined">
-                <FieldLabel><span>{{ t('scanner.tnkb') }}<span class="text-rose-500">*</span></span></FieldLabel>
-                <FieldContent>
-                  <input 
-                    type="text" 
-                    v-model="form.vehicle_registration" 
-                    :placeholder="t('scanner.tnkbPlaceholder')"
-                    class="w-full px-4 py-2 text-sm border border-input rounded-xl bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors h-10"
-                  />
-                </FieldContent>
-                <FieldError v-if="errors.vehicle_registration">{{ errors.vehicle_registration }}</FieldError>
-              </Field>
-
-              <!-- Document Upload (Required for approval conditions) -->
-              <Field v-if="arrNeedApproval.includes(form.condition)" :data-invalid="!!errors.memo_file || undefined" :data-disabled="isDocumentDisabled || undefined">
-                <FieldLabel><span>{{ t('scanner.memoOrMinutes') }}<span v-if="!isDocumentDisabled" class="text-rose-500">*</span></span></FieldLabel>
-                <FieldContent>
-                  <div class="flex gap-2 flex-col xs:flex-row">
-                    <div 
-                      class="flex-grow min-w-0 px-4 py-2 text-sm border rounded-xl truncate flex items-center h-10"
-                      :class="[
-                        form.memo_file_name ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' : 'text-muted-foreground cursor-default',
-                        errors.memo_file ? 'border-destructive' : 'border-input',
-                        isDocumentDisabled ? 'bg-muted/30 text-muted-foreground cursor-not-allowed' : 'bg-muted/10'
-                      ]"
-                      @click="form.memo_file_name && viewMemoInNewTab()"
-                    >
-                      {{ form.memo_file_name || t('scanner.noFileSelected') }}
-                    </div>
-                    <div class="flex gap-2 shrink-0">
-                      <input ref="memoFileInput" type="file" id="edit-asset-memo-upload" class="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp" @change="handleMemoUpload" :disabled="isDocumentDisabled" />
-                      <Button type="button" @click="triggerMemoFileInput" size="lg" class="rounded-xl h-10 w-full xs:w-auto" :disabled="isDocumentDisabled">{{ t('scanner.chooseDocument') }}</Button>
-                    </div>
-                  </div>
-                  <p class="text-[10px] text-muted-foreground ml-1 mt-1">{{ t('scanner.maxFileSize') }}</p>
-                </FieldContent>
-                <FieldError v-if="errors.memo_file">{{ errors.memo_file }}</FieldError>
-              </Field>
-
-              <!-- Lost Document Upload (Required only if condition is Hilang) -->
-              <Field v-if="form.condition === 'Hilang'" :data-invalid="!!errors.lost_doc_file || undefined" :data-disabled="isDocumentDisabled || undefined">
-                <FieldLabel><span>{{ t('scanner.lostDocument') }}<span v-if="!isDocumentDisabled" class="text-rose-500">*</span></span></FieldLabel>
-                <FieldContent>
-                  <div class="flex gap-2 flex-col xs:flex-row">
-                    <div 
-                      class="flex-grow min-w-0 px-4 py-2 text-sm border rounded-xl truncate flex items-center h-10"
-                      :class="[
-                        form.lost_doc_file_name ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' : 'text-muted-foreground cursor-default',
-                        errors.lost_doc_file ? 'border-destructive' : 'border-input',
-                        isDocumentDisabled ? 'bg-muted/30 text-muted-foreground cursor-not-allowed' : 'bg-muted/10'
-                      ]"
-                      @click="form.lost_doc_file_name && viewLostDocInNewTab()"
-                    >
-                      {{ form.lost_doc_file_name || t('scanner.noFileSelected') }}
-                    </div>
-                    <div class="flex gap-2 shrink-0">
-                      <input ref="lostDocFileInput" type="file" id="edit-asset-lost-doc-upload" class="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp" @change="handleLostDocUpload" :disabled="isDocumentDisabled" />
-                      <Button type="button" @click="triggerLostDocFileInput" size="lg" class="rounded-xl h-10 w-full xs:w-auto" :disabled="isDocumentDisabled">{{ t('scanner.chooseDocument') }}</Button>
-                    </div>
-                  </div>
-                  <p class="text-[10px] text-muted-foreground ml-1 mt-1">{{ t('scanner.maxFileSize') }}</p>
-                </FieldContent>
-                <FieldError v-if="errors.lost_doc_file">{{ errors.lost_doc_file }}</FieldError>
-              </Field>
-
-              <!-- Formulir Approval BoD/BoC (Only visible when existing status is Pending:BoD/BoC) -->
-              <Field v-if="isBodBocFieldVisible" :data-invalid="!!errors.bod_boc_approval_file || undefined">
-                <FieldLabel><span>{{ t('scanner.bodBocApprovalForm') }}</span></FieldLabel>
-                <FieldContent>
-                  <div class="flex gap-2 flex-col xs:flex-row">
-                    <div 
-                      class="flex-grow min-w-0 px-4 py-2 text-sm border rounded-xl bg-muted/10 truncate flex items-center h-10"
-                      :class="[
-                        form.bod_boc_approval_file_name ? 'cursor-pointer hover:bg-muted/20 hover:text-primary transition-colors text-foreground font-medium underline decoration-dotted' : 'text-muted-foreground cursor-default',
-                        errors.bod_boc_approval_file ? 'border-destructive' : 'border-input'
-                      ]"
-                      @click="form.bod_boc_approval_file_name && viewBodBocDocInNewTab()"
-                    >
-                      {{ form.bod_boc_approval_file_name || t('scanner.noFileSelected') }}
-                    </div>
-                    <div class="flex gap-2 shrink-0">
-                      <input ref="bodBocFileInput" type="file" id="edit-asset-bod-boc-doc-upload" class="hidden" accept=".pdf,.jpg,.jpeg,.png,.webp" @change="handleBodBocDocUpload" />
-                      <Button type="button" @click="triggerBodBocDocFileInput" size="lg" class="rounded-xl h-10 w-full xs:w-auto">{{ t('scanner.chooseDocument') }}</Button>
-                    </div>
-                  </div>
-                  <p class="text-[10px] text-muted-foreground ml-1 mt-1">{{ t('scanner.maxFileSize') }}</p>
-                </FieldContent>
-                <FieldError v-if="errors.bod_boc_approval_file">{{ errors.bod_boc_approval_file }}</FieldError>
-              </Field>
-            </div>
-
-            <div class="border-t border-border pt-4 flex gap-3">
-              <Button 
-                @click="activeTab = 'detail'" 
-                variant="white" 
-                size="lg" 
-                class="flex-1 rounded-xl h-11 text-sm font-semibold"
-              >
-                {{ t('common.cancel') }}
-              </Button>
-              <Button 
-                @click="handleSubmit" 
-                :disabled="form.processing" 
-                variant="primary" 
-                size="lg" 
-                class="flex-1 rounded-xl h-11 text-sm font-semibold relative"
-              >
-                <Loader2 v-if="form.processing" class="absolute inset-0 m-auto h-5 w-5 animate-spin" />
-                <span :class="{ 'opacity-0': form.processing }" class="flex items-center justify-center gap-1.5">
-                  <Save class="w-4 h-4" />
-                  {{ t('common.save') }}
-                </span>
-              </Button>
-            </div>
-          </div>
-        </div>
-
+        <!-- Tab: Maintain -->
+        <ScanMaintenanceTab
+          v-else-if="activeTab === 'maintain' && canMaintain"
+          :asset="props.asset"
+          @cancel="activeTab = 'detail'"
+          @saved="handleMaintenanceSaved"
+        />
       </div>
     </div>
-    
   </AppLayout>
 </template>

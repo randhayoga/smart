@@ -140,6 +140,7 @@ class EmployeeLoanController extends Controller
                     return [
                         'waktu' => $log->start_date ? $log->start_date->format('d-m-Y H:i:s') : '-',
                         'status' => $log->status,
+                        'condition' => $log->condition ?? '-',
                         'action_type' => $log->action_type,
                         'aktor' => ($log->action_type === 'Approval' && str_contains($log->note ?? '', 'BoD/BoC')) ? 'BoD/BoC' : ($log->actor->name ?? '-'),
                         'durasi' => $log->formatted_duration,

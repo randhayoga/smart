@@ -120,6 +120,7 @@ export default {
   subcategory: 'Jenis',
   type: 'Jenis',
   borrowingType: 'Jenis Peminjaman',
+  primaryInfo: 'Informasi Utama',
   moreInfo: 'Info Lebih Lanjut',
   modelLabel: 'Model',
   uom: 'Satuan',
@@ -160,6 +161,7 @@ export default {
   defaultPhoto: 'Foto default',
   memoDocument: 'Berita Acara / Memo',
   lostDocument: 'Surat Keterangan Kehilangan',
+  lostDocFile: 'SK Kehilangan',
   bodBocForm: 'Formulir Approval BoD/BoC',
 
   // Actions, Buttons & Tooltips

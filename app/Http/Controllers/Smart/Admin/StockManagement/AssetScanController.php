@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Smart\Admin\StockManagement;
 use App\Http\Controllers\Controller;
 use App\Models\Inventory\Asset;
 use App\Models\Master\Location;
+use App\Models\TbProject;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -48,7 +49,8 @@ class AssetScanController extends Controller
         $asset->load([
             'location.parent.parent', 'deletionApprovals',
             'lot.model.type.category', 'lot.model.brand', 'lot.model.uom',
-            'lot.organizer', 'lot.vendor', 'lot.legacyVendor', 'legacyVendor'
+            'lot.organizer', 'lot.vendor', 'lot.legacyVendor', 'legacyVendor',
+            'project'
         ]);
 
         $pendingApproval = $asset->deletionApprovals->firstWhere('decision', 'pending');
@@ -85,6 +87,14 @@ class AssetScanController extends Controller
             'admin_note' => $pendingApproval ? $pendingApproval->admin_note : ($approvedApproval ? $approvedApproval->admin_note : ($rejectedApproval ? $rejectedApproval->admin_note : null)),
             'dm_note' => $pendingApproval ? $pendingApproval->dm_note : ($approvedApproval ? $approvedApproval->dm_note : ($rejectedApproval ? $rejectedApproval->dm_note : null)),
             'condition' => $asset->condition,
+            'qc_pass' => $asset->qc_pass,
+            'last_qc' => $asset->last_qc ? $asset->last_qc->format('Y-m-d H:i') : null,
+            'burden' => $asset->burden ?? 'Corporate',
+            'project_id' => $asset->project_id,
+            'project_no' => $asset->project?->no_project,
+            'project_name' => $asset->project?->project_name,
+            'license_exp_date' => $asset->license_exp_date ? $asset->license_exp_date->format('Y-m-d') : null,
+            'renewal_reminder' => $asset->renewal_reminder,
             'type' => $asset->borrowing_type,
             'borrowing_type' => $asset->borrowing_type,
             'classification' => $asset->classification,
@@ -153,6 +163,7 @@ class AssetScanController extends Controller
         return Inertia::render('Smart/MultiRoles/ScanResult', [
             'asset' => $mappedAsset,
             'locations' => $locations,
+            'projects' => TbProject::optionsForSelection(),
         ]);
     }
 }

@@ -61,6 +61,15 @@ class AssetDetailTest extends TestCase
             'burden' => 'Corporate',
         ]);
 
+        $asset->lifecycles()->create([
+            'status' => 'Tersedia',
+            'condition' => 'Bagus',
+            'action_type' => 'Creation',
+            'start_date' => now(),
+            'actor_id' => $user->id,
+            'note' => 'Initial asset registration',
+        ]);
+
         // By ID
         $response = $this->actingAs($user)->getJson(route('smart.inventory.assets.show', $asset->id));
         $response->assertOk();
@@ -71,6 +80,13 @@ class AssetDetailTest extends TestCase
             'status' => 'Tersedia',
             'model_name' => 'ThinkPad T14',
             'barang_brand' => 'ThinkPad',
+            'lifecycles' => [
+                [
+                    'status' => 'Tersedia',
+                    'condition' => 'Bagus',
+                    'action_type' => 'Registrasi',
+                ]
+            ],
         ]);
 
         // By Code

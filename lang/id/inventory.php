@@ -62,6 +62,7 @@ return [
     'condition_damaged' => 'Rusak',
     'condition_total_damage' => 'Rusak Total',
     'condition_lost' => 'Hilang',
+    'lostDocFile' => 'SK Kehilangan',
 
     // Activation Notifications
     'notification_activation_title' => 'Approval Aset Baru :name: Perlu Perhatian Anda',
