@@ -107,6 +107,7 @@ const { t } = useI18n();
 // --- Filter & Search State ---
 const searchQuery = ref('');
 const subcategoryFilter = ref('');
+const brandFilter = ref('');
 const decisionFilter = ref('all');
 const rowsPerPage = ref('50');
 
@@ -119,12 +120,24 @@ const subcategoryOptions = computed(() => {
   return Array.from(subs);
 });
 
+const brandOptions = computed(() => {
+  const brands = new Set<string>();
+  props.approvals.forEach(app => {
+    if (app.brand) brands.add(app.brand);
+  });
+  return Array.from(brands).sort();
+});
+
 // Filtered data
 const filteredApprovals = computed(() => {
   let list = [...props.approvals];
 
   if (subcategoryFilter.value) {
     list = list.filter(app => app.subcategory === subcategoryFilter.value);
+  }
+
+  if (brandFilter.value) {
+    list = list.filter(app => app.brand === brandFilter.value);
   }
 
   if (decisionFilter.value !== 'all') {
@@ -407,6 +420,15 @@ onUnmounted(() => {
           :options="subcategoryOptions"
           :search-placeholder="t('approvals.searchSubcategory')"
           :default-label="t('approvals.allSubcategories')"
+          width-class="w-[200px] bg-white"
+        />
+
+        <!-- Brand Combobox -->
+        <Combobox
+          v-model="brandFilter"
+          :options="brandOptions"
+          :search-placeholder="t('approvals.searchBrand')"
+          :default-label="t('approvals.allBrands')"
           width-class="w-[200px] bg-white"
         />
 

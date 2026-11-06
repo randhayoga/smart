@@ -199,19 +199,22 @@ export function useMasterDataColumns(options: {
 
     cols.push({
       accessorKey: 'name',
+      enableSorting: activeTab.value !== 'locations',
       header: ({ column }) =>
-        h(
-          Button,
-          {
-            variant: 'ghost',
-            onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-            class: 'pl-2 hover:bg-transparent font-semibold text-foreground justify-start',
-          },
-          () => [
-            t('masterData.columns.nameWithTab', { tab: currentTabSingular.value }),
-            h(ArrowUpDown, { class: 'ml-2 h-4 w-4 text-muted-foreground' }),
-          ]
-        ),
+        activeTab.value === 'locations'
+          ? h('div', { class: 'pl-2 font-semibold text-foreground' }, t('masterData.columns.nameWithTab', { tab: currentTabSingular.value }))
+          : h(
+              Button,
+              {
+                variant: 'ghost',
+                onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+                class: 'pl-2 hover:bg-transparent font-semibold text-foreground justify-start',
+              },
+              () => [
+                t('masterData.columns.nameWithTab', { tab: currentTabSingular.value }),
+                h(ArrowUpDown, { class: 'ml-2 h-4 w-4 text-muted-foreground' }),
+              ]
+            ),
       cell: ({ row }) => {
         if (activeTab.value === 'locations') {
           const item = row.original as LocationRow;

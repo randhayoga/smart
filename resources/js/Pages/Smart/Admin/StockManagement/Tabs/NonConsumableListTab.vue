@@ -21,7 +21,7 @@ import DeleteErrorModal from '@/Components/DeleteErrorModal.vue';
 import EditAssetModal from '../Modals/EditAssetModal.vue';
 import DetailAssetModal from '../Modals/DetailAssetModal.vue';
 import NonConsumableFilterBar from './components/NonConsumableFilterBar.vue';
-import { useNonConsumableColumns, buildLocationTargetSetMap } from './composables/useNonConsumableColumns';
+import { useNonConsumableColumns, buildLocationTargetSetMap, getSoftwareRowClass } from './composables/useNonConsumableColumns';
 import { useNonConsumableExport } from './composables/useNonConsumableExport';
 import { prepareUnitsBundle, type CompactUnitsPayload } from '../utils/hydrateCompactUnits';
 import { parseAssetStatuses, hasAssetStatus } from '@/lib/assetStatus';
@@ -48,6 +48,7 @@ interface Props {
   hideStatusFilter?: boolean;
   hideConditionFilter?: boolean;
   hideActions?: boolean;
+  hideQc?: boolean;
   customPrintHandler?: (items: any[]) => void;
   lot?: any;
   barang?: {
@@ -68,6 +69,7 @@ const props = withDefaults(defineProps<Props>(), {
   hideStatusFilter: false,
   hideConditionFilter: false,
   hideActions: false,
+  hideQc: false,
   filterVariant: 'full',
   hideExport: false,
   statusScope: 'standard',
@@ -80,6 +82,7 @@ const props = withDefaults(defineProps<Props>(), {
 const searchQuery = ref('');
 const statusFilter = ref('');
 const conditionFilter = ref('');
+const qcFilter = ref('');
 const categoryFilter = ref('');
 const subcategoryFilter = ref('');
 const brandFilter = ref('');
@@ -303,6 +306,11 @@ const filteredUnits = computed(() => {
     list = list.filter((u: any) => (u.condition || '').toLowerCase() === condLower);
   }
 
+  if (qcFilter.value) {
+    const wantPass = qcFilter.value === 'pass';
+    list = list.filter((u: any) => u.qc_pass === wantPass);
+  }
+
   if (brandFilter.value) {
     const brandLower = brandFilter.value.toLowerCase();
     list = list.filter((u: any) => (u.barang_brand || '').toLowerCase() === brandLower);
@@ -348,6 +356,24 @@ const isAllSoft = computed(() => {
   return list.every((u: any) => isUnitSoft(u));
 });
 
+const isVehicle = computed(() => {
+  const parentCatCode = (props.barang?.category_code || props.lot?.barang_category_code || '').trim().toUpperCase();
+  const parentCat = (props.barang?.category || props.lot?.barang_category || '').trim().toLowerCase();
+  if (parentCatCode === 'KEND' || parentCat === 'kendaraan' || parentCat === 'vehicle') {
+    return true;
+  }
+  if (categoryFilter.value && ['kendaraan', 'vehicle'].includes(categoryFilter.value.trim().toLowerCase())) {
+    return true;
+  }
+  const list = filteredUnits.value;
+  if (list.length === 0) return false;
+  return list.every((u: any) => {
+    const cCode = (u.barang_category_code || '').trim().toUpperCase();
+    const cName = (u.barang_category || '').trim().toLowerCase();
+    return cCode === 'KEND' || cName === 'kendaraan' || cName === 'vehicle';
+  });
+});
+
 watch(isAllSoft, (allSoft) => {
   if (allSoft) {
     if (conditionFilter.value) conditionFilter.value = '';
@@ -359,6 +385,7 @@ const hasActiveFilters = computed(() => {
   return !!(
     statusFilter.value ||
     conditionFilter.value ||
+    qcFilter.value ||
     searchQuery.value ||
     categoryFilter.value ||
     subcategoryFilter.value ||
@@ -372,6 +399,7 @@ const hasActiveFilters = computed(() => {
 const clearFilters = () => {
   statusFilter.value = '';
   conditionFilter.value = '';
+  qcFilter.value = '';
   searchQuery.value = '';
   categoryFilter.value = '';
   subcategoryFilter.value = '';
@@ -420,11 +448,20 @@ const { columns, getStatusLabel, getConditionLabel } = useNonConsumableColumns({
   props,
   isComp,
   isAllSoft,
+  isVehicle,
+  locations: () => props.locations || [],
   t,
   te,
   locale,
   openViewAssetModal,
 });
+
+const rowClassCallback = (row: any) => {
+  if (isAllSoft.value || row?.is_software) {
+    return getSoftwareRowClass(row);
+  }
+  return '';
+};
 
 const { getExportPayload, handleExportCSV, handleExportExcel, handlePrint } = useNonConsumableExport({
   dataTableRef,
@@ -506,6 +543,7 @@ const totalAsetTerpilihCount = computed(() => {
             v-model:subcategory-filter="subcategoryFilter"
             v-model:status-filter="statusFilter"
             v-model:condition-filter="conditionFilter"
+            v-model:qc-filter="qcFilter"
             v-model:location-filter="locationFilter"
             v-model:brand-filter="brandFilter"
             v-model:organizer-filter="organizerFilter"
@@ -588,6 +626,7 @@ const totalAsetTerpilihCount = computed(() => {
           :page-size="pageSizeNumber"
           :show-selection-count="false"
           :preserve-initial-order="true"
+          :row-class="rowClassCallback"
         />
 
         <div v-if="!props.hideActions" class="text-xs text-muted-foreground pl-1 mt-3 no-print">
@@ -621,6 +660,7 @@ const totalAsetTerpilihCount = computed(() => {
     v-model:open="isViewAssetModalOpen"
     :asset="selectedAssetForView"
     :lot="props.lot"
+    :locations="props.locations"
     :users="props.users"
     @edit="openEditAssetModal"
   />

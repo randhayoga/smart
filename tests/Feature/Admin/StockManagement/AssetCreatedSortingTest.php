@@ -72,13 +72,11 @@ class AssetCreatedSortingTest extends TestCase
         $response->assertStatus(200);
         $response->assertInertia(fn (Assert $page) => $page
             ->component('Smart/Admin/StockManagement/NonConsumableList')
-            ->has('units', 2)
-            ->where('units.0.id', $newerUnit->id)
-            ->where('units.0.number', 'AST-CFS-0002')
-            ->where('units.1.id', $olderUnit->id)
-            ->where('units.1.number', 'AST-CFS-0001')
-            ->where('units.0.created_at', fn ($val) => !empty($val))
-            ->where('units.1.created_at', fn ($val) => !empty($val))
+            ->has('units_compact.rows', 2)
+            ->where('units_compact.rows.0.0', $newerUnit->id)
+            ->where('units_compact.rows.0.1', 'AST-CFS-0002')
+            ->where('units_compact.rows.1.0', $olderUnit->id)
+            ->where('units_compact.rows.1.1', 'AST-CFS-0001')
         );
     }
 
@@ -131,8 +129,8 @@ class AssetCreatedSortingTest extends TestCase
         $response->assertStatus(200);
         $response->assertInertia(fn (Assert $page) => $page
             ->component('Smart/Admin/StockManagement/NonConsumableList')
-            ->has('units', 1)
-            ->where('units.0.id', $verifiedUnit->id)
+            ->has('units_compact.rows', 1)
+            ->where('units_compact.rows.0.0', $verifiedUnit->id)
         );
     }
 }

@@ -21,7 +21,7 @@ export default {
   // Jejak Audit / Asset Movement
   auditTitle: 'Asset Movement',
   auditSubtitle: 'Activity history and system data changes',
-  auditSearchPlaceholder: 'Search Asset Number, Asset Name, or Actor Name...',
+  auditSearchPlaceholder: 'Search asset number, asset name, or actor name...',
   auditExport: 'Export Asset Movement',
   assetCode: 'Asset Number',
   assetNumber: 'Asset Number',
@@ -73,7 +73,7 @@ export default {
 
   // Karyawan (Employee Management)
   employeeTitle: 'Employee Directory',
-  employeeSearchPlaceholder: 'Search ID or Employee Name',
+  employeeSearchPlaceholder: 'Search ID or employee name...',
   employeeName: 'Name',
   employeeId: 'NPK',
   employeeDepartment: 'Department',
@@ -87,7 +87,7 @@ export default {
   historicalLoansTab: 'Borrowing History',
   loadingLoans: 'Loading borrowing data...',
   loadLoansFailed: 'Failed to load employee borrowing data.',
-  searchAssetLoanPlaceholder: 'Search Asset Number or Asset Name',
+  searchAssetLoanPlaceholder: 'Search asset number or asset name...',
   allBrands: 'All Brands',
   searchBrandPlaceholder: 'Search brand...',
   allConditions: 'All conditions',

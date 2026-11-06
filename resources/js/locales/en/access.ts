@@ -10,7 +10,7 @@ export default {
   users: {
     title: 'User Management',
     searchLabel: 'Search User',
-    searchPlaceholder: 'Search NPK or User Name',
+    searchPlaceholder: 'Search NPK or user name...',
     filterRoleLabel: 'Filter Role',
     allRoles: 'All Roles',
     rowsPerPage: 'Rows per page',

@@ -34,6 +34,7 @@ class AuditTrailController extends Controller
                 'al.id',
                 'al.action_type',
                 'al.status',
+                'al.condition',
                 'al.start_date',
                 'al.end_date',
                 'al.actor_id',
@@ -41,6 +42,7 @@ class AuditTrailController extends Controller
                 'al.previous_state',
                 'al.request_id',
                 'r.request_number',
+                'a.id as asset_id',
                 'a.number as asset_number',
                 'm.name as model_name',
             ])
@@ -67,11 +69,13 @@ class AuditTrailController extends Controller
 
             return [
                 'id' => (int) $row->id,
+                'asset_id' => $row->asset_id ? (int) $row->asset_id : null,
                 'nomor_aset' => $row->asset_number ?? '-',
                 'kode_aset' => $row->asset_number ?? '-',
                 'nama_aset' => $row->model_name ?? '-',
                 'waktu' => $row->start_date ? Carbon::parse($row->start_date)->format('d-m-Y H:i:s') : '-',
                 'status' => $row->status ?? '-',
+                'condition' => $row->condition ?? '-',
                 'action_type' => $row->action_type ?? '-',
                 'aktor' => $actorName,
                 'durasi' => AssetLifecycle::formatDurationRange($row->start_date, $row->end_date),

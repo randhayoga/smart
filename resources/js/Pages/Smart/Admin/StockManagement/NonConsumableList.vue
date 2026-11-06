@@ -31,6 +31,7 @@ const { t } = useI18n();
       :vendors="props.vendors"
       :projects="props.projects"
       :users="props.users"
+      :hide-qc="true"
       status-scope="standard"
     />
   </AppLayout>

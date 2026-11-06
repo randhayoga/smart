@@ -142,24 +142,6 @@ const {
   onDeleteRequest: (item) => openDeleteModal(item),
 });
 
-watch(categoryFilter, (val) => {
-  if (dataTableRef.value) {
-    dataTableRef.value.table.getColumn('category')?.setFilterValue(val);
-  }
-});
-
-watch(subcategoryFilter, (val) => {
-  if (dataTableRef.value) {
-    dataTableRef.value.table.getColumn('subcategory')?.setFilterValue(val);
-  }
-});
-
-watch(brandFilter, (val) => {
-  if (dataTableRef.value) {
-    dataTableRef.value.table.getColumn('brand')?.setFilterValue(val);
-  }
-});
-
 const getExportData = () => {
   if (!dataTableRef.value) return filteredBarangs.value;
   return dataTableRef.value.table.getFilteredRowModel().rows.map((row: any) => row.original);
@@ -169,22 +151,18 @@ const getExportPayload = () => {
   const data = getExportData();
   const headers = [
     t('inventory.code'),
-    t('inventory.category'),
-    t('inventory.subcategory'),
+    t('inventory.categoryType'),
     t('inventory.brand'),
     t('inventory.name'),
     t('inventory.specification'),
-    t('inventory.lastUpdate'),
     t('inventory.total'),
   ];
   const rows = data.map((item: any) => [
     item.code,
-    item.category,
-    item.subcategory,
+    item.subcategory ? `${item.category} (${item.subcategory})` : (item.category || '-'),
     item.brand,
     item.name,
     item.specification,
-    item.lastUpdate,
     item.amount,
   ]);
   return { headers, rows };
@@ -214,6 +192,15 @@ const filteredBarangs = computed(() => {
     list = list.filter((item) => item.is_consumable === true);
   } else if (typeFilter.value === 'Aset') {
     list = list.filter((item) => item.is_consumable === false);
+  }
+  if (categoryFilter.value) {
+    list = list.filter((item) => item.category === categoryFilter.value);
+  }
+  if (subcategoryFilter.value) {
+    list = list.filter((item) => item.subcategory === subcategoryFilter.value);
+  }
+  if (brandFilter.value) {
+    list = list.filter((item) => item.brand === brandFilter.value);
   }
   return list;
 });
@@ -300,28 +287,13 @@ onUnmounted(() => {
                   />
                 </div>
 
-                <!-- Brand Combobox -->
+                <!-- Types (models:type / Subcategory) Combobox -->
                 <Combobox
-                  v-model="brandFilter"
-                  :options="mainFilteredBrands"
-                  :search-placeholder="t('inventory.searchBrandPlaceholder')"
-                  :default-label="t('inventory.allBrands')"
+                  v-model="subcategoryFilter"
+                  :options="mainFilteredSubcategories"
+                  :search-placeholder="t('inventory.searchSubcategoryPlaceholder')"
+                  :default-label="t('inventory.allSubcategories')"
                 />
-
-                <!-- Type Dropdown -->
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal', !typeFilter ? 'text-muted-foreground' : 'text-foreground']">
-                      <span class="truncate">{{ typeFilter ? (typeFilter === 'Habis pakai' ? t('inventory.consumable') : t('inventory.asset')) : t('inventory.allTypes') }}</span>
-                      <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px]" align="start" :side-offset="4">
-                    <DropdownMenuItem @select="typeFilter = ''">{{ t('inventory.allTypes') }}</DropdownMenuItem>
-                    <DropdownMenuItem @select="typeFilter = 'Habis pakai'">{{ t('inventory.consumable') }}</DropdownMenuItem>
-                    <DropdownMenuItem @select="typeFilter = 'Aset'">{{ t('inventory.asset') }}</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
 
                 <!-- Category Dropdown -->
                 <DropdownMenu>
@@ -339,12 +311,27 @@ onUnmounted(() => {
                   </DropdownMenuContent>
                 </DropdownMenu>
 
-                <!-- Subcategory Combobox -->
+                <!-- Kinds (Consumables, Asset) Dropdown -->
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal', !typeFilter ? 'text-muted-foreground' : 'text-foreground']">
+                      <span class="truncate">{{ typeFilter ? (typeFilter === 'Habis pakai' ? t('inventory.consumable') : t('inventory.asset')) : t('inventory.allKinds') }}</span>
+                      <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent class="w-(--reka-dropdown-menu-trigger-width) min-w-(--reka-dropdown-menu-trigger-width) rounded-[14px]" align="start" :side-offset="4">
+                    <DropdownMenuItem @select="typeFilter = ''">{{ t('inventory.allKinds') }}</DropdownMenuItem>
+                    <DropdownMenuItem @select="typeFilter = 'Habis pakai'">{{ t('inventory.consumable') }}</DropdownMenuItem>
+                    <DropdownMenuItem @select="typeFilter = 'Aset'">{{ t('inventory.asset') }}</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <!-- Brand Combobox -->
                 <Combobox
-                  v-model="subcategoryFilter"
-                  :options="mainFilteredSubcategories"
-                  :search-placeholder="t('inventory.searchSubcategoryPlaceholder')"
-                  :default-label="t('inventory.allSubcategories')"
+                  v-model="brandFilter"
+                  :options="mainFilteredBrands"
+                  :search-placeholder="t('inventory.searchBrandPlaceholder')"
+                  :default-label="t('inventory.allBrands')"
                 />
 
                 <Transition
@@ -426,7 +413,7 @@ onUnmounted(() => {
             :data="filteredBarangs"
             :filter-value="searchQuery"
             :page-size="pageSizeNumber"
-            :default-sorting="[{ id: 'lastUpdate', desc: true }]"
+            :default-sorting="[{ id: 'name', desc: false }]"
           />
         </div>
       </div>

@@ -81,6 +81,7 @@ class PerformanceModelOptimizationTest extends TestCase
             'room_id' => null,
             'room_name' => null,
             'full_name' => 'Gedung A',
+            'is_active' => true,
         ], $hierarchyMap[$building->id]);
 
         $this->assertEquals([
@@ -91,6 +92,7 @@ class PerformanceModelOptimizationTest extends TestCase
             'room_id' => null,
             'room_name' => null,
             'full_name' => 'Gedung A, Lantai 2',
+            'is_active' => true,
         ], $hierarchyMap[$floor->id]);
 
         $this->assertEquals([
@@ -101,6 +103,7 @@ class PerformanceModelOptimizationTest extends TestCase
             'room_id' => $room->id,
             'room_name' => 'Ruang Server',
             'full_name' => 'Gedung A, Lantai 2, Ruang Server',
+            'is_active' => true,
         ], $hierarchyMap[$room->id]);
     }
 

@@ -87,6 +87,7 @@ interface RequestDetail {
   updatedAt?: string;
   pemanfaatan: 'corporate' | 'project';
   pemanfaatanDetail: string;
+  reasoning?: string | null;
   durationStart?: string | null;
   durationEnd?: string | null;
   durationDays?: number;
@@ -447,6 +448,11 @@ const activeStepIndex = computed(() => {
               </span>
             </p>
 
+            <p v-if="request.reasoning" class="text-sm text-foreground">
+              <span class="text-muted-foreground">{{ t('fulfillment.manualRequest.notesPurpose') }}:</span>
+              <span class="font-medium ml-1 text-foreground whitespace-pre-wrap">{{ request.reasoning }}</span>
+            </p>
+
             <p v-if="request.durationStart" class="text-sm text-foreground">
               <span class="text-muted-foreground">{{ t('fulfillment.duration') }}</span>
               <span class="font-medium ml-1">
@@ -505,6 +511,7 @@ const activeStepIndex = computed(() => {
                 :type-key="typeKey"
                 :imageUrl="item.imageUrl"
                 :is-consumable="item.is_consumable"
+                :reasoning="item.reasoning"
                 @view-asset="openAssetDetail"
                 @finish-asset="openFinishAssetModal"
               />

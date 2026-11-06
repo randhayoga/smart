@@ -112,6 +112,14 @@ const selectedLabel = computed(() => {
   return found ? getFullName(found) : effectiveDefaultLabel.value;
 });
 
+const isSelectedActive = computed(() => {
+  if (props.modelValue === null || props.modelValue === '' || props.modelValue === undefined) {
+    return true;
+  }
+  const found = props.locations.find(l => String(l.id) === String(props.modelValue));
+  return found ? (found.is_active !== false) : true;
+});
+
 // Build tree hierarchy
 interface TreeNode extends LocationItem {
   depth: number;
@@ -287,7 +295,9 @@ watch(open, (isOpen) => {
           widthClass,
           'justify-between rounded-[14px] font-normal',
           props.bgClass,
-          !modelValue && modelValue !== 0 ? 'text-muted-foreground' : 'text-foreground',
+          (!modelValue && modelValue !== 0)
+            ? 'text-muted-foreground'
+            : (!isSelectedActive ? 'text-destructive font-medium' : 'text-foreground'),
           error ? '!border-destructive focus:!ring-destructive/20 focus:!border-destructive' : ''
         ]"
       >
@@ -354,13 +364,19 @@ watch(open, (isOpen) => {
               </div>
 
               <!-- Node Name -->
-              <span class="truncate flex-1" :title="node.fullName">
+              <span
+                :class="[
+                  'truncate flex-1',
+                  node.is_active === false ? 'text-destructive font-medium' : ''
+                ]"
+                :title="node.fullName"
+              >
                 {{ node.name }}
               </span>
 
               <!-- Inactive Tag if any -->
-              <span v-if="node.is_active === false" class="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium shrink-0">
-                Nonaktif
+              <span v-if="node.is_active === false" class="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-destructive/10 text-destructive font-medium shrink-0">
+                {{ t('inventory.inactiveLocation') || 'Nonaktif' }}
               </span>
             </div>
           </template>

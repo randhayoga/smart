@@ -162,6 +162,51 @@ export function formatLocation(
   return parts.length > 0 ? parts.join(', ') : '-';
 }
 
+/**
+ * Checks whether a location is active.
+ * Searches the locations array by ID, name, or full_name.
+ * If found and is_active === false, returns false. Otherwise true.
+ */
+export function isLocationActive(
+  locationIdOrName: number | string | null | undefined,
+  locations?: Array<{ id?: number | string; name?: string; full_name?: string; is_active?: boolean; [key: string]: any }> | null
+): boolean {
+  if (locationIdOrName === null || locationIdOrName === undefined || locationIdOrName === '' || locationIdOrName === '-') {
+    return true;
+  }
+  if (!locations || !Array.isArray(locations) || locations.length === 0) {
+    return true;
+  }
+  const needle = String(locationIdOrName).trim();
+  const needleLower = needle.toLowerCase();
+
+  const byId = locations.find(loc => loc.id !== undefined && loc.id !== null && String(loc.id) === needle);
+  if (byId) {
+    return byId.is_active !== false;
+  }
+
+  const byName = locations.find(loc => {
+    if (loc.full_name && loc.full_name.trim().toLowerCase() === needleLower) return true;
+    if (loc.name && loc.name.trim().toLowerCase() === needleLower) return true;
+    return false;
+  });
+  if (byName) {
+    return byName.is_active !== false;
+  }
+
+  const byPartial = locations.find(loc => {
+    if (loc.name && loc.is_active === false && needleLower.includes(loc.name.trim().toLowerCase())) {
+      return true;
+    }
+    return false;
+  });
+  if (byPartial) {
+    return false;
+  }
+
+  return true;
+}
+
 export * from './requestStatus';
 
 

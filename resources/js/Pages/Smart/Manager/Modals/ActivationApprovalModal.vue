@@ -9,7 +9,8 @@ import { useI18n } from 'vue-i18n';
 import { useModalLock } from '@/composables/useModalLock';
 import { X, ThumbsUp, Ban, FileText, ChevronDown } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
-import { formatDate, formatLocation } from '@/lib/utils';
+import { formatDate, formatLocation, isLocationActive } from '@/lib/utils';
+import { usePage } from '@inertiajs/vue3';
 import Tabs from '@/Components/Tabs.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import AuditTrailTab from '@/Pages/Smart/MultiRoles/Tabs/AuditTrailTab.vue';
@@ -169,6 +170,20 @@ const getClassificationLabel = (c?: string | null) => {
   if (c === 'Inventaris') return t('inventory.classificationInventory');
   return c;
 };
+
+const page = usePage();
+const isApprovalLocationActive = computed(() => {
+  if (!props.approval) return true;
+  const unit = props.approval.unit_details || props.approval;
+  if (unit.location_is_active === false) return false;
+  const locId = unit.location_id;
+  const locName = unit.location;
+  const locations = (page?.props?.locations as any[]) || [];
+  if ((locId || locName) && locations.length > 0) {
+    return isLocationActive(locId || locName, locations);
+  }
+  return true;
+});
 </script>
 
 <template>
@@ -326,7 +341,7 @@ const getClassificationLabel = (c?: string | null) => {
 
                   <!-- 11. Lokasi (not "Lokasi Penyimpanan") -->
                   <p v-if="!isSoft(approval)" class="text-foreground">
-                    {{ t('inventory.location') }}: {{ formatLocation(approval.unit_details?.location, approval.unit_details?.floor, approval.unit_details?.room) }}
+                    {{ t('inventory.location') }}: <span :class="!isApprovalLocationActive ? 'text-destructive font-semibold' : ''">{{ formatLocation(approval.unit_details?.location, approval.unit_details?.floor, approval.unit_details?.room) }}</span>
                   </p>
 
                   <!-- 12. Umur (calculate from lot's date, clamped >= 0) -->
@@ -358,7 +373,7 @@ const getClassificationLabel = (c?: string | null) => {
                     leave-from-class="opacity-100 translate-y-0"
                     leave-to-class="opacity-0 -translate-y-1"
                   >
-                    <div v-if="showMoreInfo" class="flex flex-col gap-1.5 pt-0.5">
+                    <div v-show="showMoreInfo" class="flex flex-col gap-1.5 pt-0.5">
                       <!-- 13. Nilai -->
                       <p class="text-foreground">
                         {{ t('inventory.value') }}: {{ formatRupiah(approval.unit_details?.price ?? approval.price) }}

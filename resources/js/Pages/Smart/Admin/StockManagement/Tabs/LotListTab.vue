@@ -90,6 +90,7 @@ const { t, locale } = useI18n();
 const { can } = usePermissions();
 
 const searchQuery = ref('');
+const entryTypeFilter = ref('');
 const timeFilter = ref('');
 const organizerFilter = ref('');
 const locationFilter = ref('');
@@ -102,6 +103,7 @@ const locationTargetSetMap = computed<Map<number, Set<number>>>(() =>
 
 const isAnyFilterActive = computed(() => {
   return searchQuery.value !== '' ||
+    entryTypeFilter.value !== '' ||
     timeFilter.value !== '' ||
     organizerFilter.value !== '' ||
     locationFilter.value !== '';
@@ -109,6 +111,7 @@ const isAnyFilterActive = computed(() => {
 
 const resetFilters = () => {
   searchQuery.value = '';
+  entryTypeFilter.value = '';
   timeFilter.value = '';
   organizerFilter.value = '';
   locationFilter.value = '';
@@ -177,6 +180,7 @@ const { columns, deleteFields } = useLotTableColumns({
   openDetailLOTConsumables,
   openDeleteLotModal,
   itemsToDelete,
+  locations: () => props.locations || [],
 });
 
 const pageSizeNumber = computed(() => {
@@ -196,6 +200,10 @@ const filteredLots = computed(() => {
         (lot.number && lot.number.toLowerCase().includes(q)) ||
         (lot.po_number && lot.po_number.toLowerCase().includes(q))
     );
+  }
+
+  if (entryTypeFilter.value) {
+    list = list.filter((lot: any) => (lot.entry_type || 'Procurement') === entryTypeFilter.value);
   }
 
   if (organizerFilter.value) {
@@ -368,6 +376,21 @@ onUnmounted(() => {
               :placeholder="t('inventory.searchLotPlaceholder')"
             />
           </div>
+
+          <!-- Entry Type Filter -->
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal', !entryTypeFilter ? 'text-muted-foreground' : 'text-foreground']">
+                <span class="truncate">{{ entryTypeFilter ? (entryTypeFilter === 'Procurement' ? t('inventory.procurement') : t('inventory.grant')) : t('inventory.allEntryTypes') }}</span>
+                <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
+              <DropdownMenuItem @select="entryTypeFilter = ''">{{ t('inventory.allEntryTypes') }}</DropdownMenuItem>
+              <DropdownMenuItem @select="entryTypeFilter = 'Procurement'">{{ t('inventory.procurement') }}</DropdownMenuItem>
+              <DropdownMenuItem @select="entryTypeFilter = 'Hibah'">{{ t('inventory.grant') }}</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

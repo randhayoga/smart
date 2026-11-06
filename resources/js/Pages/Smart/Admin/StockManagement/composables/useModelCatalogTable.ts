@@ -52,6 +52,7 @@ export function useModelCatalogTable(options: {
       {
         id: 'select',
         size: 40,
+        meta: { fit: true },
         header: ({ table }) =>
           h('div', { class: 'text-center no-print flex items-center justify-center' }, [
             h('input', {
@@ -77,7 +78,6 @@ export function useModelCatalogTable(options: {
       },
       {
         accessorKey: 'name',
-        size: 225,
         header: ({ column }) =>
           h(
             Button,
@@ -95,7 +95,7 @@ export function useModelCatalogTable(options: {
           h(
             'div',
             {
-              class: isConsumableMode ? 'text-foreground truncate font-medium' : 'text-foreground truncate',
+              class: isConsumableMode ? 'text-foreground font-medium' : 'text-foreground',
               title: row.getValue('name'),
             },
             row.getValue('name')
@@ -103,7 +103,6 @@ export function useModelCatalogTable(options: {
       },
       {
         accessorKey: 'specification',
-        size: 225,
         header: ({ column }) =>
           h(
             Button,
@@ -122,7 +121,7 @@ export function useModelCatalogTable(options: {
           return h(
             'div',
             {
-              class: `${spec ? 'text-foreground' : 'text-muted-foreground'} truncate`,
+              class: spec ? 'text-foreground' : 'text-muted-foreground',
               title: spec || '-',
             },
             spec || '-'
@@ -131,7 +130,6 @@ export function useModelCatalogTable(options: {
       },
       {
         accessorKey: 'brand',
-        size: 225,
         enableGlobalFilter: isConsumableMode ? undefined : false,
         header: ({ column }) =>
           h(
@@ -146,7 +144,7 @@ export function useModelCatalogTable(options: {
               h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
             ]
           ),
-        cell: ({ row }) => h('div', { class: 'text-foreground truncate' }, row.getValue('brand')),
+        cell: ({ row }) => h('div', { class: 'text-foreground' }, row.getValue('brand')),
         ...(isConsumableMode
           ? {}
           : {
@@ -157,7 +155,12 @@ export function useModelCatalogTable(options: {
             }),
       },
       {
-        accessorKey: 'category',
+        id: 'category_type',
+        accessorFn: (row: any) => {
+          const cat = row.category || '';
+          const sub = row.subcategory || '';
+          return sub ? `${cat} (${sub})` : cat;
+        },
         enableGlobalFilter: isConsumableMode ? undefined : false,
         header: ({ column }) =>
           h(
@@ -168,49 +171,19 @@ export function useModelCatalogTable(options: {
               class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start',
             },
             () => [
-              t('inventory.category'),
+              t('inventory.categoryType'),
               h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
             ]
           ),
-        cell: ({ row }) => h('div', { class: 'text-foreground truncate' }, row.getValue('category')),
-        ...(isConsumableMode
-          ? {}
-          : {
-              filterFn: (row: any, id: string, value: any) => {
-                if (!value) return true;
-                return row.getValue(id) === value;
-              },
-            }),
-      },
-      {
-        accessorKey: 'subcategory',
-        enableGlobalFilter: isConsumableMode ? undefined : false,
-        header: ({ column }) =>
-          h(
-            Button,
-            {
-              variant: 'ghost',
-              onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-              class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start',
-            },
-            () => [
-              t('inventory.subcategory'),
-              h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-            ]
-          ),
-        cell: ({ row }) => h('div', { class: 'text-foreground truncate' }, row.getValue('subcategory')),
-        ...(isConsumableMode
-          ? {}
-          : {
-              filterFn: (row: any, id: string, value: any) => {
-                if (!value) return true;
-                return row.getValue(id) === value;
-              },
-            }),
+        cell: ({ row }) => {
+          const cat = row.original.category || '';
+          const sub = row.original.subcategory || '';
+          const formatted = sub ? `${cat} (${sub})` : cat;
+          return h('div', { class: 'text-foreground' }, formatted || '-');
+        },
       },
       {
         accessorKey: 'amount',
-        size: isConsumableMode ? 110 : 95,
         enableGlobalFilter: isConsumableMode ? undefined : false,
         header: ({ column }) =>
           h(
@@ -246,29 +219,9 @@ export function useModelCatalogTable(options: {
         },
       },
       {
-        accessorKey: 'lastUpdate',
-        size: 181,
-        enableGlobalFilter: isConsumableMode ? undefined : false,
-        header: ({ column }) =>
-          h(
-            Button,
-            {
-              variant: 'ghost',
-              onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-              class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start',
-            },
-            () => [
-              t('inventory.lastUpdate'),
-              h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-            ]
-          ),
-        cell: ({ row }) => h('div', { class: 'text-muted-foreground truncate' }, row.getValue('lastUpdate')),
-        sortingFn: (rowA, rowB, columnId) =>
-          parseIndonesianDateTime(rowA.getValue(columnId)) - parseIndonesianDateTime(rowB.getValue(columnId)),
-      },
-      {
         id: 'actions',
         size: 84,
+        meta: { fit: true },
         enableGlobalFilter: isConsumableMode ? undefined : false,
         header: () =>
           h(

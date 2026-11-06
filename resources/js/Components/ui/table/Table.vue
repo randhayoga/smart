@@ -13,7 +13,7 @@ const props = defineProps<{
   <table v-if="props.noWrapper" :class="cn('w-full caption-bottom text-sm', props.class)">
     <slot />
   </table>
-  <div v-else :class="cn('relative w-full overflow-auto', props.containerClass)">
+  <div v-else :class="cn('relative w-full overflow-x-auto', props.containerClass)">
     <table :class="cn('w-full caption-bottom text-sm', props.class)">
       <slot />
     </table>

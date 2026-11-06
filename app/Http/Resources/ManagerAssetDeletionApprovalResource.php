@@ -53,8 +53,9 @@ class ManagerAssetDeletionApprovalResource extends JsonResource
             return [
                 'waktu' => $lc->start_date ? $lc->start_date->format('d-m-Y H:i:s') : '-',
                 'status' => $lc->status ?? '-',
+                'condition' => $lc->condition ?? '-',
                 'action_type' => $lc->action_type ?? '-',
-                'aktor' => "{$actorRole}: {$actorName}",
+                'aktor' => $actorName,
                 'durasi' => $duration,
                 'catatan' => $lc->note ?? '-',
             ];
@@ -136,6 +137,8 @@ class ManagerAssetDeletionApprovalResource extends JsonResource
             'brand' => $brandName,
             'name' => $modelName,
             'nama' => $modelName,
+            'model_spec' => $model?->specification ?? '-',
+            'barang_spec' => $model?->specification ?? '-',
             'specification' => $effectiveSpec,
             'comp_specification' => $compSpec,
             'qc_pass' => $asset?->qc_pass,

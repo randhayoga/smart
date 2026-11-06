@@ -53,8 +53,9 @@ class ManagerAssetActivationApprovalResource extends JsonResource
                 return [
                     'waktu' => $lc->start_date ? $lc->start_date->format('d-m-Y H:i:s') : '-',
                     'status' => $lc->status ?? '-',
+                    'condition' => $lc->condition ?? '-',
                     'action_type' => $lc->action_type ?? '-',
-                    'aktor' => "{$actorRole}: {$actorName}",
+                    'aktor' => $actorName,
                     'durasi' => $duration,
                     'catatan' => $lc->note ?? '-',
                 ];
@@ -133,6 +134,8 @@ class ManagerAssetActivationApprovalResource extends JsonResource
             'brand' => $model?->brand?->name ?? '-',
             'name' => $model?->name ?? '-',
             'nama' => $model?->name ?? '-',
+            'model_spec' => $model?->specification ?? '-',
+            'barang_spec' => $model?->specification ?? '-',
             'specification' => $effectiveSpec,
             'comp_specification' => $compSpec,
             'classification' => $asset?->classification ?? 'Aset',

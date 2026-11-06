@@ -220,6 +220,7 @@ class Location extends Model
                 'id' => $id,
                 'name' => is_array($loc) ? ($loc['name'] ?? '') : ($loc->name ?? ''),
                 'parent_id' => is_array($loc) ? ($loc['parent_id'] ?? null) : ($loc->parent_id ?? null),
+                'is_active' => (bool) (is_array($loc) ? ($loc['is_active'] ?? true) : ($loc->is_active ?? true)),
             ];
         }
 
@@ -245,6 +246,14 @@ class Location extends Model
             $floor = $chain[1] ?? null;
             $room = $chain[2] ?? null;
 
+            $isActive = true;
+            foreach ($chain as $chainItem) {
+                if (isset($chainItem['is_active']) && !$chainItem['is_active']) {
+                    $isActive = false;
+                    break;
+                }
+            }
+
             $map[$id] = [
                 'building_id' => $building ? (int) $building['id'] : null,
                 'building_name' => $building ? $building['name'] : null,
@@ -253,6 +262,7 @@ class Location extends Model
                 'room_id' => $room ? (int) $room['id'] : null,
                 'room_name' => $room ? $room['name'] : null,
                 'full_name' => implode(', ', $names),
+                'is_active' => $isActive,
             ];
         }
 

@@ -3,11 +3,37 @@ import type { ColumnDef } from '@tanstack/vue-table';
 import { ArrowUpDown, Eye } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
 import StatusBadge from '@/Components/StatusBadge.vue';
-import { cn, formatLocation } from '@/lib/utils';
+import { cn, formatLocation, formatDate, isLocationActive } from '@/lib/utils';
 import { getAssetStatusLabel } from '@/lib/assetStatus';
 import { formatQcStatus, getQcColorClass } from '@/lib/qualityControl';
 
 export { formatLocation };
+
+/**
+ * Calculates software license expiration styling:
+ * Red (destructive) if expired (<= 0 days)
+ * Yellow (amber) if within renewal reminder days (<= renewal_reminder or 30 days)
+ */
+export function getSoftwareRowClass(row: any): string {
+  const expDateStr = row.license_exp_date || row.le;
+  if (!expDateStr) return '';
+  const expDate = new Date(expDateStr);
+  if (isNaN(expDate.getTime())) return '';
+  const now = new Date();
+  const expMidnight = new Date(expDate.getFullYear(), expDate.getMonth(), expDate.getDate());
+  const nowMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const diffTime = expMidnight.getTime() - nowMidnight.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  const reminder = row.renewal_reminder !== undefined && row.renewal_reminder !== null ? Number(row.renewal_reminder) : 30;
+
+  if (diffDays <= 0) {
+    return 'bg-destructive/10 hover:bg-destructive/15 text-destructive font-medium';
+  }
+  if (diffDays <= reminder) {
+    return 'bg-amber-500/10 hover:bg-amber-500/15 text-amber-700 dark:text-amber-400 font-medium';
+  }
+  return '';
+}
 
 const CONDITION_KEY_MAP: Record<string, string> = {
   'bagus': 'inventory.conditionGood',
@@ -63,15 +89,18 @@ export function useNonConsumableColumns(options: {
   props: {
     hideActions?: boolean;
     hideBarangColumns?: boolean;
+    hideQc?: boolean;
   };
   isComp: ComputedRef<boolean>;
   isAllSoft: ComputedRef<boolean>;
+  isVehicle?: ComputedRef<boolean>;
+  locations?: () => any[];
   t: (key: string, params?: any) => string;
   te: (key: string) => boolean;
   locale: { value: string };
   openViewAssetModal: (asset: any) => void;
 }) {
-  const { props, isComp, isAllSoft, t, te, locale, openViewAssetModal } = options;
+  const { props, isComp, isAllSoft, isVehicle, locations, t, te, locale, openViewAssetModal } = options;
 
   const getStatusLabel = (status: string) => {
     return getAssetStatusLabel(status, t, te);
@@ -99,6 +128,7 @@ export function useNonConsumableColumns(options: {
       list.push({
         id: 'select',
         size: 40,
+        meta: { fit: true },
         header: ({ table }) =>
           h('div', { class: 'text-center no-print flex items-center justify-center' }, [
             h('input', {
@@ -122,6 +152,7 @@ export function useNonConsumableColumns(options: {
 
     list.push({
       accessorKey: 'number',
+      meta: { fit: true },
       header: ({ column }) =>
         h(
           Button,
@@ -136,8 +167,30 @@ export function useNonConsumableColumns(options: {
           ]
         ),
       cell: ({ row }) =>
-        h('div', { class: 'text-muted-foreground font-mono text-sm truncate font-medium max-w-[193px]' }, row.getValue('number')),
+        h('div', { class: 'text-muted-foreground font-mono text-sm font-medium' }, row.getValue('number')),
     });
+
+    if (isVehicle?.value) {
+      list.push({
+        accessorKey: 'vehicle_registration',
+        meta: { fit: true },
+        header: ({ column }) =>
+          h(
+            Button,
+            {
+              variant: 'ghost',
+              onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+              class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start',
+            },
+            () => [
+              t('inventory.nopol'),
+              h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+            ]
+          ),
+        cell: ({ row }) =>
+          h('div', { class: 'text-foreground font-medium' }, row.original.vehicle_registration || row.original.vr || '-'),
+      });
+    }
 
     if (!props.hideBarangColumns) {
       list.push(
@@ -157,7 +210,35 @@ export function useNonConsumableColumns(options: {
               ]
             ),
           cell: ({ row }) =>
-            h('div', { class: 'text-foreground truncate font-medium', title: row.getValue('barang_nama') }, row.getValue('barang_nama')),
+            h('div', { class: 'text-foreground font-medium', title: row.getValue('barang_nama') }, row.getValue('barang_nama')),
+        },
+        {
+          id: 'specification',
+          accessorFn: (row: any) => row.comp_specification || row.specification || row.barang_specification || '-',
+          header: ({ column }) =>
+            h(
+              Button,
+              {
+                variant: 'ghost',
+                onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+                class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start',
+              },
+              () => [
+                t('inventory.specification'),
+                h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+              ]
+            ),
+          cell: ({ row }) => {
+            const spec = row.original.comp_specification || row.original.specification || row.original.barang_specification || '-';
+            return h(
+              'div',
+              {
+                class: spec && spec !== '-' ? 'text-foreground' : 'text-muted-foreground',
+                title: spec,
+              },
+              spec
+            );
+          },
         },
         {
           accessorKey: 'barang_brand',
@@ -174,47 +255,14 @@ export function useNonConsumableColumns(options: {
                 h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
               ]
             ),
-          cell: ({ row }) => h('div', { class: 'text-foreground truncate' }, row.getValue('barang_brand')),
-        },
-        {
-          accessorKey: 'barang_category',
-          header: ({ column }) =>
-            h(
-              Button,
-              {
-                variant: 'ghost',
-                onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-                class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start',
-              },
-              () => [
-                t('inventory.category'),
-                h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-              ]
-            ),
-          cell: ({ row }) => h('div', { class: 'text-foreground truncate' }, row.getValue('barang_category')),
-        },
-        {
-          accessorKey: 'barang_subcategory',
-          header: ({ column }) =>
-            h(
-              Button,
-              {
-                variant: 'ghost',
-                onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-                class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start',
-              },
-              () => [
-                t('inventory.subcategory'),
-                h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-              ]
-            ),
-          cell: ({ row }) => h('div', { class: 'text-foreground truncate' }, row.getValue('barang_subcategory')),
+          cell: ({ row }) => h('div', { class: 'text-foreground' }, row.getValue('barang_brand')),
         }
       );
     }
 
     list.push({
       accessorKey: 'status',
+      meta: { fit: true },
       header: ({ column }) =>
         h(
           Button,
@@ -240,6 +288,52 @@ export function useNonConsumableColumns(options: {
         });
       },
     });
+
+    if (isAllSoft.value) {
+      list.push({
+        accessorKey: 'license_exp_date',
+        header: ({ column }) =>
+          h(
+            Button,
+            {
+              variant: 'ghost',
+              onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+              class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start',
+            },
+            () => [
+              t('inventory.expirationDate'),
+              h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+            ]
+          ),
+        cell: ({ row }) => {
+          const val = row.original.license_exp_date || row.original.le;
+          return h('div', { class: 'text-muted-foreground' }, val ? formatDate(val) : t('inventory.perpetual'));
+        },
+      });
+
+      if (props.hideBarangColumns) {
+        list.push({
+          accessorKey: 'age',
+          header: ({ column }) =>
+            h(
+              Button,
+              {
+                variant: 'ghost',
+                onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+                class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start',
+              },
+              () => [
+                t('inventory.age'),
+                h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+              ]
+            ),
+          cell: ({ row }) => {
+            const age = row.original.age ?? (props as any).lot?.age;
+            return h('div', { class: 'text-muted-foreground' }, age !== undefined && age !== null ? `${age} ${t('inventory.yearUnit')}` : '-');
+          },
+        });
+      }
+    }
 
     if (!isAllSoft.value) {
       list.push({
@@ -267,31 +361,44 @@ export function useNonConsumableColumns(options: {
         },
       });
 
-      list.push({
-        accessorKey: 'qc_pass',
-        header: ({ column }) =>
-          h(
-            Button,
-            {
-              variant: 'ghost',
-              onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-              class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start',
-            },
-            () => [
-              t('inventory.qualityControl'),
-              h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-            ]
-          ),
-        cell: ({ row }) => {
-          const qcPass = row.original.qc_pass;
-          const lastQc = row.original.last_qc ?? row.original.lq;
-          if (qcPass === null || qcPass === undefined) {
-            return h('span', { class: 'text-muted-foreground' }, '-');
-          }
-          const textClass = getQcColorClass(qcPass);
-          return h('span', { class: textClass }, formatQcStatus(qcPass, lastQc, t));
-        },
-      });
+      if (!props.hideQc && !isVehicle?.value) {
+        list.push({
+          accessorKey: 'qc_pass',
+          header: ({ column }) =>
+            h(
+              Button,
+              {
+                variant: 'ghost',
+                onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+                class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start',
+              },
+              () => [
+                t('inventory.qualityControl'),
+                h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+              ]
+            ),
+          cell: ({ row }) => {
+            const qcPass = row.original.qc_pass;
+            const lastQc = row.original.last_qc ?? row.original.lq;
+            if (qcPass === null || qcPass === undefined) {
+              return h('span', { class: 'text-muted-foreground' }, '-');
+            }
+            const textClass = getQcColorClass(qcPass);
+            const statusLabel = qcPass ? t('inventory.qcPass') : t('inventory.qcFail');
+            const formattedDate = lastQc ? formatDate(lastQc) : null;
+            const hasDate = Boolean(formattedDate && formattedDate !== '-');
+
+            if (!hasDate) {
+              return h('div', { class: cn('font-semibold', textClass) }, statusLabel);
+            }
+
+            return h('div', { class: 'leading-tight space-y-0.5' }, [
+              h('div', { class: cn('font-semibold', textClass) }, statusLabel),
+              h('div', { class: 'text-xs text-muted-foreground font-normal' }, formattedDate),
+            ]);
+          },
+        });
+      }
     }
 
     if (props.hideBarangColumns && isComp.value) {
@@ -315,7 +422,7 @@ export function useNonConsumableColumns(options: {
           return h(
             'div',
             {
-              class: 'text-foreground truncate font-medium',
+              class: 'text-foreground font-medium',
               title: spec,
             },
             spec
@@ -324,7 +431,7 @@ export function useNonConsumableColumns(options: {
       });
     }
 
-    if (!isAllSoft.value) {
+    if (!isAllSoft.value && !isVehicle?.value) {
       list.push({
         accessorKey: 'location',
         header: ({ column }) =>
@@ -343,10 +450,16 @@ export function useNonConsumableColumns(options: {
         cell: ({ row }) => {
           const r = row.original;
           const formattedLoc = formatLocation(r.location, r.floor, r.room);
+          const locs = locations ? locations() : [];
+          const isActive = isLocationActive(r.location_id || r.location, locs);
           return h(
             'div',
             {
-              class: cn('text-muted-foreground text-sm', props.hideBarangColumns && isComp.value ? 'truncate' : ''),
+              class: cn(
+                'text-sm',
+                !isActive ? 'text-destructive font-medium' : 'text-muted-foreground',
+                props.hideBarangColumns && isComp.value ? '' : ''
+              ),
               title: formattedLoc,
             },
             formattedLoc
@@ -355,30 +468,11 @@ export function useNonConsumableColumns(options: {
       });
     }
 
-    if (props.hideBarangColumns && !isComp.value) {
-      list.push({
-        accessorKey: 'price',
-        header: ({ column }) =>
-          h(
-            Button,
-            {
-              variant: 'ghost',
-              onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-              class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start',
-            },
-            () => [
-              t('inventory.value'),
-              h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-            ]
-          ),
-        cell: ({ row }) => h('div', { class: 'text-muted-foreground text-sm font-medium' }, formatRupiah(row.original.price)),
-      });
-    }
-
     if (!props.hideActions) {
       list.push({
         id: 'actions',
         size: 80,
+        meta: { fit: true },
         header: () => h('div', { class: 'text-center font-semibold text-foreground no-print' }, t('common.actions')),
         cell: ({ row }) =>
           h('div', { class: 'flex items-center justify-center gap-2 no-print' }, [

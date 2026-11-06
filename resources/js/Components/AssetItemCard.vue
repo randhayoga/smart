@@ -106,6 +106,8 @@ export interface Props {
 
   /** Initial open state for accordion sections. Defaults to true. */
   defaultOpen?: boolean;
+  /** Optional reasoning note linked to this specific item/asset. */
+  reasoning?: string | null;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -131,6 +133,7 @@ const props = withDefaults(defineProps<Props>(), {
   lotFulfillments: undefined,
   consumableSummary: undefined,
   defaultOpen: true,
+  reasoning: null,
 });
 
 defineEmits<{
@@ -251,6 +254,12 @@ const activeAssets = computed(() => {
 
         <!-- Quantity & Unit of Measurement -->
         <p class="text-xs text-foreground font-semibold">{{ quantityLabel || $t('requests.itemQuantity') }}: {{ quantity }} {{ uom }}</p>
+
+        <!-- Item-linked Note / Reasoning -->
+        <div v-if="reasoning" class="text-xs text-foreground bg-muted/40 rounded-md p-2 border border-border/60">
+          <span class="text-muted-foreground font-medium">{{ $t('fulfillment.manualRequest.itemNotes') }}:</span>
+          <span class="ml-1 text-foreground font-medium italic">"{{ reasoning }}"</span>
+        </div>
         
         <!-- Collapsible Allocated Asset Serial Numbers / Items -->
         <div v-if="!allocationSlots && ((allocatedAssets && allocatedAssets.length > 0) || activeAssets.length > 0)" class="pt-1.5">

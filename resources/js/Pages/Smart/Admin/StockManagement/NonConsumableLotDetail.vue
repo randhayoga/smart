@@ -280,9 +280,8 @@ onUnmounted(() => {
         :vendors="props.vendors"
         :projects="props.projects"
         :users="props.users"
-        :hide-barang-columns="true"
         :lot="props.lot"
-        :barang="{ category: props.lot.barang_category }"
+        :barang="{ category: props.lot.barang_category, category_code: props.lot.barang_category_code }"
         :show-error-modal="false"
         status-scope="all"
       />

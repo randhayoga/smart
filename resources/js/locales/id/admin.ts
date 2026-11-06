@@ -21,7 +21,7 @@ export default {
   // Jejak Audit / Pergerakan Aset
   auditTitle: 'Pergerakan Aset',
   auditSubtitle: 'Riwayat aktivitas dan perubahan data sistem',
-  auditSearchPlaceholder: 'Cari Nomor Aset, Nama Aset, atau Nama Aktor...',
+  auditSearchPlaceholder: 'Cari nomor aset, nama aset, atau nama aktor...',
   auditExport: 'Ekspor Pergerakan Aset',
   assetCode: 'Nomor Aset',
   assetNumber: 'Nomor Aset',
@@ -73,7 +73,7 @@ export default {
 
   // Karyawan (Employee Management)
   employeeTitle: 'Daftar Karyawan',
-  employeeSearchPlaceholder: 'Cari NPK atau Nama Karyawan',
+  employeeSearchPlaceholder: 'Cari NPK atau nama karyawan...',
   employeeName: 'Nama',
   employeeId: 'NPK',
   employeeDepartment: 'Departemen',
@@ -87,7 +87,7 @@ export default {
   historicalLoansTab: 'Peminjaman Historis',
   loadingLoans: 'Memuat data peminjaman...',
   loadLoansFailed: 'Gagal memuat data peminjaman karyawan.',
-  searchAssetLoanPlaceholder: 'Cari Nomor Aset atau Nama Aset',
+  searchAssetLoanPlaceholder: 'Cari nomor aset atau nama aset...',
   allBrands: 'Semua Merek',
   searchBrandPlaceholder: 'Cari merek...',
   allConditions: 'Semua kondisi',

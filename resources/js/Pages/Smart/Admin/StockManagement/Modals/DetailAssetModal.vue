@@ -9,7 +9,7 @@ import { router, usePage } from '@inertiajs/vue3';
 import { toast } from 'vue-sonner';
 import { X, FileText, Upload, Loader2, ExternalLink, ChevronDown } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
-import { formatDate, formatLocation } from '@/lib/utils';
+import { formatDate, formatLocation, isLocationActive } from '@/lib/utils';
 import { formatQcStatus, getQcColorClass } from '@/lib/qualityControl';
 import { hasAssetStatus, isMaintenanceAllowed } from '@/lib/assetStatus';
 import StatusBadge from '@/Components/StatusBadge.vue';
@@ -21,6 +21,7 @@ interface Props {
   open: boolean;
   asset: any;
   lot?: any;
+  locations?: any[];
   users?: { id: number; name: string }[];
 }
 
@@ -426,6 +427,16 @@ const burdenDisplay = computed(() => {
   }
   return props.asset.burden;
 });
+
+const isAssetLocationActive = computed(() => {
+  if (props.asset?.location_is_active === false) return false;
+  const locId = props.asset?.location_id;
+  const locName = props.asset?.location;
+  if ((locId || locName) && props.locations) {
+    return isLocationActive(locId || locName, props.locations);
+  }
+  return true;
+});
 </script>
 
 <template>
@@ -569,7 +580,7 @@ const burdenDisplay = computed(() => {
 
                     <!-- 11. Lokasi (not "Lokasi Penyimpanan") -->
                     <p v-if="!isSoft" class="text-foreground">
-                      {{ t('inventory.location') }}: {{ formatLocation(asset.location, asset.floor, asset.room) }}
+                      {{ t('inventory.location') }}: <span :class="!isAssetLocationActive ? 'text-destructive font-semibold' : ''">{{ formatLocation(asset.location, asset.floor, asset.room) }}</span>
                     </p>
 
                     <!-- 12. Umur (calculate from lot's date) -->

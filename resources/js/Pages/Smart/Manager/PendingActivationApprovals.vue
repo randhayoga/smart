@@ -89,7 +89,7 @@ const { t } = useI18n();
 
 // --- Filter & Search State ---
 const searchQuery = ref('');
-const categoryFilter = ref('all');
+const typeFilter = ref('all');
 const rowsPerPage = ref('50');
 
 const dataTableRef = ref<any>(null);
@@ -103,20 +103,21 @@ const selectedIds = computed(() => {
 });
 
 // Filter options
-const categoryOptions = computed(() => {
-  const cats = new Set<string>();
+const typeOptions = computed(() => {
+  const types = new Set<string>();
   props.approvals.forEach(app => {
-    if (app.category) cats.add(app.category);
+    const val = app.subcategory || (app as any).type;
+    if (val && val !== '-') types.add(val);
   });
-  return Array.from(cats);
+  return Array.from(types).sort();
 });
 
 // Filtered data
 const filteredApprovals = computed(() => {
   let list = [...props.approvals];
 
-  if (categoryFilter.value !== 'all') {
-    list = list.filter(app => app.category === categoryFilter.value);
+  if (typeFilter.value !== 'all') {
+    list = list.filter(app => (app.subcategory || (app as any).type) === typeFilter.value);
   }
 
   // default sort by id desc
@@ -132,7 +133,7 @@ const computedPageSize = computed(() => {
   return parseInt(rowsPerPage.value, 10) || 50;
 });
 
-watch(categoryFilter, () => {
+watch(typeFilter, () => {
   if (dataTableRef.value && dataTableRef.value.table) {
     dataTableRef.value.table.resetRowSelection();
   }
@@ -176,21 +177,6 @@ const columns = computed<ColumnDef<ApprovalItem>[]>(() => [
       ])
     },
     cell: ({ row }) => h('div', { class: 'text-muted-foreground font-mono text-md truncate font-medium' }, row.getValue('asset_code')),
-  },
-  {
-    accessorKey: 'category',
-    enableGlobalFilter: false,
-    header: ({ column }) => {
-      return h(Button, {
-        variant: 'ghost',
-        onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-        class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
-      }, () => [
-        t('approvals.category'),
-        h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-      ])
-    },
-    cell: ({ row }) => h('div', { class: 'text-foreground truncate' }, row.getValue('category')),
   },
   {
     accessorKey: 'subcategory',
@@ -249,7 +235,24 @@ const columns = computed<ColumnDef<ApprovalItem>[]>(() => [
         h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
       ])
     },
-    cell: ({ row }) => h('div', { class: 'text-foreground truncate', title: row.getValue('specification') }, row.getValue('specification')),
+    cell: ({ row }) => {
+      const item = row.original;
+      const isComp = (item.category_code === 'COMP') || (item.model_category_code === 'COMP') ||
+        (item.category === 'Computer') || (item.category === 'Komputer') ||
+        (item.subcategory && (item.subcategory.toLowerCase().includes('laptop') || item.subcategory.toLowerCase().includes('notebook') || item.subcategory.toLowerCase().includes('pc')));
+
+      let spec = item.specification;
+      if (isComp) {
+        const modelSpec = item.model_spec || item.barang_spec || item.unit_details?.model_spec || item.unit_details?.barang_spec || '';
+        const compSpec = item.comp_specification || item.unit_details?.comp_specification || item.specification || '';
+        const parts = [modelSpec, compSpec].filter(s => Boolean(s && String(s).trim() !== '' && String(s).trim() !== '-'));
+        const unique = Array.from(new Set(parts));
+        if (unique.length > 0) {
+          spec = unique.join(' - ');
+        }
+      }
+      return h('div', { class: 'text-foreground truncate', title: spec || '-' }, spec || '-');
+    },
   },
   {
     id: 'actions',
@@ -419,15 +422,15 @@ onUnmounted(() => {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal bg-white', categoryFilter === 'all' ? 'text-muted-foreground' : 'text-foreground']">
-              <span class="truncate">{{ categoryFilter === 'all' ? t('approvals.allCategories') : categoryFilter }}</span>
+            <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal bg-white', typeFilter === 'all' ? 'text-muted-foreground' : 'text-foreground']">
+              <span class="truncate">{{ typeFilter === 'all' ? t('approvals.allSubcategories') : typeFilter }}</span>
               <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
-            <DropdownMenuItem @select="categoryFilter = 'all'">{{ t('approvals.allCategories') }}</DropdownMenuItem>
-            <DropdownMenuItem v-for="cat in categoryOptions" :key="cat" @select="categoryFilter = cat">
-              {{ cat }}
+            <DropdownMenuItem @select="typeFilter = 'all'">{{ t('approvals.allSubcategories') }}</DropdownMenuItem>
+            <DropdownMenuItem v-for="item in typeOptions" :key="item" @select="typeFilter = item">
+              {{ item }}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

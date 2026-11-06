@@ -25,6 +25,7 @@ import {
   DropdownMenuTrigger,
 } from "@/Components/ui/dropdown-menu";
 import TableSearch from '@/Components/TableSearch.vue';
+import Combobox from '@/Components/Combobox.vue';
 import type { ColumnDef } from '@tanstack/vue-table';
 import DataTable from '@/Components/DataTable.vue';
 
@@ -108,6 +109,8 @@ const { t } = useI18n();
 // --- Filter & Search State ---
 const searchQuery = ref('');
 const categoryFilter = ref('all');
+const subcategoryFilter = ref('');
+const brandFilter = ref('');
 const kondisiFilter = ref('all');
 const rowsPerPage = ref('50');
 
@@ -130,10 +133,27 @@ const categoryOptions = computed(() => {
   return Array.from(cats);
 });
 
+const subcategoryOptions = computed(() => {
+  const subs = new Set<string>();
+  props.approvals.forEach(app => {
+    if (app.subcategory) subs.add(app.subcategory);
+  });
+  return Array.from(subs);
+});
+
+const brandOptions = computed(() => {
+  const brands = new Set<string>();
+  props.approvals.forEach(app => {
+    if (app.brand) brands.add(app.brand);
+  });
+  return Array.from(brands).sort();
+});
+
 const kondisiOptions = computed(() => {
   const stats = new Set<string>();
   props.approvals.forEach(app => {
-    if (app.status_label) stats.add(app.status_label);
+    const cond = app.proposed_condition || app.status_label;
+    if (cond) stats.add(cond);
   });
   return Array.from(stats);
 });
@@ -146,8 +166,16 @@ const filteredApprovals = computed(() => {
     list = list.filter(app => app.category === categoryFilter.value);
   }
 
+  if (subcategoryFilter.value) {
+    list = list.filter(app => app.subcategory === subcategoryFilter.value);
+  }
+
+  if (brandFilter.value) {
+    list = list.filter(app => app.brand === brandFilter.value);
+  }
+
   if (kondisiFilter.value !== 'all') {
-    list = list.filter(app => app.status_label === kondisiFilter.value);
+    list = list.filter(app => (app.proposed_condition || app.status_label) === kondisiFilter.value);
   }
 
   // default sort by id desc
@@ -163,7 +191,7 @@ const computedPageSize = computed(() => {
   return parseInt(rowsPerPage.value, 10) || 50;
 });
 
-watch([categoryFilter, kondisiFilter], () => {
+watch([categoryFilter, subcategoryFilter, brandFilter, kondisiFilter], () => {
   if (dataTableRef.value && dataTableRef.value.table) {
     dataTableRef.value.table.resetRowSelection();
   }
@@ -520,17 +548,35 @@ onUnmounted(() => {
           </DropdownMenuContent>
         </DropdownMenu>
 
+        <!-- Subcategory / Type Combobox -->
+        <Combobox
+          v-model="subcategoryFilter"
+          :options="subcategoryOptions"
+          :search-placeholder="t('approvals.searchSubcategory')"
+          :default-label="t('approvals.allSubcategories')"
+          width-class="w-[200px] bg-white"
+        />
+
+        <!-- Brand Combobox -->
+        <Combobox
+          v-model="brandFilter"
+          :options="brandOptions"
+          :search-placeholder="t('approvals.searchBrand')"
+          :default-label="t('approvals.allBrands')"
+          width-class="w-[200px] bg-white"
+        />
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal bg-white', kondisiFilter === 'all' ? 'text-muted-foreground' : 'text-foreground']">
-              <span class="truncate">{{ kondisiFilter === 'all' ? t('approvals.allConditions') : kondisiFilter }}</span>
+            <Button variant="outline" :class="['w-[260px] justify-between rounded-[14px] font-normal bg-white', kondisiFilter === 'all' ? 'text-muted-foreground' : 'text-foreground']">
+              <span class="truncate">{{ kondisiFilter === 'all' ? t('approvals.allProposedConditions') : getConditionLabel(kondisiFilter) }}</span>
               <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
-            <DropdownMenuItem @select="kondisiFilter = 'all'">{{ t('approvals.allConditions') }}</DropdownMenuItem>
+          <DropdownMenuContent class="w-[260px] rounded-[14px]" align="start" :side-offset="4">
+            <DropdownMenuItem @select="kondisiFilter = 'all'">{{ t('approvals.allProposedConditions') }}</DropdownMenuItem>
             <DropdownMenuItem v-for="st in kondisiOptions" :key="st" @select="kondisiFilter = st">
-              {{ st }}
+              {{ getConditionLabel(st) }}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

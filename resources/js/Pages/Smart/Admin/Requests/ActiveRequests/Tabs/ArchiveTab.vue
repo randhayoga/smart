@@ -244,7 +244,7 @@ const columns = computed<ColumnDef<any>[]>(() => [
     <!-- Filters Row -->
     <div class="space-y-4 mb-6">
       <div class="flex flex-wrap items-end gap-4">
-        <div class="space-y-1.5 flex-1 min-w-[280px] max-w-md">
+        <div class="space-y-1.5 w-[310px]">
           <label class="text-xs text-muted-foreground font-medium block ml-0.5">{{ t('fulfillment.filter') }}</label>
           <TableSearch 
             v-model="searchQuery"
@@ -270,12 +270,12 @@ const columns = computed<ColumnDef<any>[]>(() => [
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" :class="['w-[180px] justify-between rounded-[14px] font-normal', !statusFilter ? 'text-muted-foreground' : 'text-foreground']">
+            <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal', !statusFilter ? 'text-muted-foreground' : 'text-foreground']">
               <span class="truncate">{{ statusFilterLabel }}</span>
               <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent class="w-[180px] rounded-[14px]" align="start" :side-offset="4">
+          <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
             <DropdownMenuItem @select="statusFilter = ''">{{ t('fulfillment.allFinalStatuses') }}</DropdownMenuItem>
             <DropdownMenuItem @select="statusFilter = 'Sukses'">{{ t('fulfillment.success') }}</DropdownMenuItem>
             <DropdownMenuItem @select="statusFilter = 'Ditolak'">{{ t('fulfillment.rejected') }}</DropdownMenuItem>
@@ -286,12 +286,12 @@ const columns = computed<ColumnDef<any>[]>(() => [
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" :class="['w-[180px] justify-between rounded-[14px] font-normal', !timeFilter ? 'text-muted-foreground' : 'text-foreground']">
+            <Button variant="outline" :class="['w-[200px] justify-between rounded-[14px] font-normal', !timeFilter ? 'text-muted-foreground' : 'text-foreground']">
               <span class="truncate">{{ timeFilterLabel }}</span>
               <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent class="w-[180px] rounded-[14px]" align="start" :side-offset="4">
+          <DropdownMenuContent class="w-[200px] rounded-[14px]" align="start" :side-offset="4">
             <DropdownMenuItem @select="timeFilter = ''">{{ t('fulfillment.allTimeRanges') }}</DropdownMenuItem>
             <DropdownMenuItem @select="timeFilter = 'Hari ini'">{{ t('fulfillment.today') }}</DropdownMenuItem>
             <DropdownMenuItem @select="timeFilter = 'Minggu ini'">{{ t('fulfillment.thisWeek') }}</DropdownMenuItem>

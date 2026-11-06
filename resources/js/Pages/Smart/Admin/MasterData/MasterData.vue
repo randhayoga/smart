@@ -337,6 +337,8 @@ onUnmounted(() => {
             :columns="columns"
             :data="displayData"
             :filter-value="activeTab === 'locations' ? '' : searchQuery"
+            :preserve-initial-order="activeTab === 'locations'"
+            :default-sorting="activeTab === 'locations' ? [] : undefined"
             :page-size="pageSize"
             :show-selection-count="false"
           />

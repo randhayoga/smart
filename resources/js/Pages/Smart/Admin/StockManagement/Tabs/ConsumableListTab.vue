@@ -518,7 +518,7 @@ onUnmounted(() => {
             :columns="columns"
             :data="filteredBarangs"
             :page-size="pageSizeNumber"
-            :default-sorting="[{ id: 'lastUpdate', desc: true }]"
+            :default-sorting="[{ id: 'name', desc: false }]"
             :row-class="getRowClass"
           />
         </div>

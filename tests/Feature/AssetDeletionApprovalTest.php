@@ -504,9 +504,10 @@ class AssetDeletionApprovalTest extends TestCase
         $response = $this->actingAs($admin)->get('/smart/stock-management/non-consumables');
         $response->assertOk();
         $props = $response->original->getData()['page']['props'];
-        $returnedUnit = collect($props['units'])->firstWhere('id', $unit->id);
-        $this->assertNotNull($returnedUnit);
-        $this->assertEquals($file1Path, $returnedUnit['bod_boc_disapproval_url']);
+        $disapprovalUrl = isset($props['units'])
+            ? (collect($props['units'])->firstWhere('id', $unit->id)['bod_boc_disapproval_url'] ?? null)
+            : ($props['units_compact']['da'][$unit->id]['bd'] ?? null);
+        $this->assertEquals($file1Path, $disapprovalUrl);
 
         // --- Cycle 2 (Successive Disapproval) ---
         $unit->update(['condition' => 'Rusak Total', 'status' => 'Tersedia', 'approval_status' => 'Pending:DM']);
@@ -551,8 +552,10 @@ class AssetDeletionApprovalTest extends TestCase
         // Verify NonConsumableController returns the newest file2Path
         $response2 = $this->actingAs($admin)->get('/smart/stock-management/non-consumables');
         $props2 = $response2->original->getData()['page']['props'];
-        $returnedUnit2 = collect($props2['units'])->firstWhere('id', $unit->id);
-        $this->assertEquals($file2Path, $returnedUnit2['bod_boc_disapproval_url']);
+        $disapprovalUrl2 = isset($props2['units'])
+            ? (collect($props2['units'])->firstWhere('id', $unit->id)['bod_boc_disapproval_url'] ?? null)
+            : ($props2['units_compact']['da'][$unit->id]['bd'] ?? null);
+        $this->assertEquals($file2Path, $disapprovalUrl2);
     }
 
     public function test_dm_approval_immediately_deletes_previous_bod_boc_disapproval_file_and_clears_url(): void

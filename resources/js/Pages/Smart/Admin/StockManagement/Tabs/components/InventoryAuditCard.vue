@@ -5,6 +5,7 @@
  */
 import { ref, computed, h } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { router } from '@inertiajs/vue3';
 import { ArrowUpDown, ChevronDown } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
 import {
@@ -21,6 +22,10 @@ import { getLocalizedAuditAction, renderAuditNote } from '@/lib/auditAction';
 
 export interface InventoryLogItem {
   id: number;
+  model_id?: number | null;
+  lot_id?: number | null;
+  model_param?: string | null;
+  lot_param?: string | null;
   barang_number: string;
   barang_name: string;
   lot_number: string;
@@ -164,7 +169,6 @@ const auditColumns = computed<ColumnDef<InventoryLogItem>[]>(() => {
   if (!props.hideBarangColumn) {
     cols.push({
       accessorKey: 'barang_number',
-      size: 200,
       header: ({ column }) => {
         return h(Button, {
           variant: 'ghost',
@@ -177,10 +181,21 @@ const auditColumns = computed<ColumnDef<InventoryLogItem>[]>(() => {
       },
       cell: ({ row }) => {
         const item = row.original;
-        return h('div', { class: 'space-y-0.5 max-w-[200px]' }, [
-          h('div', { class: 'font-mono text-sm font-medium text-foreground truncate' }, item.barang_number),
+        const hasNumber = item.barang_number && item.barang_number !== '-';
+        const modelTarget = item.model_param || item.model_id || (hasNumber ? item.barang_number.replace(/[^a-zA-Z0-9]/g, '') : null);
+
+        const numberVNode = hasNumber && modelTarget
+          ? h('button', {
+              type: 'button',
+              class: 'font-mono text-sm font-semibold text-primary hover:underline hover:text-primary/80 transition-colors cursor-pointer text-left focus:outline-none whitespace-nowrap',
+              onClick: () => router.visit(`/smart/stock-management/${modelTarget}`)
+            }, item.barang_number)
+          : h('div', { class: 'font-mono text-sm font-medium text-foreground whitespace-nowrap' }, item.barang_number || '-');
+
+        return h('div', { class: 'space-y-0.5' }, [
+          numberVNode,
           item.barang_name && item.barang_name !== '-' 
-            ? h('div', { class: 'text-xs text-muted-foreground truncate', title: item.barang_name }, item.barang_name) 
+            ? h('div', { class: 'text-xs text-muted-foreground', title: item.barang_name }, item.barang_name) 
             : null
         ]);
       }
@@ -220,7 +235,6 @@ const auditColumns = computed<ColumnDef<InventoryLogItem>[]>(() => {
     },
     {
       accessorKey: 'lot_number',
-      size: 150,
       header: ({ column }) => {
         return h(Button, {
           variant: 'ghost',
@@ -231,7 +245,22 @@ const auditColumns = computed<ColumnDef<InventoryLogItem>[]>(() => {
           h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
         ]);
       },
-      cell: ({ row }) => h('div', { class: 'font-mono text-sm font-medium text-foreground truncate' }, row.getValue('lot_number') || '-'),
+      cell: ({ row }) => {
+        const item = row.original;
+        const val = row.getValue('lot_number') as string;
+        const hasLot = val && val !== '-';
+        const lotTarget = item.lot_param || item.lot_id || (hasLot ? val.replace(/[^a-zA-Z0-9]/g, '') : null);
+
+        if (hasLot && lotTarget) {
+          return h('button', {
+            type: 'button',
+            class: 'font-mono text-sm font-semibold text-primary hover:underline hover:text-primary/80 transition-colors cursor-pointer text-left focus:outline-none whitespace-nowrap',
+            onClick: () => router.visit(`/smart/stock-management/lots/${lotTarget}`)
+          }, val);
+        }
+
+        return h('div', { class: 'font-mono text-sm font-medium text-foreground whitespace-nowrap' }, val || '-');
+      },
     },
     {
       accessorKey: 'action_type',

@@ -9,13 +9,14 @@ import { useModalLock } from '@/composables/useModalLock';
 import axios from 'axios';
 import { X, ExternalLink } from 'lucide-vue-next';
 import { Button } from '@/Components/ui/button';
-import { formatDate } from '@/lib/utils';
+import { formatDate, isLocationActive } from '@/lib/utils';
 import Tabs from '@/Components/Tabs.vue';
 import AssetPhotoGrid from '@/Components/AssetPhotoGrid.vue';
 
 interface Props {
   isOpen: boolean;
   lotId: number | null;
+  locations?: any[];
 }
 
 const props = defineProps<Props>();
@@ -111,6 +112,19 @@ const lotModelDisplay = computed(() => {
   const name = lotDetails.value.barang_nama && lotDetails.value.barang_nama !== '-' ? lotDetails.value.barang_nama : '';
   const spec = lotDetails.value.barang_specification && lotDetails.value.barang_specification !== '-' ? lotDetails.value.barang_specification : '';
   return [brand, name, spec].filter(Boolean).join(' ') || '-';
+});
+
+const page = usePage();
+const pageLocations = computed(() => props.locations || (page?.props?.locations as any[]) || []);
+const isLotLocationActive = computed(() => {
+  if (!lotDetails.value) return true;
+  if (lotDetails.value.location_is_active === false) return false;
+  const locId = lotDetails.value.location_id;
+  const locName = lotDetails.value.location;
+  if ((locId || locName) && pageLocations.value.length > 0) {
+    return isLocationActive(locId || locName, pageLocations.value);
+  }
+  return true;
 });
 
 const lotBurdenDisplay = computed(() => {
@@ -258,7 +272,8 @@ onUnmounted(() => {
 
                   <!-- 5. *Lokasi (not "Lokasi Penyimpanan") -->
                   <p class="text-foreground">
-                    <span class="text-foreground">{{ t('inventory.location') }}:</span> {{ formatLocation(lotDetails) }}
+                    <span class="text-foreground">{{ t('inventory.location') }}:</span>
+                    <span :class="!isLotLocationActive ? 'text-destructive font-semibold' : ''"> {{ formatLocation(lotDetails) }}</span>
                   </p>
 
                   <!-- 6. Nomor PO/Nomor Memo (dynamic, if hibah make the nomor memo a hyperlink that opens the memo_url in new tab) -->

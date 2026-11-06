@@ -10,7 +10,7 @@ export default {
   users: {
     title: 'Manajemen Pengguna',
     searchLabel: 'Cari Pengguna',
-    searchPlaceholder: 'Cari NPK atau Nama Pengguna',
+    searchPlaceholder: 'Cari NPK atau nama pengguna...',
     filterRoleLabel: 'Filter Peran',
     allRoles: 'Semua Peran',
     rowsPerPage: 'Baris per halaman',

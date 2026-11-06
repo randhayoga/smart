@@ -22,6 +22,7 @@ const props = defineProps<{
   subcategoryFilter: string;
   statusFilter: string;
   conditionFilter: string;
+  qcFilter?: string;
   locationFilter: string;
   brandFilter: string;
   organizerFilter: string;
@@ -51,6 +52,7 @@ const emit = defineEmits<{
   (e: 'update:subcategoryFilter', val: string): void;
   (e: 'update:statusFilter', val: string): void;
   (e: 'update:conditionFilter', val: string): void;
+  (e: 'update:qcFilter', val: string): void;
   (e: 'update:locationFilter', val: string): void;
   (e: 'update:brandFilter', val: string): void;
   (e: 'update:organizerFilter', val: string): void;
@@ -67,7 +69,7 @@ const { t } = useI18n();
   <div class="flex flex-wrap items-end justify-between gap-4">
     <div class="flex flex-wrap items-end gap-3 flex-1">
       <!-- Search -->
-      <div class="space-y-1.5 flex-1 min-w-[200px] max-w-xs">
+      <div class="space-y-1.5 flex-1 min-w-[260px] max-w-sm">
         <label for="search-aset" class="text-xs text-muted-foreground font-medium block">{{ t('inventory.filter') }}</label>
         <TableSearch
           id="search-aset"
@@ -135,6 +137,21 @@ const { t } = useI18n();
           <DropdownMenuItem v-for="cond in availableConditions" :key="cond" @select="emit('update:conditionFilter', cond)">
             {{ getConditionLabel(cond) }}
           </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <!-- QC Filter Dropdown -->
+      <DropdownMenu v-if="!props.hideConditionFilter && !isAllSoft">
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" :class="['w-[160px] justify-between rounded-[14px] font-normal', props.cardless ? 'bg-white' : '', !qcFilter ? 'text-muted-foreground' : 'text-foreground']">
+            <span class="truncate">{{ qcFilter ? (qcFilter === 'pass' ? t('inventory.qcPass') : t('inventory.qcFail')) : t('inventory.allQc') }}</span>
+            <ChevronDown class="w-4 h-4 opacity-50 shrink-0" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent class="w-[160px] rounded-[14px]" align="start" :side-offset="4">
+          <DropdownMenuItem @select="emit('update:qcFilter', '')">{{ t('inventory.allQc') }}</DropdownMenuItem>
+          <DropdownMenuItem @select="emit('update:qcFilter', 'pass')">{{ t('inventory.qcPass') }}</DropdownMenuItem>
+          <DropdownMenuItem @select="emit('update:qcFilter', 'fail')">{{ t('inventory.qcFail') }}</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 

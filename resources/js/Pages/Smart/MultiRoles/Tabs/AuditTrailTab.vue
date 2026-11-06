@@ -21,9 +21,10 @@ import { getLocalizedAuditAction, renderAuditNote } from '@/lib/auditAction';
 interface AuditTrail {
   waktu: string;
   status: string;
+  condition?: string | null;
   action_type: string;
   aktor: string;
-  durasi: string | number;
+  durasi?: string | number;
   catatan: string;
   proof_url?: string | null;
   request_id?: number | null;
@@ -212,8 +213,31 @@ const auditColumns = computed<ColumnDef<AuditTrail>[]>(() => {
       }
     },
     {
+      accessorKey: 'condition',
+      size: 130,
+      header: ({ column }) => {
+        return h(Button, {
+          variant: 'ghost',
+          onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+          class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-start'
+        }, () => [
+          t('approvals.condition'),
+          h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
+        ])
+      },
+      cell: ({ row }) => {
+        const cond = (row.getValue('condition') as string) || '';
+        if (!cond || cond === '-') return h('span', { class: 'text-muted-foreground' }, '-');
+        let textClass = 'text-foreground';
+        if (cond === 'Bagus') textClass = 'text-emerald-600 font-semibold';
+        else if (cond === 'Rusak' || cond === 'Rusak Total' || cond === 'Hilang') textClass = 'text-rose-600 font-semibold';
+        const key = 'inventory.condition' + (cond === 'Bagus' ? 'Good' : cond === 'Rusak' ? 'Damaged' : cond === 'Rusak Total' ? 'TotalDamage' : 'Lost');
+        const label = te(key) ? t(key) : cond;
+        return h('span', { class: textClass }, label);
+      }
+    },
+    {
       accessorKey: 'action_type',
-      size: 144,
       header: ({ column }) => {
         return h(Button, {
           variant: 'ghost',
@@ -224,7 +248,7 @@ const auditColumns = computed<ColumnDef<AuditTrail>[]>(() => {
           h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
         ])
       },
-      cell: ({ row }) => h('div', { class: 'text-muted-foreground truncate' }, formatAction(row.getValue('action_type'))),
+      cell: ({ row }) => h('div', { class: 'text-muted-foreground break-words whitespace-normal' }, formatAction(row.getValue('action_type'))),
     },
     {
       accessorKey: 'aktor',
@@ -239,22 +263,11 @@ const auditColumns = computed<ColumnDef<AuditTrail>[]>(() => {
           h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
         ])
       },
-      cell: ({ row }) => h('div', { class: 'text-foreground truncate' }, row.getValue('aktor')),
-    },
-    {
-      accessorKey: 'durasi',
-      size: 112,
-      header: ({ column }) => {
-        return h(Button, {
-          variant: 'ghost',
-          onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-          class: 'p-0 hover:bg-transparent font-semibold text-foreground justify-center w-full'
-        }, () => [
-          t('approvals.auditDuration'),
-          h(ArrowUpDown, { class: 'ml-2 h-3.5 w-3.5 text-muted-foreground no-print' }),
-        ])
+      cell: ({ row }) => {
+        const raw = String(row.getValue('aktor') || '-');
+        const cleaned = raw.replace(/^(User|Admin|Manager|System):\s*/i, '');
+        return h('div', { class: 'text-foreground truncate', title: cleaned }, cleaned);
       },
-      cell: ({ row }) => h('div', { class: 'text-center text-foreground truncate' }, formatDurasi(row.getValue('durasi'))),
     },
     {
       accessorKey: 'catatan',

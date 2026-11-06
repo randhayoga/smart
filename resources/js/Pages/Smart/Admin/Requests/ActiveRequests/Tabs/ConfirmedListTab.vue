@@ -283,7 +283,7 @@ watch(() => page.url, (newUrl) => {
     <!-- Filters & Rows per Page -->
     <div class="space-y-4 mb-6">
       <div class="flex flex-wrap items-end gap-4">
-        <div class="space-y-1.5 flex-1 min-w-[300px] max-w-sm">
+        <div class="space-y-1.5 w-[310px]">
           <label class="text-xs text-muted-foreground font-medium block ml-0.5">{{ t('fulfillment.filter') }}</label>
           <TableSearch 
             v-model="searchQuery"

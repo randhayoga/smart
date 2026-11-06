@@ -91,10 +91,40 @@ const getRowClass = (row: any) => {
 const isCodeIdentifier = (id: string): boolean => {
   const lower = id.toLowerCase()
   if (lower.includes('phone') || lower.includes('count')) return false
-  if (['code', 'number', 'employee_id', 'nik', 'asset_code', 'assetcode', 'lot_code', 'lotcode', 'unit_number', 'kode_aset'].includes(lower)) return true
+  if (['code', 'number', 'employee_id', 'nik', 'asset_code', 'assetcode', 'lot_code', 'lotcode', 'unit_number', 'kode_aset', 'nomor_aset', 'po_number', 'vehicle_registration', 'nopol'].includes(lower)) return true
   if (/^(.*_)?(code|kode)(_.*)?$/i.test(id)) return true
   if (/^(.*_)?number$/i.test(id)) return true
   return false
+}
+
+const isStatusIdentifier = (id: string): boolean => {
+  const lower = id.toLowerCase()
+  return ['status', 'approval_status', 'proposed_status', 'decision', 'approvalstatus'].includes(lower)
+}
+
+const isFitHeader = (header: any): boolean => {
+  const id = header.id
+  if (id === 'select' || id === 'actions') return true
+  if (isStatusIdentifier(id) || isCodeIdentifier(id)) return true
+  const meta = header.column?.columnDef?.meta as any
+  if (meta?.fit) return true
+  return false
+}
+
+const isFitCell = (cell: any): boolean => {
+  const id = cell.column?.id
+  if (id === 'select' || id === 'actions') return true
+  if (isStatusIdentifier(id) || isCodeIdentifier(id)) return true
+  const meta = cell.column?.columnDef?.meta as any
+  if (meta?.fit) return true
+  return false
+}
+
+const getCellClass = (cell: any) => {
+  if (isFitCell(cell)) {
+    return 'w-px whitespace-nowrap shrink-0'
+  }
+  return 'break-words align-middle'
 }
 
 const isDateIdentifier = (id: string): boolean => {
@@ -364,10 +394,13 @@ onUnmounted(() => {
             v-for="header in headerGroup.headers" 
             :key="header.id" 
             :class="[
-              'font-semibold text-foreground text-left',
-              tableContainerClass ? 'bg-muted/90 border-b border-border' : ''
+              'h-10 font-semibold text-foreground text-left',
+              tableContainerClass ? 'bg-muted/90 border-b border-border' : '',
+              isFitHeader(header)
+                ? 'w-px whitespace-nowrap shrink-0 [&_button]:whitespace-nowrap'
+                : 'break-words [&_button]:whitespace-normal [&_button]:h-auto [&_button]:min-h-8 [&_button]:text-left'
             ]"
-            :style="{ width: header.getSize() !== 150 ? `${header.getSize()}px` : undefined }"
+            :style="{ width: !isFitHeader(header) && header.getSize() !== 150 ? `${header.getSize()}px` : undefined }"
           >
             <FlexRender
               v-if="!header.isPlaceholder"
@@ -388,8 +421,7 @@ onUnmounted(() => {
             <TableCell
               v-for="header in (table.getHeaderGroups()[0]?.headers || [])"
               :key="`skeleton-cell-${header.id}`"
-              :class="['text-left py-3.5', props.cellClass]"
-              :style="{ width: header.getSize() !== 150 ? `${header.getSize()}px` : undefined }"
+              :class="['text-left py-3.5', props.cellClass, isFitHeader(header) ? 'w-px whitespace-nowrap shrink-0' : '']"
             >
               <Skeleton class="h-4 w-full max-w-[160px] rounded" />
             </TableCell>
@@ -405,8 +437,7 @@ onUnmounted(() => {
             <TableCell 
               v-for="cell in row.getVisibleCells()" 
               :key="cell.id" 
-              :class="['text-left', props.cellClass]"
-              :style="{ width: cell.column.getSize() !== 150 ? `${cell.column.getSize()}px` : undefined }"
+              :class="['text-left', props.cellClass, getCellClass(cell)]"
             >
               <FlexRender :render="cell.column.columnDef.cell" :props="cell.getContext()" />
             </TableCell>

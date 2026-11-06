@@ -142,6 +142,9 @@ class ConsumableController extends Controller
                     'il.created_at',
                     'il.request_id',
                     'il.fulfillment_id',
+                    'il.model_id',
+                    'il.lot_id',
+                    'l.model_id as lot_model_id',
                     'r.request_number',
                     'm.number as model_number',
                     'm.name as model_name',
@@ -187,8 +190,18 @@ class ConsumableController extends Controller
 
                 $createdAt = $row->created_at ? Carbon::parse($row->created_at) : null;
 
+                $modelId = $row->model_id ?? $row->lot_model_id ?? ($prevState['model_id'] ?? ($prevState['barang_id'] ?? null));
+                $lotId = $row->lot_id ?? ($prevState['lot_id'] ?? null);
+
+                $cleanModelNumber = ($barangNumber && $barangNumber !== '-') ? preg_replace('/[^a-zA-Z0-9]/', '', (string) $barangNumber) : null;
+                $cleanLotNumber = ($lotNumber && $lotNumber !== '-') ? preg_replace('/[^a-zA-Z0-9]/', '', (string) $lotNumber) : null;
+
                 return [
                     'id' => (int) $row->id,
+                    'model_id' => $modelId ? (int) $modelId : null,
+                    'lot_id' => $lotId ? (int) $lotId : null,
+                    'model_param' => $cleanModelNumber ?: ($modelId ? (string) $modelId : null),
+                    'lot_param' => $cleanLotNumber ?: ($lotId ? (string) $lotId : null),
                     'barang_number' => $barangNumber,
                     'barang_name' => $barangName,
                     'lot_number' => $lotNumber,

@@ -287,8 +287,10 @@ onUnmounted(() => {
         v-else-if="activeTab === 'Daftar Tidak Habis Pakai'"
         :units="props.units"
         :locations="props.locations"
+        :organizers="props.organizers"
+        :vendors="props.vendors"
         :projects="props.projects"
-        :hide-barang-columns="true"
+        :barang="props.barang"
         :show-error-modal="false"
         status-scope="all"
       />
